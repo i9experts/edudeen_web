@@ -31,7 +31,7 @@ export function getStoreSlugFromHost(): string | null {
   }
 
   const parts = hostname.split('.');
-  if (parts.length <= 2) return null; // apex domain, e.g. 'solvexo.store'
+  if (parts.length <= 2) return null; // apex domain, e.g. 'edudeen.com'
   const prefix = parts.slice(0, -2).join('.');
   return RESERVED_HOST_PREFIXES.includes(prefix) ? null : prefix;
 }
@@ -41,7 +41,7 @@ export function getStoreSlugFromHost(): string | null {
 // above), nor localhost, is treated as a possible seller-connected CUSTOM
 // domain (see `isCustomDomainCandidate`). Kept as a small array (not a single
 // string) in case a staging apex is ever added.
-const PLATFORM_APEX_DOMAINS = ['solvexo.store'];
+const PLATFORM_APEX_DOMAINS = ['edudeen.com'];
 
 /**
  * True for any hostname that isn't the platform's own apex/subdomain and
