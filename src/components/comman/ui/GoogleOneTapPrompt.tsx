@@ -15,7 +15,7 @@ export function GoogleOneTapPrompt() {
   const { promptOneTap } = useSocialLogin('seller');
 
   useEffect(() => {
-    // Only the apex Solvexo domain — never a seller's own storefront
+    // Only the apex Edudeen domain — never a seller's own storefront
     // subdomain/custom domain, which has its own separate, unrelated login
     // and almost certainly isn't a registered origin for this OAuth client.
     if (getStoreSlugFromHost() || isCustomDomainCandidate()) return;

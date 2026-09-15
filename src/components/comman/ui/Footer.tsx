@@ -16,7 +16,7 @@ interface FooterLink {
 }
 
 // The buyer-facing "Shop" column (Marketplace/Education/My Orders/Wishlist)
-// was removed — Solvexo is no longer a central marketplace a buyer browses;
+// was removed — Edudeen is no longer a central marketplace a buyer browses;
 // the apex app has no buyer-facing entry point at all any more (a buyer
 // only ever shops a seller's own storefront subdomain). The routes/pages
 // themselves are untouched, just unlinked from here.
@@ -330,7 +330,7 @@ export function Footer({ showNewsletter = true }: { showNewsletter?: boolean }) 
         <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-col-reverse sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <SolvexoIcon size={16} />
-            <p className="text-[12px] text-[#8b8985]">© {new Date().getFullYear()} Solvexo. All rights reserved.</p>
+            <p className="text-[12px] text-[#8b8985]">© {new Date().getFullYear()} Edudeen. All rights reserved.</p>
           </div>
           <button
             type="button"

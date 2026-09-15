@@ -69,7 +69,7 @@ export interface JoinableCampaign {
   /** Only meaningful when discountType === 'fixed' — always 'USD' (the platform pivot). */
   currency:      string | null;
   // 'seller': this store pays the discount out of its own payout if it joins.
-  // 'platform': Solvexo reimburses it — joining costs this store nothing.
+  // 'platform': Edudeen reimburses it — joining costs this store nothing.
   sponsorType:   'seller' | 'platform';
   isJoined:      boolean;
 }

@@ -152,7 +152,7 @@ function ConnectedSystemDiagram({ onNavigate, activeIndex, onHover, onLeave }: {
         transition={{ duration: 0.5, ease: EASE_OUT }}
       >
         <span className="absolute inset-0 rounded-full bg-brand-orange/40 blur-lg -z-10" />
-        <span className="text-white font-bold text-[14px] sm:text-[16px] tracking-tight">Solvexo</span>
+        <span className="text-white font-bold text-[14px] sm:text-[16px] tracking-tight">Edudeen</span>
       </motion.div>
 
       {PLATFORM_PRODUCTS.map((p, i) => {
@@ -329,7 +329,7 @@ export function Homepage() {
             <Reveal delay={0}>
               <p className="flex items-center gap-2 text-[11px] sm:text-[12px] font-semibold uppercase tracking-[0.22em] text-brand-orange mb-6">
                 <span className="w-[7px] h-[7px] rounded-full bg-brand-orange" />
-                Solvexo — One connected commerce system
+                Edudeen — One connected commerce system
               </p>
             </Reveal>
 
@@ -357,7 +357,7 @@ export function Homepage() {
                 </motion.div>
                 {/* Third giant line — same masked-reveal treatment as the
                    two lines above it, not a separate small paragraph. Names
-                   a real, specific Solvexo differentiator (self-serve
+                   a real, specific Edudeen differentiator (self-serve
                    activation — see "Seller activation is self-serve" in
                    CLAUDE.md) instead of a generic "One Platform." filler,
                    so the headline actually says something true and unique
@@ -470,7 +470,7 @@ export function Homepage() {
         <div className="relative max-w-[1320px] mx-auto">
           <div className="text-center max-w-[900px] mx-auto mb-16 lg:mb-20">
             <Reveal>
-              <p className="text-[11px] font-semibold text-brand-deep-orange uppercase tracking-[0.12em] mb-5">The Solvexo difference</p>
+              <p className="text-[11px] font-semibold text-brand-deep-orange uppercase tracking-[0.12em] mb-5">The Edudeen difference</p>
             </Reveal>
             <h2 className="font-serif text-[40px] sm:text-[64px] lg:text-[84px] font-bold text-carbon leading-[1.02] tracking-[-0.015em]">
               <SplitText as="div" text="One business." delay={0.05} />
@@ -723,10 +723,10 @@ export function Homepage() {
         </div>
       </section>
 
-      {/* ── How Solvexo works ── */}
+      {/* ── How Edudeen works ── */}
       <section className="py-14 sm:py-16 px-4 sm:px-6 lg:px-12 bg-white">
         <div className="max-w-[1000px] mx-auto">
-          <SectionHeading title="How Solvexo works" align="center" size="lg" className="mb-10" />
+          <SectionHeading title="How Edudeen works" align="center" size="lg" className="mb-10" />
           <RevealStagger className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" step={0.08} y={20}>
             {HOW_IT_WORKS.map(({ Icon, step, desc }, i) => (
               <div key={step} className="relative text-center">

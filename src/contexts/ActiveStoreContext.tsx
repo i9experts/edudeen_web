@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback, useMemo, t
 import { type MyStoreItem } from '@/api/services/store';
 import { useMyStores } from '@/hooks/store/useMyStores';
 
-const STORAGE_KEY = 'solvexo_active_store';
+const STORAGE_KEY = 'edudeen_active_store';
 
 interface ActiveStoreContextValue {
   stores:        MyStoreItem[];

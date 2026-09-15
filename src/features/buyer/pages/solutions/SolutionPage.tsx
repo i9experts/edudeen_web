@@ -114,7 +114,7 @@ export function SolutionPage() {
          cross-links, not repeated marketing copy. ── */}
       <div className="bg-cream px-4 md:px-8 lg:px-12 py-14 md:py-16">
         <div className="max-w-[1100px] mx-auto">
-          <SectionHeading kicker="Built on" title={`What powers ${solution.name.toLowerCase()} on Solvexo`} align="center" className="mb-10" />
+          <SectionHeading kicker="Built on" title={`What powers ${solution.name.toLowerCase()} on Edudeen`} align="center" className="mb-10" />
           <RevealStagger className="grid grid-cols-1 sm:grid-cols-3 gap-5" step={0.08} y={16}>
             {(RELATED_PRODUCTS[solution.slug] ?? []).map(slug => {
               const product = getPlatformProduct(slug);

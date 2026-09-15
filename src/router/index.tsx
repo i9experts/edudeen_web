@@ -152,7 +152,7 @@ const AdminSEO           = lazy(() => named(import('@/features/admin/pages/Admin
 const AdminAiStudio      = lazy(() => named(import('@/features/admin/pages/AdminAiStudio'),                     'AdminAiStudio'));
 
 // ── Storefront subdomain router ────────────────────────────────────────────────
-// A store's own subdomain (`hello.solvexo.store`) serves ONLY its storefront
+// A store's own subdomain (`hello.edudeen.com`) serves ONLY its storefront
 // — home/blog/custom-pages — never the marketplace/seller/admin app. Kept as
 // a wholly separate route tree (not a branch of the main tree) since a
 // `:pageSlug` catch-all would otherwise have to coexist with dozens of
@@ -378,7 +378,7 @@ const mainRouter = createBrowserRouter([
 ]);
 
 // Decided once at module load — the hostname doesn't change without a full
-// page reload, so this never needs to be reactive. A `*.solvexo.store`
+// page reload, so this never needs to be reactive. A `*.edudeen.com`
 // subdomain resolves its slug synchronously here; an arbitrary connected
 // Custom Domain (`isCustomDomainCandidate`) can't be resolved synchronously
 // (it needs a real DNS-backed lookup), so it's routed into the SAME

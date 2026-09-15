@@ -91,7 +91,7 @@ export function SignInPreview() {
               <User size={19} className="text-brand-deep-orange" />
             </div>
             <div className="min-w-0">
-              <p className="text-[13.5px] font-bold text-carbon leading-tight">Welcome to Solvexo</p>
+              <p className="text-[13.5px] font-bold text-carbon leading-tight">Welcome to Edudeen</p>
               <p className="text-[11px] text-slate mt-[2px]">Sign in to unlock your account</p>
             </div>
             <button

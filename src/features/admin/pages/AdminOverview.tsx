@@ -66,7 +66,7 @@ export function AdminOverview() {
 
   return (
     <>
-      <AdminPageHeader title="Platform Overview" subtitle="Last 30 days across the Solvexo platform." icon={<LayoutGrid size={17} />} />
+      <AdminPageHeader title="Platform Overview" subtitle="Last 30 days across the Edudeen platform." icon={<LayoutGrid size={17} />} />
       <div className="px-4 sm:px-7 pt-6 pb-8 flex flex-col gap-5">
       {error && (
         <div className="dash-section-enter flex items-center gap-3 px-4 py-3 rounded-xl bg-error-bg border border-error/10 text-[12.5px]">

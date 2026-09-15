@@ -13,7 +13,7 @@ import { StorefrontFooter } from './StorefrontFooter';
 
 const DEFAULT_FAVICON = '/favicon.png';
 
-/** Swaps the browser tab icon to the store's own logo while on any `/:slug*` route, restoring Solvexo's default on unmount — same "zero Solvexo branding on the storefront" principle as the navbar/footer, just for the one piece of chrome that lives outside React's render tree. */
+/** Swaps the browser tab icon to the store's own logo while on any `/:slug*` route, restoring Edudeen's default on unmount — same "zero Edudeen branding on the storefront" principle as the navbar/footer, just for the one piece of chrome that lives outside React's render tree. */
 function useStorefrontFavicon(logo: string | null | undefined) {
   useEffect(() => {
     const link = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
@@ -24,7 +24,7 @@ function useStorefrontFavicon(logo: string | null | undefined) {
   }, [logo]);
 }
 
-// Root layout for a store's own subdomain (`hello.solvexo.store`) OR a
+// Root layout for a store's own subdomain (`hello.edudeen.com`) OR a
 // seller-connected Custom Domain — the router mounts this tree whenever
 // EITHER `getStoreSlugFromHost()` resolved a slug at boot, OR the hostname
 // is a non-platform domain (`isCustomDomainCandidate()`, see
@@ -36,7 +36,7 @@ function useStorefrontFavicon(logo: string | null | undefined) {
 // never a random store.
 // Fetches the store + its StoreTheme ONCE, provides both via context to
 // every child route (home, custom pages, blog), and renders the seller's
-// own zero-Solvexo-branding navbar/footer around them.
+// own zero-Edudeen-branding navbar/footer around them.
 export function StorefrontLayout() {
   const slug = getStoreSlugFromHost();
   const [store, setStore] = useState<PublicStoreData | null>(null);
@@ -86,9 +86,9 @@ export function StorefrontLayout() {
   }
 
   if (error || !store || !contextValue) {
-    // `getMainAppUrl()` only makes sense on a real `*.solvexo.store`
+    // `getMainAppUrl()` only makes sense on a real `*.edudeen.com`
     // subdomain (`slug` truthy) — on a genuine custom domain, that helper
-    // would build a URL on the SELLER'S OWN domain, not Solvexo's, so the
+    // would build a URL on the SELLER'S OWN domain, not Edudeen's, so the
     // "Back to Marketplace" fallback is only shown when it can actually
     // point somewhere real.
     return (

@@ -1254,7 +1254,7 @@ export function StoreMarketing() {
             <div>
               <p className="text-[15px] font-bold text-carbon">Platform Sale Campaigns</p>
               <p className="text-[12.5px] text-slate mt-0.5">
-                Solvexo-wide sale events. Join one to get your products featured in the marketplace deals banner for its duration.
+                Edudeen-wide sale events. Join one to get your products featured in the marketplace deals banner for its duration.
               </p>
             </div>
 
@@ -1270,7 +1270,7 @@ export function StoreMarketing() {
               <EmptyState
                 icon={<Megaphone size={28} className="text-brand-orange opacity-55" />}
                 title="No active campaigns right now"
-                description="When the Solvexo team launches a platform-wide sale, it'll show up here for you to join."
+                description="When the Edudeen team launches a platform-wide sale, it'll show up here for you to join."
               />
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1293,7 +1293,7 @@ export function StoreMarketing() {
                       <div className="flex items-start gap-1.5 mb-3 px-2.5 py-2 rounded-[7px] bg-success-bg">
                         <Building2 size={13} className="text-success shrink-0 mt-[1px]" />
                         <p className="text-[11px] text-success font-medium leading-snug">
-                          Platform sponsored — Solvexo covers this discount. Your store is automatically included, no action needed.
+                          Platform sponsored — Edudeen covers this discount. Your store is automatically included, no action needed.
                         </p>
                       </div>
                     ) : (

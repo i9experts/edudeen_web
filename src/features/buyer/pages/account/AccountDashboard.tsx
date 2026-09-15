@@ -134,7 +134,7 @@ function MobileProfileHero({
             <div className="relative size-24 rounded-full bg-white/15 ring-4 ring-white/40 flex items-center justify-center">
               <UserCog size={34} className="text-white" />
             </div>
-            <p className="relative text-[19px] font-bold text-white mt-3 leading-tight">Welcome to Solvexo</p>
+            <p className="relative text-[19px] font-bold text-white mt-3 leading-tight">Welcome to Edudeen</p>
             <button
               onClick={onSignIn}
               className="relative mt-3 px-5 py-[8px] rounded-full bg-white text-brand-deep-orange text-[13px] font-bold cursor-pointer border-none"
@@ -191,15 +191,15 @@ function MobileProfileHero({
 // has this as the persistent sidebar rail, so this renders lg:hidden only.
 function MobileAccountMenu({ isLoggedIn }: { isLoggedIn: boolean }) {
   const navigate = useNavigate();
-  // "Solvexo Store App" (the public seller sign-up page, same one linked
-  // from "Sell on Solvexo"/"Become a Seller" elsewhere) is appended to the
+  // "Edudeen Store App" (the public seller sign-up page, same one linked
+  // from "Sell on Edudeen"/"Become a Seller" elsewhere) is appended to the
   // last group, right after Subscriptions — a real absolute path (`/sellers`,
   // note the leading slash), not a relative `/account/...` sub-page, so it's
   // handled separately from the rest of this list below.
   const navGroups = useNavGroups()
     .filter(g => g.group !== 'Overview')
     .map(g => g.group === 'Account'
-      ? { ...g, items: [...g.items, { id: 'sellerApp', label: 'Solvexo Store App', Icon: Store, path: '/sellers' }] }
+      ? { ...g, items: [...g.items, { id: 'sellerApp', label: 'Edudeen Store App', Icon: Store, path: '/sellers' }] }
       : g,
     );
 

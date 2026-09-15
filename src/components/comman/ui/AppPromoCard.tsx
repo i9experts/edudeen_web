@@ -67,7 +67,7 @@ export function HomeAppPromo({ className }: { className?: string }) {
           <Smartphone size={16} className="text-brand-orange" />
         </div>
         <div className="min-w-0">
-          <p className="text-[12px] font-bold text-white leading-tight">Get the Solvexo app</p>
+          <p className="text-[12px] font-bold text-white leading-tight">Get the Edudeen app</p>
           <RatingRow />
         </div>
       </div>

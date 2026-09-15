@@ -38,7 +38,7 @@ export interface BuyerNavbarSearchConfig {
 // ── Recently viewed — client-tracked (no view-history API exists), same
 // pattern as recent searches: a small real snapshot cached on-device from
 // ProductDetail so the dropdown can show it without an extra fetch. ──
-const RECENTLY_VIEWED_KEY = 'solvexo_recently_viewed';
+const RECENTLY_VIEWED_KEY = 'edudeen_recently_viewed';
 export interface RecentlyViewedItem {
   id: string;
   name: string;
@@ -73,7 +73,7 @@ export interface BuyerNavbarProps {
   hideSearch?: boolean;
   /** Optional centered nav links (desktop only) between the logo and the
    *  search box — used by PublicLayout's marketing pages (Marketplace,
-   *  Education, Pricing, FAQ, Sell on Solvexo) so that navigation lives in
+   *  Education, Pricing, FAQ, Sell on Edudeen) so that navigation lives in
    *  the one real navbar instead of a separate strip underneath it. Omitted
    *  everywhere else (Marketplace, ProductDetail, etc.) — unaffected. */
   centerLinks?: {
@@ -91,7 +91,7 @@ export interface BuyerNavbarProps {
   hideCommerce?: boolean;
 }
 
-const RECENT_KEY = 'solvexo_recent_searches';
+const RECENT_KEY = 'edudeen_recent_searches';
 const TRENDING_SEARCHES = ['Wireless Earbuds', 'Digital Planner', 'Desk Organizer', 'Handmade Jewelry', 'Watercolor Prints'];
 
 function getLocalRecentSearches(): string[] {
@@ -1087,7 +1087,7 @@ export function BuyerNavbar({ variant = 'full', contextLabel, search, accentColo
         {/* Logo — hidden while the mobile search row is expanded so the input gets full width */}
         <button
           onClick={() => navigate('/')}
-          aria-label="Solvexo home"
+          aria-label="Edudeen home"
           className={clsx(
             'items-center gap-[6px] shrink-0 cursor-pointer bg-transparent border-none p-0 outline-none rounded-sm focus-visible:ring-2 focus-visible:ring-brand-orange/40',
             mobileSearchOpen ? 'hidden md:flex' : 'flex',

@@ -12,7 +12,7 @@ export function StorefrontBlogIndex() {
 
   useEffect(() => {
     document.title = `Blog — ${store.name}`;
-    return () => { document.title = 'Solvexo'; };
+    return () => { document.title = 'Edudeen'; };
   }, [store.name]);
 
   useEffect(() => {

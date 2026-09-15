@@ -193,7 +193,7 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
 
   const showStoreCount = campaign.sponsorType === 'platform' || campaign.storeCount >= MIN_STORE_COUNT_TO_SHOW;
   const metaText = [
-    campaign.sponsorType === 'platform' ? 'Sponsored by Solvexo' : null,
+    campaign.sponsorType === 'platform' ? 'Sponsored by Edudeen' : null,
     showStoreCount ? (campaign.sponsorType === 'platform' ? `All ${campaign.storeCount} stores participating` : `${campaign.storeCount} stores participating`) : null,
   ].filter(Boolean).join(' · ');
 

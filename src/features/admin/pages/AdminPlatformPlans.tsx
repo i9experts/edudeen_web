@@ -317,7 +317,7 @@ export function AdminPlatformPlans() {
       <div className="bg-white border-b border-bone px-4 sm:px-7 py-[14px] sticky top-0 z-10 flex items-center justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-[18px] font-bold text-charcoal leading-[1.3]">Platform Plans</h1>
-          <p className="text-[12px] text-slate mt-[2px]">Seller-to-Solvexo billing tiers, limits, and add-ons.</p>
+          <p className="text-[12px] text-slate mt-[2px]">Seller-to-Edudeen billing tiers, limits, and add-ons.</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <Button variant="outline" onClick={() => setShowAddons(s => !s)}>{showAddons ? 'Hide Add-ons' : 'View Add-on Purchases'}</Button>

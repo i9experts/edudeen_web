@@ -68,7 +68,7 @@ function TestimonialFormModal({ testimonial, onClose, onSaved }: { testimonial: 
           <p className="text-[12.5px] font-medium text-charcoal mb-1.5">Rating</p>
           <StarRating value={rating} onChange={setRating} size={20} />
         </div>
-        <Textarea label="Quote" rows={4} placeholder="Solvexo made it so easy to launch my store…" value={text} onChange={e => setText(e.target.value)} />
+        <Textarea label="Quote" rows={4} placeholder="Edudeen made it so easy to launch my store…" value={text} onChange={e => setText(e.target.value)} />
         <Input label="Display Order" type="number" min={0} value={order} onChange={e => setOrder(e.target.value)} />
         <div className="flex items-center justify-between">
           <span className="text-[13px] font-medium text-charcoal">Verified Seller badge</span>
@@ -156,7 +156,7 @@ export function AdminTestimonials() {
         <div className="min-w-0">
           <h1 className="text-[18px] font-bold text-charcoal leading-[1.3]">Testimonials</h1>
           <p className="text-[12px] text-slate mt-[2px]">
-            Seller reviews of Solvexo shown on the homepage — {stats.active} published · {stats.inactive} hidden
+            Seller reviews of Edudeen shown on the homepage — {stats.active} published · {stats.inactive} hidden
           </p>
         </div>
         <Button icon={<Plus size={14} />} onClick={() => setEditing('new')} className="shrink-0">Add Testimonial</Button>

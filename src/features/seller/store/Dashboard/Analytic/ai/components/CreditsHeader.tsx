@@ -40,7 +40,7 @@ export function CreditsHeader({ storeId, credits, loading, onCreditsChanged }: C
     >
       <div className="min-w-0">
         <p className="text-xl font-bold text-white mb-[6px] flex items-center gap-2">
-          <Sparkles size={20} /> Solvexo AI Studio
+          <Sparkles size={20} /> Edudeen AI Studio
         </p>
         <p className="text-[13px] text-[#b0aea8]">
           Your intelligent co-pilot for listings, pricing, content &amp; education.

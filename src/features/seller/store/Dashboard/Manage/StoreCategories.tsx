@@ -96,7 +96,7 @@ export default function StoreCategories() {
           </div>
         </div>
         <p className="text-[12px] text-slate -mt-3">
-          Set once when your store was created. To change it, contact Solvexo support.
+          Set once when your store was created. To change it, contact Edudeen support.
         </p>
 
         {/* Subcategories */}

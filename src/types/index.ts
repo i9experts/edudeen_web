@@ -1,4 +1,4 @@
-// ─── Solvexo Global TypeScript Types ────────────────────────────────────────
+// ─── Edudeen Global TypeScript Types ────────────────────────────────────────
 
 // ── Auth ─────────────────────────────────────────────────────────────────────
 export type UserRole = 'buyer' | 'seller' | 'admin';

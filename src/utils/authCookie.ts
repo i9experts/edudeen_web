@@ -1,11 +1,11 @@
 /**
  * Cookie-backed storage for the auth session — replaces `localStorage` as
- * `TokenStorage`'s backend so a login on `solvexo.store` is visible on every
- * seller storefront subdomain (`hello.solvexo.store`, ...). `localStorage`
+ * `TokenStorage`'s backend so a login on `edudeen.com` is visible on every
+ * seller storefront subdomain (`hello.edudeen.com`, ...). `localStorage`
  * is locked to one exact origin (scheme+host+port) — a token saved there on
  * the main domain is invisible on a subdomain, which would otherwise log
  * every buyer out the moment they land on a store. A cookie scoped to
- * `domain=.solvexo.store` (or `localhost` in dev) is visible from any
+ * `domain=.edudeen.com` (or `localhost` in dev) is visible from any
  * subdomain, so this is a same-security-level swap (both are JS-readable,
  * equally exposed to XSS) purely to fix the storage *scope*, not a security
  * downgrade.

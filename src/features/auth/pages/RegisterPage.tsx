@@ -26,7 +26,7 @@ const HIGHLIGHTS = [
 ];
 
 // One screen, not three — the account type is decided by HOW someone got
-// here, never asked twice: a "Sell on Solvexo" CTA arrives as
+// here, never asked twice: a "Sell on Edudeen" CTA arrives as
 // /register?role=seller (that click already WAS the role decision), any
 // other visit is a plain buyer sign-up. Socials + the full detail form live
 // together on the same screen, Amazon/Shopify-style, instead of a
@@ -51,7 +51,7 @@ const HIGHLIGHTS = [
 // Business rule (frontend-only, deliberately reversible — mirrors
 // LoginPage's SELLER_ONLY_LOGIN): registration on the web is seller-only
 // right now. A plain /register visit used to default to a buyer sign-up
-// (only `?role=seller`, e.g. from a "Sell on Solvexo" CTA, went straight to
+// (only `?role=seller`, e.g. from a "Sell on Edudeen" CTA, went straight to
 // seller); that buyer path is hidden, not deleted — the backend register
 // endpoint still accepts role:'user' unchanged, so flipping this back to
 // false fully restores it with no other changes.
@@ -136,7 +136,7 @@ export function RegisterPage() {
       heading={isSeller
         ? <>Launch your <span className="text-brand-orange">store</span> today</>
         : <>Start <span className="text-brand-orange">selling</span> or shopping today</>}
-      subtext="Create your free Solvexo account and join a growing community of buyers and creators."
+      subtext="Create your free Edudeen account and join a growing community of buyers and creators."
       highlights={HIGHLIGHTS}
       maxWidth="max-w-[520px]"
       visual={isSeller ? <DashboardMockup /> : <MarketplaceMockup />}
@@ -149,7 +149,7 @@ export function RegisterPage() {
             : <>Create your <span className="text-brand-orange">account</span></>}
       </h1>
       <p className="text-[13px] text-slate mb-3 lg:mb-5 text-center lg:text-left">
-        {showChooser ? 'Looks like you\'ve used Solvexo on this device before' : 'Sign up with email, or continue with a social account'}
+        {showChooser ? 'Looks like you\'ve used Edudeen on this device before' : 'Sign up with email, or continue with a social account'}
       </p>
 
       {showChooser && remembered ? (

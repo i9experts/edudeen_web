@@ -248,7 +248,7 @@ function ManualPaymentConfigCard({ config, onSaved }: { config: PlatformConfig; 
       <div className="flex flex-col gap-[14px]">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-[14px]">
           <Input label="Bank Name" value={form.bankName ?? ''} onChange={(e) => setField('bankName', e.target.value)} placeholder="Meezan Bank" />
-          <Input label="Account Title" value={form.accountTitle ?? ''} onChange={(e) => setField('accountTitle', e.target.value)} placeholder="Solvexo Marketplace Pvt Ltd" />
+          <Input label="Account Title" value={form.accountTitle ?? ''} onChange={(e) => setField('accountTitle', e.target.value)} placeholder="Edudeen Marketplace Pvt Ltd" />
           <Input label="Account Number" value={form.accountNumber ?? ''} onChange={(e) => setField('accountNumber', e.target.value)} placeholder="01234567890123" />
           <Input label="IBAN" value={form.iban ?? ''} onChange={(e) => setField('iban', e.target.value)} placeholder="PK00MEZN0001234567890123" />
           <Input label="JazzCash Number (optional)" value={form.jazzcashNumber ?? ''} onChange={(e) => setField('jazzcashNumber', e.target.value)} />

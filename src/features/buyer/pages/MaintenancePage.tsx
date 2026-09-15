@@ -15,7 +15,7 @@ export function MaintenancePage() {
       </div>
       <h1 className="text-[22px] font-bold text-charcoal mb-2">We'll be right back</h1>
       <p className="text-[14px] text-slate max-w-[380px] leading-[1.6] mb-6">
-        Solvexo is undergoing scheduled maintenance. We're working to get everything back up and running as quickly as possible.
+        Edudeen is undergoing scheduled maintenance. We're working to get everything back up and running as quickly as possible.
       </p>
       <button
         onClick={() => window.location.reload()}

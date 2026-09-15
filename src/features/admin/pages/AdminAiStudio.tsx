@@ -14,7 +14,7 @@ const TABS: Tab[] = [
   { id: 'generations',  label: 'Generations',        icon: <ListChecks size={14} /> },
   { id: 'wallets',      label: 'Wallets',            icon: <Wallet size={14} /> },
   { id: 'transactions', label: 'Transactions',       icon: <Receipt size={14} /> },
-  { id: 'generate',     label: 'Generate for Solvexo', icon: <Sparkles size={14} /> },
+  { id: 'generate',     label: 'Generate for Edudeen', icon: <Sparkles size={14} /> },
 ];
 
 export function AdminAiStudio() {
@@ -23,7 +23,7 @@ export function AdminAiStudio() {
 
   return (
     <div>
-      <AdminPageHeader title="AI Studio" subtitle="Cross-store AI usage oversight, credit wallets, and Solvexo's own AI-generated content." />
+      <AdminPageHeader title="AI Studio" subtitle="Cross-store AI usage oversight, credit wallets, and Edudeen's own AI-generated content." />
 
       <div className="px-4 sm:px-7 pt-6 pb-8 flex flex-col gap-5">
       <TabBar tabs={TABS} active={activeTab} onChange={setActiveTab} />

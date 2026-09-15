@@ -36,7 +36,7 @@ const STORE_PRODUCTS = [
 export function StorefrontPreview({ className }: { className?: string }) {
   return (
     <div className={clsx('w-full rounded-2xl bg-white overflow-hidden shadow-raised border border-bone', className)}>
-      <BrowserChrome label="yourstore.solvexo.store" />
+      <BrowserChrome label="yourstore.edudeen.com" />
       <div className="flex items-center justify-between px-4 py-3 border-b border-bone">
         <span className="text-[13px] font-bold text-carbon">Aurora Goods</span>
         <div className="hidden sm:flex items-center gap-4 text-[10.5px] text-slate">

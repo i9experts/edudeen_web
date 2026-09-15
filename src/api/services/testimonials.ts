@@ -5,7 +5,7 @@ import { ENDPOINTS } from '../endpoints';
 // TYPES
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Public shape — a seller's review of the Solvexo platform (homepage social-proof). */
+/** Public shape — a seller's review of the Edudeen platform (homepage social-proof). */
 export interface Testimonial {
   id:               string;
   name:             string;
@@ -47,7 +47,7 @@ export type UpdateTestimonialPayload = Partial<CreateTestimonialPayload>;
 // PUBLIC
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** GET /api/testimonials — real, admin-curated seller reviews of Solvexo itself. */
+/** GET /api/testimonials — real, admin-curated seller reviews of Edudeen itself. */
 export function apiGetTestimonials(limit = 6) {
   return client.get<never, { success: boolean; count: number; data: Testimonial[] }>(
     ENDPOINTS.TESTIMONIALS.LIST, { params: { limit } },

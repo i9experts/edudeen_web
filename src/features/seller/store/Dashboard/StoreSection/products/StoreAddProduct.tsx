@@ -539,7 +539,7 @@ export default function StoreAddProduct() {
                 </button>
               )}
               <div className="flex items-center justify-between">
-                <span className="text-[12px] text-charcoal">Also list in Solvexo Marketplace</span>
+                <span className="text-[12px] text-charcoal">Also list in Edudeen Marketplace</span>
                 <Toggle
                   checked={cur.isListedOnSolvexo}
                   onChange={v => pType === 'physical' ? sp('isListedOnSolvexo', v) : sd('isListedOnSolvexo', v)}

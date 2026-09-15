@@ -152,7 +152,7 @@ export function PublicMegaNavbar() {
         onMouseLeave={closeSoon}
       >
         <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 h-[60px] flex items-center justify-between gap-4">
-          <Link to="/" className="shrink-0" aria-label="Solvexo home">
+          <Link to="/" className="shrink-0" aria-label="Edudeen home">
             <SolvexoLogo size={28} />
           </Link>
 
@@ -446,7 +446,7 @@ export function PublicMegaNavbar() {
                     >
                       <span>
                         <span className="block text-[19px] font-extrabold text-carbon">For Sellers</span>
-                        <span className="block text-[12px] text-slate mt-0.5">Grow your business with Solvexo.</span>
+                        <span className="block text-[12px] text-slate mt-0.5">Grow your business with Edudeen.</span>
                       </span>
                       <ArrowRight size={18} className="text-brand-orange shrink-0 transition-transform duration-200 group-active:translate-x-1" />
                     </Link>

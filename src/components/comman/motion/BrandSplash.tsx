@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { SolvexoLogo } from '@/components/comman/ui/SolvexoLogo';
 
-const FLAG = 'solvexo:splash-shown';
+const FLAG = 'edudeen:splash-shown';
 const EASE_OUT: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
-// A minimal brand splash — just the Solvexo mark, once, centered. No staged
+// A minimal brand splash — just the Edudeen mark, once, centered. No staged
 // word sequence (tried, then explicitly asked to be removed — that decision
 // stands). What was upgraded instead is production quality within that
 // constraint: the same living-grid/glow background language as the hero

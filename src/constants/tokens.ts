@@ -1,4 +1,4 @@
-// ─── Solvexo Brand Design Tokens ───────────────────────────────────────────
+// ─── Edudeen Brand Design Tokens ───────────────────────────────────────────
 // JS-accessible mirror of the color values in the Tailwind `@theme` block
 // (src/index.css) — for the few places (e.g. Recharts inline styling) that
 // can't take a Tailwind class. Prefer Tailwind utility classes everywhere else.
@@ -130,7 +130,7 @@ export const PRICING_PLANS = [
     name: 'Starter',
     monthly: 0, annual: 0,
     badge: null,
-    desc: 'Perfect for trying Solvexo and selling your first products.',
+    desc: 'Perfect for trying Edudeen and selling your first products.',
     cta: 'Start Free',
     transactionFee: '3%',
     features: [

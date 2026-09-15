@@ -376,7 +376,7 @@ export function FeaturedSellersMegaContent({ topStores, onStoreClick }: {
   );
 }
 
-// ── "About Solvexo.store" mega content — plain, borderless image+text
+// ── "About Edudeen.com" mega content — plain, borderless image+text
 // columns (no card box/border/shadow around each item) + an app/QR column
 // after a thin divider, matching Alibaba's actual "About Alibaba.com" tab
 // layout exactly (verified against a screenshot of it) rather than the
@@ -387,9 +387,9 @@ export function FeaturedSellersMegaContent({ topStores, onStoreClick }: {
 // below legible size on a narrow screen instead — the row scrolls sideways
 // there rather than wrapping. ──
 const ABOUT_CARDS: { image: string; title: string; description: string; path: string }[] = [
-  { image: aboutImg1, title: 'Why Solvexo',      description: 'One platform for marketplace, downloads, and POS.', path: '/' },
+  { image: aboutImg1, title: 'Why Edudeen',      description: 'One platform for marketplace, downloads, and POS.', path: '/' },
   { image: aboutImg2, title: 'Buyer Protection', description: 'Secure payments and easy returns, every order.',    path: '/faq' },
-  { image: aboutImg3, title: 'Sell on Solvexo',  description: 'Launch your own branded store — no coding.',        path: '/sellers' },
+  { image: aboutImg3, title: 'Sell on Edudeen',  description: 'Launch your own branded store — no coding.',        path: '/sellers' },
 ];
 
 function AboutMegaContent({ onNavigate }: { onNavigate: (path: string) => void }) {
@@ -420,8 +420,8 @@ function AboutMegaContent({ onNavigate }: { onNavigate: (path: string) => void }
       <div className="w-px self-stretch bg-bone shrink-0" />
 
       <div style={{ animationDelay: `${3 * 60}ms` }} className="dash-section-enter w-[220px] shrink-0">
-        <p className="text-[13px] font-bold text-brand-orange leading-snug mb-1">Get the Solvexo app</p>
-        <p className="text-[11px] text-slate leading-[1.5] mb-3">Browse products, chat with sellers, and manage and pay for your orders with the Solvexo app — anytime, anywhere.</p>
+        <p className="text-[13px] font-bold text-brand-orange leading-snug mb-1">Get the Edudeen app</p>
+        <p className="text-[11px] text-slate leading-[1.5] mb-3">Browse products, chat with sellers, and manage and pay for your orders with the Edudeen app — anytime, anywhere.</p>
         <div className="flex items-center gap-3">
           <div className="shrink-0 rounded-md bg-white p-1 border border-bone">
             <RealAppQr size={64} />
@@ -470,7 +470,7 @@ const DEFAULT_EXTRA_TRIGGERS: MegaMenuExtraTrigger[] = [
   { key: 'flash-sale',       label: 'Flash Sale',      icon: Flame,    chevron: true,  className: '' },
   { key: 'top-picks',        label: 'Top Picks',       icon: Star,     chevron: true,  className: '' },
   { key: 'featured-sellers', label: 'Featured Stores', icon: Store,    chevron: true,  className: '' },
-  { key: 'about',            label: 'About Solvexo',   icon: Sparkles, chevron: false, className: '' },
+  { key: 'about',            label: 'About Edudeen',   icon: Sparkles, chevron: false, className: '' },
 ];
 
 export function MegaMenuBar({

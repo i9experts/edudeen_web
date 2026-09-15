@@ -31,7 +31,7 @@ export function CategoryBrowsePage() {
 
   useEffect(() => {
     document.title = category ? `${category.name} — ${store.name}` : store.name;
-    return () => { document.title = 'Solvexo'; };
+    return () => { document.title = 'Edudeen'; };
   }, [category, store.name]);
 
   if (category === undefined) {

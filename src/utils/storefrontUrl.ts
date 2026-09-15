@@ -1,6 +1,6 @@
 /**
  * Builds an absolute URL to a store's subdomain-based storefront —
- * `hello.localhost:3000/about-us` in dev, `hello.solvexo.store/about-us` in
+ * `hello.localhost:3000/about-us` in dev, `hello.edudeen.com/about-us` in
  * production. A subdomain is a different origin from wherever the link
  * lives (Marketplace, ProductDetail, checkout, etc.), so this always returns
  * a full URL for a hard navigation (`window.location.href` or a plain
@@ -37,7 +37,7 @@ export function getStoreSlugFromHost(): string | null {
 }
 
 // The platform's own apex domain(s) — a hostname that is neither one of
-// these, nor a `*.solvexo.store` subdomain (handled by `getStoreSlugFromHost`
+// these, nor a `*.edudeen.com` subdomain (handled by `getStoreSlugFromHost`
 // above), nor localhost, is treated as a possible seller-connected CUSTOM
 // domain (see `isCustomDomainCandidate`). Kept as a small array (not a single
 // string) in case a staging apex is ever added.

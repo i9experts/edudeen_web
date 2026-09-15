@@ -1,5 +1,5 @@
 // Real-feature copy only — every entry describes a capability that actually
-// exists in the Solvexo seller workspace today (see CLAUDE.md's backend/
+// exists in the Edudeen seller workspace today (see CLAUDE.md's backend/
 // frontend module list). No invented features, no placeholder claims.
 export interface PlatformProductFaq { q: string; a: string; }
 

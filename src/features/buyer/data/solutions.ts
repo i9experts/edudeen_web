@@ -9,7 +9,7 @@ export interface Solution {
   highlights: string[];
 }
 
-// Positioning copy about how Solvexo's real, existing capabilities apply to
+// Positioning copy about how Edudeen's real, existing capabilities apply to
 // each industry — not fabricated data or invented customer claims.
 export const SOLUTIONS: Solution[] = [
   {

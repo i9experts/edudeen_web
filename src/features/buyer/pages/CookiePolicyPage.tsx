@@ -9,7 +9,7 @@ const SECTIONS: LegalSection[] = [
     id: 'introduction',
     title: 'Introduction',
     body: [
-      'This Cookie Policy explains how Solvexo uses cookies and similar tracking technologies when you visit or use our marketplace, and the choices available to you.',
+      'This Cookie Policy explains how Edudeen uses cookies and similar tracking technologies when you visit or use our marketplace, and the choices available to you.',
       'It should be read alongside our Privacy Policy, which explains more broadly how we handle your personal information.',
     ],
   },
@@ -27,7 +27,7 @@ const SECTIONS: LegalSection[] = [
       'Essential cookies: required for core functionality like staying signed in, keeping items in your cart, and completing checkout. The marketplace cannot function properly without these.',
       'Performance & analytics cookies: help us understand how the marketplace is used, so we can find and fix issues and improve the experience.',
       'Functional cookies: remember your preferences, such as language, currency, or recently viewed items.',
-      'Advertising cookies: used to show you more relevant offers on Solvexo and, where applicable, on other sites.',
+      'Advertising cookies: used to show you more relevant offers on Edudeen and, where applicable, on other sites.',
     ],
     callout: { type: 'info', text: 'Essential cookies: required for core functionality like staying signed in, keeping items in your cart, and completing checkout. The marketplace cannot function properly without these.' },
   },
@@ -49,9 +49,9 @@ const SECTIONS: LegalSection[] = [
     id: 'managing-preferences',
     title: 'Managing Your Cookie Preferences',
     body: [
-      'Most browsers let you view, delete, and block cookies through their settings. Because essential cookies are required for sign-in and checkout, blocking them may prevent parts of Solvexo from working correctly.',
+      'Most browsers let you view, delete, and block cookies through their settings. Because essential cookies are required for sign-in and checkout, blocking them may prevent parts of Edudeen from working correctly.',
     ],
-    callout: { type: 'warning', text: 'Because essential cookies are required for sign-in and checkout, blocking them may prevent parts of Solvexo from working correctly.' },
+    callout: { type: 'warning', text: 'Because essential cookies are required for sign-in and checkout, blocking them may prevent parts of Edudeen from working correctly.' },
   },
   {
     id: 'changes',
@@ -74,12 +74,12 @@ export function CookiePolicyPage() {
   return (
     <LegalPageLayout
       title="Cookie Policy"
-      subtitle="How Solvexo uses cookies and similar technologies."
+      subtitle="How Edudeen uses cookies and similar technologies."
       lastUpdated="July 24, 2026"
       sections={SECTIONS}
       relatedPages={[
-        { title: 'Privacy Policy', description: 'How Solvexo collects, uses, and protects your information.', path: '/privacy-policy' },
-        { title: 'Terms of Service', description: 'The rules and guidelines for using Solvexo as a buyer or seller.', path: '/terms-of-service' },
+        { title: 'Privacy Policy', description: 'How Edudeen collects, uses, and protects your information.', path: '/privacy-policy' },
+        { title: 'Terms of Service', description: 'The rules and guidelines for using Edudeen as a buyer or seller.', path: '/terms-of-service' },
       ]}
     />
   );

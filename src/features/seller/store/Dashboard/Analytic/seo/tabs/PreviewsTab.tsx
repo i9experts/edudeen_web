@@ -48,7 +48,7 @@ export function PreviewsTab({ storeId, storeSlug }: PreviewsTabProps) {
           ogTitle={socialData?.ogTitle}
           ogDescription={socialData?.ogDescription}
           ogImage={socialData?.ogImage}
-          url={socialData?.url ?? (storeSlug ? `https://solvexo.store/${storeSlug}` : '')}
+          url={socialData?.url ?? (storeSlug ? `https://edudeen.com/${storeSlug}` : '')}
           loading={socialLoading}
         />
         <SocialPreviewCard
@@ -56,7 +56,7 @@ export function PreviewsTab({ storeId, storeSlug }: PreviewsTabProps) {
           ogTitle={socialData?.ogTitle}
           ogDescription={socialData?.ogDescription}
           ogImage={socialData?.ogImage}
-          url={socialData?.url ?? (storeSlug ? `https://solvexo.store/${storeSlug}` : '')}
+          url={socialData?.url ?? (storeSlug ? `https://edudeen.com/${storeSlug}` : '')}
           loading={socialLoading}
         />
       </div>

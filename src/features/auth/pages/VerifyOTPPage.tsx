@@ -134,7 +134,7 @@ export function VerifyOTPPage() {
       heading={isIdentity ? 'Confirm it\'s you.' : 'One last step.'}
       subtext={isIdentity
         ? "Enter the code we sent to confirm your identity before resetting your password."
-        : 'Verify your email address to finish setting up your Solvexo account.'}
+        : 'Verify your email address to finish setting up your Edudeen account.'}
       highlights={isIdentity ? IDENTITY_HIGHLIGHTS : EMAIL_HIGHLIGHTS}
       visual={isIdentity ? <IdentityMockup /> : <InboxMockup />}
     >

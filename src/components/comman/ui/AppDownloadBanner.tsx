@@ -134,7 +134,7 @@ export function HomeScreenMockup() {
       <div className="h-9 flex items-center justify-between px-[13px]">
         <p className="text-[13px] font-bold text-carbon flex items-center gap-[3px]">
           <span className="w-4 h-4 rounded-[5px] bg-brand-orange text-white flex items-center justify-center text-[9px] font-black">S</span>
-          solvexo
+          edudeen
         </p>
         <Bell size={13} className="text-brand-orange" />
       </div>
@@ -390,7 +390,7 @@ function CompactAppDownloadBanner({ className }: { className?: string }) {
               Shop <span className="text-brand-orange">smarter.</span> Anywhere, anytime.
             </h3>
             <p className="text-[12px] md:text-[12px] text-[#b0aea8] max-w-[280px] mx-auto md:mx-0 leading-snug mb-3">
-              Track orders, get app-only deals and shop faster with the Solvexo app.
+              Track orders, get app-only deals and shop faster with the Edudeen app.
             </p>
             {/* Real, visible CTAs — never hidden behind the phones/QR, which
                sit in their own dedicated grid columns, not on top of this. */}
@@ -439,7 +439,7 @@ function CompactAppDownloadBanner({ className }: { className?: string }) {
               href={GOOGLE_PLAY_URL}
               target="_blank"
               rel="noreferrer"
-              aria-label="Scan to download the Solvexo app"
+              aria-label="Scan to download the Edudeen app"
               className="block rounded-xl border border-white/15 bg-white p-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange"
             >
               {qrDataUrl
@@ -518,7 +518,7 @@ export function AppDownloadBanner({ className, variant = 'full' }: { className?:
         <div className="text-center lg:text-left min-w-0">
           <div className="inline-flex items-center gap-2 rounded-full px-3 py-1 mb-3 bg-[rgba(217,119,87,0.15)] border border-[rgba(217,119,87,0.3)]">
             <ShoppingBag size={12} className="text-brand-orange shrink-0" />
-            <span className="text-[11px] font-medium text-brand-orange">Solvexo Mobile</span>
+            <span className="text-[11px] font-medium text-brand-orange">Edudeen Mobile</span>
           </div>
           <h3 className="text-[22px] sm:text-[25px] lg:text-[28px] font-bold text-white mb-2 leading-[1.15] tracking-tight">
             Shop <span className="text-brand-orange">smarter.</span> Anywhere, anytime.

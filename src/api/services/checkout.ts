@@ -134,7 +134,7 @@ export interface CreateCheckoutPayload {
 // Server-validated regardless (see CheckoutService.resolveCheckoutCurrency);
 // omitting/tampering with this just falls back to the buyer's saved account
 // preference or the platform default, it's never trusted blindly.
-const CURRENCY_STORAGE_KEY = 'solvexo_currency_preference';
+const CURRENCY_STORAGE_KEY = 'edudeen_currency_preference';
 function getCurrencyPreference(): string | undefined {
   const saved = localStorage.getItem(CURRENCY_STORAGE_KEY);
   return saved === 'PKR' || saved === 'USD' ? saved : undefined;

@@ -30,7 +30,7 @@ export function CategoriesTab({ storeId }: CategoriesTabProps) {
       <div className="px-5 py-3 border-b border-bone">
         <p className="text-[13px] font-semibold text-carbon">Category SEO</p>
         <p className="text-[11px] text-slate mt-[2px]">
-          Categories are platform-curated — meta for these pages is managed by Solvexo admins.
+          Categories are platform-curated — meta for these pages is managed by Edudeen admins.
         </p>
       </div>
       {data.map((cat, i) => (

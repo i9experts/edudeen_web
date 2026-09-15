@@ -17,7 +17,7 @@ export const ID_DOC_TYPE_OPTIONS: { id: IdDocumentType; label: string }[] = [
   { id: 'national_id',  label: 'Other National ID' },
 ];
 
-// A short, curated list, not an exhaustive ISO country picker — Solvexo
+// A short, curated list, not an exhaustive ISO country picker — Edudeen
 // doesn't yet have a confirmed, distinct legal requirement set for any of
 // these beyond Pakistan's ID-document options, so every entry here resolves
 // to the same generic requirement set today (see the backend's

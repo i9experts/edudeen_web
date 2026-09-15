@@ -4,7 +4,7 @@ const MAX_RECENT = 6;
 
 /** Per-scope (buyer inbox vs a specific seller store inbox) recent search memory. */
 export function useRecentSearches(scopeKey: string) {
-  const storageKey = `solvexo:recent-searches:${scopeKey}`;
+  const storageKey = `edudeen:recent-searches:${scopeKey}`;
 
   const [recent, setRecent] = useState<string[]>(() => {
     try {

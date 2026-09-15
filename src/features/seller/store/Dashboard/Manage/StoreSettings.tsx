@@ -158,10 +158,10 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 const inputCls = "w-full px-3 py-[9px] rounded-lg text-[13px] border border-bone bg-bone text-charcoal outline-none box-border";
 
-// Mirrors `CUSTOM_DOMAIN_CNAME_TARGET` in `solvexo-api/src/store/store.service.ts`
+// Mirrors `CUSTOM_DOMAIN_CNAME_TARGET` in `edudeen-api/src/store/store.service.ts`
 // — the frontend can't import a backend constant, so this literal must be
 // kept in sync by hand if that value ever changes.
-const CUSTOM_DOMAIN_CNAME_TARGET = 'stores.solvexo.store';
+const CUSTOM_DOMAIN_CNAME_TARGET = 'stores.edudeen.com';
 
 function CopyableRow({ label, value }: { label: string; value: string }) {
   const [copied, setCopied] = useState(false);
@@ -192,7 +192,7 @@ const CONNECT_STATUS_LABEL: Record<StripeConnectStatus['status'], { label: strin
 
 /** Seller's own payment gateway (Stripe Connect Express) — when active, a
  *  buyer's payment for THIS store's checkout is routed directly to the
- *  seller's own connected Stripe account (Solvexo's commission taken as an
+ *  seller's own connected Stripe account (Edudeen's commission taken as an
  *  `application_fee_amount`), bypassing the platform's shared account and
  *  internal payout-request flow entirely for that sale. Store-agnostic:
  *  Stripe Connect is a per-SELLER account (one legal entity, one bank
@@ -245,7 +245,7 @@ function PaymentGatewayCard() {
       ) : (
         <>
           <p className="text-[12.5px] text-slate mb-3">
-            Connect your own Stripe account to receive buyer payments directly — Solvexo's commission is deducted automatically, and the rest lands straight in your bank account via Stripe's own payout schedule, instead of waiting on a manual payout request.
+            Connect your own Stripe account to receive buyer payments directly — Edudeen's commission is deducted automatically, and the rest lands straight in your bank account via Stripe's own payout schedule, instead of waiting on a manual payout request.
           </p>
 
           {info && (
@@ -406,7 +406,7 @@ function DomainWhiteLabelCard({ storeId, store, refetch }: {
         ) : (
           <label className="flex items-center gap-2.5 text-[12.5px] text-graphite cursor-pointer">
             <input type="checkbox" checked={!!store?.whiteLabelEnabled} disabled={savingWhiteLabel} onChange={toggleWhiteLabel} />
-            Hide Solvexo branding on this store
+            Hide Edudeen branding on this store
           </label>
         )}
       </Field>

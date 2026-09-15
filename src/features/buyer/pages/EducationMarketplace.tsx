@@ -937,7 +937,7 @@ export function EducationMarketplace() {
             <div className="absolute -right-8 -bottom-8 w-32 h-32 rounded-full bg-white/40" />
             <div className="absolute right-3 -top-9 w-20 h-20 rounded-full bg-white/30" />
             <div className="relative z-[1] min-w-0 flex-1">
-              <p className="text-[15px] font-bold text-carbon mb-1">Download Solvexo App</p>
+              <p className="text-[15px] font-bold text-carbon mb-1">Download Edudeen App</p>
               <p className="text-[12px] text-charcoal/70 leading-snug mb-4">Shop anywhere, anytime.</p>
               <Button
                 variant="secondary"

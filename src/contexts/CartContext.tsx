@@ -11,7 +11,7 @@ import {
 import { useToast } from '@/contexts/ToastContext';
 
 // ── localStorage: variantId → type map ────────────────────────────────────────
-const TYPES_KEY = 'solvexo_cart_types';
+const TYPES_KEY = 'edudeen_cart_types';
 
 function getStoredTypes(): Record<string, 'physical' | 'digital'> {
   try { return JSON.parse(localStorage.getItem(TYPES_KEY) ?? '{}'); }
@@ -175,8 +175,8 @@ export function CartProvider({ storeId, children }: { storeId?: string; children
       }
       fetchCart();
     };
-    window.addEventListener('solvexo:auth-login', onLogin);
-    return () => window.removeEventListener('solvexo:auth-login', onLogin);
+    window.addEventListener('edudeen:auth-login', onLogin);
+    return () => window.removeEventListener('edudeen:auth-login', onLogin);
   }, [fetchCart, storeId]);
 
   const cartCount = cart?.items?.reduce((s, i) => s + i.quantity, 0) ?? 0;

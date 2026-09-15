@@ -2,7 +2,7 @@ import { apiGetMyStores, type MyStoreItem } from '@/api/services/store';
 
 /** Where an authenticated seller actually belongs, based on their REAL
  *  backend store state — never a hardcoded "/onboard". Used by OTP-verify,
- *  login, and the "Sell on Solvexo" entry handler so a seller is never sent
+ *  login, and the "Sell on Edudeen" entry handler so a seller is never sent
  *  through onboarding they've already completed, and never dumped on a
  *  dashboard when they haven't finished setup.
  *

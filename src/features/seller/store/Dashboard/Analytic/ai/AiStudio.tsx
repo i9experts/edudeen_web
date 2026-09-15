@@ -33,7 +33,7 @@ export function StoreAIStudio() {
     <>
       <StorePageHeader
         title="AI Studio"
-        subtitle="AI-powered tools to grow your Solvexo business."
+        subtitle="AI-powered tools to grow your Edudeen business."
       />
 
       <div className="px-4 md:px-7 pt-5 pb-8 flex flex-col gap-5">

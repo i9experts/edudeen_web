@@ -141,7 +141,7 @@ function ProductSeoEditModal({ storeId, productId, storeSlug, onClose, onSaved }
         value={form}
         onChange={patch => setForm(f => ({ ...f, ...patch }))}
         loading={loading}
-        previewUrl={storeSlug ? `https://solvexo.store/${storeSlug}` : undefined}
+        previewUrl={storeSlug ? `https://edudeen.com/${storeSlug}` : undefined}
       />
     </Modal>
   );

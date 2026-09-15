@@ -39,8 +39,8 @@ function NavLinkItem({ link, resolveLink, className, onNavigate }: {
     : <a key={link._id ?? label} href={href} target="_blank" rel="noopener noreferrer" onClick={onNavigate} className={className}>{label}</a>;
 }
 
-// The seller's own storefront chrome — deliberately has ZERO Solvexo branding
-// (no Solvexo logo, no platform nav links). Used only on a store's own
+// The seller's own storefront chrome — deliberately has ZERO Edudeen branding
+// (no Edudeen logo, no platform nav links). Used only on a store's own
 // subdomain via `StorefrontLayout`; the rest of the app keeps the shared
 // `BuyerNavbar`. Cart and (logged-out) sign-in now stay on this same
 // subdomain (`StorefrontCartPage`/`StorefrontLoginPage`, both store-scoped)

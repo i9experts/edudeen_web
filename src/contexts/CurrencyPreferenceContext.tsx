@@ -5,7 +5,7 @@ import { apiGetCurrentRates, type CurrentRatesMap } from '@/api/services/exchang
 
 export type SupportedCurrency = 'PKR' | 'USD';
 
-const STORAGE_KEY = 'solvexo_currency_preference';
+const STORAGE_KEY = 'edudeen_currency_preference';
 
 /**
  * Converts `amount` (denominated in `fromCurrency` — a product/cart item's

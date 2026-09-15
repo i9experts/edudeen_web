@@ -77,7 +77,7 @@ interface StoreForm {
   baseCurrency: SupportedCurrency;
 }
 
-// Solvexo is Pakistan-origin, so every store defaults to PKR pricing
+// Edudeen is Pakistan-origin, so every store defaults to PKR pricing
 // automatically — no picker shown during onboarding. A real IP/locale-based
 // default can replace this constant later without touching anything else,
 // since the rest of the app only ever reads `store.baseCurrency`.
@@ -567,7 +567,7 @@ function StoreReadyConfirmation({ store }: { store: StoreData | null }) {
         </motion.div>
         <h1 className="text-[28px] font-bold text-carbon mb-[10px]">Your store is live!</h1>
         <p className="text-[14px] text-slate leading-[1.7] mb-7 max-w-[420px] mx-auto">
-          {store?.name || 'Your store'} is ready on Solvexo — start adding products and customizing your storefront right away.
+          {store?.name || 'Your store'} is ready on Edudeen — start adding products and customizing your storefront right away.
         </p>
         <MagneticButton className="block">
           <Button variant="primary" size="lg" fullWidth onClick={() => navigate(`/store/${store?._id}/dashboard`, { replace: true })}>
@@ -699,7 +699,7 @@ export function OnboardingPage() {
       <AuthSplitLayout
         panelGradient="from-carbon via-[#241f1b] to-brand-deep-orange"
         heading="You're all set."
-        subtext="Your store is live on Solvexo — start building your storefront right away."
+        subtext="Your store is live on Edudeen — start building your storefront right away."
         highlights={ONBOARDING_HIGHLIGHTS}
         visual={<SellerDashboardMockup />}
         bare

@@ -263,7 +263,7 @@ function AdminSidebar({ open, onToggle }: AdminSidebarProps) {
               <Shield size={15} className="text-white" />
             </div>
             <div className="flex items-center flex-1 min-w-0">
-              <span className="text-[17px] font-bold text-white tracking-[-0.3px]">Solvexo</span>
+              <span className="text-[17px] font-bold text-white tracking-[-0.3px]">Edudeen</span>
               <span className="text-[17px] font-bold text-brand-orange tracking-[-0.3px]">&nbsp;Admin</span>
             </div>
             {paletteHint}

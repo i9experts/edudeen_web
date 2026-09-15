@@ -10,10 +10,10 @@ import { SectionHeading } from '@/components/comman/motion/SectionHeading';
 import { PremiumCard } from '@/components/comman/motion/PremiumCard';
 import { motion } from 'motion/react';
 
-const TOPICS = ['General question', 'Order or delivery', 'Billing & payments', 'Selling on Solvexo', 'Report a problem'];
+const TOPICS = ['General question', 'Order or delivery', 'Billing & payments', 'Selling on Edudeen', 'Report a problem'];
 
 const CONTACT_CARDS = [
-  { Icon: Mail,     label: 'Email us',        value: 'support@solvexo.com' },
+  { Icon: Mail,     label: 'Email us',        value: 'support@edudeen.com' },
   { Icon: LifeBuoy,  label: 'Help Center',     value: 'Browse FAQs & guides' },
   { Icon: Clock,     label: 'Response time',   value: 'Usually within 24 hours' },
 ];

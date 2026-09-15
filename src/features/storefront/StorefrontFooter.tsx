@@ -76,10 +76,10 @@ function FooterLinkItem({ link, resolveLink }: { link: { label: string; linkType
     : <a href={href} target="_blank" rel="noopener noreferrer" className={cls}>{link.label}</a>;
 }
 
-// The seller's own footer — zero Solvexo branding. Driven entirely by
+// The seller's own footer — zero Edudeen branding. Driven entirely by
 // `StoreTheme.footer.blocks` (footer_column / social_link / copyright_text).
 // A store with no footer configured yet renders a minimal fallback (store
-// name + a neutral copyright line) rather than any Solvexo content.
+// name + a neutral copyright line) rather than any Edudeen content.
 function SocialIcons({ socials }: { socials: Block[] }) {
   if (socials.length === 0) return null;
   return (

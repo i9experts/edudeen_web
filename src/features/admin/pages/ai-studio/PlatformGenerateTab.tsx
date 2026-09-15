@@ -18,7 +18,7 @@ export function PlatformGenerateTab() {
   return (
     <div className="flex flex-col gap-5">
       <p className="text-[12px] text-slate bg-cream border border-bone rounded-lg px-4 py-3">
-        These tools generate content for Solvexo's own marketplace — landing pages, platform announcements, and banners.
+        These tools generate content for Edudeen's own marketplace — landing pages, platform announcements, and banners.
         Generations here never charge a seller's AI credit wallet.
       </p>
 

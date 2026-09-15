@@ -16,7 +16,7 @@ const CONNECTED_APPS: AppDef[] = [
   { id: 'google-analytics', Icon: BarChart2,  iconBg: '#FFF8E1', name: 'Google Analytics', desc: 'Track store traffic and conversions.'          },
   { id: 'mailchimp',        Icon: Mail,       iconBg: '#FFF3E0', name: 'Mailchimp',        desc: 'Sync customers and send email campaigns.'      },
   { id: 'shippo',           Icon: Package,    iconBg: '#E8F5E9', name: 'Shippo',           desc: 'Discounted shipping labels and tracking.'      },
-  { id: 'zapier',           Icon: Zap,        iconBg: '#FFF3E0', name: 'Zapier',           desc: 'Connect Solvexo to 5,000+ apps.'               },
+  { id: 'zapier',           Icon: Zap,        iconBg: '#FFF3E0', name: 'Zapier',           desc: 'Connect Edudeen to 5,000+ apps.'               },
 ];
 
 const WEBHOOK_EVENTS = [
@@ -46,7 +46,7 @@ export function StoreIntegrations() {
     <>
       <StorePageHeader
         title="Apps & Integrations"
-        subtitle="Connect your favorite tools and extend Solvexo's power."
+        subtitle="Connect your favorite tools and extend Edudeen's power."
         actions={
           <div className="flex items-center gap-1.5 border border-bone rounded-lg px-3 bg-white transition-shadow duration-150 focus-within:ring-2 focus-within:ring-brand-orange/40 focus-within:border-brand-orange/50">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8C8A82" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -177,7 +177,7 @@ export function StoreIntegrations() {
               <p className="text-xs font-medium text-graphite mb-1.5">Webhook URL</p>
               <div className="flex items-center gap-2">
                 <input
-                  placeholder="https://your-app.com/webhooks/solvexo"
+                  placeholder="https://your-app.com/webhooks/edudeen"
                   value={webhookUrl}
                   onChange={e => setWebhookUrl(e.target.value)}
                   className="flex-1 px-3 py-[9px] text-[13px] border border-bone rounded-lg bg-white text-charcoal outline-none transition-shadow duration-150 focus:ring-2 focus:ring-brand-orange/40 focus:border-brand-orange/50"

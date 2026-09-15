@@ -1,8 +1,8 @@
 // Client-side cart for a logged-out shopper — lets Add to Cart work without
 // requiring login (only Checkout does). Merged into the real server cart the
-// moment the guest logs in (see CartContext's 'solvexo:auth-login' listener),
+// moment the guest logs in (see CartContext's 'edudeen:auth-login' listener),
 // then cleared — this storage is never the source of truth once a session exists.
-const GUEST_CART_KEY = 'solvexo_guest_cart';
+const GUEST_CART_KEY = 'edudeen_guest_cart';
 
 export interface GuestCartItem {
   productId:        string;

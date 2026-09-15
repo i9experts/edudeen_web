@@ -25,7 +25,7 @@ export function StorefrontBlogPost() {
 
   useEffect(() => {
     document.title = post ? `${post.title} — ${store.name}` : store.name;
-    return () => { document.title = 'Solvexo'; };
+    return () => { document.title = 'Edudeen'; };
   }, [post, store.name]);
 
   if (loading) {

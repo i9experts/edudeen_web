@@ -13,7 +13,7 @@ export function SearchResultsPage() {
 
   useEffect(() => {
     document.title = q ? `"${q}" — ${store.name}` : store.name;
-    return () => { document.title = 'Solvexo'; };
+    return () => { document.title = 'Edudeen'; };
   }, [q, store.name]);
 
   if (!q.trim()) {

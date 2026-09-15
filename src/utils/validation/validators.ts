@@ -1,4 +1,4 @@
-// ── Solvexo Central Validation System ─────────────────────────────────────────
+// ── Edudeen Central Validation System ─────────────────────────────────────────
 // Pure validator functions — return null (valid) or an error string (invalid).
 // Use factories for validators that need parameters (minLength, matchesField…).
 // ───────────────────────────────────────────────────────────────────────────────

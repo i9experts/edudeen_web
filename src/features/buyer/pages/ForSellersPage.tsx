@@ -126,7 +126,7 @@ export function ForSellersPage() {
                 <Button
                   variant="secondary" size="sm"
                   onClick={() => s.cta === 'Contact Us'
-                    ? (window.location.href = 'mailto:support@solvexo.com?subject=Institutional%20Account%20Inquiry')
+                    ? (window.location.href = 'mailto:support@edudeen.com?subject=Institutional%20Account%20Inquiry')
                     : sellEntry.go()}
                 >
                   {s.cta} <ArrowRight size={14} className="inline align-middle ml-1" />

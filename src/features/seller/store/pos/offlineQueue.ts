@@ -4,7 +4,7 @@ import type { CreateSalePayload } from '@/api/services/pos/posSales';
 // a request times out). Sales are keyed by their idempotencyKey so a retry after
 // reconnecting can never double-create the same sale server-side.
 
-const DB_NAME    = 'solvexo-pos-offline';
+const DB_NAME    = 'edudeen-pos-offline';
 const DB_VERSION = 1;
 const STORE_NAME = 'pending-sales';
 

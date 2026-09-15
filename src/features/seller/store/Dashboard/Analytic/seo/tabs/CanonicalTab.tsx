@@ -84,7 +84,7 @@ export function CanonicalTab({ storeId }: CanonicalTabProps) {
             <Input value={pathPattern} onChange={e => setPathPattern(e.target.value)} placeholder="/products?filter=*" />
           </Field>
           <Field label="Canonical URL">
-            <Input value={canonicalUrl} onChange={e => setCanonicalUrl(e.target.value)} placeholder="https://solvexo.store/store/my-store/products" />
+            <Input value={canonicalUrl} onChange={e => setCanonicalUrl(e.target.value)} placeholder="https://edudeen.com/store/my-store/products" />
           </Field>
         </Modal>
       )}

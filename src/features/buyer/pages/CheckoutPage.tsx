@@ -313,7 +313,7 @@ export function CheckoutPage() {
   // and Add to Cart both work as a guest (see CartContext's guest cart).
   // `redirect` lands them straight back here post-login, with their cart
   // already merged onto their real account (CartContext's
-  // 'solvexo:auth-login' listener), same pattern CartPage used to use.
+  // 'edudeen:auth-login' listener), same pattern CartPage used to use.
   if (!TokenStorage.isLoggedIn()) {
     return <Navigate to={`/login?redirect=${encodeURIComponent('/checkout')}`} replace />;
   }

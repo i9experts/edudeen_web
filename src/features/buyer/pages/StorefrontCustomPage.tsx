@@ -30,7 +30,7 @@ export function StorefrontCustomPage() {
 
   useEffect(() => {
     document.title = page?.seo.metaTitle || page?.title || store.name;
-    return () => { document.title = 'Solvexo'; };
+    return () => { document.title = 'Edudeen'; };
   }, [page, store.name]);
 
   if (loading) {

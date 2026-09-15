@@ -26,7 +26,7 @@ export function AboutPage() {
     <div className="bg-white min-h-full">
       <div className="px-4 md:px-8 lg:px-12 pt-14 md:pt-20 pb-12 max-w-[760px] mx-auto text-center">
         <Reveal delay={0}>
-          <p className="text-[11px] font-semibold text-brand-orange uppercase tracking-[0.12em] mb-3">About Solvexo</p>
+          <p className="text-[11px] font-semibold text-brand-orange uppercase tracking-[0.12em] mb-3">About Edudeen</p>
         </Reveal>
         <Reveal delay={0.08}>
           <h1 className="text-[28px] sm:text-[40px] font-bold text-carbon leading-[1.15] mb-5" style={{ fontFamily: SERIF }}>
@@ -35,7 +35,7 @@ export function AboutPage() {
         </Reveal>
         <Reveal delay={0.16}>
           <p className="text-[14px] sm:text-[16px] text-slate leading-[1.7]">
-            Solvexo exists because running a business online and in person usually means juggling a store builder, a POS system, an inventory tracker and an analytics tool that don't talk to each other. We built one platform where they all share the same real data instead.
+            Edudeen exists because running a business online and in person usually means juggling a store builder, a POS system, an inventory tracker and an analytics tool that don't talk to each other. We built one platform where they all share the same real data instead.
           </p>
         </Reveal>
       </div>
@@ -85,7 +85,7 @@ export function AboutPage() {
       </div>
 
       <div className="bg-carbon px-4 md:px-8 lg:px-12 py-14 text-center">
-        <SectionHeading title="Build your business on Solvexo." tone="dark" align="center" size="lg" className="mb-8" />
+        <SectionHeading title="Build your business on Edudeen." tone="dark" align="center" size="lg" className="mb-8" />
         <Reveal>
           <MagneticButton>
             <Button size="lg" onClick={sellEntry.go} loading={sellEntry.loading}>

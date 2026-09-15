@@ -38,7 +38,7 @@ export function PosLanding() {
             )}
 
             <p className="text-[22px] font-bold text-carbon mt-4 mb-2">
-              Sell in person with Solvexo POS
+              Sell in person with Edudeen POS
             </p>
             <p className="text-[14px] text-slate max-w-[440px] leading-[1.6] mb-7">
               {posEnabled

@@ -244,7 +244,7 @@ export default function StorePlanBilling() {
 
   return (
     <>
-      <StorePageHeader title="Billing Center" subtitle="Your store's Solvexo subscription, usage limits, payment method, and billing history." />
+      <StorePageHeader title="Billing Center" subtitle="Your store's Edudeen subscription, usage limits, payment method, and billing history." />
 
       <div className="px-4 lg:px-7 pt-5 pb-8 flex flex-col gap-5">
         {error && <p className="text-[13px] text-error">{error}</p>}

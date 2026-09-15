@@ -3,9 +3,9 @@ import { ENDPOINTS } from '../endpoints';
 import { setAuthCookie, getAuthCookie, deleteAuthCookie } from '@/utils/authCookie';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// TOKEN STORAGE — cookie-backed (domain-wide: `.solvexo.store`/`localhost`),
+// TOKEN STORAGE — cookie-backed (domain-wide: `.edudeen.com`/`localhost`),
 // NOT localStorage. A seller storefront lives on its own subdomain
-// (`hello.solvexo.store`), and localStorage is locked to one exact origin —
+// (`hello.edudeen.com`), and localStorage is locked to one exact origin —
 // a token saved on the main domain would be invisible there, logging every
 // buyer out the moment they land on a store. A cookie scoped to the shared
 // root domain fixes that; the public API here is unchanged so every existing
@@ -21,7 +21,7 @@ export const TokenStorage = {
     // duplicating a "just logged in" signal at each call site, is what lets
     // CartContext merge a guest's local cart into the account the instant
     // any of them succeeds.
-    window.dispatchEvent(new Event('solvexo:auth-login'));
+    window.dispatchEvent(new Event('edudeen:auth-login'));
   },
   saveUser(user: object) {
     setAuthCookie('user', JSON.stringify(user));
@@ -66,7 +66,7 @@ export function getRoleRedirect(role: AppRole): string {
 // LoginPage every time (it used to always default to "Buyer", so a seller
 // forgetting to flip it got a misleading "Invalid email or password").
 // ─────────────────────────────────────────────────────────────────────────────
-const LAST_ROLE_KEY = 'solvexo_last_role';
+const LAST_ROLE_KEY = 'edudeen_last_role';
 export const LastRolePreference = {
   get(): AppRole {
     const stored = localStorage.getItem(LAST_ROLE_KEY);
@@ -87,7 +87,7 @@ export const LastRolePreference = {
 // offers a one-click "that's me" card on RegisterPage before falling back to
 // a normal fresh sign-up.
 // ─────────────────────────────────────────────────────────────────────────────
-const REMEMBERED_ACCOUNT_KEY = 'solvexo_remembered_account';
+const REMEMBERED_ACCOUNT_KEY = 'edudeen_remembered_account';
 export interface RememberedAccountData {
   name:  string;
   email: string;

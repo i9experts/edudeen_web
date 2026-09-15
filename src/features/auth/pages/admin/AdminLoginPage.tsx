@@ -23,7 +23,7 @@ const BRANDING_HEADER = (
       <Shield size={18} className="text-white" />
     </div>
     <div>
-      <p className="text-[15px] font-bold text-white leading-tight">Solvexo Admin</p>
+      <p className="text-[15px] font-bold text-white leading-tight">Edudeen Admin</p>
       <p className="text-[11px] text-pos-muted leading-tight">Super Admin Panel</p>
     </div>
   </div>
@@ -56,7 +56,7 @@ export function AdminLoginPage() {
       panelGradient="from-admin-bg via-[#1a1918] to-[#2a1414]"
       brandingHeader={BRANDING_HEADER}
       heading={<>Platform control,<br />secured.</>}
-      subtext="Sign in with your administrator credentials to access the Solvexo control panel."
+      subtext="Sign in with your administrator credentials to access the Edudeen control panel."
       highlights={HIGHLIGHTS}
       accentIconClass="text-error"
       visual={<AdminControlMockup />}
@@ -65,7 +65,7 @@ export function AdminLoginPage() {
         Admin Sign In
       </h1>
       <p className="text-[13px] text-slate mb-6 text-center lg:text-left">
-        Access the Solvexo admin panel
+        Access the Edudeen admin panel
       </p>
 
       <div className="flex flex-col gap-4">

@@ -35,7 +35,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL as string | undefined;
 if (!API_BASE_URL) {
   // eslint-disable-next-line no-console
   console.error(
-    '[Solvexo] VITE_API_URL is not set for this build. All API requests will ' +
+    '[Edudeen] VITE_API_URL is not set for this build. All API requests will ' +
     'target the wrong host and silently fail. Set VITE_API_URL and rebuild.',
   );
 }

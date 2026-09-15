@@ -170,7 +170,7 @@ export function ClosingCtaBanner({ className }: { className?: string }) {
               Ready to start your journey?
             </h2>
             <p className="text-[13px] text-white/85 mb-6 leading-[1.7]">
-              Join thousands of sellers &amp; buyers growing together on Solvexo.
+              Join thousands of sellers &amp; buyers growing together on Edudeen.
             </p>
             <div className="flex flex-wrap gap-3">
               <Button variant="dark" size="md" pill onClick={sellEntry.go} loading={sellEntry.loading}>

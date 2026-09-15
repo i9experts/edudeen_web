@@ -21,7 +21,7 @@ export function SolutionsOverviewPage() {
       <div className="px-4 md:px-8 lg:px-12 pt-14 md:pt-18 pb-10 max-w-[760px] mx-auto">
         <SectionHeading
           kicker="Built for the way you sell"
-          title="Solvexo, tailored to your industry."
+          title="Edudeen, tailored to your industry."
           subtitle="The same real platform underneath — store, POS, inventory, AI tools — applied to how your specific business actually sells."
           align="center"
           size="lg"

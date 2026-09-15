@@ -165,7 +165,7 @@ export function apiListAdminTransactions(params: AdminTransactionsListParams = {
   return client.get<never, ApiResponse<AdminTransactionsListData>>(`${ENDPOINTS.ADMIN_AI_STUDIO.TRANSACTIONS}${qs(params)}`);
 }
 
-// ── Platform-scope generation (Solvexo's own content) ────────────────────────────
+// ── Platform-scope generation (Edudeen's own content) ────────────────────────────
 
 export interface PlatformGenerateSeoPayload {
   title: string;

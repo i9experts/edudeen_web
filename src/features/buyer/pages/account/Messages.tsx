@@ -189,7 +189,7 @@ export function Messages() {
               onSelectRecentSearch={q => { setQuery(q); handleSearch(q); }}
               onClearRecentSearches={clear}
               onCommitSearch={commit}
-              resizeStorageKey="solvexo:buyer-inbox-width"
+              resizeStorageKey="edudeen:buyer-inbox-width"
             />
           </div>
 

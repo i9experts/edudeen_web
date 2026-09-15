@@ -32,7 +32,7 @@ export function RealAppQr({ size = 74, className }: { size?: number; className?:
       href={GOOGLE_PLAY_URL}
       target="_blank"
       rel="noreferrer"
-      aria-label="Scan or click to download the Solvexo Android app"
+      aria-label="Scan or click to download the Edudeen Android app"
       className={clsx('block bg-white rounded-[14px] p-[9px] shrink-0', className)}
       style={{ width: size, height: size }}
     >

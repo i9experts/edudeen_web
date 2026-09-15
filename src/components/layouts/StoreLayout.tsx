@@ -382,7 +382,7 @@ function StoreSidebar({ open, onToggle }: StoreSidebarProps) {
             </div>
             <div className="flex items-center gap-2">
               <SolvexoIcon size={20} />
-              <p className="text-[11px] text-dark-label flex-1 min-w-0 truncate">Solvexo Store</p>
+              <p className="text-[11px] text-dark-label flex-1 min-w-0 truncate">Edudeen Store</p>
               <button
                 onClick={() => setShowLogoutConfirm(true)}
                 title="Logout"

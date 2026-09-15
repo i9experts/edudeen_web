@@ -175,7 +175,7 @@ export function InboxMockup() {
           </div>
           <div className="min-w-0">
             <p className="text-[11.5px] font-semibold text-white leading-tight">New message</p>
-            <p className="text-[10px] text-white/50 leading-tight">Solvexo Security</p>
+            <p className="text-[10px] text-white/50 leading-tight">Edudeen Security</p>
           </div>
         </div>
         <div className="rounded-lg bg-white/[0.06] border border-white/10 p-3">

@@ -25,7 +25,7 @@ export function CollectionDetailPage() {
 
   useEffect(() => {
     document.title = collection ? `${collection.name} — ${store.name}` : store.name;
-    return () => { document.title = 'Solvexo'; };
+    return () => { document.title = 'Edudeen'; };
   }, [collection, store.name]);
 
   if (collection === undefined) {

@@ -5,7 +5,7 @@ import { DialogShell } from './DialogShell';
 import { Button } from './Button';
 import { SolvexoIcon } from './SolvexoLogo';
 
-// Internal test track — swap for the public Play Store listing once Solvexo
+// Internal test track — swap for the public Play Store listing once Edudeen
 // graduates out of internal testing.
 const PLAY_STORE_URL = 'https://play.google.com/apps/internaltest/4699462862361720775';
 
@@ -15,7 +15,7 @@ const PERKS = [
   { Icon: Tag,          label: 'App-only deals' },
 ];
 
-const DISMISS_KEY = 'solvexo_app_open_prompt_dismissed';
+const DISMISS_KEY = 'edudeen_app_open_prompt_dismissed';
 
 /**
  * Mobile-only "continue in app" interstitial — mounted from BuyerLayout,
@@ -41,7 +41,7 @@ export function AppOpenPrompt() {
 
   return (
     <div className="md:hidden">
-      <DialogShell onClose={close} ariaLabel="Continue in the Solvexo app" className="max-w-[360px] p-4">
+      <DialogShell onClose={close} ariaLabel="Continue in the Edudeen app" className="max-w-[360px] p-4">
         <button
           onClick={close}
           aria-label="Close"
@@ -53,7 +53,7 @@ export function AppOpenPrompt() {
         <div className="flex items-center gap-3 pr-8">
           <SolvexoIcon size={40} />
           <div className="min-w-0">
-            <p className="text-[14px] font-bold text-carbon leading-tight">Continue in the Solvexo App</p>
+            <p className="text-[14px] font-bold text-carbon leading-tight">Continue in the Edudeen App</p>
             <p className="text-[11.5px] text-slate mt-[2px] leading-snug">A faster, smoother way to shop</p>
           </div>
         </div>
@@ -93,7 +93,7 @@ export function AppOpenFab() {
   return (
     <button
       onClick={() => { window.location.href = PLAY_STORE_URL; }}
-      aria-label="Open the Solvexo app"
+      aria-label="Open the Edudeen app"
       className={clsx(
         'drawer-enter-right md:hidden fixed right-0 top-[34%] -translate-y-1/2 z-40',
         'flex items-center gap-[4px] rounded-l-xl border border-r-0 border-bone py-[7px] px-[8px]',

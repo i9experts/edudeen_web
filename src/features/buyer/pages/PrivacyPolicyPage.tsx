@@ -9,8 +9,8 @@ const SECTIONS: LegalSection[] = [
     id: 'introduction',
     title: 'Introduction',
     body: [
-      'Solvexo ("we", "us", or "our") operates a marketplace connecting buyers with independent sellers, creators, and educators. This Privacy Policy explains what information we collect, how we use it, and the choices you have.',
-      'By using Solvexo, you agree to the collection and use of information in accordance with this policy.',
+      'Edudeen ("we", "us", or "our") operates a marketplace connecting buyers with independent sellers, creators, and educators. This Privacy Policy explains what information we collect, how we use it, and the choices you have.',
+      'By using Edudeen, you agree to the collection and use of information in accordance with this policy.',
     ],
   },
   {
@@ -47,7 +47,7 @@ const SECTIONS: LegalSection[] = [
     body: [
       'We share order details (name, shipping address, order contents) with the seller fulfilling your order — this is necessary to deliver what you\'ve purchased.',
       'We share payment details with our payment processors solely to complete transactions; we do not sell your personal information to third parties.',
-      'We may disclose information if required by law or to protect the rights, property, or safety of Solvexo, our users, or the public.',
+      'We may disclose information if required by law or to protect the rights, property, or safety of Edudeen, our users, or the public.',
     ],
   },
   {
@@ -71,9 +71,9 @@ const SECTIONS: LegalSection[] = [
     id: 'childrens-privacy',
     title: 'Children\'s Privacy',
     body: [
-      'Solvexo is not directed at children under 13, and we do not knowingly collect personal information from them. If you believe a child has provided us with personal information, please contact us so we can remove it.',
+      'Edudeen is not directed at children under 13, and we do not knowingly collect personal information from them. If you believe a child has provided us with personal information, please contact us so we can remove it.',
     ],
-    callout: { type: 'warning', text: 'Solvexo is not directed at children under 13, and we do not knowingly collect personal information from them.' },
+    callout: { type: 'warning', text: 'Edudeen is not directed at children under 13, and we do not knowingly collect personal information from them.' },
   },
   {
     id: 'changes',
@@ -96,11 +96,11 @@ export function PrivacyPolicyPage() {
   return (
     <LegalPageLayout
       title="Privacy Policy"
-      subtitle="How Solvexo collects, uses, and protects your information."
+      subtitle="How Edudeen collects, uses, and protects your information."
       lastUpdated="July 24, 2026"
       sections={SECTIONS}
       relatedPages={[
-        { title: 'Terms of Service', description: 'The rules and guidelines for using Solvexo as a buyer or seller.', path: '/terms-of-service' },
+        { title: 'Terms of Service', description: 'The rules and guidelines for using Edudeen as a buyer or seller.', path: '/terms-of-service' },
       ]}
     />
   );

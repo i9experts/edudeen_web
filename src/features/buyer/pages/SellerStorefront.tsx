@@ -122,7 +122,7 @@ export function SellerStorefront() {
 
   useEffect(() => {
     document.title = homePage?.seo.metaTitle || store.name;
-    return () => { document.title = 'Solvexo'; };
+    return () => { document.title = 'Edudeen'; };
   }, [homePage?.seo.metaTitle, store.name]);
 
   useEffect(() => {

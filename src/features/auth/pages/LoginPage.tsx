@@ -163,12 +163,12 @@ export function LoginPage() {
   return (
     <AuthSplitLayout
       heading={<>Commerce. <span className="text-brand-orange">Solved</span></>}
-      subtext="Join thousands of buyers and sellers building their business on Solvexo's marketplace."
+      subtext="Join thousands of buyers and sellers building their business on Edudeen's marketplace."
       highlights={HIGHLIGHTS}
       visual={<MarketplaceMockup />}
     >
       <h1 className="text-[20px] font-bold text-carbon mb-1 text-center lg:text-left">
-        <span className="text-brand-orange">Sign in</span> to Solvexo
+        <span className="text-brand-orange">Sign in</span> to Edudeen
       </h1>
       <p className="text-[12.5px] text-slate mb-1 text-center lg:text-left">
         {showChooser && !onPasswordStep ? 'Choose an account to continue' : 'Enter your details to continue'}
@@ -365,7 +365,7 @@ export function LoginPage() {
       {/* Covers the "account doesn't exist" case without a real
          pre-check — a failed sign-in still lands right next to this. */}
       <p className="text-center text-[12px] text-slate mt-3">
-        New to Solvexo?{' '}
+        New to Edudeen?{' '}
         <Button variant="link" size="sm" onClick={() => navigate('/register')} className="font-semibold!">
           Create an account
         </Button>

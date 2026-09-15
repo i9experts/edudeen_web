@@ -39,7 +39,7 @@ export function StoreTab({ storeId, storeSlug }: StoreTabProps) {
         value={form}
         onChange={patch => setForm(f => ({ ...f, ...patch }))}
         loading={loading}
-        previewUrl={storeSlug ? `https://solvexo.store/${storeSlug}` : undefined}
+        previewUrl={storeSlug ? `https://edudeen.com/${storeSlug}` : undefined}
       />
     </Card>
   );

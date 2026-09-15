@@ -33,7 +33,7 @@ const FALLBACK_FAQS = [
   },
   {
     q: 'What counts as a transaction fee?',
-    a: 'Transaction fees apply to each sale made through your Solvexo store or marketplace listing. Digital product sales, physical sales, and POS sales all count.',
+    a: 'Transaction fees apply to each sale made through your Edudeen store or marketplace listing. Digital product sales, physical sales, and POS sales all count.',
   },
   {
     q: 'Do you offer discounts for educators or non-profits?',
@@ -142,7 +142,7 @@ export function PricingPage() {
           ))
         ) : plans.length === 0 ? (
           <div className="text-center py-10 text-[13px] text-slate">
-            Pricing is being updated — check back shortly, or <a href="mailto:support@solvexo.com" className="text-brand-orange underline">contact sales</a>.
+            Pricing is being updated — check back shortly, or <a href="mailto:support@edudeen.com" className="text-brand-orange underline">contact sales</a>.
           </div>
         ) : plans.map(plan => {
           const isFeatured = !!plan.badge;
@@ -199,7 +199,7 @@ export function PricingPage() {
               <MagneticButton className="block mb-6">
                 <button
                   onClick={() => plan.isCustomPricing
-                    ? (window.location.href = `mailto:support@solvexo.com?subject=${encodeURIComponent(`${plan.name} Plan Inquiry`)}`)
+                    ? (window.location.href = `mailto:support@edudeen.com?subject=${encodeURIComponent(`${plan.name} Plan Inquiry`)}`)
                     : sellEntry.go()}
                   className={clsx(
                     'w-full py-[10px] rounded-lg text-[13px] font-semibold cursor-pointer flex justify-center transition-all duration-[180ms] border',
