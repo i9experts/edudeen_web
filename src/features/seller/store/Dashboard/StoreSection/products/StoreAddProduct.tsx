@@ -3,10 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { Package, Download, GraduationCap, Loader2, CalendarClock, Plus, X } from 'lucide-react';
 import { useStoreWorkspace } from '@/components/layouts/StoreLayout';
 import { apiCreatePhysicalProduct, apiCreateDigitalProduct, EDUCATION_LEVELS, type EducationLevel, type VariantOption } from '@/api/services/product';
+import { apiSetProductAttributes } from '@/api/services/attributes';
 import { addCachedProduct } from './_cache';
 import { SubcategoryField } from './SubcategoryField';
 import { CustomLevelInput } from './CustomLevelInput';
+import { DynamicAttributeFields } from './DynamicAttributeFields';
+import { toAttributeInputs, findMissingRequiredAttribute, type AttributeValuesState } from './attributeFormUtils';
 import { useStoreSubcategories } from '@/hooks/store/useStoreSubcategories';
+import { useCategoryAttributes } from '@/hooks/marketplace/useCategoryAttributes';
 import { ImageUpload, FileUpload, type PrivateUploadData, DateTimePickerModal } from '@/components/comman/ui';
 import { currencySymbol as symbolForCurrency } from '@/utils/currency';
 
@@ -167,11 +171,17 @@ export default function StoreAddProduct() {
   const [phys,              setPhys]              = useState<PhysForm>(initPhys);
   const [dig,               setDig]               = useState<DigForm>(initDig);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [attributeValues,   setAttributeValues]   = useState<AttributeValuesState>({});
 
   const sp = <K extends keyof PhysForm>(k: K, v: PhysForm[K]) => setPhys(f => ({ ...f, [k]: v }));
   const sd = <K extends keyof DigForm> (k: K, v: DigForm[K])  => setDig(f  => ({ ...f, [k]: v }));
 
   const cur = pType === 'physical' ? phys : dig;
+
+  // Attributes are scoped to whichever category the product actually sits
+  // under — the chosen subcategory, else the store's main category.
+  const effectiveCategoryId = cur.subCategoryId || store?.categoryId || null;
+  const { definitions: attrDefs, loading: attrLoading } = useCategoryAttributes(effectiveCategoryId);
 
   const addPhysTag = () => { const v = phys.tagInput.replace(',', '').trim(); if (v && !phys.tags.includes(v)) sp('tags', [...phys.tags, v]); sp('tagInput', ''); };
   const addDigTag  = () => { const v = dig.tagInput.replace(',', '').trim();  if (v && !dig.tags.includes(v))  sd('tags', [...dig.tags, v]);  sd('tagInput', '');  };
@@ -187,9 +197,12 @@ export default function StoreAddProduct() {
     if (pType !== 'physical' && (!dig.name  || !dig.price))                  { setError('Name and price are required.'); return; }
     if (pType === 'educational' && !dig.educationLevel)                      { setError('Education level is required for educational resources.'); return; }
     if (pType === 'educational' && dig.educationLevel === 'other' && !dig.customLevel.trim()) { setError('Please describe the custom education level.'); return; }
+    const missingAttr = findMissingRequiredAttribute(attrDefs, attributeValues);
+    if (missingAttr) { setError(`${missingAttr.label} is required.`); return; }
     setSaving(true);
     try {
       const finalStatus = statusOverride ?? (pType === 'physical' ? phys.status : dig.status);
+      let productId: string;
       if (pType === 'physical') {
         const res = await apiCreatePhysicalProduct({
           storeId, name: phys.name, description: phys.description,
@@ -205,6 +218,7 @@ export default function StoreAddProduct() {
           }],
         });
         addCachedProduct(storeId, { product: res.data.product, variant: res.data.defaultVariant });
+        productId = res.data.product._id;
       } else {
         const files = dig.fileData ? [{ url: dig.fileData.publicId, name: dig.fileData.fileName, size: dig.fileData.fileSize, mimeType: dig.fileData.mimeType }] : [];
         const res = await apiCreateDigitalProduct({
@@ -219,7 +233,12 @@ export default function StoreAddProduct() {
           digital: { files, downloadLimit: dig.downloadLimit, linkExpiryDays: dig.linkExpiryDays ? Number(dig.linkExpiryDays) : null, pdfStampingEnabled: dig.pdfStampingEnabled, licenseType: dig.licenseType, buyerDeliveryMessage: dig.buyerDeliveryMessage, preview: { enabled: dig.previewEnabled, sourceFileIndex: 0 } },
         });
         addCachedProduct(storeId, { product: res.data.product, variant: res.data.defaultVariant });
+        productId = res.data.product._id;
       }
+
+      const attrInputs = toAttributeInputs(attributeValues);
+      if (attrInputs.length) await apiSetProductAttributes(productId, attrInputs);
+
       navigate(`/store/${storeId}/products`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong.');
@@ -313,6 +332,18 @@ export default function StoreAddProduct() {
               refetch={refetchCats}
             />
           </Card>
+
+          {/* Category-specific classification (subject, format, etc) */}
+          {(attrLoading || attrDefs.length > 0) && (
+            <Card title="Additional Details">
+              <DynamicAttributeFields
+                definitions={attrDefs}
+                loading={attrLoading}
+                value={attributeValues}
+                onChange={setAttributeValues}
+              />
+            </Card>
+          )}
 
           {/* Product Images */}
           <Card title="Product Images">

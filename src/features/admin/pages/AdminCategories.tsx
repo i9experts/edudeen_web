@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Plus, ChevronRight, FolderTree, Tag, ImagePlus, Loader2 } from 'lucide-react';
+import { Plus, ChevronRight, FolderTree, Tag, ImagePlus, Loader2, ListFilter } from 'lucide-react';
 import { clsx } from 'clsx';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { apiGetCategoryTree, apiAddCategory, type CategoryNode } from '@/api/services/categories';
+import { AttributeManagerModal } from './AttributeManagerModal';
 import { useUpload } from '@/hooks/upload/useUpload';
 import { Button } from '@/components/comman/ui/Button';
 import { Modal } from '@/components/comman/ui/Modal';
@@ -104,35 +105,45 @@ function AddCategoryModal({ mainCategories, onClose, onSaved }: {
 }
 
 // ── Tree row ──────────────────────────────────────────────────────────────────
-function CategoryRow({ node, depth }: { node: CategoryNode; depth: number }) {
+function CategoryRow({ node, depth, onManageAttributes }: {
+  node: CategoryNode; depth: number; onManageAttributes: (node: CategoryNode) => void;
+}) {
   const [expanded, setExpanded] = useState(depth === 0);
   const hasChildren = node.children.length > 0;
 
   return (
     <div>
       <div
-        className="flex items-center gap-2 px-4 py-[10px] border-b border-[#f0eee6] hover:bg-cream cursor-pointer transition-colors duration-150"
+        className="flex items-center gap-2 px-4 py-[10px] border-b border-[#f0eee6] hover:bg-cream transition-colors duration-150"
         style={{ paddingLeft: 16 + depth * 24 }}
-        onClick={() => hasChildren && setExpanded(e => !e)}
       >
-        {hasChildren ? (
-          <ChevronRight size={13} className="text-slate shrink-0 transition-transform duration-150" style={{ transform: expanded ? 'rotate(90deg)' : 'none' }} />
-        ) : (
-          <span className="w-[13px] shrink-0" />
-        )}
-        {depth === 0
-          ? <FolderTree size={14} className="text-brand-orange shrink-0" />
-          : <Tag size={12} className="text-slate shrink-0" />}
-        <span className={depth === 0 ? 'text-[13px] font-semibold text-charcoal' : 'text-[13px] text-graphite'}>{node.name}</span>
-        {node.createdByRole && (
-          <span className="text-[10px] text-slate capitalize ml-1">· added by {node.createdByRole}</span>
-        )}
-        {!hasChildren && depth === 0 && (
-          <span className="text-[11px] text-slate ml-1">· no subcategories</span>
-        )}
+        <div className="flex items-center gap-2 flex-1 min-w-0 cursor-pointer" onClick={() => hasChildren && setExpanded(e => !e)}>
+          {hasChildren ? (
+            <ChevronRight size={13} className="text-slate shrink-0 transition-transform duration-150" style={{ transform: expanded ? 'rotate(90deg)' : 'none' }} />
+          ) : (
+            <span className="w-[13px] shrink-0" />
+          )}
+          {depth === 0
+            ? <FolderTree size={14} className="text-brand-orange shrink-0" />
+            : <Tag size={12} className="text-slate shrink-0" />}
+          <span className={depth === 0 ? 'text-[13px] font-semibold text-charcoal' : 'text-[13px] text-graphite'}>{node.name}</span>
+          {node.createdByRole && (
+            <span className="text-[10px] text-slate capitalize ml-1">· added by {node.createdByRole}</span>
+          )}
+          {!hasChildren && depth === 0 && (
+            <span className="text-[11px] text-slate ml-1">· no subcategories</span>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={() => onManageAttributes(node)}
+          className="flex items-center gap-1 text-[11px] font-semibold text-slate hover:text-brand-orange px-2 py-1 rounded-md shrink-0"
+        >
+          <ListFilter size={12} /> Attributes
+        </button>
       </div>
       {expanded && node.children.map(child => (
-        <CategoryRow key={child._id} node={child} depth={depth + 1} />
+        <CategoryRow key={child._id} node={child} depth={depth + 1} onManageAttributes={onManageAttributes} />
       ))}
     </div>
   );
@@ -145,6 +156,7 @@ export function AdminCategories() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [adding, setAdding] = useState(false);
+  const [managingAttrsFor, setManagingAttrsFor] = useState<CategoryNode | null>(null);
 
   const load = () => {
     setLoading(true);
@@ -186,7 +198,9 @@ export function AdminCategories() {
               description="Create the first main category to get started."
             />
           ) : (
-            tree.map(cat => <CategoryRow key={cat._id} node={cat} depth={0} />)
+            tree.map(cat => (
+              <CategoryRow key={cat._id} node={cat} depth={0} onManageAttributes={setManagingAttrsFor} />
+            ))
           )}
         </div>
 
@@ -202,6 +216,14 @@ export function AdminCategories() {
           mainCategories={tree}
           onClose={() => setAdding(false)}
           onSaved={() => { setAdding(false); load(); }}
+        />
+      )}
+
+      {managingAttrsFor && (
+        <AttributeManagerModal
+          categoryId={managingAttrsFor._id}
+          categoryName={managingAttrsFor.name}
+          onClose={() => setManagingAttrsFor(null)}
         />
       )}
     </div>

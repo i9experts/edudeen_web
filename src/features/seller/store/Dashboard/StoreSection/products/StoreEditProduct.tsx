@@ -9,7 +9,11 @@ import {
 import { getCachedProducts, updateCachedProduct, type ProductEntry } from './_cache';
 import { SubcategoryField } from './SubcategoryField';
 import { CustomLevelInput } from './CustomLevelInput';
+import { DynamicAttributeFields } from './DynamicAttributeFields';
+import { toAttributeInputs, findMissingRequiredAttribute, type AttributeValuesState } from './attributeFormUtils';
+import { apiGetProductAttributes, apiSetProductAttributes } from '@/api/services/attributes';
 import { useStoreSubcategories } from '@/hooks/store/useStoreSubcategories';
+import { useCategoryAttributes } from '@/hooks/marketplace/useCategoryAttributes';
 import { ImageUpload, FileUpload, type PrivateUploadData, DateTimePickerModal, SkeletonBox } from '@/components/comman/ui';
 import { currencySymbol as symbolForCurrency } from '@/utils/currency';
 
@@ -197,6 +201,7 @@ export default function StoreEditProduct() {
   const [phys,              setPhys]              = useState<PhysForm>(blankPhys);
   const [dig,               setDig]               = useState<DigForm>(blankDig);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [attributeValues,   setAttributeValues]   = useState<AttributeValuesState>({});
 
   const sp = <K extends keyof PhysForm>(k: K, v: PhysForm[K]) => setPhys(f => ({ ...f, [k]: v }));
   const sd = <K extends keyof DigForm> (k: K, v: DigForm[K])  => setDig(f  => ({ ...f, [k]: v }));
@@ -221,10 +226,21 @@ export default function StoreEditProduct() {
       })
       .catch(() => navigate(`/store/${storeId}/products`, { replace: true }))
       .finally(() => setFetching(false));
+
+    apiGetProductAttributes(productId)
+      .then(res => {
+        const seeded: AttributeValuesState = {};
+        for (const a of res.data) seeded[a.attributeDefinitionId] = a.values;
+        setAttributeValues(seeded);
+      })
+      .catch(() => {}); // no existing classification yet — leave the form blank
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const cur = pType === 'physical' ? phys : dig;
+
+  const effectiveCategoryId = cur.subCategoryId || store?.categoryId || null;
+  const { definitions: attrDefs, loading: attrLoading } = useCategoryAttributes(effectiveCategoryId);
 
   const addTag = () => {
     if (pType === 'physical') { const v = phys.tagInput.replace(',', '').trim(); if (v && !phys.tags.includes(v)) sp('tags', [...phys.tags, v]); sp('tagInput', ''); }
@@ -240,6 +256,8 @@ export default function StoreEditProduct() {
     setError('');
     if (pType === 'educational' && !dig.educationLevel) { setError('Education level is required for educational resources.'); return; }
     if (pType === 'educational' && dig.educationLevel === 'other' && !dig.customLevel.trim()) { setError('Please describe the custom education level.'); return; }
+    const missingAttr = findMissingRequiredAttribute(attrDefs, attributeValues);
+    if (missingAttr) { setError(`${missingAttr.label} is required.`); return; }
     setSaving(true);
     try {
       const finalStatus = statusOverride ?? (pType === 'physical' ? phys.status : dig.status);
@@ -275,6 +293,10 @@ export default function StoreEditProduct() {
         });
         updateCachedProduct(storeId, productId, { product: res.data.product, variant: res.data.variant });
       }
+
+      const attrInputs = toAttributeInputs(attributeValues);
+      await apiSetProductAttributes(productId, attrInputs); // replace-all — also clears any removed values
+
       navigate(`/store/${storeId}/products`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong.');
@@ -397,6 +419,18 @@ export default function StoreEditProduct() {
               refetch={refetchCats}
             />
           </Card>
+
+          {/* Category-specific classification (subject, format, etc) */}
+          {(attrLoading || attrDefs.length > 0) && (
+            <Card title="Additional Details">
+              <DynamicAttributeFields
+                definitions={attrDefs}
+                loading={attrLoading}
+                value={attributeValues}
+                onChange={setAttributeValues}
+              />
+            </Card>
+          )}
 
           {/* Product Images */}
           <Card title="Product Images">

@@ -131,6 +131,16 @@ export const ENDPOINTS = {
     GET_BY_ID: (id: string) => `/api/categories/category/${id}`,
   },
 
+  // ── ATTRIBUTES (category-scoped classification fields — subject, format, etc) ──
+  ATTRIBUTES: {
+    LIST_FOR_CATEGORY:   (categoryId: string) => `/api/categories/${categoryId}/attributes`,
+    CREATE_FOR_CATEGORY: (categoryId: string) => `/api/categories/${categoryId}/attributes`,
+    UPDATE:              (id: string) => `/api/attributes/${id}`,
+    DELETE:              (id: string) => `/api/attributes/${id}`,
+    GET_FOR_PRODUCT:     (productId: string) => `/api/products/${productId}/attributes`,
+    SET_FOR_PRODUCT:     (productId: string) => `/api/products/${productId}/attributes`,
+  },
+
   // ── STORE ─────────────────────────────────────────────────────────────────
   STORE: {
     CREATE: '/api/store/create-store',
