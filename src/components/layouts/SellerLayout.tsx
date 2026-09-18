@@ -14,7 +14,7 @@ import {
   Settings, BarChart2,
   ChevronDown, Plus, PanelLeftClose, PanelLeftOpen, LogOut,
 } from 'lucide-react';
-import { SolvexoIcon } from '@/components/comman/ui/SolvexoLogo';
+import { EdudeenIcon } from '@/components/comman/ui/EdudeenLogo';
 import { NotificationBell, AnnouncementBanner, CurrencySelector } from '@/components/comman/ui';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -259,7 +259,7 @@ function SellerSidebar({ open, onToggle }: SellerSidebarProps) {
         {/* Header: logo + toggle */}
         {open ? (
           <div className="px-5 pt-5 pb-4 shrink-0 flex items-center gap-[9px]">
-            <div className="shrink-0"><SolvexoIcon size={28} /></div>
+            <div className="shrink-0"><EdudeenIcon size={28} /></div>
             <div className="flex items-center flex-1 min-w-0">
               <span className="text-[17px] font-bold text-white tracking-[-0.3px]">Solvex</span>
               <span className="text-[17px] font-bold text-brand-orange tracking-[-0.3px]">o</span>

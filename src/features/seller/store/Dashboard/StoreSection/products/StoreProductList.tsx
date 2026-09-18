@@ -2,20 +2,19 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ShoppingBag, Plus,
-  AlertCircle, RefreshCw, TrendingUp,
+  RefreshCw, TrendingUp,
   Eye, Pencil, Trash2,
 } from 'lucide-react';
 import { useStoreWorkspace, StorePageHeader } from '@/components/layouts/StoreLayout';
 import {
   Table,      type TableColumn, type TableSort,
   Badge,      StatusBadge,
-  EmptyState,
   Card,
   SearchInput,
-  SkeletonBox,
   ActionMenu,
   Modal,
   Button,
+  InlineError,
 } from '@/components/comman/ui';
 import {
   apiGetStoreInventory,
@@ -40,6 +39,9 @@ export default function StoreProductList() {
   const [deleteTarget,  setDeleteTarget]  = useState<InventoryProduct | null>(null);
   const [deleting,      setDeleting]      = useState(false);
   const [deleteError,   setDeleteError]   = useState('');
+  const [selectedKeys,  setSelectedKeys]  = useState<Set<string | number>>(new Set());
+  const [bulkDeleting,  setBulkDeleting]  = useState(false);
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
 
   const LIMIT = 10;
   const SEARCH_LIMIT = 1000;
@@ -109,6 +111,21 @@ export default function StoreProductList() {
       setDeleteError(err instanceof Error ? err.message : 'Failed to delete product.');
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const handleBulkDeleteConfirm = async () => {
+    setBulkDeleting(true);
+    setDeleteError('');
+    try {
+      await Promise.all(Array.from(selectedKeys).map(id => apiDeleteProduct(String(id))));
+      setSelectedKeys(new Set());
+      setConfirmBulkDelete(false);
+      setRefreshKey(k => k + 1);
+    } catch (err: unknown) {
+      setDeleteError(err instanceof Error ? err.message : 'Failed to delete one or more products.');
+    } finally {
+      setBulkDeleting(false);
     }
   };
 
@@ -182,16 +199,18 @@ export default function StoreProductList() {
       render: p => <StatusBadge status={p.status} />,
     },
     {
-      key: 'actions', header: 'Actions', align: 'center', width: '80px',
+      key: 'actions', header: 'Actions', align: 'center', width: '110px',
       render: p => (
-        <ActionMenu
-          align="right"
-          items={[
-            { label: 'View Detail',    onClick: () => goDetail(p),                icon: <Eye    size={13} /> },
-            { label: 'Edit Product',   onClick: () => goEdit(p),                  icon: <Pencil size={13} /> },
-            { label: 'Delete Product', onClick: () => { setDeleteError(''); setDeleteTarget(p); }, icon: <Trash2 size={13} />, danger: true },
-          ]}
-        />
+        <div className="flex items-center justify-center gap-1">
+          <Button variant="ghost" size="xs" onClick={() => goEdit(p)} icon={<Pencil size={12} />}>Edit</Button>
+          <ActionMenu
+            align="right"
+            items={[
+              { label: 'View Detail',    onClick: () => goDetail(p),                icon: <Eye    size={13} /> },
+              { label: 'Delete Product', onClick: () => { setDeleteError(''); setDeleteTarget(p); }, icon: <Trash2 size={13} />, danger: true },
+            ]}
+          />
+        </div>
       ),
     },
   ];
@@ -201,14 +220,7 @@ export default function StoreProductList() {
       <StorePageHeader
         title="Products"
         subtitle={loading ? 'Loading…' : `${totalProducts} product${totalProducts !== 1 ? 's' : ''}`}
-        actions={
-          <button
-            onClick={goAdd}
-            className="flex items-center gap-1.5 bg-brand-orange text-white border-none rounded-[9px] px-4 py-[9px] text-[13px] font-semibold cursor-pointer transition-colors duration-150 hover:bg-brand-deep-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/50 focus-visible:ring-offset-2"
-          >
-            <Plus size={15} /> Add Product
-          </button>
-        }
+        actions={<Button onClick={goAdd} icon={<Plus size={15} />}>Add Product</Button>}
       />
 
       <div className="px-7 py-5 flex flex-col gap-5">
@@ -217,18 +229,7 @@ export default function StoreProductList() {
         <ProductStatsGrid stats={stats} loading={loading} />
 
         {/* ── Error ──────────────────────────────────────────────────── */}
-        {error && (
-          <div className="bg-error-bg border border-error-border rounded-[10px] px-4 py-3 flex items-center gap-3">
-            <AlertCircle size={16} className="text-error shrink-0" />
-            <span className="text-[13px] text-error flex-1">{error}</span>
-            <button
-              onClick={() => handleRetry()}
-              className="flex items-center gap-1 text-[12px] text-error font-semibold cursor-pointer rounded-xs transition-opacity duration-150 hover:opacity-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/50 focus-visible:ring-offset-1"
-            >
-              <RefreshCw size={12} /> Retry
-            </button>
-          </div>
-        )}
+        {error && <InlineError message={error} onRetry={handleRetry} />}
 
         {/* ── Table card ─────────────────────────────────────────────── */}
         {!error && (
@@ -243,56 +244,39 @@ export default function StoreProductList() {
                   placeholder="Search by name or SKU…"
                   className="w-[220px]"
                 />
-                <button
-                  onClick={() => handleRetry()}
-                  className="flex items-center gap-1 text-[11px] text-slate cursor-pointer border border-bone rounded-[6px] px-2 py-[6px] transition-colors duration-150 hover:bg-bone shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/50 focus-visible:ring-offset-1"
-                >
-                  <RefreshCw size={11} /> Refresh
-                </button>
+                <Button variant="outline" size="xs" onClick={handleRetry} icon={<RefreshCw size={11} />}>Refresh</Button>
               </div>
             </div>
 
-            {/* Table or skeleton or empty */}
-            {loading ? (
-              <div>
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className={`flex items-center gap-4 px-4 py-[13px]${i < 4 ? ' border-b border-[#f0eee6]' : ''}`}
-                  >
-                    <SkeletonBox width={32} height={32} rounded="8px" />
-                    <SkeletonBox width="35%" height={13} />
-                    <SkeletonBox width="10%" height={13} className="ml-auto" />
-                    <SkeletonBox width="10%" height={13} />
-                    <SkeletonBox width="8%"  height={13} />
-                    <SkeletonBox width={60}  height={22} rounded="999px" />
-                    <SkeletonBox width={80}  height={13} />
-                  </div>
-                ))}
-              </div>
-            ) : sorted.length === 0 ? (
-              <EmptyState
-                icon={<ShoppingBag size={30} className="text-brand-orange opacity-55" />}
-                title={search ? 'No products match your search' : 'No products yet'}
-                description={search ? 'Try a different name or SKU.' : 'Add physical items, digital downloads, or services to start selling.'}
-                action={search ? undefined : { label: 'Add Your First Product', onClick: goAdd, icon: <Plus size={15} /> }}
-              />
-            ) : (
-              <Table
-                columns={columns}
-                data={sorted}
-                keyExtractor={p => p.productId}
-                sort={sort ?? undefined}
-                onSortChange={handleSortChange}
-                pagination={isSearching ? undefined : {
-                  page,
-                  total:    totalProducts,
-                  perPage:  LIMIT,
-                  onChange: handlePageChange,
-                  label:    'products',
-                }}
-              />
-            )}
+            <Table
+              columns={columns}
+              data={sorted}
+              keyExtractor={p => p.productId}
+              sort={sort ?? undefined}
+              onSortChange={handleSortChange}
+              loading={loading}
+              selectable
+              selectedKeys={selectedKeys}
+              onSelectionChange={setSelectedKeys}
+              bulkActions={keys => (
+                <Button variant="danger" size="xs" onClick={() => setConfirmBulkDelete(true)} icon={<Trash2 size={12} />}>
+                  Delete {keys.size} product{keys.size !== 1 ? 's' : ''}
+                </Button>
+              )}
+              emptyState={{
+                icon: <ShoppingBag size={30} className="text-brand-orange opacity-55" />,
+                title: search ? 'No products match your search' : 'No products yet',
+                description: search ? 'Try a different name or SKU.' : 'Add physical items, digital downloads, or services to start selling.',
+                action: search ? undefined : { label: 'Add Your First Product', onClick: goAdd, icon: <Plus size={15} /> },
+              }}
+              pagination={isSearching ? undefined : {
+                page,
+                total:    totalProducts,
+                perPage:  LIMIT,
+                onChange: handlePageChange,
+                label:    'products',
+              }}
+            />
           </Card>
         )}
 
@@ -307,6 +291,22 @@ export default function StoreProductList() {
         }>
           <p className="text-[13px] text-slate">
             <span className="font-semibold text-charcoal">{deleteTarget.name}</span> will be removed from your store and the marketplace. This can't be undone.
+          </p>
+          {deleteError && (
+            <p className="text-[12px] text-error mt-3">{deleteError}</p>
+          )}
+        </Modal>
+      )}
+
+      {confirmBulkDelete && (
+        <Modal title={`Delete ${selectedKeys.size} product${selectedKeys.size !== 1 ? 's' : ''}?`} onClose={() => setConfirmBulkDelete(false)} footer={
+          <>
+            <Button variant="ghost" onClick={() => setConfirmBulkDelete(false)}>Cancel</Button>
+            <Button variant="danger" onClick={handleBulkDeleteConfirm} loading={bulkDeleting}>Delete</Button>
+          </>
+        }>
+          <p className="text-[13px] text-slate">
+            These products will be removed from your store and the marketplace. This can't be undone.
           </p>
           {deleteError && (
             <p className="text-[12px] text-error mt-3">{deleteError}</p>

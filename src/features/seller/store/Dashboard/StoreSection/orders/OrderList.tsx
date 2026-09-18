@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import {
-  ShoppingCart, AlertCircle, RefreshCw,
+  ShoppingCart, RefreshCw,
   DollarSign, Clock, TrendingUp, CheckCheck, Truck,
 } from 'lucide-react';
 import { apiMarkOrderPaid, apiUpdateOrderStatus } from '@/api/services/orders';
@@ -12,7 +12,10 @@ import {
   Card,
   Avatar,
   SearchInput,
+  FilterDropdown,
   ActionMenu,
+  Button,
+  InlineError,
 } from '@/components/comman/ui';
 import {
   apiGetSellerOrders,
@@ -182,7 +185,7 @@ export function StoreOrderList() {
       render: o => <StatusBadge status={o.status} />,
     },
     {
-      key: 'actions', header: '', align: 'center', width: '60px',
+      key: 'actions', header: '', align: 'center', width: '150px',
       render: o => {
         const busy = markingPaidId === o.orderId || updatingStatusId === o.orderId;
 
@@ -201,40 +204,42 @@ export function StoreOrderList() {
             .finally(() => setUpdatingStatusId(null));
         };
 
+        const markPaid = () => {
+          if (busy) return;
+          setMarkingPaidId(o.orderId);
+          apiMarkOrderPaid(o.orderId)
+            .then(() => setOrders(prev => prev.map(x => x.orderId === o.orderId ? { ...x, isPaid: true } : x)))
+            .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Failed to mark as paid.'))
+            .finally(() => setMarkingPaidId(null));
+        };
+
+        // One primary inline action (the single most useful next step for
+        // this order), everything else tucked in the overflow menu — same
+        // "primary + overflow" convention the admin marketplace table uses,
+        // instead of cramming every status transition into one menu.
+        const primary = !o.isPaid
+          ? { label: 'Mark Paid', icon: <CheckCheck size={12} />, onClick: markPaid, loading: markingPaidId === o.orderId }
+          : o.status === 'pending'
+          ? { label: 'Process', icon: <RefreshCw size={12} />, onClick: () => changeStatus('processing'), loading: updatingStatusId === o.orderId }
+          : o.status !== 'completed' && o.status !== 'cancelled'
+          ? { label: 'Ship', icon: <Truck size={12} />, onClick: () => changeStatus('shipped'), loading: updatingStatusId === o.orderId }
+          : null;
+
+        const overflowItems = [
+          ...(o.status !== 'completed' && o.status !== 'cancelled' && o.status !== 'pending' ? [{
+            label: 'Mark Completed', icon: <CheckCheck size={13} />, onClick: () => changeStatus('completed'),
+          }] : []),
+        ];
+
         return (
-          <ActionMenu
-            align="right"
-            items={[
-              ...(!o.isPaid ? [{
-                label: markingPaidId === o.orderId ? 'Marking…' : 'Mark as Paid',
-                icon: <CheckCheck size={13} />,
-                onClick: () => {
-                  if (busy) return;
-                  setMarkingPaidId(o.orderId);
-                  apiMarkOrderPaid(o.orderId)
-                    .then(() => setOrders(prev =>
-                      prev.map(x => x.orderId === o.orderId ? { ...x, isPaid: true } : x)
-                    ))
-                    .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Failed to mark as paid.'))
-                    .finally(() => setMarkingPaidId(null));
-                },
-              }] : []),
-              ...(o.status === 'pending' ? [{
-                label: updatingStatusId === o.orderId ? 'Updating…' : 'Mark Processing',
-                icon: <RefreshCw size={13} />,
-                onClick: () => changeStatus('processing'),
-              }] : []),
-              ...(o.status !== 'completed' && o.status !== 'cancelled' ? [{
-                label: updatingStatusId === o.orderId ? 'Updating…' : 'Mark Shipped',
-                icon: <Truck size={13} />,
-                onClick: () => changeStatus('shipped'),
-              }, {
-                label: updatingStatusId === o.orderId ? 'Updating…' : 'Mark Completed',
-                icon: <CheckCheck size={13} />,
-                onClick: () => changeStatus('completed'),
-              }] : []),
-            ]}
-          />
+          <div className="flex items-center justify-center gap-1">
+            {primary && (
+              <Button variant="ghost" size="xs" disabled={busy} loading={primary.loading} onClick={primary.onClick} icon={!primary.loading && primary.icon}>
+                {primary.label}
+              </Button>
+            )}
+            {overflowItems.length > 0 && <ActionMenu align="right" items={overflowItems} />}
+          </div>
         );
       },
     },
@@ -245,15 +250,6 @@ export function StoreOrderList() {
       <StorePageHeader
         title="Orders"
         subtitle={loading ? 'Loading…' : `${totalOrders} order${totalOrders !== 1 ? 's' : ''}`}
-        actions={
-          <button
-            disabled
-            title="Order export isn't available yet — coming soon"
-            className="flex items-center gap-1.5 bg-white text-graphite border border-bone rounded-[9px] px-4 py-[9px] text-[13px] font-medium opacity-50 cursor-not-allowed"
-          >
-            Export CSV (Coming Soon)
-          </button>
-        }
       />
 
       <div className="px-4 lg:px-7 py-5 flex flex-col gap-5">
@@ -287,18 +283,7 @@ export function StoreOrderList() {
         </div>
 
         {/* Error */}
-        {error && (
-          <div className="bg-error-bg border border-error-border rounded-[10px] px-4 py-3 flex items-center gap-3">
-            <AlertCircle size={16} className="text-error shrink-0" />
-            <span className="text-[13px] text-error flex-1">{error}</span>
-            <button
-              onClick={handleRetry}
-              className="flex items-center gap-1 text-[12px] text-error font-semibold cursor-pointer"
-            >
-              <RefreshCw size={12} /> Retry
-            </button>
-          </div>
-        )}
+        {error && <InlineError message={error} onRetry={handleRetry} />}
 
         {/* Table */}
         {!error && (
@@ -312,36 +297,26 @@ export function StoreOrderList() {
                 className="w-full sm:w-[200px] sm:ml-auto"
               />
               <div className="flex items-center gap-2 overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap sm:justify-end">
-                <select
-                  value={statusF || 'All Status'}
-                  onChange={e => setStatusF(e.target.value === 'All Status' ? '' : e.target.value)}
-                  className="text-[13px] px-3 py-2 sm:py-[7px] rounded-lg border border-bone bg-white text-charcoal outline-none cursor-pointer shrink-0"
+                <FilterDropdown
+                  value={statusF}
+                  onChange={setStatusF}
+                  placeholder="All Status"
+                  options={['pending', 'completed', 'cancelled', 'processing'].map(o => ({ value: o, label: o.charAt(0).toUpperCase() + o.slice(1) }))}
+                  className="shrink-0"
+                />
+                <FilterDropdown
+                  value={typeF}
+                  onChange={setTypeF}
+                  placeholder="All Types"
+                  options={['digital', 'physical'].map(o => ({ value: o, label: o.charAt(0).toUpperCase() + o.slice(1) }))}
+                  className="shrink-0"
+                />
+                <Button variant="outline" size="xs" onClick={() => { setSearch(''); setStatusF(''); setTypeF(''); }}>Clear</Button>
+                <Button
+                  variant="outline" size="xs" onClick={handleRetry} icon={<RefreshCw size={11} />}
                 >
-                  {['All Status', 'pending', 'completed', 'cancelled', 'processing'].map(o => (
-                    <option key={o} value={o}>{o === 'All Status' ? 'All Status' : o.charAt(0).toUpperCase() + o.slice(1)}</option>
-                  ))}
-                </select>
-                <select
-                  value={typeF || 'All Types'}
-                  onChange={e => setTypeF(e.target.value === 'All Types' ? '' : e.target.value)}
-                  className="text-[13px] px-3 py-2 sm:py-[7px] rounded-lg border border-bone bg-white text-charcoal outline-none cursor-pointer shrink-0"
-                >
-                  {['All Types', 'digital', 'physical'].map(o => (
-                    <option key={o} value={o}>{o === 'All Types' ? 'All Types' : o.charAt(0).toUpperCase() + o.slice(1)}</option>
-                  ))}
-                </select>
-                <button
-                  onClick={() => { setSearch(''); setStatusF(''); setTypeF(''); }}
-                  className="text-[12px] text-slate border border-bone rounded-[6px] px-3 py-2 sm:py-[7px] bg-white cursor-pointer hover:bg-bone shrink-0"
-                >
-                  Clear
-                </button>
-                <button
-                  onClick={handleRetry}
-                  className="flex items-center gap-1 text-[11px] text-slate cursor-pointer border border-bone rounded-[6px] px-2 py-2 sm:py-[7px] hover:bg-bone shrink-0"
-                >
-                  <RefreshCw size={11} /> Refresh
-                </button>
+                  Refresh
+                </Button>
               </div>
             </div>
 

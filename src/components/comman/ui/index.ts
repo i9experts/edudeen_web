@@ -17,7 +17,7 @@ export { AdminPageHeader }                   from './AdminPageHeader';
 
 export { Divider, Tag }                      from './Divider';
 
-export { SolvexoLogo, SolvexoIcon }          from './SolvexoLogo';
+export { EdudeenLogo, EdudeenIcon }          from './EdudeenLogo';
 
 export { CopyIconButton }                    from './CopyIconButton';
 
@@ -78,6 +78,8 @@ export type { ModalProps }                   from './Modal';
 export { StarRating }                        from './StarRating';
 
 export { ComingSoonBanner }                  from './ComingSoonBanner';
+
+export { InlineError }                       from './InlineError';
 
 export { AnnouncementBanner }                 from './AnnouncementBanner';
 export { StoreAnnouncementBar }               from './StoreAnnouncementBar';

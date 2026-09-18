@@ -10,7 +10,7 @@ import {
   Truck, MessageSquare, FolderTree, RefreshCw, Undo2, CreditCard,
   PanelLeftClose, PanelLeftOpen, AlertTriangle, AlertCircle, XCircle, Clock, LogOut, Layers,
 } from 'lucide-react';
-import { SolvexoIcon } from '@/components/comman/ui/SolvexoLogo';
+import { EdudeenIcon } from '@/components/comman/ui/EdudeenLogo';
 import { apiGetStoreById, type StoreData } from '@/api/services/store';
 import { apiGetStorePlatformPlan, type StorePlatformSubscription } from '@/api/services/platformPlans';
 import { useCommandPalette } from '@/hooks/useCommandPalette';
@@ -381,7 +381,7 @@ function StoreSidebar({ open, onToggle }: StoreSidebarProps) {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <SolvexoIcon size={20} />
+              <EdudeenIcon size={20} />
               <p className="text-[11px] text-dark-label flex-1 min-w-0 truncate">Edudeen Store</p>
               <button
                 onClick={() => setShowLogoutConfirm(true)}
@@ -395,7 +395,7 @@ function StoreSidebar({ open, onToggle }: StoreSidebarProps) {
           </div>
         ) : (
           <div className="py-3 border-t border-dark-active flex flex-col items-center gap-2 shrink-0">
-            <SolvexoIcon size={20} />
+            <EdudeenIcon size={20} />
             <button
               onClick={() => setShowLogoutConfirm(true)}
               title="Logout"

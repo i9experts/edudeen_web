@@ -1,9 +1,12 @@
-import { useState } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useCartContext } from '@/contexts/CartContext';
+import { useWishlistContext } from '@/contexts/WishlistContext';
+import { useProductsByCategory } from '@/hooks/marketplace/useProductsByCategory';
 import { Button } from '@/components/comman/ui/Button';
 import { BuyerNavbar, Breadcrumb, Footer, SkeletonBox, getRecentlyViewed } from '@/components/comman/ui';
+import { ProductCard } from '@/components/comman/marketplace/ProductCard';
 import {
   Minus, Plus, Trash2, ShoppingBag, ImageOff,
   Loader2, Package, Download, ChevronRight, ShieldCheck, RotateCcw, Lock,
@@ -38,10 +41,38 @@ export function CartPage() {
   // fully viewable/editable. Only "Proceed to Checkout" below requires
   // login (CheckoutPage's own gate), matching how Amazon/Daraz let a guest
   // manage their cart freely and only ask for an account at checkout.
-  const { cart, loading, cartCount, updateQty, removeItem, clearCart, error, clearError } = useCartContext();
+  const { cart, loading, cartCount, updateQty, removeItem, clearCart, error, clearError, addToCart, adding } = useCartContext();
   const [clearing,   setClearing]   = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+
+  // "You might also like" — a real, unfiltered catalog pool (same source
+  // Marketplace.tsx's/Homepage's own rails draw from), minus whatever's
+  // already in the cart. A genuine discovery rail, not a fabricated "bundle
+  // savings" claim — Edudeen has no bundle-pricing data model to back that up.
+  const { products: discoveryPool } = useProductsByCategory(1, 12);
+  const { isWishlisted, wishlisting, toggleWishlist } = useWishlistContext();
+  const [addToCartFailedId, setAddToCartFailedId] = useState<string | null>(null);
+  const lastAddAttemptRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!error || !lastAddAttemptRef.current) return;
+    const failedId = lastAddAttemptRef.current;
+    setAddToCartFailedId(failedId);
+    const t = setTimeout(() => { setAddToCartFailedId(id => id === failedId ? null : id); clearError(); }, 2600);
+    return () => clearTimeout(t);
+  }, [error, clearError]);
+  const handleCardClick = useCallback((slug: string) => navigate(`/product/${slug}`), [navigate]);
+  const handleAddToCart = useCallback((e: React.MouseEvent, id: string, variantId: string, type: 'physical' | 'digital') => {
+    e.stopPropagation();
+    if (!variantId) return;
+    lastAddAttemptRef.current = variantId;
+    setAddToCartFailedId(prev => prev === variantId ? null : prev);
+    addToCart(id, variantId, type);
+  }, [addToCart]);
+  const handleToggleWishlist = useCallback((e: React.MouseEvent, id: string, variantId: string) => {
+    e.stopPropagation();
+    if (variantId) toggleWishlist(id, variantId);
+  }, [toggleWishlist]);
 
   const handleUpdateQty = (productId: string, variantId: string, action: 'increase' | 'decrease') => {
     setUpdatingId(variantId);
@@ -73,6 +104,9 @@ export function CartPage() {
   // (client-tracked from ProductDetail, same source the navbar's search
   // dropdown already uses), never a fabricated "trending" list.
   const recentlyViewed = isEmpty ? getRecentlyViewed() : [];
+
+  const cartProductIds = new Set(items.map(i => i.productId));
+  const discoveryItems = discoveryPool.filter(p => !cartProductIds.has(p._id)).slice(0, 5);
 
   // Every line is converted from its OWN native (seller) currency into the
   // buyer's currently-selected display currency — this is what makes the
@@ -410,6 +444,34 @@ export function CartPage() {
               </Button>
             </div>
 
+          </div>
+        )}
+
+        {/* ── You might also like — a real discovery rail, not shown until the
+            cart itself has loaded so it never pops in above the cart card. ── */}
+        {!loading && items.length > 0 && discoveryItems.length > 0 && (
+          <div className="mt-8">
+            <p className="text-[15px] font-bold text-carbon mb-4">You might also like</p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+              {discoveryItems.map(p => {
+                const dv = (p.variants ?? []).find(v => v.isDefault) ?? p.variants?.[0];
+                const vId = dv?._id ?? '';
+                return (
+                  <ProductCard
+                    key={p._id}
+                    layout="grid"
+                    product={p}
+                    onClick={handleCardClick}
+                    isAdding={adding === vId}
+                    addToCartFailed={addToCartFailedId === vId}
+                    onAddToCart={handleAddToCart}
+                    isWishlisted={isWishlisted(p._id, vId)}
+                    isWishlisting={wishlisting === vId}
+                    onToggleWishlist={handleToggleWishlist}
+                  />
+                );
+              })}
+            </div>
           </div>
         )}
       </div>

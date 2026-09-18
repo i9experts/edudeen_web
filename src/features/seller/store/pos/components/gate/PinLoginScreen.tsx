@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Mail, LogIn, Delete } from 'lucide-react';
-import { SolvexoIcon } from '@/components/comman/ui/SolvexoLogo';
+import { EdudeenIcon } from '@/components/comman/ui/EdudeenLogo';
 import { OTPInput } from '@/components/comman/ui/OTPInput';
 import { useForm } from '@/hooks/useForm';
 import { required, email as emailValidator, exactLength, numeric } from '@/utils/validation/validators';
@@ -75,7 +75,7 @@ export function PinLoginScreen({ storeId, onSuccess }: PinLoginScreenProps) {
 
       <div className="relative w-full max-w-[400px] bg-pos-surface-3 border border-pos-border-strong rounded-[28px] p-8 sm:p-9 pos-panel-enter">
         <div className="flex flex-col items-center mb-8">
-          <SolvexoIcon size={48} />
+          <EdudeenIcon size={48} />
           <p className="text-[19px] font-bold text-white mt-5">POS Employee Login</p>
           <p className="text-[12.5px] text-pos-muted mt-[6px] text-center leading-[1.6] max-w-[280px]">
             Enter your email and 4-digit PIN to start your shift

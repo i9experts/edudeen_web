@@ -9,7 +9,7 @@ import {
   ChevronDown, ArrowRight, Plus, LifeBuoy, HelpCircle, Mail,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { SolvexoLogo } from './SolvexoLogo';
+import { EdudeenLogo } from './EdudeenLogo';
 import { TokenStorage } from '@/api/services/auth';
 import { NotificationBell } from './NotificationBell';
 import { ProfileAvatar } from './ProfileAvatar';
@@ -153,7 +153,7 @@ export function PublicMegaNavbar() {
       >
         <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 h-[60px] flex items-center justify-between gap-4">
           <Link to="/" className="shrink-0" aria-label="Edudeen home">
-            <SolvexoLogo size={28} />
+            <EdudeenLogo size={28} />
           </Link>
 
           {/* Desktop nav */}

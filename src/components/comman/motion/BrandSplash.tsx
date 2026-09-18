@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { SolvexoLogo } from '@/components/comman/ui/SolvexoLogo';
+import { EdudeenLogo } from '@/components/comman/ui/EdudeenLogo';
 
 const FLAG = 'edudeen:splash-shown';
 const EASE_OUT: [number, number, number, number] = [0.16, 1, 0.3, 1];
@@ -54,7 +54,7 @@ export function BrandSplash() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: ENTER_MS / 1000, ease: EASE_OUT }}
           >
-            <SolvexoLogo size={52} variant="light" />
+            <EdudeenLogo size={52} variant="light" />
             <motion.span
               className="h-[2px] rounded-full bg-gradient-to-r from-transparent via-brand-orange to-transparent"
               initial={{ width: 0, opacity: 0 }}

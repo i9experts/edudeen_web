@@ -103,7 +103,7 @@ export interface StoreProduct {
   digital:           DigitalMeta | null;
   status:            'draft' | 'active' | 'archived' | 'scheduled';
   scheduledAt:       string | null;
-  isListedOnSolvexo: boolean;
+  isListedOnEdudeen: boolean;
   isDelete:          boolean;
   createdAt:         string;
   updatedAt:         string;
@@ -122,7 +122,7 @@ export interface CreatePhysicalPayload {
   subCategoryId:     string | null;
   images:            string[];
   tags:              string[];
-  isListedOnSolvexo: boolean;
+  isListedOnEdudeen: boolean;
   status:            'draft' | 'active' | 'scheduled';
   scheduledAt?:      string | null;
   // At least one variant is required — every variant must share the same
@@ -140,7 +140,7 @@ export interface CreateDigitalPayload {
   customLevel?:      string | null;
   images:            string[];
   tags:              string[];
-  isListedOnSolvexo: boolean;
+  isListedOnEdudeen: boolean;
   status:            'draft' | 'active' | 'scheduled';
   scheduledAt?:      string | null;
   price:             number;
@@ -158,7 +158,7 @@ export interface EditPhysicalPayload {
   subCategoryId:     string | null;
   images:            string[];
   tags:              string[];
-  isListedOnSolvexo: boolean;
+  isListedOnEdudeen: boolean;
   status:            'draft' | 'active' | 'scheduled';
   scheduledAt?:      string | null;
 }

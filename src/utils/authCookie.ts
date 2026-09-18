@@ -31,14 +31,18 @@ function cookieDomain(): string | null {
   return `.${parts.slice(-2).join('.')}`;
 }
 
-export function setAuthCookie(name: string, value: string): void {
+// `persistent = false` ("remember me" unchecked) omits `max-age` entirely,
+// which makes it a session cookie — cleared when the browser itself closes,
+// instead of surviving ~400 days. Every existing call site keeps the long-
+// lived default, so omitting the param changes nothing for them.
+export function setAuthCookie(name: string, value: string, persistent = true): void {
   const domain = cookieDomain();
   const parts = [
     `${name}=${encodeURIComponent(value)}`,
     `path=/`,
-    `max-age=${MAX_AGE_SECONDS}`,
     `SameSite=Lax`,
   ];
+  if (persistent) parts.push(`max-age=${MAX_AGE_SECONDS}`);
   if (domain) parts.push(`domain=${domain}`);
   if (window.location.protocol === 'https:') parts.push('Secure');
   document.cookie = parts.join('; ');

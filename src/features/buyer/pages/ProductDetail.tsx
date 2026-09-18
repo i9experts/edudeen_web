@@ -11,6 +11,7 @@ import { useAuthGate } from '@/contexts/AuthGateContext';
 import { useToast } from '@/contexts/ToastContext';
 import { TokenStorage } from '@/api/services/auth';
 import { apiGetAllProducts, type MarketplaceProduct, type ProductVariant } from '@/api/services/marketplace';
+import { apiStartConversation, apiSendMessage } from '@/api/services/messaging';
 import { apiGetPublicStoreProducts, apiGetPublicStore, apiFollowStore, apiGetFollowStatus, type PublicStoreProduct, type PublicStoreData } from '@/api/services/store';
 import { getStorefrontUrl } from '@/utils/storefrontUrl';
 import { Button } from '@/components/comman/ui/Button';
@@ -24,7 +25,7 @@ import {
   ArrowRight, Package, Download, ClipboardList, CheckCircle, Minus, Plus,
   ShoppingCart, Star, Link2, Share2, ImageOff, Heart, ShieldCheck, Truck,
   UserPlus, UserCheck, Tag, ZoomIn, Users, Calendar, Award, Sparkles, Flame,
-  FileText, Store as StoreIcon, Eye, Loader2, Zap,
+  FileText, Store as StoreIcon, Eye, Loader2, Zap, MessageCircle,
 } from 'lucide-react';
 import { ProductReviewsSection } from './ProductReviews';
 import { currencySymbol } from '@/utils/currency';
@@ -335,6 +336,7 @@ export function ProductDetail() {
 
   const [following, setFollowing] = useState(false);
   const [followBusy, setFollowBusy] = useState(false);
+  const [askSellerBusy, setAskSellerBusy] = useState(false);
 
   const [previewOpen, setPreviewOpen] = useState(false);
   const { data: previewData, loading: previewLoading, error: previewError, load: loadPreview, reset: resetPreview } = useProductPreview(slug);
@@ -449,13 +451,39 @@ export function ProductDetail() {
     }, 'Sign in to follow this store.');
   }
 
-  async function handleAddToCart(navigateToCart: boolean) {
+  // "Ask the Seller a Question" — the closest real equivalent to a TPT-style
+  // Q&A tab this backend can support today (there's no question/answer
+  // schema, only Rating), so a pre-purchase question goes through the
+  // existing buyer↔seller messaging system instead, opened with this exact
+  // product attached as a rich product-share card so the seller has full
+  // context without the buyer having to re-describe which listing it's about.
+  function handleAskSeller() {
+    if (!storeId || !product || askSellerBusy) return;
+    requireAuth(async () => {
+      setAskSellerBusy(true);
+      try {
+        const conv = await apiStartConversation({ storeId });
+        await apiSendMessage(conv._id, { type: 'product_share', productShare: { productId: product._id } });
+        navigate(`/account/messages?conversation=${conv._id}`);
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : 'Could not start a conversation.');
+      } finally {
+        setAskSellerBusy(false);
+      }
+    }, 'Sign in to ask the seller a question.');
+  }
+
+  async function handleAddToCart(buyNow: boolean) {
     if (!product || !activeVariant) return;
     await addToCart(product._id, activeVariant._id, isPhysical ? 'physical' : 'digital');
     for (let i = 1; i < qty; i++) {
       await updateQty(product._id, activeVariant._id, 'increase');
     }
-    if (navigateToCart) navigate('/cart');
+    // "Buy Now" skips straight to checkout instead of the cart page — the
+    // checkout gate itself (see CheckoutPage.tsx) handles a still-logged-out
+    // buyer with an inline modal now, so there's no reason to stop at the
+    // cart page first.
+    if (buyNow) navigate('/checkout');
     else { setAddedFeedback(true); setTimeout(() => setAddedFeedback(false), 2000); }
   }
 
@@ -649,6 +677,16 @@ export function ProductDetail() {
                         {shareCopied ? <Link2 size={15} className="text-success" /> : <Share2 size={15} />}
                       </button>
                     </div>
+                    {storeId && (
+                      <button
+                        onClick={handleAskSeller}
+                        disabled={askSellerBusy}
+                        className="flex items-center justify-center gap-[6px] py-2 text-[12.5px] font-medium text-slate hover:text-brand-orange transition-colors cursor-pointer bg-transparent border-none disabled:opacity-60"
+                      >
+                        {askSellerBusy ? <Loader2 size={13} className="animate-spin" /> : <MessageCircle size={13} />}
+                        Ask the seller a question
+                      </button>
+                    )}
                   </div>
 
                   {/* Trust row */}

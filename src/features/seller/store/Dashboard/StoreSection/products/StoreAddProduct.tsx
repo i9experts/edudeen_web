@@ -134,12 +134,12 @@ function VariantOptionsField({ options, onChange }: { options: VariantOption[]; 
 const initPhys = {
   name: '', description: '', price: '', compareAtPrice: '',
   stock: '', options: [] as VariantOption[], shippingWeight: '', subCategoryId: '',
-  status: 'draft' as ProductStatus, isListedOnSolvexo: false,
+  status: 'draft' as ProductStatus, isListedOnEdudeen: false,
   scheduledAt: '', tagInput: '', tags: [] as string[], images: [] as string[],
 };
 const initDig = {
   name: '', description: '', price: '', compareAtPrice: '', subCategoryId: '',
-  status: 'draft' as ProductStatus, isListedOnSolvexo: false,
+  status: 'draft' as ProductStatus, isListedOnEdudeen: false,
   scheduledAt: '', tagInput: '', tags: [] as string[], images: [] as string[],
   fileData: null as PrivateUploadData | null,
   downloadLimit: 'unlimited', linkExpiryDays: '',
@@ -207,7 +207,7 @@ export default function StoreAddProduct() {
         const res = await apiCreatePhysicalProduct({
           storeId, name: phys.name, description: phys.description,
           subCategoryId: phys.subCategoryId || null, images: phys.images, tags: phys.tags,
-          isListedOnSolvexo: phys.isListedOnSolvexo, status: finalStatus,
+          isListedOnEdudeen: phys.isListedOnEdudeen, status: finalStatus,
           scheduledAt: finalStatus === 'scheduled' ? phys.scheduledAt || null : null,
           variants: [{
             price: Number(phys.price),
@@ -227,7 +227,7 @@ export default function StoreAddProduct() {
           subCategoryId: dig.subCategoryId || null, images: dig.images, tags: dig.tags,
           educationLevel: pType === 'educational' ? (dig.educationLevel || null) : null,
           customLevel: pType === 'educational' && dig.educationLevel === 'other' ? dig.customLevel : null,
-          isListedOnSolvexo: dig.isListedOnSolvexo, status: finalStatus,
+          isListedOnEdudeen: dig.isListedOnEdudeen, status: finalStatus,
           scheduledAt: finalStatus === 'scheduled' ? dig.scheduledAt || null : null,
           price: Number(dig.price), compareAtPrice: dig.compareAtPrice ? Number(dig.compareAtPrice) : null,
           digital: { files, downloadLimit: dig.downloadLimit, linkExpiryDays: dig.linkExpiryDays ? Number(dig.linkExpiryDays) : null, pdfStampingEnabled: dig.pdfStampingEnabled, licenseType: dig.licenseType, buyerDeliveryMessage: dig.buyerDeliveryMessage, preview: { enabled: dig.previewEnabled, sourceFileIndex: 0 } },
@@ -541,8 +541,8 @@ export default function StoreAddProduct() {
               <div className="flex items-center justify-between">
                 <span className="text-[12px] text-charcoal">Also list in Edudeen Marketplace</span>
                 <Toggle
-                  checked={cur.isListedOnSolvexo}
-                  onChange={v => pType === 'physical' ? sp('isListedOnSolvexo', v) : sd('isListedOnSolvexo', v)}
+                  checked={cur.isListedOnEdudeen}
+                  onChange={v => pType === 'physical' ? sp('isListedOnEdudeen', v) : sd('isListedOnEdudeen', v)}
                 />
               </div>
             </div>

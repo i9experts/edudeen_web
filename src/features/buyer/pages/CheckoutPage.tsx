@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { getStorefrontUrl } from '@/utils/storefrontUrl';
 import { useCartContext } from '@/contexts/CartContext';
+import { useAuthGate } from '@/contexts/AuthGateContext';
 import { TokenStorage } from '@/api/services/auth';
 import { useShippingZones } from '@/hooks/shipping/useShippingZones';
 import { apiGetMyAddresses, type Address } from '@/api/services/address';
@@ -308,16 +309,33 @@ function PaymentMethodOptions({
 export function CheckoutPage() {
   usePageTitle('Checkout');
   const navigate  = useNavigate();
+  const authGate  = useAuthGate();
 
   // The one point in the buyer flow that actually requires login — browsing
-  // and Add to Cart both work as a guest (see CartContext's guest cart).
-  // `redirect` lands them straight back here post-login, with their cart
-  // already merged onto their real account (CartContext's
-  // 'edudeen:auth-login' listener), same pattern CartPage used to use.
-  if (!TokenStorage.isLoggedIn()) {
-    return <Navigate to={`/login?redirect=${encodeURIComponent('/checkout')}`} replace />;
-  }
+  // and Add to Cart both work as a guest (see CartContext's guest cart). A
+  // modal sign-in gate (same mechanism already used for wishlist/follow)
+  // instead of a full-page redirect to /login — the checkout page never
+  // unmounts, so once the modal resolves the cart (already merged onto the
+  // real account via CartContext's 'edudeen:auth-login' listener) is right
+  // there waiting, no bounce back-and-forth needed.
+  const [, setAuthTick] = useState(0);
+  useEffect(() => {
+    const onLogin = () => setAuthTick(t => t + 1);
+    window.addEventListener('edudeen:auth-login', onLogin);
+    return () => window.removeEventListener('edudeen:auth-login', onLogin);
+  }, []);
+  const loggedIn = TokenStorage.isLoggedIn();
+  useEffect(() => {
+    if (!loggedIn) authGate.requireAuth(() => {}, 'Sign in to complete your purchase.');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loggedIn]);
 
+  // Every hook below still runs regardless of login state (CartContext
+  // already supports a guest cart) — the actual "not signed in" branch is
+  // rendered further down, after every hook in this component has been
+  // called, never before (an early return up here would make React call a
+  // different number of hooks on the next render the instant login succeeds
+  // and this same component instance re-renders instead of navigating away).
   const { cart, loading: cartLoading, cartCount, clearCart } = useCartContext();
 
   // One unified checkout for the whole cart, mixed physical+digital included
@@ -439,8 +457,13 @@ export function CheckoutPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [effectiveMethods.length]);
 
-  // Fetch addresses (physical only)
+  // Fetch addresses (physical only) — skipped entirely while the sign-in
+  // gate is up (see `loggedIn` above): both of these hit authenticated
+  // endpoints, and firing them as a guest would 401 straight into the axios
+  // client's own global "session expired" redirect, defeating the in-place
+  // modal gate below. Re-fires once `loggedIn` flips true.
   useEffect(() => {
+    if (!loggedIn) return;
     if (isDigital) { setAddrLoading(false); return; }
     let cancelled = false;
     apiGetMyAddresses()
@@ -453,11 +476,11 @@ export function CheckoutPage() {
       .catch(() => { })
       .finally(() => { if (!cancelled) setAddrLoading(false); });
     return () => { cancelled = true; };
-  }, [isDigital]);
+  }, [isDigital, loggedIn]);
 
   // Digital: auto-create checkout (no address/shipping needed) and jump to payment
   useEffect(() => {
-    if (!isDigital || checkout) return;
+    if (!loggedIn || !isDigital || checkout) return;
     let cancelled = false;
     setCreatingCheckout(true);
     setCheckoutError('');
@@ -478,7 +501,7 @@ export function CheckoutPage() {
       .finally(() => { if (!cancelled) setCreatingCheckout(false); });
     return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isDigital]);
+  }, [isDigital, loggedIn]);
 
   // Card ('stripe') or split ('split') selected → get a Stripe clientSecret
   // for this checkout so the PaymentElement can mount. Re-fetches if the
@@ -703,6 +726,21 @@ export function CheckoutPage() {
     await clearCart();
     setManualPaymentResult({ orders, amountPKR });
   };
+
+  if (!loggedIn) {
+    return (
+      <div className="min-h-screen bg-cream flex flex-col">
+        <BuyerNavbar variant="minimal" contextLabel="Checkout" hideCommerce />
+        <div className="flex-1 flex flex-col items-center justify-center gap-4 px-4 py-16 text-center">
+          <p className="text-[14px] text-slate max-w-[320px]">Sign in to complete your purchase — your cart will be right here waiting.</p>
+          <Button onClick={() => authGate.requireAuth(() => {}, 'Sign in to complete your purchase.')}>Sign In</Button>
+          <button onClick={() => navigate('/cart')} className="text-[12.5px] text-slate hover:text-charcoal transition-colors bg-transparent border-none cursor-pointer">
+            Back to Cart
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (manualPaymentResult) {
     return (

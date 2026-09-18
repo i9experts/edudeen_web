@@ -1,6 +1,6 @@
 import { Construction } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
-import { SolvexoLogo } from '@/components/comman/ui';
+import { EdudeenLogo } from '@/components/comman/ui';
 
 /** Shown when the backend returns a maintenance-mode 503 (see client.ts).
  * Admin routes stay reachable so an admin can log in and turn it back off. */
@@ -9,7 +9,7 @@ export function MaintenancePage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-cream px-6 text-center">
-      <SolvexoLogo className="mb-8" />
+      <EdudeenLogo className="mb-8" />
       <div className="w-16 h-16 rounded-2xl bg-brand-pale-orange flex items-center justify-center mb-6">
         <Construction size={28} className="text-brand-orange" />
       </div>

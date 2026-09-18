@@ -90,7 +90,7 @@ export interface MarketplaceProduct {
   totalRatings?:     number;
   lastWishlistedAt:  string | null;
   status:            string;
-  isListedOnSolvexo?: boolean;
+  isListedOnEdudeen?: boolean;
   isDelete:          boolean;
   createdAt:         string;
   updatedAt:         string;

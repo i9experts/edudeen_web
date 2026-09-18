@@ -3,7 +3,7 @@ import { X, Zap, PackageCheck, Tag } from 'lucide-react';
 import { clsx } from 'clsx';
 import { DialogShell } from './DialogShell';
 import { Button } from './Button';
-import { SolvexoIcon } from './SolvexoLogo';
+import { EdudeenIcon } from './EdudeenLogo';
 
 // Internal test track — swap for the public Play Store listing once Edudeen
 // graduates out of internal testing.
@@ -51,7 +51,7 @@ export function AppOpenPrompt() {
         </button>
 
         <div className="flex items-center gap-3 pr-8">
-          <SolvexoIcon size={40} />
+          <EdudeenIcon size={40} />
           <div className="min-w-0">
             <p className="text-[14px] font-bold text-carbon leading-tight">Continue in the Edudeen App</p>
             <p className="text-[11.5px] text-slate mt-[2px] leading-snug">A faster, smoother way to shop</p>
@@ -101,7 +101,7 @@ export function AppOpenFab() {
         'transition-all duration-500 ease-out hover:px-[10px]',
       )}
     >
-      <SolvexoIcon size={15} />
+      <EdudeenIcon size={15} />
       <span className="text-[10px] font-bold uppercase tracking-[0.04em]">
         Open
       </span>

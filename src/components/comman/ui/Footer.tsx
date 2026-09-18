@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
 import { Send, Check, ChevronDown, ChevronRight, ArrowUp, Mail } from 'lucide-react';
-import { SolvexoLogo, SolvexoIcon } from './SolvexoLogo';
+import { EdudeenLogo, EdudeenIcon } from './EdudeenLogo';
 import { AppleGlyph, GooglePlayGlyph } from './AppPromoParts';
 import { apiSubscribeNewsletter } from '../../../api/services/newsletter';
 import { scrollRootToTop } from '@/utils/scrollRoot';
@@ -21,6 +21,15 @@ interface FooterLink {
 // only ever shops a seller's own storefront subdomain). The routes/pages
 // themselves are untouched, just unlinked from here.
 const FOOTER_COLUMNS: { heading: string; links: FooterLink[] }[] = [
+  {
+    heading: 'Shop',
+    links: [
+      { label: 'Marketplace', path: '/marketplace' },
+      { label: 'Education',   path: '/education' },
+      { label: 'My Orders',   path: '/account/orders' },
+      { label: 'Wishlist',    path: '/account/wishlist' },
+    ],
+  },
   {
     heading: 'Products',
     links: [
@@ -282,10 +291,10 @@ export function Footer({ showNewsletter = true }: { showNewsletter?: boolean }) 
 
       {/* ── Link columns ─────────────────────────────────────────────────────── */}
       <Reveal className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1fr_1fr_1fr_1fr_1fr] gap-8 lg:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1.2fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr] gap-8 lg:gap-6">
 
           <div className="sm:col-span-2 lg:col-span-1 pb-2 sm:pb-0">
-            <SolvexoLogo size={26} variant="light" />
+            <EdudeenLogo size={26} variant="light" />
             <p className="text-[12.5px] mt-4 leading-relaxed max-w-[260px] text-[#9a9894]">
               The commerce OS for sellers, creators and educators — your own storefront, POS, and AI-powered tools in one platform.
             </p>
@@ -329,7 +338,7 @@ export function Footer({ showNewsletter = true }: { showNewsletter?: boolean }) 
       <div className="border-t border-white/10">
         <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-col-reverse sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <SolvexoIcon size={16} />
+            <EdudeenIcon size={16} />
             <p className="text-[12px] text-[#8b8985]">© {new Date().getFullYear()} Edudeen. All rights reserved.</p>
           </div>
           <button

@@ -10,7 +10,7 @@ import type { PublicStoreListItem } from '@/api/services/store';
 import { getStorefrontUrl } from '@/utils/storefrontUrl';
 import { ProductImage } from '@/components/comman/marketplace/ProductCard';
 import { Button } from './Button';
-import { SolvexoLogo } from './SolvexoLogo';
+import { EdudeenLogo } from './EdudeenLogo';
 import { SkeletonBox } from './SkeletonBox';
 import { NotificationBell } from './NotificationBell';
 import { ProfileAvatar } from './ProfileAvatar';
@@ -1093,7 +1093,7 @@ export function BuyerNavbar({ variant = 'full', contextLabel, search, accentColo
             mobileSearchOpen ? 'hidden md:flex' : 'flex',
           )}
         >
-          <SolvexoLogo size={scrolled ? 28 : 34} className="transition-[width,height] duration-200" />
+          <EdudeenLogo size={scrolled ? 28 : 34} className="transition-[width,height] duration-200" />
           {contextLabel && (
             <>
               <span className="text-bone mx-1 hidden md:inline">|</span>

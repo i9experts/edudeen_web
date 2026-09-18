@@ -135,12 +135,12 @@ function VariantOptionsField({ options, onChange }: { options: VariantOption[]; 
 const blankPhys = {
   name: '', description: '', price: '', compareAtPrice: '',
   stock: '', options: [] as VariantOption[], shippingWeight: '', subCategoryId: '',
-  status: 'draft' as ProductStatus, isListedOnSolvexo: false,
+  status: 'draft' as ProductStatus, isListedOnEdudeen: false,
   scheduledAt: '', tagInput: '', tags: [] as string[], images: [] as string[],
 };
 const blankDig = {
   name: '', description: '', price: '', compareAtPrice: '', subCategoryId: '',
-  status: 'draft' as ProductStatus, isListedOnSolvexo: false,
+  status: 'draft' as ProductStatus, isListedOnEdudeen: false,
   scheduledAt: '', tagInput: '', tags: [] as string[], images: [] as string[],
   fileData: null as PrivateUploadData | null,
   downloadLimit: 'unlimited', linkExpiryDays: '',
@@ -157,7 +157,7 @@ function physFromEntry(p: StoreProduct, v: ProductVariant): PhysForm {
     price: String(v.price), compareAtPrice: v.compareAtPrice != null ? String(v.compareAtPrice) : '',
     stock: String(v.stock), options: [...(v.options ?? [])], shippingWeight: v.shippingWeight ?? '',
     subCategoryId: p.subCategoryId ?? '',
-    status: p.status as ProductStatus, isListedOnSolvexo: p.isListedOnSolvexo,
+    status: p.status as ProductStatus, isListedOnEdudeen: p.isListedOnEdudeen,
     scheduledAt: '', tags: [...(p.tags ?? [])], tagInput: '', images: [...(p.images ?? [])],
   };
 }
@@ -167,7 +167,7 @@ function digFromEntry(p: StoreProduct, v: ProductVariant): DigForm {
     name: p.name, description: p.description,
     price: String(v.price), compareAtPrice: v.compareAtPrice != null ? String(v.compareAtPrice) : '',
     subCategoryId: p.subCategoryId ?? '',
-    status: p.status as ProductStatus, isListedOnSolvexo: p.isListedOnSolvexo,
+    status: p.status as ProductStatus, isListedOnEdudeen: p.isListedOnEdudeen,
     scheduledAt: '', tags: [...(p.tags ?? [])], tagInput: '', images: [...(p.images ?? [])],
     fileData: f0 ? { publicId: f0.url, resourceType: 'raw', fileName: f0.name, fileSize: f0.size, mimeType: f0.mimeType } : null,
     downloadLimit: d?.downloadLimit ?? 'unlimited',
@@ -265,7 +265,7 @@ export default function StoreEditProduct() {
         const res = await apiEditPhysicalProduct(productId, {
           productId, name: phys.name, description: phys.description,
           subCategoryId: phys.subCategoryId || null, images: phys.images, tags: phys.tags,
-          isListedOnSolvexo: phys.isListedOnSolvexo, status: finalStatus,
+          isListedOnEdudeen: phys.isListedOnEdudeen, status: finalStatus,
           scheduledAt: finalStatus === 'scheduled' ? phys.scheduledAt || null : null,
         });
         let variant = res.data.variant;
@@ -628,8 +628,8 @@ export default function StoreEditProduct() {
               <div className="flex items-center justify-between">
                 <span className="text-[12px] text-charcoal">Also list in Edudeen Marketplace</span>
                 <Toggle
-                  checked={cur.isListedOnSolvexo}
-                  onChange={v => pType === 'physical' ? sp('isListedOnSolvexo', v) : sd('isListedOnSolvexo', v)}
+                  checked={cur.isListedOnEdudeen}
+                  onChange={v => pType === 'physical' ? sp('isListedOnEdudeen', v) : sd('isListedOnEdudeen', v)}
                 />
               </div>
             </div>

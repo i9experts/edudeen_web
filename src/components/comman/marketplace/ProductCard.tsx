@@ -7,6 +7,27 @@ import { useProductPreview } from '@/hooks/marketplace/useProductPreview';
 import { currencySymbol } from '@/utils/currency';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 
+// Wraps the substring of `text` matching `query` in <mark> — same idea as
+// BuyerNavbar's search-suggestion dropdown (RecommendedProductRow), applied
+// here too so a Marketplace search-results grid highlights the match instead
+// of only the dropdown preview doing it. Case-insensitive, first match only
+// (titles are short — highlighting every occurrence isn't worth the
+// complexity here). Returns the plain text unchanged when there's no query
+// or no match, so this is a no-op for every non-search-results card.
+function HighlightedText({ text, query }: { text: string; query?: string }) {
+  const q = query?.trim();
+  if (!q) return <>{text}</>;
+  const idx = text.toLowerCase().indexOf(q.toLowerCase());
+  if (idx === -1) return <>{text}</>;
+  return (
+    <>
+      {text.slice(0, idx)}
+      <mark className="bg-brand-pale-orange text-brand-deep-orange rounded-[2px]">{text.slice(idx, idx + q.length)}</mark>
+      {text.slice(idx + q.length)}
+    </>
+  );
+}
+
 // ── Skeleton ──────────────────────────────────────────────────────────────────
 export function ProductCardSkeleton({ layout = 'grid' }: { layout?: 'grid' | 'list' }) {
   if (layout === 'list') {
@@ -101,9 +122,13 @@ export function StarRating({ rating, count }: { rating: number; count?: number }
 // same visual language as FlashSaleCard's Homepage rail tile, just in a
 // grid-card shape instead of a rail-card shape. Fix bugs here once, they're
 // fixed everywhere.
-export const ProductCard = memo(function ProductCard({ product, onClick, onAddToCart, isAdding, addToCartFailed = false, isWishlisted, isWishlisting, onToggleWishlist, compact = false, layout = 'grid' }: {
+export const ProductCard = memo(function ProductCard({ product, onClick, onAddToCart, isAdding, addToCartFailed = false, isWishlisted, isWishlisting, onToggleWishlist, compact = false, layout = 'grid', highlightQuery }: {
   product:          MarketplaceProduct;
   onClick:          (id: string) => void;
+  /** Active search term, when this card is rendered inside search results —
+   *  wraps the matching part of the title in <mark> so a shopper can see why
+   *  each result matched. Omitted (the default) everywhere else. */
+  highlightQuery?:  string;
   onAddToCart:      (e: React.MouseEvent, id: string, variantId: string, type: 'physical' | 'digital') => void;
   isAdding:         boolean;
   /** True for a few seconds right after this card's own Add to Cart request
@@ -346,7 +371,7 @@ export const ProductCard = memo(function ProductCard({ product, onClick, onAddTo
         isList ? 'flex-col justify-center gap-[3px] p-3 sm:p-4' : clsx('flex-col pt-2', compact ? 'px-[9px] pb-2' : 'px-[9px] pb-2 sm:px-[10px] sm:pb-[10px]'),
       )}>
         <p className={clsx('font-semibold text-carbon leading-[1.3] tracking-[-0.01em]', isList ? 'text-[13px] sm:text-[14px] line-clamp-1' : clsx('mb-[2px] line-clamp-2', compact ? 'text-[11.5px]' : 'text-[12px]'))}>
-          {product.name}
+          <HighlightedText text={product.name} query={highlightQuery} />
         </p>
 
         {!compact && !isList && product.description && (

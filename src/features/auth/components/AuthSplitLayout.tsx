@@ -1,7 +1,7 @@
 import { type ReactNode } from 'react';
 import { clsx } from 'clsx';
 import type { LucideIcon } from 'lucide-react';
-import { SolvexoLogo, SolvexoIcon } from '@/components/comman/ui/SolvexoLogo';
+import { EdudeenLogo, EdudeenIcon } from '@/components/comman/ui/EdudeenLogo';
 import { Reveal, RevealStagger } from '@/components/comman/motion/Reveal';
 import { BrandSplash } from '@/components/comman/motion/BrandSplash';
 import { motion, useReducedMotion } from 'motion/react';
@@ -75,7 +75,7 @@ export function AuthSplitLayout({
 
         <div className="relative z-10 flex flex-col items-center">
           <div className="mb-[clamp(6px,1.5vh,12px)]">
-            {brandingHeader ?? <SolvexoIcon size={44} />}
+            {brandingHeader ?? <EdudeenIcon size={44} />}
           </div>
 
           <h2 className="font-serif text-[clamp(16px,3.2vh,22px)] font-bold text-white leading-[1.2] max-w-[300px] mb-[clamp(3px,1vh,8px)]">
@@ -104,7 +104,7 @@ export function AuthSplitLayout({
            AuthMockups.tsx) shrinks together as the panel shrinks rather than
            overflowing and needing a scrollbar. */}
         <div className="relative z-10 flex flex-col justify-between h-full w-full overflow-hidden p-[clamp(16px,3vh,40px)]">
-          {brandingHeader ?? <SolvexoLogo size={38} variant="light" />}
+          {brandingHeader ?? <EdudeenLogo size={38} variant="light" />}
 
           <div className="min-h-0 overflow-hidden">
             <Reveal delay={0}>

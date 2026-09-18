@@ -201,7 +201,6 @@ const mainRouter = createBrowserRouter([
             path: '/',
             element: <PublicLayout />,
             children: [
-              { index: true,             element: <Homepage /> },
               { path: 'pricing',         element: <PricingPage /> },
               { path: 'sellers',         element: <ForSellersPage /> },
               { path: 'faq',             element: <FaqPage /> },
@@ -247,6 +246,7 @@ const mainRouter = createBrowserRouter([
           // redirected to the new canonical `/product/:slug` — see
           // Marketplace.tsx's handling of `slugOrId`. Can't be two separate
           // sibling routes since both shapes share the identical path pattern.
+          { index: true,             element: <Homepage /> },
           { path: 'marketplace/:slugOrId?', element: <Marketplace /> },
           { path: 'cart',            element: <CartPage /> },
           { path: 'checkout',        element: <CheckoutPage /> },

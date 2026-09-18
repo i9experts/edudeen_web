@@ -1057,6 +1057,7 @@ export function Marketplace() {
                             isWishlisted={isWishlisted(p._id, vId)}
                             isWishlisting={wishlisting === vId}
                             onToggleWishlist={handleToggleWishlist}
+                            highlightQuery={search || undefined}
                           />
                         );
                       })

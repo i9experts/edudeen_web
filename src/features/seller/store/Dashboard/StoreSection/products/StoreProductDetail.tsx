@@ -7,7 +7,7 @@ import {
 import { useStoreWorkspace } from '@/components/layouts/StoreLayout';
 import { apiGetMyProductById } from '@/api/services/product';
 import { getCachedProducts, type ProductEntry } from './_cache';
-import { SkeletonBox } from '@/components/comman/ui';
+import { SkeletonBox, StatusBadge, InfoRow, Card } from '@/components/comman/ui';
 import { currencySymbol } from '@/utils/currency';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -16,39 +16,20 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-PK', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
-function StatusBadge({ status }: { status: string }) {
-  const map: Record<string, { label: string; color: string; bg: string }> = {
-    active:    { label: 'Active',    color: '#1E7A3C', bg: '#E3F4EA' },
-    draft:     { label: 'Draft',     color: '#B36200', bg: '#FFF0E0' },
-    scheduled: { label: 'Scheduled', color: '#2156A8', bg: '#EAF0FB' },
-    archived:  { label: 'Archived',  color: '#6B7280', bg: '#F3F4F6' },
-  };
-  const s = map[status] ?? { label: status, color: '#6B7280', bg: '#F3F4F6' };
+// A titled panel, composed on top of the shared `Card` (rather than a
+// from-scratch bordered div) so this page picks up the same container
+// styling/tokens as every other panel in the app — the title+icon header
+// row itself is specific enough to this detail-page layout that it isn't
+// worth adding as a variant of the generic `Card`.
+function SectionCard({ title, icon: Icon, children }: { title: string; icon?: React.ElementType; children: React.ReactNode }) {
   return (
-    <span className="inline-flex items-center px-[10px] py-[3px] rounded-[5px] text-[11px] font-semibold" style={{ color: s.color, background: s.bg }}>
-      {s.label}
-    </span>
-  );
-}
-
-function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div className="flex items-start justify-between gap-4 py-3 border-b border-bone last:border-b-0">
-      <span className="text-[12px] text-slate shrink-0">{label}</span>
-      <span className="text-[12px] font-medium text-charcoal text-right">{value ?? '—'}</span>
-    </div>
-  );
-}
-
-function Card({ title, icon: Icon, children }: { title: string; icon?: React.ElementType; children: React.ReactNode }) {
-  return (
-    <div className="bg-white border border-bone rounded-[10px] overflow-hidden">
+    <Card padding="none">
       <div className="px-5 py-3.5 border-b border-bone flex items-center gap-2">
         {Icon && <Icon size={14} className="text-brand-orange shrink-0" />}
         <p className="text-[12px] font-bold text-charcoal uppercase tracking-[0.06em]">{title}</p>
       </div>
       <div className="px-5 py-1">{children}</div>
-    </div>
+    </Card>
   );
 }
 
@@ -205,7 +186,7 @@ export default function StoreProductDetail() {
                     <p className="text-[12px] text-slate line-through mt-0.5">{currencySymbol(store?.baseCurrency)}{v.compareAtPrice.toLocaleString()}</p>
                   )}
                   {discountPct !== null && (
-                    <span className="inline-block text-[11px] font-bold text-[#1e7a3c] bg-[#e3f4ea] px-2 py-0.5 rounded-[5px] mt-1">{discountPct}% OFF</span>
+                    <span className="inline-block text-[11px] font-bold text-success bg-success-bg px-2 py-0.5 rounded-[5px] mt-1">{discountPct}% OFF</span>
                   )}
                 </div>
               </div>
@@ -225,7 +206,7 @@ export default function StoreProductDetail() {
               )}
               <div>
                 <p className="text-[10px] text-slate uppercase tracking-[0.06em] font-semibold">Marketplace</p>
-                <p className="text-[14px] font-bold text-charcoal mt-0.5">{p.isListedOnSolvexo ? 'Listed' : 'Not listed'}</p>
+                <p className="text-[14px] font-bold text-charcoal mt-0.5">{p.isListedOnEdudeen ? 'Listed' : 'Not listed'}</p>
               </div>
               <div>
                 <p className="text-[10px] text-slate uppercase tracking-[0.06em] font-semibold">Tags</p>
@@ -246,7 +227,7 @@ export default function StoreProductDetail() {
           <div className="flex flex-col gap-4">
 
             {/* Basic Info */}
-            <Card title="Basic Information" icon={Package}>
+            <SectionCard title="Basic Information" icon={Package}>
               <InfoRow label="Product Name" value={<strong>{p.name}</strong>} />
               <InfoRow label="Product Type" value={
                 <span className="flex items-center gap-1.5 justify-end">
@@ -262,10 +243,10 @@ export default function StoreProductDetail() {
                   <p className="text-[13px] text-charcoal leading-[1.7]">{p.description}</p>
                 </div>
               )}
-            </Card>
+            </SectionCard>
 
             {/* Pricing */}
-            <Card title="Pricing" icon={Tag}>
+            <SectionCard title="Pricing" icon={Tag}>
               <InfoRow label="Selling Price" value={
                 <span className="font-bold text-charcoal">{currencySymbol(store?.baseCurrency)}{v.price.toLocaleString()}</span>
               } />
@@ -276,26 +257,26 @@ export default function StoreProductDetail() {
               } />
               {discountPct !== null && (
                 <InfoRow label="Discount" value={
-                  <span className="font-semibold text-[#1e7a3c]">{discountPct}% off</span>
+                  <span className="font-semibold text-success">{discountPct}% off</span>
                 } />
               )}
-            </Card>
+            </SectionCard>
 
             {/* Physical: Inventory */}
             {!isDigital && (
-              <Card title="Inventory & Shipping" icon={Package}>
+              <SectionCard title="Inventory & Shipping" icon={Package}>
                 <InfoRow label="SKU"             value={<code className="text-[11px] bg-bone px-[6px] py-[2px] rounded font-mono">{v.sku}</code>} />
                 <InfoRow label="Stock"           value={`${v.stock} units`} />
                 {(v.options ?? []).map(o => (
                   <InfoRow key={o.name} label={o.name} value={o.value} />
                 ))}
                 <InfoRow label="Shipping Weight" value={v.shippingWeight || '—'} />
-              </Card>
+              </SectionCard>
             )}
 
             {/* Digital delivery */}
             {isDigital && p.digital && (
-              <Card title="Digital Delivery" icon={Download}>
+              <SectionCard title="Digital Delivery" icon={Download}>
                 {(p.digital.files ?? []).length > 0 ? (
                   <div className="py-3 border-b border-bone">
                     <p className="text-[11px] text-slate mb-2">Attached File</p>
@@ -317,7 +298,7 @@ export default function StoreProductDetail() {
                 <InfoRow label="License"        value={<span className="capitalize">{p.digital.licenseType}</span>} />
                 <InfoRow label="PDF Stamping"   value={
                   p.digital.pdfStampingEnabled
-                    ? <span className="flex items-center gap-1 text-[#1e7a3c] justify-end"><CheckCircle size={13} /> Enabled</span>
+                    ? <span className="flex items-center gap-1 text-success justify-end"><CheckCircle size={13} /> Enabled</span>
                     : <span className="flex items-center gap-1 text-slate justify-end"><XCircle size={13} /> Disabled</span>
                 } />
                 {p.digital.buyerDeliveryMessage && (
@@ -328,12 +309,12 @@ export default function StoreProductDetail() {
                     </p>
                   </div>
                 )}
-              </Card>
+              </SectionCard>
             )}
 
             {/* Tags */}
             {(p.tags ?? []).length > 0 && (
-              <Card title="Tags" icon={Tag}>
+              <SectionCard title="Tags" icon={Tag}>
                 <div className="flex flex-wrap gap-1.5 py-3">
                   {(p.tags ?? []).map((t, i) => (
                     <span key={i} className="bg-brand-pale-orange text-brand-orange border border-brand-orange/20 rounded-[6px] px-[10px] py-[4px] text-[12px] font-medium">
@@ -341,7 +322,7 @@ export default function StoreProductDetail() {
                     </span>
                   ))}
                 </div>
-              </Card>
+              </SectionCard>
             )}
           </div>
 
@@ -365,27 +346,27 @@ export default function StoreProductDetail() {
             )}
 
             {/* Settings */}
-            <Card title="Settings" icon={Globe}>
+            <SectionCard title="Settings" icon={Globe}>
               <InfoRow label="Marketplace" value={
-                p.isListedOnSolvexo
-                  ? <span className="flex items-center gap-1 text-[#1e7a3c] justify-end"><CheckCircle size={13} /> Listed</span>
+                p.isListedOnEdudeen
+                  ? <span className="flex items-center gap-1 text-success justify-end"><CheckCircle size={13} /> Listed</span>
                   : <span className="flex items-center gap-1 text-slate justify-end"><XCircle size={13} /> Not listed</span>
               } />
               {!isDigital && <InfoRow label="SKU" value={<code className="text-[11px] bg-bone px-[6px] py-[2px] rounded font-mono">{v.sku}</code>} />}
-            </Card>
+            </SectionCard>
 
             {/* Timeline */}
-            <Card title="Timeline" icon={Calendar}>
+            <SectionCard title="Timeline" icon={Calendar}>
               <InfoRow label="Created"      value={formatDate(p.createdAt)} />
               <InfoRow label="Last Updated" value={formatDate(p.updatedAt)} />
-            </Card>
+            </SectionCard>
 
             {/* Product ID */}
-            <Card title="Product ID" icon={Hash}>
+            <SectionCard title="Product ID" icon={Hash}>
               <div className="py-3">
                 <p className="text-[11px] text-slate font-mono break-all leading-[1.6]">{p._id}</p>
               </div>
-            </Card>
+            </SectionCard>
 
           </div>
         </div>

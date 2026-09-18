@@ -4,7 +4,7 @@ import { clsx } from 'clsx';
 import { ShoppingCart, ClipboardList, Package, BarChart2, Settings2, Banknote, ArrowLeft, LogOut } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Avatar } from '@/components/comman/ui/Avatar';
-import { SolvexoIcon } from '@/components/comman/ui/SolvexoLogo';
+import { EdudeenIcon } from '@/components/comman/ui/EdudeenLogo';
 import { apiCashInOut } from '@/api/services/pos/posSessions';
 import { usePosSession } from '../context/PosSessionContext';
 import { ProfileOverlay } from './ProfileOverlay';
@@ -39,7 +39,7 @@ export function POSTopBar({ activeTab, setActiveTab }: POSTopBarProps) {
     <div className="shrink-0 flex flex-wrap items-center gap-3 sm:gap-5 px-3 sm:px-5 py-[10px] sm:h-16 bg-pos-surface-2 border-b border-pos-border">
       {/* Logo */}
       <div className="flex items-center gap-[10px] shrink-0">
-        <SolvexoIcon size={28} />
+        <EdudeenIcon size={28} />
         <span className="hidden sm:inline text-[14px] font-bold text-white">POS Register</span>
         <div className="flex items-center gap-[6px] bg-pos-surface rounded-full pl-[7px] pr-[10px] py-[5px] border border-pos-border">
           <span className="relative w-[7px] h-[7px] rounded-full bg-success shrink-0 pos-live-pulse" />

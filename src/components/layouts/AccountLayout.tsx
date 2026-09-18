@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { useWishlistContext } from '@/contexts/WishlistContext';
 import { useConversations } from '@/hooks/messaging/useConversations';
-import { SolvexoIcon } from '@/components/comman/ui/SolvexoLogo';
+import { EdudeenIcon } from '@/components/comman/ui/EdudeenLogo';
 import { useEdgeSwipeBack } from '@/hooks/useEdgeSwipeBack';
 
 // ── Nav model ─────────────────────────────────────────────────────────────────
@@ -186,12 +186,12 @@ function AccountSidebar({ open, onToggle }: SidebarProps) {
         {/* Footer */}
         {open ? (
           <div className="px-4 py-3 border-t border-dark-active shrink-0 flex items-center gap-2">
-            <SolvexoIcon size={20} />
+            <EdudeenIcon size={20} />
             <p className="text-[11px] text-dark-label">My Account</p>
           </div>
         ) : (
           <div className="py-3 border-t border-dark-active flex justify-center shrink-0">
-            <SolvexoIcon size={20} />
+            <EdudeenIcon size={20} />
           </div>
         )}
       </aside>

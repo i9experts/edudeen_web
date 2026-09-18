@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { clsx } from 'clsx';
-import { SolvexoIcon } from '@/components/comman/ui/SolvexoLogo';
+import { EdudeenIcon } from '@/components/comman/ui/EdudeenLogo';
 import { apiListRegisters, type PosRegister } from '@/api/services/pos/posRegisters';
 import { apiListShifts, type PosShift } from '@/api/services/pos/posShifts';
 import { apiOpenSession, type RegisterSession } from '@/api/services/pos/posSessions';
@@ -67,7 +67,7 @@ export function OpenRegisterScreen({ storeId, employeeId, employeeName, onSucces
     <div className="flex-1 flex items-center justify-center bg-pos-bg px-4">
       <div className="w-full max-w-[380px] bg-pos-surface border border-carbon rounded-2xl p-7">
         <div className="flex flex-col items-center mb-5">
-          <SolvexoIcon size={32} />
+          <EdudeenIcon size={32} />
           <p className="text-[16px] font-bold text-white mt-3">Open Register</p>
           <p className="text-[12px] text-pos-muted mt-1">Welcome, {employeeName} — start your shift</p>
         </div>

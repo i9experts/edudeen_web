@@ -21,17 +21,25 @@ export function OverviewTab({ params, compareToPreviousPeriod }: { params: BaseA
   const d = overview.data;
   const loading = overview.loading;
 
+  // Fed to the matching stat tile below — only when that tile's own series
+  // has actually loaded, never a placeholder shape (see MetricCard's own
+  // "never fabricate one" note on `sparkline`).
+  const revenueSparkline = revenue.data?.series.map(p => p.netRevenue);
+  const ordersSparkline = orders.data?.series.map(p => p.orderCount);
+
   const metrics = d && [
     { label: 'Total GMV', value: formatCurrency(d.totalGMV), icon: <DollarSign size={16} /> },
     {
       label: 'Total Revenue (net)', value: formatCurrency(d.totalRevenue), icon: <DollarSign size={16} />,
       trend: d.totalRevenueChangePercent != null ? formatPercent(d.totalRevenueChangePercent, { signed: true }) : undefined,
       trendUp: (d.totalRevenueChangePercent ?? 0) >= 0,
+      sparkline: revenueSparkline,
     },
     { label: 'Platform Earnings', value: formatCurrency(d.platformEarnings), icon: <DollarSign size={16} />, sub: `Commission ${formatCurrency(d.platformCommission)} + Subs ${formatCurrency(d.subscriptionRevenue)}` },
     {
       label: 'Total Orders', value: formatNumber(d.totalOrders), icon: <ShoppingCart size={16} />,
       trend: `${d.totalOrdersChange >= 0 ? '+' : ''}${d.totalOrdersChange} vs prev.`, trendUp: d.totalOrdersChange >= 0,
+      sparkline: ordersSparkline,
     },
     { label: 'Seller Accounts', value: formatNumber(d.totalSellers), icon: <Users size={16} /> },
     {
