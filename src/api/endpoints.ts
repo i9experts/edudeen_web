@@ -451,6 +451,7 @@ export const ENDPOINTS = {
   CART: {
     ADD: '/api/cart/add-to-cart',
     GET: '/api/cart/get-cart',
+    MY_CARTS: '/api/cart/my-carts',
     UPDATE_QUANTITY: '/api/cart/update-cart-quantity',
     REMOVE_ITEM: '/api/cart/remove-cart-item',
     CLEAR: '/api/cart/clear-cart',

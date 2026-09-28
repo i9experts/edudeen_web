@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef, type ReactNode } from 'react';
 import {
-  apiGetCart, apiAddToCart, apiUpdateCartQuantity, apiRemoveCartItem, apiClearCart,
-  type Cart, type CartItem,
+  apiGetCart, apiGetMyCarts, apiAddToCart, apiUpdateCartQuantity, apiRemoveCartItem, apiClearCart,
+  type Cart, type CartItem, type StoreCart,
 } from '@/api/services/cart';
 import { apiGetProductById, type MarketplaceProduct, type ProductVariant } from '@/api/services/marketplace';
 import { TokenStorage } from '@/api/services/auth';
@@ -57,7 +57,9 @@ interface CartContextValue {
   addToCart:     (productId: string, productVariantId: string, type?: 'physical' | 'digital') => Promise<void>;
   updateQty:     (productId: string, productVariantId: string, action: 'increase' | 'decrease') => Promise<void>;
   removeItem:    (productId: string, productVariantId: string) => Promise<void>;
-  clearCart:     () => Promise<void>;
+  /** Main site: pass a storeId to clear just that store's cart (e.g. after
+   *  checking it out); omit to clear every store. Ignored on a storefront. */
+  clearCart:     (storeId?: string) => Promise<void>;
   refetch:       () => void;
 }
 
@@ -65,6 +67,25 @@ const CartCtx = createContext<CartContextValue | null>(null);
 
 function syncCart(storeId: string, setCart: (c: Cart) => void) {
   apiGetCart(storeId).then(res => setCart(mergeTypes(res.data))).catch(() => {});
+}
+
+// Main marketplace site: flattens each store's cart into one view (items
+// tagged with their store) while keeping the per-store carts on `stores`,
+// since checkout is always one store at a time.
+function mergeStoreCarts(stores: StoreCart[]): Cart | null {
+  const nonEmpty = stores.filter(s => (s.items ?? []).length > 0);
+  if (nonEmpty.length === 0) return null;
+  const items: CartItem[] = nonEmpty.flatMap(s =>
+    (s.items ?? []).map(i => ({ ...i, storeId: s.storeId, storeName: s.store.name })),
+  );
+  return mergeTypes({
+    userId:     nonEmpty[0].userId,
+    storeId:    nonEmpty.length === 1 ? nonEmpty[0].storeId : undefined,
+    items,
+    totalItems: items.reduce((s, i) => s + i.quantity, 0),
+    totalPrice: items.reduce((s, i) => s + (i.itemTotal ?? 0), 0),
+    stores:     nonEmpty,
+  });
 }
 
 // `storeId` scopes the server-side cart to one store — pass the current
@@ -133,19 +154,35 @@ export function CartProvider({ storeId, children }: { storeId?: string; children
     setLoading(false);
   }, []);
 
+  const fetchMyCarts = useCallback(async () => {
+    try {
+      const res = await apiGetMyCarts();
+      setCart(mergeStoreCarts(res.data ?? []));
+    } catch {
+      // keep whatever is on screen
+    }
+  }, []);
+
   const fetchCart = useCallback(() => {
     if (!TokenStorage.isLoggedIn()) { refreshGuestCartDisplay(); return; }
-    // No `storeId` means this provider isn't mounted on a store's subdomain
-    // (the legacy, now-disconnected apex marketplace cart/checkout pages) —
-    // there's no server-side cart to scope to, so just show nothing rather
-    // than firing a request the backend will reject.
-    if (!storeId) { setCart(null); return; }
+    // No `storeId` = the main marketplace site: show every store's cart.
+    if (!storeId) {
+      setLoading(true);
+      fetchMyCarts().finally(() => setLoading(false));
+      return;
+    }
     setLoading(true);
     apiGetCart(storeId)
       .then(res => setCart(mergeTypes(res.data)))
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [refreshGuestCartDisplay, storeId]);
+  }, [refreshGuestCartDisplay, fetchMyCarts, storeId]);
+
+  // Which store's cart an item lives in (main site only).
+  const storeIdFor = useCallback(
+    (productVariantId: string) => storeId ?? cart?.items.find(i => i.productVariantId === productVariantId)?.storeId,
+    [storeId, cart],
+  );
 
   useEffect(() => { fetchCart(); }, [fetchCart]);
 
@@ -156,15 +193,19 @@ export function CartProvider({ storeId, children }: { storeId?: string; children
   // so concurrent add/increase calls never race on the same server cart doc.
   useEffect(() => {
     const onLogin = async () => {
-      if (!storeId) { fetchCart(); return; }
       const guestItems = getGuestCartItems();
       if (guestItems.length > 0) {
         setLoading(true);
         for (const item of guestItems) {
           try {
-            await apiAddToCart(item.productId, item.productVariantId, storeId);
-            for (let i = 1; i < item.quantity; i++) {
-              await apiUpdateCartQuantity(item.productId, item.productVariantId, 'increase', storeId);
+            // Main site: no storeId — the server files it under the
+            // product's own store and tells us which one.
+            const res = await apiAddToCart(item.productId, item.productVariantId, storeId);
+            const itemStoreId = storeId ?? res.data?.storeId;
+            if (itemStoreId) {
+              for (let i = 1; i < item.quantity; i++) {
+                await apiUpdateCartQuantity(item.productId, item.productVariantId, 'increase', itemStoreId);
+              }
             }
           } catch {
             // Product may no longer be available — skip it rather than
@@ -198,11 +239,10 @@ export function CartProvider({ storeId, children }: { storeId?: string; children
       return;
     }
 
-    if (!storeId) { setAdding(null); return; }
-
     try {
       const res = await apiAddToCart(productId, productVariantId, storeId);
-      setCart(mergeTypes(res.data));
+      if (storeId) setCart(mergeTypes(res.data));
+      else await fetchMyCarts();
       toast.success('Added to cart');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to add item to cart.';
@@ -211,7 +251,7 @@ export function CartProvider({ storeId, children }: { storeId?: string; children
     } finally {
       setAdding(null);
     }
-  }, [refreshGuestCartDisplay, toast, storeId]);
+  }, [refreshGuestCartDisplay, fetchMyCarts, toast, storeId]);
 
   const updateQty = useCallback(async (
     productId: string, productVariantId: string, action: 'increase' | 'decrease',
@@ -222,7 +262,8 @@ export function CartProvider({ storeId, children }: { storeId?: string; children
       return;
     }
 
-    if (!storeId) return;
+    const itemStoreId = storeIdFor(productVariantId);
+    if (!itemStoreId) return;
 
     setCart(prev => {
       if (!prev) return prev;
@@ -239,15 +280,16 @@ export function CartProvider({ storeId, children }: { storeId?: string; children
 
     setError(null);
     try {
-      await apiUpdateCartQuantity(productId, productVariantId, action, storeId);
+      await apiUpdateCartQuantity(productId, productVariantId, action, itemStoreId);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to update quantity.';
       setError(message);
       toast.error(message);
     } finally {
-      syncCart(storeId, c => setCart(c));
+      if (storeId) syncCart(storeId, c => setCart(c));
+      else fetchMyCarts();
     }
-  }, [refreshGuestCartDisplay, toast, storeId]);
+  }, [refreshGuestCartDisplay, fetchMyCarts, storeIdFor, toast, storeId]);
 
   const removeItem = useCallback(async (productId: string, productVariantId: string) => {
     removeType(productVariantId);
@@ -259,7 +301,8 @@ export function CartProvider({ storeId, children }: { storeId?: string; children
       return;
     }
 
-    if (!storeId) return;
+    const itemStoreId = storeIdFor(productVariantId);
+    if (!itemStoreId) return;
 
     setCart(prev => {
       if (!prev) return prev;
@@ -271,18 +314,19 @@ export function CartProvider({ storeId, children }: { storeId?: string; children
 
     setError(null);
     try {
-      await apiRemoveCartItem(productId, productVariantId, storeId);
+      await apiRemoveCartItem(productId, productVariantId, itemStoreId);
       toast.success('Removed from cart');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to remove item.';
       setError(message);
       toast.error(message);
     } finally {
-      syncCart(storeId, c => setCart(c));
+      if (storeId) syncCart(storeId, c => setCart(c));
+      else fetchMyCarts();
     }
-  }, [refreshGuestCartDisplay, toast, storeId]);
+  }, [refreshGuestCartDisplay, fetchMyCarts, storeIdFor, toast, storeId]);
 
-  const clearCart = useCallback(async () => {
+  const clearCart = useCallback(async (onlyStoreId?: string) => {
     if (!TokenStorage.isLoggedIn()) {
       clearGuestCart();
       clearTypes();
@@ -290,7 +334,25 @@ export function CartProvider({ storeId, children }: { storeId?: string; children
       toast.success('Cart cleared');
       return;
     }
-    if (!cart?._id || !storeId) return;
+    // Main site: clear one store's cart (after checking it out) or all of them.
+    if (!storeId) {
+      const targets = onlyStoreId
+        ? [onlyStoreId]
+        : (cart?.stores ?? []).map(s => s.storeId);
+      setError(null);
+      try {
+        for (const sid of targets) await apiClearCart('', sid);
+        if (!onlyStoreId) { clearTypes(); toast.success('Cart cleared'); }
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to clear cart.';
+        setError(message);
+        toast.error(message);
+      } finally {
+        await fetchMyCarts();
+      }
+      return;
+    }
+    if (!cart?._id) return;
     clearTypes();
     setCart(null);
     setError(null);
@@ -303,7 +365,7 @@ export function CartProvider({ storeId, children }: { storeId?: string; children
       toast.error(message);
       syncCart(storeId, c => setCart(c));
     }
-  }, [cart, toast, storeId]);
+  }, [cart, fetchMyCarts, toast, storeId]);
 
   const value = useMemo<CartContextValue>(() => ({
     cart, cartCount, loading, adding, error, clearError, addToCart, updateQty, removeItem, clearCart, refetch: fetchCart,

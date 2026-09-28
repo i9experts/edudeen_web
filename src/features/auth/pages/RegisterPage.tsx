@@ -55,7 +55,7 @@ const HIGHLIGHTS = [
 // seller); that buyer path is hidden, not deleted — the backend register
 // endpoint still accepts role:'user' unchanged, so flipping this back to
 // false fully restores it with no other changes.
-const SELLER_ONLY_REGISTER = true;
+const SELLER_ONLY_REGISTER = false;
 
 export function RegisterPage() {
   const navigate  = useNavigate();

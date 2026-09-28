@@ -1,503 +1,265 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePageTitle } from '@/hooks/usePageTitle';
-import { getStorefrontUrl } from '@/utils/storefrontUrl';
 import { useProductsByCategory } from '@/hooks/marketplace/useProductsByCategory';
-import { useCountdownToMidnight } from '@/hooks/useCountdownToMidnight';
-import { useCartContext } from '@/contexts/CartContext';
 import { useWishlistContext } from '@/contexts/WishlistContext';
-import { Card } from '@/components/comman/ui/Card';
-import { Avatar } from '@/components/comman/ui/Avatar';
-import {
-  BuyerNavbar, Footer, SkeletonBox, ClosingCtaBanner, StoreFeatureCard, TrustServiceStrip,
-} from '@/components/comman/ui';
-import { ProductCard, ProductCardSkeleton } from '@/components/comman/marketplace/ProductCard';
-import { FlashSaleCard } from '@/components/comman/marketplace/FlashSaleCard';
-import { MegaMenuBar } from '@/components/comman/marketplace/MegaMenuBar';
-import {
-  Search, ArrowRight, Star, Quote, BadgeCheck, Zap, Tag,
-  Shield, CreditCard, Headset, RefreshCcw,
-} from 'lucide-react';
-import { apiGetTestimonials, type Testimonial } from '@/api/services/testimonials';
-import { apiGetPlatformStats, apiGetTopStores, type PlatformStats, type PublicStoreListItem } from '@/api/services/store';
+import { BuyerNavbar, Footer } from '@/components/comman/ui';
+import { ResourceCard, ResourceCardSkeleton } from '@/components/comman/marketplace/ResourceCard';
+import { CategoryTabs } from '@/components/comman/marketplace/CategoryTabs';
 import { apiGetCategoryTree, type CategoryNode } from '@/api/services/categories';
-import { Reveal, RevealStagger } from '@/components/comman/motion/Reveal';
-import { SectionHeading } from '@/components/comman/motion/SectionHeading';
-import { AnimatedCounter } from '@/components/comman/motion/AnimatedCounter';
+import { EDUCATION_LEVELS } from '@/api/services/product';
+import type { MarketplaceSortBy } from '@/api/services/marketplace';
+import heroImage from '@/assets/learning-hero.jpg';
 
-// Same tree-search helper Marketplace.tsx uses to resolve a mega-menu/grid
-// category click's id into its canonical slug for the `/marketplace/:slug` link.
-function findCategoryById(nodes: CategoryNode[], id: string): CategoryNode | null {
-  for (const n of nodes) {
-    if (n._id === id) return n;
-    const found = findCategoryById(n.children ?? [], id);
-    if (found) return found;
-  }
-  return null;
-}
+type TypeFilter = '' | 'physical' | 'digital' | 'educational';
+type SortFilter = 'featured' | 'popular' | 'low' | 'high';
 
-const compactNumber   = new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 });
-const compactCurrency = new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1, style: 'currency', currency: 'USD' });
+const SORT_TO_API: Record<SortFilter, MarketplaceSortBy | undefined> = {
+  featured: undefined,
+  popular:  'popularity',
+  low:      'price_asc',
+  high:     'price_desc',
+};
 
-const TRUST_ITEMS = [
-  { Icon: Shield,    label: 'Buyer Protection',  sub: 'Secure checkout, every order' },
-  { Icon: CreditCard, label: 'Flexible Payment',  sub: 'Cards, COD & bank transfer' },
-  { Icon: RefreshCcw, label: 'Easy Returns',      sub: 'Hassle-free return window' },
-  { Icon: Headset,   label: '24/7 Support',       sub: "We're here whenever you need us" },
-];
+const PAGE_SIZE = 12;
+
+const selectClass =
+  'py-[10px] pl-3 pr-8 border border-bone rounded-[7px] bg-white text-carbon text-[14px] cursor-pointer max-w-[48%] sm:max-w-none';
 
 /**
- * Root landing page — a real shopper-first marketplace front door (search,
- * categories, featured/flash-sale products, seller spotlights), not the
- * former seller-acquisition pitch. That pitch content is unchanged and still
- * reachable at /sellers, /products/:slug and /solutions/:slug — this page
- * just no longer duplicates it as the first thing every visitor sees.
- * Deliberately reuses the exact same data shapes/handlers Marketplace.tsx
- * already built (categories tree, top stores, featured pool → top picks /
- * best rated / flash deals, add-to-cart & wishlist wiring) instead of
- * inventing a second version of any of it.
+ * Root landing page — a calm, resource-first shop front: warm hero, a short
+ * promise strip, then the live catalogue with its own filters, and two
+ * collection callouts. Every product, category and count is real API data.
  */
 export function Homepage() {
   const navigate = useNavigate();
   usePageTitle('Home');
 
-  const [heroSearch, setHeroSearch] = useState('');
-  const submitHeroSearch = (term?: string) => {
-    const q = (term ?? heroSearch).trim();
-    navigate(q ? `/marketplace?search=${encodeURIComponent(q)}` : '/marketplace');
-  };
-
   const [categories, setCategories] = useState<CategoryNode[]>([]);
-  const [topStores, setTopStores] = useState<PublicStoreListItem[]>([]);
-
   useEffect(() => {
     let cancelled = false;
     apiGetCategoryTree().then(res => { if (!cancelled) setCategories(res.data ?? []); }).catch(() => {});
     return () => { cancelled = true; };
   }, []);
 
-  useEffect(() => {
-    let cancelled = false;
-    apiGetTopStores(10).then(res => { if (!cancelled) setTopStores(res.data?.stores ?? []); }).catch(() => {});
-    return () => { cancelled = true; };
-  }, []);
+  // Filters (the category tabs filter the grid right here, like the rest)
+  const [category, setCategory] = useState<CategoryNode | null>(null);
+  const [level, setLevel]       = useState('');
+  const [kind, setKind]         = useState<TypeFilter>('');
+  const [sort, setSort]         = useState<SortFilter>('featured');
+  const [freeOnly, setFreeOnly] = useState(false);
+  const [limit, setLimit]       = useState(PAGE_SIZE);
 
-  const handleShopCategory = useCallback((id: string) => {
-    const match = id ? findCategoryById(categories, id) : null;
-    navigate(match ? `/marketplace/${match.slug}` : '/marketplace');
-  }, [categories, navigate]);
+  // Any filter change starts the grid over from the first page.
+  useEffect(() => { setLimit(PAGE_SIZE); }, [category, level, kind, sort, freeOnly]);
 
-  // Real, unfiltered catalog pool — same source Marketplace.tsx's own
-  // flash-sale/top-picks/best-rated rails are derived from, so the homepage
-  // shows genuine signals instead of fabricated placeholder products.
-  const { products: featuredPool, loading: poolLoading } = useProductsByCategory(1, 24);
+  const { products, total, loading } = useProductsByCategory(
+    1, limit, category?._id,
+    level ? 'educational' : (kind || undefined),
+    level || undefined, undefined, undefined,
+    undefined, freeOnly ? 0 : undefined, undefined,
+    SORT_TO_API[sort],
+  );
 
-  const flashDeals = featuredPool
-    .map(p => {
-      const dv = (p.variants ?? []).find(v => v.isDefault) ?? p.variants?.[0];
-      const price = dv?.price ?? 0;
-      const compareAt = dv?.compareAtPrice ?? null;
-      const pct = compareAt != null && compareAt > price ? Math.round((1 - price / compareAt) * 100) : 0;
-      return { product: p, pct };
-    })
-    .filter(x => x.pct > 0)
-    .sort((a, b) => b.pct - a.pct)
-    .slice(0, 10);
+  const resetFilters = () => {
+    setCategory(null); setLevel(''); setKind(''); setSort('featured'); setFreeOnly(false);
+  };
 
-  const topPicks = [...featuredPool]
-    .sort((a, b) => (b.purchaseCount + b.averageRating * 10) - (a.purchaseCount + a.averageRating * 10))
-    .slice(0, 10);
+  const resourcesRef = useRef<HTMLElement>(null);
+  const scrollToResources = () => resourcesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-  const bestRated = [...featuredPool]
-    .filter(p => p.averageRating > 0)
-    .sort((a, b) => b.averageRating - a.averageRating || (b.totalRatings ?? 0) - (a.totalRatings ?? 0))
-    .slice(0, 10);
+  const selectCategory = (c: CategoryNode | null) => {
+    setCategory(c);
+    setTimeout(scrollToResources, 30);
+  };
 
-  const countdown = useCountdownToMidnight();
-
-  // Add-to-cart / wishlist wiring — identical pattern to Marketplace.tsx's
-  // ProductCard/FlashSaleCard handlers, so a homepage add-to-cart behaves
-  // exactly the same way (guest cart, failure recovery, wishlist gate) as
-  // it does everywhere else in the app.
-  const { addToCart, adding, error: cartError, clearError: clearCartError } = useCartContext();
-  const [addToCartFailedId, setAddToCartFailedId] = useState<string | null>(null);
-  const lastAddAttemptRef = useRef<string | null>(null);
-  useEffect(() => {
-    if (!cartError || !lastAddAttemptRef.current) return;
-    const failedId = lastAddAttemptRef.current;
-    setAddToCartFailedId(failedId);
-    const t = setTimeout(() => { setAddToCartFailedId(id => id === failedId ? null : id); clearCartError(); }, 2600);
-    return () => clearTimeout(t);
-  }, [cartError, clearCartError]);
   const { isWishlisted, wishlisting, toggleWishlist } = useWishlistContext();
-
   const handleCardClick = useCallback((slug: string) => navigate(`/product/${slug}`), [navigate]);
-  const handleAddToCart = useCallback((e: React.MouseEvent, id: string, variantId: string, type: 'physical' | 'digital') => {
-    e.stopPropagation();
-    if (!variantId) return;
-    lastAddAttemptRef.current = variantId;
-    setAddToCartFailedId(prev => prev === variantId ? null : prev);
-    addToCart(id, variantId, type);
-  }, [addToCart]);
   const handleToggleWishlist = useCallback((e: React.MouseEvent, id: string, variantId: string) => {
     e.stopPropagation();
     if (variantId) toggleWishlist(id, variantId);
   }, [toggleWishlist]);
 
-  // Real platform stats + reviews — unchanged from the previous homepage,
-  // still non-critical (each section self-hides until there's real data).
-  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
-  const [testimonialsLoading, setTestimonialsLoading] = useState(true);
-  const [stats, setStats] = useState<PlatformStats | null>(null);
-  const [statsLoading, setStatsLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-    apiGetTestimonials(5)
-      .then(res => { if (!cancelled) setTestimonials(res.data ?? []); })
-      .catch(() => {})
-      .finally(() => { if (!cancelled) setTestimonialsLoading(false); });
-    return () => { cancelled = true; };
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    apiGetPlatformStats()
-      .then(res => { if (!cancelled) setStats(res.data); })
-      .catch(() => {})
-      .finally(() => { if (!cancelled) setStatsLoading(false); });
-    return () => { cancelled = true; };
-  }, []);
-
-  const statItems = stats ? [
-    { value: stats.sellersCount, format: (n: number) => `${compactNumber.format(n)}+`, label: 'Active Sellers' },
-    { value: stats.gmv,          format: (n: number) => `${compactCurrency.format(n)}+`, label: 'GMV Processed' },
-    { value: stats.buyersCount,  format: (n: number) => `${compactNumber.format(n)}+`,  label: 'Registered Buyers' },
-    { value: stats.ratingCount > 0 ? stats.avgRating : null, format: (n: number) => `${n.toFixed(1)} ★`, label: 'Average Rating' },
-  ] : [];
+  const tarbiyyah = categories.find(c => /tarbiy|islam/i.test(c.name));
+  const hasFilters = !!(category || level || kind || freeOnly || sort !== 'featured');
 
   return (
-    <div className="bg-cream min-h-full">
+    <div className="bg-white min-h-full">
 
-      {/* ── Header — same navbar + mega-menu combo every other shopping page
-         (Marketplace, ProductDetail, Cart) uses, so a shopper never sees a
-         different navigation system depending on which page they land on. */}
-      <div className="sticky top-0 z-50 [&>nav]:!border-b-0">
+      <div className="sticky top-0 z-50">
         <BuyerNavbar />
-        <MegaMenuBar
-          compact
-          categories={categories}
-          topPicks={topPicks}
-          bestRated={bestRated}
-          flashDeals={flashDeals}
-          topStores={topStores}
-          countdown={countdown}
-          onShopCategory={handleShopCategory}
-          onProductClick={handleCardClick}
-          onStoreClick={slug => window.location.href = getStorefrontUrl(slug)}
-          onTrendingTerm={term => { setHeroSearch(term); submitHeroSearch(term); }}
-          onNavigate={navigate}
-        />
+        <CategoryTabs categories={categories} activeId={category?._id ?? null} onSelect={selectCategory} />
       </div>
 
-      {/* ── Hero — search-first, not a SaaS pitch headline. ── */}
-      <section className="relative overflow-hidden bg-carbon px-4 sm:px-6 lg:px-12 py-14 sm:py-20">
-        <div className="hero-grid-drift absolute inset-0 pointer-events-none opacity-40" />
-        <div className="relative z-[1] max-w-[760px] mx-auto text-center">
-          <Reveal>
-            <h1 className="font-serif text-[30px] sm:text-[42px] lg:text-[50px] font-bold text-white leading-[1.12] tracking-[-0.015em]">
-              Find what you need, from sellers you can trust.
-            </h1>
-          </Reveal>
-          <Reveal delay={0.1}>
-            <p className="text-[13.5px] sm:text-[15px] text-white/60 leading-[1.7] mt-4 mb-8 max-w-[520px] mx-auto">
-              Shop physical products, digital downloads and educational resources — all in one marketplace.
+      <main className="max-w-[1480px] mx-auto px-[5%] md:px-[4%] pt-5 md:pt-[30px] pb-10 md:pb-[65px]">
+
+        {/* ── Hero ── */}
+        <section className="grid grid-cols-1 md:grid-cols-[1.2fr_1fr] md:min-h-[280px] rounded-[18px] overflow-hidden bg-[#eaf2f8] mb-[25px]">
+          <div className="p-[25px] md:p-[30px] lg:py-[35px] lg:px-[40px]">
+            <p className="text-[12px] font-bold tracking-[0.15em] uppercase text-brand-royal mb-[13px]">
+              For curious minds &amp; caring hearts
             </p>
-          </Reveal>
-          <Reveal delay={0.2}>
-            <form
-              onSubmit={e => { e.preventDefault(); submitHeroSearch(); }}
-              className="flex items-center gap-2 bg-white rounded-full p-[6px] pl-5 shadow-raised max-w-[560px] mx-auto"
+            <h1 className="font-serif font-normal text-[34px] md:text-[44px] leading-[1.12] tracking-[-1px] text-carbon mb-[14px]">
+              Big discoveries.<br />
+              <span className="text-brand-royal">Beautiful beginnings.</span>
+            </h1>
+            <p className="max-w-[450px] text-[15px] md:text-[16px] leading-[1.5] text-graphite mb-[21px]">
+              Find meaningful resources for the lessons you teach and the values you nurture.
+            </p>
+            <button
+              onClick={scrollToResources}
+              className="inline-block bg-brand-orange text-white border border-brand-orange rounded-lg px-5 py-[11px] text-[14px] font-bold cursor-pointer hover:brightness-95"
             >
-              <Search size={17} className="text-slate shrink-0" />
-              <input
-                value={heroSearch}
-                onChange={e => setHeroSearch(e.target.value)}
-                placeholder="Search products, resources, or stores..."
-                className="flex-1 min-w-0 bg-transparent border-none outline-none text-[13.5px] text-carbon placeholder:text-slate py-2"
-              />
-              <button
-                type="submit"
-                className="shrink-0 flex items-center gap-2 bg-gradient-to-r from-brand-orange to-brand-deep-orange px-5 sm:px-7 py-[11px] rounded-full text-[13px] sm:text-[14px] font-bold text-white cursor-pointer hover:opacity-95 transition-opacity"
-              >
-                Search
-              </button>
-            </form>
-          </Reveal>
-          {categories.length > 0 && (
-            <Reveal delay={0.3}>
-              <div className="flex flex-wrap items-center justify-center gap-2 mt-5">
-                {categories.slice(0, 6).map(c => (
-                  <button
-                    key={c._id}
-                    onClick={() => handleShopCategory(c._id)}
-                    className="px-[13px] py-[6px] rounded-full text-[12px] font-medium text-white/70 border border-white/15 hover:border-white/35 hover:text-white transition-colors cursor-pointer"
-                  >
-                    {c.name}
-                  </button>
-                ))}
-              </div>
-            </Reveal>
-          )}
+              Find your next resource
+            </button>
+          </div>
+          <div className="relative h-[170px] md:h-auto bg-[#ddeaf2] overflow-hidden">
+            <img
+              src={heroImage}
+              alt="Learning workbooks and colourful stationery arranged on a desk"
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+            <div className="absolute bottom-[22px] right-[22px] hidden sm:block bg-white px-[19px] py-3 rounded-[10px] text-[14px] text-carbon shadow-[0_8px_30px_rgba(19,57,86,0.09)]">
+              A little learning. A lasting difference.
+            </div>
+          </div>
+        </section>
+
+        {/* ── Promise strip ── */}
+        <div className="flex justify-between md:justify-center gap-[15px] md:gap-10 pt-2 pb-[27px] text-[12px] md:text-[14px] text-carbon border-b border-bone mb-[30px]">
+          {['For home & classroom', 'Preview before you choose', 'Created by educators'].map(t => (
+            <span key={t}><span className="text-brand-green">✓</span> {t}</span>
+          ))}
         </div>
-      </section>
 
-      {/* ── Shop by category ── */}
-      {categories.length > 0 && (
-        <section className="py-12 sm:py-14 px-4 sm:px-6 lg:px-12">
-          <div className="max-w-[1280px] mx-auto">
-            <div className="flex items-center justify-between mb-6">
-              <SectionHeading title="Shop by category" size="md" />
-              <button onClick={() => navigate('/marketplace')} className="hidden sm:flex items-center gap-1 text-[12.5px] font-semibold text-brand-orange hover:text-brand-deep-orange transition-colors cursor-pointer">
-                View all <ArrowRight size={13} />
-              </button>
+        {/* ── Resources ── */}
+        <section ref={resourcesRef} className="scroll-mt-[150px]">
+          <div className="flex justify-between gap-5 items-end mb-[22px]">
+            <div>
+              <p className="text-[12px] font-bold tracking-[0.15em] uppercase text-brand-royal mb-[13px]">
+                {category ? category.name : 'Your next teaching moment'}
+              </p>
+              <h2 className="font-serif font-normal text-[25px] md:text-[30px] leading-[1.2] tracking-[-0.5px] text-carbon mb-[6px]">
+                Resources with a purpose
+              </h2>
+              <p className="text-[14px] text-carbon">Thoughtful ideas for learning, growing and becoming.</p>
             </div>
-            <RevealStagger className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4" step={0.04} y={12}>
-              {categories.slice(0, 12).map(c => (
-                <button
-                  key={c._id}
-                  onClick={() => handleShopCategory(c._id)}
-                  className="group flex flex-col items-center gap-2.5 p-4 rounded-2xl bg-white border border-bone hover:border-brand-orange/40 hover:shadow-card transition-all cursor-pointer"
-                >
-                  <span className="w-12 h-12 rounded-xl bg-brand-pale-orange flex items-center justify-center overflow-hidden shrink-0 group-hover:bg-brand-orange transition-colors">
-                    {c.image
-                      ? <img src={c.image} alt="" className="w-full h-full object-cover" loading="lazy" />
-                      : <Tag size={18} className="text-brand-orange group-hover:text-white transition-colors" />}
-                  </span>
-                  <span className="text-[11.5px] font-semibold text-charcoal text-center leading-tight line-clamp-2">{c.name}</span>
-                </button>
+            <button
+              onClick={() => navigate(category ? `/marketplace/${category.slug}` : '/marketplace')}
+              className="shrink-0 bg-transparent border-0 border-b border-current text-brand-orange pb-[3px] px-0 text-[14px] font-bold cursor-pointer"
+            >
+              View all resources
+            </button>
+          </div>
+
+          <div className="flex gap-[10px] flex-wrap mb-6 items-center">
+            <select aria-label="Filter by age or grade" value={level} onChange={e => setLevel(e.target.value)} className={selectClass}>
+              <option value="">All ages &amp; grades</option>
+              {EDUCATION_LEVELS.filter(l => l.value !== 'other').map(l => (
+                <option key={l.value} value={l.value}>{l.label}</option>
               ))}
-            </RevealStagger>
+            </select>
+            <select
+              aria-label="Filter by type"
+              value={level ? 'educational' : kind}
+              disabled={!!level}
+              onChange={e => setKind(e.target.value as TypeFilter)}
+              className={selectClass}
+            >
+              <option value="">All types</option>
+              <option value="physical">Physical</option>
+              <option value="digital">Digital</option>
+              <option value="educational">Educational</option>
+            </select>
+            <select aria-label="Sort resources" value={sort} onChange={e => setSort(e.target.value as SortFilter)} className={selectClass}>
+              <option value="featured">Newest</option>
+              <option value="popular">Most popular</option>
+              <option value="low">Price: low to high</option>
+              <option value="high">Price: high to low</option>
+            </select>
+            <label className="text-[14px] text-carbon flex items-center gap-[6px] cursor-pointer">
+              <input type="checkbox" checked={freeOnly} onChange={e => setFreeOnly(e.target.checked)} /> Free resources
+            </label>
+            <span className="w-full sm:w-auto sm:ml-auto text-[14px] text-slate" aria-live="polite">
+              {loading ? 'Loading…' : `${total} resource${total === 1 ? '' : 's'}`}
+            </span>
           </div>
-        </section>
-      )}
 
-      {/* ── Flash Sale — same rail Marketplace.tsx's own browse page shows,
-         reused as-is rather than a second implementation. ── */}
-      {flashDeals.length > 0 && (
-        <section className="px-4 sm:px-6 lg:px-12 pb-2">
-          <div className="max-w-[1280px] mx-auto">
-            <div className="flex items-center gap-2 mb-4">
-              <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-error-bg text-error">
-                <Zap size={14} className="fill-error" />
-              </span>
-              <h2 className="font-serif text-[16px] sm:text-[19px] font-bold text-carbon tracking-[-0.01em]">Flash Sale</h2>
-              <span className="ml-auto flex items-center gap-[6px] text-[11px] sm:text-[12px] font-semibold text-slate">
-                <span className="hidden sm:inline">Ends in</span>
-                <span className="tabular-nums text-error font-bold">{countdown.h}:{countdown.m}:{countdown.s}</span>
-              </span>
-            </div>
-            <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1 snap-x snap-mandatory">
-              {flashDeals.map(({ product: p }) => {
-                const dv = (p.variants ?? []).find(v => v.isDefault) ?? p.variants?.[0];
-                const vId = dv?._id ?? '';
-                return (
-                  <div key={p._id} className="w-[118px] sm:w-[132px] lg:w-[144px] shrink-0 snap-start">
-                    <FlashSaleCard
-                      compact
-                      product={p}
-                      onClick={handleCardClick}
-                      isAdding={adding === vId}
-                      addToCartFailed={addToCartFailedId === vId}
-                      onAddToCart={handleAddToCart}
-                      isWishlisted={isWishlisted(p._id, vId)}
-                      isWishlisting={wishlisting === vId}
-                      onToggleWishlist={handleToggleWishlist}
-                    />
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-[14px] gap-y-[25px] md:gap-x-[22px] md:gap-y-[28px]">
+            {loading && products.length === 0
+              ? Array.from({ length: 8 }).map((_, i) => <ResourceCardSkeleton key={i} />)
+              : products.length === 0
+                ? (
+                  <div className="col-span-full p-[50px] text-center bg-cream rounded-xl">
+                    <h3 className="text-[17px] font-bold text-carbon mb-2">No resources match just yet.</h3>
+                    <p className="text-[14px] text-slate mb-4">Try a different subject or clear your filters.</p>
+                    {hasFilters && (
+                      <button onClick={resetFilters} className="bg-white text-brand-orange border border-[#c5d2db] rounded-lg px-5 py-[11px] text-[14px] font-bold cursor-pointer">
+                        Clear filters
+                      </button>
+                    )}
                   </div>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* ── Top Picks ── */}
-      {(poolLoading || topPicks.length > 0) && (
-        <section className="py-10 sm:py-12 px-4 sm:px-6 lg:px-12">
-          <div className="max-w-[1280px] mx-auto">
-            <div className="flex items-center justify-between mb-5">
-              <SectionHeading title="Top picks for you" size="md" />
-              <button onClick={() => navigate('/marketplace?sort=popularity')} className="hidden sm:flex items-center gap-1 text-[12.5px] font-semibold text-brand-orange hover:text-brand-deep-orange transition-colors cursor-pointer">
-                View all <ArrowRight size={13} />
-              </button>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
-              {poolLoading
-                ? Array.from({ length: 10 }).map((_, i) => <ProductCardSkeleton key={i} layout="grid" />)
-                : topPicks.map(p => {
+                )
+                : products.map((p, i) => {
                     const dv = (p.variants ?? []).find(v => v.isDefault) ?? p.variants?.[0];
                     const vId = dv?._id ?? '';
                     return (
-                      <ProductCard
+                      <ResourceCard
                         key={p._id}
-                        layout="grid"
+                        index={i}
                         product={p}
                         onClick={handleCardClick}
-                        isAdding={adding === vId}
-                        addToCartFailed={addToCartFailedId === vId}
-                        onAddToCart={handleAddToCart}
                         isWishlisted={isWishlisted(p._id, vId)}
                         isWishlisting={wishlisting === vId}
                         onToggleWishlist={handleToggleWishlist}
                       />
                     );
                   })}
-            </div>
           </div>
-        </section>
-      )}
 
-      {/* ── Best Rated ── */}
-      {bestRated.length > 0 && (
-        <section className="py-10 sm:py-12 px-4 sm:px-6 lg:px-12 bg-white">
-          <div className="max-w-[1280px] mx-auto">
-            <div className="flex items-center justify-between mb-5">
-              <SectionHeading title="Best rated" size="md" />
-              <button onClick={() => navigate('/marketplace?sort=best-rated')} className="hidden sm:flex items-center gap-1 text-[12.5px] font-semibold text-brand-orange hover:text-brand-deep-orange transition-colors cursor-pointer">
-                View all <ArrowRight size={13} />
+          {products.length > 0 && products.length < total && (
+            <div className="flex justify-center mt-9">
+              <button
+                onClick={() => setLimit(l => l + PAGE_SIZE)}
+                disabled={loading}
+                className="bg-white text-brand-orange border border-[#c5d2db] rounded-lg px-5 py-[11px] text-[14px] font-bold cursor-pointer disabled:opacity-60"
+              >
+                {loading ? 'Loading…' : 'Show more resources'}
               </button>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
-              {bestRated.map(p => {
-                const dv = (p.variants ?? []).find(v => v.isDefault) ?? p.variants?.[0];
-                const vId = dv?._id ?? '';
-                return (
-                  <ProductCard
-                    key={p._id}
-                    layout="grid"
-                    product={p}
-                    onClick={handleCardClick}
-                    isAdding={adding === vId}
-                    addToCartFailed={addToCartFailedId === vId}
-                    onAddToCart={handleAddToCart}
-                    isWishlisted={isWishlisted(p._id, vId)}
-                    isWishlisting={wishlisting === vId}
-                    onToggleWishlist={handleToggleWishlist}
-                  />
-                );
-              })}
-            </div>
+          )}
+        </section>
+
+        {/* ── Collections ── */}
+        <section className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-[22px]">
+          <div className="rounded-[14px] p-7 bg-[#edf5e7]">
+            <p className="text-[12px] font-bold tracking-[0.15em] uppercase text-brand-royal mb-[13px]">The Tarbiyyah collection</p>
+            <h2 className="font-serif font-normal text-[27px] leading-[1.2] text-carbon mb-[10px]">Small habits. Strong character.</h2>
+            <p className="text-[14px] text-carbon max-w-[390px] mb-4">
+              Bring kindness, gratitude and everyday good manners into your learning moments.
+            </p>
+            <button
+              onClick={() => (tarbiyyah ? selectCategory(tarbiyyah) : navigate('/education'))}
+              className="bg-transparent border-0 border-b border-current text-brand-orange pb-[3px] px-0 text-[14px] font-bold cursor-pointer"
+            >
+              Explore character-building resources →
+            </button>
+          </div>
+          <div className="rounded-[14px] p-7 bg-[#f7f3d9]">
+            <p className="text-[12px] font-bold tracking-[0.15em] uppercase text-brand-royal mb-[13px]">Made by you. Shared with the world.</p>
+            <h2 className="font-serif font-normal text-[27px] leading-[1.2] text-carbon mb-[10px]">Your knowledge can go further.</h2>
+            <p className="text-[14px] text-carbon max-w-[390px] mb-4">
+              Give your teaching ideas a home in the Edudeen Creator Network.
+            </p>
+            <button
+              onClick={() => navigate('/sellers')}
+              className="bg-transparent border-0 border-b border-current text-brand-orange pb-[3px] px-0 text-[14px] font-bold cursor-pointer"
+            >
+              Start selling on Edudeen →
+            </button>
           </div>
         </section>
-      )}
-
-      {/* ── Seller spotlights ── */}
-      {topStores.length > 0 && (
-        <section className="py-10 sm:py-12 px-4 sm:px-6 lg:px-12">
-          <div className="max-w-[1280px] mx-auto">
-            <SectionHeading title="Featured sellers" size="md" className="mb-5" />
-            <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1">
-              {topStores.map(s => (
-                <StoreFeatureCard key={s.storeId} store={s} onClick={slug => window.location.href = getStorefrontUrl(slug)} />
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* ── Trust strip ── */}
-      <div className="px-4 sm:px-6 lg:px-12 pb-2">
-        <div className="max-w-[1280px] mx-auto">
-          <TrustServiceStrip variant="card" items={TRUST_ITEMS} />
-        </div>
-      </div>
-
-      {/* ── Platform stats — self-hides until there's real data ── */}
-      {(statsLoading || statItems.length > 0) && (
-        <section className="py-12 sm:py-14 px-4 sm:px-6 lg:px-12 bg-white border-t border-b border-bone">
-          <RevealStagger className="max-w-[1000px] mx-auto grid grid-cols-2 sm:grid-cols-4 gap-6 justify-items-center" step={0.08} y={14}>
-            {statsLoading
-              ? Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="text-center">
-                    <SkeletonBox width={70} height={32} className="mb-2 mx-auto" />
-                    <SkeletonBox width={90} height={13} className="mx-auto" />
-                  </div>
-                ))
-              : statItems.map(s => (
-                  <div key={s.label} className="text-center">
-                    {s.value === null
-                      ? <p className="block text-[32px] font-bold text-brand-orange">—</p>
-                      : <AnimatedCounter value={s.value} format={s.format} className="block text-[32px] font-bold text-brand-orange" />}
-                    <p className="text-[13px] text-slate">{s.label}</p>
-                  </div>
-                ))}
-          </RevealStagger>
-        </section>
-      )}
-
-      {/* ── Social proof — real reviews only ── */}
-      {(testimonialsLoading || testimonials.length > 0) && (
-        <section className="bg-cream border-b border-bone py-10 sm:py-12 lg:py-14">
-          <div className="px-4 sm:px-6 lg:px-12">
-            <SectionHeading kicker="Trusted by buyers &amp; sellers worldwide" title="Real stories from real people" align="center" className="mb-10" />
-            <RevealStagger className="flex flex-wrap justify-center gap-4" step={0.1} y={16}>
-              {testimonialsLoading
-                ? Array.from({ length: 3 }).map((_, i) => (
-                    <Card key={i} padding="none" className="w-full sm:w-[340px]">
-                      <div className="p-5">
-                        <div className="flex items-center justify-between mb-3">
-                          <SkeletonBox width={70} height={12} />
-                          <SkeletonBox width={22} height={22} rounded="6px" />
-                        </div>
-                        <SkeletonBox width="100%" height={13} className="mb-2" />
-                        <SkeletonBox width="80%" height={13} className="mb-4" />
-                        <div className="flex items-center gap-[10px] pt-3 border-t border-bone">
-                          <SkeletonBox width={30} height={30} rounded="999px" />
-                          <div>
-                            <SkeletonBox width={90} height={13} className="mb-1" />
-                            <SkeletonBox width={70} height={11} />
-                          </div>
-                        </div>
-                      </div>
-                    </Card>
-                  ))
-                : testimonials.map(t => (
-                    <Card key={t.id} padding="none" hover className="group relative overflow-hidden w-full sm:w-[340px]">
-                      <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-brand-orange to-[#f0a57a] scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300" />
-                      <div className="p-5">
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-[2px]">
-                            {[1, 2, 3, 4, 5].map(i => (
-                              <Star key={i} size={12} className={i <= Math.round(t.rating) ? 'text-brand-orange fill-brand-orange' : 'text-bone fill-bone'} />
-                            ))}
-                          </div>
-                          <Quote size={20} className="text-brand-orange/20 fill-brand-orange/20 shrink-0" />
-                        </div>
-                        <p className="text-[13px] text-charcoal leading-[1.75] mb-4 italic">"{t.text}"</p>
-                        <div className="flex items-center gap-[10px] pt-3 border-t border-bone">
-                          <Avatar name={t.name} size={30} />
-                          <div>
-                            <div className="flex items-center gap-[6px]">
-                              <p className="text-[13px] font-semibold text-carbon">{t.name}</p>
-                              {t.isVerifiedSeller && <BadgeCheck size={13} className="text-info fill-info/15 shrink-0" />}
-                            </div>
-                            <p className="text-[11px] text-slate">{t.storeName ? `Owner, ${t.storeName}` : 'Verified Seller'}</p>
-                          </div>
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
-            </RevealStagger>
-          </div>
-        </section>
-      )}
-
-      {/* ── Closing CTA — self-contained, already offers both "Explore
-         Marketplace" and "Create Your Account" (sell entry), so it covers
-         the seller-acquisition funnel without a second dedicated pitch
-         section dominating the shopper-first homepage. ── */}
-      <ClosingCtaBanner />
+      </main>
 
       <Footer />
     </div>

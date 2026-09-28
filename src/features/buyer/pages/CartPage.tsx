@@ -100,6 +100,11 @@ export function CartPage() {
 
   const isEmpty = !loading && !items.length;
 
+  // Main site: the cart can hold several stores' items. Each store ships and
+  // bills on its own, so each gets its own checkout.
+  const storeCarts = cart?.stores ?? [];
+  const isMultiStore = storeCarts.length > 1;
+
   // Real, honest recall — the shopper's own recently-viewed products
   // (client-tracked from ProductDetail, same source the navbar's search
   // dropdown already uses), never a fabricated "trending" list.
@@ -264,10 +269,16 @@ export function CartPage() {
                 const isRemoving = removingId === key;
                 const isUpdating = updatingId === key;
                 const isLast     = idx === (items.length - 1);
+                const startsStore = isMultiStore && item.storeId !== items[idx - 1]?.storeId;
 
                 return (
+                  <div key={key}>
+                  {startsStore && (
+                    <div className={clsx('px-5 pt-3 pb-2 bg-cream text-[12px] font-semibold text-charcoal flex items-center gap-2', idx > 0 && 'border-t border-bone')}>
+                      <Package size={13} className="text-slate" /> {item.storeName ?? 'Store'}
+                    </div>
+                  )}
                   <div
-                    key={key}
                     className={clsx(
                       'flex flex-wrap gap-4 items-start px-5 py-4 transition-opacity duration-200',
                       !isLast && 'border-b border-bone',
@@ -347,6 +358,7 @@ export function CartPage() {
                       {displaySymbol}{lineTotal.toLocaleString()}
                     </p>
                   </div>
+                  </div>
                 );
               })}
 
@@ -420,20 +432,45 @@ export function CartPage() {
                     {physicalCount} physical · {digitalCount} digital — delivered together
                   </p>
                 )}
-                <Button
-                  variant="primary" fullWidth
-                  className="justify-between! px-5! py-[11px]! rounded-xl!"
-                  onClick={() => navigate('/checkout')}
-                >
-                  <span className="flex items-center gap-2">
-                    <Package size={15} />
-                    Proceed to Checkout
-                  </span>
-                  <span className="flex items-center gap-1 opacity-80 text-[12px]">
-                    {cartCount} item{cartCount !== 1 ? 's' : ''}
-                    <ChevronRight size={13} />
-                  </span>
-                </Button>
+                {isMultiStore ? (
+                  <>
+                    <p className="text-[11px] text-slate text-center -mt-1 mb-1">
+                      Items from {storeCarts.length} stores — each store checks out separately
+                    </p>
+                    {storeCarts.map(sc => (
+                      <Button
+                        key={sc.storeId}
+                        variant="primary" fullWidth
+                        className="justify-between! px-5! py-[11px]! rounded-xl!"
+                        onClick={() => navigate(`/checkout?store=${encodeURIComponent(sc.storeId)}`)}
+                      >
+                        <span className="flex items-center gap-2 min-w-0">
+                          <Package size={15} className="shrink-0" />
+                          <span className="truncate">Checkout {sc.store.name}</span>
+                        </span>
+                        <span className="flex items-center gap-1 opacity-80 text-[12px] shrink-0">
+                          {sc.totalItems}
+                          <ChevronRight size={13} />
+                        </span>
+                      </Button>
+                    ))}
+                  </>
+                ) : (
+                  <Button
+                    variant="primary" fullWidth
+                    className="justify-between! px-5! py-[11px]! rounded-xl!"
+                    onClick={() => navigate('/checkout')}
+                  >
+                    <span className="flex items-center gap-2">
+                      <Package size={15} />
+                      Proceed to Checkout
+                    </span>
+                    <span className="flex items-center gap-1 opacity-80 text-[12px]">
+                      {cartCount} item{cartCount !== 1 ? 's' : ''}
+                      <ChevronRight size={13} />
+                    </span>
+                  </Button>
+                )}
               </div>
 
               <Button

@@ -51,7 +51,7 @@ const HIGHLIGHTS = [
 // only ever signs in as a seller today — buyer login is hidden, not deleted,
 // since it may come back later. Flip SELLER_ONLY_LOGIN back to false to
 // restore the old buyer/seller inline toggle below with zero other changes.
-const SELLER_ONLY_LOGIN = true;
+const SELLER_ONLY_LOGIN = false;
 
 // Which account (buyer vs seller) to sign into is picked via a small inline
 // toggle rather than a separate role-choice step, since it only matters for

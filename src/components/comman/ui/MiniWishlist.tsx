@@ -75,11 +75,15 @@ export function MiniWishlist() {
         aria-label={`Wishlist${wishlistCount > 0 ? ` (${wishlistCount} items)` : ''}`}
         aria-haspopup="true"
         aria-expanded={open}
-        className="relative w-9 h-9 rounded-full bg-brand-pale-orange/50 flex items-center justify-center cursor-pointer shrink-0 transition-all duration-200 hover:bg-brand-pale-orange hover:scale-105 outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/40 focus-visible:ring-offset-1"
+        className="relative h-9 min-w-9 px-0 md:px-1 flex items-center justify-center gap-[5px] bg-transparent border-none cursor-pointer shrink-0 whitespace-nowrap text-[15px] text-carbon hover:text-brand-orange transition-colors outline-none rounded-md focus-visible:ring-2 focus-visible:ring-brand-orange/40"
       >
-        <Heart size={16} className={wishlistCount > 0 ? 'text-[#e11d48] fill-[#e11d48]' : 'text-brand-orange fill-none'} />
+        <Heart size={15} className={wishlistCount > 0 ? 'text-brand-orange fill-brand-orange' : 'fill-none'} />
+        <span className="hidden md:inline">Saved</span>
+        <b className="hidden md:inline text-[12px] font-bold bg-mist rounded-full px-[6px] py-[2px] leading-none">
+          {wishlistCount > 99 ? '99+' : wishlistCount}
+        </b>
         {wishlistCount > 0 && (
-          <span className="absolute top-[-4px] right-[-4px] min-w-[18px] h-[18px] rounded-[9px] bg-[#e11d48] text-white text-[10px] font-bold leading-[18px] text-center px-1 border-2 border-white">
+          <span className="md:hidden absolute top-[-2px] right-[-4px] min-w-[16px] h-[16px] rounded-[8px] bg-brand-orange text-white text-[9px] font-bold leading-[16px] text-center px-1">
             {wishlistCount > 99 ? '99+' : wishlistCount}
           </span>
         )}

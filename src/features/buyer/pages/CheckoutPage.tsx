@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { getStorefrontUrl } from '@/utils/storefrontUrl';
 import { useCartContext } from '@/contexts/CartContext';
@@ -336,14 +336,23 @@ export function CheckoutPage() {
   // called, never before (an early return up here would make React call a
   // different number of hooks on the next render the instant login succeeds
   // and this same component instance re-renders instead of navigating away).
-  const { cart, loading: cartLoading, cartCount, clearCart } = useCartContext();
+  const { cart, loading: cartLoading, clearCart } = useCartContext();
 
-  // One unified checkout for the whole cart, mixed physical+digital included
-  // (Amazon/Alibaba/Shopify/Daraz all check out a mixed cart as one order —
-  // splitting it into two separate checkouts was the old behavior here and
-  // it under-charged the displayed total while still billing the full cart
-  // server-side, since the backend was never told to filter by type).
-  const cartItems  = cart?.items ?? [];
+  // Checkout is one store at a time. On the main marketplace site the cart
+  // can span several stores — `?store=` picks which one this checkout is
+  // for (the cart page links each store's own checkout); a single-store
+  // cart (or a storefront) needs no param.
+  const [searchParams] = useSearchParams();
+  const checkoutStoreId = searchParams.get('store') ?? cart?.storeId ?? undefined;
+  const needsStorePick = !checkoutStoreId && (cart?.stores?.length ?? 0) > 1;
+
+  // One unified checkout for the chosen store's cart, mixed physical+digital
+  // included (Amazon/Alibaba/Shopify/Daraz all check out a mixed cart as one
+  // order — splitting it into two separate checkouts was the old behavior
+  // here and it under-charged the displayed total while still billing the
+  // full cart server-side, since the backend was never told to filter by type).
+  const cartItems  = (cart?.items ?? []).filter(i => !checkoutStoreId || !i.storeId || i.storeId === checkoutStoreId);
+  const checkoutCount = cartItems.reduce((s, i) => s + i.quantity, 0);
   const hasDigital = cartItems.some(i => i.type === 'digital');
   // Fully-digital carts skip address/shipping entirely; a mixed cart still
   // needs both, for its physical items — so this only means "skip the
@@ -480,11 +489,11 @@ export function CheckoutPage() {
 
   // Digital: auto-create checkout (no address/shipping needed) and jump to payment
   useEffect(() => {
-    if (!loggedIn || !isDigital || checkout) return;
+    if (!loggedIn || !isDigital || checkout || !checkoutStoreId) return;
     let cancelled = false;
     setCreatingCheckout(true);
     setCheckoutError('');
-    apiCreateCheckout({ storeId: cart?.storeId })
+    apiCreateCheckout({ storeId: checkoutStoreId })
       .then(res => {
         if (cancelled) return;
         setCheckout(res.data.checkout);
@@ -501,7 +510,7 @@ export function CheckoutPage() {
       .finally(() => { if (!cancelled) setCreatingCheckout(false); });
     return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isDigital, loggedIn]);
+  }, [isDigital, loggedIn, checkoutStoreId]);
 
   // Card ('stripe') or split ('split') selected → get a Stripe clientSecret
   // for this checkout so the PaymentElement can mount. Re-fetches if the
@@ -552,7 +561,7 @@ export function CheckoutPage() {
         if (stopped) return;
         if (res.data.status === 'completed') {
           setPollingStatus(false);
-          await clearCart();
+          await clearCart(checkoutStoreId);
           navigate('/order-success', { state: { orders: res.data.orders } });
           return;
         }
@@ -686,7 +695,7 @@ export function CheckoutPage() {
       const res = await apiCreateCheckout({
         addressId: selectedAddr._id,
         shippingZoneId: selectedZoneId,
-        storeId: cart?.storeId,
+        storeId: checkoutStoreId,
       });
       setCheckout(res.data.checkout);
       setSummary(res.data.summary);
@@ -713,7 +722,7 @@ export function CheckoutPage() {
     setPlaceError('');
     try {
       const res = await apiPlaceCodOrder({ checkoutId: checkout._id });
-      await clearCart();
+      await clearCart(checkoutStoreId);
       navigate('/order-success', { state: { orders: res.data.orders } });
     } catch (err) {
       setPlaceError(err instanceof Error ? err.message : 'Failed to place order. Please try again.');
@@ -723,7 +732,7 @@ export function CheckoutPage() {
   };
 
   const handleManualPaymentSubmitted = async (orders: ManualPaymentOrderSummary[], amountPKR: number) => {
-    await clearCart();
+    await clearCart(checkoutStoreId);
     setManualPaymentResult({ orders, amountPKR });
   };
 
@@ -735,6 +744,36 @@ export function CheckoutPage() {
           <p className="text-[14px] text-slate max-w-[320px]">Sign in to complete your purchase — your cart will be right here waiting.</p>
           <Button onClick={() => authGate.requireAuth(() => {}, 'Sign in to complete your purchase.')}>Sign In</Button>
           <button onClick={() => navigate('/cart')} className="text-[12.5px] text-slate hover:text-charcoal transition-colors bg-transparent border-none cursor-pointer">
+            Back to Cart
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (needsStorePick && cart?.stores) {
+    return (
+      <div className="min-h-screen bg-cream flex flex-col">
+        <BuyerNavbar variant="minimal" contextLabel="Checkout" hideCommerce />
+        <div className="max-w-[560px] w-full mx-auto px-4 py-12">
+          <h1 className="text-[20px] font-bold text-carbon mb-1">Which store are you checking out?</h1>
+          <p className="text-[13px] text-slate mb-6">Your cart has items from {cart.stores.length} stores. Each store ships and bills separately, so check out one at a time.</p>
+          <div className="bg-white border border-bone rounded-[10px] divide-y divide-bone">
+            {cart.stores.map(s => (
+              <button
+                key={s.storeId}
+                onClick={() => navigate(`/checkout?store=${encodeURIComponent(s.storeId)}`)}
+                className="w-full flex items-center justify-between gap-3 px-4 py-3.5 text-left bg-transparent border-none cursor-pointer hover:bg-fog transition-colors"
+              >
+                <span className="min-w-0">
+                  <span className="block text-[14px] font-semibold text-carbon truncate">{s.store.name}</span>
+                  <span className="block text-[12px] text-slate">{s.totalItems} item{s.totalItems === 1 ? '' : 's'}</span>
+                </span>
+                <ChevronRight size={16} className="text-slate shrink-0" />
+              </button>
+            ))}
+          </div>
+          <button onClick={() => navigate('/cart')} className="mt-5 text-[12.5px] text-slate hover:text-charcoal transition-colors bg-transparent border-none cursor-pointer">
             Back to Cart
           </button>
         </div>
@@ -799,7 +838,7 @@ export function CheckoutPage() {
                     </span>
                   </div>
                   <p className="text-[12px] text-slate mt-[2px]">
-                    {cartLoading ? 'Loading…' : `${cartCount} item${cartCount !== 1 ? 's' : ''} in your cart`}
+                    {cartLoading ? 'Loading…' : `${checkoutCount} item${checkoutCount !== 1 ? 's' : ''} in this order`}
                   </p>
                 </div>
                 <span className="text-[11px] font-semibold px-3 py-1 rounded-full bg-[#eef0ff] text-[#3851d1]">
@@ -890,7 +929,7 @@ export function CheckoutPage() {
                 <div>
                   <h1 className="text-[20px] font-bold text-carbon leading-tight">Checkout</h1>
                   <p className="text-[12px] text-slate mt-[2px]">
-                    {cartLoading ? 'Loading…' : `${cartCount} item${cartCount !== 1 ? 's' : ''} in your cart`}
+                    {cartLoading ? 'Loading…' : `${checkoutCount} item${checkoutCount !== 1 ? 's' : ''} in this order`}
                   </p>
                 </div>
                 <span className={clsx(

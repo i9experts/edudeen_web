@@ -85,7 +85,7 @@ export function ForSellersPage() {
 
           <h1 className="block text-3xl md:text-5xl lg:text-[48px] font-bold text-white leading-[1.15] mb-5" style={{ fontFamily: SERIF }}>
             <ClipReveal as="div" delay={0.06}>Sell more. Do less.</ClipReveal>
-            <ClipReveal as="div" delay={0.18}>With Solvex<span className="text-brand-orange">o</span>.</ClipReveal>
+            <ClipReveal as="div" delay={0.18}>With Edu<span className="text-brand-green">deen</span>.</ClipReveal>
           </h1>
 
           <Reveal delay={0.16}>

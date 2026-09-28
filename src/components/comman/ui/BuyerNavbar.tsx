@@ -516,7 +516,7 @@ export function SearchBox({
         // `max-w-none` (below) and this base max-w share the same property —
         // only applying one or the other, never both as bare classes,
         // avoids the exact same ordering trap as the position/justify fix above.
-        open && alwaysFullScreen ? 'max-w-none' : (isLg ? 'max-w-[820px]' : 'md:max-w-[360px] lg:max-w-[480px]'),
+        open && alwaysFullScreen ? 'max-w-none' : (isLg ? 'max-w-[820px]' : 'md:max-w-[420px] lg:max-w-[650px]'),
         open && (alwaysFullScreen
           ? 'flex flex-1 min-h-0 flex-col'
           : 'max-md:flex max-md:flex-1 max-md:min-h-0 max-md:flex-col max-md:max-w-none'),
@@ -527,10 +527,10 @@ export function SearchBox({
             'transition-[border-color,box-shadow,background-color] duration-200 ease-out',
             isLg
               ? 'gap-3 pl-6 pr-1.5 py-1.5 rounded-full border-2'
-              : 'gap-[9px] px-[14px] py-[9px] rounded-xl',
+              : 'gap-[9px] pl-[18px] md:pl-[22px] pr-0 py-0 rounded-full overflow-hidden',
             open
               ? 'border-brand-orange shadow-[0_2px_12px_rgba(23,71,113,0.12)] ring-[3px] ring-brand-orange/10'
-              : isLg ? 'border-brand-orange shadow-[0_6px_24px_rgba(23,71,113,0.16)]' : 'border-bone hover:border-border-hover',
+              : isLg ? 'border-brand-orange shadow-[0_6px_24px_rgba(23,71,113,0.16)]' : 'border-[#afbdc6] hover:border-brand-orange',
             open && (alwaysFullScreen ? 'shrink-0' : 'max-md:shrink-0'),
           )}
         >
@@ -547,7 +547,7 @@ export function SearchBox({
               <ArrowLeft size={17} />
             </button>
           )}
-          <Search size={isLg ? 19 : 15} className={clsx('shrink-0 transition-colors duration-200', open || isLg ? 'text-brand-orange' : 'text-slate')} />
+          {isLg && <Search size={19} className="shrink-0 text-brand-orange" />}
           <input
             ref={inputRef}
             role="combobox"
@@ -557,10 +557,10 @@ export function SearchBox({
             value={value}
             onChange={e => onChange(e.target.value)}
             onFocus={() => setOpen(true)}
-            placeholder={placeholder ?? 'Search products, categories, stores…'}
-            aria-label={placeholder ?? 'Search products, categories, stores'}
+            placeholder={placeholder ?? 'What would you love to teach today?'}
+            aria-label={placeholder ?? 'Search resources, products and stores'}
             autoFocus={autoFocus}
-            className={clsx('border-0 outline-none text-carbon placeholder:text-slate/80 bg-transparent w-full min-w-0', isLg ? 'text-[15px] md:text-[16px] py-[8px]' : 'text-[13.5px]')}
+            className={clsx('border-0 outline-none text-carbon placeholder:text-slate/80 bg-transparent w-full min-w-0', isLg ? 'text-[15px] md:text-[16px] py-[8px]' : 'text-[14px] md:text-[15px] py-[11px] md:py-[13px]')}
           />
           {value && (
             <button
@@ -571,10 +571,16 @@ export function SearchBox({
               <X size={14} />
             </button>
           )}
-          {!isLg && !value && !open && (
-            <kbd className="hidden md:flex items-center gap-[2px] text-[10px] font-semibold text-slate/70 bg-cream border border-bone rounded-[5px] px-[6px] py-[2px] shrink-0 leading-none">
-              {isMac ? '⌘' : 'Ctrl'}K
-            </kbd>
+          {!isLg && (
+            <button
+              type="button"
+              onClick={() => onSubmit(value)}
+              aria-label="Search"
+              title={`Search (${isMac ? '⌘' : 'Ctrl'}K)`}
+              className="self-stretch shrink-0 w-[52px] md:w-[60px] flex items-center justify-center bg-brand-orange text-white border-none cursor-pointer hover:brightness-95"
+            >
+              <Search size={18} />
+            </button>
           )}
           {isLg && (
             <button
@@ -1072,8 +1078,8 @@ export function BuyerNavbar({ variant = 'full', contextLabel, search, accentColo
       hidden ? '-translate-y-full md:translate-y-0' : 'translate-y-0',
     )}>
       <div className={clsx(
-        'flex items-center gap-3 md:gap-5 px-4 md:px-6 lg:px-10 transition-[height] duration-200',
-        scrolled ? 'h-[52px]' : 'h-[60px]',
+        'flex items-center gap-3 md:gap-6 px-[5%] md:px-[4%] transition-[height] duration-200',
+        scrolled ? 'h-[60px] md:h-[68px]' : 'h-[64px] md:h-[88px]',
       )}>
 
         {/* Logo — hidden while the mobile search row is expanded so the input gets full width */}
@@ -1085,7 +1091,7 @@ export function BuyerNavbar({ variant = 'full', contextLabel, search, accentColo
             mobileSearchOpen ? 'hidden md:flex' : 'flex',
           )}
         >
-          <EdudeenLogo size={scrolled ? 28 : 34} className="transition-[width,height] duration-200" />
+          <EdudeenLogo size={scrolled ? 32 : 40} className="transition-[width,height] duration-200" />
           {contextLabel && (
             <>
               <span className="text-bone mx-1 hidden md:inline">|</span>
@@ -1206,6 +1212,14 @@ export function BuyerNavbar({ variant = 'full', contextLabel, search, accentColo
                 </>
               )}
               <AccountActions simple={hideCommerce} />
+              {!hideCommerce && (
+                <button
+                  onClick={() => navigate('/sellers')}
+                  className="hidden xl:inline-block shrink-0 whitespace-nowrap bg-transparent border-0 border-b border-carbon text-carbon text-[14px] font-bold py-[7px] px-0 cursor-pointer hover:text-brand-orange hover:border-brand-orange"
+                >
+                  Start creating ↗
+                </button>
+              )}
             </div>
           </>
         )}

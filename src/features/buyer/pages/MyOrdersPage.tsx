@@ -377,6 +377,36 @@ function OrderCard({ order, onChanged }: { order: OrderSummary; onChanged: () =>
             </div>
           )}
 
+          {/* Shipment tracking — one entry per store that has shipped */}
+          {order.stores?.some(s => s.tracking?.trackingNumber) && (
+            <div className="px-4 md:px-5 pb-4 pt-3 border-t border-bone">
+              <div className="flex items-center gap-1.5 mb-3">
+                <Truck size={11} className="text-slate" />
+                <p className="text-[10px] font-bold text-slate uppercase tracking-[0.07em]">Tracking</p>
+              </div>
+              <div className="flex flex-col gap-2">
+                {order.stores.filter(s => s.tracking?.trackingNumber).map(s => (
+                  <div key={s.storeId} className="bg-cream rounded-[9px] px-3 md:px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
+                    <div className="min-w-0">
+                      <p className="text-[12px] font-semibold text-charcoal">{s.tracking!.carrier || 'Courier'}</p>
+                      <p className="text-[11px] text-slate font-mono break-all">{s.tracking!.trackingNumber}</p>
+                    </div>
+                    {s.tracking!.trackingUrl && /^https?:\/\//i.test(s.tracking!.trackingUrl) && (
+                      <a
+                        href={s.tracking!.trackingUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[12px] font-semibold text-brand-orange hover:underline shrink-0"
+                      >
+                        Track package
+                      </a>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Price summary */}
           <div className="px-4 md:px-5 py-3 bg-cream border-t border-bone flex flex-col gap-[6px]">
             <div className="flex justify-between text-[11px]">

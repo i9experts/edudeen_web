@@ -14,6 +14,7 @@ import { useWishlistContext } from '@/contexts/WishlistContext';
 import { Button } from '@/components/comman/ui/Button';
 import { Pagination, FilterDropdown, BuyerNavbar, AppDownloadBanner, Footer, TrustServiceStrip, StoreFeatureCard, EmptyState, DealsBanner, useCountdown, SkeletonBox } from '@/components/comman/ui';
 import { ProductCard, ProductCardSkeleton } from '@/components/comman/marketplace/ProductCard';
+import { ResourceCard, ResourceCardSkeleton } from '@/components/comman/marketplace/ResourceCard';
 import { FlashSaleCard } from '@/components/comman/marketplace/FlashSaleCard';
 import { FilterAccordionSection, FilterRadioRow, FilterCheckboxRow, FilterStarRow, ActiveFilterChip, PriceRangeSlider, PRICE_MIN, PRICE_MAX } from '@/components/comman/marketplace/FilterAccordionSection';
 import { MegaMenuBar, CategoryBarIcon, CategoriesMegaContent } from '@/components/comman/marketplace/MegaMenuBar';
@@ -1037,14 +1038,29 @@ export function Marketplace() {
                     'scroll-mt-[76px]',
                     viewMode === 'list'
                       ? 'flex flex-col gap-3'
-                      : 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5',
+                      : 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-[14px] gap-y-[25px] md:gap-x-[22px] md:gap-y-[28px]',
                   )}
                 >
                   {loading
-                    ? Array.from({ length: 10 }).map((_, i) => <ProductCardSkeleton key={i} layout={viewMode} />)
-                    : filtered.map(p => {
+                    ? Array.from({ length: 10 }).map((_, i) => viewMode === 'grid'
+                        ? <ResourceCardSkeleton key={i} />
+                        : <ProductCardSkeleton key={i} layout={viewMode} />)
+                    : filtered.map((p, i) => {
                         const defVariant = (p.variants ?? []).find(v => v.isDefault) ?? p.variants?.[0];
                         const vId = defVariant?._id ?? '';
+                        if (viewMode === 'grid') {
+                          return (
+                            <ResourceCard
+                              key={p._id}
+                              index={i}
+                              product={p}
+                              onClick={handleCardClick}
+                              isWishlisted={isWishlisted(p._id, vId)}
+                              isWishlisting={wishlisting === vId}
+                              onToggleWishlist={handleToggleWishlist}
+                            />
+                          );
+                        }
                         return (
                           <ProductCard
                             key={p._id}

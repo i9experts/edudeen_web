@@ -41,7 +41,7 @@ const FALLBACK_FAQS = [
   },
   {
     q: 'What payment methods do you accept?',
-    a: 'We accept all major credit cards (Visa, Mastercard, Amex), PayPal, Apple Pay, and bank transfer for annual plans.',
+    a: 'We accept all major credit and debit cards (Visa, Mastercard, Amex) through Stripe, and bank transfer.',
   },
   {
     q: 'Is there a free trial on paid plans?',

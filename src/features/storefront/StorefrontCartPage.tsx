@@ -10,6 +10,10 @@ import {
 import { clsx } from 'clsx';
 import { currencySymbol } from '@/utils/currency';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
+import { useNavigate } from 'react-router-dom';
+import { TokenStorage } from '@/api/services/auth';
+import { getMainAppUrl } from '@/utils/storefrontUrl';
+import { useStorefront } from './StorefrontContext';
 
 function CartItemImage({ images, name }: { images?: string[]; name: string }) {
   const [errored, setErrored] = useState(false);
@@ -31,12 +35,23 @@ function CartItemImage({ images, name }: { images?: string[]; name: string }) {
 
 // This store's own cart — no marketplace breadcrumb, no cross-store
 // "recently viewed"/"browse marketplace" recovery links, since a buyer on
-// this subdomain only ever shops this one store. Checkout itself isn't
-// wired up yet (needs its own storefront-local page — a later phase), so
-// the CTA is shown but disabled rather than bouncing somewhere broken.
+// this subdomain only ever shops this one store. Checkout runs on the main
+// Edudeen site's checkout, scoped to this store (`?store=`): the login
+// cookie is shared across subdomains, and this store's server-side cart is
+// the same one the main site reads. A guest's cart lives only in this
+// subdomain's localStorage, so they sign in here first (which merges it
+// into their server cart).
 export function StorefrontCartPage() {
   usePageTitle('Cart');
+  const navigate = useNavigate();
+  const { store } = useStorefront();
   const { cart, loading, cartCount, updateQty, removeItem, clearCart, error, clearError } = useCartContext();
+
+  const handleCheckout = () => {
+    if (!TokenStorage.isLoggedIn()) { navigate('/login'); return; }
+    const storeId = cart?.storeId ?? store?.storeId;
+    window.location.href = getMainAppUrl(`/checkout${storeId ? `?store=${encodeURIComponent(storeId)}` : ''}`);
+  };
   const [clearing,   setClearing]   = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
@@ -240,8 +255,8 @@ export function StorefrontCartPage() {
               <span className="text-carbon">{displaySymbol}{displayTotal.toLocaleString()}</span>
             </div>
 
-            <Button variant="primary" fullWidth disabled className="justify-center! opacity-60">
-              <Lock size={13} className="mr-1.5" /> Checkout coming soon
+            <Button variant="primary" fullWidth className="justify-center!" onClick={handleCheckout}>
+              <Lock size={13} className="mr-1.5" /> {TokenStorage.isLoggedIn() ? 'Checkout' : 'Sign in to checkout'}
             </Button>
           </div>
         </div>

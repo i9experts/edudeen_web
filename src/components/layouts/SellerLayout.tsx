@@ -261,8 +261,8 @@ function SellerSidebar({ open, onToggle }: SellerSidebarProps) {
           <div className="px-5 pt-5 pb-4 shrink-0 flex items-center gap-[9px]">
             <div className="shrink-0"><EdudeenIcon size={28} /></div>
             <div className="flex items-center flex-1 min-w-0">
-              <span className="text-[17px] font-bold text-white tracking-[-0.3px]">Solvex</span>
-              <span className="text-[17px] font-bold text-brand-orange tracking-[-0.3px]">o</span>
+              <span className="text-[17px] font-normal text-white tracking-[0.5px]">EDU</span>
+              <span className="text-[17px] font-extrabold text-white tracking-[0.5px]">DEEN</span>
             </div>
             {paletteHint}
             {toggleBtn}
