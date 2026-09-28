@@ -109,7 +109,7 @@ function BenefitEditor({ benefit, onChange, onRemove, categories }: {
                     <button key={c._id} type="button"
                       onClick={() => set('categoryIds', active ? (benefit.categoryIds ?? []).filter(id => id !== c._id) : [...(benefit.categoryIds ?? []), c._id])}
                       className="px-2.5 py-1 rounded-full text-[11px] font-medium border cursor-pointer"
-                      style={{ background: active ? '#D97757' : '#fff', color: active ? '#fff' : '#5A5852', borderColor: active ? '#D97757' : '#E8E6DC' }}>
+                      style={{ background: active ? '#174771' : '#fff', color: active ? '#fff' : '#5A5852', borderColor: active ? '#174771' : '#E8E6DC' }}>
                       {c.name}
                     </button>
                   );

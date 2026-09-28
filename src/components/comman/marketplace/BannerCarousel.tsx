@@ -183,7 +183,7 @@ export function BannerCarousel({ banners, entityType, fit = 'cover' }: BannerCar
               >
                 <span
                   className="block h-[6px] rounded-full border border-black/10 transition-all duration-300 ease-out"
-                  style={{ width: i === index ? 22 : 6, background: i === index ? '#D97757' : 'rgba(255,255,255,0.75)' }}
+                  style={{ width: i === index ? 22 : 6, background: i === index ? '#174771' : 'rgba(255,255,255,0.75)' }}
                 />
               </button>
             ))}

@@ -252,7 +252,7 @@ function AdminSidebar({ open, onToggle }: AdminSidebarProps) {
       <aside className={clsx(
         'hidden lg:flex bg-admin-bg flex-col shrink-0',
         'transition-[width] duration-300 ease-in-out',
-        import.meta.env.DEV ? 'h-[calc(100vh-44px)]' : 'h-screen',
+        'h-screen',
         open ? 'w-[220px]' : 'w-[60px]',
       )}>
 
@@ -491,7 +491,7 @@ export function AdminLayout() {
   }
 
   return (
-    <div className={clsx('flex bg-cream overflow-hidden', import.meta.env.DEV ? 'h-[calc(100vh-44px)]' : 'h-screen')}>
+    <div className={clsx('flex bg-cream overflow-hidden', 'h-screen')}>
       <AdminSidebar open={sidebarOpen} onToggle={toggle} />
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <div className="flex-1 overflow-y-auto pb-[64px] lg:pb-0">

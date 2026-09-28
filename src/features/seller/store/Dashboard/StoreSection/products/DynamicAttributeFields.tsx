@@ -66,7 +66,7 @@ export function DynamicAttributeFields({ definitions, loading, value, onChange }
                       onClick={() => setValue(def, checked ? current.filter(v => v !== o) : [...current, o])}
                       className="px-3 py-1.5 rounded-full text-[12px] font-medium border transition-colors"
                       style={checked
-                        ? { background: '#FBECE4', borderColor: '#D97757', color: '#D97757' }
+                        ? { background: '#EAF2F8', borderColor: '#174771', color: '#174771' }
                         : { background: '#fff', borderColor: '#E8E6DC', color: '#141413' }}
                     >
                       {o}

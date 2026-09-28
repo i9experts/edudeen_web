@@ -101,7 +101,7 @@ export function SellerOverviewTab({ params, compareToPreviousPeriod, currency }:
             }))}
             lines={[
               { dataKey: 'gross', label: 'Gross Revenue', color: '#8C8A82' },
-              { dataKey: 'net', label: 'Net Revenue', color: '#D97757' },
+              { dataKey: 'net', label: 'Net Revenue', color: '#174771' },
             ]}
             valuePrefix={currencySymbol(currency)}
           />
@@ -120,7 +120,7 @@ export function SellerOverviewTab({ params, compareToPreviousPeriod, currency }:
               orders: p.orderCount,
             }))}
             dataKey="orders"
-            color="#D97757"
+            color="#174771"
           />
         )}
       </div>

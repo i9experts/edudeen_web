@@ -47,7 +47,7 @@ function SaveButton({ onClick, saving, label }: { onClick: () => void; saving: b
     <button
       onClick={onClick} disabled={saving}
       className="flex items-center gap-1.5 px-5 py-[9px] rounded-[10px] text-[13px] font-bold text-white border-none cursor-pointer transition-opacity disabled:opacity-60"
-      style={{ background: '#D97757' }}
+      style={{ background: '#174771' }}
     >
       {saving ? <Loader2 size={13} className="animate-spin" /> : null} {label}
     </button>
@@ -452,7 +452,7 @@ export function StoreBuilder() {
             </button>
             <button onClick={handlePublishTheme} disabled={saving}
               className="flex items-center gap-1.5 px-3.5 py-[8px] rounded-[10px] text-[12.5px] font-bold text-white border-none cursor-pointer transition-opacity disabled:opacity-60 whitespace-nowrap"
-              style={{ background: '#D97757' }}>
+              style={{ background: '#174771' }}>
               {saving ? <Loader2 size={13} className="animate-spin" /> : <UploadCloud size={13} />} Publish
             </button>
           </div>

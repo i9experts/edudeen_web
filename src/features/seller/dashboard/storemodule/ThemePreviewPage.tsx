@@ -116,7 +116,7 @@ export function ThemePreviewPage() {
             onClick={() => setConfirming(true)}
             disabled={applied}
             className="flex items-center gap-1.5 px-4 py-[9px] rounded-[10px] text-[13px] font-bold text-white border-none cursor-pointer disabled:opacity-60"
-            style={{ background: applied ? '#2E9E5B' : '#D97757' }}
+            style={{ background: applied ? '#2E9E5B' : '#174771' }}
           >
             {applied ? <><Check size={14} /> Applied</> : 'Use This Theme'}
           </button>

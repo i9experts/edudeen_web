@@ -136,7 +136,7 @@ export function ScaleSegmentPicker<T extends string>({ label, options, value, on
                   <span
                     key={j}
                     className="w-[5px] rounded-[1px]"
-                    style={{ height: h, background: j <= i ? (selected ? '#D97757' : '#B8B5AC') : '#E5E2D9' }}
+                    style={{ height: h, background: j <= i ? (selected ? '#174771' : '#B8B5AC') : '#E5E2D9' }}
                   />
                 ))}
               </span>

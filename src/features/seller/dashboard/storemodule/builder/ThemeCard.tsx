@@ -29,7 +29,7 @@ export function ThemeCard({ theme, active, onApply, onPreview, size = 'default' 
     <div
       className={clsx(
         'group relative flex flex-col rounded-2xl border bg-white overflow-hidden transition-all duration-200',
-        active ? 'border-brand-orange shadow-[0_2px_14px_rgba(217,119,87,0.18)]' : 'border-bone hover:border-slate/30 hover:shadow-[0_2px_14px_rgba(0,0,0,0.06)]',
+        active ? 'border-brand-orange shadow-[0_2px_14px_rgba(23,71,113,0.18)]' : 'border-bone hover:border-slate/30 hover:shadow-[0_2px_14px_rgba(0,0,0,0.06)]',
       )}
     >
       <button

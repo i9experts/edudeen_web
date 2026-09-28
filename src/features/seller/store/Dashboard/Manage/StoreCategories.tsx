@@ -84,7 +84,7 @@ export default function StoreCategories() {
         {/* Main category */}
         <div className="bg-white border border-bone rounded-[10px] px-5 py-4 flex items-center gap-3">
           <div className="w-10 h-10 rounded-[10px] bg-brand-pale-orange flex items-center justify-center shrink-0">
-            <FolderTree size={19} style={{ color: '#D97757' }} />
+            <FolderTree size={19} style={{ color: '#174771' }} />
           </div>
           <div className="min-w-0">
             <p className="text-[11px] font-medium text-slate uppercase tracking-[0.06em] mb-0.5">Main Category</p>

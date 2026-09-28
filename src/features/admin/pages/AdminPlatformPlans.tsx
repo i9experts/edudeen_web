@@ -138,7 +138,7 @@ function PlanFormModal({ plan, onClose, onSaved }: { plan: PlatformPlan | 'new';
               return (
                 <button key={f.key} type="button" onClick={() => setLimit(f.key, !active)}
                   className="px-2.5 py-1 rounded-full text-[11px] font-medium border cursor-pointer"
-                  style={{ background: active ? '#D97757' : '#fff', color: active ? '#fff' : '#5A5852', borderColor: active ? '#D97757' : '#E8E6DC' }}>
+                  style={{ background: active ? '#174771' : '#fff', color: active ? '#fff' : '#5A5852', borderColor: active ? '#174771' : '#E8E6DC' }}>
                   {f.label}
                 </button>
               );

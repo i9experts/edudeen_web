@@ -59,8 +59,8 @@ export function SellerShipping() {
                 className="flex items-center gap-1.5 px-4 py-2.5 text-[13px] cursor-pointer border-none bg-transparent transition-all duration-[120ms] -mb-px whitespace-nowrap shrink-0"
                 style={{
                   fontWeight: activeTab === tab.id ? 600 : 500,
-                  borderBottom: `2px solid ${activeTab === tab.id ? '#D97757' : 'transparent'}`,
-                  color: activeTab === tab.id ? '#B95A3A' : '#8C8A82',
+                  borderBottom: `2px solid ${activeTab === tab.id ? '#174771' : 'transparent'}`,
+                  color: activeTab === tab.id ? '#0F3354' : '#8C8A82',
                 }}
               >
                 <tab.Icon size={14} />

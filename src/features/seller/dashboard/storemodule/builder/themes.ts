@@ -34,7 +34,7 @@ export const THEMES: ThemeDefinition[] = [
     category: 'lifestyle',
     characteristics: ['Full-Bleed Hero', 'Warm Terracotta', 'Rounded Cards'],
     colors: {
-      primaryColor: '#D97757', accentColor: '#B95A3A', bgColor: '#FAF9F5', textColor: '#2C2A28', font: 'Poppins',
+      primaryColor: '#174771', accentColor: '#0F3354', bgColor: '#FAF9F5', textColor: '#2C2A28', font: 'Poppins',
       buttonStyle: 'solid', buttonRadius: 'medium', buttonWidth: 'auto', buttonSize: 'md',
       imageRadius: 'medium',
       typeScale: 'comfortable', containerWidth: 'standard', sectionSpacing: 'comfortable',

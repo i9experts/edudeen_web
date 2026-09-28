@@ -2,25 +2,32 @@
 @import "tailwindcss";
 
 @theme {
-  /* ── Brand Colors ── */
-  --color-brand-orange:      #D97757;
-  --color-brand-deep-orange: #B95A3A;
-  --color-brand-pale-orange: #FBECE4;
+  /* ── Brand Colors ── the `*-orange` names are historical (the old palette
+     was terracotta); they now carry the Edudeen logo navy. Kept as-is so
+     every existing `bg-brand-orange` / `text-brand-orange` utility follows. */
+  --color-brand-orange:      #174771;
+  --color-brand-deep-orange: #0F3354;
+  --color-brand-pale-orange: #EAF2F8;
 
-  /* ── Neutrals ── */
-  --color-carbon:   #141413;
-  --color-charcoal: #2C2A28;
-  --color-graphite: #4A4945;
-  --color-slate:    #8C8A82;
-  --color-bone:     #E8E6DC;
-  --color-cream:    #FAF9F5;
+  /* Secondary logo colors — royal blue (hexagon), green (tagline bar), gold (minaret) */
+  --color-brand-royal: #3978B8;
+  --color-brand-green: #66AD36;
+  --color-brand-gold:  #CCB000;
+
+  /* ── Neutrals ── cool, navy-tinted to sit with the logo palette */
+  --color-carbon:   #152D43;
+  --color-charcoal: #1F3A52;
+  --color-graphite: #486071;
+  --color-slate:    #64727B;
+  --color-bone:     #E1E7EA;
+  --color-cream:    #F5F8FA;
 
   /* Previously scattered as raw hex in Card/Badge/Modal/BuyerNavbar (same
      values, repeated across files) — named here so they're one shared
      decision instead of copy-pasted magic numbers. No visual change. */
-  --color-border-hover: #DEDBD0;  /* one step past bone — hover border on cards/tiles */
-  --color-mist:          #F1EFE8; /* neutral chip/badge fill, between bone and cream */
-  --color-fog:           #F5F3EE; /* subtle hover surface for icon buttons on white */
+  --color-border-hover: #C5D2DB;  /* one step past bone — hover border on cards/tiles */
+  --color-mist:          #EDF2F4; /* neutral chip/badge fill, between bone and cream */
+  --color-fog:           #F1F5F8; /* subtle hover surface for icon buttons on white */
 
   /* ── Accent — a single deliberate exception to the brand palette, reused
      consistently for "AI / premium / insights" contexts (Homepage hero glow,
@@ -70,8 +77,8 @@
   --color-dark-hover:   #242220;
 
   /* ── Fonts ── */
-  --font-sans:  'Poppins', system-ui, sans-serif;
-  --font-serif: 'Lora', Georgia, serif;
+  --font-sans:  Arial, Helvetica, system-ui, sans-serif;
+  --font-serif: Georgia, 'Times New Roman', serif;
 
   /* ── Typography scale — every screen previously picked its own arbitrary
      text-[Npx] value ad hoc; these give the same set of decisions a name so
@@ -130,9 +137,9 @@
    this page's root in this class recolors it green without touching any
    shared component file or any other page. ── */
 .theme-education {
-  --color-brand-orange:      #2F8F5B;
-  --color-brand-deep-orange: #1F6B42;
-  --color-brand-pale-orange: #E7F4EC;
+  --color-brand-orange:      #4E8F28;
+  --color-brand-deep-orange: #3B6720;
+  --color-brand-pale-orange: #EDF5E7;
 }
 
 /* ── Escape hatch for cross-page global chrome (Navbar, Footer,
@@ -141,9 +148,9 @@
    content, so they must stay the true brand orange even on that page.
    Wrap just that piece in this class to reset the variables back down. ── */
 .theme-brand-default {
-  --color-brand-orange:      #D97757;
-  --color-brand-deep-orange: #B95A3A;
-  --color-brand-pale-orange: #FBECE4;
+  --color-brand-orange:      #174771;
+  --color-brand-deep-orange: #0F3354;
+  --color-brand-pale-orange: #EAF2F8;
 }
 
 /* ── Premium mesh background — layered radial glows in brand + neutral tones
@@ -152,9 +159,9 @@
    the Homepage hero and other full-bleed premium/promo sections. ── */
 .mesh-brand {
   background-image:
-    radial-gradient(ellipse 900px 500px at 12% -10%, rgba(217,119,87,0.35), transparent 60%),
+    radial-gradient(ellipse 900px 500px at 12% -10%, rgba(23,71,113,0.35), transparent 60%),
     radial-gradient(ellipse 700px 500px at 100% 10%, rgba(124,58,237,0.16), transparent 55%),
-    radial-gradient(ellipse 800px 600px at 50% 120%, rgba(217,119,87,0.14), transparent 60%),
+    radial-gradient(ellipse 800px 600px at 50% 120%, rgba(23,71,113,0.14), transparent 60%),
     linear-gradient(180deg, #141413 0%, #1c1a18 55%, #141413 100%);
 }
 .grain-overlay {
@@ -216,7 +223,7 @@
    line. Solid tinted-orange fallback fill so it never renders invisible on
    a browser without -webkit-text-stroke support. ── */
 .hero-outline-text {
-  color: rgba(217, 119, 87, 0.4);
+  color: rgba(23,71,113, 0.4);
 }
 @supports (-webkit-text-stroke: 1px black) {
   .hero-outline-text {
@@ -238,9 +245,9 @@
   }
 
   body {
-    font-family: 'Poppins', system-ui, sans-serif;
-    background: #FAF9F5;
-    color: #2C2A28;
+    font-family: var(--font-sans);
+    background: #FFFFFF;
+    color: #152D43;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     font-size: 13px;
@@ -249,6 +256,13 @@
 
   #root {
     min-height: 100vh;
+  }
+
+  /* Brand headings are serif (Georgia), body stays sans. Base layer, so any
+     component's own `font-*` utility still wins. */
+  h1, h2 {
+    font-family: var(--font-serif);
+    letter-spacing: -0.01em;
   }
 
   /* Safety-net keyboard focus ring for anything that doesn't define its own

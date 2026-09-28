@@ -15,7 +15,7 @@ import { CopyIconButton } from './CopyIconButton';
 // ─────────────────────────────────────────────────────────────────────────────
 const ROLE_CHIP_CONFIG = {
   buyer:  { label: 'Buyer',  bg: '#EEF7FF', text: '#1A65A8', dot: '#3B82F6' },
-  seller: { label: 'Seller', bg: '#FFF4DC', text: '#B36200', dot: '#D97757' },
+  seller: { label: 'Seller', bg: '#FFF4DC', text: '#B36200', dot: '#174771' },
   admin:  { label: 'Admin',  bg: '#F3F0FF', text: '#5B3BCC', dot: '#7C3AED' },
 } as const;
 
@@ -70,7 +70,7 @@ function AvatarTrigger({
       onClick={onClick}
       className={clsx(
         'size-9 rounded-full shrink-0 p-[2px] bg-gradient-to-br from-brand-orange to-brand-deep-orange cursor-pointer transition-all duration-150',
-        open ? 'scale-[0.96] shadow-[0_0_0_3px_rgba(217,119,87,0.18)]' : 'hover:scale-105',
+        open ? 'scale-[0.96] shadow-[0_0_0_3px_rgba(23,71,113,0.18)]' : 'hover:scale-105',
       )}
     >
       <span className="flex items-center justify-center w-full h-full rounded-full bg-white overflow-hidden">

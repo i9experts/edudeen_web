@@ -5,16 +5,16 @@
 
 export const COLORS = {
   // Brand
-  orange:      '#D97757',
-  deepOrange:  '#B95A3A',
-  paleOrange:  '#FBECE4',
+  orange:      '#174771',
+  deepOrange:  '#0F3354',
+  paleOrange:  '#EAF2F8',
 
   // Neutrals
-  carbon:   '#141413',
-  charcoal: '#2C2A28',
-  slate:    '#8C8A82',
-  bone:     '#E8E6DC',
-  cream:    '#FAF9F5',
+  carbon:   '#152D43',
+  charcoal: '#1F3A52',
+  slate:    '#64727B',
+  bone:     '#E1E7EA',
+  cream:    '#F5F8FA',
   white:    '#FFFFFF',
 
   // Semantic

@@ -63,9 +63,9 @@ export function EmailCampaignsTool({ storeId, onCreditsChanged }: EmailCampaigns
                   onClick={() => setTone(t)}
                   className="flex-1 py-2 rounded-lg text-xs font-medium cursor-pointer capitalize transition-all duration-150 border"
                   style={{
-                    borderColor: tone === t ? '#D97757' : '#E8E6DC',
-                    background: tone === t ? '#FBECE4' : '#fff',
-                    color: tone === t ? '#B95A3A' : '#8C8A82',
+                    borderColor: tone === t ? '#174771' : '#E8E6DC',
+                    background: tone === t ? '#EAF2F8' : '#fff',
+                    color: tone === t ? '#0F3354' : '#8C8A82',
                   }}
                 >
                   {t}

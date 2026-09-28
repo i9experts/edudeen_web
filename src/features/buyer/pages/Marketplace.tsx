@@ -110,7 +110,7 @@ const TRUST_ITEMS = [
   },
   {
     Icon: CreditCard, label: 'Secure Payments', sub: '100% secure and trusted payment methods',
-    accent: { bg: '#FBECE4', icon: '#D97757' },
+    accent: { bg: '#EAF2F8', icon: '#174771' },
   },
   {
     Icon: RefreshCcw, label: 'Easy Returns', sub: 'Hassle-free returns within 7 days',
@@ -1137,7 +1137,7 @@ export function Marketplace() {
         aria-expanded={mobileFilters}
         aria-label="Toggle filters"
         className={clsx(
-          'lg:hidden fixed left-0 top-1/2 -translate-y-1/2 z-[58] flex flex-col items-center gap-2 rounded-r-xl border border-l-0 border-white/10 py-[10px] px-[6px] text-white bg-gradient-to-b from-charcoal to-brand-orange shadow-[0_8px_24px_-4px_rgba(217,119,87,0.4),0_4px_14px_rgba(20,15,10,0.25)] cursor-pointer transition-all duration-500 ease-out hover:px-2 hover:brightness-110 hover:shadow-[0_10px_28px_-4px_rgba(217,119,87,0.5),0_4px_14px_rgba(20,15,10,0.3)]',
+          'lg:hidden fixed left-0 top-1/2 -translate-y-1/2 z-[58] flex flex-col items-center gap-2 rounded-r-xl border border-l-0 border-white/10 py-[10px] px-[6px] text-white bg-gradient-to-b from-charcoal to-brand-orange shadow-[0_8px_24px_-4px_rgba(23,71,113,0.4),0_4px_14px_rgba(20,15,10,0.25)] cursor-pointer transition-all duration-500 ease-out hover:px-2 hover:brightness-110 hover:shadow-[0_10px_28px_-4px_rgba(23,71,113,0.5),0_4px_14px_rgba(20,15,10,0.3)]',
           showFilterTab ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0',
           (mobileFilters || activeFilterCount > 0) && 'ring-2 ring-brand-orange/50',
         )}

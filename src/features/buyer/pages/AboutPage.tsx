@@ -9,7 +9,7 @@ import { PremiumCard } from '@/components/comman/motion/PremiumCard';
 import aboutImg1 from '@/assets/about/about-1.jfif';
 import aboutImg2 from '@/assets/about/about-2.jfif';
 
-const SERIF = "'Lora', Georgia, serif";
+const SERIF = "Georgia, 'Times New Roman', serif";
 
 const PILLARS = [
   { Icon: Store, title: 'One workspace', desc: 'A store, POS, orders, inventory and analytics that all read from the same real data — not five separate tools stitched together.' },

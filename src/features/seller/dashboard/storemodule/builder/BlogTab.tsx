@@ -146,7 +146,7 @@ export function BlogTab({ storeId }: { storeId: string }) {
                 <button onClick={handleTogglePublish} disabled={saving} className="flex items-center gap-1.5 px-3 py-[7px] rounded-lg text-[12px] font-semibold border border-bone bg-white text-charcoal hover:bg-cream cursor-pointer">
                   {selected.status === 'published' ? <><EyeOff size={13} /> Unpublish</> : <><Eye size={13} /> Publish</>}
                 </button>
-                <button onClick={handleSaveContent} disabled={saving} className="flex items-center gap-1.5 px-4 py-[7px] rounded-lg text-[12px] font-bold text-white border-none cursor-pointer" style={{ background: '#D97757' }}>
+                <button onClick={handleSaveContent} disabled={saving} className="flex items-center gap-1.5 px-4 py-[7px] rounded-lg text-[12px] font-bold text-white border-none cursor-pointer" style={{ background: '#174771' }}>
                   {saving ? <Loader2 size={13} className="animate-spin" /> : null} Save Content
                 </button>
               </div>

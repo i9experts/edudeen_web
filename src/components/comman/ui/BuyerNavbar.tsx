@@ -484,13 +484,8 @@ export function SearchBox({
         // filling the rest) instead of a small dropdown hanging off the
         // input. `md:` and up keeps the original anchored-dropdown behavior
         // unchanged — a mouse user doesn't need a full takeover.
-        // `inset-0` would tuck the top edge under ReferenceNav's 44px dev-only
-        // bar (see AdminLayout/BuyerNavbar's own `top-[44px]`-in-DEV pattern
-        // elsewhere) — production has no such bar, so `top-0` there is exact.
-        open && !alwaysFullScreen && clsx(
-          'max-md:fixed max-md:right-0 max-md:bottom-0 max-md:left-0 max-md:z-[9999] max-md:flex-col max-md:justify-start max-md:bg-white max-md:px-3 max-md:pt-3',
-          import.meta.env.DEV ? 'max-md:top-[44px]' : 'max-md:top-0',
-        ),
+        open && !alwaysFullScreen &&
+          'max-md:fixed max-md:top-0 max-md:right-0 max-md:bottom-0 max-md:left-0 max-md:z-[9999] max-md:flex-col max-md:justify-start max-md:bg-white max-md:px-3 max-md:pt-3',
         // The full-screen and normal-anchored states are written as two
         // complete, mutually exclusive literal class strings — never
         // composed piecemeal from separate flags — because several of these
@@ -502,10 +497,7 @@ export function SearchBox({
         // silently kept `justify-center` active despite `alwaysFullScreen`,
         // which is exactly what collapsed the layout down to a sliver.
         open && alwaysFullScreen
-          ? clsx(
-              'fixed right-0 bottom-0 left-0 z-[9999] flex flex-col justify-start bg-white px-3 pt-3',
-              import.meta.env.DEV ? 'top-[44px]' : 'top-0',
-            )
+          ? 'fixed top-0 right-0 bottom-0 left-0 z-[9999] flex flex-col justify-start bg-white px-3 pt-3'
           : 'relative flex justify-center',
       )}
       onKeyDown={handleKeyDown}
@@ -537,8 +529,8 @@ export function SearchBox({
               ? 'gap-3 pl-6 pr-1.5 py-1.5 rounded-full border-2'
               : 'gap-[9px] px-[14px] py-[9px] rounded-xl',
             open
-              ? 'border-brand-orange shadow-[0_2px_12px_rgba(217,119,87,0.12)] ring-[3px] ring-brand-orange/10'
-              : isLg ? 'border-brand-orange shadow-[0_6px_24px_rgba(217,119,87,0.16)]' : 'border-bone hover:border-border-hover',
+              ? 'border-brand-orange shadow-[0_2px_12px_rgba(23,71,113,0.12)] ring-[3px] ring-brand-orange/10'
+              : isLg ? 'border-brand-orange shadow-[0_6px_24px_rgba(23,71,113,0.16)]' : 'border-bone hover:border-border-hover',
             open && (alwaysFullScreen ? 'shrink-0' : 'max-md:shrink-0'),
           )}
         >

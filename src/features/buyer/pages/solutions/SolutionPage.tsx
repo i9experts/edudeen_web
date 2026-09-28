@@ -16,7 +16,7 @@ import {
   StorefrontPreview, POSPreview, AICommercePreview, AnalyticsPreview, InventoryPreview, OrdersTimelinePreview,
 } from '@/components/comman/mockups/ProductMockups';
 
-const SERIF = "'Lora', Georgia, serif";
+const SERIF = "Georgia, 'Times New Roman', serif";
 
 // Each solution gets a different real product preview matched to what its
 // own highlights actually emphasize — not the same dashboard mockup shown

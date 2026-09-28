@@ -139,9 +139,9 @@ export function ActivityLogTab() {
                 key={cat.id}
                 onClick={() => { setCategory(cat.id); setPage(1); }}
                 className="w-full flex items-center px-4 py-[10px] border-b border-[#f0eee6] cursor-pointer border-none text-left transition-colors duration-150 hover:bg-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-orange/50"
-                style={{ background: isActive ? '#FBECE4' : 'transparent', borderLeft: isActive ? '3px solid #D97757' : '3px solid transparent' }}
+                style={{ background: isActive ? '#EAF2F8' : 'transparent', borderLeft: isActive ? '3px solid #174771' : '3px solid transparent' }}
               >
-                <span className="text-[13px]" style={{ fontWeight: isActive ? 600 : 400, color: isActive ? '#B95A3A' : '#4A4945' }}>
+                <span className="text-[13px]" style={{ fontWeight: isActive ? 600 : 400, color: isActive ? '#0F3354' : '#4A4945' }}>
                   {cat.label}
                 </span>
               </button>

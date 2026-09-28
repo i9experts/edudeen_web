@@ -879,9 +879,9 @@ export function EducationMarketplace() {
         {/* ── AI Builder CTA ─────────────────────────────────────────────── */}
         <div
           className="mt-6 rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-5"
-          style={{ background: 'linear-gradient(120deg, #FBECE4, #FFF)' }}
+          style={{ background: 'linear-gradient(120deg, #EAF2F8, #FFF)' }}
         >
-          <div className="w-12 h-12 rounded-xl bg-[rgba(217,119,87,0.12)] flex items-center justify-center shrink-0">
+          <div className="w-12 h-12 rounded-xl bg-[rgba(23,71,113,0.12)] flex items-center justify-center shrink-0">
             <Sparkles size={24} className="text-brand-orange" />
           </div>
           <div className="flex-1 min-w-0">

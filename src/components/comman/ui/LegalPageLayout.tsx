@@ -8,7 +8,7 @@ import { Reveal } from '@/components/comman/motion/Reveal';
 import { MagneticButton } from '@/components/comman/motion/MagneticButton';
 import { PremiumCard } from '@/components/comman/motion/PremiumCard';
 
-const SERIF = "'Lora', Georgia, serif";
+const SERIF = "Georgia, 'Times New Roman', serif";
 const WORDS_PER_MINUTE = 200;
 
 export interface LegalCallout {

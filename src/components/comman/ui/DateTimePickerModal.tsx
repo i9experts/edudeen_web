@@ -161,11 +161,11 @@ export function DateTimePickerModal({ value, onChange, onClose }: DateTimePicker
                       onClick={() => !past && setSel({ y: viewY, m: viewM, d: day })}
                       className="w-8 h-8 rounded-full border-none flex items-center justify-center text-[12px] transition-all duration-100"
                       style={{
-                        background: s ? '#D97757' : 'transparent',
+                        background: s ? '#174771' : 'transparent',
                         color:      s ? '#fff' : past ? '#C5C3BB' : '#141413',
                         fontWeight: s || t ? 700 : 400,
                         cursor:     past ? 'default' : 'pointer',
-                        border:     t && !s ? '1.5px solid #D97757' : '1.5px solid transparent',
+                        border:     t && !s ? '1.5px solid #174771' : '1.5px solid transparent',
                       }}
                     >
                       {day}
@@ -188,7 +188,7 @@ export function DateTimePickerModal({ value, onChange, onClose }: DateTimePicker
                 type="button"
                 onClick={() => setMode('hour')}
                 className="w-[60px] h-[48px] rounded-[10px] border-none cursor-pointer text-[26px] font-bold transition-all duration-150 flex items-center justify-center select-none"
-                style={{ background: mode === 'hour' ? '#D97757' : '#F5F4EF', color: mode === 'hour' ? '#fff' : '#141413' }}
+                style={{ background: mode === 'hour' ? '#174771' : '#F5F4EF', color: mode === 'hour' ? '#fff' : '#141413' }}
               >
                 {hh}
               </button>
@@ -197,7 +197,7 @@ export function DateTimePickerModal({ value, onChange, onClose }: DateTimePicker
                 type="button"
                 onClick={() => setMode('minute')}
                 className="w-[60px] h-[48px] rounded-[10px] border-none cursor-pointer text-[26px] font-bold transition-all duration-150 flex items-center justify-center select-none"
-                style={{ background: mode === 'minute' ? '#D97757' : '#F5F4EF', color: mode === 'minute' ? '#fff' : '#141413' }}
+                style={{ background: mode === 'minute' ? '#174771' : '#F5F4EF', color: mode === 'minute' ? '#fff' : '#141413' }}
               >
                 {mm}
               </button>
@@ -208,7 +208,7 @@ export function DateTimePickerModal({ value, onChange, onClose }: DateTimePicker
                     type="button"
                     onClick={() => setAmpm(p)}
                     className="w-[40px] h-[22px] rounded-[6px] text-[11px] font-bold border-none cursor-pointer transition-all duration-150 flex items-center justify-center"
-                    style={{ background: ampm === p ? '#D97757' : '#E8E6DC', color: ampm === p ? '#fff' : '#8C8A82' }}
+                    style={{ background: ampm === p ? '#174771' : '#E8E6DC', color: ampm === p ? '#fff' : '#8C8A82' }}
                   >
                     {p}
                   </button>
@@ -227,14 +227,14 @@ export function DateTimePickerModal({ value, onChange, onClose }: DateTimePicker
                 <line
                   x1={CX} y1={CY}
                   x2={handPos.x} y2={handPos.y}
-                  stroke="#D97757" strokeWidth="2" strokeLinecap="round"
+                  stroke="#174771" strokeWidth="2" strokeLinecap="round"
                 />
 
                 {/* Selected indicator circle */}
-                <circle cx={handPos.x} cy={handPos.y} r="15" fill="#D97757" />
+                <circle cx={handPos.x} cy={handPos.y} r="15" fill="#174771" />
 
                 {/* Center dot */}
-                <circle cx={CX} cy={CY} r="3.5" fill="#D97757" />
+                <circle cx={CX} cy={CY} r="3.5" fill="#174771" />
 
                 {/* Hour or minute numbers */}
                 {mode === 'hour'
@@ -304,11 +304,11 @@ export function DateTimePickerModal({ value, onChange, onClose }: DateTimePicker
           {/* Preview strip */}
           <div
             className="mx-5 mb-4 px-4 py-3 rounded-[10px] border transition-all duration-200"
-            style={{ background: sel ? '#FBECE4' : '#F5F4EF', borderColor: sel ? 'rgba(217,119,87,0.3)' : '#E8E6DC' }}
+            style={{ background: sel ? '#EAF2F8' : '#F5F4EF', borderColor: sel ? 'rgba(23,71,113,0.3)' : '#E8E6DC' }}
           >
             <p
               className="text-[10px] font-bold uppercase tracking-[0.07em] mb-[3px]"
-              style={{ color: sel ? '#D97757' : '#8C8A82' }}
+              style={{ color: sel ? '#174771' : '#8C8A82' }}
             >
               {sel ? 'Going live on' : 'No date selected'}
             </p>
@@ -334,7 +334,7 @@ export function DateTimePickerModal({ value, onChange, onClose }: DateTimePicker
             onClick={confirm}
             disabled={!sel}
             className="flex-1 h-[42px] rounded-[10px] border-none text-[13px] font-semibold transition-all duration-150"
-            style={{ background: sel ? '#D97757' : '#E8E6DC', color: sel ? '#fff' : '#B5B3AC', cursor: sel ? 'pointer' : 'not-allowed' }}
+            style={{ background: sel ? '#174771' : '#E8E6DC', color: sel ? '#fff' : '#B5B3AC', cursor: sel ? 'pointer' : 'not-allowed' }}
           >
             Confirm Schedule
           </button>

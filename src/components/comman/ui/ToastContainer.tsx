@@ -20,7 +20,7 @@ const BASE: Record<ToastVariant, ToastStyle> = {
   info:    { icon: Info,          tint: 'bg-info-bg text-info',     accent: 'bg-info',    shadow: 'shadow-[0_14px_32px_-12px_rgba(26,114,194,0.38)]' },
 };
 
-const ORANGE: ToastStyle = { icon: ShoppingBag, tint: 'bg-brand-pale-orange text-brand-deep-orange', accent: 'bg-brand-orange', shadow: 'shadow-[0_14px_32px_-12px_rgba(217,119,87,0.38)]' };
+const ORANGE: ToastStyle = { icon: ShoppingBag, tint: 'bg-brand-pale-orange text-brand-deep-orange', accent: 'bg-brand-orange', shadow: 'shadow-[0_14px_32px_-12px_rgba(23,71,113,0.38)]' };
 const VIOLET: ToastStyle = { icon: ShieldCheck, tint: 'bg-accent-violet-bg text-accent-violet',      accent: 'bg-accent-violet', shadow: 'shadow-[0_14px_32px_-12px_rgba(124,58,237,0.32)]' };
 const AMBER:  ToastStyle = { icon: Star,        tint: 'bg-warning-bg text-warning',                  accent: 'bg-warning',       shadow: 'shadow-[0_14px_32px_-12px_rgba(192,139,30,0.38)]' };
 const BLUE:   ToastStyle = { icon: Package,     tint: 'bg-info-bg text-info',                        accent: 'bg-info',          shadow: 'shadow-[0_14px_32px_-12px_rgba(26,114,194,0.38)]' };

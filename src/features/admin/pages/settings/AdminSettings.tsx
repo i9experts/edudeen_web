@@ -463,7 +463,7 @@ export function AdminSettings() {
                   {group.items.map(item => {
                     const isActive  = active === item.id;
                     const isDanger  = group.isDanger;
-                    const activeColor = isDanger ? '#C0392B' : '#D97757';
+                    const activeColor = isDanger ? '#C0392B' : '#174771';
                     return (
                       <button
                         key={item.id}
@@ -471,7 +471,7 @@ export function AdminSettings() {
                         className="w-full flex items-center gap-[10px] px-4 py-[9px] cursor-pointer border-none text-left transition-colors duration-[120ms]"
                         style={{
                           borderLeft: `3px solid ${isActive ? activeColor : 'transparent'}`,
-                          background: isActive ? (isDanger ? '#FDECEA' : '#FBECE4') : 'transparent',
+                          background: isActive ? (isDanger ? '#FDECEA' : '#EAF2F8') : 'transparent',
                           color: isActive ? activeColor : (isDanger ? '#C0392B' : '#4A4945'),
                         }}
                         onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = '#FAF9F5'; }}

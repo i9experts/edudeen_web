@@ -65,7 +65,7 @@ export function SellersTab({ params }: { params: BaseAnalyticsParams }) {
                 newSellers: p.newSellers,
               }))}
               dataKey="newSellers"
-              color="#D97757"
+              color="#174771"
             />
           )}
         </div>

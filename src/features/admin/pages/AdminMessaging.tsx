@@ -240,9 +240,9 @@ export function AdminMessaging() {
               onClick={() => setTab(t)}
               className="px-4 py-[8px] rounded-lg text-[13px] font-semibold border cursor-pointer capitalize outline-none transition-[opacity,transform] duration-150 hover:opacity-90 active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-brand-orange/50"
               style={{
-                background: tab === t ? '#FBECE4' : '#fff',
-                color:      tab === t ? '#B95A3A' : '#4A4945',
-                borderColor: tab === t ? '#D97757' : 'var(--color-bone, #E8E6DC)',
+                background: tab === t ? '#EAF2F8' : '#fff',
+                color:      tab === t ? '#0F3354' : '#4A4945',
+                borderColor: tab === t ? '#174771' : 'var(--color-bone, #E8E6DC)',
               }}
             >
               {t}

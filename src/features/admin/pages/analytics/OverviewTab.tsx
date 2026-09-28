@@ -109,7 +109,7 @@ export function OverviewTab({ params, compareToPreviousPeriod }: { params: BaseA
             }))}
             lines={[
               { dataKey: 'gross', label: 'Gross Revenue', color: '#8C8A82' },
-              { dataKey: 'net', label: 'Net Revenue', color: '#D97757' },
+              { dataKey: 'net', label: 'Net Revenue', color: '#174771' },
             ]}
             valuePrefix="$"
           />
@@ -128,7 +128,7 @@ export function OverviewTab({ params, compareToPreviousPeriod }: { params: BaseA
               orders: p.orderCount,
             }))}
             dataKey="orders"
-            color="#D97757"
+            color="#174771"
           />
         )}
       </div>

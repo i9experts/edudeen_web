@@ -82,7 +82,7 @@ function NavChip({ label, path, Icon, active, disabled, prefetch }: NavPage & { 
         fontWeight: active ? 600 : 400, fontFamily: "'Poppins', sans-serif",
         cursor: disabled ? 'not-allowed' : 'pointer',
         border: 'none', whiteSpace: 'nowrap', flexShrink: 0,
-        background: active ? '#D97757' : 'transparent',
+        background: active ? '#174771' : 'transparent',
         color: active ? '#fff' : '#8C8A82',
         opacity: disabled ? 0.35 : 1,
         transition: 'all 0.15s',
@@ -157,13 +157,13 @@ export function ReferenceNav() {
         }}
       >
         <div style={{
-          width: 24, height: 24, borderRadius: 6, background: '#D97757',
+          width: 24, height: 24, borderRadius: 6, background: '#174771',
           display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
         }}>
           <span style={{ fontSize: 13, fontWeight: 800, color: '#fff', fontFamily: "'Poppins', sans-serif" }}>S</span>
         </div>
         <span style={{ fontSize: 13, fontWeight: 700, color: '#fff', fontFamily: "'Poppins', sans-serif" }}>
-          Solvex<span style={{ color: '#D97757' }}>o</span>
+          Solvex<span style={{ color: '#174771' }}>o</span>
         </span>
       </button>
 

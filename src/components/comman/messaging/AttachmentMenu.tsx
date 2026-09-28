@@ -51,7 +51,7 @@ export function AttachmentMenu({ onFileSelected, onShareProduct, disabled }: Att
     { icon: ImageIcon,   label: 'Photo & Video', bg: '#EEF7FF', fg: '#1A65A8', onClick: () => mediaRef.current?.click() },
     { icon: FileText,    label: 'Document',      bg: '#F3F0FF', fg: '#6D28D9', onClick: () => docRef.current?.click() },
     { icon: Camera,      label: 'Camera',        bg: '#FFF4DC', fg: '#B36200', onClick: () => cameraRef.current?.click() },
-    ...(onShareProduct ? [{ icon: ShoppingBag, label: 'Share Product', bg: '#FBECE4', fg: '#B95A3A', onClick: onShareProduct }] : []),
+    ...(onShareProduct ? [{ icon: ShoppingBag, label: 'Share Product', bg: '#EAF2F8', fg: '#0F3354', onClick: onShareProduct }] : []),
   ];
 
   return (

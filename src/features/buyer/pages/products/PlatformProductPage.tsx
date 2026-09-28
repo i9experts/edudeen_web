@@ -13,7 +13,7 @@ import { PremiumCard } from '@/components/comman/motion/PremiumCard';
 import { mockupForProductSlug } from '@/components/comman/mockups/ProductMockups';
 import { getPlatformProduct } from '@/features/buyer/data/platformProducts';
 
-const SERIF = "'Lora', Georgia, serif";
+const SERIF = "Georgia, 'Times New Roman', serif";
 
 function ProductFaqItem({ question, answer }: { question: string; answer: string }) {
   const [open, setOpen] = useState(false);

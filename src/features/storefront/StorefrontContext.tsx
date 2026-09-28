@@ -71,10 +71,10 @@ export const RADIUS_PX_MAP: Record<ThemeBorderRadius, string> = {
 };
 
 export const STOREFRONT_CFG_DEFAULT: StorefrontCfg = {
-  primaryColor: '#D97757',
+  primaryColor: '#174771',
   bgColor:      '#FAF9F5',
   textColor:    '#2C2A28',
-  accentColor:  '#B95A3A',
+  accentColor:  '#0F3354',
   font:         'Poppins',
   buttonStyle:    'solid',
   buttonSize:     'md',

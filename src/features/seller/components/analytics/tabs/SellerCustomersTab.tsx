@@ -44,7 +44,7 @@ export function SellerCustomersTab({ params, currency }: { params: SellerAnalyti
             returningCustomers: p.returningCustomers,
           }))}
           lines={[
-            { dataKey: 'newCustomers', label: 'New', color: '#D97757' },
+            { dataKey: 'newCustomers', label: 'New', color: '#174771' },
             { dataKey: 'returningCustomers', label: 'Returning', color: '#2C2A28' },
           ]}
         />

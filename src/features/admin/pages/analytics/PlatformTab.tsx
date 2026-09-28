@@ -32,7 +32,7 @@ export function PlatformTab({ params }: { params: BaseAnalyticsParams }) {
             newProducts: p.newProducts,
           }))}
           lines={[
-            { dataKey: 'newSellers', label: 'New Sellers', color: '#D97757' },
+            { dataKey: 'newSellers', label: 'New Sellers', color: '#174771' },
             { dataKey: 'newStores', label: 'New Stores', color: '#2156A8' },
             { dataKey: 'newProducts', label: 'New Products', color: '#2D8A4E' },
           ]}

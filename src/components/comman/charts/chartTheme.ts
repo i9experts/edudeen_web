@@ -7,7 +7,7 @@
 import { COLORS } from '@/constants/tokens';
 
 /** Font family used for axis ticks / legends across all charts. */
-export const CHART_FONT = "'Poppins', sans-serif";
+export const CHART_FONT = "Arial, Helvetica, sans-serif";
 
 /** Shared axis tick style (XAxis / YAxis / Legend text). */
 export const CHART_TICK = { fontSize: 11, fill: COLORS.slate, fontFamily: CHART_FONT };

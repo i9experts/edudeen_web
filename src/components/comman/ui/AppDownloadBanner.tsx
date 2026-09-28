@@ -51,7 +51,7 @@ function BottomTabBar({ active }: { active: number }) {
         {TAB_ITEMS.map((tab, i) =>
           tab.elevated ? (
             <div key={tab.label} className="relative flex-1 flex items-center justify-center">
-              <span className="absolute -top-[7px] flex items-center justify-center size-[16px] rounded-full bg-gradient-to-br from-brand-orange to-brand-deep-orange border-[1.5px] border-white shadow-[0_2px_5px_rgba(217,119,87,0.5)]">
+              <span className="absolute -top-[7px] flex items-center justify-center size-[16px] rounded-full bg-gradient-to-br from-brand-orange to-brand-deep-orange border-[1.5px] border-white shadow-[0_2px_5px_rgba(23,71,113,0.5)]">
                 <tab.Icon size={8} className="text-white" strokeWidth={2.4} />
               </span>
             </div>
@@ -418,7 +418,7 @@ function CompactAppDownloadBanner({ className }: { className?: string }) {
           <div className="order-2 md:order-3 flex items-center justify-center relative w-full min-h-[170px] md:min-h-[180px] py-2 md:py-3">
             <div
               className="absolute inset-0 pointer-events-none"
-              style={{ background: 'radial-gradient(ellipse 75% 70% at 50% 55%, rgba(217,119,87,0.28) 0%, rgba(217,119,87,0.10) 45%, transparent 75%)' }}
+              style={{ background: 'radial-gradient(ellipse 75% 70% at 50% 55%, rgba(23,71,113,0.28) 0%, rgba(23,71,113,0.10) 45%, transparent 75%)' }}
             />
             <div className="absolute bottom-2 w-[74px] h-[10px] rounded-[50%] bg-black/25 blur-[2px]" />
             <PhoneShell primary={false} size="sm" heightPx={165} className="-mr-[38px] -rotate-[7deg]">
@@ -516,7 +516,7 @@ export function AppDownloadBanner({ className, variant = 'full' }: { className?:
 
         {/* Copy + features */}
         <div className="text-center lg:text-left min-w-0">
-          <div className="inline-flex items-center gap-2 rounded-full px-3 py-1 mb-3 bg-[rgba(217,119,87,0.15)] border border-[rgba(217,119,87,0.3)]">
+          <div className="inline-flex items-center gap-2 rounded-full px-3 py-1 mb-3 bg-[rgba(23,71,113,0.15)] border border-[rgba(23,71,113,0.3)]">
             <ShoppingBag size={12} className="text-brand-orange shrink-0" />
             <span className="text-[11px] font-medium text-brand-orange">Edudeen Mobile</span>
           </div>
@@ -585,7 +585,7 @@ export function AppDownloadBanner({ className, variant = 'full' }: { className?:
               phone cluster, fading to nothing well before the hero's edges. */}
           <div
             className="absolute inset-0 pointer-events-none"
-            style={{ background: 'radial-gradient(ellipse 65% 60% at 50% 55%, rgba(217,119,87,0.30) 0%, rgba(217,119,87,0.12) 40%, transparent 72%)' }}
+            style={{ background: 'radial-gradient(ellipse 65% 60% at 50% 55%, rgba(23,71,113,0.30) 0%, rgba(23,71,113,0.12) 40%, transparent 72%)' }}
           />
           {/* Contact shadow — grounds the phones on the pedestal */}
           <div className="absolute bottom-0 w-[220px] h-[30px] rounded-[50%] bg-black/25 blur-[2px]" />

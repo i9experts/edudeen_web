@@ -20,7 +20,7 @@ import { AdminPageHeader } from '@/components/comman/ui/AdminPageHeader';
 interface QuickLink { Icon: LucideIcon; label: string; desc: string; path: string; gradient: string; iconColor: string }
 const QUICK_LINKS: QuickLink[] = [
   { Icon: Shield,  label: 'Moderation Queue', desc: 'Review flagged listings & reports', path: '/admin/moderation',   gradient: 'from-[#fbe9e7] to-[#fbdfdc]', iconColor: '#B3261E' },
-  { Icon: Store,   label: 'Marketplace',      desc: 'Manage listings platform-wide',     path: '/admin/marketplace',  gradient: 'from-brand-pale-orange to-brand-pale-orange', iconColor: '#D97757' },
+  { Icon: Store,   label: 'Marketplace',      desc: 'Manage listings platform-wide',     path: '/admin/marketplace',  gradient: 'from-brand-pale-orange to-brand-pale-orange', iconColor: '#174771' },
   { Icon: Users,   label: 'Users & Sellers',  desc: 'Accounts, suspensions, roles',      path: '/admin/users',        gradient: 'from-[#eaf0fb] to-[#dcebfa]', iconColor: '#2156A8' },
   { Icon: Bell,    label: 'Announcements',    desc: 'Platform-wide banners & alerts',    path: '/admin/announcements', gradient: 'from-[#f3e8ff] to-[#ede0fe]', iconColor: '#A855F7' },
 ];
@@ -58,7 +58,7 @@ export function AdminOverview() {
     { label: 'Sellers Active This Month', value: formatNumber(overview.sellersActiveThisMonth), trend: overview.sellersActiveThisMonthChange ? formatPercent(overview.sellersActiveThisMonthChange, { signed: true }) : undefined, trendUp: (overview.sellersActiveThisMonthChange ?? 0) >= 0, sub: undefined, icon: <UserCheck size={16} />, color: '#22C55E' },
     { label: 'Total Stores',           value: formatNumber(overview.totalStores),              trend: undefined, trendUp: true, sub: undefined, icon: <Store size={16} />, color: '#0D9488' },
     { label: 'Active Stores',          value: formatNumber(overview.activeStores),             trend: undefined, trendUp: true, sub: undefined, icon: <Store size={16} />, color: '#0EA5E9' },
-    { label: 'GMV (30 days)',          value: formatCurrency(overview.totalGMV),                trend: overview.totalRevenueChangePercent != null ? formatPercent(overview.totalRevenueChangePercent, { signed: true }) : undefined, trendUp: (overview.totalRevenueChangePercent ?? 0) >= 0, sub: undefined, icon: <DollarSign size={16} />, color: '#D97757' },
+    { label: 'GMV (30 days)',          value: formatCurrency(overview.totalGMV),                trend: overview.totalRevenueChangePercent != null ? formatPercent(overview.totalRevenueChangePercent, { signed: true }) : undefined, trendUp: (overview.totalRevenueChangePercent ?? 0) >= 0, sub: undefined, icon: <DollarSign size={16} />, color: '#174771' },
     { label: 'New Users',              value: formatNumber(overview.newUsers),                  trend: undefined, trendUp: true, sub: `${formatNumber(overview.totalCustomers)} total customers`, icon: <UserPlus size={16} />, color: '#0EA5E9' },
   ] : [];
 

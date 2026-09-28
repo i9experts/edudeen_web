@@ -7,35 +7,60 @@ interface LogoProps {
   variant?:       'dark' | 'light';
 }
 
+// Brand artwork lives in /public: `edudeen-mark.png` is the hexagon/minaret
+// mark on its own (≈0.8:1), `edudeen-logo.png` is the full lockup with the
+// "Your partner in Tarbiyyah" tagline (≈2.62:1, navy wordmark — only legible
+// on a light surface).
+const MARK_RATIO = 800 / 1000;
+const LOCKUP_RATIO = 2048 / 782;
+
 export function EdudeenIcon({ size = 32 }: { size?: number }) {
   return (
-    <svg
-      width={size}
+    <img
+      src="/edudeen-mark.png"
+      alt="Edudeen"
+      width={Math.round(size * MARK_RATIO)}
       height={size}
-      viewBox="0 0 32 32"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className="shrink-0"
-    >
-      <rect width="32" height="32" rx="8" fill="#D97757"/>
-      <text x="6" y="26" fontFamily="'Poppins',sans-serif" fontWeight="800" fontSize="26" fill="white">e</text>
-      <rect x="16.5" y="2" width="13" height="13" rx="3.5" fill="#C8694E" fillOpacity="0.7"/>
-      <path d="M23 11.5V5.5M23 5.5L20 8.5M23 5.5L26 8.5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
+      className="shrink-0 object-contain"
+      style={{ width: Math.round(size * MARK_RATIO), height: size }}
+      draggable={false}
+    />
   );
 }
 
 export function EdudeenLogo({ size = 32, showWordmark = true, className, variant = 'dark' }: LogoProps) {
-  const textSize = Math.round(size * 0.53);
-  return (
-    <div className={clsx('flex items-center gap-2', className)}>
-      <EdudeenIcon size={size} />
-      {showWordmark && (
-        <div className="flex items-center" style={{ fontSize: textSize }}>
-          <span className="font-bold text-brand-orange tracking-tight">E</span>
-          <span className={clsx('font-bold tracking-tight', variant === 'light' ? 'text-white' : 'text-carbon')}>dudeen</span>
+  if (!showWordmark) {
+    return <div className={clsx('flex items-center', className)}><EdudeenIcon size={size} /></div>;
+  }
+
+  // The full lockup's navy wordmark disappears on dark surfaces, so the light
+  // variant pairs the mark with a white text wordmark instead.
+  if (variant === 'light') {
+    const textSize = Math.round(size * 0.53);
+    return (
+      <div className={clsx('flex items-center gap-2', className)}>
+        <EdudeenIcon size={size} />
+        <div className="flex items-center tracking-wide" style={{ fontSize: textSize }}>
+          <span className="font-normal text-white">EDU</span>
+          <span className="font-extrabold text-white">DEEN</span>
         </div>
-      )}
+      </div>
+    );
+  }
+
+  // Lockup is drawn taller than `size` since the tagline eats the bottom third.
+  const height = Math.round(size * 1.5);
+  return (
+    <div className={clsx('flex items-center', className)}>
+      <img
+        src="/edudeen-logo.png"
+        alt="Edudeen — Your partner in Tarbiyyah"
+        width={Math.round(height * LOCKUP_RATIO)}
+        height={height}
+        className="shrink-0 object-contain"
+        style={{ width: Math.round(height * LOCKUP_RATIO), height }}
+        draggable={false}
+      />
     </div>
   );
 }

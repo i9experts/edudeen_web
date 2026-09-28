@@ -252,7 +252,7 @@ function SellerSidebar({ open, onToggle }: SellerSidebarProps) {
       <aside className={clsx(
         'hidden lg:flex bg-carbon flex-col shrink-0',
         'transition-[width] duration-300 ease-in-out',
-        import.meta.env.DEV ? 'h-[calc(100vh-44px)]' : 'h-screen',
+        'h-screen',
         open ? 'w-[220px]' : 'w-[60px]',
       )}>
 
@@ -526,7 +526,7 @@ export function SellerLayout() {
 
   return (
     <ActiveStoreProvider>
-      <div className={clsx('flex bg-cream', import.meta.env.DEV ? 'h-[calc(100vh-44px)]' : 'h-screen')}>
+      <div className={clsx('flex bg-cream', 'h-screen')}>
         <SellerSidebar open={sidebarOpen} onToggle={toggle} />
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           <AnnouncementBanner audience="sellers" />

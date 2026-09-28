@@ -196,7 +196,7 @@ function ManageSubscriptionModal({ sub, onClose, onChanged }: {
                   {(['monthly', 'yearly'] as const).map(iv => (
                     <button key={iv} type="button" onClick={() => setSelectedInterval(iv)}
                       className="flex-1 py-2 rounded-lg text-[12px] font-semibold capitalize cursor-pointer transition-all"
-                      style={{ border: `1.5px solid ${selectedInterval === iv ? '#D97757' : '#E8E6DC'}`, background: selectedInterval === iv ? '#FBECE4' : '#fff', color: selectedInterval === iv ? '#D97757' : '#8C8A82' }}>
+                      style={{ border: `1.5px solid ${selectedInterval === iv ? '#174771' : '#E8E6DC'}`, background: selectedInterval === iv ? '#EAF2F8' : '#fff', color: selectedInterval === iv ? '#174771' : '#8C8A82' }}>
                       {iv}
                     </button>
                   ))}

@@ -86,7 +86,7 @@ function VoiceNoteBubble({ url, own }: { url: string; own: boolean }) {
         >
           <div
             className={clsx('h-full rounded-full transition-[width]')}
-            style={{ width: `${pct}%`, background: own ? 'white' : '#D97757' }}
+            style={{ width: `${pct}%`, background: own ? 'white' : '#174771' }}
           />
         </div>
         <span className={clsx('text-[10px] tabular-nums', own ? 'text-white/70' : 'text-slate')}>

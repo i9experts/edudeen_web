@@ -522,9 +522,9 @@ export function SellerSettings() {
                         onClick={() => setActive(item.id)}
                         className="w-full flex items-center gap-[10px] px-4 py-[9px] cursor-pointer border-none text-left transition-[background] duration-[120ms]"
                         style={{
-                          borderLeft: `3px solid ${isActive ? (isDanger ? '#C0392B' : '#D97757') : 'transparent'}`,
-                          background: isActive ? (isDanger ? '#FDECEA' : '#FBECE4') : 'transparent',
-                          color: isActive ? (isDanger ? '#C0392B' : '#B95A3A') : (isDanger ? '#C0392B' : '#4A4945'),
+                          borderLeft: `3px solid ${isActive ? (isDanger ? '#C0392B' : '#174771') : 'transparent'}`,
+                          background: isActive ? (isDanger ? '#FDECEA' : '#EAF2F8') : 'transparent',
+                          color: isActive ? (isDanger ? '#C0392B' : '#0F3354') : (isDanger ? '#C0392B' : '#4A4945'),
                         }}
                         onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = '#FAF9F5'; }}
                         onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}

@@ -16,7 +16,7 @@ export interface SectionMeta {
 export const SECTION_META: SectionMeta[] = [
   {
     type: 'hero', label: 'Hero / Slider', description: 'Full-width image slides with a headline and call-to-action button.',
-    Icon: Image, color: '#D97757',
+    Icon: Image, color: '#174771',
     defaultSettings: { heightPreset: 'medium' },
     allowedBlockTypes: ['hero_slide'], blockLabel: 'Slide',
     defaultBlockSettings: { imageUrl: '', heading: '', subheading: '', ctaText: '', ctaLink: { linkType: 'home' } },

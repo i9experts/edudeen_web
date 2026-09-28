@@ -45,7 +45,7 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean
   return (
     <button type="button" onClick={() => onChange(!checked)}
       className="w-10 h-[22px] rounded-[11px] border-none cursor-pointer p-0 relative shrink-0 transition-colors duration-[180ms]"
-      style={{ background: checked ? '#D97757' : '#D1D5DB' }}>
+      style={{ background: checked ? '#174771' : '#D1D5DB' }}>
       <span className="absolute top-[3px] w-4 h-4 rounded-full bg-white border border-charcoal/10 transition-[left] duration-[180ms]"
         style={{ left: checked ? 21 : 3 }} />
     </button>
@@ -121,7 +121,7 @@ function VariantOptionsField({ options, onChange }: { options: VariantOption[]; 
           </div>
           <button type="button" onClick={add} disabled={!canAdd}
             className="flex items-center justify-center gap-1.5 py-[7px] rounded-md border-none text-[12px] font-semibold transition-colors"
-            style={{ background: canAdd ? '#D97757' : '#E8E6DC', color: canAdd ? '#fff' : '#A8A6A0', cursor: canAdd ? 'pointer' : 'not-allowed' }}>
+            style={{ background: canAdd ? '#174771' : '#E8E6DC', color: canAdd ? '#fff' : '#A8A6A0', cursor: canAdd ? 'pointer' : 'not-allowed' }}>
             <Plus size={13} /> Add Attribute
           </button>
         </div>
@@ -264,7 +264,7 @@ export default function StoreAddProduct() {
           </button>
           <button onClick={() => handleSubmit()} disabled={saving}
             className="flex items-center gap-1.5 border-none rounded-[9px] px-5 py-[9px] text-[13px] font-semibold"
-            style={{ background: saving ? '#E8E6DC' : '#D97757', color: saving ? '#8C8A82' : '#fff', cursor: saving ? 'not-allowed' : 'pointer' }}>
+            style={{ background: saving ? '#E8E6DC' : '#174771', color: saving ? '#8C8A82' : '#fff', cursor: saving ? 'not-allowed' : 'pointer' }}>
             {saving ? <><Loader2 size={13} className="animate-spin" />Saving…</> : 'Publish Listing'}
           </button>
         </div>
@@ -289,11 +289,11 @@ export default function StoreAddProduct() {
                   <button key={t} type="button"
                     onClick={() => enabled && setPType(t)} disabled={!enabled}
                     className="flex flex-col items-center gap-2 py-5 rounded-[10px] text-center transition-all duration-150"
-                    style={{ cursor: enabled ? 'pointer' : 'not-allowed', border: `2px solid ${sel ? '#D97757' : '#E8E6DC'}`, background: sel ? '#FBECE4' : '#FAFAF8', opacity: enabled ? 1 : 0.5 }}>
+                    style={{ cursor: enabled ? 'pointer' : 'not-allowed', border: `2px solid ${sel ? '#174771' : '#E8E6DC'}`, background: sel ? '#EAF2F8' : '#FAFAF8', opacity: enabled ? 1 : 0.5 }}>
                     <div className="w-10 h-10 rounded-[10px] flex items-center justify-center" style={{ background: sel ? '#fff' : '#F0EEE8' }}>
-                      <TIcon size={20} style={{ color: sel ? '#D97757' : '#8C8A82' }} />
+                      <TIcon size={20} style={{ color: sel ? '#174771' : '#8C8A82' }} />
                     </div>
-                    <p className="text-[13px] font-semibold" style={{ color: sel ? '#D97757' : '#141413' }}>{label}</p>
+                    <p className="text-[13px] font-semibold" style={{ color: sel ? '#174771' : '#141413' }}>{label}</p>
                     <p className="text-[11px] text-slate">{enabled ? desc : 'Not available in your plan'}</p>
                   </button>
                 );
@@ -374,7 +374,7 @@ export default function StoreAddProduct() {
                       return (
                         <button key={l.value} type="button" onClick={() => sd('educationLevel', l.value)}
                           className="px-3 py-[7px] rounded-full cursor-pointer text-[12px] font-medium transition-all duration-150"
-                          style={{ border: `1.5px solid ${sel ? '#D97757' : '#E8E6DC'}`, background: sel ? '#FBECE4' : '#fff', color: sel ? '#D97757' : '#8C8A82' }}>
+                          style={{ border: `1.5px solid ${sel ? '#174771' : '#E8E6DC'}`, background: sel ? '#EAF2F8' : '#fff', color: sel ? '#174771' : '#8C8A82' }}>
                           {l.label}
                         </button>
                       );
@@ -412,7 +412,7 @@ export default function StoreAddProduct() {
                       return (
                         <button key={l} type="button" onClick={() => sd('licenseType', l)}
                           className="flex-1 py-2 rounded-lg cursor-pointer text-[12px] font-semibold capitalize transition-all duration-150"
-                          style={{ border: `1.5px solid ${sel ? '#D97757' : '#E8E6DC'}`, background: sel ? '#FBECE4' : '#fff', color: sel ? '#D97757' : '#8C8A82' }}>
+                          style={{ border: `1.5px solid ${sel ? '#174771' : '#E8E6DC'}`, background: sel ? '#EAF2F8' : '#fff', color: sel ? '#174771' : '#8C8A82' }}>
                           {l.replace('_', ' ')}
                         </button>
                       );
@@ -552,7 +552,7 @@ export default function StoreAddProduct() {
           <div className="flex flex-col gap-2">
             <button onClick={() => handleSubmit()} disabled={saving}
               className="w-full py-[11px] rounded-[10px] text-[13px] font-bold border-none transition-all duration-150"
-              style={{ background: saving ? '#E8E6DC' : '#D97757', color: saving ? '#8C8A82' : '#fff', cursor: saving ? 'not-allowed' : 'pointer' }}>
+              style={{ background: saving ? '#E8E6DC' : '#174771', color: saving ? '#8C8A82' : '#fff', cursor: saving ? 'not-allowed' : 'pointer' }}>
               {saving ? 'Saving…' : 'Publish Listing'}
             </button>
             <button onClick={() => handleSubmit('draft')} disabled={saving}

@@ -46,7 +46,7 @@ export function RevenueTab({ params, compareToPreviousPeriod }: { params: BaseAn
           }))}
           lines={[
             { dataKey: 'gross', label: 'Gross Revenue', color: '#8C8A82' },
-            { dataKey: 'net', label: 'Net Revenue', color: '#D97757' },
+            { dataKey: 'net', label: 'Net Revenue', color: '#174771' },
           ]}
           valuePrefix="$"
         />

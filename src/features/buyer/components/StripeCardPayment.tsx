@@ -99,10 +99,10 @@ export function StripeCardPayment({ clientSecret, amount, currency, onConfirmed 
         appearance: {
           theme: 'stripe',
           variables: {
-            colorPrimary: '#D97757',
+            colorPrimary: '#174771',
             colorText: '#2C2A28',
             colorDanger: '#C13030',
-            fontFamily: 'Poppins, system-ui, sans-serif',
+            fontFamily: 'Arial, Helvetica, system-ui, sans-serif',
             borderRadius: '8px',
             fontSizeBase: '13px',
           },

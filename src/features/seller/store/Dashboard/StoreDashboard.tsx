@@ -282,7 +282,7 @@ function QuickActionsRow({ storeId }: { storeId: string }) {
   const navigate = useNavigate();
 
   const actions: QuickAction[] = [
-    { Icon: ShoppingBag,   label: 'Add Product', path: 'products/add', gradient: 'from-brand-pale-orange to-brand-pale-orange', iconColor: '#D97757' },
+    { Icon: ShoppingBag,   label: 'Add Product', path: 'products/add', gradient: 'from-brand-pale-orange to-brand-pale-orange', iconColor: '#174771' },
     { Icon: Package,       label: 'View Orders', path: 'orders',        gradient: 'from-[#f3e8ff] to-[#ede0fe]',         iconColor: '#8B5CF6' },
     { Icon: BarChart2,     label: 'Analytics',   path: 'analytics',     gradient: 'from-info-bg to-[#dcebfa]',         iconColor: '#0EA5E9' },
     { Icon: ClipboardList, label: 'Inventory',   path: 'inventory',     gradient: 'from-[#eaf7ef] to-[#dff3e7]',         iconColor: '#22C55E' },
@@ -427,7 +427,7 @@ export default function StoreDashboard() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <MetricCard
               label="Revenue (30 days)" value={formatMoneyCompact(metrics?.overview.totalRevenue ?? 0, store?.baseCurrency)}
-              sub={metrics?.overview.totalRevenue ? 'vs previous period' : 'No sales yet'} icon={<TrendingUp size={16} />} color="#D97757"
+              sub={metrics?.overview.totalRevenue ? 'vs previous period' : 'No sales yet'} icon={<TrendingUp size={16} />} color="#174771"
               sparkline={revenueSparkline}
             />
             <MetricCard

@@ -13,7 +13,7 @@ import { SectionHeading } from '@/components/comman/motion/SectionHeading';
 import { PremiumCard } from '@/components/comman/motion/PremiumCard';
 import { AnimatedCounter } from '@/components/comman/motion/AnimatedCounter';
 
-const SERIF = "'Lora', Georgia, serif";
+const SERIF = "Georgia, 'Times New Roman', serif";
 
 // ── Add-ons exact from reference ──────────────────────────────────────────────
 const ADDONS: { Icon: LucideIcon; name: string; price: string; unit: string }[] = [
@@ -86,7 +86,7 @@ export function PricingPage() {
       <div className="text-center px-4 md:px-8 lg:px-12 pt-10 md:pt-16 pb-12 max-w-[720px] mx-auto">
         {/* Top pill badge */}
         <Reveal delay={0}>
-          <div className="inline-flex items-center gap-2 bg-brand-pale-orange border border-[rgba(217,119,87,0.3)] rounded-[20px] px-[14px] py-[5px] mb-5">
+          <div className="inline-flex items-center gap-2 bg-brand-pale-orange border border-[rgba(23,71,113,0.3)] rounded-[20px] px-[14px] py-[5px] mb-5">
             <span className="text-[12px] text-brand-deep-orange font-medium">
               No credit card required • Cancel anytime
             </span>

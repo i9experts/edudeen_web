@@ -39,7 +39,7 @@ export function FinanceRevenueTab({ params }: { params: AdminFinanceParams }) {
             })}
             lines={[
               { dataKey: 'gross', label: 'Gross Revenue', color: '#8C8A82' },
-              { dataKey: 'net', label: 'Net Revenue', color: '#D97757' },
+              { dataKey: 'net', label: 'Net Revenue', color: '#174771' },
             ]}
             valuePrefix={currencySymbol(currency)}
           />
@@ -65,7 +65,7 @@ export function FinanceRevenueTab({ params }: { params: AdminFinanceParams }) {
               };
             })}
             lines={[
-              { dataKey: 'commission', label: 'Platform Commission', color: '#D97757' },
+              { dataKey: 'commission', label: 'Platform Commission', color: '#174771' },
               { dataKey: 'processingFees', label: 'Processing Fees', color: '#2156A8' },
             ]}
             valuePrefix={currencySymbol(currency)}

@@ -30,7 +30,7 @@ export function MetricCard({ label, value, trend, trendUp, sub, icon, loading, c
     );
   }
 
-  const accent = color ?? '#D97757';
+  const accent = color ?? '#174771';
 
   return (
     <Card className="metric-card-enter flex-1 min-w-[140px] group" padding="none" hover>

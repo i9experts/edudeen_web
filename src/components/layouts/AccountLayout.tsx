@@ -87,7 +87,7 @@ function AccountSidebar({ open, onToggle }: SidebarProps) {
 
   return (
     <aside className={clsx(
-      'hidden lg:flex bg-carbon flex-col shrink-0 h-[calc(100vh-44px)]',
+      'hidden lg:flex bg-carbon flex-col shrink-0 h-screen',
       'transition-[width] duration-300 ease-in-out',
       open ? 'w-[220px]' : 'w-[60px]',
     )}>
@@ -251,11 +251,9 @@ export function AccountLayout() {
     <div
       className={clsx(
         'bg-cream flex overflow-hidden',
-        // 108px mobile / 44px desktop = BuyerLayout's fixed bottom tab bar
-        // (64px, mobile-only) plus the dev-only ReferenceNav (44px, top) — that
-        // second bar doesn't exist in production, so only the real bottom tab
-        // bar is ever subtracted there (and nothing on desktop, where it's hidden).
-        import.meta.env.DEV ? 'h-[calc(100vh-108px)] md:h-[calc(100vh-44px)]' : 'h-[calc(100vh-64px)] md:h-screen',
+        // 64px = BuyerLayout's fixed bottom tab bar (mobile-only); nothing is
+        // subtracted on desktop, where that bar is hidden.
+        'h-[calc(100vh-64px)] md:h-screen',
       )}
       {...swipeHandlers}
     >

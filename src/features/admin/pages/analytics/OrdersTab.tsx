@@ -38,7 +38,7 @@ export function OrdersTab({ params }: { params: BaseAnalyticsParams }) {
                 refunded: p.refundedOrdersCount,
               }))}
               lines={[
-                { dataKey: 'orders', label: 'Orders', color: '#D97757' },
+                { dataKey: 'orders', label: 'Orders', color: '#174771' },
                 { dataKey: 'cancelled', label: 'Cancelled', color: '#C0392B' },
                 { dataKey: 'refunded', label: 'Refunded', color: '#2156A8' },
               ]}

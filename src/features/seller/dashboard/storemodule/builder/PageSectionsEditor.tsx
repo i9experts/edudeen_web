@@ -172,7 +172,7 @@ export function PageSectionsEditor({ sections, onChange, onPersist, pageOptions,
           </div>
           <button onClick={() => setShowAdd(true)}
             className="flex items-center gap-1.5 px-4 py-[9px] mt-1 text-[13px] font-bold rounded-[9px] border-none text-white cursor-pointer transition-colors"
-            style={{ background: '#D97757' }}>
+            style={{ background: '#174771' }}>
             <Plus size={14} /> Add Your First Section
           </button>
         </div>

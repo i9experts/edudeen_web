@@ -48,7 +48,7 @@ function UsageBar({ label, used, max, Icon }: { label: string; used: number; max
       </div>
       {!unlimited && (
         <div className="h-[6px] bg-cream rounded-full overflow-hidden">
-          <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: near ? '#C0392B' : '#D97757' }} />
+          <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: near ? '#C0392B' : '#174771' }} />
         </div>
       )}
     </div>
@@ -336,7 +336,7 @@ export default function StorePlanBilling() {
             const isCurrent = current?.platformPlanId === plan._id;
             const price = interval === 'yearly' && plan.yearlyPriceUSD != null ? plan.yearlyPriceUSD : plan.monthlyPriceUSD;
             return (
-              <div key={plan._id} className="bg-white border rounded-[10px] px-5 py-4 flex flex-col" style={{ borderColor: isCurrent ? '#D97757' : '#E8E6DC', borderWidth: isCurrent ? 2 : 1 }}>
+              <div key={plan._id} className="bg-white border rounded-[10px] px-5 py-4 flex flex-col" style={{ borderColor: isCurrent ? '#174771' : '#E8E6DC', borderWidth: isCurrent ? 2 : 1 }}>
                 <div className="flex items-start justify-between mb-1">
                   <p className="text-[15px] font-bold text-carbon">{plan.name}</p>
                   {plan.badge && <span className="text-[10px] font-bold px-2 py-[2px] rounded-full bg-brand-pale-orange text-brand-deep-orange">{plan.badge}</span>}

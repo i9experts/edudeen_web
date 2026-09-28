@@ -877,7 +877,7 @@ export function StoreMarketing() {
             {TABS.map(t => (
               <button key={t.id} onClick={() => setTab(t.id)}
                 className="flex items-center gap-1.5 shrink-0 whitespace-nowrap px-3 sm:px-4 py-2.5 text-[13px] font-medium cursor-pointer border-none bg-transparent -mb-px transition-colors duration-150 hover:text-brand-orange rounded-t-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/50"
-                style={{ borderBottom: `2px solid ${tab === t.id ? '#D97757' : 'transparent'}`, color: tab === t.id ? '#D97757' : '#8C8A82' }}
+                style={{ borderBottom: `2px solid ${tab === t.id ? '#174771' : 'transparent'}`, color: tab === t.id ? '#174771' : '#8C8A82' }}
               >
                 <t.Icon size={14} className="shrink-0" /> {t.label}
               </button>

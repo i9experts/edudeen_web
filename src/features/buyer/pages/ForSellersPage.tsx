@@ -17,7 +17,7 @@ import { AnimatedCounter } from '@/components/comman/motion/AnimatedCounter';
 const compactNumber   = new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 });
 const compactCurrency = new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1, style: 'currency', currency: 'USD' });
 
-const SERIF = "'Lora', Georgia, serif";
+const SERIF = "Georgia, 'Times New Roman', serif";
 
 const SELLER_TYPES: { Icon: LucideIcon; title: string; desc: string; cta: string }[] = [
   { Icon: GraduationCap, title: 'Educators',            desc: 'Sell lesson plans, worksheets, bundles, and courses to teachers and students worldwide.',    cta: 'Sell as Educator'   },
@@ -76,7 +76,7 @@ export function ForSellersPage() {
 
         <div className="max-w-[760px] mx-auto text-center relative z-[1]">
           <Reveal delay={0}>
-            <div className="inline-flex items-center gap-2 bg-[rgba(217,119,87,0.15)] border border-[rgba(217,119,87,0.3)] rounded-[20px] px-[14px] py-[5px] mb-6">
+            <div className="inline-flex items-center gap-2 bg-[rgba(23,71,113,0.15)] border border-[rgba(23,71,113,0.3)] rounded-[20px] px-[14px] py-[5px] mb-6">
               <span className="text-[12px] text-brand-orange font-medium">
                 Trusted by {stats ? `${compactNumber.format(stats.sellersCount)}+` : '50,000+'} sellers worldwide
               </span>

@@ -507,7 +507,7 @@ export default function StoreSettings() {
               disabled={!isDirty || saving}
               className="flex items-center gap-[7px] px-[18px] py-2 rounded-lg border-none text-[13px] font-semibold transition-all duration-150"
               style={{
-                background: isDirty && !saving ? '#D97757' : '#E8E6DC',
+                background: isDirty && !saving ? '#174771' : '#E8E6DC',
                 color: isDirty && !saving ? '#fff' : '#8C8A82',
                 cursor: isDirty && !saving ? 'pointer' : 'not-allowed',
               }}
@@ -717,22 +717,22 @@ export default function StoreSettings() {
                       onClick={() => toggleType(t)}
                       className="flex items-center gap-3 px-[14px] py-3 rounded-[9px] cursor-pointer transition-all duration-150 border"
                       style={{
-                        borderColor: active ? '#D97757' : '#E8E6DC',
-                        background: active ? '#FBECE4' : '#FAF9F5',
+                        borderColor: active ? '#174771' : '#E8E6DC',
+                        background: active ? '#EAF2F8' : '#FAF9F5',
                       }}
                     >
                       <div
                         className="w-[18px] h-[18px] rounded-[5px] shrink-0 flex items-center justify-center"
                         style={{
-                          border: `2px solid ${active ? '#D97757' : '#CBCABA'}`,
-                          background: active ? '#D97757' : 'transparent',
+                          border: `2px solid ${active ? '#174771' : '#CBCABA'}`,
+                          background: active ? '#174771' : 'transparent',
                         }}
                       >
                         {active && <CheckCircle size={11} className="text-white" />}
                       </div>
                       <span
                         className="text-[13px]"
-                        style={{ fontWeight: active ? 600 : 400, color: active ? '#D97757' : '#141413' }}
+                        style={{ fontWeight: active ? 600 : 400, color: active ? '#174771' : '#141413' }}
                       >
                         {PRODUCT_TYPE_LABELS[t]}
                       </span>

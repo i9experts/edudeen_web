@@ -14,7 +14,7 @@ interface AvatarProps {
 // ─── Color Palette ────────────────────────────────────────────────────────────
 
 const PALETTE = [
-  { bg: '#FBECE4', text: '#B95A3A' }, // orange
+  { bg: '#EAF2F8', text: '#0F3354' }, // orange
   { bg: '#EBF7EF', text: '#1E7A3C' }, // green
   { bg: '#E6F1FB', text: '#1A72C2' }, // blue
   { bg: '#EDE9FE', text: '#6D28D9' }, // purple
@@ -23,11 +23,11 @@ const PALETTE = [
 ];
 
 const FIXED: Record<string, { bg: string; text: string }> = {
-  orange: { bg: '#FBECE4', text: '#B95A3A' },
+  orange: { bg: '#EAF2F8', text: '#0F3354' },
   green:  { bg: '#EBF7EF', text: '#1E7A3C' },
   blue:   { bg: '#E6F1FB', text: '#1A72C2' },
   purple: { bg: '#EDE9FE', text: '#6D28D9' },
-  pos:    { bg: '#2C2A28', text: '#D97757' },
+  pos:    { bg: '#2C2A28', text: '#174771' },
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

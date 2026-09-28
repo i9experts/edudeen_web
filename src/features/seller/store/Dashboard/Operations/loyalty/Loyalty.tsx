@@ -92,7 +92,7 @@ export function StoreLoyalty() {
                 style={{
                   background: activeTab === tab.id ? '#fff' : 'transparent',
                   color: activeTab === tab.id ? '#141413' : '#8C8A82',
-                  borderBottom: activeTab === tab.id ? '2px solid #D97757' : '2px solid transparent',
+                  borderBottom: activeTab === tab.id ? '2px solid #174771' : '2px solid transparent',
                 }}
               >
                 <tab.Icon size={13} /> {tab.label}
