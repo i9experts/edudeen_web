@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useModerationStats, useModerationQueue, useModerationActions } from '@/hooks/admin/useAdminModeration';
 import type { ModerationReportRow, ModerationTargetType, RiskLevel } from '@/api/services/moderation/adminModeration';
-import { Table, Badge, Button, Modal, SkeletonBox, SearchInput, FilterDropdown, MetricCard, AdminPageHeader } from '@/components/comman/ui';
+import { Table, Badge, Button, Modal, SkeletonBox, SearchInput, FilterDropdown, MetricCard } from '@/components/comman/ui';
+import { AdminStudioHeader } from '@/features/admin/components/studio';
 import type { TableColumn } from '@/components/comman/ui';
 import type { BadgeColor } from '@/types';
 import { AnalyticsErrorState } from '@/components/comman/analytics/AnalyticsErrorState';
@@ -140,7 +141,7 @@ export function AdminModeration() {
 
   return (
     <>
-      <AdminPageHeader title="Content Moderation" subtitle="Review flagged listings, sellers, and reports." />
+      <AdminStudioHeader eyebrow="Edudeen team workspace · People" title="Content Moderation" subtitle="Review flagged listings, sellers, and reports." />
       <div className="px-4 sm:px-7 pt-6 pb-8 flex flex-col gap-5">
       {actionError && <div className="bg-error-bg border border-error-border rounded-lg px-4 py-2.5 text-[12.5px] text-error">{actionError}</div>}
 
@@ -161,7 +162,7 @@ export function AdminModeration() {
         </div>
       )}
 
-      <div className="bg-white border border-bone rounded-[10px] overflow-hidden">
+      <div className="bg-white border border-bone rounded-xl overflow-hidden">
         <div className="px-5 py-[14px] border-b border-bone flex gap-[10px] items-center flex-wrap">
           <SearchInput value={search} onChange={(v) => { setSearch(v); setPage(1); }} placeholder="Search flagged items…" className="flex-1 max-w-[280px]" />
           <FilterDropdown placeholder="All Types" options={TYPE_OPTIONS} value={typeFilter} onChange={(v) => { setTypeFilter(v); setPage(1); }} />

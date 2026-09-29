@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { TabBar, type Tab } from '@/components/comman/ui';
+import { AdminStudioHeader } from '@/features/admin/components/studio';
 
 import { AnalyticsTab } from './seo/AnalyticsTab';
 import { SettingsTab } from './seo/SettingsTab';
@@ -38,10 +39,12 @@ export function AdminSEO() {
 
   return (
     <div className="px-4 sm:px-7 pt-6 pb-8 flex flex-col gap-5">
-      <div>
-        <h1 className="text-[18px] font-bold text-charcoal mb-[3px]">Platform SEO</h1>
-        <p className="text-[12px] text-slate">Marketplace-wide search visibility, structured data, and technical SEO controls.</p>
-      </div>
+      <AdminStudioHeader
+        inset
+        eyebrow="Edudeen team workspace · Growth"
+        title="Platform SEO"
+        subtitle="Marketplace-wide search visibility, structured data, and technical SEO controls."
+      />
 
       <TabBar tabs={TABS} active={activeTab} onChange={setActiveTab} />
 

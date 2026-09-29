@@ -11,11 +11,12 @@ import {
   StatusBadge,
   Badge,
   EmptyState,
-  Card,
   SkeletonBox,
   MetricCard,
 } from '@/components/comman/ui';
 import type { MyStoreItem } from '@/api/services/store';
+import { PageHeader } from '@/components/comman/ui';
+import { StudioPanel, StudioTextLink } from '@/features/seller/components/studio/Studio';
 
 // ── Store cell: logo + name ───────────────────────────────────────────────────
 function StoreCell({ store }: { store: MyStoreItem }) {
@@ -26,7 +27,7 @@ function StoreCell({ store }: { store: MyStoreItem }) {
           ? <img loading="lazy" decoding="async" src={store.logo} alt={store.name} className="w-full h-full object-cover" />
           : <Store size={15} className="text-brand-orange" />}
       </div>
-      <span className="font-semibold text-charcoal">{store.name}</span>
+      <span className="font-bold text-carbon">{store.name}</span>
     </div>
   );
 }
@@ -89,8 +90,10 @@ export function SellerStoreList() {
         : <span className="text-slate">—</span>,
     },
     {
-      key: 'actions', header: 'Actions', align: 'center', width: '80px',
+      key: 'actions', header: 'Actions', align: 'center', width: '150px',
       render: s => (
+        <div className="flex items-center justify-center gap-3" onClick={e => e.stopPropagation()}>
+        <StudioTextLink ariaLabel={`Open ${s.name}`} onClick={() => navigate(`/store/${s._id}/dashboard`)}>Open</StudioTextLink>
         <ActionMenu
           align="right"
           items={[
@@ -98,6 +101,7 @@ export function SellerStoreList() {
             { label: 'Edit Store', onClick: () => navigate(`/store/${s._id}/settings`),  icon: <Pencil size={13} /> },
           ]}
         />
+        </div>
       ),
     },
   ];
@@ -107,18 +111,24 @@ export function SellerStoreList() {
       <SellerPageHeader
         title="My Stores"
         subtitle="Manage all your stores from one place."
-        actions={
-          <Button variant="primary" size="sm" onClick={() => navigate('/onboard')}>
-            <Plus size={14} className="mr-1 inline align-middle" />
-            New Store
-          </Button>
-        }
       />
 
-      <div className="px-4 lg:px-7 py-6 flex flex-col gap-5">
+      <div className="px-4 md:px-8 py-8 flex flex-col gap-6">
+
+        <PageHeader
+          className="mb-2"
+          eyebrow="Edudeen creator studio"
+          title="A home for your ideas."
+          description="Create thoughtfully. Share confidently. Grow with purpose. Open a store to add products, fulfil orders and see your earnings."
+          actions={
+            <Button size="md" className="!text-[14px] !font-bold" onClick={() => navigate('/onboard')} icon={<Plus size={15} />}>
+              New store
+            </Button>
+          }
+        />
 
         {/* Summary */}
-        <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
           <MetricCard label="Total Stores" value={summary.storeCount} icon={<Store size={16} />} loading={loading} />
           <MetricCard label="Total Products" value={summary.totalProducts.toLocaleString()} icon={<Package size={16} />} loading={loading} />
           <MetricCard
@@ -152,7 +162,7 @@ export function SellerStoreList() {
 
         {/* Table */}
         {(loading || stores.length > 0) && (
-          <Card padding="none">
+          <StudioPanel title="Your stores" sub={loading ? undefined : `${stores.length} store${stores.length === 1 ? '' : 's'} · select a row to open its workspace`} bodyClassName="-mx-5 sm:-mx-[27px] -mb-5 sm:-mb-[26px] border-t border-bone">
             {loading ? (
               <div className="px-5 py-4 flex flex-col gap-3">
                 {Array.from({ length: 4 }).map((_, i) => (
@@ -184,7 +194,7 @@ export function SellerStoreList() {
                 }}
               />
             )}
-          </Card>
+          </StudioPanel>
         )}
 
       </div>

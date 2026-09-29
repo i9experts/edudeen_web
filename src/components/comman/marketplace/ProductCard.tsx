@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, memo } from 'react';
 import { clsx } from 'clsx';
 import { Modal } from '@/components/comman/ui/Modal';
-import { ShoppingCart, Star, Heart, ImageOff, Loader2, Eye, Flame, BadgeCheck, Store, Check, AlertCircle } from 'lucide-react';
+import { ShoppingCart, Star, Heart, Loader2, Eye, Flame, BadgeCheck, Store, Check, AlertCircle } from 'lucide-react';
+import { ProductCoverFallback } from './ProductCoverFallback';
 import type { MarketplaceProduct } from '@/api/services/marketplace';
 import { useProductPreview } from '@/hooks/marketplace/useProductPreview';
 import { currencySymbol } from '@/utils/currency';
@@ -69,14 +70,7 @@ export function ProductImage({ images, name, className }: { images: string[]; na
   const src = images[0];
 
   if (!src || errored) {
-    return (
-      <div className={clsx('bg-brand-pale-orange flex flex-col items-center justify-center gap-[6px]', className)}>
-        <ImageOff size={24} className="text-brand-orange opacity-[0.45]" style={{ display: 'block', flexShrink: 0 }} />
-        <span className="text-[9px] text-slate max-w-[80px] text-center leading-[1.4] overflow-hidden">
-          {name.slice(0, 20)}{name.length > 20 ? '…' : ''}
-        </span>
-      </div>
-    );
+    return <ProductCoverFallback name={name} size="md" className={clsx('w-full', className)} />;
   }
 
   return (

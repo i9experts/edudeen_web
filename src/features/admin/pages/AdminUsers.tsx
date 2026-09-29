@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useAdminUsersStats, useAdminUsersList, useAdminUserActions } from '@/hooks/admin/useAdminUsers';
 import type { AccountRole, AccountRow } from '@/api/services/users/adminUsers';
-import { Table, StatusBadge, Badge, Button, Modal, SkeletonBox, SearchInput, FilterDropdown, MetricCard, AdminPageHeader } from '@/components/comman/ui';
+import { Table, StatusBadge, Badge, Button, Modal, SkeletonBox, SearchInput, FilterDropdown, MetricCard } from '@/components/comman/ui';
+import { AdminStudioHeader } from '@/features/admin/components/studio';
 import type { TableColumn } from '@/components/comman/ui';
 import type { BadgeColor } from '@/types';
 import { AnalyticsErrorState } from '@/components/comman/analytics/AnalyticsErrorState';
@@ -149,7 +150,7 @@ export function AdminUsers() {
 
   return (
     <>
-      <AdminPageHeader title="Users & Sellers" subtitle="Manage all platform users, sellers and accounts." />
+      <AdminStudioHeader eyebrow="Edudeen team workspace · People" title="Users & Sellers" subtitle="Manage all platform users, sellers and accounts." />
       <div className="px-4 sm:px-7 pt-6 pb-8 flex flex-col gap-5">
       {actionError && <div className="bg-error-bg border border-error-border rounded-lg px-4 py-2.5 text-[12.5px] text-error">{actionError}</div>}
 
@@ -169,7 +170,7 @@ export function AdminUsers() {
         </div>
       )}
 
-      <div className="bg-white border border-bone rounded-[10px] overflow-hidden">
+      <div className="bg-white border border-bone rounded-xl overflow-hidden">
         <div className="flex items-center gap-[10px] px-5 py-[14px] border-b border-bone flex-wrap">
           <SearchInput value={search} onChange={(v) => { setSearch(v); setPage(1); }} placeholder="Search by name or email…" className="flex-1 max-w-[280px]" />
           <FilterDropdown placeholder="All Roles" options={ROLE_OPTIONS} value={roleFilter} onChange={(v) => { setRoleFilter(v); setPage(1); }} />

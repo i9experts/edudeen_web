@@ -107,7 +107,7 @@ function WalletDetailModal({ wallet, onClose, onAdjusted }: {
           ) : (
             <div className="flex flex-col gap-1 max-h-[220px] overflow-y-auto">
               {(ledger?.ledger ?? []).map((entry, i) => (
-                <div key={i} className="flex items-center justify-between py-2 border-b border-[#f0eee6] last:border-b-0 text-[12px]">
+                <div key={i} className="flex items-center justify-between py-2 border-b border-bone last:border-b-0 text-[12px]">
                   <div className="min-w-0">
                     <p className="text-carbon truncate">{entry.reason}</p>
                     <p className="text-[10px] text-slate">{new Date(entry.createdAt).toLocaleString()}</p>

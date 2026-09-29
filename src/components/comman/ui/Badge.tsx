@@ -11,12 +11,13 @@ interface BadgeProps {
   className?: string;
 }
 
+// Soft studio-style status pills (e.g. Published = green, Pending review = amber).
 const colorClasses: Record<BadgeColor, string> = {
   gray:   'bg-mist text-slate',
   orange: 'bg-brand-pale-orange text-brand-deep-orange',
-  green:  'bg-success-bg text-success',
+  green:  'bg-[#eaf3e3] text-[#3b6720]',
   red:    'bg-error-bg text-error',
-  yellow: 'bg-warning-bg text-warning',
+  yellow: 'bg-[#faf0d4] text-[#755600]',
   blue:   'bg-info-bg text-info',
 };
 
@@ -33,8 +34,8 @@ export function Badge({ children, color = 'gray', size = 'md', dot, className }:
   return (
     <span
       className={clsx(
-        'inline-flex items-center gap-[5px] rounded-full whitespace-nowrap font-semibold',
-        size === 'md' ? 'text-[11px] py-[3px] px-[9px]' : 'text-[10px] py-[2px] px-[7px]',
+        'inline-flex items-center gap-[5px] rounded-full whitespace-nowrap font-medium',
+        size === 'md' ? 'text-[12px] py-[5px] px-[10px]' : 'text-[10.5px] py-[3px] px-[8px]',
         colorClasses[color],
         className,
       )}

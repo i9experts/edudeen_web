@@ -31,7 +31,7 @@ export function RulesTab() {
     return (
       <Card padding="none" className="max-w-[720px]">
         {[1, 2, 3, 4, 5].map(i => (
-          <div key={i} className={`px-5 py-4 flex items-center justify-between gap-4 ${i < 5 ? 'border-b border-[#f0eee6]' : ''}`}>
+          <div key={i} className={`px-5 py-4 flex items-center justify-between gap-4 ${i < 5 ? 'border-b border-bone' : ''}`}>
             <div className="min-w-0 flex flex-col gap-[6px]">
               <SkeletonBox height={13} width={140} />
               <SkeletonBox height={16} width={60} rounded="9999px" />
@@ -63,7 +63,7 @@ export function RulesTab() {
   return (
     <Card padding="none" className="max-w-[720px]">
       {(data ?? []).map((rule, i) => (
-        <div key={rule.code} className={`px-5 py-4 flex items-center justify-between gap-4 ${i < (data?.length ?? 0) - 1 ? 'border-b border-[#f0eee6]' : ''}`}>
+        <div key={rule.code} className={`px-5 py-4 flex items-center justify-between gap-4 ${i < (data?.length ?? 0) - 1 ? 'border-b border-bone' : ''}`}>
           <div className="min-w-0">
             <p className="text-[13px] font-medium text-carbon">{RULE_LABELS[rule.code] ?? rule.code}</p>
             <Badge color={SEVERITY_COLOR[rule.severity as keyof typeof SEVERITY_COLOR] ?? 'gray'} size="sm" className="mt-1">

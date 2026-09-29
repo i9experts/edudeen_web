@@ -42,9 +42,9 @@ export function FinanceSellersTab() {
         <FilterDropdown options={SORT_OPTIONS} value={sort} onChange={(v) => setSort(v as NonNullable<SellerBalancesParams['sort']>)} />
       </div>
 
-      <div className="bg-white border border-bone rounded-[10px]">
+      <div className="bg-white border border-bone rounded-xl">
         <div className="px-5 pt-4 pb-3">
-          <p className="text-[14px] font-bold text-charcoal">Seller Balances</p>
+          <p className="font-serif font-normal text-[19px] sm:text-[21px] text-carbon leading-[1.25]">Seller Balances</p>
           <p className="text-[12px] text-slate">Click a row to view full financial details, transaction history, and issue a manual payout.</p>
         </div>
         {balances.error ? (

@@ -3,7 +3,8 @@ import { MessageCircle, Eye, Trash2 } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useAdminContact } from '@/hooks/admin/useAdminContact';
 import { apiUpdateContactStatus, apiDeleteContactSubmission, type ContactSubmission, type ContactSubmissionStatus } from '@/api/services/contact';
-import { Button, Modal, StatusBadge, ActionMenu, Table, AdminPageHeader, type TableColumn } from '@/components/comman/ui';
+import { Button, Modal, StatusBadge, ActionMenu, Table, type TableColumn } from '@/components/comman/ui';
+import { AdminStudioHeader } from '@/features/admin/components/studio';
 
 const STATUS_LABEL: Record<ContactSubmissionStatus, string> = {
   new: 'New', read: 'Read', resolved: 'Resolved',
@@ -110,7 +111,7 @@ export function AdminContactMessages() {
 
   return (
     <div>
-      <AdminPageHeader
+      <AdminStudioHeader eyebrow="Edudeen team workspace · People"
         title="Contact Messages"
         subtitle={`${stats.new} new · ${stats.read} read · ${stats.resolved} resolved`}
       />
@@ -121,7 +122,7 @@ export function AdminContactMessages() {
             {actionError}
           </div>
         )}
-        <div className="bg-white border border-bone rounded-[10px] overflow-hidden">
+        <div className="bg-white border border-bone rounded-xl overflow-hidden">
           <div className="px-5 py-[14px] border-b border-bone flex items-center gap-[10px] flex-wrap">
             <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
               className="px-3 py-2 rounded-lg border border-bone text-[13px] bg-white outline-none cursor-pointer transition-colors duration-150 hover:border-slate/40 focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/10">

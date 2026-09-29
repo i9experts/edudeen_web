@@ -37,9 +37,9 @@ export function FinanceTransactionsTab({ params }: { params: AdminFinanceParams 
         <FilterDropdown options={TYPE_OPTIONS} value={type} onChange={(v) => { setType(v); setPage(1); }} />
       </div>
 
-      <div className="bg-white border border-bone rounded-[10px]">
+      <div className="bg-white border border-bone rounded-xl">
         <div className="px-5 pt-4 pb-3">
-          <p className="text-[14px] font-bold text-charcoal">Platform Transactions</p>
+          <p className="font-serif font-normal text-[19px] sm:text-[21px] text-carbon leading-[1.25]">Platform Transactions</p>
           <p className="text-[12px] text-slate">Every ledger entry across every store.</p>
         </div>
         {transactions.error ? (

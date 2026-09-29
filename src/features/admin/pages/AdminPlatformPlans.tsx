@@ -5,6 +5,7 @@ import { Modal } from '@/components/comman/ui/Modal';
 import { Button } from '@/components/comman/ui/Button';
 import { Input, Textarea } from '@/components/comman/ui/Input';
 import { SkeletonBox, Table, MetricCard, type TableColumn } from '@/components/comman/ui';
+import { AdminStudioHeader } from '@/features/admin/components/studio';
 import {
   apiAdminListPlatformPlans, apiAdminCreatePlatformPlan, apiAdminUpdatePlatformPlan, apiAdminArchivePlatformPlan,
   apiAdminGetPlatformPlanRevenue, apiAdminGetPlatformPlanSubscribers, apiAdminListAddonPurchases,
@@ -138,7 +139,7 @@ function PlanFormModal({ plan, onClose, onSaved }: { plan: PlatformPlan | 'new';
               return (
                 <button key={f.key} type="button" onClick={() => setLimit(f.key, !active)}
                   className="px-2.5 py-1 rounded-full text-[11px] font-medium border cursor-pointer"
-                  style={{ background: active ? '#174771' : '#fff', color: active ? '#fff' : '#5A5852', borderColor: active ? '#174771' : '#E8E6DC' }}>
+                  style={{ background: active ? '#174771' : '#fff', color: active ? '#fff' : '#486071', borderColor: active ? '#174771' : '#E1E7EA' }}>
                   {f.label}
                 </button>
               );
@@ -314,24 +315,25 @@ export function AdminPlatformPlans() {
 
   return (
     <div>
-      <div className="bg-white border-b border-bone px-4 sm:px-7 py-[14px] sticky top-0 z-10 flex items-center justify-between gap-3 flex-wrap">
-        <div>
-          <h1 className="text-[18px] font-bold text-charcoal leading-[1.3]">Platform Plans</h1>
-          <p className="text-[12px] text-slate mt-[2px]">Seller-to-Edudeen billing tiers, limits, and add-ons.</p>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <Button variant="outline" onClick={() => setShowAddons(s => !s)}>{showAddons ? 'Hide Add-ons' : 'View Add-on Purchases'}</Button>
-          <Button icon={<Plus size={14} />} onClick={() => setEditing('new')}>Create Plan</Button>
-        </div>
-      </div>
+      <AdminStudioHeader
+        eyebrow="Edudeen team workspace · Commerce"
+        title="Platform plans"
+        subtitle="Seller-to-Edudeen billing tiers, limits, and add-ons."
+        actions={
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button variant="outline" onClick={() => setShowAddons(s => !s)} aria-expanded={showAddons}>{showAddons ? 'Hide Add-ons' : 'View Add-on Purchases'}</Button>
+            <Button icon={<Plus size={14} />} onClick={() => setEditing('new')}>Create Plan</Button>
+          </div>
+        }
+      />
 
-      <div className="px-4 sm:px-7 pt-5 pb-8 flex flex-col gap-5">
+      <div className="px-4 sm:px-7 pt-6 pb-8 flex flex-col gap-5">
         {error && <p className="text-[13px] text-error">{error}</p>}
 
         {showAddons && (
-          <div className="bg-white border border-bone rounded-[10px] overflow-hidden">
+          <div className="bg-white border border-bone rounded-xl overflow-hidden">
             <div className="px-5 py-[14px] border-b border-bone">
-              <p className="text-[14px] font-bold text-charcoal">Add-on Purchases</p>
+              <p className="font-serif font-normal text-[19px] sm:text-[21px] text-carbon leading-[1.25]">Add-on Purchases</p>
             </div>
             <AddonsPanel />
           </div>
@@ -348,7 +350,7 @@ export function AdminPlatformPlans() {
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="bg-white border border-bone rounded-[10px] px-5 py-4 flex flex-col gap-3">
+              <div key={i} className="bg-white border border-bone rounded-xl px-5 py-4 flex flex-col gap-3">
                 <SkeletonBox width="60%" height={16} rounded="4px" />
                 <SkeletonBox width="40%" height={20} rounded="4px" />
                 <div className="flex flex-col gap-1.5">
@@ -363,7 +365,7 @@ export function AdminPlatformPlans() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {plans.map(plan => (
-              <div key={plan._id} className="bg-white border border-bone rounded-[10px] px-5 py-4 flex flex-col">
+              <div key={plan._id} className="bg-white border border-bone rounded-xl px-5 py-4 flex flex-col">
                 <div className="flex items-start justify-between mb-1">
                   <p className="text-[15px] font-bold text-carbon">{plan.name}</p>
                   <div className="flex items-center gap-1.5">
@@ -377,7 +379,7 @@ export function AdminPlatformPlans() {
                 <ul className="flex flex-col gap-1 mb-3 p-0 list-none">
                   {(plan.featureBullets ?? []).slice(0, 4).map(f => <li key={f} className="text-[12px] text-graphite">• {f}</li>)}
                 </ul>
-                <div className="flex items-center justify-between py-2 border-t border-[#f0eee6] mb-3 mt-auto text-[11px] text-slate">
+                <div className="flex items-center justify-between py-2 border-t border-bone mb-3 mt-auto text-[11px] text-slate">
                   <span>{plan.subscriberCount ?? 0} sellers</span>
                   <span className="font-semibold text-success">${(plan.mrrUSD ?? 0).toFixed(2)}/mo</span>
                   <span className="capitalize">{plan.status}</span>

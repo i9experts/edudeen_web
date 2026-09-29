@@ -45,7 +45,7 @@ export function RevenueTab({ params, compareToPreviousPeriod }: { params: BaseAn
             net: p.netRevenue,
           }))}
           lines={[
-            { dataKey: 'gross', label: 'Gross Revenue', color: '#8C8A82' },
+            { dataKey: 'gross', label: 'Gross Revenue', color: '#64727B' },
             { dataKey: 'net', label: 'Net Revenue', color: '#174771' },
           ]}
           valuePrefix="$"
@@ -85,9 +85,9 @@ export function RevenueTab({ params, compareToPreviousPeriod }: { params: BaseAn
       )}
 
       {compareToPreviousPeriod && b?.previousPeriod && (
-        <div className="bg-white border border-bone rounded-[10px]">
+        <div className="bg-white border border-bone rounded-xl">
           <div className="px-5 pt-4 pb-3">
-            <p className="text-[14px] font-bold text-charcoal">Period Comparison</p>
+            <p className="font-serif font-normal text-[19px] sm:text-[21px] text-carbon leading-[1.25]">Period Comparison</p>
             <p className="text-[12px] text-slate">
               {formatDate(b.previousPeriod.period.from)} – {formatDate(b.previousPeriod.period.to)} vs. {formatDate(b.period.from)} – {formatDate(b.period.to)}
             </p>

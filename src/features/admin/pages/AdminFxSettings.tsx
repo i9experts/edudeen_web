@@ -1,7 +1,8 @@
 import { useEffect, useState, useCallback } from 'react';
 import { RefreshCw, History, AlertTriangle } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
-import { Button, Input, Toggle, StatusBadge, SkeletonBox, EmptyState, Table, AdminPageHeader, type TableColumn } from '@/components/comman/ui';
+import { Button, Input, Toggle, StatusBadge, SkeletonBox, EmptyState, Table, type TableColumn } from '@/components/comman/ui';
+import { AdminStudioHeader } from '@/features/admin/components/studio';
 import { apiGetPlatformConfig, apiUpdateFxConfig, type FxConfig } from '@/api/services/config/adminConfig';
 import { apiGetCurrentRates, apiGetFxHistory, apiGetFxStaleness, apiOverrideFxRate, type CurrentRatesMap, type ExchangeRateHistoryRow } from '@/api/services/exchangeRate';
 
@@ -16,7 +17,7 @@ function RateCard({ currency, rate, staleness }: {
   staleness?: { hoursOld: number; isStale: boolean } | null;
 }) {
   return (
-    <div className="bg-white border border-bone rounded-[10px] px-5 py-4 flex-1 min-w-[220px]">
+    <div className="bg-white border border-bone rounded-xl px-5 py-4 flex-1 min-w-[220px]">
       <div className="flex items-center justify-between mb-2">
         <p className="text-[13px] font-bold text-carbon">{currency}</p>
         {staleness?.isStale && <StatusBadge status="Stale" />}
@@ -72,7 +73,7 @@ function OverrideForm({ onDone }: { onDone: () => void }) {
   }
 
   return (
-    <div className="bg-white border border-bone rounded-[10px] px-5 py-4">
+    <div className="bg-white border border-bone rounded-xl px-5 py-4">
       <p className="text-[13px] font-bold text-carbon mb-1">Set Manual Rate</p>
       <p className="text-[11px] text-slate mb-3">Overrides the auto-refreshed rate immediately. Only applies to checkouts created after this change.</p>
       <div className="flex items-end gap-3 flex-wrap">
@@ -152,7 +153,7 @@ export function AdminFxSettings() {
 
   return (
     <div>
-      <AdminPageHeader
+      <AdminStudioHeader eyebrow="Edudeen team workspace · Finance"
         title="FX Settings"
         subtitle="The single authoritative PKR/USD exchange rate used across checkout, settlement, and refunds."
         actions={<Button variant="outline" size="sm" icon={<RefreshCw size={14} />} onClick={load}>Refresh</Button>}
@@ -176,7 +177,7 @@ export function AdminFxSettings() {
         <OverrideForm onDone={load} />
 
         {fxConfig && (
-          <div className="bg-white border border-bone rounded-[10px] px-5 py-4 flex items-center justify-between">
+          <div className="bg-white border border-bone rounded-xl px-5 py-4 flex items-center justify-between">
             <div>
               <p className="text-[13px] font-bold text-carbon">Auto-refresh from provider</p>
               <p className="text-[11px] text-slate mt-[2px]">Daily automatic rate refresh (sanity-band + abnormal-jump checked before ever becoming current).</p>
@@ -185,7 +186,7 @@ export function AdminFxSettings() {
           </div>
         )}
 
-        <div className="bg-white border border-bone rounded-[10px] overflow-hidden">
+        <div className="bg-white border border-bone rounded-xl overflow-hidden">
           <div className="px-5 py-[14px] border-b border-bone flex items-center gap-2">
             <History size={14} className="text-slate" />
             <p className="text-[13px] font-bold text-carbon">Rate History</p>

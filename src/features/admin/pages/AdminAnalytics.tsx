@@ -3,6 +3,7 @@ import {
   LayoutDashboard, DollarSign, Store, Users, Package, ShoppingCart, CreditCard, TrendingUp,
 } from 'lucide-react';
 import { Button, TabBar, type Tab } from '@/components/comman/ui';
+import { AdminStudioHeader } from '@/features/admin/components/studio';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useAdminAnalyticsExport } from '@/hooks/admin/useAdminAnalytics';
 import { AnalyticsFilterBar } from '@/components/comman/analytics/AnalyticsFilterBar';
@@ -69,10 +70,12 @@ export function AdminAnalytics() {
 
   return (
     <div className="px-4 sm:px-7 pt-6 pb-8 flex flex-col gap-5">
-      <div>
-        <h1 className="text-[18px] font-bold text-charcoal mb-[3px]">Platform Analytics</h1>
-        <p className="text-[12px] text-slate">Marketplace-wide revenue, sellers, customers, products, orders, payments & growth.</p>
-      </div>
+      <AdminStudioHeader
+        inset
+        eyebrow="Edudeen team workspace · Analytics"
+        title="Platform analytics"
+        subtitle="Marketplace-wide revenue, sellers, customers, products, orders, payments & growth."
+      />
 
       <AnalyticsFilterBar
         filters={filters}

@@ -2,7 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
-import { ShoppingCart, X, ImageOff, ArrowRight } from 'lucide-react';
+import { ShoppingCart, X, ArrowRight } from 'lucide-react';
+import { ProductCoverFallback } from '@/components/comman/marketplace/ProductCoverFallback';
 import { useCartContext, type CartItem } from '@/contexts/CartContext';
 import { useDropdownPosition } from '@/hooks/useDropdownPosition';
 import { Button } from './Button';
@@ -12,11 +13,7 @@ const CLOSE_DELAY_MS = 150;
 function ItemThumb({ item }: { item: CartItem }) {
   const src = item.image?.[0] ?? item.images?.[0];
   if (!src) {
-    return (
-      <div className="w-11 h-11 rounded-[9px] bg-brand-pale-orange flex items-center justify-center shrink-0">
-        <ImageOff size={14} className="text-brand-orange opacity-50" />
-      </div>
-    );
+    return <ProductCoverFallback name={item.name} size="xs" className="w-11 h-11 rounded-[9px] shrink-0" />;
   }
   return (
     <img loading="lazy" decoding="async" src={src} alt={item.name}

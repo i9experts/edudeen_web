@@ -27,7 +27,7 @@ export function PlatformEmailTool() {
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <div className="bg-white border border-bone rounded-[10px] px-[22px] py-5">
+      <div className="bg-white border border-bone rounded-xl px-[22px] py-5">
         <p className="text-sm font-bold text-charcoal mb-5 flex items-center gap-2">
           <Mail size={15} /> Email Campaigns — Input
         </p>
@@ -47,9 +47,9 @@ export function PlatformEmailTool() {
                   onClick={() => setTone(t)}
                   className="flex-1 py-2 rounded-lg text-xs font-medium cursor-pointer capitalize transition-all duration-150 border"
                   style={{
-                    borderColor: tone === t ? '#174771' : '#E8E6DC',
+                    borderColor: tone === t ? '#174771' : '#E1E7EA',
                     background: tone === t ? '#EAF2F8' : '#fff',
-                    color: tone === t ? '#0F3354' : '#8C8A82',
+                    color: tone === t ? '#0F3354' : '#64727B',
                   }}
                 >
                   {t}
@@ -66,7 +66,7 @@ export function PlatformEmailTool() {
         </Button>
       </div>
 
-      <div className="bg-white border border-bone rounded-[10px] px-[22px] py-5">
+      <div className="bg-white border border-bone rounded-xl px-[22px] py-5">
         <p className="text-sm font-bold text-charcoal mb-5 flex items-center gap-2">
           <Sparkles size={15} /> AI Output — Preview
         </p>

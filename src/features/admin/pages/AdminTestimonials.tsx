@@ -7,6 +7,7 @@ import {
   type AdminTestimonial,
 } from '@/api/services/testimonials';
 import { Button } from '@/components/comman/ui/Button';
+import { AdminStudioHeader } from '@/features/admin/components/studio';
 import { Modal } from '@/components/comman/ui/Modal';
 import { Input, Textarea } from '@/components/comman/ui/Input';
 import { Toggle } from '@/components/comman/ui/Toggle';
@@ -134,7 +135,7 @@ export function AdminTestimonials() {
       key: 'status', header: 'Status',
       render: t => (
         <button onClick={() => handleToggle(t)} className="px-[10px] py-[3px] rounded-[5px] text-[11px] font-semibold border-none cursor-pointer outline-none transition-[filter] duration-150 hover:brightness-95 focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-brand-orange/50"
-          style={{ background: t.isActive ? '#EAF7EF' : '#F0EEE6', color: t.isActive ? '#1E7A3C' : '#5A5852' }}>
+          style={{ background: t.isActive ? '#EAF7EF' : '#EDF2F4', color: t.isActive ? '#1E7A3C' : '#486071' }}>
           {t.isActive ? 'Published' : 'Hidden'}
         </button>
       ),
@@ -152,23 +153,20 @@ export function AdminTestimonials() {
 
   return (
     <div>
-      <div className="bg-white border-b border-bone px-4 sm:px-7 py-[14px] sticky top-0 z-10 flex items-center justify-between gap-3 flex-wrap">
-        <div className="min-w-0">
-          <h1 className="text-[18px] font-bold text-charcoal leading-[1.3]">Testimonials</h1>
-          <p className="text-[12px] text-slate mt-[2px]">
-            Seller reviews of Edudeen shown on the homepage — {stats.active} published · {stats.inactive} hidden
-          </p>
-        </div>
-        <Button icon={<Plus size={14} />} onClick={() => setEditing('new')} className="shrink-0">Add Testimonial</Button>
-      </div>
+      <AdminStudioHeader
+        eyebrow="Edudeen team workspace · Content"
+        title="Testimonials"
+        subtitle={`Seller reviews of Edudeen shown on the homepage — ${stats.active} published · ${stats.inactive} hidden`}
+        actions={<Button icon={<Plus size={14} />} onClick={() => setEditing('new')} className="shrink-0">Add Testimonial</Button>}
+      />
 
-      <div className="px-4 sm:px-7 pt-5 pb-8 flex flex-col gap-4">
+      <div className="px-4 sm:px-7 pt-6 pb-8 flex flex-col gap-4">
         {actionError && (
           <div className="bg-error-bg border border-error-border rounded-lg px-4 py-2.5 text-[12.5px] text-error">
             {actionError}
           </div>
         )}
-        <div className="bg-white border border-bone rounded-[10px] overflow-hidden">
+        <div className="bg-white border border-bone rounded-xl overflow-hidden">
           {error ? (
             <p className="px-4 py-6 text-center text-[13px] text-error">{error}</p>
           ) : (

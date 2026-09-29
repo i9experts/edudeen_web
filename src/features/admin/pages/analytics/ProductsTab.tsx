@@ -75,9 +75,9 @@ export function ProductsTab({ params }: { params: BaseAnalyticsParams }) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="bg-white border border-bone rounded-[10px]">
+        <div className="bg-white border border-bone rounded-xl">
           <div className="px-5 pt-4 pb-3">
-            <p className="text-[14px] font-bold text-charcoal">Top Products</p>
+            <p className="font-serif font-normal text-[19px] sm:text-[21px] text-carbon leading-[1.25]">Top Products</p>
           </div>
           {topProducts.error ? (
             <div className="px-5 pb-5"><AnalyticsErrorState message={topProducts.error} onRetry={topProducts.refetch} /></div>
@@ -104,9 +104,9 @@ export function ProductsTab({ params }: { params: BaseAnalyticsParams }) {
         )}
       </div>
 
-      <div className="bg-white border border-bone rounded-[10px]">
+      <div className="bg-white border border-bone rounded-xl">
         <div className="px-5 pt-4 pb-3">
-          <p className="text-[14px] font-bold text-charcoal">Product Performance</p>
+          <p className="font-serif font-normal text-[19px] sm:text-[21px] text-carbon leading-[1.25]">Product Performance</p>
           <p className="text-[12px] text-slate">Every listed product platform-wide, ranked by revenue.</p>
         </div>
         {performance.error ? (
@@ -129,8 +129,8 @@ export function ProductsTab({ params }: { params: BaseAnalyticsParams }) {
         )}
       </div>
 
-      <div className="bg-white border border-bone rounded-[10px] px-5 py-5">
-        <p className="text-[14px] font-bold text-charcoal mb-1">Inventory Insights</p>
+      <div className="bg-white border border-bone rounded-xl px-5 py-5">
+        <p className="font-serif font-normal text-[19px] sm:text-[21px] text-carbon leading-[1.25] mb-1">Inventory Insights</p>
         {inventory.loading ? (
           <TableCardSkeleton rows={3} />
         ) : inventory.error ? (

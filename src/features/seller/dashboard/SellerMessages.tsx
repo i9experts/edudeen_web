@@ -161,7 +161,7 @@ export function SellerMessages() {
         }
       />
 
-      <div className="flex overflow-hidden" style={{ height: 'calc(100vh - 108px)' }}>
+      <div className="flex overflow-hidden" style={{ height: 'calc(100vh - 124px)' }}>
         <div className={activeId ? 'hidden md:flex md:w-auto md:shrink-0' : 'flex w-full md:w-auto md:shrink-0'}>
           <ChatList
             title="Chats"

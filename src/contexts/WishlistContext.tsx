@@ -46,14 +46,25 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
   // Maps "productId::variantId" → wishlistId (needed for removal)
   const idMap = useRef(new Map<string, string>());
 
-  // Initial fetch — silently skip if not authenticated
-  useEffect(() => {
-    if (!TokenStorage.isLoggedIn()) { setLoading(false); return; }
-    let cancelled = false;
+  // Bumped on every fetch so a slow response from before a logout/login can
+  // never overwrite the newer account's wishlist.
+  const fetchSeq = useRef(0);
+
+  const resetWishlist = useCallback(() => {
+    fetchSeq.current++;
+    setWishlistItems([]);
+    setWishlistedKeys(new Set());
+    idMap.current.clear();
+    setLoading(false);
+  }, []);
+
+  const fetchWishlist = useCallback(() => {
+    if (!TokenStorage.isLoggedIn()) { resetWishlist(); return; }
+    const seq = ++fetchSeq.current;
     setLoading(true);
     apiGetWishlist()
       .then(res => {
-        if (cancelled) return;
+        if (seq !== fetchSeq.current) return;
         const items = res.data ?? [];
         setWishlistItems(items);
         const keys = new Set<string>();
@@ -63,9 +74,22 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
         setWishlistedKeys(keys);
       })
       .catch(() => {})
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
-  }, []);
+      .finally(() => { if (seq === fetchSeq.current) setLoading(false); });
+  }, [resetWishlist]);
+
+  // Initial fetch, then re-fetch on every sign-in and clear on sign-out —
+  // previously this only ran once on mount, so signing out and back in
+  // (no page reload) left the wishlist empty until a manual refresh.
+  useEffect(() => {
+    fetchWishlist();
+    window.addEventListener('edudeen:auth-login', fetchWishlist);
+    window.addEventListener('edudeen:auth-logout', resetWishlist);
+    return () => {
+      fetchSeq.current++;
+      window.removeEventListener('edudeen:auth-login', fetchWishlist);
+      window.removeEventListener('edudeen:auth-logout', resetWishlist);
+    };
+  }, [fetchWishlist, resetWishlist]);
 
   const isWishlisted = useCallback(
     (productId: string, variantId: string) => wishlistedKeys.has(wKey(productId, variantId)),

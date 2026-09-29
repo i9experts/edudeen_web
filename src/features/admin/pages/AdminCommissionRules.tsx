@@ -9,6 +9,7 @@ import {
 import { useAdminSellerBalances } from '@/hooks/admin/useAdminFinance';
 import type { CommissionRateSource, SellerOverrideRow } from '@/api/services/commissionRules';
 import { Button, Modal, Input, Textarea, ActionMenu, SkeletonBox, SearchInput, Table, type TableColumn } from '@/components/comman/ui';
+import { AdminStudioHeader } from '@/features/admin/components/studio';
 
 const SOURCE_LABEL: Record<CommissionRateSource, string> = {
   seller_override: 'Seller override',
@@ -55,10 +56,10 @@ function GlobalDefaultCard() {
   }
 
   return (
-    <div className="bg-white border border-bone rounded-[10px] px-[22px] py-5">
+    <div className="bg-white border border-bone rounded-xl px-[22px] py-5">
       <div className="flex items-center justify-between gap-3 mb-1">
         <div>
-          <p className="text-[14px] font-bold text-charcoal flex items-center gap-[6px]">
+          <p className="font-serif font-normal text-[19px] sm:text-[21px] text-carbon leading-[1.25] flex items-center gap-[6px]">
             <Percent size={15} className="text-brand-orange" /> Global Default Commission
           </p>
           <p className="text-[11px] text-slate mt-[2px]">
@@ -233,17 +234,19 @@ export function AdminCommissionRules() {
 
   return (
     <div className="px-4 sm:px-7 pt-6 pb-8 flex flex-col gap-5">
-      <div>
-        <h1 className="text-[18px] font-bold text-charcoal mb-[3px]">Commission Rules</h1>
-        <p className="text-[12px] text-slate">Global default rate and per-seller commission overrides — layered above each store's platform-plan tier rate.</p>
-      </div>
+      <AdminStudioHeader
+        inset
+        eyebrow="Edudeen team workspace · Finance"
+        title="Commission rules"
+        subtitle="Global default rate and per-seller commission overrides — layered above each store's platform-plan tier rate."
+      />
 
       <GlobalDefaultCard />
 
-      <div className="bg-white border border-bone rounded-[10px] overflow-hidden">
+      <div className="bg-white border border-bone rounded-xl overflow-hidden">
         <div className="px-5 py-[14px] border-b border-bone flex items-center justify-between gap-3 flex-wrap">
           <div className="min-w-0">
-            <p className="text-[14px] font-bold text-charcoal">Seller Overrides</p>
+            <p className="font-serif font-normal text-[19px] sm:text-[21px] text-carbon leading-[1.25]">Seller Overrides</p>
             <p className="text-[11px] text-slate">Always wins over plan-tier and global rates.</p>
           </div>
           <Button icon={<Plus size={14} />} size="sm" onClick={() => setAdding(true)} className="shrink-0">Add Override</Button>

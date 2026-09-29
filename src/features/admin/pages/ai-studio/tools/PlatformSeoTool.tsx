@@ -17,7 +17,7 @@ export function PlatformSeoTool() {
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <div className="bg-white border border-bone rounded-[10px] px-[22px] py-5">
+      <div className="bg-white border border-bone rounded-xl px-[22px] py-5">
         <p className="text-sm font-bold text-charcoal mb-5 flex items-center gap-2">
           <Search size={15} /> SEO Booster — Input
         </p>
@@ -38,7 +38,7 @@ export function PlatformSeoTool() {
         </Button>
       </div>
 
-      <div className="bg-white border border-bone rounded-[10px] px-[22px] py-5">
+      <div className="bg-white border border-bone rounded-xl px-[22px] py-5">
         <p className="text-sm font-bold text-charcoal mb-5 flex items-center gap-2">
           <Sparkles size={15} /> AI Output — Preview
         </p>
@@ -68,7 +68,7 @@ export function PlatformSeoTool() {
               <p className="text-[10px] font-semibold text-slate uppercase tracking-[0.08em] mb-2">Optimized Tags</p>
               <div className="flex flex-wrap gap-[6px]">
                 {(result.optimizedTags ?? []).map(t => (
-                  <span key={t.tag} className="inline-flex items-center gap-1 px-[10px] py-[3px] bg-[#f0eee6] rounded-[5px] text-[11px] text-[#5a5852]">
+                  <span key={t.tag} className="inline-flex items-center gap-1 px-[10px] py-[3px] bg-mist rounded-[5px] text-[11px] text-graphite">
                     {t.isVerifiedData ? <ShieldCheck size={10} className="text-success" /> : null}
                     {t.tag}
                   </span>

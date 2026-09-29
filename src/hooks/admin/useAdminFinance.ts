@@ -24,6 +24,12 @@ import {
   apiAdminReconciliation,
   apiAdminReconciliationHistory,
   apiAdminFxExposure,
+  apiAdminMonthlySettlement,
+  apiAdminRunMonthlySettlement,
+  type AdminMonthlySettlementData,
+  type MonthlySettlementParams,
+  type MonthlySettlementRunResult,
+  type MonthlySettlementRunPayload,
   type AdminFinanceParams,
   type AdminTransactionsParams,
   type PayoutQueueParams,
@@ -290,6 +296,60 @@ export function useAdminRunReconciliation() {
   }, []);
 
   return { run, running, error };
+}
+
+// ── I. Monthly settlement ─────────────────────────────────────────────────────────
+
+/** Like `useAnalyticsQuery`, but also keeps the HTTP status so the page can
+ *  tell "endpoint not deployed yet" (404) apart from a real failure. */
+export function useAdminMonthlySettlement(params: MonthlySettlementParams) {
+  const [data, setData] = useState<AdminMonthlySettlementData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [errorStatus, setErrorStatus] = useState<number | undefined>(undefined);
+  const paramsKey = JSON.stringify(params);
+
+  const refetch = useCallback(() => {
+    setLoading(true);
+    setError('');
+    setErrorStatus(undefined);
+    return apiAdminMonthlySettlement(params)
+      .then(res => setData(res.data ?? null))
+      .catch((err: unknown) => {
+        setData(null);
+        setError(err instanceof Error ? err.message : 'Failed to load the monthly settlement.');
+        setErrorStatus((err as { status?: number } | null)?.status);
+      })
+      .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paramsKey]);
+
+  useEffect(() => { refetch(); }, [refetch]);
+
+  return { data, loading, error, errorStatus, refetch };
+}
+
+export function useAdminRunMonthlySettlement() {
+  const [running, setRunning] = useState(false);
+  const [error, setError] = useState('');
+  const [result, setResult] = useState<MonthlySettlementRunResult | null>(null);
+
+  const run = useCallback(async (payload: MonthlySettlementRunPayload = {}) => {
+    setRunning(true);
+    setError('');
+    try {
+      const res = await apiAdminRunMonthlySettlement(payload);
+      setResult(res.data);
+      return res.data;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create this month's payouts.");
+      return null;
+    } finally {
+      setRunning(false);
+    }
+  }, []);
+
+  return { run, running, error, result, clearResult: () => setResult(null) };
 }
 
 // ── H. Export ─────────────────────────────────────────────────────────────────────

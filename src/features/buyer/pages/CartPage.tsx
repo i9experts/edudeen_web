@@ -8,9 +8,10 @@ import { Button } from '@/components/comman/ui/Button';
 import { BuyerNavbar, Breadcrumb, Footer, SkeletonBox, getRecentlyViewed } from '@/components/comman/ui';
 import { ProductCard } from '@/components/comman/marketplace/ProductCard';
 import {
-  Minus, Plus, Trash2, ShoppingBag, ImageOff,
+  Minus, Plus, Trash2, ShoppingBag,
   Loader2, Package, Download, ChevronRight, ShieldCheck, RotateCcw, Lock,
 } from 'lucide-react';
+import { ProductCoverFallback } from '@/components/comman/marketplace/ProductCoverFallback';
 import { clsx } from 'clsx';
 import { currencySymbol } from '@/utils/currency';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
@@ -19,11 +20,7 @@ function CartItemImage({ images, name }: { images?: string[]; name: string }) {
   const [errored, setErrored] = useState(false);
   const src = images?.[0];
   if (!src || errored) {
-    return (
-      <div className="w-[72px] h-[72px] rounded-[10px] bg-brand-pale-orange flex items-center justify-center shrink-0">
-        <ImageOff size={20} className="text-brand-orange opacity-50" />
-      </div>
-    );
+    return <ProductCoverFallback name={name} size="sm" className="w-[72px] h-[72px] rounded-[10px] shrink-0" />;
   }
   return (
     <img loading="lazy" decoding="async"
@@ -190,7 +187,7 @@ export function CartPage() {
                       <div className="aspect-square rounded-lg overflow-hidden bg-brand-pale-orange mb-2">
                         {item.image
                           ? <img loading="lazy" decoding="async" src={item.image} alt="" className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.05]" />
-                          : <div className="w-full h-full flex items-center justify-center"><ImageOff size={16} className="text-brand-orange opacity-50" /></div>}
+                          : <ProductCoverFallback name={item.name} size="sm" className="w-full h-full" />}
                       </div>
                       <span className="text-[11px] font-medium text-charcoal leading-tight line-clamp-2 group-hover:text-brand-orange transition-colors">{item.name}</span>
                       {item.price != null && (

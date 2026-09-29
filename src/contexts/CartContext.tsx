@@ -216,8 +216,15 @@ export function CartProvider({ storeId, children }: { storeId?: string; children
       }
       fetchCart();
     };
+    // Sign-out: drop the previous account's server cart from screen — fetchCart
+    // falls back to the (device-local) guest cart once logged out.
+    const onLogout = () => { setCart(null); fetchCart(); };
     window.addEventListener('edudeen:auth-login', onLogin);
-    return () => window.removeEventListener('edudeen:auth-login', onLogin);
+    window.addEventListener('edudeen:auth-logout', onLogout);
+    return () => {
+      window.removeEventListener('edudeen:auth-login', onLogin);
+      window.removeEventListener('edudeen:auth-logout', onLogout);
+    };
   }, [fetchCart, storeId]);
 
   const cartCount = cart?.items?.reduce((s, i) => s + i.quantity, 0) ?? 0;

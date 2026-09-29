@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
-import { Heart, ImageOff, Star, ShoppingCart, Loader2 } from 'lucide-react';
+import { Heart, Star, ShoppingCart, Loader2 } from 'lucide-react';
+import { ProductCoverFallback } from '@/components/comman/marketplace/ProductCoverFallback';
 import { useWishlistContext } from '@/contexts/WishlistContext';
 import { useCartContext } from '@/contexts/CartContext';
 import { Card, EmptyState, SkeletonBox, PageHeader, Modal, Button } from '@/components/comman/ui';
@@ -12,11 +13,7 @@ function WishlistImg({ images, name }: { images?: string[]; name: string }) {
   const [err, setErr] = useState(false);
   const src = images?.[0];
   if (!src || err) {
-    return (
-      <div className="w-[84px] h-[84px] rounded-[12px] bg-brand-pale-orange shrink-0 flex items-center justify-center border border-[#edebe2]">
-        <ImageOff size={20} className="text-brand-orange opacity-40" />
-      </div>
-    );
+    return <ProductCoverFallback name={name} size="sm" className="w-[84px] h-[84px] rounded-[12px] shrink-0" />;
   }
   return (
     <img loading="lazy" decoding="async" src={src} alt={name} onError={() => setErr(true)}

@@ -4,6 +4,7 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { useAdminManualPayments, useApproveManualPayment, useRejectManualPayment } from '@/hooks/admin/useAdminManualPayments';
 import type { AdminManualPaymentProof, ManualPaymentProofStatus } from '@/api/services/manualPayment';
 import { Button, Modal, StatusBadge, Textarea, Table, type TableColumn } from '@/components/comman/ui';
+import { AdminStudioHeader } from '@/features/admin/components/studio';
 
 const STATUS_LABEL: Record<ManualPaymentProofStatus, string> = {
   pending: 'Pending', approved: 'Approved', rejected: 'Rejected',
@@ -165,15 +166,14 @@ export function AdminManualPayments() {
 
   return (
     <div>
-      <div className="bg-white border-b border-bone px-4 sm:px-7 py-[14px] sticky top-0 z-10 flex items-center justify-between gap-3 flex-wrap">
-        <div>
-          <h1 className="text-[18px] font-bold text-charcoal leading-[1.3]">Manual Payments</h1>
-          <p className="text-[12px] text-slate mt-[2px]">Bank-transfer payments (Pakistan track) awaiting proof verification.</p>
-        </div>
-      </div>
+      <AdminStudioHeader
+        eyebrow="Edudeen team workspace · Finance"
+        title="Manual payments"
+        subtitle="Bank-transfer payments (Pakistan track) awaiting proof verification."
+      />
 
-      <div className="px-4 sm:px-7 pt-5 pb-8 flex flex-col gap-4">
-        <div className="bg-white border border-bone rounded-[10px] overflow-hidden">
+      <div className="px-4 sm:px-7 pt-6 pb-8 flex flex-col gap-4">
+        <div className="bg-white border border-bone rounded-xl overflow-hidden">
           <div className="px-5 py-[14px] border-b border-bone flex items-center gap-[10px] flex-wrap">
             <select value={statusFilter} onChange={e => setStatusFilter(e.target.value as ManualPaymentProofStatus | '')}
               className="px-3 py-2 rounded-lg border border-bone text-[13px] bg-white outline-none cursor-pointer transition-colors duration-150 hover:border-slate/40 focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/10">

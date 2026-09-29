@@ -36,7 +36,7 @@ export function OverviewTab() {
             {Object.entries(data?.byTool ?? {}).map(([tool, counts]) => {
               const total = counts.succeeded + counts.failed + counts.processing;
               return (
-                <div key={tool} className="flex items-center justify-between gap-3 py-2 border-b border-[#f0eee6] last:border-b-0">
+                <div key={tool} className="flex items-center justify-between gap-3 py-2 border-b border-bone last:border-b-0">
                   <span className="text-[13px] text-carbon truncate min-w-0">{TOOL_LABELS[tool] ?? tool}</span>
                   <div className="flex items-center gap-3 text-[11px] shrink-0">
                     <span className="text-success">{counts.succeeded} succeeded</span>
@@ -60,7 +60,7 @@ export function OverviewTab() {
         ) : (
           <div className="flex flex-col gap-2">
             {(data?.topStores ?? []).map(store => (
-              <div key={store.storeId} className="flex items-center justify-between py-2 border-b border-[#f0eee6] last:border-b-0">
+              <div key={store.storeId} className="flex items-center justify-between py-2 border-b border-bone last:border-b-0">
                 <div className="min-w-0">
                   <p className="text-[13px] text-carbon truncate">{store.storeName ?? store.storeId}</p>
                   {store.storeSlug && <p className="text-[11px] text-slate">/{store.storeSlug}</p>}

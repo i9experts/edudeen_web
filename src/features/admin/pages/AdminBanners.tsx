@@ -7,6 +7,7 @@ import {
   bannerPlacements, SELECTABLE_PROMOTION_PLACEMENTS, type Banner, type PromotionPlacement,
 } from '@/api/services/banner';
 import { Button } from '@/components/comman/ui/Button';
+import { AdminStudioHeader } from '@/features/admin/components/studio';
 import { Modal } from '@/components/comman/ui/Modal';
 import { Input } from '@/components/comman/ui/Input';
 import { ImageUpload } from '@/components/comman/ui/Upload';
@@ -24,8 +25,8 @@ const STATUS_STYLE: Record<Banner['status'], { bg: string; color: string; label:
   active:    { bg: '#EAF7EF', color: '#1E7A3C', label: 'Active' },
   scheduled: { bg: '#EAF1FB', color: '#1D5EAE', label: 'Scheduled' },
   paused:    { bg: '#FDF3E7', color: '#9A6A17', label: 'Paused' },
-  expired:   { bg: '#F0EEE6', color: '#5A5852', label: 'Expired' },
-  draft:     { bg: '#F0EEE6', color: '#5A5852', label: 'Draft' },
+  expired:   { bg: '#EDF2F4', color: '#486071', label: 'Expired' },
+  draft:     { bg: '#EDF2F4', color: '#486071', label: 'Draft' },
 };
 
 // ── Form modal ────────────────────────────────────────────────────────────────
@@ -175,23 +176,22 @@ export function AdminBanners() {
 
   return (
     <div>
-      <div className="bg-white border-b border-bone px-4 sm:px-7 py-[14px] sticky top-0 z-10 flex items-center justify-between gap-3 flex-wrap">
-        <div className="min-w-0">
-          <h1 className="text-[18px] font-bold text-charcoal leading-[1.3]">Banners</h1>
-          <p className="text-[12px] text-slate mt-[2px]">
-            Manage promotional banners across Homepage, Marketplace, Education Marketplace, and Category placements. How many rotate at once per placement is configured in Platform Config.
-          </p>
-        </div>
-        <Button icon={<Plus size={14} />} onClick={() => setEditing('new')} className="shrink-0">
-          Add Banner
-        </Button>
-      </div>
+      <AdminStudioHeader
+        eyebrow="Edudeen team workspace · Content"
+        title="Banners"
+        subtitle="Manage promotional banners across Homepage, Marketplace, Education Marketplace, and Category placements. How many rotate at once per placement is configured in Platform Config."
+        actions={
+          <Button icon={<Plus size={14} />} onClick={() => setEditing('new')} className="shrink-0">
+            Add Banner
+          </Button>
+        }
+      />
 
-      <div className="px-4 sm:px-7 pt-5 pb-8">
+      <div className="px-4 sm:px-7 pt-6 pb-8">
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="bg-white border border-bone rounded-[10px] overflow-hidden flex flex-col">
+              <div key={i} className="bg-white border border-bone rounded-xl overflow-hidden flex flex-col">
                 <SkeletonBox className="aspect-[16/9] w-full" rounded="0" />
                 <div className="p-3 flex flex-col gap-2">
                   <SkeletonBox className="h-4 w-1/2" />
@@ -203,7 +203,7 @@ export function AdminBanners() {
         ) : error ? (
           <p className="text-[13px] text-error text-center py-8">{error}</p>
         ) : banners.length === 0 ? (
-          <div className="bg-white border border-bone rounded-[10px]">
+          <div className="bg-white border border-bone rounded-xl">
             <EmptyState
               icon={<ImageIcon size={28} className="text-slate" />}
               title="No banners yet"
@@ -216,7 +216,7 @@ export function AdminBanners() {
             {[...banners].sort((a, b) => a.order - b.order).map(b => {
               const statusStyle = STATUS_STYLE[b.status] ?? STATUS_STYLE[b.isActive ? 'active' : 'draft'];
               return (
-                <div key={b._id} className="bg-white border border-bone rounded-[10px] overflow-hidden flex flex-col transition-colors duration-200 hover:border-brand-orange/25">
+                <div key={b._id} className="bg-white border border-bone rounded-xl overflow-hidden flex flex-col transition-colors duration-200 hover:border-brand-orange/25">
                   <div className="aspect-[16/9] bg-cream">
                     <img loading="lazy" decoding="async" src={b.bannerImage} alt="" className="w-full h-full object-cover" />
                   </div>

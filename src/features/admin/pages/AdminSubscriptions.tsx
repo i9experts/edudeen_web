@@ -4,6 +4,7 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { Modal } from '@/components/comman/ui/Modal';
 import { Button } from '@/components/comman/ui/Button';
 import { SkeletonBox, Table, type TableColumn } from '@/components/comman/ui';
+import { AdminStudioHeader } from '@/features/admin/components/studio';
 import {
   apiAdminGetOverview, apiAdminGetStoreBreakdown, apiAdminGetStoreDetail,
   apiAdminGetPaymentFailures, apiAdminGetSubscriptionDetail, apiAdminSuspendPlan, apiAdminUnsuspendPlan,
@@ -18,10 +19,10 @@ type FailureRow = PaymentAttempt & { store: { name: string } | null; customer: {
 
 const WEBHOOK_STATUS_STYLE: Record<string, { bg: string; color: string }> = {
   processed: { bg: '#E3F4EA', color: '#1E7A3C' },
-  received: { bg: '#F0EEE6', color: '#5A5852' },
+  received: { bg: '#EDF2F4', color: '#486071' },
   processing: { bg: '#FFF4DC', color: '#B36200' },
   failed: { bg: '#FDECEA', color: '#C0392B' },
-  ignored: { bg: '#F0EEE6', color: '#8C8A82' },
+  ignored: { bg: '#EDF2F4', color: '#64727B' },
 };
 
 function WebhooksPanel() {
@@ -51,7 +52,7 @@ function WebhooksPanel() {
     {
       key: 'status', header: 'Status',
       render: ev => {
-        const st = WEBHOOK_STATUS_STYLE[ev.status] ?? { bg: '#F0EEE6', color: '#5A5852' };
+        const st = WEBHOOK_STATUS_STYLE[ev.status] ?? { bg: '#EDF2F4', color: '#486071' };
         return <span className="px-[10px] py-[3px] rounded-[5px] text-[11px] font-semibold" style={{ background: st.bg, color: st.color }}>{ev.status}</span>;
       },
     },
@@ -452,31 +453,31 @@ export function AdminSubscriptions() {
 
   return (
     <div>
-      <div className="bg-white border-b border-bone px-4 sm:px-7 py-[14px] sticky top-0 z-10">
-        <h1 className="text-[18px] font-bold text-charcoal leading-[1.3]">Subscriptions</h1>
-        <p className="text-[12px] text-slate mt-[2px]">Platform-wide subscription revenue, store breakdown, and payment failures.</p>
-      </div>
+      <AdminStudioHeader
+        eyebrow="Edudeen team workspace · Commerce"
+        title="Subscriptions"
+        subtitle="Platform-wide subscription revenue, store breakdown, and payment failures."
+      />
 
-      <div className="px-4 sm:px-7 pt-5 pb-8 flex flex-col gap-5">
+      <div className="px-4 sm:px-7 pt-6 pb-8 flex flex-col gap-5">
         {error && <p className="text-[13px] text-error">{error}</p>}
 
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
           {(loading && !overview) ? Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="bg-white border border-bone rounded-[10px] px-5 py-4 h-[84px] animate-pulse" />
+            <div key={i} className="bg-white border border-bone rounded-xl px-5 py-4 h-[84px] animate-pulse" />
           )) : metrics.map(m => (
-            <div key={m.label} className="bg-white border border-bone rounded-[10px] px-5 py-4">
+            <div key={m.label} className="bg-white border border-bone rounded-xl px-5 py-4">
               <p className="text-[11px] font-medium text-slate uppercase tracking-[0.06em] mb-1">{m.label}</p>
               <p className="text-[24px] font-bold text-carbon leading-[1.15]">{m.value}</p>
             </div>
           ))}
         </div>
 
-        <div className="bg-white border border-bone rounded-[10px] overflow-hidden">
+        <div className="bg-white border border-bone rounded-xl overflow-hidden">
           <div className="px-5 py-[14px] border-b border-bone flex items-center gap-[10px] overflow-x-auto scrollbar-hide">
             {(['stores', 'failures', 'webhooks', 'insights'] as Tab[]).map(t => (
-              <button key={t} onClick={() => setTab(t)}
-                className="px-[14px] py-[6px] rounded-lg text-[13px] font-medium cursor-pointer border-none capitalize shrink-0 whitespace-nowrap"
-                style={{ background: tab === t ? '#141413' : 'transparent', color: tab === t ? '#fff' : '#8C8A82' }}>
+              <button key={t} type="button" onClick={() => setTab(t)} aria-pressed={tab === t}
+                className={`px-[14px] py-[6px] rounded-lg text-[13px] font-medium cursor-pointer border-none capitalize shrink-0 whitespace-nowrap transition-colors outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/40 ${tab === t ? 'bg-brand-pale-orange text-brand-orange font-semibold' : 'bg-transparent text-slate hover:text-carbon hover:bg-cream'}`}>
                 {t === 'stores' ? 'Store Breakdown' : t === 'failures' ? 'Payment Failures' : t === 'webhooks' ? 'Stripe Webhooks' : 'Insights'}
               </button>
             ))}

@@ -6,7 +6,8 @@ import {
   apiExportAdminActivityLog, ADMIN_ACTIVITY_CATEGORIES,
   type AdminActivityLogEntry, type AdminActivityCategory,
 } from '@/api/services/activityLog';
-import { Table, Badge, Button, SearchInput, FilterDropdown, AdminPageHeader, type TableColumn } from '@/components/comman/ui';
+import { Table, Badge, Button, SearchInput, FilterDropdown, type TableColumn } from '@/components/comman/ui';
+import { AdminStudioHeader } from '@/features/admin/components/studio';
 import type { BadgeColor } from '@/types';
 import { AnalyticsErrorState } from '@/components/comman/analytics/AnalyticsErrorState';
 import { formatDate } from '@/components/comman/analytics/format';
@@ -121,7 +122,7 @@ export function AdminActivityLog() {
 
   return (
     <>
-      <AdminPageHeader
+      <AdminStudioHeader eyebrow="Edudeen team workspace · System"
         title="Activity Log"
         subtitle="Platform-wide audit trail — every seller store plus platform-level actions, in one place."
         actions={
@@ -134,7 +135,7 @@ export function AdminActivityLog() {
 
       {exportError && <div className="bg-error-bg border border-error-border rounded-lg px-4 py-2.5 text-[12.5px] text-error">{exportError}</div>}
 
-      <div className="bg-white border border-bone rounded-[10px] overflow-hidden">
+      <div className="bg-white border border-bone rounded-xl overflow-hidden">
         <div className="px-5 py-[14px] border-b border-bone flex gap-[10px] items-center flex-wrap">
           <SearchInput value={search} onChange={v => { setSearch(v); setPage(1); }} placeholder="Search action, actor, description…" className="flex-1 max-w-[280px]" />
           <FilterDropdown placeholder="All Categories" options={CATEGORY_OPTIONS} value={category} onChange={v => { setCategory(v); setPage(1); }} />

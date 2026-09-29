@@ -21,9 +21,10 @@ import { SkeletonBox } from '@/components/comman/ui/SkeletonBox';
 import { TabBar } from '@/components/comman/ui/TabBar';
 import { Modal } from '@/components/comman/ui/Modal';
 import { BuyerNavbar, Breadcrumb, AppDownloadBanner, Footer, CoverImage, pushRecentlyViewed } from '@/components/comman/ui';
+import { ProductCoverFallback } from '@/components/comman/marketplace/ProductCoverFallback';
 import {
   ArrowRight, Package, Download, ClipboardList, CheckCircle, Minus, Plus,
-  ShoppingCart, Star, Link2, Share2, ImageOff, Heart, ShieldCheck, Truck,
+  ShoppingCart, Star, Link2, Share2, Heart, ShieldCheck, Truck,
   UserPlus, UserCheck, Tag, ZoomIn, Users, Calendar, Award, Sparkles, Flame,
   FileText, Store as StoreIcon, Eye, Loader2, Zap, MessageCircle,
 } from 'lucide-react';
@@ -81,10 +82,7 @@ function ImageGallery({ images, name }: { images: string[]; name: string }) {
         onMouseMove={onMouseMove}
       >
         {!src || errored[selected] ? (
-          <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-brand-pale-orange to-[#fff5ee]">
-            <ImageOff size={56} className="text-brand-orange opacity-50" />
-            <span className="text-[12px] text-slate">{name}</span>
-          </div>
+          <ProductCoverFallback name={name} size="lg" className="w-full h-full" />
         ) : (
           <>
             <img
@@ -125,7 +123,7 @@ function ImageGallery({ images, name }: { images: string[]; name: string }) {
             >
               {!errored[i] && img
                 ? <img loading="lazy" decoding="async" src={img} alt="" onError={() => setErrored(e => ({ ...e, [i]: true }))} className="w-full h-full object-cover" />
-                : <ImageOff size={16} className="text-brand-orange opacity-50" />}
+                : <ProductCoverFallback name={name} size="xs" className="w-full h-full" />}
             </button>
           ))}
         </div>
@@ -252,7 +250,7 @@ function RelatedCard({ id, name, image, price: nativePrice, compareAtPrice: nati
       <div className="relative h-[110px] bg-brand-pale-orange flex items-center justify-center overflow-hidden">
         {image && !errored
           ? <img loading="lazy" decoding="async" src={image} alt="" onError={() => setErrored(true)} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
-          : <ImageOff size={22} className="text-brand-orange opacity-50" />}
+          : <ProductCoverFallback name={name} size="sm" className="w-full h-full" />}
 
         {/* Badges */}
         <div className="absolute top-[6px] left-[6px] flex flex-col gap-1 items-start">

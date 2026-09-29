@@ -1,7 +1,7 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Package, Download, GraduationCap, Loader2, CalendarClock, Plus, X } from 'lucide-react';
-import { useStoreWorkspace } from '@/components/layouts/StoreLayout';
+import { Download, GraduationCap, Loader2, CalendarClock, Plus, X, Check, Truck, FileDown } from 'lucide-react';
+import { useStoreWorkspace, StorePageHeader } from '@/components/layouts/StoreLayout';
 import { apiCreatePhysicalProduct, apiCreateDigitalProduct, EDUCATION_LEVELS, type EducationLevel, type VariantOption } from '@/api/services/product';
 import { apiSetProductAttributes } from '@/api/services/attributes';
 import { addCachedProduct } from './_cache';
@@ -18,34 +18,65 @@ type ProductType   = 'physical' | 'digital' | 'educational';
 type ProductStatus = 'draft' | 'active' | 'scheduled';
 type LicenseType   = 'personal' | 'single_classroom' | 'school' | 'commercial';
 
-const inp = 'w-full px-3 py-2 text-[13px] border border-bone rounded-lg text-charcoal bg-white placeholder:text-[#b5b3ac] outline-none';
-const ta  = `${inp} resize-y min-h-[100px]`;
+const inp = 'w-full px-3 py-[10px] text-[14px] border border-bone rounded-lg text-carbon bg-white placeholder:text-[#9aa6ad] outline-none focus:border-brand-royal focus:ring-2 focus:ring-brand-royal/15 transition-[border-color,box-shadow]';
+const ta  = `${inp} resize-y min-h-[110px]`;
 
-function L({ children, req }: { children: ReactNode; req?: boolean }) {
+function L({ children, req, htmlFor }: { children: ReactNode; req?: boolean; htmlFor?: string }) {
   return (
-    <label className="text-[12px] font-semibold text-graphite block mb-1.5">
-      {children}{req && <span className="text-red-500 ml-0.5">*</span>}
+    <label htmlFor={htmlFor} className="text-[13px] font-bold text-carbon block mb-1.5">
+      {children}
+      {req
+        ? <span className="text-error ml-0.5" aria-hidden="true">*</span>
+        : <span className="text-[12px] font-normal text-slate ml-1.5">(optional)</span>}
+      {req && <span className="sr-only"> (required)</span>}
     </label>
   );
 }
-function F({ label, req, children }: { label: string; req?: boolean; children: ReactNode }) {
-  return <div><L req={req}>{label}</L>{children}</div>;
-}
-function Card({ title, children }: { title: string; children: ReactNode }) {
+function F({ label, req, hint, htmlFor, children }: { label: string; req?: boolean; hint?: string; htmlFor?: string; children: ReactNode }) {
   return (
-    <div className="bg-white border border-bone rounded-[10px] overflow-hidden">
-      <div className="px-5 py-3.5 border-b border-bone">
-        <p className="text-[13px] font-bold text-charcoal">{title}</p>
-      </div>
-      <div className="px-5 py-4">{children}</div>
+    <div>
+      <L req={req} htmlFor={htmlFor}>{label}</L>
+      {children}
+      {hint && <p className="text-[12px] text-slate mt-1.5 leading-relaxed">{hint}</p>}
     </div>
   );
 }
-function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+type StepNeed = 'required' | 'optional' | 'recommended';
+const NEED_STYLE: Record<StepNeed, string> = {
+  required:    'bg-brand-pale-orange text-brand-orange',
+  recommended: 'bg-[#eaf3e3] text-[#3b6720]',
+  optional:    'bg-mist text-slate',
+};
+/** Numbered studio step: "01" badge, serif heading, required/optional tag and a one-line hint. */
+function Card({ title, step, need, hint, children }: { title: string; step?: number; need?: StepNeed; hint?: string; children: ReactNode }) {
+  return (
+    <section className="bg-white border border-bone rounded-xl px-5 py-5 sm:px-[27px] sm:py-[24px]">
+      <div className="flex items-start gap-3 mb-4">
+        {step != null && (
+          <span className="size-8 rounded-full border border-bone text-[12px] font-bold text-brand-royal flex items-center justify-center shrink-0 mt-[1px]">
+            {String(step).padStart(2, '0')}
+          </span>
+        )}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h2 className="font-serif font-normal text-[19px] sm:text-[21px] text-carbon leading-tight">{title}</h2>
+            {need && (
+              <span className={`text-[11px] font-bold uppercase tracking-[0.08em] px-2 py-[2px] rounded-full ${NEED_STYLE[need]}`}>{need}</span>
+            )}
+          </div>
+          {hint && <p className="text-[13px] text-slate mt-1 leading-relaxed">{hint}</p>}
+        </div>
+      </div>
+      <div>{children}</div>
+    </section>
+  );
+}
+function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
   return (
     <button type="button" onClick={() => onChange(!checked)}
+      role="switch" aria-checked={checked} aria-label={label}
       className="w-10 h-[22px] rounded-[11px] border-none cursor-pointer p-0 relative shrink-0 transition-colors duration-[180ms]"
-      style={{ background: checked ? '#174771' : '#D1D5DB' }}>
+      style={{ background: checked ? '#174771' : '#C5D2DB' }}>
       <span className="absolute top-[3px] w-4 h-4 rounded-full bg-white border border-charcoal/10 transition-[left] duration-[180ms]"
         style={{ left: checked ? 21 : 3 }} />
     </button>
@@ -63,7 +94,7 @@ function TagInput({ tags, input, onInput, onAdd, onRemove }: {
           <button type="button" onClick={() => onRemove(i)} className="bg-transparent border-none cursor-pointer p-0 text-brand-orange/50 text-[14px] leading-none hover:text-brand-orange">×</button>
         </span>
       ))}
-      <input value={input} onChange={e => onInput(e.target.value)}
+      <input value={input} onChange={e => onInput(e.target.value)} aria-label="Add a tag"
         onKeyDown={e => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); onAdd(); } }}
         placeholder={tags.length === 0 ? 'Type a tag and press Enter…' : ''}
         className="border-none outline-none text-[12px] flex-[1_1_80px] min-w-[80px] bg-transparent text-charcoal placeholder:text-[#b5b3ac]"
@@ -112,10 +143,10 @@ function VariantOptionsField({ options, onChange }: { options: VariantOption[]; 
       {options.length < MAX_VARIANT_OPTIONS && (
         <div className="flex flex-col gap-[7px] p-2.5 rounded-lg border border-dashed border-[#d9d6cc] bg-cream/50">
           <div className="grid grid-cols-2 gap-[7px]">
-            <input value={name} onChange={e => setName(e.target.value)} placeholder="Attribute"
+            <input value={name} onChange={e => setName(e.target.value)} placeholder="Attribute (e.g. Size)" aria-label="Variant attribute name"
               onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); add(); } }}
               className={`${inp} px-2.5 py-[7px] text-[12px] bg-white`} />
-            <input value={value} onChange={e => setValue(e.target.value)} placeholder="Value"
+            <input value={value} onChange={e => setValue(e.target.value)} placeholder="Value (e.g. Medium)" aria-label="Variant attribute value"
               onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); add(); } }}
               className={`${inp} px-2.5 py-[7px] text-[12px] bg-white`} />
           </div>
@@ -134,12 +165,13 @@ function VariantOptionsField({ options, onChange }: { options: VariantOption[]; 
 const initPhys = {
   name: '', description: '', price: '', compareAtPrice: '',
   stock: '', options: [] as VariantOption[], shippingWeight: '', subCategoryId: '',
-  status: 'draft' as ProductStatus, isListedOnEdudeen: false,
+  // Sensible default: the primary button publishes; "Save as draft" is always one click away.
+  status: 'active' as ProductStatus, isListedOnEdudeen: false,
   scheduledAt: '', tagInput: '', tags: [] as string[], images: [] as string[],
 };
 const initDig = {
   name: '', description: '', price: '', compareAtPrice: '', subCategoryId: '',
-  status: 'draft' as ProductStatus, isListedOnEdudeen: false,
+  status: 'active' as ProductStatus, isListedOnEdudeen: false,
   scheduledAt: '', tagInput: '', tags: [] as string[], images: [] as string[],
   fileData: null as PrivateUploadData | null,
   downloadLimit: 'unlimited', linkExpiryDays: '',
@@ -173,6 +205,16 @@ export default function StoreAddProduct() {
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [attributeValues,   setAttributeValues]   = useState<AttributeValuesState>({});
 
+  // Once the store loads, never leave the form on a type this store can't sell.
+  useEffect(() => {
+    if (!store) return;
+    const ok = pType === 'physical' ? supportsPhysical : pType === 'digital' ? supportsDigital : supportsEducational;
+    if (ok) return;
+    if (supportsPhysical) setPType('physical');
+    else if (supportsDigital) setPType('digital');
+    else if (supportsEducational) setPType('educational');
+  }, [store, pType, supportsPhysical, supportsDigital, supportsEducational]);
+
   const sp = <K extends keyof PhysForm>(k: K, v: PhysForm[K]) => setPhys(f => ({ ...f, [k]: v }));
   const sd = <K extends keyof DigForm> (k: K, v: DigForm[K])  => setDig(f  => ({ ...f, [k]: v }));
 
@@ -199,9 +241,10 @@ export default function StoreAddProduct() {
     if (pType === 'educational' && dig.educationLevel === 'other' && !dig.customLevel.trim()) { setError('Please describe the custom education level.'); return; }
     const missingAttr = findMissingRequiredAttribute(attrDefs, attributeValues);
     if (missingAttr) { setError(`${missingAttr.label} is required.`); return; }
+    const finalStatus = statusOverride ?? (pType === 'physical' ? phys.status : dig.status);
+    if (finalStatus === 'scheduled' && !cur.scheduledAt) { setError('Pick a date and time for your scheduled listing.'); setShowScheduleModal(true); return; }
     setSaving(true);
     try {
-      const finalStatus = statusOverride ?? (pType === 'physical' ? phys.status : dig.status);
       let productId: string;
       if (pType === 'physical') {
         const res = await apiCreatePhysicalProduct({
@@ -247,71 +290,149 @@ export default function StoreAddProduct() {
     }
   };
 
+  // ── Publishing helpers ────────────────────────────────────────────────────
+  const setStatus = (val: ProductStatus) => {
+    if (pType === 'physical') sp('status', val); else sd('status', val);
+    if (val === 'scheduled') setShowScheduleModal(true);
+  };
+  const primaryLabel = cur.status === 'scheduled' ? 'Schedule listing' : cur.status === 'draft' ? 'Save as draft' : 'Publish now';
+  const isDigitalFamily = pType === 'digital' || pType === 'educational';
+  const digitalAvailable = supportsDigital || supportsEducational;
+
+  // Required-field checklist shown beside the publish button.
+  const checklist: { label: string; done: boolean }[] = [
+    { label: 'Product title', done: !!cur.name.trim() },
+    { label: 'Price', done: cur.price !== '' && Number(cur.price) >= 0 },
+    ...(pType === 'physical' ? [{ label: 'Stock quantity', done: phys.stock !== '' }] : []),
+    ...(pType === 'educational' ? [{ label: 'Education level', done: !!dig.educationLevel && (dig.educationLevel !== 'other' || !!dig.customLevel.trim()) }] : []),
+    ...(cur.status === 'scheduled' ? [{ label: 'Schedule date & time', done: !!cur.scheduledAt }] : []),
+  ];
+  const recommended: { label: string; done: boolean }[] = [
+    { label: 'At least one image', done: cur.images.length > 0 },
+    { label: 'A description', done: !!cur.description.trim() },
+    ...(isDigitalFamily ? [{ label: 'The file buyers receive', done: !!dig.fileData }] : []),
+  ];
+
+  let stepNo = 0;
+  const nextStep = () => ++stepNo;
+
+  const primaryBtn = (full?: boolean) => (
+    <button onClick={() => handleSubmit()} disabled={saving}
+      className={`${full ? 'w-full py-[12px]' : 'px-5 py-[10px]'} flex items-center justify-center gap-1.5 rounded-lg text-[14px] font-bold border-none transition-colors ${saving ? 'bg-bone text-slate cursor-not-allowed' : 'bg-brand-orange text-white hover:bg-brand-deep-orange cursor-pointer'}`}>
+      {saving ? <><Loader2 size={14} className="animate-spin" />Saving…</> : primaryLabel}
+    </button>
+  );
+  const draftBtn = (full?: boolean) => (
+    <button onClick={() => handleSubmit('draft')} disabled={saving}
+      className={`${full ? 'w-full py-[11px]' : 'px-4 py-[10px]'} rounded-lg text-[14px] font-bold text-brand-orange bg-white border border-bone cursor-pointer hover:bg-cream transition-colors disabled:opacity-60 disabled:cursor-not-allowed`}>
+      Save as draft
+    </button>
+  );
+
   return (
-    <div className="bg-cream min-h-screen">
+    <div className="min-h-full">
 
       {/* ── Header ── */}
-      <div className="px-7 py-5 bg-white border-b border-bone flex items-center justify-between">
-        <div>
-          <h1 className="text-[18px] font-bold text-charcoal leading-tight">Add New Product</h1>
-          <p className="text-[12px] text-slate mt-0.5">Fill in product details to create your listing.</p>
+      <StorePageHeader
+        title="Add a new product"
+        subtitle="A few short steps. Fields marked * are required — everything else can be added later."
+        actions={
+          <div className="hidden sm:flex items-center gap-2">
+            {cur.status !== 'draft' && draftBtn()}
+            {primaryBtn()}
+          </div>
+        }
+      />
+
+      {error && (
+        <div className="px-4 md:px-8 pt-5">
+          <p role="alert" className="text-[13px] text-error font-medium bg-error-bg border border-error-border rounded-lg px-4 py-3">{error}</p>
         </div>
-        <div className="flex items-center gap-3">
-          {error && <p className="text-[12px] text-red-500 font-medium">{error}</p>}
-          <button onClick={() => handleSubmit('draft')} disabled={saving}
-            className="px-4 py-[9px] rounded-[9px] text-[13px] font-semibold text-slate bg-white border border-bone cursor-pointer hover:bg-cream transition-colors">
-            Save Draft
-          </button>
-          <button onClick={() => handleSubmit()} disabled={saving}
-            className="flex items-center gap-1.5 border-none rounded-[9px] px-5 py-[9px] text-[13px] font-semibold"
-            style={{ background: saving ? '#E8E6DC' : '#174771', color: saving ? '#8C8A82' : '#fff', cursor: saving ? 'not-allowed' : 'pointer' }}>
-            {saving ? <><Loader2 size={13} className="animate-spin" />Saving…</> : 'Publish Listing'}
-          </button>
-        </div>
-      </div>
+      )}
 
       {/* ── 2-column body ── */}
-      <div className="px-4 sm:px-7 py-6 grid grid-cols-1 lg:grid-cols-[1fr_296px] gap-5 items-start">
+      <div className="px-4 md:px-8 py-6 grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
 
-        {/* Left column */}
-        <div className="flex flex-col gap-5">
+        {/* Left column — the steps */}
+        <div className="flex flex-col gap-5 min-w-0">
 
-          {/* Product Type */}
-          <Card title="Product Type">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {/* Step: What are you selling? */}
+          <Card step={nextStep()} title="What are you selling?" need="required" hint="Pick physical if you ship it, digital if buyers download it. You can't change this after publishing.">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" role="radiogroup" aria-label="Product kind">
               {([
-                { t: 'physical'    as const, Icon: Package,       label: 'Physical Product',    desc: 'Shipped to the customer',      enabled: supportsPhysical    },
-                { t: 'digital'     as const, Icon: Download,      label: 'Digital Download',     desc: 'Instant downloadable file',    enabled: supportsDigital     },
-                { t: 'educational' as const, Icon: GraduationCap, label: 'Educational Resource', desc: 'Worksheets, lessons, curricula', enabled: supportsEducational },
-              ]).map(({ t, Icon: TIcon, label, desc, enabled }) => {
-                const sel = pType === t;
+                { key: 'physical' as const, Icon: Truck,    label: 'Physical product', desc: 'Books, toys, prayer mats, games — anything you pack and ship to the buyer.', enabled: supportsPhysical },
+                { key: 'digital'  as const, Icon: FileDown, label: 'Digital product',  desc: 'Worksheets, e-books, lessons, curricula — delivered instantly as a download.', enabled: digitalAvailable },
+              ]).map(({ key, Icon: KIcon, label, desc, enabled }) => {
+                const sel = key === 'physical' ? pType === 'physical' : isDigitalFamily;
                 return (
-                  <button key={t} type="button"
-                    onClick={() => enabled && setPType(t)} disabled={!enabled}
-                    className="flex flex-col items-center gap-2 py-5 rounded-[10px] text-center transition-all duration-150"
-                    style={{ cursor: enabled ? 'pointer' : 'not-allowed', border: `2px solid ${sel ? '#174771' : '#E8E6DC'}`, background: sel ? '#EAF2F8' : '#FAFAF8', opacity: enabled ? 1 : 0.5 }}>
-                    <div className="w-10 h-10 rounded-[10px] flex items-center justify-center" style={{ background: sel ? '#fff' : '#F0EEE8' }}>
-                      <TIcon size={20} style={{ color: sel ? '#174771' : '#8C8A82' }} />
-                    </div>
-                    <p className="text-[13px] font-semibold" style={{ color: sel ? '#174771' : '#141413' }}>{label}</p>
-                    <p className="text-[11px] text-slate">{enabled ? desc : 'Not available in your plan'}</p>
+                  <button key={key} type="button" role="radio" aria-checked={sel}
+                    disabled={!enabled}
+                    onClick={() => {
+                      if (!enabled) return;
+                      if (key === 'physical') setPType('physical');
+                      else if (!isDigitalFamily) setPType(supportsDigital ? 'digital' : 'educational');
+                    }}
+                    className={`flex items-start gap-4 p-5 rounded-xl text-left border-2 transition-colors ${
+                      !enabled ? 'opacity-50 cursor-not-allowed border-bone bg-cream'
+                      : sel ? 'border-brand-orange bg-brand-pale-orange cursor-pointer'
+                      : 'border-bone bg-white hover:border-border-hover hover:bg-cream cursor-pointer'}`}>
+                    <span className={`size-11 rounded-xl flex items-center justify-center shrink-0 ${sel ? 'bg-white text-brand-orange' : 'bg-cream text-slate'}`}>
+                      <KIcon size={21} />
+                    </span>
+                    <span className="flex-1 min-w-0">
+                      <span className="flex items-center justify-between gap-2">
+                        <span className={`font-serif text-[18px] ${sel ? 'text-brand-orange' : 'text-carbon'}`}>{label}</span>
+                        <span className={`size-5 rounded-full border-2 flex items-center justify-center shrink-0 ${sel ? 'bg-brand-orange border-brand-orange' : 'border-border-hover bg-white'}`}>
+                          {sel && <Check size={11} className="text-white" strokeWidth={3} />}
+                        </span>
+                      </span>
+                      <span className="block text-[13px] text-slate mt-1 leading-relaxed">{enabled ? desc : 'Not available in your plan'}</span>
+                    </span>
                   </button>
                 );
               })}
             </div>
+
+            {isDigitalFamily && (
+              <div className="mt-4">
+                <p className="text-[13px] font-bold text-carbon mb-2">What kind of digital product?</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3" role="radiogroup" aria-label="Digital product kind">
+                  {([
+                    { t: 'digital'     as const, Icon: Download,      label: 'Digital download',     desc: 'Any instant downloadable file', enabled: supportsDigital     },
+                    { t: 'educational' as const, Icon: GraduationCap, label: 'Educational resource', desc: 'Worksheets, lessons, curricula — with an education level', enabled: supportsEducational },
+                  ]).map(({ t, Icon: TIcon, label, desc, enabled }) => {
+                    const sel = pType === t;
+                    return (
+                      <button key={t} type="button" role="radio" aria-checked={sel}
+                        onClick={() => enabled && setPType(t)} disabled={!enabled}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-lg text-left border transition-colors ${
+                          !enabled ? 'opacity-50 cursor-not-allowed border-bone'
+                          : sel ? 'border-brand-orange bg-brand-pale-orange cursor-pointer'
+                          : 'border-bone bg-white hover:bg-cream cursor-pointer'}`}>
+                        <TIcon size={18} className={sel ? 'text-brand-orange' : 'text-slate'} />
+                        <span className="min-w-0">
+                          <span className={`block text-[13.5px] font-bold ${sel ? 'text-brand-orange' : 'text-carbon'}`}>{label}</span>
+                          <span className="block text-[12px] text-slate">{enabled ? desc : 'Not available in your plan'}</span>
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </Card>
 
-          {/* Basic Information */}
-          <Card title="Basic Information">
+          {/* Step: Basics */}
+          <Card step={nextStep()} title="The basics" need="required" hint="A clear title and an honest description help buyers decide quickly.">
             <div className="flex flex-col gap-4">
-              <F label="Product Title" req>
-                <input value={cur.name}
+              <F label="Product title" req htmlFor="ap-name" hint="Say what it is and who it's for — e.g. age or level.">
+                <input id="ap-name" value={cur.name}
                   onChange={e => pType === 'physical' ? sp('name', e.target.value) : sd('name', e.target.value)}
-                  placeholder={pType === 'physical' ? 'e.g. Premium Cotton T-Shirt' : 'e.g. Complete Web Design Course'}
+                  placeholder={pType === 'physical' ? 'e.g. Wooden Arabic Alphabet Puzzle (ages 3–6)' : 'e.g. My Purposeful Learning Week — printable planner'}
                   className={inp} />
               </F>
-              <F label="Description">
-                <textarea value={cur.description}
+              <F label="Description" htmlFor="ap-desc" hint="What's included, the learning goal, and how it's used at home or in class.">
+                <textarea id="ap-desc" value={cur.description}
                   onChange={e => pType === 'physical' ? sp('description', e.target.value) : sd('description', e.target.value)}
                   placeholder="Describe your product — what it includes, who it's for, and what makes it special…"
                   className={ta} />
@@ -319,8 +440,139 @@ export default function StoreAddProduct() {
             </div>
           </Card>
 
+          {/* Step: Pricing */}
+          <Card step={nextStep()} title="Price" need="required" hint={`Prices are in your store's currency (${currencySymbol}). Enter 0 for a free resource.`}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <F label={`Price (${currencySymbol})`} req htmlFor="ap-price">
+                <input id="ap-price" type="number" min="0" inputMode="decimal" value={cur.price}
+                  onChange={e => pType === 'physical' ? sp('price', e.target.value) : sd('price', e.target.value)}
+                  placeholder="0.00" className={inp} />
+              </F>
+              <F label={`Compare-at price (${currencySymbol})`} htmlFor="ap-compare" hint="Original price, shown struck through when you offer a discount.">
+                <input id="ap-compare" type="number" min="0" inputMode="decimal" value={cur.compareAtPrice}
+                  onChange={e => pType === 'physical' ? sp('compareAtPrice', e.target.value) : sd('compareAtPrice', e.target.value)}
+                  placeholder="0.00" className={inp} />
+              </F>
+            </div>
+            {discountPct !== null && (
+              <div className="flex items-center gap-1.5 px-3 py-2 mt-3 bg-success-bg border border-success/20 rounded-lg w-fit">
+                <span className="text-[12.5px] font-bold text-success">{discountPct}% OFF</span>
+                <span className="text-[12px] text-success">shown to buyers</span>
+              </div>
+            )}
+          </Card>
+
+          {/* Step: Images */}
+          <Card step={nextStep()} title="Photos" need="recommended" hint="Up to 5 images. The first image is the cover buyers see in search and on your shelf.">
+            <ImageUpload
+              value={cur.images}
+              onChange={urls => pType === 'physical' ? sp('images', urls) : sd('images', urls)}
+              maxFiles={5}
+            />
+          </Card>
+
+          {/* Physical: Inventory & Shipping */}
+          {pType === 'physical' && (
+            <Card step={nextStep()} title="Stock & shipping" need="required" hint="How many you have, and any options buyers can choose between.">
+              <div className="flex flex-col gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <F label="Stock quantity" req htmlFor="ap-stock">
+                    <input id="ap-stock" type="number" min="0" inputMode="numeric" value={phys.stock} onChange={e => sp('stock', e.target.value)} placeholder="0" className={inp} />
+                  </F>
+                  <F label="Shipping weight" htmlFor="ap-weight" hint="Used to estimate delivery cost.">
+                    <input id="ap-weight" value={phys.shippingWeight} onChange={e => sp('shippingWeight', e.target.value)} placeholder="e.g. 0.5 kg" className={inp} />
+                  </F>
+                </div>
+                <F label="Variant attributes">
+                  <VariantOptionsField options={phys.options} onChange={v => sp('options', v)} />
+                </F>
+              </div>
+            </Card>
+          )}
+
+          {/* Digital/Educational: File Upload */}
+          {isDigitalFamily && (
+            <Card step={nextStep()} title={pType === 'educational' ? 'Resource file' : 'Digital file'} need="recommended" hint="The file buyers receive instantly after purchase. You can also add it later, before publishing.">
+              <FileUpload value={dig.fileData} onChange={v => sd('fileData', v)} label="Click to upload your digital file" />
+            </Card>
+          )}
+
+          {/* Educational: Education Level (controlled Tier-1 + optional Tier-2 custom label) */}
+          {pType === 'educational' && (
+            <Card step={nextStep()} title="Education level" need="required" hint="Helps parents and teachers find resources for the right stage.">
+              <div className="flex flex-col gap-4">
+                <div role="radiogroup" aria-label="Education level" className="flex gap-2 flex-wrap">
+                  {EDUCATION_LEVELS.map(l => {
+                    const sel = dig.educationLevel === l.value;
+                    return (
+                      <button key={l.value} type="button" role="radio" aria-checked={sel} onClick={() => sd('educationLevel', l.value)}
+                        className={`px-[14px] py-[8px] rounded-full cursor-pointer text-[13px] font-medium border transition-colors ${sel ? 'border-brand-orange bg-brand-pale-orange text-brand-orange font-bold' : 'border-bone bg-white text-graphite hover:bg-cream'}`}>
+                        {l.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                {dig.educationLevel === 'other' && (
+                  <F label="Custom education level" req>
+                    <CustomLevelInput value={dig.customLevel} onChange={v => sd('customLevel', v)} />
+                  </F>
+                )}
+              </div>
+            </Card>
+          )}
+
+          {/* Digital/Educational: Delivery Settings */}
+          {isDigitalFamily && (
+            <Card step={nextStep()} title="Delivery & licence" need="optional" hint="Sensible defaults are already set — unlimited downloads, no expiry, personal licence.">
+              <div className="flex flex-col gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <F label="Download limit" htmlFor="ap-dl" hint={'Type a number, or leave "unlimited".'}>
+                    <input id="ap-dl" value={dig.downloadLimit} onChange={e => sd('downloadLimit', e.target.value)} placeholder="unlimited" className={inp} />
+                  </F>
+                  <F label="Link expiry (days)" htmlFor="ap-exp" hint="Leave empty for links that never expire.">
+                    <input id="ap-exp" type="number" min="0" value={dig.linkExpiryDays} onChange={e => sd('linkExpiryDays', e.target.value)} placeholder="No expiry" className={inp} />
+                  </F>
+                </div>
+                <F label="Licence type">
+                  <div role="radiogroup" aria-label="Licence type" className="flex gap-2 mt-0.5 flex-wrap">
+                    {(pType === 'educational'
+                      ? (['personal', 'single_classroom', 'school', 'commercial'] as const)
+                      : (['personal', 'commercial'] as const)
+                    ).map(l => {
+                      const sel = dig.licenseType === l;
+                      return (
+                        <button key={l} type="button" role="radio" aria-checked={sel} onClick={() => sd('licenseType', l)}
+                          className={`flex-1 min-w-[120px] py-[9px] rounded-lg cursor-pointer text-[13px] capitalize border transition-colors ${sel ? 'border-brand-orange bg-brand-pale-orange text-brand-orange font-bold' : 'border-bone bg-white text-graphite font-medium hover:bg-cream'}`}>
+                          {l.replace('_', ' ')}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </F>
+                <F label="Buyer delivery message" htmlFor="ap-msg" hint="Shown to the buyer with their download.">
+                  <textarea id="ap-msg" value={dig.buyerDeliveryMessage} onChange={e => sd('buyerDeliveryMessage', e.target.value)}
+                    placeholder="Thank you for your purchase! Here is your download link…" className={ta} />
+                </F>
+                <div className="flex items-center justify-between gap-4 py-0.5">
+                  <div>
+                    <p className="text-[13.5px] font-bold text-carbon">PDF stamping</p>
+                    <p className="text-[12px] text-slate mt-0.5">Watermark PDFs with the buyer's name</p>
+                  </div>
+                  <Toggle label="PDF stamping" checked={dig.pdfStampingEnabled} onChange={v => sd('pdfStampingEnabled', v)} />
+                </div>
+                <div className="flex items-center justify-between gap-4 py-0.5">
+                  <div>
+                    <p className="text-[13.5px] font-bold text-carbon">Buyer preview</p>
+                    <p className="text-[12px] text-slate mt-0.5">Let buyers see a watermarked/trimmed preview before purchase</p>
+                  </div>
+                  <Toggle label="Buyer preview" checked={dig.previewEnabled} onChange={v => sd('previewEnabled', v)} />
+                </div>
+              </div>
+            </Card>
+          )}
+
           {/* Category */}
-          <Card title="Category">
+          <Card step={nextStep()} title="Category" need="optional" hint={`Your product is listed under ${mainCategory?.name ?? 'your store category'}. Pick a subcategory to help buyers browse.`}>
             <SubcategoryField
               mainCategoryName={mainCategory?.name ?? ''}
               mainCategoryId={store?.categoryId ?? ''}
@@ -335,7 +587,7 @@ export default function StoreAddProduct() {
 
           {/* Category-specific classification (subject, format, etc) */}
           {(attrLoading || attrDefs.length > 0) && (
-            <Card title="Additional Details">
+            <Card step={nextStep()} title="Additional details" hint="Details for this category, such as subject or format. Fields marked * are required.">
               <DynamicAttributeFields
                 definitions={attrDefs}
                 loading={attrLoading}
@@ -345,105 +597,8 @@ export default function StoreAddProduct() {
             </Card>
           )}
 
-          {/* Product Images */}
-          <Card title="Product Images">
-            <p className="text-[12px] text-slate mb-3">Upload up to 5 images. First image is the cover shown to buyers.</p>
-            <ImageUpload
-              value={cur.images}
-              onChange={urls => pType === 'physical' ? sp('images', urls) : sd('images', urls)}
-              maxFiles={5}
-            />
-          </Card>
-
-          {/* Digital/Educational: File Upload */}
-          {(pType === 'digital' || pType === 'educational') && (
-            <Card title={pType === 'educational' ? 'Resource File' : 'Digital File'}>
-              <p className="text-[12px] text-slate mb-3">Upload the file buyers will receive instantly after purchase.</p>
-              <FileUpload value={dig.fileData} onChange={v => sd('fileData', v)} label="Click to upload your digital file" />
-            </Card>
-          )}
-
-          {/* Educational: Education Level (controlled Tier-1 + optional Tier-2 custom label) */}
-          {pType === 'educational' && (
-            <Card title="Education Level">
-              <div className="flex flex-col gap-4">
-                <F label="Education Level" req>
-                  <div className="flex gap-2 flex-wrap">
-                    {EDUCATION_LEVELS.map(l => {
-                      const sel = dig.educationLevel === l.value;
-                      return (
-                        <button key={l.value} type="button" onClick={() => sd('educationLevel', l.value)}
-                          className="px-3 py-[7px] rounded-full cursor-pointer text-[12px] font-medium transition-all duration-150"
-                          style={{ border: `1.5px solid ${sel ? '#174771' : '#E8E6DC'}`, background: sel ? '#EAF2F8' : '#fff', color: sel ? '#174771' : '#8C8A82' }}>
-                          {l.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </F>
-                {dig.educationLevel === 'other' && (
-                  <F label="Custom Education Level" req>
-                    <CustomLevelInput value={dig.customLevel} onChange={v => sd('customLevel', v)} />
-                  </F>
-                )}
-              </div>
-            </Card>
-          )}
-
-          {/* Digital/Educational: Delivery Settings */}
-          {(pType === 'digital' || pType === 'educational') && (
-            <Card title="Delivery Settings">
-              <div className="flex flex-col gap-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <F label="Download Limit">
-                    <input value={dig.downloadLimit} onChange={e => sd('downloadLimit', e.target.value)} placeholder="unlimited" className={inp} />
-                  </F>
-                  <F label="Link Expiry (days)">
-                    <input type="number" min="0" value={dig.linkExpiryDays} onChange={e => sd('linkExpiryDays', e.target.value)} placeholder="No expiry" className={inp} />
-                  </F>
-                </div>
-                <F label="License Type">
-                  <div className="flex gap-2 mt-0.5 flex-wrap">
-                    {(pType === 'educational'
-                      ? (['personal', 'single_classroom', 'school', 'commercial'] as const)
-                      : (['personal', 'commercial'] as const)
-                    ).map(l => {
-                      const sel = dig.licenseType === l;
-                      return (
-                        <button key={l} type="button" onClick={() => sd('licenseType', l)}
-                          className="flex-1 py-2 rounded-lg cursor-pointer text-[12px] font-semibold capitalize transition-all duration-150"
-                          style={{ border: `1.5px solid ${sel ? '#174771' : '#E8E6DC'}`, background: sel ? '#EAF2F8' : '#fff', color: sel ? '#174771' : '#8C8A82' }}>
-                          {l.replace('_', ' ')}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </F>
-                <F label="Buyer Delivery Message">
-                  <textarea value={dig.buyerDeliveryMessage} onChange={e => sd('buyerDeliveryMessage', e.target.value)}
-                    placeholder="Thank you for your purchase! Here is your download link…" className={ta} />
-                </F>
-                <div className="flex items-center justify-between py-0.5">
-                  <div>
-                    <p className="text-[13px] font-semibold text-charcoal">PDF Stamping</p>
-                    <p className="text-[11px] text-slate mt-0.5">Watermark PDFs with the buyer's name</p>
-                  </div>
-                  <Toggle checked={dig.pdfStampingEnabled} onChange={v => sd('pdfStampingEnabled', v)} />
-                </div>
-                <div className="flex items-center justify-between py-0.5">
-                  <div>
-                    <p className="text-[13px] font-semibold text-charcoal">Buyer Preview</p>
-                    <p className="text-[11px] text-slate mt-0.5">Let buyers see a watermarked/trimmed preview before purchase</p>
-                  </div>
-                  <Toggle checked={dig.previewEnabled} onChange={v => sd('previewEnabled', v)} />
-                </div>
-              </div>
-            </Card>
-          )}
-
           {/* Tags */}
-          <Card title="Tags & SEO">
-            <p className="text-[12px] text-slate mb-3">Help buyers discover your product through search and filters.</p>
+          <Card step={nextStep()} title="Tags & search" need="optional" hint="Words buyers might search for — e.g. seerah, ramadan, phonics.">
             <TagInput
               tags={cur.tags} input={cur.tagInput}
               onInput={v => pType === 'physical' ? sp('tagInput', v) : sd('tagInput', v)}
@@ -452,117 +607,103 @@ export default function StoreAddProduct() {
                 ? sp('tags', phys.tags.filter((_, idx) => idx !== i))
                 : sd('tags', dig.tags.filter((_, idx) => idx !== i))}
             />
-            <p className="text-[11px] text-slate mt-2">Press Enter or comma to add a tag</p>
+            <p className="text-[12px] text-slate mt-2">Press Enter or comma to add a tag</p>
           </Card>
         </div>
 
-        {/* ── Right sidebar ── */}
-        <div className="flex flex-col gap-4">
+        {/* ── Right sidebar — publishing ── */}
+        <aside className="flex flex-col gap-4 lg:sticky lg:top-[96px]" aria-label="Publishing">
 
-          {/* Pricing */}
-          <Card title="Pricing">
-            <div className="flex flex-col gap-3">
-              <F label={`Price (${currencySymbol})`} req>
-                <input type="number" min="0" value={cur.price}
-                  onChange={e => pType === 'physical' ? sp('price', e.target.value) : sd('price', e.target.value)}
-                  placeholder="0.00" className={inp} />
-              </F>
-              <F label={`Compare-at Price (${currencySymbol})`}>
-                <input type="number" min="0" value={cur.compareAtPrice}
-                  onChange={e => pType === 'physical' ? sp('compareAtPrice', e.target.value) : sd('compareAtPrice', e.target.value)}
-                  placeholder="0.00" className={inp} />
-              </F>
-              {discountPct !== null && (
-                <div className="flex items-center gap-1.5 px-3 py-2 bg-[#e3f4ea] border border-[#b7e2c7] rounded-[7px]">
-                  <span className="text-[12px] font-bold text-[#1e7a3c]">{discountPct}% OFF</span>
-                  <span className="text-[11px] text-success">shown to buyers</span>
-                </div>
-              )}
+          <section className="bg-white border border-bone rounded-xl px-5 py-5">
+            <h2 className="font-serif font-normal text-[20px] text-carbon mb-1">Publish</h2>
+            <p className="text-[12.5px] text-slate mb-4">Choose when this product goes live.</p>
+
+            <div role="radiogroup" aria-label="Listing status" className="flex flex-col gap-1.5">
+              {([
+                { val: 'active'    as const, label: 'Publish now',        desc: 'Live in your store straight away', dotCls: 'bg-success' },
+                { val: 'scheduled' as const, label: 'Schedule for later', desc: 'Goes live on a date you choose',   dotCls: 'bg-brand-royal' },
+                { val: 'draft'     as const, label: 'Keep as draft',      desc: 'Only you can see it',              dotCls: 'bg-slate' },
+              ]).map(({ val, label, desc, dotCls }) => {
+                const sel = cur.status === val;
+                return (
+                  <button key={val} type="button" role="radio" aria-checked={sel}
+                    onClick={() => setStatus(val)}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border cursor-pointer text-left transition-colors w-full ${sel ? 'bg-brand-pale-orange border-brand-orange' : 'bg-white border-bone hover:bg-cream'}`}>
+                    <span className={`w-[8px] h-[8px] rounded-full shrink-0 ${dotCls}`} />
+                    <span className="flex-1 min-w-0">
+                      <span className={`block text-[13px] font-bold ${sel ? 'text-brand-orange' : 'text-carbon'}`}>{label}</span>
+                      <span className="block text-[11.5px] text-slate">{desc}</span>
+                    </span>
+                    <span className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${sel ? 'bg-brand-orange border-brand-orange' : 'border-border-hover bg-white'}`}>
+                      {sel && <Check size={9} className="text-white" strokeWidth={3.5} />}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
-          </Card>
 
-          {/* Inventory & Shipping (physical only) */}
-          {pType === 'physical' && (
-            <Card title="Inventory & Shipping">
-              <div className="flex flex-col gap-3">
-                <F label="Stock Quantity" req>
-                  <input type="number" min="0" value={phys.stock} onChange={e => sp('stock', e.target.value)} placeholder="0" className={inp} />
-                </F>
-                <F label="Variant Attributes">
-                  <VariantOptionsField options={phys.options} onChange={v => sp('options', v)} />
-                </F>
-                <F label="Shipping Weight">
-                  <input value={phys.shippingWeight} onChange={e => sp('shippingWeight', e.target.value)} placeholder="e.g. 0.5 kg" className={inp} />
-                </F>
-              </div>
-            </Card>
-          )}
+            {cur.status === 'scheduled' && (
+              <button type="button" onClick={() => setShowScheduleModal(true)}
+                className="mt-2 flex items-center gap-2 px-3 py-2 rounded-lg border border-bone bg-cream text-[12.5px] text-carbon cursor-pointer hover:border-brand-orange/40 transition-colors w-full text-left">
+                <CalendarClock size={14} className="text-brand-orange shrink-0" />
+                <span className="truncate">
+                  {cur.scheduledAt
+                    ? new Date(cur.scheduledAt).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })
+                    : 'Set schedule date & time'}
+                </span>
+              </button>
+            )}
 
-          {/* Listing Status */}
-          <Card title="Listing Status">
-            <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-between gap-3 mt-4 pt-4 border-t border-bone">
               <div>
-                <L>Status</L>
-                <div className="flex flex-col gap-1.5">
-                  {([
-                    { val: 'draft'     as const, label: 'Draft',     dotCls: 'bg-[#b5b3ac]',    selCls: 'bg-[#f5f4ef] border-[#b5b3ac]',    chkCls: 'bg-[#b5b3ac]'    },
-                    { val: 'active'    as const, label: 'Active',    dotCls: 'bg-[#22c55e]',    selCls: 'bg-[#edfbf3] border-[#22c55e]',    chkCls: 'bg-[#22c55e]'    },
-                    { val: 'scheduled' as const, label: 'Scheduled', dotCls: 'bg-brand-orange',  selCls: 'bg-brand-pale-orange border-brand-orange', chkCls: 'bg-brand-orange' },
-                  ]).map(({ val, label, dotCls, selCls, chkCls }) => {
-                    const sel = cur.status === val;
-                    return (
-                      <button key={val} type="button"
-                        onClick={() => {
-                          if (pType === 'physical') sp('status', val); else sd('status', val);
-                          if (val === 'scheduled') setShowScheduleModal(true);
-                        }}
-                        className={`flex items-center gap-3 px-3 py-2.5 rounded-[9px] border-[1.5px] cursor-pointer text-left transition-all duration-150 w-full ${sel ? selCls : 'bg-cream border-bone hover:border-[#c5c3bb]'}`}>
-                        <span className={`w-[7px] h-[7px] rounded-full shrink-0 ${dotCls}`} />
-                        <span className={`flex-1 text-[12px] font-semibold ${sel ? 'text-charcoal' : 'text-slate'}`}>{label}</span>
-                        <span className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${sel ? `${chkCls} border-transparent` : 'border-[#d1d5db] bg-white'}`}>
-                          {sel && <svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3L3 5L7 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
+                <p className="text-[13px] font-bold text-carbon">Also list on Edudeen Marketplace</p>
+                <p className="text-[11.5px] text-slate">Reach buyers beyond your own store</p>
               </div>
-              {cur.status === 'scheduled' && (
-                <button type="button" onClick={() => setShowScheduleModal(true)}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg border border-bone bg-cream text-[12px] text-charcoal cursor-pointer hover:border-brand-orange/40 transition-colors w-full text-left">
-                  <CalendarClock size={13} className="text-brand-orange shrink-0" />
-                  <span className="truncate">
-                    {cur.scheduledAt
-                      ? new Date(cur.scheduledAt).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })
-                      : 'Set schedule date & time'}
-                  </span>
-                </button>
-              )}
-              <div className="flex items-center justify-between">
-                <span className="text-[12px] text-charcoal">Also list in Edudeen Marketplace</span>
-                <Toggle
-                  checked={cur.isListedOnEdudeen}
-                  onChange={v => pType === 'physical' ? sp('isListedOnEdudeen', v) : sd('isListedOnEdudeen', v)}
-                />
-              </div>
+              <Toggle
+                label="Also list on Edudeen Marketplace"
+                checked={cur.isListedOnEdudeen}
+                onChange={v => pType === 'physical' ? sp('isListedOnEdudeen', v) : sd('isListedOnEdudeen', v)}
+              />
             </div>
-          </Card>
 
-          {/* Action buttons */}
-          <div className="flex flex-col gap-2">
-            <button onClick={() => handleSubmit()} disabled={saving}
-              className="w-full py-[11px] rounded-[10px] text-[13px] font-bold border-none transition-all duration-150"
-              style={{ background: saving ? '#E8E6DC' : '#174771', color: saving ? '#8C8A82' : '#fff', cursor: saving ? 'not-allowed' : 'pointer' }}>
-              {saving ? 'Saving…' : 'Publish Listing'}
-            </button>
-            <button onClick={() => handleSubmit('draft')} disabled={saving}
-              className="w-full py-[9px] rounded-[10px] text-[13px] font-semibold text-slate border-none bg-transparent cursor-pointer hover:text-charcoal transition-colors">
-              Save as Draft
-            </button>
-          </div>
+            <div className="flex flex-col gap-2 mt-5">
+              {primaryBtn(true)}
+              {cur.status !== 'draft' && draftBtn(true)}
+            </div>
+            {error && <p role="alert" className="text-[12.5px] text-error font-medium text-center mt-3">{error}</p>}
+          </section>
 
-          {error && <p className="text-[12px] text-red-500 font-medium text-center">{error}</p>}
-        </div>
+          {/* Readiness checklist */}
+          <section className="bg-white border border-bone rounded-xl px-5 py-5">
+            <p className="text-[11px] font-bold text-brand-royal uppercase tracking-[0.15em] mb-3">Ready to share?</p>
+            <ul className="flex flex-col gap-2 list-none p-0 m-0">
+              {checklist.map(item => (
+                <li key={item.label} className="flex items-center gap-2 text-[13px]">
+                  <span className={`size-[18px] rounded-full flex items-center justify-center shrink-0 ${item.done ? 'bg-success text-white' : 'border-2 border-border-hover'}`}>
+                    {item.done && <Check size={10} strokeWidth={3.5} />}
+                  </span>
+                  <span className={item.done ? 'text-carbon' : 'text-graphite'}>{item.label}</span>
+                  <span className="text-[11px] text-slate ml-auto">Required</span>
+                </li>
+              ))}
+              {recommended.map(item => (
+                <li key={item.label} className="flex items-center gap-2 text-[13px]">
+                  <span className={`size-[18px] rounded-full flex items-center justify-center shrink-0 ${item.done ? 'bg-success text-white' : 'border-2 border-border-hover'}`}>
+                    {item.done && <Check size={10} strokeWidth={3.5} />}
+                  </span>
+                  <span className={item.done ? 'text-carbon' : 'text-graphite'}>{item.label}</span>
+                  <span className="text-[11px] text-slate ml-auto">Recommended</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        </aside>
+      </div>
+
+      {/* Mobile action bar — keeps Publish / Draft in reach above the bottom nav */}
+      <div className="sm:hidden sticky bottom-[56px] z-10 bg-white/95 backdrop-blur-md border-t border-bone px-4 py-3 flex gap-2">
+        {cur.status !== 'draft' && <div className="flex-1">{draftBtn(true)}</div>}
+        <div className="flex-1">{primaryBtn(true)}</div>
       </div>
 
       {showScheduleModal && (

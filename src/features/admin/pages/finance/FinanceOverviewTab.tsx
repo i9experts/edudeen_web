@@ -60,7 +60,7 @@ export function FinanceOverviewTab({ params }: { params: AdminFinanceParams }) {
       {d && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {PAYOUT_STATUSES.map((status) => (
-            <div key={status} className="bg-white border border-bone rounded-[10px] px-4 py-3">
+            <div key={status} className="bg-white border border-bone rounded-xl px-4 py-3">
               <p className="text-[11px] font-medium text-slate uppercase tracking-[0.06em] mb-1">{status} payouts</p>
               <p className="text-[20px] font-bold text-charcoal">{d.payoutQueue[status].count}</p>
               {/* Never a blended sum — one line per currency actually present */}
@@ -98,7 +98,7 @@ export function FinanceOverviewTab({ params }: { params: AdminFinanceParams }) {
               };
             })}
             lines={[
-              { dataKey: 'gross', label: 'Gross Revenue', color: '#8C8A82' },
+              { dataKey: 'gross', label: 'Gross Revenue', color: '#64727B' },
               { dataKey: 'net', label: 'Net Revenue', color: '#174771' },
             ]}
             valuePrefix={currencySymbol(currency)}

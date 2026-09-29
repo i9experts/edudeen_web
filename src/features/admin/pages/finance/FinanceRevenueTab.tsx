@@ -38,7 +38,7 @@ export function FinanceRevenueTab({ params }: { params: AdminFinanceParams }) {
               };
             })}
             lines={[
-              { dataKey: 'gross', label: 'Gross Revenue', color: '#8C8A82' },
+              { dataKey: 'gross', label: 'Gross Revenue', color: '#64727B' },
               { dataKey: 'net', label: 'Net Revenue', color: '#174771' },
             ]}
             valuePrefix={currencySymbol(currency)}

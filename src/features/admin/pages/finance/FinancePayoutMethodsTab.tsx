@@ -83,9 +83,9 @@ export function FinancePayoutMethodsTab() {
       )}
       {(scheduled.error || verifyError) && <p className="text-[12px] text-error">{scheduled.error || verifyError}</p>}
 
-      <div className="bg-white border border-bone rounded-[10px] overflow-hidden">
+      <div className="bg-white border border-bone rounded-xl overflow-hidden">
         <div className="px-5 py-[14px] border-b border-bone">
-          <p className="text-[14px] font-bold text-charcoal">Pending Verification</p>
+          <p className="font-serif font-normal text-[19px] sm:text-[21px] text-carbon leading-[1.25]">Pending Verification</p>
         </div>
         {error ? (
           <p className="px-4 py-6 text-center text-[13px] text-error">{error}</p>

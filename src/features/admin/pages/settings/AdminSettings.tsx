@@ -8,7 +8,7 @@ import { useEditProfile } from '@/hooks/auth/useEditProfile';
 import { useChangePassword } from '@/hooks/auth/useChangePassword';
 import { useUpload } from '@/hooks/upload/useUpload';
 import { NotificationsPanel } from '@/components/comman/ui';
-import { AdminPageHeader } from '@/components/comman/ui/AdminPageHeader';
+import { AdminStudioHeader } from '@/features/admin/components/studio';
 import { AdminNavMenu } from '@/components/layouts/AdminLayout';
 import { apiAdminAnalyticsOverview, type AdminOverviewData } from '@/api/services/analytics/adminAnalytics';
 import { formatCurrency, formatNumber } from '@/components/comman/analytics/format';
@@ -44,7 +44,7 @@ function MobileAdminHero({
 }) {
   return (
     <div className="lg:hidden -mx-4 -mt-5">
-      <div className="relative overflow-hidden bg-gradient-to-br from-carbon via-[#241f1b] to-brand-deep-orange px-6 pt-8 pb-12 flex flex-col items-center text-center">
+      <div className="relative overflow-hidden bg-gradient-to-br from-carbon via-brand-deep-orange to-brand-orange px-6 pt-8 pb-12 flex flex-col items-center text-center">
         <div
           className="pointer-events-none absolute inset-0 opacity-[0.08]"
           style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '22px 22px' }}
@@ -106,7 +106,7 @@ function MobileAdminMenu({ active, onSelect }: { active: Section; onSelect: (id:
           <div className="px-5 pt-4 pb-2">
             <p className="text-[10.5px] font-bold uppercase tracking-[0.06em] text-slate">{group.group}</p>
           </div>
-          <div className="divide-y divide-[#f5f4ef]">
+          <div className="divide-y divide-bone">
             {group.items.map(item => {
               const isActive = active === item.id;
               return (
@@ -141,7 +141,7 @@ function ProfileSkeleton() {
           <div className="animate-pulse w-20 h-[11px] rounded bg-bone" />
         </div>
       </div>
-      <div className="h-px bg-[#f0eee6] mb-5" />
+      <div className="h-px bg-mist mb-5" />
       {[1, 2, 3, 4].map(i => (
         <div key={i} className="mb-4">
           <div className="animate-pulse w-20 h-[11px] rounded bg-bone mb-[6px]" />
@@ -215,7 +215,7 @@ export function AdminSettings() {
 
   return (
     <>
-      <AdminPageHeader title="Settings" subtitle="Manage your admin account and preferences." />
+      <AdminStudioHeader eyebrow="Edudeen team workspace · Account" title="Settings" subtitle="Manage your admin account and preferences." />
 
       <div className="px-4 sm:px-7 pt-5 pb-8">
 
@@ -263,7 +263,7 @@ export function AdminSettings() {
 
             {/* Profile */}
             {active === 'profile' && (
-              <div className="bg-white border border-bone rounded-[10px] px-4 sm:px-[26px] py-6">
+              <div className="bg-white border border-bone rounded-xl px-4 sm:px-[26px] py-6">
                 <p className="text-[16px] font-bold text-charcoal mb-[22px]">Profile</p>
 
                 {profileLoading ? <ProfileSkeleton /> : (
@@ -293,7 +293,7 @@ export function AdminSettings() {
                       </div>
                     </div>
 
-                    <div className="h-px bg-[#f0eee6] mb-5" />
+                    <div className="h-px bg-mist mb-5" />
 
                     {/* Name */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-[14px] mb-4">
@@ -348,7 +348,7 @@ export function AdminSettings() {
                         <label className="text-[12px] font-medium text-graphite mb-[5px] block">Account Status</label>
                         <input readOnly value={profile?.status ?? ''}
                           className="w-full px-3 py-[9px] text-[13px] border border-bone rounded-lg outline-none bg-cream box-border capitalize"
-                          style={{ color: profile?.status === 'active' ? '#1E7A3C' : '#8C8A82' }} />
+                          style={{ color: profile?.status === 'active' ? '#1E7A3C' : '#64727B' }} />
                       </div>
                     </div>
 
@@ -371,7 +371,7 @@ export function AdminSettings() {
 
             {/* Email & Password section */}
             {active === 'security' && (
-              <div className="bg-white border border-bone rounded-[10px] px-4 sm:px-[26px] py-6">
+              <div className="bg-white border border-bone rounded-xl px-4 sm:px-[26px] py-6">
                 <p className="text-[16px] font-bold text-charcoal mb-[22px]">Email &amp; Password</p>
 
                 <div className="mb-5">
@@ -380,7 +380,7 @@ export function AdminSettings() {
                     className="w-full px-3 py-[9px] text-[13px] border border-bone rounded-lg outline-none text-slate bg-cream box-border" />
                 </div>
 
-                <div className="h-px bg-[#f0eee6] mb-5" />
+                <div className="h-px bg-mist mb-5" />
 
                 <p className="text-[13px] font-semibold text-charcoal mb-4">Change Password</p>
 
@@ -433,7 +433,7 @@ export function AdminSettings() {
 
             {/* Other sections */}
             {active !== 'profile' && active !== 'security' && active !== 'notifications' && (
-              <div className="bg-white border border-bone rounded-[10px] px-4 sm:px-[26px] py-6">
+              <div className="bg-white border border-bone rounded-xl px-4 sm:px-[26px] py-6">
                 <div className="flex flex-col items-center justify-center py-[60px] text-center">
                   <div className="text-slate mb-[14px]">
                     {activeItem ? <activeItem.Icon size={40} /> : <Settings size={40} />}
@@ -451,10 +451,10 @@ export function AdminSettings() {
 
           {/* ── RIGHT: Nav sidebar — desktop only ── */}
           <div className="hidden lg:block">
-            <div className="bg-white border border-bone rounded-[10px] sticky top-[70px]" style={{ padding: 0 }}>
+            <div className="bg-white border border-bone rounded-xl sticky top-6" style={{ padding: 0 }}>
               {NAV.map((group, gi) => (
                 <div key={group.group}>
-                  {gi > 0 && <div className="h-px bg-[#f0eee6]" />}
+                  {gi > 0 && <div className="h-px bg-mist" />}
                   <div className="px-4 pt-[10px] pb-1">
                     <p className={`text-[10px] font-semibold uppercase tracking-[0.08em] ${group.isDanger ? 'text-[#c0392b]' : 'text-slate'}`}>
                       {group.group}
@@ -467,14 +467,16 @@ export function AdminSettings() {
                     return (
                       <button
                         key={item.id}
+                        type="button"
                         onClick={() => setActive(item.id)}
-                        className="w-full flex items-center gap-[10px] px-4 py-[9px] cursor-pointer border-none text-left transition-colors duration-[120ms]"
+                        aria-current={isActive ? 'page' : undefined}
+                        className="w-full flex items-center gap-[10px] px-4 py-[9px] cursor-pointer border-none text-left transition-colors duration-[120ms] outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-orange/40"
                         style={{
                           borderLeft: `3px solid ${isActive ? activeColor : 'transparent'}`,
                           background: isActive ? (isDanger ? '#FDECEA' : '#EAF2F8') : 'transparent',
-                          color: isActive ? activeColor : (isDanger ? '#C0392B' : '#4A4945'),
+                          color: isActive ? activeColor : (isDanger ? '#C0392B' : '#486071'),
                         }}
-                        onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = '#FAF9F5'; }}
+                        onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = '#F5F8FA'; }}
                         onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
                       >
                         <item.Icon size={14} className="flex-shrink-0" />

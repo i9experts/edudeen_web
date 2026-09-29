@@ -15,6 +15,7 @@ import { Button } from '@/components/comman/ui/Button';
 import { Pagination, FilterDropdown, BuyerNavbar, AppDownloadBanner, Footer, TrustServiceStrip, StoreFeatureCard, EmptyState, DealsBanner, useCountdown, SkeletonBox } from '@/components/comman/ui';
 import { ProductCard, ProductCardSkeleton } from '@/components/comman/marketplace/ProductCard';
 import { ResourceCard, ResourceCardSkeleton } from '@/components/comman/marketplace/ResourceCard';
+import { SectionHead } from '@/components/comman/marketplace/SectionHead';
 import { FlashSaleCard } from '@/components/comman/marketplace/FlashSaleCard';
 import { FilterAccordionSection, FilterRadioRow, FilterCheckboxRow, FilterStarRow, ActiveFilterChip, PriceRangeSlider, PRICE_MIN, PRICE_MAX } from '@/components/comman/marketplace/FilterAccordionSection';
 import { MegaMenuBar, CategoryBarIcon, CategoriesMegaContent } from '@/components/comman/marketplace/MegaMenuBar';
@@ -367,6 +368,7 @@ export function Marketplace() {
   // homepage-style landing view (Hero + Trust Strip) with results, immediately
   // — same behavior Amazon/Alibaba use once a shopper has committed to a query.
   const isBrowsing = !!search || !!selectedCategory || !!campaignFilterId;
+  const selectedCategoryNode = selectedCategory ? findCategoryById(categories, selectedCategory) : null;
 
   const LIMIT = 20;
 
@@ -593,7 +595,7 @@ export function Marketplace() {
     : `${rangeStart}–${rangeEnd} of ${total} Products`;
 
   return (
-    <div className="min-h-screen bg-cream">
+    <div className="min-h-screen bg-white">
 
       {/* Navbar + category/mega-menu row stay pinned together as one sticky
           header block. Sticking each independently doesn't work — a
@@ -640,6 +642,18 @@ export function Marketplace() {
         />
       </div>
 
+      {/* ── Page intro — what this view is (whole marketplace, a category or a search) ── */}
+      <div className="px-[5%] md:px-[4%] pt-6 md:pt-8 pb-1">
+        <SectionHead
+          as="h1"
+          className="mb-2"
+          eyebrow={selectedCategoryNode ? 'Category' : search ? 'Search' : 'The Edudeen marketplace'}
+          title={selectedCategoryNode ? selectedCategoryNode.name : search ? `Results for "${search}"` : 'Everything worth learning'}
+          sub={selectedCategoryNode?.description
+            || (search ? 'Resources, products and stores matching your search.' : 'Physical products, digital downloads and educational resources from verified sellers.')}
+        />
+      </div>
+
       {/* ── Hero carousel — real marketplace/category banner data, inset with
          side padding + rounded corners as its own floating card rather than
          edge-to-edge. Uses BannerCarousel as-is (real impression/click
@@ -651,8 +665,8 @@ export function Marketplace() {
          everything below it down (a real layout shift, not just a "slow"
          feeling). ── */}
       {(banners.length > 0 || bannersLoading) && (
-        <div className="px-4 sm:px-6 lg:px-10 py-3">
-          <div className="relative w-full h-[200px] sm:h-[320px] lg:h-[420px] xl:h-[460px] overflow-hidden rounded-2xl">
+        <div className="px-[5%] md:px-[4%] py-3">
+          <div className="relative w-full h-[200px] sm:h-[320px] lg:h-[420px] xl:h-[460px] overflow-hidden rounded-[18px]">
             {banners.length > 0
               ? <BannerCarousel entityType="banner" banners={banners.map(b => ({ _id: b._id, order: b.order, imageUrl: b.bannerImage, linkUrl: b.urlOnTap }))} />
               : <SkeletonBox className="absolute inset-0 w-full h-full" rounded="16px" />}
@@ -667,23 +681,21 @@ export function Marketplace() {
          than inventing new styling. Renders nothing once loaded if the
          fetch failed (no fake placeholders). ── */}
       {(platformStatsLoading || trustStatItems.length > 0) && (
-        <div className="bg-cream">
-          <div className="px-4 sm:px-6 lg:px-10 py-3 sm:py-4">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 justify-items-center max-w-[1100px] mx-auto">
-              {platformStatsLoading
-                ? Array.from({ length: 4 }).map((_, i) => (
-                    <div key={i} className="text-center">
-                      <SkeletonBox width={70} height={28} className="mb-1.5 mx-auto" />
-                      <SkeletonBox width={90} height={12} className="mx-auto" />
-                    </div>
-                  ))
-                : trustStatItems.map(s => (
-                    <div key={s.label} className="text-center">
-                      <p className="block text-[22px] sm:text-[26px] font-bold text-brand-orange">{s.value}</p>
-                      <p className="text-[12px] text-slate">{s.label}</p>
-                    </div>
-                  ))}
-            </div>
+        <div className="px-[5%] md:px-[4%] py-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-5">
+            {platformStatsLoading
+              ? Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="rounded-xl border border-bone p-4 sm:p-5">
+                    <SkeletonBox width={90} height={12} className="mb-3" />
+                    <SkeletonBox width={70} height={28} />
+                  </div>
+                ))
+              : trustStatItems.map(s => (
+                  <div key={s.label} className="rounded-xl border border-bone px-4 py-4 sm:px-6 sm:py-5">
+                    <p className="text-[12px] sm:text-[13px] text-slate m-0">{s.label}</p>
+                    <p className="font-serif text-[25px] sm:text-[32px] text-carbon leading-none mt-2 mb-0">{s.value}</p>
+                  </div>
+                ))}
           </div>
         </div>
       )}
@@ -701,7 +713,7 @@ export function Marketplace() {
          popped in late even after its own campaign data was already
          ready). ── */}
       {!isBrowsing && (
-        <div className="px-4 sm:px-6 lg:px-10 py-3">
+        <div className="px-[5%] md:px-[4%] py-3">
           {/* DealsBanner's own compact+label surface is deliberately unrounded
              (built for edge-to-edge placement) — now that it's inset with
              side padding like the hero carousel above it, this wrapper clips
@@ -723,7 +735,7 @@ export function Marketplace() {
          mapping. Sits right under the hero carousel, above the search bar/
          Flash Sale card. ── */}
       {categories.length > 0 && (
-        <div className="px-4 sm:px-6 lg:px-10 pt-5 pb-2">
+        <div className="px-[5%] md:px-[4%] pt-5 pb-2">
           <div className="flex items-center gap-3 sm:gap-5 overflow-x-auto scrollbar-hide pb-1">
             {categories.slice(0, 8).map(cat => (
               <button
@@ -778,19 +790,19 @@ export function Marketplace() {
          shopper's own filtered results. Reuses FlashSaleCard as-is (already
          used by Homepage's rail) rather than a new component. ── */}
       {!isBrowsing && flashDeals.length > 0 && (
-        <div id="flash-sale-rail" className="px-4 sm:px-6 lg:px-10 pt-5 scroll-mt-[76px]">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-error-bg text-error">
-                <Zap size={14} className="fill-error" />
-              </span>
-              <h2 className="font-serif text-[16px] sm:text-[19px] font-bold text-carbon tracking-[-0.01em]">Flash Sale</h2>
-            </div>
-            <div className="flex items-center gap-[6px] text-[11px] sm:text-[12px] font-semibold text-slate">
-              <span className="hidden sm:inline">Ends in</span>
-              <span className="tabular-nums text-error font-bold">{countdown.h}:{countdown.m}:{countdown.s}</span>
-            </div>
-          </div>
+        <div id="flash-sale-rail" className="px-[5%] md:px-[4%] pt-5 scroll-mt-[76px]">
+          <SectionHead
+            className="!mb-4"
+            eyebrow="Limited-time savings"
+            title="Flash Sale"
+            icon={<span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-error-bg text-error"><Zap size={14} className="fill-error" /></span>}
+            action={
+              <div className="shrink-0 flex items-center gap-[6px] text-[12px] sm:text-[13px] font-semibold text-slate">
+                <span className="hidden sm:inline">Ends in</span>
+                <span className="tabular-nums text-error font-bold">{countdown.h}:{countdown.m}:{countdown.s}</span>
+              </div>
+            }
+          />
           <div
             ref={flashSaleTrackRef}
             onMouseEnter={() => setFlashSalePaused(true)}
@@ -823,7 +835,7 @@ export function Marketplace() {
       )}
 
       {/* ── Main content ─────────────────────────────────────────────────────── */}
-      <div className="px-4 sm:px-6 lg:px-10 py-4 sm:py-5 lg:py-6">
+      <div className="px-[5%] md:px-[4%] py-4 sm:py-5 lg:py-6">
 
         {/* Results heading — only when browsing (search/category/campaign), so
             a shopper always knows what narrowed the grid they're looking at.
@@ -1132,12 +1144,12 @@ export function Marketplace() {
         </div>
       </div>
 
-      <div className="px-4 sm:px-6 lg:px-10 pt-2">
+      <div className="px-[5%] md:px-[4%] pt-2">
         <TrustServiceStrip variant="card" items={TRUST_ITEMS} />
       </div>
 
       {/* ── App download + footer ── */}
-      <div id="app-download" className="px-4 sm:px-6 lg:px-10 pt-5 pb-8 scroll-mt-[76px]">
+      <div id="app-download" className="px-[5%] md:px-[4%] pt-5 pb-8 scroll-mt-[76px]">
         <AppDownloadBanner variant="compact" />
       </div>
       <Footer showNewsletter={false} />

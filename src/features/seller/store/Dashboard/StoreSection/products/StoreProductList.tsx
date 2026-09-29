@@ -223,7 +223,7 @@ export default function StoreProductList() {
         actions={<Button onClick={goAdd} icon={<Plus size={15} />}>Add Product</Button>}
       />
 
-      <div className="px-7 py-5 flex flex-col gap-5">
+      <div className="px-4 md:px-8 py-6 flex flex-col gap-5">
 
         {/* ── Stats ──────────────────────────────────────────────────── */}
         <ProductStatsGrid stats={stats} loading={loading} />
@@ -235,14 +235,14 @@ export default function StoreProductList() {
         {!error && (
           <Card padding="none">
             {/* Toolbar */}
-            <div className="px-5 pt-4 pb-3 flex items-center justify-between gap-3">
-              <p className="text-[14px] font-bold text-charcoal shrink-0">All Products</p>
+            <div className="px-5 sm:px-6 pt-5 pb-4 flex items-center justify-between gap-3 flex-wrap">
+              <h2 className="font-serif font-normal text-[21px] text-carbon shrink-0">Your product shelf</h2>
               <div className="flex items-center gap-2 ml-auto">
                 <SearchInput
                   value={search}
                   onChange={setSearch}
                   placeholder="Search by name or SKU…"
-                  className="w-[220px]"
+                  className="w-[180px] sm:w-[220px]"
                 />
                 <Button variant="outline" size="xs" onClick={handleRetry} icon={<RefreshCw size={11} />}>Refresh</Button>
               </div>

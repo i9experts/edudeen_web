@@ -8,7 +8,11 @@ import { Modal } from '@/components/comman/ui/Modal';
 import { Badge } from '@/components/comman/ui/Badge';
 import type { BadgeColor } from '@/types';
 import { MetricCard } from '@/components/comman/ui/MetricCard';
-import { SkeletonBox, Table, type TableColumn } from '@/components/comman/ui';
+import { SkeletonBox, Table, TabBar, type TableColumn } from '@/components/comman/ui';
+import { useSearchParams } from 'react-router-dom';
+import { EarningsStatement } from './EarningsStatement';
+
+type FinanceTab = 'overview' | 'earnings';
 import { currencySymbol } from '@/utils/currency';
 import {
   apiGetFinanceDashboard, apiGetFinanceTransactions, apiExportFinanceTransactions,
@@ -279,7 +283,17 @@ function PayoutDetailModal({ onClose, storeId, payoutId }: { onClose: () => void
 // ── Component ─────────────────────────────────────────────────────────────────
 export function StoreFinance() {
   usePageTitle('Finance');
-  const { storeId } = useStoreWorkspace();
+  const { storeId, store } = useStoreWorkspace();
+
+  // Tabs live in the URL (?tab=earnings) so the sidebar's "Earnings" entry
+  // and shared links can open the monthly statement directly.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab: FinanceTab = searchParams.get('tab') === 'earnings' ? 'earnings' : 'overview';
+  const setTab = (next: FinanceTab) => {
+    const params = new URLSearchParams(searchParams);
+    if (next === 'overview') params.delete('tab'); else params.set('tab', next);
+    setSearchParams(params, { replace: true });
+  };
 
   const [dashboard, setDashboard] = useState<FinanceDashboard | null>(null);
   // Which wallet/currency is currently shown — a seller can hold more than
@@ -414,46 +428,9 @@ export function StoreFinance() {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="px-4 lg:px-7 pt-5 pb-8 flex flex-col gap-5">
-        <SkeletonBox height={110} rounded="12px" />
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {Array.from({ length: 4 }).map((_, i) => <SkeletonBox key={i} height={90} rounded="10px" />)}
-        </div>
-        <div className="flex gap-4">
-          <SkeletonBox height={320} rounded="10px" className="flex-1" />
-          <SkeletonBox height={320} rounded="10px" width={280} />
-        </div>
-      </div>
-    );
-  }
+  const activeWallet = dashboard?.wallets.find(w => w.currency === activeCurrency) ?? dashboard?.wallets[0] ?? null;
 
-  if (error || !dashboard) {
-    return (
-      <div className="px-4 lg:px-7 pt-5 pb-8">
-        <div className="flex flex-col items-center gap-3 text-center bg-white border border-bone rounded-[10px] px-6 py-12">
-          <div className="w-11 h-11 rounded-full bg-error-bg flex items-center justify-center">
-            <AlertTriangle size={20} className="text-error" />
-          </div>
-          <p className="text-[13px] text-charcoal max-w-sm">{error || 'Failed to load finance data.'}</p>
-          <Button size="sm" variant="outline" onClick={loadCore}>Try Again</Button>
-        </div>
-      </div>
-    );
-  }
-
-  const activeWallet = dashboard.wallets.find(w => w.currency === activeCurrency) ?? dashboard.wallets[0] ?? null;
-
-  if (!activeWallet) {
-    return (
-      <div className="px-4 lg:px-7 pt-5 pb-8">
-        <p className="text-[13px] text-slate">No sales yet — your wallet will appear here once you make your first sale.</p>
-      </div>
-    );
-  }
-
-  return (
+  const header = (
     <>
       <StorePageHeader
         title="Finance & Payouts"
@@ -461,16 +438,105 @@ export function StoreFinance() {
         actions={
           <>
             <Button size="sm" variant="outline" icon={<Plus size={13} />} onClick={() => setMethodModal(true)}>
-              Add Payout Method
+              <span className="hidden sm:inline">Add Payout Method</span>
+              <span className="sm:hidden">Method</span>
             </Button>
-            <Button size="sm" onClick={() => setPayoutModal(true)} disabled={activeWallet.availableBalance <= 0}>
+            <Button size="sm" onClick={() => setPayoutModal(true)} disabled={!activeWallet || activeWallet.availableBalance <= 0}>
               Request Payout
             </Button>
           </>
         }
       />
+      <div className="px-4 md:px-8 pt-4">
+        <TabBar
+          tabs={[
+            { id: 'overview', label: 'Overview' },
+            { id: 'earnings', label: 'Monthly earnings' },
+          ]}
+          active={tab}
+          onChange={id => setTab(id as FinanceTab)}
+        />
+      </div>
+    </>
+  );
 
-      <div className="px-4 lg:px-7 pt-5 pb-8 flex flex-col gap-5">
+  // Payout-method modal stays reachable from the header on every tab/state.
+  const methodModalEl = methodModal && (
+    <PayoutMethodModal storeId={storeId} defaultCurrency={activeWallet?.currency ?? store?.baseCurrency ?? undefined} onClose={() => setMethodModal(false)} onSaved={() => { setMethodModal(false); loadCore(); loadWalletScoped(); }} />
+  );
+
+  if (tab === 'earnings') {
+    return (
+      <>
+        {header}
+        <div className="px-4 md:px-8 pt-6 pb-10">
+          <EarningsStatement
+            storeId={storeId}
+            currencies={dashboard?.wallets.map(w => w.currency) ?? []}
+            defaultCurrency={store?.baseCurrency}
+          />
+        </div>
+        {methodModalEl}
+      </>
+    );
+  }
+
+  if (loading) {
+    return (
+      <>
+        {header}
+        <div className="px-4 md:px-8 pt-6 pb-8 flex flex-col gap-5" aria-busy="true">
+          <SkeletonBox height={110} rounded="12px" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {Array.from({ length: 4 }).map((_, i) => <SkeletonBox key={i} height={90} rounded="10px" />)}
+          </div>
+          <div className="flex gap-4">
+            <SkeletonBox height={320} rounded="10px" className="flex-1" />
+            <SkeletonBox height={320} rounded="10px" width={280} />
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  if (error || !dashboard) {
+    return (
+      <>
+        {header}
+        <div className="px-4 md:px-8 pt-6 pb-8">
+          <div role="alert" className="flex flex-col items-center gap-3 text-center bg-white border border-bone rounded-xl px-6 py-12">
+            <div className="w-11 h-11 rounded-full bg-error-bg flex items-center justify-center">
+              <AlertTriangle size={20} className="text-error" />
+            </div>
+            <p className="text-[13px] text-charcoal max-w-sm">{error || 'Failed to load finance data.'}</p>
+            <Button size="sm" variant="outline" onClick={loadCore}>Try Again</Button>
+          </div>
+        </div>
+        {methodModalEl}
+      </>
+    );
+  }
+
+  if (!activeWallet) {
+    return (
+      <>
+        {header}
+        <div className="px-4 md:px-8 pt-6 pb-8">
+          <div className="bg-cream border border-bone rounded-xl px-6 py-10 text-center">
+            <p className="font-serif text-[21px] text-carbon mb-2">No sales yet.</p>
+            <p className="text-[13.5px] text-slate">Your wallet will appear here once you make your first sale.</p>
+          </div>
+        </div>
+        {methodModalEl}
+      </>
+    );
+  }
+
+  return (
+    <>
+      {header}
+
+      <div className="px-4 md:px-8 pt-6 pb-10 flex flex-col gap-5">
 
         {/* Wallet selector — a seller can hold more than one currency
             (e.g. a PKR wallet from bank-transfer/COD sales and a USD wallet
@@ -481,10 +547,11 @@ export function StoreFinance() {
               <button
                 key={w.currency}
                 onClick={() => setActiveCurrency(w.currency)}
+                aria-pressed={w.currency === activeWallet.currency}
                 className={
                   w.currency === activeWallet.currency
-                    ? 'px-3 py-[6px] rounded-lg text-[12px] font-semibold bg-carbon text-white cursor-pointer'
-                    : 'px-3 py-[6px] rounded-lg text-[12px] font-semibold bg-white border border-bone text-charcoal cursor-pointer hover:bg-cream'
+                    ? 'px-4 py-[8px] rounded-lg text-[13px] font-bold bg-brand-orange border border-brand-orange text-white cursor-pointer'
+                    : 'px-4 py-[8px] rounded-lg text-[13px] font-bold bg-white border border-bone text-brand-orange cursor-pointer hover:bg-cream'
                 }
               >
                 {w.currency} Wallet
@@ -494,19 +561,19 @@ export function StoreFinance() {
         )}
 
         {/* Balance Card */}
-        <div className="bg-carbon rounded-xl px-5 sm:px-7 py-6 flex flex-wrap justify-between items-center gap-4">
+        <div className="bg-white border border-bone rounded-xl px-5 sm:px-[27px] py-6 flex flex-wrap justify-between items-center gap-4">
           <div>
-            <p className="text-[10px] font-semibold text-slate uppercase tracking-[0.1em] mb-2">Available Balance ({activeWallet.currency})</p>
-            <p className="text-[32px] font-bold text-white leading-[1.1] mb-3">{fmt(activeWallet.availableBalance, activeWallet.currency)}</p>
+            <p className="text-[12px] font-bold text-brand-royal uppercase tracking-[0.15em] mb-2">Available Balance ({activeWallet.currency})</p>
+            <p className="font-serif text-[36px] font-normal text-carbon leading-[1.1] mb-3">{fmt(activeWallet.availableBalance, activeWallet.currency)}</p>
             <div className="flex items-center gap-6 flex-wrap">
-              <span className="text-[11px] text-slate">Pending: <span className="text-white font-medium">{fmt(activeWallet.pendingBalance, activeWallet.currency)}</span></span>
+              <span className="text-[13px] text-slate">Pending: <span className="text-carbon font-bold">{fmt(activeWallet.pendingBalance, activeWallet.currency)}</span></span>
               {activeWallet.nextPayout.scheduledAt && (
-                <span className="text-[11px] text-brand-orange font-medium">
+                <span className="text-[13px] text-brand-orange font-bold">
                   Next Payout: {new Date(activeWallet.nextPayout.scheduledAt).toLocaleDateString()}
                 </span>
               )}
               {activeWallet.nextPayout.method && (
-                <span className="text-[11px] text-slate">
+                <span className="text-[13px] text-slate">
                   Method: {METHOD_LABEL[activeWallet.nextPayout.method.type as PayoutMethodType] ?? activeWallet.nextPayout.method.type}
                   {activeWallet.nextPayout.method.last4 ? ` ••${activeWallet.nextPayout.method.last4}` : ''}
                 </span>
@@ -535,9 +602,9 @@ export function StoreFinance() {
         <div className="flex gap-4 items-start flex-wrap lg:flex-nowrap">
 
           {/* LEFT — Transaction History */}
-          <div className="flex-1 min-w-0 w-full bg-white border border-bone rounded-[10px] overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-3.5 border-b border-bone flex-wrap gap-2.5">
-              <p className="text-sm font-semibold text-carbon">Transaction History</p>
+          <div className="flex-1 min-w-0 w-full bg-white border border-bone rounded-xl overflow-hidden">
+            <div className="flex items-center justify-between px-5 sm:px-6 py-4 flex-wrap gap-2.5">
+              <h2 className="font-serif font-normal text-[21px] text-carbon">Transaction History</h2>
               <div className="flex items-center gap-2">
                 <select value={txType} onChange={e => { setTxType(e.target.value as TransactionType | ''); setTxPage(1); }}
                   className="px-3 py-[7px] text-[13px] border border-bone rounded-lg bg-white text-charcoal outline-none">
@@ -563,10 +630,10 @@ export function StoreFinance() {
           <div className="w-full lg:w-[280px] shrink-0 flex flex-col gap-3.5">
 
             {/* Payout Methods */}
-            <div className="bg-white border border-bone rounded-[10px] px-[18px] py-4">
+            <div className="bg-white border border-bone rounded-xl px-5 py-5">
               <div className="flex items-center justify-between mb-3">
-                <p className="text-[13px] font-semibold text-carbon">Payout Methods</p>
-                <button onClick={() => setMethodModal(true)} className="text-slate hover:text-brand-orange cursor-pointer bg-transparent border-none">
+                <p className="font-serif text-[18px] text-carbon">Payout Methods</p>
+                <button onClick={() => setMethodModal(true)} aria-label="Add payout method" className="text-slate hover:text-brand-orange cursor-pointer bg-transparent border-none">
                   <Plus size={14} />
                 </button>
               </div>
@@ -591,7 +658,7 @@ export function StoreFinance() {
                         <button onClick={() => setEditingMethod(m)} className="text-[10px] text-slate hover:text-brand-orange cursor-pointer bg-transparent border-none">
                           Edit
                         </button>
-                        <button onClick={() => { setDeletingMethodId(m._id); setDeleteMethodError(''); }} className="text-slate hover:text-error cursor-pointer bg-transparent border-none">
+                        <button onClick={() => { setDeletingMethodId(m._id); setDeleteMethodError(''); }} aria-label="Delete payout method" className="text-slate hover:text-error cursor-pointer bg-transparent border-none">
                           <X size={12} />
                         </button>
                       </div>
@@ -603,8 +670,8 @@ export function StoreFinance() {
 
             {/* Payout Schedule */}
             {schedule && (
-              <div className="bg-white border border-bone rounded-[10px] px-[18px] py-4">
-                <p className="text-[13px] font-semibold text-carbon mb-3">Payout Schedule</p>
+              <div className="bg-white border border-bone rounded-xl px-5 py-5">
+                <p className="font-serif text-[18px] text-carbon mb-3">Payout Schedule</p>
                 <div className="flex flex-col gap-2.5">
                   {[
                     ['Frequency', schedule.frequency ? schedule.frequency[0].toUpperCase() + schedule.frequency.slice(1) : '—'],
@@ -628,8 +695,8 @@ export function StoreFinance() {
             )}
 
             {/* Fee Breakdown */}
-            <div className="bg-white border border-bone rounded-[10px] px-[18px] py-4">
-              <p className="text-[13px] font-semibold text-carbon mb-3">Fee Breakdown</p>
+            <div className="bg-white border border-bone rounded-xl px-5 py-5">
+              <p className="font-serif text-[18px] text-carbon mb-3">Fee Breakdown</p>
               <div className="flex flex-col gap-2.5">
                 {[
                   ['Marketplace Listing Fee', dashboard.feeBreakdown.marketplaceListingFee],
@@ -647,9 +714,9 @@ export function StoreFinance() {
             </div>
 
             {/* Tax Reports */}
-            <div className="bg-white border border-bone rounded-[10px] px-[18px] py-4">
+            <div className="bg-white border border-bone rounded-xl px-5 py-5">
               <div className="flex items-center justify-between mb-3">
-                <p className="text-[13px] font-semibold text-carbon">Tax Reports</p>
+                <p className="font-serif text-[18px] text-carbon">Tax Reports</p>
                 <button onClick={handleGenerateTaxReport} disabled={generatingTax}
                   className="text-[11px] text-brand-orange hover:underline cursor-pointer bg-transparent border-none disabled:opacity-50">
                   {generatingTax ? 'Generating…' : 'Generate'}
@@ -679,8 +746,8 @@ export function StoreFinance() {
 
             {/* Recent Payouts */}
             {recentPayouts.length > 0 && (
-              <div className="bg-white border border-bone rounded-[10px] px-[18px] py-4">
-                <p className="text-[13px] font-semibold text-carbon mb-3">Recent Payouts</p>
+              <div className="bg-white border border-bone rounded-xl px-5 py-5">
+                <p className="font-serif text-[18px] text-carbon mb-3">Recent Payouts</p>
                 <div className="flex flex-col gap-2.5">
                   {recentPayouts.map(p => (
                     <button key={p._id} onClick={() => setSelectedPayoutId(p._id)}
@@ -697,9 +764,7 @@ export function StoreFinance() {
         </div>
       </div>
 
-      {methodModal && (
-        <PayoutMethodModal storeId={storeId} defaultCurrency={activeWallet.currency} onClose={() => setMethodModal(false)} onSaved={() => { setMethodModal(false); loadCore(); loadWalletScoped(); }} />
-      )}
+      {methodModalEl}
       {editingMethod && (
         <PayoutMethodModal storeId={storeId} editing={editingMethod} defaultCurrency={activeWallet.currency} onClose={() => setEditingMethod(null)} onSaved={() => { setEditingMethod(null); loadCore(); loadWalletScoped(); }} />
       )}

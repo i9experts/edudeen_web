@@ -4,9 +4,10 @@ import { useCartContext } from '@/contexts/CartContext';
 import { Button } from '@/components/comman/ui/Button';
 import { SkeletonBox } from '@/components/comman/ui';
 import {
-  Minus, Plus, Trash2, ShoppingBag, ImageOff,
+  Minus, Plus, Trash2, ShoppingBag,
   Loader2, Download, Lock,
 } from 'lucide-react';
+import { ProductCoverFallback } from '@/components/comman/marketplace/ProductCoverFallback';
 import { clsx } from 'clsx';
 import { currencySymbol } from '@/utils/currency';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
@@ -19,11 +20,7 @@ function CartItemImage({ images, name }: { images?: string[]; name: string }) {
   const [errored, setErrored] = useState(false);
   const src = images?.[0];
   if (!src || errored) {
-    return (
-      <div className="w-[72px] h-[72px] rounded-[10px] bg-brand-pale-orange flex items-center justify-center shrink-0">
-        <ImageOff size={20} className="text-brand-orange opacity-50" />
-      </div>
-    );
+    return <ProductCoverFallback name={name} size="sm" className="w-[72px] h-[72px] rounded-[10px] shrink-0" />;
   }
   return (
     <img loading="lazy" decoding="async"

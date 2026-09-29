@@ -31,6 +31,9 @@ export const TokenStorage = {
     deleteAuthCookie('refreshToken');
     deleteAuthCookie('user');
     sessionStorage.removeItem('authCtx');
+    // Mirror of the login event in save() — lets account-scoped state
+    // (wishlist, cart) drop the previous user's data without a page reload.
+    window.dispatchEvent(new Event('edudeen:auth-logout'));
   },
   getToken()     { return getAuthCookie('accessToken'); },
   getRefresh()   { return getAuthCookie('refreshToken'); },

@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useAdminAnnouncements, useAnnouncementActions } from '@/hooks/admin/useAdminAnnouncements';
 import type { Announcement, AnnouncementAudience, AnnouncementStatus } from '@/api/services/announcements/adminAnnouncements';
-import { Button, Modal, Input, Textarea, Select, Table, StatusBadge, Badge, FilterDropdown, SearchInput, AdminPageHeader } from '@/components/comman/ui';
+import { Button, Modal, Input, Textarea, Select, Table, StatusBadge, Badge, FilterDropdown, SearchInput } from '@/components/comman/ui';
+import { AdminStudioHeader } from '@/features/admin/components/studio';
 import type { TableColumn } from '@/components/comman/ui';
 import { AnalyticsErrorState } from '@/components/comman/analytics/AnalyticsErrorState';
 import { formatDate } from '@/components/comman/analytics/format';
@@ -36,8 +37,8 @@ function CreateAnnouncementCard({ onCreated }: { onCreated: () => void }) {
   }
 
   return (
-    <div className="bg-white border border-bone rounded-[10px] px-[22px] py-5">
-      <p className="text-[14px] font-bold text-charcoal mb-[18px]">Create Announcement</p>
+    <div className="bg-white border border-bone rounded-xl px-[22px] py-5">
+      <p className="font-serif font-normal text-[19px] sm:text-[21px] text-carbon leading-[1.25] mb-[18px]">Create Announcement</p>
       <div className="flex flex-col gap-4">
         <Input label="Title" placeholder="Announcement title…" value={title} onChange={(e) => setTitle(e.target.value)} />
         <Textarea label="Message" rows={4} placeholder="Write your announcement message here…" value={message} onChange={(e) => setMessage(e.target.value)} />
@@ -223,7 +224,7 @@ export function AdminAnnouncements() {
 
   return (
     <>
-      <AdminPageHeader title="Announcements" subtitle="Broadcast platform-wide messages to users and sellers." />
+      <AdminStudioHeader eyebrow="Edudeen team workspace · Content" title="Announcements" subtitle="Broadcast platform-wide messages to users and sellers." />
       <div className="px-4 sm:px-7 pt-6 pb-8 flex flex-col gap-5">
       <CreateAnnouncementCard onCreated={refetch} />
 
@@ -231,9 +232,9 @@ export function AdminAnnouncements() {
         <div className="bg-error-bg border border-error-border rounded-lg px-4 py-2.5 text-[12.5px] text-error">{actionError}</div>
       )}
 
-      <div className="bg-white border border-bone rounded-[10px] overflow-hidden">
+      <div className="bg-white border border-bone rounded-xl overflow-hidden">
         <div className="px-5 py-[14px] border-b border-bone flex items-center gap-[10px] flex-wrap">
-          <p className="text-[14px] font-bold text-charcoal flex-1">All Announcements</p>
+          <p className="font-serif font-normal text-[19px] sm:text-[21px] text-carbon leading-[1.25] flex-1">All Announcements</p>
           <SearchInput value={search} onChange={(v) => { setSearch(v); setPage(1); }} placeholder="Search announcements…" className="max-w-[240px]" />
           <FilterDropdown placeholder="All Statuses" options={STATUS_OPTIONS} value={statusFilter} onChange={(v) => { setStatusFilter(v); setPage(1); }} />
           <FilterDropdown placeholder="All Audiences" options={AUDIENCE_OPTIONS} value={audienceFilter} onChange={(v) => { setAudienceFilter(v); setPage(1); }} />

@@ -31,15 +31,15 @@ export function PlatformGenerateTab() {
               onClick={() => setActiveTool(tool.id)}
               className="text-left px-5 py-[18px] rounded-[10px] cursor-pointer transition-[border-color,background] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/50"
               style={{
-                border: `2px solid ${active ? '#174771' : '#E8E6DC'}`,
+                border: `2px solid ${active ? '#174771' : '#E1E7EA'}`,
                 background: active ? '#EAF2F8' : '#fff',
               }}
             >
-              <div className="mb-[10px]" style={{ color: active ? '#0F3354' : '#8C8A82' }}>
+              <div className="mb-[10px]" style={{ color: active ? '#0F3354' : '#64727B' }}>
                 <tool.Icon size={22} />
               </div>
-              <p className="text-sm font-semibold mb-1" style={{ color: active ? '#0F3354' : '#141413' }}>{tool.title}</p>
-              <p className="text-xs" style={{ color: active ? '#0F3354' : '#8C8A82' }}>{tool.desc}</p>
+              <p className="text-sm font-semibold mb-1" style={{ color: active ? '#0F3354' : '#152D43' }}>{tool.title}</p>
+              <p className="text-xs" style={{ color: active ? '#0F3354' : '#64727B' }}>{tool.desc}</p>
             </button>
           );
         })}

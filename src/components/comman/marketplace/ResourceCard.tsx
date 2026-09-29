@@ -6,25 +6,11 @@ import { EDUCATION_LEVELS } from '@/api/services/product';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 import { currencySymbol } from '@/utils/currency';
 import { getStorefrontUrl } from '@/utils/storefrontUrl';
+import { coverPaletteFor } from './ProductCoverFallback';
 
-// Soft paper-on-pastel palettes for the "worksheet" cover — picked per
-// product (stable hash of its id), so the grid reads as a varied shelf.
-const PALETTES = [
-  { bg: '#dfedd6', accent: '#477d35' },
-  { bg: '#e5eef8', accent: '#2863a2' },
-  { bg: '#f6eac9', accent: '#ad711e' },
-  { bg: '#e8e1f1', accent: '#785793' },
-  { bg: '#f7e0d6', accent: '#af6045' },
-  { bg: '#dceceb', accent: '#2b7c77' },
-  { bg: '#e2e9f2', accent: '#42688e' },
-  { bg: '#eef0ce', accent: '#7b8129' },
-];
-
-function paletteFor(id: string) {
-  let h = 0;
-  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) | 0;
-  return PALETTES[Math.abs(h) % PALETTES.length];
-}
+// Same name-keyed palette as ProductCoverFallback, so a product keeps its
+// colours between the grid card and cart/wishlist/detail thumbnails.
+const paletteFor = coverPaletteFor;
 
 const LEVEL_LABEL = new Map<string, string>(EDUCATION_LEVELS.map(l => [l.value, l.label]));
 const TYPE_LABEL: Record<string, string> = { physical: 'Physical', digital: 'Digital', educational: 'Educational' };
@@ -40,7 +26,7 @@ export interface ResourceCardProps {
 }
 
 function Cover({ product, tilt }: { product: MarketplaceProduct; tilt: number }) {
-  const { bg, accent } = paletteFor(product._id);
+  const { bg, accent } = paletteFor(product.name || product._id);
   const [imgFailed, setImgFailed] = useState(false);
   const image = !imgFailed ? product.images?.[0] : undefined;
 

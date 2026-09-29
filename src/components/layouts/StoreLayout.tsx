@@ -8,9 +8,9 @@ import {
   Settings, Sparkles, ChevronLeft, ChevronRight, Store,
   ClipboardList, Megaphone, Star, Plug, Search, Wallet,
   Truck, MessageSquare, FolderTree, RefreshCw, Undo2, CreditCard,
-  PanelLeftClose, PanelLeftOpen, AlertTriangle, AlertCircle, XCircle, Clock, LogOut, Layers,
+  PanelLeftClose, PanelLeftOpen, AlertTriangle, AlertCircle, XCircle, Clock, LogOut, Layers, Receipt,
 } from 'lucide-react';
-import { EdudeenIcon } from '@/components/comman/ui/EdudeenLogo';
+import { EdudeenIcon, EdudeenLogo } from '@/components/comman/ui/EdudeenLogo';
 import { apiGetStoreById, type StoreData } from '@/api/services/store';
 import { apiGetStorePlatformPlan, type StorePlatformSubscription } from '@/api/services/platformPlans';
 import { useCommandPalette } from '@/hooks/useCommandPalette';
@@ -86,6 +86,7 @@ export const NAV: { group: string; items: NavItem[] }[] = [
     group: 'Finance',
     items: [
       { id: 'finance',      Icon: Wallet,     label: 'Finance',        path: 'finance'      },
+      { id: 'earnings',     Icon: Receipt,    label: 'Earnings',       path: 'finance?tab=earnings' },
       { id: 'plan-billing', Icon: CreditCard, label: 'Plan & Billing', path: 'plan-billing' },
     ],
   },
@@ -220,6 +221,29 @@ function buildPaletteItems(
   return result;
 }
 
+// A nav path may carry a query (e.g. 'finance?tab=earnings'). Such an item is
+// active only when that query matches; its query-less sibling on the same
+// route ('finance') is active only when no query-carrying sibling matches.
+const ALL_NAV_PATHS = NAV.flatMap(s => s.items.map(i => i.path));
+
+function queryMatches(query: string, search: string) {
+  const want = new URLSearchParams(query);
+  const have = new URLSearchParams(search);
+  for (const [k, v] of want) if (have.get(k) !== v) return false;
+  return true;
+}
+
+function isNavItemActive(path: string, pathname: string, search: string, storeId: string) {
+  if (path.startsWith('/')) return pathname === path || pathname.startsWith(path + '/');
+  const [seg, query] = path.split('?');
+  if (pathname !== `/store/${storeId}/${seg}`) return false;
+  if (query) return queryMatches(query, search);
+  return !ALL_NAV_PATHS.some(p => {
+    const [s, q] = p.split('?');
+    return s === seg && !!q && queryMatches(q, search);
+  });
+}
+
 // ── Sidebar ───────────────────────────────────────────────────────────────────
 // Desktop only now — mobile navigation is the "menu" list on StoreDashboard
 // (mirrors the buyer Account section's redesign: a real native-app menu
@@ -228,7 +252,7 @@ interface StoreSidebarProps { open: boolean; onToggle: () => void; }
 
 function StoreSidebar({ open, onToggle }: StoreSidebarProps) {
   const navigate     = useNavigate();
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
   const { store, storeId, loading } = useStoreWorkspace();
   const { open: paletteOpen, setOpen: setPaletteOpen } = useCommandPalette();
   const paletteItems = buildPaletteItems(navigate, storeId);
@@ -243,10 +267,7 @@ function StoreSidebar({ open, onToggle }: StoreSidebarProps) {
     await logout('/login');
   };
 
-  const isActive = (seg: string) =>
-    seg.startsWith('/')
-      ? pathname === seg || pathname.startsWith(seg + '/')
-      : pathname === `/store/${storeId}/${seg}`;
+  const isActive = (path: string) => isNavItemActive(path, pathname, search, storeId);
 
   const initials   = store?.name?.slice(0, 2).toUpperCase() ?? '..';
   const credits    = store?.aiCredits ?? 0;
@@ -257,29 +278,42 @@ function StoreSidebar({ open, onToggle }: StoreSidebarProps) {
     <button
       onClick={onToggle}
       title={open ? 'Collapse sidebar' : 'Expand sidebar'}
-      className="size-7 rounded-md flex items-center justify-center shrink-0 text-slate hover:text-white hover:bg-dark-active transition-colors cursor-pointer"
+      aria-label={open ? 'Collapse sidebar' : 'Expand sidebar'}
+      className="size-8 rounded-lg flex items-center justify-center shrink-0 text-slate hover:text-carbon hover:bg-cream transition-colors cursor-pointer"
     >
-      {open ? <PanelLeftClose size={15} /> : <PanelLeftOpen size={15} />}
+      {open ? <PanelLeftClose size={16} /> : <PanelLeftOpen size={16} />}
     </button>
   );
 
   return (
     <>
       <aside className={clsx(
-        'hidden lg:flex bg-carbon flex-col shrink-0',
+        'hidden lg:flex bg-white border-r border-bone flex-col shrink-0',
         'transition-[width] duration-300 ease-in-out',
         'h-screen',
-        open ? 'w-[220px]' : 'w-[60px]',
+        open ? 'w-[248px]' : 'w-[68px]',
       )}>
 
-        {/* Store identity + collapse toggle — same row, toggle on the right,
-           rather than the toggle sitting alone on its own row above this. */}
+        {/* Brand row — Edudeen lockup + collapse toggle. */}
         {open ? (
-          <div className="px-4 pt-[14px] pb-3 shrink-0">
-            <div className="flex items-center gap-[10px]">
-              <div className="size-9 rounded-[9px] shrink-0 bg-brand-orange overflow-hidden flex items-center justify-center text-[13px] font-bold text-white">
+          <div className="px-5 pt-5 pb-4 shrink-0 flex items-center justify-between gap-2">
+            <EdudeenLogo size={22} />
+            {toggleBtn}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center gap-3 pt-5 pb-3 shrink-0">
+            <EdudeenIcon size={28} />
+            {toggleBtn}
+          </div>
+        )}
+
+        {/* Store identity — which workspace you're in. */}
+        {open ? (
+          <div className="px-4 pb-4 shrink-0">
+            <div className="flex items-center gap-[10px] rounded-xl border border-bone px-3 py-[10px]">
+              <div className="size-9 rounded-[9px] shrink-0 bg-brand-pale-orange overflow-hidden flex items-center justify-center text-[13px] font-bold text-brand-orange">
                 {loading
-                  ? <div className="animate-pulse size-9 bg-charcoal rounded-[9px]" />
+                  ? <div className="animate-pulse size-9 bg-bone rounded-[9px]" />
                   : store?.logo
                     ? <img loading="lazy" decoding="async" src={store.logo} className="w-full h-full object-cover" alt="" />
                     : initials}
@@ -287,39 +321,38 @@ function StoreSidebar({ open, onToggle }: StoreSidebarProps) {
               <div className="flex-1 min-w-0">
                 {loading ? (
                   <>
-                    <div className="animate-pulse w-[90px] h-3 rounded-[3px] bg-charcoal mb-[5px]" />
-                    <div className="animate-pulse w-[55px] h-[10px] rounded-[3px] bg-charcoal" />
+                    <div className="animate-pulse w-[90px] h-3 rounded-[3px] bg-bone mb-[5px]" />
+                    <div className="animate-pulse w-[55px] h-[10px] rounded-[3px] bg-bone" />
                   </>
                 ) : (
                   <>
-                    <p className="text-[12px] font-bold text-white leading-[1.3] truncate">{store?.name ?? 'Loading…'}</p>
-                    <p className="text-[10px] text-slate leading-[1.3]">
+                    <p className="text-[13px] font-bold text-carbon leading-[1.3] truncate">{store?.name ?? 'Loading…'}</p>
+                    <p className="text-[11px] text-slate leading-[1.3] truncate capitalize">
                       {store?.plan ?? ''}{store?.slug ? ` · /${store.slug}` : ''}
                     </p>
                   </>
                 )}
               </div>
-              {toggleBtn}
             </div>
           </div>
         ) : (
-          <div className="flex flex-col items-center gap-2 pt-3 pb-2 shrink-0">
-            <div className="size-8 rounded-[8px] shrink-0 bg-brand-orange overflow-hidden flex items-center justify-center text-[11px] font-bold text-white">
+          <div className="flex justify-center pb-3 shrink-0">
+            <div
+              title={store?.name}
+              className="size-9 rounded-[9px] shrink-0 bg-brand-pale-orange overflow-hidden flex items-center justify-center text-[11px] font-bold text-brand-orange"
+            >
               {loading ? '…' : store?.logo ? <img loading="lazy" decoding="async" src={store.logo} className="w-full h-full object-cover" alt="" /> : initials}
             </div>
-            {toggleBtn}
           </div>
         )}
 
-        <div className="h-px bg-dark-active mx-3 mb-[6px]" />
-
         {/* Nav */}
-        <nav className={clsx('flex-1 overflow-y-auto', open ? 'px-[10px] pt-1' : 'px-[10px] pt-2')}>
+        <nav aria-label="Store workspace" className={clsx('flex-1 overflow-y-auto', open ? 'px-3 pt-1' : 'px-[12px] pt-1')}>
           {NAV.map(section => (
-            <div key={section.group} className="mb-1">
+            <div key={section.group} className="mb-3">
               {open
-                ? <p className="text-[10px] font-semibold text-dark-label px-2 py-1 uppercase tracking-[0.08em] mb-0.5">{section.group}</p>
-                : <div className="h-px bg-dark-active mx-1 mb-2" />
+                ? <p className="text-[10.5px] font-bold text-slate px-3 py-1 uppercase tracking-[0.14em] mb-0.5">{section.group}</p>
+                : <div className="h-px bg-bone mx-1 mb-2" />
               }
               {section.items.map(item => {
                 const active = isActive(item.path);
@@ -335,25 +368,20 @@ function StoreSidebar({ open, onToggle }: StoreSidebarProps) {
                     aria-label={item.label}
                     aria-current={active ? 'page' : undefined}
                     className={clsx(
-                      'flex items-center gap-[10px] py-[9px] px-[10px] rounded-md mb-0.5 cursor-pointer',
+                      'flex items-center gap-[10px] py-[8px] px-3 rounded-lg mb-0.5 cursor-pointer',
                       'transition-colors duration-150',
                       !open && 'lg:justify-center lg:px-0',
-                      active ? 'bg-dark-active' : 'bg-transparent hover:bg-[#1a1917]',
+                      active ? 'bg-brand-pale-orange' : 'bg-transparent hover:bg-cream',
                     )}
                   >
                     <item.Icon
-                      size={15}
-                      className={clsx('shrink-0', active ? 'text-brand-orange opacity-100' : 'text-slate opacity-55')}
+                      size={16}
+                      className={clsx('shrink-0', active ? 'text-brand-orange' : 'text-slate')}
                     />
                     {open && (
-                      <>
-                        <span className={clsx('text-[13px] flex-1 font-normal text-slate', active && 'font-semibold text-white')}>
-                          {item.label}
-                        </span>
-                        {active && (
-                          <div className="w-[3px] h-[14px] rounded-[2px] bg-brand-orange shrink-0" />
-                        )}
-                      </>
+                      <span className={clsx('text-[13.5px] flex-1', active ? 'font-bold text-brand-orange' : 'font-normal text-graphite')}>
+                        {item.label}
+                      </span>
                     )}
                   </div>
                 );
@@ -362,47 +390,45 @@ function StoreSidebar({ open, onToggle }: StoreSidebarProps) {
           ))}
         </nav>
 
-        {/* Footer: AI credits */}
+        {/* Footer: AI credits + sign out */}
         {open ? (
-          <div className="px-4 py-3 border-t border-dark-active shrink-0">
-            <div className="bg-dark-active rounded-md px-3 py-[10px] mb-[10px]">
-              <div className="flex justify-between mb-[6px]">
+          <div className="px-4 py-4 border-t border-bone shrink-0">
+            <div className="bg-cream border border-bone rounded-xl px-3 py-[10px] mb-3">
+              <div className="flex justify-between mb-[7px]">
                 <div className="flex items-center gap-[5px]">
-                  <Sparkles size={11} className="text-brand-orange" />
-                  <span className="text-[11px] text-slate">AI Credits</span>
+                  <Sparkles size={12} className="text-brand-royal" />
+                  <span className="text-[12px] text-graphite">AI Credits</span>
                 </div>
-                <span className="text-[11px] font-semibold text-brand-orange">{credits}/{maxCredits}</span>
+                <span className="text-[12px] font-bold text-brand-orange">{credits}/{maxCredits}</span>
               </div>
-              <div className="h-1 bg-charcoal rounded-[2px]">
+              <div className="h-[5px] bg-bone rounded-full" role="progressbar" aria-valuenow={credits} aria-valuemin={0} aria-valuemax={maxCredits} aria-label="AI credits used">
                 <div
-                  className="h-full bg-brand-orange rounded-[2px] transition-[width] duration-300"
+                  className="h-full bg-brand-orange rounded-full transition-[width] duration-300"
                   style={{ width: `${pct}%` }}
                 />
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <EdudeenIcon size={20} />
-              <p className="text-[11px] text-dark-label flex-1 min-w-0 truncate">Edudeen Store</p>
+              <p className="text-[12px] text-slate flex-1 min-w-0 truncate">Edudeen creator studio</p>
               <button
                 onClick={() => setShowLogoutConfirm(true)}
                 title="Logout"
                 aria-label="Logout"
-                className="size-7 rounded-md flex items-center justify-center shrink-0 text-slate hover:text-white hover:bg-dark-active transition-colors cursor-pointer"
+                className="size-8 rounded-lg flex items-center justify-center shrink-0 text-slate hover:text-carbon hover:bg-cream transition-colors cursor-pointer"
               >
-                <LogOut size={14} />
+                <LogOut size={15} />
               </button>
             </div>
           </div>
         ) : (
-          <div className="py-3 border-t border-dark-active flex flex-col items-center gap-2 shrink-0">
-            <EdudeenIcon size={20} />
+          <div className="py-3 border-t border-bone flex flex-col items-center gap-2 shrink-0">
             <button
               onClick={() => setShowLogoutConfirm(true)}
               title="Logout"
               aria-label="Logout"
-              className="size-7 rounded-md flex items-center justify-center shrink-0 text-slate hover:text-white hover:bg-dark-active transition-colors cursor-pointer"
+              className="size-8 rounded-lg flex items-center justify-center shrink-0 text-slate hover:text-carbon hover:bg-cream transition-colors cursor-pointer"
             >
-              <LogOut size={14} />
+              <LogOut size={15} />
             </button>
           </div>
         )}
@@ -429,18 +455,23 @@ export interface StorePageHeaderProps {
   title:     string;
   subtitle?: string;
   actions?:  ReactNode;
+  /** Small royal-blue label above the title. Defaults to the store's name. Pass '' to hide. */
+  eyebrow?:  string;
 }
 
-export function StorePageHeader({ title, subtitle, actions }: StorePageHeaderProps) {
+// Studio-style sticky page bar: blue letter-spaced eyebrow (store name),
+// serif title, muted sub-line, actions on the right.
+export function StorePageHeader({ title, subtitle, actions, eyebrow }: StorePageHeaderProps) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const { storeId } = useStoreWorkspace();
+  const { storeId, store } = useStoreWorkspace();
   const dashboardPath = `/store/${storeId}/dashboard`;
   const isDashboard = pathname === dashboardPath;
+  const eyebrowText = eyebrow ?? store?.name ?? '';
 
   return (
-    <div className="bg-white/90 backdrop-blur-md border-b border-bone px-4 md:px-7 py-[14px] flex items-center justify-between sticky top-0 z-10 shrink-0">
-      <div className="flex items-center gap-3">
+    <div className="bg-white/95 backdrop-blur-md border-b border-bone px-4 md:px-8 py-[14px] flex items-center justify-between gap-3 sticky top-0 z-10 shrink-0">
+      <div className="flex items-center gap-3 min-w-0">
         {/* Mobile only, and only away from the dashboard "menu" screen —
            real drill-in navigation (back to the menu) instead of a
            hamburger that used to open a copy of the desktop sidebar. */}
@@ -453,12 +484,15 @@ export function StorePageHeader({ title, subtitle, actions }: StorePageHeaderPro
             <ChevronLeft size={19} />
           </button>
         )}
-        <div>
-          <h1 className="text-[18px] font-bold text-carbon leading-[1.3]">{title}</h1>
-          {subtitle && <p className="text-[12px] text-slate mt-0.5">{subtitle}</p>}
+        <div className="min-w-0">
+          {eyebrowText && (
+            <p className="hidden sm:block text-[10.5px] font-bold text-brand-royal uppercase tracking-[0.15em] mb-[3px] truncate">{eyebrowText}</p>
+          )}
+          <h1 className="font-serif font-normal text-[21px] md:text-[25px] text-carbon leading-[1.2] tracking-[-0.3px] truncate">{title}</h1>
+          {subtitle && <p className="text-[12.5px] text-slate mt-0.5 truncate">{subtitle}</p>}
         </div>
       </div>
-      <div className="flex items-center gap-[10px]">
+      <div className="flex items-center gap-[10px] shrink-0">
         {actions}
         <NotificationBell />
       </div>
@@ -639,6 +673,10 @@ function GatedOutlet() {
   return <Outlet />;
 }
 
+function isFullBleedRoute(pathname: string) {
+  return /\/(storebuilder|messages)(\/|$)/.test(pathname);
+}
+
 // ── Layout ────────────────────────────────────────────────────────────────────
 export function StoreLayout() {
   const { pathname: currentPath } = useLocation();
@@ -656,14 +694,18 @@ export function StoreLayout() {
 
   return (
     <StoreWorkspaceProvider>
-      <div className={clsx('flex bg-cream overflow-hidden', 'h-screen')}>
+      <div className={clsx('flex bg-white overflow-hidden', 'h-screen')}>
         <StoreSidebar open={sidebarOpen} onToggle={toggle} />
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           <AnnouncementBanner audience="sellers" />
           <StoreVerificationBanner />
           <PlatformBillingBanner />
           <div className="flex-1 overflow-y-auto pb-[64px] lg:pb-0">
-            <GatedOutlet />
+            {/* Content column capped at a readable studio width; the builder
+               and messages views keep the full canvas they need. */}
+            <div className={isFullBleedRoute(currentPath) ? 'min-h-full' : 'w-full max-w-[1440px] mx-auto min-h-full'}>
+              <GatedOutlet />
+            </div>
           </div>
         </div>
       </div>

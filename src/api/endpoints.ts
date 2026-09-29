@@ -787,6 +787,7 @@ export const ENDPOINTS = {
       PAYOUT_SCHEDULE:       (storeId: string) => `/api/finance/${storeId}/payout-schedule`,
       GENERATE_TAX_REPORT:   (storeId: string) => `/api/finance/${storeId}/tax-reports/generate`,
       TAX_REPORTS:           (storeId: string) => `/api/finance/${storeId}/tax-reports`,
+      MONTHLY_STATEMENT:     (storeId: string) => `/api/finance/${storeId}/monthly-statement`,
     },
     ADMIN: {
       OVERVIEW:              '/api/admin/finance/overview',
@@ -813,6 +814,8 @@ export const ENDPOINTS = {
       RECONCILIATION:        '/api/admin/finance/reconciliation',
       RECONCILIATION_HISTORY: '/api/admin/finance/reconciliation/history',
       FX_EXPOSURE:           '/api/admin/finance/fx-exposure',
+      MONTHLY_SETTLEMENT:    '/api/admin/finance/monthly-settlement',
+      MONTHLY_SETTLEMENT_RUN: '/api/admin/finance/monthly-settlement/run',
     },
   },
 

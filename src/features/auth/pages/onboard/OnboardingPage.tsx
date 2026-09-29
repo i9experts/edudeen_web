@@ -326,8 +326,8 @@ function Step2Payment({ onNext, onBack, step, maxReached, onStepClick, alreadyCo
           <div className="flex items-start gap-2 text-[12px] text-charcoal bg-cream border border-bone rounded-[8px] px-3 py-3 mb-4">
             <Clock size={14} className="mt-[1px] flex-shrink-0 text-slate" />
             <div>
-              <p className="font-semibold text-carbon mb-[2px]">Card setup is coming soon</p>
-              <p className="text-slate">We're finishing setup for online payments — please check back shortly to continue onboarding.</p>
+              <p className="font-semibold text-carbon mb-[2px]">Card setup isn't available right now</p>
+              <p className="text-slate">You can continue without a card — your store will go live once the Edudeen team approves it.</p>
             </div>
           </div>
         ) : loadError ? (
@@ -358,12 +358,24 @@ function Step2Payment({ onNext, onBack, step, maxReached, onStepClick, alreadyCo
           <Button variant="ghost" size="md" onClick={onBack} className="shrink-0">
             <ArrowLeft size={14} className="inline align-middle mr-1" /> Back
           </Button>
-          {alreadyConfirmed && (
+          {alreadyConfirmed ? (
             <Button variant="primary" size="md" onClick={onNext} className="flex-1">
               Continue <ArrowRight size={14} className="inline align-middle ml-1" />
             </Button>
+          ) : (
+            // A card only fast-tracks activation — without one the store is
+            // created as 'pending' and goes live after admin review, so the
+            // seller is never stuck on this step.
+            <Button variant="secondary" size="md" onClick={onNext} disabled={confirming} className="flex-1">
+              Skip for now <ArrowRight size={14} className="inline align-middle ml-1" />
+            </Button>
           )}
         </div>
+        {!alreadyConfirmed && (
+          <p className="text-[11.5px] text-slate text-center mt-2">
+            Skipping is fine — your store will be reviewed by the Edudeen team before it goes live.
+          </p>
+        )}
       </div>
     </div>
   );

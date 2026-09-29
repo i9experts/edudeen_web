@@ -82,9 +82,9 @@ export function OverviewTab({ params, compareToPreviousPeriod }: { params: BaseA
       )}
 
       {compareToPreviousPeriod && d?.previousPeriod && (
-        <div className="bg-white border border-bone rounded-[10px]">
+        <div className="bg-white border border-bone rounded-xl">
           <div className="px-5 pt-4 pb-3">
-            <p className="text-[14px] font-bold text-charcoal">Period Comparison</p>
+            <p className="font-serif font-normal text-[19px] sm:text-[21px] text-carbon leading-[1.25]">Period Comparison</p>
             <p className="text-[12px] text-slate">
               {formatDate(d.previousPeriod.period.from)} – {formatDate(d.previousPeriod.period.to)} vs. {formatDate(d.period.from)} – {formatDate(d.period.to)}
             </p>
@@ -108,7 +108,7 @@ export function OverviewTab({ params, compareToPreviousPeriod }: { params: BaseA
               net: p.netRevenue,
             }))}
             lines={[
-              { dataKey: 'gross', label: 'Gross Revenue', color: '#8C8A82' },
+              { dataKey: 'gross', label: 'Gross Revenue', color: '#64727B' },
               { dataKey: 'net', label: 'Net Revenue', color: '#174771' },
             ]}
             valuePrefix="$"

@@ -14,7 +14,7 @@ import {
   Settings, BarChart2,
   ChevronDown, Plus, PanelLeftClose, PanelLeftOpen, LogOut,
 } from 'lucide-react';
-import { EdudeenIcon } from '@/components/comman/ui/EdudeenLogo';
+import { EdudeenIcon, EdudeenLogo } from '@/components/comman/ui/EdudeenLogo';
 import { NotificationBell, AnnouncementBanner, CurrencySelector } from '@/components/comman/ui';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -120,25 +120,27 @@ function SidebarStoreSwitcher() {
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen(p => !p)}
+        aria-expanded={open}
+        aria-haspopup="menu"
         className={clsx(
-          'w-full rounded-md py-2 px-[10px] flex items-center gap-2',
-          'cursor-pointer border-0 transition-colors duration-150',
-          open ? 'bg-charcoal' : 'bg-dark-active hover:bg-charcoal',
+          'w-full rounded-xl py-[9px] px-3 flex items-center gap-[10px]',
+          'cursor-pointer border transition-colors duration-150',
+          open ? 'bg-cream border-border-hover' : 'bg-white border-bone hover:bg-cream',
         )}
       >
-        <div className="size-6 rounded-sm bg-brand-orange flex items-center justify-center shrink-0">
-          <Store size={13} className="text-white" />
+        <div className="size-8 rounded-[9px] bg-brand-pale-orange flex items-center justify-center shrink-0">
+          <Store size={15} className="text-brand-orange" />
         </div>
         <div className="flex-1 min-w-0 text-left">
-          <p className="text-[11px] font-semibold text-white leading-[1.3] truncate">{displayName}</p>
-          {displaySub && <p className="text-[10px] text-slate leading-[1.3]">{displaySub}</p>}
+          <p className="text-[13px] font-bold text-carbon leading-[1.3] truncate">{displayName}</p>
+          {displaySub && <p className="text-[11px] text-slate leading-[1.3]">{displaySub}</p>}
         </div>
         <ChevronDown size={13} className={clsx('text-slate shrink-0 transition-transform duration-200', open && 'rotate-180')} />
       </button>
 
       {open && (
-        <div className="absolute left-0 right-0 top-[calc(100%+4px)] z-[200] bg-[#1a1917] border border-charcoal rounded-[10px] p-[6px]">
-          <p className="text-[10px] font-semibold text-dark-label uppercase tracking-[0.08em] px-[10px] pt-1 pb-2">
+        <div className="absolute left-0 right-0 top-[calc(100%+6px)] z-[200] bg-white border border-bone rounded-xl p-[6px] shadow-[0_12px_32px_rgba(21,45,67,0.12)]">
+          <p className="text-[10.5px] font-bold text-brand-royal uppercase tracking-[0.14em] px-[10px] pt-1 pb-2">
             Switch Store
           </p>
           <div className="max-h-[205px] overflow-y-auto">
@@ -152,13 +154,13 @@ function SidebarStoreSwitcher() {
               />
             ))}
             {stores.length === 0 && !loading && (
-              <p className="text-[11px] text-dark-label px-[10px] py-[6px]">No stores yet</p>
+              <p className="text-[12px] text-slate px-[10px] py-[6px]">No stores yet</p>
             )}
           </div>
-          <div className="h-px bg-charcoal mx-[6px] my-1" />
+          <div className="h-px bg-bone mx-[6px] my-1" />
           <button
             onClick={() => { setOpen(false); navigate('/onboard'); }}
-            className="flex items-center gap-[7px] w-full py-2 px-[10px] rounded-[7px] bg-transparent border-0 cursor-pointer text-[11px] font-semibold text-brand-orange hover:bg-charcoal transition-colors duration-150"
+            className="flex items-center gap-[7px] w-full py-2 px-[10px] rounded-[7px] bg-transparent border-0 cursor-pointer text-[12.5px] font-bold text-brand-orange hover:bg-brand-pale-orange transition-colors duration-150"
           >
             <Plus size={12} /> New Store
           </button>
@@ -178,14 +180,14 @@ function SidebarStoreItem({ label, sub, logo, onClick }: {
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-[9px] w-full py-[7px] px-[10px] rounded-md bg-transparent border-0 cursor-pointer text-left transition-colors duration-[120ms] hover:bg-dark-hover"
+      className="flex items-center gap-[9px] w-full py-[7px] px-[10px] rounded-lg bg-transparent border-0 cursor-pointer text-left transition-colors duration-[120ms] hover:bg-cream"
     >
-      <div className="size-[26px] rounded-[7px] shrink-0 bg-charcoal overflow-hidden flex items-center justify-center text-[9px] font-bold text-slate">
+      <div className="size-[28px] rounded-[7px] shrink-0 bg-brand-pale-orange overflow-hidden flex items-center justify-center text-[10px] font-bold text-brand-orange">
         {logo ? <img loading="lazy" decoding="async" src={logo} alt={label} className="w-full h-full object-cover" /> : initials}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-[12px] font-medium text-dark-text truncate">{label}</p>
-        <p className="text-[10px] text-dark-label">{sub}</p>
+        <p className="text-[13px] font-medium text-carbon truncate">{label}</p>
+        <p className="text-[11px] text-slate truncate">{sub}</p>
       </div>
     </button>
   );
@@ -227,9 +229,10 @@ function SellerSidebar({ open, onToggle }: SellerSidebarProps) {
     <button
       onClick={onToggle}
       title={open ? 'Collapse sidebar' : 'Expand sidebar'}
-      className="size-7 rounded-md flex items-center justify-center shrink-0 text-slate hover:text-white hover:bg-dark-active transition-colors cursor-pointer"
+      aria-label={open ? 'Collapse sidebar' : 'Expand sidebar'}
+      className="size-8 rounded-lg flex items-center justify-center shrink-0 text-slate hover:text-carbon hover:bg-cream transition-colors cursor-pointer"
     >
-      {open ? <PanelLeftClose size={15} /> : <PanelLeftOpen size={15} />}
+      {open ? <PanelLeftClose size={16} /> : <PanelLeftOpen size={16} />}
     </button>
   );
 
@@ -239,8 +242,8 @@ function SellerSidebar({ open, onToggle }: SellerSidebarProps) {
       onClick={() => setPaletteOpen(true)}
       title="Search (Ctrl+K)"
       className={clsx(
-        'flex items-center gap-1 rounded-md border border-dark-active text-slate hover:text-white hover:bg-dark-active transition-colors cursor-pointer shrink-0',
-        open ? 'px-[7px] py-[3px] text-[10px] font-semibold' : 'size-7 justify-center text-[9px] font-semibold',
+        'flex items-center gap-1 rounded-md border border-bone text-slate hover:text-carbon hover:bg-cream transition-colors cursor-pointer shrink-0',
+        open ? 'px-[7px] py-[3px] text-[10.5px] font-semibold' : 'size-8 justify-center text-[10px] font-semibold',
       )}
     >
       {open ? '⌘K' : 'K'}
@@ -250,25 +253,22 @@ function SellerSidebar({ open, onToggle }: SellerSidebarProps) {
   return (
     <>
       <aside className={clsx(
-        'hidden lg:flex bg-carbon flex-col shrink-0',
+        'hidden lg:flex bg-white border-r border-bone flex-col shrink-0',
         'transition-[width] duration-300 ease-in-out',
         'h-screen',
-        open ? 'w-[220px]' : 'w-[60px]',
+        open ? 'w-[248px]' : 'w-[68px]',
       )}>
 
         {/* Header: logo + toggle */}
         {open ? (
-          <div className="px-5 pt-5 pb-4 shrink-0 flex items-center gap-[9px]">
-            <div className="shrink-0"><EdudeenIcon size={28} /></div>
-            <div className="flex items-center flex-1 min-w-0">
-              <span className="text-[17px] font-normal text-white tracking-[0.5px]">EDU</span>
-              <span className="text-[17px] font-extrabold text-white tracking-[0.5px]">DEEN</span>
-            </div>
+          <div className="px-5 pt-5 pb-4 shrink-0 flex items-center gap-[8px]">
+            <div className="flex-1 min-w-0"><EdudeenLogo size={22} /></div>
             {paletteHint}
             {toggleBtn}
           </div>
         ) : (
-          <div className="pt-5 pb-4 flex flex-col items-center gap-[6px] shrink-0">
+          <div className="pt-5 pb-4 flex flex-col items-center gap-[8px] shrink-0">
+            <EdudeenIcon size={28} />
             {paletteHint}
             {toggleBtn}
           </div>
@@ -276,18 +276,18 @@ function SellerSidebar({ open, onToggle }: SellerSidebarProps) {
 
         {/* Store switcher (only when expanded) */}
         {open && (
-          <div className="px-5 pb-4 shrink-0">
+          <div className="px-4 pb-4 shrink-0">
             <SidebarStoreSwitcher />
           </div>
         )}
 
         {/* Nav sections */}
-        <nav className={clsx('flex-1 overflow-y-auto', open ? 'px-3 pt-1' : 'px-[10px] pt-2')}>
+        <nav aria-label="Seller" className={clsx('flex-1 overflow-y-auto', open ? 'px-3 pt-1' : 'px-[12px] pt-1')}>
           {NAV_SECTIONS.map(section => (
-            <div key={section.label} className="mb-1">
+            <div key={section.label} className="mb-3">
               {open
-                ? <p className="text-[10px] font-semibold text-dark-label block px-2 py-1 uppercase tracking-[0.08em] mb-1">{section.label}</p>
-                : <div className="h-px bg-dark-active mx-1 mb-2" />
+                ? <p className="text-[10.5px] font-bold text-slate block px-3 py-1 uppercase tracking-[0.14em] mb-0.5">{section.label}</p>
+                : <div className="h-px bg-bone mx-1 mb-2" />
               }
 
               {section.items.map(item => {
@@ -304,11 +304,11 @@ function SellerSidebar({ open, onToggle }: SellerSidebarProps) {
                         title={item.label}
                         aria-label={item.label}
                         className={clsx(
-                          'w-full flex items-center justify-center py-[9px] rounded-md mb-0.5 cursor-pointer border-none transition-colors duration-150',
-                          anyChildActive ? 'bg-dark-active' : 'bg-transparent hover:bg-dark-active',
+                          'w-full flex items-center justify-center py-[9px] rounded-lg mb-0.5 cursor-pointer border-none transition-colors duration-150',
+                          anyChildActive ? 'bg-brand-pale-orange' : 'bg-transparent hover:bg-cream',
                         )}
                       >
-                        <item.Icon size={15} className={clsx('shrink-0', anyChildActive ? 'text-brand-orange opacity-100' : 'text-slate opacity-45')} />
+                        <item.Icon size={16} className={clsx('shrink-0', anyChildActive ? 'text-brand-orange' : 'text-slate')} />
                       </button>
                     );
                   }
@@ -319,10 +319,10 @@ function SellerSidebar({ open, onToggle }: SellerSidebarProps) {
                         type="button"
                         onClick={() => toggleDropdown(item.id)}
                         aria-expanded={isOpen}
-                        className="w-full flex items-center gap-[10px] py-[9px] px-[10px] rounded-md cursor-pointer border-none text-left transition-colors duration-150 hover:bg-dark-active"
+                        className="w-full flex items-center gap-[10px] py-[8px] px-3 rounded-lg cursor-pointer border-none text-left transition-colors duration-150 bg-transparent hover:bg-cream"
                       >
-                        <item.Icon size={15} className={clsx('shrink-0', anyChildActive ? 'text-brand-orange opacity-100' : 'text-slate opacity-45')} />
-                        <span className={clsx('text-[13px] flex-1', anyChildActive ? 'font-semibold text-white' : 'font-normal text-slate')}>
+                        <item.Icon size={16} className={clsx('shrink-0', anyChildActive ? 'text-brand-orange' : 'text-slate')} />
+                        <span className={clsx('text-[13.5px] flex-1', anyChildActive ? 'font-bold text-brand-orange' : 'font-normal text-graphite')}>
                           {item.label}
                         </span>
                         <ChevronDown size={14} className={clsx('text-slate transition-transform duration-200', isOpen && 'rotate-180')} />
@@ -338,16 +338,16 @@ function SellerSidebar({ open, onToggle }: SellerSidebarProps) {
                                 onClick={() => navigate(child.path)}
                                 aria-current={active ? 'page' : undefined}
                                 className={clsx(
-                                  'w-full flex items-center gap-[10px] py-2 px-[10px] rounded-md mb-0.5 border-none text-left',
+                                  'w-full flex items-center gap-[10px] py-2 px-3 rounded-lg mb-0.5 border-none text-left',
                                   'cursor-pointer transition-colors duration-150',
-                                  active ? 'bg-dark-active' : 'bg-transparent hover:bg-dark-active',
+                                  active ? 'bg-brand-pale-orange' : 'bg-transparent hover:bg-cream',
                                 )}
                               >
-                                <child.Icon size={13} className={clsx('shrink-0', active ? 'text-brand-orange opacity-100' : 'text-slate opacity-45')} />
-                                <span className={clsx('text-[12px] flex-1', active ? 'font-semibold text-white' : 'font-normal text-slate')}>
+                                <child.Icon size={13} className={clsx('shrink-0', active ? 'text-brand-orange' : 'text-slate')} />
+                                <span className={clsx('text-[13px] flex-1', active ? 'font-bold text-brand-orange' : 'font-normal text-graphite')}>
                                   {child.label}
                                 </span>
-                                {active && <div className="w-[3px] h-[14px] rounded-[2px] bg-brand-orange shrink-0" />}
+                                
                               </button>
                             );
                           })}
@@ -367,19 +367,19 @@ function SellerSidebar({ open, onToggle }: SellerSidebarProps) {
                     aria-label={item.label}
                     aria-current={active ? 'page' : undefined}
                     className={clsx(
-                      'w-full flex items-center gap-[10px] py-[9px] px-[10px] rounded-md mb-0.5 border-none text-left',
+                      'w-full flex items-center gap-[10px] py-[8px] px-3 rounded-lg mb-0.5 border-none text-left',
                       'cursor-pointer transition-colors duration-150',
                       !open && 'lg:justify-center lg:px-0',
-                      active ? 'bg-dark-active' : 'bg-transparent hover:bg-dark-active',
+                      active ? 'bg-brand-pale-orange' : 'bg-transparent hover:bg-cream',
                     )}
                   >
-                    <item.Icon size={15} className={clsx('shrink-0', active ? 'text-brand-orange opacity-100' : 'text-slate opacity-45')} />
+                    <item.Icon size={16} className={clsx('shrink-0', active ? 'text-brand-orange' : 'text-slate')} />
                     {open && (
                       <>
-                        <span className={clsx('text-[13px] flex-1', active ? 'font-semibold text-white' : 'font-normal text-slate')}>
+                        <span className={clsx('text-[13.5px] flex-1', active ? 'font-bold text-brand-orange' : 'font-normal text-graphite')}>
                           {item.label}
                         </span>
-                        {active && <div className="w-[3px] h-[14px] rounded-[2px] bg-brand-orange shrink-0" />}
+                        
                       </>
                     )}
                   </button>
@@ -390,11 +390,11 @@ function SellerSidebar({ open, onToggle }: SellerSidebarProps) {
         </nav>
 
         {/* User footer */}
-        <div className="px-4 py-3 border-t border-dark-active shrink-0">
+        <div className="px-4 py-4 border-t border-bone shrink-0">
           <div className={clsx('flex items-center gap-2', !open && 'flex-col')}>
-            <div className="size-7 rounded-full shrink-0 bg-charcoal flex items-center justify-center overflow-hidden">
+            <div className="size-8 rounded-full shrink-0 bg-brand-pale-orange flex items-center justify-center overflow-hidden">
               {profileLoading
-                ? <div className="animate-pulse w-full h-full bg-[#3c3a38]" />
+                ? <div className="animate-pulse w-full h-full bg-bone" />
                 : profile?.profileImage
                   ? <img loading="lazy" decoding="async" src={profile.profileImage} alt={profile.name} className="w-full h-full object-cover" />
                   : <span className="text-[10px] font-bold text-brand-orange">{profile?.name?.slice(0, 2).toUpperCase() ?? '--'}</span>
@@ -404,16 +404,16 @@ function SellerSidebar({ open, onToggle }: SellerSidebarProps) {
               <div className="flex-1 min-w-0">
                 {profileLoading ? (
                   <>
-                    <div className="animate-pulse w-20 h-[11px] rounded-[3px] bg-charcoal mb-1" />
-                    <div className="animate-pulse w-[110px] h-[9px] rounded-[3px] bg-charcoal" />
+                    <div className="animate-pulse w-20 h-[11px] rounded-[3px] bg-bone mb-1" />
+                    <div className="animate-pulse w-[110px] h-[9px] rounded-[3px] bg-bone" />
                   </>
                 ) : (
                   <>
-                    <p className="text-[12px] font-medium text-white leading-[1.3] truncate">{profile?.name ?? '—'}</p>
+                    <p className="text-[13px] font-bold text-carbon leading-[1.3] truncate">{profile?.name ?? '—'}</p>
                     <div className="flex items-center gap-1 min-w-0">
-                      <p className="text-[10px] text-slate leading-[1.3] truncate">{profile?.email ?? '—'}</p>
+                      <p className="text-[11px] text-slate leading-[1.3] truncate">{profile?.email ?? '—'}</p>
                       {profile?.email && (
-                        <CopyIconButton value={profile.email} title="Copy email" size={11} className="text-slate hover:text-white" />
+                        <CopyIconButton value={profile.email} title="Copy email" size={11} className="text-slate hover:text-carbon" />
                       )}
                     </div>
                   </>
@@ -424,9 +424,9 @@ function SellerSidebar({ open, onToggle }: SellerSidebarProps) {
               onClick={() => setShowLogoutConfirm(true)}
               title="Logout"
               aria-label="Logout"
-              className="size-7 rounded-md flex items-center justify-center shrink-0 text-slate hover:text-white hover:bg-dark-active transition-colors cursor-pointer"
+              className="size-8 rounded-lg flex items-center justify-center shrink-0 text-slate hover:text-carbon hover:bg-cream transition-colors cursor-pointer"
             >
-              <LogOut size={14} />
+              <LogOut size={15} />
             </button>
           </div>
         </div>
@@ -495,16 +495,23 @@ export interface SellerPageHeaderProps {
   title:     string;
   subtitle?: string;
   actions?:  ReactNode;
+  /** Small royal-blue label above the title. Defaults to "Edudeen creator studio". Pass '' to hide. */
+  eyebrow?:  string;
 }
 
-export function SellerPageHeader({ title, subtitle, actions }: SellerPageHeaderProps) {
+// Studio-style sticky page bar: blue letter-spaced eyebrow, serif title,
+// muted sub-line, actions on the right.
+export function SellerPageHeader({ title, subtitle, actions, eyebrow = 'Edudeen creator studio' }: SellerPageHeaderProps) {
   return (
-    <div className="bg-white/90 backdrop-blur-md border-b border-bone px-4 md:px-7 py-[14px] flex items-center justify-between sticky top-0 z-10 shrink-0">
-      <div>
-        <h1 className="text-[18px] font-bold text-carbon leading-[1.3]">{title}</h1>
-        {subtitle && <p className="text-[12px] text-slate mt-0.5">{subtitle}</p>}
+    <div className="bg-white/95 backdrop-blur-md border-b border-bone px-4 md:px-8 py-[14px] flex items-center justify-between gap-3 sticky top-0 z-10 shrink-0">
+      <div className="min-w-0">
+        {eyebrow && (
+          <p className="hidden sm:block text-[10.5px] font-bold text-brand-royal uppercase tracking-[0.15em] mb-[3px] truncate">{eyebrow}</p>
+        )}
+        <h1 className="font-serif font-normal text-[21px] md:text-[25px] text-carbon leading-[1.2] tracking-[-0.3px] truncate">{title}</h1>
+        {subtitle && <p className="text-[12.5px] text-slate mt-0.5 truncate">{subtitle}</p>}
       </div>
-      <div className="flex items-center gap-[10px]">
+      <div className="flex items-center gap-[10px] shrink-0">
         {actions}
         <NotificationBell />
         <CurrencySelector />
@@ -526,12 +533,14 @@ export function SellerLayout() {
 
   return (
     <ActiveStoreProvider>
-      <div className={clsx('flex bg-cream', 'h-screen')}>
+      <div className={clsx('flex bg-white', 'h-screen')}>
         <SellerSidebar open={sidebarOpen} onToggle={toggle} />
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           <AnnouncementBanner audience="sellers" />
           <div className="flex-1 overflow-y-auto overflow-x-hidden pb-[64px] lg:pb-0">
-            <Outlet />
+            <div className="w-full max-w-[1440px] mx-auto min-h-full">
+              <Outlet />
+            </div>
           </div>
         </div>
       </div>

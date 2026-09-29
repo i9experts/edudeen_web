@@ -72,9 +72,9 @@ export function SellersTab({ params }: { params: BaseAnalyticsParams }) {
         <MetricCard label="Seller Accounts (Cumulative)" value={latestCumulative != null ? formatNumber(latestCumulative) : '—'} loading={trends.loading} />
       </div>
 
-      <div className="bg-white border border-bone rounded-[10px]">
+      <div className="bg-white border border-bone rounded-xl">
         <div className="px-5 pt-4 pb-3 flex flex-wrap items-center justify-between gap-3">
-          <p className="text-[14px] font-bold text-charcoal">Top / Lowest Performing Sellers</p>
+          <p className="font-serif font-normal text-[19px] sm:text-[21px] text-carbon leading-[1.25]">Top / Lowest Performing Sellers</p>
           <div className="flex items-center gap-2">
             <FilterDropdown options={SORT_OPTIONS} value={sort} onChange={v => setSort(v as 'revenue' | 'orders')} />
             <FilterDropdown options={RANK_OPTIONS} value={order} onChange={v => setOrder(v as 'asc' | 'desc')} />
@@ -93,9 +93,9 @@ export function SellersTab({ params }: { params: BaseAnalyticsParams }) {
         )}
       </div>
 
-      <div className="bg-white border border-bone rounded-[10px]">
+      <div className="bg-white border border-bone rounded-xl">
         <div className="px-5 pt-4 pb-3">
-          <p className="text-[14px] font-bold text-charcoal">Seller Performance</p>
+          <p className="font-serif font-normal text-[19px] sm:text-[21px] text-carbon leading-[1.25]">Seller Performance</p>
           <p className="text-[12px] text-slate">Full ranking across every seller on the platform.</p>
         </div>
         {performance.error ? (

@@ -7,7 +7,7 @@ import type { ReportStatus, TargetType, Conversation, Report } from '@/api/servi
 import { SkeletonBox } from '@/components/comman/ui/SkeletonBox';
 import { useFocusTrap } from '@/components/comman/ui/useFocusTrap';
 import { Table, type TableColumn } from '@/components/comman/ui/Table';
-import { AdminPageHeader } from '@/components/comman/ui/AdminPageHeader';
+import { AdminStudioHeader } from '@/features/admin/components/studio';
 
 type MainTab = 'conversations' | 'reports';
 
@@ -104,7 +104,7 @@ function ConversationsPanel() {
       key: 'isArchived', header: 'Status',
       render: c => (
         <span className="px-[10px] py-[3px] rounded-[5px] text-[11px] font-semibold"
-          style={{ background: c.isArchived ? '#F0EEE6' : '#EAF7EF', color: c.isArchived ? '#5A5852' : '#1E7A3C' }}>
+          style={{ background: c.isArchived ? '#EDF2F4' : '#EAF7EF', color: c.isArchived ? '#486071' : '#1E7A3C' }}>
           {c.isArchived ? 'Archived' : 'Active'}
         </span>
       ),
@@ -230,7 +230,7 @@ export function AdminMessaging() {
 
   return (
     <div>
-      <AdminPageHeader title="Messaging" subtitle="Oversee buyer–seller conversations and moderation reports." />
+      <AdminStudioHeader eyebrow="Edudeen team workspace · People" title="Messaging" subtitle="Oversee buyer–seller conversations and moderation reports." />
 
       <div className="px-4 sm:px-7 pt-5 pb-8 flex flex-col gap-5">
         <div className="flex gap-2">
@@ -241,8 +241,8 @@ export function AdminMessaging() {
               className="px-4 py-[8px] rounded-lg text-[13px] font-semibold border cursor-pointer capitalize outline-none transition-[opacity,transform] duration-150 hover:opacity-90 active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-brand-orange/50"
               style={{
                 background: tab === t ? '#EAF2F8' : '#fff',
-                color:      tab === t ? '#0F3354' : '#4A4945',
-                borderColor: tab === t ? '#174771' : 'var(--color-bone, #E8E6DC)',
+                color:      tab === t ? '#0F3354' : '#486071',
+                borderColor: tab === t ? '#174771' : 'var(--color-bone, #E1E7EA)',
               }}
             >
               {t}

@@ -439,6 +439,96 @@ export function apiAdminFxExposure() {
   return client.get<never, ApiResponse<AdminFxExposureData>>(ENDPOINTS.FINANCE.ADMIN.FX_EXPOSURE);
 }
 
+// ── I. Monthly settlement ─────────────────────────────────────────────────────────
+// Once a month every seller is paid what they're owed after Edudeen's
+// commission. `run` only *creates* payouts — they still land in the existing
+// payout approval queue (`PAYOUT_QUEUE`) for an admin to approve.
+
+export interface MonthlySettlementPayoutMethod {
+  id: string;
+  type: string;
+  bankName: string | null;
+  last4: string | null;
+  status: string;
+}
+
+export interface MonthlySettlementPayout {
+  id: string;
+  status: string;
+  amount: number;
+}
+
+export interface MonthlySettlementRow {
+  storeId: string;
+  storeName: string;
+  sellerId: string;
+  sellerName: string;
+  grossSales: number;
+  commission: number;
+  net: number;
+  availableBalance: number;
+  pendingBalance: number;
+  payoutMethod: MonthlySettlementPayoutMethod | null;
+  payout: MonthlySettlementPayout | null;
+}
+
+export interface AdminMonthlySettlementData {
+  month: string;
+  currency: string;
+  totals: {
+    sellers: number;
+    grossSales: number;
+    commission: number;
+    netOwedToSellers: number;
+    payoutsCreated: number;
+  };
+  rows: MonthlySettlementRow[];
+}
+
+export interface MonthlySettlementParams {
+  /** YYYY-MM */
+  month?: string;
+  currency?: string;
+  [key: string]: unknown;
+}
+
+/** Known skip reasons; any other string is a raw error message from the server. */
+export type MonthlySettlementSkipReason = 'below_minimum' | 'no_active_default_payout_method' | 'payout_already_pending';
+
+export interface MonthlySettlementRunDetail {
+  storeId: string;
+  currency: string;
+  result: 'created' | 'skipped';
+  reason?: MonthlySettlementSkipReason | string;
+  amount?: number;
+  payoutId?: string;
+}
+
+export interface MonthlySettlementRunResult {
+  month: string;
+  created: number;
+  skipped: number;
+  /** Only meaningful as one number when a single currency was run — use `byCurrency` otherwise. */
+  totalAmount: number;
+  byCurrency?: { currency: string; amount?: number; totalAmount?: number; created?: number; count?: number }[];
+  details: MonthlySettlementRunDetail[];
+}
+
+export interface MonthlySettlementRunPayload {
+  /** Omit to settle every currency. */
+  currency?: string;
+  /** YYYY-MM — only used as the payout-note label; server defaults to the previous UTC month. */
+  month?: string;
+}
+
+export function apiAdminMonthlySettlement(params: MonthlySettlementParams = {}) {
+  return client.get<never, ApiResponse<AdminMonthlySettlementData>>(`${ENDPOINTS.FINANCE.ADMIN.MONTHLY_SETTLEMENT}${qs(params)}`);
+}
+
+export function apiAdminRunMonthlySettlement(payload: MonthlySettlementRunPayload = {}) {
+  return client.post<never, ApiResponse<MonthlySettlementRunResult>>(ENDPOINTS.FINANCE.ADMIN.MONTHLY_SETTLEMENT_RUN, payload);
+}
+
 // ── H. Export ─────────────────────────────────────────────────────────────────────
 
 /** GET /api/admin/finance/export — downloads a PDF or CSV report and triggers the browser save dialog. */

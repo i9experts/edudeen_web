@@ -3,7 +3,8 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { useMarketplaceStats, useMarketplaceListings, useMarketplaceListingActions } from '@/hooks/admin/useAdminMarketplace';
 import type { MarketplaceListingRow, ListingStatus } from '@/api/services/marketplace/adminMarketplace';
 import { apiGetCategoryTree, type CategoryNode } from '@/api/services/categories';
-import { Table, StatusBadge, Button, Modal, SkeletonBox, SearchInput, FilterDropdown, MetricCard, AdminPageHeader, ActionMenu } from '@/components/comman/ui';
+import { Table, StatusBadge, Button, Modal, SkeletonBox, SearchInput, FilterDropdown, MetricCard, ActionMenu } from '@/components/comman/ui';
+import { AdminStudioHeader } from '@/features/admin/components/studio';
 import type { TableColumn } from '@/components/comman/ui';
 import { AnalyticsErrorState } from '@/components/comman/analytics/AnalyticsErrorState';
 import { formatCurrency, formatNumber } from '@/components/comman/analytics/format';
@@ -123,7 +124,7 @@ export function AdminMarketplace() {
 
   return (
     <>
-      <AdminPageHeader
+      <AdminStudioHeader eyebrow="Edudeen team workspace · Commerce"
         title="Marketplace Management"
         subtitle="Review, feature and manage all marketplace listings."
         actions={<Button variant="outline" size="sm" icon={<RefreshCw size={13} />} onClick={refreshAll}>Refresh</Button>}
@@ -148,7 +149,7 @@ export function AdminMarketplace() {
         </div>
       )}
 
-      <div className="bg-white border border-bone rounded-[10px] overflow-hidden">
+      <div className="bg-white border border-bone rounded-xl overflow-hidden">
         <div className="flex items-center gap-[10px] px-5 py-[14px] border-b border-bone flex-wrap">
           <SearchInput value={search} onChange={(v) => { setSearch(v); setPage(1); }} placeholder="Search listings or sellers…" className="flex-1 max-w-[300px]" />
           <FilterDropdown placeholder="All Categories" options={categories} value={categoryId} onChange={(v) => { setCategoryId(v); setPage(1); }} />

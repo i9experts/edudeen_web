@@ -10,7 +10,7 @@ import { Modal } from '@/components/comman/ui/Modal';
 import { Input, Textarea, Select } from '@/components/comman/ui/Input';
 import { EmptyState } from '@/components/comman/ui/EmptyState';
 import { SkeletonBox } from '@/components/comman/ui/SkeletonBox';
-import { AdminPageHeader } from '@/components/comman/ui/AdminPageHeader';
+import { AdminStudioHeader } from '@/features/admin/components/studio';
 
 // ── Add Category modal ───────────────────────────────────────────────────────
 // Admins can create either a main category (no parent) or a subcategory under
@@ -114,7 +114,7 @@ function CategoryRow({ node, depth, onManageAttributes }: {
   return (
     <div>
       <div
-        className="flex items-center gap-2 px-4 py-[10px] border-b border-[#f0eee6] hover:bg-cream transition-colors duration-150"
+        className="flex items-center gap-2 px-4 py-[10px] border-b border-bone hover:bg-cream transition-colors duration-150"
         style={{ paddingLeft: 16 + depth * 24 }}
       >
         <div className="flex items-center gap-2 flex-1 min-w-0 cursor-pointer" onClick={() => hasChildren && setExpanded(e => !e)}>
@@ -177,14 +177,14 @@ export function AdminCategories() {
 
   return (
     <div>
-      <AdminPageHeader
+      <AdminStudioHeader eyebrow="Edudeen team workspace · Commerce"
         title="Categories"
         subtitle={`${totalMain} main categories · ${totalSubs} subcategories`}
         actions={<Button icon={<Plus size={14} />} onClick={() => setAdding(true)}>Add Category</Button>}
       />
 
       <div className="px-4 sm:px-7 pt-5 pb-8">
-        <div className="bg-white border border-bone rounded-[10px] overflow-hidden">
+        <div className="bg-white border border-bone rounded-xl overflow-hidden">
           {loading ? (
             <div className="px-4 py-4 flex flex-col gap-3">
               {Array.from({ length: 4 }).map((_, i) => <SkeletonBox key={i} className="h-6 w-full" />)}

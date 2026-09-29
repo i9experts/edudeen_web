@@ -253,6 +253,61 @@ export function apiGetTaxReports(storeId: string) {
   return client.get<never, TaxReport[]>(ENDPOINTS.FINANCE.SELLER.TAX_REPORTS(storeId));
 }
 
+// ── Monthly statement (Earnings) ────────────────────────────────────────────
+export interface MonthlyStatementTransaction {
+  id:          string;
+  type:        TransactionType | string;
+  amount:      number;
+  description: string;
+  referenceId: string | null;
+  createdAt:   string;
+  status:      TransactionStatus | string;
+}
+
+export interface MonthlyStatement {
+  /** YYYY-MM */
+  month:             string;
+  currency:          string;
+  /** Platform commission rate, as a percentage (e.g. 10 = 10%) or a fraction (0.1) — see formatCommissionRate. */
+  commissionRate:    number;
+  orderCount:        number;
+  grossSales:        number;
+  commission:        number;
+  processingFees:    number;
+  refunds:           number;
+  /** Commission owed on cash-on-delivery orders (seller kept the cash) — deducted from the next payout. */
+  codCommissionOwed: number;
+  netEarnings:       number;
+  /** Can be negative when COD commission owed exceeds cleared earnings. */
+  availableBalance:  number;
+  pendingBalance:    number;
+  nextPayoutDate:    string | null;
+  payoutFrequency:   string | null;
+  payout: {
+    id:          string;
+    status:      PayoutStatus | string;
+    amount:      number;
+    createdAt:   string;
+    processedAt: string | null;
+  } | null;
+  transactions: MonthlyStatementTransaction[];
+}
+
+// Same unwrap convention as every other seller finance call above: the
+// backend returns the statement object directly and the interceptor hands
+// back that body. `month` defaults to the current UTC month server-side,
+// `currency` to the store's baseCurrency. Defensive: also tolerates a
+// `{ success, data }` envelope so a future shape change can't break the page.
+export async function apiGetMonthlyStatement(storeId: string, month: string, currency?: string) {
+  const res = await client.get<never, MonthlyStatement | { success?: boolean; data: MonthlyStatement }>(
+    `${ENDPOINTS.FINANCE.SELLER.MONTHLY_STATEMENT(storeId)}${qs({ month, currency })}`,
+  );
+  if (res && typeof res === 'object' && 'data' in res && res.data && typeof res.data === 'object' && 'grossSales' in res.data) {
+    return res.data;
+  }
+  return res as MonthlyStatement;
+}
+
 export function apiGenerateTaxReport(storeId: string, year: number, period: 'q1' | 'q2' | 'q3' | 'q4' | 'annual', currency?: string) {
   return client.post<never, TaxReport>(`${ENDPOINTS.FINANCE.SELLER.GENERATE_TAX_REPORT(storeId)}${qs({ year, period, currency })}`);
 }

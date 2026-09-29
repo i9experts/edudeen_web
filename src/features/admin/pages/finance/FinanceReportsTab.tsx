@@ -62,8 +62,8 @@ export function FinanceReportsTab({ params }: { params: AdminFinanceParams }) {
       ) : settlement.error ? (
         <AnalyticsErrorState message={settlement.error} onRetry={settlement.refetch} />
       ) : settlement.data ? (
-        <div className="bg-white border border-bone rounded-[10px] px-5 py-5 flex flex-col gap-4">
-          <p className="text-[14px] font-bold text-charcoal">Settlement Report</p>
+        <div className="bg-white border border-bone rounded-xl px-5 py-5 flex flex-col gap-4">
+          <p className="font-serif font-normal text-[19px] sm:text-[21px] text-carbon leading-[1.25]">Settlement Report</p>
           {settlement.data.byCurrency.map((c) => (
             <div key={c.currency}>
               <p className="text-[12px] font-semibold text-slate uppercase tracking-[0.06em] mb-2">{c.currency}</p>
@@ -110,9 +110,9 @@ export function FinanceReportsTab({ params }: { params: AdminFinanceParams }) {
       ) : exposure.error ? (
         <AnalyticsErrorState message={exposure.error} onRetry={exposure.refetch} />
       ) : exposure.data ? (
-        <div className="bg-white border border-bone rounded-[10px] px-5 py-5">
+        <div className="bg-white border border-bone rounded-xl px-5 py-5">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-[14px] font-bold text-charcoal">FX Exposure</p>
+            <p className="font-serif font-normal text-[19px] sm:text-[21px] text-carbon leading-[1.25]">FX Exposure</p>
             <StatusBadge status={exposure.data.breached ? 'Flagged' : 'Active'} />
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3">
@@ -126,9 +126,9 @@ export function FinanceReportsTab({ params }: { params: AdminFinanceParams }) {
       ) : null}
 
       {/* Reconciliation — daily buyer-collected vs. ledger comparison */}
-      <div className="bg-white border border-bone rounded-[10px]">
+      <div className="bg-white border border-bone rounded-xl">
         <div className="px-5 pt-4 pb-3">
-          <p className="text-[14px] font-bold text-charcoal">Reconciliation Runs</p>
+          <p className="font-serif font-normal text-[19px] sm:text-[21px] text-carbon leading-[1.25]">Reconciliation Runs</p>
           <p className="text-[12px] text-slate">Daily comparison of buyer collections against the finance ledger, per currency.</p>
         </div>
         {reconciliation.error ? (
@@ -145,9 +145,9 @@ export function FinanceReportsTab({ params }: { params: AdminFinanceParams }) {
       </div>
 
       {/* Refunds */}
-      <div className="bg-white border border-bone rounded-[10px]">
+      <div className="bg-white border border-bone rounded-xl">
         <div className="px-5 pt-4 pb-3">
-          <p className="text-[14px] font-bold text-charcoal">Refund Report</p>
+          <p className="font-serif font-normal text-[19px] sm:text-[21px] text-carbon leading-[1.25]">Refund Report</p>
           {refunds.data?.note && <p className="text-[12px] text-slate">{refunds.data.note}</p>}
         </div>
         {refunds.error ? (
@@ -164,9 +164,9 @@ export function FinanceReportsTab({ params }: { params: AdminFinanceParams }) {
       </div>
 
       {/* Tax reports */}
-      <div className="bg-white border border-bone rounded-[10px]">
+      <div className="bg-white border border-bone rounded-xl">
         <div className="px-5 pt-4 pb-3">
-          <p className="text-[14px] font-bold text-charcoal">Tax Reports</p>
+          <p className="font-serif font-normal text-[19px] sm:text-[21px] text-carbon leading-[1.25]">Tax Reports</p>
           <p className="text-[12px] text-slate">Generated per-store by sellers (Finance → Tax Reports).</p>
         </div>
         {taxReports.error ? (

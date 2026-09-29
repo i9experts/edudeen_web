@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  ShoppingBag, Heart, Bell, MapPin, Package, ImageOff, ChevronRight,
+  ShoppingBag, Heart, Bell, MapPin, Package, ChevronRight,
   ShieldCheck, Mail, UserCog, Sparkles, ArrowRight, Store,
 } from 'lucide-react';
+import { ProductCoverFallback } from '@/components/comman/marketplace/ProductCoverFallback';
 import { useGetProfile } from '@/hooks/auth/useGetProfile';
 import { TokenStorage } from '@/api/services/auth';
 import { useWishlistContext } from '@/contexts/WishlistContext';
@@ -50,11 +51,7 @@ function RecentOrderRow({ order }: { order: OrderSummary }) {
 function WishlistPreviewImg({ src, name }: { src?: string; name: string }) {
   const [err, setErr] = useState(false);
   if (!src || err) {
-    return (
-      <div className="w-12 h-12 rounded-[9px] bg-brand-pale-orange shrink-0 flex items-center justify-center border border-[#edebe2]">
-        <ImageOff size={16} className="text-brand-orange opacity-40" />
-      </div>
-    );
+    return <ProductCoverFallback name={name} size="xs" className="w-12 h-12 rounded-[9px] shrink-0" />;
   }
   return <img loading="lazy" decoding="async" src={src} alt={name} onError={() => setErr(true)} className="w-12 h-12 rounded-[9px] object-cover shrink-0 border border-[#edebe2]" />;
 }

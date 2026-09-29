@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useLeads, useLeadDetail, useLeadActions } from '@/hooks/admin/useAdminMarketplace';
 import type { LeadRow, LeadVerificationStatus } from '@/api/services/marketplace/adminMarketplace';
-import { Table, Button, Modal, SearchInput, FilterDropdown, Badge, StatusBadge, SkeletonBox, AdminPageHeader } from '@/components/comman/ui';
+import { Table, Button, Modal, SearchInput, FilterDropdown, Badge, StatusBadge, SkeletonBox } from '@/components/comman/ui';
+import { AdminStudioHeader } from '@/features/admin/components/studio';
 import type { TableColumn } from '@/components/comman/ui';
 import { AnalyticsErrorState } from '@/components/comman/analytics/AnalyticsErrorState';
 import { formatDate } from '@/components/comman/analytics/format';
@@ -321,7 +322,7 @@ export function AdminLeads() {
 
   return (
     <>
-      <AdminPageHeader
+      <AdminStudioHeader eyebrow="Edudeen team workspace · Commerce"
         title="Leads"
         subtitle="New stores submitted through onboarding — review business verification and approve or reject before they go live."
         actions={<Button variant="outline" size="sm" icon={<RefreshCw size={13} />} onClick={refetch}>Refresh</Button>}
@@ -329,7 +330,7 @@ export function AdminLeads() {
       <div className="px-4 sm:px-7 pt-6 pb-8 flex flex-col gap-5">
       {actionError && <div className="bg-error-bg border border-error-border rounded-lg px-4 py-2.5 text-[12.5px] text-error">{actionError}</div>}
 
-      <div className="bg-white border border-bone rounded-[10px] overflow-hidden">
+      <div className="bg-white border border-bone rounded-xl overflow-hidden">
         <div className="flex items-center gap-[10px] px-5 py-[14px] border-b border-bone flex-wrap">
           <SearchInput value={search} onChange={v => { setSearch(v); setPage(1); }} placeholder="Search by store name…" className="flex-1 max-w-[300px]" />
           <FilterDropdown

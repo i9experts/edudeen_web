@@ -8,7 +8,8 @@ import {
   useUpdateMaintenanceMode,
 } from '@/hooks/admin/useAdminConfig';
 import type { PlatformConfig, AiConfig, EmailConfig, ManualPaymentConfig } from '@/api/services/config/adminConfig';
-import { Toggle, Input, Textarea, Select, Button, Modal, SkeletonBox, AdminPageHeader } from '@/components/comman/ui';
+import { Toggle, Input, Textarea, Select, Button, Modal, SkeletonBox } from '@/components/comman/ui';
+import { AdminStudioHeader } from '@/features/admin/components/studio';
 import { AnalyticsErrorState } from '@/components/comman/analytics/AnalyticsErrorState';
 import { AlertCircle, AlertTriangle, CheckCircle2 } from 'lucide-react';
 
@@ -49,11 +50,11 @@ function MaintenanceCard({ config, onSaved }: { config: PlatformConfig; onSaved:
     <>
       <div
         className="bg-white rounded-[10px] px-[22px] py-5 transition-[border-color] duration-200"
-        style={{ border: config.maintenanceMode ? '2px solid #C13030' : '1px solid #E8E6DC' }}
+        style={{ border: config.maintenanceMode ? '2px solid #C13030' : '1px solid #E1E7EA' }}
       >
         <div className="flex items-center justify-between gap-4">
           <div>
-            <p className="text-[14px] font-bold text-charcoal flex items-center gap-[6px] mb-[3px]">
+            <p className="font-serif font-normal text-[19px] sm:text-[21px] text-carbon leading-[1.25] flex items-center gap-[6px] mb-[3px]">
               <AlertCircle size={15} className="text-error" /> Maintenance Mode
             </p>
             <p className="text-[12px] text-slate">When enabled, the platform shows a maintenance page to all users.</p>
@@ -123,8 +124,8 @@ function AiConfigCard({ config, onSaved }: { config: PlatformConfig; onSaved: (c
   }
 
   return (
-    <div className="bg-white border border-bone rounded-[10px] px-[22px] py-5">
-      <p className="text-[14px] font-bold text-charcoal mb-4">AI Configuration</p>
+    <div className="bg-white border border-bone rounded-xl px-[22px] py-5">
+      <p className="font-serif font-normal text-[19px] sm:text-[21px] text-carbon leading-[1.25] mb-4">AI Configuration</p>
       <div className="flex flex-col gap-[14px]">
         <Input
           label="Monthly Credit Limit (per seller)"
@@ -185,8 +186,8 @@ function EmailConfigCard({ config, onSaved }: { config: PlatformConfig; onSaved:
   }
 
   return (
-    <div className="bg-white border border-bone rounded-[10px] px-[22px] py-5">
-      <p className="text-[14px] font-bold text-charcoal mb-4">Email Configuration</p>
+    <div className="bg-white border border-bone rounded-xl px-[22px] py-5">
+      <p className="font-serif font-normal text-[19px] sm:text-[21px] text-carbon leading-[1.25] mb-4">Email Configuration</p>
       <div className="flex flex-col gap-[14px]">
         <Input label="From Name" value={fromName} onChange={(e) => setFromName(e.target.value)} />
         <Input label="From Email" type="email" value={fromEmail} onChange={(e) => setFromEmail(e.target.value)} error={validationError.includes('From Email') ? validationError : undefined} />
@@ -237,10 +238,10 @@ function ManualPaymentConfigCard({ config, onSaved }: { config: PlatformConfig; 
   }
 
   return (
-    <div className="bg-white border border-bone rounded-[10px] px-[22px] py-5">
+    <div className="bg-white border border-bone rounded-xl px-[22px] py-5">
       <div className="flex items-center justify-between gap-3 mb-4">
         <div>
-          <p className="text-[14px] font-bold text-charcoal">Manual Bank Transfer</p>
+          <p className="font-serif font-normal text-[19px] sm:text-[21px] text-carbon leading-[1.25]">Manual Bank Transfer</p>
           <p className="text-[11px] text-slate">Pakistan track — buyers transfer into your account and upload proof, reviewed here before an order is marked paid.</p>
         </div>
         <Toggle checked={form.enabled} onChange={(next) => setField('enabled', next)} />
@@ -310,7 +311,7 @@ export function AdminConfig() {
 
   return (
     <>
-      <AdminPageHeader title="Platform Config" subtitle="AI settings, email config and system controls." />
+      <AdminStudioHeader eyebrow="Edudeen team workspace · System" title="Platform Config" subtitle="AI settings, email config and system controls." />
       <div className="px-4 sm:px-7 pt-6 pb-8 flex flex-col gap-5">
       {loading && !config ? (
         <ConfigSkeleton />

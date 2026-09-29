@@ -59,8 +59,8 @@ interface TableProps<T = Record<string, unknown>> {
 }
 
 const TH =
-  'text-left text-[11px] font-semibold text-slate uppercase tracking-[0.05em] ' +
-  'px-5 py-[12px] whitespace-nowrap';
+  'text-left text-[12px] font-medium text-slate uppercase tracking-[0.04em] ' +
+  'px-5 py-[14px] whitespace-nowrap';
 
 export function Table<T = Record<string, unknown>>({
   columns, data, keyExtractor, onRowClick, pagination, className,
@@ -127,7 +127,7 @@ export function Table<T = Record<string, unknown>>({
           <div className="hidden sm:block overflow-x-auto">
             <table className="w-full border-collapse text-[13px]">
               <thead className="sticky top-0 z-[1]">
-                <tr className="border-y border-bone bg-cream">
+                <tr className="border-b border-bone bg-[#f5f8fa]">
                   {selectable && (
                     <th className={clsx(TH, 'w-[40px]')}>
                       <input
@@ -178,7 +178,7 @@ export function Table<T = Record<string, unknown>>({
               <tbody>
                 {loading ? (
                   Array.from({ length: loadingRows }).map((_, i) => (
-                    <tr key={`skeleton-${i}`} className={clsx(i < loadingRows - 1 && 'border-b border-[#f0eee6]')}>
+                    <tr key={`skeleton-${i}`} className={clsx(i < loadingRows - 1 && 'border-b border-bone')}>
                       {selectable && (
                         <td className="px-5 py-[14px]"><SkeletonBox width={16} height={16} rounded="4px" /></td>
                       )}
@@ -196,7 +196,7 @@ export function Table<T = Record<string, unknown>>({
                     <tr
                       key={rowKey}
                       className={clsx(
-                        i < data.length - 1 && 'border-b border-[#f0eee6]',
+                        i < data.length - 1 && 'border-b border-bone',
                         onRowClick && 'cursor-pointer',
                         'transition-colors duration-150 hover:bg-cream',
                       )}

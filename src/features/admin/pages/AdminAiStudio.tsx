@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { LayoutDashboard, ListChecks, Wallet, Receipt, Sparkles } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
-import { TabBar, AdminPageHeader, type Tab } from '@/components/comman/ui';
+import { TabBar, type Tab } from '@/components/comman/ui';
+import { AdminStudioHeader } from '@/features/admin/components/studio';
 
 import { OverviewTab } from './ai-studio/OverviewTab';
 import { GenerationsTab } from './ai-studio/GenerationsTab';
@@ -23,7 +24,7 @@ export function AdminAiStudio() {
 
   return (
     <div>
-      <AdminPageHeader title="AI Studio" subtitle="Cross-store AI usage oversight, credit wallets, and Edudeen's own AI-generated content." />
+      <AdminStudioHeader eyebrow="Edudeen team workspace · Growth" title="AI Studio" subtitle="Cross-store AI usage oversight, credit wallets, and Edudeen's own AI-generated content." />
 
       <div className="px-4 sm:px-7 pt-6 pb-8 flex flex-col gap-5">
       <TabBar tabs={TABS} active={activeTab} onChange={setActiveTab} />

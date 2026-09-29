@@ -5,7 +5,8 @@ import {
   useCampaigns, useCampaignActions, usePlatformCoupons, usePlatformCouponActions,
 } from '@/hooks/admin/useAdminMarketing';
 import type { Campaign, CampaignStatus, DiscountType, CampaignSponsorType, PlatformCoupon } from '@/api/services/marketing/adminMarketing';
-import { Button, Modal, Input, Textarea, Select, Table, StatusBadge, Badge, Toggle, TabBar, ImageUpload, ActionMenu, EmptyState, AdminPageHeader } from '@/components/comman/ui';
+import { Button, Modal, Input, Textarea, Select, Table, StatusBadge, Badge, Toggle, TabBar, ImageUpload, ActionMenu, EmptyState } from '@/components/comman/ui';
+import { AdminStudioHeader } from '@/features/admin/components/studio';
 import type { TableColumn, Tab } from '@/components/comman/ui';
 import { AnalyticsErrorState } from '@/components/comman/analytics/AnalyticsErrorState';
 import { formatDate, formatCurrency } from '@/components/comman/analytics/format';
@@ -279,7 +280,7 @@ function CampaignsTab() {
         <Button size="sm" icon={<Plus size={13} />} onClick={() => setCreating(true)}>New Campaign</Button>
       </div>
 
-      <div className="bg-white border border-bone rounded-[10px] overflow-hidden">
+      <div className="bg-white border border-bone rounded-xl overflow-hidden">
         {error ? (
           <div className="p-5"><AnalyticsErrorState message={error} onRetry={refetch} /></div>
         ) : (
@@ -427,7 +428,7 @@ function CouponsTab() {
         <Button size="sm" icon={<Plus size={13} />} onClick={() => setCreating(true)}>New Coupon</Button>
       </div>
 
-      <div className="bg-white border border-bone rounded-[10px] overflow-hidden">
+      <div className="bg-white border border-bone rounded-xl overflow-hidden">
         {error ? (
           <div className="p-5"><AnalyticsErrorState message={error} onRetry={refetch} /></div>
         ) : (
@@ -553,7 +554,7 @@ function ApprovePromotionModal({ request, onClose, onApproved }: { request: Prom
 }
 
 const PLACEMENT_STYLE: Record<PromotionPlacement, { Icon: typeof Store; accent: string; bg: string }> = {
-  homepageHero: { Icon: Store, accent: '#8C8A82', bg: '#F0EEE6' },
+  homepageHero: { Icon: Store, accent: '#64727B', bg: '#EDF2F4' },
   marketplaceHero: { Icon: Store, accent: '#1D5EAE', bg: '#EAF1FB' },
   educationHero: { Icon: GraduationCap, accent: '#7B3DAE', bg: '#F4EAFB' },
   categoryHero: { Icon: LayoutGrid, accent: '#1E7A8C', bg: '#E6F5F5' },
@@ -607,11 +608,11 @@ function PromotionCalendarModal({ onClose }: { onClose: () => void }) {
           <>
             {/* Summary strip */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="bg-white border border-bone rounded-[10px] px-3.5 py-3">
+              <div className="bg-white border border-bone rounded-xl px-3.5 py-3">
                 <p className="text-[10px] font-medium text-slate uppercase tracking-[0.06em] mb-1">Scheduled</p>
                 <p className="text-[18px] font-bold text-carbon leading-[1.15]">{totalPromotions}</p>
               </div>
-              <div className="bg-white border border-bone rounded-[10px] px-3.5 py-3">
+              <div className="bg-white border border-bone rounded-xl px-3.5 py-3">
                 <p className="text-[10px] font-medium text-slate uppercase tracking-[0.06em] mb-1">Revenue in Window</p>
                 <p className="text-[18px] font-bold text-carbon leading-[1.15]">{formatCurrency(totalRevenue)}</p>
               </div>
@@ -890,7 +891,7 @@ function PromotionsTab() {
             ['Buyer Revenue', formatCurrency(analytics.revenueUSD)],
             ['Ad Revenue', formatCurrency(analytics.platformRevenueUSD)],
           ].map(([label, value]) => (
-            <div key={label} className="bg-white border border-bone rounded-[10px] px-3.5 py-3">
+            <div key={label} className="bg-white border border-bone rounded-xl px-3.5 py-3">
               <p className="text-[10px] font-medium text-slate uppercase tracking-[0.06em] mb-1">{label}</p>
               <p className="text-[18px] font-bold text-carbon leading-[1.15]">{value}</p>
             </div>
@@ -913,7 +914,7 @@ function PromotionsTab() {
         </div>
       </div>
 
-      <div className="bg-white border border-bone rounded-[10px] overflow-hidden">
+      <div className="bg-white border border-bone rounded-xl overflow-hidden">
         {error ? (
           <div className="p-5"><AnalyticsErrorState message={error} onRetry={refetch} /></div>
         ) : (
@@ -957,7 +958,7 @@ export function AdminMarketing() {
 
   return (
     <>
-      <AdminPageHeader title="Marketing" subtitle="Platform-wide sale campaigns and coupon codes, separate from each seller's own store coupons." />
+      <AdminStudioHeader eyebrow="Edudeen team workspace · Growth" title="Marketing" subtitle="Platform-wide sale campaigns and coupon codes, separate from each seller's own store coupons." />
       <div className="px-4 sm:px-7 pt-6 pb-8 flex flex-col gap-5">
       <TabBar tabs={TABS} active={tab} onChange={setTab} />
 

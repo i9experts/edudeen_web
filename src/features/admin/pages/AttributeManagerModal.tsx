@@ -103,7 +103,7 @@ export function AttributeManagerModal({ categoryId, categoryName, onClose }: Pro
         ) : (
           <div className="border border-bone rounded-lg overflow-hidden">
             {definitions.map(def => (
-              <div key={def._id} className="flex items-center gap-2 px-3 py-2 border-b border-[#f0eee6] last:border-b-0">
+              <div key={def._id} className="flex items-center gap-2 px-3 py-2 border-b border-bone last:border-b-0">
                 <div className="flex-1 min-w-0">
                   <p className="text-[13px] font-semibold text-charcoal truncate">{def.label} <span className="text-[11px] text-slate font-normal">({def.key})</span></p>
                   <p className="text-[11px] text-slate">
