@@ -14,7 +14,7 @@ function BrowserChrome({ label }: { label: string }) {
   return (
     <div className="flex items-center gap-2 px-3 py-2 bg-cream border-b border-bone">
       <span className="size-[7px] rounded-full bg-[#e5675b]" />
-      <span className="size-[7px] rounded-full bg-[#e8b74e]" />
+      <span className="size-[7px] rounded-full bg-[#66AD36]" />
       <span className="size-[7px] rounded-full bg-[#59c26a]" />
       <span className="ml-2 text-[10px] text-slate truncate">{label}</span>
     </div>

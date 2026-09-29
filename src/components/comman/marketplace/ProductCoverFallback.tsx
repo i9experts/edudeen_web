@@ -6,9 +6,9 @@ import { clsx } from 'clsx';
 export const COVER_PALETTES = [
   { bg: '#dfedd6', accent: '#477d35' },
   { bg: '#e5eef8', accent: '#2863a2' },
-  { bg: '#f6eac9', accent: '#ad711e' },
+  { bg: '#e4f0d8', accent: '#3d7a24' },
   { bg: '#e8e1f1', accent: '#785793' },
-  { bg: '#f7e0d6', accent: '#af6045' },
+  { bg: '#eaf4e1', accent: '#5a8f2f' },
   { bg: '#dceceb', accent: '#2b7c77' },
   { bg: '#e2e9f2', accent: '#42688e' },
   { bg: '#eef0ce', accent: '#7b8129' },

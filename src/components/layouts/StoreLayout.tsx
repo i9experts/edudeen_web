@@ -288,7 +288,7 @@ function StoreSidebar({ open, onToggle }: StoreSidebarProps) {
   return (
     <>
       <aside className={clsx(
-        'hidden lg:flex bg-white border-r border-bone flex-col shrink-0',
+        'hidden lg:flex bg-[#f3f7fa] border-r border-[#d5dfe6] flex-col shrink-0',
         'transition-[width] duration-300 ease-in-out',
         'h-screen',
         open ? 'w-[248px]' : 'w-[68px]',
@@ -351,7 +351,7 @@ function StoreSidebar({ open, onToggle }: StoreSidebarProps) {
           {NAV.map(section => (
             <div key={section.group} className="mb-3">
               {open
-                ? <p className="text-[10.5px] font-bold text-slate px-3 py-1 uppercase tracking-[0.14em] mb-0.5">{section.group}</p>
+                ? <p className="text-[11px] font-bold text-graphite px-3 py-1 uppercase tracking-[0.12em] mb-0.5">{section.group}</p>
                 : <div className="h-px bg-bone mx-1 mb-2" />
               }
               {section.items.map(item => {
@@ -371,15 +371,15 @@ function StoreSidebar({ open, onToggle }: StoreSidebarProps) {
                       'flex items-center gap-[10px] py-[8px] px-3 rounded-lg mb-0.5 cursor-pointer',
                       'transition-colors duration-150',
                       !open && 'lg:justify-center lg:px-0',
-                      active ? 'bg-brand-pale-orange' : 'bg-transparent hover:bg-cream',
+                      active ? 'bg-brand-orange shadow-[0_2px_8px_rgba(23,71,113,0.28)]' : 'bg-transparent hover:bg-[#e3ecf3]',
                     )}
                   >
                     <item.Icon
                       size={16}
-                      className={clsx('shrink-0', active ? 'text-brand-orange' : 'text-slate')}
+                      className={clsx('shrink-0', active ? 'text-white' : 'text-charcoal')}
                     />
                     {open && (
-                      <span className={clsx('text-[13.5px] flex-1', active ? 'font-bold text-brand-orange' : 'font-normal text-graphite')}>
+                      <span className={clsx('text-[13.5px] flex-1', active ? 'font-semibold text-white' : 'font-medium text-carbon')}>
                         {item.label}
                       </span>
                     )}

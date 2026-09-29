@@ -556,7 +556,7 @@ export function ProductDetail() {
                       {product.activeCampaign && (
                         <span
                           title={`${product.activeCampaign.name} — ends ${new Date(product.activeCampaign.endDate).toLocaleDateString()}`}
-                          className="flex items-center gap-1 rounded-full bg-gradient-to-r from-brand-orange to-[#f0a57a] px-2.5 py-[3px] text-[11px] font-bold text-white"
+                          className="flex items-center gap-1 rounded-full bg-gradient-to-r from-brand-orange to-[#66AD36] px-2.5 py-[3px] text-[11px] font-bold text-white"
                         >
                           <Zap size={10} className="fill-white shrink-0" />
                           {product.activeCampaign.discountType && product.activeCampaign.discountValue != null

@@ -45,7 +45,7 @@ export function RailCard({ product, onClick, badge, rank, size = 'md', stockLabe
       {/* Hover accent — same sweep-in top line used on TopStoreCard/Feature cards,
          so this rail card finally reads as the same design system, not a
          separate/older component. */}
-      <div className="absolute top-0 left-0 right-0 h-[3px] z-[1] bg-gradient-to-r from-brand-orange to-[#f0a57a] scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300" />
+      <div className="absolute top-0 left-0 right-0 h-[3px] z-[1] bg-gradient-to-r from-brand-orange to-[#66AD36] scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300" />
 
       <div className="relative">
         <ProductImage

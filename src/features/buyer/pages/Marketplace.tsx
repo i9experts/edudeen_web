@@ -916,11 +916,11 @@ export function Marketplace() {
                then a live countdown + a way to leave the filter on the
                right. */
             <div className="relative mb-5 h-[110px] w-full overflow-hidden rounded-2xl border border-brand-orange/20">
-              <div className="gradient-drift absolute inset-0 bg-gradient-to-r from-brand-orange via-[#e28b63] to-brand-pale-orange" />
+              <div className="gradient-drift absolute inset-0 bg-gradient-to-r from-brand-orange via-[#4E8F28] to-brand-pale-orange" />
               <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(255,255,255,0.22),transparent_55%)]" />
               <div className="pointer-events-none absolute inset-0 opacity-[0.07] bg-[radial-gradient(circle_at_1px_1px,#ffffff_1px,transparent_0)] bg-[length:14px_14px]" />
               <div className="pointer-events-none absolute -top-8 left-[30%] size-24 rounded-full bg-white/15 blur-2xl" />
-              <div className="pointer-events-none absolute -bottom-10 right-[15%] size-28 rounded-full bg-[#7a3520]/20 blur-2xl" />
+              <div className="pointer-events-none absolute -bottom-10 right-[15%] size-28 rounded-full bg-[#0B2A45]/20 blur-2xl" />
               <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-white/30" />
 
               <div className="relative z-[1] flex h-full items-stretch gap-4 px-5 py-4">

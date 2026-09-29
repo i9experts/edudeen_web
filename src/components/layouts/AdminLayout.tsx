@@ -213,8 +213,8 @@ interface AdminSidebarProps { open: boolean; onToggle: () => void; }
 // Shared classes for the light "team workspace" rail — navy text/icon on a
 // pale-blue fill for the active entry, a soft cream hover otherwise.
 const NAV_FOCUS = 'outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/40';
-const NAV_ROW_ACTIVE = 'bg-brand-pale-orange text-brand-orange';
-const NAV_ROW_IDLE = 'bg-transparent text-graphite hover:bg-cream hover:text-carbon';
+const NAV_ROW_ACTIVE = 'bg-brand-orange text-white shadow-[0_2px_8px_rgba(23,71,113,0.28)]';
+const NAV_ROW_IDLE = 'bg-transparent text-carbon hover:bg-[#e3ecf3]';
 
 // Desktop only now — mobile navigation is AdminBottomNav below, a real
 // bottom tab bar plus a "Settings" tab that hosts every other module's
@@ -284,7 +284,7 @@ function AdminSidebar({ open, onToggle }: AdminSidebarProps) {
       <aside
         aria-label="Admin navigation"
         className={clsx(
-          'hidden lg:flex bg-white border-r border-bone flex-col shrink-0',
+          'hidden lg:flex bg-[#f3f7fa] border-r border-[#d5dfe6] flex-col shrink-0',
           'transition-[width] duration-300 ease-in-out',
           'h-screen',
           open ? 'w-[236px]' : 'w-[64px]',
@@ -353,7 +353,7 @@ function AdminSidebar({ open, onToggle }: AdminSidebarProps) {
                     active ? NAV_ROW_ACTIVE : NAV_ROW_IDLE,
                   )}
                 >
-                  <module.Icon size={16} className={clsx('shrink-0', active ? 'text-brand-orange' : 'text-slate')} />
+                  <module.Icon size={16} className={clsx('shrink-0', active ? 'text-white' : 'text-charcoal')} />
                   {open && (
                     <span className={clsx('text-[13px] flex-1 truncate', active ? 'font-semibold' : 'font-medium')}>
                       {module.label}
@@ -391,10 +391,10 @@ function AdminSidebar({ open, onToggle }: AdminSidebarProps) {
                     !open && 'justify-center px-0',
                     !open && moduleHasActive
                       ? NAV_ROW_ACTIVE
-                      : clsx('bg-transparent hover:bg-cream', moduleHasActive ? 'text-carbon' : 'text-graphite hover:text-carbon'),
+                      : clsx('bg-transparent hover:bg-[#e3ecf3] text-carbon', moduleHasActive && 'bg-[#e3ecf3]'),
                   )}
                 >
-                  <module.Icon size={16} className={clsx('shrink-0', moduleHasActive ? 'text-brand-orange' : 'text-slate')} />
+                  <module.Icon size={16} className={clsx('shrink-0', moduleHasActive ? 'text-brand-orange' : 'text-charcoal')} />
                   {open && (
                     <>
                       <span className={clsx('text-[13px] flex-1 truncate', moduleHasActive ? 'font-semibold' : 'font-medium')}>
@@ -402,14 +402,14 @@ function AdminSidebar({ open, onToggle }: AdminSidebarProps) {
                       </span>
                       <ChevronDown
                         size={14}
-                        className={clsx('shrink-0 text-slate transition-transform duration-200', expanded && 'rotate-180')}
+                        className={clsx('shrink-0 text-graphite transition-transform duration-200', expanded && 'rotate-180')}
                       />
                     </>
                   )}
                 </button>
 
                 {expanded && (
-                  <div id={groupId} role="group" aria-label={module.label} className="mt-0.5 mb-1 ml-[18px] pl-[10px] border-l border-bone flex flex-col gap-0.5">
+                  <div id={groupId} role="group" aria-label={module.label} className="mt-0.5 mb-1 ml-[18px] pl-[10px] border-l-2 border-[#cdd9e2] flex flex-col gap-0.5">
                     {children.map(item => {
                       const active = isActive(item.path);
                       return (
@@ -425,8 +425,8 @@ function AdminSidebar({ open, onToggle }: AdminSidebarProps) {
                             active ? NAV_ROW_ACTIVE : NAV_ROW_IDLE,
                           )}
                         >
-                          <item.Icon size={14} className={clsx('shrink-0', active ? 'text-brand-orange' : 'text-slate')} />
-                          <span className={clsx('text-[12.5px] flex-1 truncate', active ? 'font-semibold' : 'font-normal')}>
+                          <item.Icon size={14} className={clsx('shrink-0', active ? 'text-white' : 'text-charcoal')} />
+                          <span className={clsx('text-[13px] flex-1 truncate', active ? 'font-semibold' : 'font-medium')}>
                             {item.label}
                           </span>
                         </button>
@@ -451,10 +451,10 @@ function AdminSidebar({ open, onToggle }: AdminSidebarProps) {
               aria-current={isActive('/admin/settings') ? 'page' : undefined}
               className={clsx(
                 'flex items-center gap-2 rounded-lg py-1.5 px-1 border-none text-left flex-1 min-w-0 bg-transparent',
-                'cursor-pointer transition-colors duration-150 hover:bg-cream',
+                'cursor-pointer transition-colors duration-150 hover:bg-[#e3ecf3]',
                 NAV_FOCUS,
                 !open && 'flex-col justify-center',
-                isActive('/admin/settings') && 'bg-brand-pale-orange',
+                isActive('/admin/settings') && 'bg-[#e3ecf3]',
               )}
             >
               <div className="size-8 rounded-full shrink-0 bg-brand-orange flex items-center justify-center overflow-hidden text-[10.5px] font-bold text-white">

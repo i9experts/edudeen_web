@@ -110,7 +110,7 @@ export function ClosingCtaBanner({ className }: { className?: string }) {
     : FALLBACK_PREVIEW_ITEMS;
 
   return (
-    <section className={clsx('grain-overlay relative overflow-hidden bg-gradient-to-br from-brand-orange via-[#f0a57a] to-brand-deep-orange', className)}>
+    <section className={clsx('grain-overlay relative overflow-hidden bg-gradient-to-br from-brand-orange via-[#66AD36] to-brand-deep-orange', className)}>
       <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-white/40 to-white/10" />
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute w-[280px] h-[280px] rounded-full -top-24 -left-10 bg-white/10 blur-3xl" />

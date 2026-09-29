@@ -302,7 +302,7 @@ export const ProductCard = memo(function ProductCard({ product, onClick, onAddTo
               ? 'bg-info-bg text-info border-info/25'
               : isDigital
                 ? 'bg-[#ede9fe] text-[#7c3aed] border-[#ddd6fe]'
-                : 'bg-brand-pale-orange text-brand-deep-orange border-[#f5d0bc]',
+                : 'bg-[#edf5e7] text-[#3b6720] border-[#c7e0b5]',
           )}>
             {typeLabel}
           </span>

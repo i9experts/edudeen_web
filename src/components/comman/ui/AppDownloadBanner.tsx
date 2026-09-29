@@ -124,7 +124,7 @@ const HOME_CATEGORIES = [
 // in the app — not a fabricated USD price.
 const FLASH_DEAL_PRODUCTS = [
   { name: 'Smartphone',           color: '#111111', price: 54999,  compareAt: 91998,  pct: 40 },
-  { name: 'Wireless Headphones',  color: '#F3E7DB', price: 3499,   compareAt: 6998,   pct: 50 },
+  { name: 'Wireless Headphones',  color: '#E4F0DA', price: 3499,   compareAt: 6998,   pct: 50 },
 ];
 
 export function HomeScreenMockup() {
@@ -366,7 +366,7 @@ function CompactAppDownloadBanner({ className }: { className?: string }) {
             this clipped layer) are still free to bleed above the card's top
             edge for the floating-app effect instead of getting cut off. */}
         <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
-          <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-brand-orange to-[#f0a57a]" />
+          <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-brand-orange to-[#66AD36]" />
           <div className="absolute w-[160px] h-[160px] rounded-full bg-[#3a3633] -top-12 -right-8" />
           {/* Purely decorative — no carousel behind this banner, just the same
              small dot accent the reference design has near the phone cluster. */}
@@ -501,7 +501,7 @@ export function AppDownloadBanner({ className, variant = 'full' }: { className?:
   return (
     <section className={clsx('relative overflow-hidden rounded-2xl bg-gradient-to-br from-carbon to-charcoal', className)}>
       {/* Thin top accent line */}
-      <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-brand-orange to-[#f0a57a]" />
+      <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-brand-orange to-[#66AD36]" />
 
       {/* Soft ambient circle + faint dotted-grid texture — CSS only. No orange
           here — the only orange glow in this banner lives locally behind the

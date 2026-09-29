@@ -70,7 +70,7 @@ export function findAccountNavLabel(pathname: string, groups: NavGroup[]): strin
   return 'My Account';
 }
 
-// ── Sidebar (mirrors the seller StoreLayout dark sidebar) — desktop only.
+// ── Sidebar (same light studio sidebar as the seller/admin panels) — desktop only.
 // Mobile navigation lives entirely in AccountDashboard's own menu list now
 // (native-app style: a flat list of destinations + a back arrow on each
 // sub-page), not a hamburger-triggered copy of this same rail. ─────────────
@@ -87,7 +87,7 @@ function AccountSidebar({ open, onToggle }: SidebarProps) {
 
   return (
     <aside className={clsx(
-      'hidden lg:flex bg-carbon flex-col shrink-0 h-screen',
+      'hidden lg:flex bg-[#f3f7fa] border-r border-[#d5dfe6] flex-col shrink-0 h-screen',
       'transition-[width] duration-300 ease-in-out',
       open ? 'w-[220px]' : 'w-[60px]',
     )}>
@@ -98,14 +98,14 @@ function AccountSidebar({ open, onToggle }: SidebarProps) {
             <>
               <button
                 onClick={() => navigate('/')}
-                className="flex items-center gap-[7px] flex-1 bg-transparent border-0 cursor-pointer text-slate text-[12px] font-medium transition-colors duration-150 text-left hover:text-brand-orange"
+                className="flex items-center gap-[7px] flex-1 bg-transparent border-0 cursor-pointer text-carbon text-[13px] font-semibold transition-colors duration-150 text-left hover:text-brand-orange"
               >
                 <ChevronLeft size={14} /> Home
               </button>
               <button
                 onClick={onToggle}
                 title="Collapse sidebar"
-                className="size-9 rounded-md flex items-center justify-center shrink-0 text-slate hover:text-white hover:bg-dark-active transition-colors cursor-pointer"
+                className="size-9 rounded-md flex items-center justify-center shrink-0 text-charcoal hover:text-brand-orange hover:bg-[#e3ecf3] transition-colors cursor-pointer"
               >
                 <PanelLeftClose size={15} />
               </button>
@@ -115,14 +115,14 @@ function AccountSidebar({ open, onToggle }: SidebarProps) {
               <button
                 onClick={() => navigate('/')}
                 title="Home"
-                className="size-9 rounded-md flex items-center justify-center text-slate hover:text-brand-orange hover:bg-dark-active transition-colors cursor-pointer"
+                className="size-9 rounded-md flex items-center justify-center text-charcoal hover:text-brand-orange hover:bg-[#e3ecf3] transition-colors cursor-pointer"
               >
                 <ChevronLeft size={15} />
               </button>
               <button
                 onClick={onToggle}
                 title="Expand sidebar"
-                className="size-9 rounded-md flex items-center justify-center shrink-0 text-slate hover:text-white hover:bg-dark-active transition-colors cursor-pointer"
+                className="size-9 rounded-md flex items-center justify-center shrink-0 text-charcoal hover:text-brand-orange hover:bg-[#e3ecf3] transition-colors cursor-pointer"
               >
                 <PanelLeftOpen size={15} />
               </button>
@@ -130,15 +130,15 @@ function AccountSidebar({ open, onToggle }: SidebarProps) {
           )}
         </div>
 
-        <div className="h-px bg-dark-active mx-3 mb-[6px]" />
+        <div className="h-px bg-[#d5dfe6] mx-3 mb-[6px]" />
 
         {/* Nav */}
         <nav className={clsx('flex-1 overflow-y-auto', open ? 'px-[10px] pt-1' : 'px-[10px] pt-2')}>
           {navGroups.map(section => (
             <div key={section.group} className="mb-1">
               {open
-                ? <p className="text-[10px] font-semibold text-dark-label px-2 py-1 uppercase tracking-[0.08em] mb-0.5">{section.group}</p>
-                : <div className="h-px bg-dark-active mx-1 mb-2" />
+                ? <p className="text-[11px] font-bold text-graphite px-2 py-1 uppercase tracking-[0.12em] mb-0.5">{section.group}</p>
+                : <div className="h-px bg-[#d5dfe6] mx-1 mb-2" />
               }
               {section.items.map(item => {
                 const active = isActive(item.path);
@@ -156,24 +156,24 @@ function AccountSidebar({ open, onToggle }: SidebarProps) {
                       'flex items-center gap-[10px] min-h-11 py-[9px] px-[10px] rounded-md mb-0.5 cursor-pointer',
                       'transition-colors duration-150',
                       !open && 'lg:justify-center lg:px-0',
-                      active ? 'bg-dark-active' : 'bg-transparent hover:bg-[#1a1917]',
+                      active ? 'bg-brand-orange shadow-[0_2px_8px_rgba(23,71,113,0.28)]' : 'bg-transparent hover:bg-[#e3ecf3]',
                     )}
                   >
-                    <item.Icon size={15} className={clsx('shrink-0', active ? 'text-brand-orange opacity-100' : 'text-slate opacity-55')} />
+                    <item.Icon size={15} className={clsx('shrink-0', active ? 'text-white' : 'text-charcoal')} />
                     {open && (
                       <>
-                        <span className={clsx('text-[13px] flex-1', active ? 'font-semibold text-white' : 'font-normal text-slate')}>
+                        <span className={clsx('text-[13.5px] flex-1', active ? 'font-semibold text-white' : 'font-medium text-carbon')}>
                           {item.label}
                         </span>
                         {!!item.badge && item.badge > 0 && (
                           <span className={clsx(
                             'text-[9px] font-bold px-[6px] py-[1px] rounded-full leading-[14px] shrink-0',
-                            active ? 'bg-brand-orange text-white' : 'bg-dark-active text-slate',
+                            active ? 'bg-white text-brand-orange' : 'bg-brand-orange text-white',
                           )}>
                             {item.badge > 99 ? '99+' : item.badge}
                           </span>
                         )}
-                        {active && <div className="w-[3px] h-[14px] rounded-[2px] bg-brand-orange shrink-0" />}
+                        
                       </>
                     )}
                   </div>
@@ -185,12 +185,12 @@ function AccountSidebar({ open, onToggle }: SidebarProps) {
 
         {/* Footer */}
         {open ? (
-          <div className="px-4 py-3 border-t border-dark-active shrink-0 flex items-center gap-2">
+          <div className="px-4 py-3 border-t border-[#d5dfe6] shrink-0 flex items-center gap-2">
             <EdudeenIcon size={20} />
-            <p className="text-[11px] text-dark-label">My Account</p>
+            <p className="text-[12px] font-semibold text-graphite">My Account</p>
           </div>
         ) : (
-          <div className="py-3 border-t border-dark-active flex justify-center shrink-0">
+          <div className="py-3 border-t border-[#d5dfe6] flex justify-center shrink-0">
             <EdudeenIcon size={20} />
           </div>
         )}

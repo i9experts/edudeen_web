@@ -435,7 +435,7 @@ export function StoreBuilder() {
           Publish. Shown whenever the draft actually differs from what's
           live, on any of those 4 tabs. */}
       {hasUnpublishedChanges && ['theme', 'header', 'footer', 'storeInfo'].includes(tab) && (
-        <div className="mx-4 lg:mx-7 mt-4 flex flex-wrap items-center justify-between gap-3 bg-brand-pale-orange border border-[#f5d0bc] rounded-2xl px-4 py-3">
+        <div className="mx-4 lg:mx-7 mt-4 flex flex-wrap items-center justify-between gap-3 bg-brand-pale-orange border border-[#c7e0b5] rounded-2xl px-4 py-3">
           <p className="text-[12.5px] font-semibold text-brand-deep-orange">You have unpublished changes — your live storefront still shows the last published version.</p>
           <div className="flex items-center gap-2 shrink-0">
             <a

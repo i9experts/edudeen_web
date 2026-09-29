@@ -56,49 +56,49 @@ function WishlistPreviewImg({ src, name }: { src?: string; name: string }) {
   return <img loading="lazy" decoding="async" src={src} alt={name} onError={() => setErr(true)} className="w-12 h-12 rounded-[9px] object-cover shrink-0 border border-[#edebe2]" />;
 }
 
-// ── Welcome hero — same warm-hero language the Seller dashboard already uses
-// (dot-grid overlay, glow orb, avatar + greeting + primary actions), just
-// recolored to the buyer's own warm brand-orange gradient instead of
-// Seller's dark carbon one. Deliberate: this is a customer workspace, not a
-// business-operations one, so it should feel like a different product built
-// on the same system, not an identical dark dashboard reused verbatim. ──
+// ── Welcome hero — the storefront's own hero language (pale blue panel,
+// royal-blue eyebrow, serif greeting, navy primary + white secondary
+// button), so the account area reads as part of the same site. ──
 function WelcomeHero({ name, image, memberSince }: { name?: string; image?: string | null; memberSince: string }) {
   const navigate = useNavigate();
+  const firstName = name?.split(' ')[0];
+  const displayName = firstName ? firstName.charAt(0).toUpperCase() + firstName.slice(1) : '';
   return (
-    <div className="dash-section-enter relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-orange via-[#c9694a] to-brand-deep-orange px-6 py-6 sm:px-7 sm:py-7 flex flex-col sm:flex-row sm:items-center gap-5 sm:gap-6">
-      <div
-        className="pointer-events-none absolute inset-0 opacity-[0.08]"
-        style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '22px 22px' }}
-      />
-      <div className="pointer-events-none absolute -top-16 -right-10 size-56 rounded-full bg-white/15 blur-3xl" />
-
+    <div className="dash-section-enter relative overflow-hidden rounded-[18px] bg-[#eaf2f8] px-6 py-6 sm:px-8 sm:py-7 flex flex-col sm:flex-row sm:items-center gap-5 sm:gap-6">
       <div className="relative flex items-center gap-4 flex-1 min-w-0">
         {image ? (
           <img
             loading="lazy" decoding="async"
             src={image} alt={name ?? 'You'}
-            className="size-14 rounded-2xl object-cover ring-2 ring-white/25 shrink-0"
+            className="size-14 rounded-full object-cover ring-4 ring-white shrink-0"
           />
         ) : (
-          <div className="size-14 rounded-2xl bg-white/15 ring-2 ring-white/25 flex items-center justify-center shrink-0">
-            <Avatar name={name ?? 'You'} size={44} />
+          <div className="size-14 rounded-full bg-white ring-4 ring-white flex items-center justify-center shrink-0">
+            <Avatar name={name ?? 'You'} size={48} />
           </div>
         )}
         <div className="min-w-0">
-          <p className="text-[20px] sm:text-[22px] font-bold text-white leading-tight truncate">
-            Welcome back{name ? `, ${name.split(' ')[0]}` : ''}
+          <p className="text-[11px] sm:text-[12px] font-bold tracking-[0.15em] uppercase text-brand-royal mb-1.5">Your Edudeen account</p>
+          <p className="font-serif font-normal text-[24px] sm:text-[30px] text-carbon leading-[1.15] tracking-[-0.5px] truncate">
+            Welcome back{displayName ? `, ${displayName}` : ''}.
           </p>
-          <p className="text-[12px] text-white/75 mt-1">Member since {memberSince}</p>
+          <p className="text-[13px] text-graphite mt-1">Member since {memberSince}</p>
         </div>
       </div>
 
       <div className="relative flex items-center gap-2 flex-wrap shrink-0">
-        <Button variant="outline" size="sm" className="!bg-white/10 !border-white/20 !text-white hover:!bg-white/20" onClick={() => navigate('/account/orders')}>
-          Track Orders
-        </Button>
-        <Button variant="dark" size="sm" icon={<Store size={14} />} onClick={() => navigate('/marketplace')}>
-          Continue Shopping
-        </Button>
+        <button
+          onClick={() => navigate('/account/orders')}
+          className="bg-white text-brand-orange border border-[#c5d2db] rounded-lg px-5 py-[10px] text-[14px] font-bold cursor-pointer hover:brightness-95"
+        >
+          Track orders
+        </button>
+        <button
+          onClick={() => navigate('/marketplace')}
+          className="inline-flex items-center gap-2 bg-brand-orange text-white border border-brand-orange rounded-lg px-5 py-[10px] text-[14px] font-bold cursor-pointer hover:brightness-95"
+        >
+          <Store size={15} /> Continue shopping
+        </button>
       </div>
     </div>
   );
@@ -117,7 +117,7 @@ function MobileProfileHero({
 }) {
   return (
     <div className="lg:hidden -mx-4 -mt-4">
-      <div className="relative overflow-hidden bg-gradient-to-br from-brand-orange via-[#d98a6f] to-[#f0b8a0] px-6 pt-8 pb-12 flex flex-col items-center text-center">
+      <div className="relative overflow-hidden bg-gradient-to-br from-brand-orange via-[#4E8F28] to-brand-royal px-6 pt-8 pb-12 flex flex-col items-center text-center">
         <div
           className="pointer-events-none absolute inset-0 opacity-[0.08]"
           style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '22px 22px' }}

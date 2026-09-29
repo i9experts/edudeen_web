@@ -60,7 +60,7 @@ function MobileSellerHero({
 }) {
   return (
     <div className="lg:hidden -mx-4 -mt-5">
-      <div className="relative overflow-hidden bg-gradient-to-br from-brand-orange via-[#d98a6f] to-[#f0b8a0] px-6 pt-8 pb-12 flex flex-col items-center text-center">
+      <div className="relative overflow-hidden bg-gradient-to-br from-brand-orange via-[#4E8F28] to-[#66AD36] px-6 pt-8 pb-12 flex flex-col items-center text-center">
         <div
           className="pointer-events-none absolute inset-0 opacity-[0.08]"
           style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '22px 22px' }}

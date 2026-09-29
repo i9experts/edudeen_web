@@ -213,20 +213,20 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
         {compact ? (
           label ? (
             /* Compact + label: the exact same light warm gradient (orange →
-               `#e28b63` → `#f3a27a`) the default/non-compact card below
+               `#2863A2` → `#5B9BD5`) the default/non-compact card below
                already uses — on-theme, no foreign hue — plus the same
                depth tricks that card uses to keep it from reading as a flat
                two-tone streak: a soft top-left highlight, and a warm dark
-               blur (`#7a3520`, also lifted from that same card) sitting
+               blur (`#0B2A45`, also lifted from that same card) sitting
                behind the countdown/CTA column so the white text there stays
                legible even though the base gradient itself is light. No
                rounding on the outer layer here (unlike every other variant)
                — this card is meant to sit full-width/edge-to-edge against
                the page, not read as a floating rounded card. */
             <div className="absolute inset-0 overflow-hidden border border-black/10">
-              <div className="gradient-drift absolute inset-0 bg-gradient-to-r from-brand-orange via-[#e28b63] to-[#f3a27a]" />
+              <div className="gradient-drift absolute inset-0 bg-gradient-to-r from-brand-orange via-[#4E8F28] to-[#66AD36]" />
               <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(255,255,255,0.22),transparent_55%)]" />
-              <div className="pointer-events-none absolute -bottom-10 right-[6%] size-32 rounded-full bg-[#7a3520]/35 blur-3xl" />
+              <div className="pointer-events-none absolute -bottom-10 right-[6%] size-32 rounded-full bg-[#0B2A45]/35 blur-3xl" />
               <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-white/25" />
             </div>
           ) : (
@@ -234,11 +234,11 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
           )
         ) : (
           <div className="absolute inset-0 overflow-hidden rounded-[20px] border border-black/10">
-            <div className="gradient-drift absolute inset-0 bg-gradient-to-br from-brand-orange via-[#e28b63] to-[#f3a27a]" />
+            <div className="gradient-drift absolute inset-0 bg-gradient-to-br from-brand-orange via-[#4E8F28] to-[#66AD36]" />
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(255,255,255,0.18),transparent_55%)]" />
             <div className="pointer-events-none absolute inset-0 opacity-[0.08] bg-[radial-gradient(circle_at_1px_1px,#ffffff_1px,transparent_0)] bg-[length:16px_16px]" />
             <div className="pointer-events-none absolute -top-10 left-[38%] size-40 rounded-full bg-white/10 blur-3xl" />
-            <div className="pointer-events-none absolute -bottom-14 right-[20%] size-48 rounded-full bg-[#7a3520]/25 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-14 right-[20%] size-48 rounded-full bg-[#0B2A45]/25 blur-3xl" />
             {/* Thin vertical separators between the 3 columns — desktop only, there's no room below lg. */}
             <div className="pointer-events-none hidden lg:block absolute inset-y-6 left-[40%] w-px bg-white/15" />
             <div className="pointer-events-none hidden lg:block absolute inset-y-6 left-[75%] w-px bg-white/15" />

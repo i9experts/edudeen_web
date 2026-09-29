@@ -118,7 +118,7 @@ export function FlashSaleCard({ product, onClick, onAddToCart, isAdding, addToCa
         <span className={clsx(
           'absolute rounded-full font-bold tracking-[0.02em] border bg-white',
           compact ? 'top-[5px] left-[5px] px-[5px] py-[1px] text-[7px]' : 'top-[7px] left-[7px] px-[6px] py-[1.5px] text-[8px]',
-          isDigital ? 'text-[#7c3aed] border-[#ddd6fe]' : 'text-brand-deep-orange border-[#f5d0bc]',
+          isDigital ? 'text-[#7c3aed] border-[#ddd6fe]' : 'text-[#3b6720] border-[#c7e0b5]',
         )}>
           {typeLabel}
         </span>
