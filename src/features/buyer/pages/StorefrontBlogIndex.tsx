@@ -3,10 +3,11 @@ import { Link } from 'react-router-dom';
 import { Newspaper } from 'lucide-react';
 import { SkeletonBox } from '@/components/comman/ui';
 import { apiListPublicBlogPosts, type BlogPostSummary } from '@/api/services/storeBlog';
-import { useStorefront } from '@/features/storefront/StorefrontContext';
+import { useStorefront, useStorefrontPaths } from '@/features/storefront/StorefrontContext';
 
 export function StorefrontBlogIndex() {
   const { store, cfg } = useStorefront();
+  const { path } = useStorefrontPaths();
   const [posts, setPosts] = useState<BlogPostSummary[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -35,7 +36,7 @@ export function StorefrontBlogIndex() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {posts.map(post => (
-            <Link key={post.slug} to={`/blog/${post.slug}`} className="block bg-white border border-bone rounded-xl overflow-hidden no-underline hover:shadow-md transition-shadow">
+            <Link key={post.slug} to={path(`/blog/${post.slug}`)} className="block bg-white border border-bone rounded-xl overflow-hidden no-underline hover:shadow-md transition-shadow">
               {post.coverImage && <img src={post.coverImage} alt={post.title} className="w-full h-[160px] object-cover" />}
               <div className="p-4">
                 {post.publishedAt && <p className="text-[11px] text-slate mb-1">{new Date(post.publishedAt).toLocaleDateString()}</p>}

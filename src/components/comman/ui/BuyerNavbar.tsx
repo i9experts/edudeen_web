@@ -7,7 +7,7 @@ import { TokenStorage } from '@/api/services/auth';
 import { apiGetRecentSearches, apiSearchStores } from '@/api/services/search';
 import { apiGetAllProducts, type MarketplaceProduct } from '@/api/services/marketplace';
 import type { PublicStoreListItem } from '@/api/services/store';
-import { getStorefrontUrl } from '@/utils/storefrontUrl';
+import { getStorePagePath } from '@/utils/storefrontUrl';
 import { ProductImage } from '@/components/comman/marketplace/ProductCard';
 import { Button } from './Button';
 import { EdudeenLogo } from './EdudeenLogo';
@@ -423,7 +423,7 @@ export function SearchBox({
   const goToStore = (slug: string) => {
     setOpen(false);
     onClose?.();
-    window.location.href = getStorefrontUrl(slug);
+    navigate(getStorePagePath(slug));
   };
 
   // Arrow-key navigation across every suggestion — moves real DOM focus (not
@@ -1018,15 +1018,29 @@ function NavDropdown({ label, children }: { label: string; children: { label: st
 export function useCompactOnScroll() {
   const [scrolled, setScrolled] = useState(false);
   const [hidden, setHidden]     = useState(false);
-  const lastY = useRef(0);
+  const lastY  = useRef(0);
+  // Where the current scroll direction started. Hide/show only fires after a
+  // real 24px run in one direction from here — comparing against the previous
+  // scroll event (a few px) made the bar flicker when a scroll came to rest
+  // (momentum settling / overscroll bounce nudges it back and forth).
+  const anchor = useRef(0);
+  const dir    = useRef<0 | 1 | -1>(0);
   useEffect(() => {
     const el = scrollRootRef.current;
     if (!el) return;
+    const TRAVEL = 24;
     const onScroll = () => {
-      const y = el.scrollTop;
-      setScrolled(y > 8);
-      if (y > 48 && y > lastY.current + 3) setHidden(true);
-      else if (y < lastY.current - 3 || y <= 8) setHidden(false);
+      // Clamp away overscroll/rubber-band values outside the real range.
+      const max = Math.max(0, el.scrollHeight - el.clientHeight);
+      const y = Math.min(Math.max(el.scrollTop, 0), max);
+      // Hysteresis so the solid-background state can't flap right at the threshold.
+      setScrolled(s => (s ? y > 2 : y > 16));
+
+      const d = y > lastY.current ? 1 : y < lastY.current ? -1 : 0;
+      if (d !== 0 && d !== dir.current) { dir.current = d; anchor.current = lastY.current; }
+      if (y <= 8) setHidden(false);
+      else if (dir.current === 1 && y > 64 && y - anchor.current > TRAVEL) setHidden(true);
+      else if (dir.current === -1 && anchor.current - y > TRAVEL) setHidden(false);
       lastY.current = y;
     };
     onScroll();
@@ -1078,10 +1092,9 @@ export function BuyerNavbar({ variant = 'full', contextLabel, search, accentColo
       hidden ? '-translate-y-full md:translate-y-0' : 'translate-y-0',
     )}>
       {variant === 'full' && <PlatformTopBar />}
-      <div className={clsx(
-        'flex items-center gap-3 md:gap-6 px-[5%] md:px-[4%] transition-[height] duration-200',
-        scrolled ? 'h-[60px] md:h-[68px]' : 'h-[64px] md:h-[88px]',
-      )}>
+      {/* Fixed height — shrinking it on scroll shifted the page under the
+         sticky header and made it jitter near the top. */}
+      <div className="flex items-center gap-3 md:gap-6 px-[5%] md:px-[4%] h-[64px] md:h-[80px]">
 
         {/* Logo — hidden while the mobile search row is expanded so the input gets full width */}
         <button

@@ -65,11 +65,22 @@ function baseDomain(): string {
     : hostname.split('.').slice(-2).join('.');
 }
 
+/** In-app path to a store's page inside Edudeen — use with `navigate()` / `<Link>`. */
+export function getStorePagePath(slug: string, path = ''): string {
+  const cleanPath = path ? (path.startsWith('/') ? path : `/${path}`) : '';
+  return `/shop/${slug}${cleanPath}`;
+}
+
+/**
+ * Absolute URL of a store's page — now `edudeen.com/shop/<slug>` (a page
+ * inside the main app) rather than the `<slug>.edudeen.com` subdomain, so
+ * opening a store never leaves Edudeen. Subdomain URLs still work for anyone
+ * who has one bookmarked (see `getStoreSlugFromHost`).
+ */
 export function getStorefrontUrl(slug: string, path = ''): string {
   const { protocol, port } = window.location;
   const portSuffix = port ? `:${port}` : '';
-  const cleanPath = path ? (path.startsWith('/') ? path : `/${path}`) : '';
-  return `${protocol}//${slug}.${baseDomain()}${portSuffix}${cleanPath}`;
+  return `${protocol}//${baseDomain()}${portSuffix}${getStorePagePath(slug, path)}`;
 }
 
 /** The reverse direction — from a store's subdomain back to the main app (apex domain), e.g. a storefront's "Back to Marketplace" link. */

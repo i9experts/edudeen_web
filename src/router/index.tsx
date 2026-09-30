@@ -254,6 +254,23 @@ const mainRouter = createBrowserRouter([
         ],
       },
 
+      // ── A seller's store as a page inside Edudeen (`/shop/<slug>`) — same
+      //    themed storefront the store's subdomain serves, same child pages. ──
+      {
+        path: '/shop/:storeSlug',
+        element: <StorefrontLayout />,
+        children: [
+          { index: true, element: <SellerStorefront /> },
+          { path: 'blog', element: <StorefrontBlogIndex /> },
+          { path: 'blog/:postSlug', element: <StorefrontBlogPost /> },
+          { path: 'cart', element: <StorefrontCartPage /> },
+          { path: 'category/:slugOrId', element: <CategoryBrowsePage /> },
+          { path: 'collections/:slugOrId', element: <CollectionDetailPage /> },
+          { path: 'search', element: <SearchResultsPage /> },
+          { path: ':pageSlug', element: <StorefrontCustomPage /> },
+        ],
+      },
+
       // ── Maintenance mode (backend 503 redirects here — see client.ts) ──
       { path: '/maintenance',     element: <MaintenancePage /> },
 

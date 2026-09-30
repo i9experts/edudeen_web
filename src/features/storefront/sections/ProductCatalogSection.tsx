@@ -11,9 +11,9 @@ import { useCartContext } from '@/contexts/CartContext';
 import { useWishlistContext } from '@/contexts/WishlistContext';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 import { currencySymbol } from '@/utils/currency';
-import { getMainAppUrl } from '@/utils/storefrontUrl';
-import { useStorefront } from '../StorefrontContext';
+import { useStorefront, useStorefrontPaths } from '../StorefrontContext';
 import { ProductCardShell, ProductCardImage } from '../ProductCard';
+import { ProductCoverFallback } from '@/components/comman/marketplace/ProductCoverFallback';
 
 const SORT_OPTIONS = [
   { value: 'newest',     label: 'Newest'          },
@@ -22,9 +22,11 @@ const SORT_OPTIONS = [
   { value: 'best_rated', label: 'Best Rated'      },
 ];
 
+// No photo (or a broken one) → the same designed name cover the homepage
+// cards use, instead of a bare box icon.
 function ProductImage({ src, alt }: { src: string; alt: string }) {
   const [errored, setErrored] = useState(false);
-  if (errored) return <Package size={28} className="text-brand-orange" />;
+  if (errored) return <ProductCoverFallback name={alt} size="lg" className="w-full h-full" />;
   return (
     <img loading="lazy" decoding="async" src={src} alt={alt} onError={() => setErrored(true)}
       className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.06]" />
@@ -64,6 +66,7 @@ export interface ProductCatalogSectionSettings {
 // being hardcoded on the page.
 export function ProductCatalogSection({ settings }: { settings: ProductCatalogSectionSettings }) {
   const { store, cfg } = useStorefront();
+  const { toMain } = useStorefrontPaths();
   const { currency: displayCurrency, convert } = useCurrencyPreference();
   const displaySymbol = currencySymbol(displayCurrency);
   const { addToCart, adding } = useCartContext();
@@ -152,10 +155,10 @@ export function ProductCatalogSection({ settings }: { settings: ProductCatalogSe
               const typeLabel = isPhysical ? 'Physical' : pType === 'educational' ? 'Educational' : 'Digital';
               const vId = p.variantId ?? '';
               return (
-                <ProductCardShell key={p._id} onClick={() => { window.location.href = getMainAppUrl(`/product/${p.slug}`); }}>
+                <ProductCardShell key={p._id} onClick={() => toMain(`/product/${p.slug}`)}>
                   <div className="absolute top-0 left-0 w-full h-[3px] scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300 z-[1]" style={{ background: cfg.primaryColor }} />
                   <ProductCardImage>
-                    {p.images?.[0] ? <ProductImage src={p.images[0]} alt={p.name} /> : <Package size={28} className="text-brand-orange" />}
+                    {p.images?.[0] ? <ProductImage src={p.images[0]} alt={p.name} /> : <ProductCoverFallback name={p.name} size="lg" className="w-full h-full" />}
                     <button
                       onClick={e => { e.stopPropagation(); if (vId) toggleWishlist(p._id, vId); }}
                       disabled={!vId || wishlisting === vId}

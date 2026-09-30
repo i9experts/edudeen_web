@@ -21,9 +21,9 @@ import { apiGetPublicStoreProducts } from '@/api/services/store';
 import { Modal } from '@/components/comman/ui/Modal';
 import { TokenStorage } from '@/api/services/auth';
 import { currencySymbol } from '@/utils/currency';
-import { useStorefront } from '@/features/storefront/StorefrontContext';
-import { getMainAppUrl } from '@/utils/storefrontUrl';
+import { useStorefront, useStorefrontPaths, isEdudeenDefaultTheme, EDUDEEN_DEFAULT_COVER_GRADIENT } from '@/features/storefront/StorefrontContext';
 import { SectionRenderer } from '@/features/storefront/SectionRenderer';
+import { ProductCatalogSection } from '@/features/storefront/sections/ProductCatalogSection';
 
 // ── Badge config ──────────────────────────────────────────────────────────────
 const SELLER_TYPE_LABEL: Record<string, string> = {
@@ -71,6 +71,7 @@ function StoreBadges({ badges, sellerType }: { badges: string[]; sellerType: str
 export function SellerStorefront() {
   const navigate = useNavigate();
   const { store, cfg, theme } = useStorefront();
+  const { toMain, basePath } = useStorefrontPaths();
   const identityBanner = theme?.identityBanner;
   const showFollow     = identityBanner?.showFollowButton     !== false;
   const showMessage    = identityBanner?.showMessageButton    !== false;
@@ -125,9 +126,14 @@ export function SellerStorefront() {
     return () => { document.title = 'Edudeen'; };
   }, [homePage?.seo.metaTitle, store.name]);
 
+  const [homePageLoaded, setHomePageLoaded] = useState(false);
   useEffect(() => {
-    apiGetPublicHomePage(store.storeId).then(res => setHomePage(res.data)).catch(() => setHomePage(null));
+    apiGetPublicHomePage(store.storeId)
+      .then(res => setHomePage(res.data))
+      .catch(() => setHomePage(null))
+      .finally(() => setHomePageLoaded(true));
   }, [store.storeId]);
+  const hasCatalogSection = !!homePage?.sections.some(s => s.type === 'product_catalog' && s.enabled !== false);
 
   // Total product count for the identity banner — cheap first-page fetch, the
   // real catalog listing/pagination lives inside `ProductCatalogSection`.
@@ -154,7 +160,7 @@ export function SellerStorefront() {
   }, [store.storeId]);
 
   const handleCreateGiftCardIntent = async () => {
-    if (!isLoggedIn) { window.location.href = getMainAppUrl('/login'); return; }
+    if (!isLoggedIn) { toMain('/login'); return; }
     if (!giftCardAmount) return;
     setGiftCardBusy(true);
     setGiftCardError('');
@@ -183,7 +189,7 @@ export function SellerStorefront() {
   };
 
   const handleSubscribe = async (plan: BuyerPlan, interval: BillingInterval) => {
-    if (!isLoggedIn) { navigate('/login'); return; }
+    if (!isLoggedIn) { if (basePath) toMain('/login'); else navigate('/login'); return; }
     setSubscribingId(plan._id);
     setSubscribeError('');
     setSubscribedMsg('');
@@ -263,7 +269,7 @@ export function SellerStorefront() {
       setMsgError('');
       try {
         const conv = await apiStartConversation({ storeId: store.storeId });
-        window.location.href = getMainAppUrl(`/account/messages?conversation=${conv._id}`);
+        toMain(`/account/messages?conversation=${conv._id}`);
       } catch (err) {
         setMsgError(err instanceof Error ? err.message : 'Could not start a conversation.');
       } finally {
@@ -290,7 +296,7 @@ export function SellerStorefront() {
         overlay
         overlayClassName={bannerLayout === 'immersive' ? 'bg-black/50' : 'bg-black/40'}
         fallbackClassName=""
-        fallbackStyle={{ background: `linear-gradient(135deg, ${cfg.primaryColor}CC, ${cfg.accentColor}CC)` }}
+        fallbackStyle={{ background: isEdudeenDefaultTheme(theme) ? EDUDEEN_DEFAULT_COVER_GRADIENT : `linear-gradient(135deg, ${cfg.primaryColor}CC, ${cfg.accentColor}CC)` }}
         backgroundOverride={storeBanners.length > 0
           ? <BannerCarousel entityType="store_banner" banners={storeBanners.map(b => ({ _id: b._id, order: b.order, imageUrl: b.imageUrl, linkUrl: b.linkTarget, mobileImageUrl: b.mobileImageUrl }))} />
           : undefined}
@@ -392,6 +398,12 @@ export function SellerStorefront() {
 
       {/* ── Seller-composed sections ───────────────────────────────────────── */}
       {homePage && <SectionRenderer sections={homePage.sections} />}
+
+      {/* Every store shows its whole catalogue — if the seller hasn't added
+         (or has hidden) a product catalog section, show all products anyway. */}
+      {homePageLoaded && !hasCatalogSection && (
+        <ProductCatalogSection settings={{ heading: 'All products', showFilters: true, defaultSort: 'newest' }} />
+      )}
 
       {/* ── Store Membership ───────────────────────────────────────────────── */}
       {showMembership && plans.length > 0 && (

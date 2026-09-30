@@ -3,9 +3,10 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { X } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useIsBuyer } from '@/hooks/auth/useIsBuyer';
+import { useEdgeHoverScroll } from '@/hooks/useEdgeHoverScroll';
 import { apiSearchProducts } from '@/api/services/search';
 import { usePageTitle } from '@/hooks/usePageTitle';
-import { getStorefrontUrl } from '@/utils/storefrontUrl';
+import { getStorePagePath } from '@/utils/storefrontUrl';
 import { useProductsByCategory } from '@/hooks/marketplace/useProductsByCategory';
 import { useCountdownToMidnight } from '@/hooks/useCountdownToMidnight';
 import { useCartContext } from '@/contexts/CartContext';
@@ -23,7 +24,7 @@ import {
   EMPTY_FILTERS, PRICE_NO_MAX, type MarketplaceFilters,
 } from '@/components/comman/marketplace/FiltersDrawer';
 import { SectionHead, sectionLinkClass } from '@/components/comman/marketplace/SectionHead';
-import { Star, Quote, BadgeCheck, Zap, Tag, Shield, CreditCard, Headset, RefreshCcw } from 'lucide-react';
+import { Star, Quote, BadgeCheck, Zap, Shield, CreditCard, Headset, RefreshCcw } from 'lucide-react';
 import { apiGetTestimonials, type Testimonial } from '@/api/services/testimonials';
 import { apiGetPlatformStats, apiGetTopStores, type PlatformStats, type PublicStoreListItem } from '@/api/services/store';
 import { apiGetCategoryTree, type CategoryNode } from '@/api/services/categories';
@@ -111,7 +112,7 @@ function isOnSale(p: MarketplaceProduct) {
 /**
  * One shop category — a fixed subject (optionally backed by a real admin
  * category of the same name) or any other admin root category. The same list
- * drives the tabs, the "All Categories" menu, "Shop by category" and the
+ * drives the tabs, the "All Categories" menu and the
  * Filters drawer, so they can never disagree.
  */
 interface ShopTab {
@@ -139,6 +140,7 @@ const linkButtonClass = sectionLinkClass;
 export function Homepage() {
   const navigate = useNavigate();
   const isBuyer = useIsBuyer();
+  const sellersRowRef = useEdgeHoverScroll<HTMLDivElement>();
   usePageTitle('Home');
 
   const [categories, setCategories] = useState<CategoryNode[]>([]);
@@ -435,7 +437,7 @@ export function Homepage() {
           countdown={countdown}
           onShopCategory={handleShopCategory}
           onProductClick={handleCardClick}
-          onStoreClick={slug => window.location.href = getStorefrontUrl(slug)}
+          onStoreClick={slug => navigate(getStorePagePath(slug))}
           onTrendingTerm={submitSearch}
           onNavigate={navigate}
         />
@@ -489,33 +491,6 @@ export function Homepage() {
             <span key={t}><span className="text-brand-green">✓</span> {t}</span>
           ))}
         </div>
-
-        {/* ── Shop by category ── */}
-        {menuCategories.length > 0 && (
-          <section className="mb-12">
-            <SectionHead
-              eyebrow="Explore"
-              title="Shop by category"
-              action={{ label: 'View all', onClick: () => selectSubject(null) }}
-            />
-            <RevealStagger className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4" step={0.04} y={12}>
-              {menuCategories.slice(0, 12).map(c => (
-                <button
-                  key={c._id}
-                  onClick={() => handleShopCategory(c._id)}
-                  className="group flex flex-col items-center gap-2.5 p-4 rounded-xl bg-[#f5f8fa] border border-bone hover:border-brand-orange/40 hover:bg-white transition-all cursor-pointer"
-                >
-                  <span className="w-12 h-12 rounded-full bg-white border border-bone flex items-center justify-center overflow-hidden shrink-0 group-hover:border-brand-orange transition-colors">
-                    {c.image
-                      ? <img src={c.image} alt="" className="w-full h-full object-cover" loading="lazy" />
-                      : <Tag size={18} className="text-brand-orange" />}
-                  </span>
-                  <span className="text-[12.5px] font-semibold text-carbon text-center leading-tight line-clamp-2">{c.name}</span>
-                </button>
-              ))}
-            </RevealStagger>
-          </section>
-        )}
 
         {/* ── Flash sale ── */}
         {flashDeals.length > 0 && (
@@ -730,9 +705,10 @@ export function Homepage() {
         {topStores.length > 0 && (
           <section className="mb-12">
             <SectionHead eyebrow="Meet the makers" title="Featured sellers" />
-            <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1">
+            {/* Hover near either edge to glide the row that way. */}
+            <div ref={sellersRowRef} className="flex gap-3 overflow-x-auto scrollbar-hide pb-1 pt-1">
               {topStores.map(s => (
-                <StoreFeatureCard key={s.storeId} store={s} onClick={slug => window.location.href = getStorefrontUrl(slug)} />
+                <StoreFeatureCard key={s.storeId} store={s} onClick={slug => navigate(getStorePagePath(slug))} />
               ))}
             </div>
           </section>

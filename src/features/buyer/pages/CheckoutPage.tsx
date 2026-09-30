@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { usePageTitle } from '@/hooks/usePageTitle';
-import { getStorefrontUrl } from '@/utils/storefrontUrl';
+import { getStorePagePath } from '@/utils/storefrontUrl';
 import { useCartContext } from '@/contexts/CartContext';
 import { useAuthGate } from '@/contexts/AuthGateContext';
 import { TokenStorage } from '@/api/services/auth';
@@ -1731,7 +1731,7 @@ export function CheckoutPage() {
                 {savingsHints.map(hint => (
                   <button
                     key={hint.storeId}
-                    onClick={() => hint.storeSlug && (window.location.href = getStorefrontUrl(hint.storeSlug))}
+                    onClick={() => hint.storeSlug && (navigate(getStorePagePath(hint.storeSlug)))}
                     className="w-full text-left px-3.5 py-3 rounded-lg bg-brand-pale-orange border border-brand-orange/20 cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange"
                   >
                     <p className="text-[12.5px] font-semibold text-brand-deep-orange">

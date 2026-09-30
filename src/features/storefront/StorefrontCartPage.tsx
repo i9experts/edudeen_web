@@ -13,8 +13,7 @@ import { currencySymbol } from '@/utils/currency';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 import { useNavigate } from 'react-router-dom';
 import { TokenStorage } from '@/api/services/auth';
-import { getMainAppUrl } from '@/utils/storefrontUrl';
-import { useStorefront } from './StorefrontContext';
+import { useStorefront, useStorefrontPaths } from './StorefrontContext';
 
 function CartItemImage({ images, name }: { images?: string[]; name: string }) {
   const [errored, setErrored] = useState(false);
@@ -42,12 +41,18 @@ export function StorefrontCartPage() {
   usePageTitle('Cart');
   const navigate = useNavigate();
   const { store } = useStorefront();
+  const { basePath, path, toMain } = useStorefrontPaths();
   const { cart, loading, cartCount, updateQty, removeItem, clearCart, error, clearError } = useCartContext();
 
   const handleCheckout = () => {
-    if (!TokenStorage.isLoggedIn()) { navigate('/login'); return; }
+    if (!TokenStorage.isLoggedIn()) {
+      // Inside the main app the normal Edudeen login is used; a subdomain has its own.
+      if (basePath) toMain(`/login?redirect=${encodeURIComponent(path('/cart'))}`);
+      else navigate('/login');
+      return;
+    }
     const storeId = cart?.storeId ?? store?.storeId;
-    window.location.href = getMainAppUrl(`/checkout${storeId ? `?store=${encodeURIComponent(storeId)}` : ''}`);
+    toMain(`/checkout${storeId ? `?store=${encodeURIComponent(storeId)}` : ''}`);
   };
   const [clearing,   setClearing]   = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);

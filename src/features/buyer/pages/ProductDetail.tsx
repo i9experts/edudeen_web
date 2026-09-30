@@ -13,7 +13,7 @@ import { TokenStorage } from '@/api/services/auth';
 import { apiGetAllProducts, type MarketplaceProduct, type ProductVariant } from '@/api/services/marketplace';
 import { apiStartConversation, apiSendMessage } from '@/api/services/messaging';
 import { apiGetPublicStoreProducts, apiGetPublicStore, apiFollowStore, apiGetFollowStatus, type PublicStoreProduct, type PublicStoreData } from '@/api/services/store';
-import { getStorefrontUrl } from '@/utils/storefrontUrl';
+import { getStorePagePath } from '@/utils/storefrontUrl';
 import { Button } from '@/components/comman/ui/Button';
 import { Badge } from '@/components/comman/ui/Badge';
 import { Card } from '@/components/comman/ui/Card';
@@ -800,7 +800,7 @@ export function ProductDetail() {
                         )}
                       </div>
                       <div className="flex gap-2 shrink-0 pt-8">
-                        <Button variant="secondary" size="sm" disabled={!product.storeSlug} onClick={() => product.storeSlug && (window.location.href = getStorefrontUrl(product.storeSlug))}>
+                        <Button variant="secondary" size="sm" disabled={!product.storeSlug} onClick={() => product.storeSlug && (navigate(getStorePagePath(product.storeSlug)))}>
                           Visit Store <ArrowRight size={13} className="inline align-middle ml-1" />
                         </Button>
                         {storeId && (

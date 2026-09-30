@@ -2,10 +2,9 @@ import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
 import { Menu, X, ShoppingCart, User, Store as StoreIcon, Search } from 'lucide-react';
-import { useStorefront } from './StorefrontContext';
+import { useStorefront, useStorefrontPaths } from './StorefrontContext';
 import { useCartContext } from '@/contexts/CartContext';
 import { TokenStorage } from '@/api/services/auth';
-import { getMainAppUrl } from '@/utils/storefrontUrl';
 import { ThemedButton } from './ThemedButton';
 
 type ResolveLink = ReturnType<typeof useStorefront>['resolveLink'];
@@ -50,6 +49,7 @@ function NavLinkItem({ link, resolveLink, className, onNavigate }: {
 export function StorefrontNavbar() {
   const navigate = useNavigate();
   const { store, theme, cfg, resolveLink } = useStorefront();
+  const { path, toMain, basePath } = useStorefrontPaths();
   const { cartCount } = useCartContext();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -59,18 +59,18 @@ export function StorefrontNavbar() {
   const submitSearch = (e: FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
-    navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    navigate(`${path('/search')}?q=${encodeURIComponent(searchQuery.trim())}`);
     setSearchOpen(false);
   };
 
-  const logoUrl = theme?.header.logoSource === 'custom' ? theme.header.customLogoUrl : store.logo;
-  const navLinks = theme?.header.blocks.filter(b => b.type === 'nav_link') ?? [];
-  const navAlignment = theme?.header.navAlignment ?? 'left';
+  const logoUrl = theme?.header?.logoSource === 'custom' ? theme.header.customLogoUrl : store.logo;
+  const navLinks = theme?.header?.blocks?.filter(b => b.type === 'nav_link') ?? [];
+  const navAlignment = theme?.header?.navAlignment ?? 'left';
   const isCentered = cfg.headerStyle === 'centered';
   const dark = cfg.isDarkTheme;
 
   const logo = (
-    <Link to="" className="flex items-center gap-2 shrink-0 no-underline">
+    <Link to={path('/')} className="flex items-center gap-2 shrink-0 no-underline">
       {logoUrl
         ? <img src={logoUrl} alt={store.name} className="w-9 h-9 rounded-lg object-cover" />
         : <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: `${cfg.primaryColor}18` }}>
@@ -105,7 +105,7 @@ export function StorefrontNavbar() {
       </button>
 
       <button
-        onClick={() => navigate('/cart')}
+        onClick={() => navigate(path('/cart'))}
         aria-label="Cart"
         className={clsx('relative w-9 h-9 rounded-full flex items-center justify-center border-none bg-transparent cursor-pointer transition-colors', dark ? 'hover:bg-white/10' : 'hover:bg-cream')}
       >
@@ -121,7 +121,7 @@ export function StorefrontNavbar() {
       </button>
 
       <button
-        onClick={() => { isLoggedIn ? window.location.href = getMainAppUrl('/account') : navigate('/login'); }}
+        onClick={() => { if (isLoggedIn) toMain('/account'); else if (basePath) toMain(`/login?redirect=${encodeURIComponent(basePath)}`); else navigate('/login'); }}
         aria-label="Account"
         className={clsx('w-9 h-9 rounded-full flex items-center justify-center border-none bg-transparent cursor-pointer transition-colors', dark ? 'hover:bg-white/10' : 'hover:bg-cream')}
       >

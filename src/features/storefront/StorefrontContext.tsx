@@ -1,5 +1,6 @@
 import { createContext, useContext, type ReactNode } from 'react';
 import type { PublicStoreData } from '@/api/services/store';
+import { getMainAppUrl } from '@/utils/storefrontUrl';
 import type {
   StoreThemeData, ThemeBorderRadius, ThemeButtonStyle, ThemeButtonWidth, ThemeScale, ThemeCardStyle, ThemeButtonSize,
   ThemeHeroStyle, ThemeHeroAlignment, ThemeProductImageRatio, ThemeProductImageHover, ThemeProductGridDensity,
@@ -70,12 +71,37 @@ export const RADIUS_PX_MAP: Record<ThemeBorderRadius, string> = {
   full:   '9999px',
 };
 
+// Edudeen logo gold (the minaret) and the default-theme cover gradient built
+// from all three logo colors — navy (keeps the white store name legible on
+// the left) → green → gold.
+export const EDUDEEN_GOLD = '#CCB000';
+export const EDUDEEN_DEFAULT_COVER_GRADIENT =
+  'linear-gradient(120deg, #174771 0%, #2E6B5C 38%, #66AD36 64%, #E2C21A 86%, #F4DC4C 100%)';
+export const EDUDEEN_GOLD_GRADIENT = 'linear-gradient(90deg, #F4DC4C 0%, #E2C21A 50%, #CCB000 100%)';
+
+// The colors the backend stamps on every new store's theme (store-theme.schema
+// defaults — the old orange palette). A store still on exactly these never
+// picked its own colors, so it gets Edudeen's default look instead.
+const BACKEND_UNTOUCHED_COLORS = { primaryColor: '#D97757', bgColor: '#FAF9F5', accentColor: '#B95A3A' };
+
+/** True when the seller hasn't chosen theme colors — the store then uses Edudeen's default look. */
+export function isEdudeenDefaultTheme(theme: StoreThemeData | null): boolean {
+  const t = theme?.theme;
+  if (!t?.primaryColor && !t?.bgColor) return true;
+  const same = (a?: string, b?: string) => (a ?? '').toLowerCase() === (b ?? '').toLowerCase();
+  return same(t?.primaryColor, BACKEND_UNTOUCHED_COLORS.primaryColor)
+    && same(t?.bgColor, BACKEND_UNTOUCHED_COLORS.bgColor)
+    && same(t?.accentColor, BACKEND_UNTOUCHED_COLORS.accentColor);
+}
+
+// A store with no saved theme renders in Edudeen's own look — the logo
+// navy + green on white, same typeface as the main site.
 export const STOREFRONT_CFG_DEFAULT: StorefrontCfg = {
   primaryColor: '#174771',
-  bgColor:      '#FAF9F5',
-  textColor:    '#2C2A28',
-  accentColor:  '#0F3354',
-  font:         'Poppins',
+  bgColor:      '#FFFFFF',
+  textColor:    '#152D43',
+  accentColor:  '#66AD36',
+  font:         'Arial',
   buttonStyle:    'solid',
   buttonSize:     'md',
   buttonRadiusPx: RADIUS_PX_MAP.medium,
@@ -126,12 +152,14 @@ const SPACING_SCALE_MAP: Record<ThemeScale, number> = { compact: 0.65, comfortab
  *  builder preview (`BuilderPreview`), so the two can never drift apart. */
 export function resolveStorefrontCfg(theme: StoreThemeData | null): StorefrontCfg {
   const t = theme?.theme;
+  // Colors/font the seller never changed → Edudeen's palette; layout choices still apply.
+  const edudeen = isEdudeenDefaultTheme(theme);
   return {
-    primaryColor: t?.primaryColor ?? STOREFRONT_CFG_DEFAULT.primaryColor,
-    bgColor:      t?.bgColor      ?? STOREFRONT_CFG_DEFAULT.bgColor,
-    textColor:    t?.textColor    ?? STOREFRONT_CFG_DEFAULT.textColor,
-    accentColor:  t?.accentColor  ?? STOREFRONT_CFG_DEFAULT.accentColor,
-    font:         t?.font         ?? STOREFRONT_CFG_DEFAULT.font,
+    primaryColor: edudeen ? STOREFRONT_CFG_DEFAULT.primaryColor : (t?.primaryColor ?? STOREFRONT_CFG_DEFAULT.primaryColor),
+    bgColor:      edudeen ? STOREFRONT_CFG_DEFAULT.bgColor      : (t?.bgColor      ?? STOREFRONT_CFG_DEFAULT.bgColor),
+    textColor:    edudeen ? STOREFRONT_CFG_DEFAULT.textColor    : (t?.textColor    ?? STOREFRONT_CFG_DEFAULT.textColor),
+    accentColor:  edudeen ? STOREFRONT_CFG_DEFAULT.accentColor  : (t?.accentColor  ?? STOREFRONT_CFG_DEFAULT.accentColor),
+    font:         edudeen ? STOREFRONT_CFG_DEFAULT.font         : (t?.font         ?? STOREFRONT_CFG_DEFAULT.font),
     buttonStyle:    t?.buttonStyle  ?? STOREFRONT_CFG_DEFAULT.buttonStyle,
     buttonSize:     t?.buttonSize   ?? STOREFRONT_CFG_DEFAULT.buttonSize,
     buttonRadiusPx: RADIUS_PX_MAP[t?.buttonRadius ?? 'medium'],
@@ -151,9 +179,9 @@ export function resolveStorefrontCfg(theme: StoreThemeData | null): StorefrontCf
     productGridDensity: t?.productGridDensity ?? STOREFRONT_CFG_DEFAULT.productGridDensity,
     testimonialStyle:   t?.testimonialStyle   ?? STOREFRONT_CFG_DEFAULT.testimonialStyle,
     faqStyle:           t?.faqStyle           ?? STOREFRONT_CFG_DEFAULT.faqStyle,
-    headerStyle:        theme?.header.headerStyle ?? STOREFRONT_CFG_DEFAULT.headerStyle,
-    footerStyle:        theme?.footer.footerStyle  ?? STOREFRONT_CFG_DEFAULT.footerStyle,
-    isDarkTheme:        isDarkHex(t?.bgColor ?? STOREFRONT_CFG_DEFAULT.bgColor),
+    headerStyle:        theme?.header?.headerStyle ?? STOREFRONT_CFG_DEFAULT.headerStyle,
+    footerStyle:        theme?.footer?.footerStyle  ?? STOREFRONT_CFG_DEFAULT.footerStyle,
+    isDarkTheme:        isDarkHex(edudeen ? STOREFRONT_CFG_DEFAULT.bgColor : (t?.bgColor ?? STOREFRONT_CFG_DEFAULT.bgColor)),
   };
 }
 
@@ -173,13 +201,13 @@ export interface StorefrontLinkSettings {
  *  `categoryId`/`collectionId` here is always valid even though a slug would
  *  render a prettier URL — matches the existing Marketplace legacy-id
  *  redirect precedent rather than requiring a second slug lookup here. */
-export function resolveStorefrontLink(link: StorefrontLinkSettings): { to?: string; href?: string } {
+export function resolveStorefrontLink(link: StorefrontLinkSettings, basePath = ''): { to?: string; href?: string } {
   if (link.linkType === 'external') return { href: link.url };
-  if (link.linkType === 'blog') return { to: `/blog` };
-  if (link.linkType === 'page' && link.pageSlug) return { to: `/${link.pageSlug}` };
-  if (link.linkType === 'category' && link.categoryId) return { to: `/category/${link.categoryId}` };
-  if (link.linkType === 'collection' && link.collectionId) return { to: `/collections/${link.collectionId}` };
-  return { to: `/` }; // 'home' (and any unrecognized/incomplete fallback)
+  if (link.linkType === 'blog') return { to: `${basePath}/blog` };
+  if (link.linkType === 'page' && link.pageSlug) return { to: `${basePath}/${link.pageSlug}` };
+  if (link.linkType === 'category' && link.categoryId) return { to: `${basePath}/category/${link.categoryId}` };
+  if (link.linkType === 'collection' && link.collectionId) return { to: `${basePath}/collections/${link.collectionId}` };
+  return { to: basePath || `/` }; // 'home' (and any unrecognized/incomplete fallback)
 }
 
 export interface StorefrontContextValue {
@@ -188,6 +216,12 @@ export interface StorefrontContextValue {
   cfg:    StorefrontCfg;
   /** Resolves a nav_link/footer-link block's link settings into a real in-app path or external href. */
   resolveLink: (link: StorefrontLinkSettings) => { to?: string; href?: string };
+  /** '' on a store's own subdomain; `/shop/<slug>` when the store is opened
+   *  inside the main Edudeen app. Prefix every storefront-internal path with it. */
+  basePath?: string;
+  /** Goes to a main-app page (product, checkout, login, account) — a plain
+   *  in-app navigation inside Edudeen, a cross-origin jump on a subdomain. */
+  goToMainApp?: (path: string) => void;
 }
 
 const StorefrontContext = createContext<StorefrontContextValue | null>(null);
@@ -200,4 +234,12 @@ export function useStorefront(): StorefrontContextValue {
   const ctx = useContext(StorefrontContext);
   if (!ctx) throw new Error('useStorefront must be used within a StorefrontProvider (StorefrontLayout)');
   return ctx;
+}
+
+/** Storefront-internal path helper + main-app jump, safe with or without a `basePath`. */
+export function useStorefrontPaths() {
+  const { basePath = '', goToMainApp } = useStorefront();
+  const path = (p: string) => (p === '/' || p === '' ? (basePath || '/') : `${basePath}${p.startsWith('/') ? p : `/${p}`}`);
+  const toMain = (p: string) => (goToMainApp ? goToMainApp(p) : (window.location.href = getMainAppUrl(p)));
+  return { basePath, path, toMain };
 }

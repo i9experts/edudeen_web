@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { RefreshCw, ImageOff } from 'lucide-react';
 import {
   Card, EmptyState, SkeletonBox, Table, type TableColumn,
@@ -7,7 +7,7 @@ import {
 } from '@/components/comman/ui';
 import { Button } from '@/components/comman/ui/Button';
 import { Modal } from '@/components/comman/ui/Modal';
-import { getStorefrontUrl } from '@/utils/storefrontUrl';
+import { getStorePagePath } from '@/utils/storefrontUrl';
 import {
   apiGetMySubscriptions, apiGetMySubscriptionById, apiPauseMySubscription, apiResumeMySubscription,
   apiCancelMySubscription, apiChangeMyPlan, apiBrowseStorePlans,
@@ -426,6 +426,7 @@ export function SubscriptionsTab() {
   }, [page]);
 
   useEffect(load, [load]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const next = new URLSearchParams(searchParams);
@@ -439,7 +440,7 @@ export function SubscriptionsTab() {
     {
       key: 'store', header: 'Store', width: '220px',
       render: s => (
-        <button onClick={() => s.store && (window.location.href = getStorefrontUrl(s.store.slug))} className="flex items-center gap-[10px] bg-transparent border-0 cursor-pointer text-left p-0">
+        <button onClick={() => s.store && (navigate(getStorePagePath(s.store.slug)))} className="flex items-center gap-[10px] bg-transparent border-0 cursor-pointer text-left p-0">
           <div className="w-9 h-9 rounded-lg bg-cream border border-bone overflow-hidden shrink-0 flex items-center justify-center">
             {s.store?.logo ? <img loading="lazy" decoding="async" src={s.store.logo} alt="" className="w-full h-full object-cover" /> : <ImageOff size={13} className="text-slate" />}
           </div>

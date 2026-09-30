@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiGetCategoryTree, type CategoryNode } from '@/api/services/categories';
-import { useStorefront } from '../StorefrontContext';
+import { useStorefront, useStorefrontPaths } from '../StorefrontContext';
 
 export interface FeaturedCategoryGridSectionSettings {
   heading?:     string;
@@ -20,6 +20,7 @@ function flatten(nodes: CategoryNode[]): CategoryNode[] {
 // looks broken mid-edit.
 export function FeaturedCategoryGridSection({ settings }: { settings: FeaturedCategoryGridSectionSettings }) {
   const { cfg } = useStorefront();
+  const { path } = useStorefrontPaths();
   const [categories, setCategories] = useState<CategoryNode[]>([]);
 
   useEffect(() => {
@@ -49,7 +50,7 @@ export function FeaturedCategoryGridSection({ settings }: { settings: FeaturedCa
           {tiles.map(cat => (
             <Link
               key={cat._id}
-              to={`/category/${cat.slug || cat._id}`}
+              to={path(`/category/${cat.slug || cat._id}`)}
               className="group relative rounded-xl overflow-hidden aspect-[4/3] flex items-end no-underline"
               style={{ background: cat.image ? undefined : `${cfg.primaryColor}15` }}
             >

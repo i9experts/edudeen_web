@@ -1,13 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Package } from 'lucide-react';
 import { ProductImage, StarRating } from '@/components/comman/marketplace/ProductCard';
 import { useStorefrontProductSection } from '@/hooks/useStorefrontProductSections';
 import { apiGetPublicStoreProducts, type PublicStoreProduct } from '@/api/services/store';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 import { currencySymbol } from '@/utils/currency';
-import { getMainAppUrl } from '@/utils/storefrontUrl';
-import { useStorefront } from '../StorefrontContext';
+import { useStorefront, useStorefrontPaths } from '../StorefrontContext';
 import { ProductCardShell, ProductCardImage } from '../ProductCard';
+import { ProductCoverFallback } from '@/components/comman/marketplace/ProductCoverFallback';
 
 export interface FeaturedProductsSectionSettings {
   heading?:      string;
@@ -68,6 +67,7 @@ function useCuratedProducts(storeId: string | undefined, settings: FeaturedProdu
 // `ProductCatalogSection`, which is the full paginated browse grid.
 export function FeaturedProductsSection({ settings }: { settings: FeaturedProductsSectionSettings }) {
   const { store, cfg } = useStorefront();
+  const { toMain } = useStorefrontPaths();
   const { currency: displayCurrency, convert } = useCurrencyPreference();
   const displaySymbol = currencySymbol(displayCurrency);
   const { products, loading } = useCuratedProducts(store.storeId, settings);
@@ -82,12 +82,12 @@ export function FeaturedProductsSection({ settings }: { settings: FeaturedProduc
           const pType = p.productType ?? p.type ?? 'physical';
           const isDigital = pType !== 'physical';
           return (
-            <ProductCardShell key={p._id} onClick={() => { window.location.href = getMainAppUrl(`/product/${p.slug}`); }} className="shrink-0 w-[160px] text-left">
+            <ProductCardShell key={p._id} onClick={() => toMain(`/product/${p.slug}`)} className="shrink-0 w-[160px] text-left">
               <div className="relative p-2">
                 <ProductCardImage>
                   {p.images?.[0]
                     ? <ProductImage images={p.images} name={p.name} className="w-full h-full object-cover" />
-                    : <Package size={24} className="text-brand-orange" />}
+                    : <ProductCoverFallback name={p.name} size="sm" className="w-full h-full" />}
                 </ProductCardImage>
                 <span className={`absolute top-3 left-3 px-[6px] py-[1px] rounded-[4px] text-[9px] font-semibold border ${isDigital ? 'bg-accent-violet-bg text-accent-violet border-accent-violet/25' : 'bg-[#edf5e7] text-[#3b6720] border-[#c7e0b5]'}`}>
                   {isDigital ? (pType === 'educational' ? 'Educational' : 'Digital') : 'Physical'}

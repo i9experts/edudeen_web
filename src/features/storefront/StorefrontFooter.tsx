@@ -102,7 +102,7 @@ function SocialIcons({ socials }: { socials: Block[] }) {
 
 export function StorefrontFooter() {
   const { store, theme, cfg, resolveLink } = useStorefront();
-  const blocks = theme?.footer.blocks ?? [];
+  const blocks = theme?.footer?.blocks ?? [];
 
   const columns = blocks.filter(b => b.type === 'footer_column');
   const socials = blocks.filter(b => b.type === 'social_link');

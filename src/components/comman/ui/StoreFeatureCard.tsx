@@ -4,6 +4,7 @@ import { Star, Users, Store, TrendingUp, BadgeCheck, PackageCheck, UserPlus, Use
 import { apiFollowStore, type PublicStoreListItem } from '@/api/services/store';
 import { useAuthGate } from '@/contexts/AuthGateContext';
 import { CoverImage } from './CoverImage';
+import { EDUDEEN_DEFAULT_COVER_GRADIENT } from '@/features/storefront/StorefrontContext';
 
 // ── Featured seller card — cover, avatar, badges, rating/followers/products, follow ──
 export function StoreFeatureCard({ store, onClick, className }: {
@@ -46,6 +47,9 @@ export function StoreFeatureCard({ store, onClick, className }: {
         src={store.coverImage}
         imgClassName="transition-transform duration-500 group-hover:scale-105"
         className="h-[88px]"
+        // No cover photo → the same Edudeen default gradient the store page uses.
+        fallbackClassName=""
+        fallbackStyle={{ background: EDUDEEN_DEFAULT_COVER_GRADIENT }}
       >
         {isTopSeller && (
           <span className="absolute top-[8px] right-[8px] inline-flex items-center gap-[3px] px-[7px] py-[3px] rounded-full bg-carbon/80 backdrop-blur-sm text-white text-[9.5px] font-bold">
@@ -84,9 +88,8 @@ export function StoreFeatureCard({ store, onClick, className }: {
           <p className="text-[13.5px] font-bold text-carbon leading-tight truncate">{store.name}</p>
           {isVerified && <BadgeCheck size={14} className="text-info fill-info/15 shrink-0" />}
         </div>
-        {store.description && (
-          <p className="text-[10.5px] text-slate leading-snug line-clamp-1 mb-[10px]">{store.description}</p>
-        )}
+        {/* Always reserve the line so cards without a description stay the same height. */}
+        <p className="text-[10.5px] text-slate leading-snug line-clamp-1 mb-[10px] min-h-[1.375em]">{store.description || ' '}</p>
 
         <div className="flex items-center gap-3 pt-[10px] border-t border-bone">
           <span className="flex items-center gap-[4px] text-[11px] text-charcoal font-medium">
