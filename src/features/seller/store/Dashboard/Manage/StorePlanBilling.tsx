@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import {
-  Check, Zap, Users, Package, Sparkles, MonitorSmartphone, AlertTriangle, Clock, CreditCard,
+  Check, Zap, Users, Package, Sparkles, AlertTriangle, Clock, CreditCard,
   XCircle, RotateCcw, Loader2, type LucideIcon,
 } from 'lucide-react';
 import { StorePageHeader, useStoreWorkspace } from '@/components/layouts/StoreLayout';
@@ -313,7 +313,6 @@ export default function StorePlanBilling() {
                 max={entitlements.aiCredits.monthlyAllowance}
                 Icon={Sparkles}
               />
-              <UsageBar label="POS Locations" used={entitlements.maxPosLocations.used} max={entitlements.maxPosLocations.limit} Icon={MonitorSmartphone} />
             </div>
           </div>
         )}

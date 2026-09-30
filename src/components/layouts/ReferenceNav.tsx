@@ -43,7 +43,6 @@ const SELLER_PAGES: NavPage[] = [
   // { label: 'Add Product',  path: '/seller/products/add',     Icon: Plus            },
   // { label: 'Digital Upload', path: '/seller/products/digital', Icon: Upload          },
   { label: 'Store Builder',  path: '/seller/store',            Icon: Store, prefetch: () => { void import('@/features/seller/dashboard/storemodule/StoreBuilder'); } },
-  // { label: 'POS Register',   path: '/seller/pos',              Icon: Monitor         },
   // { label: 'Orders',         path: '/seller/orders',           Icon: Package         },
   // { label: 'Returns',        path: '/seller/returns',          Icon: CornerUpLeft    },
   // { label: 'Inventory',      path: '/seller/inventory',        Icon: ClipboardList   },

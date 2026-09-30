@@ -8,7 +8,7 @@ import { ProductPicker } from '../components/ProductPicker';
 import { GenerationActions } from '../components/GenerationActions';
 import type { AiTone } from '@/api/services/aiStudio';
 
-const PRODUCT_TYPES = ['Educational Resource', 'Digital Download', 'Handmade Craft', 'Business Tool', 'Physical Product', 'Service'];
+const PRODUCT_TYPES = ['Educational Resource', 'Digital Download', 'Book', 'Online Course', 'School Supplies', 'Tutoring / Classes'];
 
 interface ListingWriterToolProps {
   storeId: string;

@@ -26,13 +26,6 @@ export const COLORS = {
   errorBg:    '#FDEAEA',
   info:       '#1A72C2',
   infoBg:     '#E6F1FB',
-
-  // POS Dark Theme
-  posBg:      '#0F0E0D',
-  posSurface: '#1A1918',
-  posBorder:  '#2C2A28',
-  posMuted:   '#5C5A58',
-  posFaint:   '#6A6866',
 } as const;
 
 // ── Status → Badge color mapping ────────────────────────────────────────────
@@ -107,21 +100,20 @@ export const ONBOARDING_STEPS = [
 ] as const;
 
 export const SELLER_TYPES = [
-  { id: 'creator',    icon: 'palette',    title: 'Creator',           desc: 'Sell digital art, templates, fonts, music, presets' },
+  { id: 'creator',    icon: 'palette',    title: 'Content Creator',   desc: 'Printables, flashcards, educational templates and media' },
   { id: 'educator',   icon: 'book-open',  title: 'Educator',          desc: 'Worksheets, lesson plans, curriculum, assessments'  },
-  { id: 'retailer',   icon: 'store',      title: 'Retailer',          desc: 'Physical goods, handmade products, branded items'   },
-  { id: 'brand',      icon: 'briefcase',  title: 'Brand / Business',  desc: 'Run a full online store with inventory and POS'     },
-  { id: 'freelancer', icon: 'monitor',    title: 'Freelancer',        desc: 'Offer services, bookings, or consulting packages'   },
-  { id: 'multiple',   icon: 'gift',       title: 'Mix of the above',  desc: 'I sell across multiple categories and formats'      },
+  { id: 'retailer',   icon: 'store',      title: 'Bookseller / Retailer', desc: 'Books, Quran sets, stationery and school supplies' },
+  { id: 'brand',      icon: 'briefcase',  title: 'Publisher / Institute', desc: 'Publish books or run a full online learning store' },
+  { id: 'freelancer', icon: 'monitor',    title: 'Tutor / Teacher',   desc: 'Offer tutoring, Quran classes or course packages'   },
+  { id: 'multiple',   icon: 'gift',       title: 'Mix of the above',  desc: 'I sell across multiple learning categories and formats' },
 ] as const;
 
 export const PRODUCT_TYPES = [
-  { id: 'physical',       icon: 'package',   label: 'Physical Products',     desc: 'Ship items to customers'      },
-  { id: 'digital',        icon: 'download',  label: 'Digital Downloads',     desc: 'PDFs, files, audio, video'   },
+  { id: 'physical',       icon: 'package',   label: 'Books & School Supplies', desc: 'Ship books, stationery and kits' },
+  { id: 'digital',        icon: 'download',  label: 'Digital Learning Resources', desc: 'eBooks, PDFs, audio, video'   },
   { id: 'educational',    icon: 'book-open', label: 'Educational Resources', desc: 'Worksheets, lesson plans'    },
-  { id: 'services',       icon: 'calendar',  label: 'Services / Bookings',  desc: 'Appointments and packages'   },
-  { id: 'subscriptions',  icon: 'repeat',    label: 'Subscriptions',         desc: 'Recurring membership access' },
-  { id: 'pos',            icon: 'monitor',   label: 'In-Person / POS',      desc: 'Sell at a physical location'  },
+  { id: 'services',       icon: 'calendar',  label: 'Classes / Tutoring',    desc: 'Live lessons and course packages' },
+  { id: 'subscriptions',  icon: 'repeat',    label: 'Learning Subscriptions', desc: 'Recurring course or membership access' },
 ] as const;
 
 // ── Pricing Plans ────────────────────────────────────────────────────────────
@@ -138,7 +130,7 @@ export const PRICING_PLANS = [
       'Digital product delivery', 'Standard checkout', 'Email support',
       '100 AI credits / month', '3% transaction fee',
     ],
-    missing: ['Custom domain', 'POS', 'Advanced analytics', 'Store Builder themes', 'Priority support'],
+    missing: ['Custom domain', 'Advanced analytics', 'Store Builder themes', 'Priority support'],
   },
   {
     name: 'Professional',
@@ -149,7 +141,7 @@ export const PRICING_PLANS = [
     transactionFee: '1%',
     features: [
       'Unlimited products', 'Custom domain (.com)', 'Full Store Builder',
-      'POS register', 'Advanced analytics', 'AI Studio — 1,000 credits / mo',
+      'Course & subscription products', 'Advanced analytics', 'AI Studio — 1,000 credits / mo',
       '5 staff accounts', 'Email campaigns', 'Abandoned cart recovery',
       'Priority support', '1% transaction fee', 'Marketplace featured badge',
     ],
@@ -159,11 +151,11 @@ export const PRICING_PLANS = [
     name: 'Business',
     monthly: 99, annual: 79,
     badge: null,
-    desc: 'For high-volume sellers, agencies, and multi-location businesses.',
+    desc: 'For high-volume booksellers, publishers, and learning institutes.',
     cta: 'Start Free Trial',
     transactionFee: '0.5%',
     features: [
-      'Everything in Professional', 'Multi-location POS', 'Unlimited staff accounts',
+      'Everything in Professional', 'Unlimited staff accounts',
       'AI Studio — 5,000 credits / mo', 'Loyalty & Rewards program',
       'Subscription products', 'Advanced shipping rules',
       'API access & webhooks', 'Dedicated account manager',

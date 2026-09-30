@@ -107,7 +107,7 @@ export function LandingPagesTab() {
           }
         >
           <Field label="Slug" hint={editing !== 'new' ? 'Slug cannot be changed after creation.' : undefined} className="mb-3">
-            <Input value={slug} disabled={editing !== 'new'} onChange={e => setSlug(e.target.value)} placeholder="summer-sale-2026" />
+            <Input value={slug} disabled={editing !== 'new'} onChange={e => setSlug(e.target.value)} placeholder="back-to-school-2026" />
           </Field>
           <Field label="Title" className="mb-3">
             <Input value={title} onChange={e => setTitle(e.target.value)} />

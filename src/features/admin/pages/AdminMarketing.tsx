@@ -88,7 +88,7 @@ function CreateCampaignModal({ campaign, onClose, onSaved }: { campaign?: Campai
       </>}
     >
       <div className="flex flex-col gap-4">
-        <Input label="Campaign Name" placeholder="Summer Sale Weekend" value={name} onChange={(e) => setName(e.target.value)} />
+        <Input label="Campaign Name" placeholder="Back to School Week" value={name} onChange={(e) => setName(e.target.value)} />
         <Textarea label="Description" rows={3} placeholder="Optional description sellers will see when opting in…" value={description} onChange={(e) => setDescription(e.target.value)} />
         <div>
           <label className="text-[12px] font-medium text-charcoal block mb-1.5">Banner Image (optional)</label>

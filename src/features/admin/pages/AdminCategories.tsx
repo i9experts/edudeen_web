@@ -74,7 +74,7 @@ function AddCategoryModal({ mainCategories, onClose, onSaved }: {
           <option value="">None — create as a main category</option>
           {mainCategories.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
         </Select>
-        <Input label="Name" placeholder="e.g. Electronics" value={name} onChange={e => setName(e.target.value)} />
+        <Input label="Name" placeholder="e.g. Islamic Books" value={name} onChange={e => setName(e.target.value)} />
         <Textarea label="Description (optional)" rows={3} placeholder="Describe this category…" value={description} onChange={e => setDescription(e.target.value)} />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>

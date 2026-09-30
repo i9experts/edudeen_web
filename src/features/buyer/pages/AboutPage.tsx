@@ -1,4 +1,4 @@
-import { ArrowRight, Store, MonitorSmartphone, Sparkles, BarChart3 } from 'lucide-react';
+import { ArrowRight, Store, BookOpen, Sparkles, BarChart3 } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useSellEntry } from '@/hooks/auth/useSellEntry';
 import { Button, Footer } from '@/components/comman/ui';
@@ -12,9 +12,9 @@ import aboutImg2 from '@/assets/about/about-2.jfif';
 const SERIF = "Georgia, 'Times New Roman', serif";
 
 const PILLARS = [
-  { Icon: Store, title: 'One workspace', desc: 'A store, POS, orders, inventory and analytics that all read from the same real data — not five separate tools stitched together.' },
-  { Icon: MonitorSmartphone, title: 'Sell anywhere', desc: 'The same catalog and stock, whether a sale happens online or at an in-person counter.' },
-  { Icon: Sparkles, title: 'AI where it helps', desc: 'Real, metered AI tools for the writing and analysis work that eats a seller\'s time — not a decorative label.' },
+  { Icon: Store, title: 'One workspace', desc: 'A store, orders, inventory and analytics that all read from the same real data — not five separate tools stitched together.' },
+  { Icon: BookOpen, title: 'Printed and digital', desc: 'Sell printed books and school supplies alongside courses, eBooks and worksheets, from one catalog.' },
+  { Icon: Sparkles, title: 'AI where it helps', desc: 'Real, metered AI tools for the writing and analysis work that eats an educator\'s time — not a decorative label.' },
   { Icon: BarChart3, title: 'Numbers you can trust', desc: 'Every figure a seller sees is computed from their actual orders and payments, never a simulated placeholder.' },
 ];
 
@@ -30,12 +30,12 @@ export function AboutPage() {
         </Reveal>
         <Reveal delay={0.08}>
           <h1 className="text-[28px] sm:text-[40px] font-bold text-carbon leading-[1.15] mb-5" style={{ fontFamily: SERIF }}>
-            Commerce shouldn't need five different logins.
+            Sharing knowledge shouldn't need five different logins.
           </h1>
         </Reveal>
         <Reveal delay={0.16}>
           <p className="text-[14px] sm:text-[16px] text-slate leading-[1.7]">
-            Edudeen exists because running a business online and in person usually means juggling a store builder, a POS system, an inventory tracker and an analytics tool that don't talk to each other. We built one platform where they all share the same real data instead.
+            Edudeen exists because teachers, scholars, academies and publishers who sell learning materials online usually end up juggling a store builder, a file-delivery service, an inventory tracker and an analytics tool that don't talk to each other. We built one education marketplace where they all share the same real data instead.
           </p>
         </Reveal>
       </div>
@@ -78,14 +78,14 @@ export function AboutPage() {
               More independence for every seller.
             </h2>
             <p className="text-[14px] text-slate leading-[1.75]">
-              Sellers' own payment gateways, custom domains per store, and a native POS app are all real items on our roadmap — the direction is always toward a seller owning more of their own business, not less.
+              Sellers' own payment gateways and custom domains per store are real items on our roadmap — the direction is always toward an educator owning more of their own teaching business, not less.
             </p>
           </Reveal>
         </div>
       </div>
 
       <div className="bg-carbon px-4 md:px-8 lg:px-12 py-14 text-center">
-        <SectionHeading title="Build your business on Edudeen." tone="dark" align="center" size="lg" className="mb-8" />
+        <SectionHeading title="Share what you teach on Edudeen." tone="dark" align="center" size="lg" className="mb-8" />
         <Reveal>
           <MagneticButton>
             <Button size="lg" onClick={sellEntry.go} loading={sellEntry.loading}>

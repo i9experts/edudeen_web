@@ -14,6 +14,10 @@ import { ResourceCard, ResourceCardSkeleton } from '@/components/comman/marketpl
 import { FlashSaleCard } from '@/components/comman/marketplace/FlashSaleCard';
 import { MegaMenuBar } from '@/components/comman/marketplace/MegaMenuBar';
 import { CategoryTabs } from '@/components/comman/marketplace/CategoryTabs';
+import {
+  FiltersButton, FiltersDrawer, Section, RadioRow, CheckRow,
+  EMPTY_FILTERS, PRICE_NO_MAX, type MarketplaceFilters,
+} from '@/components/comman/marketplace/FiltersDrawer';
 import { SectionHead, sectionLinkClass } from '@/components/comman/marketplace/SectionHead';
 import { Star, Quote, BadgeCheck, Zap, Tag, Shield, CreditCard, Headset, RefreshCcw } from 'lucide-react';
 import { apiGetTestimonials, type Testimonial } from '@/api/services/testimonials';
@@ -57,9 +61,56 @@ const SORT_TO_API: Record<SortFilter, MarketplaceSortBy | undefined> = {
 };
 
 const PAGE_SIZE = 12;
+// The API caps a page at 50 — the pool used when a filter has to run in the browser.
+const CLIENT_POOL = 50;
 
-const selectClass =
-  'py-[10px] pl-3 pr-8 border border-bone rounded-[7px] bg-white text-carbon text-[14px] cursor-pointer max-w-[48%] sm:max-w-none';
+const SORT_LABELS: Record<SortFilter, string> = {
+  featured: 'Featured',
+  popular:  'Most popular',
+  low:      'Price: low to high',
+  high:     'Price: high to low',
+};
+
+// Fixed subject tabs. When an admin category with a matching name exists it
+// filters server-side by that category; otherwise the tab matches on the
+// product's name, description and tags.
+const SUBJECT_TABS: { id: string; label: string; category: RegExp; keywords: RegExp }[] = [
+  { id: 'tarbiyyah',     label: 'Tarbiyyah',       category: /tarbiy/i,
+    keywords: /tarbiy|islam|quran|qur'an|seerah|sirah|dua|salah|namaz|hadith|akhlaq|deen|tajweed|prophet|ramadan|wudu/i },
+  { id: 'arabic-urdu',   label: 'Arabic & Urdu',   category: /arabic|urdu/i,
+    keywords: /arabic|urdu|qaida|noorani|عربي|اردو/i },
+  { id: 'english',       label: 'English',         category: /^english/i,
+    keywords: /english|phonics|grammar|spelling|vocabulary|reading|writing|alphabet tracing/i },
+  { id: 'maths-science', label: 'Maths & Science', category: /math|science|stem/i,
+    keywords: /math|maths|science|stem|physics|chemistry|biology|arithmetic|numbers|geometry|algebra/i },
+  { id: 'homeschooling', label: 'Homeschooling',   category: /home ?school/i,
+    keywords: /home ?school|curriculum|lesson plan|planner|unit study|montessori/i },
+];
+
+const LANGUAGES: { value: string; label: string; match: RegExp }[] = [
+  { value: 'english', label: 'English', match: /english/i },
+  { value: 'arabic',  label: 'Arabic',  match: /arabic|عربي/i },
+  { value: 'urdu',    label: 'Urdu',    match: /urdu|اردو/i },
+];
+
+function flattenCategories(nodes: CategoryNode[], out: CategoryNode[] = []): CategoryNode[] {
+  for (const n of nodes) { out.push(n); flattenCategories(n.children ?? [], out); }
+  return out;
+}
+
+const sameRange = (a: [number, number], b: [number, number]) => a[0] === b[0] && a[1] === b[1];
+
+// Category names are left out on purpose: a broad category like "Islamic &
+// Educational Resources" would make every product match every subject.
+function productText(p: MarketplaceProduct) {
+  return `${p.name} ${p.description ?? ''} ${(p.tags ?? []).join(' ')}`;
+}
+
+function isOnSale(p: MarketplaceProduct) {
+  const dv = (p.variants ?? []).find(v => v.isDefault) ?? p.variants?.[0];
+  return dv?.compareAtPrice != null && dv.compareAtPrice > (dv.price ?? 0);
+}
+
 
 const linkButtonClass = sectionLinkClass;
 
@@ -127,32 +178,63 @@ export function Homepage() {
   const countdown = useCountdownToMidnight();
 
   // ── Catalogue section filters ──
-  const [category, setCategory] = useState<CategoryNode | null>(null);
+  const [subject, setSubject]   = useState<string | null>(null);
   const [level, setLevel]       = useState('');
-  const [kind, setKind]         = useState<TypeFilter>('');
+  const [language, setLanguage] = useState('');
   const [sort, setSort]         = useState<SortFilter>('featured');
   const [freeOnly, setFreeOnly] = useState(false);
+  const [filters, setFilters]   = useState<MarketplaceFilters>(EMPTY_FILTERS);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [limit, setLimit]       = useState(PAGE_SIZE);
 
-  useEffect(() => { setLimit(PAGE_SIZE); }, [category, level, kind, sort, freeOnly]);
+  useEffect(() => { setLimit(PAGE_SIZE); }, [subject, level, language, sort, freeOnly, filters]);
 
-  const { products, total, loading } = useProductsByCategory(
-    1, limit, category?._id,
-    level ? 'educational' : (kind || undefined),
+  const allCategories = flattenCategories(categories);
+  const subjectTab = SUBJECT_TABS.find(t => t.id === subject) ?? null;
+  // A real admin category named after the tab → filter server-side by it.
+  const subjectCategory = subjectTab ? allCategories.find(c => subjectTab.category.test(c.name)) ?? null : null;
+  const languageDef = LANGUAGES.find(l => l.value === language) ?? null;
+
+  // Subject keywords, language and "on sale" aren't API filters — when any is
+  // on, fetch the largest page the API allows and narrow it here.
+  const clientSide = (!!subjectTab && !subjectCategory) || !!languageDef || filters.onSale;
+  const itemType = filters.type[0]?.toLowerCase() as TypeFilter | undefined;
+  const [minP, maxP] = filters.priceRange;
+
+  const { products: fetched, total: serverTotal, loading } = useProductsByCategory(
+    1, clientSide ? CLIENT_POOL : limit, subjectCategory?._id,
+    level ? 'educational' : (itemType || undefined),
     level || undefined, undefined, undefined,
-    undefined, freeOnly ? 0 : undefined, undefined,
+    freeOnly ? undefined : (minP > 0 ? minP : undefined),
+    freeOnly ? 0 : (maxP < PRICE_NO_MAX ? maxP : undefined),
+    filters.minRating ?? undefined,
     SORT_TO_API[sort],
   );
 
+  const narrowed = clientSide
+    ? fetched.filter(p => {
+        const text = productText(p);
+        if (subjectTab && !subjectCategory && !subjectTab.keywords.test(text)) return false;
+        if (languageDef && !languageDef.match.test(text)) return false;
+        if (filters.onSale && !isOnSale(p)) return false;
+        return true;
+      })
+    : fetched;
+  const products = clientSide ? narrowed.slice(0, limit) : narrowed;
+  const total = clientSide ? narrowed.length : serverTotal;
+
   const resetFilters = () => {
-    setCategory(null); setLevel(''); setKind(''); setSort('featured'); setFreeOnly(false);
+    setSubject(null); setLevel(''); setLanguage(''); setSort('featured'); setFreeOnly(false); setFilters(EMPTY_FILTERS);
   };
-  const hasFilters = !!(category || level || kind || freeOnly || sort !== 'featured');
+  const pageFilterCount = (subject ? 1 : 0) + (level ? 1 : 0) + (language ? 1 : 0) + (freeOnly ? 1 : 0) + (sort !== 'featured' ? 1 : 0);
+  const drawerFilterCount =
+    (sameRange(filters.priceRange, EMPTY_FILTERS.priceRange) ? 0 : 1) + filters.type.length + (filters.minRating ? 1 : 0) + (filters.onSale ? 1 : 0);
+  const hasFilters = pageFilterCount + drawerFilterCount > 0;
 
   const resourcesRef = useRef<HTMLElement>(null);
   const scrollToResources = () => resourcesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  const selectCategory = (c: CategoryNode | null) => {
-    setCategory(c);
+  const selectSubject = (id: string | null) => {
+    setSubject(id);
     setTimeout(scrollToResources, 30);
   };
 
@@ -229,7 +311,6 @@ export function Homepage() {
     { value: stats.ratingCount > 0 ? stats.avgRating : null, format: (n: number) => `${n.toFixed(1)} ★`, label: 'Average Rating' },
   ] : [];
 
-  const tarbiyyah = categories.find(c => /tarbiy|islam/i.test(c.name));
 
   return (
     <div className="bg-white min-h-full">
@@ -370,49 +451,21 @@ export function Homepage() {
         {/* ── Catalogue with filters ── */}
         <section ref={resourcesRef} className="scroll-mt-[150px] mb-12">
           <SectionHead
-            eyebrow={category ? category.name : 'Your next teaching moment'}
+            eyebrow={subjectTab ? subjectTab.label : 'Your next teaching moment'}
             title="Resources with a purpose"
             sub="Thoughtful ideas for learning, growing and becoming."
-            action={{ label: 'View all resources', onClick: () => navigate(category ? `/marketplace/${category.slug}` : '/marketplace') }}
+            action={{ label: 'View all resources', onClick: () => navigate(subjectCategory ? `/marketplace/${subjectCategory.slug}` : '/marketplace') }}
           />
 
-          {categories.length > 0 && (
-            <CategoryTabs
-              categories={categories}
-              activeId={category?._id ?? null}
-              onSelect={selectCategory}
-              className="!px-0 mb-5"
-            />
-          )}
+          <CategoryTabs
+            tabs={SUBJECT_TABS}
+            activeId={subject}
+            onSelect={selectSubject}
+            className="!px-0 mb-5"
+          />
 
           <div className="flex gap-[10px] flex-wrap mb-6 items-center">
-            <select aria-label="Filter by age or grade" value={level} onChange={e => setLevel(e.target.value)} className={selectClass}>
-              <option value="">All ages &amp; grades</option>
-              {EDUCATION_LEVELS.filter(l => l.value !== 'other').map(l => (
-                <option key={l.value} value={l.value}>{l.label}</option>
-              ))}
-            </select>
-            <select
-              aria-label="Filter by type"
-              value={level ? 'educational' : kind}
-              disabled={!!level}
-              onChange={e => setKind(e.target.value as TypeFilter)}
-              className={selectClass}
-            >
-              <option value="">All types</option>
-              <option value="physical">Physical</option>
-              <option value="digital">Digital</option>
-              <option value="educational">Educational</option>
-            </select>
-            <select aria-label="Sort resources" value={sort} onChange={e => setSort(e.target.value as SortFilter)} className={selectClass}>
-              <option value="featured">Newest</option>
-              <option value="popular">Most popular</option>
-              <option value="low">Price: low to high</option>
-              <option value="high">Price: high to low</option>
-            </select>
-            <label className="text-[14px] text-carbon flex items-center gap-[6px] cursor-pointer">
-              <input type="checkbox" checked={freeOnly} onChange={e => setFreeOnly(e.target.checked)} /> Free resources
-            </label>
+            <FiltersButton count={pageFilterCount + drawerFilterCount} onClick={() => setFiltersOpen(true)} />
             {hasFilters && (
               <button onClick={resetFilters} className="bg-transparent border-none p-0 text-[13px] text-slate underline cursor-pointer">
                 Clear filters
@@ -452,6 +505,47 @@ export function Homepage() {
               </button>
             </div>
           )}
+
+          <FiltersDrawer
+            open={filtersOpen}
+            onClose={() => setFiltersOpen(false)}
+            filters={filters}
+            onChange={setFilters}
+            onClear={resetFilters}
+            total={total}
+            extraActiveCount={pageFilterCount}
+          >
+            <Section title="Subject">
+              <RadioRow name="f-subject" label="All resources" checked={!subject} onChange={() => setSubject(null)} />
+              {SUBJECT_TABS.map(t => (
+                <RadioRow key={t.id} name="f-subject" label={t.label} checked={subject === t.id} onChange={() => setSubject(t.id)} />
+              ))}
+            </Section>
+
+            <Section title="Age & grade">
+              <RadioRow name="f-level" label="All ages & grades" checked={!level} onChange={() => setLevel('')} />
+              {EDUCATION_LEVELS.filter(l => l.value !== 'other').map(l => (
+                <RadioRow key={l.value} name="f-level" label={l.label} checked={level === l.value} onChange={() => setLevel(l.value)} />
+              ))}
+            </Section>
+
+            <Section title="Language">
+              <RadioRow name="f-lang" label="All languages" checked={!language} onChange={() => setLanguage('')} />
+              {LANGUAGES.map(l => (
+                <RadioRow key={l.value} name="f-lang" label={l.label} checked={language === l.value} onChange={() => setLanguage(l.value)} />
+              ))}
+            </Section>
+
+            <Section title="Sort by">
+              {(Object.keys(SORT_LABELS) as SortFilter[]).map(s => (
+                <RadioRow key={s} name="f-sort" label={SORT_LABELS[s]} checked={sort === s} onChange={() => setSort(s)} />
+              ))}
+            </Section>
+
+            <Section title="Price type">
+              <CheckRow label="Free resources" checked={freeOnly} onChange={() => setFreeOnly(v => !v)} />
+            </Section>
+          </FiltersDrawer>
         </section>
 
         {/* ── Top picks ── */}
@@ -492,7 +586,7 @@ export function Homepage() {
             <p className="text-[14px] text-carbon max-w-[390px] mb-4">
               Bring kindness, gratitude and everyday good manners into your learning moments.
             </p>
-            <button onClick={() => (tarbiyyah ? selectCategory(tarbiyyah) : navigate('/education'))} className={linkButtonClass}>
+            <button onClick={() => selectSubject('tarbiyyah')} className={linkButtonClass}>
               Explore character-building resources →
             </button>
           </div>

@@ -317,6 +317,15 @@
 .scrollbar-hide { scrollbar-width: none; -ms-overflow-style: none; }
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 
+/* Thin, always-visible brand scrollbar for inner scroll panels (e.g. the
+   marketplace filter sidebar) — a visible track so it's obvious there is
+   more below, without the chunky default OS bar. */
+.brand-scrollbar { scrollbar-width: thin; scrollbar-color: #9fb4c4 transparent; }
+.brand-scrollbar::-webkit-scrollbar { width: 6px; }
+.brand-scrollbar::-webkit-scrollbar-track { background: transparent; margin: 10px 0; }
+.brand-scrollbar::-webkit-scrollbar-thumb { background: #9fb4c4; border-radius: 999px; }
+.brand-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--color-brand-orange); }
+
 /* ── Fire button variant — solid dotted fill at rest, breaks apart into dashed dots on hover ──
    Declared outside any @layer so it wins over Button's BASE transition utilities
    (same layering trick already used by the utilities above) without editing BASE. */

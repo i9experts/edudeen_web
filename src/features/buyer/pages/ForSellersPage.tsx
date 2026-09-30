@@ -4,7 +4,7 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { useSellEntry } from '@/hooks/auth/useSellEntry';
 import { Button } from '@/components/comman/ui/Button';
 import { SkeletonBox } from '@/components/comman/ui';
-import { ArrowRight, GraduationCap, Palette, Store, Gem, Briefcase, Building2, Gift, Hammer, Download, Sparkles, BarChart2, Monitor, CreditCard, Lock } from 'lucide-react';
+import { ArrowRight, GraduationCap, Palette, Store, BookOpen, Library, Building2, Gift, Hammer, Download, Sparkles, BarChart2, PackageCheck, CreditCard, Lock } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { apiGetPlatformStats, type PlatformStats } from '@/api/services/store';
 import { Reveal, RevealStagger } from '@/components/comman/motion/Reveal';
@@ -21,10 +21,10 @@ const SERIF = "Georgia, 'Times New Roman', serif";
 
 const SELLER_TYPES: { Icon: LucideIcon; title: string; desc: string; cta: string }[] = [
   { Icon: GraduationCap, title: 'Educators',            desc: 'Sell lesson plans, worksheets, bundles, and courses to teachers and students worldwide.',    cta: 'Sell as Educator'   },
-  { Icon: Palette,       title: 'Creators & Designers', desc: 'Digital downloads, templates, fonts, and design assets with instant delivery.',               cta: 'Start Creating'     },
-  { Icon: Store,         title: 'Retailers',             desc: 'Launch your online store and sell physical products to customers everywhere.',                 cta: 'Open Your Store'    },
-  { Icon: Gem,           title: 'Handmade Sellers',      desc: 'Showcase your handcrafted goods with your own beautiful, branded storefront.',              cta: 'List Your Craft'    },
-  { Icon: Briefcase,     title: 'Brands & Agencies',     desc: 'White-label storefronts, multi-seat management, and advanced analytics.',                     cta: 'Go Enterprise'      },
+  { Icon: Palette,       title: 'Educational Creators',  desc: 'Printables, flashcards, eBooks and study templates with instant digital delivery.',          cta: 'Start Creating'     },
+  { Icon: Store,         title: 'Bookshops & Stationers', desc: 'Put your books, school supplies and stationery online and deliver to students everywhere.',    cta: 'Open Your Store'    },
+  { Icon: BookOpen,      title: 'Quran & Islamic Teachers', desc: 'Offer Quran, Tajweed, Arabic and Islamic studies courses and materials from your own storefront.', cta: 'Start Teaching'  },
+  { Icon: Library,       title: 'Publishers',            desc: 'List your whole catalogue with per-edition stock, sales analytics and printed and digital formats.', cta: 'List Your Titles'  },
   { Icon: Building2,     title: 'Schools & Districts',   desc: 'Institutional accounts with volume pricing and centralized resource management.',              cta: 'Contact Us'         },
 ];
 
@@ -34,7 +34,7 @@ const FEATURES: { Icon: LucideIcon; title: string; desc: string }[] = [
   { Icon: Download,    title: 'Digital Delivery',     desc: 'Instant file delivery for digital products.'       },
   { Icon: Sparkles,    title: 'AI Tools',             desc: 'AI-powered listing optimization and pricing.'      },
   { Icon: BarChart2,   title: 'Analytics',            desc: 'Real-time sales data and customer insights.'       },
-  { Icon: Monitor,     title: 'Point of Sale',        desc: 'Accept payments in person with our mobile POS.'   },
+  { Icon: PackageCheck, title: 'Inventory Tracking',  desc: 'Per-edition stock for printed books and supplies.' },
   { Icon: CreditCard,  title: 'Fast Payouts',         desc: 'Get paid within 2 business days, every time.'     },
   { Icon: Lock,        title: 'Seller Protection',    desc: 'Fraud protection and dispute resolution support.'  },
 ];
@@ -140,7 +140,7 @@ export function ForSellersPage() {
       {/* ── Feature Highlights ───────────────────────────────────────────── */}
       <div className="px-4 md:px-8 lg:px-12 py-12 md:py-[72px] bg-white">
         <div className="max-w-[1100px] mx-auto">
-          <SectionHeading title="Everything you need to run your business" subtitle="One subscription. Every tool. Zero technical headaches." align="center" className="mb-12" size="lg" />
+          <SectionHeading title="Everything you need to sell what you teach" subtitle="One subscription. Every tool. Zero technical headaches." align="center" className="mb-12" size="lg" />
           <RevealStagger className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" step={0.05} y={16}>
             {FEATURES.map(f => (
               <PremiumCard key={f.title} className="px-[18px] py-5">

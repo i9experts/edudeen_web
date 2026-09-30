@@ -29,7 +29,7 @@ import { SectionRenderer } from '@/features/storefront/SectionRenderer';
 const SELLER_TYPE_LABEL: Record<string, string> = {
   educator:       'Education Specialist',
   creator:        'Content Creator',
-  retailer:       'Retail Seller',
+  retailer:       'Bookshop & Supplies',
   brand_business: 'Brand / Business',
   freelancer:     'Freelancer',
 };

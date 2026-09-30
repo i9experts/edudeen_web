@@ -63,7 +63,7 @@ function TestimonialFormModal({ testimonial, onClose, onSaved }: { testimonial: 
       <div className="flex flex-col gap-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Input label="Seller Name" placeholder="Amina Raza" value={sellerName} onChange={e => setSellerName(e.target.value)} />
-          <Input label="Store Name (optional)" placeholder="Amina Crafts" value={storeName} onChange={e => setStoreName(e.target.value)} />
+          <Input label="Store Name (optional)" placeholder="Amina Books" value={storeName} onChange={e => setStoreName(e.target.value)} />
         </div>
         <div>
           <p className="text-[12.5px] font-medium text-charcoal mb-1.5">Rating</p>

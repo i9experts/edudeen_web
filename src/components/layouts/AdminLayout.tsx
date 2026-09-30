@@ -15,6 +15,7 @@ import { TokenStorage, type AppRole } from '@/api/services/auth';
 import { CommandPalette } from '@/components/comman/ui/CommandPalette';
 import { Modal, Button, CopyIconButton } from '@/components/comman/ui';
 import { EdudeenLogo, EdudeenIcon } from '@/components/comman/ui/EdudeenLogo';
+import { PlatformTopBar } from '@/components/comman/ui/PlatformTopBar';
 
 interface AdminNavItem {
   id:    string;
@@ -526,6 +527,7 @@ export function AdminLayout() {
     <div className={clsx('flex bg-white overflow-hidden', 'h-screen')}>
       <AdminSidebar open={sidebarOpen} onToggle={toggle} />
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <PlatformTopBar showAccount />
         {/* Mobile top bar — brand only; navigation lives in AdminBottomNav. */}
         <div className="lg:hidden shrink-0 flex items-center justify-between gap-3 px-4 py-2.5 bg-white border-b border-bone">
           <EdudeenLogo size={20} />

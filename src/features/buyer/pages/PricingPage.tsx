@@ -33,7 +33,7 @@ const FALLBACK_FAQS = [
   },
   {
     q: 'What counts as a transaction fee?',
-    a: 'Transaction fees apply to each sale made through your Edudeen store or marketplace listing. Digital product sales, physical sales, and POS sales all count.',
+    a: 'Transaction fees apply to each sale made through your Edudeen store or marketplace listing. Sales of digital resources (courses, eBooks, worksheets) and physical items (printed books, school supplies) both count.',
   },
   {
     q: 'Do you offer discounts for educators or non-profits?',

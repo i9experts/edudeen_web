@@ -116,7 +116,7 @@ export function MiniWishlist() {
                 </div>
               </div>
               <p className="text-[13.5px] font-semibold text-charcoal">Your wishlist is empty</p>
-              <p className="text-[11.5px] text-slate mt-[3px] mb-5">Save items you love to see them here.</p>
+              <p className="text-[11.5px] text-slate mt-[3px] mb-5">Save books and courses you love to see them here.</p>
               <Button variant="outline" size="sm" pill onClick={() => goTo('/account/wishlist')}>
                 Go to Wishlist
               </Button>

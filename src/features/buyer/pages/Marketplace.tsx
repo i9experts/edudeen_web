@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { clsx } from 'clsx';
 import { usePageTitle } from '@/hooks/usePageTitle';
-import { useStickyBox } from '@/hooks/useStickyBox';
 import { getStorefrontUrl } from '@/utils/storefrontUrl';
 import { useProductsByCategory } from '@/hooks/marketplace/useProductsByCategory';
 import { useProductSearch } from '@/hooks/marketplace/useProductSearch';
@@ -17,13 +16,14 @@ import { ProductCard, ProductCardSkeleton } from '@/components/comman/marketplac
 import { ResourceCard, ResourceCardSkeleton } from '@/components/comman/marketplace/ResourceCard';
 import { SectionHead } from '@/components/comman/marketplace/SectionHead';
 import { FlashSaleCard } from '@/components/comman/marketplace/FlashSaleCard';
-import { FilterAccordionSection, FilterRadioRow, FilterCheckboxRow, FilterStarRow, ActiveFilterChip, PriceRangeSlider, PRICE_MIN, PRICE_MAX } from '@/components/comman/marketplace/FilterAccordionSection';
+import { ActiveFilterChip } from '@/components/comman/marketplace/FilterAccordionSection';
+import { FiltersButton, FiltersDrawer, EMPTY_FILTERS, PRICE_NO_MAX, type MarketplaceFilters } from '@/components/comman/marketplace/FiltersDrawer';
 import { MegaMenuBar, CategoryBarIcon, CategoriesMegaContent } from '@/components/comman/marketplace/MegaMenuBar';
 import { Modal } from '@/components/comman/ui/Modal';
 import { BannerCarousel } from '@/components/comman/marketplace/BannerCarousel';
 import {
   ShoppingBag,
-  SlidersHorizontal, X, Zap, LayoutGrid, LayoutList,
+  X, Zap, LayoutGrid, LayoutList,
   RefreshCcw, Headset, ArrowRight,
   Shield, CreditCard, BadgeCheck,
 } from 'lucide-react';
@@ -41,56 +41,10 @@ const compactNumber = new Intl.NumberFormat('en', { notation: 'compact', maximum
 const compactCurrency = new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1, style: 'currency', currency: 'USD' });
 
 // ── Filter data ───────────────────────────────────────────────────────────────
-const TYPE_ITEMS = ['Physical', 'Digital', 'Educational'];
-const RATING_ITEMS: { label: string; stars: number }[] = [
-  { label: '4★ & up', stars: 4 },
-  { label: '3★ & up', stars: 3 },
-];
-
-interface FilterState { priceRange: [number, number]; type: string[]; minRating: number | null; }
-
-function FilterPanel({ filters, onToggleType, onRatingChange, onPriceRangeChange, categories = [], selectedCategory, onCategoryChange }: {
-  filters:  FilterState;
-  onToggleType: (value: string) => void;
-  onRatingChange: (stars: number | null) => void;
-  onPriceRangeChange: (value: [number, number]) => void;
-  categories:       CategoryNode[];
-  selectedCategory: string;
-  onCategoryChange: (id: string) => void;
-}) {
-  const isPriceRangeActive = filters.priceRange[0] !== PRICE_MIN || filters.priceRange[1] !== PRICE_MAX;
-  return (
-    <div>
-      {categories.length > 0 && (
-        <FilterAccordionSection title="Category" activeCount={selectedCategory ? 1 : 0}>
-          <div className="flex flex-col">
-            <FilterRadioRow label="All Categories" active={selectedCategory === ''} onClick={() => onCategoryChange('')} count={categories.reduce((sum, c) => sum + (c.productCount ?? 0), 0)} />
-            {categories.map(c => (
-              <FilterRadioRow key={c._id} label={c.name} active={selectedCategory === c._id} onClick={() => onCategoryChange(c._id)} count={c.productCount} />
-            ))}
-          </div>
-        </FilterAccordionSection>
-      )}
-      <FilterAccordionSection title="Price Range" activeCount={isPriceRangeActive ? 1 : 0}>
-        <PriceRangeSlider value={filters.priceRange} onChange={onPriceRangeChange} />
-      </FilterAccordionSection>
-      <FilterAccordionSection title="Product Type" activeCount={filters.type.length}>
-        <div className="flex flex-col">
-          {TYPE_ITEMS.map(label => (
-            <FilterCheckboxRow key={label} label={label} active={filters.type.includes(label)} onClick={() => onToggleType(label)} />
-          ))}
-        </div>
-      </FilterAccordionSection>
-      <FilterAccordionSection title="Rating" activeCount={filters.minRating ? 1 : 0}>
-        <div className="flex flex-col">
-          {RATING_ITEMS.map(({ label, stars }) => (
-            <FilterStarRow key={label} stars={stars} active={filters.minRating === stars} onClick={() => onRatingChange(filters.minRating === stars ? null : stars)} />
-          ))}
-        </div>
-      </FilterAccordionSection>
-    </div>
-  );
-}
+// The filter UI itself lives in FiltersDrawer (a slide-in panel opened from
+// the "Filters" pill in the toolbar).
+type FilterState = MarketplaceFilters;
+const PRICE_FLOOR = 0;
 
 // ── Config ────────────────────────────────────────────────────────────────────
 const SORT_OPTIONS = [
@@ -190,14 +144,6 @@ export function Marketplace() {
   // as-is from the navbar's own "All Categories" dropdown), not a second/
   // duplicated category browser.
   const [categoriesModalOpen, setCategoriesModalOpen] = useState(false);
-  // The floating Filters tab starts fully off-screen (not just invisible —
-  // translated past the viewport edge) and slides in shortly after the page
-  // has settled, instead of being visible immediately on load.
-  const [showFilterTab, setShowFilterTab] = useState(false);
-  useEffect(() => {
-    const t = setTimeout(() => setShowFilterTab(true), 700);
-    return () => clearTimeout(t);
-  }, []);
   // Flash Sale rail auto-advances one card at a time — paused on hover/touch
   // so a shopper reading or reaching for a card never has it slide away
   // mid-interaction.
@@ -210,14 +156,15 @@ export function Marketplace() {
     const ratingParam = Number(searchParams.get('rating'));
     return {
       priceRange: [
-        minPrice > 0 ? minPrice : PRICE_MIN,
-        maxPrice > 0 ? maxPrice : PRICE_MAX,
+        minPrice > 0 ? minPrice : PRICE_FLOOR,
+        maxPrice > 0 ? maxPrice : PRICE_NO_MAX,
       ],
       type: searchParams.get('type')?.split(',').filter(Boolean) ?? [],
       minRating: ratingParam >= 1 && ratingParam <= 5 ? ratingParam : null,
+      onSale: searchParams.get('sale') === '1',
     };
   });
-  const isPriceRangeActive = filters.priceRange[0] !== PRICE_MIN || filters.priceRange[1] !== PRICE_MAX;
+  const isPriceRangeActive = filters.priceRange[0] !== PRICE_FLOOR || filters.priceRange[1] !== PRICE_NO_MAX;
   const [searchInput, setSearchInput] = useState(() => searchParams.get('search') ?? '');
   const [search,      setSearch]      = useState(() => (searchParams.get('search') ?? '').trim().toLowerCase());
   const [categories,       setCategories]       = useState<CategoryNode[]>([]);
@@ -325,7 +272,7 @@ export function Marketplace() {
     // serverMinRating/serverProductType above), so changing them must reset
     // the page like every other facet — otherwise a filter change while on
     // page 3 would fetch page 3 of the NEW filtered set instead of page 1.
-  }, [selectedCategory, campaignFilterId, search, sortBy, filters.priceRange[0], filters.priceRange[1], filters.type.join(','), filters.minRating]);
+  }, [selectedCategory, campaignFilterId, search, sortBy, filters.priceRange[0], filters.priceRange[1], filters.type.join(','), filters.minRating, filters.onSale]);
 
   // A legacy `?category=<id>` hasn't been resolved into the new path form
   // yet — skip the write-back below so it doesn't strip that param (via its
@@ -344,14 +291,15 @@ export function Marketplace() {
     if (search)              next.set('search', search);
     if (sortBy !== 'newest') next.set('sort', sortBy);
     if (page > 1)            next.set('page', String(page));
-    if (filters.priceRange[0] !== PRICE_MIN || filters.priceRange[1] !== PRICE_MAX) {
+    if (filters.priceRange[0] !== PRICE_FLOOR || filters.priceRange[1] !== PRICE_NO_MAX) {
       next.set('price', `${filters.priceRange[0]}-${filters.priceRange[1]}`);
     }
     if (filters.type.length) next.set('type', filters.type.join(','));
     if (filters.minRating)   next.set('rating', String(filters.minRating));
+    if (filters.onSale)      next.set('sale', '1');
     setSearchParams(next, { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasPendingLegacyCategory, campaignFilterId, search, sortBy, page, filters.priceRange[0], filters.priceRange[1], filters.type.join(','), filters.minRating]);
+  }, [hasPendingLegacyCategory, campaignFilterId, search, sortBy, page, filters.priceRange[0], filters.priceRange[1], filters.type.join(','), filters.minRating, filters.onSale]);
 
   // Category selection updates the path segment (not the query string) —
   // an explicit navigate rather than local state alone, preserving whatever
@@ -388,7 +336,7 @@ export function Marketplace() {
     ? (filters.type[0].toLowerCase() as 'physical' | 'digital' | 'educational')
     : undefined;
   const serverMinPrice = isPriceRangeActive ? filters.priceRange[0] : undefined;
-  const serverMaxPrice = isPriceRangeActive && filters.priceRange[1] < PRICE_MAX ? filters.priceRange[1] : undefined;
+  const serverMaxPrice = isPriceRangeActive && filters.priceRange[1] < PRICE_NO_MAX ? filters.priceRange[1] : undefined;
   const serverMinRating = filters.minRating ?? undefined;
 
   // True while a :categorySlug in the URL hasn't been resolved against the
@@ -471,20 +419,6 @@ export function Marketplace() {
     .sort((a, b) => b.pct - a.pct)
     .slice(0, 10);
 
-  // Desktop filters sidebar sticks to `top-[88px]` (below the sticky navbar
-  // + mega-menu row) while scrolling through the taller product column, and
-  // releases at the row's bottom edge — via `useStickyBox`, not CSS
-  // `position: sticky`, since the app's real scroll container is
-  // RootLayout's custom `position: fixed` wrapper, not `window`, and native
-  // sticky doesn't reliably engage against that. Re-measures whenever the
-  // above-the-fold async content (hero banners/categories/flash deals)
-  // finishes loading and changes this row's natural page position — plain
-  // scroll/resize listeners alone don't catch that, so without this the
-  // sidebar could stick against a still-loading (shorter) layout and then
-  // never re-release once the real content pushed the row further down.
-  const { wrapperRef: filterWrapperRef, contentRef: filterContentRef, wrapperStyle: filterWrapperStyle, contentStyle: filterContentStyle } =
-    useStickyBox(88, [bannersLoading, categories.length, flashDeals.length]);
-
   const topPicks = [...featuredPool]
     .sort((a, b) => (b.purchaseCount + b.averageRating * 10) - (a.purchaseCount + a.averageRating * 10))
     .slice(0, 10);
@@ -513,7 +447,7 @@ export function Marketplace() {
   }, [flashSalePaused, flashDeals.length]);
 
   const totalPages = Math.ceil(total / LIMIT) || 1;
-  const activeFilterCount = (isPriceRangeActive ? 1 : 0) + filters.type.length + (filters.minRating ? 1 : 0);
+  const activeFilterCount = (isPriceRangeActive ? 1 : 0) + filters.type.length + (filters.minRating ? 1 : 0) + (filters.onSale ? 1 : 0) + (selectedCategory ? 1 : 0);
 
   useEffect(() => {
     const id = setTimeout(() => setSearch(searchInput.trim().toLowerCase()), 300);
@@ -531,7 +465,9 @@ export function Marketplace() {
 
   const setPriceRange = (range: [number, number]) => setFilters(prev => ({ ...prev, priceRange: range }));
 
-  const clearFilters = () => setFilters({ priceRange: [PRICE_MIN, PRICE_MAX], type: [], minRating: null });
+  const clearFilters = () => { setFilters(EMPTY_FILTERS); if (selectedCategory) handleCategoryChange(''); };
+  const setOnSale = (on: boolean) => setFilters(prev => ({ ...prev, onSale: on }));
+  const fmtRs = (n: number) => `Rs ${n.toLocaleString()}`;
 
   // Active filter chip strip — one removable chip per currently-applied facet,
   // so a shopper can see (and undo) exactly what's narrowing the grid without
@@ -543,10 +479,13 @@ export function Marketplace() {
     ...(isPriceRangeActive
       ? [{
           key: 'price',
-          label: filters.priceRange[1] >= PRICE_MAX ? `$${filters.priceRange[0]}+` : `$${filters.priceRange[0]}–$${filters.priceRange[1]}`,
-          onRemove: () => setPriceRange([PRICE_MIN, PRICE_MAX]),
+          label: filters.priceRange[1] >= PRICE_NO_MAX
+            ? `${fmtRs(filters.priceRange[0])}+`
+            : filters.priceRange[0] === 0 ? `Under ${fmtRs(filters.priceRange[1])}` : `${fmtRs(filters.priceRange[0])} – ${fmtRs(filters.priceRange[1])}`,
+          onRemove: () => setPriceRange([PRICE_FLOOR, PRICE_NO_MAX]),
         }]
       : []),
+    ...(filters.onSale ? [{ key: 'sale', label: 'On sale', onRemove: () => setOnSale(false) }] : []),
     ...filters.type.map(t => ({ key: `type-${t}`, label: t, onRemove: () => toggleType(t) })),
     ...(filters.minRating
       ? [{ key: 'rating', label: `${filters.minRating}★ & up`, onRemove: () => setMinRating(null) }]
@@ -576,18 +515,27 @@ export function Marketplace() {
   // client-side here is the 2-or-more-types-checked case, since the backend
   // only accepts one `productType` value at a time.
   const multiTypeSelected = filters.type.length > 1;
-  const filtered = multiTypeSelected
-    ? products.filter(p => {
-        const pType = p.productType ?? p.type ?? 'physical';
-        return filters.type.some(t => t.toLowerCase() === pType);
-      })
-    : products;
+  // "On sale" = the default variant is priced below its compare-at price.
+  // There's no server-side discount facet, so like multi-type it narrows the
+  // current page only.
+  const isOnSale = (p: (typeof products)[number]) => {
+    const dv = (p.variants ?? []).find(v => v.isDefault) ?? p.variants?.[0];
+    return dv?.compareAtPrice != null && dv.compareAtPrice > dv.price;
+  };
+  const filtered = products.filter(p => {
+    if (multiTypeSelected) {
+      const pType = p.productType ?? p.type ?? 'physical';
+      if (!filters.type.some(t => t.toLowerCase() === pType)) return false;
+    }
+    if (filters.onSale && !isOnSale(p)) return false;
+    return true;
+  });
 
-  // Only the multi-type-select edge case still only narrows the current
-  // page rather than the full result set — everything else (search, price,
-  // rating, sort, a single selected type) is a real server query, so the
-  // total/range below is accurate for it.
-  const isNarrowedView = multiTypeSelected;
+  // Multi-type and "On sale" only narrow the current page rather than the
+  // full result set — everything else (search, price, rating, sort, a single
+  // selected type) is a real server query, so the total/range below is
+  // accurate for it.
+  const isNarrowedView = multiTypeSelected || filters.onSale;
   const rangeStart = total === 0 ? 0 : (page - 1) * LIMIT + 1;
   const rangeEnd   = Math.min(page * LIMIT, total);
   const countLabel = isNarrowedView
@@ -849,13 +797,15 @@ export function Marketplace() {
           </p>
         )}
 
-        {/* Sort/view toolbar — Filters now lives on its own tab stuck to the
-           left edge of the viewport on mobile/tablet (see below); a real
-           persistent sidebar takes over at `lg` instead. */}
+        {/* Toolbar — "Filters" pill (opens the slide-in filter panel) + result
+           count on the left, sort and grid/list view on the right. */}
         <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
-          <span className="text-[13px] font-medium text-slate">
-            {!loading && (error ? 'Error loading' : <>Showing <span className="text-carbon font-semibold">{countLabel}</span></>)}
-          </span>
+          <div className="flex items-center gap-4 flex-wrap">
+            <FiltersButton count={activeFilterCount} onClick={() => setMobileFilters(true)} />
+            <span className="text-[13px] font-medium text-slate">
+              {!loading && (error ? 'Error loading' : <>Showing <span className="text-carbon font-semibold">{countLabel}</span></>)}
+            </span>
+          </div>
           <div className="flex items-center gap-3">
             <FilterDropdown options={SORT_OPTIONS} value={sortBy} onChange={setSortBy} />
             <div className="hidden sm:flex items-center gap-[2px] rounded-lg border border-bone bg-white p-[3px]">
@@ -994,31 +944,9 @@ export function Marketplace() {
           )
         )}
 
-        {/* ── Filters sidebar + products — a real persistent left column at
-           `lg` and up (Amazon/Daraz-style), same FilterPanel the mobile
-           bottom-sheet drawer below already renders (one filter UI, two
-           places it can appear, not a second implementation). ── */}
-        <div className="lg:flex lg:items-start lg:gap-6">
-          <aside ref={filterWrapperRef} className="hidden lg:block w-[264px] shrink-0" style={filterWrapperStyle}>
-            <div ref={filterContentRef} className="bg-white rounded-2xl border border-bone p-4" style={filterContentStyle}>
-              <div className="flex items-center justify-between mb-1">
-                <p className="flex items-center gap-[7px] text-[13.5px] font-bold text-carbon">
-                  <SlidersHorizontal size={14} className="text-charcoal" /> Filters
-                </p>
-                {activeFilterCount > 0 && (
-                  <button
-                    onClick={clearFilters}
-                    className="flex items-center gap-1 text-[11px] font-medium text-slate hover:text-brand-orange transition-colors duration-200 cursor-pointer bg-transparent border-none p-0"
-                  >
-                    <RefreshCcw size={11} /> Reset All
-                  </button>
-                )}
-              </div>
-              <FilterPanel filters={filters} onToggleType={toggleType} onRatingChange={setMinRating} onPriceRangeChange={setPriceRange} categories={categories} selectedCategory={selectedCategory} onCategoryChange={handleCategoryChange} />
-            </div>
-          </aside>
-
-          <div className="flex-1 min-w-0">
+        {/* ── Products — full width; filters open in the slide-in panel. ── */}
+        <div>
+          <div className="min-w-0">
                 {/* Active filter chips — one removable chip per applied facet */}
                 {activeFilterChips.length > 0 && (
                   <div className="flex flex-wrap items-center gap-2 mb-4">
@@ -1050,7 +978,7 @@ export function Marketplace() {
                     'scroll-mt-[76px]',
                     viewMode === 'list'
                       ? 'flex flex-col gap-3'
-                      : 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-[14px] gap-y-[25px] md:gap-x-[22px] md:gap-y-[28px]',
+                      : 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-[14px] gap-y-[25px] md:gap-x-[22px] md:gap-y-[28px]',
                   )}
                 >
                   {loading
@@ -1154,104 +1082,18 @@ export function Marketplace() {
       </div>
       <Footer showNewsletter={false} />
 
-      {/* ── Filters — a real sidebar, not an inline panel or a bottom sheet.
-         A slim vertical ribbon tab stays stuck to the left edge of the
-         viewport, vertically centered; clicking it slides a full-height
-         drawer in from the left, over the page. The label is rotated as one
-         line (not stacked letter-by-letter — that reads much slower) so it
-         reads like a spine label on a folder tab. ── */}
-      <button
-        onClick={() => setMobileFilters(o => !o)}
-        aria-expanded={mobileFilters}
-        aria-label="Toggle filters"
-        className={clsx(
-          'lg:hidden fixed left-0 top-1/2 -translate-y-1/2 z-[58] flex flex-col items-center gap-2 rounded-r-xl border border-l-0 border-white/10 py-[10px] px-[6px] text-white bg-gradient-to-b from-charcoal to-brand-orange shadow-[0_8px_24px_-4px_rgba(23,71,113,0.4),0_4px_14px_rgba(20,15,10,0.25)] cursor-pointer transition-all duration-500 ease-out hover:px-2 hover:brightness-110 hover:shadow-[0_10px_28px_-4px_rgba(23,71,113,0.5),0_4px_14px_rgba(20,15,10,0.3)]',
-          showFilterTab ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0',
-          (mobileFilters || activeFilterCount > 0) && 'ring-2 ring-brand-orange/50',
-        )}
-      >
-        <SlidersHorizontal size={11} strokeWidth={2} className="shrink-0" />
-        {/* `writing-mode:vertical-rl` (not a `rotate-90` transform on
-           horizontal text) — a transform is purely visual and doesn't
-           affect layout, so the button would still be laid out as wide as
-           the unrotated text; vertical-rl actually reflows the text
-           vertically, so the box sizes correctly narrow+tall, and Latin
-           glyphs rotate clockwise automatically (browser default
-           text-orientation: mixed) reading top-to-bottom. */}
-        <span className="[writing-mode:vertical-rl] whitespace-nowrap text-[9px] font-bold uppercase tracking-[0.05em] my-0.5">
-          Filter Products
-        </span>
-        {activeFilterCount > 0 && (
-          <span className="min-w-[15px] h-[15px] rounded-full bg-white text-brand-deep-orange text-[8px] font-bold flex items-center justify-center px-[3px] leading-none shrink-0">
-            {activeFilterCount}
-          </span>
-        )}
-      </button>
-
-      <div
-        className={clsx(
-          'lg:hidden fixed inset-0 bg-black/40 z-[59] transition-opacity duration-300',
-          mobileFilters ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none',
-        )}
-        onClick={() => setMobileFilters(false)}
+      {/* ── Filters — slide-in panel opened from the toolbar's "Filters" pill. ── */}
+      <FiltersDrawer
+        open={mobileFilters}
+        onClose={() => setMobileFilters(false)}
+        filters={filters}
+        onChange={setFilters}
+        onClear={clearFilters}
+        total={isNarrowedView ? filtered.length : total}
+        categories={categories}
+        selectedCategory={selectedCategory}
+        onCategoryChange={handleCategoryChange}
       />
-
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-hidden={!mobileFilters}
-        className={clsx(
-          'lg:hidden fixed top-0 left-0 h-full w-[300px] max-w-[85vw] z-[60] bg-white shadow-2xl outline-none overflow-y-auto',
-          'transition-transform duration-300 ease-out',
-          mobileFilters ? 'translate-x-0' : '-translate-x-full',
-        )}
-      >
-        <div className="sticky top-0 bg-white z-[1] flex items-center justify-between gap-2 px-5 py-4 border-b border-bone">
-          <div className="flex items-center gap-[9px]">
-            <SlidersHorizontal size={15} className="text-charcoal" strokeWidth={2} />
-            <span className="text-[14.5px] font-bold text-carbon tracking-[-0.01em]">Filters</span>
-            {activeFilterCount > 0 && (
-              <span className="min-w-[18px] h-[18px] rounded-full bg-brand-orange text-white text-[9px] font-bold flex items-center justify-center px-[4px] leading-none">
-                {activeFilterCount}
-              </span>
-            )}
-          </div>
-          <div className="flex items-center gap-3">
-            {activeFilterCount > 0 && (
-              <button
-                onClick={clearFilters}
-                className="flex items-center gap-1 text-[12px] font-medium text-slate hover:text-brand-orange transition-colors duration-200 cursor-pointer p-2 -m-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange"
-              >
-                <RefreshCcw size={12} /> Reset All
-              </button>
-            )}
-            <button
-              onClick={() => setMobileFilters(false)}
-              aria-label="Close filters"
-              className="size-9 rounded-full bg-cream flex items-center justify-center cursor-pointer hover:bg-bone transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange"
-            >
-              <X size={14} className="text-charcoal" />
-            </button>
-          </div>
-        </div>
-        <div className="px-5 py-4 pb-24">
-          <FilterPanel filters={filters} onToggleType={toggleType} onRatingChange={setMinRating} onPriceRangeChange={setPriceRange} categories={categories} selectedCategory={selectedCategory} onCategoryChange={handleCategoryChange} />
-        </div>
-
-        {/* Sticky "show results" footer — filtering is already live as you
-           toggle each control above, so this isn't really an "Apply" action;
-           it's the same confirm-and-close affordance Amazon/Shopify's mobile
-           filter sheets use, so closing the drawer never requires scrolling
-           back up to find the header's X button. */}
-        <div className="sticky bottom-0 left-0 right-0 bg-white border-t border-bone px-5 py-3.5">
-          <button
-            onClick={() => setMobileFilters(false)}
-            className="w-full flex items-center justify-center gap-2 bg-brand-orange text-white text-[13.5px] font-bold rounded-xl py-[11px] cursor-pointer hover:bg-brand-deep-orange transition-colors duration-200"
-          >
-            Show {total} {total === 1 ? 'Result' : 'Results'}
-          </button>
-        </div>
-      </div>
     </div>
   );
 }

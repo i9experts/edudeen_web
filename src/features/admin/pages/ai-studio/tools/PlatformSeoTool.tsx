@@ -24,7 +24,7 @@ export function PlatformSeoTool() {
 
         <div className="flex flex-col gap-4">
           <Field label="Title to Optimize">
-            <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Summer Sale Landing Page" />
+            <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Back to School Landing Page" />
           </Field>
           <Field label="Description (optional)">
             <Textarea rows={4} value={description} onChange={e => setDescription(e.target.value)} />

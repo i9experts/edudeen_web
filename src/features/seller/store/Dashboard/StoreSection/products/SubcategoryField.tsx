@@ -95,7 +95,7 @@ function AddSubcategoryModal({ mainCategoryId, onClose, onCreated }: {
       <div className="flex flex-col gap-3">
         <div>
           <label className="text-[12px] font-medium text-charcoal block mb-1.5">Name</label>
-          <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Ceramics"
+          <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Workbooks"
             className="w-full px-3 py-2 text-[13px] border border-bone rounded-lg outline-none text-charcoal bg-white" />
         </div>
         <div>

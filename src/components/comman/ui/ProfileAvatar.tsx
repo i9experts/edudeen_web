@@ -8,7 +8,9 @@ import {
 } from 'lucide-react';
 import { useGetProfile } from '@/hooks/auth/useGetProfile';
 import { TokenStorage, apiLogout } from '@/api/services/auth';
+import { useNotification } from '@/contexts/NotificationContext';
 import { CopyIconButton } from './CopyIconButton';
+import { NotificationsMenuSection, NotificationToast } from './NotificationBell';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // RoleChip
@@ -56,10 +58,14 @@ function AvatarImage({
 // AvatarTrigger
 // ─────────────────────────────────────────────────────────────────────────────
 function AvatarTrigger({
-  open, onClick, profileImage, name, initials, loading,
+  open, onClick, profileImage, name, initials, loading, badge = 0, compact = false,
 }: {
   open: boolean; onClick: () => void;
   profileImage?: string | null; name?: string; initials: string; loading: boolean;
+  /** Unread-notification count shown on the avatar (0 hides it). */
+  badge?: number;
+  /** Smaller trigger for the thin top bar. */
+  compact?: boolean;
 }) {
   // A gradient ring (brand-orange → deep-orange, 2px, via padding + an inner
   // white gap) rather than a flat single-color border — gives the avatar its
@@ -68,11 +74,19 @@ function AvatarTrigger({
   return (
     <button
       onClick={onClick}
+      aria-label={badge > 0 ? `Account menu, ${badge} unread notifications` : 'Account menu'}
       className={clsx(
-        'size-9 rounded-full shrink-0 p-[2px] bg-gradient-to-br from-brand-orange to-brand-deep-orange cursor-pointer transition-all duration-150',
+        'relative rounded-full shrink-0 p-[2px]',
+        compact ? 'size-7 ring-1 ring-white/60' : 'size-9',
+        'bg-gradient-to-br from-brand-orange to-brand-deep-orange cursor-pointer transition-all duration-150',
         open ? 'scale-[0.96] shadow-[0_0_0_3px_rgba(23,71,113,0.18)]' : 'hover:scale-105',
       )}
     >
+      {badge > 0 && (
+        <span className="absolute -top-[3px] -right-[3px] z-[1] min-w-[15px] h-[15px] bg-[#c0392b] text-white text-[8px] font-bold rounded-full flex items-center justify-center px-[3px] border border-white leading-none">
+          {badge > 99 ? '99+' : badge}
+        </span>
+      )}
       <span className="flex items-center justify-center w-full h-full rounded-full bg-white overflow-hidden">
         {loading
           ? <div className="w-full h-full bg-bone animate-pulse rounded-full" />
@@ -209,12 +223,13 @@ const SHOW_BUYER_FEATURES = false;
 // ProfileDropdown
 // ─────────────────────────────────────────────────────────────────────────────
 function ProfileDropdown({
-  profile, initials, onNavigate, onLogout,
+  profile, initials, onNavigate, onLogout, withNotifications,
 }: {
   profile: ReturnType<typeof useGetProfile>['profile'];
   initials: string;
   onNavigate: (path: string) => void;
   onLogout: () => void;
+  withNotifications: boolean;
 }) {
   const role      = profile?.role;
   const isSeller  = role === 'seller';
@@ -225,7 +240,7 @@ function ProfileDropdown({
   const hasDash   = isSeller || isAdmin;
 
   return (
-    <div className="relative w-[272px]">
+    <div className="relative w-full">
       {/* Arrow indicator — a rotated square clipped by the panel's own border/bg,
           connecting the floating panel visually back to its trigger. */}
       <div className="absolute -top-[7px] right-[14px] w-3 h-3 bg-white border-t border-l border-bone rotate-45" />
@@ -239,6 +254,12 @@ function ProfileDropdown({
         hasSeller={hasSeller}
         hasAdmin={hasAdmin}
       />
+      {withNotifications && (
+        <>
+          <NotificationsMenuSection onNavigate={onNavigate} />
+          <div className="h-px bg-bone mx-3" />
+        </>
+      )}
       <DropdownMenu
         hasBuyer={hasBuyer}
         hasDash={hasDash}
@@ -256,11 +277,19 @@ function ProfileDropdown({
 // ─────────────────────────────────────────────────────────────────────────────
 const CLOSE_DELAY_MS = 150;
 const PANEL_WIDTH = 272;
+const PANEL_WIDTH_WITH_NOTIFICATIONS = 312;
 const PANEL_HEIGHT_ESTIMATE = 320;
 
-export function ProfileAvatar() {
+/** `withNotifications` folds the notification bell into this menu (unread badge on the avatar, latest items inside the popup). */
+export function ProfileAvatar({ withNotifications = false, compact = false }: { withNotifications?: boolean; compact?: boolean } = {}) {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const { unreadCount, fetchNotifications } = useNotification();
+  const panelWidth = withNotifications ? PANEL_WIDTH_WITH_NOTIFICATIONS : PANEL_WIDTH;
+  const panelHeight = withNotifications ? PANEL_HEIGHT_ESTIMATE + 260 : PANEL_HEIGHT_ESTIMATE;
+
+  useEffect(() => { if (withNotifications) fetchNotifications(); }, [withNotifications, fetchNotifications]);
+  useEffect(() => { if (withNotifications && open) fetchNotifications(); }, [withNotifications, open, fetchNotifications]);
   const [pos, setPos] = useState<{ top?: number; bottom?: number; right?: number }>({});
   const triggerRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -283,12 +312,12 @@ export function ProfileAvatar() {
     if (!rect) return;
     const GAP = 10;
     const spaceBelow = window.innerHeight - rect.bottom;
-    const openUpward = spaceBelow < PANEL_HEIGHT_ESTIMATE + GAP && rect.top > PANEL_HEIGHT_ESTIMATE;
+    const openUpward = spaceBelow < panelHeight + GAP && rect.top > panelHeight;
     setPos({
       [openUpward ? 'bottom' : 'top']: openUpward ? window.innerHeight - rect.top + GAP : rect.bottom + GAP,
       right: Math.max(8, window.innerWidth - rect.right),
     });
-  }, []);
+  }, [panelHeight]);
 
   useEffect(() => {
     if (!open) return;
@@ -340,8 +369,11 @@ export function ProfileAvatar() {
           name={profile?.name}
           initials={initials}
           loading={loading}
+          badge={withNotifications ? unreadCount : 0}
+          compact={compact}
         />
       </div>
+      {withNotifications && <NotificationToast />}
 
       {createPortal(
         <div
@@ -352,7 +384,7 @@ export function ProfileAvatar() {
           // mid-hover.
           onMouseEnter={clearCloseTimer}
           onMouseLeave={scheduleClose}
-          style={{ position: 'fixed', zIndex: 100, width: PANEL_WIDTH, ...pos }}
+          style={{ position: 'fixed', zIndex: 100, width: panelWidth, ...pos }}
           className={clsx(
             'transition-all duration-200 origin-top-right',
             open ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 -translate-y-1 pointer-events-none',
@@ -363,6 +395,7 @@ export function ProfileAvatar() {
             initials={initials}
             onNavigate={handleNavigate}
             onLogout={handleLogout}
+            withNotifications={withNotifications}
           />
         </div>,
         document.body,

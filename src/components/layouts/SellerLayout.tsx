@@ -15,7 +15,8 @@ import {
   ChevronDown, Plus, PanelLeftClose, PanelLeftOpen, LogOut,
 } from 'lucide-react';
 import { EdudeenIcon, EdudeenLogo } from '@/components/comman/ui/EdudeenLogo';
-import { NotificationBell, AnnouncementBanner, CurrencySelector } from '@/components/comman/ui';
+import { AnnouncementBanner } from '@/components/comman/ui';
+import { PlatformTopBar } from '@/components/comman/ui/PlatformTopBar';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface NavItem {
@@ -511,11 +512,7 @@ export function SellerPageHeader({ title, subtitle, actions, eyebrow = 'Edudeen 
         <h1 className="font-serif font-normal text-[21px] md:text-[25px] text-carbon leading-[1.2] tracking-[-0.3px] truncate">{title}</h1>
         {subtitle && <p className="text-[12.5px] text-slate mt-0.5 truncate">{subtitle}</p>}
       </div>
-      <div className="flex items-center gap-[10px] shrink-0">
-        {actions}
-        <NotificationBell />
-        <CurrencySelector />
-      </div>
+      {actions && <div className="flex items-center gap-[10px] shrink-0">{actions}</div>}
     </div>
   );
 }
@@ -536,6 +533,7 @@ export function SellerLayout() {
       <div className={clsx('flex bg-white', 'h-screen')}>
         <SellerSidebar open={sidebarOpen} onToggle={toggle} />
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+          <PlatformTopBar showAccount />
           <AnnouncementBanner audience="sellers" />
           <div className="flex-1 overflow-y-auto overflow-x-hidden pb-[64px] lg:pb-0">
             <div className="w-full max-w-[1440px] mx-auto min-h-full">

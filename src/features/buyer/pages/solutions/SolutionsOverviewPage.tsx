@@ -20,9 +20,9 @@ export function SolutionsOverviewPage() {
     <div className="bg-white min-h-full">
       <div className="px-4 md:px-8 lg:px-12 pt-14 md:pt-18 pb-10 max-w-[760px] mx-auto">
         <SectionHeading
-          kicker="Built for the way you sell"
-          title="Edudeen, tailored to your industry."
-          subtitle="The same real platform underneath — store, POS, inventory, AI tools — applied to how your specific business actually sells."
+          kicker="Built for the way you teach"
+          title="Edudeen, tailored to how you educate."
+          subtitle="The same real platform underneath — store, digital delivery, inventory, AI tools — applied to how teachers, scholars, academies and publishers actually sell."
           align="center"
           size="lg"
         />

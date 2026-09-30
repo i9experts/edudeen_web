@@ -5,14 +5,14 @@ import { clsx } from 'clsx';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import type { Variants } from 'motion/react';
 import {
-  Store, MonitorSmartphone, Sparkles, BarChart3, PackageCheck, Users,
+  Store, BarChart3, PackageCheck, Users,
   ChevronDown, ArrowRight, Plus, LifeBuoy, HelpCircle, Mail,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { EdudeenLogo } from './EdudeenLogo';
 import { TokenStorage } from '@/api/services/auth';
-import { NotificationBell } from './NotificationBell';
 import { ProfileAvatar } from './ProfileAvatar';
+import { PlatformTopBar } from './PlatformTopBar';
 import { useSellEntry } from '@/hooks/auth/useSellEntry';
 import { useCompactOnScroll } from './BuyerNavbar';
 import { PLATFORM_PRODUCTS } from '@/features/buyer/data/platformProducts';
@@ -24,8 +24,6 @@ const NAV_EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
 const PRODUCT_ICONS: Record<string, LucideIcon> = {
   'store-builder': Store,
-  pos: MonitorSmartphone,
-  'ai-commerce': Sparkles,
   analytics: BarChart3,
   inventory: PackageCheck,
   'orders-customers': Users,
@@ -151,6 +149,7 @@ export function PublicMegaNavbar() {
         )}
         onMouseLeave={closeSoon}
       >
+        <PlatformTopBar />
         <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 h-[60px] flex items-center justify-between gap-4">
           <Link to="/" className="shrink-0" aria-label="Edudeen home">
             <EdudeenLogo size={28} />
@@ -174,10 +173,7 @@ export function PublicMegaNavbar() {
           {/* Actions */}
           <div className="hidden lg:flex items-center gap-3 shrink-0">
             {loggedIn ? (
-              <>
-                <NotificationBell />
-                <ProfileAvatar />
-              </>
+              <ProfileAvatar withNotifications />
             ) : (
               <>
                 <button onClick={() => navigate('/login')} className="text-[13px] font-medium text-charcoal hover:text-brand-orange transition-colors bg-transparent border-none cursor-pointer">
@@ -288,7 +284,7 @@ export function PublicMegaNavbar() {
                 )}
 
                 {openMenu === 'solutions' && (
-                  <div className="grid grid-cols-4 gap-3">
+                  <div className="grid grid-cols-3 gap-3">
                     {SOLUTIONS.map(s => (
                       <Link
                         key={s.slug}
@@ -446,7 +442,7 @@ export function PublicMegaNavbar() {
                     >
                       <span>
                         <span className="block text-[19px] font-extrabold text-carbon">For Sellers</span>
-                        <span className="block text-[12px] text-slate mt-0.5">Grow your business with Edudeen.</span>
+                        <span className="block text-[12px] text-slate mt-0.5">Share and sell what you teach on Edudeen.</span>
                       </span>
                       <ArrowRight size={18} className="text-brand-orange shrink-0 transition-transform duration-200 group-active:translate-x-1" />
                     </Link>
@@ -457,7 +453,7 @@ export function PublicMegaNavbar() {
               <motion.div variants={navFadeVariants} className="flex flex-col gap-2.5 pt-6 mt-6 pb-6 border-t border-carbon/10">
                 {loggedIn ? (
                   <div className="flex items-center gap-3 py-1">
-                    <ProfileAvatar />
+                    <ProfileAvatar withNotifications />
                     <span className="text-[12px] text-slate">Signed in</span>
                   </div>
                 ) : (

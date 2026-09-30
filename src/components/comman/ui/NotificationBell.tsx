@@ -28,6 +28,105 @@ function formatRelativeTime(dateStr: string): string {
   }
 }
 
+/** Where "View all" goes for the signed-in role. */
+export function notificationsPath(): string {
+  const role = TokenStorage.getUser<{ role?: 'user' | 'seller' | 'admin' }>()?.role;
+  if (role === 'seller') return '/seller/settings?tab=notifications';
+  if (role === 'admin') return '/admin/settings?tab=notifications';
+  return '/account/notifications';
+}
+
+/** Real-time push toast — rendered by whichever component owns notifications on the page. */
+export function NotificationToast() {
+  const { toast, clearToast } = useNotification();
+
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(clearToast, 5000);
+    return () => clearTimeout(timer);
+  }, [toast, clearToast]);
+
+  if (!toast) return null;
+  return (
+    <div className="fixed bottom-6 right-6 z-[9999] bg-carbon text-white rounded-xl border border-charcoal p-3.5 flex gap-3.5 max-w-[340px] animate-slide-in duration-300">
+      <div className="size-9 rounded-lg bg-dark-active flex items-center justify-center shrink-0 border border-charcoal">
+        {getNotificationIcon(toast.type)}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-[12.5px] font-bold leading-tight">{toast.title}</p>
+        <p className="text-[11.5px] text-slate mt-1 leading-normal">{toast.body}</p>
+      </div>
+      <button
+        onClick={clearToast}
+        className="text-slate hover:text-white bg-transparent border-0 cursor-pointer p-0 shrink-0 self-start mt-0.5"
+        aria-label="Dismiss toast"
+      >
+        <X size={14} />
+      </button>
+    </div>
+  );
+}
+
+/** Compact notifications block for the profile popup — latest few + mark-all / view-all. */
+export function NotificationsMenuSection({ onNavigate }: { onNavigate: (path: string) => void }) {
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotification();
+  const recent = notifications.slice(0, 3);
+
+  return (
+    <div className="px-[6px] pt-2 pb-1">
+      <div className="flex items-center justify-between px-3 pb-1.5">
+        <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.06em] text-slate">
+          <Bell size={12} /> Notifications
+          {unreadCount > 0 && (
+            <span className="px-1.5 py-[1px] rounded-full text-[9px] font-bold bg-[#c0392b] text-white normal-case tracking-normal">
+              {unreadCount > 99 ? '99+' : unreadCount} new
+            </span>
+          )}
+        </span>
+        {unreadCount > 0 && (
+          <button
+            onClick={markAllAsRead}
+            className="text-[11px] font-semibold text-brand-orange hover:text-brand-deep-orange border-none bg-transparent cursor-pointer flex items-center gap-1 p-0"
+          >
+            <Check size={11} /> Mark all read
+          </button>
+        )}
+      </div>
+
+      {recent.length > 0 ? (
+        <div className="flex flex-col">
+          {recent.map(n => (
+            <button
+              key={n._id}
+              onClick={() => !n.isRead && markAsRead(n._id)}
+              className={clsx(
+                'w-full flex gap-2.5 px-3 py-2 rounded-[9px] border-0 text-left cursor-pointer hover:bg-cream transition-colors',
+                n.isRead ? 'bg-transparent' : 'bg-brand-pale-orange/25',
+              )}
+            >
+              <span className="size-7 rounded-lg bg-bone flex items-center justify-center shrink-0">{getNotificationIcon(n.type)}</span>
+              <span className="flex-1 min-w-0">
+                <span className={clsx('block text-[12px] text-charcoal leading-tight truncate', n.isRead ? 'font-medium' : 'font-bold')}>{n.title}</span>
+                <span className="block text-[11px] text-slate leading-snug line-clamp-1 mt-[2px]">{n.body}</span>
+                <span className="flex items-center gap-1 text-[10px] text-slate mt-[3px]"><Clock size={9} /> {formatRelativeTime(n.createdAt)}</span>
+              </span>
+            </button>
+          ))}
+        </div>
+      ) : (
+        <p className="px-3 py-2 text-[12px] text-slate m-0">All caught up — no new notifications.</p>
+      )}
+
+      <button
+        onClick={() => onNavigate(notificationsPath())}
+        className="w-full mt-1 px-3 py-2 rounded-[9px] text-left text-[12px] font-semibold text-brand-orange hover:bg-cream bg-transparent border-none cursor-pointer"
+      >
+        View all notifications →
+      </button>
+    </div>
+  );
+}
+
 export function NotificationBell() {
   const navigate = useNavigate();
   const {
@@ -36,8 +135,6 @@ export function NotificationBell() {
     markAsRead,
     markAllAsRead,
     deleteNotification,
-    toast,
-    clearToast,
     fetchNotifications,
   } = useNotification();
 
@@ -63,16 +160,6 @@ export function NotificationBell() {
     fetchNotifications();
   }, [fetchNotifications]);
 
-  // Auto-dismiss toast after 5 seconds
-  useEffect(() => {
-    if (toast) {
-      const timer = setTimeout(() => {
-        clearToast();
-      }, 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [toast, clearToast]);
-
   const handleBellClick = () => {
     setIsOpen(!isOpen);
     if (!isOpen) {
@@ -82,15 +169,7 @@ export function NotificationBell() {
 
   const handleViewAll = () => {
     setIsOpen(false);
-    const user = TokenStorage.getUser<{ role?: 'user' | 'seller' | 'admin' }>();
-    const role = user?.role;
-    if (role === 'seller') {
-      navigate('/seller/settings?tab=notifications');
-    } else if (role === 'admin') {
-      navigate('/admin/settings?tab=notifications');
-    } else {
-      navigate('/account/notifications');
-    }
+    navigate(notificationsPath());
   };
 
   const recentNotifications = notifications.slice(0, 5);
@@ -225,24 +304,7 @@ export function NotificationBell() {
       )}
 
       {/* Slide-in real-time push toast overlay */}
-      {toast && (
-        <div className="fixed bottom-6 right-6 z-[9999] bg-carbon text-white rounded-xl border border-charcoal p-3.5 flex gap-3.5 max-w-[340px] animate-slide-in duration-300">
-          <div className="size-9 rounded-lg bg-dark-active flex items-center justify-center shrink-0 border border-charcoal">
-            {getNotificationIcon(toast.type)}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-[12.5px] font-bold leading-tight">{toast.title}</p>
-            <p className="text-[11.5px] text-slate mt-1 leading-normal">{toast.body}</p>
-          </div>
-          <button
-            onClick={clearToast}
-            className="text-slate hover:text-white bg-transparent border-0 cursor-pointer p-0 shrink-0 self-start mt-0.5"
-            aria-label="Dismiss toast"
-          >
-            <X size={14} />
-          </button>
-        </div>
-      )}
+      <NotificationToast />
     </div>
   );
 }

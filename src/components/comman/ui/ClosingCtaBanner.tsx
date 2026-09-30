@@ -32,9 +32,9 @@ const FALLBACK_STAT_ITEMS = [
 ];
 const FALLBACK_AVATAR_NAMES = ['Ayesha K', 'Bilal R', 'Sara M', 'Zain A', 'Noor F'];
 const FALLBACK_PREVIEW_ITEMS = [
-  { id: 'fallback-1', name: 'Wireless Headphones', images: [] as string[], price: 59.99,  currency: 'USD' },
-  { id: 'fallback-2', name: 'Smart Watch Pro',      images: [] as string[], price: 89.99,  currency: 'USD' },
-  { id: 'fallback-3', name: 'Leather Tote Bag',     images: [] as string[], price: 39.99,  currency: 'USD' },
+  { id: 'fallback-1', name: 'Tajweed Quran (Colour-Coded)', images: [] as string[], price: 24.99,  currency: 'USD' },
+  { id: 'fallback-2', name: 'Arabic for Beginners Course',  images: [] as string[], price: 39.99,  currency: 'USD' },
+  { id: 'fallback-3', name: 'Grade 5 Maths Workbook',       images: [] as string[], price: 9.99,   currency: 'USD' },
 ];
 
 // Fills the gap between the CTA copy and the phone mockup — same trust

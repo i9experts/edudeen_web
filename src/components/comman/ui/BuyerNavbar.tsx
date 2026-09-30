@@ -12,8 +12,8 @@ import { ProductImage } from '@/components/comman/marketplace/ProductCard';
 import { Button } from './Button';
 import { EdudeenLogo } from './EdudeenLogo';
 import { SkeletonBox } from './SkeletonBox';
-import { NotificationBell } from './NotificationBell';
 import { ProfileAvatar } from './ProfileAvatar';
+import { PlatformTopBar } from './PlatformTopBar';
 import { ActionMenu } from './ActionMenu';
 import { useCurrencyPreference, type SupportedCurrency } from '@/contexts/CurrencyPreferenceContext';
 import { currencySymbol } from '@/utils/currency';
@@ -92,7 +92,7 @@ export interface BuyerNavbarProps {
 }
 
 const RECENT_KEY = 'edudeen_recent_searches';
-const TRENDING_SEARCHES = ['Wireless Earbuds', 'Digital Planner', 'Desk Organizer', 'Handmade Jewelry', 'Watercolor Prints'];
+const TRENDING_SEARCHES = ['Tajweed Quran', 'Arabic Workbook', 'Maths Worksheets', 'Seerah for Kids', 'Study Planner'];
 
 function getLocalRecentSearches(): string[] {
   try { return JSON.parse(localStorage.getItem(RECENT_KEY) ?? '[]'); } catch { return []; }
@@ -859,9 +859,10 @@ const CURRENCY_OPTIONS: { code: SupportedCurrency; Flag: typeof FlagPK; label: s
 // actions) rather than a one-off implementation. Manual selection here
 // always wins and persists — location detection only ever sets the
 // initial default, never overrides an explicit choice.
-export function CurrencySelector() {
+export function CurrencySelector({ tone = 'light' }: { tone?: 'light' | 'dark' } = {}) {
   const { currency, setCurrency } = useCurrencyPreference();
   const active = CURRENCY_OPTIONS.find(c => c.code === currency) ?? CURRENCY_OPTIONS[0];
+  const dark = tone === 'dark';
 
   return (
     <ActionMenu
@@ -869,11 +870,13 @@ export function CurrencySelector() {
       trigger={
         <>
           <active.Flag className="w-4 h-3 rounded-[2px] shrink-0 object-cover" />
-          <span className="hidden md:inline">{active.code}</span>
-          <ChevronDown size={12} className="hidden md:inline text-slate" />
+          <span className={dark ? 'inline' : 'hidden md:inline'}>{active.code}</span>
+          <ChevronDown size={12} className={dark ? 'inline text-white/80' : 'hidden md:inline text-slate'} />
         </>
       }
-      triggerClassName="flex items-center gap-1.5 text-[12px] font-semibold text-charcoal border border-bone rounded-md pl-2 pr-2 md:pr-[7px] py-1 bg-white hover:bg-cream transition-colors cursor-pointer shrink-0"
+      triggerClassName={dark
+        ? 'flex items-center gap-1.5 text-[12px] font-semibold text-white border border-white/30 rounded-md pl-2 pr-[7px] py-[3px] bg-white/10 hover:bg-white/20 transition-colors cursor-pointer shrink-0'
+        : 'flex items-center gap-1.5 text-[12px] font-semibold text-charcoal border border-bone rounded-md pl-2 pr-2 md:pr-[7px] py-1 bg-white hover:bg-cream transition-colors cursor-pointer shrink-0'}
       items={CURRENCY_OPTIONS.map(c => ({
         label: (
           <span className="flex items-center gap-2 flex-1">
@@ -899,11 +902,10 @@ function AccountActions({ simple = false }: { simple?: boolean }) {
   const sellEntry = useSellEntry();
 
   if (TokenStorage.isLoggedIn()) {
+    // Currency lives in the top bar; notifications live inside the profile popup.
     return (
       <div className="flex items-center gap-2.5">
-        <NotificationBell />
-        <ProfileAvatar />
-        {!simple && <CurrencySelector />}
+        <ProfileAvatar withNotifications />
       </div>
     );
   }
@@ -938,12 +940,10 @@ function AccountActions({ simple = false }: { simple?: boolean }) {
       >
         Sign In
       </button>
-      {/* Currency sits at the very end — the rightmost element in the navbar
-         on every page. */}
-      <CurrencySelector />
     </div>
   );
 }
+
 
 // A centerLinks entry with `children` — hover (desktop pointer) or click opens
 // a small panel of real sub-pages (e.g. FAQ/Contact/Privacy under "Resources"),
@@ -1077,6 +1077,7 @@ export function BuyerNavbar({ variant = 'full', contextLabel, search, accentColo
       scrolled ? 'bg-white border-bone' : 'bg-white/90 border-transparent',
       hidden ? '-translate-y-full md:translate-y-0' : 'translate-y-0',
     )}>
+      {variant === 'full' && <PlatformTopBar />}
       <div className={clsx(
         'flex items-center gap-3 md:gap-6 px-[5%] md:px-[4%] transition-[height] duration-200',
         scrolled ? 'h-[60px] md:h-[68px]' : 'h-[64px] md:h-[88px]',
@@ -1091,7 +1092,7 @@ export function BuyerNavbar({ variant = 'full', contextLabel, search, accentColo
             mobileSearchOpen ? 'hidden md:flex' : 'flex',
           )}
         >
-          <EdudeenLogo size={scrolled ? 32 : 40} className="transition-[width,height] duration-200" />
+          <EdudeenLogo size={40} />
           {contextLabel && (
             <>
               <span className="text-bone mx-1 hidden md:inline">|</span>
@@ -1212,14 +1213,6 @@ export function BuyerNavbar({ variant = 'full', contextLabel, search, accentColo
                 </>
               )}
               <AccountActions simple={hideCommerce} />
-              {!hideCommerce && (
-                <button
-                  onClick={() => navigate('/sellers')}
-                  className="hidden xl:inline-block shrink-0 whitespace-nowrap bg-transparent border-0 border-b border-carbon text-carbon text-[14px] font-bold py-[7px] px-0 cursor-pointer hover:text-brand-orange hover:border-brand-orange"
-                >
-                  Start creating ↗
-                </button>
-              )}
             </div>
           </>
         )}

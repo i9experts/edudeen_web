@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { clsx } from 'clsx';
 import {
-  Search, ShoppingCart, CreditCard, Wallet, Banknote, Check,
-  TrendingUp, TrendingDown, Users, Package, DollarSign, Sparkles,
-  ArrowRight, Bell, PackageCheck,
+  ShoppingCart, Check,
+  TrendingUp, TrendingDown, Users, Package, DollarSign,
+  Bell, PackageCheck,
 } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
 import { PhoneShell, StatusBar } from '@/components/comman/ui/AppDownloadBanner';
@@ -27,10 +27,10 @@ function BrowserChrome({ label }: { label: string }) {
 // copy/prices), same convention already used by Homepage's showcase mockups.
 // ────────────────────────────────────────────────────────────────────────────
 const STORE_PRODUCTS = [
-  { name: 'Everyday Tote',   price: '$48', img: 'fashionRack' as const },
-  { name: 'Cloud Sneaker',   price: '$72', img: 'sneakers' as const },
-  { name: 'Studio Headphones', price: '$129', img: 'headphones' as const },
-  { name: 'Classic Watch',   price: '$96', img: 'watch' as const },
+  { name: 'The Noble Quran (Tajweed)', price: '$24', img: 'quran' as const },
+  { name: 'Arabic for Beginners Course', price: '$39', img: 'onlineStudy' as const },
+  { name: 'Grade 5 Maths Worksheets', price: '$9', img: 'examPaper' as const },
+  { name: 'A5 Study Notebook Set',  price: '$12', img: 'notebookPen' as const },
 ];
 
 export function StorefrontPreview({ className }: { className?: string }) {
@@ -38,16 +38,16 @@ export function StorefrontPreview({ className }: { className?: string }) {
     <div className={clsx('w-full rounded-2xl bg-white overflow-hidden shadow-raised border border-bone', className)}>
       <BrowserChrome label="yourstore.edudeen.com" />
       <div className="flex items-center justify-between px-4 py-3 border-b border-bone">
-        <span className="text-[13px] font-bold text-carbon">Aurora Goods</span>
+        <span className="text-[13px] font-bold text-carbon">Noor Learning</span>
         <div className="hidden sm:flex items-center gap-4 text-[10.5px] text-slate">
-          <span>New</span><span>Shop</span><span>About</span>
+          <span>Books</span><span>Courses</span><span>About</span>
         </div>
         <ShoppingCart size={14} className="text-carbon" />
       </div>
       <div className="h-[80px] sm:h-[100px] bg-gradient-to-br from-brand-orange to-brand-deep-orange relative flex items-center px-5">
         <div>
-          <p className="text-white font-bold text-[13px] sm:text-[15px] leading-tight">Autumn Collection</p>
-          <p className="text-white/80 text-[9.5px] sm:text-[10.5px] mt-0.5">Up to 30% off new arrivals</p>
+          <p className="text-white font-bold text-[13px] sm:text-[15px] leading-tight">Back to School</p>
+          <p className="text-white/80 text-[9.5px] sm:text-[10.5px] mt-0.5">Up to 30% off books and course bundles</p>
         </div>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-[10px] p-4">
@@ -68,59 +68,6 @@ export function StorefrontPreview({ className }: { className?: string }) {
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// POSPreview — search + product tiles + cart/payment panel.
-// ────────────────────────────────────────────────────────────────────────────
-const POS_ITEMS = [
-  { name: 'Wireless Earbuds', price: 'Rs 4,200', qty: 1 },
-  { name: 'Phone Case',       price: 'Rs 900',   qty: 2 },
-  { name: 'Screen Protector', price: 'Rs 350',   qty: 1 },
-];
-
-export function POSPreview({ className }: { className?: string }) {
-  const subtotal = 4200 + 900 * 2 + 350;
-  return (
-    <div className={clsx('w-full rounded-2xl bg-white overflow-hidden shadow-raised border border-bone flex flex-col sm:flex-row', className)}>
-      <div className="flex-1 min-w-0 border-b sm:border-b-0 sm:border-r border-bone">
-        <div className="flex items-center gap-2 px-3 py-2.5 border-b border-bone">
-          <Search size={13} className="text-slate" />
-          <span className="text-[10.5px] text-slate">Search products…</span>
-        </div>
-        <div className="grid grid-cols-3 gap-[8px] p-3">
-          {(['headphones', 'watch', 'sneakers', 'skincare', 'cosmetics', 'fashionRack'] as const).map((key, i) => (
-            <div key={i} className="rounded-md overflow-hidden bg-cream aspect-square relative">
-              <img src={unsplashUrl(key, 140)} alt="" className="w-full h-full object-cover" loading="lazy" />
-            </div>
-          ))}
-        </div>
-      </div>
-      <div className="w-full sm:w-[190px] shrink-0 p-3 flex flex-col">
-        <p className="text-[10.5px] font-bold text-carbon mb-2">Current Sale</p>
-        <div className="flex flex-col gap-[6px] flex-1">
-          {POS_ITEMS.map(item => (
-            <div key={item.name} className="flex items-center justify-between text-[9.5px]">
-              <span className="text-charcoal truncate">{item.qty}× {item.name}</span>
-              <span className="font-semibold text-carbon shrink-0">{item.price}</span>
-            </div>
-          ))}
-        </div>
-        <div className="flex items-center justify-between pt-2 border-t border-bone mt-2">
-          <span className="text-[10px] font-bold text-carbon">Total</span>
-          <span className="text-[13px] font-bold text-brand-orange">Rs {subtotal.toLocaleString()}</span>
-        </div>
-        <div className="flex items-center gap-[6px] mt-2">
-          <CreditCard size={13} className="text-slate" />
-          <Wallet size={13} className="text-slate" />
-          <Banknote size={13} className="text-slate" />
-        </div>
-        <div className="mt-2 rounded-lg bg-gradient-to-r from-brand-orange to-brand-deep-orange text-white text-[10.5px] font-bold text-center py-[9px] flex items-center justify-center gap-1.5">
-          <Check size={12} /> Payment received
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ────────────────────────────────────────────────────────────────────────────
 // SellerDashboardPreview — metrics row + chart + recent orders + top products.
 // ────────────────────────────────────────────────────────────────────────────
 const CHART_BARS = [30, 45, 38, 60, 52, 70, 64, 80, 74, 90, 82, 96];
@@ -130,9 +77,9 @@ const RECENT_ORDERS = [
   { id: '#3919', customer: 'A. Raza',  amount: 'Rs 6,400', status: 'Paid' },
 ];
 const TOP_PRODUCTS = [
-  { name: 'Wireless Earbuds', units: 84,  img: 'headphones' as const },
-  { name: 'Classic Watch',    units: 61,  img: 'watch' as const },
-  { name: 'Cloud Sneaker',    units: 52,  img: 'sneakers' as const },
+  { name: 'Tajweed Basics Course',   units: 84,  img: 'quran' as const },
+  { name: 'Grade 5 Maths Workbook',  units: 61,  img: 'examPaper' as const },
+  { name: 'Stationery Starter Kit',  units: 52,  img: 'stationery' as const },
 ];
 
 export function SellerDashboardPreview({ className }: { className?: string }) {
@@ -205,43 +152,6 @@ export function SellerDashboardPreview({ className }: { className?: string }) {
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// AICommercePreview — AI insight feed with per-insight actions.
-// ────────────────────────────────────────────────────────────────────────────
-const AI_INSIGHTS = [
-  { text: "Demand for “Wireless Earbuds” is trending up — consider raising the price by 8%.", action: 'Apply' },
-  { text: "“Leather Wallet” has a thin description — generate a stronger one from its photos.", action: 'Generate' },
-  { text: '23 customers viewed “Yoga Mat” but didn’t buy — send them a limited discount?', action: 'Send' },
-];
-
-export function AICommercePreview({ className }: { className?: string }) {
-  return (
-    <div className={clsx('w-full rounded-2xl bg-white overflow-hidden shadow-raised border border-bone', className)}>
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-bone bg-gradient-to-r from-accent-violet-bg to-transparent">
-        <span className="w-6 h-6 rounded-md bg-accent-violet flex items-center justify-center shrink-0">
-          <Sparkles size={13} className="text-white" />
-        </span>
-        <p className="text-[12px] font-bold text-carbon">AI Commerce Assistant</p>
-      </div>
-      <div className="p-4 flex flex-col gap-2.5">
-        {AI_INSIGHTS.map((insight, i) => (
-          <div key={i} className="rounded-xl bg-cream p-3 flex items-start gap-2.5">
-            <span className="w-6 h-6 rounded-md bg-white flex items-center justify-center shrink-0 mt-[1px]">
-              <Sparkles size={12} className="text-accent-violet" />
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="text-[11px] text-charcoal leading-[1.5]">{insight.text}</p>
-              <button className="mt-1.5 inline-flex items-center gap-1 text-[10px] font-semibold text-accent-violet bg-accent-violet-bg rounded-full px-2.5 py-1">
-                {insight.action} <ArrowRight size={9} />
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ────────────────────────────────────────────────────────────────────────────
 // AnalyticsPreview — a focused single sales chart + KPI strip (distinct from
 // the fuller SellerDashboardPreview, for contexts that just need "analytics").
 // ────────────────────────────────────────────────────────────────────────────
@@ -282,17 +192,17 @@ export function MobileStorePreview({ className }: { className?: string }) {
       <StatusBar />
       <div className="px-[10px] pt-[6px]">
         <div className="flex items-center justify-between mb-[10px]">
-          <span className="text-[10px] font-bold text-carbon">Aurora Goods</span>
+          <span className="text-[10px] font-bold text-carbon">Noor Learning</span>
           <div className="flex items-center gap-[6px]">
             <Bell size={11} className="text-charcoal" />
             <ShoppingCart size={11} className="text-charcoal" />
           </div>
         </div>
         <div className="h-[46px] rounded-[8px] bg-gradient-to-br from-brand-orange to-brand-deep-orange mb-[8px] flex items-center px-[10px]">
-          <p className="text-white text-[9px] font-bold leading-tight">30% off<br />New Arrivals</p>
+          <p className="text-white text-[9px] font-bold leading-tight">30% off<br />Course Bundles</p>
         </div>
         <div className="grid grid-cols-2 gap-[6px]">
-          {(['sneakers', 'headphones', 'watch', 'skincare'] as const).map(key => (
+          {(['quran', 'bookStack', 'notebookPen', 'stationery'] as const).map(key => (
             <div key={key} className="rounded-[6px] overflow-hidden bg-cream">
               <div className="aspect-square overflow-hidden">
                 <img src={unsplashUrl(key, 140)} alt="" className="w-full h-full object-cover" loading="lazy" />
@@ -316,10 +226,10 @@ export function MobileStorePreview({ className }: { className?: string }) {
 // counts moving toward zero, not orders/revenue.
 // ────────────────────────────────────────────────────────────────────────────
 const STOCK_LEVELS = [
-  { name: 'Wireless Earbuds', img: 'headphones' as const, stock: 84, pct: 84 },
-  { name: 'Classic Watch',    img: 'watch' as const,      stock: 12, pct: 12 },
-  { name: 'Cloud Sneaker',    img: 'sneakers' as const,   stock: 52, pct: 52 },
-  { name: 'Camera Lens',      img: 'cameraGear' as const,  stock: 4,  pct: 4 },
+  { name: 'Mushaf — Hardback, 15-line', img: 'quran' as const,      stock: 84, pct: 84 },
+  { name: 'Science Textbook, 3rd ed.',  img: 'bookSpines' as const, stock: 12, pct: 12 },
+  { name: 'A5 Ruled Notebooks (5-pack)', img: 'notebookPen' as const, stock: 52, pct: 52 },
+  { name: 'Seerah Reader — Paperback',  img: 'openBooks' as const,  stock: 4,  pct: 4 },
 ];
 
 export function InventoryPreview({ className }: { className?: string }) {
@@ -354,7 +264,7 @@ export function InventoryPreview({ className }: { className?: string }) {
           <span className="w-6 h-6 rounded-md bg-white flex items-center justify-center shrink-0">
             <PackageCheck size={13} className="text-error" />
           </span>
-          <span className="text-[10.5px] text-error flex-1">"Studio Headphones" is almost out of stock</span>
+          <span className="text-[10.5px] text-error flex-1">"Seerah Reader — Paperback" is almost out of stock</span>
           <button className="text-[9.5px] font-semibold text-white bg-error rounded-md px-2 py-1 shrink-0">Restock</button>
         </div>
       </div>
@@ -434,8 +344,6 @@ export function OrdersTimelinePreview({ className }: { className?: string }) {
 export function mockupForProductSlug(slug: string) {
   switch (slug) {
     case 'store-builder': return <StorefrontPreview />;
-    case 'pos':            return <POSPreview />;
-    case 'ai-commerce':    return <AICommercePreview />;
     case 'analytics':      return <AnalyticsPreview />;
     case 'inventory':      return <InventoryPreview />;
     default:               return <OrdersTimelinePreview />; // orders-customers

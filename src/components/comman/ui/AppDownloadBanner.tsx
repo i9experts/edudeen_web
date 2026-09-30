@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   Zap, PackageCheck, Bell, ShoppingBag, Search, Gift, ShieldCheck, Award, Headphones,
-  Signal, Wifi, BatteryFull, Home, ShoppingCart, Package, User, Shirt, Sparkles, BookOpen,
+  Signal, Wifi, BatteryFull, Home, ShoppingCart, Package, User, GraduationCap, Sparkles, BookOpen, BookMarked, Pencil,
   Check, Send, Percent,
 } from 'lucide-react';
 import { clsx } from 'clsx';
@@ -114,17 +114,17 @@ function OrdersScreenMockup() {
 
 // ── Home / discover screen — front phone ───────────────────────────────────────
 const HOME_CATEGORIES = [
-  { Icon: Headphones, label: 'Electronics' },
-  { Icon: Shirt,       label: 'Fashion' },
-  { Icon: Home,        label: 'Home' },
-  { Icon: BookOpen,    label: 'Books' },
+  { Icon: BookMarked,    label: 'Quran' },
+  { Icon: GraduationCap, label: 'Courses' },
+  { Icon: Pencil,        label: 'Stationery' },
+  { Icon: BookOpen,      label: 'Books' },
 ];
 
 // Rs. (PKR), matching how the real Flash Sale rail prices things elsewhere
 // in the app — not a fabricated USD price.
 const FLASH_DEAL_PRODUCTS = [
-  { name: 'Smartphone',           color: '#111111', price: 54999,  compareAt: 91998,  pct: 40 },
-  { name: 'Wireless Headphones',  color: '#E4F0DA', price: 3499,   compareAt: 6998,   pct: 50 },
+  { name: 'Tajweed Quran (Hardback)', color: '#1F3A2B', price: 2499,   compareAt: 4165,   pct: 40 },
+  { name: 'Grade 5 Maths Workbook',   color: '#E4F0DA', price: 799,    compareAt: 1598,   pct: 50 },
 ];
 
 export function HomeScreenMockup() {
@@ -141,7 +141,7 @@ export function HomeScreenMockup() {
       <div className="px-[11px]">
         <div className="flex items-center gap-[6px] rounded-full border border-bone bg-cream px-[10px] py-[6px] mb-[9px]">
           <Search size={10} className="text-slate" />
-          <span className="text-[7.5px] text-slate">Search products, stores...</span>
+          <span className="text-[7.5px] text-slate">Search books, courses, stores...</span>
         </div>
 
         <div className="rounded-[12px] bg-gradient-to-br from-brand-orange to-brand-deep-orange px-[11px] py-[10px] flex items-center justify-between mb-[10px]">

@@ -80,7 +80,7 @@ export function CanonicalTab() {
             <Input value={pathPattern} onChange={e => setPathPattern(e.target.value)} placeholder="/marketplace/category/:id" />
           </Field>
           <Field label="Canonical URL">
-            <Input value={canonicalUrl} onChange={e => setCanonicalUrl(e.target.value)} placeholder="https://edudeen.com/marketplace/category/electronics" />
+            <Input value={canonicalUrl} onChange={e => setCanonicalUrl(e.target.value)} placeholder="https://edudeen.com/marketplace/category/islamic-books" />
           </Field>
         </Modal>
       )}

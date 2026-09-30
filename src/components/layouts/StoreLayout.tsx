@@ -15,7 +15,8 @@ import { apiGetStoreById, type StoreData } from '@/api/services/store';
 import { apiGetStorePlatformPlan, type StorePlatformSubscription } from '@/api/services/platformPlans';
 import { useCommandPalette } from '@/hooks/useCommandPalette';
 import { useLogout } from '@/hooks/auth/useLogout';
-import { NotificationBell, AnnouncementBanner, Modal, Button } from '@/components/comman/ui';
+import { AnnouncementBanner, Modal, Button } from '@/components/comman/ui';
+import { PlatformTopBar } from '@/components/comman/ui/PlatformTopBar';
 import { CommandPalette, type CommandPaletteItem } from '@/components/comman/ui/CommandPalette';
 
 // ── Store Workspace Context ───────────────────────────────────────────────────
@@ -492,10 +493,7 @@ export function StorePageHeader({ title, subtitle, actions, eyebrow }: StorePage
           {subtitle && <p className="text-[12.5px] text-slate mt-0.5 truncate">{subtitle}</p>}
         </div>
       </div>
-      <div className="flex items-center gap-[10px] shrink-0">
-        {actions}
-        <NotificationBell />
-      </div>
+      {actions && <div className="flex items-center gap-[10px] shrink-0">{actions}</div>}
     </div>
   );
 }
@@ -697,6 +695,7 @@ export function StoreLayout() {
       <div className={clsx('flex bg-white overflow-hidden', 'h-screen')}>
         <StoreSidebar open={sidebarOpen} onToggle={toggle} />
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+          <PlatformTopBar showAccount />
           <AnnouncementBanner audience="sellers" />
           <StoreVerificationBanner />
           <PlatformBillingBanner />

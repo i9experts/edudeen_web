@@ -93,11 +93,8 @@ const SellerSettings       = lazy(() => named(import('@/features/seller/dashboar
 const SellerShipping       = lazy(() => named(import('@/features/seller/dashboard/SellerShipping'),             'SellerShipping'));
 const SellerMessages       = lazy(() => named(import('@/features/seller/dashboard/SellerMessages'),             'SellerMessages'));
 const SellerStoreList      = lazy(() => named(import('@/features/seller/dashboard/storemodule/SellerStoreList'),'SellerStoreList'));
-const POSRegister          = lazy(() => named(import('@/features/seller/store/pos/POSRegister'),                'POSRegister'));
-const POSEmployeeLogin     = lazy(() => named(import('@/features/seller/store/pos/POSEmployeeLogin'),           'POSEmployeeLogin'));
 const ThemePreviewPage     = lazy(() => named(import('@/features/seller/dashboard/storemodule/ThemePreviewPage'), 'ThemePreviewPage'));
 const LivePreviewPage      = lazy(() => named(import('@/features/seller/dashboard/storemodule/LivePreviewPage'), 'LivePreviewPage'));
-const PosLanding           = lazy(() => named(import('@/features/seller/store/pos/PosLanding'),                 'PosLanding'));
 
 // ── Store Workspace ───────────────────────────────────────────────────────────
 const StoreDashboard     = lazy(() => import('@/features/seller/store/Dashboard/StoreDashboard'));
@@ -270,9 +267,6 @@ const mainRouter = createBrowserRouter([
       { path: '/verify-otp',      element: <VerifyOTPPage /> },
       { path: '/new-password',    element: <NewPasswordPage /> },
 
-      // ── POS terminal — standalone (no seller sidebar) ──────────────────
-      { path: '/store/:storeId/pos/register', element: <POSRegister /> },
-      { path: '/store/:storeId/pos/login',    element: <POSEmployeeLogin /> },
 
       // ── Theme Preview — standalone, opened in its own tab from the Theme
       // Library ("Preview"); resolves the theme purely from :themeId, never
@@ -306,7 +300,6 @@ const mainRouter = createBrowserRouter([
         children: [
           { index: true,                              element: <Navigate to="dashboard" replace /> },
           { path: 'dashboard',                        element: <StoreDashboard /> },
-          { path: 'pos',                               element: <PosLanding /> },
           { path: 'orders',                           element: <StoreOrderList /> },
           { path: 'products',                         element: <StoreProductList /> },
           { path: 'products/add',                     element: <StoreAddProduct /> },
@@ -332,7 +325,12 @@ const mainRouter = createBrowserRouter([
           { path: 'integrations',                     element: <StoreIntegrations /> },
           { path: 'activity',                         element: <Navigate to="../settings" replace /> },
           { path: 'followers',                        element: <Navigate to="../customer/list" replace /> },
-          { path: 'pos-admin',                        element: <Navigate to="../pos" replace /> },
+          // Retired in-person POS URLs (Edudeen is online-only) — old
+          // bookmarks land on the store dashboard instead of a 404.
+          { path: 'pos',                              element: <Navigate to="../dashboard" replace /> },
+          { path: 'pos/register',                     element: <Navigate to="../dashboard" replace /> },
+          { path: 'pos/login',                        element: <Navigate to="../dashboard" replace /> },
+          { path: 'pos-admin',                        element: <Navigate to="../dashboard" replace /> },
           { path: 'shipping',                         element: <SellerShipping /> },
           { path: 'messages',                         element: <SellerMessages /> },
         ],

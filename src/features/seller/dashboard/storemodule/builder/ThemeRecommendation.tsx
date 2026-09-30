@@ -18,8 +18,8 @@ function getRecommendedThemeIds(store: StoreHint): string[] {
   if (store.sellerType === 'creator') {
     return ['soft-studio', 'minimal-boutique', 'clean-grid'];
   }
-  if (types.includes('in_person_pos')) {
-    return ['fresh-market', 'warm-craft', 'clean-grid'];
+  if (types.includes('physical_products')) {
+    return ['warm-craft', 'fresh-market', 'clean-grid'];
   }
   return ['warm-craft', 'clean-grid', 'minimal-boutique'];
 }

@@ -1,21 +1,22 @@
 import { clsx } from 'clsx';
-import type { CategoryNode } from '@/api/services/categories';
+
+export interface CategoryTab {
+  id:    string;
+  label: string;
+}
 
 interface CategoryTabsProps {
-  categories: CategoryNode[];
+  tabs:       CategoryTab[];
   /** `null` = the "All resources" tab. */
   activeId:   string | null;
-  onSelect:   (category: CategoryNode | null) => void;
+  onSelect:   (id: string | null) => void;
   allLabel?:  string;
   className?: string;
 }
 
 /** The flat category tab row under the header — underline marks the active one. */
-export function CategoryTabs({ categories, activeId, onSelect, allLabel = 'All resources', className }: CategoryTabsProps) {
-  const tabs: { id: string | null; label: string; node: CategoryNode | null }[] = [
-    { id: null, label: allLabel, node: null },
-    ...categories.map(c => ({ id: c._id, label: c.name, node: c })),
-  ];
+export function CategoryTabs({ tabs, activeId, onSelect, allLabel = 'All resources', className }: CategoryTabsProps) {
+  const all: { id: string | null; label: string }[] = [{ id: null, label: allLabel }, ...tabs];
 
   return (
     <nav
@@ -25,12 +26,12 @@ export function CategoryTabs({ categories, activeId, onSelect, allLabel = 'All r
         className,
       )}
     >
-      {tabs.map(t => {
+      {all.map(t => {
         const active = t.id === activeId;
         return (
           <button
             key={t.id ?? 'all'}
-            onClick={() => onSelect(t.node)}
+            onClick={() => onSelect(t.id)}
             aria-current={active ? 'page' : undefined}
             className={clsx(
               'shrink-0 whitespace-nowrap bg-transparent border-0 border-b-[3px] py-[14px] px-0 text-[14px] text-carbon cursor-pointer transition-colors',

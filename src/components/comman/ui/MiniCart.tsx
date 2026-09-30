@@ -81,7 +81,7 @@ export function MiniCart({ accentColor }: { accentColor?: string }) {
         className="relative h-9 min-w-9 px-0 md:px-1 flex items-center justify-center gap-[5px] bg-transparent border-none cursor-pointer shrink-0 whitespace-nowrap text-[15px] text-carbon hover:text-brand-orange transition-colors outline-none rounded-md focus-visible:ring-2 focus-visible:ring-brand-orange/40"
       >
         <ShoppingCart size={15} style={accentColor ? { color: accentColor } : undefined} className={clsx('shrink-0 md:hidden', !accentColor && 'text-carbon')} />
-        <span className="hidden md:inline">Bag</span>
+        <span className="hidden md:inline">Cart</span>
         <b className="hidden md:inline text-[12px] font-bold bg-mist rounded-full px-[6px] py-[2px] leading-none">
           {cartCount > 99 ? '99+' : cartCount}
         </b>
@@ -122,7 +122,7 @@ export function MiniCart({ accentColor }: { accentColor?: string }) {
                 </div>
               </div>
               <p className="text-[13.5px] font-semibold text-charcoal">Your cart is empty</p>
-              <p className="text-[11.5px] text-slate mt-[3px] mb-5">Add items to see them here.</p>
+              <p className="text-[11.5px] text-slate mt-[3px] mb-5">Add books, courses or supplies to see them here.</p>
               <Button variant="outline" size="sm" pill onClick={() => goTo('/cart')}>
                 Go to Cart
               </Button>

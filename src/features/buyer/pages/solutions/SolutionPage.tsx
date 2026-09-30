@@ -1,6 +1,6 @@
 import type { ReactElement } from 'react';
 import { useParams, useNavigate, Navigate } from 'react-router-dom';
-import { ArrowRight, Check, Store, MonitorSmartphone, Sparkles, BarChart3, PackageCheck, Users } from 'lucide-react';
+import { ArrowRight, Check, Store, BarChart3, PackageCheck, Users } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useSellEntry } from '@/hooks/auth/useSellEntry';
@@ -13,27 +13,24 @@ import { unsplashUrl } from '@/assets/stockPhotos';
 import { getSolution } from '@/features/buyer/data/solutions';
 import { getPlatformProduct } from '@/features/buyer/data/platformProducts';
 import {
-  StorefrontPreview, POSPreview, AICommercePreview, AnalyticsPreview, InventoryPreview, OrdersTimelinePreview,
+  StorefrontPreview, AnalyticsPreview, OrdersTimelinePreview, InventoryPreview,
 } from '@/components/comman/mockups/ProductMockups';
 
 const SERIF = "Georgia, 'Times New Roman', serif";
 
 // Each solution gets a different real product preview matched to what its
 // own highlights actually emphasize — not the same dashboard mockup shown
-// six times across six industry pages.
+// several times across several audience pages.
 const SOLUTION_PREVIEW: Record<string, () => ReactElement> = {
-  retail:          () => <OrdersTimelinePreview />,
-  fashion:         () => <InventoryPreview />,
-  restaurants:     () => <POSPreview />,
-  beauty:          () => <StorefrontPreview />,
-  creators:        () => <AICommercePreview />,
-  'small-business': () => <AnalyticsPreview />,
+  'teachers-tutors':      () => <StorefrontPreview />,
+  'islamic-scholars':     () => <OrdersTimelinePreview />,
+  'schools-academies':    () => <AnalyticsPreview />,
+  'publishers-bookshops': () => <InventoryPreview />,
+  creators:               () => <StorefrontPreview />,
 };
 
 const PRODUCT_ICONS: Record<string, LucideIcon> = {
   'store-builder': Store,
-  pos: MonitorSmartphone,
-  'ai-commerce': Sparkles,
   analytics: BarChart3,
   inventory: PackageCheck,
   'orders-customers': Users,
@@ -42,12 +39,11 @@ const PRODUCT_ICONS: Record<string, LucideIcon> = {
 // Which real platform products this industry actually leans on most —
 // genuine cross-links into /products/:slug, not invented per-industry copy.
 const RELATED_PRODUCTS: Record<string, string[]> = {
-  retail:           ['store-builder', 'pos', 'inventory'],
-  fashion:          ['store-builder', 'inventory', 'ai-commerce'],
-  restaurants:      ['pos', 'inventory', 'orders-customers'],
-  beauty:           ['store-builder', 'ai-commerce', 'analytics'],
-  creators:         ['ai-commerce', 'store-builder', 'analytics'],
-  'small-business': ['store-builder', 'pos', 'analytics'],
+  'teachers-tutors':      ['store-builder', 'orders-customers', 'analytics'],
+  'islamic-scholars':     ['store-builder', 'inventory', 'orders-customers'],
+  'schools-academies':    ['store-builder', 'orders-customers', 'analytics'],
+  'publishers-bookshops': ['inventory', 'orders-customers', 'analytics'],
+  creators:               ['store-builder', 'analytics', 'orders-customers'],
 };
 
 export function SolutionPage() {
@@ -106,7 +102,7 @@ export function SolutionPage() {
           </Button>
         </Reveal>
         <Reveal delay={0.1}>
-          {(SOLUTION_PREVIEW[solution.slug] ?? SOLUTION_PREVIEW.retail)()}
+          {(SOLUTION_PREVIEW[solution.slug] ?? SOLUTION_PREVIEW['teachers-tutors'])()}
         </Reveal>
       </div>
 

@@ -113,16 +113,18 @@ function MobileStoreMenu({ active, onSelect }: { active: string; onSelect: (id: 
 }
 
 const PRODUCT_TYPE_LABELS: Record<ProductType, string> = {
-  physical_products:    'Physical Products',
-  digital_downloads:    'Digital Downloads',
+  physical_products:    'Books & School Supplies',
+  digital_downloads:    'Digital Learning Resources',
   educational_resources:'Educational Resources',
-  services_bookings:    'Services / Bookings',
-  subscriptions:        'Subscriptions',
-  in_person_pos:        'In-Person / POS',
+  services_bookings:    'Classes / Tutoring',
+  subscriptions:        'Learning Subscriptions',
+  // Retired (online-only marketplace) — kept only because the API enum still
+  // has it; never offered as a choice below.
+  in_person_pos:        'In-Person (retired)',
 };
 const ALL_PRODUCT_TYPES: ProductType[] = [
   'physical_products', 'digital_downloads', 'educational_resources',
-  'services_bookings', 'subscriptions', 'in_person_pos',
+  'services_bookings', 'subscriptions',
 ];
 
 // ── Skeleton ──────────────────────────────────────────────────────────────────
@@ -658,7 +660,7 @@ export default function StoreSettings() {
                 <input
                   value={tagline}
                   onChange={e => setTagline(e.target.value)}
-                  placeholder="e.g. Handmade with love since 2020"
+                  placeholder="e.g. Trusted learning resources since 2020"
                   maxLength={100}
                   className={inputCls}
                 />

@@ -15,7 +15,7 @@ interface PremiumCardProps {
 // Pricing/ForSellers/Contact/Legal — one consistent card shell for the
 // redesigned public pages, with a cursor-tracked radial glow on hover
 // (desktop only) instead of a flat border-color swap. Not used by
-// admin/seller/POS — those keep the existing shared `Card` component as-is.
+// the admin/seller dashboards — those keep the existing shared `Card` component as-is.
 export function PremiumCard({ children, className, interactive = true, tone = 'light', onClick }: PremiumCardProps) {
   const [pos, setPos] = useState({ x: 50, y: 50 });
   const [hovering, setHovering] = useState(false);

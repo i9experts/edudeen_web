@@ -17,7 +17,6 @@ const FOOTER_COLUMNS: { heading: string; links: FooterLink[] }[] = [
   {
     heading: 'Shop',
     links: [
-      { label: 'Marketplace', path: '/marketplace' },
       { label: 'Education',   path: '/education' },
       { label: 'My Orders',   path: '/account/orders' },
       { label: 'Wishlist',    path: '/account/wishlist' },
@@ -27,18 +26,18 @@ const FOOTER_COLUMNS: { heading: string; links: FooterLink[] }[] = [
     heading: 'Products',
     links: [
       { label: 'Store Builder', path: '/products/store-builder' },
-      { label: 'Point of Sale', path: '/products/pos' },
-      { label: 'AI Commerce',   path: '/products/ai-commerce' },
       { label: 'Analytics',     path: '/products/analytics' },
+      { label: 'Inventory',     path: '/products/inventory' },
     ],
   },
   {
     heading: 'Solutions',
     links: [
-      { label: 'Retail',      path: '/solutions/retail' },
-      { label: 'Fashion',     path: '/solutions/fashion' },
-      { label: 'Restaurants', path: '/solutions/restaurants' },
-      { label: 'Beauty',      path: '/solutions/beauty' },
+      { label: 'Teachers & Tutors',      path: '/solutions/teachers-tutors' },
+      { label: 'Quran & Islamic Studies', path: '/solutions/islamic-scholars' },
+      { label: 'Schools & Academies',    path: '/solutions/schools-academies' },
+      { label: 'Publishers & Bookshops', path: '/solutions/publishers-bookshops' },
+      { label: 'Educational Creators',   path: '/solutions/creators' },
     ],
   },
   {
@@ -259,7 +258,7 @@ export function Footer({ showNewsletter = true }: { showNewsletter?: boolean }) 
             </button>
             <p className="text-[13px] text-brand-orange mt-3 mb-2">Purposeful learning. Meaningful possibilities.</p>
             <p className="text-[13px] leading-relaxed max-w-[280px]">
-              Islamic &amp; educational resources for homes and classrooms — plus your own storefront, POS and AI-powered tools for sellers, creators and educators.
+              Islamic &amp; educational resources for homes and classrooms — plus your own storefront, digital delivery and AI-powered tools for teachers, scholars, publishers and educational creators.
             </p>
             <a href={`mailto:${CONTACT_EMAIL}`} className="inline-block mt-3 text-[13px] text-carbon font-semibold hover:text-brand-orange">
               {CONTACT_EMAIL}

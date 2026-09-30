@@ -126,7 +126,8 @@ function PlanFormModal({ plan, onClose, onSaved }: { plan: PlatformPlan | 'new';
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
             <Input label="Max products (-1=∞)" type="number" value={limits.maxProducts ?? ''} onChange={e => setLimit('maxProducts', Number(e.target.value))} />
             <Input label="Max staff (-1=∞)" type="number" value={limits.maxStaffAccounts ?? ''} onChange={e => setLimit('maxStaffAccounts', Number(e.target.value))} />
-            <Input label="Max POS locations" type="number" value={limits.maxPosLocations ?? ''} onChange={e => setLimit('maxPosLocations', Number(e.target.value))} />
+            {/* `maxPosLocations` is intentionally not editable (in-person POS
+                is retired) but stays in `limits`, so the saved value is preserved. */}
             <Input label="AI credits/mo" type="number" value={limits.aiCreditsPerMonth ?? ''} onChange={e => setLimit('aiCreditsPerMonth', Number(e.target.value))} />
             <Input label="Txn fee (0-1)" type="number" step="0.01" min={0} max={1} value={limits.transactionFeeRate ?? ''} onChange={e => setLimit('transactionFeeRate', Number(e.target.value))} />
             <Input label="SLA uptime %" type="number" value={limits.slaUptimePercent ?? ''} onChange={e => setLimit('slaUptimePercent', Number(e.target.value))} />

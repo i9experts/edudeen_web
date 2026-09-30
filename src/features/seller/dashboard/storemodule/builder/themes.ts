@@ -1,6 +1,6 @@
 import type { StorefrontColors, ThemeHeaderStyle, ThemeFooterStyle } from '@/api/services/storeTheme';
 
-export type ThemeCategory = 'fashion' | 'beauty' | 'food' | 'lifestyle' | 'luxury' | 'electronics' | 'general';
+export type ThemeCategory = 'books' | 'quran-islamic' | 'courses' | 'kids-learning' | 'stationery' | 'general';
 export type ThemeBadge    = 'new' | 'popular' | 'trending';
 
 export interface ThemeDefinition {
@@ -21,18 +21,20 @@ export interface ThemeDefinition {
   footerStyle: ThemeFooterStyle;
 }
 
+// Theme `id`s are persisted per store in the database — NEVER rename or
+// remove one; only names/descriptions/categories are safe to edit.
 // 10 curated, genuinely distinct themes — composition (hero/header/footer/
-// card layout/typography/spacing), not just palette. "Warm Craft"
+// card layout/typography/spacing), not just palette. "Warm Classroom" (id `warm-craft`)
 // intentionally matches every schema default exactly, so it's the safe
 // baseline a pre-existing store (or a fresh one that's never applied a
 // theme) is equivalent to.
 export const THEMES: ThemeDefinition[] = [
   {
     id: 'warm-craft',
-    name: 'Warm Craft',
-    description: 'Artisan & handmade — warm terracotta, a full-bleed hero, and soft rounded cards.',
-    category: 'lifestyle',
-    characteristics: ['Full-Bleed Hero', 'Warm Terracotta', 'Rounded Cards'],
+    name: 'Warm Classroom',
+    description: 'Teaching aids & learning kits — a warm palette, a full-bleed hero, and soft rounded cards.',
+    category: 'kids-learning',
+    characteristics: ['Full-Bleed Hero', 'Warm Palette', 'Rounded Cards'],
     colors: {
       primaryColor: '#174771', accentColor: '#0F3354', bgColor: '#FAF9F5', textColor: '#2C2A28', font: 'Poppins',
       buttonStyle: 'solid', buttonRadius: 'medium', buttonWidth: 'auto', buttonSize: 'md',
@@ -48,9 +50,9 @@ export const THEMES: ThemeDefinition[] = [
   },
   {
     id: 'modern-fashion',
-    name: 'Modern Fashion',
-    description: 'Premium fashion — dramatic split hero, editorial type, and a full-width CTA.',
-    category: 'fashion',
+    name: 'Modern Academy',
+    description: 'Online academies & course creators — dramatic split hero, editorial type, and a full-width CTA.',
+    category: 'courses',
     characteristics: ['Split Hero', 'Editorial Type', 'Full-Width CTA'],
     colors: {
       primaryColor: '#1F1B2E', accentColor: '#C9A15A', bgColor: '#FFFFFF', textColor: '#1A1720', font: 'Montserrat',
@@ -67,8 +69,8 @@ export const THEMES: ThemeDefinition[] = [
   },
   {
     id: 'minimal-boutique',
-    name: 'Minimal Boutique',
-    description: 'Quiet luxury — restrained monochrome, sharp corners, and generous whitespace.',
+    name: 'Minimal Library',
+    description: 'Calm and focused — restrained monochrome, sharp corners, and generous whitespace.',
     category: 'general',
     characteristics: ['Whitespace-First', 'Thin Type', 'Sharp Corners'],
     colors: {
@@ -86,9 +88,9 @@ export const THEMES: ThemeDefinition[] = [
   },
   {
     id: 'bold-editorial',
-    name: 'Bold Editorial',
-    description: 'Magazine-inspired commerce — oversized serif headlines and a bordered product grid.',
-    category: 'fashion',
+    name: 'Bold Publisher',
+    description: 'Publishers & bookshops — oversized serif headlines and a bordered book grid.',
+    category: 'books',
     characteristics: ['Oversized Type', 'Split Hero', 'Bordered Cards'],
     colors: {
       primaryColor: '#8A6D3B', accentColor: '#5F4A28', bgColor: '#FBFAF7', textColor: '#242220', font: 'Fraunces',
@@ -106,7 +108,7 @@ export const THEMES: ThemeDefinition[] = [
   {
     id: 'clean-grid',
     name: 'Clean Grid',
-    description: 'Contemporary ecommerce — vibrant, fully rounded, with soft-tinted buttons.',
+    description: 'Contemporary learning store — vibrant, fully rounded, with soft-tinted buttons.',
     category: 'general',
     badge: 'popular',
     characteristics: ['Structured Grid', 'Pill Buttons', 'Rounded Imagery'],
@@ -125,9 +127,9 @@ export const THEMES: ThemeDefinition[] = [
   },
   {
     id: 'luxury-noir',
-    name: 'Luxury Noir',
-    description: 'Fine jewelry & premium goods — a deep dark palette with cinematic imagery.',
-    category: 'luxury',
+    name: 'Noor Classic',
+    description: 'Quran & Islamic learning — a deep dark palette with gold accents and cinematic imagery.',
+    category: 'quran-islamic',
     characteristics: ['Dark Palette', 'Cinematic Hero', 'Serif Type'],
     colors: {
       primaryColor: '#C9A461', accentColor: '#8B7333', bgColor: '#0E0D0C', textColor: '#F3F1EA', font: 'Playfair Display',
@@ -144,9 +146,9 @@ export const THEMES: ThemeDefinition[] = [
   },
   {
     id: 'fresh-market',
-    name: 'Fresh Market',
-    description: 'Food, organic & wellness — a natural palette with a friendly, rounded feel.',
-    category: 'food',
+    name: 'Bright Kids',
+    description: 'Kids learning & early education — a natural palette with a friendly, rounded feel.',
+    category: 'kids-learning',
     characteristics: ['Rounded & Friendly', 'Soft CTA', 'Category Feel'],
     colors: {
       primaryColor: '#4C7A3D', accentColor: '#D98E2D', bgColor: '#FBF8F0', textColor: '#2B2A22', font: 'Nunito',
@@ -163,9 +165,9 @@ export const THEMES: ThemeDefinition[] = [
   },
   {
     id: 'street-urban',
-    name: 'Street / Urban',
-    description: 'Sneakers & streetwear — bold contrast type and an energetic, edge-to-edge grid.',
-    category: 'fashion',
+    name: 'Campus Supplies',
+    description: 'Stationery & school supplies — bold contrast type and an energetic, edge-to-edge grid.',
+    category: 'stationery',
     badge: 'new',
     characteristics: ['Bold Type', 'High Contrast', 'Energetic Grid'],
     colors: {
@@ -183,9 +185,9 @@ export const THEMES: ThemeDefinition[] = [
   },
   {
     id: 'soft-studio',
-    name: 'Soft Studio',
-    description: 'Beauty & skincare — soft neutrals, spacious layout, and subtle shadow-only cards.',
-    category: 'beauty',
+    name: 'Soft Study',
+    description: 'Islamic studies & printables — soft neutrals, spacious layout, and subtle shadow-only cards.',
+    category: 'quran-islamic',
     badge: 'trending',
     characteristics: ['Soft Neutrals', 'Spacious Layout', 'Subtle Shadows'],
     colors: {
@@ -203,9 +205,9 @@ export const THEMES: ThemeDefinition[] = [
   },
   {
     id: 'tech-commerce',
-    name: 'Tech Commerce',
-    description: 'Electronics & gadgets — a crisp geometric grid with structured, specification-style cards.',
-    category: 'electronics',
+    name: 'Digital Campus',
+    description: 'Online courses & digital resources — a crisp geometric grid with structured, detail-style cards.',
+    category: 'courses',
     characteristics: ['Crisp Grid', 'Structured Cards', 'Modern Sans'],
     colors: {
       primaryColor: '#2563EB', accentColor: '#0EA5E9', bgColor: '#F7F9FC', textColor: '#10151C', font: 'Roboto',
@@ -224,11 +226,10 @@ export const THEMES: ThemeDefinition[] = [
 
 export const THEME_CATEGORIES: { value: ThemeCategory | 'all'; label: string }[] = [
   { value: 'all',         label: 'All' },
-  { value: 'fashion',     label: 'Fashion' },
-  { value: 'beauty',      label: 'Beauty' },
-  { value: 'food',        label: 'Food' },
-  { value: 'lifestyle',   label: 'Lifestyle' },
-  { value: 'luxury',      label: 'Luxury' },
-  { value: 'electronics', label: 'Electronics' },
+  { value: 'books',         label: 'Books' },
+  { value: 'quran-islamic', label: 'Quran & Islamic' },
+  { value: 'courses',       label: 'Courses' },
+  { value: 'kids-learning', label: 'Kids Learning' },
+  { value: 'stationery',    label: 'Stationery' },
   { value: 'general',     label: 'General' },
 ];

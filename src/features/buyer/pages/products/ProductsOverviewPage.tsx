@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Store, MonitorSmartphone, Sparkles, BarChart3, PackageCheck, Users } from 'lucide-react';
+import { ArrowRight, Store, BarChart3, PackageCheck, Users } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useSellEntry } from '@/hooks/auth/useSellEntry';
@@ -13,8 +13,6 @@ import { PLATFORM_PRODUCTS } from '@/features/buyer/data/platformProducts';
 
 const ICONS: Record<string, LucideIcon> = {
   'store-builder': Store,
-  pos: MonitorSmartphone,
-  'ai-commerce': Sparkles,
   analytics: BarChart3,
   inventory: PackageCheck,
   'orders-customers': Users,
@@ -30,8 +28,8 @@ export function ProductsOverviewPage() {
       <div className="px-4 md:px-8 lg:px-12 pt-14 md:pt-18 pb-10 max-w-[760px] mx-auto">
         <SectionHeading
           kicker="One platform"
-          title="Every product you need to run a business."
-          subtitle="Store, POS, AI tools and analytics — under one login, sharing the same real data."
+          title="Everything you need to sell what you teach."
+          subtitle="Store builder, inventory, orders and analytics — under one login, sharing the same real data."
           align="center"
           size="lg"
         />
