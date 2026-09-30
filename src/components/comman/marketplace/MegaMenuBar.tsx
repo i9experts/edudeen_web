@@ -389,7 +389,7 @@ export function FeaturedSellersMegaContent({ topStores, onStoreClick }: {
 // there rather than wrapping. ──
 const ABOUT_CARDS: { image: string; title: string; description: string; path: string }[] = [
   { image: aboutImg1, title: 'Why Edudeen',      description: 'One platform for books, courses and learning downloads.', path: '/' },
-  { image: aboutImg2, title: 'Buyer Protection', description: 'Secure payments and easy returns, every order.',    path: '/faq' },
+  { image: aboutImg2, title: 'Secure Checkout',  description: 'Payments handled by Edudeen, refunds on request.',    path: '/faq' },
   { image: aboutImg3, title: 'Sell on Edudeen',  description: 'Launch your own branded store — no coding.',        path: '/sellers' },
 ];
 

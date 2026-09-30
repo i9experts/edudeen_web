@@ -26,10 +26,10 @@ import { ArrowRight, Sparkles, SlidersHorizontal, Loader2, RefreshCcw, Graduatio
 // Bottom-of-page trust strip — plain facts, distinct set/wording from the
 // persuasive header badges — same convention as the general Marketplace.
 const BOTTOM_TRUST_ITEMS = [
-  { Icon: Truck,       label: 'Free Shipping'   },
-  { Icon: RefreshCcw,  label: 'Easy Returns'    },
-  { Icon: ShieldCheck, label: 'Secure Payments' },
-  { Icon: Headset,     label: '24/7 Support'    },
+  { Icon: Truck,       label: 'Books Delivered to You'  },
+  { Icon: RefreshCcw,  label: 'Return Requests'        },
+  { Icon: ShieldCheck, label: 'Secure Checkout'        },
+  { Icon: Headset,     label: 'Help When You Need It'  },
 ];
 
 const SUBJECTS = ['Math', 'ELA', 'Science', 'Social Studies', 'Art', 'SEL'];
@@ -667,10 +667,10 @@ export function EducationMarketplace() {
           </div>
           <div className="hidden lg:flex items-center gap-5 pt-1">
             {[
-              { Icon: ShieldCheck, label: 'Buyer Protection', sub: 'Shop with confidence'  },
-              { Icon: Wallet,      label: 'Secure Payments',  sub: '100% secure payments'  },
-              { Icon: RefreshCcw,  label: 'Easy Returns',     sub: '30-day returns'        },
-              { Icon: Headset,     label: '24/7 Support',     sub: "We're here to help"    },
+              { Icon: ShieldCheck, label: 'Verified Sellers',  sub: 'Look for the verified badge'  },
+              { Icon: Wallet,      label: 'Secure Checkout',   sub: 'You pay Edudeen directly'     },
+              { Icon: Zap,         label: 'Instant Downloads', sub: 'Digital items, right away'    },
+              { Icon: Headset,     label: 'Help When Needed',  sub: 'Message sellers or contact us' },
             ].map(({ Icon, label, sub }) => (
               <div key={label} className="flex items-center gap-[10px]">
                 <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white border border-bone shadow-card">

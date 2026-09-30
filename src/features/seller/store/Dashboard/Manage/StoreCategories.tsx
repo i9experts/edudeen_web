@@ -1,76 +1,16 @@
-import { useState } from 'react';
-import { FolderTree, Tag, Plus } from 'lucide-react';
+import { FolderTree, Tag } from 'lucide-react';
 import { useStoreWorkspace, StorePageHeader } from '@/components/layouts/StoreLayout';
 import { useStoreSubcategories } from '@/hooks/store/useStoreSubcategories';
-import { apiAddCategory } from '@/api/services/categories';
-import { Modal } from '@/components/comman/ui/Modal';
-import { Button } from '@/components/comman/ui/Button';
-import { SkeletonBox, ImageUpload } from '@/components/comman/ui';
+import { SkeletonBox } from '@/components/comman/ui';
 
 // A store's main category is fixed at creation (assertValidRootCategory on
 // the backend) — sellers can never change it or see other main categories
-// here. The only action available is adding subcategories under it.
-function AddSubcategoryModal({ mainCategoryId, onClose, onCreated }: {
-  mainCategoryId: string; onClose: () => void; onCreated: () => void;
-}) {
-  const [name, setName]               = useState('');
-  const [description, setDescription] = useState('');
-  const [image, setImage]             = useState('');
-  const [saving, setSaving]           = useState(false);
-  const [error, setError]             = useState('');
-
-  async function submit() {
-    if (!name.trim()) { setError('Name is required.'); return; }
-    setError('');
-    setSaving(true);
-    try {
-      await apiAddCategory({ name: name.trim(), parentId: mainCategoryId, description: description.trim() || undefined, image: image.trim() || undefined });
-      onCreated();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create subcategory.');
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  return (
-    <Modal
-      title="Add Subcategory"
-      width={460}
-      onClose={onClose}
-      mobileSheet
-      footer={
-        <>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={submit} loading={saving}>Create</Button>
-        </>
-      }
-    >
-      <div className="flex flex-col gap-3">
-        <div>
-          <label className="text-[12px] font-medium text-charcoal block mb-1.5">Name</label>
-          <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Workbooks"
-            className="w-full px-3 py-2 text-[13px] border border-bone rounded-lg outline-none text-charcoal bg-white transition-colors duration-150 focus:ring-2 focus:ring-brand-orange/40 focus:border-brand-orange/50" />
-        </div>
-        <div>
-          <label className="text-[12px] font-medium text-charcoal block mb-1.5">Description (optional)</label>
-          <textarea rows={2} value={description} onChange={e => setDescription(e.target.value)}
-            className="w-full px-3 py-2 text-[13px] border border-bone rounded-lg outline-none text-charcoal bg-white resize-y transition-colors duration-150 focus:ring-2 focus:ring-brand-orange/40 focus:border-brand-orange/50" />
-        </div>
-        <div>
-          <label className="text-[12px] font-medium text-charcoal block mb-1.5">Image (optional)</label>
-          <ImageUpload value={image ? [image] : []} onChange={urls => setImage(urls[0] ?? '')} maxFiles={1} />
-        </div>
-        {error && <p className="text-[12px] text-error">{error}</p>}
-      </div>
-    </Modal>
-  );
-}
-
+// here. Subcategories are platform-wide (shared by every store under the same
+// main category), so the seller workspace only lists them; new ones are added
+// by the Edudeen team, not by individual sellers.
 export default function StoreCategories() {
   const { store } = useStoreWorkspace();
-  const { mainCategory, subcategories, loading, refetch } = useStoreSubcategories(store?.categoryId);
-  const [adding, setAdding] = useState(false);
+  const { mainCategory, subcategories, loading } = useStoreSubcategories(store?.categoryId);
 
   return (
     <>
@@ -104,11 +44,8 @@ export default function StoreCategories() {
           <div className="px-5 py-[14px] border-b border-bone flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-[13px] font-bold text-charcoal">Subcategories</p>
-              <p className="text-[11px] text-slate mt-0.5">Used to tag your products more precisely.</p>
+              <p className="text-[11px] text-slate mt-0.5">Pick one of these when you add a product. They're shared across Edudeen — to request a new one, contact Edudeen support.</p>
             </div>
-            <Button icon={<Plus size={13} />} size="sm" onClick={() => setAdding(true)} disabled={!store?.categoryId} className="shrink-0">
-              Add Subcategory
-            </Button>
           </div>
 
           {loading ? (
@@ -135,14 +72,6 @@ export default function StoreCategories() {
           )}
         </div>
       </div>
-
-      {adding && store?.categoryId && (
-        <AddSubcategoryModal
-          mainCategoryId={store.categoryId}
-          onClose={() => setAdding(false)}
-          onCreated={() => { setAdding(false); refetch(); }}
-        />
-      )}
     </>
   );
 }

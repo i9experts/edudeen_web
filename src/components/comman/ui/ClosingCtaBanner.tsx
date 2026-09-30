@@ -34,7 +34,7 @@ const FALLBACK_PREVIEW_ITEMS = [
 const CLOSING_TRUST_ITEMS = [
   { Icon: ShieldCheck, label: 'Secure Payments' },
   { Icon: Truck,       label: 'Fast Delivery' },
-  { Icon: Headphones,  label: '24/7 Support' },
+  { Icon: Headphones,  label: 'Help When Needed' },
 ];
 
 /**

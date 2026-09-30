@@ -64,6 +64,7 @@ const FOOTER_COLUMNS: { heading: string; links: FooterLink[] }[] = [
       { label: 'Privacy Policy',   path: '/privacy-policy' },
       { label: 'Terms of Service', path: '/terms-of-service' },
       { label: 'Cookie Policy',    path: '/cookie-policy' },
+      { label: 'Delete Account',   path: '/delete-account' },
     ],
   },
 ];

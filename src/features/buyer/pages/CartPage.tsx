@@ -164,7 +164,7 @@ export function CartPage() {
               </span>
               <p className="relative text-[19px] font-bold text-carbon mb-1">Your cart is empty</p>
               <p className="relative text-[13px] text-slate max-w-[360px] leading-[1.6] mb-5">
-                Nothing here yet — browse the marketplace to find products, digital downloads, and courses from verified sellers.
+                Nothing here yet — explore books, Quran and Islamic learning, courses, and worksheets from verified educators.
               </p>
               <div className="relative flex items-center gap-2 flex-wrap justify-center">
                 <Button variant="primary" onClick={() => navigate('/')}>Browse resources</Button>
@@ -198,18 +198,17 @@ export function CartPage() {
               </div>
             )}
 
-            {/* Trust reassurance — same real, already-established language as
-                the Marketplace welcome strip's Buyer Protection link, not new
-                claims invented for this page. */}
+            {/* Trust reassurance — only claims backed by a real feature
+                (token downloads, platform checkout, buyer return requests). */}
             <div className="flex items-center justify-center gap-5 sm:gap-8 flex-wrap text-[11.5px] text-slate">
               <button onClick={() => navigate('/faq')} className="flex items-center gap-[6px] bg-transparent border-none cursor-pointer p-0 hover:text-brand-orange transition-colors">
-                <ShieldCheck size={14} className="text-success" /> Buyer Protection
+                <ShieldCheck size={14} className="text-success" /> Instant Digital Downloads
               </button>
               <button onClick={() => navigate('/faq')} className="flex items-center gap-[6px] bg-transparent border-none cursor-pointer p-0 hover:text-brand-orange transition-colors">
                 <Lock size={14} className="text-success" /> Secure Checkout
               </button>
               <button onClick={() => navigate('/faq')} className="flex items-center gap-[6px] bg-transparent border-none cursor-pointer p-0 hover:text-brand-orange transition-colors">
-                <RotateCcw size={14} className="text-success" /> Easy Returns
+                <RotateCcw size={14} className="text-success" /> Returns on Physical Items
               </button>
             </div>
           </div>

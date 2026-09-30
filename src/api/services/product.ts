@@ -308,9 +308,11 @@ export function apiDeleteVariant(productId: string, variantId: string) {
   return client.delete<never, ApiResponse<ProductVariant[]>>(ENDPOINTS.PRODUCT.VARIANTS.DELETE(productId, variantId));
 }
 
-export function apiGetStoreInventory(storeId: string, page = 1, limit = 10) {
+export function apiGetStoreInventory(storeId: string, page = 1, limit = 10, filters: { status?: 'active' | 'draft' | 'archived' } = {}) {
+  // Backend supports ?status= (and counts stats.totalProducts on the same filter).
+  const status = filters.status ? `&status=${filters.status}` : '';
   return client.get<never, ApiResponse<GetInventoryData>>(
-    `${ENDPOINTS.INVENTORY.GET_STORE_INVENTORY(storeId)}?page=${page}&limit=${limit}`,
+    `${ENDPOINTS.INVENTORY.GET_STORE_INVENTORY(storeId)}?page=${page}&limit=${limit}${status}`,
   );
 }
 

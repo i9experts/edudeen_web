@@ -92,7 +92,7 @@ export function EducationAppPromo({ className }: { className?: string }) {
         </div>
         <div className="min-w-0">
           <p className="text-[12px] font-bold text-white leading-tight">Learn on the go</p>
-          <RatingRow label="Coming soon for educators" />
+          <RatingRow label="Android now · iOS soon" />
         </div>
       </div>
       <div className="flex items-center gap-2.5">

@@ -10,7 +10,7 @@ import { apiDeleteAccount } from '@/api/services/users';
 import { TokenStorage } from '@/api/services/auth';
 import { Modal, Button, NotificationsPanel } from '@/components/comman/ui';
 import {
-  User, KeyRound, ShieldCheck, Bell,
+  User, KeyRound, Bell,
   Trash2, Camera, Settings, Check, Loader2, Eye, EyeOff, ChevronLeft, ChevronRight, type LucideIcon,
 } from 'lucide-react';
 import { SellerPageHeader } from '@/components/layouts/SellerLayout';

@@ -4,7 +4,7 @@ import {
   TrendingUp, TrendingDown, ShoppingBag, Package,
   CheckCircle, Clock, Globe, Copy, ExternalLink,
   ArrowRight, Settings, Sparkles, BarChart2,
-  ClipboardList, Megaphone, Plus,
+  Megaphone, Plus,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useStoreWorkspace, StorePageHeader } from '@/components/layouts/StoreLayout';
@@ -28,6 +28,8 @@ interface StoreMetrics {
   overview:      SellerOverviewData;
   revenueSeries: RevenuePoint[];
   totalProducts: number;
+  /** Published (status=active) products only — drafts excluded. */
+  activeProducts: number;
   shelf:         InventoryProduct[];
   today:         SellerTodaySummaryData;
 }
@@ -52,13 +54,15 @@ function useStoreDashboardMetrics(storeId: string) {
       // "product shelf" panel can show the latest items too.
       apiGetStoreInventory(storeId, 1, SHELF_SIZE),
       apiSellerAnalyticsToday(storeId),
+      apiGetStoreInventory(storeId, 1, 1, { status: 'active' }),
     ])
-      .then(([overviewRes, revenueRes, inventoryRes, todayRes]) => {
+      .then(([overviewRes, revenueRes, inventoryRes, todayRes, activeRes]) => {
         if (cancelled) return;
         setMetrics({
           overview: overviewRes.data,
           revenueSeries: revenueRes.data.series,
           totalProducts: inventoryRes.data.stats.totalProducts,
+          activeProducts: activeRes.data.stats.totalProducts,
           shelf: inventoryRes.data.products ?? [],
           today: todayRes.data,
         });
@@ -96,7 +100,7 @@ function StoreInfoCard() {
 
   const handleCopy = () => {
     if (store?.slug) {
-      navigator.clipboard.writeText(`/${store.slug}`);
+      navigator.clipboard.writeText(getStorefrontUrl(store.slug));
       setCopied(true);
       setTimeout(() => setCopied(false), 1600);
     }
@@ -149,7 +153,7 @@ function StoreInfoCard() {
           <p className="text-[11px] font-bold text-brand-royal uppercase tracking-[0.14em] mb-1.5">Store URL</p>
           <div className="flex items-center gap-2 bg-cream rounded-lg px-[10px] py-[8px] border border-bone">
             <span className="flex-1 text-[13px] font-medium text-charcoal overflow-hidden text-ellipsis whitespace-nowrap">
-              /{store?.slug ?? '…'}
+              {store?.slug ? getStorefrontUrl(store.slug).replace(/^https?:\/\//, '') : '…'}
             </span>
             <button
               onClick={handleCopy}
@@ -219,14 +223,13 @@ function QuickActionsRow({ storeId }: { storeId: string }) {
     { Icon: ShoppingBag,   label: 'Add Product', path: 'products/add' },
     { Icon: Package,       label: 'View Orders', path: 'orders'       },
     { Icon: BarChart2,     label: 'Analytics',   path: 'analytics'    },
-    { Icon: ClipboardList, label: 'Inventory',   path: 'inventory'    },
     { Icon: Megaphone,     label: 'Marketing',   path: 'marketing'    },
     { Icon: Sparkles,      label: 'AI Studio',   path: 'ai/studio'    },
   ];
 
   return (
     <StudioPanel title="Quick actions">
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         {actions.map(({ Icon, label, path }) => (
           <button
             key={label}
@@ -449,7 +452,7 @@ export default function StoreDashboard() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             <MetricCard
               label="Revenue (30 days)" value={formatMoneyCompact(metrics?.overview.totalRevenue ?? 0, store?.baseCurrency)}
-              sub={metrics?.overview.totalRevenue ? 'vs previous period' : 'No sales yet'}
+              sub={metrics?.overview.totalRevenue ? 'Last 30 days' : 'No sales yet'}
               sparkline={revenueSparkline}
             />
             <MetricCard
@@ -457,8 +460,10 @@ export default function StoreDashboard() {
               sub={metrics?.overview.totalOrders ? `${formatNumber(metrics.overview.cancelledOrders)} cancelled` : 'No orders yet'}
             />
             <MetricCard
-              label="Active products" value={formatNumber(metrics?.totalProducts ?? 0)}
-              sub={metrics?.totalProducts ? 'In your catalog' : 'Add your first product'}
+              label="Active products" value={formatNumber(metrics?.activeProducts ?? 0)}
+              sub={metrics?.totalProducts
+                ? (metrics.totalProducts > metrics.activeProducts ? `${formatNumber(metrics.totalProducts - metrics.activeProducts)} not published` : 'All published')
+                : 'Add your first product'}
             />
             <MetricCard
               label="Customers (30 days)" value={formatNumber(totalCustomers)}

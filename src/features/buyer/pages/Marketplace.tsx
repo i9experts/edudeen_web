@@ -61,23 +61,23 @@ const SORT_OPTIONS = [
 // `variant="card"`.
 const TRUST_ITEMS = [
   {
-    Icon: Shield, label: 'Buyer Protection', sub: "Get full refund if product isn't as described",
+    Icon: Shield, label: 'Instant Downloads', sub: 'Digital resources ready right after payment',
     accent: { bg: '#E6F1FB', icon: '#1A72C2' },
   },
   {
-    Icon: CreditCard, label: 'Secure Payments', sub: '100% secure and trusted payment methods',
+    Icon: CreditCard, label: 'Secure Checkout', sub: 'You pay Edudeen, not a stranger',
     accent: { bg: '#EAF2F8', icon: '#174771' },
   },
   {
-    Icon: RefreshCcw, label: 'Easy Returns', sub: 'Hassle-free returns within 7 days',
+    Icon: RefreshCcw, label: 'Return Requests', sub: 'Request a return on physical items from My Orders',
     accent: { bg: '#EBF7EF', icon: '#2D8A4E' },
   },
   {
-    Icon: BadgeCheck, label: 'Verified Sellers', sub: 'Shop from trusted and verified stores',
+    Icon: BadgeCheck, label: 'Verified Sellers', sub: 'Look for the verified badge on stores',
     accent: { bg: '#F5F0FB', icon: '#7C3AED' },
   },
   {
-    Icon: Headset, label: '24/7 Support', sub: "We're here anytime you need us",
+    Icon: Headset, label: 'Help When You Need It', sub: 'Message the seller or contact us',
     accent: { bg: '#F1EFE8', icon: '#4A4945' },
   },
 ];

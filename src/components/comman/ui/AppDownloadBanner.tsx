@@ -146,9 +146,9 @@ export function HomeScreenMockup() {
 
         <div className="rounded-[12px] bg-gradient-to-br from-brand-orange to-brand-deep-orange px-[11px] py-[10px] flex items-center justify-between mb-[10px]">
           <div>
-            <p className="text-[8.5px] font-bold text-white leading-tight">EXTRA 20% OFF</p>
-            <p className="text-[7px] text-white/85 leading-tight mt-[1px]">App Exclusive Deals</p>
-            <span className="inline-block mt-[5px] px-[8px] py-[2.5px] rounded-full bg-white text-[6.5px] font-bold text-brand-deep-orange">Shop Now</span>
+            <p className="text-[8.5px] font-bold text-white leading-tight">Learn anywhere</p>
+            <p className="text-[7px] text-white/85 leading-tight mt-[1px]">Your downloads, on the go</p>
+            <span className="inline-block mt-[5px] px-[8px] py-[2.5px] rounded-full bg-white text-[6.5px] font-bold text-brand-deep-orange">Browse</span>
           </div>
           <Gift size={22} className="text-white/90 shrink-0" />
         </div>
@@ -493,9 +493,9 @@ export function AppDownloadBanner({ className, variant = 'full' }: { className?:
   // Happy Shoppers / Verified Stores are real counts once they load.
   const trustStats = [
     { Icon: ShoppingBag, value: stats ? `${compactNumber.format(stats.buyersCount)}+` : '—', label: 'Happy Shoppers' },
-    { Icon: ShieldCheck, value: '100%', label: 'Secure Shopping' },
+    { Icon: ShieldCheck, value: 'Secure', label: 'Checkout' },
     { Icon: Award,       value: stats ? `${compactNumber.format(stats.storesCount)}+` : '—', label: 'Verified Stores' },
-    { Icon: Headphones,  value: '24/7', label: 'Customer Support' },
+    { Icon: Headphones,  value: 'Help', label: 'When You Need It' },
   ];
 
   return (

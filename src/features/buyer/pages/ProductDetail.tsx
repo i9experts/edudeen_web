@@ -708,7 +708,7 @@ export function ProductDetail() {
                       </div>
                       <div className="min-w-0">
                         <p className="text-[11.5px] font-semibold text-charcoal leading-tight truncate">Secure checkout</p>
-                        <p className="text-[10px] text-slate mt-[1px] truncate">100% buyer protection</p>
+                        <p className="text-[10px] text-slate mt-[1px] truncate">Pay safely through Edudeen</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-[8px] min-w-0">
@@ -716,8 +716,8 @@ export function ProductDetail() {
                         <Truck size={14} className="text-brand-orange" />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-[11.5px] font-semibold text-charcoal leading-tight truncate">{isDigital ? 'Instant delivery' : 'Fast shipping'}</p>
-                        <p className="text-[10px] text-slate mt-[1px] truncate">{isDigital ? 'Download right after purchase' : 'Tracked, reliable delivery'}</p>
+                        <p className="text-[11.5px] font-semibold text-charcoal leading-tight truncate">{isDigital ? 'Instant delivery' : 'Shipped by the seller'}</p>
+                        <p className="text-[10px] text-slate mt-[1px] truncate">{isDigital ? 'Download right after purchase' : 'Track it from My Orders'}</p>
                       </div>
                     </div>
                   </div>

@@ -59,10 +59,10 @@ export function AboutPage() {
           <Reveal delay={0.1}>
             <p className="text-[11px] font-semibold text-brand-orange uppercase tracking-[0.1em] mb-3">Our approach</p>
             <h2 className="text-[22px] sm:text-[26px] font-bold text-carbon leading-[1.3] mb-4" style={{ fontFamily: SERIF }}>
-              Self-serve, from day one.
+              Easy to start, verified to trust.
             </h2>
             <p className="text-[14px] text-slate leading-[1.75]">
-              A seller who completes onboarding and adds a payment method is live immediately — no manual approval queue standing between signing up and actually selling. We'd rather earn trust through a working product than gate it behind a review process.
+              Educators can set up a store and start listing quickly. Sellers who complete Edudeen's verification earn a verified badge, so learners and parents can see at a glance which stores have been checked — and buyers always pay through Edudeen's own checkout.
             </p>
           </Reveal>
         </div>

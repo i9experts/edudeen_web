@@ -42,14 +42,6 @@ const NAV_SECTIONS: NavSection[] = [
     label: 'Workspace',
     items: [
       { id: 'store-list',    Icon: Store,  label: 'My Stores',    path: '/seller/stores' },
-
-      // {
-      //   id: 'my-store', Icon: Store, label: 'My Store',
-      //   children: [
-      //     { id: 'store-list',    Icon: List,  label: 'Store List',    path: '/seller/stores' },
-      //     { id: 'store-builder', Icon: Store, label: 'Store Builder', path: '/seller/store'  },
-      //   ],
-      // },
     ],
   },
   {

@@ -37,7 +37,7 @@ const FALLBACK_FAQS = [
   },
   {
     q: 'Do you offer discounts for educators or non-profits?',
-    a: 'Yes — educators and registered non-profits qualify for a 40% discount on any paid plan. Contact our support team with your credentials.',
+    a: "We don't have a standard educator or non-profit discount yet. If you're a school, madrasa or non-profit with special needs, contact us and we'll see what we can do.",
   },
   {
     q: 'What payment methods do you accept?',

@@ -41,6 +41,7 @@ import { PricingPage }          from '@/features/buyer/pages/PricingPage';
 import { ForSellersPage }       from '@/features/buyer/pages/ForSellersPage';
 import { FaqPage }              from '@/features/buyer/pages/FaqPage';
 import { PrivacyPolicyPage }    from '@/features/buyer/pages/PrivacyPolicyPage';
+import { DeleteAccountPage }    from '@/features/buyer/pages/DeleteAccountPage';
 import { TermsOfServicePage }   from '@/features/buyer/pages/TermsOfServicePage';
 import { CookiePolicyPage }     from '@/features/buyer/pages/CookiePolicyPage';
 import { ContactUsPage }        from '@/features/buyer/pages/ContactUsPage';
@@ -74,6 +75,7 @@ const MaintenancePage      = lazy(() => named(import('@/features/buyer/pages/Mai
 // ── Account (buyer) ───────────────────────────────────────────────────────────
 const AccountDashboard     = lazy(() => named(import('@/features/buyer/pages/account/AccountDashboard'),        'AccountDashboard'));
 const AccountOrders        = lazy(() => named(import('@/features/buyer/pages/MyOrdersPage'),                     'OrdersTab'));
+const AccountDownloads     = lazy(() => named(import('@/features/buyer/pages/account/Downloads'),                'Downloads'));
 const AccountWishlist      = lazy(() => named(import('@/features/buyer/pages/account/Wishlist'),                 'Wishlist'));
 const AccountReviews       = lazy(() => named(import('@/features/buyer/pages/MyReviewsPage'),                    'ReviewsTab'));
 const AccountPayments      = lazy(() => named(import('@/features/buyer/pages/account/Payments'),                 'Payments'));
@@ -130,6 +132,7 @@ const AdminActivityLog   = lazy(() => named(import('@/features/admin/pages/Admin
 const AdminMessaging     = lazy(() => named(import('@/features/admin/pages/AdminMessaging'),                    'AdminMessaging'));
 const AdminMarketplace   = lazy(() => named(import('@/features/admin/pages/AdminMarketplace'),                  'AdminMarketplace'));
 const AdminLeads         = lazy(() => named(import('@/features/admin/pages/AdminLeads'),                        'AdminLeads'));
+const AdminRefunds       = lazy(() => named(import('@/features/admin/pages/AdminRefunds'),                      'AdminRefunds'));
 const AdminCategories    = lazy(() => named(import('@/features/admin/pages/AdminCategories'),                    'AdminCategories'));
 const AdminSubscriptions = lazy(() => named(import('@/features/admin/pages/AdminSubscriptions'),                 'AdminSubscriptions'));
 const AdminPlatformPlans = lazy(() => named(import('@/features/admin/pages/AdminPlatformPlans'),                 'AdminPlatformPlans'));
@@ -203,6 +206,7 @@ const mainRouter = createBrowserRouter([
               { path: 'faq',             element: <FaqPage /> },
               { path: 'help',            element: <Navigate to="/faq" replace /> },
               { path: 'privacy-policy',  element: <PrivacyPolicyPage /> },
+              { path: 'delete-account',  element: <DeleteAccountPage /> },
               { path: 'terms-of-service', element: <TermsOfServicePage /> },
               { path: 'cookie-policy',   element: <CookiePolicyPage /> },
               { path: 'contact-us',      element: <ContactUsPage /> },
@@ -222,6 +226,7 @@ const mainRouter = createBrowserRouter([
               { index: true,          element: <Navigate to="dashboard" replace /> },
               { path: 'dashboard',     element: <AccountDashboard /> },
               { path: 'orders',        element: <AccountOrders /> },
+              { path: 'downloads',     element: <AccountDownloads /> },
               { path: 'wishlist',      element: <AccountWishlist /> },
               { path: 'reviews',       element: <AccountReviews /> },
               { path: 'payments',      element: <AccountPayments /> },
@@ -342,6 +347,7 @@ const mainRouter = createBrowserRouter([
           { path: 'activity-log', element: <RequireRole role="admin"><AdminActivityLog /></RequireRole> },
           { path: 'messages',     element: <AdminMessaging /> },
           { path: 'leads',        element: <RequireRole role="admin"><AdminLeads /></RequireRole> },
+          { path: 'refunds',      element: <RequireRole role="admin"><AdminRefunds /></RequireRole> },
           { path: 'marketplace',  element: <RequireRole role="admin"><AdminMarketplace /></RequireRole> },
           { path: 'categories',   element: <AdminCategories /> },
           { path: 'subscriptions',element: <AdminSubscriptions /> },

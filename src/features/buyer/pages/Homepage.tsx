@@ -37,10 +37,10 @@ const compactNumber   = new Intl.NumberFormat('en', { notation: 'compact', maxim
 const compactCurrency = new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1, style: 'currency', currency: 'USD' });
 
 const TRUST_ITEMS = [
-  { Icon: Shield,     label: 'Buyer Protection', sub: 'Secure checkout, every order' },
-  { Icon: CreditCard, label: 'Flexible Payment', sub: 'Cards, COD & bank transfer' },
-  { Icon: RefreshCcw, label: 'Easy Returns',     sub: 'Hassle-free return window' },
-  { Icon: Headset,    label: '24/7 Support',     sub: "We're here whenever you need us" },
+  { Icon: Shield,     label: 'Secure Checkout',   sub: 'Payments handled by Edudeen' },
+  { Icon: CreditCard, label: 'Flexible Payment',  sub: 'Cards, COD & bank transfer' },
+  { Icon: RefreshCcw, label: 'Refund Requests',   sub: 'Raise one from My Orders' },
+  { Icon: Headset,    label: 'Help When Needed',  sub: 'Message the seller or contact us' },
 ];
 
 type TypeFilter = '' | 'physical' | 'digital' | 'educational';

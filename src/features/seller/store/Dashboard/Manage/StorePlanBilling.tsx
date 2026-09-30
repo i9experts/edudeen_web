@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import {
-  Check, Zap, Users, Package, Sparkles, AlertTriangle, Clock, CreditCard,
+  Check, Zap, Package, Sparkles, AlertTriangle, Clock, CreditCard,
   XCircle, RotateCcw, Loader2, type LucideIcon,
 } from 'lucide-react';
 import { StorePageHeader, useStoreWorkspace } from '@/components/layouts/StoreLayout';
