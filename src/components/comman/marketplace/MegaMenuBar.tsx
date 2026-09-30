@@ -146,7 +146,7 @@ export function CategoriesMegaContent({
 
   if (categories.length === 0) return <p className="text-[13px] text-slate">No categories yet.</p>;
 
-  // Fixed height is applied via a CSS custom property + a static `lg:h-[var(...)]`
+  // Fixed height is applied via a CSS custom property + a static `lg:h-` arbitrary-value utility
   // class — never a plain inline `height`, and never gated below `lg` — so
   // that below `lg` both columns flow naturally with the page's own single
   // scroll (the outer mega-panel's `max-h-[70vh] overflow-y-auto`) instead
