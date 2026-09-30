@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Users, Shield, Store, DollarSign, Bell, Settings, UserCog,
   PanelLeftClose, PanelLeftOpen, MessageSquare, Image as ImageIcon, HelpCircle, FolderTree, RefreshCw,
   BarChart3, Layers, Search, Sparkles, Tag, LogOut, MessageCircle, Landmark, Percent, Coins, UserPlus, Activity,
-  ChevronDown, TrendingUp, ChevronRight, Quote, CalendarCheck,
+  ChevronDown, TrendingUp, ChevronRight, Quote, CalendarCheck, Undo2,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useGetProfile } from '@/hooks/auth/useGetProfile';
@@ -32,8 +32,9 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { id: 'moderation',    Icon: Shield,          label: 'Moderation',      path: '/admin/moderation'    },
   { id: 'activity-log',  Icon: Activity,        label: 'Activity Log',    path: '/admin/activity-log'  },
   { id: 'messages',      Icon: MessageSquare,   label: 'Messaging',       path: '/admin/messages'      },
-  { id: 'leads',         Icon: UserPlus,        label: 'Leads',           path: '/admin/leads'         },
-  { id: 'marketplace',   Icon: Store,           label: 'Marketplace',     path: '/admin/marketplace'   },
+  { id: 'leads',         Icon: UserPlus,        label: 'Seller Applications', path: '/admin/leads'     },
+  { id: 'refunds',       Icon: Undo2,           label: 'Refunds',         path: '/admin/refunds'       },
+  { id: 'marketplace',   Icon: Store,           label: 'Listings',        path: '/admin/marketplace'   },
   { id: 'categories',    Icon: FolderTree,      label: 'Categories',      path: '/admin/categories'    },
   { id: 'subscriptions', Icon: RefreshCw,       label: 'Subscriptions',   path: '/admin/subscriptions' },
   { id: 'marketing',     Icon: Tag,             label: 'Marketing',       path: '/admin/marketing'     },
@@ -71,8 +72,8 @@ interface AdminModule {
 // nothing to expand for a "section" that's really just one page.
 export const ADMIN_MODULES: AdminModule[] = [
   { id: 'overview',  label: 'Overview',             Icon: LayoutDashboard, ids: ['overview'] },
-  { id: 'commerce',  label: 'Commerce',             Icon: Store,           ids: ['marketplace', 'categories', 'leads', 'subscriptions', 'platform-plans'] },
-  { id: 'people',    label: 'Users & Communication', Icon: Users,          ids: ['users', 'moderation', 'messages', 'contact'] },
+  { id: 'commerce',  label: 'Commerce',             Icon: Store,           ids: ['marketplace', 'categories', 'refunds', 'subscriptions', 'platform-plans'] },
+  { id: 'people',    label: 'Users & Communication', Icon: Users,          ids: ['users', 'leads', 'moderation', 'messages', 'contact'] },
   { id: 'growth',    label: 'Growth',                Icon: TrendingUp,     ids: ['marketing', 'seo', 'ai-studio'] },
   { id: 'finance',   label: 'Finance',               Icon: DollarSign,     ids: ['finance', 'monthly-payouts', 'manual-payments', 'commission-rules', 'fx-settings'] },
   { id: 'content',   label: 'Content',               Icon: ImageIcon,      ids: ['banners', 'faqs', 'testimonials', 'announcements'] },
@@ -171,7 +172,7 @@ export function AdminNavMenu({ excludeItemIds = [] }: { excludeItemIds?: string[
 const ADMIN_TABS: { id: string; Icon: LucideIcon; label: string; path: string }[] = [
   { id: 'overview',   Icon: LayoutDashboard, label: 'Overview',    path: '/admin'            },
   { id: 'users',      Icon: Users,           label: 'Users',       path: '/admin/users'      },
-  { id: 'marketplace',Icon: Store,           label: 'Marketplace', path: '/admin/marketplace' },
+  { id: 'marketplace',Icon: Store,           label: 'Listings', path: '/admin/marketplace' },
   { id: 'moderation', Icon: Shield,          label: 'Moderation',  path: '/admin/moderation' },
   { id: 'settings',   Icon: Settings,        label: 'Settings',    path: '/admin/settings'   },
 ];

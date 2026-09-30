@@ -113,7 +113,7 @@ function useUncontrolledSearch() {
   const [value, setValue] = useState('');
   const submit = (term?: string) => {
     const q = (term ?? value).trim();
-    if (q) navigate(`/marketplace?search=${encodeURIComponent(q)}`);
+    if (q) navigate(`/?search=${encodeURIComponent(q)}`);
   };
   return { value, onChange: setValue, submit };
 }

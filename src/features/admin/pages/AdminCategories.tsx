@@ -12,15 +12,36 @@ import { EmptyState } from '@/components/comman/ui/EmptyState';
 import { SkeletonBox } from '@/components/comman/ui/SkeletonBox';
 import { AdminStudioHeader } from '@/features/admin/components/studio';
 
+// ── Suggested education subjects ─────────────────────────────────────────────
+// The same five subject tabs the buyer homepage shows (Homepage.tsx
+// SUBJECT_TABS). Each tab filters by a category whose name matches, so
+// creating these main categories makes those tabs filter precisely. A chip only
+// prefills the form; nothing is created until the admin clicks "Create".
+interface CategorySuggestion { name: string; description: string }
+
+const SUGGESTED_CATEGORIES: CategorySuggestion[] = [
+  { name: 'Tarbiyyah',       description: 'Islamic upbringing: Quran, Seerah, duas, salah, akhlaq and Islamic studies resources.' },
+  { name: 'Arabic & Urdu',   description: 'Arabic and Urdu language learning: Qaida, Noorani, reading, writing and vocabulary.' },
+  { name: 'English',         description: 'English language resources: phonics, grammar, spelling, reading and writing.' },
+  { name: 'Maths & Science', description: 'Maths and science resources: numbers, arithmetic, geometry and early STEM.' },
+  { name: 'Homeschooling',   description: 'Homeschool curricula, lesson plans, planners and unit studies.' },
+];
+
+function missingSuggestions(mainCategories: CategoryNode[]) {
+  const existing = new Set(mainCategories.map(c => c.name.trim().toLowerCase()));
+  return SUGGESTED_CATEGORIES.filter(s => !existing.has(s.name.toLowerCase()));
+}
+
 // ── Add Category modal ───────────────────────────────────────────────────────
 // Admins can create either a main category (no parent) or a subcategory under
 // an existing main category — never deeper than one level (server-enforced).
-function AddCategoryModal({ mainCategories, onClose, onSaved }: {
-  mainCategories: CategoryNode[]; onClose: () => void; onSaved: () => void;
+function AddCategoryModal({ mainCategories, initial, onClose, onSaved }: {
+  mainCategories: CategoryNode[]; initial?: CategorySuggestion | null; onClose: () => void; onSaved: () => void;
 }) {
   const [parentId,    setParentId]    = useState('');
-  const [name,        setName]        = useState('');
-  const [description, setDescription] = useState('');
+  const [name,        setName]        = useState(initial?.name ?? '');
+  const [description, setDescription] = useState(initial?.description ?? '');
+  const suggestions = missingSuggestions(mainCategories);
   const [image,       setImage]       = useState('');
   const [preview,     setPreview]     = useState('');
   const [sortOrder,   setSortOrder]   = useState('0');
@@ -70,6 +91,31 @@ function AddCategoryModal({ mainCategories, onClose, onSaved }: {
       }
     >
       <div className="flex flex-col gap-4">
+        {suggestions.length > 0 && (
+          <div>
+            <p className="text-[12px] font-medium text-charcoal mb-[6px]">Suggested subjects</p>
+            <div className="flex flex-wrap gap-[6px]">
+              {suggestions.map(s => {
+                const selected = !parentId && name.trim().toLowerCase() === s.name.toLowerCase();
+                return (
+                  <button
+                    key={s.name}
+                    type="button"
+                    onClick={() => { setParentId(''); setName(s.name); setDescription(s.description); }}
+                    aria-pressed={selected}
+                    className={clsx(
+                      'px-2.5 py-1 rounded-full text-[11.5px] font-medium border cursor-pointer transition-colors',
+                      selected ? 'bg-brand-orange text-white border-brand-orange' : 'bg-white text-graphite border-bone hover:border-brand-orange',
+                    )}
+                  >
+                    {s.name}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-[11px] text-slate mt-[6px]">These match the subject tabs on the homepage. Picking one fills in the form; review it, then click Create Category.</p>
+          </div>
+        )}
         <Select label="Parent Category" value={parentId} onChange={e => setParentId(e.target.value)}>
           <option value="">None — create as a main category</option>
           {mainCategories.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
@@ -156,6 +202,7 @@ export function AdminCategories() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [adding, setAdding] = useState(false);
+  const [prefill, setPrefill] = useState<CategorySuggestion | null>(null);
   const [managingAttrsFor, setManagingAttrsFor] = useState<CategoryNode | null>(null);
 
   const load = () => {
@@ -180,10 +227,26 @@ export function AdminCategories() {
       <AdminStudioHeader eyebrow="Edudeen team workspace · Commerce"
         title="Categories"
         subtitle={`${totalMain} main categories · ${totalSubs} subcategories`}
-        actions={<Button icon={<Plus size={14} />} onClick={() => setAdding(true)}>Add Category</Button>}
+        actions={<Button icon={<Plus size={14} />} onClick={() => { setPrefill(null); setAdding(true); }}>Add Category</Button>}
       />
 
       <div className="px-4 sm:px-7 pt-5 pb-8">
+        {!loading && !error && missingSuggestions(tree).length > 0 && (
+          <div className="bg-white border border-bone rounded-xl px-4 py-3 mb-4 flex flex-wrap items-center gap-2">
+            <p className="text-[12px] font-semibold text-charcoal mr-1">Suggested subjects:</p>
+            {missingSuggestions(tree).map(s => (
+              <button
+                key={s.name}
+                type="button"
+                onClick={() => { setPrefill(s); setAdding(true); }}
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11.5px] font-medium border border-bone bg-white text-graphite cursor-pointer hover:border-brand-orange hover:text-brand-orange transition-colors"
+              >
+                <Plus size={11} /> {s.name}
+              </button>
+            ))}
+            <p className="basis-full text-[11px] text-slate">The homepage's subject tabs work best when a main category with the same name exists. Nothing is created until you confirm.</p>
+          </div>
+        )}
         <div className="bg-white border border-bone rounded-xl overflow-hidden">
           {loading ? (
             <div className="px-4 py-4 flex flex-col gap-3">
@@ -207,13 +270,18 @@ export function AdminCategories() {
         <p className="text-[12px] text-slate mt-4 leading-[1.6] max-w-[640px]">
           Main categories are the curated top-level taxonomy sellers choose from when creating a store.
           Subcategories can be nested one level under a main category — sellers may also add their own
-          subcategories from their dashboard. Editing and deleting categories isn't supported yet.
+          subcategories from their dashboard.
+        </p>
+        <p className="text-[12px] text-slate mt-2 leading-[1.6] max-w-[640px] bg-cream border border-bone rounded-lg px-3 py-2">
+          Good to know: categories can be added here, but renaming or removing them isn't available yet.
+          Double-check the name before creating — your existing categories and products aren't affected.
         </p>
       </div>
 
       {adding && (
         <AddCategoryModal
           mainCategories={tree}
+          initial={prefill}
           onClose={() => setAdding(false)}
           onSaved={() => { setAdding(false); load(); }}
         />

@@ -1,4 +1,4 @@
-import { Truck, ShieldCheck, RefreshCcw, BadgeCheck, Headset, Tag, type LucideIcon } from 'lucide-react';
+import { Download, ShieldCheck, RefreshCcw, BadgeCheck, Headset, Tag, type LucideIcon } from 'lucide-react';
 import { clsx } from 'clsx';
 
 interface TrustItem {
@@ -11,13 +11,16 @@ interface TrustItem {
   accent?: { bg: string; icon: string };
 }
 
+// Only claims backed by a real feature: instant token downloads, platform
+// checkout, buyer return requests on physical items, store verification,
+// buyer↔seller messaging / contact form, and seller campaigns.
 const DEFAULT_ITEMS: TrustItem[] = [
-  { Icon: Truck,       label: 'Free Shipping'    },
-  { Icon: ShieldCheck, label: 'Secure Payments'  },
-  { Icon: RefreshCcw,  label: 'Easy Returns'     },
-  { Icon: BadgeCheck,  label: 'Verified Sellers' },
-  { Icon: Headset,     label: '24/7 Support'     },
-  { Icon: Tag,         label: 'Daily Deals'      },
+  { Icon: Download,    label: 'Instant Downloads'     },
+  { Icon: ShieldCheck, label: 'Secure Checkout'       },
+  { Icon: RefreshCcw,  label: 'Return Requests'       },
+  { Icon: BadgeCheck,  label: 'Verified Sellers'      },
+  { Icon: Headset,     label: 'Help When You Need It' },
+  { Icon: Tag,         label: 'Daily Deals'           },
 ];
 
 interface TrustServiceStripProps {

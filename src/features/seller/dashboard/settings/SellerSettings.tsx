@@ -31,7 +31,7 @@ const SETTINGS_NAV: { group: string; isDanger?: boolean; items: { id: SettingSec
     items: [
       { id: 'profile',         label: 'Profile',          Icon: User           },
       { id: 'email-password',  label: 'Email & Password', Icon: KeyRound       },
-      { id: 'two-factor',      label: 'Two-Factor Auth',  Icon: ShieldCheck    },
+      // Two-Factor Auth hidden until it's actually built (it was a "coming soon" placeholder).
       { id: 'notifications',   label: 'Notifications',    Icon: Bell           },
     ],
   },

@@ -7,17 +7,20 @@ import { AppleGlyph, GooglePlayGlyph } from './AppPromoParts';
 import { apiSubscribeNewsletter } from '../../../api/services/newsletter';
 import { scrollRootToTop } from '@/utils/scrollRoot';
 import { useSellEntry } from '@/hooks/auth/useSellEntry';
+import { isBuyerSession } from '@/hooks/auth/useIsBuyer';
 
 interface FooterLink {
   label: string;
   path?: string; // omit for links to pages that don't exist yet (rendered inert)
 }
 
+const SELLER_ONLY_COLUMNS = new Set(['Products', 'Solutions']);
+const SELLER_ONLY_PATHS = new Set(['/sellers', '/pricing', '/onboard']);
+
 const FOOTER_COLUMNS: { heading: string; links: FooterLink[] }[] = [
   {
     heading: 'Shop',
     links: [
-      { label: 'Education',   path: '/education' },
       { label: 'My Orders',   path: '/account/orders' },
       { label: 'Wishlist',    path: '/account/wishlist' },
     ],
@@ -43,8 +46,7 @@ const FOOTER_COLUMNS: { heading: string; links: FooterLink[] }[] = [
   {
     heading: 'Resources',
     links: [
-      { label: 'FAQ',         path: '/faq' },
-      { label: 'Help Center', path: '/help' },
+      { label: 'Help & FAQ',  path: '/faq' },
       { label: 'Contact Us',  path: '/contact-us' },
     ],
   },
@@ -230,6 +232,14 @@ export function Footer({ showNewsletter = true }: { showNewsletter?: boolean }) 
   // "Start Selling" is the only footer link that means seller intent — route
   // it through the shared entry handler instead of a raw navigate.
   const footerNavigate = (path: string) => path === '/onboard' ? sellEntry.go() : navigate(path);
+  // A signed-in buyer can't open a store — drop the seller-recruitment
+  // columns and links (store-builder products, solutions, pricing, for sellers).
+  const buyer = isBuyerSession();
+  const footerColumns = buyer
+    ? FOOTER_COLUMNS
+        .filter(col => !SELLER_ONLY_COLUMNS.has(col.heading))
+        .map(col => ({ ...col, links: col.links.filter(l => !l.path || !SELLER_ONLY_PATHS.has(l.path)) }))
+    : FOOTER_COLUMNS;
 
   return (
     <footer className="bg-white border-t border-bone text-slate">
@@ -279,7 +289,7 @@ export function Footer({ showNewsletter = true }: { showNewsletter?: boolean }) 
             </div>
           </div>
 
-          {FOOTER_COLUMNS.map(col => (
+          {footerColumns.map(col => (
             <FooterColumn key={col.heading} heading={col.heading} links={col.links} navigate={footerNavigate} />
           ))}
 

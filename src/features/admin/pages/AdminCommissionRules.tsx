@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Percent, Plus, Trash2, History } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import {
@@ -77,6 +78,12 @@ function GlobalDefaultCard() {
         <p className="text-[28px] font-bold text-carbon mt-3">{rule ? pct(rule.rate) : '8.00%'}</p>
       )}
       {rule?.notes && <p className="text-[12px] text-slate mt-1">{rule.notes}</p>}
+
+      <div className="mt-3 bg-cream border border-bone rounded-lg px-3 py-[9px] text-[12px] text-charcoal leading-[1.55]">
+        <span className="font-semibold">Plan fees take precedence.</span> A store on a platform plan pays that plan's "Txn fee" instead of this default.
+        Order used for every sale: seller override (below) → platform plan fee → this global default.{' '}
+        <Link to="/admin/platform-plans" className="underline font-medium text-brand-orange">View plan fees</Link>
+      </div>
 
       <button
         onClick={() => setShowHistory(s => !s)}

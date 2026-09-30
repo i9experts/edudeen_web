@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { clsx } from 'clsx';
-import { Home, Store, ShoppingCart, User } from 'lucide-react';
+import { Home, Heart, ShoppingCart, User } from 'lucide-react';
 import { TokenStorage } from '@/api/services/auth';
 import { useCartContext } from '@/contexts/CartContext';
 import { AnnouncementBanner, AppOpenPrompt, AppOpenFab } from '@/components/comman/ui';
@@ -20,7 +20,7 @@ function BuyerBottomNav() {
 
   const tabs = [
     { id: 'home',        Icon: Home,         label: 'Home',        path: '/' },
-    { id: 'marketplace', Icon: Store,        label: 'Shop',        path: '/marketplace' },
+    { id: 'saved',       Icon: Heart,        label: 'Saved',       path: '/account/wishlist' },
     { id: 'cart',        Icon: ShoppingCart, label: 'Cart',        path: '/cart', badge: cartCount },
     { id: 'account',     Icon: User,         label: 'Account',     path: TokenStorage.isLoggedIn() ? '/account/dashboard' : '/login' },
   ] as const;

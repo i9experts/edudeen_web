@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import {
   useAdminConfig,
@@ -97,9 +98,7 @@ function MaintenanceCard({ config, onSaved }: { config: PlatformConfig; onSaved:
 function AiConfigCard({ config, onSaved }: { config: PlatformConfig; onSaved: (c: PlatformConfig) => void }) {
   const { update, submitting, error } = useUpdateAiConfig();
   const { saved, flash } = useSavedFlash();
-  const [creditLimit, setCreditLimit] = useState(String(config.aiConfig.monthlyCreditLimit));
   const [aiModel, setAiModel] = useState(config.aiConfig.aiModel);
-  const [validationError, setValidationError] = useState('');
 
   // Re-seed local form state when the server value changes underneath us
   // (e.g. after a successful save) — adjusted during render rather than in
@@ -107,18 +106,16 @@ function AiConfigCard({ config, onSaved }: { config: PlatformConfig; onSaved: (c
   const [syncedAiConfig, setSyncedAiConfig] = useState(config.aiConfig);
   if (config.aiConfig !== syncedAiConfig) {
     setSyncedAiConfig(config.aiConfig);
-    setCreditLimit(String(config.aiConfig.monthlyCreditLimit));
     setAiModel(config.aiConfig.aiModel);
   }
 
+  // The old "Monthly Credit Limit (per seller)" field (aiConfig.monthlyCreditLimit)
+  // is hidden: the backend never reads it. Each seller's monthly AI credits
+  // come from their platform plan's `aiCreditsPerMonth` (see
+  // platform-plans/ai-credits.service.ts), so that's the one setting that
+  // matters. The stored value is left untouched (not sent on save).
   async function save() {
-    const limit = parseInt(creditLimit, 10);
-    if (Number.isNaN(limit) || limit < 0) {
-      setValidationError('Monthly credit limit must be a positive number.');
-      return;
-    }
-    setValidationError('');
-    const payload: Partial<AiConfig> = { monthlyCreditLimit: limit, aiModel };
+    const payload: Partial<AiConfig> = { aiModel };
     const ok = await update(payload);
     if (ok) { onSaved({ ...config, aiConfig: { ...config.aiConfig, ...payload } }); flash(); }
   }
@@ -127,21 +124,14 @@ function AiConfigCard({ config, onSaved }: { config: PlatformConfig; onSaved: (c
     <div className="bg-white border border-bone rounded-xl px-[22px] py-5">
       <p className="font-serif font-normal text-[19px] sm:text-[21px] text-carbon leading-[1.25] mb-4">AI Configuration</p>
       <div className="flex flex-col gap-[14px]">
-        <Input
-          label="Monthly Credit Limit (per seller)"
-          type="number"
-          min={0}
-          value={creditLimit}
-          onChange={(e) => setCreditLimit(e.target.value)}
-          error={validationError || undefined}
-        />
         <Select label="AI Model" value={aiModel} onChange={(e) => setAiModel(e.target.value)}>
           {AI_MODELS.map((m) => <option key={m} value={m}>{m}</option>)}
         </Select>
         <div className="bg-brand-pale-orange rounded-lg px-3 py-[10px] text-[12px] text-brand-deep-orange">
-          <p className="font-semibold mb-[3px]">Cost estimate</p>
+          <p className="font-semibold mb-[3px]">Monthly AI credits</p>
           <p className="text-[#8c6050]">
-            At {creditLimit || 0} credits/seller × active sellers, actual usage tracks against each seller's AI wallet.
+            Each seller's monthly AI credits come from their plan's "AI credits / month" setting.{' '}
+            <Link to="/admin/platform-plans" className="underline font-medium">Edit in Platform Plans</Link>
           </p>
         </div>
         {error && <p className="text-[12px] text-error">{error}</p>}
@@ -228,12 +218,14 @@ function ManualPaymentConfigCard({ config, onSaved }: { config: PlatformConfig; 
       setValidationError('Bank name, account title, and account number are required to enable bank transfer.');
       return;
     }
-    if (!form.usdToPkrRate || form.usdToPkrRate <= 0) {
-      setValidationError('USD → PKR rate must be a positive number.');
-      return;
-    }
     setValidationError('');
-    const ok = await update(form);
+    // `usdToPkrRate` is deliberately not sent: it's a legacy field the
+    // backend no longer uses for charges (payment.service uses the FX
+    // Settings rate snapshot instead), so editing it here only caused two
+    // disagreeing PKR rates.
+    const { usdToPkrRate: _legacyRate, ...payload } = form;
+    void _legacyRate;
+    const ok = await update(payload);
     if (ok) { onSaved({ ...config, manualPaymentConfig: form }); flash(); }
   }
 
@@ -255,13 +247,13 @@ function ManualPaymentConfigCard({ config, onSaved }: { config: PlatformConfig; 
           <Input label="JazzCash Number (optional)" value={form.jazzcashNumber ?? ''} onChange={(e) => setField('jazzcashNumber', e.target.value)} />
           <Input label="Easypaisa Number (optional)" value={form.easypaisaNumber ?? ''} onChange={(e) => setField('easypaisaNumber', e.target.value)} />
         </div>
-        <Input
-          label="USD → PKR Rate"
-          type="number"
-          min={1}
-          value={String(form.usdToPkrRate)}
-          onChange={(e) => setField('usdToPkrRate', Number(e.target.value) || 0)}
-        />
+        <div className="bg-cream border border-bone rounded-lg px-3 py-[10px] text-[12px] text-charcoal">
+          <p className="font-semibold mb-[2px]">Exchange rate</p>
+          <p className="text-slate">
+            The USD → PKR rate buyers are charged comes from FX Settings, the single rate used at checkout.{' '}
+            <Link to="/admin/fx-settings" className="underline font-medium text-brand-orange">Manage in FX Settings</Link>
+          </p>
+        </div>
         <Textarea
           label="Instructions shown to buyer (optional)"
           value={form.instructions ?? ''}

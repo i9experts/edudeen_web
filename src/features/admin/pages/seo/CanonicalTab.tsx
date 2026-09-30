@@ -77,10 +77,10 @@ export function CanonicalTab() {
           }
         >
           <Field label="Path Pattern" className="mb-3">
-            <Input value={pathPattern} onChange={e => setPathPattern(e.target.value)} placeholder="/marketplace/category/:id" />
+            <Input value={pathPattern} onChange={e => setPathPattern(e.target.value)} placeholder="/product/:slug" />
           </Field>
           <Field label="Canonical URL">
-            <Input value={canonicalUrl} onChange={e => setCanonicalUrl(e.target.value)} placeholder="https://edudeen.com/marketplace/category/islamic-books" />
+            <Input value={canonicalUrl} onChange={e => setCanonicalUrl(e.target.value)} placeholder="https://edudeen.com/product/tajweed-quran" />
           </Field>
         </Modal>
       )}

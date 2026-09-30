@@ -7,7 +7,7 @@ import { TokenStorage, getRoleRedirect, type AppRole } from '@/api/services/auth
 import { Button } from '@/components/comman/ui/Button';
 import {
   Camera, Palette, BookOpen, Store, Briefcase, Monitor, Globe,
-  Package, Download, Calendar, Repeat,
+  Package, Download, Repeat,
   Sparkles, ArrowRight, ArrowLeft, Check, AlertTriangle, Loader2,
   ShieldCheck, Clock,
 } from 'lucide-react';
@@ -46,7 +46,7 @@ const NARROW_CONTENT = 'max-w-[480px] mx-auto';
 
 const SELLER_TYPES: { id: SellerType; Icon: React.ElementType; title: string; desc: string }[] = [
   { id: 'creator',  Icon: Palette,   title: 'Content Creator',  desc: 'Printables, flashcards, educational templates and media' },
-  { id: 'creator',  Icon: BookOpen,  title: 'Educator',         desc: 'Worksheets, lesson plans, curriculum, assessments' },
+  { id: 'educator', Icon: BookOpen,  title: 'Educator',       desc: 'Worksheets, lesson plans, curriculum, assessments' },
   { id: 'retailer',      Icon: Store,     title: 'Bookseller / Retailer', desc: 'Books, Quran sets, stationery and school supplies' },
   { id: 'brand_business', Icon: Briefcase, title: 'Publisher / Institute', desc: 'Publish books or run a full online learning store' },
   { id: 'freelancer',    Icon: Monitor,   title: 'Tutor / Teacher', desc: 'Offer tutoring, Quran classes or course packages' },
@@ -56,8 +56,7 @@ const SELLER_TYPES: { id: SellerType; Icon: React.ElementType; title: string; de
 const PRODUCT_TYPES: { id: ProductType; Icon: React.ElementType; title: string; desc: string }[] = [
   { id: 'physical_products', Icon: Package,           title: 'Books & School Supplies', desc: 'Ship books, stationery and learning kits' },
   { id: 'digital_downloads', Icon: Download,          title: 'Digital Learning Resources', desc: 'eBooks, PDFs, audio and video lessons' },
-  { id: 'digital_downloads', Icon: BookOpen,          title: 'Educational Resources', desc: 'Worksheets, lesson plans' },
-  { id: 'services_bookings', Icon: Calendar,          title: 'Classes / Tutoring',    desc: 'Live lessons, Quran classes, course packages' },
+  { id: 'educational_resources', Icon: BookOpen,      title: 'Educational Resources', desc: 'Worksheets, lesson plans' },
   { id: 'subscriptions',     Icon: Repeat,            title: 'Learning Subscriptions', desc: 'Recurring course or membership access' },
 ];
 
@@ -478,7 +477,6 @@ function Step4WhatYouSell({ form, setForm, onNext, onBack, step, maxReached, onS
               {form.productTypes.includes('physical_products') && <span className="bg-success-bg text-success text-[11px] font-semibold px-[9px] py-[3px] rounded-[20px]">Inventory Manager</span>}
               {form.productTypes.includes('digital_downloads')     && <span className="bg-success-bg text-success text-[11px] font-semibold px-[9px] py-[3px] rounded-[20px]">Digital Delivery</span>}
               {form.productTypes.includes('educational_resources') && <span className="bg-success-bg text-success text-[11px] font-semibold px-[9px] py-[3px] rounded-[20px]">AI Worksheet Builder</span>}
-              {form.productTypes.includes('services_bookings') && <span className="bg-success-bg text-success text-[11px] font-semibold px-[9px] py-[3px] rounded-[20px]">Bookings</span>}
               <span className="bg-success-bg text-success text-[11px] font-semibold px-[9px] py-[3px] rounded-[20px]">AI Studio</span>
               <span className="bg-success-bg text-success text-[11px] font-semibold px-[9px] py-[3px] rounded-[20px]">Marketplace</span>
             </div>
@@ -625,7 +623,8 @@ export function OnboardingPage() {
             ...restored,
             // In-person POS was retired (online-only education marketplace) —
             // drop it from any draft saved before that change.
-            ...(restored.productTypes ? { productTypes: restored.productTypes.filter(p => p !== 'in_person_pos') } : {}),
+            // Classes/Tutoring (services_bookings) likewise has no product flow.
+            ...(restored.productTypes ? { productTypes: restored.productTypes.filter(p => p !== 'in_person_pos' && p !== 'services_bookings') } : {}),
           }));
         }
         setAlreadyConfirmed(hasPlatformPaymentMethod);

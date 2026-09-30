@@ -86,7 +86,7 @@ export function Wishlist() {
           icon={<Heart size={28} className="text-brand-orange opacity-55" />}
           title="Wishlist is empty"
           description="Save products you love and find them here anytime."
-          action={{ label: 'Browse Marketplace', onClick: () => navigate('/marketplace') }}
+          action={{ label: 'Browse resources', onClick: () => navigate('/') }}
           className="py-12"
         />
       </Card>

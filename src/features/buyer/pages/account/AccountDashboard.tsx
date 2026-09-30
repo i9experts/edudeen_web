@@ -94,7 +94,7 @@ function WelcomeHero({ name, image, memberSince }: { name?: string; image?: stri
           Track orders
         </button>
         <button
-          onClick={() => navigate('/marketplace')}
+          onClick={() => navigate('/')}
           className="inline-flex items-center gap-2 bg-brand-orange text-white border border-brand-orange rounded-lg px-5 py-[10px] text-[14px] font-bold cursor-pointer hover:brightness-95"
         >
           <Store size={15} /> Continue shopping
@@ -188,17 +188,8 @@ function MobileProfileHero({
 // has this as the persistent sidebar rail, so this renders lg:hidden only.
 function MobileAccountMenu({ isLoggedIn }: { isLoggedIn: boolean }) {
   const navigate = useNavigate();
-  // "Edudeen Store App" (the public seller sign-up page, same one linked
-  // from "Sell on Edudeen"/"Become a Seller" elsewhere) is appended to the
-  // last group, right after Subscriptions — a real absolute path (`/sellers`,
-  // note the leading slash), not a relative `/account/...` sub-page, so it's
-  // handled separately from the rest of this list below.
-  const navGroups = useNavGroups()
-    .filter(g => g.group !== 'Overview')
-    .map(g => g.group === 'Account'
-      ? { ...g, items: [...g.items, { id: 'sellerApp', label: 'Edudeen Store App', Icon: Store, path: '/sellers' }] }
-      : g,
-    );
+  // Buyer accounts get no seller sign-up link here — a buyer can't open a store.
+  const navGroups = useNavGroups().filter(g => g.group !== 'Overview');
 
   return (
     <div className="lg:hidden flex flex-col gap-4">
@@ -362,7 +353,7 @@ export function AccountDashboard() {
                 icon={<ShoppingBag size={26} className="text-brand-orange opacity-55" />}
                 title="No orders yet"
                 description="Your recent purchases will show up here."
-                action={{ label: 'Browse Marketplace', onClick: () => navigate('/marketplace'), icon: <Store size={13} /> }}
+                action={{ label: 'Browse resources', onClick: () => navigate('/'), icon: <Store size={13} /> }}
                 className="py-9"
               />
             ) : (
@@ -468,7 +459,7 @@ export function AccountDashboard() {
                 { label: 'Add New Address',   path: '/account/addresses',    Icon: MapPin },
                 { label: 'Track Orders',      path: '/account/orders',       Icon: Package },
                 { label: 'Notification Settings', path: '/account/notifications', Icon: Bell },
-                { label: 'Browse Marketplace', path: '/marketplace',         Icon: Store },
+                { label: 'Browse resources',   path: '/',         Icon: Store },
               ].map(a => (
                 <button
                   key={a.path}

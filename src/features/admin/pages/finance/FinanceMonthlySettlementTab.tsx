@@ -7,6 +7,7 @@ import { formatMoneyCompact } from '@/utils/currency';
 import { useAdminMonthlySettlement, useAdminRunMonthlySettlement } from '@/hooks/admin/useAdminFinance';
 import type { MonthlySettlementRow, MonthlySettlementPayoutMethod } from '@/api/services/finance/adminFinance';
 import { FinanceStatusBadge } from '../../components/finance/FinanceStatusBadge';
+import { PayoutSettingsCard } from '../../components/finance/PayoutSettingsCard';
 import { StudioPanel, StudioInfoGrid, textLinkClass } from '../../components/studio';
 
 const CURRENCIES = ['PKR', 'USD'] as const;
@@ -246,6 +247,9 @@ export function FinanceMonthlySettlementTab({ onOpenPayouts }: { onOpenPayouts: 
           </StudioPanel>
         </>
       )}
+
+      {/* Payout minimums / frequency (PUT /api/admin/platform-config/payout) */}
+      <PayoutSettingsCard />
 
       {/* How it works */}
       <StudioPanel title="How monthly payouts work">

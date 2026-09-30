@@ -78,9 +78,23 @@ export interface FxConfig {
   abnormalJumpAlertPercent: number;
 }
 
+export type PayoutFrequency = 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'manual';
+
+/** Mirrors backend PayoutConfig (admin-config/schemas/platform-config.schema.ts). */
+export interface PayoutConfig {
+  /** Minimum available balance before a USD seller can be paid out. */
+  minPayoutUSD: number;
+  /** Minimum available balance before a PKR seller can be paid out. */
+  minPayoutPKR: number;
+  /** Frequency NEW seller payout schedules start on — existing schedules are not changed. */
+  payoutFrequency: PayoutFrequency;
+}
+
 export interface PlatformConfig {
   _id: string;
   maintenanceMode: boolean;
+  /** May be absent on an older config document — the backend then falls back to its defaults (USD 5 / PKR 1500 / monthly). */
+  payoutConfig?: PayoutConfig;
   featureFlags: FeatureFlags;
   aiConfig: AiConfig;
   emailConfig: EmailConfig;
@@ -127,6 +141,10 @@ export function apiUpdatePromotionPricing(payload: PromotionPricing) {
 
 export function apiUpdateManualPaymentConfig(payload: Partial<ManualPaymentConfig>) {
   return client.put<never, ApiResponse<PlatformConfig>>(ENDPOINTS.PLATFORM_CONFIG.UPDATE_MANUAL_PAYMENT, payload);
+}
+
+export function apiUpdatePayoutConfig(payload: Partial<PayoutConfig>) {
+  return client.put<never, ApiResponse<PlatformConfig>>(ENDPOINTS.PLATFORM_CONFIG.UPDATE_PAYOUT, payload);
 }
 
 export function apiUpdateFxConfig(payload: Partial<FxConfig>) {

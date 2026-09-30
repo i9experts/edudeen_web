@@ -13,6 +13,7 @@ import {
   apiGetManualPaymentBankDetails, apiSubmitManualPayment,
   type ManualPaymentBankDetails, type ManualPaymentOrderSummary,
 } from '@/api/services/manualPayment';
+import { apiGetCurrentRates } from '@/api/services/exchangeRate';
 import { Button } from '@/components/comman/ui/Button';
 import { SkeletonBox, BuyerNavbar, Breadcrumb, Input } from '@/components/comman/ui';
 import { StripeCardPayment, isStripeConfigured } from '@/features/buyer/components/StripeCardPayment';
@@ -58,8 +59,8 @@ function CardPaymentSlot({
       <div className="flex items-start gap-2 text-[12px] text-charcoal bg-cream border border-bone rounded-[8px] px-3 py-3">
         <Clock size={14} className="mt-[1px] flex-shrink-0 text-slate" />
         <div>
-          <p className="font-semibold text-carbon mb-[2px]">Card payments are coming soon</p>
-          <p className="text-slate">We're finishing setup for online card payments — please check back shortly to complete this order.</p>
+          <p className="font-semibold text-carbon mb-[2px]">Card payment isn't available yet</p>
+          <p className="text-slate">Online card payment is still being set up. Please choose another payment method above, or come back later — your cart will be saved.</p>
         </div>
       </div>
     );
@@ -98,17 +99,74 @@ function CardPaymentSlot({
   return <StripeCardPayment clientSecret={clientSecret} amount={amount} currency={currency} onConfirmed={onConfirmed} />;
 }
 
+// ── Shown when a cart with digital items has no payment method that can
+// complete it right now. Digital downloads are delivered instantly, so they
+// must be paid up front (card, or bank transfer when enabled) — never cash
+// on delivery. Physical items can still be bought on their own. ─────────────
+function DigitalPaymentNotice({
+  physicalCount, onPhysicalOnly, onBack,
+}: {
+  physicalCount:  number;
+  onPhysicalOnly: () => void;
+  onBack:         () => void;
+}) {
+  return (
+    <div className="flex flex-col gap-3 text-[12px] text-charcoal bg-cream border border-bone rounded-[10px] px-4 py-4">
+      <div className="flex items-start gap-2">
+        <Download size={14} className="mt-[1px] flex-shrink-0 text-[#3851d1]" />
+        <div>
+          <p className="font-semibold text-carbon mb-[2px]">Digital downloads need online payment</p>
+          <p className="text-slate leading-[1.6]">
+            Because digital resources are delivered instantly, they can only be paid for online by card
+            {' '}— they can't be paid with cash on delivery. Online card payment isn't available on Edudeen just yet,
+            so these items will stay safely in your cart until it is.
+          </p>
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {physicalCount > 0 && (
+          <Button variant="primary" size="sm" onClick={onPhysicalOnly} className="gap-1">
+            Check out {physicalCount} physical item{physicalCount !== 1 ? 's' : ''} now <ChevronRight size={14} />
+          </Button>
+        )}
+        <Button variant="outline" size="sm" onClick={onBack}>Back to Cart</Button>
+      </div>
+    </div>
+  );
+}
+
 // ── Manual Bank Transfer slot — Pakistan track. Fetches the admin-configured
 // bank details, shows the PKR amount to transfer, and submits the buyer's
 // proof (order is created + proof recorded in one call, `paymentStatus:
 // 'pending_verification'` until an admin reviews it). ───────────────────────
 function ManualBankTransferSlot({
-  checkoutId, amountUSD, onSubmitted,
+  checkoutId, amount, currency, fxSnapshots, onSubmitted,
 }: {
   checkoutId:  string;
-  amountUSD:   number;
+  /** Total in the checkout's own currency. */
+  amount:      number;
+  currency:    string;
+  fxSnapshots?: Checkout['fxSnapshots'];
   onSubmitted: (orders: ManualPaymentOrderSummary[], amountPKR: number) => void;
 }) {
+  // PKR/USD rate — exactly what the backend charges with
+  // (PaymentService.manualBankTransferPayment): the checkout's own frozen
+  // FX snapshot first, else the current FX Settings rate (the same
+  // /exchange-rate/current source CurrencyPreferenceContext uses). Never the
+  // legacy ManualPaymentConfig.usdToPkrRate, which the backend no longer uses.
+  const snapshotRate = fxSnapshots?.find(s => s.currency === 'PKR')?.ratePerUSD ?? null;
+  const [liveRate, setLiveRate] = useState<number | null>(null);
+  useEffect(() => {
+    if (currency === 'PKR' || snapshotRate) return;
+    let cancelled = false;
+    apiGetCurrentRates()
+      .then(res => { if (!cancelled) setLiveRate(res.data?.PKR?.ratePerUSD ?? null); })
+      .catch(() => { /* fall back to showing the checkout-currency amount only */ });
+    return () => { cancelled = true; };
+  }, [currency, snapshotRate]);
+  const usdToPkr = currency === 'PKR' ? 1 : (snapshotRate ?? liveRate);
+  // Only USD and PKR checkouts exist today (SUPPORTED_CURRENCIES).
+  const amountPKR = currency === 'PKR' ? amount : usdToPkr ? Math.round(amount * usdToPkr * 100) / 100 : null;
   const [bankDetails, setBankDetails]   = useState<ManualPaymentBankDetails | null>(null);
   const [loadingDetails, setLoadingDetails] = useState(true);
   const [detailsError, setDetailsError] = useState('');
@@ -167,7 +225,6 @@ function ManualBankTransferSlot({
     );
   }
 
-  const amountPKR = amountUSD * bankDetails.usdToPkrRate;
   const rows: [string, string | null][] = [
     ['Bank', bankDetails.bankName],
     ['Account Title', bankDetails.accountTitle],
@@ -183,12 +240,18 @@ function ManualBankTransferSlot({
         <div className="flex justify-between items-baseline">
           <span className="text-[12px] text-slate">Amount to transfer</span>
           <span className="text-[18px] font-bold text-brand-deep-orange">
-            PKR {amountPKR.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+            {amountPKR != null
+              ? `PKR ${amountPKR.toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+              : `${currencySymbol(currency)}${amount.toFixed(2)}`}
           </span>
         </div>
-        <p className="text-[10.5px] text-slate">
-          ≈ {currencySymbol('USD')}{amountUSD.toFixed(2)} at PKR {bankDetails.usdToPkrRate}/USD
-        </p>
+        {currency !== 'PKR' && (
+          <p className="text-[10.5px] text-slate">
+            {amountPKR != null && usdToPkr
+              ? <>≈ {currencySymbol(currency)}{amount.toFixed(2)} at PKR {usdToPkr.toLocaleString(undefined, { maximumFractionDigits: 2 })}/USD</>
+              : 'The exact PKR amount is confirmed when you submit your proof.'}
+          </p>
+        )}
         <div className="h-px bg-bone my-1" />
         {rows.filter(([, v]) => v).map(([label, value]) => (
           <div key={label} className="flex justify-between gap-3 text-[12px]">
@@ -291,7 +354,7 @@ function PaymentMethodOptions({
                   <p className="text-[13px] font-semibold text-carbon">{label}</p>
                   {unavailable && (
                     <span className="text-[10px] font-semibold px-2 py-[1px] rounded-full bg-bone text-slate">
-                      Coming soon
+                      Not available yet
                     </span>
                   )}
                 </div>
@@ -336,7 +399,7 @@ export function CheckoutPage() {
   // called, never before (an early return up here would make React call a
   // different number of hooks on the next render the instant login succeeds
   // and this same component instance re-renders instead of navigating away).
-  const { cart, loading: cartLoading, clearCart } = useCartContext();
+  const { cart, loading: cartLoading, clearCart, refetch: refetchCart } = useCartContext();
 
   // Checkout is one store at a time. On the main marketplace site the cart
   // can span several stores — `?store=` picks which one this checkout is
@@ -351,7 +414,13 @@ export function CheckoutPage() {
   // order — splitting it into two separate checkouts was the old behavior
   // here and it under-charged the displayed total while still billing the
   // full cart server-side, since the backend was never told to filter by type).
-  const cartItems  = (cart?.items ?? []).filter(i => !checkoutStoreId || !i.storeId || i.storeId === checkoutStoreId);
+  // `?only=physical` — the buyer chose to check out just the physical items
+  // (e.g. no online payment rail is available yet for the digital ones).
+  // Digital items stay in the cart; the backend removes only what was bought.
+  const physicalOnly = searchParams.get('only') === 'physical';
+  const cartItems  = (cart?.items ?? [])
+    .filter(i => !checkoutStoreId || !i.storeId || i.storeId === checkoutStoreId)
+    .filter(i => !physicalOnly || i.type !== 'digital');
   const checkoutCount = cartItems.reduce((s, i) => s + i.quantity, 0);
   const hasDigital = cartItems.some(i => i.type === 'digital');
   // Fully-digital carts skip address/shipping entirely; a mixed cart still
@@ -457,14 +526,24 @@ export function CheckoutPage() {
     ? allowedMethods.filter(m => m !== 'cash_on_delivery')
     : allowedMethods;
 
+  // Methods the buyer can actually complete right now (card/split need Stripe
+  // configured). If a cart with digital items has none, it's not a dead end:
+  // explain why and offer to check out the physical items on their own.
+  const usableMethods = effectiveMethods.filter(m => !((m === 'stripe' || m === 'split') && !isStripeConfigured()));
+  const digitalPaymentBlocked = hasDigital && !!checkout && usableMethods.length === 0;
+  const physicalItemCount = cartItems.filter(i => i.type !== 'digital').length;
+
   // With only one real choice (a pure-digital cart only ever gets 'stripe'),
   // select it automatically instead of making the buyer pick a "radio group"
   // with one item in it. A mixed cart gets both 'stripe' and 'split' — that's
   // a real choice, so it's left for the buyer to pick via the radio list.
+  // Same for "only one method is actually usable" (e.g. card isn't set up
+  // yet but bank transfer is) — pick the one that can complete the order.
   useEffect(() => {
     if (effectiveMethods.length === 1) setSelectedMethod(effectiveMethods[0]);
+    else if (usableMethods.length === 1) setSelectedMethod(usableMethods[0]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [effectiveMethods.length]);
+  }, [effectiveMethods.length, usableMethods.length]);
 
   // Fetch addresses (physical only) — skipped entirely while the sign-in
   // gate is up (see `loggedIn` above): both of these hit authenticated
@@ -499,9 +578,11 @@ export function CheckoutPage() {
         setCheckout(res.data.checkout);
         setSummary(res.data.summary);
         setSavingsHints(res.data.subscriptionSavingsHints ?? []);
-        // Temporary: Stripe is the only payment method enabled at checkout for now
-        // (other methods left disabled server-side too, just kept out of this list).
-        setAllowedMethods((res.data.allowedPaymentMethods ?? []).filter(m => m === 'stripe'));
+        // Digital carts: card, or manual bank transfer when an admin has it
+        // enabled (the backend accepts it for digital items — it's a
+        // Stripe-equivalent pay-up-front rail, see
+        // PaymentService.manualBankTransferPayment). Never COD.
+        setAllowedMethods((res.data.allowedPaymentMethods ?? []).filter(m => m === 'stripe' || m === 'manual_bank_transfer'));
         setStep(3);
       })
       .catch(err => {
@@ -543,6 +624,34 @@ export function CheckoutPage() {
     return () => { cancelled = true; };
   }, [selectedMethod, checkout, clientSecret, clientSecretMode, isDigital, step]);
 
+  // After an order is placed: a physical-only checkout must NOT wipe the
+  // store's cart (its digital items are still waiting there) — the backend
+  // already removed exactly the checked-out items, so just re-sync.
+  const finishCheckoutCart = async () => {
+    if (physicalOnly) await refetchCart();
+    else await clearCart(checkoutStoreId);
+  };
+
+  // Restart this checkout for the cart's physical items only — address and
+  // shipping picks are kept, a fresh (physical-only) checkout is created when
+  // the buyer continues from the shipping step.
+  const switchToPhysicalOnly = () => {
+    const next = new URLSearchParams(searchParams);
+    next.set('only', 'physical');
+    if (checkoutStoreId) next.set('store', checkoutStoreId);
+    setCheckout(null);
+    setSummary(null);
+    setAllowedMethods([]);
+    setSelectedMethod(null);
+    setClientSecret(null);
+    setClientSecretMode(null);
+    setChargeAmount(null);
+    setInitiatePaymentErr('');
+    setPlaceError('');
+    setStep(selectedAddr ? 2 : 1);
+    navigate(`/checkout?${next.toString()}`, { replace: true });
+  };
+
   // Stop any in-flight poll on unmount (e.g. buyer navigates away mid-confirmation).
   useEffect(() => () => { if (pollTimer.current) clearTimeout(pollTimer.current); }, []);
 
@@ -561,7 +670,7 @@ export function CheckoutPage() {
         if (stopped) return;
         if (res.data.status === 'completed') {
           setPollingStatus(false);
-          await clearCart(checkoutStoreId);
+          await finishCheckoutCart();
           navigate('/order-success', { state: { orders: res.data.orders } });
           return;
         }
@@ -696,6 +805,9 @@ export function CheckoutPage() {
         addressId: selectedAddr._id,
         shippingZoneId: selectedZoneId,
         storeId: checkoutStoreId,
+        ...(physicalOnly && {
+          items: cartItems.map(i => ({ productId: i.productId, variantId: i.productVariantId })),
+        }),
       });
       setCheckout(res.data.checkout);
       setSummary(res.data.summary);
@@ -703,9 +815,10 @@ export function CheckoutPage() {
       // Temporary: for physical/mixed checkout, Stripe only works on a USD
       // checkout (see PaymentService.confirmCardPayment) — a PKR checkout
       // has no working card rail yet, so Cash on Delivery is kept as the
-      // fallback that actually completes an order right now. Split (card +
-      // COD) and manual bank transfer stay hidden for the demo.
-      setAllowedMethods((res.data.allowedPaymentMethods ?? []).filter(m => m === 'stripe' || m === 'cash_on_delivery'));
+      // fallback that actually completes an order right now. Manual bank
+      // transfer is offered whenever the backend lists it (admin-enabled);
+      // split (card + COD) stays hidden for now.
+      setAllowedMethods((res.data.allowedPaymentMethods ?? []).filter(m => m === 'stripe' || m === 'cash_on_delivery' || m === 'manual_bank_transfer'));
       setStep(3);
     } catch (err) {
       setCheckoutError(err instanceof Error ? err.message : 'Failed to create checkout. Please try again.');
@@ -722,7 +835,7 @@ export function CheckoutPage() {
     setPlaceError('');
     try {
       const res = await apiPlaceCodOrder({ checkoutId: checkout._id });
-      await clearCart(checkoutStoreId);
+      await finishCheckoutCart();
       navigate('/order-success', { state: { orders: res.data.orders } });
     } catch (err) {
       setPlaceError(err instanceof Error ? err.message : 'Failed to place order. Please try again.');
@@ -732,7 +845,7 @@ export function CheckoutPage() {
   };
 
   const handleManualPaymentSubmitted = async (orders: ManualPaymentOrderSummary[], amountPKR: number) => {
-    await clearCart(checkoutStoreId);
+    await finishCheckoutCart();
     setManualPaymentResult({ orders, amountPKR });
   };
 
@@ -899,10 +1012,14 @@ export function CheckoutPage() {
                       checkout && (
                         <ManualBankTransferSlot
                           checkoutId={checkout._id}
-                          amountUSD={chargeAmount ?? total}
+                          amount={total}
+                          currency={checkout.currency}
+                          fxSnapshots={checkout.fxSnapshots}
                           onSubmitted={handleManualPaymentSubmitted}
                         />
                       )
+                    ) : digitalPaymentBlocked ? (
+                      <DigitalPaymentNotice physicalCount={physicalItemCount} onPhysicalOnly={switchToPhysicalOnly} onBack={() => navigate('/cart')} />
                     ) : (
                       <CardPaymentSlot
                         checkoutReady={!!checkout}
@@ -939,6 +1056,15 @@ export function CheckoutPage() {
                   Step {step} of 4
                 </span>
               </div>
+
+              {physicalOnly && (
+                <div className="flex items-start gap-2 bg-[#eef0ff] border border-[#c7ceff] rounded-[8px] px-3 py-2 mb-4">
+                  <Download size={13} className="text-[#3851d1] shrink-0 mt-[1px]" />
+                  <p className="text-[12px] text-[#3851d1] font-medium">
+                    Checking out physical items only — your digital items stay in your cart.
+                  </p>
+                </div>
+              )}
 
               {/* Progress bar */}
               <div className="relative flex justify-between items-start w-full">
@@ -1271,13 +1397,18 @@ export function CheckoutPage() {
 
               {step === 3 && (
                 <div className="p-5">
-                  {effectiveMethods.length === 0 && (
+                  {digitalPaymentBlocked && (
+                    <div className="mb-4">
+                      <DigitalPaymentNotice physicalCount={physicalItemCount} onPhysicalOnly={switchToPhysicalOnly} onBack={() => navigate('/cart')} />
+                    </div>
+                  )}
+                  {effectiveMethods.length === 0 && !digitalPaymentBlocked && (
                     <div className="flex items-start gap-2 text-[12px] text-error bg-error-bg border border-error-border rounded-[8px] px-3 py-3 mb-4">
                       <AlertCircle size={13} className="mt-[1px] flex-shrink-0" />
                       No payment method is available for this order right now. Please try again shortly or contact support.
                     </div>
                   )}
-                  <div className="mb-4">
+                  <div className={clsx('mb-4', digitalPaymentBlocked && 'hidden')}>
                     <PaymentMethodOptions
                       methods={effectiveMethods}
                       selectedMethod={selectedMethod}
@@ -1287,10 +1418,10 @@ export function CheckoutPage() {
                     />
                   </div>
 
-                  <div>
+                  <div className={clsx(digitalPaymentBlocked && 'hidden')}>
                     <Button
                       variant="primary" size="sm"
-                      disabled={!selectedMethod}
+                      disabled={!selectedMethod || digitalPaymentBlocked}
                       onClick={() => setStep(4)}
                       className="gap-1"
                     >
@@ -1375,7 +1506,9 @@ export function CheckoutPage() {
                     checkout && (
                       <ManualBankTransferSlot
                         checkoutId={checkout._id}
-                        amountUSD={chargeAmount ?? total}
+                        amount={total}
+                        currency={checkout.currency}
+                        fxSnapshots={checkout.fxSnapshots}
                         onSubmitted={handleManualPaymentSubmitted}
                       />
                     )

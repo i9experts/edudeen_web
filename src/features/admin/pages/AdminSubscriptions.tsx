@@ -131,12 +131,12 @@ function InsightsPanel() {
       {ltv && (
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-cream rounded-[8px] px-4 py-3">
-            <p className="text-[10px] text-slate uppercase tracking-wide mb-1">Realized LTV (churned)</p>
+            <p className="text-[10px] text-slate uppercase tracking-wide mb-1">Avg. lifetime value (ended subscriptions)</p>
             <p className="text-[18px] font-bold text-carbon">${ltv.realizedLtvUSD.toFixed(2)}</p>
             <p className="text-[11px] text-slate mt-0.5">{ltv.canceledSubscriptionsSampled} sampled</p>
           </div>
           <div className="bg-cream rounded-[8px] px-4 py-3">
-            <p className="text-[10px] text-slate uppercase tracking-wide mb-1">Active Revenue-to-Date</p>
+            <p className="text-[10px] text-slate uppercase tracking-wide mb-1">Avg. paid so far (active subscriptions)</p>
             <p className="text-[18px] font-bold text-carbon">${ltv.activeAvgRevenueToDateUSD.toFixed(2)}</p>
             <p className="text-[11px] text-slate mt-0.5">{ltv.activeSubscriptionsSampled} sampled</p>
           </div>
@@ -145,10 +145,10 @@ function InsightsPanel() {
 
       {cohorts.length > 0 && (
         <div>
-          <p className="text-[12px] font-semibold text-charcoal mb-2">Monthly Cohort Retention</p>
+          <p className="text-[12px] font-semibold text-charcoal mb-2">How many subscribers stay, by start month</p>
           <Table
             columns={[
-              { key: 'cohort', header: 'Cohort', render: c => <span className="text-charcoal">{c.cohort}</span> },
+              { key: 'cohort', header: 'Started in', render: c => <span className="text-charcoal">{c.cohort}</span> },
               { key: 'totalStarted', header: 'Started', render: c => <span className="text-graphite">{c.totalStarted}</span> },
               { key: 'stillActive', header: 'Still Active', render: c => <span className="text-graphite">{c.stillActive}</span> },
               { key: 'retentionPercent', header: 'Retention', render: c => <span className="font-semibold text-success">{c.retentionPercent}%</span> },
@@ -239,7 +239,7 @@ function StoreDetailModal({ storeId, onClose }: { storeId: string; onClose: () =
       ) : (
         <div className="flex flex-col gap-4">
           <div className="grid grid-cols-3 gap-2">
-            {[['MRR', `$${data.mrr.toFixed(2)}`], ['Subscribers', String(data.activeSubscribersCount)], ['Churn', `${data.churnRate}%`]].map(([l, v]) => (
+            {[['Monthly revenue', `$${data.mrr.toFixed(2)}`], ['Subscribers', String(data.activeSubscribersCount)], ['Cancellation rate', `${data.churnRate}%`]].map(([l, v]) => (
               <div key={l} className="bg-cream rounded-lg px-3 py-2.5 text-center">
                 <p className="text-[10px] text-slate uppercase tracking-wide">{l}</p>
                 <p className="text-[16px] font-bold text-carbon">{v}</p>
@@ -420,18 +420,18 @@ export function AdminSubscriptions() {
   }, []);
 
   const metrics = overview ? [
-    { label: 'Platform MRR', value: `$${overview.mrr.toFixed(2)}`, Icon: TrendingUp },
-    { label: 'Active Subscribers', value: String(overview.activeSubscribersCount), Icon: Users },
-    { label: 'Stores with Plans', value: String(overview.storesWithActivePlans), Icon: StoreIcon },
-    { label: 'Failed Payments (30d)', value: String(overview.failedPaymentsLast30Days), Icon: AlertTriangle },
-    { label: 'Past Due Subs', value: String(overview.pastDueSubscriptionsCount), Icon: ShieldAlert },
+    { label: 'Monthly revenue', value: `$${overview.mrr.toFixed(2)}`, Icon: TrendingUp },
+    { label: 'Active subscribers', value: String(overview.activeSubscribersCount), Icon: Users },
+    { label: 'Stores offering subscriptions', value: String(overview.storesWithActivePlans), Icon: StoreIcon },
+    { label: 'Failed renewals (30 days)', value: String(overview.failedPaymentsLast30Days), Icon: AlertTriangle },
+    { label: 'Overdue subscriptions', value: String(overview.pastDueSubscriptionsCount), Icon: ShieldAlert },
   ] : [];
 
   const storeColumns: TableColumn<StoreBreakdownRow>[] = [
     { key: 'storeName', header: 'Store', render: s => <span className="font-semibold text-charcoal">{s.storeName}</span> },
     { key: 'subscriberCount', header: 'Subscribers', render: s => <span className="text-graphite">{s.subscriberCount}</span> },
-    { key: 'mrrUSD', header: 'MRR', render: s => <span className="font-semibold text-success">${s.mrrUSD.toFixed(2)}</span> },
-    { key: 'planCount', header: 'Plans', render: s => <span className="text-graphite">{s.planCount}</span> },
+    { key: 'mrrUSD', header: 'Monthly revenue', render: s => <span className="font-semibold text-success">${s.mrrUSD.toFixed(2)}</span> },
+    { key: 'planCount', header: 'Subscription plans', render: s => <span className="text-graphite">{s.planCount}</span> },
     {
       key: 'actions', header: '',
       render: s => <button onClick={() => setViewingStore(s.storeId)} className="px-3 py-1 bg-white border border-bone rounded-[6px] text-xs text-graphite cursor-pointer">View</button>,
@@ -441,7 +441,7 @@ export function AdminSubscriptions() {
   const failureColumns: TableColumn<FailureRow>[] = [
     { key: 'createdAt', header: 'Date', render: f => <span className="text-slate whitespace-nowrap">{new Date(f.createdAt).toLocaleString()}</span> },
     { key: 'store', header: 'Store', render: f => <span className="text-charcoal">{f.store?.name ?? '—'}</span> },
-    { key: 'customer', header: 'Customer', render: f => <span className="text-graphite">{f.customer?.name ?? '—'}</span> },
+    { key: 'customer', header: 'Buyer', render: f => <span className="text-graphite">{f.customer?.name ?? '—'}</span> },
     { key: 'attemptType', header: 'Type', render: f => <span className="text-slate">{f.attemptType} #{f.attemptNumber}</span> },
     { key: 'amountUSD', header: 'Amount', render: f => <span className="font-semibold text-error">${f.amountUSD.toFixed(2)}</span> },
     { key: 'failureReason', header: 'Reason', render: f => <span className="text-slate max-w-[180px] truncate block">{f.failureReason ?? '—'}</span> },
@@ -456,7 +456,7 @@ export function AdminSubscriptions() {
       <AdminStudioHeader
         eyebrow="Edudeen team workspace · Commerce"
         title="Subscriptions"
-        subtitle="Platform-wide subscription revenue, store breakdown, and payment failures."
+        subtitle="Recurring learning subscriptions buyers take out with stores (e.g. monthly worksheet packs or memberships): revenue by store and failed renewals."
       />
 
       <div className="px-4 sm:px-7 pt-6 pb-8 flex flex-col gap-5">
@@ -478,7 +478,7 @@ export function AdminSubscriptions() {
             {(['stores', 'failures', 'webhooks', 'insights'] as Tab[]).map(t => (
               <button key={t} type="button" onClick={() => setTab(t)} aria-pressed={tab === t}
                 className={`px-[14px] py-[6px] rounded-lg text-[13px] font-medium cursor-pointer border-none capitalize shrink-0 whitespace-nowrap transition-colors outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/40 ${tab === t ? 'bg-brand-pale-orange text-brand-orange font-semibold' : 'bg-transparent text-slate hover:text-carbon hover:bg-cream'}`}>
-                {t === 'stores' ? 'Store Breakdown' : t === 'failures' ? 'Payment Failures' : t === 'webhooks' ? 'Stripe Webhooks' : 'Insights'}
+                {t === 'stores' ? 'By store' : t === 'failures' ? 'Failed renewals' : t === 'webhooks' ? 'Payment events (technical)' : 'Insights'}
               </button>
             ))}
           </div>
@@ -501,7 +501,7 @@ export function AdminSubscriptions() {
               data={failures}
               keyExtractor={f => f._id}
               loading={loading}
-              emptyState={{ title: 'No payment failures. 🎉' }}
+              emptyState={{ title: 'No failed renewals.' }}
             />
           )}
         </div>

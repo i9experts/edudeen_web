@@ -8,7 +8,7 @@ import type { TableColumn } from '@/components/comman/ui';
 import type { BadgeColor } from '@/types';
 import { AnalyticsErrorState } from '@/components/comman/analytics/AnalyticsErrorState';
 import { formatDate } from '@/components/comman/analytics/format';
-import { AlertCircle, AlertTriangle, Info, SearchX, Eye, Check, Trash2 } from 'lucide-react';
+import { AlertCircle, AlertTriangle, Info, SearchX, Eye, Check, Trash2, ShieldCheck } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 const RISK: Record<RiskLevel, { label: string; color: BadgeColor; Icon: LucideIcon }> = {
@@ -51,7 +51,9 @@ function ReportDetailModal({ report, onClose, onApproved }: { report: Moderation
       onClose={onClose}
       footer={<>
         <Button variant="ghost" onClick={onClose}>Close</Button>
-        <Button variant="secondary" onClick={handleApprove} loading={processingId === report._id}>Approve — No Action</Button>
+        <Button variant="secondary" onClick={handleApprove} loading={processingId === report._id}>
+          {report.targetType === 'review' ? 'Dismiss report' : 'Approve — No Action'}
+        </Button>
       </>}
     >
       <div className="flex flex-col gap-3">
@@ -74,6 +76,11 @@ function ReportDetailModal({ report, onClose, onApproved }: { report: Moderation
           </div>
         )}
         <p className="text-[11px] text-slate">Reported {formatDate(report.createdAt)}</p>
+        {report.targetType === 'review' && (
+          <p className="text-[11.5px] text-slate bg-cream border border-bone rounded-md px-2.5 py-2">
+            Dismissing closes this report. The review itself stays published — reviews can't be removed from this screen yet.
+          </p>
+        )}
         {error && <p className="text-[12px] text-error">{error}</p>}
       </div>
     </Modal>
@@ -132,8 +139,17 @@ export function AdminModeration() {
       render: (r) => (
         <div className="flex gap-[6px]">
           <Button size="xs" variant="outline" icon={<Eye size={11} />} onClick={() => setViewing(r)}>Review</Button>
-          <Button size="xs" variant="secondary" icon={<Check size={11} />} loading={processingId === r._id} onClick={() => handleApprove(r)}>Approve</Button>
-          <Button size="xs" variant="danger" icon={<Trash2 size={11} />} disabled={processingId === r._id} onClick={() => setRemoving(r)}>Remove</Button>
+          <Button size="xs" variant="secondary" icon={<Check size={11} />} loading={processingId === r._id} onClick={() => handleApprove(r)}>
+            {r.targetType === 'review' ? 'Dismiss report' : 'Approve'}
+          </Button>
+          {/* Removing a review isn't supported server-side (the moderation
+              "remove" action only delists listings / suspends sellers), so
+              review reports can only be dismissed. */}
+          {r.targetType !== 'review' && (
+            <Button size="xs" variant="danger" icon={<Trash2 size={11} />} disabled={processingId === r._id} onClick={() => setRemoving(r)}>
+              {r.targetType === 'seller' ? 'Suspend' : 'Remove'}
+            </Button>
+          )}
         </div>
       ),
     },
@@ -177,7 +193,9 @@ export function AdminModeration() {
             data={data?.items ?? []}
             keyExtractor={(r) => r._id}
             loading={loading}
-            emptyState={{ icon: <SearchX size={28} className="text-slate/50" />, title: 'No flagged items match your filters', description: 'Try adjusting your search or clearing the type/priority filters.' }}
+            emptyState={search || typeFilter || riskFilter
+              ? { icon: <SearchX size={28} className="text-slate/50" />, title: 'No flagged items match your filters', description: 'Try adjusting your search or clearing the type/priority filters.' }
+              : { icon: <ShieldCheck size={28} className="text-slate/50" />, title: 'Nothing to review', description: 'Reports appear here when buyers or sellers report a listing, a seller or a review. There are no open reports right now.' }}
             pagination={{ page, total: data?.total ?? 0, perPage: 10, onChange: setPage, label: 'reports' }}
           />
         )}

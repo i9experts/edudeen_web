@@ -79,7 +79,7 @@ function LeadDetailModal({ leadId, onClose, onApprove, onReject, onMarkUnderRevi
   const reviewable = data?.verificationStatus === 'pending' || data?.verificationStatus === 'under_review';
 
   return (
-    <Modal mobileSheet title="Review Lead" onClose={onClose} width={640}>
+    <Modal mobileSheet title="Review Application" onClose={onClose} width={640}>
       {loading && (
         <div className="flex flex-col gap-3">
           <SkeletonBox height={20} width="60%" />
@@ -213,7 +213,7 @@ function LeadDetailModal({ leadId, onClose, onApprove, onReject, onMarkUnderRevi
 }
 
 export function AdminLeads() {
-  usePageTitle('Leads');
+  usePageTitle('Seller Applications');
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -323,7 +323,7 @@ export function AdminLeads() {
   return (
     <>
       <AdminStudioHeader eyebrow="Edudeen team workspace · Commerce"
-        title="Leads"
+        title="Seller Applications"
         subtitle="New stores submitted through onboarding — review business verification and approve or reject before they go live."
         actions={<Button variant="outline" size="sm" icon={<RefreshCw size={13} />} onClick={refetch}>Refresh</Button>}
       />
@@ -383,7 +383,7 @@ export function AdminLeads() {
 
       {rejecting && (
         <Modal mobileSheet
-          title="Reject Lead"
+          title="Reject Application"
           onClose={() => { setRejecting(null); setReason(''); }}
           footer={<>
             <Button variant="ghost" onClick={() => { setRejecting(null); setReason(''); }}>Cancel</Button>

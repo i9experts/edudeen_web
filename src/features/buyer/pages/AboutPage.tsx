@@ -1,6 +1,7 @@
 import { ArrowRight, Store, BookOpen, Sparkles, BarChart3 } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useSellEntry } from '@/hooks/auth/useSellEntry';
+import { isBuyerSession } from '@/hooks/auth/useIsBuyer';
 import { Button, Footer } from '@/components/comman/ui';
 import { Reveal, RevealStagger } from '@/components/comman/motion/Reveal';
 import { MagneticButton } from '@/components/comman/motion/MagneticButton';
@@ -84,16 +85,19 @@ export function AboutPage() {
         </div>
       </div>
 
-      <div className="bg-carbon px-4 md:px-8 lg:px-12 py-14 text-center">
-        <SectionHeading title="Share what you teach on Edudeen." tone="dark" align="center" size="lg" className="mb-8" />
-        <Reveal>
-          <MagneticButton>
-            <Button size="lg" onClick={sellEntry.go} loading={sellEntry.loading}>
-              Start Selling Free <ArrowRight size={14} className="inline align-middle ml-1" />
-            </Button>
-          </MagneticButton>
-        </Reveal>
-      </div>
+      {/* Seller CTA — not shown to a signed-in buyer. */}
+      {!isBuyerSession() && (
+        <div className="bg-carbon px-4 md:px-8 lg:px-12 py-14 text-center">
+          <SectionHeading title="Share what you teach on Edudeen." tone="dark" align="center" size="lg" className="mb-8" />
+          <Reveal>
+            <MagneticButton>
+              <Button size="lg" onClick={sellEntry.go} loading={sellEntry.loading}>
+                Start Selling Free <ArrowRight size={14} className="inline align-middle ml-1" />
+              </Button>
+            </MagneticButton>
+          </Reveal>
+        </div>
+      )}
 
       <Footer />
     </div>

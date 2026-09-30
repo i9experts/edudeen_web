@@ -6,13 +6,13 @@ import type { LucideIcon } from 'lucide-react';
 import {
   LayoutDashboard, Package, ShoppingBag, Users, BarChart2,
   Settings, Sparkles, ChevronLeft, ChevronRight, Store,
-  ClipboardList, Megaphone, Star, Plug, Search, Wallet,
-  Truck, MessageSquare, FolderTree, RefreshCw, Undo2, CreditCard,
-  PanelLeftClose, PanelLeftOpen, AlertTriangle, AlertCircle, XCircle, Clock, LogOut, Layers, Receipt,
+  Megaphone, Star, Search, Wallet,
+  MessageSquare, FolderTree, RefreshCw, Undo2, CreditCard,
+  PanelLeftClose, PanelLeftOpen, AlertTriangle, AlertCircle, XCircle, Clock, LogOut, Layers,
 } from 'lucide-react';
 import { EdudeenIcon, EdudeenLogo } from '@/components/comman/ui/EdudeenLogo';
 import { apiGetStoreById, type StoreData } from '@/api/services/store';
-import { apiGetStorePlatformPlan, type StorePlatformSubscription } from '@/api/services/platformPlans';
+import { apiGetStorePlatformPlan, apiGetStoreEntitlements, type StorePlatformSubscription } from '@/api/services/platformPlans';
 import { useCommandPalette } from '@/hooks/useCommandPalette';
 import { useLogout } from '@/hooks/auth/useLogout';
 import { AnnouncementBanner, Modal, Button } from '@/components/comman/ui';
@@ -52,14 +52,12 @@ export const NAV: { group: string; items: NavItem[] }[] = [
     items: [
       { id: 'orders',   Icon: Package,  label: 'Orders',       path: 'orders'  },
       { id: 'returns',  Icon: Undo2,    label: 'Returns',       path: 'returns' },
-      { id: 'shipping', Icon: Truck,    label: 'Shipping',      path: 'shipping' },
     ],
   },
   {
     group: 'Catalog',
     items: [
       { id: 'products',      Icon: ShoppingBag,   label: 'Products',      path: 'products'     },
-      { id: 'inventory',     Icon: ClipboardList, label: 'Inventory',     path: 'inventory'    },
       { id: 'categories',    Icon: FolderTree,    label: 'Categories',    path: 'categories'   },
       { id: 'collections',   Icon: Layers,        label: 'Collections',   path: 'collections'  },
       { id: 'store-builder', Icon: Store,         label: 'Store Builder', path: 'storebuilder' },
@@ -77,7 +75,6 @@ export const NAV: { group: string; items: NavItem[] }[] = [
     group: 'Growth',
     items: [
       { id: 'marketing',     Icon: Megaphone, label: 'Marketing',     path: 'marketing'     },
-      { id: 'loyalty',       Icon: Star,      label: 'Loyalty',       path: 'loyalty'       },
       { id: 'subscriptions', Icon: RefreshCw, label: 'Subscriptions', path: 'subscriptions' },
       { id: 'seo',           Icon: Search,    label: 'SEO',           path: 'seo'           },
       { id: 'ai',            Icon: Sparkles,  label: 'AI Studio',     path: 'ai/studio'     },
@@ -86,15 +83,15 @@ export const NAV: { group: string; items: NavItem[] }[] = [
   {
     group: 'Finance',
     items: [
-      { id: 'finance',      Icon: Wallet,     label: 'Finance',        path: 'finance'      },
-      { id: 'earnings',     Icon: Receipt,    label: 'Earnings',       path: 'finance?tab=earnings' },
+      // One entry: opens the monthly statement; the page's own tab bar still
+      // reaches the overview (transactions, payout methods).
+      { id: 'earnings',     Icon: Wallet,     label: 'Earnings',       path: 'finance?tab=earnings' },
       { id: 'plan-billing', Icon: CreditCard, label: 'Plan & Billing', path: 'plan-billing' },
     ],
   },
   {
     group: 'Settings',
     items: [
-      { id: 'integrations',  Icon: Plug,        label: 'Integrations',          path: 'integrations'  },
       { id: 'settings',      Icon: Settings,    label: 'Settings',              path: 'settings'      },
     ],
   },
@@ -156,7 +153,7 @@ export function StoreNavMenu({ storeId, onNavigate, excludeGroups = [], excludeI
 // ── Mobile bottom tab bar — real navigation for the most frequent
 // destinations, same icon-only pattern as SellerBottomNav. The last tab
 // ("Settings") is where every OTHER section lives (Sales/Catalog/Customers/
-// Growth/Finance, plus Integrations) via StoreSettings'
+// Growth/Finance) via StoreSettings'
 // own mobile menu — Dashboard itself stays a pure metrics page, it doesn't
 // double as a menu of everything.
 const STORE_TABS: { id: string; Icon: LucideIcon; label: string; path: string }[] = [
@@ -238,6 +235,9 @@ function isNavItemActive(path: string, pathname: string, search: string, storeId
   if (path.startsWith('/')) return pathname === path || pathname.startsWith(path + '/');
   const [seg, query] = path.split('?');
   if (pathname !== `/store/${storeId}/${seg}`) return false;
+  // The only nav entry for this route stays highlighted whatever tab is open.
+  const siblings = ALL_NAV_PATHS.filter(p => p.split('?')[0] === seg);
+  if (siblings.length === 1) return true;
   if (query) return queryMatches(query, search);
   return !ALL_NAV_PATHS.some(p => {
     const [s, q] = p.split('?');
@@ -271,9 +271,21 @@ function StoreSidebar({ open, onToggle }: StoreSidebarProps) {
   const isActive = (path: string) => isNavItemActive(path, pathname, search, storeId);
 
   const initials   = store?.name?.slice(0, 2).toUpperCase() ?? '..';
-  const credits    = store?.aiCredits ?? 0;
-  const maxCredits = 1000;
-  const pct        = Math.min(100, Math.round((credits / maxCredits) * 100));
+  // Real plan allowance from entitlements (monthlyAllowance: -1 = unlimited,
+  // 0/unknown = no fixed max) — never a made-up ceiling.
+  const [aiCredits, setAiCredits] = useState<{ monthlyAllowance: number; balance: number } | null>(null);
+  useEffect(() => {
+    if (!storeId) return;
+    let cancelled = false;
+    apiGetStoreEntitlements(storeId)
+      .then(res => { if (!cancelled) setAiCredits(res.data.aiCredits ?? null); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [storeId]);
+  const credits    = aiCredits?.balance ?? store?.aiCredits ?? 0;
+  const maxCredits = aiCredits && aiCredits.monthlyAllowance > 0 ? aiCredits.monthlyAllowance : null;
+  const unlimited  = aiCredits?.monthlyAllowance === -1;
+  const pct        = maxCredits ? Math.min(100, Math.round((credits / maxCredits) * 100)) : 0;
 
   const toggleBtn = (
     <button
@@ -400,14 +412,18 @@ function StoreSidebar({ open, onToggle }: StoreSidebarProps) {
                   <Sparkles size={12} className="text-brand-royal" />
                   <span className="text-[12px] text-graphite">AI Credits</span>
                 </div>
-                <span className="text-[12px] font-bold text-brand-orange">{credits}/{maxCredits}</span>
+                <span className="text-[12px] font-bold text-brand-orange">
+                  {unlimited ? 'Unlimited' : maxCredits ? `${credits}/${maxCredits}` : credits}
+                </span>
               </div>
-              <div className="h-[5px] bg-bone rounded-full" role="progressbar" aria-valuenow={credits} aria-valuemin={0} aria-valuemax={maxCredits} aria-label="AI credits used">
-                <div
-                  className="h-full bg-brand-orange rounded-full transition-[width] duration-300"
-                  style={{ width: `${pct}%` }}
-                />
-              </div>
+              {maxCredits && (
+                <div className="h-[5px] bg-bone rounded-full" role="progressbar" aria-valuenow={credits} aria-valuemin={0} aria-valuemax={maxCredits} aria-label="AI credits remaining">
+                  <div
+                    className="h-full bg-brand-orange rounded-full transition-[width] duration-300"
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+              )}
             </div>
             <div className="flex items-center gap-2">
               <p className="text-[12px] text-slate flex-1 min-w-0 truncate">Edudeen creator studio</p>

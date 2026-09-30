@@ -89,15 +89,15 @@ export function StorefrontLayout() {
     // `getMainAppUrl()` only makes sense on a real `*.edudeen.com`
     // subdomain (`slug` truthy) — on a genuine custom domain, that helper
     // would build a URL on the SELLER'S OWN domain, not Edudeen's, so the
-    // "Back to Marketplace" fallback is only shown when it can actually
+    // "Back to resources" fallback is only shown when it can actually
     // point somewhere real.
     return (
       <div className="min-h-screen bg-cream flex flex-col items-center justify-center gap-4">
         <Store size={48} className="text-bone" />
         <p className="text-[15px] text-slate">{slug ? 'Store not found' : "This domain isn't connected to a store yet"}</p>
         {slug && (
-          <Button variant="secondary" size="sm" onClick={() => { window.location.href = getMainAppUrl('/marketplace'); }}>
-            <ArrowLeft size={13} className="mr-1" /> Back to Marketplace
+          <Button variant="secondary" size="sm" onClick={() => { window.location.href = getMainAppUrl('/'); }}>
+            <ArrowLeft size={13} className="mr-1" /> Back to resources
           </Button>
         )}
       </div>

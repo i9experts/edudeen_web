@@ -255,7 +255,7 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
                countdown row next to it. */
             <button
               key={campaign._id}
-              onClick={() => navigate(`/marketplace?campaign=${campaign.slug}`)}
+              onClick={() => navigate('/')}
               className="group relative z-[1] flex w-full flex-col items-stretch border-none bg-transparent p-0 outline-none cursor-pointer overflow-hidden text-left sm:h-full sm:flex-row"
             >
               {/* Below `sm`, the image fills its box edge-to-edge (`cover`,
@@ -383,7 +383,7 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
              this placement. */
           <button
             key={campaign._id}
-            onClick={() => navigate(`/marketplace?campaign=${campaign.slug}`)}
+            onClick={() => navigate('/')}
             className="group relative z-[1] block w-full h-full border-none bg-transparent p-0 outline-none cursor-pointer overflow-hidden rounded-[20px]"
           >
             <CampaignImage src={campaign.bannerImage} fit="cover" />
@@ -398,7 +398,7 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
         ) : (
           <button
             key={campaign._id}
-            onClick={() => navigate(`/marketplace?campaign=${campaign.slug}`)}
+            onClick={() => navigate('/')}
             className="campaign-fade group relative z-[1] grid w-full h-full gap-4 border-none bg-transparent text-left text-white outline-none cursor-pointer px-5 py-5 sm:px-7 sm:py-6 grid-cols-1 lg:grid-cols-[40%_35%_25%] lg:gap-0 lg:px-8 lg:py-0 lg:h-[188px]"
           >
             {/* LEFT (40%) — badge, huge discount, title, description, meta, CTA.

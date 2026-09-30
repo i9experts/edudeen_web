@@ -2,7 +2,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import type { LucideIcon } from 'lucide-react';
 import { useGetProfile } from '@/hooks/auth/useGetProfile';
 import {
-  Home, ShoppingCart, Store, DollarSign, Users, BookOpen,
+  Home, Store, DollarSign, Users,
   LogIn,
   Settings,
   Shield,
@@ -17,12 +17,9 @@ interface NavPage { label: string; path: string; Icon: LucideIcon; prefetch?: ()
 
 const PUBLIC_PAGES: NavPage[] = [
   { label: 'Home',       path: '/',                   Icon: Home         },
-  { label: 'Marketplace',    path: '/marketplace',        Icon: ShoppingCart },
-  // { label: 'Product Detail', path: '/marketplace/1',      Icon: FileText     },
   // { label: 'Storefront',     path: '/store/teacherspro',  Icon: Store        },
   { label: 'Pricing',        path: '/pricing',            Icon: DollarSign   },
   { label: 'For Sellers',    path: '/sellers',            Icon: Users        },
-  { label: 'Education',    path: '/education',          Icon: BookOpen, prefetch: () => { void import('@/features/buyer/pages/EducationMarketplace'); } },
 ];
 
 const LEGAL_PAGES: NavPage[] = [

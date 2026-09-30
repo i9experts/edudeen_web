@@ -13,6 +13,7 @@ import { EdudeenLogo } from './EdudeenLogo';
 import { TokenStorage } from '@/api/services/auth';
 import { ProfileAvatar } from './ProfileAvatar';
 import { PlatformTopBar } from './PlatformTopBar';
+import { isBuyerSession } from '@/hooks/auth/useIsBuyer';
 import { useSellEntry } from '@/hooks/auth/useSellEntry';
 import { useCompactOnScroll } from './BuyerNavbar';
 import { PLATFORM_PRODUCTS } from '@/features/buyer/data/platformProducts';
@@ -139,6 +140,9 @@ export function PublicMegaNavbar() {
   }, [mobileOpen]);
 
   const loggedIn = TokenStorage.isLoggedIn();
+  // Signed-in buyers see a shop-focused nav — no store-builder products,
+  // solutions, pricing or "For Sellers".
+  const isBuyer = isBuyerSession();
 
   return (
     <>
@@ -157,6 +161,14 @@ export function PublicMegaNavbar() {
 
           {/* Desktop nav */}
           <nav className="hidden lg:flex items-center gap-6">
+            {isBuyer ? (
+              <>
+                <Link to="/" onMouseEnter={() => openNow(null)} className="text-[13px] font-medium text-charcoal hover:text-brand-orange transition-colors">Shop</Link>
+                <div onMouseEnter={() => openNow('resources')}>
+                  <DesktopMenuButton label="Resources" active={openMenu === 'resources'} onClick={() => openNow(openMenu === 'resources' ? null : 'resources')} />
+                </div>
+              </>
+            ) : (<>
             <div onMouseEnter={() => openNow('products')}>
               <DesktopMenuButton label="Products" active={openMenu === 'products'} onClick={() => openNow(openMenu === 'products' ? null : 'products')} />
             </div>
@@ -168,6 +180,7 @@ export function PublicMegaNavbar() {
             </div>
             <Link to="/pricing" onMouseEnter={() => openNow(null)} className="text-[13px] font-medium text-charcoal hover:text-brand-orange transition-colors">Pricing</Link>
             <Link to="/sellers" onMouseEnter={() => openNow(null)} className="text-[13px] font-medium text-charcoal hover:text-brand-orange transition-colors">For Sellers</Link>
+            </>)}
           </nav>
 
           {/* Actions */}
@@ -364,6 +377,7 @@ export function PublicMegaNavbar() {
               style={{ paddingBottom: 'max(24px, env(safe-area-inset-bottom))' }}
             >
               <div className="flex-1 flex flex-col">
+                {!isBuyer && (<>
                 <MobileAccordionRow
                   title="Products"
                   isOpen={expanded === 'products'}
@@ -406,6 +420,7 @@ export function PublicMegaNavbar() {
                     View all solutions <ArrowRight size={12} />
                   </Link>
                 </MobileAccordionRow>
+                </>)}
 
                 <MobileAccordionRow
                   title="Resources"
@@ -424,6 +439,7 @@ export function PublicMegaNavbar() {
                   ))}
                 </MobileAccordionRow>
 
+                {!isBuyer && (<>
                 <div className="overflow-hidden">
                   <motion.div variants={navRowVariants}>
                     <Link to="/pricing" onClick={closeMenu} className="group flex items-center justify-between py-[18px] border-b border-carbon/10">
@@ -448,6 +464,7 @@ export function PublicMegaNavbar() {
                     </Link>
                   </motion.div>
                 </div>
+                </>)}
               </div>
 
               <motion.div variants={navFadeVariants} className="flex flex-col gap-2.5 pt-6 mt-6 pb-6 border-t border-carbon/10">

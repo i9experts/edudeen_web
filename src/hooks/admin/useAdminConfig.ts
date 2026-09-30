@@ -9,6 +9,8 @@ import {
   apiUpdatePlacementLimits,
   apiUpdatePromotionPricing,
   apiUpdateManualPaymentConfig,
+  apiUpdatePayoutConfig,
+  type PayoutConfig,
   type FeatureFlags,
   type AiConfig,
   type EmailConfig,
@@ -138,6 +140,27 @@ export function useUpdateManualPaymentConfig() {
       return true;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update manual payment config.');
+      return false;
+    } finally {
+      setSubmitting(false);
+    }
+  }, []);
+
+  return { update, submitting, error };
+}
+
+export function useUpdatePayoutConfig() {
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+
+  const update = useCallback(async (payload: Partial<PayoutConfig>) => {
+    setSubmitting(true);
+    setError('');
+    try {
+      await apiUpdatePayoutConfig(payload);
+      return true;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update payout settings.');
       return false;
     } finally {
       setSubmitting(false);

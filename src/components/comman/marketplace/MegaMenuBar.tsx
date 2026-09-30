@@ -8,6 +8,7 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import type { MarketplaceProduct } from '@/api/services/marketplace';
 import { type CategoryNode } from '@/api/services/categories';
+import { isBuyerSession } from '@/hooks/auth/useIsBuyer';
 import { type PublicStoreListItem } from '@/api/services/store';
 import { RealAppQr, AppleGlyph, GooglePlayGlyph, GOOGLE_PLAY_URL } from '@/components/comman/ui/AppPromoParts';
 import { StoreFeatureCard, useCompactOnScroll, CountdownUnit } from '@/components/comman/ui';
@@ -393,9 +394,11 @@ const ABOUT_CARDS: { image: string; title: string; description: string; path: st
 ];
 
 function AboutMegaContent({ onNavigate }: { onNavigate: (path: string) => void }) {
+  // No "Sell on Edudeen" card for a signed-in buyer.
+  const cards = isBuyerSession() ? ABOUT_CARDS.filter(c => c.path !== '/sellers') : ABOUT_CARDS;
   return (
     <div className="flex items-start gap-4 md:gap-6 overflow-x-auto scrollbar-hide pb-1">
-      {ABOUT_CARDS.map(({ image, title, description, path }, i) => (
+      {cards.map(({ image, title, description, path }, i) => (
         <button
           key={title}
           onClick={() => onNavigate(path)}

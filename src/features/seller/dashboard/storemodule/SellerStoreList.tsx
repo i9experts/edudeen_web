@@ -17,6 +17,11 @@ import {
 import type { MyStoreItem } from '@/api/services/store';
 import { PageHeader } from '@/components/comman/ui';
 import { StudioPanel, StudioTextLink } from '@/features/seller/components/studio/Studio';
+import { currencySymbol } from '@/utils/currency';
+
+function money(n: number, currency?: string | null) {
+  return `${currencySymbol(currency ?? 'PKR')} ${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
 
 // ── Store cell: logo + name ───────────────────────────────────────────────────
 function StoreCell({ store }: { store: MyStoreItem }) {
@@ -41,6 +46,17 @@ export function SellerStoreList() {
   const PER_PAGE = 10;
   const [page, setPage] = useState(1);
   const paged = stores.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+
+  // 	otalSalesUSD is (despite the name) each store's net sales in THAT
+  // store's own currency — never sum PKR and USD stores into one number.
+  const revenueByCurrency = stores.reduce<Record<string, number>>((acc, s) => {
+    const cur = s.baseCurrency ?? 'PKR';
+    acc[cur] = (acc[cur] ?? 0) + (s.totalSalesUSD ?? 0);
+    return acc;
+  }, {});
+  const revenueLabel = Object.keys(revenueByCurrency).length === 0
+    ? money(summary.totalRevenueUSD, 'PKR')
+    : Object.entries(revenueByCurrency).map(([cur, amt]) => money(amt, cur)).join(' + ');
 
   const columns: TableColumn<MyStoreItem>[] = [
     {
@@ -73,7 +89,7 @@ export function SellerStoreList() {
     },
     {
       key: 'totalSalesUSD', header: 'Revenue', align: 'right',
-      render: s => <span className="font-semibold text-charcoal">${s.totalSalesUSD.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>,
+      render: s => <span className="font-semibold text-charcoal whitespace-nowrap">{money(s.totalSalesUSD, s.baseCurrency)}</span>,
     },
     {
       key: 'aiCredits', header: 'AI Credits', align: 'right',
@@ -133,7 +149,7 @@ export function SellerStoreList() {
           <MetricCard label="Total Products" value={summary.totalProducts.toLocaleString()} icon={<Package size={16} />} loading={loading} />
           <MetricCard
             label="Total Revenue"
-            value={`$${summary.totalRevenueUSD.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+            value={revenueLabel}
             icon={<DollarSign size={16} />}
             loading={loading}
           />

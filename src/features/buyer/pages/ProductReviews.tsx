@@ -338,6 +338,17 @@ export function ProductReviewsSection({ productId, storeName }: ProductReviewsSe
     return () => { cancelled = true; };
   }, [productId, refreshKey]);
 
+  // "Write a review" links from My Orders / order success land on
+  // /product/<slug>#write-review — open the form once reviews have loaded
+  // (so we know the buyer hasn't already reviewed this product).
+  const autoOpenedRef = useRef(false);
+  useEffect(() => {
+    if (autoOpenedRef.current || loading || !isLoggedIn) return;
+    if (window.location.hash !== '#write-review') return;
+    autoOpenedRef.current = true;
+    if (!hasOwnReview) setShowWrite(true);
+  }, [loading, isLoggedIn, hasOwnReview]);
+
   const hasPhotoReviews = useMemo(() => allReviews.some(r => r.media?.length > 0), [allReviews]);
 
   const filteredSorted = useMemo(() => {

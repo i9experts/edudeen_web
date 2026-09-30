@@ -11,7 +11,7 @@ interface OrderActionResponse {
 export interface UpdateStatusPayload {
   orderId: string;
   storeId: string;
-  status:  'pending' | 'processing' | 'shipped' | 'completed' | 'cancelled';
+  status:  'pending' | 'processing' | 'shipped' | 'delivered' | 'completed' | 'cancelled';
   tracking?: {
     carrier:        string;
     trackingNumber: string;
@@ -164,6 +164,44 @@ export function apiUpdateOrderStatus(payload: UpdateStatusPayload) {
   return client.put<never, OrderActionResponse>(ENDPOINTS.ORDERS.UPDATE_STATUS, payload);
 }
 
+export interface DigitalDownloadFile {
+  index:     number;
+  fileName:  string;
+  mimeType:  string;
+  size?:     number;
+  type:      'stamped' | 'download';
+  endpoint:  string;
+  token:     string;
+  expiresIn: string;
+}
+
+interface DownloadFilesResponse {
+  success: boolean;
+  message: string;
+  data: {
+    files:         DigitalDownloadFile[];
+    downloadCount: number;
+    downloadLimit: string;
+    remaining:     string;
+  };
+}
+
+/** GET /api/orders/download-url — every file of a purchased digital product,
+ *  each with its own short-lived (10 min) token + direct-download endpoint.
+ *  Also enforces link expiry / download limit up front. */
+export function apiGetDownloadFiles(orderId: string, productId: string) {
+  return client.get<never, DownloadFilesResponse>(ENDPOINTS.ORDERS.DOWNLOAD_URL, {
+    params: { orderId, productId },
+  });
+}
+
+/** Absolute URL for a token-based download endpoint (no auth header needed). */
+export function buildDownloadHref(endpoint: string, token: string) {
+  const base = (import.meta.env.VITE_API_URL as string | undefined) ?? '';
+  return `${base}${endpoint}?token=${encodeURIComponent(token)}`;
+}
+
+/** @deprecated Response is actually `data.files[]` — use apiGetDownloadFiles. */
 export function apiGetDownloadUrl(orderId: string, productId: string) {
   return client.get<never, { success: boolean; message: string; data: { downloadUrl: string } }>(
     `${ENDPOINTS.ORDERS.DOWNLOAD_URL}?orderId=${orderId}&productId=${productId}`,

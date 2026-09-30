@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   ShoppingCart, RefreshCw,
-  DollarSign, Clock, TrendingUp, CheckCheck, Truck,
+  DollarSign, Clock, TrendingUp, CheckCheck, Truck, Eye,
 } from 'lucide-react';
 import { apiMarkOrderPaid, apiUpdateOrderStatus } from '@/api/services/orders';
 import { useStoreWorkspace, StorePageHeader } from '@/components/layouts/StoreLayout';
@@ -13,7 +13,6 @@ import {
   Avatar,
   SearchInput,
   FilterDropdown,
-  ActionMenu,
   Button,
   InlineError,
 } from '@/components/comman/ui';
@@ -21,9 +20,13 @@ import {
   apiGetSellerOrders,
   type SellerOrder,
   type SellerOrderStats,
+  type SellerOrderFilters,
 } from '@/api/services/product';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { currencySymbol } from '@/utils/currency';
+import {
+  OrderDetailModal, canMarkPaid, canComplete, canProcess, canShip, paymentLabel,
+} from './OrderDetailModal';
 
 // ── Customer cell ──────────────────────────────────────────────────────────────
 function CustomerCell({ name, email }: { name: string; email: string }) {
@@ -38,6 +41,13 @@ function CustomerCell({ name, email }: { name: string; email: string }) {
   );
 }
 
+const STATUS_OPTIONS = ['pending', 'processing', 'shipped', 'delivered', 'completed', 'cancelled'];
+const TYPE_OPTIONS: { value: NonNullable<SellerOrderFilters['type']>; label: string }[] = [
+  { value: 'physical', label: 'Physical' },
+  { value: 'digital',  label: 'Digital' },
+  { value: 'mixed',    label: 'Mixed' },
+];
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 export function StoreOrderList() {
   usePageTitle('Orders');
@@ -50,33 +60,33 @@ export function StoreOrderList() {
   const [search,      setSearch]      = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [statusF,     setStatusF]     = useState('');
-  const [typeF,       setTypeF]       = useState('');
+  const [typeF,       setTypeF]       = useState<SellerOrderFilters['type']>('');
   const [loading,       setLoading]       = useState(true);
   const [error,         setError]         = useState('');
   const [refreshKey,    setRefreshKey]    = useState(0);
-  const [markingPaidId,    setMarkingPaidId]    = useState<string | null>(null);
-  const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null);
+  const [busyId,        setBusyId]        = useState<string | null>(null);
+  const [selected,      setSelected]      = useState<SellerOrder | null>(null);
 
   const LIMIT = 10;
-  // No server-side order search endpoint exists — when searching, fetch a
-  // much larger page instead of the normal small one so the search covers
-  // (up to) the whole order list rather than silently only ever matching
-  // whatever 10 rows happened to already be on screen (same pattern as
-  // StoreProductList's SEARCH_LIMIT).
-  const SEARCH_LIMIT = 1000;
+  // Status/type filters run server-side (seller-orders supports ?status= and
+  // ?type=). There is NO server-side search param and the backend caps
+  // `limit` at 50, so a search looks through the 50 most recent orders
+  // matching the current filters — the UI says so below.
+  const SEARCH_LIMIT = 50;
 
   useEffect(() => {
     const id = setTimeout(() => setDebouncedSearch(search), 300);
     return () => clearTimeout(id);
   }, [search]);
 
+  const isSearching = debouncedSearch.trim().length > 0;
+
   useEffect(() => {
     if (!storeId) return;
     let cancelled = false;
-    const isSearching = debouncedSearch.trim().length > 0;
     const [fetchPage, fetchLimit] = isSearching ? [1, SEARCH_LIMIT] : [page, LIMIT];
 
-    apiGetSellerOrders(storeId, fetchPage, fetchLimit)
+    apiGetSellerOrders(storeId, fetchPage, fetchLimit, { status: statusF, type: typeF })
       .then(res => {
         if (cancelled) return;
         setOrders(res.data.orders ?? []);
@@ -89,7 +99,7 @@ export function StoreOrderList() {
       .finally(() => { if (!cancelled) setLoading(false); });
 
     return () => { cancelled = true; };
-  }, [storeId, page, refreshKey, debouncedSearch]);
+  }, [storeId, page, refreshKey, isSearching, statusF, typeF]);
 
   const handlePageChange = (p: number) => {
     setLoading(true);
@@ -104,17 +114,21 @@ export function StoreOrderList() {
     setRefreshKey(k => k + 1);
   };
 
-  const filtered = orders.filter(o => {
-    const q = search.toLowerCase();
-    if (q &&
-      !o.orderNumber.toLowerCase().includes(q) &&
-      !o.customer.name.toLowerCase().includes(q) &&
-      !o.product.toLowerCase().includes(q)
-    ) return false;
-    if (statusF && o.status !== statusF) return false;
-    if (typeF   && o.type   !== typeF)   return false;
-    return true;
-  });
+  const changeFilter = (fn: () => void) => { setLoading(true); setError(''); setPage(1); fn(); };
+
+  const patchOrder = (orderId: string, patch: Partial<SellerOrder>) => {
+    setOrders(prev => prev.map(x => x.orderId === orderId ? { ...x, ...patch } : x));
+    setSelected(prev => prev && prev.orderId === orderId ? { ...prev, ...patch } : prev);
+  };
+
+  // Search only (status/type are already applied by the server).
+  const q = debouncedSearch.trim().toLowerCase();
+  const filtered = q
+    ? orders.filter(o =>
+        o.orderNumber.toLowerCase().includes(q) ||
+        o.customer.name.toLowerCase().includes(q) ||
+        o.product.toLowerCase().includes(q))
+    : orders;
 
   // ── Columns ──────────────────────────────────────────────────────────────────
   const columns: TableColumn<SellerOrder>[] = [
@@ -122,7 +136,7 @@ export function StoreOrderList() {
       key: 'no', header: '#', width: '48px',
       render: (_, i) => (
         <span className="text-[12px] text-slate font-medium">
-          {(page - 1) * LIMIT + i + 1}
+          {(isSearching ? 0 : (page - 1) * LIMIT) + i + 1}
         </span>
       ),
     },
@@ -148,7 +162,7 @@ export function StoreOrderList() {
       key: 'type', header: 'Type',
       render: o => (
         <Badge color={o.type === 'digital' ? 'blue' : 'orange'}>
-          {o.type === 'digital' ? (o.productType === 'educational' ? 'Educational' : 'Digital') : 'Physical'}
+          {o.type === 'digital' ? (o.productType === 'educational' ? 'Educational' : 'Digital') : o.type === 'mixed' ? 'Mixed' : 'Physical'}
         </Badge>
       ),
     },
@@ -164,7 +178,7 @@ export function StoreOrderList() {
       key: 'amount', header: 'Amount', align: 'right',
       render: o => (
         <span className="text-[13px] font-bold text-charcoal whitespace-nowrap">
-          {currencySymbol(store?.baseCurrency)}{o.amount.toLocaleString()}
+          {currencySymbol(o.currency ?? store?.baseCurrency)}{o.amount.toLocaleString()}
         </span>
       ),
     },
@@ -172,7 +186,7 @@ export function StoreOrderList() {
       key: 'paymentType', header: 'Payment',
       render: o => (
         <div className="flex flex-col gap-[2px]">
-          <span className="text-[12px] text-slate capitalize">{o.paymentType.replace(/_/g, ' ')}</span>
+          <span className="text-[12px] text-slate capitalize">{paymentLabel(o.paymentType)}</span>
           {o.isPaid
             ? <span className="text-[10px] font-semibold text-success">Paid</span>
             : <span className="text-[10px] font-semibold text-[#b36200]">Unpaid</span>
@@ -185,65 +199,50 @@ export function StoreOrderList() {
       render: o => <StatusBadge status={o.status} />,
     },
     {
-      key: 'actions', header: '', align: 'center', width: '150px',
+      key: 'actions', header: '', align: 'center', width: '170px',
       render: o => {
-        const busy = markingPaidId === o.orderId || updatingStatusId === o.orderId;
+        const busy = busyId === o.orderId;
 
-        const changeStatus = (status: 'processing' | 'shipped' | 'completed' | 'cancelled') => {
+        const run = (fn: () => Promise<unknown>, patch: Partial<SellerOrder>) => {
           if (busy) return;
-          setUpdatingStatusId(o.orderId);
-          apiUpdateOrderStatus({ orderId: o.orderId, storeId, status })
-            .then(() => {
-              setOrders(prev =>
-                prev.map(x => x.orderId === o.orderId ? { ...x, status } : x)
-              );
-            })
-            .catch((err: unknown) => {
-              setError(err instanceof Error ? err.message : 'Failed to update status.');
-            })
-            .finally(() => setUpdatingStatusId(null));
+          setBusyId(o.orderId);
+          fn()
+            .then(() => patchOrder(o.orderId, patch))
+            .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Action failed.'))
+            .finally(() => setBusyId(null));
         };
 
-        const markPaid = () => {
-          if (busy) return;
-          setMarkingPaidId(o.orderId);
-          apiMarkOrderPaid(o.orderId)
-            .then(() => setOrders(prev => prev.map(x => x.orderId === o.orderId ? { ...x, isPaid: true } : x)))
-            .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Failed to mark as paid.'))
-            .finally(() => setMarkingPaidId(null));
-        };
-
-        // One primary inline action (the single most useful next step for
-        // this order), everything else tucked in the overflow menu — same
-        // "primary + overflow" convention the admin marketplace table uses,
-        // instead of cramming every status transition into one menu.
-        const primary = !o.isPaid
-          ? { label: 'Mark Paid', icon: <CheckCheck size={12} />, onClick: markPaid, loading: markingPaidId === o.orderId }
-          : o.status === 'pending'
-          ? { label: 'Process', icon: <RefreshCw size={12} />, onClick: () => changeStatus('processing'), loading: updatingStatusId === o.orderId }
-          : o.status !== 'completed' && o.status !== 'cancelled'
-          ? { label: 'Ship', icon: <Truck size={12} />, onClick: () => changeStatus('shipped'), loading: updatingStatusId === o.orderId }
+        // One inline "next step" that the backend will actually accept
+        // (see OrderDetailModal's can* helpers). Shipping needs a tracking
+        // number, so "Ship" opens the detail view instead of firing blind.
+        const primary =
+          canShip(o) && o.status === 'processing'
+            ? { label: 'Ship', icon: <Truck size={12} />, onClick: () => setSelected(o) }
+          : canProcess(o)
+            ? { label: 'Process', icon: <RefreshCw size={12} />, onClick: () => run(() => apiUpdateOrderStatus({ orderId: o.orderId, storeId, status: 'processing' }), { status: 'processing' }) }
+          : canMarkPaid(o) && (o.type === 'digital' || o.status === 'shipped' || o.status === 'delivered')
+            ? { label: 'Mark Paid', icon: <CheckCheck size={12} />, onClick: () => run(() => apiMarkOrderPaid(o.orderId), { isPaid: true, status: 'completed' }) }
+          : canComplete(o)
+            ? { label: 'Complete', icon: <CheckCheck size={12} />, onClick: () => run(() => apiUpdateOrderStatus({ orderId: o.orderId, storeId, status: 'completed' }), { status: 'completed' }) }
           : null;
 
-        const overflowItems = [
-          ...(o.status !== 'completed' && o.status !== 'cancelled' && o.status !== 'pending' ? [{
-            label: 'Mark Completed', icon: <CheckCheck size={13} />, onClick: () => changeStatus('completed'),
-          }] : []),
-        ];
-
         return (
-          <div className="flex items-center justify-center gap-1">
+          <div className="flex items-center justify-center gap-1" onClick={e => e.stopPropagation()}>
             {primary && (
-              <Button variant="ghost" size="xs" disabled={busy} loading={primary.loading} onClick={primary.onClick} icon={!primary.loading && primary.icon}>
+              <Button variant="ghost" size="xs" disabled={busy} loading={busy} onClick={primary.onClick} icon={!busy && primary.icon}>
                 {primary.label}
               </Button>
             )}
-            {overflowItems.length > 0 && <ActionMenu align="right" items={overflowItems} />}
+            <Button variant="ghost" size="xs" onClick={() => setSelected(o)} icon={<Eye size={12} />} aria-label={`View order ${o.orderNumber}`}>
+              View
+            </Button>
           </div>
         );
       },
     },
   ];
+
+  const hasFilters = !!(search || statusF || typeF);
 
   return (
     <>
@@ -296,22 +295,27 @@ export function StoreOrderList() {
                 placeholder="Search orders…"
                 className="w-full sm:w-[200px] sm:ml-auto"
               />
+              {isSearching && (
+                <p className="text-[11.5px] text-slate sm:text-right">
+                  Searching your {SEARCH_LIMIT} most recent orders{statusF || typeF ? ' that match the filters' : ''} by order number, customer or product.
+                </p>
+              )}
               <div className="flex items-center gap-2 overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap sm:justify-end">
                 <FilterDropdown
                   value={statusF}
-                  onChange={setStatusF}
+                  onChange={v => changeFilter(() => setStatusF(v))}
                   placeholder="All Status"
-                  options={['pending', 'completed', 'cancelled', 'processing'].map(o => ({ value: o, label: o.charAt(0).toUpperCase() + o.slice(1) }))}
+                  options={STATUS_OPTIONS.map(o => ({ value: o, label: o.charAt(0).toUpperCase() + o.slice(1) }))}
                   className="shrink-0"
                 />
                 <FilterDropdown
-                  value={typeF}
-                  onChange={setTypeF}
+                  value={typeF ?? ''}
+                  onChange={v => changeFilter(() => setTypeF(v as SellerOrderFilters['type']))}
                   placeholder="All Types"
-                  options={['digital', 'physical'].map(o => ({ value: o, label: o.charAt(0).toUpperCase() + o.slice(1) }))}
+                  options={TYPE_OPTIONS}
                   className="shrink-0"
                 />
-                <Button variant="outline" size="xs" onClick={() => { setSearch(''); setStatusF(''); setTypeF(''); }}>Clear</Button>
+                <Button variant="outline" size="xs" onClick={() => changeFilter(() => { setSearch(''); setStatusF(''); setTypeF(''); })}>Clear</Button>
                 <Button
                   variant="outline" size="xs" onClick={handleRetry} icon={<RefreshCw size={11} />}
                 >
@@ -324,16 +328,17 @@ export function StoreOrderList() {
               columns={columns}
               data={filtered}
               keyExtractor={o => o.orderId}
+              onRowClick={o => setSelected(o)}
               loading={loading}
               emptyState={{
                 icon: <ShoppingCart size={30} className="text-brand-orange opacity-55" />,
-                title: search || statusF || typeF ? 'No orders match your filters' : 'No orders yet',
+                title: hasFilters ? 'No orders match your filters' : 'No orders yet',
                 description:
-                  search || statusF || typeF
+                  hasFilters
                     ? 'Try adjusting your search or filters.'
                     : 'Orders from your store will appear here once customers start purchasing.',
               }}
-              pagination={{
+              pagination={isSearching ? undefined : {
                 page,
                 total:    totalOrders,
                 perPage:  LIMIT,
@@ -345,6 +350,15 @@ export function StoreOrderList() {
         )}
 
       </div>
+
+      {selected && (
+        <OrderDetailModal
+          order={selected}
+          storeId={storeId}
+          onClose={() => setSelected(null)}
+          onUpdated={patchOrder}
+        />
+      )}
     </>
   );
 }

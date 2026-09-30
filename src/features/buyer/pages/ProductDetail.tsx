@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { clsx } from 'clsx';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useEdgeSwipeBack } from '@/hooks/useEdgeSwipeBack';
 import { useProductById } from '@/hooks/marketplace/useProductById';
@@ -317,6 +317,7 @@ function ProductRail({ title, children }: { title: string; children: React.React
 
 export function ProductDetail() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { slug = '' } = useParams<{ slug: string }>();
   usePageTitle('Product Detail');
   const swipeHandlers = useEdgeSwipeBack(() => navigate(-1));
@@ -353,9 +354,21 @@ export function ProductDetail() {
   // the product's real current slug.
   useEffect(() => {
     if (product && product.slug && product.slug !== slug) {
-      navigate(`/product/${product.slug}`, { replace: true });
+      // Keep any #reviews / #write-review anchor through the normalization.
+      navigate(`/product/${product.slug}${location.hash}`, { replace: true });
     }
-  }, [product, slug, navigate]);
+  }, [product, slug, navigate, location.hash]);
+
+  // Deep links to the reviews section (e.g. "Write a review" from My Orders)
+  // — the section only exists once the product has loaded, so scroll then.
+  useEffect(() => {
+    if (!product) return;
+    if (location.hash !== '#reviews' && location.hash !== '#write-review') return;
+    const t = setTimeout(() => {
+      document.getElementById('reviews')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+    return () => clearTimeout(t);
+  }, [product, location.hash]);
 
   const variants = detail?.variants ?? [];
   const activeVariant = selectedVariant ?? detail?.defaultVariant ?? null;
@@ -509,7 +522,7 @@ export function ProductDetail() {
 
   return (
     <div className="min-h-screen bg-cream" {...swipeHandlers}>
-      <BuyerNavbar backTo={{ label: 'Marketplace', path: '/marketplace' }} />
+      <BuyerNavbar backTo={{ label: 'Home', path: '/' }} />
 
       {loading && <DetailSkeleton />}
 
@@ -518,7 +531,7 @@ export function ProductDetail() {
           <p className="text-[15px] text-error mb-4">{error}</p>
           <div className="flex items-center justify-center gap-2">
             <Button variant="outline" onClick={refetch}>Try again</Button>
-            <Button variant="secondary" onClick={() => navigate('/marketplace')}>Back to Marketplace</Button>
+            <Button variant="secondary" onClick={() => navigate('/')}>Back to resources</Button>
           </div>
         </div>
       )}
@@ -527,7 +540,7 @@ export function ProductDetail() {
         <div className="px-4 md:px-6 lg:px-10 py-6 md:py-8 pb-[92px] lg:pb-8">
           <Breadcrumb className="mb-4" items={[
             { label: 'Home', path: '/' },
-            { label: 'Marketplace', path: '/marketplace' },
+            { label: 'Home', path: '/' },
             { label: product.name },
           ]} />
 

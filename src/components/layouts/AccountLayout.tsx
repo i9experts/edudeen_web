@@ -3,7 +3,7 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
 import {
   LayoutDashboard, ShoppingBag, Heart, Star,
-  MessageSquare, Landmark,
+  MessageSquare, Landmark, Download,
   User, Shield, MapPin, Bell, RefreshCw,
   ChevronLeft, PanelLeftClose, PanelLeftOpen, type LucideIcon,
 } from 'lucide-react';
@@ -36,6 +36,7 @@ export function useNavGroups(): NavGroup[] {
       group: 'Shopping',
       items: [
         { id: 'orders',   label: 'Orders',   Icon: ShoppingBag, path: 'orders' },
+        { id: 'downloads', label: 'Downloads', Icon: Download,  path: 'downloads' },
         { id: 'wishlist', label: 'Wishlist', Icon: Heart,       path: 'wishlist', badge: wishlistCount },
         { id: 'reviews',  label: 'Reviews',  Icon: Star,        path: 'reviews' },
         { id: 'payments', label: 'Bank Transfers', Icon: Landmark, path: 'payments' },

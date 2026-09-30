@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { clsx } from 'clsx';
-import { ArrowRight, Download, Plus, X, Star, AlertTriangle } from 'lucide-react';
+import { Download, Plus, X, Star, AlertTriangle, CalendarCheck } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useStoreWorkspace, StorePageHeader } from '@/components/layouts/StoreLayout';
 import { Button } from '@/components/comman/ui/Button';
@@ -16,13 +16,18 @@ type FinanceTab = 'overview' | 'earnings';
 import { currencySymbol } from '@/utils/currency';
 import {
   apiGetFinanceDashboard, apiGetFinanceTransactions, apiExportFinanceTransactions,
-  apiRequestPayout, apiGetPayouts, apiGetPayoutById,
+  apiGetPayouts, apiGetPayoutById,
   apiGetPayoutMethods, apiAddPayoutMethod, apiUpdatePayoutMethod, apiSetDefaultPayoutMethod,
-  apiDeletePayoutMethod, apiGetPayoutSchedule, apiUpdatePayoutSchedule,
-  apiGetTaxReports, apiGenerateTaxReport,
+  apiDeletePayoutMethod,
   type FinanceDashboard, type Transaction, type TransactionType, type PayoutMethod,
-  type PayoutMethodType, type PayoutSchedule, type TaxReport, type Payout, type PayoutStatus,
+  type PayoutMethodType, type Payout, type PayoutStatus,
 } from '@/api/services/finance';
+
+// Payout model: buyers pay Edudeen; Edudeen pays each seller once a month,
+// after commission. Sellers never request payouts or set a schedule, so the
+// old "Request Payout" / "Update Schedule" controls and the flat-rate
+// "Pending Tax" / tax-report estimates are intentionally not shown here.
+const PAYOUT_NOTE = 'Edudeen pays your earnings monthly, after commission.';
 
 const TYPE_STYLE: Record<TransactionType, { color: BadgeColor; label: string }> = {
   sale:       { color: 'green',  label: 'Sale' },
@@ -141,114 +146,6 @@ function PayoutMethodModal({
   );
 }
 
-// ── Request payout modal ─────────────────────────────────────────────────────
-function RequestPayoutModal({
-  onClose, onRequested, storeId, availableBalance, currency, methods,
-}: { onClose: () => void; onRequested: () => void; storeId: string; availableBalance: number; currency: string; methods: PayoutMethod[] }) {
-  // Only methods for THIS wallet's currency are ever offered — a payout
-  // must always match the wallet it's drawn from (see backend
-  // FinanceService.requestPayout, which derives currency from the chosen
-  // method itself).
-  const eligibleMethods = methods.filter(m => m.currency === currency);
-  const defaultMethod = eligibleMethods.find(m => m.isDefault) ?? eligibleMethods[0] ?? null;
-  const [methodId, setMethodId] = useState(defaultMethod?._id ?? '');
-  const [amount, setAmount] = useState(String(availableBalance));
-  const [notes, setNotes] = useState('');
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
-
-  async function handleSubmit() {
-    const amt = parseFloat(amount);
-    if (!methodId) { setError('Select a payout method.'); return; }
-    if (!amt || amt < 1) { setError('Enter a valid amount.'); return; }
-    if (amt > availableBalance) { setError(`Amount exceeds available balance (${fmt(availableBalance, currency)}).`); return; }
-    setSaving(true); setError('');
-    try {
-      await apiRequestPayout(storeId, amt, methodId, notes || undefined);
-      onRequested();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to request payout.');
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  return (
-    <Modal title="Request Payout" width={420} onClose={onClose}>
-      <div className="flex flex-col gap-3">
-        {error && <p className="text-[12px] text-error">{error}</p>}
-        <p className="text-[12px] text-slate">Available balance: <span className="font-semibold text-carbon">{fmt(availableBalance, currency)}</span></p>
-        {eligibleMethods.length === 0 && methods.length > 0 && (
-          <p className="text-[11px] text-warning bg-warning-bg rounded-md px-2 py-1">
-            None of your saved payout methods are set up for {currency} — add one to withdraw this wallet.
-          </p>
-        )}
-        <input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="Amount"
-          className="px-3 py-2 border border-bone rounded-lg text-[13px] outline-none" />
-        <select value={methodId} onChange={e => setMethodId(e.target.value)}
-          className="px-3 py-2 border border-bone rounded-lg text-[13px] outline-none bg-white">
-          <option value="">Select payout method…</option>
-          {eligibleMethods.map(m => (
-            <option key={m._id} value={m._id}>
-              {METHOD_LABEL[m.type]}{m.bankName ? ` — ${m.bankName}` : ''}{m.accountLast4 ? ` ••${m.accountLast4}` : ''}{m.isDefault ? ' (default)' : ''}
-            </option>
-          ))}
-        </select>
-        <input value={notes} onChange={e => setNotes(e.target.value)} placeholder="Notes (optional)"
-          className="px-3 py-2 border border-bone rounded-lg text-[13px] outline-none" />
-        <Button size="sm" loading={saving} disabled={!eligibleMethods.length} onClick={handleSubmit}>
-          {eligibleMethods.length ? 'Request Payout' : 'Add a payout method first'}
-        </Button>
-      </div>
-    </Modal>
-  );
-}
-
-// ── Payout schedule modal ────────────────────────────────────────────────────
-function ScheduleModal({ onClose, onSaved, storeId, schedule }: { onClose: () => void; onSaved: () => void; storeId: string; schedule: PayoutSchedule }) {
-  const [frequency, setFrequency] = useState(schedule.frequency);
-  const [minimumAmount, setMinimumAmount] = useState(String(schedule.minimumAmount));
-  const [isEnabled, setIsEnabled] = useState(schedule.isEnabled);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
-
-  async function handleSave() {
-    setSaving(true); setError('');
-    try {
-      // currency must always be sent — it's what tells the backend WHICH
-      // wallet's schedule this update applies to (a store can have one
-      // schedule per currency it holds a balance in).
-      await apiUpdatePayoutSchedule(storeId, { currency: schedule.currency, frequency, minimumAmount: parseFloat(minimumAmount) || 1, isEnabled });
-      onSaved();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update schedule.');
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  return (
-    <Modal title={`Payout Schedule — ${schedule.currency}`} width={380} onClose={onClose}>
-      <div className="flex flex-col gap-3">
-        {error && <p className="text-[12px] text-error">{error}</p>}
-        <select value={frequency} onChange={e => setFrequency(e.target.value as typeof frequency)}
-          className="px-3 py-2 border border-bone rounded-lg text-[13px] outline-none bg-white">
-          {(['daily', 'weekly', 'biweekly', 'monthly', 'manual'] as const).map(f => (
-            <option key={f} value={f}>{f[0].toUpperCase() + f.slice(1)}</option>
-          ))}
-        </select>
-        <input type="number" value={minimumAmount} onChange={e => setMinimumAmount(e.target.value)} placeholder="Minimum payout amount"
-          className="px-3 py-2 border border-bone rounded-lg text-[13px] outline-none" />
-        <label className="flex items-center gap-2 text-[12.5px] text-graphite cursor-pointer">
-          <input type="checkbox" checked={isEnabled} onChange={e => setIsEnabled(e.target.checked)} />
-          Enable automatic payouts
-        </label>
-        <Button size="sm" loading={saving} onClick={handleSave}>Save Schedule</Button>
-      </div>
-    </Modal>
-  );
-}
-
 // ── Payout detail modal ───────────────────────────────────────────────────────
 function PayoutDetailModal({ onClose, storeId, payoutId }: { onClose: () => void; storeId: string; payoutId: string }) {
   const [payout, setPayout] = useState<Payout | null>(null);
@@ -304,13 +201,10 @@ export function StoreFinance() {
   const [txTotal, setTxTotal] = useState(0);
   const [txType, setTxType] = useState<TransactionType | ''>('');
   const [methods, setMethods] = useState<PayoutMethod[]>([]);
-  const [schedule, setSchedule] = useState<PayoutSchedule | null>(null);
-  const [taxReports, setTaxReports] = useState<TaxReport[]>([]);
   const [recentPayouts, setRecentPayouts] = useState<Payout[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [exporting, setExporting] = useState(false);
-  const [generatingTax, setGeneratingTax] = useState(false);
 
   const transactionColumns: TableColumn<Transaction>[] = [
     { key: 'createdAt', header: 'Date', render: t => <span className="text-slate whitespace-nowrap">{new Date(t.createdAt).toLocaleDateString()}</span> },
@@ -328,8 +222,6 @@ export function StoreFinance() {
 
   const [methodModal, setMethodModal] = useState(false);
   const [editingMethod, setEditingMethod] = useState<PayoutMethod | null>(null);
-  const [payoutModal, setPayoutModal] = useState(false);
-  const [scheduleModal, setScheduleModal] = useState(false);
   const [selectedPayoutId, setSelectedPayoutId] = useState<string | null>(null);
   const [deletingMethodId, setDeletingMethodId] = useState<string | null>(null);
   const [deleteMethodBusy, setDeleteMethodBusy] = useState(false);
@@ -347,12 +239,11 @@ export function StoreFinance() {
     Promise.all([
       apiGetFinanceDashboard(storeId),
       apiGetPayoutMethods(storeId),
-      apiGetTaxReports(storeId),
     ])
-      .then(([d, m, t]) => {
+      .then(([d, m]) => {
         setDashboard(d);
         setActiveCurrency(prev => prev && d.wallets.some(w => w.currency === prev) ? prev : (d.wallets[0]?.currency ?? null));
-        setMethods(m ?? []); setTaxReports(t ?? []);
+        setMethods(m ?? []);
       })
       .catch(err => setError(err instanceof Error ? err.message : 'Failed to load finance data.'))
       .finally(() => setLoading(false));
@@ -360,11 +251,8 @@ export function StoreFinance() {
 
   const loadWalletScoped = useCallback(() => {
     if (!storeId || !activeCurrency) return;
-    Promise.all([
-      apiGetPayoutSchedule(storeId, activeCurrency),
-      apiGetPayouts(storeId, { limit: 5, currency: activeCurrency }),
-    ])
-      .then(([s, p]) => { setSchedule(s); setRecentPayouts(p.payouts ?? []); })
+    apiGetPayouts(storeId, { limit: 5, currency: activeCurrency })
+      .then(p => setRecentPayouts(p.payouts ?? []))
       .catch(() => {});
   }, [storeId, activeCurrency]);
 
@@ -390,19 +278,6 @@ export function StoreFinance() {
       URL.revokeObjectURL(url);
     } finally {
       setExporting(false);
-    }
-  }
-
-  async function handleGenerateTaxReport() {
-    setGeneratingTax(true);
-    try {
-      const now = new Date();
-      const q = Math.floor(now.getMonth() / 3) + 1;
-      await apiGenerateTaxReport(storeId, now.getFullYear(), `q${q}` as 'q1' | 'q2' | 'q3' | 'q4', activeCurrency || undefined);
-      const reports = await apiGetTaxReports(storeId);
-      setTaxReports(reports ?? []);
-    } finally {
-      setGeneratingTax(false);
     }
   }
 
@@ -433,21 +308,20 @@ export function StoreFinance() {
   const header = (
     <>
       <StorePageHeader
-        title="Finance & Payouts"
-        subtitle="Track earnings, payouts, fees, and tax reports."
+        title="Earnings"
+        subtitle="Your sales, commission and monthly payouts from Edudeen."
         actions={
-          <>
-            <Button size="sm" variant="outline" icon={<Plus size={13} />} onClick={() => setMethodModal(true)}>
-              <span className="hidden sm:inline">Add Payout Method</span>
-              <span className="sm:hidden">Method</span>
-            </Button>
-            <Button size="sm" onClick={() => setPayoutModal(true)} disabled={!activeWallet || activeWallet.availableBalance <= 0}>
-              Request Payout
-            </Button>
-          </>
+          <Button size="sm" variant="outline" icon={<Plus size={13} />} onClick={() => setMethodModal(true)}>
+            <span className="hidden sm:inline">Add Payout Method</span>
+            <span className="sm:hidden">Method</span>
+          </Button>
         }
       />
-      <div className="px-4 md:px-8 pt-4">
+      <div className="px-4 md:px-8 pt-4 flex flex-col gap-3">
+        <div className="flex items-center gap-2 text-[12.5px] text-carbon bg-info-bg border border-[#bfdcf3] rounded-lg px-3 py-2">
+          <CalendarCheck size={14} className="shrink-0 text-brand-royal" />
+          <span>{PAYOUT_NOTE} Keep a payout method on file so we know where to send it.</span>
+        </div>
         <TabBar
           tabs={[
             { id: 'overview', label: 'Overview' },
@@ -567,11 +441,6 @@ export function StoreFinance() {
             <p className="font-serif text-[36px] font-normal text-carbon leading-[1.1] mb-3">{fmt(activeWallet.availableBalance, activeWallet.currency)}</p>
             <div className="flex items-center gap-6 flex-wrap">
               <span className="text-[13px] text-slate">Pending: <span className="text-carbon font-bold">{fmt(activeWallet.pendingBalance, activeWallet.currency)}</span></span>
-              {activeWallet.nextPayout.scheduledAt && (
-                <span className="text-[13px] text-brand-orange font-bold">
-                  Next Payout: {new Date(activeWallet.nextPayout.scheduledAt).toLocaleDateString()}
-                </span>
-              )}
               {activeWallet.nextPayout.method && (
                 <span className="text-[13px] text-slate">
                   Method: {METHOD_LABEL[activeWallet.nextPayout.method.type as PayoutMethodType] ?? activeWallet.nextPayout.method.type}
@@ -580,9 +449,7 @@ export function StoreFinance() {
               )}
             </div>
           </div>
-          <Button size="md" onClick={() => setPayoutModal(true)} disabled={activeWallet.availableBalance <= 0} iconRight={<ArrowRight size={14} />}>
-            Request Payout
-          </Button>
+          <p className="text-[12.5px] text-slate max-w-[260px]">{PAYOUT_NOTE}</p>
         </div>
 
         {/* Metrics */}
@@ -593,9 +460,8 @@ export function StoreFinance() {
             trend={`${activeWallet.summary.revenueGrowthPercent >= 0 ? '+' : ''}${activeWallet.summary.revenueGrowthPercent}% vs last month`}
             trendUp={activeWallet.summary.revenueGrowthPercent >= 0}
           />
-          <MetricCard label="Platform Fees" value={fmt(activeWallet.summary.platformFees, activeWallet.currency)} sub="This month" />
+          <MetricCard label="Commission" value={fmt(activeWallet.summary.platformFees, activeWallet.currency)} sub="This month" />
           <MetricCard label="Total Paid Out" value={fmt(activeWallet.summary.totalPaidOut, activeWallet.currency)} sub="All time" />
-          <MetricCard label="Pending Tax" value={fmt(activeWallet.summary.pendingTax, activeWallet.currency)} sub="Estimated" />
         </div>
 
         {/* 2-col layout */}
@@ -668,80 +534,22 @@ export function StoreFinance() {
               )}
             </div>
 
-            {/* Payout Schedule */}
-            {schedule && (
-              <div className="bg-white border border-bone rounded-xl px-5 py-5">
-                <p className="font-serif text-[18px] text-carbon mb-3">Payout Schedule</p>
-                <div className="flex flex-col gap-2.5">
-                  {[
-                    ['Frequency', schedule.frequency ? schedule.frequency[0].toUpperCase() + schedule.frequency.slice(1) : '—'],
-                    ['Status', schedule.isEnabled ? 'Enabled' : 'Disabled'],
-                    ['Minimum', fmt(schedule.minimumAmount, schedule.currency)],
-                    ['Next Payout', schedule.nextPayoutAt ? new Date(schedule.nextPayoutAt).toLocaleDateString() : '—'],
-                  ].map(([label, val]) => (
-                    <div key={label} className="flex justify-between items-center">
-                      <span className="text-xs text-slate">{label}</span>
-                      <span className="text-xs font-medium text-graphite">{val}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-3 pt-3 border-t border-bone">
-                  <button onClick={() => setScheduleModal(true)}
-                    className="px-3.5 py-1.5 bg-white border border-bone rounded-[7px] text-xs text-graphite cursor-pointer hover:border-brand-orange/40">
-                    Update Schedule
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Fee Breakdown */}
+            {/* Fees — only the commission (the real, per-store rate) and card
+                processing; the old listing/delivery/AI-credit rows were fixed
+                strings, not store data. */}
             <div className="bg-white border border-bone rounded-xl px-5 py-5">
-              <p className="font-serif text-[18px] text-carbon mb-3">Fee Breakdown</p>
+              <p className="font-serif text-[18px] text-carbon mb-3">Fees</p>
               <div className="flex flex-col gap-2.5">
                 {[
-                  ['Marketplace Listing Fee', dashboard.feeBreakdown.marketplaceListingFee],
-                  ['Transaction Fee', dashboard.feeBreakdown.transactionFee],
-                  ['Payment Processing', dashboard.feeBreakdown.paymentProcessing],
-                  ['Digital Delivery', dashboard.feeBreakdown.digitalDelivery],
-                  ['AI Credits', dashboard.feeBreakdown.aiCredits],
+                  ['Edudeen commission', dashboard.feeBreakdown.transactionFee],
+                  ['Card processing', dashboard.feeBreakdown.paymentProcessing],
                 ].map(([label, val]) => (
-                  <div key={label} className="flex justify-between items-center">
-                    <span className="text-xs text-slate">{label}</span>
-                    <span className="text-xs font-medium text-graphite">{val}</span>
+                  <div key={label} className="flex justify-between items-start gap-3">
+                    <span className="text-xs text-slate shrink-0">{label}</span>
+                    <span className="text-xs font-medium text-graphite text-right">{val}</span>
                   </div>
                 ))}
               </div>
-            </div>
-
-            {/* Tax Reports */}
-            <div className="bg-white border border-bone rounded-xl px-5 py-5">
-              <div className="flex items-center justify-between mb-3">
-                <p className="font-serif text-[18px] text-carbon">Tax Reports</p>
-                <button onClick={handleGenerateTaxReport} disabled={generatingTax}
-                  className="text-[11px] text-brand-orange hover:underline cursor-pointer bg-transparent border-none disabled:opacity-50">
-                  {generatingTax ? 'Generating…' : 'Generate'}
-                </button>
-              </div>
-              {taxReports.length === 0 ? (
-                <p className="text-xs text-slate">No tax reports yet.</p>
-              ) : (
-                <div className="flex flex-col gap-3">
-                  {taxReports.map(r => (
-                    <div key={r._id} className="flex items-center justify-between gap-2">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[13px] font-medium text-graphite leading-[1.3] capitalize">{r.period} {r.year}</p>
-                        <p className="text-[11px] text-slate mt-0.5">Net {fmt(r.netRevenue, r.currency)} · Est. tax {fmt(r.estimatedTax, r.currency)}</p>
-                      </div>
-                      {r.pdfUrl && (
-                        <a href={r.pdfUrl} target="_blank" rel="noreferrer"
-                          className="shrink-0 flex items-center gap-1 px-2.5 py-1 bg-white border border-bone rounded-[6px] text-[11px] font-medium text-slate hover:border-brand-orange/40">
-                          PDF
-                        </a>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
 
             {/* Recent Payouts */}
@@ -767,13 +575,6 @@ export function StoreFinance() {
       {methodModalEl}
       {editingMethod && (
         <PayoutMethodModal storeId={storeId} editing={editingMethod} defaultCurrency={activeWallet.currency} onClose={() => setEditingMethod(null)} onSaved={() => { setEditingMethod(null); loadCore(); loadWalletScoped(); }} />
-      )}
-      {payoutModal && (
-        <RequestPayoutModal storeId={storeId} availableBalance={activeWallet.availableBalance} currency={activeWallet.currency} methods={methods}
-          onClose={() => setPayoutModal(false)} onRequested={() => { setPayoutModal(false); loadCore(); loadWalletScoped(); loadTransactions(); }} />
-      )}
-      {scheduleModal && schedule && (
-        <ScheduleModal storeId={storeId} schedule={schedule} onClose={() => setScheduleModal(false)} onSaved={() => { setScheduleModal(false); loadWalletScoped(); }} />
       )}
       {selectedPayoutId && (
         <PayoutDetailModal storeId={storeId} payoutId={selectedPayoutId} onClose={() => setSelectedPayoutId(null)} />

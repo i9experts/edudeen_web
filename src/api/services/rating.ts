@@ -57,7 +57,7 @@ export interface Pagination {
 
 export interface MyReviewEntry {
   reviewId:           string;
-  product:            { productId: string; name: string; image: string | null } | null;
+  product:            { productId: string; name: string; image: string | null; slug?: string | null } | null;
   rating:             number | null;
   comments:           ReviewComment[];
   media:              string[];

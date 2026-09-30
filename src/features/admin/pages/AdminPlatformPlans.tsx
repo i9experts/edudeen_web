@@ -30,15 +30,16 @@ const DEFAULT_LIMITS: PlatformPlanLimits = {
 
 type BooleanKeys<T> = { [K in keyof T]-?: NonNullable<T[K]> extends boolean ? K : never }[keyof T];
 
+// Only the toggles that matter for an education shop are shown. The hidden
+// SaaS/POS ones (custom domain, white label, abandoned-cart recovery, API &
+// webhooks) plus the hidden numeric limits (staff seats, SLA uptime %,
+// maxPosLocations) are NOT dropped: `limits` state is seeded from the whole
+// saved `plan.limits` object and sent back as-is, so their values survive.
 const BOOL_FLAGS: { key: BooleanKeys<PlatformPlanLimits>; label: string }[] = [
-  { key: 'customDomainAllowed', label: 'Custom domain' },
-  { key: 'whiteLabelAllowed', label: 'White label' },
   { key: 'loyaltyProgramAllowed', label: 'Loyalty program' },
   { key: 'subscriptionProductsAllowed', label: 'Store subscriptions' },
   { key: 'advancedAnalyticsAllowed', label: 'Advanced analytics' },
-  { key: 'abandonedCartRecoveryAllowed', label: 'Abandoned cart recovery' },
   { key: 'emailCampaignsAllowed', label: 'Email campaigns' },
-  { key: 'apiWebhooksAllowed', label: 'API & webhooks' },
   { key: 'dedicatedAccountManager', label: 'Dedicated account manager' },
   { key: 'prioritySupport', label: 'Priority support' },
   { key: 'marketplaceFeaturedBadge', label: 'Marketplace featured badge' },
@@ -125,15 +126,23 @@ function PlanFormModal({ plan, onClose, onSaved }: { plan: PlatformPlan | 'new';
           <p className="text-[12px] font-semibold text-charcoal mb-2">Limits</p>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
             <Input label="Max products (-1=∞)" type="number" value={limits.maxProducts ?? ''} onChange={e => setLimit('maxProducts', Number(e.target.value))} />
-            <Input label="Max staff (-1=∞)" type="number" value={limits.maxStaffAccounts ?? ''} onChange={e => setLimit('maxStaffAccounts', Number(e.target.value))} />
-            {/* `maxPosLocations` is intentionally not editable (in-person POS
-                is retired) but stays in `limits`, so the saved value is preserved. */}
+            {/* `maxStaffAccounts`, `slaUptimePercent` and `maxPosLocations` are
+                intentionally not editable here (not relevant to an education
+                shop) but stay in `limits`, so the saved values are preserved. */}
             <Input label="AI credits/mo" type="number" value={limits.aiCreditsPerMonth ?? ''} onChange={e => setLimit('aiCreditsPerMonth', Number(e.target.value))} />
-            <Input label="Txn fee (0-1)" type="number" step="0.01" min={0} max={1} value={limits.transactionFeeRate ?? ''} onChange={e => setLimit('transactionFeeRate', Number(e.target.value))} />
-            <Input label="SLA uptime %" type="number" value={limits.slaUptimePercent ?? ''} onChange={e => setLimit('slaUptimePercent', Number(e.target.value))} />
             <Input label="Max store banners (-1=∞)" type="number" value={limits.maxActiveStoreBanners ?? ''} onChange={e => setLimit('maxActiveStoreBanners', Number(e.target.value))} />
             <Input label="Max active promotions (-1=∞)" type="number" value={limits.maxActivePromotions ?? ''} onChange={e => setLimit('maxActivePromotions', Number(e.target.value))} />
           </div>
+          <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,180px)_1fr] gap-x-3 gap-y-1 items-start mb-3">
+            <Input label="Txn fee (0-1)" type="number" step="0.01" min={0} max={1} value={limits.transactionFeeRate ?? ''} onChange={e => setLimit('transactionFeeRate', Number(e.target.value))} />
+            <p className="text-[11.5px] text-slate leading-[1.5] sm:pt-[26px]">
+              Commission Edudeen keeps on each sale (0.05 = 5%). This plan's fee overrides the global commission rule for stores on this plan;
+              only a seller-specific override in Commission Rules takes precedence over it.
+            </p>
+          </div>
+          <p className="text-[11.5px] text-slate mb-3">
+            "AI credits/mo" is the monthly AI allowance each store on this plan receives — this is the setting that's actually used.
+          </p>
           <div className="flex flex-wrap gap-2">
             {BOOL_FLAGS.map(f => {
               const active = !!limits[f.key];
@@ -228,6 +237,9 @@ function SubscribersModal({ plan, onClose }: { plan: PlatformPlan; onClose: () =
           ) : (
             <div className="flex flex-col gap-3">
               <Input label="Invoice ID" value={invoiceId} onChange={e => setInvoiceId(e.target.value)} placeholder="Paste the invoice ID to refund" />
+              {/* Admins can't list a store's plan invoices yet (that endpoint is
+                  seller-only), so the ID can't be prefilled here. */}
+              <p className="text-[11.5px] text-slate -mt-1">Invoice IDs aren't listed here yet. Ask the seller for it (from their Billing page) or copy it from the Stripe dashboard.</p>
               <Input label="Amount (USD)" type="number" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} placeholder="Leave blank for full remaining amount" />
               {refundError && <p className="text-[12px] text-error">{refundError}</p>}
             </div>

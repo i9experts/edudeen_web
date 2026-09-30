@@ -43,6 +43,13 @@ const TABS: { id: Tab; label: string; Icon: LucideIcon }[] = [
   { id: 'coupons',   label: 'Coupons',        Icon: TagIcon      },
   { id: 'discounts', label: 'Discounts',      Icon: Percent      },
   { id: 'platform',  label: 'Platform Sales', Icon: Megaphone    },
+];
+
+// Not shown as tabs: Email Campaigns / Abandoned Cart / Affiliate have no
+// backend yet ("Coming Soon" placeholders), and Gift Cards doesn't fit an
+// education shop. Their panels stay in the code, just unreachable; kept in
+// this list only so the Coming Soon fallback below can still label them.
+const HIDDEN_TABS: { id: Tab; label: string; Icon: LucideIcon }[] = [
   { id: 'email',     label: 'Email Campaigns', Icon: Mail         },
   { id: 'cart',      label: 'Abandoned Cart',  Icon: ShoppingCart },
   { id: 'affiliate', label: 'Affiliate',       Icon: Handshake    },
@@ -892,7 +899,7 @@ export function StoreMarketing() {
               <div>
                 <p className="text-[15px] font-bold text-carbon">Store Banners</p>
                 <p className="text-[12.5px] text-slate mt-0.5">
-                  Hero, promotion, season, collection, and (coming soon) video banners for your storefront.
+                  Hero, promotion, season and collection banners for your storefront.
                 </p>
               </div>
               <Button icon={<Plus size={14} />} onClick={() => setAddingBanner(true)}>Add Banner</Button>
@@ -1607,10 +1614,10 @@ export function StoreMarketing() {
         {(tab === 'email' || tab === 'cart' || tab === 'affiliate') && (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <div className="text-brand-orange mb-4">
-              {(() => { const found = TABS.find(t => t.id === tab); return found ? <found.Icon size={48} /> : null; })()}
+              {(() => { const found = HIDDEN_TABS.find(t => t.id === tab); return found ? <found.Icon size={48} /> : null; })()}
             </div>
             <p className="text-base font-semibold text-carbon mb-1.5">
-              {TABS.find(t => t.id === tab)?.label} — Coming Soon
+              {HIDDEN_TABS.find(t => t.id === tab)?.label} — Coming Soon
             </p>
             <p className="text-[13px] text-slate">
               This feature is being built. Stay tuned for updates!

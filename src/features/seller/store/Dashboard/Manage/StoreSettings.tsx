@@ -123,8 +123,9 @@ const PRODUCT_TYPE_LABELS: Record<ProductType, string> = {
   in_person_pos:        'In-Person (retired)',
 };
 const ALL_PRODUCT_TYPES: ProductType[] = [
-  'physical_products', 'digital_downloads', 'educational_resources',
-  'services_bookings', 'subscriptions',
+  // services_bookings (Classes / Tutoring) is not offered — there is no
+  // product/booking flow behind it yet; the label above stays for legacy stores.
+  'physical_products', 'digital_downloads', 'educational_resources', 'subscriptions',
 ];
 
 // ── Skeleton ──────────────────────────────────────────────────────────────────

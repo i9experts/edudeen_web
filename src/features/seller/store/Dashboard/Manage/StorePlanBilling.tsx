@@ -32,6 +32,12 @@ const ADDON_LABELS: Record<AddonType, string> = {
   sms_notifications: 'SMS Notifications',
 };
 
+// Only add-ons with a real effect are offered for purchase — extra AI credits
+// top up the AI Studio balance. Staff seats, tax compliance, SMS and priority
+// placement have nothing behind them yet (labels above stay only so any
+// already-purchased row still renders a name).
+const PURCHASABLE_ADDONS: AddonType[] = ['extra_ai_credits'];
+
 function daysUntil(dateStr: string): number {
   return Math.max(0, Math.ceil((new Date(dateStr).getTime() - Date.now()) / (24 * 60 * 60 * 1000)));
 }
@@ -306,7 +312,6 @@ export default function StorePlanBilling() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <UsageBar label="Products" used={entitlements.maxProducts.used} max={entitlements.maxProducts.limit} Icon={Package} />
-              <UsageBar label="Staff Accounts" used={entitlements.maxStaffAccounts.used} max={entitlements.maxStaffAccounts.limit} Icon={Users} />
               <UsageBar
                 label="AI Credits (balance)"
                 used={entitlements.aiCredits.monthlyAllowance === -1 ? entitlements.aiCredits.balance : Math.max(0, entitlements.aiCredits.monthlyAllowance - entitlements.aiCredits.balance)}
@@ -416,7 +421,7 @@ export default function StorePlanBilling() {
       {addonModal && (
         <Modal title="Add an Add-on" width={420} onClose={() => setAddonModal(false)}>
           <div className="flex flex-col gap-2">
-            {(Object.keys(ADDON_LABELS) as AddonType[]).map(type => (
+            {PURCHASABLE_ADDONS.map(type => (
               <button key={type} disabled={addonBusy} onClick={() => handlePurchaseAddon(type)}
                 className="text-left px-3.5 py-3 rounded-lg bg-cream border border-bone cursor-pointer hover:border-brand-orange/40 disabled:opacity-50 disabled:cursor-wait">
                 <span className="text-[13px] font-medium text-charcoal">{ADDON_LABELS[type]}</span>

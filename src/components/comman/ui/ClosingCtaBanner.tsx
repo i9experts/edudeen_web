@@ -6,7 +6,7 @@ import { Button } from './Button';
 import { Avatar } from './Avatar';
 import { PhoneShell, StatusBar, HomeScreenMockup } from './AppDownloadBanner';
 import { ProductImage } from '@/components/comman/marketplace/ProductCard';
-import { useSellEntry } from '@/hooks/auth/useSellEntry';
+import { TokenStorage } from '@/api/services/auth';
 import { formatMoney } from '@/utils/currency';
 import { apiGetPlatformStats, type PlatformStats } from '@/api/services/store';
 import { apiGetTestimonials, type Testimonial } from '@/api/services/testimonials';
@@ -20,17 +20,8 @@ const CLOSING_TAB_ICONS = [Home, ShoppingBag, Package, User] as const;
 const compactNumber   = new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 });
 const compactCurrency = new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1, style: 'currency', currency: 'USD' });
 
-// Design-reference placeholder content — shown whenever the live platform
-// numbers/reviews/catalog aren't available yet (or the API is unreachable),
-// so this banner always renders looking finished instead of blank. Real
-// data (fetched below) replaces every one of these the moment it loads.
-const FALLBACK_STAT_ITEMS = [
-  { value: '27K+',  label: 'Active Sellers' },
-  { value: '2.6M+', label: 'Products Sold' },
-  { value: '132K+', label: 'Orders Delivered' },
-  { value: '98%',   label: 'Happy Customers' },
-];
-const FALLBACK_AVATAR_NAMES = ['Ayesha K', 'Bilal R', 'Sara M', 'Zain A', 'Noor F'];
+// Phone-mockup sample rows, used only until real catalogue items load. Stats,
+// avatars and ratings never fall back to made-up figures.
 const FALLBACK_PREVIEW_ITEMS = [
   { id: 'fallback-1', name: 'Tajweed Quran (Colour-Coded)', images: [] as string[], price: 24.99,  currency: 'USD' },
   { id: 'fallback-2', name: 'Arabic for Beginners Course',  images: [] as string[], price: 39.99,  currency: 'USD' },
@@ -56,7 +47,6 @@ const CLOSING_TRUST_ITEMS = [
  */
 export function ClosingCtaBanner({ className }: { className?: string }) {
   const navigate = useNavigate();
-  const sellEntry = useSellEntry();
 
   const [stats, setStats] = useState<PlatformStats | null>(null);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
@@ -93,10 +83,11 @@ export function ClosingCtaBanner({ className }: { className?: string }) {
     { value: `${compactNumber.format(stats.buyersCount)}+`,   label: 'Happy Buyers' },
     ...(stats.ratingCount > 0 ? [{ value: `${stats.avgRating.toFixed(1)}★`, label: 'Store Rating' }] : []),
   ] : [];
-  const displayStatItems = realStatItems.length > 0 ? realStatItems : FALLBACK_STAT_ITEMS;
+  // Real numbers only — nothing is shown until the stats API answers.
+  const displayStatItems = realStatItems;
 
   const hasRealRating = !!stats && stats.ratingCount > 0;
-  const avatarNames = testimonials.length > 0 ? testimonials.slice(0, 5).map(t => t.name) : FALLBACK_AVATAR_NAMES;
+  const avatarNames = testimonials.slice(0, 5).map(t => t.name);
 
   // Real catalog items with an actual photo when available; the fixed
   // reference product list otherwise (ProductImage already renders a clean
@@ -136,7 +127,7 @@ export function ClosingCtaBanner({ className }: { className?: string }) {
            is wide enough now to reach well past the old right-hand slot. */}
         <div className="lg:max-w-[560px]">
           <p className="text-[13px] sm:text-[14px] font-bold text-white mb-4">
-            Trusted by thousands of sellers &amp; buyers worldwide
+            Trusted by educators, parents &amp; learners
           </p>
           <div className="flex flex-wrap items-center gap-x-7 gap-y-3">
             {displayStatItems.map(({ value, label }) => (
@@ -151,13 +142,15 @@ export function ClosingCtaBanner({ className }: { className?: string }) {
                   <Avatar key={i} name={name} size={34} className="ring-2 ring-white/40" />
                 ))}
               </div>
-              <div className="flex items-center gap-[4px]">
-                <Star size={13} className="text-white fill-white" />
-                <span className="text-[13px] font-bold text-white">{hasRealRating ? stats!.avgRating.toFixed(1) : '4.8'}/5</span>
-                <span className="text-[11px] text-white/70 whitespace-nowrap">
-                  From {hasRealRating ? `${compactNumber.format(stats!.ratingCount)}+` : '50k+'} reviews
-                </span>
-              </div>
+              {hasRealRating && (
+                <div className="flex items-center gap-[4px]">
+                  <Star size={13} className="text-white fill-white" />
+                  <span className="text-[13px] font-bold text-white">{stats!.avgRating.toFixed(1)}/5</span>
+                  <span className="text-[11px] text-white/70 whitespace-nowrap">
+                    From {compactNumber.format(stats!.ratingCount)} reviews
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -170,17 +163,20 @@ export function ClosingCtaBanner({ className }: { className?: string }) {
               Ready to start your journey?
             </h2>
             <p className="text-[13px] text-white/85 mb-6 leading-[1.7]">
-              Join thousands of sellers &amp; buyers growing together on Edudeen.
+              Books, Quran learning, courses and worksheets from educators you can trust.
             </p>
             <div className="flex flex-wrap gap-3">
-              <Button variant="dark" size="md" pill onClick={sellEntry.go} loading={sellEntry.loading}>
-                Create Your Account <ArrowRight size={13} className="inline align-middle ml-1" />
-              </Button>
+              {/* Plain buyer sign-up (not the seller flow); hidden once signed in. */}
+              {!TokenStorage.isLoggedIn() && (
+                <Button variant="dark" size="md" pill onClick={() => navigate('/register')}>
+                  Create Your Account <ArrowRight size={13} className="inline align-middle ml-1" />
+                </Button>
+              )}
               <button
-                onClick={() => navigate('/marketplace')}
+                onClick={() => navigate('/')}
                 className="inline-flex items-center justify-center gap-2 px-5 py-[10px] rounded-full text-[13px] font-medium text-carbon bg-white hover:bg-white/90 transition-colors cursor-pointer"
               >
-                Explore Marketplace
+                Browse resources
               </button>
             </div>
           </div>

@@ -22,7 +22,8 @@ import { CartPage }     from '@/features/buyer/pages/CartPage';
 import { CheckoutPage } from '@/features/buyer/pages/CheckoutPage';
 import { LoginPage }    from '@/features/auth/pages/LoginPage';
 import { RegisterPage } from '@/features/auth/pages/RegisterPage';
-import { Marketplace }  from '@/features/buyer/pages/Marketplace';
+import { MarketplaceRedirect } from '@/features/buyer/pages/MarketplaceRedirect';
+import { NotForBuyers } from '@/router/NotForBuyers';
 import { OnboardingPage } from '@/features/auth/pages/onboard/OnboardingPage';
 
 // Remaining auth pages — eagerly imported too (no lazy/Suspense split), same
@@ -68,7 +69,6 @@ const StorefrontBlogIndex  = lazy(() => named(import('@/features/buyer/pages/Sto
 const StorefrontBlogPost   = lazy(() => named(import('@/features/buyer/pages/StorefrontBlogPost'),               'StorefrontBlogPost'));
 const StorefrontCartPage   = lazy(() => named(import('@/features/storefront/StorefrontCartPage'),                'StorefrontCartPage'));
 const StorefrontLoginPage  = lazy(() => named(import('@/features/storefront/StorefrontLoginPage'),               'StorefrontLoginPage'));
-const EducationMarketplace = lazy(() => named(import('@/features/buyer/pages/EducationMarketplace'),            'EducationMarketplace'));
 const MaintenancePage      = lazy(() => named(import('@/features/buyer/pages/MaintenancePage'),                 'MaintenancePage'));
 
 // ── Account (buyer) ───────────────────────────────────────────────────────────
@@ -198,8 +198,8 @@ const mainRouter = createBrowserRouter([
             path: '/',
             element: <PublicLayout />,
             children: [
-              { path: 'pricing',         element: <PricingPage /> },
-              { path: 'sellers',         element: <ForSellersPage /> },
+              { path: 'pricing',         element: <NotForBuyers><PricingPage /></NotForBuyers> },
+              { path: 'sellers',         element: <NotForBuyers><ForSellersPage /></NotForBuyers> },
               { path: 'faq',             element: <FaqPage /> },
               { path: 'help',            element: <Navigate to="/faq" replace /> },
               { path: 'privacy-policy',  element: <PrivacyPolicyPage /> },
@@ -208,10 +208,10 @@ const mainRouter = createBrowserRouter([
               { path: 'contact-us',      element: <ContactUsPage /> },
               { path: 'contact',         element: <Navigate to="/contact-us" replace /> },
               { path: 'about',           element: <AboutPage /> },
-              { path: 'products',        element: <ProductsOverviewPage /> },
-              { path: 'products/:slug',  element: <PlatformProductPage /> },
-              { path: 'solutions',       element: <SolutionsOverviewPage /> },
-              { path: 'solutions/:slug', element: <SolutionPage /> },
+              { path: 'products',        element: <NotForBuyers><ProductsOverviewPage /></NotForBuyers> },
+              { path: 'products/:slug',  element: <NotForBuyers><PlatformProductPage /></NotForBuyers> },
+              { path: 'solutions',       element: <NotForBuyers><SolutionsOverviewPage /></NotForBuyers> },
+              { path: 'solutions/:slug', element: <NotForBuyers><SolutionPage /></NotForBuyers> },
             ],
           },
           // Account — nested routes, each section is its own deep-linkable page
@@ -236,22 +236,16 @@ const mainRouter = createBrowserRouter([
             ],
           },
           // Pages with their own embedded navbar (no PublicLayout wrapper needed)
-          // `:slugOrId` is optional (bare `/marketplace` browses everything) and
-          // does double duty: a category slug narrows the browse view, while a
-          // 24-hex-char value is treated by Marketplace as a legacy bookmarked
-          // product id (old `/marketplace/:id` product links) and resolved/
-          // redirected to the new canonical `/product/:slug` — see
-          // Marketplace.tsx's handling of `slugOrId`. Can't be two separate
-          // sibling routes since both shapes share the identical path pattern.
           { index: true,             element: <Homepage /> },
-          { path: 'marketplace/:slugOrId?', element: <Marketplace /> },
+          // The homepage is the shop — the old separate marketplace pages
+          // (/marketplace, /education) forward there so old links keep working.
+          { path: 'marketplace/:slugOrId?', element: <MarketplaceRedirect /> },
+          { path: 'education/:levelSlug?',  element: <Navigate to="/" replace /> },
+          { path: 'EducationMarketplace',   element: <Navigate to="/" replace /> },
           { path: 'cart',            element: <CartPage /> },
           { path: 'checkout',        element: <CheckoutPage /> },
           { path: 'order-success',   element: <OrderSuccessPage /> },
           { path: 'product/:slug',   element: <ProductDetail /> },
-          { path: 'education/:levelSlug?', element: <EducationMarketplace /> },
-          // Old mis-cased path — static alias, same idiom as 'settings' above.
-          { path: 'EducationMarketplace', element: <Navigate to="/education" replace /> },
         ],
       },
 

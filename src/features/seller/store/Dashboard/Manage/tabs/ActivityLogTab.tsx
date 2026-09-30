@@ -96,7 +96,7 @@ export function ActivityLogTab() {
 
   const metrics = stats ? [
     { label: 'Total Events',        value: stats.totalEvents.toLocaleString(),      sub: 'Last 90 days' },
-    { label: 'Staff Actions Today', value: String(stats.staffActionsToday),         sub: `${stats.activeStaffToday} team member(s) active` },
+    // No staff accounts exist yet (no RBAC), so there's no 'Staff Actions' card.
     { label: 'Security Alerts',     value: String(stats.securityAlerts),            sub: stats.securityAlerts === 0 ? 'No threats' : 'Review recommended' },
     { label: 'Last Login',          value: stats.lastLogin ? timeAgo(stats.lastLogin.at) : '—', sub: stats.lastLogin?.actorName ?? '' },
   ] : [];
@@ -105,7 +105,7 @@ export function ActivityLogTab() {
     <div className="flex flex-col gap-5">
 
       <div className="flex items-center justify-between">
-        <p className="text-[13px] text-slate">Full audit trail of all staff actions, changes, and security events.</p>
+        <p className="text-[13px] text-slate">Full audit trail of your store's changes and security events.</p>
         <button
           onClick={() => { apiExportActivityLog(storeId, store?.name ?? 'store').catch(() => {}); }}
           className="flex items-center gap-1.5 px-4 py-[7px] bg-white border border-bone rounded-lg text-xs font-medium text-graphite cursor-pointer transition-colors duration-150 hover:bg-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/50"
@@ -115,7 +115,7 @@ export function ActivityLogTab() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {metrics.map(m => (
           <div key={m.label} className="bg-white border border-bone rounded-[10px] px-5 py-4">
             <p className="text-[11px] font-medium text-slate uppercase tracking-[0.06em] mb-1">{m.label}</p>

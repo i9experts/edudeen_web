@@ -1,5 +1,9 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { X } from 'lucide-react';
+import { clsx } from 'clsx';
+import { useIsBuyer } from '@/hooks/auth/useIsBuyer';
+import { apiSearchProducts } from '@/api/services/search';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { getStorefrontUrl } from '@/utils/storefrontUrl';
 import { useProductsByCategory } from '@/hooks/marketplace/useProductsByCategory';
@@ -28,17 +32,6 @@ import type { MarketplaceProduct, MarketplaceSortBy } from '@/api/services/marke
 import { RevealStagger } from '@/components/comman/motion/Reveal';
 import { AnimatedCounter } from '@/components/comman/motion/AnimatedCounter';
 import heroImage from '@/assets/learning-hero.jpg';
-
-// Same tree-search helper Marketplace.tsx uses to resolve a mega-menu/grid
-// category click's id into its canonical slug for the `/marketplace/:slug` link.
-function findCategoryById(nodes: CategoryNode[], id: string): CategoryNode | null {
-  for (const n of nodes) {
-    if (n._id === id) return n;
-    const found = findCategoryById(n.children ?? [], id);
-    if (found) return found;
-  }
-  return null;
-}
 
 const compactNumber   = new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 });
 const compactCurrency = new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1, style: 'currency', currency: 'USD' });
@@ -106,10 +99,32 @@ function productText(p: MarketplaceProduct) {
   return `${p.name} ${p.description ?? ''} ${(p.tags ?? []).join(' ')}`;
 }
 
+function defaultVariant(p: MarketplaceProduct) {
+  return (p.variants ?? []).find(v => v.isDefault) ?? p.variants?.[0];
+}
+
 function isOnSale(p: MarketplaceProduct) {
-  const dv = (p.variants ?? []).find(v => v.isDefault) ?? p.variants?.[0];
+  const dv = defaultVariant(p);
   return dv?.compareAtPrice != null && dv.compareAtPrice > (dv.price ?? 0);
 }
+
+/**
+ * One shop category — a fixed subject (optionally backed by a real admin
+ * category of the same name) or any other admin root category. The same list
+ * drives the tabs, the "All Categories" menu, "Shop by category" and the
+ * Filters drawer, so they can never disagree.
+ */
+interface ShopTab {
+  id: string;
+  label: string;
+  /** Real category → filtered server-side. */
+  categoryId?: string;
+  /** No real category → matched on name/description/tags. */
+  keywords?: RegExp;
+  node?: CategoryNode;
+}
+
+const catTabId = (categoryId: string) => `cat-${categoryId}`;
 
 
 const linkButtonClass = sectionLinkClass;
@@ -123,6 +138,7 @@ const linkButtonClass = sectionLinkClass;
  */
 export function Homepage() {
   const navigate = useNavigate();
+  const isBuyer = useIsBuyer();
   usePageTitle('Home');
 
   const [categories, setCategories] = useState<CategoryNode[]>([]);
@@ -140,15 +156,18 @@ export function Homepage() {
     return () => { cancelled = true; };
   }, []);
 
-  const handleShopCategory = useCallback((id: string) => {
-    const match = id ? findCategoryById(categories, id) : null;
-    navigate(match ? `/marketplace/${match.slug}` : '/marketplace');
-  }, [categories, navigate]);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const searchQ = (searchParams.get('search') ?? '').trim();
 
   const submitSearch = (term: string) => {
     const q = term.trim();
-    navigate(q ? `/marketplace?search=${encodeURIComponent(q)}` : '/marketplace');
+    navigate(q ? `/?search=${encodeURIComponent(q)}` : '/');
   };
+  const clearSearch = () => setSearchParams(prev => {
+    const next = new URLSearchParams(prev);
+    next.delete('search');
+    return next;
+  }, { replace: true });
 
   // ── Discovery rails: one unfiltered catalogue pool, same source the
   //    Marketplace page's own rails use ──
@@ -187,44 +206,118 @@ export function Homepage() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [limit, setLimit]       = useState(PAGE_SIZE);
 
-  useEffect(() => { setLimit(PAGE_SIZE); }, [subject, level, language, sort, freeOnly, filters]);
+  useEffect(() => { setLimit(PAGE_SIZE); }, [subject, level, language, sort, freeOnly, filters, searchQ]);
 
-  const allCategories = flattenCategories(categories);
-  const subjectTab = SUBJECT_TABS.find(t => t.id === subject) ?? null;
-  // A real admin category named after the tab → filter server-side by it.
-  const subjectCategory = subjectTab ? allCategories.find(c => subjectTab.category.test(c.name)) ?? null : null;
+  const allCategories = useMemo(() => flattenCategories(categories), [categories]);
+  const shopTabs = useMemo<ShopTab[]>(() => {
+    const used = new Set<string>();
+    const subjects = SUBJECT_TABS.map(t => {
+      const node = allCategories.find(c => t.category.test(c.name));
+      if (node) used.add(node._id);
+      return { id: t.id, label: t.label, categoryId: node?._id, keywords: node ? undefined : t.keywords, node };
+    });
+    const extra = categories
+      .filter(c => !used.has(c._id))
+      .map(c => ({ id: catTabId(c._id), label: c.name, categoryId: c._id, node: c }));
+    return [...subjects, ...extra];
+  }, [categories, allCategories]);
+
+  // A tab id, or `cat-<id>` for a subcategory picked from the mega menu.
+  const subjectTab: ShopTab | null = useMemo(() => {
+    if (!subject) return null;
+    const tab = shopTabs.find(t => t.id === subject);
+    if (tab) return tab;
+    const node = allCategories.find(c => catTabId(c._id) === subject);
+    return node ? { id: subject, label: node.name, categoryId: node._id, node } : null;
+  }, [subject, shopTabs, allCategories]);
+
+  // `/?category=<slug>` (old /marketplace/<slug> links) opens that category.
+  useEffect(() => {
+    const slug = searchParams.get('category');
+    if (!slug || allCategories.length === 0) return;
+    const node = allCategories.find(c => c.slug === slug);
+    if (node) {
+      const tab = shopTabs.find(t => t.categoryId === node._id);
+      setSubject(tab ? tab.id : catTabId(node._id));
+    }
+    setSearchParams(prev => { const n = new URLSearchParams(prev); n.delete('category'); return n; }, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allCategories.length]);
+
   const languageDef = LANGUAGES.find(l => l.value === language) ?? null;
-
-  // Subject keywords, language and "on sale" aren't API filters — when any is
-  // on, fetch the largest page the API allows and narrow it here.
-  const clientSide = (!!subjectTab && !subjectCategory) || !!languageDef || filters.onSale;
   const itemType = filters.type[0]?.toLowerCase() as TypeFilter | undefined;
   const [minP, maxP] = filters.priceRange;
 
-  const { products: fetched, total: serverTotal, loading } = useProductsByCategory(
-    1, clientSide ? CLIENT_POOL : limit, subjectCategory?._id,
+  // ── Search (`/?search=`) — a real text search; every filter below then
+  //    narrows its results in the browser. ──
+  const [searchPool, setSearchPool] = useState<MarketplaceProduct[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  useEffect(() => {
+    if (!searchQ) { setSearchPool([]); return; }
+    let cancelled = false;
+    setSearchLoading(true);
+    apiSearchProducts(searchQ, 1, CLIENT_POOL)
+      .then(res => { if (!cancelled) setSearchPool(res.data?.products ?? []); })
+      .catch(() => { if (!cancelled) setSearchPool([]); })
+      .finally(() => { if (!cancelled) setSearchLoading(false); });
+    const t = setTimeout(() => resourcesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 350);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [searchQ]);
+
+  // Subject keywords, language and "on sale" aren't API filters — when any is
+  // on, fetch the largest page the API allows and narrow it here.
+  const clientSide = !!searchQ || !!subjectTab?.keywords || !!languageDef || filters.onSale;
+
+  const { products: browsed, total: serverTotal, loading: browseLoading } = useProductsByCategory(
+    1, clientSide ? CLIENT_POOL : limit, subjectTab?.categoryId,
     level ? 'educational' : (itemType || undefined),
     level || undefined, undefined, undefined,
     freeOnly ? undefined : (minP > 0 ? minP : undefined),
     freeOnly ? 0 : (maxP < PRICE_NO_MAX ? maxP : undefined),
     filters.minRating ?? undefined,
     SORT_TO_API[sort],
+    !searchQ,
   );
 
-  const narrowed = clientSide
-    ? fetched.filter(p => {
-        const text = productText(p);
-        if (subjectTab && !subjectCategory && !subjectTab.keywords.test(text)) return false;
-        if (languageDef && !languageDef.match.test(text)) return false;
-        if (filters.onSale && !isOnSale(p)) return false;
-        return true;
-      })
-    : fetched;
+  const narrowed = useMemo(() => {
+    if (!clientSide) return browsed;
+    const inSubject = (p: MarketplaceProduct) => {
+      if (!subjectTab) return true;
+      if (subjectTab.keywords) return subjectTab.keywords.test(productText(p));
+      return p.categoryId === subjectTab.categoryId || p.subCategoryId === subjectTab.categoryId;
+    };
+    const list = (searchQ ? searchPool : browsed).filter(p => {
+      if (!inSubject(p)) return false;
+      if (languageDef && !languageDef.match.test(productText(p))) return false;
+      if (filters.onSale && !isOnSale(p)) return false;
+      if (searchQ) {
+        // The browse API already applied these; search results need them here.
+        const price = defaultVariant(p)?.price ?? 0;
+        const kind = p.productType ?? p.type;
+        if (level && p.educationLevel !== level) return false;
+        if (itemType && kind !== itemType) return false;
+        if (freeOnly ? price > 0 : (price < minP || price > maxP)) return false;
+        if (filters.minRating && p.averageRating < filters.minRating) return false;
+      }
+      return true;
+    });
+    if (searchQ && sort !== 'featured') {
+      const price = (p: MarketplaceProduct) => defaultVariant(p)?.price ?? 0;
+      list.sort((a, b) =>
+        sort === 'low' ? price(a) - price(b)
+        : sort === 'high' ? price(b) - price(a)
+        : b.purchaseCount - a.purchaseCount);
+    }
+    return list;
+  }, [clientSide, browsed, searchPool, searchQ, subjectTab, languageDef, filters, level, itemType, freeOnly, minP, maxP, sort]);
+
+  const loading = searchQ ? searchLoading : browseLoading;
   const products = clientSide ? narrowed.slice(0, limit) : narrowed;
   const total = clientSide ? narrowed.length : serverTotal;
 
   const resetFilters = () => {
     setSubject(null); setLevel(''); setLanguage(''); setSort('featured'); setFreeOnly(false); setFilters(EMPTY_FILTERS);
+    if (searchQ) clearSearch();
   };
   const pageFilterCount = (subject ? 1 : 0) + (level ? 1 : 0) + (language ? 1 : 0) + (freeOnly ? 1 : 0) + (sort !== 'featured' ? 1 : 0);
   const drawerFilterCount =
@@ -237,6 +330,20 @@ export function Homepage() {
     setSubject(id);
     setTimeout(scrollToResources, 30);
   };
+  const handleShopCategory = useCallback((id: string) => {
+    setSubject(id || null);
+    setTimeout(() => resourcesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 30);
+  }, []);
+
+  // The shared tab list in the shape the mega menu / category grid expect.
+  const menuCategories = useMemo<CategoryNode[]>(() => shopTabs.map(t => ({
+    ...(t.node ?? {}),
+    _id: t.id,
+    name: t.label,
+    slug: t.node?.slug ?? t.id,
+    image: t.node?.image ?? null,
+    children: (t.node?.children ?? []).map(ch => ({ ...ch, _id: catTabId(ch._id) })),
+  }) as CategoryNode), [shopTabs]);
 
   // ── Cart + wishlist wiring (flash-sale cards add straight to cart) ──
   const { addToCart, adding, error: cartError, clearError: clearCartError } = useCartContext();
@@ -320,7 +427,7 @@ export function Homepage() {
         <BuyerNavbar />
         <MegaMenuBar
           compact
-          categories={categories}
+          categories={menuCategories}
           topPicks={topPicks}
           bestRated={bestRated}
           flashDeals={flashDeals}
@@ -357,10 +464,10 @@ export function Homepage() {
                 Find your next resource
               </button>
               <button
-                onClick={() => navigate('/marketplace')}
+                onClick={() => selectSubject('tarbiyyah')}
                 className="inline-block bg-white text-brand-orange border border-[#c5d2db] rounded-lg px-5 py-[11px] text-[14px] font-bold cursor-pointer hover:brightness-95"
               >
-                Browse the marketplace
+                Explore Tarbiyyah
               </button>
             </div>
           </div>
@@ -384,15 +491,15 @@ export function Homepage() {
         </div>
 
         {/* ── Shop by category ── */}
-        {categories.length > 0 && (
+        {menuCategories.length > 0 && (
           <section className="mb-12">
             <SectionHead
               eyebrow="Explore"
               title="Shop by category"
-              action={{ label: 'View all', onClick: () => navigate('/marketplace') }}
+              action={{ label: 'View all', onClick: () => selectSubject(null) }}
             />
             <RevealStagger className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4" step={0.04} y={12}>
-              {categories.slice(0, 12).map(c => (
+              {menuCategories.slice(0, 12).map(c => (
                 <button
                   key={c._id}
                   onClick={() => handleShopCategory(c._id)}
@@ -451,21 +558,36 @@ export function Homepage() {
         {/* ── Catalogue with filters ── */}
         <section ref={resourcesRef} className="scroll-mt-[150px] mb-12">
           <SectionHead
-            eyebrow={subjectTab ? subjectTab.label : 'Your next teaching moment'}
+            eyebrow={searchQ ? 'Search results' : subjectTab ? subjectTab.label : 'Your next teaching moment'}
             title="Resources with a purpose"
             sub="Thoughtful ideas for learning, growing and becoming."
-            action={{ label: 'View all resources', onClick: () => navigate(subjectCategory ? `/marketplace/${subjectCategory.slug}` : '/marketplace') }}
           />
 
           <CategoryTabs
-            tabs={SUBJECT_TABS}
-            activeId={subject}
+            tabs={shopTabs}
+            activeId={subjectTab && !shopTabs.some(t => t.id === subjectTab.id) ? null : subject}
             onSelect={selectSubject}
             className="!px-0 mb-5"
           />
 
           <div className="flex gap-[10px] flex-wrap mb-6 items-center">
             <FiltersButton count={pageFilterCount + drawerFilterCount} onClick={() => setFiltersOpen(true)} />
+            {searchQ && (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-pale-orange text-carbon text-[13px] font-semibold pl-3 pr-1.5 py-[6px]">
+                “{searchQ}”
+                <button onClick={clearSearch} aria-label="Clear search" className="size-5 rounded-full flex items-center justify-center bg-transparent border-none cursor-pointer hover:bg-white/70">
+                  <X size={13} />
+                </button>
+              </span>
+            )}
+            {subjectTab && !shopTabs.some(t => t.id === subjectTab.id) && (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-pale-orange text-carbon text-[13px] font-semibold pl-3 pr-1.5 py-[6px]">
+                {subjectTab.label}
+                <button onClick={() => setSubject(null)} aria-label="Clear category" className="size-5 rounded-full flex items-center justify-center bg-transparent border-none cursor-pointer hover:bg-white/70">
+                  <X size={13} />
+                </button>
+              </span>
+            )}
             {hasFilters && (
               <button onClick={resetFilters} className="bg-transparent border-none p-0 text-[13px] text-slate underline cursor-pointer">
                 Clear filters
@@ -517,7 +639,7 @@ export function Homepage() {
           >
             <Section title="Subject">
               <RadioRow name="f-subject" label="All resources" checked={!subject} onChange={() => setSubject(null)} />
-              {SUBJECT_TABS.map(t => (
+              {shopTabs.map(t => (
                 <RadioRow key={t.id} name="f-subject" label={t.label} checked={subject === t.id} onChange={() => setSubject(t.id)} />
               ))}
             </Section>
@@ -554,7 +676,7 @@ export function Homepage() {
             <SectionHead
               eyebrow="Loved by buyers"
               title="Top picks for you"
-              action={{ label: 'View all', onClick: () => navigate('/marketplace?sort=popularity') }}
+              action={{ label: 'View all', onClick: () => { setSort('popular'); selectSubject(null); } }}
             />
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-[14px] gap-y-[25px] md:gap-x-[22px] md:gap-y-[28px]">
               {poolLoading
@@ -570,7 +692,7 @@ export function Homepage() {
             <SectionHead
               eyebrow="Highest reviews"
               title="Best rated"
-              action={{ label: 'View all', onClick: () => navigate('/marketplace?sort=best-rated') }}
+              action={{ label: 'View all', onClick: () => { setFilters(f => ({ ...f, minRating: 4 })); selectSubject(null); } }}
             />
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-[14px] gap-y-[25px] md:gap-x-[22px] md:gap-y-[28px]">
               {bestRated.map(renderResourceCard)}
@@ -579,7 +701,7 @@ export function Homepage() {
         )}
 
         {/* ── Collections ── */}
-        <section className="mb-12 grid grid-cols-1 md:grid-cols-2 gap-[22px]">
+        <section className={clsx('mb-12 grid grid-cols-1 gap-[22px]', !isBuyer && 'md:grid-cols-2')}>
           <div className="rounded-[14px] p-7 bg-[#edf5e7]">
             <p className="text-[12px] font-bold tracking-[0.15em] uppercase text-brand-royal mb-[13px]">The Tarbiyyah collection</p>
             <h2 className="font-serif font-normal text-[27px] leading-[1.2] text-carbon mb-[10px]">Small habits. Strong character.</h2>
@@ -590,16 +712,18 @@ export function Homepage() {
               Explore character-building resources →
             </button>
           </div>
-          <div className="rounded-[14px] p-7 bg-[#f7f3d9]">
-            <p className="text-[12px] font-bold tracking-[0.15em] uppercase text-brand-royal mb-[13px]">Made by you. Shared with the world.</p>
-            <h2 className="font-serif font-normal text-[27px] leading-[1.2] text-carbon mb-[10px]">Your knowledge can go further.</h2>
-            <p className="text-[14px] text-carbon max-w-[390px] mb-4">
-              Give your teaching ideas a home in the Edudeen Creator Network.
-            </p>
-            <button onClick={() => navigate('/sellers')} className={linkButtonClass}>
-              Start selling on Edudeen →
-            </button>
-          </div>
+          {!isBuyer && (
+            <div className="rounded-[14px] p-7 bg-[#f7f3d9]">
+              <p className="text-[12px] font-bold tracking-[0.15em] uppercase text-brand-royal mb-[13px]">Made by you. Shared with the world.</p>
+              <h2 className="font-serif font-normal text-[27px] leading-[1.2] text-carbon mb-[10px]">Your knowledge can go further.</h2>
+              <p className="text-[14px] text-carbon max-w-[390px] mb-4">
+                Give your teaching ideas a home in the Edudeen Creator Network.
+              </p>
+              <button onClick={() => navigate('/sellers')} className={linkButtonClass}>
+                Start selling on Edudeen →
+              </button>
+            </div>
+          )}
         </section>
 
         {/* ── Featured sellers ── */}

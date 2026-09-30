@@ -133,7 +133,7 @@ export function CartPage() {
       <div className={clsx('max-w-[960px] mx-auto px-4 md:px-6 py-6 md:py-8', !isEmpty && items.length > 0 && 'pb-[88px] lg:pb-8')}>
         <Breadcrumb className="mb-4" items={[
           { label: 'Home', path: '/' },
-          { label: 'Marketplace', path: '/marketplace'},
+          { label: 'Home', path: '/' },
           { label: 'Cart' },
         ]} />
 
@@ -167,8 +167,7 @@ export function CartPage() {
                 Nothing here yet — browse the marketplace to find products, digital downloads, and courses from verified sellers.
               </p>
               <div className="relative flex items-center gap-2 flex-wrap justify-center">
-                <Button variant="primary" onClick={() => navigate('/marketplace')}>Browse Marketplace</Button>
-                <Button variant="outline" onClick={() => navigate('/education')}>Explore Education</Button>
+                <Button variant="primary" onClick={() => navigate('/')}>Browse resources</Button>
               </div>
             </div>
 
@@ -472,7 +471,7 @@ export function CartPage() {
 
               <Button
                 variant="ghost" size="sm" fullWidth className="justify-center"
-                onClick={() => navigate('/marketplace')}
+                onClick={() => navigate('/')}
               >
                 Continue Shopping
               </Button>

@@ -1,16 +1,17 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Package, Download, Truck, CheckCircle2, Clock, XCircle,
   ChevronDown, MapPin, Box, ShoppingBag,
-  BadgeCheck, RotateCcw, Loader2, Ban, Undo2,
+  BadgeCheck, RotateCcw, Ban, Undo2, Star,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { Card, EmptyState, Modal, Textarea, Button, SkeletonBox, PageHeader } from '@/components/comman/ui';
 import {
-  apiGetMyOrders, apiCancelOrder, apiRequestReturn, apiGetDownloadLink,
+  apiGetMyOrders, apiCancelOrder, apiRequestReturn,
   type OrderSummary, type OrderStatus, type OrderLineItem,
 } from '@/api/services/orders';
+import { DigitalFileDownloads } from '@/features/buyer/components/DigitalFileDownloads';
 import { currencySymbol } from '@/utils/currency';
 import { useToast } from '@/contexts/ToastContext';
 
@@ -47,46 +48,6 @@ function StatusBadge({ status }: { status: OrderStatus }) {
       <Icon size={9} />
       {cfg.label}
     </span>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// DownloadBtn — real flow: get a short-lived token, then open the direct-download URL
-// ─────────────────────────────────────────────────────────────────────────────
-function DownloadBtn({ orderId, productId }: { orderId: string; productId: string }) {
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
-
-  const handle = async () => {
-    setBusy(true);
-    setError('');
-    try {
-      const res = await apiGetDownloadLink(orderId, productId, 0);
-      const base = import.meta.env.VITE_API_URL as string;
-      window.open(`${base}${res.data.endpoint}?token=${res.data.token}`, '_blank');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch download link.');
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <div className="flex flex-col items-end gap-1">
-      <button
-        onClick={handle}
-        disabled={busy}
-        className={clsx(
-          'flex items-center gap-[5px] px-3 py-[5px] rounded-[7px] text-[11px] font-semibold border-none',
-          busy ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer',
-          'bg-[#eef0ff] text-[#3851d1]',
-        )}
-      >
-        {busy ? <Loader2 size={11} className="animate-spin" /> : <Download size={11} />}
-        {busy ? 'Fetching…' : 'Download'}
-      </button>
-      {error && <p className="text-[10px] text-error">{error}</p>}
-    </div>
   );
 }
 
@@ -193,8 +154,14 @@ function OrderTimeline({ status }: { status: OrderStatus }) {
 // ─────────────────────────────────────────────────────────────────────────────
 // OrderItemRow
 // ─────────────────────────────────────────────────────────────────────────────
-function OrderItemRow({ item, orderId, currency }: { item: OrderLineItem; orderId: string; currency: string }) {
+const REVIEWABLE_STATUSES = ['delivered', 'completed'];
+
+function OrderItemRow({ item, orderId, orderStatus, currency }: { item: OrderLineItem; orderId: string; orderStatus: OrderStatus; currency: string }) {
   const isDigital = item.type === 'digital';
+  // Backend only accepts a verified review once the item is delivered/completed
+  // (RatingService.checkVerifiedPurchase).
+  const canReview = !!item.productId && item.status !== 'cancelled'
+    && (REVIEWABLE_STATUSES.includes(item.status) || REVIEWABLE_STATUSES.includes(orderStatus));
   return (
     <div className="flex items-center justify-between gap-3 py-3 border-b border-bone last:border-0">
       <div className="flex items-center gap-3 min-w-0">
@@ -225,7 +192,15 @@ function OrderItemRow({ item, orderId, currency }: { item: OrderLineItem; orderI
       <div className="flex flex-col items-end gap-1.5 shrink-0">
         <p className="text-[12px] font-bold text-charcoal">{currencySymbol(currency)} {item.totalPrice.toLocaleString()}</p>
         {isDigital && item.productId && (
-          <DownloadBtn orderId={orderId} productId={item.productId} />
+          <DigitalFileDownloads orderId={orderId} productId={item.productId} />
+        )}
+        {canReview && (
+          <Link
+            to={`/product/${item.productId}#write-review`}
+            className="flex items-center gap-[5px] text-[11px] font-semibold text-brand-orange hover:underline"
+          >
+            <Star size={11} /> Write a review
+          </Link>
         )}
       </div>
     </div>
@@ -345,7 +320,7 @@ function OrderCard({ order, onChanged }: { order: OrderSummary; onChanged: () =>
               <p className="text-[10px] font-bold text-slate uppercase tracking-[0.07em]">Items ({items.length})</p>
             </div>
             {items.map((item, i) => (
-              <OrderItemRow key={item.itemId ?? i} item={item} orderId={order.orderId} currency={order.currency} />
+              <OrderItemRow key={item.itemId ?? i} item={item} orderId={order.orderId} orderStatus={order.orderStatus} currency={order.currency} />
             ))}
           </div>
 
@@ -582,7 +557,7 @@ export function OrdersTab() {
           icon={<ShoppingBag size={28} className="text-brand-orange opacity-55" />}
           title="No orders yet"
           description="Your order history will appear here once you make your first purchase."
-          action={{ label: 'Browse Marketplace', onClick: () => navigate('/marketplace'), icon: <ShoppingBag size={14} /> }}
+          action={{ label: 'Browse resources', onClick: () => navigate('/'), icon: <ShoppingBag size={14} /> }}
           className="py-12"
         />
       ) : filtered.length === 0 ? (

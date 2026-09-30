@@ -1,59 +1,21 @@
-import { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useEffect, useMemo } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import {
   CheckCircle2, MapPin, Package, ShoppingBag, Download,
-  Loader2, ArrowRight, Home, Truck, Box, BadgeCheck,
+  ArrowRight, Home, Truck, Box, BadgeCheck, Star, ClipboardList,
 } from 'lucide-react';
 import type { PlacedOrder, OrderItem, OrderDeliveryAddress } from '@/api/services/payment';
-import { apiGetDownloadUrl } from '@/api/services/orders';
+import { DigitalFileDownloads } from '@/features/buyer/components/DigitalFileDownloads';
 import { clsx } from 'clsx';
 import { Button } from '@/components/comman/ui/Button';
 import { BuyerNavbar, Footer } from '@/components/comman/ui';
 import { currencySymbol } from '@/utils/currency';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DownloadBtn
-// ─────────────────────────────────────────────────────────────────────────────
-function DownloadBtn({ orderId, productId }: { orderId: string; productId: string }) {
-  const [busy,  setBusy]  = useState(false);
-  const [err,   setErr]   = useState('');
-
-  const fetch = async () => {
-    setBusy(true); setErr('');
-    try {
-      const res = await apiGetDownloadUrl(orderId, productId);
-      window.open(res.data.downloadUrl, '_blank', 'noopener noreferrer');
-    } catch (e) {
-      setErr(e instanceof Error ? e.message : 'Download failed');
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <div className="flex flex-col items-end gap-[3px]">
-      <button
-        onClick={fetch}
-        disabled={busy}
-        className={clsx(
-          'flex items-center gap-[5px] px-3 min-h-9 rounded-[7px] text-[11px] font-semibold border-none transition-opacity',
-          busy ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer',
-          'bg-[#eef0ff] text-[#3851d1]',
-        )}
-      >
-        {busy ? <Loader2 size={11} className="animate-spin" /> : <Download size={11} />}
-        {busy ? 'Fetching…' : 'Download'}
-      </button>
-      {err && <p className="text-[10px] text-error leading-tight max-w-[140px] text-right">{err}</p>}
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // OrderItemRow
 // ─────────────────────────────────────────────────────────────────────────────
-function OrderItemRow({ item, orderId, currency }: { item: OrderItem; orderId: string; currency: string }) {
+function OrderItemRow({ item, orderId, currency, canReview }: { item: OrderItem; orderId: string; currency: string; canReview: boolean }) {
   const isDigital = item.type === 'digital';
   return (
     <div className="flex items-center justify-between gap-3 py-3 border-b border-bone last:border-0">
@@ -84,7 +46,15 @@ function OrderItemRow({ item, orderId, currency }: { item: OrderItem; orderId: s
       <div className="flex flex-col items-end gap-1.5 shrink-0">
         <p className="text-[13px] font-bold text-charcoal">{currencySymbol(currency)}{item.totalPrice.toLocaleString()}</p>
         {isDigital && item.productId && (
-          <DownloadBtn orderId={orderId} productId={item.productId} />
+          <DigitalFileDownloads orderId={orderId} productId={item.productId} />
+        )}
+        {isDigital && canReview && item.productId && (
+          <Link
+            to={`/product/${item.productId}#write-review`}
+            className="flex items-center gap-[5px] text-[11px] font-semibold text-brand-orange hover:underline"
+          >
+            <Star size={11} /> Write a review
+          </Link>
         )}
       </div>
     </div>
@@ -94,7 +64,7 @@ function OrderItemRow({ item, orderId, currency }: { item: OrderItem; orderId: s
 // ─────────────────────────────────────────────────────────────────────────────
 // OrderItemsSection
 // ─────────────────────────────────────────────────────────────────────────────
-function OrderItemsSection({ items, orderId, currency }: { items: OrderItem[]; orderId: string; currency: string }) {
+function OrderItemsSection({ items, orderId, currency, canReview }: { items: OrderItem[]; orderId: string; currency: string; canReview: boolean }) {
   return (
     <section>
       <div className="flex items-center gap-2 mb-1">
@@ -105,7 +75,7 @@ function OrderItemsSection({ items, orderId, currency }: { items: OrderItem[]; o
       </div>
       <div>
         {items.map((item, i) => (
-          <OrderItemRow key={i} item={item} orderId={orderId} currency={currency} />
+          <OrderItemRow key={i} item={item} orderId={orderId} currency={currency} canReview={canReview} />
         ))}
       </div>
     </section>
@@ -224,7 +194,13 @@ function OrderCard({ order }: { order: PlacedOrder }) {
 
       {/* Card body */}
       <div className="px-5 py-4 flex flex-col gap-0">
-        <OrderItemsSection items={order.items} orderId={order.orderId} currency={order.currency} />
+        {/* Reviews are only accepted once an item is delivered/completed
+            (RatingService.checkVerifiedPurchase) — for a paid digital order
+            that's as soon as the order is marked completed. */}
+        <OrderItemsSection
+          items={order.items} orderId={order.orderId} currency={order.currency}
+          canReview={order.isPaid && order.orderStatus === 'completed'}
+        />
         {!allDigital && order.deliveryAddress && <AddressSection addr={order.deliveryAddress} />}
         {!allDigital && <OrderTimeline currentStatus={order.orderStatus} />}
       </div>
@@ -358,17 +334,18 @@ function SummaryPanel({ orders, navigate }: { orders: PlacedOrder[]; navigate: (
           variant="primary" fullWidth
           className="justify-center! px-4! py-[11px]! rounded-[10px]!"
           icon={<ShoppingBag size={14} />}
-          onClick={() => navigate('/marketplace')}
+          onClick={() => navigate('/')}
         >
           Continue Shopping
         </Button>
         <Button
           variant="outline" fullWidth
           className="justify-center! px-4! py-[11px]! rounded-[10px]!"
+          icon={<ClipboardList size={14} />}
           iconRight={<ArrowRight size={13} />}
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/account/orders')}
         >
-          Back to Home
+          View My Orders
         </Button>
       </div>
 
@@ -379,14 +356,41 @@ function SummaryPanel({ orders, navigate }: { orders: PlacedOrder[]; navigate: (
 // ─────────────────────────────────────────────────────────────────────────────
 // Page
 // ─────────────────────────────────────────────────────────────────────────────
+// The last successful order(s) are kept for this tab's session so a refresh
+// (which drops router `location.state`) still shows the confirmation instead
+// of bouncing the buyer to the homepage.
+const LAST_ORDER_KEY = 'edudeen_last_order_success';
+
+function readStoredOrders(): PlacedOrder[] {
+  try {
+    const raw = sessionStorage.getItem(LAST_ORDER_KEY);
+    const parsed = raw ? JSON.parse(raw) : null;
+    return Array.isArray(parsed) ? (parsed as PlacedOrder[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function storeOrders(orders: PlacedOrder[]) {
+  try { sessionStorage.setItem(LAST_ORDER_KEY, JSON.stringify(orders)); } catch { /* storage unavailable — refresh just won't restore */ }
+}
+
 export function OrderSuccessPage() {
   usePageTitle('Order Confirmed');
   const navigate = useNavigate();
   const location = useLocation();
-  const orders   = (location.state as { orders: PlacedOrder[] } | null)?.orders ?? [];
+  const stateOrders = (location.state as { orders?: PlacedOrder[] } | null)?.orders;
+  const orders = useMemo<PlacedOrder[]>(
+    () => (stateOrders && stateOrders.length > 0 ? stateOrders : readStoredOrders()),
+    [stateOrders],
+  );
 
   useEffect(() => {
-    if (orders.length === 0) navigate('/marketplace', { replace: true });
+    if (stateOrders && stateOrders.length > 0) storeOrders(stateOrders);
+  }, [stateOrders]);
+
+  useEffect(() => {
+    if (orders.length === 0) navigate('/', { replace: true });
   }, [orders.length, navigate]);
 
   if (orders.length === 0) {

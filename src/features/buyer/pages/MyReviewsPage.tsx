@@ -72,7 +72,9 @@ export function ReviewsTab() {
       key: 'product', header: 'Product', width: '240px',
       render: r => (
         <button
-          onClick={() => r.product && navigate(`/marketplace/${r.product.productId}`)}
+          // /product/:slug also resolves a raw product id (and then normalizes
+          // the URL to the real slug), so the id is a working fallback.
+          onClick={() => r.product && navigate(`/product/${r.product.slug || r.product.productId}`)}
           className="flex items-center gap-[10px] bg-transparent border-0 cursor-pointer text-left p-0"
         >
           <div className="w-10 h-10 rounded-lg bg-cream border border-bone overflow-hidden shrink-0">

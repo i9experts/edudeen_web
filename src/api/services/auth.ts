@@ -57,7 +57,7 @@ export function getRoleRedirect(role: AppRole): string {
     // it depends on which store, if any, the seller owns) — this is just the
     // last-resort fallback if one ever doesn't.
     case 'seller': return '/seller/stores';
-    default:       return '/marketplace';       // "user" / buyer
+    default:       return '/';       // "user" / buyer
   }
 }
 

@@ -47,6 +47,9 @@ export interface Checkout {
   giftCardDiscountUSD?: number;
   campaignDiscountTotalUSD?: number;
   totalAmount:       number;
+  /** FX rates frozen onto this checkout at creation (units per 1 USD) — the
+   *  same snapshot the backend charges with. */
+  fxSnapshots?:      { currency: string; ratePerUSD: number; effectiveFrom?: string; source?: string }[];
   status:            string;
   expiredAt:         string;
   isDelete:          boolean;
@@ -127,6 +130,9 @@ export interface CreateCheckoutPayload {
   // Cart is now store-scoped — required so the backend knows which of the
   // buyer's (possibly several, one-per-store) carts to check out from.
   storeId?:        string;
+  // Optional subset of the store's cart to check out (backend falls back to
+  // the whole cart when omitted) — used for "check out physical items only".
+  items?:          { productId: string; variantId: string }[];
 }
 
 // Same key CurrencyPreferenceContext writes to — read directly here rather

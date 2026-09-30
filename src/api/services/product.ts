@@ -333,7 +333,8 @@ export interface SellerOrder {
   orderNumber: string;
   customer:    SellerOrderCustomer;
   product:     string;
-  type:        'physical' | 'digital';
+  /** sellerOrder.fulfillmentType — 'mixed' when the store's part of the order has both kinds. */
+  type:        'physical' | 'digital' | 'mixed';
   productType?: 'physical' | 'digital' | 'educational';
   date:        string;
   amount:      number;
@@ -364,9 +365,23 @@ export interface GetSellerOrdersData {
   orders:     SellerOrder[];
 }
 
-export function apiGetSellerOrders(storeId: string, page = 1, limit = 10) {
+/** Server-side filters supported by GET /orders/seller-orders/:storeId
+ *  (orders.service getSellerOrders): `status` matches sellerOrders.status,
+ *  `type` matches sellerOrders.fulfillmentType. There is no search param —
+ *  and the backend caps `limit` at 50. */
+export interface SellerOrderFilters {
+  status?: string;
+  type?:   'physical' | 'digital' | 'mixed' | '';
+  time?:   'today' | 'week' | 'month' | '';
+}
+
+export function apiGetSellerOrders(storeId: string, page = 1, limit = 10, filters: SellerOrderFilters = {}) {
+  const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+  if (filters.status) params.set('status', filters.status);
+  if (filters.type)   params.set('type', filters.type);
+  if (filters.time)   params.set('time', filters.time);
   return client.get<never, ApiResponse<GetSellerOrdersData>>(
-    `${ENDPOINTS.SELLER_ACCOUNT.GET_SELLER_ORDERS(storeId)}?page=${page}&limit=${limit}`,
+    `${ENDPOINTS.SELLER_ACCOUNT.GET_SELLER_ORDERS(storeId)}?${params.toString()}`,
   );
 }
 

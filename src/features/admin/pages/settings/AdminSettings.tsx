@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
-  User, KeyRound, ShieldCheck, Bell, Camera, ChevronLeft, ChevronRight,
+  User, KeyRound, Bell, Camera, ChevronLeft, ChevronRight,
   Settings, Check, Loader2, Eye, EyeOff, type LucideIcon,
 } from 'lucide-react';
 import { useGetProfile } from '@/hooks/auth/useGetProfile';
@@ -26,7 +26,8 @@ const NAV: { group: string; isDanger?: boolean; items: { id: Section; label: str
     items: [
       { id: 'profile',       label: 'Profile',          Icon: User       },
       { id: 'security',      label: 'Email & Password', Icon: KeyRound   },
-      { id: 'two-factor',    label: 'Two-Factor Auth',  Icon: ShieldCheck},
+      // 'two-factor' is hidden until two-factor auth actually exists — it
+      // only rendered a "coming soon" placeholder.
       { id: 'notifications', label: 'Notifications',    Icon: Bell       },
     ],
   },

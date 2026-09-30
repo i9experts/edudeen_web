@@ -143,10 +143,10 @@ function VariantOptionsField({ options, onChange }: { options: VariantOption[]; 
       {options.length < MAX_VARIANT_OPTIONS && (
         <div className="flex flex-col gap-[7px] p-2.5 rounded-lg border border-dashed border-[#d9d6cc] bg-cream/50">
           <div className="grid grid-cols-2 gap-[7px]">
-            <input value={name} onChange={e => setName(e.target.value)} placeholder="Attribute (e.g. Size)" aria-label="Variant attribute name"
+            <input value={name} onChange={e => setName(e.target.value)} placeholder="Attribute (e.g. Edition)" aria-label="Variant attribute name"
               onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); add(); } }}
               className={`${inp} px-2.5 py-[7px] text-[12px] bg-white`} />
-            <input value={value} onChange={e => setValue(e.target.value)} placeholder="Value (e.g. Medium)" aria-label="Variant attribute value"
+            <input value={value} onChange={e => setValue(e.target.value)} placeholder="Value (e.g. Hardcover)" aria-label="Variant attribute value"
               onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); add(); } }}
               className={`${inp} px-2.5 py-[7px] text-[12px] bg-white`} />
           </div>
@@ -157,7 +157,7 @@ function VariantOptionsField({ options, onChange }: { options: VariantOption[]; 
           </button>
         </div>
       )}
-      <p className="text-[11px] text-slate">Optional — leave empty for a single plain variant, or add up to 3 like Color, Size, Material.</p>
+      <p className="text-[11px] text-slate">Optional — leave empty for a single plain variant, or add up to 3 like Edition, Format, Language.</p>
     </div>
   );
 }
@@ -166,12 +166,12 @@ const initPhys = {
   name: '', description: '', price: '', compareAtPrice: '',
   stock: '', options: [] as VariantOption[], shippingWeight: '', subCategoryId: '',
   // Sensible default: the primary button publishes; "Save as draft" is always one click away.
-  status: 'active' as ProductStatus, isListedOnEdudeen: false,
+  status: 'active' as ProductStatus, isListedOnEdudeen: true,
   scheduledAt: '', tagInput: '', tags: [] as string[], images: [] as string[],
 };
 const initDig = {
   name: '', description: '', price: '', compareAtPrice: '', subCategoryId: '',
-  status: 'active' as ProductStatus, isListedOnEdudeen: false,
+  status: 'active' as ProductStatus, isListedOnEdudeen: true,
   scheduledAt: '', tagInput: '', tags: [] as string[], images: [] as string[],
   fileData: null as PrivateUploadData | null,
   downloadLimit: 'unlimited', linkExpiryDays: '',
@@ -242,6 +242,9 @@ export default function StoreAddProduct() {
     const missingAttr = findMissingRequiredAttribute(attrDefs, attributeValues);
     if (missingAttr) { setError(`${missingAttr.label} is required.`); return; }
     const finalStatus = statusOverride ?? (pType === 'physical' ? phys.status : dig.status);
+    // A digital product with no file would sell buyers nothing — drafts may
+    // skip it, but publishing/scheduling needs at least one file.
+    if (pType !== 'physical' && finalStatus !== 'draft' && !dig.fileData) { setError('Upload the file buyers will receive before publishing (or save as draft).'); return; }
     if (finalStatus === 'scheduled' && !cur.scheduledAt) { setError('Pick a date and time for your scheduled listing.'); setShowScheduleModal(true); return; }
     setSaving(true);
     try {
@@ -305,12 +308,12 @@ export default function StoreAddProduct() {
     { label: 'Price', done: cur.price !== '' && Number(cur.price) >= 0 },
     ...(pType === 'physical' ? [{ label: 'Stock quantity', done: phys.stock !== '' }] : []),
     ...(pType === 'educational' ? [{ label: 'Education level', done: !!dig.educationLevel && (dig.educationLevel !== 'other' || !!dig.customLevel.trim()) }] : []),
+    ...(isDigitalFamily && cur.status !== 'draft' ? [{ label: 'The file buyers receive', done: !!dig.fileData }] : []),
     ...(cur.status === 'scheduled' ? [{ label: 'Schedule date & time', done: !!cur.scheduledAt }] : []),
   ];
   const recommended: { label: string; done: boolean }[] = [
     { label: 'At least one image', done: cur.images.length > 0 },
     { label: 'A description', done: !!cur.description.trim() },
-    ...(isDigitalFamily ? [{ label: 'The file buyers receive', done: !!dig.fileData }] : []),
   ];
 
   let stepNo = 0;
@@ -492,7 +495,7 @@ export default function StoreAddProduct() {
 
           {/* Digital/Educational: File Upload */}
           {isDigitalFamily && (
-            <Card step={nextStep()} title={pType === 'educational' ? 'Resource file' : 'Digital file'} need="recommended" hint="The file buyers receive instantly after purchase. You can also add it later, before publishing.">
+            <Card step={nextStep()} title={pType === 'educational' ? 'Resource file' : 'Digital file'} need="required" hint="The file buyers receive instantly after purchase. Required to publish — drafts can be saved without it.">
               <FileUpload value={dig.fileData} onChange={v => sd('fileData', v)} label="Click to upload your digital file" />
             </Card>
           )}
