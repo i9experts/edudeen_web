@@ -152,17 +152,18 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Fetch initial stats when logged in
+  // Fetch initial stats when logged in. Preferences are only needed by the
+  // notification settings screen (NotificationsPanel), which loads them itself
+  // — no need to request them on every page load.
   useEffect(() => {
     if (TokenStorage.isLoggedIn()) {
       fetchUnreadCount();
-      fetchPreferences();
     } else {
       setNotifications([]);
       setUnreadCount(0);
       setPreferences(null);
     }
-  }, [fetchUnreadCount, fetchPreferences]);
+  }, [fetchUnreadCount]);
 
   // Real-time Sockets
   useEffect(() => {
