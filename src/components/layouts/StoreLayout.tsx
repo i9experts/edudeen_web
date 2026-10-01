@@ -680,6 +680,19 @@ function isFullBleedRoute(pathname: string) {
   return /\/messages(\/|$)/.test(pathname);
 }
 
+// Top bar for the store workspace: this store's logo (or its name when it has
+// none) and a link to its page — no shopper promos or currency switch.
+function StoreTopBar() {
+  const { store } = useStoreWorkspace();
+  return (
+    <PlatformTopBar
+      variant="seller"
+      store={store ? { name: store.name, logo: store.logo, slug: store.slug } : null}
+      showAccount
+    />
+  );
+}
+
 // ── Layout ────────────────────────────────────────────────────────────────────
 export function StoreLayout() {
   const { pathname: currentPath } = useLocation();
@@ -700,7 +713,7 @@ export function StoreLayout() {
       <div className={clsx('flex bg-white overflow-hidden', 'h-screen')}>
         <StoreSidebar open={sidebarOpen} onToggle={toggle} />
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-          <PlatformTopBar showAccount />
+          <StoreTopBar />
           <AnnouncementBanner audience="sellers" />
           <StoreVerificationBanner />
           <PlatformBillingBanner />

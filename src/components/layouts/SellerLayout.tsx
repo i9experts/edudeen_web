@@ -509,6 +509,19 @@ export function SellerPageHeader({ title, subtitle, actions, eyebrow = 'Edudeen 
   );
 }
 
+// Top bar across the seller's own pages (My Stores, Analytics, Settings): with
+// one store it shows that store (logo, or its name); with several it shows the
+// seller's name. No shopper promos or currency switch.
+function SellerTopBar() {
+  const { stores } = useActiveStore();
+  const { profile } = useGetProfile();
+  const only = stores.length === 1 ? stores[0] : null;
+  const identity = only
+    ? { name: only.name, logo: only.logo, slug: only.slug }
+    : profile?.name ? { name: profile.name } : null;
+  return <PlatformTopBar variant="seller" store={identity} showAccount />;
+}
+
 // ── Layout ────────────────────────────────────────────────────────────────────
 export function SellerLayout() {
   const { pathname: currentPath } = useLocation();
@@ -525,7 +538,7 @@ export function SellerLayout() {
       <div className={clsx('flex bg-white', 'h-screen')}>
         <SellerSidebar open={sidebarOpen} onToggle={toggle} />
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-          <PlatformTopBar showAccount />
+          <SellerTopBar />
           <AnnouncementBanner audience="sellers" />
           <div className="flex-1 overflow-y-auto overflow-x-hidden pb-[64px] lg:pb-0">
             <div className="w-full max-w-[1440px] mx-auto min-h-full">
