@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Users, Shield, Store, DollarSign, Bell, Settings, UserCog,
   PanelLeftClose, PanelLeftOpen, MessageSquare, Image as ImageIcon, HelpCircle, FolderTree, RefreshCw,
   BarChart3, Layers, Search, Sparkles, Tag, LogOut, MessageCircle, Landmark, Percent, Coins, UserPlus, Activity,
-  ChevronDown, TrendingUp, ChevronRight, Quote, CalendarCheck, Undo2,
+  ChevronDown, TrendingUp, ChevronRight, Quote, CalendarCheck, Undo2, Truck,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useGetProfile } from '@/hooks/auth/useGetProfile';
@@ -35,6 +35,7 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { id: 'messages',      Icon: MessageSquare,   label: 'Messaging',       path: '/admin/messages'      },
   { id: 'leads',         Icon: UserPlus,        label: 'Seller Applications', path: '/admin/leads'     },
   { id: 'refunds',       Icon: Undo2,           label: 'Refunds',         path: '/admin/refunds'       },
+  { id: 'shipping-zones',Icon: Truck,           label: 'Shipping Zones',  path: '/admin/shipping-zones' },
   { id: 'marketplace',   Icon: Store,           label: 'Listings',        path: '/admin/marketplace'   },
   { id: 'categories',    Icon: FolderTree,      label: 'Categories',      path: '/admin/categories'    },
   { id: 'subscriptions', Icon: RefreshCw,       label: 'Subscriptions',   path: '/admin/subscriptions' },

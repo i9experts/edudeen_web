@@ -5,6 +5,7 @@ import axios, { type AxiosResponse, type InternalAxiosRequestConfig } from 'axio
 // `TokenStorage`) to avoid a circular import, since `auth.ts` itself imports
 // this `client` module.
 import { getAuthCookie, deleteAuthCookie } from '@/utils/authCookie';
+import { API_BASE_URL, API_URL_MISSING } from './apiBase';
 
 // Endpoints where a 401 means "this specific attempt was rejected" (wrong
 // password, invalid/expired OTP, invalid reset token, invalid social token)
@@ -31,8 +32,7 @@ const AUTH_ATTEMPT_PATHS = [
 // destructure downstream throws on the resulting string. This exact failure
 // mode shipped once already (baseURL came out as `void 0` in a production
 // bundle) — fail loudly here instead of letting it recur silently.
-const API_BASE_URL = import.meta.env.VITE_API_URL as string | undefined;
-if (!API_BASE_URL) {
+if (API_URL_MISSING) {
   // eslint-disable-next-line no-console
   console.error(
     '[Edudeen] VITE_API_URL is not set for this build. All API requests will ' +
@@ -49,7 +49,8 @@ const client = axios.create({
 // ── Request interceptor — attach Bearer token automatically ───────────────────
 client.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    if (!API_BASE_URL) {
+    // (An empty base is fine in local dev — requests go through the Vite proxy.)
+    if (API_URL_MISSING) {
       return Promise.reject(Object.assign(
         new Error('The app is misconfigured (missing API URL). Please contact support.'),
         { isNetworkError: false, status: undefined },

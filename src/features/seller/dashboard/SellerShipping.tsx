@@ -4,6 +4,7 @@ import { SellerPageHeader } from '@/components/layouts/SellerLayout';
 import { MapPin, Truck, Tag, Home, AlertCircle } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useShippingZones } from '@/hooks/shipping/useShippingZones';
+import { shippingZoneLabel } from '@/api/services/shipping';
 import { Button, SkeletonBox, EmptyState } from '@/components/comman/ui';
 
 // ── Data ──────────────────────────────────────────────────────────────────────
@@ -89,7 +90,7 @@ export function SellerShipping() {
                 <div key={zone._id} className="bg-white border border-bone rounded-[10px] px-4 sm:px-[22px] py-[18px]">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold text-carbon mb-[3px]">{zone.city}, {zone.province}</p>
+                      <p className="text-sm font-semibold text-carbon mb-[3px]">{shippingZoneLabel(zone)}</p>
                       <p className="text-xs text-slate">{zone.country} · Est. delivery {zone.estimatedDeliveryTime}</p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">

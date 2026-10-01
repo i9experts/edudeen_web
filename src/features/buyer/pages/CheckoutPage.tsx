@@ -6,6 +6,17 @@ import { useCartContext } from '@/contexts/CartContext';
 import { useAuthGate } from '@/contexts/AuthGateContext';
 import { TokenStorage } from '@/api/services/auth';
 import { useShippingZones } from '@/hooks/shipping/useShippingZones';
+import { shippingZoneLabel, zonesForAddress, type ShippingZone } from '@/api/services/shipping';
+
+// Offered only while no shipping zones exist at all, so a physical order can
+// still be placed (free shipping) before an admin sets up delivery prices.
+const STANDARD_DELIVERY: ShippingZone = {
+  _id: '__standard', country: 'Pakistan', province: null, city: null, shippingPrice: 0,
+  estimatedDeliveryTime: '3-7 days', status: 'active', isDelete: false, createdAt: '', updatedAt: '',
+};
+const zoneTitle = (z: ShippingZone) => (z._id === STANDARD_DELIVERY._id ? 'Standard delivery' : shippingZoneLabel(z));
+// Zone prices are always PKR, whatever currency the checkout is in.
+const zonePrice = (z: ShippingZone) => (z.shippingPrice > 0 ? `Rs ${z.shippingPrice.toLocaleString()}` : 'Free');
 import { apiGetMyAddresses, type Address, type AddressPayload } from '@/api/services/address';
 import { apiCreateCheckout, apiApplyCoupon, apiRemoveCoupon, apiApplyGiftCard, apiRemoveGiftCard, type Checkout, type CheckoutSummary, type SubscriptionSavingsHint } from '@/api/services/checkout';
 import { apiPlaceCodOrder, apiInitiatePayment, apiGetPaymentStatus } from '@/api/services/payment';
@@ -707,14 +718,22 @@ export function CheckoutPage() {
     }, 30_000);
   };
 
-  const matchingZones = selectedAddr
-    ? zones.filter(z =>
-      z.city.toLowerCase() === selectedAddr.city.toLowerCase() ||
-      z.province.toLowerCase() === selectedAddr.state.toLowerCase()
-    )
-    : zones;
+  // Shipping options for the chosen address: its city's zone, its province's,
+  // then country-wide ones. (This used to crash on a zone with no city or
+  // province, and offered other cities' zones when none matched.) While an
+  // admin hasn't set up any zones yet, standard delivery keeps checkout open.
+  const noZonesConfigured = !zonesLoading && zones.length === 0;
+  const matchingZones = noZonesConfigured
+    ? [STANDARD_DELIVERY]
+    : selectedAddr ? zonesForAddress(zones, { city: selectedAddr.city, state: selectedAddr.state }) : [];
 
-  const selectedZone = zones.find(z => z._id === selectedZoneId) ?? null;
+  const selectedZone = matchingZones.find(z => z._id === selectedZoneId) ?? null;
+
+  // Only one way to ship there → pick it, one less click for the buyer.
+  useEffect(() => {
+    if (step === 2 && !selectedZoneId && matchingZones.length === 1) setSelectedZoneId(matchingZones[0]._id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, selectedZoneId, matchingZones.length, matchingZones[0]?._id]);
 
   // The whole cart checks out together — one order, no more splitting by type.
   const orderSubtotal = checkout
@@ -832,7 +851,7 @@ export function CheckoutPage() {
     try {
       const res = await apiCreateCheckout({
         addressId: selectedAddr._id,
-        shippingZoneId: selectedZoneId,
+        ...(selectedZoneId !== STANDARD_DELIVERY._id && { shippingZoneId: selectedZoneId }),
         storeId: checkoutStoreId,
         ...(physicalOnly && {
           items: cartItems.map(i => ({ productId: i.productId, variantId: i.productVariantId })),
@@ -1314,6 +1333,20 @@ export function CheckoutPage() {
                     </div>
                   ) : (
                     <div className="flex flex-col gap-4">
+                      {matchingZones.length === 0 && (
+                        <div role="alert" className="flex items-start gap-2 text-[12.5px] text-charcoal bg-cream border border-bone rounded-[8px] px-3 py-3">
+                          <AlertCircle size={14} className="mt-[1px] flex-shrink-0 text-brand-orange" />
+                          <div>
+                            <p className="font-semibold text-carbon">We don't deliver to {selectedAddr?.city || 'this address'} yet</p>
+                            <p className="text-slate mt-[2px]">
+                              Try another address, or contact support@edudeen.com.{' '}
+                              <button type="button" onClick={() => setStep(1)} className="text-brand-orange font-semibold bg-transparent border-0 p-0 cursor-pointer">
+                                Change address
+                              </button>
+                            </p>
+                          </div>
+                        </div>
+                      )}
                       {/* Dropdown trigger */}
                       <div className="relative" ref={shippingDropRef}>
                         <button
@@ -1328,14 +1361,14 @@ export function CheckoutPage() {
                             <div className="flex-1 min-w-0 flex items-center justify-between">
                               <div>
                                 <p className="text-[13px] font-semibold text-carbon">
-                                  {selectedZone.city}, {selectedZone.province}
+                                  {zoneTitle(selectedZone)}
                                 </p>
                                 <p className="text-[12px] text-slate mt-[1px]">
                                   Estimated delivery: {selectedZone.estimatedDeliveryTime}
                                 </p>
                               </div>
                               <span className="text-[13px] font-bold text-carbon ml-4 flex-shrink-0">
-                                {currencySymbol(checkout?.currency)} {selectedZone.shippingPrice.toLocaleString()}
+                                {zonePrice(selectedZone)}
                               </span>
                             </div>
                           ) : (
@@ -1347,11 +1380,11 @@ export function CheckoutPage() {
                         {/* Dropdown list */}
                         {shippingDropOpen && (
                           <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-bone rounded-[10px] z-20 overflow-hidden">
-                            {(matchingZones.length > 0 ? matchingZones : zones).length === 0 ? (
+                            {matchingZones.length === 0 ? (
                               <div className="px-4 py-4 text-[13px] text-slate text-center">
-                                No shipping methods available for this address yet.
+                                We don't deliver to {selectedAddr?.city || 'this address'} yet.
                               </div>
-                            ) : (matchingZones.length > 0 ? matchingZones : zones).map((zone, i) => (
+                            ) : matchingZones.map((zone, i) => (
                               <button
                                 key={zone._id}
                                 type="button"
@@ -1372,14 +1405,14 @@ export function CheckoutPage() {
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <p className="text-[13px] font-semibold text-carbon">
-                                    {zone.city}, {zone.province}
+                                    {zoneTitle(zone)}
                                   </p>
                                   <p className="text-[12px] text-slate mt-[1px]">
                                     Estimated delivery: {zone.estimatedDeliveryTime}
                                   </p>
                                 </div>
                                 <span className="text-[13px] font-bold text-carbon flex-shrink-0">
-                                  {currencySymbol(checkout?.currency)} {zone.shippingPrice.toLocaleString()}
+                                  {zonePrice(zone)}
                                 </span>
                               </button>
                             ))}
@@ -1413,9 +1446,9 @@ export function CheckoutPage() {
 
               {step > 2 && selectedZone && (
                 <div className="px-5 py-3 text-[13px] text-carbon">
-                  <span className="font-medium">{selectedZone.city}, {selectedZone.province}</span>
+                  <span className="font-medium">{zoneTitle(selectedZone)}</span>
                   {' — '}
-                  {currencySymbol(checkout?.currency)} {selectedZone.shippingPrice.toLocaleString()} · {selectedZone.estimatedDeliveryTime}
+                  {zonePrice(selectedZone)} · {selectedZone.estimatedDeliveryTime}
                 </div>
               )}
             </div>

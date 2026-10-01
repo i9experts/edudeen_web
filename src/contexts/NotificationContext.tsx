@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { io } from 'socket.io-client';
 import { TokenStorage } from '@/api/services/auth';
+import { API_BASE_URL } from '@/api/apiBase';
 import {
   apiListNotifications,
   apiGetUnreadCount,
@@ -170,7 +171,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     if (!TokenStorage.isLoggedIn()) return;
 
     const token = TokenStorage.getToken();
-    const base = (import.meta.env.VITE_API_URL as string) ?? '';
+    const base = API_BASE_URL;
     const socket = io(`${base}/notifications`, {
       auth: { token },
       transports: ['websocket', 'polling'],

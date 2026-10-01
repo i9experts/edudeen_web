@@ -118,7 +118,8 @@ export function LoginPage() {
   // all — it signed in via Google last time. Asking for a password it never
   // had would just strand the visitor, so this path skips straight to
   // "Continue with Google" instead of the password field.
-  const googleOnlyContinue = showChooser && onPasswordStep && remembered?.authMethod === 'google';
+  const socialMethod = remembered?.authMethod && remembered.authMethod !== 'password' ? remembered.authMethod : null;
+  const googleOnlyContinue = showChooser && onPasswordStep && !!socialMethod;
 
   // Fresh flow only: the URL follows the reactive email-typed reveal (for
   // back-button/shareable-link purposes), as a `replace` (not a new history
@@ -242,7 +243,7 @@ export function LoginPage() {
             <>
               <SocialLoginRow
                 layout="stacked"
-                mount={social.mount}
+                mount={social.mount} onProvider={social.signIn}
                 disabled={social.loading}
                 className="mb-3 lg:mb-4"
               />
@@ -286,10 +287,10 @@ export function LoginPage() {
           {googleOnlyContinue ? (
             <>
               <p className="text-[12.5px] text-slate text-center mb-3">
-                This account signs in with Google.
+                This account signs in with {socialMethod === 'facebook' ? 'Facebook' : socialMethod === 'apple' ? 'Apple' : 'Google'}.
               </p>
               <SocialLoginRow
-                mount={social.mount}
+                mount={social.mount} onProvider={social.signIn}
                 disabled={social.loading}
               />
               {social.error && (
@@ -356,7 +357,7 @@ export function LoginPage() {
               </div>
 
               <SocialLoginRow
-                mount={social.mount}
+                mount={social.mount} onProvider={social.signIn}
                 disabled={social.loading || login.loading}
                 className="mb-3 lg:mb-4"
               />

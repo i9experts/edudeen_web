@@ -101,7 +101,7 @@ export interface RememberedAccountData {
    *  with Google" instead of a password field for it. Optional so an
    *  already-stored value from before this field existed still renders (just
    *  falls back to the password-field path, the previous universal behavior). */
-  authMethod?: 'password' | 'google';
+  authMethod?: 'password' | 'google' | 'facebook' | 'apple';
 }
 export const RememberedAccount = {
   get(): RememberedAccountData | null {
@@ -268,7 +268,8 @@ export interface SocialLoginPayload {
   socialId:     string;
   userName?:    string;
   name?:        string;
-  email:        string;
+  /** Ignored by the server (it trusts the provider's verified email) — optional. */
+  email?:       string;
   image?:       string;
   fcmToken?:    string;
   token?:       string;

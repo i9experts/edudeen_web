@@ -1,5 +1,6 @@
 import client from '../client';
 import { ENDPOINTS } from '../endpoints';
+import { API_BASE_URL } from '@/api/apiBase';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -197,7 +198,7 @@ export function apiGetDownloadFiles(orderId: string, productId: string) {
 
 /** Absolute URL for a token-based download endpoint (no auth header needed). */
 export function buildDownloadHref(endpoint: string, token: string) {
-  const base = (import.meta.env.VITE_API_URL as string | undefined) ?? '';
+  const base = API_BASE_URL;
   return `${base}${endpoint}?token=${encodeURIComponent(token)}`;
 }
 

@@ -1,5 +1,6 @@
 import { io, type Socket } from 'socket.io-client';
 import { getAuthCookie } from '@/utils/authCookie';
+import { API_BASE_URL } from '@/api/apiBase';
 
 // Ref-counted singleton: several messaging hooks (conversation list, thread,
 // message list) can be mounted at once while the messaging page is open —
@@ -10,7 +11,7 @@ let refCount = 0;
 export function acquireMessagingSocket(): Socket {
   if (!socket) {
     const token = getAuthCookie('accessToken');
-    const base = (import.meta.env.VITE_API_URL as string) ?? '';
+    const base = API_BASE_URL;
     socket = io(`${base}/messaging`, {
       auth: { token },
       transports: ['websocket', 'polling'],

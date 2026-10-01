@@ -175,7 +175,7 @@ export function SignInPreview() {
             <div className="flex-1 h-px bg-bone" />
           </div>
           <div className="px-4 pb-2">
-            <SocialLoginRow layout="stacked" mount={social.mount} disabled={login.loading} />
+            <SocialLoginRow layout="stacked" mount={social.mount} onProvider={social.signIn} disabled={login.loading} />
           </div>
 
           {social.error && (

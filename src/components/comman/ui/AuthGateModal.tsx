@@ -201,7 +201,7 @@ export function AuthGateModal() {
               <span className="text-[10px] text-slate whitespace-nowrap">or continue with</span>
               <div className="flex-1 h-px bg-bone" />
             </div>
-            <SocialLoginRow mount={social.mount} disabled={submitting} />
+            <SocialLoginRow mount={social.mount} onProvider={social.signIn} disabled={submitting} />
             {social.error && (
               <p className="text-[11.5px] text-info flex items-start gap-1">
                 <Info size={12} className="shrink-0 mt-[1px]" /> {social.error}
