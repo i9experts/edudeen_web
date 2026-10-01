@@ -1,109 +1,20 @@
 import { useState, useEffect } from 'react';
-import { clsx } from 'clsx';
 import {
   MapPin, Plus, Pencil, ArrowLeft, Home, Briefcase, Star as StarIcon,
-  Loader2, Trash2, type LucideIcon,
+  Trash2, type LucideIcon,
 } from 'lucide-react';
 import {
-  apiGetMyAddresses, apiAddAddress, apiUpdateAddress, apiSetDefaultAddress, apiDeleteAddress,
+  apiGetMyAddresses, apiUpdateAddress, apiSetDefaultAddress, apiDeleteAddress,
   type Address, type AddressPayload,
 } from '@/api/services/address';
 import {
   Table, type TableColumn, ActionMenu, Badge, Card, EmptyState, SkeletonBox, PageHeader, Modal, Button,
-  LocationPickerMap,
 } from '@/components/comman/ui';
+import { AddressForm, EMPTY_ADDRESS_FORM, addressFromProfile, saveNewAddress } from '@/features/buyer/components/AddressForm';
+import { useGetProfile } from '@/hooks/auth/useGetProfile';
 import { useToast } from '@/contexts/ToastContext';
 
-const INPUT_CLS = 'w-full py-[10px] px-[13px] text-[13px] border border-bone rounded-[9px] outline-none text-charcoal bg-white box-border focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/10 transition-colors';
-const LABEL_CLS = 'text-[12px] font-medium text-graphite mb-[6px] block';
-const EMPTY_FORM: AddressPayload = {
-  label: 'Home', recipientName: '', phoneNumber: '',
-  addressLine1: '', addressLine2: '', state: '', city: '', zipCode: '',
-  latitude: null, longitude: null,
-  isDefault: false,
-};
 const LABEL_ICON: Record<string, LucideIcon> = { Home, Work: Briefcase, Other: StarIcon };
-
-function AddrField({ label, value, onChange, placeholder, half }: {
-  label: string; value: string; onChange: (v: string) => void; placeholder?: string; half?: boolean;
-}) {
-  return (
-    <div className={half ? '' : 'sm:col-span-2'}>
-      <label className={LABEL_CLS}>{label}</label>
-      <input value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} className={INPUT_CLS} />
-    </div>
-  );
-}
-
-function AddressForm({ initial, onSave, onCancel, saving }: {
-  initial: AddressPayload; onSave: (d: AddressPayload) => void; onCancel: () => void; saving: boolean;
-}) {
-  const [form, setForm] = useState<AddressPayload>(initial);
-  const set = (k: keyof AddressPayload, v: string | boolean | number | null) => setForm(p => ({ ...p, [k]: v }));
-
-  return (
-    <div className="border-[1.5px] border-brand-orange rounded-[12px] px-5 py-5 bg-[#fffaf7]">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div className="sm:col-span-2">
-          <label className={LABEL_CLS}>Label</label>
-          <div className="flex gap-2">
-            {(['Home', 'Work', 'Other'] as const).map(l => (
-              <button
-                key={l} type="button" onClick={() => set('label', l)}
-                className={clsx(
-                  'px-4 py-[6px] rounded-lg text-[12px] font-semibold cursor-pointer border',
-                  form.label === l
-                    ? 'border-brand-orange bg-brand-pale-orange text-brand-deep-orange'
-                    : 'border-bone bg-white text-slate',
-                )}
-              >{l}</button>
-            ))}
-          </div>
-        </div>
-        <AddrField label="Recipient Name"            value={form.recipientName}      onChange={v => set('recipientName', v)}  placeholder="Full name"        half />
-        <AddrField label="Phone Number"              value={form.phoneNumber}        onChange={v => set('phoneNumber', v)}    placeholder="e.g. 03001234567" half />
-        <AddrField label="Address Line 1"            value={form.addressLine1}       onChange={v => set('addressLine1', v)}   placeholder="House no, Street" />
-        <AddrField label="Address Line 2 (Optional)" value={form.addressLine2 ?? ''} onChange={v => set('addressLine2', v)}   placeholder="Landmark, Area"   />
-        <AddrField label="City"                      value={form.city}               onChange={v => set('city', v)}           placeholder="e.g. Karachi"     half />
-        <AddrField label="State"                     value={form.state}              onChange={v => set('state', v)}          placeholder="e.g. Sindh"       half />
-        <AddrField label="Zip Code"                  value={form.zipCode}            onChange={v => set('zipCode', v)}        placeholder="e.g. 75300"       half />
-        <div className="sm:col-span-2">
-          <LocationPickerMap
-            latitude={form.latitude ?? null}
-            longitude={form.longitude ?? null}
-            onChange={(lat, lng) => setForm(p => ({ ...p, latitude: lat, longitude: lng }))}
-          />
-        </div>
-        <div className="sm:col-span-2 flex items-center gap-2">
-          <input
-            type="checkbox" id="addr-default"
-            checked={form.isDefault ?? false}
-            onChange={e => set('isDefault', e.target.checked)}
-            className="w-[15px] h-[15px] cursor-pointer accent-brand-orange"
-          />
-          <label htmlFor="addr-default" className="text-[12px] text-graphite cursor-pointer">
-            Set as default address
-          </label>
-        </div>
-      </div>
-      <div className="flex gap-[10px] mt-[18px]">
-        <button
-          onClick={() => onSave(form)} disabled={saving}
-          className={clsx(
-            'px-6 min-h-11 rounded-[9px] text-[13px] font-semibold bg-brand-orange text-white border-none flex items-center gap-[6px]',
-            saving ? 'cursor-not-allowed opacity-70' : 'cursor-pointer hover:bg-brand-deep-orange transition-colors',
-          )}
-        >
-          {saving && <Loader2 size={13} className="animate-spin" />}
-          {saving ? 'Saving…' : 'Save Address'}
-        </button>
-        <button onClick={onCancel} className="px-[18px] min-h-11 rounded-[9px] text-[13px] border border-bone bg-white text-slate cursor-pointer">
-          Discard
-        </button>
-      </div>
-    </div>
-  );
-}
 
 type AddrView = 'list' | 'add' | 'edit';
 
@@ -114,6 +25,7 @@ export function Addresses() {
   const [saving, setSaving] = useState(false);
   const [view, setView] = useState<AddrView>('list');
   const [editTarget, setEditTarget] = useState<Address | null>(null);
+  const { profile } = useGetProfile();
 
   useEffect(() => {
     let cancelled = false;
@@ -134,7 +46,7 @@ export function Addresses() {
   const handleSave = async (data: AddressPayload) => {
     setSaving(true);
     try {
-      if (view === 'add') await apiAddAddress(data);
+      if (view === 'add') await saveNewAddress(data);
       else if (view === 'edit' && editTarget) await apiUpdateAddress(editTarget._id, data);
       await refreshAddresses();
       toast.success(view === 'add' ? 'Address added' : 'Address updated');
@@ -259,7 +171,8 @@ export function Addresses() {
             <AddressForm
               initial={editTarget
                 ? { label: editTarget.label, recipientName: editTarget.recipientName, phoneNumber: editTarget.phoneNumber, addressLine1: editTarget.addressLine1, addressLine2: editTarget.addressLine2, state: editTarget.state, city: editTarget.city, zipCode: editTarget.zipCode, latitude: editTarget.latitude, longitude: editTarget.longitude, isDefault: editTarget.isDefault }
-                : EMPTY_FORM}
+                // First address: start from the one given at sign-up.
+                : addresses.length === 0 ? addressFromProfile(profile) : EMPTY_ADDRESS_FORM}
               onSave={handleSave}
               onCancel={goList}
               saving={saving}

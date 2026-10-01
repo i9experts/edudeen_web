@@ -6,7 +6,7 @@ import { useCartContext } from '@/contexts/CartContext';
 import { useAuthGate } from '@/contexts/AuthGateContext';
 import { TokenStorage } from '@/api/services/auth';
 import { useShippingZones } from '@/hooks/shipping/useShippingZones';
-import { apiGetMyAddresses, type Address } from '@/api/services/address';
+import { apiGetMyAddresses, type Address, type AddressPayload } from '@/api/services/address';
 import { apiCreateCheckout, apiApplyCoupon, apiRemoveCoupon, apiApplyGiftCard, apiRemoveGiftCard, type Checkout, type CheckoutSummary, type SubscriptionSavingsHint } from '@/api/services/checkout';
 import { apiPlaceCodOrder, apiInitiatePayment, apiGetPaymentStatus } from '@/api/services/payment';
 import {
@@ -17,6 +17,8 @@ import { apiGetCurrentRates } from '@/api/services/exchangeRate';
 import { Button } from '@/components/comman/ui/Button';
 import { SkeletonBox, BuyerNavbar, Breadcrumb, Input } from '@/components/comman/ui';
 import { StripeCardPayment, isStripeConfigured } from '@/features/buyer/components/StripeCardPayment';
+import { AddressForm, EMPTY_ADDRESS_FORM, addressFromProfile, saveNewAddress } from '@/features/buyer/components/AddressForm';
+import { useGetProfile } from '@/hooks/auth/useGetProfile';
 import {
   MapPin, Truck, CreditCard, CheckCircle2,
   ChevronRight, AlertCircle, PackageCheck,
@@ -439,6 +441,13 @@ export function CheckoutPage() {
   // Address
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [addrLoading, setAddrLoading] = useState(true);
+  // Sign-up name/phone/address, used to pre-fill a first delivery address.
+  // Re-read after an in-place sign-in (the cache held null while signed out).
+  const { profile, loading: profileLoading, refetch: refetchProfile } = useGetProfile();
+  useEffect(() => {
+    if (loggedIn && !profile && !profileLoading) refetchProfile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loggedIn]);
   const [selectedAddr, setSelectedAddr] = useState<Address | null>(null);
 
   // Shipping
@@ -792,6 +801,26 @@ export function CheckoutPage() {
     setAddrDropOpen(false);
   };
 
+  // Adding an address right here instead of sending the buyer away from their
+  // cart. The first one starts from the address given at sign-up.
+  const [addingAddr, setAddingAddr] = useState(false);
+  const [addrSaving, setAddrSaving] = useState(false);
+  const [addrSaveError, setAddrSaveError] = useState('');
+  const handleAddAddress = async (form: AddressPayload) => {
+    setAddrSaving(true);
+    setAddrSaveError('');
+    try {
+      const saved = await saveNewAddress(form);
+      setAddresses(prev => [...(saved.isDefault ? prev.map(a => ({ ...a, isDefault: false })) : prev), saved]);
+      selectAddress(saved);
+      setAddingAddr(false);
+    } catch (err) {
+      setAddrSaveError(err instanceof Error ? err.message : 'Failed to save address.');
+    } finally {
+      setAddrSaving(false);
+    }
+  };
+
   const handleContinueToShipping = () => {
     if (selectedAddr) setStep(2);
   };
@@ -1124,15 +1153,30 @@ export function CheckoutPage() {
                       <SkeletonBox height={54} rounded="10px" />
                       <SkeletonBox height={32} width={180} rounded="8px" />
                     </div>
-                  ) : addresses.length === 0 ? (
+                  ) : addresses.length === 0 || addingAddr ? (
                     <div className="flex flex-col gap-3">
-                      <div className="flex items-start gap-2 text-[13px] text-slate">
-                        <AlertCircle size={14} className="mt-[2px] flex-shrink-0" />
-                        No saved addresses. Please add one first.
-                      </div>
-                      <Button variant="ghost" size="sm" onClick={() => navigate('/account/addresses')}>
-                        Go to Addresses
-                      </Button>
+                      <AddressForm
+                        key={addresses.length === 0 ? `first-${profile?._id ?? ''}` : 'another'}
+                        initial={addresses.length === 0
+                          ? addressFromProfile(profile)
+                          : { ...EMPTY_ADDRESS_FORM, recipientName: profile?.name ?? '', phoneNumber: profile?.phone ?? '' }}
+                        note={addresses.length === 0
+                          ? (profile?.address
+                            ? 'We filled this in from the address you gave when you signed up. Check it and add anything missing.'
+                            : 'Add the address your order should be delivered to.')
+                          : undefined}
+                        submitLabel="Save & deliver here"
+                        onSave={handleAddAddress}
+                        onCancel={addresses.length > 0 ? () => { setAddingAddr(false); setAddrSaveError(''); } : undefined}
+                        cancelLabel="Cancel"
+                        saving={addrSaving}
+                      />
+                      {addrSaveError && (
+                        <div role="alert" className="flex items-start gap-2 text-[13px] text-error">
+                          <AlertCircle size={14} className="mt-[2px] flex-shrink-0" />
+                          {addrSaveError}
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div className="flex flex-col gap-4">
@@ -1207,7 +1251,7 @@ export function CheckoutPage() {
                             <div className="border-t border-bone px-4 py-2">
                               <button
                                 type="button"
-                                onClick={() => navigate('/account/addresses')}
+                                onClick={() => { setAddrDropOpen(false); setAddingAddr(true); }}
                                 className="text-[12px] text-brand-orange font-medium cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange"
                               >
                                 + Add new address
