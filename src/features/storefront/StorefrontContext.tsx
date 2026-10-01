@@ -84,6 +84,38 @@ export const EDUDEEN_GOLD_GRADIENT = 'linear-gradient(90deg, #F4DC4C 0%, #E2C21A
 // picked its own colors, so it gets Edudeen's default look instead.
 const BACKEND_UNTOUCHED_COLORS = { primaryColor: '#D97757', bgColor: '#FAF9F5', accentColor: '#B95A3A' };
 
+/**
+ * The light customisation a seller gets (marketplace-style, like an Etsy shop):
+ * one accent colour from this fixed, on-brand set. Background, text and font
+ * always stay Edudeen's, so every store page still looks like Edudeen.
+ */
+export const STORE_ACCENT_SWATCHES: { label: string; hex: string }[] = [
+  { label: 'Edudeen Navy', hex: '#174771' },
+  { label: 'Edudeen Green', hex: '#3E8E2F' },
+  { label: 'Teal',          hex: '#1F7A75' },
+  { label: 'Royal Blue',    hex: '#2B5DA8' },
+  { label: 'Plum',          hex: '#6B3F8F' },
+  { label: 'Maroon',        hex: '#8C2F39' },
+];
+
+/** The store's accent — only a colour from the swatch set counts; anything else (an old full theme) falls back to navy. */
+export function storeAccent(theme: StoreThemeData | null): string {
+  const c = theme?.theme?.primaryColor?.toLowerCase();
+  return STORE_ACCENT_SWATCHES.find(s => s.hex.toLowerCase() === c)?.hex ?? STORE_ACCENT_SWATCHES[0].hex;
+}
+
+/** Store-page cover when there's no cover photo: Edudeen's gradient, led by the store's accent. */
+export function storeCoverGradient(accent: string): string {
+  return accent.toLowerCase() === STORE_ACCENT_SWATCHES[0].hex.toLowerCase()
+    ? EDUDEEN_DEFAULT_COVER_GRADIENT
+    : `linear-gradient(120deg, ${accent} 0%, ${accent} 30%, #66AD36 72%, #E2C21A 92%, #F4DC4C 100%)`;
+}
+
+/** Edudeen's look for a store page, with only the seller's chosen accent applied. */
+export function resolveEdudeenStoreCfg(theme: StoreThemeData | null): StorefrontCfg {
+  return { ...resolveStorefrontCfg(null), primaryColor: storeAccent(theme) };
+}
+
 /** True when the seller hasn't chosen theme colors — the store then uses Edudeen's default look. */
 export function isEdudeenDefaultTheme(theme: StoreThemeData | null): boolean {
   const t = theme?.theme;

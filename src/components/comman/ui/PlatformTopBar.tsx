@@ -3,6 +3,7 @@ import { clsx } from 'clsx';
 import { TokenStorage } from '@/api/services/auth';
 import { CurrencySelector } from './BuyerNavbar';
 import { ProfileAvatar } from './ProfileAvatar';
+import { TopBarDealsTicker } from './TopBarDealsTicker';
 
 type Role = 'user' | 'seller' | 'admin';
 
@@ -31,14 +32,17 @@ export function PlatformTopBar({ showAccount = false, className }: { showAccount
 
   return (
     <div className={clsx('shrink-0 bg-[linear-gradient(100deg,#1f4f78_0%,#3f8a5e_38%,#66AD36_62%,#3f8a5e_82%,#1f4f78_100%)] text-white', className)}>
-      <div className="h-9 flex items-center justify-end gap-4 px-[5%] md:px-[4%]">
+      <div className="h-9 flex items-center gap-4 px-[5%] md:px-[4%]">
+        {/* Left: live admin sales + top marketplace flash deals. */}
+        <TopBarDealsTicker />
         <CurrencySelector tone="dark" />
         {action && (
           <>
-            <span className="w-px h-4 bg-white/30" aria-hidden />
+            {/* On a phone the sales ticker gets the room; this link stays in the footer. */}
+            <span className="hidden sm:block w-px h-4 bg-white/30" aria-hidden />
             <button
               onClick={() => navigate(action.path)}
-              className="shrink-0 whitespace-nowrap bg-transparent border-none p-0 text-[12.5px] font-bold text-white cursor-pointer hover:underline underline-offset-4"
+              className="hidden sm:inline-block shrink-0 whitespace-nowrap bg-transparent border-none p-0 text-[12.5px] font-bold text-white cursor-pointer hover:underline underline-offset-4"
             >
               {action.label}
             </button>

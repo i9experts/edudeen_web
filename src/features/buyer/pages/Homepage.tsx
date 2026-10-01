@@ -4,6 +4,7 @@ import { X } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useIsBuyer } from '@/hooks/auth/useIsBuyer';
 import { useEdgeHoverScroll } from '@/hooks/useEdgeHoverScroll';
+import { useTopBarDeals } from '@/hooks/useTopBarDeals';
 import { apiSearchProducts } from '@/api/services/search';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { getStorePagePath } from '@/utils/storefrontUrl';
@@ -160,6 +161,15 @@ export function Homepage() {
 
   const [searchParams, setSearchParams] = useSearchParams();
   const searchQ = (searchParams.get('search') ?? '').trim();
+  // `/?campaign=<id>` — opened from a sale in the top bar; narrows the catalogue to that sale.
+  const campaignId = (searchParams.get('campaign') ?? '').trim();
+  const topBarDeals = useTopBarDeals();
+  const activeCampaign = campaignId ? topBarDeals?.campaigns.find(c => c._id === campaignId) ?? null : null;
+  const clearCampaign = () => setSearchParams(prev => {
+    const next = new URLSearchParams(prev);
+    next.delete('campaign');
+    return next;
+  }, { replace: true });
 
   const submitSearch = (term: string) => {
     const q = term.trim();
@@ -273,7 +283,7 @@ export function Homepage() {
   const { products: browsed, total: serverTotal, loading: browseLoading } = useProductsByCategory(
     1, clientSide ? CLIENT_POOL : limit, subjectTab?.categoryId,
     level ? 'educational' : (itemType || undefined),
-    level || undefined, undefined, undefined,
+    level || undefined, undefined, campaignId || undefined,
     freeOnly ? undefined : (minP > 0 ? minP : undefined),
     freeOnly ? 0 : (maxP < PRICE_NO_MAX ? maxP : undefined),
     filters.minRating ?? undefined,
@@ -320,11 +330,19 @@ export function Homepage() {
   const resetFilters = () => {
     setSubject(null); setLevel(''); setLanguage(''); setSort('featured'); setFreeOnly(false); setFilters(EMPTY_FILTERS);
     if (searchQ) clearSearch();
+    if (campaignId) clearCampaign();
   };
   const pageFilterCount = (subject ? 1 : 0) + (level ? 1 : 0) + (language ? 1 : 0) + (freeOnly ? 1 : 0) + (sort !== 'featured' ? 1 : 0);
   const drawerFilterCount =
     (sameRange(filters.priceRange, EMPTY_FILTERS.priceRange) ? 0 : 1) + filters.type.length + (filters.minRating ? 1 : 0) + (filters.onSale ? 1 : 0);
-  const hasFilters = pageFilterCount + drawerFilterCount > 0;
+  const hasFilters = pageFilterCount + drawerFilterCount > 0 || !!campaignId;
+
+  // Arriving from a top-bar sale → bring the filtered catalogue into view.
+  useEffect(() => {
+    if (!campaignId) return;
+    const t = setTimeout(() => resourcesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 350);
+    return () => clearTimeout(t);
+  }, [campaignId]);
 
   const resourcesRef = useRef<HTMLElement>(null);
   const scrollToResources = () => resourcesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -533,7 +551,7 @@ export function Homepage() {
         {/* ── Catalogue with filters ── */}
         <section ref={resourcesRef} className="scroll-mt-[150px] mb-12">
           <SectionHead
-            eyebrow={searchQ ? 'Search results' : subjectTab ? subjectTab.label : 'Your next teaching moment'}
+            eyebrow={searchQ ? 'Search results' : campaignId ? (activeCampaign?.name ?? 'Sale') : subjectTab ? subjectTab.label : 'Your next teaching moment'}
             title="Resources with a purpose"
             sub="Thoughtful ideas for learning, growing and becoming."
           />
@@ -547,6 +565,14 @@ export function Homepage() {
 
           <div className="flex gap-[10px] flex-wrap mb-6 items-center">
             <FiltersButton count={pageFilterCount + drawerFilterCount} onClick={() => setFiltersOpen(true)} />
+            {campaignId && (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#F4DC4C] text-[#152D43] text-[13px] font-semibold pl-3 pr-1.5 py-[6px]">
+                Sale: {activeCampaign?.name ?? 'Selected sale'}
+                <button onClick={clearCampaign} aria-label="Clear sale filter" className="size-5 rounded-full flex items-center justify-center bg-transparent border-none cursor-pointer hover:bg-white/60">
+                  <X size={13} />
+                </button>
+              </span>
+            )}
             {searchQ && (
               <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-pale-orange text-carbon text-[13px] font-semibold pl-3 pr-1.5 py-[6px]">
                 “{searchQ}”

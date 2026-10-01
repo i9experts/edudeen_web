@@ -89,14 +89,12 @@ const AccountSubscriptions = lazy(() => named(import('@/features/buyer/pages/MyS
 
 // ── Seller ────────────────────────────────────────────────────────────────────
 const SellerAnalytics      = lazy(() => named(import('@/features/seller/dashboard/SellerAnalytics'),             'SellerAnalytics'));
-const StoreBuilder         = lazy(() => named(import('@/features/seller/dashboard/storemodule/StoreBuilder'),   'StoreBuilder'));
 const StoreBuilderRedirect = lazy(() => named(import('@/features/seller/dashboard/storemodule/StoreBuilderRedirect'), 'StoreBuilderRedirect'));
 const SellerSettings       = lazy(() => named(import('@/features/seller/dashboard/settings/SellerSettings'),   'SellerSettings'));
 const SellerShipping       = lazy(() => named(import('@/features/seller/dashboard/SellerShipping'),             'SellerShipping'));
 const SellerMessages       = lazy(() => named(import('@/features/seller/dashboard/SellerMessages'),             'SellerMessages'));
 const SellerStoreList      = lazy(() => named(import('@/features/seller/dashboard/storemodule/SellerStoreList'),'SellerStoreList'));
-const ThemePreviewPage     = lazy(() => named(import('@/features/seller/dashboard/storemodule/ThemePreviewPage'), 'ThemePreviewPage'));
-const LivePreviewPage      = lazy(() => named(import('@/features/seller/dashboard/storemodule/LivePreviewPage'), 'LivePreviewPage'));
+const StorePageOverview    = lazy(() => named(import('@/features/seller/dashboard/storemodule/StorePageOverview'), 'StorePageOverview'));
 
 // ── Store Workspace ───────────────────────────────────────────────────────────
 const StoreDashboard     = lazy(() => import('@/features/seller/store/Dashboard/StoreDashboard'));
@@ -263,7 +261,8 @@ const mainRouter = createBrowserRouter([
           { index: true, element: <SellerStorefront /> },
           { path: 'blog', element: <StorefrontBlogIndex /> },
           { path: 'blog/:postSlug', element: <StorefrontBlogPost /> },
-          { path: 'cart', element: <StorefrontCartPage /> },
+          // One Edudeen cart + checkout for every store.
+          { path: 'cart', element: <Navigate to="/cart" replace /> },
           { path: 'category/:slugOrId', element: <CategoryBrowsePage /> },
           { path: 'collections/:slugOrId', element: <CollectionDetailPage /> },
           { path: 'search', element: <SearchResultsPage /> },
@@ -284,17 +283,10 @@ const mainRouter = createBrowserRouter([
       { path: '/new-password',    element: <NewPasswordPage /> },
 
 
-      // ── Theme Preview — standalone, opened in its own tab from the Theme
-      // Library ("Preview"); resolves the theme purely from :themeId, never
-      // from any Store Builder in-memory state (see ThemePreviewPage.tsx). ──
-      { path: '/store/:storeId/theme-preview/:themeId', element: <ThemePreviewPage /> },
-
-      // ── Live Preview — seller-authenticated only (never public), opened
-      // from the Theme/Header/Footer/Store Info tabs' "Unpublished changes"
-      // banner. Renders the seller's REAL draft against real store data —
-      // distinct from ThemePreviewPage above, which is public precisely
-      // because it has no real seller data to protect (Phase 9). ──
-      { path: '/store/:storeId/live-preview', element: <LivePreviewPage /> },
+      // ── Retired theme / live previews — stores now use Edudeen's own design,
+      //    so old preview links land on the seller's Store Page instead. ──
+      { path: '/store/:storeId/theme-preview/:themeId', element: <Navigate to="../../storebuilder" relative="path" replace /> },
+      { path: '/store/:storeId/live-preview', element: <Navigate to="../storebuilder" relative="path" replace /> },
 
       // ── Seller pages with dark sidebar ────────────────────────────────
       {
@@ -328,7 +320,7 @@ const mainRouter = createBrowserRouter([
           { path: 'collections',                      element: <StoreCollections /> },
           { path: 'plan-billing',                     element: <StorePlanBilling /> },
           { path: 'verification',                     element: <StoreVerification /> },
-          { path: 'storebuilder',                     element: <StoreBuilder /> },
+          { path: 'storebuilder',                     element: <StorePageOverview /> },
           { path: 'returns',                          element: <StoreReturnList /> },
           { path: 'seo',                              element: <StoreSEO /> },
           { path: 'ai/studio',                        element: <StoreAIStudio /> },

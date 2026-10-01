@@ -136,8 +136,6 @@ export function LoginPage() {
     }, { replace: true });
   }, [showChooser, freshEmailEntered, onPasswordStep, setSearchParams]);
 
-  if (TokenStorage.isLoggedIn()) return null;
-
   const otherRole: AppRole = role === 'user' ? 'seller' : 'user';
   const roleLabel = (r: AppRole) => (r === 'seller' ? 'seller' : 'buyer');
   const switchRole = useCallback(() => setRole(otherRole), [otherRole]);
@@ -159,6 +157,11 @@ export function LoginPage() {
     });
     setValue('email', '');
   }, [setSearchParams, setValue]);
+
+  // Signed in (the redirect effect above is already moving them on). Must stay
+  // AFTER every hook — returning before the useCallbacks above crashed the
+  // page with "Rendered fewer hooks than expected" the moment login succeeded.
+  if (TokenStorage.isLoggedIn()) return null;
 
   return (
     <AuthSplitLayout

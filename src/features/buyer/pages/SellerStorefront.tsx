@@ -12,7 +12,6 @@ import {
 import { apiFollowStore, apiGetFollowStatus } from '@/api/services/store';
 import { useToast } from '@/contexts/ToastContext';
 import { apiStartConversation } from '@/api/services/messaging';
-import { apiGetPublicHomePage, type StorePageData } from '@/api/services/storePages';
 import { apiGetMyBalance, apiGetRewards, apiRedeemReward, type LoyaltyBalance, type Reward } from '@/api/services/loyalty';
 import { apiGetGiftCardPublicSettings, apiCreateGiftCardPurchaseIntent, type GiftCardPublicSettings } from '@/api/services/giftCards';
 import { StripeCardPayment, isStripeConfigured } from '@/features/buyer/components/StripeCardPayment';
@@ -21,8 +20,8 @@ import { apiGetPublicStoreProducts } from '@/api/services/store';
 import { Modal } from '@/components/comman/ui/Modal';
 import { TokenStorage } from '@/api/services/auth';
 import { currencySymbol } from '@/utils/currency';
-import { useStorefront, useStorefrontPaths, isEdudeenDefaultTheme, EDUDEEN_DEFAULT_COVER_GRADIENT } from '@/features/storefront/StorefrontContext';
-import { SectionRenderer } from '@/features/storefront/SectionRenderer';
+import { useStorefront, useStorefrontPaths, storeCoverGradient } from '@/features/storefront/StorefrontContext';
+import { FeaturedProductsSection } from '@/features/storefront/sections/FeaturedProductsSection';
 import { ProductCatalogSection } from '@/features/storefront/sections/ProductCatalogSection';
 
 // ── Badge config ──────────────────────────────────────────────────────────────
@@ -61,13 +60,13 @@ function StoreBadges({ badges, sellerType }: { badges: string[]; sellerType: str
   );
 }
 
-// ── Home page ──────────────────────────────────────────────────────────────────
-// The seller's storefront home — the fixed transactional chrome below (store
-// identity banner, follow/message, loyalty rewards, membership plans) is not
-// seller-composable content, so it stays fixed rather than being modeled as a
-// section (see the storefront builder plan). The seller-authored content
-// (hero slides, rich text, featured products, the product catalog, etc.)
-// renders via `SectionRenderer` from the store's home `StorePage`.
+// Loyalty points and gift cards were retired from the seller panel; their
+// buttons stay off here too (flip to bring them back).
+const SHOW_RETIRED_EXTRAS = false;
+
+// ── Store page ─────────────────────────────────────────────────────────────────
+// A store's page inside Edudeen: identity banner (logo, name, description,
+// follow/message, membership), then every product the store sells.
 export function SellerStorefront() {
   const navigate = useNavigate();
   const { store, cfg, theme } = useStorefront();
@@ -91,7 +90,6 @@ export function SellerStorefront() {
   const { requireAuth } = useAuthGate();
   const toast = useToast();
 
-  const [homePage, setHomePage] = useState<StorePageData | null>(null);
   const [total, setTotal] = useState(0);
   const [following, setFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
@@ -122,18 +120,9 @@ export function SellerStorefront() {
   const { banners: storeBanners } = useStoreBanners(store.storeId);
 
   useEffect(() => {
-    document.title = homePage?.seo.metaTitle || store.name;
+    document.title = `${store.name} — Edudeen`;
     return () => { document.title = 'Edudeen'; };
-  }, [homePage?.seo.metaTitle, store.name]);
-
-  const [homePageLoaded, setHomePageLoaded] = useState(false);
-  useEffect(() => {
-    apiGetPublicHomePage(store.storeId)
-      .then(res => setHomePage(res.data))
-      .catch(() => setHomePage(null))
-      .finally(() => setHomePageLoaded(true));
-  }, [store.storeId]);
-  const hasCatalogSection = !!homePage?.sections.some(s => s.type === 'product_catalog' && s.enabled !== false);
+  }, [store.name]);
 
   // Total product count for the identity banner — cheap first-page fetch, the
   // real catalog listing/pagination lives inside `ProductCatalogSection`.
@@ -296,7 +285,7 @@ export function SellerStorefront() {
         overlay
         overlayClassName={bannerLayout === 'immersive' ? 'bg-black/50' : 'bg-black/40'}
         fallbackClassName=""
-        fallbackStyle={{ background: isEdudeenDefaultTheme(theme) ? EDUDEEN_DEFAULT_COVER_GRADIENT : `linear-gradient(135deg, ${cfg.primaryColor}CC, ${cfg.accentColor}CC)` }}
+        fallbackStyle={{ background: storeCoverGradient(cfg.primaryColor) }}
         backgroundOverride={storeBanners.length > 0
           ? <BannerCarousel entityType="store_banner" banners={storeBanners.map(b => ({ _id: b._id, order: b.order, imageUrl: b.imageUrl, linkUrl: b.linkTarget, mobileImageUrl: b.mobileImageUrl }))} />
           : undefined}
@@ -355,14 +344,14 @@ export function SellerStorefront() {
                   <RefreshCw size={13} style={{ color: cfg.primaryColor }} /> Membership
                 </button>
               )}
-              {showLoyaltyBtn && isLoggedIn && loyalty && (
+              {SHOW_RETIRED_EXTRAS && showLoyaltyBtn && isLoggedIn && loyalty && (
                 <button onClick={openRewards}
                   style={{ borderRadius: cfg.buttonRadiusPx }}
                   className="flex items-center gap-[6px] px-[14px] py-[7px] text-[13px] font-medium cursor-pointer transition-colors bg-white text-charcoal border border-white hover:bg-[rgba(255,255,255,0.9)] whitespace-nowrap">
                   <Gift size={13} style={{ color: cfg.primaryColor }} /> {loyalty.pointsBalance.toLocaleString()} points
                 </button>
               )}
-              {giftCardSettings?.purchaseEnabled && (
+              {SHOW_RETIRED_EXTRAS && giftCardSettings?.purchaseEnabled && (
                 <button onClick={() => setShowGiftCardModal(true)}
                   style={{ borderRadius: cfg.buttonRadiusPx }}
                   className="flex items-center gap-[6px] px-[14px] py-[7px] text-[13px] font-medium cursor-pointer transition-colors bg-white text-charcoal border border-white hover:bg-[rgba(255,255,255,0.9)] whitespace-nowrap">
@@ -396,14 +385,12 @@ export function SellerStorefront() {
         </div>
       </CoverImage>
 
-      {/* ── Seller-composed sections ───────────────────────────────────────── */}
-      {homePage && <SectionRenderer sections={homePage.sections} />}
-
-      {/* Every store shows its whole catalogue — if the seller hasn't added
-         (or has hidden) a product catalog section, show all products anyway. */}
-      {homePageLoaded && !hasCatalogSection && (
-        <ProductCatalogSection settings={{ heading: 'All products', showFilters: true, defaultSort: 'newest' }} />
-      )}
+      {/* ── Every product this store sells — the store page is a normal
+         Edudeen page now, not a seller-designed site, so it's always the
+         full catalogue (no custom builder sections). ── */}
+      {/* Seller-picked highlights (up to 8) — hidden when nothing is pinned. */}
+      <FeaturedProductsSection settings={{ heading: 'Featured', source: 'pinned', limit: 8 }} />
+      <ProductCatalogSection settings={{ heading: `All products from ${store.name}`, showFilters: true, defaultSort: 'newest' }} />
 
       {/* ── Store Membership ───────────────────────────────────────────────── */}
       {showMembership && plans.length > 0 && (

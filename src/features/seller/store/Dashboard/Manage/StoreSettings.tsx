@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Save, Store, Loader2, CheckCircle, AlertCircle, Globe, Lock, History, ChevronLeft, ChevronRight, Copy, Check, CreditCard } from 'lucide-react';
 import { useStoreWorkspace, StorePageHeader, StoreNavMenu } from '@/components/layouts/StoreLayout';
+import { getStorefrontUrl } from '@/utils/storefrontUrl';
 import { apiUpdateStore, apiSetCustomDomain, apiVerifyCustomDomain, apiSetWhiteLabel, type ProductType, type CustomDomainStatus } from '@/api/services/store';
 import { apiGetStoreEntitlements, type EntitlementsSummary } from '@/api/services/platformPlans';
 import { apiGetStripeConnectStatus, apiCreateStripeConnectOnboardingLink, apiSyncStripeConnectStatus, type StripeConnectStatus } from '@/api/services/stripeConnect';
@@ -165,6 +166,9 @@ const inputCls = "w-full px-3 py-[9px] rounded-lg text-[13px] border border-bone
 // — the frontend can't import a backend constant, so this literal must be
 // kept in sync by hand if that value ever changes.
 const CUSTOM_DOMAIN_CNAME_TARGET = 'stores.edudeen.com';
+
+// Stores no longer get their own domain or payment gateway (see the note where these render).
+const SHOW_OWN_DOMAIN_AND_GATEWAY = false;
 
 function CopyableRow({ label, value }: { label: string; value: string }) {
   const [copied, setCopied] = useState(false);
@@ -772,9 +776,20 @@ export default function StoreSettings() {
               </div>
             </div>
 
-            {storeId && <DomainWhiteLabelCard storeId={storeId} store={store ? { customDomain: store.customDomain, customDomainStatus: store.customDomainStatus, whiteLabelEnabled: store.whiteLabelEnabled } : null} refetch={refetch} />}
+            {/* A store has one address (edudeen.com/shop/<slug>) and Edudeen collects
+               every payment, so the custom-domain / white-label and own-payment-gateway
+               cards are switched off. Saved values are untouched. */}
+            {SHOW_OWN_DOMAIN_AND_GATEWAY && storeId && <DomainWhiteLabelCard storeId={storeId} store={store ? { customDomain: store.customDomain, customDomainStatus: store.customDomainStatus, whiteLabelEnabled: store.whiteLabelEnabled } : null} refetch={refetch} />}
+            {SHOW_OWN_DOMAIN_AND_GATEWAY && <PaymentGatewayCard />}
 
-            <PaymentGatewayCard />
+            <div className="rounded-xl border border-bone bg-cream/40 px-4 py-3.5">
+              <p className="text-[13.5px] font-semibold text-charcoal mb-1">Payments & your store link</p>
+              <p className="text-[12.5px] text-slate leading-relaxed">
+                Your store lives at <span className="font-semibold text-charcoal">{store?.slug ? getStorefrontUrl(store.slug).replace(/^https?:\/\//, '') : 'edudeen.com/shop/…'}</span>.
+                Buyers pay through Edudeen's checkout; Edudeen pays your earnings monthly, after commission —
+                add or change where you get paid under <a href={`/store/${storeId}/finance?tab=earnings`} className="text-brand-orange font-semibold">Earnings</a>.
+              </p>
+            </div>
           </div>
         </div>
       )}

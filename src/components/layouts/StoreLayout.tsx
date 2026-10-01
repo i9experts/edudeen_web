@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import { Outlet, Navigate, useNavigate, useLocation, useParams } from 'react-router-dom';
 import { TokenStorage, type AppRole } from '@/api/services/auth';
 import { clsx } from 'clsx';
@@ -18,23 +18,12 @@ import { useLogout } from '@/hooks/auth/useLogout';
 import { AnnouncementBanner, Modal, Button } from '@/components/comman/ui';
 import { PlatformTopBar } from '@/components/comman/ui/PlatformTopBar';
 import { CommandPalette, type CommandPaletteItem } from '@/components/comman/ui/CommandPalette';
+import { StoreWorkspaceCtx, useStoreWorkspace } from './StoreWorkspaceContext';
 
 // ── Store Workspace Context ───────────────────────────────────────────────────
-interface StoreWorkspaceValue {
-  store:    StoreData | null;
-  storeId:  string;
-  loading:  boolean;
-  error:    string;
-  refetch:  () => void;
-}
-
-const StoreWorkspaceCtx = createContext<StoreWorkspaceValue | null>(null);
-
-export function useStoreWorkspace(): StoreWorkspaceValue {
-  const ctx = useContext(StoreWorkspaceCtx);
-  if (!ctx) throw new Error('useStoreWorkspace must be inside StoreLayout');
-  return ctx;
-}
+// Defined in ./StoreWorkspaceContext (see the note there); re-exported so every
+// existing `import { useStoreWorkspace } from '@/components/layouts/StoreLayout'` keeps working.
+export { useStoreWorkspace };
 
 // ── Sidebar Nav ───────────────────────────────────────────────────────────────
 export interface NavItem { id: string; Icon: LucideIcon; label: string; path: string }
@@ -60,7 +49,7 @@ export const NAV: { group: string; items: NavItem[] }[] = [
       { id: 'products',      Icon: ShoppingBag,   label: 'Products',      path: 'products'     },
       { id: 'categories',    Icon: FolderTree,    label: 'Categories',    path: 'categories'   },
       { id: 'collections',   Icon: Layers,        label: 'Collections',   path: 'collections'  },
-      { id: 'store-builder', Icon: Store,         label: 'Store Builder', path: 'storebuilder' },
+      { id: 'store-builder', Icon: Store,         label: 'Customize Store', path: 'storebuilder' },
     ],
   },
   {
@@ -688,7 +677,7 @@ function GatedOutlet() {
 }
 
 function isFullBleedRoute(pathname: string) {
-  return /\/(storebuilder|messages)(\/|$)/.test(pathname);
+  return /\/messages(\/|$)/.test(pathname);
 }
 
 // ── Layout ────────────────────────────────────────────────────────────────────

@@ -203,6 +203,18 @@
   to   { transform: translateX(-50%); }
 }
 
+/* ── Top-bar sales ticker — each rotated item slides up into place. ── */
+.topbar-ticker-in {
+  animation: topbar-ticker-in 380ms ease-out;
+}
+@keyframes topbar-ticker-in {
+  from { opacity: 0; transform: translateY(60%); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .topbar-ticker-in { animation: none; }
+}
+
 /* ── Slow breathing glow — sits behind the accent headline line for a
    living-but-restrained sense of depth (no blob repositioning, just a
    gentle opacity/scale pulse). ── */

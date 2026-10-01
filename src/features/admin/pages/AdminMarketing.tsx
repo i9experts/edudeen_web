@@ -40,6 +40,27 @@ const PLACEMENT_LABEL: Record<PromotionPlacement, string> = {
 
 // ═══════════════════════════════ Campaigns ═══════════════════════════════════
 
+// Seasonal sale presets — one click fills the form with the next upcoming
+// dates; the admin can still change anything before creating it.
+const SALE_PRESETS: { label: string; description: string; start: [number, number]; end: [number, number]; discount: number }[] = [
+  { label: 'October Mega Sale', description: 'A month of savings on books, courses and learning resources.', start: [10, 1],  end: [10, 31], discount: 20 },
+  { label: '11.11 Sale',        description: 'One day only — the biggest discounts of the year on 11 November.', start: [11, 11], end: [11, 11], discount: 30 },
+  { label: '12.12 Sale',        description: 'Year-end deals on 12 December.',                               start: [12, 12], end: [12, 12], discount: 25 },
+  { label: 'Azadi Sale',        description: 'Celebrate Independence Day (14 August) with special prices.',   start: [8, 10],  end: [8, 15],  discount: 14 },
+  { label: 'Back to School Sale', description: 'Stationery, workbooks and courses for the new school year.',  start: [3, 25],  end: [4, 15],  discount: 15 },
+];
+
+/** Next occurrence of a month/day window (rolls to next year once it has ended). */
+function nextPresetWindow(start: [number, number], end: [number, number]) {
+  const now = new Date();
+  let year = now.getFullYear();
+  const endOf = (y: number) => new Date(y, end[0] - 1, end[1], 23, 59);
+  if (endOf(year) < now) year += 1;
+  const s = new Date(year, start[0] - 1, start[1], 0, 0);
+  // A window already underway starts now rather than in the past.
+  return { start: s < now ? now : s, end: endOf(year) };
+}
+
 function CreateCampaignModal({ campaign, onClose, onSaved }: { campaign?: Campaign; onClose: () => void; onSaved: () => void }) {
   const isEdit = !!campaign;
   const { createCampaign, updateCampaign, submitting, error } = useCampaignActions();
@@ -88,7 +109,36 @@ function CreateCampaignModal({ campaign, onClose, onSaved }: { campaign?: Campai
       </>}
     >
       <div className="flex flex-col gap-4">
-        <Input label="Campaign Name" placeholder="Back to School Week" value={name} onChange={(e) => setName(e.target.value)} />
+        {!isEdit && (
+          <div>
+            <p className="text-[12px] font-medium text-charcoal mb-1.5">Quick start</p>
+            <div className="flex flex-wrap gap-2">
+              {SALE_PRESETS.map(p => (
+                <button
+                  key={p.label}
+                  type="button"
+                  onClick={() => {
+                    const w = nextPresetWindow(p.start, p.end);
+                    setName(p.label);
+                    setDescription(p.description);
+                    setStartDate(toDatetimeLocalValue(w.start.toISOString()));
+                    setEndDate(toDatetimeLocalValue(w.end.toISOString()));
+                    setDiscountType('percentage');
+                    setDiscountValue(String(p.discount));
+                  }}
+                  className={clsx(
+                    'px-3 py-1.5 rounded-full text-[12px] font-semibold border cursor-pointer transition-colors',
+                    name === p.label ? 'border-brand-orange bg-brand-pale-orange text-charcoal' : 'border-bone bg-white text-charcoal hover:border-brand-orange',
+                  )}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+            <p className="text-[11px] text-slate mt-1.5">Fills in the name, the next dates and a suggested discount — edit anything before creating. Live campaigns show in the top bar of every page.</p>
+          </div>
+        )}
+        <Input label="Campaign Name" placeholder="October Mega Sale" value={name} onChange={(e) => setName(e.target.value)} />
         <Textarea label="Description" rows={3} placeholder="Optional description sellers will see when opting in…" value={description} onChange={(e) => setDescription(e.target.value)} />
         <div>
           <label className="text-[12px] font-medium text-charcoal block mb-1.5">Banner Image (optional)</label>

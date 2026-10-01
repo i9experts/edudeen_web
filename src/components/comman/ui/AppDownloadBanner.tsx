@@ -476,17 +476,20 @@ function CompactAppDownloadBanner({ className }: { className?: string }) {
 }
 
 export function AppDownloadBanner({ className, variant = 'full' }: { className?: string; variant?: 'full' | 'compact' }) {
-  if (variant === 'compact') return <CompactAppDownloadBanner className={className} />;
   // Self-fetches — this banner is reused across several pages that don't already
-  // load platform stats, so it can't rely on a prop from the caller.
+  // load platform stats, so it can't rely on a prop from the caller. Hooks run
+  // before the compact early-return below (Rules of Hooks); compact skips the fetch.
   const [stats, setStats] = useState<PlatformStats | null>(null);
   useEffect(() => {
+    if (variant === 'compact') return;
     let cancelled = false;
     apiGetPlatformStats()
       .then(res => { if (!cancelled) setStats(res.data); })
       .catch(() => { /* non-critical — trust stats just fall back to static copy */ });
     return () => { cancelled = true; };
-  }, []);
+  }, [variant]);
+
+  if (variant === 'compact') return <CompactAppDownloadBanner className={className} />;
 
   // "Secure Shopping" and "Customer Support" are policy statements, not measured
   // metrics — there's no backing field for either, so those two stay static.

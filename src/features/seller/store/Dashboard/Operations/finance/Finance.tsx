@@ -242,7 +242,7 @@ export function StoreFinance() {
     ])
       .then(([d, m]) => {
         setDashboard(d);
-        setActiveCurrency(prev => prev && d.wallets.some(w => w.currency === prev) ? prev : (d.wallets[0]?.currency ?? null));
+        setActiveCurrency(prev => prev && (d.wallets ?? []).some(w => w.currency === prev) ? prev : (d.wallets?.[0]?.currency ?? null));
         setMethods(m ?? []);
       })
       .catch(err => setError(err instanceof Error ? err.message : 'Failed to load finance data.'))
@@ -303,7 +303,7 @@ export function StoreFinance() {
     }
   }
 
-  const activeWallet = dashboard?.wallets.find(w => w.currency === activeCurrency) ?? dashboard?.wallets[0] ?? null;
+  const activeWallet = dashboard?.wallets?.find(w => w.currency === activeCurrency) ?? dashboard?.wallets?.[0] ?? null;
 
   const header = (
     <>
@@ -346,7 +346,7 @@ export function StoreFinance() {
         <div className="px-4 md:px-8 pt-6 pb-10">
           <EarningsStatement
             storeId={storeId}
-            currencies={dashboard?.wallets.map(w => w.currency) ?? []}
+            currencies={dashboard?.wallets?.map(w => w.currency) ?? []}
             defaultCurrency={store?.baseCurrency}
           />
         </div>
@@ -415,9 +415,9 @@ export function StoreFinance() {
         {/* Wallet selector — a seller can hold more than one currency
             (e.g. a PKR wallet from bank-transfer/COD sales and a USD wallet
             from Stripe sales); these are NEVER summed into one number. */}
-        {dashboard.wallets.length > 1 && (
+        {(dashboard.wallets?.length ?? 0) > 1 && (
           <div className="flex gap-2">
-            {dashboard.wallets.map(w => (
+            {(dashboard.wallets ?? []).map(w => (
               <button
                 key={w.currency}
                 onClick={() => setActiveCurrency(w.currency)}
