@@ -9,7 +9,7 @@ import { RootLayout }   from '@/components/layouts/RootLayout';
 import { BuyerLayout }  from '@/components/layouts/BuyerLayout';
 import { AccountLayout } from '@/components/layouts/AccountLayout';
 import { PublicLayout } from '@/components/layouts/PublicLayout';
-import { SellerLayout } from '@/components/layouts/SellerLayout';
+import { SellerStoreRedirect } from './SellerStoreRedirect';
 import { AdminLayout }  from '@/components/layouts/AdminLayout';
 import { StoreLayout }  from '@/components/layouts/StoreLayout';
 import { RequireRole }  from './RequireRole';
@@ -88,12 +88,9 @@ const AccountNotifications = lazy(() => named(import('@/features/buyer/pages/acc
 const AccountSubscriptions = lazy(() => named(import('@/features/buyer/pages/MySubscriptionsPage'),              'SubscriptionsTab'));
 
 // ── Seller ────────────────────────────────────────────────────────────────────
-const SellerAnalytics      = lazy(() => named(import('@/features/seller/dashboard/SellerAnalytics'),             'SellerAnalytics'));
-const StoreBuilderRedirect = lazy(() => named(import('@/features/seller/dashboard/storemodule/StoreBuilderRedirect'), 'StoreBuilderRedirect'));
-const SellerSettings       = lazy(() => named(import('@/features/seller/dashboard/settings/SellerSettings'),   'SellerSettings'));
+const SellerSettings      = lazy(() => named(import('@/features/seller/dashboard/settings/SellerSettings'),   'SellerSettings'));
 const SellerShipping       = lazy(() => named(import('@/features/seller/dashboard/SellerShipping'),             'SellerShipping'));
 const SellerMessages       = lazy(() => named(import('@/features/seller/dashboard/SellerMessages'),             'SellerMessages'));
-const SellerStoreList      = lazy(() => named(import('@/features/seller/dashboard/storemodule/SellerStoreList'),'SellerStoreList'));
 const StorePageOverview    = lazy(() => named(import('@/features/seller/dashboard/storemodule/StorePageOverview'), 'StorePageOverview'));
 
 // ── Store Workspace ───────────────────────────────────────────────────────────
@@ -288,16 +285,17 @@ const mainRouter = createBrowserRouter([
       { path: '/store/:storeId/theme-preview/:themeId', element: <Navigate to="../../storebuilder" relative="path" replace /> },
       { path: '/store/:storeId/live-preview', element: <Navigate to="../storebuilder" relative="path" replace /> },
 
-      // ── Seller pages with dark sidebar ────────────────────────────────
+      // ── Old seller-level pages — one seller has one store now, so these
+      //    all open that store's own workspace. ──────────────────────────
       {
         path: '/seller',
-        element: <SellerLayout />,
         children: [
-          { index: true,           element: <Navigate to="/seller/stores" replace /> },
-          { path: 'analytics',     element: <SellerAnalytics /> },
-          { path: 'stores',        element: <SellerStoreList /> },
-          { path: 'store',         element: <StoreBuilderRedirect /> },
-          { path: 'settings',      element: <SellerSettings /> },
+          { index: true,           element: <SellerStoreRedirect /> },
+          { path: 'analytics',     element: <SellerStoreRedirect to="analytics" /> },
+          { path: 'stores',        element: <SellerStoreRedirect /> },
+          { path: 'store',         element: <SellerStoreRedirect to="storebuilder" /> },
+          { path: 'settings',      element: <SellerStoreRedirect to="account" /> },
+          { path: '*',             element: <SellerStoreRedirect /> },
         ],
       },
 
@@ -316,6 +314,7 @@ const mainRouter = createBrowserRouter([
           { path: 'customer/list',                    element: <StoreCustomerList /> },
           { path: 'analytics',                        element: <StoreAnalytics /> },
           { path: 'settings',                         element: <StoreSettings /> },
+          { path: 'account',                          element: <SellerSettings /> },
           { path: 'categories',                       element: <StoreCategories /> },
           { path: 'collections',                      element: <StoreCollections /> },
           { path: 'plan-billing',                     element: <StorePlanBilling /> },

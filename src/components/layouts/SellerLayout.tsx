@@ -17,6 +17,7 @@ import {
 import { EdudeenIcon, EdudeenLogo } from '@/components/comman/ui/EdudeenLogo';
 import { AnnouncementBanner } from '@/components/comman/ui';
 import { PlatformTopBar } from '@/components/comman/ui/PlatformTopBar';
+import { useLockPageScroll } from '@/hooks/useLockPageScroll';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface NavItem {
@@ -524,6 +525,8 @@ function SellerTopBar() {
 
 // ── Layout ────────────────────────────────────────────────────────────────────
 export function SellerLayout() {
+  // Only the dashboard's own content area scrolls — never the page around it.
+  useLockPageScroll();
   const { pathname: currentPath } = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const toggle = () => setSidebarOpen(o => !o);
@@ -535,12 +538,12 @@ export function SellerLayout() {
 
   return (
     <ActiveStoreProvider>
-      <div className={clsx('flex bg-white', 'h-screen')}>
+      <div className={clsx('flex bg-white overflow-hidden', 'h-screen')}>
         <SellerSidebar open={sidebarOpen} onToggle={toggle} />
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           <SellerTopBar />
           <AnnouncementBanner audience="sellers" />
-          <div className="flex-1 overflow-y-auto overflow-x-hidden pb-[64px] lg:pb-0">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain pb-[64px] lg:pb-0">
             <div className="w-full max-w-[1440px] mx-auto min-h-full">
               <Outlet />
             </div>

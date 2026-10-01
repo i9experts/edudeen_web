@@ -36,6 +36,13 @@ export function notificationsPath(): string {
   return '/account/notifications';
 }
 
+/** In-app page a notification points to (e.g. a sale campaign → Marketing), if any.
+ *  Only same-app paths — never an outside URL. */
+export function notificationLink(data: Record<string, unknown> | null | undefined): string | null {
+  const link = data?.link;
+  return typeof link === 'string' && link.startsWith('/') && !link.startsWith('//') ? link : null;
+}
+
 /** Real-time push toast — rendered by whichever component owns notifications on the page. */
 export function NotificationToast() {
   const { toast, clearToast } = useNotification();
@@ -98,7 +105,11 @@ export function NotificationsMenuSection({ onNavigate }: { onNavigate: (path: st
           {recent.map(n => (
             <button
               key={n._id}
-              onClick={() => !n.isRead && markAsRead(n._id)}
+              onClick={() => {
+                if (!n.isRead) markAsRead(n._id);
+                const link = notificationLink(n.data);
+                if (link) onNavigate(link);
+              }}
               className={clsx(
                 'w-full flex gap-2.5 px-3 py-2 rounded-[9px] border-0 text-left cursor-pointer hover:bg-cream transition-colors',
                 n.isRead ? 'bg-transparent' : 'bg-brand-pale-orange/25',
@@ -226,7 +237,11 @@ export function NotificationBell() {
               recentNotifications.map((notif) => (
                 <div
                   key={notif._id}
-                  onClick={() => !notif.isRead && markAsRead(notif._id)}
+                  onClick={() => {
+                    if (!notif.isRead) markAsRead(notif._id);
+                    const link = notificationLink(notif.data);
+                    if (link) { setIsOpen(false); navigate(link); }
+                  }}
                   className={clsx(
                     'p-3 flex gap-3 text-left transition-colors duration-150 relative group cursor-pointer hover:bg-cream/40',
                     !notif.isRead && 'bg-brand-pale-orange/20'

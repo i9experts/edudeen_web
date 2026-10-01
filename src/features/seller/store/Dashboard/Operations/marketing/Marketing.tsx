@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { useStoreCampaigns } from '@/hooks/store/useStoreCampaigns';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { Tag as TagIcon, Mail, ShoppingCart, Handshake, Gift, Megaphone, Building2, User, Image as ImageIcon, Pause, Play, Trash2, Plus, Star, Bell, ArrowUp, ArrowDown, Rocket, X, Percent, type LucideIcon } from 'lucide-react';
 import { StorePageHeader, useStoreWorkspace } from '@/components/layouts/StoreLayout';
@@ -7,7 +9,6 @@ import { StripeCardPayment, isStripeConfigured } from '@/features/buyer/componen
 import { currencySymbol } from '@/utils/currency';
 import {
   apiGetCoupons, apiCreateCoupon, apiUpdateCoupon, apiDeleteCoupon,
-  apiGetJoinableCampaigns, apiJoinCampaign, apiLeaveCampaign,
   type Coupon, type DiscountType, type JoinableCampaign,
 } from '@/api/services/marketing';
 import {
@@ -36,13 +37,13 @@ import { apiGetCategoryTree, type CategoryNode } from '@/api/services/categories
 type Tab = 'banners' | 'featured' | 'announcement' | 'promotions' | 'coupons' | 'discounts' | 'platform' | 'email' | 'cart' | 'affiliate' | 'giftcards';
 
 const TABS: { id: Tab; label: string; Icon: LucideIcon }[] = [
+  { id: 'platform',     label: 'Platform Sales', Icon: Megaphone    },
   { id: 'banners',      label: 'Store Banners',  Icon: ImageIcon    },
   { id: 'featured',     label: 'Featured & Collections', Icon: Star },
   { id: 'announcement', label: 'Announcement Bar', Icon: Bell },
   { id: 'promotions',   label: 'Promotion Requests', Icon: Rocket },
   { id: 'coupons',   label: 'Coupons',        Icon: TagIcon      },
   { id: 'discounts', label: 'Discounts',      Icon: Percent      },
-  { id: 'platform',  label: 'Platform Sales', Icon: Megaphone    },
 ];
 
 // Not shown as tabs: Email Campaigns / Abandoned Cart / Affiliate have no
@@ -398,7 +399,12 @@ function PromotionPaymentModal({ request, onClose, onPaid }: { request: Promotio
 export function StoreMarketing() {
   usePageTitle('Marketing');
   const { store, storeId } = useStoreWorkspace();
-  const [tab, setTab] = useState<Tab>('coupons');
+  // `?tab=` picks the tab, so notifications and the dashboard sale card can
+  // link straight to Platform Sales.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlTab = searchParams.get('tab');
+  const tab: Tab = TABS.some(t => t.id === urlTab) ? urlTab as Tab : 'coupons';
+  const setTab = (next: Tab) => setSearchParams(p => { const q = new URLSearchParams(p); q.set('tab', next); return q; }, { replace: true });
 
   // Featured & Collections (pinned products)
   const [inventory, setInventory] = useState<InventoryProduct[]>([]);
@@ -598,27 +604,16 @@ export function StoreMarketing() {
   }, [storeId]);
 
   // Platform-wide sale campaigns (admin-created) this store can opt into
-  const [campaigns, setCampaigns] = useState<JoinableCampaign[]>([]);
-  const [campaignsLoading, setCampaignsLoading] = useState(true);
-  const [campaignsError, setCampaignsError] = useState('');
+  const { campaigns, loading: campaignsLoading, error: campaignsLoadError, toggle: toggleJoined } = useStoreCampaigns(storeId);
+  const [toggleError, setCampaignsError] = useState('');
+  const campaignsError = toggleError || campaignsLoadError;
   const [campaignBusyId, setCampaignBusyId] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!storeId || tab !== 'platform') return;
-    setCampaignsLoading(true);
-    apiGetJoinableCampaigns(storeId)
-      .then(res => setCampaigns(res.data ?? []))
-      .catch(err => setCampaignsError(err instanceof Error ? err.message : 'Failed to load campaigns.'))
-      .finally(() => setCampaignsLoading(false));
-  }, [storeId, tab]);
 
   async function toggleCampaign(campaign: JoinableCampaign) {
     setCampaignBusyId(campaign._id);
     setCampaignsError('');
     try {
-      if (campaign.isJoined) await apiLeaveCampaign(storeId, campaign._id);
-      else await apiJoinCampaign(storeId, campaign._id);
-      setCampaigns(prev => prev.map(c => c._id === campaign._id ? { ...c, isJoined: !c.isJoined } : c));
+      await toggleJoined(campaign);
     } catch (err) {
       setCampaignsError(err instanceof Error ? err.message : 'Failed to update campaign.');
     } finally {

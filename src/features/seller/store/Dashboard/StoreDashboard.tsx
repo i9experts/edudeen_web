@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useStoreWorkspace, StorePageHeader } from '@/components/layouts/StoreLayout';
+import { PlatformSalesCard } from './PlatformSalesCard';
 import { AreaChart } from '@/components/comman/charts';
 import { MetricCard, SkeletonBox, Button, PageHeader } from '@/components/comman/ui';
 import {
@@ -447,6 +448,9 @@ export default function StoreDashboard() {
               </button>
             </div>
           )}
+
+          {/* Admin sale campaigns — join right from the dashboard */}
+          <PlatformSalesCard storeId={storeId} />
 
           {/* Metric Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">

@@ -8,7 +8,7 @@ import {
   Settings, Sparkles, ChevronLeft, ChevronRight, Store,
   Megaphone, Star, Search, Wallet,
   MessageSquare, FolderTree, RefreshCw, Undo2, CreditCard,
-  PanelLeftClose, PanelLeftOpen, AlertTriangle, AlertCircle, XCircle, Clock, LogOut, Layers,
+  PanelLeftClose, PanelLeftOpen, AlertTriangle, AlertCircle, XCircle, Clock, LogOut, Layers, UserRound,
 } from 'lucide-react';
 import { EdudeenIcon, EdudeenLogo } from '@/components/comman/ui/EdudeenLogo';
 import { apiGetStoreById, type StoreData } from '@/api/services/store';
@@ -17,8 +17,10 @@ import { useCommandPalette } from '@/hooks/useCommandPalette';
 import { useLogout } from '@/hooks/auth/useLogout';
 import { AnnouncementBanner, Modal, Button } from '@/components/comman/ui';
 import { PlatformTopBar } from '@/components/comman/ui/PlatformTopBar';
+import { useLockPageScroll } from '@/hooks/useLockPageScroll';
 import { CommandPalette, type CommandPaletteItem } from '@/components/comman/ui/CommandPalette';
 import { StoreWorkspaceCtx, useStoreWorkspace } from './StoreWorkspaceContext';
+import { useStoreCampaigns } from '@/hooks/store/useStoreCampaigns';
 
 // ── Store Workspace Context ───────────────────────────────────────────────────
 // Defined in ./StoreWorkspaceContext (see the note there); re-exported so every
@@ -81,7 +83,8 @@ export const NAV: { group: string; items: NavItem[] }[] = [
   {
     group: 'Settings',
     items: [
-      { id: 'settings',      Icon: Settings,    label: 'Settings',              path: 'settings'      },
+      { id: 'settings',      Icon: Settings,    label: 'Store Settings',        path: 'settings'      },
+      { id: 'account',       Icon: UserRound,   label: 'Account',               path: 'account'       },
     ],
   },
 ];
@@ -258,6 +261,13 @@ function StoreSidebar({ open, onToggle }: StoreSidebarProps) {
   };
 
   const isActive = (path: string) => isNavItemActive(path, pathname, search, storeId);
+  // Admin sale campaigns this store hasn't joined yet — shown as a badge on
+  // Marketing, which then opens straight on the Platform Sales tab.
+  const { needsAction: campaignsToJoin } = useStoreCampaigns(storeId);
+  const itemTarget = (item: NavItem) =>
+    item.path.startsWith('/') ? item.path
+      : item.id === 'marketing' && campaignsToJoin > 0 ? `/store/${storeId}/marketing?tab=platform`
+      : `/store/${storeId}/${item.path}`;
 
   const initials   = store?.name?.slice(0, 2).toUpperCase() ?? '..';
   // Real plan allowance from entitlements (monthlyAllowance: -1 = unlimited,
@@ -358,7 +368,8 @@ function StoreSidebar({ open, onToggle }: StoreSidebarProps) {
               }
               {section.items.map(item => {
                 const active = isActive(item.path);
-                const goToItem = () => navigate(item.path.startsWith('/') ? item.path : `/store/${storeId}/${item.path}`);
+                const goToItem = () => navigate(itemTarget(item));
+                const badge = item.id === 'marketing' ? campaignsToJoin : 0;
                 return (
                   <div
                     key={item.id}
@@ -366,11 +377,11 @@ function StoreSidebar({ open, onToggle }: StoreSidebarProps) {
                     tabIndex={0}
                     onClick={goToItem}
                     onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goToItem(); } }}
-                    title={!open ? item.label : undefined}
-                    aria-label={item.label}
+                    title={!open ? (badge ? `${item.label} — ${badge} sale${badge > 1 ? 's' : ''} to join` : item.label) : undefined}
+                    aria-label={badge ? `${item.label}, ${badge} sale${badge > 1 ? 's' : ''} to join` : item.label}
                     aria-current={active ? 'page' : undefined}
                     className={clsx(
-                      'flex items-center gap-[10px] py-[8px] px-3 rounded-lg mb-0.5 cursor-pointer',
+                      'relative flex items-center gap-[10px] py-[8px] px-3 rounded-lg mb-0.5 cursor-pointer',
                       'transition-colors duration-150',
                       !open && 'lg:justify-center lg:px-0',
                       active ? 'bg-brand-orange shadow-[0_2px_8px_rgba(23,71,113,0.28)]' : 'bg-transparent hover:bg-[#e3ecf3]',
@@ -385,6 +396,16 @@ function StoreSidebar({ open, onToggle }: StoreSidebarProps) {
                         {item.label}
                       </span>
                     )}
+                    {badge > 0 && (open ? (
+                      <span className={clsx(
+                        'text-[9.5px] font-bold px-[6px] py-[1px] rounded-full leading-[14px] shrink-0',
+                        active ? 'bg-white text-brand-orange' : 'bg-brand-green text-white',
+                      )}>
+                        {badge} new sale{badge > 1 ? 's' : ''}
+                      </span>
+                    ) : (
+                      <span className="absolute top-1 right-1 size-2 rounded-full bg-brand-green" aria-hidden />
+                    ))}
                   </div>
                 );
               })}
@@ -695,6 +716,8 @@ function StoreTopBar() {
 
 // ── Layout ────────────────────────────────────────────────────────────────────
 export function StoreLayout() {
+  // Only the dashboard's own content area scrolls — never the page around it.
+  useLockPageScroll();
   const { pathname: currentPath } = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const toggle = () => setSidebarOpen(o => !o);
@@ -717,7 +740,7 @@ export function StoreLayout() {
           <AnnouncementBanner audience="sellers" />
           <StoreVerificationBanner />
           <PlatformBillingBanner />
-          <div className="flex-1 overflow-y-auto pb-[64px] lg:pb-0">
+          <div className="flex-1 overflow-y-auto overscroll-contain pb-[64px] lg:pb-0">
             {/* Content column capped at a readable studio width; the builder
                and messages views keep the full canvas they need. */}
             <div className={isFullBleedRoute(currentPath) ? 'min-h-full' : 'w-full max-w-[1440px] mx-auto min-h-full'}>

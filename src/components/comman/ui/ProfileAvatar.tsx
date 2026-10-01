@@ -195,9 +195,17 @@ function DropdownMenu({
         {hasDash && (
           <MenuItem
             icon={isAdmin ? Shield : LayoutDashboard}
-            label={isAdmin ? 'Admin Panel' : 'Seller Dashboard'}
+            label={isAdmin ? 'Admin Panel' : 'Store Dashboard'}
             sublabel={isAdmin ? 'Manage the platform' : 'Manage your store'}
-            onClick={() => onNavigate(isAdmin ? '/admin' : '/seller/stores')}
+            onClick={() => onNavigate(isAdmin ? '/admin' : '/seller')}
+          />
+        )}
+        {hasDash && !isAdmin && (
+          <MenuItem
+            icon={User}
+            label="Account"
+            sublabel="Profile, login & notifications"
+            onClick={() => onNavigate('/seller/settings')}
           />
         )}
       </div>

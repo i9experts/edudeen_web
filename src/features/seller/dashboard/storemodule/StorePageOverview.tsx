@@ -377,7 +377,7 @@ export function StorePageOverview() {
               </div>
               <div className="mt-3 flex flex-col gap-1.5 text-[12px] text-slate">
                 <span className="flex items-center gap-1.5"><ShoppingCart size={13} className="text-brand-orange" /> Buyers check out through Edudeen</span>
-                <span className="flex items-center gap-1.5"><ShieldCheck size={13} className="text-brand-orange" /> Earnings paid monthly, after commission</span>
+                <span className="flex items-center gap-1.5"><ShieldCheck size={13} className="text-brand-orange" /> No commission — earnings paid monthly</span>
               </div>
             </div>
           </aside>

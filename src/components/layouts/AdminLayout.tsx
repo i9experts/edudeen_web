@@ -16,6 +16,7 @@ import { CommandPalette } from '@/components/comman/ui/CommandPalette';
 import { Modal, Button, CopyIconButton } from '@/components/comman/ui';
 import { EdudeenLogo, EdudeenIcon } from '@/components/comman/ui/EdudeenLogo';
 import { PlatformTopBar } from '@/components/comman/ui/PlatformTopBar';
+import { useLockPageScroll } from '@/hooks/useLockPageScroll';
 
 interface AdminNavItem {
   id:    string;
@@ -515,6 +516,8 @@ function AdminSidebar({ open, onToggle }: AdminSidebarProps) {
 }
 
 export function AdminLayout() {
+  // Only the dashboard's own content area scrolls — never the page around it.
+  useLockPageScroll();
   const { pathname: currentPath } = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const toggle = () => setSidebarOpen(o => !o);
@@ -534,7 +537,7 @@ export function AdminLayout() {
           <EdudeenLogo size={20} />
           <span className="text-[10px] font-bold text-brand-royal uppercase tracking-[0.15em]">Team workspace</span>
         </div>
-        <main id="admin-main" className="flex-1 overflow-y-auto pb-[72px] lg:pb-10">
+        <main id="admin-main" className="flex-1 overflow-y-auto overscroll-contain pb-[72px] lg:pb-10">
           <Outlet />
         </main>
       </div>

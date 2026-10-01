@@ -786,7 +786,7 @@ export default function StoreSettings() {
               <p className="text-[13.5px] font-semibold text-charcoal mb-1">Payments & your store link</p>
               <p className="text-[12.5px] text-slate leading-relaxed">
                 Your store lives at <span className="font-semibold text-charcoal">{store?.slug ? getStorefrontUrl(store.slug).replace(/^https?:\/\//, '') : 'edudeen.com/shop/…'}</span>.
-                Buyers pay through Edudeen's checkout; Edudeen pays your earnings monthly, after commission —
+                Buyers pay through Edudeen's checkout; Edudeen pays your full earnings monthly (only the card processing fee is deducted) —
                 add or change where you get paid under <a href={`/store/${storeId}/finance?tab=earnings`} className="text-brand-orange font-semibold">Earnings</a>.
               </p>
             </div>

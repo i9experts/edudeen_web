@@ -48,7 +48,7 @@ const PAYOUT_TONE: Record<string, 'green' | 'amber' | 'gray' | 'blue' | 'red'> =
 
 const HOW_YOU_GET_PAID = [
   { tag: 'Checkout',   title: 'Buyers pay Edudeen',        body: 'Card and online payments are collected securely by Edudeen on your behalf when a buyer checks out.' },
-  { tag: 'Commission', title: 'Commission is deducted',     body: 'The platform commission and any payment-processing fees or refunds are taken out of each sale.' },
+  { tag: 'Fees',       title: 'Only card fees come off',    body: 'Edudeen takes no commission — only the card processing fee and any refunds are taken out of each sale.' },
   { tag: 'Payout',     title: 'Net earnings paid monthly',  body: 'Card sales become payable after a 14-day clearing hold. What remains is paid to your payout method on the 1st of the following month, after admin approval.' },
 ];
 
@@ -213,7 +213,7 @@ export function EarningsStatement({ storeId, currencies, defaultCurrency }: Prop
             <MetricCard
               label="Net earnings"
               value={money(statement.netEarnings)}
-              sub="After commission, fees and refunds"
+              sub="After card fees and refunds"
             />
             <MetricCard
               label="Next payout date"

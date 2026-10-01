@@ -27,7 +27,7 @@ import {
 // after commission. Sellers never request payouts or set a schedule, so the
 // old "Request Payout" / "Update Schedule" controls and the flat-rate
 // "Pending Tax" / tax-report estimates are intentionally not shown here.
-const PAYOUT_NOTE = 'Edudeen pays your earnings monthly, after commission.';
+const PAYOUT_NOTE = 'No commission — Edudeen pays your full earnings monthly, minus card processing fees.';
 
 const TYPE_STYLE: Record<TransactionType, { color: BadgeColor; label: string }> = {
   sale:       { color: 'green',  label: 'Sale' },
@@ -309,7 +309,7 @@ export function StoreFinance() {
     <>
       <StorePageHeader
         title="Earnings"
-        subtitle="Your sales, commission and monthly payouts from Edudeen."
+        subtitle="Your sales, fees and monthly payouts from Edudeen."
         actions={
           <Button size="sm" variant="outline" icon={<Plus size={13} />} onClick={() => setMethodModal(true)}>
             <span className="hidden sm:inline">Add Payout Method</span>

@@ -36,7 +36,7 @@ const Divider = ({ className }: { className?: string }) => <span className={clsx
 // Visitors can learn about selling; a signed-in buyer gets no seller link.
 function shopAction(role: Role | undefined, loggedIn: boolean): { label: string; path: string } | null {
   if (role === 'admin')  return { label: 'Admin panel ↗',   path: '/admin' };
-  if (role === 'seller') return { label: 'My stores ↗',     path: '/seller/stores' };
+  if (role === 'seller') return { label: 'My store ↗',      path: '/seller' };
   if (loggedIn)          return null;
   return { label: 'Start creating ↗', path: '/sellers' };
 }

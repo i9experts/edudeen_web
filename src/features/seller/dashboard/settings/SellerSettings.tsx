@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useGetProfile, invalidateProfileCache } from '@/hooks/auth/useGetProfile';
 import { useEditProfile } from '@/hooks/auth/useEditProfile';
@@ -13,7 +13,7 @@ import {
   User, KeyRound, Bell,
   Trash2, Camera, Settings, Check, Loader2, Eye, EyeOff, ChevronLeft, ChevronRight, type LucideIcon,
 } from 'lucide-react';
-import { SellerPageHeader } from '@/components/layouts/SellerLayout';
+import { StorePageHeader } from '@/components/layouts/StoreLayout';
 
 // ── Data ──────────────────────────────────────────────────────────────────────
 // Account-level only. Store Info/Domain/Payments/Shipping/Billing/Payouts/
@@ -156,7 +156,11 @@ function MobileSellerMenu({ active, onSelect }: { active: SettingSection; onSele
 export function SellerSettings() {
   usePageTitle('Settings');
   const navigate = useNavigate();
-  const [active,    setActive]    = useState<SettingSection>('profile');
+  const [searchParams] = useSearchParams();
+  const initialTab = searchParams.get('tab') as SettingSection | null;
+  const [active,    setActive]    = useState<SettingSection>(
+    initialTab && SETTINGS_NAV.some(g => g.items.some(i => i.id === initialTab)) ? initialTab : 'profile',
+  );
   // Mobile-only: whether we've drilled into a section from the account-hub
   // menu below (mirrors the buyer AccountLayout's back-arrow drill-in, done
   // via local state instead of real routes since this page has none).
@@ -228,9 +232,9 @@ export function SellerSettings() {
 
   return (
     <>
-      <SellerPageHeader
-        title="Settings"
-        subtitle="Manage your account preferences."
+      <StorePageHeader
+        title="Account"
+        subtitle="Your seller profile, login and notifications."
       />
 
       <div className="px-4 lg:px-7 pt-5 pb-8">

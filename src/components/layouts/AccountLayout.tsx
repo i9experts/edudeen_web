@@ -11,6 +11,8 @@ import { useWishlistContext } from '@/contexts/WishlistContext';
 import { useConversations } from '@/hooks/messaging/useConversations';
 import { EdudeenIcon } from '@/components/comman/ui/EdudeenLogo';
 import { PlatformTopBar } from '@/components/comman/ui/PlatformTopBar';
+import { useLockPageScroll } from '@/hooks/useLockPageScroll';
+import { AnnouncementBanner } from '@/components/comman/ui';
 import { useEdgeSwipeBack } from '@/hooks/useEdgeSwipeBack';
 
 // ── Nav model ─────────────────────────────────────────────────────────────────
@@ -236,6 +238,8 @@ function MobileTopBar({ label, isRoot, onBack }: { label: string; isRoot: boolea
 
 // ── Layout ────────────────────────────────────────────────────────────────────
 export function AccountLayout() {
+  // Only the dashboard's own content area scrolls — never the page around it.
+  useLockPageScroll();
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -263,8 +267,10 @@ export function AccountLayout() {
 
       <div className="flex flex-col flex-1 min-w-0 min-h-0">
         <PlatformTopBar showAccount />
+        {/* Inside the column (not above the layout) so the page never grows past the screen. */}
+        <AnnouncementBanner audience="buyers" />
         <MobileTopBar label={currentLabel} isRoot={isRoot} onBack={goHome} />
-        <main className="flex-1 min-h-0 min-w-0 px-4 md:px-7 py-4 md:py-6 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <main className="flex-1 min-h-0 min-w-0 px-4 md:px-7 py-4 md:py-6 overflow-y-auto overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <Suspense fallback={<AccountContentSkeleton />}>
             <Outlet />
           </Suspense>

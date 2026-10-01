@@ -18,6 +18,16 @@ export function isStripeConfigured() {
   return !!PUBLISHABLE_KEY;
 }
 
+/** Finishes a subscription's first payment when the bank asks for 3-D Secure.
+ *  Returns an error message, or null once Stripe reports it paid. */
+export async function confirmSubscriptionPayment(clientSecret: string): Promise<string | null> {
+  const stripe = await getStripe();
+  if (!stripe) return 'Card payments are not available right now.';
+  const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret);
+  if (error) return error.message ?? 'Your card was declined.';
+  return paymentIntent?.status === 'succeeded' || paymentIntent?.status === 'processing' ? null : 'Payment did not complete.';
+}
+
 interface StripeCardSetupProps {
   clientSecret: string;
   /** Called once Stripe confirms the SetupIntent client-side, with the
@@ -25,9 +35,11 @@ interface StripeCardSetupProps {
    *  apiConfirmOnboardingPaymentMethod(setupIntentId) to have the backend
    *  verify it and flip Seller.hasPlatformPaymentMethod. */
   onConfirmed: (setupIntentId: string) => void;
+  /** Line under the button. */
+  note?: string;
 }
 
-function SetupForm({ onConfirmed }: Omit<StripeCardSetupProps, 'clientSecret'>) {
+function SetupForm({ onConfirmed, note }: Omit<StripeCardSetupProps, 'clientSecret'>) {
   const stripe   = useStripe();
   const elements = useElements();
   const [submitting, setSubmitting] = useState(false);
@@ -73,7 +85,7 @@ function SetupForm({ onConfirmed }: Omit<StripeCardSetupProps, 'clientSecret'>) 
       </Button>
 
       <p className="flex items-center justify-center gap-[6px] text-[11px] text-slate">
-        <ShieldCheck size={12} className="text-success shrink-0" /> Your card is encrypted and secured by Stripe — you won't be charged today
+        <ShieldCheck size={12} className="text-success shrink-0" /> {note ?? "Your card is encrypted and secured by Stripe — you won't be charged today"}
       </p>
     </form>
   );
@@ -83,7 +95,7 @@ function SetupForm({ onConfirmed }: Omit<StripeCardSetupProps, 'clientSecret'>) 
  *  nothing if VITE_STRIPE_PUBLISHABLE_KEY isn't set. Callers should check
  *  isStripeConfigured() first and show a fallback state instead of mounting
  *  this. */
-export function StripeCardSetup({ clientSecret, onConfirmed }: StripeCardSetupProps) {
+export function StripeCardSetup({ clientSecret, onConfirmed, note }: StripeCardSetupProps) {
   const promise = getStripe();
   if (!promise) return null;
 
@@ -105,7 +117,7 @@ export function StripeCardSetup({ clientSecret, onConfirmed }: StripeCardSetupPr
         },
       }}
     >
-      <SetupForm onConfirmed={onConfirmed} />
+      <SetupForm onConfirmed={onConfirmed} note={note} />
     </Elements>
   );
 }

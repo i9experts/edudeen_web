@@ -15,10 +15,15 @@ import { useUpload } from '@/hooks/upload/useUpload';
 import type { SellerType, ProductType, StoreData, SupportedCurrency } from '@/api/services/store';
 import { apiGetCategoryTree, type CategoryNode } from '@/api/services/categories';
 import { getStorefrontUrl } from '@/utils/storefrontUrl';
-import { apiCreateOnboardingSetupIntent, apiConfirmOnboardingPaymentMethod, apiGetOnboardingProgress, apiSaveOnboardingDraft } from '@/api/services/platformPlans';
+import {
+  apiCreateOnboardingSetupIntent, apiConfirmOnboardingPaymentMethod, apiGetOnboardingProgress, apiSaveOnboardingDraft,
+  apiBrowsePlatformPlans, apiChangePlatformPlan, type PlatformPlan,
+} from '@/api/services/platformPlans';
+import { apiGetMyStores } from '@/api/services/store';
+import { resolveSellerDestination } from '@/utils/sellerRouting';
 import { AuthSplitLayout } from '@/features/auth/components/AuthSplitLayout';
 import { SellerDashboardMockup } from '@/features/auth/components/mockups/AuthMockups';
-import { StripeCardSetup, isStripeConfigured } from './StripeCardSetup';
+import { StripeCardSetup, isStripeConfigured, confirmSubscriptionPayment } from './StripeCardSetup';
 import { MagneticButton } from '@/components/comman/motion/MagneticButton';
 import { motion } from 'motion/react';
 
@@ -35,7 +40,7 @@ const ONBOARDING_HIGHLIGHTS = [
 // real card on file at the Payment step (see StripeCardSetup /
 // confirmOnboardingPaymentMethod) has their store activated immediately on
 // submit — see StoreService.createStore's `selfServeActivation`.
-const STEPS = ['Store Info', 'Payment', 'Seller Type', 'What You Sell', 'Review'];
+const STEPS = ['Store Info', 'Plan & Payment', 'Seller Type', 'What You Sell', 'Review'];
 const TOTAL_STEPS = STEPS.length;
 
 // Every step shares this exact outer width so the progress header (badge +
@@ -73,6 +78,10 @@ interface StoreForm {
    *  backend as part of store creation. Locked forever once the store has
    *  its first product (see CreateStorePayload.baseCurrency). */
   baseCurrency: SupportedCurrency;
+  /** Monthly store plan picked at the Plan & Payment step (charged on launch). */
+  planId:       string;
+  planName:     string;
+  planPriceUSD: number;
 }
 
 // Edudeen is Pakistan-origin, so every store defaults to PKR pricing
@@ -264,11 +273,13 @@ function Step1StoreInfo({ form, setForm, onNext, step, maxReached, onStepClick }
   );
 }
 
-// ── Step 2 — Payment ──────────────────────────────────────────────────────────
-// A card on file (never charged today — the store starts on the free plan,
-// see ensureDefaultSubscription) is what lets the store activate immediately
-// on submit instead of sitting in an admin-review queue, Shopify-style.
-function Step2Payment({ onNext, onBack, step, maxReached, onStepClick, alreadyConfirmed }: {
+// ── Step 2 — Plan & Payment ───────────────────────────────────────────────────
+// A store needs a paid monthly plan. The seller picks one here and saves a
+// card; the first month is charged when the store is created at the last
+// step. Sales themselves are commission-free — the seller keeps the full
+// amount, less the card processing fee — and Edudeen pays out monthly.
+function Step2Payment({ form, setForm, onNext, onBack, step, maxReached, onStepClick, alreadyConfirmed, onCardSaved }: {
+  form: StoreForm; setForm: (f: StoreForm) => void;
   onNext: () => void; onBack: () => void;
   step: number; maxReached: number; onStepClick: (step: number) => void;
   /** True when Seller.hasPlatformPaymentMethod was already true on load —
@@ -276,11 +287,28 @@ function Step2Payment({ onNext, onBack, step, maxReached, onStepClick, alreadyCo
    *  device, having already confirmed a card in an earlier session. Skips
    *  straight to a "already added" confirmation instead of asking again. */
   alreadyConfirmed: boolean;
+  onCardSaved: () => void;
 }) {
+  const [plans, setPlans] = useState<PlatformPlan[] | null>(null);
+  const [plansError, setPlansError] = useState('');
   const [clientSecret, setClientSecret] = useState('');
   const [loadError, setLoadError] = useState('');
   const [confirming, setConfirming] = useState(false);
   const [confirmError, setConfirmError] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+    apiBrowsePlatformPlans()
+      .then(res => {
+        if (cancelled) return;
+        const paid = (res.data ?? [])
+          .filter(p => p.status === 'active' && !p.isFree && !p.isCustomPricing && (p.monthlyPriceUSD ?? 0) > 0)
+          .sort((a, b) => a.sortOrder - b.sortOrder);
+        setPlans(paid);
+      })
+      .catch(() => { if (!cancelled) { setPlans([]); setPlansError('Could not load plans. Please refresh and try again.'); } });
+    return () => { cancelled = true; };
+  }, []);
 
   useEffect(() => {
     if (alreadyConfirmed || !isStripeConfigured()) return;
@@ -291,63 +319,143 @@ function Step2Payment({ onNext, onBack, step, maxReached, onStepClick, alreadyCo
     return () => { cancelled = true; };
   }, [alreadyConfirmed]);
 
+  // A plan picked in an earlier session that's no longer offered is dropped.
+  const selected = plans?.find(p => p._id === form.planId) ?? null;
+
+  const choose = (p: PlatformPlan) =>
+    setForm({ ...form, planId: p._id, planName: p.name, planPriceUSD: p.monthlyPriceUSD ?? 0 });
+
   const handleConfirmed = useCallback(async (setupIntentId: string) => {
     setConfirming(true);
     setConfirmError('');
     try {
       await apiConfirmOnboardingPaymentMethod(setupIntentId);
+      onCardSaved();
       onNext();
     } catch (err) {
       setConfirmError(err instanceof Error ? err.message : 'Could not save your card. Please try again.');
     } finally {
       setConfirming(false);
     }
-  }, [onNext]);
+  }, [onNext, onCardSaved]);
 
   return (
     <div className={clsx(STEP_WIDTH, 'w-full mx-auto')}>
       <OnboardingStepHeader step={step} maxReached={maxReached} onStepClick={onStepClick} />
       <div className={clsx(NARROW_CONTENT, 'text-center mb-7')}>
-        <h1 className="text-[28px] font-bold text-carbon mb-2">Add a payment method</h1>
-        <p className="text-[14px] text-slate">Your store starts on the free plan — this just activates your account instantly. You won't be charged today.</p>
+        <h1 className="text-[28px] font-bold text-carbon mb-2">Choose your plan</h1>
+        <p className="text-[14px] text-slate">One simple monthly fee for your store. No commission on your sales — you keep the full amount, only the card processing fee is taken off. Edudeen pays your earnings out every month.</p>
       </div>
+
       <div className={NARROW_CONTENT}>
-        {alreadyConfirmed ? (
-          <div className="flex items-start gap-2 text-[12px] text-charcoal bg-success-bg border border-success/30 rounded-[8px] px-3 py-3 mb-4">
-            <Check size={14} className="mt-[1px] flex-shrink-0 text-success" />
-            <div>
-              <p className="font-semibold text-carbon mb-[2px]">Payment method already added</p>
-              <p className="text-slate">You confirmed a card in an earlier session — no need to do it again.</p>
-            </div>
-          </div>
-        ) : !isStripeConfigured() ? (
-          <div className="flex items-start gap-2 text-[12px] text-charcoal bg-cream border border-bone rounded-[8px] px-3 py-3 mb-4">
-            <Clock size={14} className="mt-[1px] flex-shrink-0 text-slate" />
-            <div>
-              <p className="font-semibold text-carbon mb-[2px]">Card setup isn't available right now</p>
-              <p className="text-slate">You can continue without a card — your store will go live once the Edudeen team approves it.</p>
-            </div>
-          </div>
-        ) : loadError ? (
-          <div className="flex items-center gap-2 rounded-lg bg-error-bg px-[14px] py-[10px] mb-4 text-[13px] text-error">
-            <AlertTriangle size={14} className="shrink-0" />
-            <span>{loadError}</span>
-          </div>
-        ) : !clientSecret ? (
-          <div className="flex items-center justify-center py-10">
+        {/* Plans */}
+        {plans === null ? (
+          <div className="flex items-center justify-center py-8">
             <Loader2 size={24} className="text-brand-orange animate-spin" />
           </div>
+        ) : plans.length === 0 ? (
+          <div className="flex items-start gap-2 text-[12.5px] text-error bg-error-bg rounded-[8px] px-3 py-3 mb-5">
+            <AlertTriangle size={14} className="mt-[1px] shrink-0" />
+            <span>{plansError || 'Store plans are not available yet. Please contact support@edudeen.com to open your store.'}</span>
+          </div>
         ) : (
+          <div role="radiogroup" aria-label="Store plan" className="flex flex-col gap-3 mb-6">
+            {plans.map(p => {
+              const on = p._id === selected?._id;
+              return (
+                <button
+                  key={p._id}
+                  type="button"
+                  role="radio"
+                  aria-checked={on}
+                  onClick={() => choose(p)}
+                  className={clsx(
+                    'w-full text-left rounded-[14px] border-2 px-4 py-[14px] cursor-pointer transition-colors duration-150 bg-white',
+                    on ? 'border-brand-orange bg-brand-pale-orange/40' : 'border-bone hover:border-slate/40',
+                  )}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className={clsx(
+                      'mt-[2px] size-5 rounded-full border-2 flex items-center justify-center shrink-0',
+                      on ? 'border-brand-orange bg-brand-orange' : 'border-bone bg-white',
+                    )}>
+                      {on && <Check size={10} className="text-white" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-[14px] font-bold text-carbon">{p.name}</p>
+                        {p.badge && <span className="text-[10px] font-semibold px-2 py-[2px] rounded-full bg-brand-gold/15 text-[#8a7700]">{p.badge}</span>}
+                      </div>
+                      {p.description && <p className="text-[12px] text-slate mt-[2px]">{p.description}</p>}
+                      {p.featureBullets.length > 0 && (
+                        <ul className="mt-2 flex flex-col gap-[3px]">
+                          {p.featureBullets.slice(0, 4).map(b => (
+                            <li key={b} className="flex items-start gap-[6px] text-[11.5px] text-charcoal">
+                              <Check size={11} className="text-success mt-[2px] shrink-0" /> {b}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-[18px] font-bold text-brand-orange leading-none">${(p.monthlyPriceUSD ?? 0).toLocaleString()}</p>
+                      <p className="text-[10.5px] text-slate mt-1">per month</p>
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Card */}
+        {plans && plans.length > 0 && (
           <>
-            <StripeCardSetup clientSecret={clientSecret} onConfirmed={handleConfirmed} />
-            {confirmError && (
-              <div className="flex items-center gap-2 rounded-lg bg-error-bg px-[14px] py-[10px] mt-3 text-[13px] text-error">
-                <AlertTriangle size={14} className="shrink-0" />
-                <span>{confirmError}</span>
+            <p className="text-[12px] font-bold text-carbon uppercase tracking-[0.05em] pb-2 mb-3 border-b border-bone">Payment method</p>
+            {alreadyConfirmed ? (
+              <div className="flex items-start gap-2 text-[12px] text-charcoal bg-success-bg border border-success/30 rounded-[8px] px-3 py-3 mb-4">
+                <Check size={14} className="mt-[1px] flex-shrink-0 text-success" />
+                <div>
+                  <p className="font-semibold text-carbon mb-[2px]">Card on file</p>
+                  <p className="text-slate">Your saved card will be charged for the first month when you launch your store.</p>
+                </div>
               </div>
-            )}
-            {confirming && (
-              <p className="text-[11.5px] text-slate text-center mt-2">Activating your store…</p>
+            ) : !isStripeConfigured() ? (
+              <div className="flex items-start gap-2 text-[12px] text-charcoal bg-cream border border-bone rounded-[8px] px-3 py-3 mb-4">
+                <Clock size={14} className="mt-[1px] flex-shrink-0 text-slate" />
+                <div>
+                  <p className="font-semibold text-carbon mb-[2px]">Card payments aren't available right now</p>
+                  <p className="text-slate">Please try again later or contact support@edudeen.com.</p>
+                </div>
+              </div>
+            ) : !selected ? (
+              <p className="text-[12.5px] text-slate mb-4">Pick a plan above to add your card.</p>
+            ) : loadError ? (
+              <div className="flex items-center gap-2 rounded-lg bg-error-bg px-[14px] py-[10px] mb-4 text-[13px] text-error">
+                <AlertTriangle size={14} className="shrink-0" />
+                <span>{loadError}</span>
+              </div>
+            ) : !clientSecret ? (
+              <div className="flex items-center justify-center py-10">
+                <Loader2 size={24} className="text-brand-orange animate-spin" />
+              </div>
+            ) : (
+              <>
+                <StripeCardSetup
+                  clientSecret={clientSecret}
+                  onConfirmed={handleConfirmed}
+                  note={`Secured by Stripe — $${(selected.monthlyPriceUSD ?? 0).toLocaleString()} is charged each month once your store launches.`}
+                />
+                {confirmError && (
+                  <div className="flex items-center gap-2 rounded-lg bg-error-bg px-[14px] py-[10px] mt-3 text-[13px] text-error">
+                    <AlertTriangle size={14} className="shrink-0" />
+                    <span>{confirmError}</span>
+                  </div>
+                )}
+                {confirming && (
+                  <p className="text-[11.5px] text-slate text-center mt-2">Saving your card…</p>
+                )}
+              </>
             )}
           </>
         )}
@@ -356,24 +464,13 @@ function Step2Payment({ onNext, onBack, step, maxReached, onStepClick, alreadyCo
           <Button variant="ghost" size="md" onClick={onBack} className="shrink-0">
             <ArrowLeft size={14} className="inline align-middle mr-1" /> Back
           </Button>
-          {alreadyConfirmed ? (
-            <Button variant="primary" size="md" onClick={onNext} className="flex-1">
-              Continue <ArrowRight size={14} className="inline align-middle ml-1" />
-            </Button>
-          ) : (
-            // A card only fast-tracks activation — without one the store is
-            // created as 'pending' and goes live after admin review, so the
-            // seller is never stuck on this step.
-            <Button variant="secondary" size="md" onClick={onNext} disabled={confirming} className="flex-1">
-              Skip for now <ArrowRight size={14} className="inline align-middle ml-1" />
+          {/* No skip — a store can't be opened without a plan and a card. */}
+          {alreadyConfirmed && (
+            <Button variant="primary" size="md" onClick={() => selected && onNext()} disabled={!selected} className="flex-1">
+              {selected ? <span>Continue <ArrowRight size={14} className="inline align-middle ml-1" /></span> : 'Pick a plan to continue'}
             </Button>
           )}
         </div>
-        {!alreadyConfirmed && (
-          <p className="text-[11.5px] text-slate text-center mt-2">
-            Skipping is fine — your store will be reviewed by the Edudeen team before it goes live.
-          </p>
-        )}
       </div>
     </div>
   );
@@ -530,9 +627,19 @@ function Step5Review({ form, submitting, submitError, onSubmit, onBack, step, ma
           </div>
         </div>
 
+        <div className="mb-6">
+          <p className="text-[12px] font-bold text-carbon uppercase tracking-[0.05em] pb-2 mb-3 border-b border-bone">Plan</p>
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-[12.5px] font-semibold text-carbon">{form.planName || '—'}</p>
+            <p className="text-[12.5px] font-semibold text-brand-orange">${form.planPriceUSD.toLocaleString()} / month</p>
+          </div>
+        </div>
+
         <div className="flex items-start gap-2 text-left mb-6 bg-success-bg rounded-xl px-[14px] py-[12px]">
           <ShieldCheck size={16} className="text-success shrink-0 mt-[1px]" />
-          <p className="text-[12.5px] text-success leading-[1.6]">Payment method on file — your store will go live immediately, no waiting on review.</p>
+          <p className="text-[12.5px] text-success leading-[1.6]">
+            Launching charges your saved card ${form.planPriceUSD.toLocaleString()} for the first month, then monthly. Every sale is yours in full (minus the card processing fee), paid out by Edudeen monthly.
+          </p>
         </div>
 
         {submitError && (
@@ -547,8 +654,8 @@ function Step5Review({ form, submitting, submitError, onSubmit, onBack, step, ma
             <ArrowLeft size={14} className="inline align-middle mr-1" /> Back
           </Button>
           <MagneticButton className="flex-1">
-            <Button variant="primary" size="lg" fullWidth onClick={onSubmit} loading={submitting}>
-              Launch My Store
+            <Button variant="primary" size="lg" fullWidth onClick={onSubmit} loading={submitting} disabled={!form.planId}>
+              Pay &amp; Launch My Store
             </Button>
           </MagneticButton>
         </div>
@@ -559,8 +666,33 @@ function Step5Review({ form, submitting, submitError, onSubmit, onBack, step, ma
 
 // ── Terminal state — store created and live ───────────────────────────────────
 // Same flat, no-card treatment as Step5Review.
-function StoreReadyConfirmation({ store }: { store: StoreData | null }) {
+function StoreReadyConfirmation({ store, paymentError, retrying, onRetry }: {
+  store: StoreData | null; paymentError: string | null; retrying: boolean; onRetry: () => void;
+}) {
   const navigate = useNavigate();
+  if (paymentError) {
+    return (
+      <div className={clsx(STEP_WIDTH, 'w-full mx-auto')}>
+        <OnboardingStepHeader step={TOTAL_STEPS} maxReached={TOTAL_STEPS} onStepClick={() => {}} />
+        <div className={clsx(NARROW_CONTENT, 'text-center')}>
+          <div className="size-14 rounded-full bg-error-bg flex items-center justify-center mx-auto mb-4">
+            <AlertTriangle size={24} className="text-error" />
+          </div>
+          <h1 className="text-[26px] font-bold text-carbon mb-[10px]">Your store is created — payment didn't go through</h1>
+          <p className="text-[13.5px] text-slate leading-[1.7] mb-2 max-w-[420px] mx-auto">
+            We couldn't charge the first month of your plan: <span className="text-error">{paymentError}</span>
+          </p>
+          <p className="text-[13px] text-slate leading-[1.7] mb-7 max-w-[420px] mx-auto">Try again, or update your card from Plan &amp; Billing.</p>
+          <div className="flex flex-col gap-[10px]">
+            <Button variant="primary" size="lg" fullWidth onClick={onRetry} loading={retrying}>Try payment again</Button>
+            <Button variant="ghost" size="md" fullWidth onClick={() => navigate(`/store/${store?._id}/plan-billing`, { replace: true })}>
+              Go to Plan &amp; Billing
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className={clsx(STEP_WIDTH, 'w-full mx-auto')}>
       <OnboardingStepHeader step={TOTAL_STEPS} maxReached={TOTAL_STEPS} onStepClick={() => {}} />
@@ -599,6 +731,7 @@ export function OnboardingPage() {
   const [form, setForm] = useState<StoreForm>({
     storeName: '', categoryId: '', categoryName: '', description: '', logo: '',
     sellerType: '', sellerKey: '', productTypes: [], baseCurrency: DEFAULT_CURRENCY,
+    planId: '', planName: '', planPriceUSD: 0,
   });
   // Resumability — a reload/lost connection/different device shouldn't send
   // the seller back to step 1 with everything they've typed gone. Loaded
@@ -607,9 +740,17 @@ export function OnboardingPage() {
   // skip re-asking for a card it already has on file.
   const [progressLoading, setProgressLoading] = useState(true);
   const [alreadyConfirmed, setAlreadyConfirmed] = useState(false);
+  const [existingDest, setExistingDest] = useState<string | null>(null);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [retrying, setRetrying] = useState(false);
+  const [storesChecked, setStoresChecked] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
+    apiGetMyStores()
+      .then(res => { if (!cancelled && (res.data ?? []).length > 0) setExistingDest(resolveSellerDestination(res.data)); })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setStoresChecked(true); });
     apiGetOnboardingProgress()
       .then(res => {
         if (cancelled) return;
@@ -683,6 +824,7 @@ export function OnboardingPage() {
         });
         if (!store) { setSubmitError(createStore.error || 'Failed to create store. Please try again.'); return; }
       }
+      setPaymentError(await startPlan(store._id));
       setCreated(true);
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : 'Failed to create store. Please try again.');
@@ -691,9 +833,34 @@ export function OnboardingPage() {
     }
   };
 
+  // Starts the monthly plan on the new store: the saved card is charged for
+  // the first month (3-D Secure, if the bank asks, is finished here).
+  // Returns an error message, or null once paid.
+  const startPlan = async (storeId: string): Promise<string | null> => {
+    try {
+      const res = await apiChangePlatformPlan(storeId, form.planId, 'monthly');
+      const data = res.data as unknown as { requiresAction?: boolean; clientSecret?: string | null };
+      if (data?.requiresAction && data.clientSecret) return await confirmSubscriptionPayment(data.clientSecret);
+      return null;
+    } catch (err) {
+      return err instanceof Error ? err.message : 'Payment failed.';
+    }
+  };
+
+  const retryPayment = async () => {
+    const id = createStore.store?._id;
+    if (!id) return;
+    setRetrying(true);
+    setPaymentError(await startPlan(id));
+    setRetrying(false);
+  };
+
+  // One seller, one store — someone who already has a store goes to it.
+  if (existingDest && !created) return <Navigate to={existingDest} replace />;
+
   // Brief — just long enough to know whether to resume a draft — but real,
   // to avoid flashing an empty step 1 before a resumed draft overwrites it.
-  if (progressLoading) {
+  if (progressLoading || !storesChecked) {
     return (
       <AuthSplitLayout
         panelGradient="from-carbon via-[#241f1b] to-brand-deep-orange"
@@ -721,7 +888,7 @@ export function OnboardingPage() {
         bare
       >
         <div className="flex-1 flex items-start justify-center px-6 py-6">
-          <StoreReadyConfirmation store={createStore.store} />
+          <StoreReadyConfirmation store={createStore.store} paymentError={paymentError} retrying={retrying} onRetry={retryPayment} />
         </div>
       </AuthSplitLayout>
     );
@@ -739,7 +906,7 @@ export function OnboardingPage() {
       <div className="flex-1 flex items-start justify-center px-6 py-6">
         <StepPane step={step}>
           {step === 1 && <Step1StoreInfo form={form} setForm={setForm} onNext={next} step={step} maxReached={maxReached} onStepClick={jumpTo} />}
-          {step === 2 && <Step2Payment onNext={next} onBack={back} step={step} maxReached={maxReached} onStepClick={jumpTo} alreadyConfirmed={alreadyConfirmed} />}
+          {step === 2 && <Step2Payment form={form} setForm={setForm} onNext={next} onBack={back} step={step} maxReached={maxReached} onStepClick={jumpTo} alreadyConfirmed={alreadyConfirmed} onCardSaved={() => setAlreadyConfirmed(true)} />}
           {step === 3 && <Step3SellerType form={form} setForm={setForm} onNext={next} onBack={back} step={step} maxReached={maxReached} onStepClick={jumpTo} />}
           {step === 4 && <Step4WhatYouSell form={form} setForm={setForm} onNext={next} onBack={back} step={step} maxReached={maxReached} onStepClick={jumpTo} />}
           {step === 5 && (

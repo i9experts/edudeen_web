@@ -66,9 +66,15 @@ function BuyerBottomNav() {
 // MegaMenuBar and sits under this shell for the shared announcement banner,
 // mobile bottom-nav and app-install prompts.
 export function BuyerLayout() {
+  // The account area is a full-height dashboard (sidebar + its own scroll) —
+  // a banner stacked above it made the page taller than the screen, so the
+  // whole page slid up and left a blank strip at the top. AccountLayout
+  // shows the banner inside its own column instead.
+  const { pathname } = useLocation();
+  const inAccount = pathname === '/account' || pathname.startsWith('/account/');
   return (
     <>
-      <AnnouncementBanner audience="buyers" />
+      {!inAccount && <AnnouncementBanner audience="buyers" />}
       {/* Local Suspense boundary (same reasoning as PublicLayout) so a
          first-visit-this-session page under this branch doesn't blank the
          whole screen via RootLayout's outer big-spinner Suspense — no

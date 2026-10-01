@@ -10,6 +10,8 @@ import {
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { getNotificationIcon } from './notificationIcon';
+import { useNavigate } from 'react-router-dom';
+import { notificationLink } from './NotificationBell';
 
 function formatFullTime(dateStr: string): string {
   try {
@@ -40,6 +42,7 @@ export function NotificationsPanel() {
     fetchPreferences,
     updatePreferences,
   } = useNotification();
+  const navigate = useNavigate();
 
   const [unreadOnly, setUnreadOnly] = useState(false);
   const [prefError, setPrefError] = useState('');
@@ -297,6 +300,14 @@ export function NotificationsPanel() {
                   <div className="flex items-center gap-1.5 text-[10.5px] text-slate mt-2">
                     <Clock size={10} />
                     <span>{formatFullTime(notif.createdAt)}</span>
+                    {notificationLink(notif.data) && (
+                      <button
+                        onClick={() => { if (!notif.isRead) markAsRead(notif._id); navigate(notificationLink(notif.data)!); }}
+                        className="ml-2 text-[11px] font-semibold text-brand-orange hover:text-brand-deep-orange bg-transparent border-0 p-0 cursor-pointer"
+                      >
+                        Open →
+                      </button>
+                    )}
                   </div>
                 </div>
 
