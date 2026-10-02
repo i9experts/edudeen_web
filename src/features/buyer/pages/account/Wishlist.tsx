@@ -149,7 +149,7 @@ export function Wishlist() {
                     )} />
                   ))}
                   {p.averageRating > 0 && (
-                    <span className="text-[11px] text-slate ml-[2px]">({p.averageRating.toFixed(1)})</span>
+                    <span className="text-[11px] text-slate ms-[2px]">({p.averageRating.toFixed(1)})</span>
                   )}
                 </div>
 

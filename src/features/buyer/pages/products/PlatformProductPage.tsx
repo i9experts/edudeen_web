@@ -24,7 +24,7 @@ function ProductFaqItem({ question, answer }: { question: string; answer: string
         onClick={() => setOpen(o => !o)}
         aria-expanded={open}
         aria-controls={id}
-        className="w-full flex items-center justify-between gap-4 py-[16px] text-left bg-transparent border-none cursor-pointer group"
+        className="w-full flex items-center justify-between gap-4 py-[16px] text-start bg-transparent border-none cursor-pointer group"
       >
         <span className={clsx('text-[13.5px] font-semibold transition-colors', open ? 'text-brand-orange' : 'text-carbon group-hover:text-brand-orange')}>
           {question}
@@ -33,7 +33,7 @@ function ProductFaqItem({ question, answer }: { question: string; answer: string
       </button>
       <div className={clsx('grid transition-[grid-template-rows] duration-300 ease-out', open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]')}>
         <div className="overflow-hidden">
-          <p id={id} className="text-[12.5px] text-slate leading-[1.7] pb-4 pr-8">{answer}</p>
+          <p id={id} className="text-[12.5px] text-slate leading-[1.7] pb-4 pe-8">{answer}</p>
         </div>
       </div>
     </div>
@@ -72,7 +72,7 @@ export function PlatformProductPage() {
               <div className="flex flex-wrap gap-3">
                 <MagneticButton>
                   <Button size="lg" onClick={sellEntry.go} loading={sellEntry.loading}>
-                    Start Selling Free <ArrowRight size={14} className="inline align-middle ml-1" />
+                    Start Selling Free <ArrowRight size={14} className="inline align-middle ms-1" />
                   </Button>
                 </MagneticButton>
                 <Button variant="outline" size="lg" onClick={() => navigate('/products')}>
@@ -144,7 +144,7 @@ export function PlatformProductPage() {
         <Reveal>
           <MagneticButton>
             <Button size="lg" onClick={sellEntry.go} loading={sellEntry.loading}>
-              Start Selling Free <ArrowRight size={14} className="inline align-middle ml-1" />
+              Start Selling Free <ArrowRight size={14} className="inline align-middle ms-1" />
             </Button>
           </MagneticButton>
         </Reveal>

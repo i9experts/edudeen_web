@@ -141,14 +141,14 @@ export function RegisterPage() {
       maxWidth="max-w-[520px]"
       visual={isSeller ? <DashboardMockup /> : <MarketplaceMockup />}
     >
-      <h1 className="text-[22px] font-bold text-carbon mb-1 text-center lg:text-left">
+      <h1 className="text-[22px] font-bold text-carbon mb-1 text-center lg:text-start">
         {showChooser
           ? <>Welcome <span className="text-brand-orange">back</span></>
           : isSeller
             ? <>Create your <span className="text-brand-orange">seller</span> account</>
             : <>Create your <span className="text-brand-orange">account</span></>}
       </h1>
-      <p className="text-[13px] text-slate mb-3 lg:mb-5 text-center lg:text-left">
+      <p className="text-[13px] text-slate mb-3 lg:mb-5 text-center lg:text-start">
         {showChooser ? 'Looks like you\'ve used Edudeen on this device before' : 'Sign up with email, or continue with a social account'}
       </p>
 
@@ -160,7 +160,7 @@ export function RegisterPage() {
           <button
             type="button"
             onClick={() => navigate(isSeller ? '/login?role=seller' : '/login')}
-            className="w-full flex items-center gap-3 p-3 rounded-xl border border-bone bg-white cursor-pointer text-left hover:border-brand-orange hover:bg-brand-pale-orange/20 transition-colors mb-3"
+            className="w-full flex items-center gap-3 p-3 rounded-xl border border-bone bg-white cursor-pointer text-start hover:border-brand-orange hover:bg-brand-pale-orange/20 transition-colors mb-3"
           >
             <Avatar name={remembered.name} size={40} />
             <div className="min-w-0 flex-1">

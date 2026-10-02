@@ -124,7 +124,7 @@ export function DonutChart({
                 <div key={seg.label} className="flex items-center gap-2">
                   <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: seg.color }} />
                   <span className="text-[12px] text-graphite flex-1 truncate">{seg.label}</span>
-                  <span className="text-[12px] font-semibold text-charcoal ml-2">{pct}%</span>
+                  <span className="text-[12px] font-semibold text-charcoal ms-2">{pct}%</span>
                 </div>
               );
             })}

@@ -28,8 +28,8 @@ export function Toggle({ checked, onChange, disabled = false, size = 'md' }: Tog
           size === 'md' ? 'w-4 h-4 top-[3px]' : 'w-3.5 h-3.5 top-[3px]',
           'absolute rounded-full bg-white transition-[left] duration-[180ms]',
           checked
-            ? (size === 'md' ? 'left-[21px]' : 'left-[14px]')
-            : 'left-[3px]',
+            ? (size === 'md' ? 'start-[21px]' : 'start-[14px]')
+            : 'start-[3px]',
         )}
       />
     </button>

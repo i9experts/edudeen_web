@@ -104,27 +104,27 @@ export function ClosingCtaBanner({ className }: { className?: string }) {
     <section className={clsx('grain-overlay relative overflow-hidden bg-gradient-to-br from-brand-orange via-[#66AD36] to-brand-deep-orange', className)}>
       <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-white/40 to-white/10" />
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute w-[280px] h-[280px] rounded-full -top-24 -left-10 bg-white/10 blur-3xl" />
-        <div className="absolute w-[220px] h-[220px] rounded-full -bottom-20 -right-8 bg-carbon/15 blur-3xl" />
-        <div className="absolute w-[220px] h-[220px] rounded-full top-1/3 left-[40%] bg-white/[0.07] blur-3xl" />
+        <div className="absolute w-[280px] h-[280px] rounded-full -top-24 -start-10 bg-white/10 blur-3xl" />
+        <div className="absolute w-[220px] h-[220px] rounded-full -bottom-20 -end-8 bg-carbon/15 blur-3xl" />
+        <div className="absolute w-[220px] h-[220px] rounded-full top-1/3 start-[40%] bg-white/[0.07] blur-3xl" />
         {/* Faint dotted-grid texture on the right half — same technique used
            behind AppDownloadBanner's phone cluster — so the wide orange
            field reads as deliberate depth rather than a flat fill. */}
         <div
-          className="hidden lg:block absolute right-0 top-0 bottom-0 w-1/2 opacity-[0.07]"
+          className="hidden lg:block absolute end-0 top-0 bottom-0 w-1/2 opacity-[0.07]"
           style={{ backgroundImage: 'radial-gradient(rgba(255,255,255,0.9) 1px, transparent 1px)', backgroundSize: '20px 20px' }}
         />
         {/* Decorative bag mark — purely ornamental (matches the reference's
            bottom-left bag/ribbon flourish), not standing in for real data. */}
-        <ShoppingBag size={130} strokeWidth={1.25} className="absolute -bottom-6 left-2 text-white/[0.12]" />
+        <ShoppingBag size={130} strokeWidth={1.25} className="absolute -bottom-6 start-2 text-white/[0.12]" />
       </div>
 
       {/* Stats row — same orange background as the CTA below, just a thin
          hairline divider instead of a separate solid-color band. */}
       <div className="relative z-[1] pt-10 sm:pt-12 pb-5 sm:pb-6 px-4 sm:px-6 lg:px-12 border-b border-white/15">
-        {/* Kept in one left-aligned column (not pushed out to the right)
+        {/* Kept in one start-aligned column (not pushed out to the right)
            so the avatar/rating row stays clear of the phone cluster, which
-           is wide enough now to reach well past the old right-hand slot. */}
+           is wide enough now to reach well past the old end-hand slot. */}
         <div className="lg:max-w-[560px]">
           <p className="text-[13px] sm:text-[14px] font-bold text-white mb-4">
             Trusted by educators, parents &amp; learners
@@ -136,7 +136,7 @@ export function ClosingCtaBanner({ className }: { className?: string }) {
                 <p className="text-[10.5px] text-white/70 mt-1 whitespace-nowrap">{label}</p>
               </div>
             ))}
-            <div className="flex items-center gap-3 pl-1 sm:pl-3">
+            <div className="flex items-center gap-3 ps-1 sm:ps-3">
               <div className="flex -space-x-2">
                 {avatarNames.map((name, i) => (
                   <Avatar key={i} name={name} size={34} className="ring-2 ring-white/40" />
@@ -157,7 +157,7 @@ export function ClosingCtaBanner({ className }: { className?: string }) {
       </div>
 
       <div className="relative z-[1] pt-8 sm:pt-10 pb-16 sm:pb-24 px-4 sm:px-6 lg:px-12">
-        <div className="flex flex-col lg:flex-row lg:items-center gap-8 lg:gap-10 lg:pr-[170px]">
+        <div className="flex flex-col lg:flex-row lg:items-center gap-8 lg:gap-10 lg:pe-[170px]">
           <div className="max-w-lg shrink-0">
             <h2 className="font-serif text-[24px] sm:text-[28px] font-bold text-white mb-2 leading-[1.2] tracking-[-0.01em]">
               Ready to start your journey?
@@ -169,7 +169,7 @@ export function ClosingCtaBanner({ className }: { className?: string }) {
               {/* Plain buyer sign-up (not the seller flow); hidden once signed in. */}
               {!TokenStorage.isLoggedIn() && (
                 <Button variant="dark" size="md" pill onClick={() => navigate('/register')}>
-                  Create Your Account <ArrowRight size={13} className="inline align-middle ml-1" />
+                  Create Your Account <ArrowRight size={13} className="inline align-middle ms-1" />
                 </Button>
               )}
               <button
@@ -183,7 +183,7 @@ export function ClosingCtaBanner({ className }: { className?: string }) {
 
           {/* Fills the wide gap ahead of the phone mockup instead of leaving
              it bare. */}
-          <div className="hidden lg:flex flex-col gap-4 pl-8 border-l border-white/20 shrink-0">
+          <div className="hidden lg:flex flex-col gap-4 ps-8 border-s border-white/20 shrink-0">
             {CLOSING_TRUST_ITEMS.map(({ Icon, label }) => (
               <div key={label} className="flex items-center gap-[10px]">
                 <span className="w-9 h-9 rounded-full bg-white/15 flex items-center justify-center shrink-0">
@@ -203,14 +203,14 @@ export function ClosingCtaBanner({ className }: { className?: string }) {
          catalog items when available (the fixed reference list otherwise). A
          soft glow + contact shadow ground the pair instead of letting them
          float in the empty space beside the CTA copy. */}
-      <div className="hidden lg:flex items-end justify-center absolute right-2 lg:right-8 top-1/2 -translate-y-1/2 pb-2 z-[2]">
+      <div className="hidden lg:flex items-end justify-center absolute end-2 lg:end-8 top-1/2 -translate-y-1/2 pb-2 z-[2]">
         <div
           className="absolute inset-0 pointer-events-none"
           style={{ background: 'radial-gradient(ellipse 75% 65% at 50% 55%, rgba(255,255,255,0.20) 0%, transparent 70%)' }}
         />
         <div className="absolute bottom-0 w-[240px] h-[28px] rounded-[50%] bg-black/20 blur-[3px]" />
 
-        <PhoneShell primary={false} className="-mr-[86px] -translate-x-[10px] translate-y-[14px] -rotate-[15deg]">
+        <PhoneShell primary={false} className="-me-[86px] -translate-x-[10px] translate-y-[14px] -rotate-[15deg]">
           <HomeScreenMockup />
         </PhoneShell>
 

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
 import {
-  ExternalLink, Copy, Check, Store as StoreIcon, ShieldCheck, ShoppingCart, Loader2, Star, Megaphone, Palette, Image as ImageIcon, Type, LayoutTemplate,
+  ExternalLink, Copy, Check, Store as StoreIcon, ShieldCheck, ShoppingCart, Loader2, Star, Megaphone, Palette, Image as ImageIcon, Type, LayoutTemplate, GraduationCap,
 } from 'lucide-react';
 import { Button, Input, Textarea, Select, Toggle, ImageUpload } from '@/components/comman/ui';
 import { StorePageHeader, useStoreWorkspace } from '@/components/layouts/StoreLayout';
@@ -41,7 +41,16 @@ interface Draft {
   announcementCtaLabel: string;
   announcementCtaLink: string;
   featured: string[];
+  // Teacher profile (one item per line for the lists)
+  eduHeadline: string;
+  eduQualifications: string;
+  eduExperience: string;
+  eduSubjects: string;
+  eduInstitutions: string;
+  eduLevels: string;
 }
+
+const lines = (s: string) => s.split('\n').map(x => x.trim()).filter(Boolean);
 
 function Section({ icon, title, hint, children }: { icon: ReactNode; title: string; hint?: string; children: ReactNode }) {
   return (
@@ -104,6 +113,12 @@ export function StorePageOverview() {
           announcementCtaLabel: a?.ctaLabel ?? '',
           announcementCtaLink: a?.ctaLink ?? '',
           featured: store.pinnedProductIds ?? [],
+          eduHeadline: store.educatorProfile?.headline ?? '',
+          eduQualifications: (store.educatorProfile?.qualifications ?? []).join('\n'),
+          eduExperience: store.educatorProfile?.experienceYears != null ? String(store.educatorProfile.experienceYears) : '',
+          eduSubjects: (store.educatorProfile?.subjects ?? []).join('\n'),
+          eduInstitutions: (store.educatorProfile?.institutions ?? []).join('\n'),
+          eduLevels: (store.educatorProfile?.teachingLevels ?? []).join('\n'),
         };
         setInitial(seeded);
         setDraft(seeded);
@@ -164,6 +179,21 @@ export function StorePageOverview() {
         }));
       }
       if (changed(['featured'])) jobs.push(apiUpdatePinnedProducts(storeId, draft.featured));
+      if (changed(['eduHeadline', 'eduQualifications', 'eduExperience', 'eduSubjects', 'eduInstitutions', 'eduLevels'])) {
+        const years = draft.eduExperience.trim() === '' ? null : Number(draft.eduExperience);
+        if (years != null && (!Number.isInteger(years) || years < 0 || years > 70)) throw new Error('Years teaching must be a whole number from 0 to 70.');
+        jobs.push(apiUpdateStore({
+          storeId,
+          educatorProfile: {
+            headline: draft.eduHeadline.trim() || null,
+            qualifications: lines(draft.eduQualifications),
+            experienceYears: years,
+            subjects: lines(draft.eduSubjects),
+            institutions: lines(draft.eduInstitutions),
+            teachingLevels: lines(draft.eduLevels),
+          },
+        }));
+      }
       await Promise.all(jobs);
       setInitial(draft);
       refetch();
@@ -226,6 +256,19 @@ export function StorePageOverview() {
                 <Input label="Headline" placeholder="e.g. Joyful Quran & Arabic resources for young learners" value={draft.tagline} maxLength={90} onChange={e => set('tagline', e.target.value)} />
                 <Textarea label="About your store" rows={4} maxLength={600} placeholder="Your teaching background, what makes your resources special, who they're for…" value={draft.description} onChange={e => set('description', e.target.value)} />
                 <p className="text-[11px] text-slate -mt-2 text-right">{draft.description.length}/600</p>
+              </div>
+            </Section>
+
+            <Section icon={<GraduationCap size={15} />} title="About you as a teacher" hint="Shown on your store and every product page. Edudeen can add a Verified Educator badge once it checks these.">
+              <div className="flex flex-col gap-3.5">
+                <Input label="One line about you" placeholder="e.g. Primary teacher, 12 years teaching Quran and Arabic" value={draft.eduHeadline} maxLength={160} onChange={e => set('eduHeadline', e.target.value)} />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <Textarea label="Qualifications (one per line)" rows={3} placeholder={'B.Ed, University of Karachi\nIjazah in Hafs'} value={draft.eduQualifications} onChange={e => set('eduQualifications', e.target.value)} />
+                  <Textarea label="Subjects you teach (one per line)" rows={3} placeholder={'Quran & Tajweed\nArabic'} value={draft.eduSubjects} onChange={e => set('eduSubjects', e.target.value)} />
+                  <Textarea label="Where you've taught (one per line)" rows={3} placeholder={'Beaconhouse, Lahore\nOnline tutoring'} value={draft.eduInstitutions} onChange={e => set('eduInstitutions', e.target.value)} />
+                  <Textarea label="Levels you teach (one per line)" rows={3} placeholder={'Primary\nO Level'} value={draft.eduLevels} onChange={e => set('eduLevels', e.target.value)} />
+                </div>
+                <Input label="Years teaching" type="number" min={0} max={70} value={draft.eduExperience} onChange={e => set('eduExperience', e.target.value)} className="max-w-[160px]" />
               </div>
             </Section>
 

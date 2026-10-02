@@ -40,7 +40,32 @@ export interface DigitalMeta {
   licenseType:          'personal' | 'single_classroom' | 'school' | 'commercial';
   buyerDeliveryMessage: string;
   preview?:             DigitalPreviewMeta;
+  /** Free sample anyone can download (seller views only — public views get sampleAvailable). */
+  sampleFile?:          DigitalFile | null;
 }
+
+/** Who a resource is for — exam boards and an age range. */
+export interface LearningMetaInput {
+  curricula?: string[];
+  ageMin?:    number | null;
+  ageMax?:    number | null;
+  /** Digital only: files, an online course, or a scheduled live class. */
+  deliveryFormat?: DeliveryFormat;
+  liveSession?:    LiveSessionInput | null;
+}
+
+export type DeliveryFormat = 'download' | 'course' | 'live_class';
+export interface LiveSessionInput {
+  startsAt:        string;
+  durationMinutes: number;
+  platform:        'zoom' | 'google_meet' | 'teams' | 'other';
+  meetingUrl:      string;
+  capacity:        number | null;
+  notes:           string;
+}
+
+/** Extra licenses at their own price (digital only). */
+export interface LicenseTierInput { license: 'single_classroom' | 'school' | 'commercial'; price: number; compareAtPrice?: number | null }
 
 /** A single seller-defined attribute on a variant, e.g. {name:'Color', value:'Red'} — a
  *  product's variants can mix any attributes (Color, Size, Material…), up to 3 each,
@@ -100,9 +125,16 @@ export interface StoreProduct {
   normalizedCustomLevel: string | null;
   images:            string[];
   tags:              string[];
+  curricula?:        string[];
+  ageMin?:           number | null;
+  ageMax?:           number | null;
+  deliveryFormat?:   DeliveryFormat;
+  liveSession?:      LiveSessionInput | null;
   digital:           DigitalMeta | null;
-  status:            'draft' | 'active' | 'archived' | 'scheduled';
+  status:            'draft' | 'active' | 'archived' | 'scheduled' | 'inactive' | 'pending_review' | 'rejected';
   scheduledAt:       string | null;
+  /** Reviewer's note when an admin sent the listing back. */
+  reviewNote?:       string | null;
   isListedOnEdudeen: boolean;
   isDelete:          boolean;
   createdAt:         string;
@@ -115,7 +147,7 @@ export interface StoreProduct {
 
 // ── Request payloads ──────────────────────────────────────────────────────────
 
-export interface CreatePhysicalPayload {
+export interface CreatePhysicalPayload extends LearningMetaInput {
   storeId:           string;
   name:              string;
   description:       string;
@@ -130,7 +162,7 @@ export interface CreatePhysicalPayload {
   variants:          VariantInput[];
 }
 
-export interface CreateDigitalPayload {
+export interface CreateDigitalPayload extends LearningMetaInput {
   storeId:           string;
   name:              string;
   description:       string;
@@ -146,12 +178,13 @@ export interface CreateDigitalPayload {
   price:             number;
   compareAtPrice:    number | null;
   digital:           DigitalMeta;
+  licenseTiers?:     LicenseTierInput[];
 }
 
 // Physical products manage price/stock/options per-variant exclusively through
 // the variant CRUD endpoints below now — this payload only touches
 // product-level fields (name/images/status/etc), never price or variants.
-export interface EditPhysicalPayload {
+export interface EditPhysicalPayload extends LearningMetaInput {
   productId:         string;
   name:              string;
   description:       string;
@@ -163,7 +196,7 @@ export interface EditPhysicalPayload {
   scheduledAt?:      string | null;
 }
 
-export interface EditDigitalPayload {
+export interface EditDigitalPayload extends LearningMetaInput {
   productId:      string;
   variantId:      string | null;
   name:           string;
@@ -176,6 +209,8 @@ export interface EditDigitalPayload {
   price:          number;
   compareAtPrice: number | null;
   digital:        DigitalMeta;
+  /** Replaces all extra licenses; [] removes them. */
+  licenseTiers?:  LicenseTierInput[];
 }
 
 // ── Response shapes ───────────────────────────────────────────────────────────
@@ -212,7 +247,9 @@ export interface InventoryProduct {
   productType?: 'physical' | 'digital' | 'educational';
   stock:        number | string;
   stockStatus:  string;
-  status:       'active' | 'draft' | 'archived';
+  status:       'active' | 'draft' | 'archived' | 'inactive' | 'scheduled' | 'pending_review' | 'rejected';
+  /** Reviewer's note when an admin sent the listing back. */
+  reviewNote?:  string | null;
   price:        number;
   allTimeSales: number;
 }
@@ -423,3 +460,8 @@ export function apiGetTrendingProducts(storeId: string, limit = 12) {
   return client.get<never, ApiResponse<StorefrontProductsData>>(ENDPOINTS.PRODUCT.STORE_TRENDING(storeId), { params: { limit } });
 }
 
+
+/** Changes only a listing's status (the edit endpoint ignores fields it isn't sent). */
+export function apiSetProductStatus(productId: string, status: 'draft' | 'active') {
+  return client.post<never, ApiResponse<EditProductData>>(ENDPOINTS.PRODUCT.EDIT_PRODUCT, { productId, status });
+}

@@ -88,6 +88,12 @@ export const STATUS_COLORS: Record<string, 'green' | 'yellow' | 'blue' | 'gray' 
   physical:         'orange',
   completed:        'green',
   Completed:        'green',
+  pending_review:   'blue',
+  pending_verification: 'yellow',
+  unpaid:           'yellow',
+  failed:           'red',
+  partially_shipped: 'blue',
+  shipped:          'blue',
 };
 
 // ── Seller Onboarding Steps ──────────────────────────────────────────────────

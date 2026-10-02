@@ -50,7 +50,7 @@ export function ChatHeader({
         <button
           onClick={onBack}
           aria-label="Back to conversations"
-          className="md:hidden p-1 -ml-1 rounded-full hover:bg-cream cursor-pointer bg-transparent border-none text-charcoal outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/40"
+          className="md:hidden p-1 -ms-1 rounded-full hover:bg-cream cursor-pointer bg-transparent border-none text-charcoal outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/40"
         >
           <ArrowLeft size={19} />
         </button>

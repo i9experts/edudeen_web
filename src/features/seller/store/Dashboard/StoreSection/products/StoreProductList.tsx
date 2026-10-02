@@ -196,7 +196,16 @@ export default function StoreProductList() {
     },
     {
       key: 'status', header: 'Status',
-      render: p => <StatusBadge status={p.status} />,
+      render: p => p.status === 'pending_review' ? (
+        <span title="Edudeen checks new listings before they go live — usually within a day.">
+          <Badge color="blue">In review</Badge>
+        </span>
+      ) : p.status === 'rejected' ? (
+        <div className="flex flex-col items-start gap-1 max-w-[220px]">
+          <Badge color="red">Needs changes</Badge>
+          {p.reviewNote && <span className="text-[11.5px] text-error leading-snug line-clamp-3" title={p.reviewNote}>{p.reviewNote}</span>}
+        </div>
+      ) : <StatusBadge status={p.status} />,
     },
     {
       key: 'actions', header: 'Actions', align: 'center', width: '110px',

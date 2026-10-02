@@ -253,8 +253,8 @@ export const ProductCard = memo(function ProductCard({ product, onClick, onAddTo
           homepage's cards; the hover signal instead of a shadow or a
           border-color change. */}
       <div className={clsx(
-        'absolute top-0 left-0 h-[3px] bg-gradient-to-r from-brand-orange to-brand-deep-orange scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300 z-[1]',
-        isList ? 'w-[3px] h-full top-0 bottom-0 left-0 scale-y-0 scale-x-100 group-hover:scale-y-100 origin-top' : 'w-full',
+        'absolute top-0 start-0 h-[3px] bg-gradient-to-r from-brand-orange to-brand-deep-orange scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300 z-[1]',
+        isList ? 'w-[3px] h-full top-0 bottom-0 start-0 scale-y-0 scale-x-100 group-hover:scale-y-100 origin-top' : 'w-full',
       )} />
 
       {/* Image — full-bleed to the card's own rounded top corners (parent's
@@ -270,7 +270,7 @@ export const ProductCard = memo(function ProductCard({ product, onClick, onAddTo
           {/* Variant swatches — real photos, in a soft frosted pill. Always
               visible (no hover-fade, no Quick View bar to collide with). */}
           {showVariantSwatches && (
-            <div className="absolute bottom-2 right-2 flex items-center gap-1 bg-white/90 backdrop-blur-sm rounded-lg p-1 shadow-[0_2px_8px_rgba(0,0,0,0.12)]">
+            <div className="absolute bottom-2 end-2 flex items-center gap-1 bg-white/90 backdrop-blur-sm rounded-lg p-1 shadow-[0_2px_8px_rgba(0,0,0,0.12)]">
               {variantSwatchImages.slice(0, 2).map((img) => (
                 <button
                   key={img}
@@ -295,7 +295,7 @@ export const ProductCard = memo(function ProductCard({ product, onClick, onAddTo
 
         {/* Top-left: product type + discount/campaign badge(s), stacked —
             plain markdown in red, live sale campaign in orange with a flame. */}
-        <div className="absolute top-2 left-2 flex flex-col items-start gap-1">
+        <div className="absolute top-2 start-2 flex flex-col items-start gap-1">
           <span className={clsx(
             'px-[6px] py-[2px] rounded-md text-[9px] font-bold tracking-[0.01em] border',
             isEducational
@@ -328,7 +328,7 @@ export const ProductCard = memo(function ProductCard({ product, onClick, onAddTo
           disabled={isWishlisting}
           aria-label={isWishlisted ? 'Remove from wishlist' : 'Save to wishlist'}
           className={clsx(
-            'absolute top-2 right-2 w-8 h-8 rounded-lg bg-white border border-bone',
+            'absolute top-2 end-2 w-8 h-8 rounded-lg bg-white border border-bone',
             'flex items-center justify-center transition-[transform,background-color] duration-150 hover:bg-brand-pale-orange hover:scale-[1.08]',
             isWishlisting ? 'cursor-wait' : 'cursor-pointer',
           )}
@@ -347,7 +347,7 @@ export const ProductCard = memo(function ProductCard({ product, onClick, onAddTo
             disabled={previewLoading}
             aria-label="Preview"
             className={clsx(
-              'absolute bottom-2 left-2 w-8 h-8 rounded-lg bg-white border border-bone',
+              'absolute bottom-2 start-2 w-8 h-8 rounded-lg bg-white border border-bone',
               'flex items-center justify-center transition-[transform,background-color] duration-150 hover:bg-brand-pale-orange hover:scale-[1.08]',
               previewLoading ? 'cursor-wait' : 'cursor-pointer',
             )}

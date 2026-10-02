@@ -138,7 +138,7 @@ export function LegalPageLayout({ title, subtitle, lastUpdated, sections, relate
   return (
     <div className="bg-white min-h-full scroll-smooth">
       {/* ── Reading progress bar ── */}
-      <div className="print:hidden fixed top-0 left-0 right-0 h-[2px] bg-transparent z-[60]">
+      <div className="print:hidden fixed top-0 start-0 end-0 h-[2px] bg-transparent z-[60]">
         <div className="h-full bg-brand-orange transition-[width] duration-100 ease-out" style={{ width: `${progress}%` }} />
       </div>
 
@@ -159,7 +159,7 @@ export function LegalPageLayout({ title, subtitle, lastUpdated, sections, relate
             <span>Last updated {lastUpdated}</span>
             <span className="text-bone">•</span>
             <span>{readingMinutes} min read</span>
-            <div className="print:hidden flex items-center gap-2 sm:ml-auto">
+            <div className="print:hidden flex items-center gap-2 sm:ms-auto">
               <button
                 onClick={() => window.print()}
                 className="flex items-center gap-1.5 px-3 py-[6px] rounded-md border border-bone text-[12px] font-medium text-charcoal bg-white hover:bg-cream transition-colors cursor-pointer"
@@ -183,13 +183,13 @@ export function LegalPageLayout({ title, subtitle, lastUpdated, sections, relate
         {/* Table of contents — desktop only, sticky */}
         <nav aria-label="Table of contents" className="print:hidden hidden lg:block sticky top-16">
           <p className="text-[11px] font-bold text-slate uppercase tracking-[0.08em] mb-3">On this page</p>
-          <ul className="flex flex-col gap-[2px] border-l border-bone">
+          <ul className="flex flex-col gap-[2px] border-s border-bone">
             {sections.map((s, i) => (
               <li key={s.id}>
                 <button
                   onClick={() => scrollTo(s.id)}
                   className={clsx(
-                    'w-full text-left pl-4 pr-2 py-[7px] -ml-px border-l-2 text-[12.5px] transition-colors cursor-pointer bg-transparent',
+                    'w-full text-start ps-4 pe-2 py-[7px] -ms-px border-s-2 text-[12.5px] transition-colors cursor-pointer bg-transparent',
                     activeId === s.id
                       ? 'border-brand-orange text-brand-orange font-semibold'
                       : 'border-transparent text-slate hover:text-carbon',

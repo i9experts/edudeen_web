@@ -201,7 +201,7 @@ export function DateTimePickerModal({ value, onChange, onClose }: DateTimePicker
               >
                 {mm}
               </button>
-              <div className="flex flex-col gap-1.5 ml-1">
+              <div className="flex flex-col gap-1.5 ms-1">
                 {(['AM', 'PM'] as const).map(p => (
                   <button
                     key={p}

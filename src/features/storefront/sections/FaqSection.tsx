@@ -29,7 +29,7 @@ export function FaqSection({ settings, blocks }: { settings: { heading?: string 
                 ) : (
                   <button
                     onClick={() => setOpenIndex(open ? null : i)}
-                    className="w-full flex items-center justify-between gap-3 text-left bg-transparent border-none cursor-pointer py-1"
+                    className="w-full flex items-center justify-between gap-3 text-start bg-transparent border-none cursor-pointer py-1"
                   >
                     <span className="text-[14px] font-semibold" style={{ color: cfg.textColor }}>{item.question}</span>
                     <ChevronDown size={16} className={clsx('shrink-0 transition-transform duration-200', open && 'rotate-180')} style={{ color: cfg.textColor }} />

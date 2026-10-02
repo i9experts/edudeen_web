@@ -42,23 +42,47 @@ const PLACEMENT_LABEL: Record<PromotionPlacement, string> = {
 
 // Seasonal sale presets — one click fills the form with the next upcoming
 // dates; the admin can still change anything before creating it.
-const SALE_PRESETS: { label: string; description: string; start: [number, number]; end: [number, number]; discount: number }[] = [
+type SalePreset = { label: string; description: string; discount: number } & (
+  | { start: [number, number]; end: [number, number] }
+  // Lunar dates move every year, so these come from a table instead.
+  | { lunar: Record<number, [string, string]> }
+);
+
+// Expected Ramzan dates in Pakistan (moon sighting can shift them by a day —
+// the admin adjusts before creating).
+const RAMZAN: Record<number, [string, string]> = {
+  2026: ['2026-02-18', '2026-03-19'], 2027: ['2027-02-08', '2027-03-09'], 2028: ['2028-01-28', '2028-02-26'],
+  2029: ['2029-01-16', '2029-02-14'], 2030: ['2030-01-06', '2030-02-04'],
+};
+
+const SALE_PRESETS: SalePreset[] = [
+  { label: 'Back to School (April)', description: 'Workbooks, stationery and courses for the new session in Pakistan.', start: [3, 25], end: [4, 15], discount: 15 },
+  { label: 'Back to School (August)', description: 'New Cambridge / O & A Level session — notes, past papers and books.', start: [8, 1], end: [8, 31], discount: 15 },
+  { label: 'Exam Prep Sale',      description: 'Board exam season — past papers, notes and revision packs for Matric and Inter.', start: [2, 1], end: [3, 15], discount: 20 },
+  { label: 'O/A Level Exam Prep', description: 'Cambridge May/June series — topical past papers and revision guides.', start: [3, 15], end: [5, 15], discount: 20 },
+  { label: 'Ramzan Sale',         description: 'Quran, Tajweed, Seerah and Islamic learning for the blessed month.', lunar: RAMZAN, discount: 20 },
+  { label: 'Summer Learning',     description: 'Holiday homework help, reading packs and summer courses.', start: [6, 1], end: [7, 31], discount: 15 },
+  { label: "Teachers' Day",       description: 'World Teachers’ Day (5 October) — thank-you deals on teacher resources.', start: [10, 1], end: [10, 7], discount: 15 },
   { label: 'October Mega Sale', description: 'A month of savings on books, courses and learning resources.', start: [10, 1],  end: [10, 31], discount: 20 },
   { label: '11.11 Sale',        description: 'One day only — the biggest discounts of the year on 11 November.', start: [11, 11], end: [11, 11], discount: 30 },
   { label: '12.12 Sale',        description: 'Year-end deals on 12 December.',                               start: [12, 12], end: [12, 12], discount: 25 },
   { label: 'Azadi Sale',        description: 'Celebrate Independence Day (14 August) with special prices.',   start: [8, 10],  end: [8, 15],  discount: 14 },
-  { label: 'Back to School Sale', description: 'Stationery, workbooks and courses for the new school year.',  start: [3, 25],  end: [4, 15],  discount: 15 },
 ];
 
-/** Next occurrence of a month/day window (rolls to next year once it has ended). */
-function nextPresetWindow(start: [number, number], end: [number, number]) {
+/** Next occurrence of a preset's window (rolls to next year once it has ended). */
+function nextPresetWindow(p: SalePreset) {
   const now = new Date();
-  let year = now.getFullYear();
-  const endOf = (y: number) => new Date(y, end[0] - 1, end[1], 23, 59);
-  if (endOf(year) < now) year += 1;
-  const s = new Date(year, start[0] - 1, start[1], 0, 0);
   // A window already underway starts now rather than in the past.
-  return { start: s < now ? now : s, end: endOf(year) };
+  const clamp = (s: Date, e: Date) => ({ start: s < now ? now : s, end: e });
+  if ('lunar' in p) {
+    const year = Object.keys(p.lunar).map(Number).sort().find(y => new Date(`${p.lunar[y][1]}T23:59:00`) >= now);
+    if (year == null) return clamp(now, new Date(now.getTime() + 30 * 864e5));
+    return clamp(new Date(`${p.lunar[year][0]}T00:00:00`), new Date(`${p.lunar[year][1]}T23:59:00`));
+  }
+  let year = now.getFullYear();
+  const endOf = (y: number) => new Date(y, p.end[0] - 1, p.end[1], 23, 59);
+  if (endOf(year) < now) year += 1;
+  return clamp(new Date(year, p.start[0] - 1, p.start[1], 0, 0), endOf(year));
 }
 
 function CreateCampaignModal({ campaign, onClose, onSaved }: { campaign?: Campaign; onClose: () => void; onSaved: () => void }) {
@@ -118,7 +142,7 @@ function CreateCampaignModal({ campaign, onClose, onSaved }: { campaign?: Campai
                   key={p.label}
                   type="button"
                   onClick={() => {
-                    const w = nextPresetWindow(p.start, p.end);
+                    const w = nextPresetWindow(p);
                     setName(p.label);
                     setDescription(p.description);
                     setStartDate(toDatetimeLocalValue(w.start.toISOString()));

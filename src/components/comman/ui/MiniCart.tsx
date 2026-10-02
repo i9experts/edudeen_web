@@ -1,3 +1,4 @@
+import { useT } from '@/contexts/languageCtx';
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
@@ -30,6 +31,7 @@ function lineTotal(item: CartItem) {
 // there's something in it, or a centered "cart is empty" illustration + a single
 // "Go to Cart" action when there isn't — instead of navigating away immediately.
 export function MiniCart({ accentColor }: { accentColor?: string }) {
+  const t = useT();
   const navigate = useNavigate();
   const ref = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -81,12 +83,12 @@ export function MiniCart({ accentColor }: { accentColor?: string }) {
         className="relative h-9 min-w-9 px-0 md:px-1 flex items-center justify-center gap-[5px] bg-transparent border-none cursor-pointer shrink-0 whitespace-nowrap text-[15px] text-carbon hover:text-brand-orange transition-colors outline-none rounded-md focus-visible:ring-2 focus-visible:ring-brand-orange/40"
       >
         <ShoppingCart size={15} style={accentColor ? { color: accentColor } : undefined} className={clsx('shrink-0 md:hidden', !accentColor && 'text-carbon')} />
-        <span className="hidden md:inline">Cart</span>
+        <span className="hidden md:inline">{t('Cart')}</span>
         <b className="hidden md:inline text-[12px] font-bold bg-mist rounded-full px-[6px] py-[2px] leading-none">
           {cartCount > 99 ? '99+' : cartCount}
         </b>
         {cartCount > 0 && (
-          <span className="md:hidden absolute top-[-2px] right-[-4px] min-w-[16px] h-[16px] rounded-[8px] bg-brand-orange text-white text-[9px] font-bold leading-[16px] text-center px-1">
+          <span className="md:hidden absolute top-[-2px] end-[-4px] min-w-[16px] h-[16px] rounded-[8px] bg-brand-orange text-white text-[9px] font-bold leading-[16px] text-center px-1">
             {cartCount > 99 ? '99+' : cartCount}
           </span>
         )}
@@ -100,7 +102,7 @@ export function MiniCart({ accentColor }: { accentColor?: string }) {
           style={pos}
           className="dropdown-enter fixed z-[9999] w-[320px] max-w-[calc(100vw-2rem)]"
         >
-          <div className="absolute -top-[7px] w-3 h-3 bg-white border-t border-l border-bone rotate-45" style={{ left: pos.arrowLeft }} />
+          <div className="absolute -top-[7px] w-3 h-3 bg-white border-t border-s border-bone rotate-45" style={{ left: pos.arrowLeft }} />
           <div className="relative bg-white border border-bone rounded-[16px] overflow-hidden flex flex-col">
           <div className="flex items-center justify-between px-4 py-3 border-b border-bone">
             <p className="text-[13px] font-bold text-carbon">Shopping Cart{cartCount > 0 ? ` (${cartCount})` : ''}</p>

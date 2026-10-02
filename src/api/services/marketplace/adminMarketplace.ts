@@ -11,7 +11,7 @@ export interface MarketplaceStats {
   gmvThisMonth: number;
 }
 
-export type ListingStatus = 'active' | 'inactive' | 'draft' | 'scheduled' | 'flagged';
+export type ListingStatus = 'active' | 'inactive' | 'draft' | 'scheduled' | 'pending_review' | 'rejected' | 'flagged';
 
 export interface MarketplaceListingQuery {
   search?: string;
@@ -33,6 +33,37 @@ export interface MarketplaceListingRow {
   purchaseCount: number;
   status: string;
   isFeatured: boolean;
+  /** The reviewer's note (set when a listing was sent back). */
+  reviewNote?: string | null;
+  createdAt?: string;
+}
+
+/** Everything the listing-review screen shows. */
+export interface ListingReview {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  images: string[];
+  tags: string[];
+  type: 'physical' | 'digital';
+  productType: 'physical' | 'digital' | 'educational';
+  educationLevel: string | null;
+  customLevel: string | null;
+  status: string;
+  scheduledAt: string | null;
+  reviewNote: string | null;
+  createdAt: string;
+  updatedAt: string;
+  category: string | null;
+  subCategory: string | null;
+  seller: { id: string; name: string; email: string } | null;
+  store: { id: string; name: string; slug: string; status: string; badges: string[] } | null;
+  variants: { id: string; price: number; compareAtPrice: number | null; currency: string; options: { name: string; value: string }[]; stock: number; isDefault: boolean }[];
+  digital: {
+    licenseType: string; downloadLimit: string; pdfStampingEnabled: boolean;
+    files: { name: string; size: number; mimeType: string; viewUrl: string }[];
+  } | null;
 }
 
 export type GrantableStoreBadge = 'verified' | 'top_seller' | 'verified_educator';
@@ -159,6 +190,26 @@ export function apiSetListingFeatured(id: string, isFeatured: boolean) {
 
 export function apiRemoveListing(id: string) {
   return client.patch<never, ApiResponse<null>>(ENDPOINTS.MARKETPLACE.ADMIN.REMOVE(id));
+}
+
+// ── Listing review (new listings wait for approval before going live) ───────
+const REVIEW_BASE = '/api/admin/marketplace/listings';
+
+export function apiGetListingReviewCount() {
+  return client.get<never, ApiResponse<{ pending: number }>>(`${REVIEW_BASE}/review/count`);
+}
+
+export function apiGetListingForReview(id: string) {
+  return client.get<never, ApiResponse<ListingReview>>(`${REVIEW_BASE}/${id}/review`);
+}
+
+export function apiApproveListing(id: string, note?: string) {
+  return client.patch<never, ApiResponse<{ status: string }>>(`${REVIEW_BASE}/${id}/approve`, note ? { note } : {});
+}
+
+/** `reason` (10+ characters) is shown to the seller. */
+export function apiRejectListing(id: string, reason: string) {
+  return client.patch<never, ApiResponse<{ status: string }>>(`${REVIEW_BASE}/${id}/reject`, { reason });
 }
 
 /** PATCH /api/admin/marketplace/stores/:id/badge — grants/revokes a store trust badge (e.g. 'verified_educator'). */

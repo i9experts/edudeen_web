@@ -85,7 +85,7 @@ export function PersonalInfo() {
                       ? <img loading="lazy" decoding="async" src={profile.profileImage} alt={profile.name} className="w-full h-full object-cover" />
                       : initials}
                 </div>
-                <button className="absolute bottom-0 right-0 w-[24px] h-[24px] rounded-full bg-brand-orange border-2 border-white flex items-center justify-center cursor-pointer">
+                <button className="absolute bottom-0 end-0 w-[24px] h-[24px] rounded-full bg-brand-orange border-2 border-white flex items-center justify-center cursor-pointer">
                   <Camera size={11} className="text-white" />
                 </button>
               </div>
@@ -95,7 +95,7 @@ export function PersonalInfo() {
                 {!loading && (
                   <div className="flex items-center gap-1.5 mt-2">
                     <Badge color="orange" size="sm" className="capitalize">{profile?.role ?? ''}</Badge>
-                    {profile?.isVerified && <Badge color="green" size="sm"><Check size={9} className="mr-[2px]" /> Verified</Badge>}
+                    {profile?.isVerified && <Badge color="green" size="sm"><Check size={9} className="me-[2px]" /> Verified</Badge>}
                   </div>
                 )}
               </div>

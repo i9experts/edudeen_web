@@ -1,5 +1,5 @@
 import { useState, useEffect, type ReactNode } from 'react';
-import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { Link, useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Package, Download, GraduationCap, Loader2, CalendarClock, Plus, X } from 'lucide-react';
 import { useStoreWorkspace } from '@/components/layouts/StoreLayout';
 import {
@@ -14,7 +14,13 @@ import { toAttributeInputs, findMissingRequiredAttribute, type AttributeValuesSt
 import { apiGetProductAttributes, apiSetProductAttributes } from '@/api/services/attributes';
 import { useStoreSubcategories } from '@/hooks/store/useStoreSubcategories';
 import { useCategoryAttributes } from '@/hooks/marketplace/useCategoryAttributes';
-import { ImageUpload, FileUpload, type PrivateUploadData, DateTimePickerModal, SkeletonBox } from '@/components/comman/ui';
+import { ImageUpload, type PrivateUploadData, DateTimePickerModal, SkeletonBox } from '@/components/comman/ui';
+import {
+  LearningFields, EMPTY_LEARNING, learningPayload, learningError, type LearningValue,
+  LicenseTiersField, EMPTY_TIERS, tiersPayload, tiersError, type LicenseTierValue,
+  DeliverableFilesField, SampleFileField,
+} from '@/features/seller/components/products/LearningFields';
+import { DeliveryFormatField, EMPTY_DELIVERY, deliveryPayload, deliveryError, deliveryFromProduct } from '@/features/seller/components/products/DeliveryFormatField';
 import { currencySymbol as symbolForCurrency } from '@/utils/currency';
 
 type ProductStatus = 'draft' | 'active' | 'scheduled';
@@ -142,7 +148,9 @@ const blankDig = {
   name: '', description: '', price: '', compareAtPrice: '', subCategoryId: '',
   status: 'draft' as ProductStatus, isListedOnEdudeen: false,
   scheduledAt: '', tagInput: '', tags: [] as string[], images: [] as string[],
-  fileData: null as PrivateUploadData | null,
+  files: [] as PrivateUploadData[],
+  sampleFile: null as PrivateUploadData | null,
+  tiers: EMPTY_TIERS as LicenseTierValue[],
   downloadLimit: 'unlimited', linkExpiryDays: '',
   pdfStampingEnabled: false, licenseType: 'personal' as LicenseType,
   buyerDeliveryMessage: '', educationLevel: '' as EducationLevel | '', customLevel: '',
@@ -151,25 +159,33 @@ const blankDig = {
 type PhysForm = typeof blankPhys;
 type DigForm  = typeof blankDig;
 
+// A listing waiting for review (or sent back) shows as "Active": saving it
+// asks to publish again, and the server puts it back in the review queue.
+function formStatus(s: string): ProductStatus {
+  return s === 'pending_review' || s === 'rejected' ? 'active' : (s as ProductStatus);
+}
 function physFromEntry(p: StoreProduct, v: ProductVariant): PhysForm {
   return {
     name: p.name, description: p.description,
     price: String(v.price), compareAtPrice: v.compareAtPrice != null ? String(v.compareAtPrice) : '',
     stock: String(v.stock), options: [...(v.options ?? [])], shippingWeight: v.shippingWeight ?? '',
     subCategoryId: p.subCategoryId ?? '',
-    status: p.status as ProductStatus, isListedOnEdudeen: p.isListedOnEdudeen,
+    status: formStatus(p.status), isListedOnEdudeen: p.isListedOnEdudeen,
     scheduledAt: '', tags: [...(p.tags ?? [])], tagInput: '', images: [...(p.images ?? [])],
   };
 }
 function digFromEntry(p: StoreProduct, v: ProductVariant): DigForm {
-  const d = p.digital, f0 = d?.files?.[0];
+  const d = p.digital;
+  const toUpload = (f: { url: string; name: string; size: number; mimeType: string }): PrivateUploadData => ({ publicId: f.url, resourceType: 'raw', fileName: f.name, fileSize: f.size, mimeType: f.mimeType });
   return {
     name: p.name, description: p.description,
     price: String(v.price), compareAtPrice: v.compareAtPrice != null ? String(v.compareAtPrice) : '',
     subCategoryId: p.subCategoryId ?? '',
-    status: p.status as ProductStatus, isListedOnEdudeen: p.isListedOnEdudeen,
+    status: formStatus(p.status), isListedOnEdudeen: p.isListedOnEdudeen,
     scheduledAt: '', tags: [...(p.tags ?? [])], tagInput: '', images: [...(p.images ?? [])],
-    fileData: f0 ? { publicId: f0.url, resourceType: 'raw', fileName: f0.name, fileSize: f0.size, mimeType: f0.mimeType } : null,
+    files: (d?.files ?? []).map(toUpload),
+    sampleFile: d?.sampleFile ? toUpload(d.sampleFile) : null,
+    tiers: EMPTY_TIERS,
     downloadLimit: d?.downloadLimit ?? 'unlimited',
     linkExpiryDays: d?.linkExpiryDays != null ? String(d.linkExpiryDays) : '',
     pdfStampingEnabled: d?.pdfStampingEnabled ?? false,
@@ -202,13 +218,19 @@ export default function StoreEditProduct() {
   const [dig,               setDig]               = useState<DigForm>(blankDig);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [attributeValues,   setAttributeValues]   = useState<AttributeValuesState>({});
+  // Listing review state from the server (not editable here).
+  const [review, setReview] = useState<{ status: string; note: string | null } | null>(null);
+  const [learning, setLearning] = useState<LearningValue>(EMPTY_LEARNING);
+  const [delivery, setDelivery] = useState(EMPTY_DELIVERY);
 
   const sp = <K extends keyof PhysForm>(k: K, v: PhysForm[K]) => setPhys(f => ({ ...f, [k]: v }));
   const sd = <K extends keyof DigForm> (k: K, v: DigForm[K])  => setDig(f  => ({ ...f, [k]: v }));
 
   function init(p: StoreProduct, v: ProductVariant) {
     setPType(p.productType);
+    setReview(p.status === 'pending_review' || p.status === 'rejected' ? { status: p.status, note: p.reviewNote ?? null } : null);
     setVariantId(v._id || null);
+    setLearning({ curricula: [...(p.curricula ?? [])], ageMin: p.ageMin != null ? String(p.ageMin) : '', ageMax: p.ageMax != null ? String(p.ageMax) : '' });
     if (p.productType === 'physical') setPhys(physFromEntry(p, v));
     else                              setDig(digFromEntry(p, v));
   }
@@ -226,6 +248,30 @@ export default function StoreEditProduct() {
       })
       .catch(() => navigate(`/store/${storeId}/products`, { replace: true }))
       .finally(() => setFetching(false));
+
+    // The list cache has no extra license variants or full file list — always
+    // read those fresh, without touching what the seller is typing.
+    apiGetMyProductById(productId)
+      .then(res => {
+        const p = res.data.product;
+        const variants = res.data.variants ?? [];
+        setLearning({ curricula: [...(p.curricula ?? [])], ageMin: p.ageMin != null ? String(p.ageMin) : '', ageMax: p.ageMax != null ? String(p.ageMax) : '' });
+        if (p.type === 'digital') {
+          setDelivery(deliveryFromProduct(p));
+          const priceFor = (label: string) => variants.find(v => !v.isDefault && v.options?.some(o => o.name === 'License' && o.value === label));
+          const fresh = digFromEntry(p, res.data.defaultVariant ?? variants[0]);
+          setDig(f => ({
+            ...f,
+            files: fresh.files,
+            sampleFile: fresh.sampleFile,
+            tiers: EMPTY_TIERS.map(t => {
+              const v = priceFor(t.license === 'school' ? 'Whole school' : 'One classroom');
+              return v ? { ...t, enabled: true, price: String(v.price) } : t;
+            }),
+          }));
+        }
+      })
+      .catch(() => {});
 
     apiGetProductAttributes(productId)
       .then(res => {
@@ -256,6 +302,8 @@ export default function StoreEditProduct() {
     setError('');
     if (pType === 'educational' && !dig.educationLevel) { setError('Education level is required for educational resources.'); return; }
     if (pType === 'educational' && dig.educationLevel === 'other' && !dig.customLevel.trim()) { setError('Please describe the custom education level.'); return; }
+    const learnErr = learningError(learning) ?? (pType !== 'physical' ? tiersError(dig.tiers) ?? deliveryError(delivery) : null);
+    if (learnErr) { setError(learnErr); return; }
     const missingAttr = findMissingRequiredAttribute(attrDefs, attributeValues);
     if (missingAttr) { setError(`${missingAttr.label} is required.`); return; }
     setSaving(true);
@@ -267,6 +315,7 @@ export default function StoreEditProduct() {
           subCategoryId: phys.subCategoryId || null, images: phys.images, tags: phys.tags,
           isListedOnEdudeen: phys.isListedOnEdudeen, status: finalStatus,
           scheduledAt: finalStatus === 'scheduled' ? phys.scheduledAt || null : null,
+          ...learningPayload(learning),
         });
         let variant = res.data.variant;
         if (variantId) {
@@ -278,7 +327,8 @@ export default function StoreEditProduct() {
         }
         updateCachedProduct(storeId, productId, { product: res.data.product, variant });
       } else {
-        const files = dig.fileData ? [{ url: dig.fileData.publicId, name: dig.fileData.fileName, size: dig.fileData.fileSize, mimeType: dig.fileData.mimeType }] : [];
+        const toFile = (f: PrivateUploadData) => ({ url: f.publicId, name: f.fileName, size: f.fileSize, mimeType: f.mimeType });
+        const files = dig.files.map(toFile);
         const res = await apiEditDigitalProduct(productId, {
           productId, variantId,
           name: dig.name, description: dig.description,
@@ -289,7 +339,10 @@ export default function StoreEditProduct() {
           scheduledAt: finalStatus === 'scheduled' ? dig.scheduledAt || null : null,
           price: Number(dig.price),
           compareAtPrice: dig.compareAtPrice ? Number(dig.compareAtPrice) : null,
-          digital: { files, downloadLimit: dig.downloadLimit, linkExpiryDays: dig.linkExpiryDays ? Number(dig.linkExpiryDays) : null, pdfStampingEnabled: dig.pdfStampingEnabled, licenseType: dig.licenseType, buyerDeliveryMessage: dig.buyerDeliveryMessage, preview: { enabled: dig.previewEnabled, sourceFileIndex: 0 } },
+          ...learningPayload(learning),
+          ...deliveryPayload(delivery),
+          licenseTiers: pType === 'educational' && dig.licenseType !== 'commercial' ? tiersPayload(dig.tiers.filter(t => t.license !== dig.licenseType)) : [],
+          digital: { files, downloadLimit: dig.downloadLimit, linkExpiryDays: dig.linkExpiryDays ? Number(dig.linkExpiryDays) : null, pdfStampingEnabled: dig.pdfStampingEnabled, licenseType: dig.licenseType, buyerDeliveryMessage: dig.buyerDeliveryMessage, preview: { enabled: dig.previewEnabled, sourceFileIndex: 0 }, sampleFile: dig.sampleFile ? toFile(dig.sampleFile) : null },
         });
         updateCachedProduct(storeId, productId, { product: res.data.product, variant: res.data.variant });
       }
@@ -384,6 +437,16 @@ export default function StoreEditProduct() {
         </div>
       </div>
 
+      {review && (
+        <div role="status" className={`mx-4 sm:mx-7 mt-5 rounded-xl border px-4 py-3 text-[13px] ${review.status === 'rejected' ? 'border-error/30 bg-error-bg text-error' : 'border-info/30 bg-info-bg text-carbon'}`}>
+          {review.status === 'rejected' ? (
+            <><b>Edudeen asked for changes:</b> {review.note ?? 'See the note from the review team.'} Fix this and press Save Changes with status Active to send it for review again.</>
+          ) : (
+            <><b>In review.</b> The Edudeen team checks new listings before they go live — usually within a day. You can still edit it.</>
+          )}
+        </div>
+      )}
+
       {/* ── 2-column body ── */}
       <div className="px-4 sm:px-7 py-6 grid grid-cols-1 lg:grid-cols-[1fr_296px] gap-5 items-start">
 
@@ -442,13 +505,34 @@ export default function StoreEditProduct() {
             />
           </Card>
 
-          {/* Digital/Educational: File Upload */}
           {(pType === 'digital' || pType === 'educational') && (
-            <Card title={pType === 'educational' ? 'Resource File' : 'Digital File'}>
-              <p className="text-[12px] text-slate mb-3">Upload the file buyers will receive instantly after purchase.</p>
-              <FileUpload value={dig.fileData} onChange={v => sd('fileData', v)} label="Click to upload your digital file" />
+            <Card title="How buyers get it">
+              <DeliveryFormatField value={delivery} onChange={setDelivery} />
+              {delivery.format === 'course' && (
+                <Link to={`/store/${storeId}/products/${productId}/course`} className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-brand-royal text-white px-4 py-2 text-[13px] font-bold no-underline">
+                  Open the course builder
+                </Link>
+              )}
             </Card>
           )}
+
+          {/* Digital/Educational: File Upload */}
+          {(pType === 'digital' || pType === 'educational') && (
+            <Card title={delivery.format === 'download' ? (pType === 'educational' ? 'Resource File' : 'Digital File') : 'Extra files (optional)'}>
+              <p className="text-[12px] text-slate mb-3">{delivery.format === 'download' ? 'The files buyers receive instantly after purchase.' : 'Worksheets, slides or notes buyers can download too.'}</p>
+              <DeliverableFilesField files={dig.files} onChange={v => sd('files', v)} />
+            </Card>
+          )}
+
+          {pType !== 'physical' && (
+            <Card title="Free sample">
+              <SampleFileField value={dig.sampleFile} onChange={v => sd('sampleFile', v)} />
+            </Card>
+          )}
+
+          <Card title="Who it's for">
+            <LearningFields value={learning} onChange={setLearning} />
+          </Card>
 
           {/* Educational: Education Level (controlled Tier-1 + optional Tier-2 custom label) */}
           {pType === 'educational' && (
@@ -506,6 +590,11 @@ export default function StoreEditProduct() {
                     })}
                   </div>
                 </F>
+                {pType === 'educational' && dig.licenseType !== 'commercial' && (
+                  <F label="Classroom & school licenses">
+                    <LicenseTiersField baseLicense={dig.licenseType} tiers={dig.tiers} onChange={v => sd('tiers', v)} currencySymbol={currencySymbol} />
+                  </F>
+                )}
                 <F label="Buyer Delivery Message">
                   <textarea value={dig.buyerDeliveryMessage} onChange={e => sd('buyerDeliveryMessage', e.target.value)}
                     placeholder="Thank you for your purchase!" className={ta} />

@@ -66,6 +66,8 @@ const StorefrontCustomPage = lazy(() => named(import('@/features/buyer/pages/Sto
 const CategoryBrowsePage   = lazy(() => named(import('@/features/storefront/pages/CategoryBrowsePage'),           'CategoryBrowsePage'));
 const CollectionDetailPage = lazy(() => named(import('@/features/storefront/pages/CollectionDetailPage'),         'CollectionDetailPage'));
 const SearchResultsPage    = lazy(() => named(import('@/features/storefront/pages/SearchResultsPage'),            'SearchResultsPage'));
+const MarketplaceSearchPage   = lazy(() => named(import('@/features/buyer/pages/MarketplaceBrowse'),          'SearchResultsPage'));
+const MarketplaceCategoryPage = lazy(() => named(import('@/features/buyer/pages/MarketplaceBrowse'),          'CategoryPage'));
 const StorefrontBlogIndex  = lazy(() => named(import('@/features/buyer/pages/StorefrontBlogIndex'),              'StorefrontBlogIndex'));
 const StorefrontBlogPost   = lazy(() => named(import('@/features/buyer/pages/StorefrontBlogPost'),               'StorefrontBlogPost'));
 const StorefrontCartPage   = lazy(() => named(import('@/features/storefront/StorefrontCartPage'),                'StorefrontCartPage'));
@@ -75,6 +77,16 @@ const MaintenancePage      = lazy(() => named(import('@/features/buyer/pages/Mai
 // ── Account (buyer) ───────────────────────────────────────────────────────────
 const AccountDashboard     = lazy(() => named(import('@/features/buyer/pages/account/AccountDashboard'),        'AccountDashboard'));
 const AccountOrders        = lazy(() => named(import('@/features/buyer/pages/MyOrdersPage'),                     'OrdersTab'));
+const AccountOrderDetail   = lazy(() => named(import('@/features/buyer/pages/account/OrderDetailPage'),        'OrderDetailPage'));
+const OrderInvoice         = lazy(() => named(import('@/features/buyer/pages/account/InvoicePage'),            'InvoicePage'));
+const LearnHubPage         = lazy(() => named(import('@/features/buyer/pages/LearnPages'),                     'LearnHubPage'));
+const LearnLevelPage       = lazy(() => named(import('@/features/buyer/pages/LearnPages'),                     'LearnLevelPage'));
+const AccountLists         = lazy(() => named(import('@/features/buyer/pages/account/ListsPage'),              'ListsPage'));
+const AccountQuotes        = lazy(() => named(import('@/features/buyer/pages/account/QuotesPage'),             'QuotesPage'));
+const QuotationPrint       = lazy(() => named(import('@/features/buyer/pages/account/QuotationPage'),          'QuotationPage'));
+const PublicListPage       = lazy(() => named(import('@/features/buyer/pages/ListPage'),                       'ListPage'));
+const StoreQuestions     = lazy(() => named(import('@/features/seller/store/Dashboard/Operations/questions/StoreQuestions'), 'StoreQuestions'));
+const StoreQuotes        = lazy(() => named(import('@/features/seller/store/Dashboard/Operations/quotes/StoreQuotes'),       'StoreQuotes'));
 const AccountDownloads     = lazy(() => named(import('@/features/buyer/pages/account/Downloads'),                'Downloads'));
 const AccountWishlist      = lazy(() => named(import('@/features/buyer/pages/account/Wishlist'),                 'Wishlist'));
 const AccountReviews       = lazy(() => named(import('@/features/buyer/pages/MyReviewsPage'),                    'ReviewsTab'));
@@ -99,10 +111,17 @@ const StoreProductList   = lazy(() => import('@/features/seller/store/Dashboard/
 const StoreAddProduct    = lazy(() => import('@/features/seller/store/Dashboard/StoreSection/products/StoreAddProduct'));
 const StoreEditProduct   = lazy(() => import('@/features/seller/store/Dashboard/StoreSection/products/StoreEditProduct'));
 const StoreProductDetail = lazy(() => import('@/features/seller/store/Dashboard/StoreSection/products/StoreProductDetail'));
+const CourseBuilder      = lazy(() => import('@/features/seller/store/Dashboard/StoreSection/products/CourseBuilder'));
 const StoreCustomerList  = lazy(() => import('@/features/seller/store/Dashboard/StoreSection/customer/CustomerList'));
 const StoreSettings      = lazy(() => import('@/features/seller/store/Dashboard/Manage/StoreSettings'));
 const StoreCategories    = lazy(() => import('@/features/seller/store/Dashboard/Manage/StoreCategories'));
 const StoreCollections   = lazy(() => import('@/features/seller/store/Dashboard/Manage/StoreCollections'));
+const StoreBundles       = lazy(() => import('@/features/seller/store/Dashboard/Manage/StoreBundles'));
+const BundlePage         = lazy(() => named(import('@/features/buyer/pages/BundlePage'), 'BundlePage'));
+const CoursePlayerPage   = lazy(() => named(import('@/features/buyer/pages/CoursePlayerPage'), 'CoursePlayerPage'));
+const CertificatePage    = lazy(() => named(import('@/features/buyer/pages/CertificatePage'), 'CertificatePage'));
+const ShelfPage          = lazy(() => named(import('@/features/buyer/pages/ShelfPage'), 'ShelfPage'));
+const AdminShelves       = lazy(() => named(import('@/features/admin/pages/AdminShelves'), 'AdminShelves'));
 const StorePlanBilling   = lazy(() => import('@/features/seller/store/Dashboard/Manage/StorePlanBilling'));
 const StoreVerification  = lazy(() => named(import('@/features/seller/store/Dashboard/Manage/StoreVerification'), 'StoreVerification'));
 const StoreOrderList     = lazy(() => named(import('@/features/seller/store/Dashboard/StoreSection/orders/OrderList'),        'StoreOrderList'));
@@ -116,7 +135,6 @@ const StoreInventory     = lazy(() => named(import('@/features/seller/store/Dash
 const StoreMarketing     = lazy(() => named(import('@/features/seller/store/Dashboard/Operations/marketing/Marketing'),      'StoreMarketing'));
 const StoreLoyalty       = lazy(() => named(import('@/features/seller/store/Dashboard/Operations/loyalty/Loyalty'),          'StoreLoyalty'));
 const StoreSubscriptions = lazy(() => named(import('@/features/seller/store/Dashboard/Operations/subscriptions/Subscriptions'), 'StoreSubscriptions'));
-const StoreIntegrations  = lazy(() => named(import('@/features/seller/store/Dashboard/Operations/integrations/Integrations'),'StoreIntegrations'));
 
 // ── Admin ─────────────────────────────────────────────────────────────────────
 const AdminOverview      = lazy(() => named(import('@/features/admin/pages/AdminOverview'),                     'AdminOverview'));
@@ -129,6 +147,7 @@ const AdminMarketplace   = lazy(() => named(import('@/features/admin/pages/Admin
 const AdminLeads         = lazy(() => named(import('@/features/admin/pages/AdminLeads'),                        'AdminLeads'));
 const AdminRefunds       = lazy(() => named(import('@/features/admin/pages/AdminRefunds'),                      'AdminRefunds'));
 const AdminShippingZones = lazy(() => named(import('@/features/admin/pages/AdminShippingZones'),                'AdminShippingZones'));
+const AdminOrders        = lazy(() => named(import('@/features/admin/pages/AdminOrders'),                       'AdminOrders'));
 const AdminCategories    = lazy(() => named(import('@/features/admin/pages/AdminCategories'),                    'AdminCategories'));
 const AdminSubscriptions = lazy(() => named(import('@/features/admin/pages/AdminSubscriptions'),                 'AdminSubscriptions'));
 const AdminPlatformPlans = lazy(() => named(import('@/features/admin/pages/AdminPlatformPlans'),                 'AdminPlatformPlans'));
@@ -222,7 +241,10 @@ const mainRouter = createBrowserRouter([
               { index: true,          element: <Navigate to="dashboard" replace /> },
               { path: 'dashboard',     element: <AccountDashboard /> },
               { path: 'orders',        element: <AccountOrders /> },
+              { path: 'orders/:orderId', element: <AccountOrderDetail /> },
               { path: 'downloads',     element: <AccountDownloads /> },
+              { path: 'lists',         element: <AccountLists /> },
+              { path: 'quotes',        element: <AccountQuotes /> },
               { path: 'wishlist',      element: <AccountWishlist /> },
               { path: 'reviews',       element: <AccountReviews /> },
               { path: 'payments',      element: <AccountPayments /> },
@@ -247,6 +269,14 @@ const mainRouter = createBrowserRouter([
           { path: 'checkout',        element: <CheckoutPage /> },
           { path: 'order-success',   element: <OrderSuccessPage /> },
           { path: 'product/:slug',   element: <ProductDetail /> },
+          { path: 'search',          element: <MarketplaceSearchPage /> },
+          { path: 'c/:slug',         element: <MarketplaceCategoryPage /> },
+          // Grade and subject landing pages (/learn/primary-school/mathematics).
+          { path: 'learn',           element: <LearnHubPage /> },
+          { path: 'learn/:level/:subject?', element: <LearnLevelPage /> },
+          { path: 'lists/:slug', element: <PublicListPage /> },
+          { path: 'bundles/:slug', element: <BundlePage /> },
+          { path: 'picks/:slug', element: <ShelfPage /> },
         ],
       },
 
@@ -270,6 +300,12 @@ const mainRouter = createBrowserRouter([
 
       // ── Maintenance mode (backend 503 redirects here — see client.ts) ──
       { path: '/maintenance',     element: <MaintenancePage /> },
+
+      // Printable invoice — no app chrome, so printing gives a clean page.
+      { path: '/account/orders/:orderId/invoice', element: <OrderInvoice /> },
+      { path: '/quotes/:quoteId/print', element: <QuotationPrint /> },
+      { path: '/course/:slug', element: <CoursePlayerPage /> },
+      { path: '/certificates/:code', element: <CertificatePage /> },
 
       // ── Auth ──────────────────────────────────────────────────────────
       { path: '/login',           element: <LoginPage /> },
@@ -312,12 +348,14 @@ const mainRouter = createBrowserRouter([
           { path: 'products/add',                     element: <StoreAddProduct /> },
           { path: 'products/edit/:productId',         element: <StoreEditProduct /> },
           { path: 'products/detail/:productId',       element: <StoreProductDetail /> },
+          { path: 'products/:productId/course',       element: <CourseBuilder /> },
           { path: 'customer/list',                    element: <StoreCustomerList /> },
           { path: 'analytics',                        element: <StoreAnalytics /> },
           { path: 'settings',                         element: <StoreSettings /> },
           { path: 'account',                          element: <SellerSettings /> },
           { path: 'categories',                       element: <StoreCategories /> },
           { path: 'collections',                      element: <StoreCollections /> },
+          { path: 'bundles',                          element: <StoreBundles /> },
           { path: 'plan-billing',                     element: <StorePlanBilling /> },
           { path: 'verification',                     element: <StoreVerification /> },
           { path: 'storebuilder',                     element: <StorePageOverview /> },
@@ -325,12 +363,15 @@ const mainRouter = createBrowserRouter([
           { path: 'seo',                              element: <StoreSEO /> },
           { path: 'ai/studio',                        element: <StoreAIStudio /> },
           { path: 'reviews',                          element: <StoreReviews /> },
+          { path: 'questions',                        element: <StoreQuestions /> },
+          { path: 'quotes',                           element: <StoreQuotes /> },
           { path: 'finance',                          element: <StoreFinance /> },
           { path: 'inventory',                        element: <StoreInventory /> },
           { path: 'marketing',                        element: <StoreMarketing /> },
           { path: 'loyalty',                          element: <StoreLoyalty /> },
           { path: 'subscriptions',                    element: <StoreSubscriptions /> },
-          { path: 'integrations',                     element: <StoreIntegrations /> },
+          // Retired: the page only showed placeholder "connected apps".
+          { path: 'integrations',                     element: <Navigate to="../dashboard" replace /> },
           { path: 'activity',                         element: <Navigate to="../settings" replace /> },
           { path: 'followers',                        element: <Navigate to="../customer/list" replace /> },
           // Retired in-person POS URLs (Edudeen is online-only) — old
@@ -358,6 +399,8 @@ const mainRouter = createBrowserRouter([
           { path: 'leads',        element: <RequireRole role="admin"><AdminLeads /></RequireRole> },
           { path: 'refunds',      element: <RequireRole role="admin"><AdminRefunds /></RequireRole> },
           { path: 'shipping-zones', element: <RequireRole role="admin"><AdminShippingZones /></RequireRole> },
+          { path: 'picks', element: <RequireRole role="admin"><AdminShelves /></RequireRole> },
+          { path: 'orders',       element: <RequireRole role="admin"><AdminOrders /></RequireRole> },
           { path: 'marketplace',  element: <RequireRole role="admin"><AdminMarketplace /></RequireRole> },
           { path: 'categories',   element: <AdminCategories /> },
           { path: 'subscriptions',element: <AdminSubscriptions /> },

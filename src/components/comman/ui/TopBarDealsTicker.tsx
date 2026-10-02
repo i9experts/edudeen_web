@@ -96,7 +96,7 @@ export function TopBarDealsTicker({ className }: { className?: string }) {
         <ChevronRight size={13} className="shrink-0 opacity-80" />
       </button>
       {items.length > 1 && (
-        <span className="hidden md:flex shrink-0 items-center gap-1 ml-1" aria-hidden>
+        <span className="hidden md:flex shrink-0 items-center gap-1 ms-1" aria-hidden>
           {items.map((it, i) => (
             <span key={it.key} className={clsx('size-[5px] rounded-full', i === index % items.length ? 'bg-white' : 'bg-white/35')} />
           ))}

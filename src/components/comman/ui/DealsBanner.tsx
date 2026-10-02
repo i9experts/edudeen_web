@@ -226,7 +226,7 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
             <div className="absolute inset-0 overflow-hidden border border-black/10">
               <div className="gradient-drift absolute inset-0 bg-gradient-to-r from-brand-orange via-[#4E8F28] to-[#66AD36]" />
               <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(255,255,255,0.22),transparent_55%)]" />
-              <div className="pointer-events-none absolute -bottom-10 right-[6%] size-32 rounded-full bg-[#0B2A45]/35 blur-3xl" />
+              <div className="pointer-events-none absolute -bottom-10 end-[6%] size-32 rounded-full bg-[#0B2A45]/35 blur-3xl" />
               <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-white/25" />
             </div>
           ) : (
@@ -237,11 +237,11 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
             <div className="gradient-drift absolute inset-0 bg-gradient-to-br from-brand-orange via-[#4E8F28] to-[#66AD36]" />
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(255,255,255,0.18),transparent_55%)]" />
             <div className="pointer-events-none absolute inset-0 opacity-[0.08] bg-[radial-gradient(circle_at_1px_1px,#ffffff_1px,transparent_0)] bg-[length:16px_16px]" />
-            <div className="pointer-events-none absolute -top-10 left-[38%] size-40 rounded-full bg-white/10 blur-3xl" />
-            <div className="pointer-events-none absolute -bottom-14 right-[20%] size-48 rounded-full bg-[#0B2A45]/25 blur-3xl" />
+            <div className="pointer-events-none absolute -top-10 start-[38%] size-40 rounded-full bg-white/10 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-14 end-[20%] size-48 rounded-full bg-[#0B2A45]/25 blur-3xl" />
             {/* Thin vertical separators between the 3 columns — desktop only, there's no room below lg. */}
-            <div className="pointer-events-none hidden lg:block absolute inset-y-6 left-[40%] w-px bg-white/15" />
-            <div className="pointer-events-none hidden lg:block absolute inset-y-6 left-[75%] w-px bg-white/15" />
+            <div className="pointer-events-none hidden lg:block absolute inset-y-6 start-[40%] w-px bg-white/15" />
+            <div className="pointer-events-none hidden lg:block absolute inset-y-6 start-[75%] w-px bg-white/15" />
             <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-white/25" />
           </div>
         )}
@@ -256,7 +256,7 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
             <button
               key={campaign._id}
               onClick={() => navigate(`/?campaign=${encodeURIComponent(campaign._id)}`)}
-              className="group relative z-[1] flex w-full flex-col items-stretch border-none bg-transparent p-0 outline-none cursor-pointer overflow-hidden text-left sm:h-full sm:flex-row"
+              className="group relative z-[1] flex w-full flex-col items-stretch border-none bg-transparent p-0 outline-none cursor-pointer overflow-hidden text-start sm:h-full sm:flex-row"
             >
               {/* Below `sm`, the image fills its box edge-to-edge (`cover`,
                   no padding) — there's no room there for the letterboxed
@@ -283,7 +283,7 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
                   <CampaignImage src={campaign.bannerImage} fit="cover" />
                 </div>
                 {hasPercentOff && (
-                  <span className="absolute right-1 top-1 sm:right-auto sm:left-1 z-[1] inline-flex items-center rounded-full bg-brand-deep-orange px-[8px] py-[3px] text-[9px] font-bold leading-none text-white">
+                  <span className="absolute end-1 top-1 sm:end-auto sm:start-1 z-[1] inline-flex items-center rounded-full bg-brand-deep-orange px-[8px] py-[3px] text-[9px] font-bold leading-none text-white">
                     -{campaign.discountValue}% OFF
                   </span>
                 )}
@@ -293,7 +293,7 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
                    OFF badge's opposite corner). Text-shadow instead of a
                    scrim here, since there's no gradient backing behind
                    this block. */}
-                <div className="absolute left-1 right-1 top-1 z-[1] flex flex-col items-start gap-[3px] sm:hidden">
+                <div className="absolute start-1 end-1 top-1 z-[1] flex flex-col items-start gap-[3px] sm:hidden">
                   <span className="inline-flex items-center gap-[4px] rounded-full bg-white/90 px-[7px] py-[2.5px] text-[8.5px] font-bold uppercase tracking-wide text-brand-deep-orange">
                     <Zap size={9} className="fill-brand-deep-orange" /> Limited Time
                   </span>
@@ -388,7 +388,7 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
           >
             <CampaignImage src={campaign.bannerImage} fit="cover" />
             {hasPercentOff && (
-              <span className="absolute top-2 left-2 -rotate-6 flex flex-col items-center justify-center size-[42px] rounded-full bg-error text-white border-2 border-white/40 z-[1]">
+              <span className="absolute top-2 start-2 -rotate-6 flex flex-col items-center justify-center size-[42px] rounded-full bg-error text-white border-2 border-white/40 z-[1]">
                 <span className="text-[11px] font-bold leading-none">-{campaign.discountValue}%</span>
                 <span className="text-[5px] font-semibold uppercase tracking-wide leading-none mt-[1px]">off</span>
               </span>
@@ -399,12 +399,12 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
           <button
             key={campaign._id}
             onClick={() => navigate(`/?campaign=${encodeURIComponent(campaign._id)}`)}
-            className="campaign-fade group relative z-[1] grid w-full h-full gap-4 border-none bg-transparent text-left text-white outline-none cursor-pointer px-5 py-5 sm:px-7 sm:py-6 grid-cols-1 lg:grid-cols-[40%_35%_25%] lg:gap-0 lg:px-8 lg:py-0 lg:h-[188px]"
+            className="campaign-fade group relative z-[1] grid w-full h-full gap-4 border-none bg-transparent text-start text-white outline-none cursor-pointer px-5 py-5 sm:px-7 sm:py-6 grid-cols-1 lg:grid-cols-[40%_35%_25%] lg:gap-0 lg:px-8 lg:py-0 lg:h-[188px]"
           >
             {/* LEFT (40%) — badge, huge discount, title, description, meta, CTA.
                 5 text elements max, one line each — everything stays legible
                 inside a ~180px-tall card instead of sprawling. */}
-            <div className="flex min-w-0 flex-col justify-center gap-[5px] lg:pr-6">
+            <div className="flex min-w-0 flex-col justify-center gap-[5px] lg:pe-6">
               <span className="inline-flex w-fit items-center gap-[5px] rounded-full bg-white px-[10px] py-[5px] text-[10px] font-bold uppercase tracking-wide text-brand-deep-orange whitespace-nowrap">
                 <Zap size={11} className="fill-brand-deep-orange" /> Limited Time
               </span>
@@ -429,7 +429,7 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
                 <CampaignImage src={campaign.bannerImage} />
 
                 {hasPercentOff && (
-                  <span className="absolute -top-2 -left-2 -rotate-6 flex flex-col items-center justify-center size-[42px] rounded-full bg-error text-white border-2 border-white/40">
+                  <span className="absolute -top-2 -start-2 -rotate-6 flex flex-col items-center justify-center size-[42px] rounded-full bg-error text-white border-2 border-white/40">
                     <span className="text-[11px] font-bold leading-none">-{campaign.discountValue}%</span>
                     <span className="text-[5px] font-semibold uppercase tracking-wide leading-none mt-[1px]">off</span>
                   </span>
@@ -438,7 +438,7 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
             </div>
 
             {/* RIGHT (25%) — countdown + CTA */}
-            <div className="flex flex-col items-center justify-center gap-3 lg:pl-6">
+            <div className="flex flex-col items-center justify-center gap-3 lg:ps-6">
               <div className="countdown-pulse flex shrink-0 items-center gap-[6px]">
                 <CountdownUnit value={countdown.hours} label="hrs" size="sm" />
                 <span className="pb-4 text-white/40">:</span>
@@ -469,7 +469,7 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
                 <span className="relative block h-[5px] w-full rounded-full border border-black/10 bg-white/25 overflow-hidden">
                   <span
                     className={clsx(
-                      'absolute inset-y-0 left-0 rounded-full bg-white',
+                      'absolute inset-y-0 start-0 rounded-full bg-white',
                       i < activeIndex ? 'w-full' : i > activeIndex ? 'w-0' : 'campaign-progress-fill',
                     )}
                     style={i === activeIndex ? { animationDuration: `${ROTATE_MS}ms`, animationPlayState: paused ? 'paused' : 'running' } : undefined}

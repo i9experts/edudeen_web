@@ -84,7 +84,7 @@ export function StorefrontLayout() {
         <Store size={48} className="text-bone" />
         <p className="text-[15px] text-slate">Store not found</p>
         <Button variant="secondary" size="sm" onClick={() => { if (inApp) navigate('/'); else window.location.href = getMainAppUrl('/'); }}>
-          <ArrowLeft size={13} className="mr-1" /> Back to Edudeen
+          <ArrowLeft size={13} className="me-1" /> Back to Edudeen
         </Button>
       </div>
     );

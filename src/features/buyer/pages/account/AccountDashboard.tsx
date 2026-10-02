@@ -26,7 +26,7 @@ function RecentOrderRow({ order }: { order: OrderSummary }) {
   return (
     <button
       onClick={() => navigate('/account/orders')}
-      className="group w-full flex items-center gap-3 px-4 py-3 text-left bg-transparent border-none cursor-pointer hover:bg-cream transition-colors rounded-[10px]"
+      className="group w-full flex items-center gap-3 px-4 py-3 text-start bg-transparent border-none cursor-pointer hover:bg-cream transition-colors rounded-[10px]"
     >
       <div className="w-9 h-9 rounded-[9px] bg-brand-pale-orange flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-110">
         <Package size={14} className="text-brand-orange" />
@@ -211,7 +211,7 @@ function MobileAccountMenu({ isLoggedIn }: { isLoggedIn: boolean }) {
                   if (item.path.startsWith('/')) { navigate(item.path); return; }
                   navigate(isLoggedIn ? `/account/${item.path}` : '/login');
                 }}
-                className="w-full flex items-center gap-3 px-5 py-[13px] bg-transparent border-0 cursor-pointer text-left hover:bg-cream transition-colors"
+                className="w-full flex items-center gap-3 px-5 py-[13px] bg-transparent border-0 cursor-pointer text-start hover:bg-cream transition-colors"
               >
                 <div className="w-8 h-8 rounded-[9px] bg-brand-pale-orange flex items-center justify-center shrink-0">
                   <item.Icon size={15} className="text-brand-orange" />
@@ -392,7 +392,7 @@ export function AccountDashboard() {
                   <button
                     key={item.product._id}
                     onClick={() => navigate(`/product/${item.product.slug}`)}
-                    className="group flex flex-col items-start gap-1.5 bg-transparent border-none cursor-pointer p-0 text-left w-[84px] transition-transform duration-200 hover:-translate-y-[2px]"
+                    className="group flex flex-col items-start gap-1.5 bg-transparent border-none cursor-pointer p-0 text-start w-[84px] transition-transform duration-200 hover:-translate-y-[2px]"
                   >
                     <div className="overflow-hidden rounded-[10px]">
                       <WishlistPreviewImg src={item.product.images?.[0]} name={item.product.name} />
@@ -467,7 +467,7 @@ export function AccountDashboard() {
                   className="group w-full flex items-center gap-2.5 px-3 py-[9px] rounded-[8px] text-[12.5px] text-charcoal bg-cream hover:bg-brand-pale-orange border-none cursor-pointer transition-colors"
                 >
                   <a.Icon size={14} className="text-brand-orange shrink-0 transition-transform duration-200 group-hover:scale-110" />
-                  <span className="flex-1 text-left">{a.label}</span>
+                  <span className="flex-1 text-start">{a.label}</span>
                   <ChevronRight size={13} className="text-slate shrink-0 transition-transform duration-200 group-hover:translate-x-[2px]" />
                 </button>
               ))}

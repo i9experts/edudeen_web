@@ -28,7 +28,7 @@ export function Field({ label, required, hint, error, className, children }: Fie
     <div className={clsx('mb-[14px]', className)}>
       <label htmlFor={finalId} className="block text-[12px] font-medium text-charcoal mb-[5px]">
         {label}
-        {required && <span className="text-brand-orange ml-[2px]"> *</span>}
+        {required && <span className="text-brand-orange ms-[2px]"> *</span>}
       </label>
       {control}
       {hint && !error && (

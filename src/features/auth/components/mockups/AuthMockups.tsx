@@ -36,7 +36,7 @@ function GlowOrb({ className }: { className?: string }) {
 export function MarketplaceMockup() {
   return (
     <div className="relative w-full max-w-[300px] mx-auto py-[clamp(2px,1.5vh,24px)]">
-      <GlowOrb className="w-40 h-40 bg-brand-orange/30 -top-6 -right-4" />
+      <GlowOrb className="w-40 h-40 bg-brand-orange/30 -top-6 -end-4" />
       <GlassPanel className="relative p-[clamp(10px,1.8vh,16px)] auth-float">
         <div className="flex items-center justify-between mb-[clamp(4px,1vh,12px)]">
           <div className="flex items-center gap-2">
@@ -65,14 +65,14 @@ export function MarketplaceMockup() {
         </div>
       </GlassPanel>
 
-      <FloatingChip className="-left-3 -bottom-4 auth-float-slow hidden sm:flex">
+      <FloatingChip className="-start-3 -bottom-4 auth-float-slow hidden sm:flex">
         <span className="w-6 h-6 rounded-full bg-success/25 flex items-center justify-center shrink-0">
           <CheckCircle2 size={12} className="text-[#4ade80]" />
         </span>
         <span className="text-[10.5px] font-medium text-white/85">Order confirmed</span>
       </FloatingChip>
 
-      <FloatingChip className="-right-2 top-2 hidden sm:flex">
+      <FloatingChip className="-end-2 top-2 hidden sm:flex">
         <div className="flex items-center gap-[2px]">
           {Array.from({ length: 5 }).map((_, i) => <Star key={i} size={9} className="text-brand-orange fill-brand-orange" />)}
         </div>
@@ -87,7 +87,7 @@ export function DashboardMockup() {
   const bars = [40, 65, 48, 80, 58, 92, 70];
   return (
     <div className="relative w-full max-w-[300px] mx-auto py-[clamp(6px,2vh,24px)]">
-      <GlowOrb className="w-40 h-40 bg-info/25 -top-4 -left-6" />
+      <GlowOrb className="w-40 h-40 bg-info/25 -top-4 -start-6" />
       <GlassPanel className="relative p-4 auth-float">
         <div className="flex items-center justify-between mb-3">
           <span className="text-[11.5px] font-semibold text-white">Store revenue</span>
@@ -103,7 +103,7 @@ export function DashboardMockup() {
         </div>
       </GlassPanel>
 
-      <FloatingChip className="-right-3 -bottom-4 auth-float-slow hidden sm:flex">
+      <FloatingChip className="-end-3 -bottom-4 auth-float-slow hidden sm:flex">
         <span className="w-6 h-6 rounded-full bg-brand-orange/25 flex items-center justify-center shrink-0">
           <TrendingUp size={12} className="text-brand-orange" />
         </span>
@@ -123,7 +123,7 @@ export function SecurityMockup() {
       <div className="relative size-20 rounded-[22px] bg-white/[0.08] backdrop-blur-md border border-white/25 flex items-center justify-center auth-float">
         <ShieldCheck size={34} className="text-brand-orange" />
       </div>
-      <FloatingChip className="right-2 bottom-4 hidden sm:flex">
+      <FloatingChip className="end-2 bottom-4 hidden sm:flex">
         <Mail size={12} className="text-white/70" />
         <span className="text-[10.5px] font-medium text-white/85">Reset code sent</span>
       </FloatingChip>
@@ -135,7 +135,7 @@ export function SecurityMockup() {
 export function PasswordSecurityMockup() {
   return (
     <div className="relative w-full max-w-[260px] mx-auto py-[clamp(6px,2vh,24px)]">
-      <GlowOrb className="w-40 h-40 bg-success/25 -top-2 -right-2" />
+      <GlowOrb className="w-40 h-40 bg-success/25 -top-2 -end-2" />
       <GlassPanel className="relative p-4 auth-float">
         <div className="flex items-center gap-2.5 mb-4">
           <div className="size-8 rounded-lg bg-white/10 border border-white/15 flex items-center justify-center">
@@ -183,7 +183,7 @@ export function InboxMockup() {
           <p className="text-[20px] font-bold tracking-[0.3em] text-white">8 4 2 1 9 6</p>
         </div>
       </GlassPanel>
-      <FloatingChip className="-right-2 -bottom-3 hidden sm:flex">
+      <FloatingChip className="-end-2 -bottom-3 hidden sm:flex">
         <CheckCircle2 size={12} className="text-[#4ade80]" />
         <span className="text-[10.5px] font-medium text-white/85">Delivered instantly</span>
       </FloatingChip>
@@ -200,7 +200,7 @@ export function IdentityMockup() {
       <div className="relative size-20 rounded-[22px] bg-white/[0.08] backdrop-blur-md border border-white/25 flex items-center justify-center auth-float">
         <Fingerprint size={34} className="text-brand-orange" />
       </div>
-      <FloatingChip className="left-1 top-3 hidden sm:flex">
+      <FloatingChip className="start-1 top-3 hidden sm:flex">
         <ShieldCheck size={12} className="text-[#4ade80]" />
         <span className="text-[10.5px] font-medium text-white/85">Confirm it's you</span>
       </FloatingChip>
@@ -213,7 +213,7 @@ export function SellerDashboardMockup() {
   const bars = [35, 55, 42, 70, 50, 85, 62, 78];
   return (
     <div className="relative w-full max-w-[300px] mx-auto py-[clamp(4px,1.4vh,16px)]">
-      <GlowOrb className="w-40 h-40 bg-brand-orange/25 -top-6 -left-4" />
+      <GlowOrb className="w-40 h-40 bg-brand-orange/25 -top-6 -start-4" />
       <GlassPanel className="relative p-4 auth-float">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
@@ -243,7 +243,7 @@ export function SellerDashboardMockup() {
         </div>
       </GlassPanel>
 
-      <FloatingChip className="-right-3 -bottom-3 auth-float-slow hidden sm:flex">
+      <FloatingChip className="-end-3 -bottom-3 auth-float-slow hidden sm:flex">
         <Sparkle />
         <span className="text-[10.5px] font-medium text-white/85">Tools activated</span>
       </FloatingChip>
@@ -255,7 +255,7 @@ export function SellerDashboardMockup() {
 export function AdminControlMockup() {
   return (
     <div className="relative w-full max-w-[280px] mx-auto py-[clamp(6px,2vh,24px)]">
-      <GlowOrb className="w-40 h-40 bg-error/25 -top-4 -right-4" />
+      <GlowOrb className="w-40 h-40 bg-error/25 -top-4 -end-4" />
       <GlassPanel className="relative p-4 auth-float">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
@@ -282,7 +282,7 @@ export function AdminControlMockup() {
         </div>
       </GlassPanel>
 
-      <FloatingChip className="-left-2 -bottom-4 auth-float-slow hidden sm:flex">
+      <FloatingChip className="-start-2 -bottom-4 auth-float-slow hidden sm:flex">
         <Fingerprint size={12} className="text-white/70" />
         <span className="text-[10.5px] font-medium text-white/85">Restricted access</span>
       </FloatingChip>

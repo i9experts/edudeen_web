@@ -130,7 +130,7 @@ export function CommandPalette({ items, open, onClose }: CommandPaletteProps) {
                     onMouseEnter={() => setHighlighted(flatIndex)}
                     onClick={() => runItem(item)}
                     className={clsx(
-                      'w-full flex items-center gap-[10px] px-4 py-[9px] text-left border-none cursor-pointer transition-colors duration-100',
+                      'w-full flex items-center gap-[10px] px-4 py-[9px] text-start border-none cursor-pointer transition-colors duration-100',
                       isHighlighted ? 'bg-brand-pale-orange' : 'bg-transparent hover:bg-cream',
                     )}
                   >

@@ -148,8 +148,8 @@ export function SeoMetaForm({ value, onChange, previewUrl, disabled, loading, cl
       </button>
 
       {advancedOpen && (
-        <div className="flex flex-col gap-4 pl-1 border-l-2 border-bone ml-1">
-          <div className="pl-3">
+        <div className="flex flex-col gap-4 ps-1 border-s-2 border-bone ms-1">
+          <div className="ps-3">
             <label className="text-xs font-medium text-graphite mb-[5px] block">OG Title</label>
             <Input
               value={value.ogTitle ?? ''}
@@ -158,7 +158,7 @@ export function SeoMetaForm({ value, onChange, previewUrl, disabled, loading, cl
               placeholder="Falls back to Meta Title if left blank"
             />
           </div>
-          <div className="pl-3">
+          <div className="ps-3">
             <label className="text-xs font-medium text-graphite mb-[5px] block">OG Description</label>
             <Textarea
               rows={2}
@@ -168,7 +168,7 @@ export function SeoMetaForm({ value, onChange, previewUrl, disabled, loading, cl
               placeholder="Falls back to Meta Description if left blank"
             />
           </div>
-          <div className="pl-3">
+          <div className="ps-3">
             <label className="text-xs font-medium text-graphite mb-[5px] block">Twitter Card Type</label>
             <Select
               value={value.twitterCard ?? 'summary_large_image'}

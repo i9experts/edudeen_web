@@ -15,8 +15,8 @@ export function InfoRow({ label, value, border = true, className }: InfoRowProps
       border && 'border-b border-bone last:border-b-0',
       className,
     )}>
-      <span className="text-[12px] text-slate shrink-0 mr-4 pt-px">{label}</span>
-      <span className="text-[13px] text-carbon text-right">{value ?? '—'}</span>
+      <span className="text-[12px] text-slate shrink-0 me-4 pt-px">{label}</span>
+      <span className="text-[13px] text-carbon text-end">{value ?? '—'}</span>
     </div>
   );
 }

@@ -80,14 +80,14 @@ function PasswordInput({ label, placeholder, value, onChange, onBlur, error }: {
         <input id={id} type={show ? 'text' : 'password'} placeholder={placeholder} value={value} autoComplete="new-password"
           onChange={e => onChange(e.target.value)} onBlur={onBlur}
           className={clsx(
-            'w-full px-3 pr-[42px] py-[10px] rounded-lg border text-[13px] text-charcoal outline-none bg-white',
+            'w-full px-3 pe-[42px] py-[10px] rounded-lg border text-[13px] text-charcoal outline-none bg-white',
             'transition-[border-color,box-shadow] duration-150 focus:ring-2',
             error ? 'border-error focus:ring-error/10' : 'border-bone focus:border-brand-orange focus:ring-brand-orange/10',
           )}
         />
         <button type="button" onClick={() => setShow(s => !s)}
           aria-label={show ? 'Hide password' : 'Show password'}
-          className="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer text-slate p-0 flex hover:text-charcoal transition-colors">
+          className="absolute end-3 top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer text-slate p-0 flex hover:text-charcoal transition-colors">
           {show ? <EyeOff size={16} /> : <Eye size={16} />}
         </button>
       </div>
@@ -146,8 +146,8 @@ export function NewPasswordPage() {
 
   return (
     <AuthSplitLayout heading="Almost there. Set a new password." subtext="Enter the code we emailed you and choose a new password to finish." highlights={HIGHLIGHTS} visual={<PasswordSecurityMockup />}>
-      <h1 className="text-[22px] font-bold text-carbon text-center lg:text-left mb-2">Reset your password</h1>
-      <p className="text-[13px] text-slate text-center lg:text-left mb-5 leading-[1.6]">
+      <h1 className="text-[22px] font-bold text-carbon text-center lg:text-start mb-2">Reset your password</h1>
+      <p className="text-[13px] text-slate text-center lg:text-start mb-5 leading-[1.6]">
         {userEmail ? <>Almost done, <strong className="text-carbon">{userEmail}</strong> — choose a new password to finish resetting your account.</> : 'Choose a new password to finish resetting your account.'}
       </p>
 
@@ -167,7 +167,7 @@ export function NewPasswordPage() {
         {values.confirmPassword && (
           <motion.p className={clsx('text-[11px] mt-[5px]', passwordsMatch ? 'text-success' : 'text-error')} {...fadeSlide}>
             {passwordsMatch
-              ? <><Check size={11} className="inline align-middle mr-[3px]" />Passwords match</>
+              ? <><Check size={11} className="inline align-middle me-[3px]" />Passwords match</>
               : <>✗ Passwords do not match</>}
           </motion.p>
         )}

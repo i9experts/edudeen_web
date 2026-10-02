@@ -1,3 +1,4 @@
+import { useT } from '@/contexts/languageCtx';
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
@@ -27,6 +28,7 @@ const CLOSE_DELAY_MS = 150;
 // re-checked on both the trigger and the portaled panel so moving between the
 // two never closes it) as well as on outside click/Escape.
 export function SignInPreview() {
+  const t = useT();
   const navigate = useNavigate();
   const ref = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -71,7 +73,7 @@ export function SignInPreview() {
   return (
     <div ref={ref} className="relative hidden md:block" onMouseEnter={openNow} onMouseLeave={scheduleClose}>
       <Button variant="primary" size="sm" onClick={() => navigate('/login')}>
-        Sign In
+        {t('Sign In')}
       </Button>
 
       {open && createPortal(
@@ -82,7 +84,7 @@ export function SignInPreview() {
           style={pos}
           className="dropdown-enter fixed z-[9999] w-[320px] max-w-[calc(100vw-2rem)]"
         >
-          <div className="absolute -top-[7px] w-3 h-3 bg-white border-t border-l border-bone rotate-45" style={{ left: pos.arrowLeft }} />
+          <div className="absolute -top-[7px] w-3 h-3 bg-white border-t border-s border-bone rotate-45" style={{ left: pos.arrowLeft }} />
           <div className="relative bg-white border border-bone rounded-[16px] overflow-hidden flex flex-col">
 
           {/* Header — avatar + welcome */}
@@ -97,7 +99,7 @@ export function SignInPreview() {
             <button
               onClick={() => setOpen(false)}
               aria-label="Close"
-              className="absolute right-3 top-3 w-6 h-6 rounded-md flex items-center justify-center bg-transparent border-none cursor-pointer text-slate hover:bg-white/70 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange"
+              className="absolute end-3 top-3 w-6 h-6 rounded-md flex items-center justify-center bg-transparent border-none cursor-pointer text-slate hover:bg-white/70 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange"
             >
               <X size={13} />
             </button>

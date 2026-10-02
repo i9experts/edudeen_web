@@ -45,12 +45,12 @@ export function AppOpenPrompt() {
         <button
           onClick={close}
           aria-label="Close"
-          className="absolute top-3 right-3 w-7 h-7 flex items-center justify-center rounded-full bg-cream text-slate border-0 cursor-pointer hover:bg-bone"
+          className="absolute top-3 end-3 w-7 h-7 flex items-center justify-center rounded-full bg-cream text-slate border-0 cursor-pointer hover:bg-bone"
         >
           <X size={14} />
         </button>
 
-        <div className="flex items-center gap-3 pr-8">
+        <div className="flex items-center gap-3 pe-8">
           <EdudeenIcon size={40} />
           <div className="min-w-0">
             <p className="text-[14px] font-bold text-carbon leading-tight">Continue in the Edudeen App</p>
@@ -95,8 +95,8 @@ export function AppOpenFab() {
       onClick={() => { window.location.href = PLAY_STORE_URL; }}
       aria-label="Open the Edudeen app"
       className={clsx(
-        'drawer-enter-right md:hidden fixed right-0 top-[34%] -translate-y-1/2 z-40',
-        'flex items-center gap-[4px] rounded-l-xl border border-r-0 border-bone py-[7px] px-[8px]',
+        'drawer-enter-right md:hidden fixed end-0 top-[34%] -translate-y-1/2 z-40',
+        'flex items-center gap-[4px] rounded-s-xl border border-e-0 border-bone py-[7px] px-[8px]',
         'bg-white text-brand-orange cursor-pointer',
         'transition-all duration-500 ease-out hover:px-[10px]',
       )}

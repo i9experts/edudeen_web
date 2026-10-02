@@ -131,7 +131,7 @@ export function DigitalFileDownloads({
         </ul>
       )}
 
-      {error && <p className={clsx('text-[10px] text-error leading-tight max-w-[220px]', align === 'end' && 'text-right')}>{error}</p>}
+      {error && <p className={clsx('text-[10px] text-error leading-tight max-w-[220px]', align === 'end' && 'text-end')}>{error}</p>}
     </div>
   );
 }

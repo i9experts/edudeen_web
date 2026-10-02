@@ -8,12 +8,14 @@ import { NotificationProvider } from '@/contexts/NotificationContext';
 import { CurrencyPreferenceProvider } from '@/contexts/CurrencyPreferenceContext';
 import { AuthGateProvider } from '@/contexts/AuthGateContext';
 import { ToastProvider } from '@/contexts/ToastContext';
+import { LanguageProvider } from '@/contexts/LanguageContext';
 import './index.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ToastProvider>
       <AuthGateProvider>
+        <LanguageProvider>
         <CurrencyPreferenceProvider>
           <CartProvider>
             <WishlistProvider>
@@ -23,6 +25,7 @@ createRoot(document.getElementById('root')!).render(
             </WishlistProvider>
           </CartProvider>
         </CurrencyPreferenceProvider>
+        </LanguageProvider>
       </AuthGateProvider>
     </ToastProvider>
   </StrictMode>,

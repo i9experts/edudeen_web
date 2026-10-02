@@ -60,7 +60,7 @@ export function PremiumCard({ children, className, interactive = true, tone = 'l
   // still a button semantically, same as `Card`'s own `onClick` path.
   if (onClick) {
     return (
-      <button type="button" onClick={onClick} {...sharedHandlers} style={sharedStyle} className={clsx(sharedClassName, 'cursor-pointer text-left w-full appearance-none')}>
+      <button type="button" onClick={onClick} {...sharedHandlers} style={sharedStyle} className={clsx(sharedClassName, 'cursor-pointer text-start w-full appearance-none')}>
         {children}
       </button>
     );

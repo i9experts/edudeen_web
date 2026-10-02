@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Users, Shield, Store, DollarSign, Bell, Settings, UserCog,
   PanelLeftClose, PanelLeftOpen, MessageSquare, Image as ImageIcon, HelpCircle, FolderTree, RefreshCw,
   BarChart3, Layers, Search, Sparkles, Tag, LogOut, MessageCircle, Landmark, Percent, Coins, UserPlus, Activity,
-  ChevronDown, TrendingUp, ChevronRight, Quote, CalendarCheck, Undo2, Truck,
+  ChevronDown, TrendingUp, ChevronRight, Quote, CalendarCheck, Undo2, Truck, ShoppingBag, BookMarked,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useGetProfile } from '@/hooks/auth/useGetProfile';
@@ -17,6 +17,7 @@ import { Modal, Button, CopyIconButton } from '@/components/comman/ui';
 import { EdudeenLogo, EdudeenIcon } from '@/components/comman/ui/EdudeenLogo';
 import { PlatformTopBar } from '@/components/comman/ui/PlatformTopBar';
 import { useLockPageScroll } from '@/hooks/useLockPageScroll';
+import { apiGetListingReviewCount } from '@/api/services/marketplace/adminMarketplace';
 
 interface AdminNavItem {
   id:    string;
@@ -34,12 +35,14 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { id: 'activity-log',  Icon: Activity,        label: 'Activity Log',    path: '/admin/activity-log'  },
   { id: 'messages',      Icon: MessageSquare,   label: 'Messaging',       path: '/admin/messages'      },
   { id: 'leads',         Icon: UserPlus,        label: 'Seller Applications', path: '/admin/leads'     },
+  { id: 'orders',        Icon: ShoppingBag,     label: 'Orders',          path: '/admin/orders'        },
   { id: 'refunds',       Icon: Undo2,           label: 'Refunds',         path: '/admin/refunds'       },
   { id: 'shipping-zones',Icon: Truck,           label: 'Shipping Zones',  path: '/admin/shipping-zones' },
   { id: 'marketplace',   Icon: Store,           label: 'Listings',        path: '/admin/marketplace'   },
   { id: 'categories',    Icon: FolderTree,      label: 'Categories',      path: '/admin/categories'    },
   { id: 'subscriptions', Icon: RefreshCw,       label: 'Subscriptions',   path: '/admin/subscriptions' },
   { id: 'marketing',     Icon: Tag,             label: 'Marketing',       path: '/admin/marketing'     },
+  { id: 'picks',         Icon: BookMarked,      label: 'Edudeen Picks',   path: '/admin/picks'         },
   { id: 'platform-plans',Icon: Layers,          label: 'Platform Plans',  path: '/admin/platform-plans' },
   { id: 'finance',       Icon: DollarSign,      label: 'Finance',         path: '/admin/finance'       },
   { id: 'monthly-payouts', Icon: CalendarCheck, label: 'Monthly Payouts', path: '/admin/finance?tab=monthly-payouts' },
@@ -74,9 +77,9 @@ interface AdminModule {
 // nothing to expand for a "section" that's really just one page.
 export const ADMIN_MODULES: AdminModule[] = [
   { id: 'overview',  label: 'Overview',             Icon: LayoutDashboard, ids: ['overview'] },
-  { id: 'commerce',  label: 'Commerce',             Icon: Store,           ids: ['marketplace', 'categories', 'refunds', 'subscriptions', 'platform-plans'] },
+  { id: 'commerce',  label: 'Commerce',             Icon: Store,           ids: ['orders', 'marketplace', 'categories', 'refunds', 'shipping-zones', 'subscriptions', 'platform-plans'] },
   { id: 'people',    label: 'Users & Communication', Icon: Users,          ids: ['users', 'leads', 'moderation', 'messages', 'contact'] },
-  { id: 'growth',    label: 'Growth',                Icon: TrendingUp,     ids: ['marketing', 'seo', 'ai-studio'] },
+  { id: 'growth',    label: 'Growth',                Icon: TrendingUp,     ids: ['marketing', 'picks', 'seo', 'ai-studio'] },
   { id: 'finance',   label: 'Finance',               Icon: DollarSign,     ids: ['finance', 'monthly-payouts', 'manual-payments', 'commission-rules', 'fx-settings'] },
   { id: 'content',   label: 'Content',               Icon: ImageIcon,      ids: ['banners', 'faqs', 'testimonials', 'announcements'] },
   { id: 'analytics', label: 'Analytics',             Icon: BarChart3,       ids: ['analytics'] },
@@ -236,6 +239,14 @@ function AdminSidebar({ open, onToggle }: AdminSidebarProps) {
   // by default; re-synced on every route change, but a manual
   // expand/collapse while staying on the same page is left alone.
   const [expandedModuleId, setExpandedModuleId] = useState<string | null>(() => moduleForPath(pathname, search));
+  // New listings waiting for approval — shown as a badge on Listings.
+  const [pendingListings, setPendingListings] = useState(0);
+  useEffect(() => {
+    let alive = true;
+    apiGetListingReviewCount().then(r => { if (alive) setPendingListings(r.data?.pending ?? 0); }).catch(() => {});
+    return () => { alive = false; };
+  }, [pathname]);
+  const badgeFor = (id: string) => (id === 'marketplace' ? pendingListings : 0);
   useEffect(() => { setExpandedModuleId(moduleForPath(pathname, search)); }, [pathname, search]);
 
   const handleLogout = async () => {
@@ -416,11 +427,12 @@ function AdminSidebar({ open, onToggle }: AdminSidebarProps) {
                   <div id={groupId} role="group" aria-label={module.label} className="mt-0.5 mb-1 ml-[18px] pl-[10px] border-l-2 border-[#cdd9e2] flex flex-col gap-0.5">
                     {children.map(item => {
                       const active = isActive(item.path);
+                      const badge = badgeFor(item.id);
                       return (
                         <button
                           key={item.id}
                           type="button"
-                          onClick={() => goTo(item.path)}
+                          onClick={() => goTo(badge ? `${item.path}?status=pending_review` : item.path)}
                           aria-current={active ? 'page' : undefined}
                           className={clsx(
                             'w-full flex items-center gap-[8px] py-[8px] px-[9px] rounded-lg border-none text-left',
@@ -433,6 +445,11 @@ function AdminSidebar({ open, onToggle }: AdminSidebarProps) {
                           <span className={clsx('text-[13px] flex-1 truncate', active ? 'font-semibold' : 'font-medium')}>
                             {item.label}
                           </span>
+                          {badge > 0 && (
+                            <span aria-label={`${badge} waiting for review`} className={clsx('text-[10px] font-bold px-[6px] py-[1px] rounded-full leading-[14px] shrink-0', active ? 'bg-white text-brand-orange' : 'bg-info text-white')}>
+                              {badge > 99 ? '99+' : badge}
+                            </span>
+                          )}
                         </button>
                       );
                     })}

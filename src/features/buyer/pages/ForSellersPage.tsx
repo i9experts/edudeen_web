@@ -71,8 +71,8 @@ export function ForSellersPage() {
         className="px-4 md:px-8 lg:px-12 pt-12 md:pt-20 pb-10 md:pb-16 relative overflow-hidden"
         style={{ background: 'linear-gradient(135deg, #141413 0%, #2C2A28 100%)' }}
       >
-        <div className="absolute rounded-full w-[400px] h-[400px] bg-brand-orange opacity-[0.08] -top-[80px] -right-[80px]" />
-        <div className="absolute rounded-full w-[300px] h-[300px] bg-brand-deep-orange opacity-[0.06] -bottom-[60px] left-[40%]" />
+        <div className="absolute rounded-full w-[400px] h-[400px] bg-brand-orange opacity-[0.08] -top-[80px] -end-[80px]" />
+        <div className="absolute rounded-full w-[300px] h-[300px] bg-brand-deep-orange opacity-[0.06] -bottom-[60px] start-[40%]" />
 
         <div className="max-w-[760px] mx-auto text-center relative z-[1]">
           <Reveal delay={0}>
@@ -102,7 +102,7 @@ export function ForSellersPage() {
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <MagneticButton>
                 <Button size="lg" onClick={sellEntry.go} loading={sellEntry.loading}>
-                  Start for Free <ArrowRight size={14} className="inline align-middle ml-1" />
+                  Start for Free <ArrowRight size={14} className="inline align-middle ms-1" />
                 </Button>
               </MagneticButton>
               <button
@@ -132,7 +132,7 @@ export function ForSellersPage() {
                     ? (window.location.href = 'mailto:support@edudeen.com?subject=Institutional%20Account%20Inquiry')
                     : sellEntry.go()}
                 >
-                  {s.cta} <ArrowRight size={14} className="inline align-middle ml-1" />
+                  {s.cta} <ArrowRight size={14} className="inline align-middle ms-1" />
                 </Button>
               </PremiumCard>
             ))}
@@ -188,7 +188,7 @@ export function ForSellersPage() {
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <MagneticButton>
               <Button size="lg" onClick={sellEntry.go} loading={sellEntry.loading}>
-                Create Free Account <ArrowRight size={14} className="inline align-middle ml-1" />
+                Create Free Account <ArrowRight size={14} className="inline align-middle ms-1" />
               </Button>
             </MagneticButton>
             <button

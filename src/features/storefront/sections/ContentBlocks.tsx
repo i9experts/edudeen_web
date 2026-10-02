@@ -24,18 +24,18 @@ export function ContentBlocks({ blocks }: { blocks: ContentBlock[] }) {
             return <img key={i} src={block.settings.imageUrl} alt={block.settings.alt ?? ''} className="max-w-full rounded-lg" />;
           case 'quote':
             return (
-              <blockquote key={i} className="border-l-4 pl-4 italic text-[15px]" style={{ borderColor: cfg.primaryColor, color: cfg.textColor }}>
+              <blockquote key={i} className="border-s-4 ps-4 italic text-[15px]" style={{ borderColor: cfg.primaryColor, color: cfg.textColor }}>
                 “{block.settings.text}”
                 {block.settings.author && <footer className="not-italic text-[12px] mt-1 opacity-70">— {block.settings.author}</footer>}
               </blockquote>
             );
           case 'list':
             return block.settings.style === 'numbered' ? (
-              <ol key={i} className="list-decimal pl-5 flex flex-col gap-1 text-[14px]" style={{ color: cfg.textColor }}>
+              <ol key={i} className="list-decimal ps-5 flex flex-col gap-1 text-[14px]" style={{ color: cfg.textColor }}>
                 {(block.settings.items ?? []).map((item: string, j: number) => <li key={j}>{item}</li>)}
               </ol>
             ) : (
-              <ul key={i} className="list-disc pl-5 flex flex-col gap-1 text-[14px]" style={{ color: cfg.textColor }}>
+              <ul key={i} className="list-disc ps-5 flex flex-col gap-1 text-[14px]" style={{ color: cfg.textColor }}>
                 {(block.settings.items ?? []).map((item: string, j: number) => <li key={j}>{item}</li>)}
               </ul>
             );

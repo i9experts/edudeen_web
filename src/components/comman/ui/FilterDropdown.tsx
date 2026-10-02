@@ -20,14 +20,14 @@ export function FilterDropdown({ options, value, onChange, placeholder, classNam
       <select
         value={value}
         onChange={e => onChange(e.target.value)}
-        className="appearance-none bg-white border border-bone rounded-lg text-[13px] text-carbon pl-3 pr-7 py-[7px] outline-none cursor-pointer hover:bg-cream transition-colors"
+        className="appearance-none bg-white border border-bone rounded-lg text-[13px] text-carbon ps-3 pe-7 py-[7px] outline-none cursor-pointer hover:bg-cream transition-colors"
       >
         {placeholder && <option value="">{placeholder}</option>}
         {options.map(o => (
           <option key={o.value} value={o.value}>{o.label}</option>
         ))}
       </select>
-      <ChevronDown size={13} className="absolute right-2 pointer-events-none text-slate" />
+      <ChevronDown size={13} className="absolute end-2 pointer-events-none text-slate" />
     </div>
   );
 }

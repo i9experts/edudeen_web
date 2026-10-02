@@ -40,7 +40,7 @@ export function ChatListItem({
       onClick={onClick}
       aria-current={active ? 'true' : undefined}
       className={clsx(
-        'group w-full flex items-center gap-[11px] px-[14px] py-[10px] text-left cursor-pointer border-none transition-colors duration-150 outline-none',
+        'group w-full flex items-center gap-[11px] px-[14px] py-[10px] text-start cursor-pointer border-none transition-colors duration-150 outline-none',
         'focus-visible:ring-2 focus-visible:ring-brand-orange/40 focus-visible:ring-inset',
         active ? 'bg-brand-pale-orange' : 'bg-transparent hover:bg-cream',
       )}

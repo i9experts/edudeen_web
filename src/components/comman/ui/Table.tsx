@@ -59,7 +59,7 @@ interface TableProps<T = Record<string, unknown>> {
 }
 
 const TH =
-  'text-left text-[12px] font-medium text-slate uppercase tracking-[0.04em] ' +
+  'text-start text-[12px] font-medium text-slate uppercase tracking-[0.04em] ' +
   'px-5 py-[14px] whitespace-nowrap';
 
 export function Table<T = Record<string, unknown>>({
@@ -108,7 +108,7 @@ export function Table<T = Record<string, unknown>>({
       {selectable && keys.size > 0 && bulkActions && (
         <div className="px-5 py-2.5 border-b border-bone bg-brand-pale-orange/40 flex items-center gap-3">
           <span className="text-[12px] font-medium text-charcoal">{keys.size} selected</span>
-          <div className="flex items-center gap-2 ml-auto">
+          <div className="flex items-center gap-2 ms-auto">
             {bulkActions(keys)}
           </div>
         </div>
@@ -147,7 +147,7 @@ export function Table<T = Record<string, unknown>>({
                     return (
                       <th
                         key={col.key}
-                        className={clsx(TH, col.align === 'right' && 'text-right', col.align === 'center' && 'text-center')}
+                        className={clsx(TH, col.align === 'right' && 'text-end', col.align === 'center' && 'text-center')}
                         style={col.width ? { width: col.width } : undefined}
                         aria-sort={col.sortable ? ariaSort : undefined}
                       >
@@ -218,7 +218,7 @@ export function Table<T = Record<string, unknown>>({
                           key={col.key}
                           className={clsx(
                             'px-5 py-[14px] text-carbon',
-                            col.align === 'right'  && 'text-right',
+                            col.align === 'right'  && 'text-end',
                             col.align === 'center' && 'text-center',
                           )}
                         >
@@ -256,7 +256,7 @@ export function Table<T = Record<string, unknown>>({
                     {labeledColumns.map(col => (
                       <div key={col.key} className="flex items-start justify-between gap-3">
                         <span className="text-[10.5px] font-semibold text-slate uppercase tracking-[0.05em] shrink-0 pt-[1px]">{col.header}</span>
-                        <span className="text-[13px] text-carbon text-right min-w-0">
+                        <span className="text-[13px] text-carbon text-end min-w-0">
                           {col.render ? col.render(row, i) : String((row as Record<string, unknown>)[col.key] ?? '')}
                         </span>
                       </div>

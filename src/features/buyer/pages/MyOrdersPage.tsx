@@ -122,9 +122,9 @@ function OrderTimeline({ status }: { status: OrderStatus }) {
 
   return (
     <div className="relative flex items-start justify-between pt-1">
-      <div className="absolute top-[13px] left-[13px] right-[13px] h-[2px] bg-bone rounded-full" />
+      <div className="absolute top-[13px] start-[13px] end-[13px] h-[2px] bg-bone rounded-full" />
       <div
-        className="absolute top-[13px] left-[13px] h-[2px] bg-success rounded-full transition-all duration-500"
+        className="absolute top-[13px] start-[13px] h-[2px] bg-success rounded-full transition-all duration-500"
         style={{ width: `${(activeIdx / (TIMELINE.length - 1)) * 100}%` }}
       />
       {TIMELINE.map(({ icon: Icon, label }, i) => {
@@ -274,7 +274,7 @@ function OrderCard({ order, onChanged }: { order: OrderSummary; onChanged: () =>
       {/* Header — click to expand */}
       <button
         onClick={() => setExpanded(v => !v)}
-        className="w-full text-left px-4 md:px-5 py-4 flex items-center gap-3 flex-wrap cursor-pointer bg-transparent border-none"
+        className="w-full text-start px-4 md:px-5 py-4 flex items-center gap-3 flex-wrap cursor-pointer bg-transparent border-none"
       >
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-[4px]">
@@ -296,7 +296,7 @@ function OrderCard({ order, onChanged }: { order: OrderSummary; onChanged: () =>
         </div>
 
         <div className="flex items-center gap-3 shrink-0">
-          <div className="text-right">
+          <div className="text-end">
             <p className="text-[10px] text-slate mb-[1px]">Total</p>
             <p className="text-[14px] font-bold text-carbon">{currencySymbol(order.currency)} {order.totalAmount.toLocaleString()}</p>
           </div>
@@ -403,8 +403,13 @@ function OrderCard({ order, onChanged }: { order: OrderSummary; onChanged: () =>
           </div>
 
           {/* Actions */}
-          {(canCancel || canReturn) && (
-            <div className="px-4 md:px-5 py-3 border-t border-bone flex items-center gap-2 justify-end">
+          <div className="px-4 md:px-5 py-3 border-t border-bone flex items-center gap-2 justify-end flex-wrap">
+              <Link
+                to={`/account/orders/${order.orderId}`}
+                className="me-auto flex items-center gap-[6px] px-3 py-[7px] rounded-[8px] text-[12px] font-semibold border border-bone bg-white text-charcoal no-underline"
+              >
+                Order details &amp; invoice
+              </Link>
               {canReturn && (
                 <button
                   onClick={() => setModal('return')}
@@ -421,8 +426,7 @@ function OrderCard({ order, onChanged }: { order: OrderSummary; onChanged: () =>
                   <Ban size={12} /> Cancel Order
                 </button>
               )}
-            </div>
-          )}
+          </div>
         </div>
       )}
 

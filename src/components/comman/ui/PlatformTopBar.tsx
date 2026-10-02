@@ -3,6 +3,7 @@ import { clsx } from 'clsx';
 import { Tag, Shield } from 'lucide-react';
 import { TokenStorage } from '@/api/services/auth';
 import { CurrencySelector } from './BuyerNavbar';
+import { LanguageToggle } from './LanguageToggle';
 import { ProfileAvatar } from './ProfileAvatar';
 import { TopBarDealsTicker } from './TopBarDealsTicker';
 import { useTopBarDeals } from '@/hooks/useTopBarDeals';
@@ -101,6 +102,7 @@ export function PlatformTopBar({ variant = 'shop', store, showAccount = false, c
             {/* Left: live admin sales + top marketplace flash deals. */}
             <TopBarDealsTicker />
             <CurrencySelector tone="dark" />
+            <LanguageToggle tone="dark" />
             {action && (
               <>
                 {/* On a phone the sales ticker gets the room; this link stays in the footer. */}

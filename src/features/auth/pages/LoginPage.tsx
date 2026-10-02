@@ -171,10 +171,10 @@ export function LoginPage() {
       highlights={HIGHLIGHTS}
       visual={<MarketplaceMockup />}
     >
-      <h1 className="text-[20px] font-bold text-carbon mb-1 text-center lg:text-left">
+      <h1 className="text-[20px] font-bold text-carbon mb-1 text-center lg:text-start">
         <span className="text-brand-orange">Sign in</span> to Edudeen
       </h1>
-      <p className="text-[12.5px] text-slate mb-1 text-center lg:text-left">
+      <p className="text-[12.5px] text-slate mb-1 text-center lg:text-start">
         {showChooser && !onPasswordStep ? 'Choose an account to continue' : 'Enter your details to continue'}
       </p>
 
@@ -186,7 +186,7 @@ export function LoginPage() {
             <button
               type="button"
               onClick={backToPicker}
-              className="w-full flex items-center gap-3 p-3 rounded-xl border border-bone bg-cream mb-3 text-left cursor-pointer hover:border-slate/40 transition-colors"
+              className="w-full flex items-center gap-3 p-3 rounded-xl border border-bone bg-cream mb-3 text-start cursor-pointer hover:border-slate/40 transition-colors"
             >
               <ArrowLeft size={14} className="text-slate shrink-0" />
               <Avatar name={remembered!.name} size={36} />
@@ -203,7 +203,7 @@ export function LoginPage() {
             <button
               type="button"
               onClick={selectAccount}
-              className="w-full flex items-center gap-3 p-3 rounded-xl border border-bone bg-white cursor-pointer text-left hover:border-brand-orange hover:bg-brand-pale-orange/20 transition-colors mb-3"
+              className="w-full flex items-center gap-3 p-3 rounded-xl border border-bone bg-white cursor-pointer text-start hover:border-brand-orange hover:bg-brand-pale-orange/20 transition-colors mb-3"
             >
               <Avatar name={remembered!.name} size={40} />
               <div className="min-w-0 flex-1">
@@ -226,7 +226,7 @@ export function LoginPage() {
       ) : (
         <>
           {!SELLER_ONLY_LOGIN && (
-            <p className="text-center lg:text-left mb-2.5 lg:mb-4">
+            <p className="text-center lg:text-start mb-2.5 lg:mb-4">
               <span className="text-[11.5px] text-slate">
                 Signing in as a <strong className="text-charcoal">{roleLabel(role)}</strong> —{' '}
               </span>

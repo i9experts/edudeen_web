@@ -50,10 +50,10 @@ export function ForgotPasswordPage() {
         <Mail size={19} className="text-brand-orange" />
       </div>
 
-      <h1 className="text-[22px] font-bold text-carbon mb-1.5 text-center lg:text-left">
+      <h1 className="text-[22px] font-bold text-carbon mb-1.5 text-center lg:text-start">
         Forgot your password?
       </h1>
-      <p className="text-[13px] text-slate mb-6 leading-[1.6] text-center lg:text-left">
+      <p className="text-[13px] text-slate mb-6 leading-[1.6] text-center lg:text-start">
         Enter your email and we'll send you a reset code.
       </p>
 

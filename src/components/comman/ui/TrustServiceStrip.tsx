@@ -51,7 +51,7 @@ export function TrustServiceStrip({ variant = 'light', items = DEFAULT_ITEMS }: 
           card && 'lg:divide-x lg:divide-[#DCEFE3]',
         )}>
           {items.map(({ Icon, label, sub, accent }) => (
-            <div key={label} className={clsx('flex items-center gap-[10px] justify-center sm:justify-start', !dark && 'lg:pl-4 lg:first:pl-0')}>
+            <div key={label} className={clsx('flex items-center gap-[10px] justify-center sm:justify-start', !dark && 'lg:ps-4 lg:first:ps-0')}>
               <span
                 className={clsx(
                   'flex size-9 items-center justify-center rounded-full border shrink-0',

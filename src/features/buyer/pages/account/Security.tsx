@@ -19,13 +19,13 @@ function PasswordField({ label, value, onChange }: { label: string; value: strin
           type={show ? 'text' : 'password'}
           value={value}
           onChange={e => onChange(e.target.value)}
-          className={clsx(INPUT_CLS, 'pr-10')}
+          className={clsx(INPUT_CLS, 'pe-10')}
         />
         <button
           type="button"
           onClick={() => setShow(s => !s)}
           aria-label={show ? 'Hide password' : 'Show password'}
-          className="absolute right-[12px] top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer text-slate p-0 flex hover:text-charcoal transition-colors"
+          className="absolute end-[12px] top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer text-slate p-0 flex hover:text-charcoal transition-colors"
         >
           {show ? <EyeOff size={15} /> : <Eye size={15} />}
         </button>
@@ -80,7 +80,7 @@ export function Security() {
           </div>
           {!loading && (
             <Badge color={profile?.isVerified ? 'green' : 'gray'} size="sm">
-              {profile?.isVerified ? (<><Check size={9} className="mr-[2px]" /> Verified</>) : 'Unverified'}
+              {profile?.isVerified ? (<><Check size={9} className="me-[2px]" /> Verified</>) : 'Unverified'}
             </Badge>
           )}
         </div>

@@ -49,7 +49,7 @@ export function Cursor() {
   return (
     <motion.div
       aria-hidden
-      className="pointer-events-none fixed top-0 left-0 z-[90] hidden md:block"
+      className="pointer-events-none fixed top-0 start-0 z-[90] hidden md:block"
       style={{ x: springX, y: springY }}
     >
       <motion.div

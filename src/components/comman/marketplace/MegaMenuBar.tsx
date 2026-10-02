@@ -1,9 +1,10 @@
+import { useT } from '@/contexts/languageCtx';
 import { useState, useEffect, useRef, type ReactNode, type CSSProperties } from 'react';
 import { clsx } from 'clsx';
 import { TokenStorage } from '@/api/services/auth';
 import { ProductImage } from '@/components/comman/marketplace/ProductCard';
 import {
-  Star, ChevronRight, ShieldCheck, BadgeCheck, ChevronDown, Tag, Store, Sparkles, Flame,
+  Star, ChevronRight, ShieldCheck, BadgeCheck, ChevronDown, Tag, Store, Sparkles, Flame, GraduationCap,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { MarketplaceProduct } from '@/api/services/marketplace';
@@ -39,14 +40,14 @@ export function RailCard({ product, onClick, badge, rank, size = 'md', stockLabe
     <button
       onClick={() => onClick(product.slug)}
       className={clsx(
-        'relative shrink-0 text-left bg-white rounded-[14px] border border-bone overflow-hidden cursor-pointer group transition-all duration-200 hover:-translate-y-[3px] hover:border-brand-orange/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange',
+        'relative shrink-0 text-start bg-white rounded-[14px] border border-bone overflow-hidden cursor-pointer group transition-all duration-200 hover:-translate-y-[3px] hover:border-brand-orange/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange',
         isSm ? 'w-[92px] sm:w-[104px]' : 'w-[112px] sm:w-[126px]',
       )}
     >
       {/* Hover accent — same sweep-in top line used on TopStoreCard/Feature cards,
          so this rail card finally reads as the same design system, not a
          separate/older component. */}
-      <div className="absolute top-0 left-0 right-0 h-[3px] z-[1] bg-gradient-to-r from-brand-orange to-[#66AD36] scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300" />
+      <div className="absolute top-0 start-0 end-0 h-[3px] z-[1] bg-gradient-to-r from-brand-orange to-[#66AD36] scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300" />
 
       <div className="relative">
         <ProductImage
@@ -54,9 +55,9 @@ export function RailCard({ product, onClick, badge, rank, size = 'md', stockLabe
           name={product.name}
           className={clsx('transition-transform duration-500 ease-out group-hover:scale-[1.06]', isSm ? 'h-[74px] sm:h-[80px]' : 'h-[92px] sm:h-[100px]')}
         />
-        {badge && <div className="absolute top-[5px] left-[5px]">{badge}</div>}
+        {badge && <div className="absolute top-[5px] start-[5px]">{badge}</div>}
         {rank != null && (
-          <span className="absolute bottom-[5px] left-[5px] w-[18px] h-[18px] rounded-full bg-carbon/85 backdrop-blur-sm text-white text-[10px] font-bold flex items-center justify-center">
+          <span className="absolute bottom-[5px] start-[5px] w-[18px] h-[18px] rounded-full bg-carbon/85 backdrop-blur-sm text-white text-[10px] font-bold flex items-center justify-center">
             {rank}
           </span>
         )}
@@ -167,9 +168,9 @@ export function CategoriesMegaContent({
   return (
     <div className="flex flex-col lg:flex-row gap-5 lg:gap-8">
       {/* Column 1 — category links */}
-      <div className={clsx('w-full lg:w-[220px] shrink-0 flex flex-col border-b lg:border-b-0 lg:border-r border-bone pb-4 lg:pb-0 pr-0 lg:pr-6', colHeightCls)} style={colVars}>
+      <div className={clsx('w-full lg:w-[220px] shrink-0 flex flex-col border-b lg:border-b-0 lg:border-e border-bone pb-4 lg:pb-0 pe-0 lg:pe-6', colHeightCls)} style={colVars}>
         <MegaSectionLabel>Categories</MegaSectionLabel>
-        <div className={clsx('flex flex-col gap-[2px] pr-1 -mr-1', colInnerCls)}>
+        <div className={clsx('flex flex-col gap-[2px] pe-1 -me-1', colInnerCls)}>
           {categories.map(cat => (
             <button
               key={cat._id}
@@ -177,7 +178,7 @@ export function CategoriesMegaContent({
               onFocus={() => setActiveId(cat._id)}
               onClick={() => onShopCategory(cat._id)}
               className={clsx(
-                'w-full flex items-center gap-[10px] px-[10px] py-[9px] rounded-lg text-left bg-transparent border-none cursor-pointer transition-colors duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange',
+                'w-full flex items-center gap-[10px] px-[10px] py-[9px] rounded-lg text-start bg-transparent border-none cursor-pointer transition-colors duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange',
                 activeId === cat._id ? 'bg-brand-pale-orange text-brand-orange' : 'text-charcoal hover:bg-cream',
               )}
             >
@@ -190,9 +191,9 @@ export function CategoriesMegaContent({
       </div>
 
       {/* Column 2 — subcategory rail/grid + trending searches */}
-      <div className={clsx('w-full lg:flex-1 lg:min-w-0 flex flex-col border-b lg:border-b-0 lg:border-r border-bone pb-4 lg:pb-0 pr-0 lg:pr-8', colHeightCls)} style={colVars}>
+      <div className={clsx('w-full lg:flex-1 lg:min-w-0 flex flex-col border-b lg:border-b-0 lg:border-e border-bone pb-4 lg:pb-0 pe-0 lg:pe-8', colHeightCls)} style={colVars}>
         <MegaSectionLabel>Subcategories</MegaSectionLabel>
-        <div className={clsx('pr-1 -mr-1', colInnerCls)}>
+        <div className={clsx('pe-1 -me-1', colInnerCls)}>
         {active && active.children.length > 0 ? (
           // Mobile: one horizontally swipeable icon rail — the same
           // "browse by subcategory" pattern every shopping app uses —
@@ -242,7 +243,7 @@ export function FlashSaleMegaContent({ flashDeals, countdown, onProductClick }: 
       <div className="relative order-first lg:order-none w-full lg:w-[190px] shrink-0 overflow-hidden rounded-2xl border border-black/10 flex flex-row lg:flex-col items-center gap-3 lg:gap-0 p-3 lg:p-4 text-white">
         <div className="gradient-drift absolute inset-0 bg-gradient-to-br from-[#e11d48] via-[#d9375b] to-brand-deep-orange" />
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(255,255,255,0.2),transparent_55%)]" />
-        <div className="pointer-events-none absolute -bottom-8 -right-6 size-24 rounded-full bg-white/10 blur-2xl" />
+        <div className="pointer-events-none absolute -bottom-8 -end-6 size-24 rounded-full bg-white/10 blur-2xl" />
 
         <span className="relative z-[1] flex size-9 items-center justify-center rounded-full bg-white/15 shrink-0 lg:mb-2">
           <Flame size={17} className="text-white" />
@@ -403,7 +404,7 @@ function AboutMegaContent({ onNavigate }: { onNavigate: (path: string) => void }
           key={title}
           onClick={() => onNavigate(path)}
           style={{ animationDelay: `${i * 60}ms` }}
-          className="dash-section-enter group flex-1 min-w-[150px] shrink-0 text-left bg-transparent border-none p-0 cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange"
+          className="dash-section-enter group flex-1 min-w-[150px] shrink-0 text-start bg-transparent border-none p-0 cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange"
         >
           <div className="relative h-[92px] overflow-hidden rounded-lg mb-3">
             <img
@@ -512,6 +513,7 @@ export function MegaMenuBar({
    *  above the hero (Marketplace) rather than below it. */
   compact?: boolean;
 }) {
+  const t = useT();
   const [active, setActive] = useState<MegaMenuKey | null>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Switching straight from one open panel to another swapped content
@@ -569,7 +571,7 @@ export function MegaMenuBar({
     extra,
   );
   const triggerUnderlineCls = (key: MegaMenuKey) => clsx(
-    'absolute left-0 right-0 -bottom-[2px] h-[2px] rounded-full bg-brand-orange origin-left transition-transform duration-200',
+    'absolute start-0 end-0 -bottom-[2px] h-[2px] rounded-full bg-brand-orange origin-left transition-transform duration-200',
     active === key ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-50',
   );
 
@@ -581,7 +583,7 @@ export function MegaMenuBar({
          this app, and it never wraps/grows tall, same as the navbar above
          it, so it can't cover other fixed UI like the mobile Filter tab),
          Verified Sellers/Verified Stores/Track Order/Help Center/Contact
-         (right, pushed there via `ml-auto`, desktop-only). Previously two
+         (right, pushed there via `ms-auto`, desktop-only). Previously two
          separate white rows (a "category line" and a "welcome line") that
          duplicated the same navigational weight — merged into one to remove
          that redundancy. On a tablet-width screen where the nav row and the
@@ -626,7 +628,7 @@ export function MegaMenuBar({
               compact && 'md:rounded-none md:bg-transparent md:px-0 md:py-1 md:text-[11.5px]',
             ))}
           >
-            {categoriesLabel}
+            {t(categoriesLabel)}
             <ChevronDown size={compact ? 12 : 14} className={clsx('transition-transform duration-200', active === 'categories' && 'rotate-180')} />
             <span className={triggerUnderlineCls('categories')} />
           </button>
@@ -663,40 +665,51 @@ export function MegaMenuBar({
                   compact && 'md:hidden',
                 )}
               />
-              {item.label}
+              {t(item.label)}
               {item.chevron && <ChevronDown size={compact ? 11 : 12} className={clsx('transition-transform duration-200', active === item.key && 'rotate-180')} />}
             </button>
           ))}
+          <button
+            onClick={() => onNavigate('/learn')}
+            className={clsx(
+              'group flex items-center whitespace-nowrap shrink-0 border-none cursor-pointer transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange',
+              'gap-[6px] py-[7px] px-[11px] rounded-full text-[12.5px] font-semibold text-charcoal hover:bg-cream bg-transparent',
+              compact && 'md:gap-1 md:py-1 md:px-0 md:rounded-none md:text-[11.5px] md:font-medium md:hover:bg-transparent md:text-slate md:hover:text-brand-orange',
+            )}
+          >
+            <GraduationCap size={13} className={clsx('shrink-0 text-slate group-hover:text-brand-orange', compact && 'md:hidden')} />
+            {t('Learn by grade')}
+          </button>
           </div>
 
           {/* Utility links — desktop only. On mobile this row is already a
               tight, swipeable chip bar (native-app style); cramming these
               five extra links into it too was the opposite of that look.
-              `ml-auto` keeps it flush right whether it stays on line 1
+              `ms-auto` keeps it flush right whether it stays on line 1
               (room permitting) or drops to its own line 2 below the nav
               group (outer row is `flex-wrap` — see above). */}
           <span className={clsx(
-            'hidden md:flex items-center gap-x-4 gap-y-2 flex-wrap text-slate whitespace-nowrap ml-auto',
+            'hidden md:flex items-center gap-x-4 gap-y-2 flex-wrap text-slate whitespace-nowrap ms-auto',
             compact ? 'text-[11.5px]' : 'text-[12.5px]',
           )}>
             <span className="flex items-center gap-1 shrink-0">
-              <BadgeCheck size={compact ? 11 : 13} className="text-success" /> Verified Sellers
+              <BadgeCheck size={compact ? 11 : 13} className="text-success" /> {t('Verified Sellers')}
             </span>
             <span className="flex items-center gap-1 shrink-0">
-              <ShieldCheck size={compact ? 11 : 13} className="text-success" /> Verified Stores
+              <ShieldCheck size={compact ? 11 : 13} className="text-success" /> {t('Verified Stores')}
             </span>
             <span className="w-px h-4 bg-bone shrink-0" />
             <button
               onClick={() => onNavigate(TokenStorage.isLoggedIn() ? '/account/orders' : '/login')}
               className="shrink-0 bg-transparent border-none cursor-pointer text-slate hover:text-brand-orange transition-colors p-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange"
             >
-              Track Order
+              {t('Track Order')}
             </button>
             <button onClick={() => onNavigate('/faq')} className="shrink-0 bg-transparent border-none cursor-pointer text-slate hover:text-brand-orange transition-colors p-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange">
-              Help Center
+              {t('Help Center')}
             </button>
             <button onClick={() => onNavigate('/contact-us')} className="shrink-0 bg-transparent border-none cursor-pointer text-slate hover:text-brand-orange transition-colors p-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange">
-              Contact
+              {t('Contact')}
             </button>
           </span>
         </div>
@@ -706,7 +719,7 @@ export function MegaMenuBar({
       <div
         onMouseEnter={clearCloseTimer}
         className={clsx(
-          'absolute left-0 right-0 top-full z-50 bg-white border-b border-bone transition-all duration-200 origin-top',
+          'absolute start-0 end-0 top-full z-50 bg-white border-b border-bone transition-all duration-200 origin-top',
           active ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 -translate-y-2 pointer-events-none',
         )}
       >

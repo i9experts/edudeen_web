@@ -283,7 +283,7 @@ export function NotificationsPanel() {
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 min-w-0 pr-12">
+                <div className="flex-1 min-w-0 pe-12">
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className={clsx('text-[13px] text-carbon', !notif.isRead ? 'font-bold' : 'font-semibold')}>
                       {notif.title}
@@ -303,7 +303,7 @@ export function NotificationsPanel() {
                     {notificationLink(notif.data) && (
                       <button
                         onClick={() => { if (!notif.isRead) markAsRead(notif._id); navigate(notificationLink(notif.data)!); }}
-                        className="ml-2 text-[11px] font-semibold text-brand-orange hover:text-brand-deep-orange bg-transparent border-0 p-0 cursor-pointer"
+                        className="ms-2 text-[11px] font-semibold text-brand-orange hover:text-brand-deep-orange bg-transparent border-0 p-0 cursor-pointer"
                       >
                         Open →
                       </button>
@@ -312,7 +312,7 @@ export function NotificationsPanel() {
                 </div>
 
                 {/* Operations */}
-                <div className="flex items-center gap-1.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity absolute right-4 top-1/2 -translate-y-1/2">
+                <div className="flex items-center gap-1.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity absolute end-4 top-1/2 -translate-y-1/2">
                   {!notif.isRead && (
                     <button
                       title="Mark as read"

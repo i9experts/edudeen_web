@@ -11,7 +11,13 @@ import { DynamicAttributeFields } from './DynamicAttributeFields';
 import { toAttributeInputs, findMissingRequiredAttribute, type AttributeValuesState } from './attributeFormUtils';
 import { useStoreSubcategories } from '@/hooks/store/useStoreSubcategories';
 import { useCategoryAttributes } from '@/hooks/marketplace/useCategoryAttributes';
-import { ImageUpload, FileUpload, type PrivateUploadData, DateTimePickerModal } from '@/components/comman/ui';
+import { ImageUpload, type PrivateUploadData, DateTimePickerModal } from '@/components/comman/ui';
+import {
+  LearningFields, EMPTY_LEARNING, learningPayload, learningError,
+  LicenseTiersField, EMPTY_TIERS, tiersPayload, tiersError,
+  DeliverableFilesField, SampleFileField,
+} from '@/features/seller/components/products/LearningFields';
+import { DeliveryFormatField, EMPTY_DELIVERY, deliveryPayload, deliveryError } from '@/features/seller/components/products/DeliveryFormatField';
 import { currencySymbol as symbolForCurrency } from '@/utils/currency';
 
 type ProductType   = 'physical' | 'digital' | 'educational';
@@ -104,6 +110,7 @@ function TagInput({ tags, input, onInput, onAdd, onRemove }: {
 }
 
 const MAX_VARIANT_OPTIONS = 3;
+const isDigitalFamilyType = (t: ProductType) => t === 'digital' || t === 'educational';
 
 // ── Variant attributes builder — replaces the old fixed Size/Color inputs with
 // any combination of seller-defined attributes (Color, Size, Material…), up to
@@ -173,7 +180,9 @@ const initDig = {
   name: '', description: '', price: '', compareAtPrice: '', subCategoryId: '',
   status: 'active' as ProductStatus, isListedOnEdudeen: true,
   scheduledAt: '', tagInput: '', tags: [] as string[], images: [] as string[],
-  fileData: null as PrivateUploadData | null,
+  files: [] as PrivateUploadData[],
+  sampleFile: null as PrivateUploadData | null,
+  tiers: EMPTY_TIERS,
   downloadLimit: 'unlimited', linkExpiryDays: '',
   pdfStampingEnabled: false, licenseType: 'personal' as LicenseType,
   buyerDeliveryMessage: '', educationLevel: '' as EducationLevel | '', customLevel: '',
@@ -204,6 +213,8 @@ export default function StoreAddProduct() {
   const [dig,               setDig]               = useState<DigForm>(initDig);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [attributeValues,   setAttributeValues]   = useState<AttributeValuesState>({});
+  const [learning,          setLearning]          = useState(EMPTY_LEARNING);
+  const [delivery,          setDelivery]          = useState(EMPTY_DELIVERY);
 
   // Once the store loads, never leave the form on a type this store can't sell.
   useEffect(() => {
@@ -239,12 +250,16 @@ export default function StoreAddProduct() {
     if (pType !== 'physical' && (!dig.name  || !dig.price))                  { setError('Name and price are required.'); return; }
     if (pType === 'educational' && !dig.educationLevel)                      { setError('Education level is required for educational resources.'); return; }
     if (pType === 'educational' && dig.educationLevel === 'other' && !dig.customLevel.trim()) { setError('Please describe the custom education level.'); return; }
+    const learnErr = learningError(learning) ?? (pType !== 'physical' ? tiersError(dig.tiers) ?? deliveryError(delivery) : null);
+    if (learnErr) { setError(learnErr); return; }
     const missingAttr = findMissingRequiredAttribute(attrDefs, attributeValues);
     if (missingAttr) { setError(`${missingAttr.label} is required.`); return; }
-    const finalStatus = statusOverride ?? (pType === 'physical' ? phys.status : dig.status);
+    // A course is saved as a draft first; the course builder opens next and it's published from there.
+    const isCourse = pType !== 'physical' && delivery.format === 'course';
+    const finalStatus = isCourse ? 'draft' : statusOverride ?? (pType === 'physical' ? phys.status : dig.status);
     // A digital product with no file would sell buyers nothing — drafts may
     // skip it, but publishing/scheduling needs at least one file.
-    if (pType !== 'physical' && finalStatus !== 'draft' && !dig.fileData) { setError('Upload the file buyers will receive before publishing (or save as draft).'); return; }
+    if (pType !== 'physical' && delivery.format === 'download' && finalStatus !== 'draft' && dig.files.length === 0) { setError('Upload the file buyers will receive before publishing (or save as draft).'); return; }
     if (finalStatus === 'scheduled' && !cur.scheduledAt) { setError('Pick a date and time for your scheduled listing.'); setShowScheduleModal(true); return; }
     setSaving(true);
     try {
@@ -255,6 +270,7 @@ export default function StoreAddProduct() {
           subCategoryId: phys.subCategoryId || null, images: phys.images, tags: phys.tags,
           isListedOnEdudeen: phys.isListedOnEdudeen, status: finalStatus,
           scheduledAt: finalStatus === 'scheduled' ? phys.scheduledAt || null : null,
+          ...learningPayload(learning),
           variants: [{
             price: Number(phys.price),
             compareAtPrice: phys.compareAtPrice ? Number(phys.compareAtPrice) : null,
@@ -266,7 +282,8 @@ export default function StoreAddProduct() {
         addCachedProduct(storeId, { product: res.data.product, variant: res.data.defaultVariant });
         productId = res.data.product._id;
       } else {
-        const files = dig.fileData ? [{ url: dig.fileData.publicId, name: dig.fileData.fileName, size: dig.fileData.fileSize, mimeType: dig.fileData.mimeType }] : [];
+        const toFile = (f: PrivateUploadData) => ({ url: f.publicId, name: f.fileName, size: f.fileSize, mimeType: f.mimeType });
+        const files = dig.files.map(toFile);
         const res = await apiCreateDigitalProduct({
           storeId, name: dig.name, description: dig.description,
           productType: pType === 'educational' ? 'educational' : 'digital',
@@ -276,7 +293,10 @@ export default function StoreAddProduct() {
           isListedOnEdudeen: dig.isListedOnEdudeen, status: finalStatus,
           scheduledAt: finalStatus === 'scheduled' ? dig.scheduledAt || null : null,
           price: Number(dig.price), compareAtPrice: dig.compareAtPrice ? Number(dig.compareAtPrice) : null,
-          digital: { files, downloadLimit: dig.downloadLimit, linkExpiryDays: dig.linkExpiryDays ? Number(dig.linkExpiryDays) : null, pdfStampingEnabled: dig.pdfStampingEnabled, licenseType: dig.licenseType, buyerDeliveryMessage: dig.buyerDeliveryMessage, preview: { enabled: dig.previewEnabled, sourceFileIndex: 0 } },
+          ...learningPayload(learning),
+          ...deliveryPayload(delivery),
+          licenseTiers: tiersPayload(dig.tiers.filter(t => t.license !== dig.licenseType)),
+          digital: { files, downloadLimit: dig.downloadLimit, linkExpiryDays: dig.linkExpiryDays ? Number(dig.linkExpiryDays) : null, pdfStampingEnabled: dig.pdfStampingEnabled, licenseType: dig.licenseType, buyerDeliveryMessage: dig.buyerDeliveryMessage, preview: { enabled: dig.previewEnabled, sourceFileIndex: 0 }, sampleFile: dig.sampleFile ? toFile(dig.sampleFile) : null },
         });
         addCachedProduct(storeId, { product: res.data.product, variant: res.data.defaultVariant });
         productId = res.data.product._id;
@@ -285,7 +305,7 @@ export default function StoreAddProduct() {
       const attrInputs = toAttributeInputs(attributeValues);
       if (attrInputs.length) await apiSetProductAttributes(productId, attrInputs);
 
-      navigate(`/store/${storeId}/products`);
+      navigate(isCourse ? `/store/${storeId}/products/${productId}/course` : `/store/${storeId}/products`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong.');
     } finally {
@@ -298,7 +318,7 @@ export default function StoreAddProduct() {
     if (pType === 'physical') sp('status', val); else sd('status', val);
     if (val === 'scheduled') setShowScheduleModal(true);
   };
-  const primaryLabel = cur.status === 'scheduled' ? 'Schedule listing' : cur.status === 'draft' ? 'Save as draft' : 'Publish now';
+  const primaryLabel = isDigitalFamilyType(pType) && delivery.format === 'course' ? 'Save & build the course' : cur.status === 'scheduled' ? 'Schedule listing' : cur.status === 'draft' ? 'Save as draft' : 'Publish now';
   const isDigitalFamily = pType === 'digital' || pType === 'educational';
   const digitalAvailable = supportsDigital || supportsEducational;
 
@@ -308,7 +328,8 @@ export default function StoreAddProduct() {
     { label: 'Price', done: cur.price !== '' && Number(cur.price) >= 0 },
     ...(pType === 'physical' ? [{ label: 'Stock quantity', done: phys.stock !== '' }] : []),
     ...(pType === 'educational' ? [{ label: 'Education level', done: !!dig.educationLevel && (dig.educationLevel !== 'other' || !!dig.customLevel.trim()) }] : []),
-    ...(isDigitalFamily && cur.status !== 'draft' ? [{ label: 'The file buyers receive', done: !!dig.fileData }] : []),
+    ...(isDigitalFamily && delivery.format === 'download' && cur.status !== 'draft' ? [{ label: 'The file buyers receive', done: dig.files.length > 0 }] : []),
+    ...(isDigitalFamily && delivery.format === 'live_class' ? [{ label: 'Live class date, time & link', done: !deliveryError(delivery) }] : []),
     ...(cur.status === 'scheduled' ? [{ label: 'Schedule date & time', done: !!cur.scheduledAt }] : []),
   ];
   const recommended: { label: string; done: boolean }[] = [
@@ -493,12 +514,29 @@ export default function StoreAddProduct() {
             </Card>
           )}
 
-          {/* Digital/Educational: File Upload */}
           {isDigitalFamily && (
-            <Card step={nextStep()} title={pType === 'educational' ? 'Resource file' : 'Digital file'} need="required" hint="The file buyers receive instantly after purchase. Required to publish — drafts can be saved without it.">
-              <FileUpload value={dig.fileData} onChange={v => sd('fileData', v)} label="Click to upload your digital file" />
+            <Card step={nextStep()} title="How buyers get it" need="required" hint="Downloadable files, an online course with lessons, or a live class at a set time.">
+              <DeliveryFormatField value={delivery} onChange={setDelivery} />
             </Card>
           )}
+
+          {/* Digital/Educational: File Upload */}
+          {isDigitalFamily && (
+            <Card step={nextStep()} title={delivery.format === 'download' ? (pType === 'educational' ? 'Resource file' : 'Digital file') : 'Extra files'} need={delivery.format === 'download' ? 'required' : 'optional'} hint={delivery.format === 'download' ? 'The file buyers receive instantly after purchase. Required to publish — drafts can be saved without it.' : 'Worksheets, slides or notes buyers can download alongside the ' + (delivery.format === 'course' ? 'course.' : 'class.')}>
+              <DeliverableFilesField files={dig.files} onChange={v => sd('files', v)} />
+            </Card>
+          )}
+
+          {isDigitalFamily && (
+            <Card step={nextStep()} title="Free sample" need="optional" hint="Let teachers and parents try before they buy.">
+              <SampleFileField value={dig.sampleFile} onChange={v => sd('sampleFile', v)} />
+            </Card>
+          )}
+
+          {/* Who it's for — exam board and ages (every product type) */}
+          <Card step={nextStep()} title="Who it's for" need="optional" hint="Boards and ages help the right buyers find this.">
+            <LearningFields value={learning} onChange={setLearning} />
+          </Card>
 
           {/* Educational: Education Level (controlled Tier-1 + optional Tier-2 custom label) */}
           {pType === 'educational' && (
@@ -552,6 +590,11 @@ export default function StoreAddProduct() {
                     })}
                   </div>
                 </F>
+                {pType === 'educational' && dig.licenseType !== 'commercial' && (
+                  <F label="Classroom & school licenses">
+                    <LicenseTiersField baseLicense={dig.licenseType} tiers={dig.tiers} onChange={v => sd('tiers', v)} currencySymbol={currencySymbol} />
+                  </F>
+                )}
                 <F label="Buyer delivery message" htmlFor="ap-msg" hint="Shown to the buyer with their download.">
                   <textarea id="ap-msg" value={dig.buyerDeliveryMessage} onChange={e => sd('buyerDeliveryMessage', e.target.value)}
                     placeholder="Thank you for your purchase! Here is your download link…" className={ta} />
@@ -619,12 +662,12 @@ export default function StoreAddProduct() {
 
           <section className="bg-white border border-bone rounded-xl px-5 py-5">
             <h2 className="font-serif font-normal text-[20px] text-carbon mb-1">Publish</h2>
-            <p className="text-[12.5px] text-slate mb-4">Choose when this product goes live.</p>
+            <p className="text-[12.5px] text-slate mb-4">Choose when this product goes live. New listings get a quick check by the Edudeen team first, usually within a day.</p>
 
             <div role="radiogroup" aria-label="Listing status" className="flex flex-col gap-1.5">
               {([
-                { val: 'active'    as const, label: 'Publish now',        desc: 'Live in your store straight away', dotCls: 'bg-success' },
-                { val: 'scheduled' as const, label: 'Schedule for later', desc: 'Goes live on a date you choose',   dotCls: 'bg-brand-royal' },
+                { val: 'active'    as const, label: 'Publish now',        desc: 'Goes live once Edudeen approves it', dotCls: 'bg-success' },
+                { val: 'scheduled' as const, label: 'Schedule for later', desc: 'Approved first, then live on your date', dotCls: 'bg-brand-royal' },
                 { val: 'draft'     as const, label: 'Keep as draft',      desc: 'Only you can see it',              dotCls: 'bg-slate' },
               ]).map(({ val, label, desc, dotCls }) => {
                 const sel = cur.status === val;

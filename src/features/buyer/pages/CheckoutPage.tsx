@@ -269,7 +269,7 @@ function ManualBankTransferSlot({
         {rows.filter(([, v]) => v).map(([label, value]) => (
           <div key={label} className="flex justify-between gap-3 text-[12px]">
             <span className="text-slate flex-shrink-0">{label}</span>
-            <span className="font-medium text-carbon text-right font-mono">{value}</span>
+            <span className="font-medium text-carbon text-end font-mono">{value}</span>
           </div>
         ))}
         {bankDetails.instructions && <p className="text-[11px] text-slate mt-1">{bankDetails.instructions}</p>}
@@ -924,7 +924,7 @@ export function CheckoutPage() {
               <button
                 key={s.storeId}
                 onClick={() => navigate(`/checkout?store=${encodeURIComponent(s.storeId)}`)}
-                className="w-full flex items-center justify-between gap-3 px-4 py-3.5 text-left bg-transparent border-none cursor-pointer hover:bg-fog transition-colors"
+                className="w-full flex items-center justify-between gap-3 px-4 py-3.5 text-start bg-transparent border-none cursor-pointer hover:bg-fog transition-colors"
               >
                 <span className="min-w-0">
                   <span className="block text-[14px] font-semibold text-carbon truncate">{s.store.name}</span>
@@ -955,7 +955,7 @@ export function CheckoutPage() {
             Your order has been placed and your transfer proof of <span className="font-semibold text-carbon">PKR {manualPaymentResult.amountPKR.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span> was received.
             We'll notify you as soon as it's confirmed — usually within a few hours.
           </p>
-          <div className="bg-white border border-bone rounded-[10px] divide-y divide-bone text-left mb-8">
+          <div className="bg-white border border-bone rounded-[10px] divide-y divide-bone text-start mb-8">
             {manualPaymentResult.orders.map(o => (
               <div key={o.orderId} className="flex justify-between items-center px-4 py-3 text-[13px]">
                 <span className="font-mono font-semibold text-brand-deep-orange">{o.orderNumber}</span>
@@ -1117,10 +1117,10 @@ export function CheckoutPage() {
               {/* Progress bar */}
               <div className="relative flex justify-between items-start w-full">
                 {/* background line */}
-                <div className="absolute top-3 left-0 right-0 h-[2px] bg-bone rounded-full" />
+                <div className="absolute top-3 start-0 end-0 h-[2px] bg-bone rounded-full" />
                 {/* filled line */}
                 <div
-                  className="absolute top-3 left-0 h-[2px] bg-success rounded-full transition-all duration-300"
+                  className="absolute top-3 start-0 h-[2px] bg-success rounded-full transition-all duration-300"
                   style={{ width: step === 1 ? '0%' : step === 2 ? '33%' : step === 3 ? '66%' : '100%' }}
                 />
                 {([
@@ -1157,9 +1157,9 @@ export function CheckoutPage() {
                   <Button
                     variant="ghost" size="sm"
                     onClick={() => setStep(1)}
-                    className="ml-auto text-[12px] text-brand-orange font-medium cursor-pointer"
+                    className="ms-auto text-[12px] text-brand-orange font-medium cursor-pointer"
                   >
-                    <ArrowDownCircle size={14} className="inline align-middle mr-1" />Change Address
+                    <ArrowDownCircle size={14} className="inline align-middle me-1" />Change Address
                   </Button>
 
                 )}
@@ -1205,7 +1205,7 @@ export function CheckoutPage() {
                           type="button"
                           onClick={() => setAddrDropOpen(o => !o)}
                           className={clsx(
-                            'w-full flex items-center justify-between gap-3 px-4 py-3 rounded-[10px] border bg-cream text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange',
+                            'w-full flex items-center justify-between gap-3 px-4 py-3 rounded-[10px] border bg-cream text-start transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange',
                             addrDropOpen ? 'border-brand-orange ring-2 ring-brand-pale-orange' : 'border-bone hover:border-[#c5c4bc]',
                           )}
                         >
@@ -1230,14 +1230,14 @@ export function CheckoutPage() {
 
                         {/* Dropdown list */}
                         {addrDropOpen && (
-                          <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-bone rounded-[10px] z-20 overflow-hidden">
+                          <div className="absolute top-full start-0 end-0 mt-1 bg-white border border-bone rounded-[10px] z-20 overflow-hidden">
                             {addresses.map((addr, i) => (
                               <button
                                 key={addr._id}
                                 type="button"
                                 onClick={() => selectAddress(addr)}
                                 className={clsx(
-                                  'w-full flex items-start gap-3 px-4 py-3 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange',
+                                  'w-full flex items-start gap-3 px-4 py-3 text-start transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange',
                                   i > 0 && 'border-t border-bone',
                                   selectedAddr?._id === addr._id
                                     ? 'bg-brand-pale-orange'
@@ -1316,9 +1316,9 @@ export function CheckoutPage() {
                   <Button
                     variant="ghost" size="sm"
                     onClick={() => setStep(2)}
-                    className="ml-auto text-[12px] text-brand-orange font-medium cursor-pointer"
+                    className="ms-auto text-[12px] text-brand-orange font-medium cursor-pointer"
                   >
-                    <ArrowDownCircle size={14} className="inline align-middle mr-1" />Change Shipping Method
+                    <ArrowDownCircle size={14} className="inline align-middle me-1" />Change Shipping Method
 
                   </Button>
                 )}
@@ -1353,7 +1353,7 @@ export function CheckoutPage() {
                           type="button"
                           onClick={() => setShippingDropOpen(o => !o)}
                           className={clsx(
-                            'w-full flex items-center justify-between gap-3 px-4 py-3 rounded-[10px] border bg-cream text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange',
+                            'w-full flex items-center justify-between gap-3 px-4 py-3 rounded-[10px] border bg-cream text-start transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange',
                             shippingDropOpen ? 'border-brand-orange ring-2 ring-brand-pale-orange' : 'border-bone hover:border-[#c5c4bc]',
                           )}
                         >
@@ -1367,19 +1367,19 @@ export function CheckoutPage() {
                                   Estimated delivery: {selectedZone.estimatedDeliveryTime}
                                 </p>
                               </div>
-                              <span className="text-[13px] font-bold text-carbon ml-4 flex-shrink-0">
+                              <span className="text-[13px] font-bold text-carbon ms-4 flex-shrink-0">
                                 {zonePrice(selectedZone)}
                               </span>
                             </div>
                           ) : (
                             <span className="text-[13px] text-slate">Select a shipping method…</span>
                           )}
-                          <ChevronRight size={15} className={clsx('flex-shrink-0 text-slate transition-transform ml-2', shippingDropOpen && 'rotate-90')} />
+                          <ChevronRight size={15} className={clsx('flex-shrink-0 text-slate transition-transform ms-2', shippingDropOpen && 'rotate-90')} />
                         </button>
 
                         {/* Dropdown list */}
                         {shippingDropOpen && (
-                          <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-bone rounded-[10px] z-20 overflow-hidden">
+                          <div className="absolute top-full start-0 end-0 mt-1 bg-white border border-bone rounded-[10px] z-20 overflow-hidden">
                             {matchingZones.length === 0 ? (
                               <div className="px-4 py-4 text-[13px] text-slate text-center">
                                 We don't deliver to {selectedAddr?.city || 'this address'} yet.
@@ -1390,7 +1390,7 @@ export function CheckoutPage() {
                                 type="button"
                                 onClick={() => { setSelectedZoneId(zone._id); setShippingDropOpen(false); }}
                                 className={clsx(
-                                  'w-full flex items-center gap-3 px-4 py-3 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange',
+                                  'w-full flex items-center gap-3 px-4 py-3 text-start transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange',
                                   i > 0 && 'border-t border-bone',
                                   selectedZoneId === zone._id ? 'bg-brand-pale-orange' : 'hover:bg-cream',
                                 )}
@@ -1465,9 +1465,9 @@ export function CheckoutPage() {
                   <Button
                     variant="ghost" size="sm"
                     onClick={() => setStep(3)}
-                    className="ml-auto text-[12px] text-brand-orange font-medium cursor-pointer"
+                    className="ms-auto text-[12px] text-brand-orange font-medium cursor-pointer"
                   >
-                    <ArrowDownCircle size={14} className="inline align-middle mr-1" />Change Payment Method
+                    <ArrowDownCircle size={14} className="inline align-middle me-1" />Change Payment Method
                   </Button>
                 )}
               </div>
@@ -1536,19 +1536,19 @@ export function CheckoutPage() {
                   <div className="rounded-[10px] border border-bone bg-cream px-4 py-3 mb-4 flex flex-col gap-2.5">
                     <div className="flex justify-between gap-3 text-[12.5px]">
                       <span className="text-slate flex-shrink-0">Deliver to</span>
-                      <span className="font-medium text-carbon text-right">
+                      <span className="font-medium text-carbon text-end">
                         {selectedAddr?.recipientName} — {selectedAddr?.addressLine1}, {selectedAddr?.city}, {selectedAddr?.state}
                       </span>
                     </div>
                     <div className="flex justify-between gap-3 text-[12.5px]">
                       <span className="text-slate flex-shrink-0">Shipping</span>
-                      <span className="font-medium text-carbon text-right">
+                      <span className="font-medium text-carbon text-end">
                         {selectedZone ? `${selectedZone.city}, ${selectedZone.province} · ${currencySymbol(checkout?.currency)} ${selectedZone.shippingPrice.toLocaleString()}` : '—'}
                       </span>
                     </div>
                     <div className="flex justify-between gap-3 text-[12.5px]">
                       <span className="text-slate flex-shrink-0">Payment</span>
-                      <span className="font-medium text-carbon text-right">
+                      <span className="font-medium text-carbon text-end">
                         {!selectedMethod ? '—' : selectedMethod === 'split' && summary?.digitalSubtotal != null && summary?.physicalSubtotal != null
                           ? `${PAYMENT_LABELS.split.label} · ${currencySymbol(checkout?.currency)} ${summary.digitalSubtotal.toFixed(2)} now, ${currencySymbol(checkout?.currency)} ${summary.physicalSubtotal.toFixed(2)} on delivery`
                           : `${PAYMENT_LABELS[selectedMethod]?.label ?? selectedMethod} · ${currencySymbol(checkout?.currency)} ${(chargeAmount ?? total).toFixed(2)}`}
@@ -1619,7 +1619,7 @@ export function CheckoutPage() {
                   <div key={item.variantId} className="flex justify-between text-[12px]">
                     <span className="text-carbon truncate max-w-[150px]">
                       {item.name}
-                      <span className="text-slate ml-1">×{item.quantity}</span>
+                      <span className="text-slate ms-1">×{item.quantity}</span>
                     </span>
                     <span className="font-medium text-carbon flex-shrink-0">
                       {cur} {item.totalPrice.toLocaleString()}
@@ -1633,7 +1633,7 @@ export function CheckoutPage() {
                     <div key={item.productVariantId} className="flex justify-between text-[12px]">
                       <span className="text-carbon truncate max-w-[150px]">
                         {item.name}
-                        <span className="text-slate ml-1">×{item.quantity}</span>
+                        <span className="text-slate ms-1">×{item.quantity}</span>
                       </span>
                       <span className="font-medium text-carbon flex-shrink-0">
                         {cur} {ttl.toLocaleString()}
@@ -1798,7 +1798,7 @@ export function CheckoutPage() {
             </div>
 
             {checkout && (
-              <p className="text-[11px] text-slate mt-2 text-right">
+              <p className="text-[11px] text-slate mt-2 text-end">
                 Checkout ID: {checkout._id.slice(-8).toUpperCase()}
               </p>
             )}
@@ -1809,7 +1809,7 @@ export function CheckoutPage() {
                   <button
                     key={hint.storeId}
                     onClick={() => hint.storeSlug && (navigate(getStorePagePath(hint.storeSlug)))}
-                    className="w-full text-left px-3.5 py-3 rounded-lg bg-brand-pale-orange border border-brand-orange/20 cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange"
+                    className="w-full text-start px-3.5 py-3 rounded-lg bg-brand-pale-orange border border-brand-orange/20 cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange"
                   >
                     <p className="text-[12.5px] font-semibold text-brand-deep-orange">
                       You could save ${hint.potentialSavingsUSD.toFixed(2)} on this order

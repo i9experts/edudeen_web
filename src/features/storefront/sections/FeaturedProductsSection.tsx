@@ -82,14 +82,14 @@ export function FeaturedProductsSection({ settings }: { settings: FeaturedProduc
           const pType = p.productType ?? p.type ?? 'physical';
           const isDigital = pType !== 'physical';
           return (
-            <ProductCardShell key={p._id} onClick={() => toMain(`/product/${p.slug}`)} className="shrink-0 w-[160px] text-left">
+            <ProductCardShell key={p._id} onClick={() => toMain(`/product/${p.slug}`)} className="shrink-0 w-[160px] text-start">
               <div className="relative p-2">
                 <ProductCardImage>
                   {p.images?.[0]
                     ? <ProductImage images={p.images} name={p.name} className="w-full h-full object-cover" />
                     : <ProductCoverFallback name={p.name} size="sm" className="w-full h-full" />}
                 </ProductCardImage>
-                <span className={`absolute top-3 left-3 px-[6px] py-[1px] rounded-[4px] text-[9px] font-semibold border ${isDigital ? 'bg-accent-violet-bg text-accent-violet border-accent-violet/25' : 'bg-[#edf5e7] text-[#3b6720] border-[#c7e0b5]'}`}>
+                <span className={`absolute top-3 start-3 px-[6px] py-[1px] rounded-[4px] text-[9px] font-semibold border ${isDigital ? 'bg-accent-violet-bg text-accent-violet border-accent-violet/25' : 'bg-[#edf5e7] text-[#3b6720] border-[#c7e0b5]'}`}>
                   {isDigital ? (pType === 'educational' ? 'Educational' : 'Digital') : 'Physical'}
                 </span>
               </div>

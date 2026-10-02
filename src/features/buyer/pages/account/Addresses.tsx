@@ -103,7 +103,7 @@ export function Addresses() {
       key: 'label', header: 'Label',
       render: a => {
         const LIcon = LABEL_ICON[a.label] ?? MapPin;
-        return <Badge color="orange" size="sm"><LIcon size={10} className="mr-[3px]" />{a.label}</Badge>;
+        return <Badge color="orange" size="sm"><LIcon size={10} className="me-[3px]" />{a.label}</Badge>;
       },
     },
     {

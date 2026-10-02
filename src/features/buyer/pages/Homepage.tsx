@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { X } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useIsBuyer } from '@/hooks/auth/useIsBuyer';
@@ -8,6 +8,7 @@ import { useTopBarDeals } from '@/hooks/useTopBarDeals';
 import { apiSearchProducts } from '@/api/services/search';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { getStorePagePath } from '@/utils/storefrontUrl';
+import { categoryPath } from '@/hooks/marketplace/useCategoryTree';
 import { useProductsByCategory } from '@/hooks/marketplace/useProductsByCategory';
 import { useCountdownToMidnight } from '@/hooks/useCountdownToMidnight';
 import { useCartContext } from '@/contexts/CartContext';
@@ -31,6 +32,7 @@ import { apiGetPlatformStats, apiGetTopStores, type PlatformStats, type PublicSt
 import { apiGetCategoryTree, type CategoryNode } from '@/api/services/categories';
 import { EDUCATION_LEVELS } from '@/api/services/product';
 import type { MarketplaceProduct, MarketplaceSortBy } from '@/api/services/marketplace';
+import { apiGetHomeShelves, type CuratedShelf } from '@/api/services/classroom';
 import { RevealStagger } from '@/components/comman/motion/Reveal';
 import { AnimatedCounter } from '@/components/comman/motion/AnimatedCounter';
 import heroImage from '@/assets/learning-hero.jpg';
@@ -140,6 +142,9 @@ const linkButtonClass = sectionLinkClass;
  */
 export function Homepage() {
   const navigate = useNavigate();
+  // Edudeen's curated, seasonal shelves ("Exam ki tayyari" etc.), set by the admin team.
+  const [shelves, setShelves] = useState<CuratedShelf[]>([]);
+  useEffect(() => { apiGetHomeShelves().then(res => setShelves(res.data ?? [])).catch(() => {}); }, []);
   const isBuyer = useIsBuyer();
   const sellersRowRef = useEdgeHoverScroll<HTMLDivElement>();
   usePageTitle('Home');
@@ -173,7 +178,7 @@ export function Homepage() {
 
   const submitSearch = (term: string) => {
     const q = term.trim();
-    navigate(q ? `/?search=${encodeURIComponent(q)}` : '/');
+    navigate(q ? `/search?q=${encodeURIComponent(q)}` : '/');
   };
   const clearSearch = () => setSearchParams(prev => {
     const next = new URLSearchParams(prev);
@@ -350,10 +355,15 @@ export function Homepage() {
     setSubject(id);
     setTimeout(scrollToResources, 30);
   };
+  // A real category opens its own page; a keyword-only subject tab (no
+  // matching category) still filters the catalogue below.
   const handleShopCategory = useCallback((id: string) => {
+    const tabNode = shopTabs.find(t => t.id === id)?.node;
+    const node = tabNode ?? allCategories.find(c => c._id === id || catTabId(c._id) === id);
+    if (node) { navigate(categoryPath(node)); return; }
     setSubject(id || null);
     setTimeout(() => resourcesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 30);
-  }, []);
+  }, [shopTabs, allCategories, navigate]);
 
   // The shared tab list in the shape the mega menu / category grid expect.
   const menuCategories = useMemo<CategoryNode[]>(() => shopTabs.map(t => ({
@@ -439,6 +449,9 @@ export function Homepage() {
   ] : [];
 
 
+  // Old `/?search=` links now open the real search results page.
+  if (searchQ) return <Navigate to={`/search?q=${encodeURIComponent(searchQ)}`} replace />;
+
   return (
     <div className="bg-white min-h-full">
 
@@ -497,7 +510,7 @@ export function Homepage() {
               alt="Learning workbooks and colourful stationery arranged on a desk"
               className="absolute inset-0 w-full h-full object-cover"
             />
-            <div className="absolute bottom-[22px] right-[22px] hidden sm:block bg-white px-[19px] py-3 rounded-[10px] text-[14px] text-carbon shadow-[0_8px_30px_rgba(19,57,86,0.09)]">
+            <div className="absolute bottom-[22px] end-[22px] hidden sm:block bg-white px-[19px] py-3 rounded-[10px] text-[14px] text-carbon shadow-[0_8px_30px_rgba(19,57,86,0.09)]">
               A little learning. A lasting difference.
             </div>
           </div>
@@ -548,6 +561,21 @@ export function Homepage() {
           </section>
         )}
 
+        {/* ── Edudeen picks (curated shelves) ── */}
+        {shelves.map(s => (
+          <section key={s._id} className="mb-12">
+            <SectionHead
+              eyebrow="Edudeen picks"
+              title={s.title}
+              action={{ label: 'View all', onClick: () => navigate(`/picks/${s.slug}`) }}
+            />
+            {s.subtitle && <p className="text-[13.5px] text-graphite -mt-3 mb-4">{s.subtitle}</p>}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-[14px] gap-y-[25px] md:gap-x-[22px] md:gap-y-[28px]">
+              {s.products.slice(0, 5).map(renderResourceCard)}
+            </div>
+          </section>
+        ))}
+
         {/* ── Catalogue with filters ── */}
         <section ref={resourcesRef} className="scroll-mt-[150px] mb-12">
           <SectionHead
@@ -566,7 +594,7 @@ export function Homepage() {
           <div className="flex gap-[10px] flex-wrap mb-6 items-center">
             <FiltersButton count={pageFilterCount + drawerFilterCount} onClick={() => setFiltersOpen(true)} />
             {campaignId && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#F4DC4C] text-[#152D43] text-[13px] font-semibold pl-3 pr-1.5 py-[6px]">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#F4DC4C] text-[#152D43] text-[13px] font-semibold ps-3 pe-1.5 py-[6px]">
                 Sale: {activeCampaign?.name ?? 'Selected sale'}
                 <button onClick={clearCampaign} aria-label="Clear sale filter" className="size-5 rounded-full flex items-center justify-center bg-transparent border-none cursor-pointer hover:bg-white/60">
                   <X size={13} />
@@ -574,7 +602,7 @@ export function Homepage() {
               </span>
             )}
             {searchQ && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-pale-orange text-carbon text-[13px] font-semibold pl-3 pr-1.5 py-[6px]">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-pale-orange text-carbon text-[13px] font-semibold ps-3 pe-1.5 py-[6px]">
                 “{searchQ}”
                 <button onClick={clearSearch} aria-label="Clear search" className="size-5 rounded-full flex items-center justify-center bg-transparent border-none cursor-pointer hover:bg-white/70">
                   <X size={13} />
@@ -582,7 +610,7 @@ export function Homepage() {
               </span>
             )}
             {subjectTab && !shopTabs.some(t => t.id === subjectTab.id) && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-pale-orange text-carbon text-[13px] font-semibold pl-3 pr-1.5 py-[6px]">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-pale-orange text-carbon text-[13px] font-semibold ps-3 pe-1.5 py-[6px]">
                 {subjectTab.label}
                 <button onClick={() => setSubject(null)} aria-label="Clear category" className="size-5 rounded-full flex items-center justify-center bg-transparent border-none cursor-pointer hover:bg-white/70">
                   <X size={13} />
@@ -594,7 +622,7 @@ export function Homepage() {
                 Clear filters
               </button>
             )}
-            <span className="w-full sm:w-auto sm:ml-auto text-[14px] text-slate" aria-live="polite">
+            <span className="w-full sm:w-auto sm:ms-auto text-[14px] text-slate" aria-live="polite">
               {loading ? 'Loading…' : `${total} resource${total === 1 ? '' : 's'}`}
             </span>
           </div>

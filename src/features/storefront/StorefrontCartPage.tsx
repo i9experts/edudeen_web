@@ -205,7 +205,7 @@ export function StorefrontCartPage() {
                       </button>
                       <Button
                         variant="danger" size="xs"
-                        className="ml-2! py-[11px]! min-h-10"
+                        className="ms-2! py-[11px]! min-h-10"
                         onClick={() => handleRemove(item.productId, key)}
                         loading={isRemoving}
                         icon={!isRemoving && <Trash2 size={11} />}
@@ -241,7 +241,7 @@ export function StorefrontCartPage() {
                   return (
                     <div key={item.productVariantId} className="flex justify-between text-[12px] gap-2">
                       <span className="text-carbon truncate">
-                        {item.name}<span className="text-slate ml-1">×{item.quantity}</span>
+                        {item.name}<span className="text-slate ms-1">×{item.quantity}</span>
                       </span>
                       <span className="font-medium text-carbon shrink-0">{displaySymbol}{ttl.toLocaleString()}</span>
                     </div>
@@ -258,7 +258,7 @@ export function StorefrontCartPage() {
             </div>
 
             <Button variant="primary" fullWidth className="justify-center!" onClick={handleCheckout}>
-              <Lock size={13} className="mr-1.5" /> {TokenStorage.isLoggedIn() ? 'Checkout' : 'Sign in to checkout'}
+              <Lock size={13} className="me-1.5" /> {TokenStorage.isLoggedIn() ? 'Checkout' : 'Sign in to checkout'}
             </Button>
           </div>
         </div>

@@ -65,7 +65,7 @@ export function RoleSegmentedControl({
                 'relative z-10 flex-1 flex flex-col gap-0.5 py-[10px] px-3 rounded-[14px]',
                 'border-none bg-transparent cursor-pointer select-none outline-none',
                 'transition-colors duration-200 ease-out',
-                hasDescriptions ? 'text-left items-start' : 'items-center',
+                hasDescriptions ? 'text-start items-start' : 'items-center',
               )}
             >
               <span className={clsx('flex items-center gap-1.5 w-full', !hasDescriptions && 'justify-center')}>
@@ -82,7 +82,7 @@ export function RoleSegmentedControl({
                 {hasDescriptions && (
                   <CheckCircle2
                     size={15}
-                    className={clsx('ml-auto shrink-0 transition-opacity duration-150', active ? 'text-brand-orange opacity-100' : 'opacity-0')}
+                    className={clsx('ms-auto shrink-0 transition-opacity duration-150', active ? 'text-brand-orange opacity-100' : 'opacity-0')}
                   />
                 )}
               </span>

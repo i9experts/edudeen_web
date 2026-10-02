@@ -1,3 +1,4 @@
+import { useT } from '@/contexts/languageCtx';
 import { Suspense } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { clsx } from 'clsx';
@@ -17,6 +18,7 @@ function BuyerBottomNav() {
   const { pathname } = useLocation();
   const { cartCount } = useCartContext();
   const isActive = (path: string) => path === '/' ? pathname === '/' : pathname.startsWith(path);
+  const t = useT();
 
   const tabs = [
     { id: 'home',        Icon: Home,         label: 'Home',        path: '/' },
@@ -26,7 +28,7 @@ function BuyerBottomNav() {
   ] as const;
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 h-16 bg-white border-t border-bone">
+    <nav className="lg:hidden fixed bottom-0 start-0 end-0 z-50 h-16 bg-white border-t border-bone">
       <div className="flex items-stretch h-full">
         {tabs.map(tab => {
           const active = isActive(tab.path);
@@ -35,7 +37,7 @@ function BuyerBottomNav() {
               key={tab.id}
               onClick={() => navigate(tab.path)}
               aria-current={active ? 'page' : undefined}
-              aria-label={tab.label}
+              aria-label={t(tab.label)}
               className="relative flex-1 flex flex-col items-center justify-center gap-[3px] cursor-pointer bg-transparent border-none"
             >
               <span className="relative">
@@ -45,12 +47,12 @@ function BuyerBottomNav() {
                   className={clsx('transition-colors duration-150', active ? 'text-brand-orange' : 'text-slate')}
                 />
                 {'badge' in tab && tab.badge > 0 && (
-                  <span className="absolute -top-1.5 -right-2 min-w-[15px] h-[15px] px-[3px] rounded-full bg-brand-orange text-white text-[9px] font-bold flex items-center justify-center">
+                  <span className="absolute -top-1.5 -end-2 min-w-[15px] h-[15px] px-[3px] rounded-full bg-brand-orange text-white text-[9px] font-bold flex items-center justify-center">
                     {tab.badge > 9 ? '9+' : tab.badge}
                   </span>
                 )}
               </span>
-              <span className={clsx('text-[10px] font-medium transition-colors duration-150', active ? 'text-brand-orange' : 'text-slate')}>{tab.label}</span>
+              <span className={clsx('text-[10px] font-medium transition-colors duration-150', active ? 'text-brand-orange' : 'text-slate')}>{t(tab.label)}</span>
             </button>
           );
         })}

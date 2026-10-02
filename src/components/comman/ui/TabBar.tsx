@@ -31,7 +31,7 @@ export function TabBar({ tabs, active, onChange, className, dense = false }: Tab
               className={clsx(
                 'flex items-center font-medium shrink-0',
                 dense ? 'gap-[4px] px-[10px] py-2 text-[11.5px]' : 'gap-[6px] px-4 py-[10px] text-[13px]',
-                'border-b-2 -mb-px bg-transparent border-l-0 border-r-0 border-t-0',
+                'border-b-2 -mb-px bg-transparent border-s-0 border-e-0 border-t-0',
                 'outline-none cursor-pointer transition-all duration-150 whitespace-nowrap',
                 isActive
                   ? 'border-b-brand-orange text-brand-orange'

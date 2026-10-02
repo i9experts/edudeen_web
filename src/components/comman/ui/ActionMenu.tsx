@@ -82,7 +82,7 @@ function DropdownPortal({
           aria-disabled={item.disabled}
           onClick={e => { e.stopPropagation(); if (item.disabled) return; item.onClick(); onClose(); }}
           className={clsx(
-            'w-full flex items-center gap-2 px-4 py-[9px] text-[13px] font-medium text-left border-none bg-transparent transition-colors',
+            'w-full flex items-center gap-2 px-4 py-[9px] text-[13px] font-medium text-start border-none bg-transparent transition-colors',
             item.disabled
               ? 'text-slate/60 cursor-not-allowed'
               : item.danger

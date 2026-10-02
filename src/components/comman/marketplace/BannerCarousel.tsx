@@ -161,18 +161,18 @@ export function BannerCarousel({ banners, entityType, fit = 'cover' }: BannerCar
           <button
             onClick={() => go(-1)}
             aria-label="Previous banner"
-            className="absolute left-3 top-1/2 -translate-y-1/2 size-10 rounded-full bg-white/85 shadow-[0_4px_14px_rgba(20,15,10,0.12)] backdrop-blur-sm hover:bg-white hover:scale-105 flex items-center justify-center border-none cursor-pointer opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-[opacity,transform,background-color] duration-200 z-10"
+            className="absolute start-3 top-1/2 -translate-y-1/2 size-10 rounded-full bg-white/85 shadow-[0_4px_14px_rgba(20,15,10,0.12)] backdrop-blur-sm hover:bg-white hover:scale-105 flex items-center justify-center border-none cursor-pointer opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-[opacity,transform,background-color] duration-200 z-10"
           >
             <ChevronLeft size={16} className="text-charcoal" />
           </button>
           <button
             onClick={() => go(1)}
             aria-label="Next banner"
-            className="absolute right-3 top-1/2 -translate-y-1/2 size-10 rounded-full bg-white/85 shadow-[0_4px_14px_rgba(20,15,10,0.12)] backdrop-blur-sm hover:bg-white hover:scale-105 flex items-center justify-center border-none cursor-pointer opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-[opacity,transform,background-color] duration-200 z-10"
+            className="absolute end-3 top-1/2 -translate-y-1/2 size-10 rounded-full bg-white/85 shadow-[0_4px_14px_rgba(20,15,10,0.12)] backdrop-blur-sm hover:bg-white hover:scale-105 flex items-center justify-center border-none cursor-pointer opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-[opacity,transform,background-color] duration-200 z-10"
           >
             <ChevronRight size={16} className="text-charcoal" />
           </button>
-          <div className="absolute bottom-4 right-4 sm:right-6 lg:right-10 flex gap-[6px] z-10">
+          <div className="absolute bottom-4 end-4 sm:end-6 lg:end-10 flex gap-[6px] z-10">
             {sorted.map((b, i) => (
               <button
                 key={b._id}

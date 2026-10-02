@@ -92,7 +92,7 @@ export function AboutPage() {
           <Reveal>
             <MagneticButton>
               <Button size="lg" onClick={sellEntry.go} loading={sellEntry.loading}>
-                Start Selling Free <ArrowRight size={14} className="inline align-middle ml-1" />
+                Start Selling Free <ArrowRight size={14} className="inline align-middle ms-1" />
               </Button>
             </MagneticButton>
           </Reveal>

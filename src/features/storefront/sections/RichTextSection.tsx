@@ -12,7 +12,7 @@ export interface RichTextSectionSettings {
 // platform chrome protecting it.
 export function RichTextSection({ settings, blocks }: { settings: RichTextSectionSettings; blocks: ContentBlock[] }) {
   const { cfg } = useStorefront();
-  const alignCls = { left: 'text-left items-start', center: 'text-center items-center', right: 'text-right items-end' }[settings.alignment ?? 'left'];
+  const alignCls = { left: 'text-start items-start', center: 'text-center items-center', right: 'text-end items-end' }[settings.alignment ?? 'left'];
 
   return (
     <div className="px-4 sm:px-6 lg:px-10" style={{ paddingTop: 32 * cfg.sectionSpacingScale, paddingBottom: 32 * cfg.sectionSpacingScale }}>

@@ -1,3 +1,4 @@
+import { useT } from '@/contexts/languageCtx';
 import { useState, useEffect, useRef, useCallback, useId } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
@@ -113,7 +114,7 @@ function useUncontrolledSearch() {
   const [value, setValue] = useState('');
   const submit = (term?: string) => {
     const q = (term ?? value).trim();
-    if (q) navigate(`/?search=${encodeURIComponent(q)}`);
+    if (q) navigate(`/search?q=${encodeURIComponent(q)}`);
   };
   return { value, onChange: setValue, submit };
 }
@@ -137,11 +138,11 @@ function SearchSectionLabel({ icon, tone = 'neutral', children }: { icon: React.
 // term, full-width, hover fill), not a chip cloud. ──
 function SuggestionRow({ icon, label, onClick, onRemove }: { icon: React.ReactNode; label: React.ReactNode; onClick: () => void; onRemove?: () => void }) {
   return (
-    <div className="group w-full flex items-center gap-[11px] pl-2 pr-1 rounded-lg hover:bg-cream">
+    <div className="group w-full flex items-center gap-[11px] ps-2 pe-1 rounded-lg hover:bg-cream">
       <button
         data-search-item
         onClick={onClick}
-        className="flex-1 min-w-0 flex items-center gap-[11px] py-[9px] bg-transparent border-none text-left cursor-pointer focus-visible:outline-none"
+        className="flex-1 min-w-0 flex items-center gap-[11px] py-[9px] bg-transparent border-none text-start cursor-pointer focus-visible:outline-none"
       >
         <span className="flex size-7 items-center justify-center rounded-full bg-cream text-slate shrink-0 group-hover:bg-white">
           {icon}
@@ -197,7 +198,7 @@ function RecommendedProductRow({ product, categoryName, query, onClick }: { prod
     <button
       data-search-item
       onClick={onClick}
-      className="group w-full flex items-center gap-3 px-2 py-2 rounded-xl bg-transparent border-none text-left cursor-pointer transition-colors duration-150 hover:bg-cream focus-visible:outline-none focus-visible:bg-cream"
+      className="group w-full flex items-center gap-3 px-2 py-2 rounded-xl bg-transparent border-none text-start cursor-pointer transition-colors duration-150 hover:bg-cream focus-visible:outline-none focus-visible:bg-cream"
     >
       <span className="w-14 h-14 rounded-[10px] overflow-hidden shrink-0 bg-brand-pale-orange">
         <ProductImage images={product.images ?? []} name={product.name} className="w-full h-full object-cover" />
@@ -233,7 +234,7 @@ function StoreMatchRow({ store, query, onClick }: { store: PublicStoreListItem; 
     <button
       data-search-item
       onClick={onClick}
-      className="group w-full flex items-center gap-3 px-2 py-2 rounded-xl bg-transparent border-none text-left cursor-pointer transition-colors duration-150 hover:bg-cream focus-visible:outline-none focus-visible:bg-cream"
+      className="group w-full flex items-center gap-3 px-2 py-2 rounded-xl bg-transparent border-none text-start cursor-pointer transition-colors duration-150 hover:bg-cream focus-visible:outline-none focus-visible:bg-cream"
     >
       <span className="w-14 h-14 rounded-[10px] overflow-hidden shrink-0 bg-brand-pale-orange flex items-center justify-center">
         {store.logo
@@ -282,6 +283,7 @@ export function SearchBox({
   value, onChange, placeholder, categories, onCategorySelect, popularStores, onSubmit, autoFocus, size = 'md', onClose,
   alwaysFullScreen = false,
 }: SearchBoxProps) {
+  const t = useT();
   const isLg = size === 'lg';
   const navigate = useNavigate();
   const panelId = useId();
@@ -485,7 +487,7 @@ export function SearchBox({
         // input. `md:` and up keeps the original anchored-dropdown behavior
         // unchanged — a mouse user doesn't need a full takeover.
         open && !alwaysFullScreen &&
-          'max-md:fixed max-md:top-0 max-md:right-0 max-md:bottom-0 max-md:left-0 max-md:z-[9999] max-md:flex-col max-md:justify-start max-md:bg-white max-md:px-3 max-md:pt-3',
+          'max-md:fixed max-md:top-0 max-md:end-0 max-md:bottom-0 max-md:start-0 max-md:z-[9999] max-md:flex-col max-md:justify-start max-md:bg-white max-md:px-3 max-md:pt-3',
         // The full-screen and normal-anchored states are written as two
         // complete, mutually exclusive literal class strings — never
         // composed piecemeal from separate flags — because several of these
@@ -497,7 +499,7 @@ export function SearchBox({
         // silently kept `justify-center` active despite `alwaysFullScreen`,
         // which is exactly what collapsed the layout down to a sliver.
         open && alwaysFullScreen
-          ? 'fixed top-0 right-0 bottom-0 left-0 z-[9999] flex flex-col justify-start bg-white px-3 pt-3'
+          ? 'fixed top-0 end-0 bottom-0 start-0 z-[9999] flex flex-col justify-start bg-white px-3 pt-3'
           : 'relative flex justify-center',
       )}
       onKeyDown={handleKeyDown}
@@ -526,8 +528,8 @@ export function SearchBox({
             'group relative flex items-center bg-white border w-full',
             'transition-[border-color,box-shadow,background-color] duration-200 ease-out',
             isLg
-              ? 'gap-3 pl-6 pr-1.5 py-1.5 rounded-full border-2'
-              : 'gap-[9px] pl-[18px] md:pl-[22px] pr-0 py-0 rounded-full overflow-hidden',
+              ? 'gap-3 ps-6 pe-1.5 py-1.5 rounded-full border-2'
+              : 'gap-[9px] ps-[18px] md:ps-[22px] pe-0 py-0 rounded-full overflow-hidden',
             open
               ? 'border-brand-orange shadow-[0_2px_12px_rgba(23,71,113,0.12)] ring-[3px] ring-brand-orange/10'
               : isLg ? 'border-brand-orange shadow-[0_6px_24px_rgba(23,71,113,0.16)]' : 'border-[#afbdc6] hover:border-brand-orange',
@@ -540,7 +542,7 @@ export function SearchBox({
               onClick={closeFullScreen}
               aria-label="Close search"
               className={clsx(
-                'shrink-0 items-center justify-center -ml-1 mr-[2px] w-6 h-6 bg-transparent border-none cursor-pointer text-charcoal',
+                'shrink-0 items-center justify-center -ms-1 me-[2px] w-6 h-6 bg-transparent border-none cursor-pointer text-charcoal',
                 alwaysFullScreen ? 'flex' : 'hidden max-md:flex',
               )}
             >
@@ -557,7 +559,7 @@ export function SearchBox({
             value={value}
             onChange={e => onChange(e.target.value)}
             onFocus={() => setOpen(true)}
-            placeholder={placeholder ?? 'What would you love to teach today?'}
+            placeholder={placeholder ?? t('What would you love to teach today?')}
             aria-label={placeholder ?? 'Search resources, products and stores'}
             autoFocus={autoFocus}
             className={clsx('border-0 outline-none text-carbon placeholder:text-slate/80 bg-transparent w-full min-w-0', isLg ? 'text-[15px] md:text-[16px] py-[8px]' : 'text-[14px] md:text-[15px] py-[11px] md:py-[13px]')}
@@ -607,7 +609,7 @@ export function SearchBox({
               // properties too.
               alwaysFullScreen
                 ? 'relative top-0 mt-3 flex-1 max-h-none border-0 rounded-none shadow-none'
-                : 'absolute left-0 right-0 top-[calc(100%+6px)] border border-bone rounded-2xl shadow-card-hover max-h-[460px] max-md:relative max-md:top-0 max-md:mt-3 max-md:flex-1 max-md:max-h-none max-md:rounded-none max-md:border-0 max-md:shadow-none',
+                : 'absolute start-0 end-0 top-[calc(100%+6px)] border border-bone rounded-2xl shadow-card-hover max-h-[460px] max-md:relative max-md:top-0 max-md:mt-3 max-md:flex-1 max-md:max-h-none max-md:rounded-none max-md:border-0 max-md:shadow-none',
             )}
           >
             {!isTyping ? (
@@ -648,7 +650,7 @@ export function SearchBox({
                           key={item.id}
                           data-search-item
                           onClick={() => goToProduct(item.id)}
-                          className="group shrink-0 w-[74px] text-left bg-transparent border-none cursor-pointer p-0 focus-visible:outline-none"
+                          className="group shrink-0 w-[74px] text-start bg-transparent border-none cursor-pointer p-0 focus-visible:outline-none"
                         >
                           <span className="block w-[74px] h-[74px] rounded-[10px] overflow-hidden bg-brand-pale-orange">
                             {item.image
@@ -696,7 +698,7 @@ export function SearchBox({
                           key={s.storeId}
                           data-search-item
                           onClick={() => goToStore(s.slug)}
-                          className="flex items-center gap-[7px] max-w-[180px] pl-[5px] pr-[12px] py-[5px] rounded-full text-[11.5px] font-medium bg-white text-charcoal border border-bone hover:border-brand-orange hover:bg-brand-pale-orange hover:text-brand-deep-orange focus-visible:outline-none focus-visible:border-brand-orange focus-visible:bg-brand-pale-orange transition-colors duration-150 cursor-pointer"
+                          className="flex items-center gap-[7px] max-w-[180px] ps-[5px] pe-[12px] py-[5px] rounded-full text-[11.5px] font-medium bg-white text-charcoal border border-bone hover:border-brand-orange hover:bg-brand-pale-orange hover:text-brand-deep-orange focus-visible:outline-none focus-visible:border-brand-orange focus-visible:bg-brand-pale-orange transition-colors duration-150 cursor-pointer"
                           title={s.name}
                         >
                           <span className="w-6 h-6 rounded-full overflow-hidden shrink-0 bg-brand-pale-orange flex items-center justify-center">
@@ -800,7 +802,7 @@ export function SearchBox({
                 <button
                   data-search-item
                   onClick={() => { onSubmit(value); setOpen(false); onClose?.(); }}
-                  className="w-full flex items-center justify-between gap-2 px-4 py-3 bg-transparent border-none text-left cursor-pointer transition-colors duration-150 hover:bg-cream focus-visible:outline-none focus-visible:bg-cream"
+                  className="w-full flex items-center justify-between gap-2 px-4 py-3 bg-transparent border-none text-start cursor-pointer transition-colors duration-150 hover:bg-cream focus-visible:outline-none focus-visible:bg-cream"
                 >
                   <span className="text-[12.5px] font-semibold text-brand-orange">
                     View all results for "{value.trim()}"
@@ -875,8 +877,8 @@ export function CurrencySelector({ tone = 'light' }: { tone?: 'light' | 'dark' }
         </>
       }
       triggerClassName={dark
-        ? 'flex items-center gap-1.5 text-[12px] font-semibold text-white border border-white/30 rounded-md pl-2 pr-[7px] py-[3px] bg-white/10 hover:bg-white/20 transition-colors cursor-pointer shrink-0'
-        : 'flex items-center gap-1.5 text-[12px] font-semibold text-charcoal border border-bone rounded-md pl-2 pr-2 md:pr-[7px] py-1 bg-white hover:bg-cream transition-colors cursor-pointer shrink-0'}
+        ? 'flex items-center gap-1.5 text-[12px] font-semibold text-white border border-white/30 rounded-md ps-2 pe-[7px] py-[3px] bg-white/10 hover:bg-white/20 transition-colors cursor-pointer shrink-0'
+        : 'flex items-center gap-1.5 text-[12px] font-semibold text-charcoal border border-bone rounded-md ps-2 pe-2 md:pe-[7px] py-1 bg-white hover:bg-cream transition-colors cursor-pointer shrink-0'}
       items={CURRENCY_OPTIONS.map(c => ({
         label: (
           <span className="flex items-center gap-2 flex-1">
@@ -898,6 +900,7 @@ export function CurrencySelector({ tone = 'light' }: { tone?: 'light' | 'dark' }
 // features that don't belong on a page whose one job is converting a visitor
 // into a seller).
 function AccountActions({ simple = false }: { simple?: boolean }) {
+  const t = useT();
   const navigate = useNavigate();
   const sellEntry = useSellEntry();
 
@@ -917,7 +920,7 @@ function AccountActions({ simple = false }: { simple?: boolean }) {
           onClick={() => navigate('/login')}
           className="text-[13px] font-medium text-white border border-white/25 rounded-md px-[14px] py-[7px] bg-transparent cursor-pointer hover:bg-white/10 transition-colors"
         >
-          Sign In
+          {t('Sign In')}
         </button>
         <button
           onClick={sellEntry.go}
@@ -925,7 +928,7 @@ function AccountActions({ simple = false }: { simple?: boolean }) {
           className="inline-flex items-center gap-[6px] text-[13px] font-semibold text-white border-none rounded-md px-[14px] py-[7px] bg-brand-orange cursor-pointer hover:bg-brand-deep-orange transition-colors disabled:opacity-60"
         >
           {sellEntry.loading && <Loader2 size={13} className="animate-spin" />}
-          Start Selling
+          {t('Start Selling')}
         </button>
       </div>
     );
@@ -938,7 +941,7 @@ function AccountActions({ simple = false }: { simple?: boolean }) {
         onClick={() => navigate('/login')}
         className="md:hidden text-[13px] font-medium text-white border-none rounded-md px-[10px] py-[6px] bg-brand-orange cursor-pointer hover:bg-brand-deep-orange transition-colors"
       >
-        Sign In
+        {t('Sign In')}
       </button>
     </div>
   );
@@ -990,7 +993,7 @@ function NavDropdown({ label, children }: { label: string; children: { label: st
               key={c.path}
               onClick={() => { navigate(c.path); setOpen(false); }}
               className={clsx(
-                'w-full text-left px-3.5 py-2 text-[13px] bg-transparent border-none cursor-pointer transition-colors duration-150',
+                'w-full text-start px-3.5 py-2 text-[13px] bg-transparent border-none cursor-pointer transition-colors duration-150',
                 pathname.startsWith(c.path) ? 'text-brand-orange' : 'text-charcoal hover:bg-cream hover:text-brand-orange',
               )}
             >
@@ -1146,7 +1149,7 @@ export function BuyerNavbar({ variant = 'full', contextLabel, search, accentColo
           <div className="flex-1 flex items-center justify-end">
             {backTo && (
               <Button variant="ghost" size="sm" onClick={() => navigate(backTo.path)}>
-                <ArrowLeft size={14} className="inline align-middle mr-1" />
+                <ArrowLeft size={14} className="inline align-middle me-1" />
                 {backTo.label}
               </Button>
             )}
@@ -1187,7 +1190,7 @@ export function BuyerNavbar({ variant = 'full', contextLabel, search, accentColo
               <button
                 onClick={() => setMobileSearchOpen(true)}
                 aria-label="Search"
-                className="md:hidden ml-auto shrink-0 w-9 h-9 flex items-center justify-center rounded-full text-charcoal cursor-pointer hover:bg-cream transition-colors"
+                className="md:hidden ms-auto shrink-0 w-9 h-9 flex items-center justify-center rounded-full text-charcoal cursor-pointer hover:bg-cream transition-colors"
               >
                 <Search size={16} />
               </button>
@@ -1204,17 +1207,17 @@ export function BuyerNavbar({ variant = 'full', contextLabel, search, accentColo
 
             {/* Actions — hidden on mobile while search is expanded so the input gets full width.
                With hideSearch there's no flex-1 search container to push this group to the
-               right edge, so it takes ml-auto itself in that case. `overflow-x-auto` is a
+               right edge, so it takes ms-auto itself in that case. `overflow-x-auto` is a
                safety net, not the primary fix — on a narrow phone this many icons (wishlist/
                cart/notifications/avatar/currency) plus the logo genuinely don't all fit, and
                previously the excess (usually the currency picker, being last) just rendered
                past the screen edge with no way to reach it at all. This guarantees every
                icon stays reachable by a horizontal swipe even in the tightest case. */}
-            <div className={clsx('items-center gap-1 md:gap-2.5 min-w-0 overflow-x-auto scrollbar-hide', mobileSearchOpen ? 'hidden md:flex' : 'flex', hideSearch && 'ml-auto')}>
+            <div className={clsx('items-center gap-1 md:gap-2.5 min-w-0 overflow-x-auto scrollbar-hide', mobileSearchOpen ? 'hidden md:flex' : 'flex', hideSearch && 'ms-auto')}>
               {backTo && (
                 <div className="hidden md:inline-flex">
                   <Button variant="ghost" size="sm" onClick={() => navigate(backTo.path)}>
-                    <ArrowLeft size={14} className="inline align-middle mr-1" />
+                    <ArrowLeft size={14} className="inline align-middle me-1" />
                     {backTo.label}
                   </Button>
                 </div>

@@ -1,3 +1,4 @@
+import { useT } from '@/contexts/languageCtx';
 import { useNavigate } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 import { clsx } from 'clsx';
@@ -9,6 +10,7 @@ export interface BreadcrumbItem {
 
 export function Breadcrumb({ items, className }: { items: BreadcrumbItem[]; className?: string }) {
   const navigate = useNavigate();
+  const t = useT();
 
   return (
     <nav
@@ -29,7 +31,7 @@ export function Breadcrumb({ items, className }: { items: BreadcrumbItem[]; clas
                 onClick={() => navigate(item.path!)}
                 className="text-[12px] text-slate hover:text-brand-orange bg-transparent border-none cursor-pointer p-0 font-medium transition-colors rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/30"
               >
-                {item.label}
+                {t(item.label)}
               </button>
             ) : (
               <span
@@ -38,7 +40,7 @@ export function Breadcrumb({ items, className }: { items: BreadcrumbItem[]; clas
                   isLast ? 'text-charcoal font-semibold' : 'text-slate font-medium',
                 )}
               >
-                {item.label}
+                {t(item.label)}
               </span>
             )}
           </span>

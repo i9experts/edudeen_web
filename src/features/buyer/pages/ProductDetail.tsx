@@ -9,11 +9,17 @@ import { useCartContext } from '@/contexts/CartContext';
 import { useWishlistContext } from '@/contexts/WishlistContext';
 import { useAuthGate } from '@/contexts/AuthGateContext';
 import { useToast } from '@/contexts/ToastContext';
+import { useT } from '@/contexts/languageCtx';
 import { TokenStorage } from '@/api/services/auth';
-import { apiGetAllProducts, type MarketplaceProduct, type ProductVariant } from '@/api/services/marketplace';
+import { apiGetAllProducts, apiGetProductSample, apiGetAlsoBought, type MarketplaceProduct, type ProductVariant } from '@/api/services/marketplace';
 import { apiStartConversation, apiSendMessage } from '@/api/services/messaging';
 import { apiGetPublicStoreProducts, apiGetPublicStore, apiFollowStore, apiGetFollowStatus, type PublicStoreProduct, type PublicStoreData } from '@/api/services/store';
 import { getStorePagePath } from '@/utils/storefrontUrl';
+import { apiGetProductAttributes, type ProductAttributeValue } from '@/api/services/attributes';
+import { EDUCATION_LEVELS } from '@/api/services/product';
+import { useCategoryTree, categoryPath } from '@/hooks/marketplace/useCategoryTree';
+import { ageLabel, CURRICULUM_LABEL } from '@/constants/learning';
+import { EducatorCard, hasEducatorProfile } from '@/components/comman/marketplace/EducatorCard';
 import { Button } from '@/components/comman/ui/Button';
 import { Badge } from '@/components/comman/ui/Badge';
 import { Card } from '@/components/comman/ui/Card';
@@ -26,13 +32,25 @@ import {
   ArrowRight, Package, Download, ClipboardList, CheckCircle, Minus, Plus,
   ShoppingCart, Star, Link2, Share2, Heart, ShieldCheck, Truck,
   UserPlus, UserCheck, Tag, ZoomIn, Users, Calendar, Award, Sparkles, Flame,
-  FileText, Store as StoreIcon, Eye, Loader2, Zap, MessageCircle,
+  FileText, Store as StoreIcon, Eye, Loader2, Zap, MessageCircle, ListPlus, School, MessageCircleQuestion,
 } from 'lucide-react';
 import { ProductReviewsSection } from './ProductReviews';
+import { SaveToListDialog } from '@/features/buyer/components/SaveToListDialog';
+import { QuoteRequestDialog } from '@/features/buyer/components/QuoteRequestDialog';
+import { ProductQuestions } from '@/features/buyer/components/ProductQuestions';
+import { BundleOffer } from '@/features/buyer/components/BundleOffer';
+import { CourseOrLiveInfo } from '@/features/buyer/components/CourseOrLiveInfo';
 import { currencySymbol } from '@/utils/currency';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 
 // ── Skeleton ──────────────────────────────────────────────────────────────────
+const LICENSE_LABEL: Record<string, string> = {
+  personal: 'Personal use',
+  single_classroom: 'One classroom',
+  school: 'Whole school',
+  commercial: 'Commercial',
+};
+
 function DetailSkeleton() {
   return (
     <div className="px-4 md:px-6 lg:px-10 py-6 md:py-7">
@@ -100,7 +118,7 @@ function ImageGallery({ images, name }: { images: string[]; name: string }) {
                 }}
               />
             )}
-            <span className="absolute top-3 right-3 flex items-center gap-1 px-[9px] py-[5px] rounded-full bg-black/55 text-white text-[10.5px] font-medium opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm">
+            <span className="absolute top-3 end-3 flex items-center gap-1 px-[9px] py-[5px] rounded-full bg-black/55 text-white text-[10.5px] font-medium opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm">
               <ZoomIn size={12} /> Hover to zoom
             </span>
           </>
@@ -175,6 +193,11 @@ function VariantSelector({ variants, selected, onSelect }: {
                 </button>
               ))}
             </div>
+            {name === 'License' && (
+              <p className="text-[11px] text-slate mt-[6px] leading-snug">
+                Personal use: just you. One classroom: one teacher with their students. Whole school: every teacher at your school.
+              </p>
+            )}
           </div>
         );
       })}
@@ -245,7 +268,7 @@ function RelatedCard({ id, name, image, price: nativePrice, compareAtPrice: nati
   return (
     <div
       onClick={() => onClick(id)}
-      className="relative shrink-0 w-[150px] text-left bg-white rounded-[14px] border border-bone overflow-hidden cursor-pointer group transition-all duration-200 hover:-translate-y-[3px] hover:border-brand-orange/25"
+      className="relative shrink-0 w-[150px] text-start bg-white rounded-[14px] border border-bone overflow-hidden cursor-pointer group transition-all duration-200 hover:-translate-y-[3px] hover:border-brand-orange/25"
     >
       <div className="relative h-[110px] bg-brand-pale-orange flex items-center justify-center overflow-hidden">
         {image && !errored
@@ -253,7 +276,7 @@ function RelatedCard({ id, name, image, price: nativePrice, compareAtPrice: nati
           : <ProductCoverFallback name={name} size="sm" className="w-full h-full" />}
 
         {/* Badges */}
-        <div className="absolute top-[6px] left-[6px] flex flex-col gap-1 items-start">
+        <div className="absolute top-[6px] start-[6px] flex flex-col gap-1 items-start">
           {pctOff != null && pctOff > 0 && (
             <span className="text-[9.5px] font-bold text-white bg-error px-[6px] py-[2px] rounded-md">-{pctOff}%</span>
           )}
@@ -270,7 +293,7 @@ function RelatedCard({ id, name, image, price: nativePrice, compareAtPrice: nati
             onClick={e => { e.stopPropagation(); wishlist.onToggle(); }}
             aria-label={wishlist.active ? 'Remove from wishlist' : 'Save to wishlist'}
             className={clsx(
-              'absolute top-[6px] right-[6px] w-6 h-6 rounded-full flex items-center justify-center border-0 cursor-pointer transition-opacity focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange',
+              'absolute top-[6px] end-[6px] w-6 h-6 rounded-full flex items-center justify-center border-0 cursor-pointer transition-opacity focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange',
               wishlist.active ? 'bg-white opacity-100' : 'bg-white/85 opacity-0 group-hover:opacity-100',
             )}
           >
@@ -327,6 +350,7 @@ export function ProductDetail() {
   const { isWishlisted, wishlisting, toggleWishlist } = useWishlistContext();
   const { requireAuth } = useAuthGate();
   const toast = useToast();
+  const t = useT();
 
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
   const [addedFeedback, setAddedFeedback] = useState(false);
@@ -344,9 +368,20 @@ export function ProductDetail() {
   const [sellerProductsTotal, setSellerProductsTotal] = useState(0);
   const [relatedProducts, setRelatedProducts] = useState<MarketplaceProduct[]>([]);
   const [storeData, setStoreData] = useState<PublicStoreData | null>(null);
-  const [activeTab, setActiveTab] = useState('seller');
+  const [activeTab, setActiveTab] = useState('description');
+  const [listOpen, setListOpen] = useState(false);
+  const [quoteOpen, setQuoteOpen] = useState(false);
+  const [answeredCount, setAnsweredCount] = useState<number | null>(null);
 
   const product = detail?.product ?? null;
+
+  // "#questions" (from an "answered" notification) opens the Q&A tab.
+  useEffect(() => {
+    if (!product || location.hash !== '#questions') return;
+    setActiveTab('questions');
+    const t = setTimeout(() => document.getElementById('questions')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 150);
+    return () => clearTimeout(t);
+  }, [product, location.hash]);
 
   // The backend resolves this route's :slug param by slug OR raw id (id
   // kept as a permanent fallback for old bookmarked links) — if we got here
@@ -449,6 +484,51 @@ export function ProductDetail() {
     return () => { cancelled = true; };
   }, [product?.categoryId, product?._id]);
 
+  // Category names for the breadcrumb and "Subject area".
+  const { byId: categoriesById } = useCategoryTree();
+  const subCategory = product?.subCategoryId ? categoriesById.get(product.subCategoryId)?.node ?? null : null;
+  const category = (product?.categoryId ? categoriesById.get(product.categoryId)?.node : null) ?? (product?.subCategoryId ? categoriesById.get(product.subCategoryId)?.parent : null) ?? null;
+  const gradeLabel = product?.educationLevel
+    ? (product.educationLevel === 'other' ? product.customLevel : EDUCATION_LEVELS.find(l => l.value === product.educationLevel)?.label) ?? null
+    : null;
+
+  // What other teachers bought alongside this one.
+  const [alsoBought, setAlsoBought] = useState<{ basis: 'bought_together' | 'similar'; products: MarketplaceProduct[] }>({ basis: 'similar', products: [] });
+  useEffect(() => {
+    if (!product?._id) return;
+    let cancelled = false;
+    apiGetAlsoBought(product._id, 8)
+      .then(res => { if (!cancelled) setAlsoBought(res.data ?? { basis: 'similar', products: [] }); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [product?._id]);
+
+  // Free sample: the link is short-lived, so it's fetched on click.
+  const [sampleBusy, setSampleBusy] = useState(false);
+  async function openSample() {
+    if (!product) return;
+    setSampleBusy(true);
+    try {
+      const res = await apiGetProductSample(product._id);
+      window.open(res.data.url, '_blank', 'noopener');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not open the sample.');
+    } finally {
+      setSampleBusy(false);
+    }
+  }
+
+  // Seller-filled category fields (subject, format, language, …).
+  const [attributes, setAttributes] = useState<ProductAttributeValue[]>([]);
+  useEffect(() => {
+    if (!product?._id) return;
+    let cancelled = false;
+    apiGetProductAttributes(product._id)
+      .then(res => { if (!cancelled) setAttributes(res.data ?? []); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [product?._id]);
+
   function handleFollow() {
     if (!storeId || followBusy) return;
     requireAuth(async () => {
@@ -510,14 +590,26 @@ export function ProductDetail() {
     } catch { /* clipboard unavailable */ }
   }
 
+  // What a teacher or parent checks first: who it's for, what subject, what format.
+  const learningDetails: { label: string; value: string }[] = product ? [
+    ...(gradeLabel ? [{ label: 'Grade / level', value: gradeLabel }] : []),
+    ...(ageLabel(product.ageMin, product.ageMax) ? [{ label: 'Suitable for', value: ageLabel(product.ageMin, product.ageMax)! }] : []),
+    ...(product.curricula?.length ? [{ label: 'Exam board', value: product.curricula.map(c => CURRICULUM_LABEL[c] ?? c).join(', ') }] : []),
+    ...(subCategory ? [{ label: 'Subject area', value: subCategory.name }] : category ? [{ label: 'Subject area', value: category.name }] : []),
+    ...attributes.filter(a => a.values.length).map(a => ({ label: a.label, value: a.values.join(', ') })),
+    ...(isDigital && product.digital?.fileCount ? [{ label: 'Files', value: `${product.digital.fileCount} file${product.digital.fileCount > 1 ? 's' : ''}` }] : []),
+    // The license the buyer has picked, if the seller offers several.
+    ...(product.digital?.licenseType ? [{ label: 'License', value: activeVariant?.options?.find(o => o.name === 'License')?.value ?? LICENSE_LABEL[product.digital.licenseType] ?? product.digital.licenseType }] : []),
+    ...(product.digital?.downloadLimit ? [{ label: 'Downloads', value: product.digital.downloadLimit === 'unlimited' ? 'Unlimited' : `${product.digital.downloadLimit} times` }] : []),
+    { label: 'Delivery', value: isDigital ? 'Instant download' : 'Shipped by the seller' },
+  ] : [];
+
   const specs: { label: string; value: string }[] = product ? [
     { label: 'Product Type', value: typeLabel },
+    ...learningDetails.filter(d => d.label !== 'Delivery'),
     ...(activeVariant?.sku ? [{ label: 'SKU', value: activeVariant.sku }] : []),
     ...(activeVariant?.options ?? []).map(o => ({ label: o.name, value: o.value })),
     ...(activeVariant?.shippingWeight ? [{ label: 'Weight', value: activeVariant.shippingWeight }] : []),
-    ...(product.digital?.licenseType ? [{ label: 'License', value: product.digital.licenseType }] : []),
-    ...(product.digital?.downloadLimit ? [{ label: 'Download Limit', value: String(product.digital.downloadLimit) }] : []),
-    { label: 'Status', value: product.status },
   ] : [];
 
   return (
@@ -540,7 +632,8 @@ export function ProductDetail() {
         <div className="px-4 md:px-6 lg:px-10 py-6 md:py-8 pb-[92px] lg:pb-8">
           <Breadcrumb className="mb-4" items={[
             { label: 'Home', path: '/' },
-            { label: 'Home', path: '/' },
+            ...(category ? [{ label: category.name, path: categoryPath(category) }] : []),
+            ...(subCategory ? [{ label: subCategory.name, path: categoryPath(subCategory) }] : []),
             { label: product.name },
           ]} />
 
@@ -622,16 +715,29 @@ export function ProductDetail() {
                       : 'border-[#cfeeda] bg-success-bg text-success',
                   )}>
                     <CheckCircle size={13} />
-                    {stock <= 0 ? 'Out of stock' : isDigital ? 'Available — instant delivery' : stock <= 5 ? `Only ${stock} left in stock` : 'In stock'}
+                    {stock <= 0 ? 'Out of stock' : isDigital ? t('Available — instant delivery') : stock <= 5 ? `Only ${stock} left in stock` : 'In stock'}
                   </div>
 
-                  {isDigital && product.digital?.previewAvailable && (
-                    <Button
-                      variant="outline" size="md" fullWidth className="justify-center mb-3"
-                      onClick={() => { setPreviewOpen(true); loadPreview(); }}
-                    >
-                      <Eye size={14} className="inline align-middle mr-[6px]" /> Preview before you buy
-                    </Button>
+                  {isDigital && (product.digital?.previewAvailable || product.digital?.sampleAvailable) && (
+                    <div className="flex gap-2 mb-3">
+                      {product.digital?.previewAvailable && (
+                        <Button
+                          variant="outline" size="md" fullWidth className="justify-center flex-1"
+                          onClick={() => { setPreviewOpen(true); loadPreview(); }}
+                        >
+                          <Eye size={14} className="inline align-middle me-[6px]" /> {t('Preview')}
+                        </Button>
+                      )}
+                      {product.digital?.sampleAvailable && (
+                        <Button
+                          variant="outline" size="md" fullWidth className="justify-center flex-1"
+                          loading={sampleBusy}
+                          onClick={openSample}
+                        >
+                          <Download size={14} className="inline align-middle me-[6px]" /> {t('Free sample')}
+                        </Button>
+                      )}
+                    </div>
                   )}
 
                   <VariantSelector variants={variants} selected={activeVariant} onSelect={setSelectedVariant} />
@@ -650,7 +756,7 @@ export function ProductDetail() {
                       disabled={stock <= 0} loading={adding === activeVariant?._id}
                       onClick={() => handleAddToCart(true)}
                     >
-                      {stock <= 0 ? 'Out of Stock' : <>Buy Now <ArrowRight size={14} className="inline align-middle ml-[6px]" />{displayPrice != null ? ` ${displaySymbol}${(displayPrice * qty).toLocaleString()}` : ''}</>}
+                      {stock <= 0 ? t('Out of Stock') : <>{t('Buy Now')} <ArrowRight size={14} className="inline align-middle ms-[6px]" />{displayPrice != null ? ` ${displaySymbol}${(displayPrice * qty).toLocaleString()}` : ''}</>}
                     </Button>
                     <div className="flex gap-2">
                       <Button
@@ -658,7 +764,7 @@ export function ProductDetail() {
                         disabled={stock <= 0} loading={adding === activeVariant?._id}
                         onClick={() => handleAddToCart(false)}
                       >
-                        {stock <= 0 ? 'Out of Stock' : addedFeedback ? '✓ Added to Cart' : <><ShoppingCart size={14} /> Add to Cart</>}
+                        {stock <= 0 ? t('Out of Stock') : addedFeedback ? t('✓ Added to Cart') : <><ShoppingCart size={14} /> {t('Add to Cart')}</>}
                       </Button>
                       {product && activeVariant && (() => {
                         const wishlisted = isWishlisted(product._id, activeVariant._id);
@@ -679,6 +785,16 @@ export function ProductDetail() {
                           </button>
                         );
                       })()}
+                      {product && (
+                        <button
+                          onClick={() => requireAuth(() => setListOpen(true), 'Sign in to save this to a list.')}
+                          title="Save to a list"
+                          aria-label="Save to a list"
+                          className="w-10 flex-shrink-0 rounded-[10px] flex items-center justify-center border-[1.5px] border-bone bg-white cursor-pointer text-slate hover:text-brand-orange hover:border-brand-orange/40 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange"
+                        >
+                          <ListPlus size={16} />
+                        </button>
+                      )}
                       <button
                         onClick={handleShare}
                         title="Share this listing"
@@ -695,7 +811,15 @@ export function ProductDetail() {
                         className="flex items-center justify-center gap-[6px] py-2 text-[12.5px] font-medium text-slate hover:text-brand-orange transition-colors cursor-pointer bg-transparent border-none disabled:opacity-60"
                       >
                         {askSellerBusy ? <Loader2 size={13} className="animate-spin" /> : <MessageCircle size={13} />}
-                        Ask the seller a question
+                        {t('Ask the seller a question')}
+                      </button>
+                    )}
+                    {storeId && (
+                      <button
+                        onClick={() => requireAuth(() => setQuoteOpen(true), 'Sign in to request a school price.')}
+                        className="flex items-center justify-center gap-[6px] rounded-[10px] border border-dashed border-brand-orange/40 bg-brand-pale-orange/30 py-2 text-[12.5px] font-semibold text-brand-orange hover:bg-brand-pale-orange/60 transition-colors cursor-pointer"
+                      >
+                        <School size={14} /> {t('Buying for a school? Get a bulk price')}
                       </button>
                     )}
                   </div>
@@ -707,8 +831,8 @@ export function ProductDetail() {
                         <ShieldCheck size={14} className="text-brand-orange" />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-[11.5px] font-semibold text-charcoal leading-tight truncate">Secure checkout</p>
-                        <p className="text-[10px] text-slate mt-[1px] truncate">Pay safely through Edudeen</p>
+                        <p className="text-[11.5px] font-semibold text-charcoal leading-tight truncate">{t('Secure checkout')}</p>
+                        <p className="text-[10px] text-slate mt-[1px] truncate">{t('Pay safely through Edudeen')}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-[8px] min-w-0">
@@ -716,8 +840,8 @@ export function ProductDetail() {
                         <Truck size={14} className="text-brand-orange" />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-[11.5px] font-semibold text-charcoal leading-tight truncate">{isDigital ? 'Instant delivery' : 'Shipped by the seller'}</p>
-                        <p className="text-[10px] text-slate mt-[1px] truncate">{isDigital ? 'Download right after purchase' : 'Track it from My Orders'}</p>
+                        <p className="text-[11.5px] font-semibold text-charcoal leading-tight truncate">{isDigital ? t('Instant delivery') : t('Shipped by the seller')}</p>
+                        <p className="text-[10px] text-slate mt-[1px] truncate">{isDigital ? t('Download right after purchase') : t('Track it from My Orders')}</p>
                       </div>
                     </div>
                   </div>
@@ -726,16 +850,20 @@ export function ProductDetail() {
             </div>
           </div>
 
+          {product && <CourseOrLiveInfo product={product} />}
+          {product && <BundleOffer productId={product._id} />}
+
           {/* ── Description / Specifications / Seller / Shipping tabs ──────────── */}
             <div className="bg-white rounded-2xl border border-bone overflow-hidden mb-6">
               <TabBar
                 className="px-3"
                 dense
                 tabs={[
-                  { id: 'seller', label: 'Seller', icon: <StoreIcon size={12} /> },
-                  { id: 'description', label: 'Description', icon: <FileText size={12} /> },
-                  { id: 'specs', label: 'Specs', icon: <ClipboardList size={12} /> },
-                  { id: 'shipping', label: 'Shipping', icon: <Truck size={12} /> },
+                  { id: 'description', label: t('Description'), icon: <FileText size={12} /> },
+                  { id: 'specs', label: t('Details'), icon: <ClipboardList size={12} /> },
+                  { id: 'questions', label: answeredCount ? `${t('Questions')} (${answeredCount})` : t('Questions'), icon: <MessageCircleQuestion size={12} /> },
+                  { id: 'seller', label: t('Seller'), icon: <StoreIcon size={12} /> },
+                  { id: 'shipping', label: isDigital ? t('Delivery') : t('Shipping'), icon: <Truck size={12} /> },
                 ]}
                 active={activeTab}
                 onChange={setActiveTab}
@@ -744,7 +872,17 @@ export function ProductDetail() {
               <div className="p-6">
                 {activeTab === 'description' && (
                   <div>
-                    <p className="text-[13px] text-slate leading-[1.8] mb-4">{product.description || 'No description available.'}</p>
+                    {learningDetails.length > 1 && (
+                      <dl className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-3 rounded-xl border border-bone bg-cream/60 px-4 py-3 mb-5">
+                        {learningDetails.map(d => (
+                          <div key={d.label} className="min-w-0">
+                            <dt className="text-[10.5px] font-semibold uppercase tracking-[0.06em] text-slate">{t(d.label)}</dt>
+                            <dd className="text-[13px] font-semibold text-carbon mt-[2px] break-words">{d.value}</dd>
+                          </div>
+                        ))}
+                      </dl>
+                    )}
+                    <p className="text-[13px] text-slate leading-[1.8] mb-4 whitespace-pre-line">{product.description || 'No description available.'}</p>
                     {(product.tags?.length ?? 0) > 0 && (
                       <div className="flex flex-wrap gap-[6px]">
                         {product.tags!.map(tag => (
@@ -767,6 +905,11 @@ export function ProductDetail() {
                     ))}
                   </dl>
                 )}
+
+                {/* Kept mounted so the tab label can show the answered count. */}
+                <div hidden={activeTab !== 'questions'}>
+                  <ProductQuestions productId={product._id} onCount={setAnsweredCount} />
+                </div>
 
                 {activeTab === 'seller' && (
                   <div>
@@ -801,7 +944,7 @@ export function ProductDetail() {
                       </div>
                       <div className="flex gap-2 shrink-0 pt-8">
                         <Button variant="secondary" size="sm" disabled={!product.storeSlug} onClick={() => product.storeSlug && (navigate(getStorePagePath(product.storeSlug)))}>
-                          Visit Store <ArrowRight size={13} className="inline align-middle ml-1" />
+                          Visit Store <ArrowRight size={13} className="inline align-middle ms-1" />
                         </Button>
                         {storeId && (
                           <Button
@@ -814,6 +957,11 @@ export function ProductDetail() {
                       </div>
                     </div>
 
+                    {hasEducatorProfile(storeData?.educatorProfile) && (
+                      <div className="mb-5">
+                        <EducatorCard compact profile={storeData.educatorProfile} verified={(storeData.badges ?? []).includes('verified_educator')} name={storeData.name ?? product.sellerName ?? 'Seller'} />
+                      </div>
+                    )}
                     <div className="grid grid-cols-3 gap-2 mb-5">
                       <div className="rounded-xl bg-cream border border-bone p-3 text-center">
                         <Users size={14} className="text-brand-orange mx-auto mb-1" />
@@ -865,9 +1013,26 @@ export function ProductDetail() {
             <ProductReviewsSection productId={product._id} storeName={product.sellerName} />
           </div>
 
+          {/* ── Bought together ──────────────────────────────────────────────── */}
+          {alsoBought.products.length > 0 && (
+            <ProductRail title={alsoBought.basis === 'bought_together' ? t('Teachers who bought this also bought') : `More for ${gradeLabel ?? 'this level'}`}>
+              {alsoBought.products.map(p => {
+                const dv = (p.variants ?? []).find(v => v.isDefault) ?? p.variants?.[0];
+                return (
+                  <RelatedCard
+                    key={p._id} id={p.slug} name={p.name} image={p.images?.[0] ?? null}
+                    price={dv?.price ?? null} compareAtPrice={dv?.compareAtPrice ?? null} currency={dv?.currency}
+                    rating={p.averageRating} reviewCount={p.totalRatings} sold={p.purchaseCount}
+                    onClick={slug => navigate(`/product/${slug}`)}
+                  />
+                );
+              })}
+            </ProductRail>
+          )}
+
           {/* ── More from this Seller ────────────────────────────────────────── */}
           {sellerProducts.length > 0 && (
-            <ProductRail title="More from this Seller">
+            <ProductRail title={t('More from this Seller')}>
               {sellerProducts.map(p => (
                 <RelatedCard
                   key={p._id} id={p.slug} name={p.name} image={p.images?.[0] ?? null}
@@ -890,7 +1055,7 @@ export function ProductDetail() {
             const topSeller = relatedProducts.reduce((max, p) => p.purchaseCount > max ? p.purchaseCount : max, 0);
             const fourteenDaysAgo = Date.now() - 14 * 24 * 60 * 60 * 1000;
             return (
-              <ProductRail title="Related Products">
+              <ProductRail title={t('Related Products')}>
                 {relatedProducts.map(p => {
                   const dv = (p.variants ?? []).find(v => v.isDefault) ?? p.variants?.[0];
                   const wishlisted = dv ? isWishlisted(p._id, dv._id) : false;
@@ -931,11 +1096,14 @@ export function ProductDetail() {
             disabled={stock <= 0} loading={adding === activeVariant._id}
             onClick={() => handleAddToCart(false)}
           >
-            {stock <= 0 ? 'Out of Stock' : addedFeedback ? '✓ Added to Cart' : <><ShoppingCart size={14} /> Add to Cart</>}
+            {stock <= 0 ? t('Out of Stock') : addedFeedback ? t('✓ Added to Cart') : <><ShoppingCart size={14} /> {t('Add to Cart')}</>}
           </Button>
         </div>
       )}
 
+
+      {listOpen && product && <SaveToListDialog productId={product._id} productName={product.name} onClose={() => setListOpen(false)} />}
+      {quoteOpen && product && <QuoteRequestDialog productId={product._id} productName={product.name} onClose={() => setQuoteOpen(false)} />}
 
       {previewOpen && (
         <Modal title="Preview" onClose={() => { setPreviewOpen(false); resetPreview(); }} width={560} mobileSheet>

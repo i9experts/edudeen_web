@@ -125,9 +125,9 @@ function OrderTimeline({ currentStatus }: { currentStatus: string }) {
       <h3 className="text-[11px] font-bold text-slate uppercase tracking-[0.07em] mb-4">Order Progress</h3>
       <div className="relative flex items-start justify-between">
         {/* track line */}
-        <div className="absolute top-[13px] left-[13px] right-[13px] h-[2px] bg-bone rounded-full" />
+        <div className="absolute top-[13px] start-[13px] end-[13px] h-[2px] bg-bone rounded-full" />
         <div
-          className="absolute top-[13px] left-[13px] h-[2px] bg-success rounded-full transition-all duration-500"
+          className="absolute top-[13px] start-[13px] h-[2px] bg-success rounded-full transition-all duration-500"
           style={{ width: `${(activeIdx / (TIMELINE_STEPS.length - 1)) * 100}%` }}
         />
         {TIMELINE_STEPS.map(({ icon: Icon, label }, i) => {
@@ -250,7 +250,7 @@ function SuccessHero({ orders }: { orders: PlacedOrder[] }) {
         <div className="w-[72px] h-[72px] rounded-full bg-success-bg flex items-center justify-center">
           <CheckCircle2 size={38} className="text-success" />
         </div>
-        <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-brand-orange flex items-center justify-center">
+        <div className="absolute -top-1 -end-1 w-6 h-6 rounded-full bg-brand-orange flex items-center justify-center">
           <span className="text-white text-[10px] font-bold">{orders.length}</span>
         </div>
       </div>

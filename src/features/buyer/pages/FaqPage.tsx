@@ -19,7 +19,7 @@ function FaqAccordionItem({ question, answer }: { question: string; answer: stri
         onClick={() => setOpen(o => !o)}
         aria-expanded={open}
         aria-controls={id}
-        className="w-full flex items-center justify-between gap-4 py-[18px] text-left bg-transparent border-none cursor-pointer group"
+        className="w-full flex items-center justify-between gap-4 py-[18px] text-start bg-transparent border-none cursor-pointer group"
       >
         <span className={clsx('text-[14px] font-semibold transition-colors', open ? 'text-brand-orange' : 'text-carbon group-hover:text-brand-orange')}>
           {question}
@@ -35,7 +35,7 @@ function FaqAccordionItem({ question, answer }: { question: string; answer: stri
           conditional mount, and the answer stays in the DOM either way. */}
       <div className={clsx('grid transition-[grid-template-rows] duration-300 ease-out', open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]')}>
         <div className="overflow-hidden">
-          <p id={id} className="text-[13px] text-slate leading-[1.75] pb-5 pr-9">{answer}</p>
+          <p id={id} className="text-[13px] text-slate leading-[1.75] pb-5 pe-9">{answer}</p>
         </div>
       </div>
     </div>

@@ -48,19 +48,11 @@
   --color-info:       #1A72C2;
   --color-info-bg:    #E6F1FB;
 
-  /* ── POS Dark Theme — 4-level elevation scale (0 = page → 3 = floating) ── */
-  --color-pos-bg:            #0F0E0D;  /* level 0 — page background */
-  --color-pos-surface:       #1A1918;  /* level 1 — resting cards (product tiles) */
-  --color-pos-surface-2:     #211F1C;  /* level 2 — raised panels (top bar, cart, footers) */
-  --color-pos-surface-3:     #2A2723;  /* level 3 — floating (modals, overlays, receipts) */
-  --color-pos-border:        #2C2A28;
-  --color-pos-border-strong: #3B3733;
+  /* Muted grey used by the admin login screen. */
   --color-pos-muted:         #5C5A58;
-  --color-pos-faint:         #6A6866;
 
-  /* ── Admin Theme — mirrors the POS elevation scale (same dark-dashboard
-     shape: page → resting → raised → floating) so admin dark surfaces stop
-     having to either borrow POS tokens out of context or hardcode hex. ── */
+  /* ── Admin Theme — dark-dashboard elevation scale
+     (page → resting → raised → floating). ── */
   --color-admin-bg:            #0F0E0D;  /* level 0 — page background */
   --color-admin-surface:       #1A1918;  /* level 1 — resting cards */
   --color-admin-surface-2:     #211F1C;  /* level 2 — raised panels (toolbars, headers) */
@@ -321,10 +313,6 @@
 ::-webkit-scrollbar-track { background: var(--color-bone); }
 ::-webkit-scrollbar-thumb { background: var(--color-slate); border-radius: 2px; }
 
-/* ── POS Dark scrollbar ── */
-.pos-dark ::-webkit-scrollbar-track { background: #2C2A28; }
-.pos-dark ::-webkit-scrollbar-thumb { background: #5C5A58; }
-
 /* ── Hidden scrollbar utility ── */
 .scrollbar-hide { scrollbar-width: none; -ms-overflow-style: none; }
 .scrollbar-hide::-webkit-scrollbar { display: none; }
@@ -354,23 +342,6 @@
   background-size: 1.2em 1.2em;
 }
 
-/* ── POS Motion Utilities (structure only — no color) ── */
-@keyframes pos-overlay-fade-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-@keyframes pos-panel-enter {
-  from { opacity: 0; transform: scale(0.96) translateY(8px); }
-  to   { opacity: 1; transform: scale(1) translateY(0); }
-}
-@keyframes pos-item-enter {
-  from { opacity: 0; transform: translateY(-4px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-.pos-overlay-enter { animation: pos-overlay-fade-in 180ms var(--ease-out); }
-.pos-panel-enter { animation: pos-panel-enter 220ms var(--ease-out); }
-.pos-item-enter { animation: pos-item-enter 180ms var(--ease-out); }
-
 /* Animated "Live" status ring — a soft pulsing halo behind a solid status dot.
    Uses an animated outline (not box-shadow) so the ring never reads as elevation. */
 @keyframes pos-live-pulse {
@@ -379,28 +350,6 @@
   100% { outline: 2px solid rgba(45,138,78,0); outline-offset: 6px; }
 }
 .pos-live-pulse { animation: pos-live-pulse 2.2s ease-out infinite; }
-
-/* Shimmering skeleton — replaces flat animate-pulse for POS loading states */
-@keyframes pos-skeleton-shimmer {
-  0%   { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-.pos-skeleton {
-  background: linear-gradient(100deg, var(--color-pos-surface) 30%, #262420 50%, var(--color-pos-surface) 70%);
-  background-size: 250% 100%;
-  animation: pos-skeleton-shimmer 1.8s ease-in-out infinite;
-}
-
-/* Shared hover-lift for POS surfaces (product tiles, cards) — one definition
-   instead of repeating the same transform/border utility combo everywhere.
-   Depth comes from the translate + border intensification, never a shadow. */
-.pos-surface-hover {
-  transition: transform 200ms var(--ease-out), border-color 200ms var(--ease-out);
-}
-.pos-surface-hover:hover {
-  transform: translateY(-2px);
-  border-color: var(--color-pos-border-strong);
-}
 
 /* ── Shared dropdown / panel / drawer motion (Navbar previews, mini cart, popups) ── */
 @keyframes dropdown-enter {
@@ -666,3 +615,68 @@
   100% { transform: scale(1); }
 }
 .filter-check-pop { animation: filter-check-pop 200ms var(--ease-out); }
+
+/* ── Urdu interface (LanguageContext) ──────────────────────────────────────
+   "Edudeen Urdu" only covers Arabic-script characters (unicode-range), so in
+   Urdu mode English words, numbers and prices keep the normal Arial/Georgia
+   faces and nothing changes size. The overrides keep Urdu lines the same
+   height as English ones, so switching language doesn't move the layout. */
+@font-face {
+  font-family: 'Edudeen Urdu';
+  font-style: normal;
+  font-weight: 400 500;
+  font-display: swap;
+  src: url('./assets/fonts/noto-naskh-arabic-arabic-400-normal.woff2') format('woff2');
+  unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF, U+200C-200F;
+  size-adjust: 112%;
+  ascent-override: 92%;
+  descent-override: 32%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: 'Edudeen Urdu';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('./assets/fonts/noto-naskh-arabic-arabic-600-normal.woff2') format('woff2');
+  unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF, U+200C-200F;
+  size-adjust: 112%;
+  ascent-override: 92%;
+  descent-override: 32%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: 'Edudeen Urdu';
+  font-style: normal;
+  font-weight: 700 900;
+  font-display: swap;
+  src: url('./assets/fonts/noto-naskh-arabic-arabic-700-normal.woff2') format('woff2');
+  unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF, U+200C-200F;
+  size-adjust: 112%;
+  ascent-override: 92%;
+  descent-override: 32%;
+  line-gap-override: 0%;
+}
+.font-urdu { font-family: 'Edudeen Urdu', var(--font-sans); }
+.lang-ur body { font-family: 'Edudeen Urdu', var(--font-sans); }
+.lang-ur .font-serif { font-family: 'Edudeen Urdu', var(--font-serif); }
+/* Uppercase + wide letter-spacing breaks joined Urdu letters apart. */
+.lang-ur .uppercase { text-transform: none; }
+.lang-ur [class*="tracking-"] { letter-spacing: 0; }
+/* Arrows and chevrons point the reading direction. */
+[dir='rtl'] .lucide-arrow-right,
+[dir='rtl'] .lucide-arrow-left,
+[dir='rtl'] .lucide-chevron-right,
+[dir='rtl'] .lucide-chevron-left,
+[dir='rtl'] .lucide-chevrons-right,
+[dir='rtl'] .lucide-chevrons-left,
+[dir='rtl'] .lucide-arrow-up-right,
+[dir='rtl'] .lucide-move-right { transform: scaleX(-1); }
+/* Emails, links, phone numbers and amounts typed into forms stay left-to-right. */
+[dir='rtl'] input[type='email'],
+[dir='rtl'] input[type='url'],
+[dir='rtl'] input[type='tel'],
+[dir='rtl'] input[type='number'],
+[dir='rtl'] input[type='password'] { direction: ltr; text-align: right; }
+/* A chevron that rotates to show 'open' already points the right way. */
+[dir='rtl'] [class*='lucide-chevron'][class*='rotate-'] { transform: none; }

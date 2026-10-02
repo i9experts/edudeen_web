@@ -16,7 +16,7 @@ function BrowserChrome({ label }: { label: string }) {
       <span className="size-[7px] rounded-full bg-[#e5675b]" />
       <span className="size-[7px] rounded-full bg-[#66AD36]" />
       <span className="size-[7px] rounded-full bg-[#59c26a]" />
-      <span className="ml-2 text-[10px] text-slate truncate">{label}</span>
+      <span className="ms-2 text-[10px] text-slate truncate">{label}</span>
     </div>
   );
 }
@@ -304,9 +304,9 @@ export function OrdersTimelinePreview({ className }: { className?: string }) {
         </div>
 
         <div className="relative flex items-center justify-between mb-5 px-1">
-          <div className="absolute left-0 right-0 top-[9px] h-[2px] bg-bone" />
+          <div className="absolute start-0 end-0 top-[9px] h-[2px] bg-bone" />
           <motion.div
-            className="absolute left-0 top-[9px] h-[2px] bg-brand-orange"
+            className="absolute start-0 top-[9px] h-[2px] bg-brand-orange"
             animate={{ width: `${(stageIndex / (ORDER_STAGES.length - 1)) * 100}%` }}
             transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
           />

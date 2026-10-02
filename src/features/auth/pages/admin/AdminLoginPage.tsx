@@ -61,10 +61,10 @@ export function AdminLoginPage() {
       accentIconClass="text-error"
       visual={<AdminControlMockup />}
     >
-      <h1 className="text-[22px] font-bold text-carbon mb-1.5 text-center lg:text-left">
+      <h1 className="text-[22px] font-bold text-carbon mb-1.5 text-center lg:text-start">
         Admin Sign In
       </h1>
-      <p className="text-[13px] text-slate mb-6 text-center lg:text-left">
+      <p className="text-[13px] text-slate mb-6 text-center lg:text-start">
         Access the Edudeen admin panel
       </p>
 

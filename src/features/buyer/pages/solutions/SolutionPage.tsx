@@ -79,7 +79,7 @@ export function SolutionPage() {
           <Reveal delay={0.24}>
             <MagneticButton>
               <Button size="lg" onClick={sellEntry.go} loading={sellEntry.loading}>
-                Start Selling Free <ArrowRight size={14} className="inline align-middle ml-1" />
+                Start Selling Free <ArrowRight size={14} className="inline align-middle ms-1" />
               </Button>
             </MagneticButton>
           </Reveal>
@@ -98,7 +98,7 @@ export function SolutionPage() {
             ))}
           </div>
           <Button variant="outline" className="mt-6" onClick={() => navigate('/products')}>
-            See every product <ArrowRight size={14} className="inline align-middle ml-1" />
+            See every product <ArrowRight size={14} className="inline align-middle ms-1" />
           </Button>
         </Reveal>
         <Reveal delay={0.1}>
@@ -138,7 +138,7 @@ export function SolutionPage() {
         <Reveal>
           <MagneticButton>
             <Button size="lg" onClick={sellEntry.go} loading={sellEntry.loading}>
-              Start Selling Free <ArrowRight size={14} className="inline align-middle ml-1" />
+              Start Selling Free <ArrowRight size={14} className="inline align-middle ms-1" />
             </Button>
           </MagneticButton>
         </Reveal>

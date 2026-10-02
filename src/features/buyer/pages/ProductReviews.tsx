@@ -56,7 +56,7 @@ function ReviewLightbox({ images, startIndex, onClose }: { images: string[]; sta
         <button
           onClick={onClose}
           aria-label="Close"
-          className="absolute -top-11 right-0 w-8 h-8 flex items-center justify-center rounded-lg bg-white/10 text-white border-0 cursor-pointer hover:bg-white/20 transition-colors"
+          className="absolute -top-11 end-0 w-8 h-8 flex items-center justify-center rounded-lg bg-white/10 text-white border-0 cursor-pointer hover:bg-white/20 transition-colors"
         >
           <X size={18} />
         </button>
@@ -66,14 +66,14 @@ function ReviewLightbox({ images, startIndex, onClose }: { images: string[]; sta
             <button
               onClick={() => go(-1)}
               aria-label="Previous image"
-              className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white flex items-center justify-center border-0 cursor-pointer hover:bg-cream transition-colors"
+              className="absolute start-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white flex items-center justify-center border-0 cursor-pointer hover:bg-cream transition-colors"
             >
               <ChevronLeft size={18} />
             </button>
             <button
               onClick={() => go(1)}
               aria-label="Next image"
-              className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white flex items-center justify-center border-0 cursor-pointer hover:bg-cream transition-colors"
+              className="absolute end-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white flex items-center justify-center border-0 cursor-pointer hover:bg-cream transition-colors"
             >
               <ChevronRight size={18} />
             </button>
@@ -141,7 +141,7 @@ function RatingSummaryCard({
           </div>
         </div>
 
-        <div className="flex-1 flex flex-col gap-[7px] min-w-0 lg:border-l lg:border-bone lg:pl-8">
+        <div className="flex-1 flex flex-col gap-[7px] min-w-0 lg:border-s lg:border-bone lg:ps-8">
           {(['5', '4', '3', '2', '1'] as const).map(star => {
             const count = stats.ratingBreakdown[star] ?? 0;
             const pct = stats.totalReviews > 0 ? Math.round((count / stats.totalReviews) * 100) : 0;
@@ -152,14 +152,14 @@ function RatingSummaryCard({
                 onClick={() => onSelectRating(Number(star))}
                 className="flex items-center gap-2 bg-transparent border-0 cursor-pointer p-0 group"
               >
-                <span className={`text-[12px] w-9 text-left shrink-0 ${active ? 'font-bold text-brand-orange' : 'text-graphite'}`}>{star} ★</span>
+                <span className={`text-[12px] w-9 text-start shrink-0 ${active ? 'font-bold text-brand-orange' : 'text-graphite'}`}>{star} ★</span>
                 <div className="flex-1 h-2 rounded-full bg-[#eee9df] overflow-hidden">
                   <div
                     className={`h-full rounded-full transition-[width] duration-300 ${active ? 'bg-gradient-to-r from-brand-orange to-[#f59e0b]' : 'bg-[#d9d6cc] group-hover:bg-brand-orange/60'}`}
                     style={{ width: `${pct}%` }}
                   />
                 </div>
-                <span className="text-[11px] text-slate w-7 text-right shrink-0">{count}</span>
+                <span className="text-[11px] text-slate w-7 text-end shrink-0">{count}</span>
               </button>
             );
           })}
@@ -267,7 +267,7 @@ function ReviewCard({ review: r, storeName, onToggleHelpful, onEdit, onDelete, o
       )}
 
       {r.sellerReply && (
-        <div className="mt-3 ml-2 pl-3 border-l-[3px] border-brand-orange/30">
+        <div className="mt-3 ms-2 ps-3 border-s-[3px] border-brand-orange/30">
           <div className="flex items-center gap-[6px] mb-1">
             <div className="w-5 h-5 rounded-full bg-bone flex items-center justify-center shrink-0">
               <Store size={11} className="text-graphite" />

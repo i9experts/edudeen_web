@@ -90,7 +90,7 @@ export function StoreBadgeChip({ platform, compact = false }: { platform: 'ios' 
       {compact ? (
         <p className="text-[10.5px] font-semibold text-white leading-none">{isIos ? 'App Store' : 'Google Play'}</p>
       ) : (
-        <div className="text-left leading-none">
+        <div className="text-start leading-none">
           <p className="text-[7.5px] text-white/60 mb-[2px]">{isIos ? 'Download on the' : 'GET IT ON'}</p>
           <p className="text-[12.5px] font-bold text-white leading-none">{isIos ? 'App Store' : 'Google Play'}</p>
         </div>

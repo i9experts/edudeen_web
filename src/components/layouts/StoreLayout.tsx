@@ -6,7 +6,7 @@ import type { LucideIcon } from 'lucide-react';
 import {
   LayoutDashboard, Package, ShoppingBag, Users, BarChart2,
   Settings, Sparkles, ChevronLeft, ChevronRight, Store,
-  Megaphone, Star, Search, Wallet,
+  Megaphone, Star, Search, Wallet, FileSpreadsheet, MessageCircleQuestion, Package2,
   MessageSquare, FolderTree, RefreshCw, Undo2, CreditCard,
   PanelLeftClose, PanelLeftOpen, AlertTriangle, AlertCircle, XCircle, Clock, LogOut, Layers, UserRound,
 } from 'lucide-react';
@@ -43,6 +43,7 @@ export const NAV: { group: string; items: NavItem[] }[] = [
     items: [
       { id: 'orders',   Icon: Package,  label: 'Orders',       path: 'orders'  },
       { id: 'returns',  Icon: Undo2,    label: 'Returns',       path: 'returns' },
+      { id: 'quotes',   Icon: FileSpreadsheet, label: 'School Quotes', path: 'quotes' },
     ],
   },
   {
@@ -51,6 +52,7 @@ export const NAV: { group: string; items: NavItem[] }[] = [
       { id: 'products',      Icon: ShoppingBag,   label: 'Products',      path: 'products'     },
       { id: 'categories',    Icon: FolderTree,    label: 'Categories',    path: 'categories'   },
       { id: 'collections',   Icon: Layers,        label: 'Collections',   path: 'collections'  },
+      { id: 'bundles',       Icon: Package2,      label: 'Bundles',       path: 'bundles'      },
       { id: 'store-builder', Icon: Store,         label: 'Customize Store', path: 'storebuilder' },
     ],
   },
@@ -59,6 +61,7 @@ export const NAV: { group: string; items: NavItem[] }[] = [
     items: [
       { id: 'customers', Icon: Users,          label: 'Customers', path: 'customer/list' },
       { id: 'reviews',   Icon: Star,           label: 'Reviews',   path: 'reviews'        },
+      { id: 'questions', Icon: MessageCircleQuestion, label: 'Questions', path: 'questions'   },
       { id: 'messages',  Icon: MessageSquare,  label: 'Messages',  path: 'messages'       },
     ],
   },

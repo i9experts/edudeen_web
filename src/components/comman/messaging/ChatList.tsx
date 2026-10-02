@@ -113,7 +113,7 @@ export function ChatList({
   return (
     <div
       ref={rootRef}
-      className="w-full md:w-[var(--list-w)] md:shrink-0 border-r border-[#eeece4] flex flex-col bg-white h-full relative"
+      className="w-full md:w-[var(--list-w)] md:shrink-0 border-e border-[#eeece4] flex flex-col bg-white h-full relative"
       style={{ '--list-w': `${width}px` } as React.CSSProperties}
     >
         <div className="px-4 pt-4 pb-[10px] flex items-center justify-between shrink-0">
@@ -157,7 +157,7 @@ export function ChatList({
           </div>
 
           {showRecent && (
-            <div className="absolute left-4 right-4 top-full mt-1 z-20 bg-white border border-bone rounded-[12px] py-2 overflow-hidden">
+            <div className="absolute start-4 end-4 top-full mt-1 z-20 bg-white border border-bone rounded-[12px] py-2 overflow-hidden">
               <div className="flex items-center justify-between px-3 pb-1.5">
                 <span className="text-[10.5px] font-semibold text-slate uppercase tracking-[0.05em]">Recent</span>
                 {onClearRecentSearches && (
@@ -175,7 +175,7 @@ export function ChatList({
                   key={r}
                   onMouseDown={e => e.preventDefault()}
                   onClick={() => onSelectRecentSearch?.(r)}
-                  className="w-full flex items-center gap-2 px-3 py-[8px] text-[13px] text-charcoal hover:bg-cream cursor-pointer bg-transparent border-none text-left"
+                  className="w-full flex items-center gap-2 px-3 py-[8px] text-[13px] text-charcoal hover:bg-cream cursor-pointer bg-transparent border-none text-start"
                 >
                   <Clock size={13} className="text-slate shrink-0" />
                   <span className="truncate">{r}</span>
@@ -264,7 +264,7 @@ export function ChatList({
           role="separator"
           aria-orientation="vertical"
           aria-label="Resize conversation list"
-          className="hidden md:block absolute top-0 bottom-0 right-0 z-10 w-[5px] cursor-col-resize hover:bg-brand-orange/20 active:bg-brand-orange/30 transition-colors"
+          className="hidden md:block absolute top-0 bottom-0 end-0 z-10 w-[5px] cursor-col-resize hover:bg-brand-orange/20 active:bg-brand-orange/30 transition-colors"
         />
       )}
     </div>

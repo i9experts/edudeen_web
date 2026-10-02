@@ -1,3 +1,4 @@
+import { useT } from '@/contexts/languageCtx';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
@@ -164,7 +165,7 @@ function Newsletter() {
   return (
     <div className="w-full sm:max-w-[420px]">
       <form onSubmit={submit} className="flex items-stretch border border-[#afbdc6] rounded-full overflow-hidden bg-white focus-within:border-brand-orange transition-colors">
-        <Mail size={15} className="ml-4 self-center text-slate shrink-0" />
+        <Mail size={15} className="ms-4 self-center text-slate shrink-0" />
         <input
           value={email}
           onChange={e => setEmail(e.target.value)}
@@ -183,7 +184,7 @@ function Newsletter() {
           <Send size={13} /> <span className="hidden sm:inline">{loading ? 'Subscribing…' : 'Subscribe'}</span>
         </button>
       </form>
-      {error && <p className="mt-2 pl-3 text-[11.5px] text-error">{error}</p>}
+      {error && <p className="mt-2 ps-3 text-[11.5px] text-error">{error}</p>}
     </div>
   );
 }
@@ -191,6 +192,7 @@ function Newsletter() {
 // Accordion on mobile (each column independently collapsible), static and
 // always-open at sm: and up.
 function FooterColumn({ heading, links, navigate }: { heading: string; links: FooterLink[]; navigate: (p: string) => void }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const contentId = `footer-col-${heading.toLowerCase().replace(/\s+/g, '-')}`;
 
@@ -201,9 +203,9 @@ function FooterColumn({ heading, links, navigate }: { heading: string; links: Fo
         onClick={() => setOpen(o => !o)}
         aria-expanded={open}
         aria-controls={contentId}
-        className="w-full min-h-11 flex items-center justify-between gap-2 py-3 sm:py-0 sm:pointer-events-none text-left bg-transparent border-none cursor-pointer sm:cursor-default outline-none"
+        className="w-full min-h-11 flex items-center justify-between gap-2 py-3 sm:py-0 sm:pointer-events-none text-start bg-transparent border-none cursor-pointer sm:cursor-default outline-none"
       >
-        <span className="text-[12px] font-bold text-carbon uppercase tracking-[0.12em] sm:mb-4">{heading}</span>
+        <span className="text-[12px] font-bold text-carbon uppercase tracking-[0.12em] sm:mb-4">{t(heading)}</span>
         <ChevronDown size={15} className={clsx('text-slate transition-transform duration-200 sm:hidden shrink-0', open && 'rotate-180')} />
       </button>
 
@@ -213,7 +215,7 @@ function FooterColumn({ heading, links, navigate }: { heading: string; links: Fo
             {link.path ? (
               <button
                 onClick={() => navigate(link.path!)}
-                className="min-h-11 sm:min-h-0 text-[13px] text-slate hover:text-brand-orange transition-colors bg-transparent border-none p-0 cursor-pointer text-left"
+                className="min-h-11 sm:min-h-0 text-[13px] text-slate hover:text-brand-orange transition-colors bg-transparent border-none p-0 cursor-pointer text-start"
               >
                 {link.label}
               </button>

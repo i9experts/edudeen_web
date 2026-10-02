@@ -143,12 +143,12 @@ function BubbleMenu({ own, canEdit, onReply, onEdit, onDelete }: BubbleMenuProps
       {open && (
         <div role="menu" className={clsx(
           'absolute top-[22px] z-30 bg-white border border-bone rounded-[10px] py-[5px] min-w-[138px]',
-          own ? 'right-0' : 'left-0',
+          own ? 'end-0' : 'start-0',
         )}>
           <button
             role="menuitem"
             onClick={() => { onReply(); setOpen(false); }}
-            className="w-full flex items-center gap-[9px] px-[13px] py-[9px] text-[13px] text-charcoal hover:bg-[#f7f6f1] cursor-pointer bg-transparent border-none text-left"
+            className="w-full flex items-center gap-[9px] px-[13px] py-[9px] text-[13px] text-charcoal hover:bg-[#f7f6f1] cursor-pointer bg-transparent border-none text-start"
           >
             <ReplyIcon size={13} className="text-slate shrink-0" /> Reply
           </button>
@@ -156,7 +156,7 @@ function BubbleMenu({ own, canEdit, onReply, onEdit, onDelete }: BubbleMenuProps
             <button
               role="menuitem"
               onClick={() => { onEdit(); setOpen(false); }}
-              className="w-full flex items-center gap-[9px] px-[13px] py-[9px] text-[13px] text-charcoal hover:bg-[#f7f6f1] cursor-pointer bg-transparent border-none text-left"
+              className="w-full flex items-center gap-[9px] px-[13px] py-[9px] text-[13px] text-charcoal hover:bg-[#f7f6f1] cursor-pointer bg-transparent border-none text-start"
             >
               <Pencil size={13} className="text-slate shrink-0" /> Edit
             </button>
@@ -167,7 +167,7 @@ function BubbleMenu({ own, canEdit, onReply, onEdit, onDelete }: BubbleMenuProps
               <button
                 role="menuitem"
                 onClick={() => { onDelete(); setOpen(false); }}
-                className="w-full flex items-center gap-[9px] px-[13px] py-[9px] text-[13px] text-red-500 hover:bg-red-50 cursor-pointer bg-transparent border-none text-left"
+                className="w-full flex items-center gap-[9px] px-[13px] py-[9px] text-[13px] text-red-500 hover:bg-red-50 cursor-pointer bg-transparent border-none text-start"
               >
                 <Trash2 size={13} className="shrink-0" /> Delete
               </button>
@@ -209,8 +209,8 @@ export const MessageBubble = memo(function MessageBubble({
   const time = new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
   const bubbleRadius = own
-    ? isLastInGroup ? 'rounded-[18px] rounded-br-[4px]' : 'rounded-[18px]'
-    : isLastInGroup ? 'rounded-[18px] rounded-bl-[4px]' : 'rounded-[18px]';
+    ? isLastInGroup ? 'rounded-[18px] rounded-ee-[4px]' : 'rounded-[18px]'
+    : isLastInGroup ? 'rounded-[18px] rounded-es-[4px]' : 'rounded-[18px]';
 
   const isAudioAttachment = (message.type === 'voice') ||
     (message.type === 'document' && message.attachments?.[0]?.mimeType?.startsWith('audio/')) ||
@@ -301,7 +301,7 @@ export const MessageBubble = memo(function MessageBubble({
               >
                 {/* ▾ menu trigger — top corner, shows on hover */}
                 {!message._pending && !message._failed && (
-                  <div className={clsx('absolute top-[5px] z-10', own ? 'left-[5px]' : 'right-[5px]')}>
+                  <div className={clsx('absolute top-[5px] z-10', own ? 'start-[5px]' : 'end-[5px]')}>
                     <BubbleMenu
                       own={own}
                       canEdit={own && message.type === 'text'}
@@ -315,7 +315,7 @@ export const MessageBubble = memo(function MessageBubble({
                 {/* Reply-to preview */}
                 {message.replyTo && (
                   <div className={clsx(
-                    'mb-[6px] px-[10px] py-[6px] rounded-[8px] border-l-[3px] text-[12px] opacity-80',
+                    'mb-[6px] px-[10px] py-[6px] rounded-[8px] border-s-[3px] text-[12px] opacity-80',
                     own ? 'bg-white/15 border-white' : 'bg-cream border-brand-orange',
                   )}>
                     <p className="line-clamp-2 leading-snug">{message.replyTo.text ?? `[${message.replyTo.type}]`}</p>
@@ -324,9 +324,9 @@ export const MessageBubble = memo(function MessageBubble({
 
                 {/* Text */}
                 {message.type === 'text' && (
-                  <p className={clsx('text-[14px] leading-[1.45] whitespace-pre-wrap break-words', own ? 'pl-[18px]' : 'pr-[18px]')}>
+                  <p className={clsx('text-[14px] leading-[1.45] whitespace-pre-wrap break-words', own ? 'ps-[18px]' : 'pe-[18px]')}>
                     {message.text}
-                    {message.isEdited && <span className={clsx('text-[10px] ml-1', own ? 'text-white/60' : 'text-slate')}>(edited)</span>}
+                    {message.isEdited && <span className={clsx('text-[10px] ms-1', own ? 'text-white/60' : 'text-slate')}>(edited)</span>}
                   </p>
                 )}
 

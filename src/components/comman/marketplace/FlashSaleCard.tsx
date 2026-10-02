@@ -102,7 +102,7 @@ export function FlashSaleCard({ product, onClick, onAddToCart, isAdding, addToCa
       )}
     >
       {/* Accent bar — sweeps in on hover, same signal as ProductCard's grid tiles */}
-      <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-brand-orange to-brand-deep-orange scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300 z-[1]" />
+      <div className="absolute top-0 start-0 w-full h-[3px] bg-gradient-to-r from-brand-orange to-brand-deep-orange scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300 z-[1]" />
 
       {/* Image — square, the card's focal point without dominating the whole card.
           Compact: stays fixed-size on hover (no zoom) — hover instead reveals the
@@ -117,7 +117,7 @@ export function FlashSaleCard({ product, onClick, onAddToCart, isAdding, addToCa
         {/* Category badge — compact, opaque (no blur/glass) */}
         <span className={clsx(
           'absolute rounded-full font-bold tracking-[0.02em] border bg-white',
-          compact ? 'top-[5px] left-[5px] px-[5px] py-[1px] text-[7px]' : 'top-[7px] left-[7px] px-[6px] py-[1.5px] text-[8px]',
+          compact ? 'top-[5px] start-[5px] px-[5px] py-[1px] text-[7px]' : 'top-[7px] start-[7px] px-[6px] py-[1.5px] text-[8px]',
           isDigital ? 'text-[#7c3aed] border-[#ddd6fe]' : 'text-[#3b6720] border-[#c7e0b5]',
         )}>
           {typeLabel}
@@ -127,7 +127,7 @@ export function FlashSaleCard({ product, onClick, onAddToCart, isAdding, addToCa
         {pctOff != null && pctOff > 0 && (
           <span className={clsx(
             'absolute rounded-full font-bold bg-error text-white',
-            compact ? 'top-[5px] right-[5px] px-[6px] py-[2px] text-[8px]' : 'top-[7px] right-[7px] px-[7px] py-[2.5px] text-[9px]',
+            compact ? 'top-[5px] end-[5px] px-[6px] py-[2px] text-[8px]' : 'top-[7px] end-[7px] px-[7px] py-[2.5px] text-[9px]',
           )}>
             -{pctOff}%
           </span>
@@ -139,7 +139,7 @@ export function FlashSaleCard({ product, onClick, onAddToCart, isAdding, addToCa
           disabled={isWishlisting}
           className={clsx(
             'absolute rounded-full bg-white border border-bone flex items-center justify-center z-[1]',
-            compact ? 'bottom-[6px] right-[6px] w-7 h-7' : 'bottom-2 right-2 w-8 h-8',
+            compact ? 'bottom-[6px] end-[6px] w-7 h-7' : 'bottom-2 end-2 w-8 h-8',
             'transition-all duration-200 hover:scale-110 hover:bg-brand-pale-orange',
             isWishlisting ? 'cursor-wait' : 'cursor-pointer',
           )}

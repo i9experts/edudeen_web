@@ -133,7 +133,7 @@ export function PricingPage() {
       {/* ── Plan Cards — live from the admin-managed platform-plan catalog.
           A flex-wrap row (not a fixed 4-column grid) so however many real
           plans exist — 2 today, maybe more later — always sit centered as a
-          deliberate row instead of left-aligned with a lopsided dead gap
+          deliberate row instead of start-aligned with a lopsided dead gap
           where the missing columns would have been. ── */}
       <RevealStagger className="flex flex-wrap justify-center gap-4 px-4 md:px-8 lg:px-12 pb-16 max-w-[1200px] mx-auto" step={0.1} y={22}>
         {plansLoading ? (
@@ -280,7 +280,7 @@ export function PricingPage() {
                 onClick={() => sellEntry.go()}
                 className="px-6 py-[13px] rounded-lg text-[15px] font-medium cursor-pointer bg-brand-orange text-white border-none transition-all duration-[180ms] w-full sm:w-auto"
               >
-                Create Free Account <ArrowRight size={14} className="inline align-middle ml-1" />
+                Create Free Account <ArrowRight size={14} className="inline align-middle ms-1" />
               </button>
             </MagneticButton>
             <button

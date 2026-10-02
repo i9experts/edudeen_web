@@ -72,14 +72,14 @@ export function AttachmentMenu({ onFileSelected, onShareProduct, disabled }: Att
       </button>
 
       {open && (
-        <div role="menu" className="absolute bottom-[46px] right-0 z-50 w-[190px] bg-white border border-bone rounded-[14px] p-[6px] transition-all duration-150 ease-out starting:opacity-0 starting:translate-y-1">
+        <div role="menu" className="absolute bottom-[46px] end-0 z-50 w-[190px] bg-white border border-bone rounded-[14px] p-[6px] transition-all duration-150 ease-out starting:opacity-0 starting:translate-y-1">
           {actions.map(a => (
             <button
               key={a.label}
               role="menuitem"
               type="button"
               onClick={() => { a.onClick(); setOpen(false); }}
-              className="w-full flex items-center gap-[10px] px-[10px] py-[9px] rounded-[9px] text-[13px] font-medium text-charcoal hover:bg-cream cursor-pointer bg-transparent border-none text-left"
+              className="w-full flex items-center gap-[10px] px-[10px] py-[9px] rounded-[9px] text-[13px] font-medium text-charcoal hover:bg-cream cursor-pointer bg-transparent border-none text-start"
             >
               <span className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ background: a.bg, color: a.fg }}>
                 <a.icon size={15} />

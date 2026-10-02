@@ -95,8 +95,8 @@ export function AuthSplitLayout({
           backgroundSize: '28px 28px',
         }} />
         {/* Ambient glow — subtle enterprise polish, consistent across every auth screen */}
-        <div className="absolute -bottom-24 -left-16 w-72 h-72 rounded-full bg-brand-orange/20 blur-3xl auth-glow-pulse pointer-events-none" />
-        <div className="absolute -top-20 -right-10 w-56 h-56 rounded-full bg-white/[0.06] blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-24 -start-16 w-72 h-72 rounded-full bg-brand-orange/20 blur-3xl auth-glow-pulse pointer-events-none" />
+        <div className="absolute -top-20 -end-10 w-56 h-56 rounded-full bg-white/[0.06] blur-3xl pointer-events-none" />
 
         {/* `overflow-hidden` (not `overflow-y-auto`) + clamp()-based, viewport-height-
            relative sizing below — this content must always fit, never scroll, on any

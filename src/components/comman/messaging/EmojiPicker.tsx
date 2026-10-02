@@ -37,7 +37,7 @@ export function EmojiPicker({ onSelect, className }: EmojiPickerProps) {
       </button>
 
       {open && (
-        <div className="absolute bottom-[46px] left-0 z-50 w-[260px] max-h-[280px] overflow-y-auto bg-white border border-bone rounded-[14px] p-[10px]">
+        <div className="absolute bottom-[46px] start-0 z-50 w-[260px] max-h-[280px] overflow-y-auto bg-white border border-bone rounded-[14px] p-[10px]">
           {EMOJI_GROUPS.map(group => (
             <div key={group.label} className="mb-[8px]">
               <p className="text-[10px] font-semibold text-slate uppercase tracking-[0.05em] mb-[4px] px-[2px]">{group.label}</p>

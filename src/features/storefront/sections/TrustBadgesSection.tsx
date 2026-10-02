@@ -31,7 +31,7 @@ export function TrustBadgesSection({ blocks }: { settings: Record<string, any>; 
         {blocks.map((item, i) => {
           const Icon = ICON_MAP[item.icon] ?? ShieldCheck;
           return (
-            <div key={i} className="flex flex-col items-center text-center gap-2 sm:flex-row sm:text-left sm:gap-3">
+            <div key={i} className="flex flex-col items-center text-center gap-2 sm:flex-row sm:text-start sm:gap-3">
               <span
                 className="shrink-0 w-10 h-10 rounded-full flex items-center justify-center"
                 style={{ background: `${cfg.primaryColor}15`, color: cfg.primaryColor }}

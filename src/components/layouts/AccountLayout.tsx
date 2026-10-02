@@ -1,9 +1,10 @@
+import { useT } from '@/contexts/languageCtx';
 import { useState, Suspense } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
 import {
   LayoutDashboard, ShoppingBag, Heart, Star,
-  MessageSquare, Landmark, Download,
+  MessageSquare, Landmark, Download, ListChecks, FileSpreadsheet,
   User, Shield, MapPin, Bell, RefreshCw,
   ChevronLeft, PanelLeftClose, PanelLeftOpen, type LucideIcon,
 } from 'lucide-react';
@@ -20,6 +21,7 @@ export interface NavItem { id: string; label: string; Icon: LucideIcon; path: st
 export interface NavGroup { group: string; items: NavItem[] }
 
 export function useNavGroups(): NavGroup[] {
+  const t = useT();
   const { wishlistCount } = useWishlistContext();
   // Reuses the same live-updating (socket-backed) conversations hook the
   // Messages page itself uses, so this badge tracks in real time just like
@@ -29,35 +31,37 @@ export function useNavGroups(): NavGroup[] {
 
   return [
     {
-      group: 'Overview',
+      group: t('Overview'),
       items: [
-        { id: 'dashboard', label: 'Dashboard', Icon: LayoutDashboard, path: 'dashboard' },
+        { id: 'dashboard', label: t('Dashboard'), Icon: LayoutDashboard, path: 'dashboard' },
       ],
     },
     {
-      group: 'Shopping',
+      group: t('Shopping'),
       items: [
-        { id: 'orders',   label: 'Orders',   Icon: ShoppingBag, path: 'orders' },
-        { id: 'downloads', label: 'Downloads', Icon: Download,  path: 'downloads' },
-        { id: 'wishlist', label: 'Wishlist', Icon: Heart,       path: 'wishlist', badge: wishlistCount },
-        { id: 'reviews',  label: 'Reviews',  Icon: Star,        path: 'reviews' },
-        { id: 'payments', label: 'Bank Transfers', Icon: Landmark, path: 'payments' },
+        { id: 'orders',   label: t('Orders'),   Icon: ShoppingBag, path: 'orders' },
+        { id: 'downloads', label: t('My Library'), Icon: Download,  path: 'downloads' },
+        { id: 'wishlist', label: t('Wishlist'), Icon: Heart,       path: 'wishlist', badge: wishlistCount },
+        { id: 'lists',    label: t('My Lists'), Icon: ListChecks,  path: 'lists' },
+        { id: 'quotes',   label: t('School Quotes'), Icon: FileSpreadsheet, path: 'quotes' },
+        { id: 'reviews',  label: t('Reviews'),  Icon: Star,        path: 'reviews' },
+        { id: 'payments', label: t('Bank Transfers'), Icon: Landmark, path: 'payments' },
       ],
     },
     {
-      group: 'Updates',
+      group: t('Updates'),
       items: [
-        { id: 'messages',      label: 'Messages',      Icon: MessageSquare, path: 'messages', badge: messagesUnread },
-        { id: 'notifications', label: 'Notifications', Icon: Bell,          path: 'notifications' },
+        { id: 'messages',      label: t('Messages'),      Icon: MessageSquare, path: 'messages', badge: messagesUnread },
+        { id: 'notifications', label: t('Notifications'), Icon: Bell,          path: 'notifications' },
       ],
     },
     {
-      group: 'Account',
+      group: t('Account'),
       items: [
-        { id: 'profile',       label: 'Profile',        Icon: User,      path: 'profile' },
-        { id: 'security',      label: 'Login & Security', Icon: Shield,  path: 'security' },
-        { id: 'addresses',     label: 'Addresses',      Icon: MapPin,    path: 'addresses' },
-        { id: 'subscriptions', label: 'Subscriptions',  Icon: RefreshCw, path: 'subscriptions' },
+        { id: 'profile',       label: t('Profile'),        Icon: User,      path: 'profile' },
+        { id: 'security',      label: t('Login & Security'), Icon: Shield,  path: 'security' },
+        { id: 'addresses',     label: t('Addresses'),      Icon: MapPin,    path: 'addresses' },
+        { id: 'subscriptions', label: t('Subscriptions'),  Icon: RefreshCw, path: 'subscriptions' },
       ],
     },
   ];
@@ -91,7 +95,7 @@ function AccountSidebar({ open, onToggle }: SidebarProps) {
 
   return (
     <aside className={clsx(
-      'hidden lg:flex bg-[#f3f7fa] border-r border-[#d5dfe6] flex-col shrink-0 h-screen',
+      'hidden lg:flex bg-[#f3f7fa] border-e border-[#d5dfe6] flex-col shrink-0 h-screen',
       'transition-[width] duration-300 ease-in-out',
       open ? 'w-[220px]' : 'w-[60px]',
     )}>
@@ -102,7 +106,7 @@ function AccountSidebar({ open, onToggle }: SidebarProps) {
             <>
               <button
                 onClick={() => navigate('/')}
-                className="flex items-center gap-[7px] flex-1 bg-transparent border-0 cursor-pointer text-carbon text-[13px] font-semibold transition-colors duration-150 text-left hover:text-brand-orange"
+                className="flex items-center gap-[7px] flex-1 bg-transparent border-0 cursor-pointer text-carbon text-[13px] font-semibold transition-colors duration-150 text-start hover:text-brand-orange"
               >
                 <ChevronLeft size={14} /> Home
               </button>
@@ -226,7 +230,7 @@ function MobileTopBar({ label, isRoot, onBack }: { label: string; isRoot: boolea
         <button
           onClick={onBack}
           aria-label="Back to My Account"
-          className="w-9 h-9 -ml-1 flex items-center justify-center rounded-full bg-transparent border-0 cursor-pointer text-charcoal hover:bg-cream transition-colors"
+          className="w-9 h-9 -ms-1 flex items-center justify-center rounded-full bg-transparent border-0 cursor-pointer text-charcoal hover:bg-cream transition-colors"
         >
           <ChevronLeft size={18} />
         </button>

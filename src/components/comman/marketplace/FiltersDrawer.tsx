@@ -104,7 +104,7 @@ function Stars({ n }: { n: number }) {
       {[1, 2, 3, 4, 5].map(i => (
         <Star key={i} size={15} className={i <= n ? 'text-brand-gold fill-brand-gold' : 'text-bone fill-bone'} />
       ))}
-      <span className="ml-1.5">&amp; up</span>
+      <span className="ms-1.5">&amp; up</span>
     </span>
   );
 }
@@ -112,7 +112,7 @@ function Stars({ n }: { n: number }) {
 export function FiltersDrawer({
   open, onClose, filters, onChange, onClear, total,
   categories = [], selectedCategory = '', onCategoryChange = () => {},
-  children, extraActiveCount = 0,
+  children, extraActiveCount = 0, showOnSale = true,
 }: {
   open: boolean;
   onClose: () => void;
@@ -127,6 +127,8 @@ export function FiltersDrawer({
   children?: ReactNode;
   /** How many of those page-specific filters are on (enables "Clear all"). */
   extraActiveCount?: number;
+  /** Hide "On sale" where the page can't filter by it. */
+  showOnSale?: boolean;
 }) {
   const bucketMatch = PRICE_BUCKETS.find(b => sameRange(b.range, filters.priceRange));
   const anyPrice = sameRange(filters.priceRange, EMPTY_FILTERS.priceRange);
@@ -177,9 +179,9 @@ export function FiltersDrawer({
         aria-label="Filters"
         aria-hidden={!open}
         className={clsx(
-          'fixed top-0 left-0 h-full w-[min(510px,100vw)] z-[60] bg-white shadow-2xl flex flex-col',
+          'fixed top-0 start-0 h-full w-[min(510px,100vw)] z-[60] bg-white shadow-2xl flex flex-col',
           'transition-transform duration-300 ease-out',
-          open ? 'translate-x-0' : '-translate-x-full',
+          open ? 'translate-x-0' : '-translate-x-full rtl:translate-x-full',
         )}
       >
         {/* Header — title + close button inside the panel. */}
@@ -191,7 +193,7 @@ export function FiltersDrawer({
             type="button"
             onClick={onClose}
             aria-label="Close filters"
-            className="size-10 -mr-2 flex items-center justify-center rounded-full bg-transparent text-carbon border-none cursor-pointer hover:bg-[#eef1f3] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange"
+            className="size-10 -me-2 flex items-center justify-center rounded-full bg-transparent text-carbon border-none cursor-pointer hover:bg-[#eef1f3] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange"
           >
             <X size={24} strokeWidth={2.2} />
           </button>
@@ -200,9 +202,11 @@ export function FiltersDrawer({
         <div className="brand-scrollbar flex-1 overflow-y-auto overscroll-contain px-7 sm:px-10 pt-6 pb-6">
           {children}
 
-          <Section title="Special offers">
-            <CheckRow label="On sale" checked={filters.onSale} onChange={() => onChange({ ...filters, onSale: !filters.onSale })} />
-          </Section>
+          {showOnSale && (
+            <Section title="Special offers">
+              <CheckRow label="On sale" checked={filters.onSale} onChange={() => onChange({ ...filters, onSale: !filters.onSale })} />
+            </Section>
+          )}
 
           <Section title="Item type">
             <RadioRow name="f-type" label="All items" checked={!selectedType} onChange={() => setType(null)} />
@@ -226,7 +230,7 @@ export function FiltersDrawer({
             {customOpen && (
               <form
                 onSubmit={e => { e.preventDefault(); applyCustom(); }}
-                className="flex items-center gap-3 pl-[38px] pt-2"
+                className="flex items-center gap-3 ps-[38px] pt-2"
               >
                 <input
                   type="number" min={0} inputMode="numeric" placeholder="Low" aria-label="Minimum price"

@@ -30,11 +30,11 @@ function SlideNav({ blocks, index, setIndex }: { blocks: HeroSlide[]; index: num
   return (
     <>
       <button onClick={() => setIndex(i => (i - 1 + blocks.length) % blocks.length)} aria-label="Previous slide"
-        className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/80 hover:bg-white flex items-center justify-center border-none cursor-pointer">
+        className="absolute start-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/80 hover:bg-white flex items-center justify-center border-none cursor-pointer">
         <ChevronLeft size={18} />
       </button>
       <button onClick={() => setIndex(i => (i + 1) % blocks.length)} aria-label="Next slide"
-        className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/80 hover:bg-white flex items-center justify-center border-none cursor-pointer">
+        className="absolute end-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/80 hover:bg-white flex items-center justify-center border-none cursor-pointer">
         <ChevronRight size={18} />
       </button>
       <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
@@ -84,7 +84,7 @@ export function HeroSection({ settings, blocks }: { settings: HeroSectionSetting
         <div
           className={clsx(
             'w-full md:w-1/2 flex flex-col justify-center gap-2 px-4 sm:px-6 lg:px-10 py-8 sm:py-12',
-            cfg.heroAlignment === 'center' ? 'items-center text-center' : 'items-start text-left',
+            cfg.heroAlignment === 'center' ? 'items-center text-center' : 'items-start text-start',
           )}
           style={{ background: cfg.bgColor }}
         >

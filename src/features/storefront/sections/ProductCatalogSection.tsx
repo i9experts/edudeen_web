@@ -124,7 +124,7 @@ export function ProductCatalogSection({ settings }: { settings: ProductCatalogSe
                 className="relative shrink-0 py-[10px] text-[13px] font-semibold bg-transparent border-none cursor-pointer whitespace-nowrap"
                 style={{ color: active ? cfg.primaryColor : '#8C8A82' }}>
                 {tag === 'all' ? 'All Products' : tag}
-                <span className="absolute left-0 right-0 -bottom-[1px] h-[2px] rounded-full origin-left transition-transform duration-200"
+                <span className="absolute start-0 end-0 -bottom-[1px] h-[2px] rounded-full origin-left transition-transform duration-200"
                   style={{ background: cfg.primaryColor, transform: active ? 'scaleX(1)' : 'scaleX(0)' }} />
               </button>
             );
@@ -156,24 +156,24 @@ export function ProductCatalogSection({ settings }: { settings: ProductCatalogSe
               const vId = p.variantId ?? '';
               return (
                 <ProductCardShell key={p._id} onClick={() => toMain(`/product/${p.slug}`)}>
-                  <div className="absolute top-0 left-0 w-full h-[3px] scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300 z-[1]" style={{ background: cfg.primaryColor }} />
+                  <div className="absolute top-0 start-0 w-full h-[3px] scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300 z-[1]" style={{ background: cfg.primaryColor }} />
                   <ProductCardImage>
                     {p.images?.[0] ? <ProductImage src={p.images[0]} alt={p.name} /> : <ProductCoverFallback name={p.name} size="lg" className="w-full h-full" />}
                     <button
                       onClick={e => { e.stopPropagation(); if (vId) toggleWishlist(p._id, vId); }}
                       disabled={!vId || wishlisting === vId}
                       aria-label="Save to wishlist"
-                      className={clsx('absolute bottom-[6px] right-[6px] w-6 h-6 rounded-full bg-[rgba(255,255,255,0.92)] flex items-center justify-center border-none transition-transform duration-150', vId ? 'cursor-pointer hover:scale-110' : 'cursor-not-allowed opacity-50')}
+                      className={clsx('absolute bottom-[6px] end-[6px] w-6 h-6 rounded-full bg-[rgba(255,255,255,0.92)] flex items-center justify-center border-none transition-transform duration-150', vId ? 'cursor-pointer hover:scale-110' : 'cursor-not-allowed opacity-50')}
                     >
                       <Heart size={11} className={clsx(isWishlisted(p._id, vId) ? 'text-[#e11d48] fill-[#e11d48]' : 'text-slate fill-none')} />
                     </button>
-                    <div className="absolute top-[6px] left-[6px]">
+                    <div className="absolute top-[6px] start-[6px]">
                       <span className={clsx('px-[5px] py-[2px] rounded-[4px] text-[9px] font-semibold border leading-none', isPhysical ? 'bg-[#edf5e7] text-[#3b6720] border-[#c7e0b5]' : 'bg-accent-violet-bg text-accent-violet border-accent-violet/25')}>
                         {typeLabel}
                       </span>
                     </div>
                     {p.activeCampaign && (
-                      <div className="absolute top-[6px] right-[6px]">
+                      <div className="absolute top-[6px] end-[6px]">
                         <span className="flex items-center gap-[3px] px-[5px] py-[2px] rounded-[4px] text-[9px] font-bold leading-none bg-gradient-to-r from-brand-orange to-[#66AD36] text-white">
                           <Zap size={8} className="fill-white shrink-0" />
                           {p.activeCampaign.discountType && p.activeCampaign.discountValue != null

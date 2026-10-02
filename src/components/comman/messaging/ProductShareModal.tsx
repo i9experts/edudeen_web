@@ -76,7 +76,7 @@ export function ProductShareModal({ storeId, onClose, onShare, sharing }: Produc
                 <button
                   key={p._id}
                   onClick={() => setSelectedId(p._id)}
-                  className={`w-full flex items-center gap-3 px-2 py-2 rounded-[10px] text-left cursor-pointer border-none transition-colors ${selectedId === p._id ? 'bg-brand-pale-orange' : 'bg-transparent hover:bg-cream'}`}
+                  className={`w-full flex items-center gap-3 px-2 py-2 rounded-[10px] text-start cursor-pointer border-none transition-colors ${selectedId === p._id ? 'bg-brand-pale-orange' : 'bg-transparent hover:bg-cream'}`}
                 >
                   <div className="w-11 h-11 rounded-[9px] bg-cream border border-bone overflow-hidden shrink-0 flex items-center justify-center">
                     {p.images?.[0] ? <img loading="lazy" decoding="async" src={p.images[0]} alt="" className="w-full h-full object-cover" /> : <ImageOff size={14} className="text-slate" />}

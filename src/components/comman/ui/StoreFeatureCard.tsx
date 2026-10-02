@@ -38,7 +38,7 @@ export function StoreFeatureCard({ store, onClick, className }: {
       tabIndex={0}
       onKeyDown={e => { if (e.key === 'Enter') onClick(store.slug); }}
       className={clsx(
-        'relative shrink-0 w-[240px] sm:w-[264px] text-left bg-white rounded-2xl border border-bone overflow-hidden cursor-pointer group transition-all duration-300 hover:-translate-y-[4px] hover:border-brand-orange/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange',
+        'relative shrink-0 w-[240px] sm:w-[264px] text-start bg-white rounded-2xl border border-bone overflow-hidden cursor-pointer group transition-all duration-300 hover:-translate-y-[4px] hover:border-brand-orange/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange',
         className,
       )}
     >
@@ -52,7 +52,7 @@ export function StoreFeatureCard({ store, onClick, className }: {
         fallbackStyle={{ background: EDUDEEN_DEFAULT_COVER_GRADIENT }}
       >
         {isTopSeller && (
-          <span className="absolute top-[8px] right-[8px] inline-flex items-center gap-[3px] px-[7px] py-[3px] rounded-full bg-carbon/80 backdrop-blur-sm text-white text-[9.5px] font-bold">
+          <span className="absolute top-[8px] end-[8px] inline-flex items-center gap-[3px] px-[7px] py-[3px] rounded-full bg-carbon/80 backdrop-blur-sm text-white text-[9.5px] font-bold">
             <TrendingUp size={9} /> Top Seller
           </span>
         )}

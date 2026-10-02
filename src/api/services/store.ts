@@ -20,6 +20,15 @@ export interface CreateStorePayload {
   baseCurrency: SupportedCurrency;
 }
 
+/** The teacher behind a store — shown to buyers next to the Verified Educator badge. */
+export interface EducatorProfile {
+  headline:        string | null;
+  qualifications:  string[];
+  experienceYears: number | null;
+  subjects:        string[];
+  institutions:    string[];
+  teachingLevels:  string[];
+}
 export interface UpdateStorePayload {
   storeId:      string;
   name?:        string;
@@ -28,6 +37,7 @@ export interface UpdateStorePayload {
   categoryId?:  string;
   description?: string;
   tagline?:      string;
+  educatorProfile?: EducatorProfile | null;
   contactEmail?: string;
   contactPhone?: string;
   productTypes?: ProductType[];
@@ -45,6 +55,7 @@ export interface StoreData {
   description:  string;
   /** Short marketing line — distinct from `description`, shown alongside the store name. */
   tagline:      string | null;
+  educatorProfile?: EducatorProfile | null;
   contactEmail: string | null;
   contactPhone: string | null;
   sellerType:   SellerType;
@@ -211,6 +222,7 @@ export interface PublicStoreData {
   coverImage:     string | null;
   description:    string | null;
   tagline:        string | null;
+  educatorProfile?: EducatorProfile | null;
   contactEmail:   string | null;
   contactPhone:   string | null;
   /** The store's single fixed root category — needed to resolve its own

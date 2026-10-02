@@ -83,7 +83,7 @@ function AvatarTrigger({
       )}
     >
       {badge > 0 && (
-        <span className="absolute -top-[3px] -right-[3px] z-[1] min-w-[15px] h-[15px] bg-[#c0392b] text-white text-[8px] font-bold rounded-full flex items-center justify-center px-[3px] border border-white leading-none">
+        <span className="absolute -top-[3px] -end-[3px] z-[1] min-w-[15px] h-[15px] bg-[#c0392b] text-white text-[8px] font-bold rounded-full flex items-center justify-center px-[3px] border border-white leading-none">
           {badge > 99 ? '99+' : badge}
         </span>
       )}
@@ -142,7 +142,7 @@ function MenuItem({
     <button
       onClick={onClick}
       className={clsx(
-        'w-full flex items-center gap-[10px] py-[9px] px-3 rounded-[9px] border-0 cursor-pointer text-left group',
+        'w-full flex items-center gap-[10px] py-[9px] px-3 rounded-[9px] border-0 cursor-pointer text-start group',
         'transition-colors',
         danger ? 'hover:bg-[#fff0f0]' : 'hover:bg-cream',
       )}
@@ -251,7 +251,7 @@ function ProfileDropdown({
     <div className="relative w-full">
       {/* Arrow indicator — a rotated square clipped by the panel's own border/bg,
           connecting the floating panel visually back to its trigger. */}
-      <div className="absolute -top-[7px] right-[14px] w-3 h-3 bg-white border-t border-l border-bone rotate-45" />
+      <div className="absolute -top-[7px] end-[14px] w-3 h-3 bg-white border-t border-s border-bone rotate-45" />
       <div className="relative bg-white border border-bone rounded-[16px] overflow-hidden">
       <DropdownHeader
         profileImage={profile?.profileImage}

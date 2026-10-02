@@ -42,6 +42,11 @@ export interface DigitalProduct {
   licenseType:           string;
   buyerDeliveryMessage:  string;
   previewAvailable?:     boolean;
+  /** Public views strip `files` and send only how many there are. */
+  fileCount?:            number;
+  /** A free sample exists — fetch it with apiGetProductSample. */
+  sampleAvailable?:      boolean;
+  sampleName?:           string | null;
 }
 
 export type ProductPreviewData =
@@ -81,6 +86,13 @@ export interface MarketplaceProduct {
   normalizedCustomLevel?: string | null;
   images:            string[];
   tags?:             string[];
+  /** Exam boards it follows — see constants/learning.ts. */
+  curricula?:        string[];
+  ageMin?:           number | null;
+  ageMax?:           number | null;
+  deliveryFormat?:   'download' | 'course' | 'live_class';
+  /** Live classes only — the meeting link is never public. */
+  liveSession?:      { startsAt: string; durationMinutes: number; platform: string; capacity: number | null; notes: string } | null;
   digital?:          DigitalProduct | null;
   viewCount:         number;
   wishlistCount:     number;
@@ -145,6 +157,49 @@ export function apiGetAllProducts(
   );
 }
 
+/** Everything the marketplace browse endpoint can filter on, as named fields. */
+export interface BrowseParams {
+  q?:             string;
+  categoryId?:    string;
+  productType?:   'physical' | 'digital' | 'educational';
+  educationLevel?: string;
+  campaignId?:    string;
+  minPrice?:      number;
+  maxPrice?:      number;
+  minRating?:     number;
+  sortBy?:        MarketplaceSortBy;
+  /** Exam board (CURRICULA value). */
+  curriculum?:    string;
+  /** Suitable for a child of this age. */
+  age?:           number;
+  page?:          number;
+  /** Server caps this at 50. */
+  limit?:         number;
+}
+
+/** Free sample link (valid ~10 minutes). */
+export function apiGetProductSample(idOrSlug: string) {
+  return client.get<never, { success: boolean; data: { name: string; mimeType: string; url: string } }>(`/api/products/sample/${idOrSlug}`);
+}
+
+export function apiBrowseProducts(p: BrowseParams) {
+  const params = new URLSearchParams({ page: String(p.page ?? 1), limit: String(p.limit ?? 24) });
+  if (p.q?.trim()) params.set('q', p.q.trim());
+  if (p.categoryId) params.set('id', p.categoryId);
+  if (p.productType) params.set('productType', p.productType);
+  if (p.educationLevel) params.set('educationLevel', p.educationLevel);
+  if (p.campaignId) params.set('campaignId', p.campaignId);
+  if (p.minPrice != null) params.set('minPrice', String(p.minPrice));
+  if (p.maxPrice != null) params.set('maxPrice', String(p.maxPrice));
+  if (p.minRating != null) params.set('minRating', String(p.minRating));
+  if (p.sortBy) params.set('sortBy', p.sortBy);
+  if (p.curriculum) params.set('curriculum', p.curriculum);
+  if (p.age != null) params.set('age', String(p.age));
+  return client.get<never, ProductsByCategoryResponse>(
+    `${ENDPOINTS.MARKETPLACE.PRODUCTS_BY_CATEGORY}?${params.toString()}`,
+  );
+}
+
 export interface EducationFacetLevel { level: string; count: number }
 export interface EducationFacetOtherLevel { slug: string; displayName: string; count: number }
 interface EducationFacetsResponse {
@@ -192,4 +247,9 @@ export function apiGetProductPreview(id: string) {
   return client.get<never, { success: boolean; data: ProductPreviewData }>(
     ENDPOINTS.MARKETPLACE.PRODUCT_PREVIEW(id),
   );
+}
+
+/** "Teachers who bought this also bought" — or similar resources for the same grade when there isn't enough order history. */
+export function apiGetAlsoBought(idOrSlug: string, limit = 8) {
+  return client.get<never, { success: boolean; data: { basis: 'bought_together' | 'similar'; products: MarketplaceProduct[] } }>(`/api/products/also-bought/${idOrSlug}?limit=${limit}`);
 }

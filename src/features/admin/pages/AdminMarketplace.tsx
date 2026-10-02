@@ -1,4 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { ListingReviewModal } from '@/features/admin/components/ListingReviewModal';
+import { apiGetListingReviewCount } from '@/api/services/marketplace/adminMarketplace';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useMarketplaceStats, useMarketplaceListings, useMarketplaceListingActions } from '@/hooks/admin/useAdminMarketplace';
 import type { MarketplaceListingRow, ListingStatus } from '@/api/services/marketplace/adminMarketplace';
@@ -8,9 +11,11 @@ import { AdminStudioHeader } from '@/features/admin/components/studio';
 import type { TableColumn } from '@/components/comman/ui';
 import { AnalyticsErrorState } from '@/components/comman/analytics/AnalyticsErrorState';
 import { formatCurrency, formatNumber } from '@/components/comman/analytics/format';
-import { Star, StoreIcon, RefreshCw, GraduationCap, Trash2 } from 'lucide-react';
+import { Star, StoreIcon, RefreshCw, GraduationCap, Trash2, ClipboardCheck } from 'lucide-react';
 
 const STATUS_OPTIONS = [
+  { value: 'pending_review', label: 'Waiting for review' },
+  { value: 'rejected', label: 'Sent back to seller' },
   { value: 'active', label: 'Active' },
   { value: 'inactive', label: 'Inactive' },
   { value: 'draft', label: 'Draft' },
@@ -33,7 +38,13 @@ export function AdminMarketplace() {
 
   const [search, setSearch] = useState('');
   const [categoryId, setCategoryId] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  // ?status=pending_review (sidebar badge) opens straight on the review queue.
+  const [searchParams] = useSearchParams();
+  const [statusFilter, setStatusFilter] = useState(searchParams.get('status') ?? '');
+  const [reviewing, setReviewing] = useState<string | null>(null);
+  const [pendingCount, setPendingCount] = useState(0);
+  const loadPending = () => { apiGetListingReviewCount().then(r => setPendingCount(r.data?.pending ?? 0)).catch(() => {}); };
+  useEffect(loadPending, []);
   const [page, setPage] = useState(1);
   const [categories, setCategories] = useState<{ value: string; label: string }[]>([]);
 
@@ -56,7 +67,7 @@ export function AdminMarketplace() {
   const { setFeatured, removeListing, setStoreBadge, processingId, error: actionError } = useMarketplaceListingActions();
   const [removing, setRemoving] = useState<MarketplaceListingRow | null>(null);
 
-  function refreshAll() { refetchStats(); refetch(); }
+  function refreshAll() { refetchStats(); refetch(); loadPending(); }
 
   async function toggleFeatured(row: MarketplaceListingRow) {
     const ok = await setFeatured(row.id, !row.isFeatured);
@@ -95,6 +106,9 @@ export function AdminMarketplace() {
         const hasEducatorBadge = (r.storeBadges ?? []).includes('verified_educator');
         return (
           <div className="flex items-center gap-[6px]">
+            {(r.status === 'pending_review' || r.status === 'rejected') ? (
+              <Button size="xs" variant="primary" icon={<ClipboardCheck size={11} />} onClick={() => setReviewing(r.id)}>Review</Button>
+            ) : (
             <Button
               size="xs"
               variant={r.isFeatured ? 'outline' : 'secondary'}
@@ -104,6 +118,7 @@ export function AdminMarketplace() {
             >
               {r.isFeatured ? 'Unfeature' : 'Feature'}
             </Button>
+            )}
             <ActionMenu
               align="right"
               items={[
@@ -130,6 +145,12 @@ export function AdminMarketplace() {
         actions={<Button variant="outline" size="sm" icon={<RefreshCw size={13} />} onClick={refreshAll}>Refresh</Button>}
       />
       <div className="px-4 sm:px-7 pt-6 pb-8 flex flex-col gap-5">
+      {pendingCount > 0 && statusFilter !== 'pending_review' && (
+        <div className="flex items-center justify-between gap-3 flex-wrap rounded-xl border border-info/30 bg-info-bg px-4 py-3">
+          <p className="text-[13px] text-carbon"><b>{pendingCount} new listing{pendingCount > 1 ? 's' : ''}</b> waiting for review before going live.</p>
+          <Button size="sm" variant="primary" icon={<ClipboardCheck size={13} />} onClick={() => { setStatusFilter('pending_review'); setPage(1); }}>Review now</Button>
+        </div>
+      )}
       {actionError && <div className="bg-error-bg border border-error-border rounded-lg px-4 py-2.5 text-[12.5px] text-error">{actionError}</div>}
 
       {statsError ? (
@@ -169,6 +190,14 @@ export function AdminMarketplace() {
           />
         )}
       </div>
+
+      {reviewing && (
+        <ListingReviewModal
+          listingId={reviewing}
+          onClose={() => setReviewing(null)}
+          onDone={() => { setReviewing(null); refreshAll(); }}
+        />
+      )}
 
       {removing && (
         <Modal mobileSheet

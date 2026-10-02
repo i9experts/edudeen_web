@@ -103,9 +103,9 @@ function OnboardingStepHeader({ step, maxReached, onStepClick }: { step: number;
         </span>
       </div>
       <div className="relative flex justify-between items-start w-full">
-        <div className="absolute top-3 left-0 right-0 h-[2px] bg-bone rounded-full" />
+        <div className="absolute top-3 start-0 end-0 h-[2px] bg-bone rounded-full" />
         <div
-          className="absolute top-3 left-0 h-[2px] bg-brand-orange rounded-full transition-all duration-300"
+          className="absolute top-3 start-0 h-[2px] bg-brand-orange rounded-full transition-all duration-300"
           style={{ width: `${((step - 1) / (STEPS.length - 1)) * 100}%` }}
         />
         {STEPS.map((label, i) => {
@@ -266,7 +266,7 @@ function Step1StoreInfo({ form, setForm, onNext, step, maxReached, onStepClick }
         </div>
 
         <Button variant="primary" size="lg" fullWidth onClick={() => canProceed && onNext()} disabled={!canProceed}>
-          Continue <ArrowRight size={14} className="inline align-middle ml-1" />
+          Continue <ArrowRight size={14} className="inline align-middle ms-1" />
         </Button>
       </div>
     </div>
@@ -370,7 +370,7 @@ function Step2Payment({ form, setForm, onNext, onBack, step, maxReached, onStepC
                   aria-checked={on}
                   onClick={() => choose(p)}
                   className={clsx(
-                    'w-full text-left rounded-[14px] border-2 px-4 py-[14px] cursor-pointer transition-colors duration-150 bg-white',
+                    'w-full text-start rounded-[14px] border-2 px-4 py-[14px] cursor-pointer transition-colors duration-150 bg-white',
                     on ? 'border-brand-orange bg-brand-pale-orange/40' : 'border-bone hover:border-slate/40',
                   )}
                 >
@@ -397,7 +397,7 @@ function Step2Payment({ form, setForm, onNext, onBack, step, maxReached, onStepC
                         </ul>
                       )}
                     </div>
-                    <div className="text-right shrink-0">
+                    <div className="text-end shrink-0">
                       <p className="text-[18px] font-bold text-brand-orange leading-none">${(p.monthlyPriceUSD ?? 0).toLocaleString()}</p>
                       <p className="text-[10.5px] text-slate mt-1">per month</p>
                     </div>
@@ -462,12 +462,12 @@ function Step2Payment({ form, setForm, onNext, onBack, step, maxReached, onStepC
 
         <div className="flex gap-[10px] mt-4">
           <Button variant="ghost" size="md" onClick={onBack} className="shrink-0">
-            <ArrowLeft size={14} className="inline align-middle mr-1" /> Back
+            <ArrowLeft size={14} className="inline align-middle me-1" /> Back
           </Button>
           {/* No skip — a store can't be opened without a plan and a card. */}
           {alreadyConfirmed && (
             <Button variant="primary" size="md" onClick={() => selected && onNext()} disabled={!selected} className="flex-1">
-              {selected ? <span>Continue <ArrowRight size={14} className="inline align-middle ml-1" /></span> : 'Pick a plan to continue'}
+              {selected ? <span>Continue <ArrowRight size={14} className="inline align-middle ms-1" /></span> : 'Pick a plan to continue'}
             </Button>
           )}
         </div>
@@ -516,10 +516,10 @@ function Step3SellerType({ form, setForm, onNext, onBack, step, maxReached, onSt
       </div>
       <div className="flex gap-[10px]">
         <Button variant="ghost" size="md" onClick={onBack} className="shrink-0">
-          <ArrowLeft size={14} className="inline align-middle mr-1" /> Back
+          <ArrowLeft size={14} className="inline align-middle me-1" /> Back
         </Button>
         <Button variant="primary" size="lg" className="flex-1 justify-center" onClick={() => form.sellerType && onNext()} disabled={!form.sellerType}>
-          {form.sellerType ? <span>Continue <ArrowRight size={14} className="inline align-middle ml-1" /></span> : 'Select one to continue'}
+          {form.sellerType ? <span>Continue <ArrowRight size={14} className="inline align-middle ms-1" /></span> : 'Select one to continue'}
         </Button>
       </div>
     </div>
@@ -553,7 +553,7 @@ function Step4WhatYouSell({ form, setForm, onNext, onBack, step, maxReached, onS
               )}
             >
               {on && (
-                <div className="absolute top-[10px] right-[10px] size-5 rounded-full bg-brand-orange flex items-center justify-center transition-transform duration-200">
+                <div className="absolute top-[10px] end-[10px] size-5 rounded-full bg-brand-orange flex items-center justify-center transition-transform duration-200">
                   <Check size={10} className="text-white" />
                 </div>
               )}
@@ -583,12 +583,12 @@ function Step4WhatYouSell({ form, setForm, onNext, onBack, step, maxReached, onS
 
       <div className="flex gap-[10px]">
         <Button variant="ghost" size="md" onClick={onBack} className="shrink-0">
-          <ArrowLeft size={14} className="inline align-middle mr-1" /> Back
+          <ArrowLeft size={14} className="inline align-middle me-1" /> Back
         </Button>
         <Button variant="primary" size="lg" className="flex-1 justify-center"
           onClick={() => form.productTypes.length > 0 && onNext()}
           disabled={form.productTypes.length === 0}>
-          {form.productTypes.length > 0 ? <span>Continue <ArrowRight size={14} className="inline align-middle ml-1" /></span> : 'Select at least one'}
+          {form.productTypes.length > 0 ? <span>Continue <ArrowRight size={14} className="inline align-middle ms-1" /></span> : 'Select at least one'}
         </Button>
       </div>
     </div>
@@ -635,7 +635,7 @@ function Step5Review({ form, submitting, submitError, onSubmit, onBack, step, ma
           </div>
         </div>
 
-        <div className="flex items-start gap-2 text-left mb-6 bg-success-bg rounded-xl px-[14px] py-[12px]">
+        <div className="flex items-start gap-2 text-start mb-6 bg-success-bg rounded-xl px-[14px] py-[12px]">
           <ShieldCheck size={16} className="text-success shrink-0 mt-[1px]" />
           <p className="text-[12.5px] text-success leading-[1.6]">
             Launching charges your saved card ${form.planPriceUSD.toLocaleString()} for the first month, then monthly. Every sale is yours in full (minus the card processing fee), paid out by Edudeen monthly.
@@ -643,7 +643,7 @@ function Step5Review({ form, submitting, submitError, onSubmit, onBack, step, ma
         </div>
 
         {submitError && (
-          <div className="flex items-start gap-2 text-left mb-4">
+          <div className="flex items-start gap-2 text-start mb-4">
             <AlertTriangle size={14} className="text-error shrink-0 mt-[2px]" />
             <p className="text-[12.5px] text-error leading-[1.6]">{submitError}</p>
           </div>
@@ -651,7 +651,7 @@ function Step5Review({ form, submitting, submitError, onSubmit, onBack, step, ma
 
         <div className="flex gap-[10px]">
           <Button variant="ghost" size="md" onClick={onBack} className="shrink-0" disabled={submitting}>
-            <ArrowLeft size={14} className="inline align-middle mr-1" /> Back
+            <ArrowLeft size={14} className="inline align-middle me-1" /> Back
           </Button>
           <MagneticButton className="flex-1">
             <Button variant="primary" size="lg" fullWidth onClick={onSubmit} loading={submitting} disabled={!form.planId}>
@@ -711,7 +711,7 @@ function StoreReadyConfirmation({ store, paymentError, retrying, onRetry }: {
         </p>
         <MagneticButton className="block">
           <Button variant="primary" size="lg" fullWidth onClick={() => navigate(`/store/${store?._id}/dashboard`, { replace: true })}>
-            Go to My Store Dashboard <ArrowRight size={14} className="inline align-middle ml-1" />
+            Go to My Store Dashboard <ArrowRight size={14} className="inline align-middle ms-1" />
           </Button>
         </MagneticButton>
       </div>

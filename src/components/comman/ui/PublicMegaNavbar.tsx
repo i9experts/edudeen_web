@@ -64,7 +64,7 @@ function MobileMenuButton({ open, onClick }: { open: boolean; onClick: () => voi
       aria-label={open ? 'Close menu' : 'Open menu'}
       aria-expanded={open}
       aria-controls="mobile-nav-panel"
-      className="lg:hidden relative flex items-center justify-center w-11 h-11 -mr-1 bg-transparent border-none cursor-pointer"
+      className="lg:hidden relative flex items-center justify-center w-11 h-11 -me-1 bg-transparent border-none cursor-pointer"
     >
       <motion.span
         className="absolute w-[19px] h-[1.5px] rounded-full bg-carbon"
@@ -239,7 +239,7 @@ export function PublicMegaNavbar() {
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.18, ease: NAV_EASE }}
               onMouseEnter={() => openNow(openMenu)}
-              className="hidden lg:block absolute left-0 right-0 top-full bg-white border-b border-bone shadow-xl"
+              className="hidden lg:block absolute start-0 end-0 top-full bg-white border-b border-bone shadow-xl"
             >
               <div className="max-w-[1280px] mx-auto px-8 py-7">
                 {openMenu === 'products' && (
@@ -366,7 +366,7 @@ export function PublicMegaNavbar() {
             animate={{ clipPath: 'inset(0% 0% 0% 0%)' }}
             exit={{ clipPath: 'inset(0% 0% 100% 0%)' }}
             transition={{ duration: 0.55, ease: NAV_EASE }}
-            className="lg:hidden fixed left-0 right-0 top-[60px] bottom-0 z-[55] bg-cream"
+            className="lg:hidden fixed start-0 end-0 top-[60px] bottom-0 z-[55] bg-cream"
           >
             <motion.div
               variants={navListVariants}
@@ -526,7 +526,7 @@ function MobileAccordionRow({ title, isOpen, onToggle, children }: {
         <button
           onClick={onToggle}
           aria-expanded={isOpen}
-          className="w-full flex items-center justify-between py-[18px] bg-transparent border-none cursor-pointer text-left"
+          className="w-full flex items-center justify-between py-[18px] bg-transparent border-none cursor-pointer text-start"
         >
           <span className="text-[26px] sm:text-[30px] font-extrabold text-carbon tracking-tight">{title}</span>
           <motion.span

@@ -33,7 +33,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         )}
         <div className="relative">
           {leftAddon && (
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 select-none text-[13px] text-slate pointer-events-none">
+            <span className="absolute start-3 top-1/2 -translate-y-1/2 select-none text-[13px] text-slate pointer-events-none">
               {leftAddon}
             </span>
           )}
@@ -43,15 +43,15 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             aria-invalid={!!error}
             className={clsx(
               BASE,
-              leftAddon  && 'pl-6',
-              rightIcon  && 'pr-9',
+              leftAddon  && 'ps-6',
+              rightIcon  && 'pe-9',
               error      && 'border-error! focus:ring-error/10!',
               className,
             )}
             {...props}
           />
           {rightIcon && (
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate">
+            <span className="absolute end-3 top-1/2 -translate-y-1/2 text-slate">
               {rightIcon}
             </span>
           )}
@@ -107,14 +107,14 @@ export const Select = forwardRef<
           ref={ref}
           id={selectId}
           aria-invalid={!!error}
-          className={clsx(BASE, 'appearance-none cursor-pointer pr-8', error && 'border-error!', className)}
+          className={clsx(BASE, 'appearance-none cursor-pointer pe-8', error && 'border-error!', className)}
           {...props}
         >
           {children}
         </select>
         <ChevronDown
           size={13}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate pointer-events-none"
+          className="absolute end-3 top-1/2 -translate-y-1/2 text-slate pointer-events-none"
         />
       </div>
       {error && <p role="alert" className="mt-1 text-[11px] text-error">{error}</p>}

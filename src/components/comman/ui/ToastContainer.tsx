@@ -68,7 +68,7 @@ export function ToastContainer() {
   if (toasts.length === 0) return null;
 
   return (
-    <div className="fixed bottom-6 right-6 z-[9999] flex flex-col gap-3 items-end pointer-events-none">
+    <div className="fixed bottom-6 end-6 z-[9999] flex flex-col gap-3 items-end pointer-events-none">
       {toasts.map(t => {
         const style = resolveStyle(t.variant, t.message);
         const Icon = style.icon;
@@ -81,11 +81,11 @@ export function ToastContainer() {
             onMouseLeave={() => resume(t.id)}
             className={clsx(
               t.leaving ? 'toast-leave' : 'toast-enter',
-              'pointer-events-auto relative flex items-start gap-3 w-[320px] max-w-[calc(100vw-3rem)] overflow-hidden rounded-2xl border border-bone bg-white pl-4 pr-3 py-3',
+              'pointer-events-auto relative flex items-start gap-3 w-[320px] max-w-[calc(100vw-3rem)] overflow-hidden rounded-2xl border border-bone bg-white ps-4 pe-3 py-3',
               style.shadow,
             )}
           >
-            <span className={clsx('absolute left-0 top-0 bottom-0 w-[3px]', style.accent)} />
+            <span className={clsx('absolute start-0 top-0 bottom-0 w-[3px]', style.accent)} />
             <span className={clsx('flex items-center justify-center size-8 rounded-[10px] shrink-0', style.tint)}>
               <Icon size={16} />
             </span>
@@ -97,7 +97,7 @@ export function ToastContainer() {
             >
               <X size={13} />
             </button>
-            <span className="absolute left-0 right-0 bottom-0 h-[2.5px] bg-bone/70">
+            <span className="absolute start-0 end-0 bottom-0 h-[2.5px] bg-bone/70">
               <span
                 className={clsx('toast-progress block h-full', style.accent)}
                 style={{ animationDuration: `${TOAST_DURATION_MS}ms`, animationPlayState: t.paused ? 'paused' : 'running' }}

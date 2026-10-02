@@ -55,7 +55,7 @@ export function NotificationToast() {
 
   if (!toast) return null;
   return (
-    <div className="fixed bottom-6 right-6 z-[9999] bg-carbon text-white rounded-xl border border-charcoal p-3.5 flex gap-3.5 max-w-[340px] animate-slide-in duration-300">
+    <div className="fixed bottom-6 end-6 z-[9999] bg-carbon text-white rounded-xl border border-charcoal p-3.5 flex gap-3.5 max-w-[340px] animate-slide-in duration-300">
       <div className="size-9 rounded-lg bg-dark-active flex items-center justify-center shrink-0 border border-charcoal">
         {getNotificationIcon(toast.type)}
       </div>
@@ -111,7 +111,7 @@ export function NotificationsMenuSection({ onNavigate }: { onNavigate: (path: st
                 if (link) onNavigate(link);
               }}
               className={clsx(
-                'w-full flex gap-2.5 px-3 py-2 rounded-[9px] border-0 text-left cursor-pointer hover:bg-cream transition-colors',
+                'w-full flex gap-2.5 px-3 py-2 rounded-[9px] border-0 text-start cursor-pointer hover:bg-cream transition-colors',
                 n.isRead ? 'bg-transparent' : 'bg-brand-pale-orange/25',
               )}
             >
@@ -130,7 +130,7 @@ export function NotificationsMenuSection({ onNavigate }: { onNavigate: (path: st
 
       <button
         onClick={() => onNavigate(notificationsPath())}
-        className="w-full mt-1 px-3 py-2 rounded-[9px] text-left text-[12px] font-semibold text-brand-orange hover:bg-cream bg-transparent border-none cursor-pointer"
+        className="w-full mt-1 px-3 py-2 rounded-[9px] text-start text-[12px] font-semibold text-brand-orange hover:bg-cream bg-transparent border-none cursor-pointer"
       >
         View all notifications →
       </button>
@@ -198,7 +198,7 @@ export function NotificationBell() {
       >
         <Bell size={16} className="text-brand-orange" />
         {unreadCount > 0 && (
-          <span className="absolute -top-[3px] -right-[3px] min-w-[15px] h-[15px] bg-[#c0392b] text-white text-[8px] font-bold rounded-full flex items-center justify-center px-[3px] border border-white leading-none">
+          <span className="absolute -top-[3px] -end-[3px] min-w-[15px] h-[15px] bg-[#c0392b] text-white text-[8px] font-bold rounded-full flex items-center justify-center px-[3px] border border-white leading-none">
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
@@ -243,7 +243,7 @@ export function NotificationBell() {
                     if (link) { setIsOpen(false); navigate(link); }
                   }}
                   className={clsx(
-                    'p-3 flex gap-3 text-left transition-colors duration-150 relative group cursor-pointer hover:bg-cream/40',
+                    'p-3 flex gap-3 text-start transition-colors duration-150 relative group cursor-pointer hover:bg-cream/40',
                     !notif.isRead && 'bg-brand-pale-orange/20'
                   )}
                 >
@@ -253,7 +253,7 @@ export function NotificationBell() {
                   </div>
 
                   {/* Body text */}
-                  <div className="flex-1 min-w-0 pr-6">
+                  <div className="flex-1 min-w-0 pe-6">
                     <p className={clsx('text-[12px] text-charcoal leading-tight', !notif.isRead ? 'font-bold' : 'font-medium')}>
                       {notif.title}
                     </p>
@@ -267,7 +267,7 @@ export function NotificationBell() {
                   </div>
 
                   {/* Actions on hover */}
-                  <div className="absolute right-2 top-2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="absolute end-2 top-2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     {!notif.isRead && (
                       <button
                         title="Mark as read"
@@ -294,7 +294,7 @@ export function NotificationBell() {
 
                   {/* Unread blue dot indicator */}
                   {!notif.isRead && (
-                    <span className="absolute right-3 bottom-3 w-[6px] h-[6px] rounded-full bg-brand-orange shrink-0" />
+                    <span className="absolute end-3 bottom-3 w-[6px] h-[6px] rounded-full bg-brand-orange shrink-0" />
                   )}
                 </div>
               ))

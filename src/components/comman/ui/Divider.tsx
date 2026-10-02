@@ -28,7 +28,7 @@ export function Tag({ children, onRemove, className }: TagProps) {
         <button
           type="button"
           onClick={onRemove}
-          className="text-brand-deep-orange opacity-60 hover:opacity-100 text-[13px] leading-none border-0 bg-transparent cursor-pointer p-0 ml-[1px]"
+          className="text-brand-deep-orange opacity-60 hover:opacity-100 text-[13px] leading-none border-0 bg-transparent cursor-pointer p-0 ms-[1px]"
         >
           ×
         </button>

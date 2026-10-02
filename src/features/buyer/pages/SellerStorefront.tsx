@@ -22,6 +22,7 @@ import { TokenStorage } from '@/api/services/auth';
 import { currencySymbol } from '@/utils/currency';
 import { useStorefront, useStorefrontPaths, storeCoverGradient } from '@/features/storefront/StorefrontContext';
 import { FeaturedProductsSection } from '@/features/storefront/sections/FeaturedProductsSection';
+import { EducatorCard, hasEducatorProfile } from '@/components/comman/marketplace/EducatorCard';
 import { ProductCatalogSection } from '@/features/storefront/sections/ProductCatalogSection';
 
 // ── Badge config ──────────────────────────────────────────────────────────────
@@ -366,7 +367,7 @@ export function SellerStorefront() {
                       following ? 'bg-white text-charcoal border-white' : 'bg-transparent text-white border-[rgba(255,255,255,0.5)] hover:bg-[rgba(255,255,255,0.1)]')}>
                     {(followLoading || !followStatusLoaded) ? <Loader2 size={13} className="animate-spin inline" /> : following ? 'Following ✓' : 'Follow Store'}
                   </button>
-                  {followError && <p className="text-[11px] text-white bg-black/30 rounded-md px-2 py-1 max-w-[220px] text-center sm:text-right">{followError}</p>}
+                  {followError && <p className="text-[11px] text-white bg-black/30 rounded-md px-2 py-1 max-w-[220px] text-center sm:text-end">{followError}</p>}
                 </>
               )}
 
@@ -377,7 +378,7 @@ export function SellerStorefront() {
                     className="flex items-center gap-[6px] px-[14px] py-[7px] text-[13px] font-medium cursor-pointer transition-colors bg-white text-charcoal border border-white hover:bg-[rgba(255,255,255,0.9)] whitespace-nowrap">
                     {msgLoading ? <Loader2 size={13} className="animate-spin" /> : <MessageCircle size={13} />} Message
                   </button>
-                  {msgError && <p className="text-[11px] text-white bg-black/30 rounded-md px-2 py-1 max-w-[220px] text-center sm:text-right">{msgError}</p>}
+                  {msgError && <p className="text-[11px] text-white bg-black/30 rounded-md px-2 py-1 max-w-[220px] text-center sm:text-end">{msgError}</p>}
                 </>
               )}
             </div>
@@ -388,6 +389,12 @@ export function SellerStorefront() {
       {/* ── Every product this store sells — the store page is a normal
          Edudeen page now, not a seller-designed site, so it's always the
          full catalogue (no custom builder sections). ── */}
+      {hasEducatorProfile(store.educatorProfile) && (
+        <div className="px-4 sm:px-6 lg:px-10 pt-6 max-w-[1480px] mx-auto w-full">
+          <EducatorCard profile={store.educatorProfile} verified={(store.badges ?? []).includes('verified_educator')} name={store.name} />
+        </div>
+      )}
+
       {/* Seller-picked highlights (up to 8) — hidden when nothing is pinned. */}
       <FeaturedProductsSection settings={{ heading: 'Featured', source: 'pinned', limit: 8 }} />
       <ProductCatalogSection settings={{ heading: `All products from ${store.name}`, showFilters: true, defaultSort: 'newest' }} />

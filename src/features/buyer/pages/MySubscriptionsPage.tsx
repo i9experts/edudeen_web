@@ -174,7 +174,7 @@ function ManageSubscriptionModal({ sub, onClose, onChanged }: {
             ) : timeline.map(ev => (
               <div key={ev._id} className="text-[12px] px-2 py-1.5 rounded bg-cream">
                 <span className="text-charcoal">{ev.description}</span>
-                <span className="text-slate ml-1.5">· {new Date(ev.createdAt).toLocaleDateString()}</span>
+                <span className="text-slate ms-1.5">· {new Date(ev.createdAt).toLocaleDateString()}</span>
               </div>
             ))}
           </div>
@@ -204,7 +204,7 @@ function ManageSubscriptionModal({ sub, onClose, onChanged }: {
                 <Button size="sm" onClick={submitChangePlan} loading={busy} disabled={!selectedPlanId}>Confirm Change</Button>
               </>
             )}
-            <button onClick={() => setChangingPlan(false)} className="text-[11px] text-slate bg-transparent border-none cursor-pointer text-left">Back</button>
+            <button onClick={() => setChangingPlan(false)} className="text-[11px] text-slate bg-transparent border-none cursor-pointer text-start">Back</button>
           </div>
         )}
 
@@ -440,7 +440,7 @@ export function SubscriptionsTab() {
     {
       key: 'store', header: 'Store', width: '220px',
       render: s => (
-        <button onClick={() => s.store && (navigate(getStorePagePath(s.store.slug)))} className="flex items-center gap-[10px] bg-transparent border-0 cursor-pointer text-left p-0">
+        <button onClick={() => s.store && (navigate(getStorePagePath(s.store.slug)))} className="flex items-center gap-[10px] bg-transparent border-0 cursor-pointer text-start p-0">
           <div className="w-9 h-9 rounded-lg bg-cream border border-bone overflow-hidden shrink-0 flex items-center justify-center">
             {s.store?.logo ? <img loading="lazy" decoding="async" src={s.store.logo} alt="" className="w-full h-full object-cover" /> : <ImageOff size={13} className="text-slate" />}
           </div>
@@ -475,7 +475,7 @@ export function SubscriptionsTab() {
           actions={
             <div className="flex flex-col items-end gap-1">
               <Button size="sm" variant="outline" loading={openingPortal} onClick={handleManageBilling}>Manage Billing</Button>
-              {billingError && <p className="text-[11px] text-error max-w-[220px] text-right">{billingError}</p>}
+              {billingError && <p className="text-[11px] text-error max-w-[220px] text-end">{billingError}</p>}
             </div>
           }
         />

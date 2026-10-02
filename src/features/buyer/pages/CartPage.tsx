@@ -181,7 +181,7 @@ export function CartPage() {
                     <button
                       key={item.id}
                       onClick={() => navigate(`/product/${item.id}`)}
-                      className="group flex flex-col text-left bg-transparent border border-transparent rounded-xl p-1.5 cursor-pointer transition-all duration-200 hover:border-bone hover:-translate-y-[2px]"
+                      className="group flex flex-col text-start bg-transparent border border-transparent rounded-xl p-1.5 cursor-pointer transition-all duration-200 hover:border-bone hover:-translate-y-[2px]"
                     >
                       <div className="aspect-square rounded-lg overflow-hidden bg-brand-pale-orange mb-2">
                         {item.image
@@ -338,7 +338,7 @@ export function CartPage() {
 
                         <Button
                           variant="danger" size="xs"
-                          className="ml-2! py-[11px]! min-h-10"
+                          className="ms-2! py-[11px]! min-h-10"
                           onClick={() => handleRemove(item.productId, key)}
                           loading={isRemoving}
                           icon={!isRemoving && <Trash2 size={11} />}
@@ -387,7 +387,7 @@ export function CartPage() {
                       <div key={item.productVariantId} className="flex justify-between text-[12px] gap-2">
                         <span className="text-carbon truncate">
                           {item.name}
-                          <span className="text-slate ml-1">×{item.quantity}</span>
+                          <span className="text-slate ms-1">×{item.quantity}</span>
                         </span>
                         <span className="font-medium text-carbon shrink-0">{displaySymbol}{ttl.toLocaleString()}</span>
                       </div>

@@ -5,6 +5,7 @@ import { scrollRootRef } from '@/utils/scrollRoot';
 import { AuthGateModal } from '@/components/comman/ui/AuthGateModal';
 import { ToastContainer } from '@/components/comman/ui/ToastContainer';
 import { GoogleOneTapPrompt } from '@/components/comman/ui/GoogleOneTapPrompt';
+import { LanguageRouteSync } from '@/contexts/LanguageContext';
 
 function PageSpinner() {
   return (
@@ -21,7 +22,7 @@ function TopProgressBar() {
   const navigation = useNavigation();
   if (navigation.state === 'idle') return null;
   return (
-    <div className="fixed top-0 left-0 right-0 z-[9999] h-[3px] bg-transparent overflow-hidden">
+    <div className="fixed top-0 start-0 end-0 z-[9999] h-[3px] bg-transparent overflow-hidden">
       <div className="h-full w-1/3 bg-brand-orange animate-[top-progress_1s_ease-in-out_infinite]" />
     </div>
   );
@@ -47,6 +48,7 @@ export function RootLayout() {
       <AuthGateModal />
       <ToastContainer />
       <GoogleOneTapPrompt />
+      <LanguageRouteSync />
       {/* `fixed inset-0` (not paddingTop + height:100vh) so this wrapper IS the
           scroll container — the previous approach had no overflow container of
           its own, so tall pages fell back to scrolling the whole document.

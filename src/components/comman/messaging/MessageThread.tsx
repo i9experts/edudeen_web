@@ -33,7 +33,7 @@ function TypingBubble({ name, image }: { name: string; image?: string | null }) 
   return (
     <div className="flex items-end gap-[6px] mb-[6px] transition-all duration-300 ease-out starting:opacity-0 starting:translate-y-1">
       <div className="w-7 shrink-0 self-end"><ChatAvatar name={name} image={image} size={26} /></div>
-      <div className="bg-white border border-[#eeece4] rounded-[18px] rounded-bl-[4px] px-[16px] py-[12px]">
+      <div className="bg-white border border-[#eeece4] rounded-[18px] rounded-es-[4px] px-[16px] py-[12px]">
         <span className="inline-flex items-center gap-[3px]" aria-label={`${name} is typing`}>
           {[0, 1, 2].map(i => (
             <span
@@ -172,7 +172,7 @@ export function MessageThread({
         <button
           onClick={jumpToLatest}
           aria-label="Jump to latest message"
-          className="absolute bottom-3 right-3 w-9 h-9 rounded-full bg-white border border-bone flex items-center justify-center cursor-pointer text-charcoal hover:bg-cream transition-colors"
+          className="absolute bottom-3 end-3 w-9 h-9 rounded-full bg-white border border-bone flex items-center justify-center cursor-pointer text-charcoal hover:bg-cream transition-colors"
         >
           ↓
         </button>

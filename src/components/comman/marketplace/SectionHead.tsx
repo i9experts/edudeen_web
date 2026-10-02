@@ -1,3 +1,4 @@
+import { useT } from '@/contexts/languageCtx';
 import type { ReactNode } from 'react';
 import { clsx } from 'clsx';
 
@@ -22,10 +23,11 @@ export function SectionHead({ eyebrow, title, sub, action, icon, as = 'h2', clas
   className?: string;
 }) {
   const Heading = as;
+  const t = useT();
   return (
     <div className={clsx('flex justify-between gap-5 items-end mb-[22px]', className)}>
       <div className="min-w-0">
-        {eyebrow && <p className="text-[12px] font-bold tracking-[0.15em] uppercase text-brand-royal mb-[13px]">{eyebrow}</p>}
+        {eyebrow && <p className="text-[12px] font-bold tracking-[0.15em] uppercase text-brand-royal mb-[13px]">{t(eyebrow)}</p>}
         <Heading
           className={clsx(
             'flex items-center gap-2 font-serif font-normal text-carbon mb-[6px]',
@@ -34,12 +36,12 @@ export function SectionHead({ eyebrow, title, sub, action, icon, as = 'h2', clas
               : 'text-[25px] md:text-[30px] leading-[1.2] tracking-[-0.5px]',
           )}
         >
-          {icon}{title}
+          {icon}{t(title)}
         </Heading>
-        {sub && <p className="text-[14px] text-carbon m-0">{sub}</p>}
+        {sub && <p className="text-[14px] text-carbon m-0">{t(sub)}</p>}
       </div>
       {isLinkAction(action)
-        ? <button onClick={action.onClick} className={sectionLinkClass}>{action.label}</button>
+        ? <button onClick={action.onClick} className={sectionLinkClass}>{t(action.label)}</button>
         : action}
     </div>
   );

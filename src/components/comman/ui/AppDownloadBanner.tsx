@@ -178,7 +178,7 @@ export function HomeScreenMockup() {
           {FLASH_DEAL_PRODUCTS.map((p, i) => (
             <div key={i} className="rounded-[8px] border border-bone overflow-hidden relative">
               <div className="aspect-square relative" style={{ background: p.color }}>
-                <span className="absolute top-[3px] left-[3px] px-[4px] py-[1px] rounded-[3px] text-[5px] font-bold bg-[#e11d48] text-white">-{p.pct}%</span>
+                <span className="absolute top-[3px] start-[3px] px-[4px] py-[1px] rounded-[3px] text-[5px] font-bold bg-[#e11d48] text-white">-{p.pct}%</span>
               </div>
               <div className="px-[5px] py-[4px]">
                 <p className="text-[6px] font-semibold text-charcoal truncate">{p.name}</p>
@@ -246,10 +246,10 @@ export function PhoneShell({ className, primary = true, size = 'md', heightPx, c
       style={heightPx != null ? { height: `${heightPx}px` } : undefined}
     >
       {/* Side buttons — the detail that reads "real phone" instead of a bare rounded rectangle */}
-      <div className="absolute -left-px top-[20%] w-[2px] h-[6%] rounded-l-sm bg-[#0a0a09]" />
-      <div className="absolute -left-px top-[29%] w-[2px] h-[9%] rounded-l-sm bg-[#0a0a09]" />
-      <div className="absolute -left-px top-[40%] w-[2px] h-[9%] rounded-l-sm bg-[#0a0a09]" />
-      <div className="absolute -right-px top-[24%] w-[2px] h-[10%] rounded-r-sm bg-[#0a0a09]" />
+      <div className="absolute -start-px top-[20%] w-[2px] h-[6%] rounded-s-sm bg-[#0a0a09]" />
+      <div className="absolute -start-px top-[29%] w-[2px] h-[9%] rounded-s-sm bg-[#0a0a09]" />
+      <div className="absolute -start-px top-[40%] w-[2px] h-[9%] rounded-s-sm bg-[#0a0a09]" />
+      <div className="absolute -end-px top-[24%] w-[2px] h-[10%] rounded-e-sm bg-[#0a0a09]" />
 
       <div className={clsx(
         'w-full h-full bg-gradient-to-b from-[#333130] via-carbon to-[#0a0a09] border',
@@ -264,7 +264,7 @@ export function PhoneShell({ className, primary = true, size = 'md', heightPx, c
           )} />
           {compact ? (
             <div
-              className="absolute top-0 left-0 origin-top-left"
+              className="absolute top-0 start-0 origin-top-left"
               style={{ width: MD_CONTENT_WIDTH, height: MD_CONTENT_HEIGHT, transform: `scale(${contentScale})` }}
             >
               {children}
@@ -367,10 +367,10 @@ function CompactAppDownloadBanner({ className }: { className?: string }) {
             edge for the floating-app effect instead of getting cut off. */}
         <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
           <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-brand-orange to-[#66AD36]" />
-          <div className="absolute w-[160px] h-[160px] rounded-full bg-[#3a3633] -top-12 -right-8" />
+          <div className="absolute w-[160px] h-[160px] rounded-full bg-[#3a3633] -top-12 -end-8" />
           {/* Purely decorative — no carousel behind this banner, just the same
              small dot accent the reference design has near the phone cluster. */}
-          <div className="hidden md:flex absolute bottom-3 right-[70px] lg:right-[86px] items-center gap-[5px]">
+          <div className="hidden md:flex absolute bottom-3 end-[70px] lg:end-[86px] items-center gap-[5px]">
             <span className="size-[5px] rounded-full bg-brand-orange/70" />
             <span className="size-[5px] rounded-full bg-white/25" />
           </div>
@@ -384,7 +384,7 @@ function CompactAppDownloadBanner({ className }: { className?: string }) {
            copy → phones → QR (phones as the hero visual right under the
            headline, QR last as a small secondary CTA) instead of the grid's
            copy → QR → phones column order. */}
-        <div className="relative z-[1] flex flex-col items-center text-center gap-4 md:grid md:grid-cols-[minmax(0,1.45fr)_minmax(90px,0.5fr)_minmax(220px,0.9fr)] md:items-center md:text-left md:gap-3 lg:gap-5">
+        <div className="relative z-[1] flex flex-col items-center text-center gap-4 md:grid md:grid-cols-[minmax(0,1.45fr)_minmax(90px,0.5fr)_minmax(220px,0.9fr)] md:items-center md:text-start md:gap-3 lg:gap-5">
           <div className="order-1 min-w-0">
             <h3 className="text-[19px] sm:text-[21px] md:text-[22px] lg:text-[25px] font-bold text-white mb-1.5 leading-[1.2] tracking-tight md:whitespace-nowrap">
               Shop <span className="text-brand-orange">smarter.</span> Anywhere, anytime.
@@ -421,7 +421,7 @@ function CompactAppDownloadBanner({ className }: { className?: string }) {
               style={{ background: 'radial-gradient(ellipse 75% 70% at 50% 55%, rgba(23,71,113,0.28) 0%, rgba(23,71,113,0.10) 45%, transparent 75%)' }}
             />
             <div className="absolute bottom-2 w-[74px] h-[10px] rounded-[50%] bg-black/25 blur-[2px]" />
-            <PhoneShell primary={false} size="sm" heightPx={165} className="-mr-[38px] -rotate-[7deg]">
+            <PhoneShell primary={false} size="sm" heightPx={165} className="-me-[38px] -rotate-[7deg]">
               <OrdersScreenMockup />
             </PhoneShell>
             <PhoneShell size="sm" heightPx={185} className="rotate-0">
@@ -509,16 +509,16 @@ export function AppDownloadBanner({ className, variant = 'full' }: { className?:
       {/* Soft ambient circle + faint dotted-grid texture — CSS only. No orange
           here — the only orange glow in this banner lives locally behind the
           phone mockups (see the phone-cluster spotlight below), not hero-wide. */}
-      <div className="absolute w-[280px] h-[280px] rounded-full bg-[#3a3633] -top-20 -right-16 pointer-events-none" />
+      <div className="absolute w-[280px] h-[280px] rounded-full bg-[#3a3633] -top-20 -end-16 pointer-events-none" />
       <div
-        className="hidden lg:block absolute right-0 top-0 bottom-0 w-[40%] opacity-[0.05] pointer-events-none"
+        className="hidden lg:block absolute end-0 top-0 bottom-0 w-[40%] opacity-[0.05] pointer-events-none"
         style={{ backgroundImage: 'radial-gradient(rgba(255,255,255,0.7) 1px, transparent 1px)', backgroundSize: '20px 20px' }}
       />
 
       <div className="relative z-[1] px-6 sm:px-8 lg:px-10 pt-6 sm:pt-7 pb-5 grid grid-cols-1 lg:grid-cols-[1.1fr_auto_auto] items-center gap-6 lg:gap-8">
 
         {/* Copy + features */}
-        <div className="text-center lg:text-left min-w-0">
+        <div className="text-center lg:text-start min-w-0">
           <div className="inline-flex items-center gap-2 rounded-full px-3 py-1 mb-3 bg-[rgba(23,71,113,0.15)] border border-[rgba(23,71,113,0.3)]">
             <ShoppingBag size={12} className="text-brand-orange shrink-0" />
             <span className="text-[11px] font-medium text-brand-orange">Edudeen Mobile</span>
@@ -539,7 +539,7 @@ export function AppDownloadBanner({ className, variant = 'full' }: { className?:
             {FEATURES.map(({ Icon, title, sub }) => (
               <li
                 key={title}
-                className="flex items-center gap-[10px] text-left rounded-xl px-1 py-1"
+                className="flex items-center gap-[10px] text-start rounded-xl px-1 py-1"
               >
                 <span className="w-8 h-8 rounded-[9px] border border-brand-orange/25 bg-brand-orange/[0.12] flex items-center justify-center shrink-0">
                   <Icon size={14} className="text-brand-orange" />
@@ -583,7 +583,7 @@ export function AppDownloadBanner({ className, variant = 'full' }: { className?:
 
         {/* Phone mockups — layered composition: back phone tilted left, lower,
             further left; front phone near-upright, overlapping ~40% of it. */}
-        <div className="hidden lg:flex items-end justify-center shrink-0 relative pb-1 pl-6">
+        <div className="hidden lg:flex items-end justify-center shrink-0 relative pb-1 ps-6">
           {/* Localized "studio spotlight" — orange only immediately behind the
               phone cluster, fading to nothing well before the hero's edges. */}
           <div
@@ -593,7 +593,7 @@ export function AppDownloadBanner({ className, variant = 'full' }: { className?:
           {/* Contact shadow — grounds the phones on the pedestal */}
           <div className="absolute bottom-0 w-[220px] h-[30px] rounded-[50%] bg-black/25 blur-[2px]" />
 
-          <PhoneShell primary={false} className="-mr-[86px] -translate-x-[14px] translate-y-[16px] -rotate-[15deg]">
+          <PhoneShell primary={false} className="-me-[86px] -translate-x-[14px] translate-y-[16px] -rotate-[15deg]">
             <OrdersScreenMockup />
           </PhoneShell>
           <PhoneShell className="rotate-[1deg]">
@@ -607,7 +607,7 @@ export function AppDownloadBanner({ className, variant = 'full' }: { className?:
         <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 sm:px-6 py-[14px]">
           <div className="grid grid-cols-2 sm:flex sm:items-center sm:justify-between gap-3">
             {trustStats.map(({ Icon, value, label }, i) => (
-              <div key={label} className={clsx('flex items-center gap-[8px]', i > 0 && 'sm:border-l sm:border-white/10 sm:pl-4')}>
+              <div key={label} className={clsx('flex items-center gap-[8px]', i > 0 && 'sm:border-s sm:border-white/10 sm:ps-4')}>
                 <span className="w-7 h-7 rounded-full bg-white/[0.06] flex items-center justify-center shrink-0">
                   <Icon size={13} className="text-brand-orange" />
                 </span>

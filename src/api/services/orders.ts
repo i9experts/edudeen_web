@@ -92,7 +92,13 @@ export interface OrderDetail {
   totalAmount:     number;
   currency:        string;
   shippingAddress: Record<string, unknown>;
-  sellerOrders:    OrderStoreGroup[];
+  sellerOrders:    (OrderStoreGroup & { _id?: string; storeName?: string | null; storeSlug?: string | null; storeContactEmail?: string | null; storeContactPhone?: string | null; sellerName?: string | null })[];
+  couponCode?:     string | null;
+  couponDiscountTotal?: number;
+  giftCardDiscountTotal?: number;
+  campaignDiscountTotal?: number;
+  autoDiscountTotal?: number;
+  subscriberDiscountTotal?: number;
   createdAt:       string;
   paidAt?:         string | null;
 }
@@ -252,4 +258,35 @@ export function apiStreamPdf(orderId: string, productId: string, fileIndex = 0) 
     params: { orderId, productId, fileIndex },
     responseType: 'blob',
   });
+}
+
+// ── My Library (every digital resource the buyer owns) ───────────────────────
+export interface LibraryItem {
+  orderId:        string;
+  orderNumber:    string;
+  itemId:         string;
+  productId:      string;
+  slug:           string | null;
+  name:           string;
+  image:          string | null;
+  licenseType:    string | null;
+  storeId:        string;
+  storeName:      string | null;
+  storeSlug:      string | null;
+  isPaid:         boolean;
+  purchasedAt:    string;
+  downloadCount:  number;
+  reviewable:     boolean;
+  category:       string | null;
+  subCategory:    string | null;
+  educationLevel: string | null;
+  customLevel:    string | null;
+  curricula:      string[];
+  fileCount:      number;
+  deliveryFormat?: 'download' | 'course' | 'live_class';
+  liveStartsAt?:  string | null;
+}
+
+export function apiGetMyLibrary() {
+  return client.get<never, { success: boolean; data: { items: LibraryItem[] } }>('/api/orders/my-library');
 }

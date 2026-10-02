@@ -76,7 +76,7 @@ export function FunnelChart({
                 className="h-[42px] rounded-[6px] flex items-center justify-between px-4 transition-[width] duration-300"
                 style={{ width: `${barW}%`, background: color }}
               >
-                <span className="text-[12px] font-semibold text-white truncate pr-2">{step.label}</span>
+                <span className="text-[12px] font-semibold text-white truncate pe-2">{step.label}</span>
                 <span className="text-[13px] font-bold text-white shrink-0">
                   {valuePrefix}{step.value.toLocaleString()}{valueSuffix}
                 </span>
