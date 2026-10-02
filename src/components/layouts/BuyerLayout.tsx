@@ -1,3 +1,4 @@
+import { QuickAccessRail } from '@/components/comman/marketplace/QuickAccessRail';
 import { useT } from '@/contexts/languageCtx';
 import { Suspense } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
@@ -86,6 +87,7 @@ export function BuyerLayout() {
       <BuyerBottomNav />
       <AppOpenPrompt />
       <AppOpenFab />
+      <QuickAccessRail />
     </>
   );
 }

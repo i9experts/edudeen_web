@@ -763,6 +763,24 @@ export const UR: Record<string, string> = {
   'Every figure a seller sees is computed from their actual orders and payments, never a simulated placeholder.': 'فروخت کنندہ کو نظر آنے والا ہر عدد اس کے اصل آرڈرز اور ادائیگیوں سے بنتا ہے، فرضی نہیں۔',
   'Educators can set up a store and start listing quickly. Sellers who complete Edudeen\'s verification earn a verified badge, so learners and parents can see at a glance which stores have been checked — and buyers always pay through Edudeen\'s own checkout.': 'اساتذہ جلدی اسٹور بنا کر چیزیں لگا سکتے ہیں۔ ایجوڈین کی تصدیق مکمل کرنے والوں کو تصدیقی نشان ملتا ہے، تاکہ طلبہ اور والدین ایک نظر میں جانچے ہوئے اسٹور پہچان سکیں — اور خریدار ہمیشہ ایجوڈین کے ذریعے ادائیگی کرتے ہیں۔',
   'Sellers\' own payment gateways and custom domains per store are real items on our roadmap — the direction is always toward an educator owning more of their own teaching business, not less.': 'فروخت کنندگان کے اپنے پیمنٹ گیٹ وے اور ہر اسٹور کا اپنا ڈومین ہمارے منصوبے میں شامل ہیں — مقصد یہ ہے کہ استاد اپنے تدریسی کاروبار کا زیادہ مالک بنے۔',
+  // ── Quick-access rail ─────────────────────────────────────────────────────
+  'Quick access': 'فوری رسائی',
+  'Deals': 'ڈیلز',
+  'All deals': 'تمام ڈیلز',
+  'No live deals right now — check back soon.': 'اس وقت کوئی ڈیل نہیں — جلد دوبارہ دیکھیں۔',
+  'Ends in': 'ختم ہونے میں',
+  'Browse all': 'سب دیکھیں',
+  'Preschool to university, by subject': 'پری اسکول سے یونیورسٹی تک، مضمون کے لحاظ سے',
+  'Recently viewed': 'حال ہی میں دیکھے',
+  'Clear': 'صاف کریں',
+  'Resources you open will show up here, so you can find them again.': 'جو وسائل آپ کھولیں گے وہ یہاں نظر آئیں گے، تاکہ دوبارہ آسانی سے مل جائیں۔',
+  'Welcome to Edudeen': 'ایجوڈین میں خوش آمدید',
+  'Hello,': 'السلام علیکم،',
+  'there': 'جناب',
+  'Sign in to track orders, download your resources and save lists.': 'آرڈر ٹریک کرنے، وسائل ڈاؤن لوڈ کرنے اور فہرستیں محفوظ کرنے کے لیے سائن اِن کریں۔',
+  'New customer? Create an account': 'نئے ہیں؟ اکاؤنٹ بنائیں',
+  'Sale': 'سیل',
+  'SALE': 'سیل',
   // ── Small common words ────────────────────────────────────────────────────
   'Close': 'بند کریں',
   'Back': 'واپس',
@@ -815,6 +833,17 @@ export const UR_PATTERNS: [RegExp, (m: RegExpMatchArray) => string][] = [
   [/^(\d[\d,]*) files?$/, m => `${m[1]} فائلیں`],
   [/^(\d+) of (\d+) lessons done$/, m => `${m[2]} میں سے ${m[1]} اسباق مکمل`],
   [/^Ends in (\d{1,2}:\d{2}:\d{2})$/, m => `ختم ہونے میں ${m[1]}`],
+  [/^(\d+)d (\d+)h$/, m => `${m[1]} دن ${m[2]} گھنٹے`],
+  [/^(\d+)h (\d+)m$/, m => `${m[1]} گھنٹے ${m[2]} منٹ`],
+  [/^(\d+)m$/, m => `${m[1]} منٹ`],
+  [/^ending now$/, () => 'ختم ہو رہی ہے'],
+  // Top-bar sale ticker: "Up to 20% off · ends in 2d 23h", "Rs500 off · ends in 5h 3m"
+  [/^(?:Up to (\d+)% off|(.+) off)(?: · ends in (.+))?$/, m => {
+    const off = m[1] ? `${m[1]}% تک رعایت` : `${m[2]} رعایت`;
+    if (!m[3]) return off;
+    const t = m[3].replace(/(\d+)d/, '$1 دن').replace(/(\d+)h/, '$1 گھنٹے').replace(/(\d+)m/, '$1 منٹ').replace('ending now', 'ختم ہو رہی ہے');
+    return `${off} · ختم ہونے میں ${t}`;
+  }],
   // Ages / grades
   [/^Ages (\d+)–(\d+)$/, m => `عمر ${m[1]}–${m[2]} سال`],
   [/^Ages (\d+)\+$/, m => `عمر ${m[1]}+ سال`],

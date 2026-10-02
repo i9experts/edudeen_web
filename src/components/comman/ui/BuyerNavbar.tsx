@@ -47,6 +47,9 @@ export interface RecentlyViewedItem {
   price: number | null;
   currency?: 'PKR' | 'USD' | null;
 }
+export function clearRecentlyViewed() {
+  try { localStorage.removeItem(RECENTLY_VIEWED_KEY); } catch { /* storage blocked */ }
+}
 export function getRecentlyViewed(): RecentlyViewedItem[] {
   try { return JSON.parse(localStorage.getItem(RECENTLY_VIEWED_KEY) ?? '[]'); } catch { return []; }
 }

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { X } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useIsBuyer } from '@/hooks/auth/useIsBuyer';
@@ -350,6 +350,17 @@ export function Homepage() {
   }, [campaignId]);
 
   const resourcesRef = useRef<HTMLElement>(null);
+
+  // `/#deals` (from the quick-access rail): jump to the flash sale, or —
+  // when there isn't one today — show the catalogue filtered to items on sale.
+  const { hash } = useLocation();
+  const hasDeals = flashDeals.length > 0;
+  useEffect(() => {
+    if (hash !== '#deals' || poolLoading) return;
+    if (!hasDeals) setFilters(f => ({ ...f, onSale: true }));
+    const t = setTimeout(() => (hasDeals ? document.getElementById('deals') : resourcesRef.current)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150);
+    return () => clearTimeout(t);
+  }, [hash, hasDeals, poolLoading]);
   const scrollToResources = () => resourcesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   const selectSubject = (id: string | null) => {
     setSubject(id);
@@ -525,7 +536,7 @@ export function Homepage() {
 
         {/* ── Flash sale ── */}
         {flashDeals.length > 0 && (
-          <section className="mb-12">
+          <section id="deals" className="mb-12 scroll-mt-[150px]">
             <SectionHead
               eyebrow="Limited-time savings"
               title="Flash Sale"
