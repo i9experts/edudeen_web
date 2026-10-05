@@ -68,25 +68,29 @@ export function StoreOrderList() {
   const [selected,      setSelected]      = useState<SellerOrder | null>(null);
 
   const LIMIT = 10;
-  // Status/type filters run server-side (seller-orders supports ?status= and
-  // ?type=). There is NO server-side search param and the backend caps
-  // `limit` at 50, so a search looks through the 50 most recent orders
-  // matching the current filters — the UI says so below.
-  const SEARCH_LIMIT = 50;
+  // Status/type filters and search (?q= — order number, buyer name/email,
+  // item name) all run server-side, so pagination stays intact while searching.
 
   useEffect(() => {
-    const id = setTimeout(() => setDebouncedSearch(search), 300);
+    if (search.trim() === debouncedSearch.trim()) return;
+    const id = setTimeout(() => {
+      // A new term restarts at page 1.
+      setLoading(true);
+      setError('');
+      setPage(1);
+      setDebouncedSearch(search);
+    }, 300);
     return () => clearTimeout(id);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search]);
 
-  const isSearching = debouncedSearch.trim().length > 0;
+  const q = debouncedSearch.trim();
 
   useEffect(() => {
     if (!storeId) return;
     let cancelled = false;
-    const [fetchPage, fetchLimit] = isSearching ? [1, SEARCH_LIMIT] : [page, LIMIT];
 
-    apiGetSellerOrders(storeId, fetchPage, fetchLimit, { status: statusF, type: typeF })
+    apiGetSellerOrders(storeId, page, LIMIT, { status: statusF, type: typeF, q })
       .then(res => {
         if (cancelled) return;
         setOrders(res.data.orders ?? []);
@@ -99,12 +103,11 @@ export function StoreOrderList() {
       .finally(() => { if (!cancelled) setLoading(false); });
 
     return () => { cancelled = true; };
-  }, [storeId, page, refreshKey, isSearching, statusF, typeF]);
+  }, [storeId, page, refreshKey, q, statusF, typeF]);
 
   const handlePageChange = (p: number) => {
     setLoading(true);
     setError('');
-    setSearch('');
     setPage(p);
   };
 
@@ -121,22 +124,13 @@ export function StoreOrderList() {
     setSelected(prev => prev && prev.orderId === orderId ? { ...prev, ...patch } : prev);
   };
 
-  // Search only (status/type are already applied by the server).
-  const q = debouncedSearch.trim().toLowerCase();
-  const filtered = q
-    ? orders.filter(o =>
-        o.orderNumber.toLowerCase().includes(q) ||
-        o.customer.name.toLowerCase().includes(q) ||
-        o.product.toLowerCase().includes(q))
-    : orders;
-
   // ── Columns ──────────────────────────────────────────────────────────────────
   const columns: TableColumn<SellerOrder>[] = [
     {
       key: 'no', header: '#', width: '48px',
       render: (_, i) => (
         <span className="text-[12px] text-slate font-medium">
-          {(isSearching ? 0 : (page - 1) * LIMIT) + i + 1}
+          {(page - 1) * LIMIT + i + 1}
         </span>
       ),
     },
@@ -292,14 +286,9 @@ export function StoreOrderList() {
               <SearchInput
                 value={search}
                 onChange={setSearch}
-                placeholder="Search orders…"
+                placeholder="Order #, customer or product…"
                 className="w-full sm:w-[200px] sm:ml-auto"
               />
-              {isSearching && (
-                <p className="text-[11.5px] text-slate sm:text-right">
-                  Searching your {SEARCH_LIMIT} most recent orders{statusF || typeF ? ' that match the filters' : ''} by order number, customer or product.
-                </p>
-              )}
               <div className="flex items-center gap-2 overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap sm:justify-end">
                 <FilterDropdown
                   value={statusF}
@@ -326,7 +315,7 @@ export function StoreOrderList() {
 
             <Table
               columns={columns}
-              data={filtered}
+              data={orders}
               keyExtractor={o => o.orderId}
               onRowClick={o => setSelected(o)}
               loading={loading}
@@ -338,7 +327,7 @@ export function StoreOrderList() {
                     ? 'Try adjusting your search or filters.'
                     : 'Orders from your store will appear here once customers start purchasing.',
               }}
-              pagination={isSearching ? undefined : {
+              pagination={{
                 page,
                 total:    totalOrders,
                 perPage:  LIMIT,

@@ -5,13 +5,20 @@ import { Input } from '@/components/comman/ui/Input';
 import { Button } from '@/components/comman/ui/Button';
 import { useGeneratePriceOptimization } from '@/hooks/seller/useAiStudio';
 import { ProductPicker } from '../components/ProductPicker';
+import { costLabel } from '../components/costLabel';
+import { useStoreWorkspace } from '@/components/layouts/StoreLayout';
+import { currencySymbol } from '@/utils/currency';
 
 interface PriceOptimizerToolProps {
   storeId: string;
   onCreditsChanged: () => void;
+  /** Live cost from credits.toolCosts (undefined while loading). */
+  creditCost?: number;
 }
 
-export function PriceOptimizerTool({ storeId, onCreditsChanged }: PriceOptimizerToolProps) {
+export function PriceOptimizerTool({ storeId, onCreditsChanged, creditCost }: PriceOptimizerToolProps) {
+  const { store } = useStoreWorkspace();
+  const sym = currencySymbol(store?.baseCurrency);
   const [productId, setProductId] = useState('');
   const [attributes, setAttributes] = useState('');
 
@@ -54,7 +61,7 @@ export function PriceOptimizerTool({ storeId, onCreditsChanged }: PriceOptimizer
         )}
 
         <Button variant="primary" size="md" fullWidth loading={generating} disabled={!productId} onClick={() => handleGenerate()} icon={<Sparkles size={14} />} className="mt-5">
-          Generate with AI (10 credits)
+          Generate with AI{costLabel(creditCost)}
         </Button>
       </div>
 
@@ -84,9 +91,9 @@ export function PriceOptimizerTool({ storeId, onCreditsChanged }: PriceOptimizer
                 <div className="text-center py-3">
                   <TrendingUp size={36} className="text-brand-orange mx-auto mb-2" />
                   <p className="text-[10px] font-semibold text-slate uppercase tracking-[0.08em] mb-1">Suggested Price</p>
-                  <p className="text-[40px] font-bold text-brand-orange leading-none">${result.suggestedPrice.toFixed(2)}</p>
+                  <p className="text-[40px] font-bold text-brand-orange leading-none">{sym}{result.suggestedPrice.toFixed(2)}</p>
                   <p className="text-xs text-slate mt-1">
-                    Range: ${result.suggestedPriceMin?.toFixed(2)} – ${result.suggestedPriceMax?.toFixed(2)}
+                    Range: {sym}{result.suggestedPriceMin?.toFixed(2)} – {sym}{result.suggestedPriceMax?.toFixed(2)}
                   </p>
                 </div>
 

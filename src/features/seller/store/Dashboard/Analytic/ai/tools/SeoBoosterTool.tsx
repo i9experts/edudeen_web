@@ -6,13 +6,16 @@ import { Button } from '@/components/comman/ui/Button';
 import { useGenerateSeoBooster, useAcceptAiGeneration } from '@/hooks/seller/useAiStudio';
 import { ProductPicker } from '../components/ProductPicker';
 import { GenerationActions } from '../components/GenerationActions';
+import { costLabel } from '../components/costLabel';
 
 interface SeoBoosterToolProps {
   storeId: string;
   onCreditsChanged: () => void;
+  /** Live cost from credits.toolCosts (undefined while loading). */
+  creditCost?: number;
 }
 
-export function SeoBoosterTool({ storeId, onCreditsChanged }: SeoBoosterToolProps) {
+export function SeoBoosterTool({ storeId, onCreditsChanged, creditCost }: SeoBoosterToolProps) {
   const [productId, setProductId] = useState('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -81,7 +84,7 @@ export function SeoBoosterTool({ storeId, onCreditsChanged }: SeoBoosterToolProp
           icon={<Sparkles size={14} />}
           className="mt-5"
         >
-          Generate with AI (5 credits)
+          Generate with AI{costLabel(creditCost)}
         </Button>
       </div>
 

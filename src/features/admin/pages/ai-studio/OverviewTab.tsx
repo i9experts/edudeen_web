@@ -21,10 +21,10 @@ export function OverviewTab() {
   return (
     <div className="flex flex-col gap-5">
       <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
-        <MetricCard label="Generations (28d)" value={data?.totalGenerations ?? 0} icon={<Sparkles size={16} />} loading={loading} />
-        <MetricCard label="Success Rate" value={`${data?.successRate ?? 0}%`} icon={<CheckCircle2 size={16} />} loading={loading} />
-        <MetricCard label="Credits Spent (28d)" value={(data?.totalCreditsSpent ?? 0).toLocaleString()} icon={<Coins size={16} />} loading={loading} />
-        <MetricCard label="Captured Transactions" value={data?.capturedTransactionCount ?? 0} icon={<ListChecks size={16} />} loading={loading} />
+        <MetricCard label="Generations (28d)" value={data?.totalGenerations ?? '—'} icon={<Sparkles size={16} />} loading={loading} />
+        <MetricCard label="Success Rate" value={data?.successRate != null ? `${data.successRate}%` : '—'} icon={<CheckCircle2 size={16} />} loading={loading} />
+        <MetricCard label="Credits Spent (28d)" value={data?.totalCreditsSpent != null ? data.totalCreditsSpent.toLocaleString() : '—'} icon={<Coins size={16} />} loading={loading} />
+        <MetricCard label="Captured Transactions" value={data?.capturedTransactionCount ?? '—'} icon={<ListChecks size={16} />} loading={loading} />
       </div>
 
       <Card>

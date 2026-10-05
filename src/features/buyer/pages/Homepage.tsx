@@ -1,3 +1,5 @@
+import { PlacementBanner } from '@/components/comman/marketplace/PlacementBanner';
+import { DealsBanner } from '@/components/comman/ui/DealsBanner';
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { X } from 'lucide-react';
@@ -10,7 +12,7 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { getStorePagePath } from '@/utils/storefrontUrl';
 import { categoryPath } from '@/hooks/marketplace/useCategoryTree';
 import { useProductsByCategory } from '@/hooks/marketplace/useProductsByCategory';
-import { useCountdownToMidnight } from '@/hooks/useCountdownToMidnight';
+import { useCountdownTo } from '@/hooks/useCountdownTo';
 import { useCartContext } from '@/contexts/CartContext';
 import { useWishlistContext } from '@/contexts/WishlistContext';
 import { Avatar } from '@/components/comman/ui/Avatar';
@@ -33,6 +35,7 @@ import { apiGetCategoryTree, type CategoryNode } from '@/api/services/categories
 import { EDUCATION_LEVELS } from '@/api/services/product';
 import type { MarketplaceProduct, MarketplaceSortBy } from '@/api/services/marketplace';
 import { apiGetHomeShelves, type CuratedShelf } from '@/api/services/classroom';
+import { apiBrowseProducts } from '@/api/services/marketplace';
 import { RevealStagger } from '@/components/comman/motion/Reveal';
 import { AnimatedCounter } from '@/components/comman/motion/AnimatedCounter';
 import heroImage from '@/assets/learning-hero.jpg';
@@ -145,6 +148,11 @@ export function Homepage() {
   // Edudeen's curated, seasonal shelves ("Exam ki tayyari" etc.), set by the admin team.
   const [shelves, setShelves] = useState<CuratedShelf[]>([]);
   useEffect(() => { apiGetHomeShelves().then(res => setShelves(res.data ?? [])).catch(() => {}); }, []);
+  // Listings the Edudeen team has featured (Admin → Listings → Feature).
+  const [featured, setFeatured] = useState<MarketplaceProduct[]>([]);
+  // The isFeatured check keeps the row honest on an API deploy that predates
+  // the `featured` filter (it would otherwise return the newest products).
+  useEffect(() => { apiBrowseProducts({ featured: true, limit: 10 }).then(res => setFeatured((res.data?.products ?? []).filter(p => p.isFeatured === true))).catch(() => {}); }, []);
   const isBuyer = useIsBuyer();
   const sellersRowRef = useEdgeHoverScroll<HTMLDivElement>();
   usePageTitle('Home');
@@ -211,7 +219,10 @@ export function Homepage() {
     .sort((a, b) => b.averageRating - a.averageRating || (b.totalRatings ?? 0) - (a.totalRatings ?? 0))
     .slice(0, 10);
 
-  const countdown = useCountdownToMidnight();
+  // The flash-sale timer counts down to the soonest-ending live sale campaign;
+  // with no campaign running there's no timer (discounted items still show).
+  const saleEnd = (topBarDeals?.campaigns ?? []).map(c => c.endDate).sort()[0] ?? null;
+  const countdown = useCountdownTo(saleEnd);
 
   // ── Catalogue section filters ──
   const [subject, setSubject]   = useState<string | null>(null);
@@ -453,9 +464,9 @@ export function Homepage() {
   }, []);
 
   const statItems = stats ? [
-    { value: stats.sellersCount, format: (n: number) => `${compactNumber.format(n)}+`, label: 'Active Sellers' },
-    { value: stats.gmv,          format: (n: number) => `${compactCurrency.format(n)}+`, label: 'GMV Processed' },
-    { value: stats.buyersCount,  format: (n: number) => `${compactNumber.format(n)}+`,  label: 'Registered Buyers' },
+    { value: stats.sellersCount ?? 0, format: (n: number) => `${compactNumber.format(n)}+`, label: 'Active Sellers' },
+    { value: stats.gmv ?? 0,          format: (n: number) => `${compactCurrency.format(n)}+`, label: 'GMV Processed' },
+    { value: stats.buyersCount ?? 0,  format: (n: number) => `${compactNumber.format(n)}+`,  label: 'Registered Buyers' },
     { value: stats.ratingCount > 0 ? stats.avgRating : null, format: (n: number) => `${n.toFixed(1)} ★`, label: 'Average Rating' },
   ] : [];
 
@@ -486,6 +497,9 @@ export function Homepage() {
       </div>
 
       <main className="max-w-[1480px] mx-auto px-[5%] md:px-[4%] pt-5 md:pt-[30px] pb-10 md:pb-[65px]">
+
+        {/* ── Admin banners / paid promotions (Admin → Banners, homepage slot) ── */}
+        <PlacementBanner placement="homepageHero" className="mb-[25px]" />
 
         {/* ── Hero ── */}
         <section className="grid grid-cols-1 md:grid-cols-[1.2fr_1fr] md:min-h-[280px] rounded-[18px] overflow-hidden bg-[#eaf2f8] mb-[25px]">
@@ -534,6 +548,9 @@ export function Homepage() {
           ))}
         </div>
 
+        {/* ── Live sale campaign (Admin → Marketing → Campaigns), with its banner image ── */}
+        <DealsBanner className="!px-0 !pt-0 mb-12" />
+
         {/* ── Flash sale ── */}
         {flashDeals.length > 0 && (
           <section id="deals" className="mb-12 scroll-mt-[150px]">
@@ -541,12 +558,12 @@ export function Homepage() {
               eyebrow="Limited-time savings"
               title="Flash Sale"
               icon={<span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-error-bg text-error"><Zap size={14} className="fill-error" /></span>}
-              action={
+              action={countdown ? (
                 <span className="shrink-0 flex items-center gap-[6px] text-[12px] sm:text-[13px] font-semibold text-slate">
                   <span className="hidden sm:inline">Ends in</span>
                   <span className="tabular-nums text-error font-bold">{countdown.h}:{countdown.m}:{countdown.s}</span>
                 </span>
-              }
+              ) : undefined}
             />
             <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1 snap-x snap-mandatory">
               {flashDeals.map(({ product: p }) => {
@@ -573,6 +590,16 @@ export function Homepage() {
         )}
 
         {/* ── Edudeen picks (curated shelves) ── */}
+        {/* ── Featured by Edudeen (admin-featured listings) ── */}
+        {featured.length > 0 && (
+          <section className="mb-12">
+            <SectionHead eyebrow="Hand-picked by our team" title="Featured by Edudeen" />
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-[14px] gap-y-[25px] md:gap-x-[22px] md:gap-y-[28px]">
+              {featured.slice(0, 5).map(renderResourceCard)}
+            </div>
+          </section>
+        )}
+
         {shelves.map(s => (
           <section key={s._id} className="mb-12">
             <SectionHead
@@ -840,7 +867,7 @@ export function Homepage() {
                             <p className="text-[13px] font-bold text-carbon">{t.name}</p>
                             {t.isVerifiedSeller && <BadgeCheck size={13} className="text-brand-royal shrink-0" />}
                           </div>
-                          <p className="text-[12px] text-slate">{t.storeName ? `Owner, ${t.storeName}` : 'Verified Seller'}</p>
+                          <p className="text-[12px] text-slate">{t.storeName ? `Owner, ${t.storeName}` : t.isVerifiedSeller ? 'Verified Seller' : 'Edudeen member'}</p>
                         </div>
                       </figcaption>
                     </figure>

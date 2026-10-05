@@ -1,11 +1,13 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useContext } from 'react';
 import { Search, Check, Package, FolderTree, Layers } from 'lucide-react';
 import { Modal } from '@/components/comman/ui/Modal';
 import { Button } from '@/components/comman/ui/Button';
 import { SkeletonBox } from '@/components/comman/ui';
-import { apiGetStoreInventory } from '@/api/services/product';
 import { apiGetCategoryTree } from '@/api/services/categories';
 import { apiListCollections } from '@/api/services/collections';
+import { StoreWorkspaceCtx } from '@/components/layouts/StoreWorkspaceContext';
+import { useInventorySearch } from '@/hooks/seller/useInventorySearch';
+import { currencySymbol } from '@/utils/currency';
 
 export type EntityPickerMode = 'products' | 'categories' | 'collections';
 
@@ -24,11 +26,10 @@ const MODE_LABEL: Record<EntityPickerMode, string> = {
 const MODE_ICON: Record<EntityPickerMode, typeof Package> = {
   products: Package, categories: FolderTree, collections: Layers,
 };
-// Products are fetched once (a wide page, not paginated further) and
-// filtered client-side, same precedent `FeaturedProductsSection`'s manual
-// source already uses — there's no dedicated store-product search endpoint
-// today, and this keeps the picker to zero new backend surface.
-const PRODUCTS_FETCH_LIMIT = 200;
+// Products: the first page loads up-front, then typing searches the whole
+// catalog server-side (inventory ?q= name/SKU). Categories/collections are
+// small per-store lists and stay filtered client-side.
+const PRODUCTS_FETCH_LIMIT = 100;
 
 /**
  * One reusable searchable picker for Products / Categories / Collections —
@@ -51,7 +52,8 @@ export function EntityPickerModal({
   mainCategoryId?: string;
   multiple: boolean;
   initialSelectedIds: string[];
-  onConfirm: (ids: string[]) => void;
+  /** `labels` = id → name for every row seen in this session (incl. search results), for chip lists. */
+  onConfirm: (ids: string[], labels: Record<string, string>) => void;
   title?: string;
 }) {
   const [rows, setRows] = useState<PickerRow[]>([]);
@@ -59,6 +61,17 @@ export function EntityPickerModal({
   const [error, setError] = useState('');
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<string[]>(initialSelectedIds);
+  // Optional: the picker may render outside a store workspace.
+  const storeCurrency = useContext(StoreWorkspaceCtx)?.store?.baseCurrency;
+
+  const isProducts = mode === 'products';
+  const inventory = useInventorySearch(storeId, { limit: PRODUCTS_FETCH_LIMIT, enabled: open && isProducts });
+  const { setQuery: setInventoryQuery } = inventory;
+  useEffect(() => { if (isProducts) setInventoryQuery(query); }, [isProducts, query, setInventoryQuery]);
+  const productRows = useMemo<PickerRow[]>(
+    () => inventory.products.map(p => ({ id: p.productId, label: p.name, sub: `${currencySymbol(storeCurrency)}${p.price.toLocaleString()}`, image: p.image })),
+    [inventory.products, storeCurrency],
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -68,10 +81,8 @@ export function EntityPickerModal({
     setError('');
 
     if (mode === 'products') {
-      apiGetStoreInventory(storeId, 1, PRODUCTS_FETCH_LIMIT)
-        .then(res => setRows(res.data.products.map(p => ({ id: p.productId, label: p.name, sub: `$${p.price.toLocaleString()}`, image: p.image }))))
-        .catch(() => setError('Failed to load products.'))
-        .finally(() => setLoading(false));
+      // Loaded by useInventorySearch above.
+      setLoading(false);
     } else if (mode === 'categories') {
       if (!mainCategoryId) { setRows([]); setLoading(false); return; }
       apiGetCategoryTree(mainCategoryId)
@@ -87,10 +98,18 @@ export function EntityPickerModal({
   }, [open, mode, storeId, mainCategoryId, JSON.stringify(initialSelectedIds)]);
 
   const filtered = useMemo(() => {
+    if (isProducts) return productRows; // already filtered server-side
     const q = query.trim().toLowerCase();
     if (!q) return rows;
     return rows.filter(r => r.label.toLowerCase().includes(q));
-  }, [rows, query]);
+  }, [isProducts, productRows, rows, query]);
+  const [seenLabels, setSeenLabels] = useState<Record<string, string>>({});
+  useEffect(() => {
+    if (filtered.length) setSeenLabels(prev => ({ ...prev, ...Object.fromEntries(filtered.map(r => [r.id, r.label])) }));
+  }, [filtered]);
+  const listLoading = isProducts ? inventory.loading && productRows.length === 0 : loading;
+  const listError   = isProducts ? inventory.error : error;
+  const hasAny      = isProducts ? (productRows.length > 0 || !!query.trim()) : rows.length > 0;
 
   const toggle = (id: string) => {
     if (multiple) {
@@ -113,7 +132,7 @@ export function EntityPickerModal({
       footer={
         <>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={() => onConfirm(selected)} disabled={selected.length === 0}>
+          <Button onClick={() => onConfirm(selected, seenLabels)} disabled={selected.length === 0}>
             {multiple ? `Add ${selected.length ? `(${selected.length})` : ''}` : 'Select'}
           </Button>
         </>
@@ -130,14 +149,14 @@ export function EntityPickerModal({
         </div>
 
         <div className="max-h-[360px] overflow-y-auto flex flex-col gap-1 -mx-1 px-1">
-          {loading ? (
+          {listLoading ? (
             Array.from({ length: 5 }).map((_, i) => <SkeletonBox key={i} height={44} rounded="8px" />)
-          ) : error ? (
-            <p className="text-[12.5px] text-error py-4 text-center">{error}</p>
+          ) : listError ? (
+            <p className="text-[12.5px] text-error py-4 text-center">{listError}</p>
           ) : filtered.length === 0 ? (
             <div className="flex flex-col items-center gap-2 py-8 text-slate">
               <Icon size={22} />
-              <p className="text-[12.5px]">{rows.length === 0 ? `No ${MODE_LABEL[mode].toLowerCase()} yet.` : 'No matches.'}</p>
+              <p className="text-[12.5px]">{isProducts && inventory.loading ? 'Searching…' : !hasAny ? `No ${MODE_LABEL[mode].toLowerCase()} yet.` : 'No matches.'}</p>
             </div>
           ) : (
             filtered.map(row => {

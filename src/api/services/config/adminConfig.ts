@@ -150,3 +150,8 @@ export function apiUpdatePayoutConfig(payload: Partial<PayoutConfig>) {
 export function apiUpdateFxConfig(payload: Partial<FxConfig>) {
   return client.put<never, ApiResponse<PlatformConfig>>(ENDPOINTS.PLATFORM_CONFIG.UPDATE_FX, payload);
 }
+
+/** PUT /api/admin/platform-config/social-links — footer social links (empty string clears one). */
+export function apiUpdateSocialLinks(links: Partial<Record<'facebook' | 'instagram' | 'linkedin' | 'youtube' | 'tiktok' | 'x', string>>) {
+  return client.put<never, { success: boolean; message?: string }>('/api/admin/platform-config/social-links', links);
+}

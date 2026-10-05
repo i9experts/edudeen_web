@@ -6,6 +6,7 @@ import { Button } from '@/components/comman/ui/Button';
 import { ImageUpload } from '@/components/comman/ui/Upload';
 import { useImageEnhance } from '@/hooks/seller/useAiStudio';
 import type { EnhancementType } from '@/api/services/aiStudio';
+import { costLabel } from '../components/costLabel';
 
 const ENHANCEMENT_LABELS: Record<EnhancementType, string> = {
   upscale: 'Upscale Resolution',
@@ -16,9 +17,11 @@ const ENHANCEMENT_LABELS: Record<EnhancementType, string> = {
 interface ImageEnhancerToolProps {
   storeId: string;
   onCreditsChanged: () => void;
+  /** Live cost from credits.toolCosts (undefined while loading). */
+  creditCost?: number;
 }
 
-export function ImageEnhancerTool({ storeId, onCreditsChanged }: ImageEnhancerToolProps) {
+export function ImageEnhancerTool({ storeId, onCreditsChanged, creditCost }: ImageEnhancerToolProps) {
   const [imageUrl, setImageUrl] = useState('');
   const [enhancementType, setEnhancementType] = useState<EnhancementType>('upscale');
 
@@ -60,7 +63,7 @@ export function ImageEnhancerTool({ storeId, onCreditsChanged }: ImageEnhancerTo
         )}
 
         <Button variant="primary" size="md" fullWidth loading={generating} disabled={!imageUrl} onClick={handleGenerate} icon={<Sparkles size={14} />} className="mt-5">
-          Enhance with AI (15 credits)
+          Enhance with AI{costLabel(creditCost)}
         </Button>
       </div>
 

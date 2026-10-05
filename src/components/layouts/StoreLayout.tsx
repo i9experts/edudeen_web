@@ -1,4 +1,4 @@
-import { useState, useEffect, type ReactNode } from 'react';
+import { useState, useEffect, type ReactNode, Suspense } from 'react';
 import { Outlet, Navigate, useNavigate, useLocation, useParams } from 'react-router-dom';
 import { TokenStorage, type AppRole } from '@/api/services/auth';
 import { clsx } from 'clsx';
@@ -6,7 +6,7 @@ import type { LucideIcon } from 'lucide-react';
 import {
   LayoutDashboard, Package, ShoppingBag, Users, BarChart2,
   Settings, Sparkles, ChevronLeft, ChevronRight, Store,
-  Megaphone, Star, Search, Wallet, FileSpreadsheet, MessageCircleQuestion, Package2,
+  Megaphone, Star, Search, Wallet, FileSpreadsheet, MessageCircleQuestion, Package2, Truck, Boxes, Gift,
   MessageSquare, FolderTree, RefreshCw, Undo2, CreditCard,
   PanelLeftClose, PanelLeftOpen, AlertTriangle, AlertCircle, XCircle, Clock, LogOut, Layers, UserRound,
 } from 'lucide-react';
@@ -43,6 +43,7 @@ export const NAV: { group: string; items: NavItem[] }[] = [
     items: [
       { id: 'orders',   Icon: Package,  label: 'Orders',       path: 'orders'  },
       { id: 'returns',  Icon: Undo2,    label: 'Returns',       path: 'returns' },
+      { id: 'shipping', Icon: Truck,    label: 'Shipping',      path: 'shipping' },
       { id: 'quotes',   Icon: FileSpreadsheet, label: 'School Quotes', path: 'quotes' },
     ],
   },
@@ -50,6 +51,7 @@ export const NAV: { group: string; items: NavItem[] }[] = [
     group: 'Catalog',
     items: [
       { id: 'products',      Icon: ShoppingBag,   label: 'Products',      path: 'products'     },
+      { id: 'inventory',     Icon: Boxes,         label: 'Inventory',     path: 'inventory'    },
       { id: 'categories',    Icon: FolderTree,    label: 'Categories',    path: 'categories'   },
       { id: 'collections',   Icon: Layers,        label: 'Collections',   path: 'collections'  },
       { id: 'bundles',       Icon: Package2,      label: 'Bundles',       path: 'bundles'      },
@@ -70,6 +72,7 @@ export const NAV: { group: string; items: NavItem[] }[] = [
     items: [
       { id: 'marketing',     Icon: Megaphone, label: 'Marketing',     path: 'marketing'     },
       { id: 'subscriptions', Icon: RefreshCw, label: 'Subscriptions', path: 'subscriptions' },
+      { id: 'loyalty',       Icon: Gift,      label: 'Loyalty',       path: 'loyalty'       },
       { id: 'seo',           Icon: Search,    label: 'SEO',           path: 'seo'           },
       { id: 'ai',            Icon: Sparkles,  label: 'AI Studio',     path: 'ai/studio'     },
     ],
@@ -697,7 +700,9 @@ function StoreWorkspaceError({ error, onRetry }: { error: string; onRetry: () =>
 function GatedOutlet() {
   const { loading, error, refetch } = useStoreWorkspace();
   if (!loading && error) return <StoreWorkspaceError error={error} onRetry={refetch} />;
-  return <Outlet />;
+  // Own boundary: a page chunk still downloading never blanks the sidebar
+  // with RootLayout's full-screen spinner.
+  return <Suspense fallback={null}><Outlet /></Suspense>;
 }
 
 function isFullBleedRoute(pathname: string) {

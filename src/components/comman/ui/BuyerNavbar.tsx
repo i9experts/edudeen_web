@@ -5,10 +5,11 @@ import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { clsx } from 'clsx';
 import { ArrowLeft, ArrowRight, Search, Clock, LayoutGrid, X, TrendingUp, Tag, Star, Sparkles, ChevronDown, Check, Store as StoreIcon, Lightbulb, Trash2, Eye, Loader2 } from 'lucide-react';
 import { TokenStorage } from '@/api/services/auth';
-import { apiGetRecentSearches, apiSearchStores } from '@/api/services/search';
-import { apiGetAllProducts, type MarketplaceProduct } from '@/api/services/marketplace';
+import { apiGetRecentSearches, apiSearchStores, apiSearchProducts, apiGetTrendingSearches } from '@/api/services/search';
+import type { MarketplaceProduct } from '@/api/services/marketplace';
 import type { PublicStoreListItem } from '@/api/services/store';
 import { getStorePagePath } from '@/utils/storefrontUrl';
+import { fetchRecentlyViewed, clearRecentlyViewedRemote } from '@/utils/recentlyViewedSync';
 import { ProductImage } from '@/components/comman/marketplace/ProductCard';
 import { Button } from './Button';
 import { EdudeenLogo } from './EdudeenLogo';
@@ -49,6 +50,7 @@ export interface RecentlyViewedItem {
 }
 export function clearRecentlyViewed() {
   try { localStorage.removeItem(RECENTLY_VIEWED_KEY); } catch { /* storage blocked */ }
+  void clearRecentlyViewedRemote();
 }
 export function getRecentlyViewed(): RecentlyViewedItem[] {
   try { return JSON.parse(localStorage.getItem(RECENTLY_VIEWED_KEY) ?? '[]'); } catch { return []; }
@@ -96,7 +98,8 @@ export interface BuyerNavbarProps {
 }
 
 const RECENT_KEY = 'edudeen_recent_searches';
-const TRENDING_SEARCHES = ['Tajweed Quran', 'Arabic Workbook', 'Maths Worksheets', 'Seerah for Kids', 'Study Planner'];
+// Popular terms across all buyers (GET /api/search/trending), fetched once per page load.
+let trendingCache: string[] | null = null;
 
 function getLocalRecentSearches(): string[] {
   try { return JSON.parse(localStorage.getItem(RECENT_KEY) ?? '[]'); } catch { return []; }
@@ -317,9 +320,9 @@ export function SearchBox({
   // endpoint for.
   const [syncedRecent, setSyncedRecent] = useState<string[]>([]);
   const [localRecent,  setLocalRecent]  = useState<string[]>([]);
-  const [pool, setPool] = useState<MarketplaceProduct[]>([]);
+  const [productMatches, setProductMatches] = useState<MarketplaceProduct[]>([]);
   const [poolLoading, setPoolLoading] = useState(false);
-  const poolFetched = useRef(false);
+  const [trending, setTrending] = useState<string[]>(() => trendingCache ?? []);
   const [storeMatches, setStoreMatches] = useState<PublicStoreListItem[]>([]);
   const [storesLoading, setStoresLoading] = useState(false);
   const [recentlyViewed, setRecentlyViewed] = useState<RecentlyViewedItem[]>([]);
@@ -352,6 +355,14 @@ export function SearchBox({
 
     setLocalRecent(getLocalRecentSearches());
     setRecentlyViewed(getRecentlyViewed());
+    // Signed in: the account's history (other devices too) merged ahead of this device's.
+    fetchRecentlyViewed(8).then(remote => {
+      if (!remote.length) return;
+      setRecentlyViewed(local => {
+        const merged = [...remote.map(r => ({ ...r, id: r.slug ?? r.id })), ...local];
+        return merged.filter((it, i) => merged.findIndex(x => x.id === it.id) === i).slice(0, 8);
+      });
+    });
     if (TokenStorage.isLoggedIn()) {
       // Account-synced history when the backend has it.
       apiGetRecentSearches(5)
@@ -361,17 +372,12 @@ export function SearchBox({
       setSyncedRecent([]);
     }
 
-    // Recommended-products pool — fetched once per mount (not on every open),
-    // reusing the same public listing endpoint Homepage/Marketplace already
-    // call for their own "trending"/"top picks" rails. Filtered client-side
-    // by the typed query below — no new endpoint, no backend change.
-    if (!poolFetched.current) {
-      poolFetched.current = true;
-      setPoolLoading(true);
-      apiGetAllProducts(1, 20)
-        .then(res => setPool(res.data?.products ?? []))
-        .catch(() => {})
-        .finally(() => setPoolLoading(false));
+    // What other buyers are searching for — real terms, not a fixed list.
+    if (trendingCache === null) {
+      trendingCache = [];
+      apiGetTrendingSearches(6)
+        .then(res => { trendingCache = (res.data ?? []).map(t => t.query); setTrending(trendingCache); })
+        .catch(() => {});
     }
 
     const handler = (e: MouseEvent) => {
@@ -380,6 +386,23 @@ export function SearchBox({
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [open]);
+
+  // Product matches while typing — the real server search over the whole
+  // catalogue (not a filter over a few preloaded items). `suggest` keeps
+  // half-typed terms out of the buyer's search history.
+  useEffect(() => {
+    const query = value.trim();
+    if (!open || query.length < 2) { setProductMatches([]); setPoolLoading(false); return; }
+    let cancelled = false;
+    setPoolLoading(true);
+    const id = setTimeout(() => {
+      apiSearchProducts(query, 1, 4, { suggest: true })
+        .then(res => { if (!cancelled) setProductMatches(res.data?.products ?? []); })
+        .catch(() => { if (!cancelled) setProductMatches([]); })
+        .finally(() => { if (!cancelled) setPoolLoading(false); });
+    }, 250);
+    return () => { cancelled = true; clearTimeout(id); };
+  }, [open, value]);
 
   // Store matches for the typing state's "Stores" group — same public
   // search endpoint the Marketplace page already uses for its own below-hero
@@ -459,7 +482,7 @@ export function SearchBox({
 
   // Typing state — grouped, deliberately capped small (this is a preview,
   // not a results page; "View all results" is what a shopper wants for more).
-  const matchingProducts = isTyping ? pool.filter(p => p.name.toLowerCase().includes(query)).slice(0, 4) : [];
+  const matchingProducts = isTyping ? productMatches.slice(0, 4) : [];
   const matchingCategories = isTyping ? (categories ?? []).filter(c => c.name.toLowerCase().includes(query)).slice(0, 5) : [];
 
   const typeLabel = (p: MarketplaceProduct) => {
@@ -472,7 +495,7 @@ export function SearchBox({
   // raw id or goes blank.
   const categoryNameFor = (p: MarketplaceProduct) => categories?.find(c => c.id === p.categoryId)?.name ?? typeLabel(p);
 
-  const hasEmptyStateContent = recent.length > 0 || TRENDING_SEARCHES.length > 0 || (categories?.length ?? 0) > 0
+  const hasEmptyStateContent = recent.length > 0 || trending.length > 0 || (categories?.length ?? 0) > 0
     || recentlyViewed.length > 0 || (popularStores?.length ?? 0) > 0;
   const hasTypingContent = matchingProducts.length > 0 || matchingCategories.length > 0 || storeMatches.length > 0 || poolLoading || storesLoading;
   const hasSuggestions = isTyping ? hasTypingContent : hasEmptyStateContent;
@@ -716,14 +739,16 @@ export function SearchBox({
                   </div>
                 )}
 
+                {trending.length > 0 && (
                 <div className="px-3 py-3 border-b border-bone">
                   <div className="px-1"><SearchSectionLabel icon={<TrendingUp size={10} />} tone="brand">Trending Searches</SearchSectionLabel></div>
                   <div className="flex flex-col">
-                    {TRENDING_SEARCHES.map(term => (
+                    {trending.map(term => (
                       <SuggestionRow key={term} icon={<TrendingUp size={13} />} label={term} onClick={() => pick(term)} />
                     ))}
                   </div>
                 </div>
+                )}
 
                 <div className="px-3 py-3">
                   <div className="px-1"><SearchSectionLabel icon={<Lightbulb size={10} />}>Search Tips</SearchSectionLabel></div>

@@ -388,7 +388,7 @@ export const ProductCard = memo(function ProductCard({ product, onClick, onAddTo
           <div className="flex items-center gap-[6px] min-w-0">
             <StarRating rating={product.averageRating} count={ratingCount} />
             {!compact && product.purchaseCount > 0 && (
-              <span className="text-[9.5px] text-slate hidden sm:inline whitespace-nowrap">· {product.purchaseCount}+ sold</span>
+              <span className="text-[9.5px] text-slate hidden sm:inline whitespace-nowrap">· {product.purchaseCount} sold</span>
             )}
           </div>
           {/* Stock status — merged into the rating row instead of its own

@@ -3,6 +3,7 @@ import { RefreshCw, History, AlertTriangle } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { Button, Input, Toggle, StatusBadge, SkeletonBox, EmptyState, Table, type TableColumn } from '@/components/comman/ui';
 import { AdminStudioHeader } from '@/features/admin/components/studio';
+import { useToast } from '@/contexts/ToastContext';
 import { apiGetPlatformConfig, apiUpdateFxConfig, type FxConfig } from '@/api/services/config/adminConfig';
 import { apiGetCurrentRates, apiGetFxHistory, apiGetFxStaleness, apiOverrideFxRate, type CurrentRatesMap, type ExchangeRateHistoryRow } from '@/api/services/exchangeRate';
 
@@ -103,25 +104,32 @@ export function AdminFxSettings() {
   const [history, setHistory] = useState<ExchangeRateHistoryRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingConfig, setSavingConfig] = useState(false);
+  // Per-section load errors — a failed request must not read as "no data".
+  const [errors, setErrors] = useState<{ rates?: string; config?: string; history?: string }>({});
+  const [configError, setConfigError] = useState('');
+  const toast = useToast();
 
   const load = useCallback(async () => {
     setLoading(true);
-    try {
-      const [ratesRes, staleRes, configRes, historyRes] = await Promise.all([
-        apiGetCurrentRates(),
-        apiGetFxStaleness(),
-        apiGetPlatformConfig(),
-        apiGetFxHistory({ limit: 15 }),
-      ]);
-      setRates(ratesRes.data);
-      setStaleness(staleRes.data);
-      setFxConfig(configRes.data.fxConfig);
-      setHistory(historyRes.data.items);
-    } catch {
-      // handled per-section below via empty states
-    } finally {
-      setLoading(false);
-    }
+    const msg = (r: PromiseSettledResult<unknown>, fallback: string) =>
+      r.status === 'rejected' ? (r.reason instanceof Error ? r.reason.message : fallback) : undefined;
+    const [ratesRes, staleRes, configRes, historyRes] = await Promise.allSettled([
+      apiGetCurrentRates(),
+      apiGetFxStaleness(),
+      apiGetPlatformConfig(),
+      apiGetFxHistory({ limit: 15 }),
+    ]);
+    if (ratesRes.status === 'fulfilled') setRates(ratesRes.value.data ?? {});
+    // Staleness only adds a badge — a failure just hides it.
+    setStaleness(staleRes.status === 'fulfilled' ? staleRes.value.data ?? {} : {});
+    if (configRes.status === 'fulfilled') setFxConfig(configRes.value.data.fxConfig);
+    if (historyRes.status === 'fulfilled') setHistory(historyRes.value.data.items ?? []);
+    setErrors({
+      rates: msg(ratesRes, 'Failed to load current rates.'),
+      config: msg(configRes, 'Failed to load FX settings.'),
+      history: msg(historyRes, 'Failed to load rate history.'),
+    });
+    setLoading(false);
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -129,9 +137,13 @@ export function AdminFxSettings() {
   async function toggleAutoRefresh(value: boolean) {
     if (!fxConfig) return;
     setSavingConfig(true);
+    setConfigError('');
     try {
       const res = await apiUpdateFxConfig({ autoRefreshEnabled: value });
       setFxConfig(res.data.fxConfig);
+      toast.success(value ? 'Auto-refresh turned on' : 'Auto-refresh turned off');
+    } catch (err) {
+      setConfigError(err instanceof Error ? err.message : 'Failed to update auto-refresh.');
     } finally {
       setSavingConfig(false);
     }
@@ -163,6 +175,11 @@ export function AdminFxSettings() {
         <div className="flex gap-4 flex-wrap">
           {loading ? (
             <SkeletonBox className="h-24 w-full" />
+          ) : errors.rates ? (
+            <div className="w-full bg-white border border-bone rounded-xl px-5 py-4 flex items-center justify-between gap-3 flex-wrap">
+              <p className="text-[13px] text-error flex items-center gap-1 m-0"><AlertTriangle size={14} /> {errors.rates}</p>
+              <Button variant="outline" size="sm" onClick={load}>Try again</Button>
+            </div>
           ) : (
             Object.keys(rates).length === 0 ? (
               <EmptyState icon={<AlertTriangle size={28} className="text-slate" />} title="No rates configured" description="Set a manual rate below to get started." />
@@ -174,15 +191,24 @@ export function AdminFxSettings() {
           )}
         </div>
 
-        <OverrideForm onDone={load} />
+        <OverrideForm onDone={() => { toast.success('Manual rate applied'); load(); }} />
 
+        {!loading && errors.config && !fxConfig && (
+          <div className="bg-white border border-bone rounded-xl px-5 py-4">
+            <p className="text-[13px] font-bold text-carbon">Auto-refresh from provider</p>
+            <p className="text-[12px] text-error mt-1 flex items-center gap-1"><AlertTriangle size={13} /> {errors.config}</p>
+          </div>
+        )}
         {fxConfig && (
-          <div className="bg-white border border-bone rounded-xl px-5 py-4 flex items-center justify-between">
-            <div>
-              <p className="text-[13px] font-bold text-carbon">Auto-refresh from provider</p>
-              <p className="text-[11px] text-slate mt-[2px]">Daily automatic rate refresh (sanity-band + abnormal-jump checked before ever becoming current).</p>
+          <div className="bg-white border border-bone rounded-xl px-5 py-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-[13px] font-bold text-carbon">Auto-refresh from provider</p>
+                <p className="text-[11px] text-slate mt-[2px]">Daily automatic rate refresh (sanity-band + abnormal-jump checked before ever becoming current).</p>
+              </div>
+              <Toggle checked={fxConfig.autoRefreshEnabled} onChange={toggleAutoRefresh} disabled={savingConfig} />
             </div>
-            <Toggle checked={fxConfig.autoRefreshEnabled} onChange={toggleAutoRefresh} disabled={savingConfig} />
+            {configError && <p className="text-[12px] text-error mt-2 flex items-center gap-1"><AlertTriangle size={13} /> {configError}</p>}
           </div>
         )}
 
@@ -191,13 +217,15 @@ export function AdminFxSettings() {
             <History size={14} className="text-slate" />
             <p className="text-[13px] font-bold text-carbon">Rate History</p>
           </div>
-          <Table
+          {errors.history && !loading ? (
+            <p className="px-5 py-6 text-center text-[13px] text-error">{errors.history}</p>
+          ) : <Table
             columns={historyColumns}
             data={history}
             keyExtractor={h => h._id}
             loading={loading}
             emptyState={{ icon: <History size={28} className="text-slate" />, title: 'No history yet', description: 'Rate changes will appear here.' }}
-          />
+          />}
         </div>
       </div>
     </div>

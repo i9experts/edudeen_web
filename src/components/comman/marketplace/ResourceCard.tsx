@@ -25,6 +25,25 @@ export interface ResourceCardProps {
   isWishlisted?:    boolean;
   isWishlisting?:   boolean;
   onToggleWishlist?: (e: React.MouseEvent, id: string, variantId: string) => void;
+  /** `list` lays the card out as a full-width row (browse page list view). */
+  layout?:          'grid' | 'list';
+}
+
+function ListCover({ product }: { product: MarketplaceProduct }) {
+  const { bg, accent } = paletteFor(product.name || product._id);
+  const [imgFailed, setImgFailed] = useState(false);
+  const image = !imgFailed ? product.images?.[0] : undefined;
+  return (
+    <div className="w-[112px] sm:w-[168px] aspect-square rounded-xl overflow-hidden flex items-center justify-center shrink-0" style={{ background: bg }}>
+      {image ? (
+        <img src={image} alt="" loading="lazy" decoding="async" onError={() => setImgFailed(true)} className="w-full h-full object-cover" />
+      ) : (
+        <strong className="font-serif font-normal text-[15px] sm:text-[18px] leading-[1.1] text-center px-3 line-clamp-4" style={{ color: accent }}>
+          {product.name}
+        </strong>
+      )}
+    </div>
+  );
 }
 
 function Cover({ product, tilt }: { product: MarketplaceProduct; tilt: number }) {
@@ -79,7 +98,7 @@ export function RatingLine({ rating, count, className }: { rating?: number; coun
 }
 
 export const ResourceCard = memo(function ResourceCard({
-  product, index = 0, onClick, isWishlisted = false, isWishlisting = false, onToggleWishlist,
+  product, index = 0, onClick, isWishlisted = false, isWishlisting = false, onToggleWishlist, layout = 'grid',
 }: ResourceCardProps) {
   const { currency: displayCurrency, convert } = useCurrencyPreference();
   const variant = (product.variants ?? []).find(v => v.isDefault) ?? product.variants?.[0];
@@ -106,6 +125,65 @@ export const ResourceCard = memo(function ResourceCard({
       ? `Live · ${new Date(product.liveSession.startsAt).toLocaleDateString('en-PK', { day: 'numeric', month: 'short' })}`
       : 'Instant download';
   const meta = [ageLabel(product.ageMin, product.ageMax) ?? level ?? 'All ages', delivery].join(' · ');
+
+  const badge = (campaignOff || percentOff > 0) ? (campaign && campaignOff ? `${campaign.name} · ${campaignOff}` : `-${percentOff}%`) : null;
+  const wishlistButton = onToggleWishlist && variantId ? (
+    <button
+      onClick={e => onToggleWishlist(e, product._id, variantId)}
+      disabled={isWishlisting}
+      aria-pressed={isWishlisted}
+      aria-label={`${isWishlisted ? 'Unsave' : 'Save'} ${product.name}`}
+      className={clsx(
+        'w-9 h-9 rounded-full border flex items-center justify-center cursor-pointer transition-colors shrink-0',
+        isWishlisted ? 'bg-brand-orange border-brand-orange text-white' : 'bg-white border-[#dfe5e6] text-brand-orange hover:bg-brand-pale-orange',
+        isWishlisting && 'opacity-60',
+      )}
+    >
+      <Heart size={15} className={isWishlisted ? 'fill-white' : ''} />
+    </button>
+  ) : null;
+
+  if (layout === 'list') {
+    return (
+      <article className="flex gap-4 sm:gap-6 py-5 border-b border-bone min-w-0">
+        <button onClick={() => onClick(product.slug)} aria-label={`View ${product.name}`} className="p-0 bg-transparent border-none cursor-pointer shrink-0">
+          <ListCover product={product} />
+        </button>
+        <div className="flex-1 min-w-0 flex flex-col">
+          <div className="flex items-start gap-3">
+            <div className="flex-1 min-w-0">
+              <p className="text-[12px] text-slate mb-1 truncate">{meta}</p>
+              <button
+                onClick={() => onClick(product.slug)}
+                className="block p-0 bg-transparent border-none text-start text-carbon font-bold text-[15px] sm:text-[17px] leading-[1.4] cursor-pointer hover:underline line-clamp-2"
+              >
+                {product.name}
+              </button>
+            </div>
+            {wishlistButton}
+          </div>
+          {product.sellerName && (
+            product.storeSlug ? (
+              <Link to={getStorePagePath(product.storeSlug)} className="self-start mt-1 text-[13px] font-bold text-brand-orange no-underline hover:underline truncate max-w-full">
+                {product.sellerName}
+              </Link>
+            ) : (
+              <span className="mt-1 text-[13px] text-slate truncate">{product.sellerName}</span>
+            )
+          )}
+          <RatingLine rating={product.averageRating} count={product.totalRatings} className="mt-1" />
+          <div className="flex items-center gap-2 flex-wrap mt-auto pt-3">
+            <strong className={clsx('text-[16px] sm:text-[18px]', was ? 'text-error' : 'text-carbon')}>
+              {rawPrice === 0 ? 'Free' : fmt(price)}
+            </strong>
+            {was && rawPrice > 0 && <s className="text-[12.5px] text-slate" aria-label={`Was ${fmt(was)}`}>{fmt(was)}</s>}
+            {badge && <span className="text-[11px] font-bold px-2 py-[3px] rounded-full bg-error text-white truncate max-w-[60%]">{badge}</span>}
+            <span className="ms-auto text-[11px] border border-[#dde5e8] px-[7px] py-[3px] rounded text-[#566773] shrink-0">{TYPE_LABEL[kind] ?? kind}</span>
+          </div>
+        </div>
+      </article>
+    );
+  }
 
   return (
     <article className="group relative min-w-0">

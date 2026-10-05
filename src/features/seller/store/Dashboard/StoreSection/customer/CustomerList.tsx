@@ -9,6 +9,7 @@ import { Table, type TableColumn } from '@/components/comman/ui/Table';
 import { Badge } from '@/components/comman/ui/Badge';
 import { SearchInput } from '@/components/comman/ui/SearchInput';
 import { formatMoneyCompact } from '@/utils/currency';
+import { useDebouncedValue } from '@/hooks/seller/useInventorySearch';
 import { FollowersTab } from './tabs/FollowersTab';
 
 const TABS: Tab[] = [
@@ -36,6 +37,7 @@ export default function StoreCustomerList() {
 
   const [customers, setCustomers] = useState<StoreCustomer[]>([]);
   const [total, setTotal] = useState(0);
+  const [storeTotal, setStoreTotal] = useState<number | null>(null);
   const [summary, setSummary] = useState({ totalOrders: 0, totalRevenue: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -43,41 +45,55 @@ export default function StoreCustomerList() {
   const [sel, setSel] = useState<StoreCustomer | null>(null);
   const [form, setForm] = useState({ name: '', phone: '', email: '' });
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const [saved, setSaved] = useState(false);
+
+  // Server-side name/email search (debounced); a new term restarts at page 1.
+  const debouncedSearch = useDebouncedValue(search.trim(), 300);
+  useEffect(() => { setPage(1); }, [debouncedSearch]);
 
   useEffect(() => {
     if (!storeId || activeTab !== 'customers') return;
+    let cancelled = false;
     setLoading(true);
-    apiGetStoreCustomers(storeId, page, PER_PAGE)
+    setError('');
+    apiGetStoreCustomers(storeId, page, PER_PAGE, debouncedSearch)
       .then(res => {
+        if (cancelled) return;
         setCustomers(res.data.customers ?? []);
         setTotal(res.data.pagination.total);
+        // The metric card shows the whole store, not just search matches.
+        if (!debouncedSearch) setStoreTotal(res.data.pagination.total);
         setSummary(res.data.summary);
       })
-      .catch(err => setError(err instanceof Error ? err.message : 'Failed to load customers.'))
-      .finally(() => setLoading(false));
-  }, [storeId, page, activeTab]);
+      .catch(err => { if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load customers.'); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [storeId, page, activeTab, debouncedSearch]);
 
   function select(c: StoreCustomer) {
     setSel(c);
     setForm({ name: c.name, phone: c.phone ?? '', email: c.email });
+    setSaveError('');
+    setSaved(false);
   }
 
   async function saveEdit() {
     if (!sel) return;
     setSaving(true);
+    setSaveError('');
+    setSaved(false);
     try {
       const res = await apiUpdateStoreCustomer(storeId, sel._id, form);
       setCustomers(prev => prev.map(c => c._id === sel._id ? { ...c, ...res.data } : c));
       setSel(prev => prev ? { ...prev, ...res.data } : prev);
+      setSaved(true);
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Failed to save changes.');
     } finally {
       setSaving(false);
     }
   }
-
-  const filtered = customers.filter(c => {
-    const q = search.toLowerCase();
-    return !q || c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q);
-  });
 
   const columns: TableColumn<StoreCustomer>[] = [
     {
@@ -130,7 +146,7 @@ export default function StoreCustomerList() {
       <div className="px-4 md:px-7 pt-5 pb-8 flex flex-col gap-5">
 
         <div className="flex flex-wrap gap-3">
-          <MetricCard label="Total Customers" value={total.toLocaleString()} icon={<Users size={16} />} loading={loading && page === 1 && customers.length === 0} />
+          <MetricCard label="Total Customers" value={(storeTotal ?? total).toLocaleString()} icon={<Users size={16} />} loading={loading && page === 1 && customers.length === 0} />
           <MetricCard label="Total Orders"     value={summary.totalOrders.toLocaleString()} icon={<ShoppingBag size={16} />} loading={loading && page === 1 && customers.length === 0} />
           <MetricCard label="Total Revenue"    value={formatMoneyCompact(summary.totalRevenue, store?.baseCurrency)} icon={<DollarSign size={16} />} loading={loading && page === 1 && customers.length === 0} />
         </div>
@@ -146,15 +162,15 @@ export default function StoreCustomerList() {
             ) : (
               <Table
                 columns={columns}
-                data={filtered}
+                data={customers}
                 keyExtractor={c => c._id}
                 onRowClick={select}
                 loading={loading}
                 pagination={{ page, total, perPage: PER_PAGE, onChange: setPage, label: 'customers' }}
                 emptyState={{
                   icon: <Users size={28} className="text-brand-orange opacity-55" />,
-                  title: 'No customers found for this store yet',
-                  description: 'Customers who place an order from this store will show up here.',
+                  title: debouncedSearch ? 'No customers match your search' : 'No customers found for this store yet',
+                  description: debouncedSearch ? 'Try a different name or email.' : 'Customers who place an order from this store will show up here.',
                 }}
               />
             )}
@@ -201,6 +217,8 @@ export default function StoreCustomerList() {
                   </div>
                 </div>
 
+                {saveError && <p role="alert" className="text-xs text-error mb-2">{saveError}</p>}
+                {saved && !saveError && <p className="text-xs text-success mb-2">Changes saved.</p>}
                 <button onClick={saveEdit} disabled={saving} className="w-full py-2 bg-brand-orange border-none rounded-lg text-xs font-semibold text-white cursor-pointer disabled:opacity-50">
                   {saving ? 'Saving…' : 'Save Changes'}
                 </button>

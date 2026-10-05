@@ -17,7 +17,8 @@ import {
   type StoreBanner, type StoreBannerType, type StoreBannerLinkType,
 } from '@/api/services/storeBanner';
 import { apiUpdatePinnedProducts, apiUpdateAnnouncementBar, type StoreAnnouncementType } from '@/api/services/store';
-import { apiGetStoreInventory, type InventoryProduct } from '@/api/services/product';
+import { type InventoryProduct } from '@/api/services/product';
+import { useInventorySearch } from '@/hooks/seller/useInventorySearch';
 import { SELECTABLE_PROMOTION_PLACEMENTS, type PromotionPlacement } from '@/api/services/banner';
 import {
   apiPreviewPromotionPrice, apiListPromotionRequests, apiCreatePromotionRequest, apiPayPromotionRequest, apiConfirmPromotionPayment, apiCancelPromotionRequest,
@@ -44,17 +45,17 @@ const TABS: { id: Tab; label: string; Icon: LucideIcon }[] = [
   { id: 'promotions',   label: 'Promotion Requests', Icon: Rocket },
   { id: 'coupons',   label: 'Coupons',        Icon: TagIcon      },
   { id: 'discounts', label: 'Discounts',      Icon: Percent      },
+  { id: 'giftcards', label: 'Gift Cards',     Icon: Gift         },
 ];
 
 // Not shown as tabs: Email Campaigns / Abandoned Cart / Affiliate have no
-// backend yet ("Coming Soon" placeholders), and Gift Cards doesn't fit an
-// education shop. Their panels stay in the code, just unreachable; kept in
-// this list only so the Coming Soon fallback below can still label them.
+// backend yet ("Coming Soon" placeholders). Their panels stay in the code,
+// just unreachable; kept in this list only so the Coming Soon fallback below
+// can still label them.
 const HIDDEN_TABS: { id: Tab; label: string; Icon: LucideIcon }[] = [
   { id: 'email',     label: 'Email Campaigns', Icon: Mail         },
   { id: 'cart',      label: 'Abandoned Cart',  Icon: ShoppingCart },
   { id: 'affiliate', label: 'Affiliate',       Icon: Handshake    },
-  { id: 'giftcards', label: 'Gift Cards',      Icon: Gift         },
 ];
 
 const PLACEMENT_LABEL: Record<PromotionPlacement, string> = {
@@ -407,8 +408,33 @@ export function StoreMarketing() {
   const setTab = (next: Tab) => setSearchParams(p => { const q = new URLSearchParams(p); q.set('tab', next); return q; }, { replace: true });
 
   // Featured & Collections (pinned products)
-  const [inventory, setInventory] = useState<InventoryProduct[]>([]);
-  const [inventoryLoading, setInventoryLoading] = useState(true);
+  // Product list shared by the Featured and Discounts pickers: first 100 load
+  // up-front, typing searches the whole catalog server-side (name/SKU).
+  const productSearch = useInventorySearch(storeId, { limit: 100, enabled: tab === 'featured' || tab === 'discounts' });
+  const inventory: InventoryProduct[] = productSearch.products;
+  const inventoryLoading = productSearch.loading && inventory.length === 0 && !productSearch.searching;
+  const { setQuery: setProductQuery } = productSearch;
+  useEffect(() => { setProductQuery(''); }, [tab, setProductQuery]);
+  // Names of every product seen so far, so pinned/selected items keep their
+  // label even when the current search doesn't return them.
+  const [productNames, setProductNames] = useState<Record<string, string>>({});
+  useEffect(() => {
+    if (inventory.length === 0) return;
+    setProductNames(prev => ({ ...prev, ...Object.fromEntries(inventory.map(p => [p.productId, p.name])) }));
+  }, [inventory]);
+  const productSearchInput = (productSearch.total > inventory.length || productSearch.query) ? (
+    <input
+      type="search"
+      value={productSearch.query}
+      onChange={e => setProductQuery(e.target.value)}
+      placeholder="Search products by name or SKU…"
+      className="w-full mb-2 px-3 py-2 text-[13px] border border-bone rounded-lg outline-none text-charcoal bg-white"
+    />
+  ) : null;
+  const productSearchEmpty = !productSearch.loading && productSearch.searching && inventory.length === 0
+    ? <p className="text-xs text-slate px-1 py-2">No products match “{productSearch.query.trim()}”.</p>
+    : null;
+
   const [pinnedIds, setPinnedIds] = useState<string[]>([]);
   const [pinnedSaving, setPinnedSaving] = useState(false);
   const [pinnedError, setPinnedError] = useState('');
@@ -417,11 +443,6 @@ export function StoreMarketing() {
   useEffect(() => {
     if (!storeId || tab !== 'featured') return;
     setPinnedIds(store?.pinnedProductIds ?? []);
-    setInventoryLoading(true);
-    apiGetStoreInventory(storeId, 1, 100)
-      .then(res => setInventory(res.data.products ?? []))
-      .catch(() => {})
-      .finally(() => setInventoryLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storeId, tab]);
 
@@ -768,11 +789,11 @@ export function StoreMarketing() {
     if (!storeId || tab !== 'discounts') return;
     setDiscountsLoading(true);
     setDiscountsError('');
-    Promise.all([apiGetDiscounts(storeId), apiGetCategoryTree(), apiGetStoreInventory(storeId, 1, 100)])
-      .then(([discRes, catRes, invRes]) => {
+    // Products for the "specific products" target come from productSearch above.
+    Promise.all([apiGetDiscounts(storeId), apiGetCategoryTree()])
+      .then(([discRes, catRes]) => {
         setDiscounts(discRes.data ?? []);
         setCategoryTree(catRes.data ?? []);
-        setInventory(invRes.data.products ?? []);
       })
       .catch(err => setDiscountsError(err instanceof Error ? err.message : 'Failed to load discounts.'))
       .finally(() => setDiscountsLoading(false));
@@ -1048,11 +1069,11 @@ export function StoreMarketing() {
                 <p className="text-[11px] font-semibold text-slate uppercase tracking-[0.06em] mb-2">Pinned Order</p>
                 <div className="flex flex-col gap-1.5">
                   {pinnedIds.map((id, i) => {
-                    const product = inventory.find(p => p.productId === id);
+                    const name = productNames[id];
                     return (
                       <div key={id} className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-cream">
                         <span className="text-[11px] text-slate w-4">{i + 1}</span>
-                        <span className="text-[13px] text-charcoal flex-1 truncate">{product?.name ?? id}</span>
+                        <span className="text-[13px] text-charcoal flex-1 truncate">{name ?? id}</span>
                         <button onClick={() => movePinned(i, -1)} disabled={i === 0} className="p-1 rounded-md border-0 bg-transparent cursor-pointer disabled:opacity-30 hover:bg-bone"><ArrowUp size={13} /></button>
                         <button onClick={() => movePinned(i, 1)} disabled={i === pinnedIds.length - 1} className="p-1 rounded-md border-0 bg-transparent cursor-pointer disabled:opacity-30 hover:bg-bone"><ArrowDown size={13} /></button>
                         <button onClick={() => togglePin(id)} className="p-1 rounded-md border-0 bg-transparent cursor-pointer hover:bg-bone text-error"><Trash2 size={13} /></button>
@@ -1065,10 +1086,13 @@ export function StoreMarketing() {
 
             <div className="bg-white border border-bone rounded-[10px] px-[18px] py-4">
               <p className="text-[11px] font-semibold text-slate uppercase tracking-[0.06em] mb-2">All Products</p>
+              {productSearchInput}
+              {productSearch.error && <p className="text-xs text-error mb-2">{productSearch.error}</p>}
               {inventoryLoading ? (
                 <div className="flex flex-col gap-2">{Array.from({ length: 4 }).map((_, i) => <SkeletonBox key={i} height={36} rounded="8px" />)}</div>
               ) : (
                 <div className="flex flex-col gap-1 max-h-[360px] overflow-y-auto">
+                  {productSearchEmpty}
                   {inventory.map(p => (
                     <label key={p.productId} className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg cursor-pointer hover:bg-cream">
                       <input type="checkbox" checked={pinnedIds.includes(p.productId)} onChange={() => togglePin(p.productId)} className="cursor-pointer" />
@@ -1432,7 +1456,15 @@ export function StoreMarketing() {
               {discountForm.target === 'products' && (
                 <div className="mb-3.5">
                   <label className="text-xs font-medium text-graphite mb-[5px] block">Products</label>
+                  {productSearchInput}
+                  {discountForm.productIds.length > 0 && (
+                    <p className="text-[11px] text-slate mb-1.5 truncate">
+                      Selected: {discountForm.productIds.map(id => productNames[id] ?? id).join(', ')}
+                    </p>
+                  )}
                   <div className="max-h-40 overflow-y-auto border border-bone rounded-lg p-2.5 flex flex-col gap-1.5">
+                    {productSearch.loading && inventory.length === 0 && <p className="text-xs text-slate">Loading products…</p>}
+                    {productSearchEmpty}
                     {inventory.map(p => (
                       <label key={p.productId} className="flex items-center gap-2 text-xs text-graphite cursor-pointer">
                         <input

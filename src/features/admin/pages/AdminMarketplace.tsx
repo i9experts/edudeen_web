@@ -156,14 +156,15 @@ export function AdminMarketplace() {
       {statsError ? (
         <AnalyticsErrorState message={statsError} onRetry={refetchStats} />
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
           {statsLoading && !stats ? (
-            Array.from({ length: 4 }).map((_, i) => <SkeletonBox key={i} height={92} rounded="10px" />)
+            Array.from({ length: 5 }).map((_, i) => <SkeletonBox key={i} height={92} rounded="10px" />)
           ) : stats ? (
             <>
               <MetricCard label="Total Listings" value={formatNumber(stats.totalListings)} />
               <MetricCard label="Active" value={formatNumber(stats.active)} sub="Live on marketplace" />
-              <MetricCard label="Flagged" value={formatNumber(stats.flagged)} sub="Pending review" />
+              <MetricCard label="Waiting for Review" value={formatNumber(pendingCount)} sub="New listings not live yet" />
+              <MetricCard label="Flagged" value={formatNumber(stats.flagged)} sub="Open reports on listings" />
               <MetricCard label="GMV This Month" value={formatCurrency(stats.gmvThisMonth)} />
             </>
           ) : null}

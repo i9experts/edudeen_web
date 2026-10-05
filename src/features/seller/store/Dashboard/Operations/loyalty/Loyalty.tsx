@@ -4,6 +4,7 @@ import { StorePageHeader, useStoreWorkspace } from '@/components/layouts/StoreLa
 import { Modal } from '@/components/comman/ui/Modal';
 import { EmptyState, SkeletonBox, Table, type TableColumn } from '@/components/comman/ui';
 import { Star, Trophy, Gift, Users, Settings, Award, Gem, Trash2, Plus } from 'lucide-react';
+import { currencySymbol } from '@/utils/currency';
 import type { LucideIcon } from 'lucide-react';
 import {
   apiGetLoyaltyOverview, apiGetLoyaltyProgram, apiUpdateLoyaltyProgram, apiUpdateEarningRules,
@@ -121,6 +122,7 @@ export function StoreLoyalty() {
 // ── Overview ──────────────────────────────────────────────────────────────────
 
 function OverviewTab({ storeId }: { storeId: string }) {
+  const sym = currencySymbol(useStoreWorkspace().store?.baseCurrency);
   const [data, setData] = useState<LoyaltyOverview | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -147,7 +149,7 @@ function OverviewTab({ storeId }: { storeId: string }) {
     { label: 'Program Members', value: data.programMembers.toLocaleString() },
     { label: 'Points Issued (30d)', value: data.pointsIssuedLast30Days.toLocaleString() },
     { label: 'Points Redeemed', value: data.pointsRedeemedTotal.toLocaleString() },
-    { label: 'Revenue from Members (30d)', value: `$${data.revenueFromMembersLast30Days.toFixed(2)}` },
+    { label: 'Revenue from Members (30d)', value: `${sym}${data.revenueFromMembersLast30Days.toFixed(2)}` },
   ];
 
   const activityRows = Object.entries(ACTIVITY_LABELS).map(([type, label]) => ({
@@ -277,6 +279,7 @@ function TiersTab({ storeId, program, onSaved }: { storeId: string; program: Loy
 const emptyRewardForm = { name: '', description: '', pointsCost: '', type: 'fixed_discount' as RewardType, discountValue: '', productId: '', stockLimit: '' };
 
 function RewardsTab({ storeId, showCreate, onCloseCreate }: { storeId: string; showCreate: boolean; onCloseCreate: () => void }) {
+  const sym = currencySymbol(useStoreWorkspace().store?.baseCurrency);
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState(emptyRewardForm);
@@ -343,7 +346,7 @@ function RewardsTab({ storeId, showCreate, onCloseCreate }: { storeId: string; s
               {r.description && <p className="text-xs text-slate mb-2">{r.description}</p>}
               <p className="text-[13px] font-bold text-brand-orange mb-3">{r.pointsCost} points</p>
               <p className="text-xs text-slate mb-3">
-                {r.type === 'fixed_discount' ? `$${r.discountValue} discount` : `Free product`}
+                {r.type === 'fixed_discount' ? `${sym}${r.discountValue} discount` : `Free product`}
                 {r.stockLimit != null && ` — ${r.redeemedCount}/${r.stockLimit} redeemed`}
               </p>
               <div className="flex gap-2">

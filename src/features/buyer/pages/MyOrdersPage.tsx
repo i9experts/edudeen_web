@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Package, Download, Truck, CheckCircle2, Clock, XCircle,
   ChevronDown, MapPin, Box, ShoppingBag,
-  BadgeCheck, RotateCcw, Ban, Undo2, Star,
+  RotateCcw, Ban, Undo2, Star,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { Card, EmptyState, Modal, Textarea, Button, SkeletonBox, PageHeader } from '@/components/comman/ui';
@@ -14,6 +14,7 @@ import {
 import { DigitalFileDownloads } from '@/features/buyer/components/DigitalFileDownloads';
 import { currencySymbol } from '@/utils/currency';
 import { useToast } from '@/contexts/ToastContext';
+import { buildOrderProgress, OrderProgressTrack } from './account/orderProgress';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Status config
@@ -37,8 +38,15 @@ const FILTER_TABS: { key: 'all' | OrderStatus; label: string }[] = [
   { key: 'cancelled',  label: 'Cancelled'  },
 ];
 
+// The order-level enum also has 'partially_shipped' (not in the OrderStatus
+// union) — fall back to a real label instead of crashing on an unknown key.
+const PARTIALLY_SHIPPED = { label: 'Partially shipped', icon: Truck, bg: '#E8F5FF', text: '#1A65A8', border: '#B3D8F7' };
+
 function StatusBadge({ status }: { status: OrderStatus }) {
-  const cfg  = STATUS_CONFIG[status];
+  const cfg  = STATUS_CONFIG[status]
+    ?? ((status as string) === 'partially_shipped'
+      ? PARTIALLY_SHIPPED
+      : { ...STATUS_CONFIG.pending, label: String(status).replace(/_/g, ' ') });
   const Icon = cfg.icon;
   return (
     <span
@@ -106,49 +114,21 @@ function ReasonModal({
 // ─────────────────────────────────────────────────────────────────────────────
 // OrderTimeline
 // ─────────────────────────────────────────────────────────────────────────────
-const TIMELINE = [
-  { icon: BadgeCheck,   label: 'Confirmed'  },
-  { icon: Box,          label: 'Processing' },
-  { icon: Truck,        label: 'Shipped'    },
-  { icon: CheckCircle2, label: 'Delivered'  },
-] as const;
-
-function OrderTimeline({ status }: { status: OrderStatus }) {
-  if (status === 'cancelled') return null;
-  const activeIdx = status === 'completed' || status === 'delivered' ? 3
-    : status === 'shipped' ? 2
-    : status === 'processing' ? 1
-    : 0;
-
-  return (
-    <div className="relative flex items-start justify-between pt-1">
-      <div className="absolute top-[13px] start-[13px] end-[13px] h-[2px] bg-bone rounded-full" />
-      <div
-        className="absolute top-[13px] start-[13px] h-[2px] bg-success rounded-full transition-all duration-500"
-        style={{ width: `${(activeIdx / (TIMELINE.length - 1)) * 100}%` }}
-      />
-      {TIMELINE.map(({ icon: Icon, label }, i) => {
-        const done   = i < activeIdx;
-        const active = i === activeIdx;
-        return (
-          <div key={label} className="relative z-10 flex flex-col items-center gap-[6px]">
-            <div className={clsx(
-              'w-7 h-7 rounded-full flex items-center justify-center',
-              done   ? 'bg-success text-white'
-              : active ? 'bg-brand-orange text-white ring-4 ring-brand-pale-orange'
-              : 'bg-bone text-slate',
-            )}>
-              <Icon size={13} />
-            </div>
-            <span className={clsx(
-              'text-[10px] font-semibold whitespace-nowrap',
-              done ? 'text-success' : active ? 'text-brand-orange' : 'text-slate',
-            )}>{label}</span>
-          </div>
-        );
-      })}
-    </div>
-  );
+// Real statuses only: unpaid orders show "Awaiting payment" (never
+// "Confirmed"), and shipped/delivered come from the seller orders with their
+// real shippedAt/deliveredAt timestamps — see account/orderProgress.tsx.
+function OrderTimeline({ order }: { order: OrderSummary }) {
+  const steps = buildOrderProgress({
+    orderStatus:   order.orderStatus,
+    isPaid:        order.isPaid,
+    paymentType:   order.paymentType,
+    paymentStatus: order.paymentStatus,
+    createdAt:     order.createdAt,
+    paidAt:        order.paidAt ?? null,
+    stores:        order.stores,
+  });
+  if (!steps) return null;
+  return <OrderProgressTrack steps={steps} />;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -348,7 +328,7 @@ function OrderCard({ order, onChanged }: { order: OrderSummary; onChanged: () =>
           {!allDigital && order.orderStatus !== 'cancelled' && (
             <div className="px-4 md:px-5 pb-4 pt-3 border-t border-bone">
               <p className="text-[10px] font-bold text-slate uppercase tracking-[0.07em] mb-4">Order Progress</p>
-              <OrderTimeline status={order.orderStatus} />
+              <OrderTimeline order={order} />
             </div>
           )}
 

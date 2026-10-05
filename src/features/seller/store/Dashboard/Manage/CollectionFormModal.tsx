@@ -45,13 +45,12 @@ export function CollectionFormModal({ storeId, mainCategoryId, collection, onClo
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
-  // Resolves id → name for the chip list — covers both an existing manual
-  // collection's already-saved `productIds` and anything the picker adds
-  // afterward, in one fetch (same "no dedicated fetch-by-ids endpoint"
-  // precedent used elsewhere in this builder).
+  // Resolves id → name for the chip list: the first inventory page covers an
+  // existing collection's saved `productIds` in the common case; anything
+  // the (server-searchable) picker adds brings its own label via onConfirm.
   useEffect(() => {
     if (type !== 'manual') return;
-    apiGetStoreInventory(storeId, 1, 200)
+    apiGetStoreInventory(storeId, 1, 100)
       .then(res => {
         const map: Record<string, string> = {};
         res.data.products.forEach(p => { map[p.productId] = p.name; });
@@ -226,7 +225,7 @@ export function CollectionFormModal({ storeId, mainCategoryId, collection, onClo
           storeId={storeId}
           multiple
           initialSelectedIds={productIds}
-          onConfirm={(ids) => { setProductIds(ids); setShowProductPicker(false); }}
+          onConfirm={(ids, labels) => { setProductLabels(prev => ({ ...prev, ...labels })); setProductIds(ids); setShowProductPicker(false); }}
         />
       )}
       {showCategoryPicker && (

@@ -6,6 +6,7 @@ import { Button } from '@/components/comman/ui/Button';
 import { useGenerateListing, useAcceptAiGeneration } from '@/hooks/seller/useAiStudio';
 import { ProductPicker } from '../components/ProductPicker';
 import { GenerationActions } from '../components/GenerationActions';
+import { costLabel } from '../components/costLabel';
 import type { AiTone } from '@/api/services/aiStudio';
 
 const PRODUCT_TYPES = ['Educational Resource', 'Digital Download', 'Book', 'Online Course', 'School Supplies', 'Tutoring / Classes'];
@@ -13,9 +14,11 @@ const PRODUCT_TYPES = ['Educational Resource', 'Digital Download', 'Book', 'Onli
 interface ListingWriterToolProps {
   storeId: string;
   onCreditsChanged: () => void;
+  /** Live cost from credits.toolCosts (undefined while loading). */
+  creditCost?: number;
 }
 
-export function ListingWriterTool({ storeId, onCreditsChanged }: ListingWriterToolProps) {
+export function ListingWriterTool({ storeId, onCreditsChanged, creditCost }: ListingWriterToolProps) {
   const [productId, setProductId] = useState('');
   const [productType, setProductType] = useState(PRODUCT_TYPES[0]);
   const [keywords, setKeywords] = useState('');
@@ -107,7 +110,7 @@ export function ListingWriterTool({ storeId, onCreditsChanged }: ListingWriterTo
           icon={<Sparkles size={14} />}
           className="mt-5"
         >
-          Generate with AI (5 credits)
+          Generate with AI{costLabel(creditCost)}
         </Button>
       </div>
 

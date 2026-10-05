@@ -1,3 +1,4 @@
+import { PlacementBanner } from '@/components/comman/marketplace/PlacementBanner';
 import { useT } from '@/contexts/languageCtx';
 import { useEffect, useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
@@ -51,6 +52,7 @@ export function LearnHubPage() {
       <div className="sticky top-0 z-50"><BuyerNavbar /></div>
       <main className="max-w-[1480px] mx-auto px-[5%] md:px-[4%] pt-4 md:pt-6 pb-12">
         <Breadcrumb className="mb-1" items={[{ label: 'Home', path: '/' }, { label: 'Learn by grade' }]} />
+        <PlacementBanner placement="educationHero" className="mb-6" />
         <header className="mb-6">
           <p className="text-[12px] font-bold tracking-[0.15em] uppercase text-brand-royal mb-1">{t('Learn by grade')}</p>
           <h1 className="font-serif font-normal text-[30px] md:text-[38px] leading-[1.15] text-carbon text-balance">{t('Resources for every class')}</h1>
@@ -122,6 +124,7 @@ export function LearnLevelPage() {
       subcategories={chips}
       subcategoryHref={node => learnPath(level.value, node)}
       subcategoriesLabel={subject ? 'Topics' : 'Subjects'}
+      bannerPlacement="educationHero"
       showCategoryFilter={false}
       emptyHint={`Nothing for ${level.label.toLowerCase()} here yet — check back soon, teachers add new resources every week.`}
     />

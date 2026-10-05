@@ -5,6 +5,7 @@ import { Select } from '@/components/comman/ui/Input';
 import { Button } from '@/components/comman/ui/Button';
 import { useGenerateEmailCampaign, useAcceptAiGeneration } from '@/hooks/seller/useAiStudio';
 import { GenerationActions } from '../components/GenerationActions';
+import { costLabel } from '../components/costLabel';
 import type { AiTone, CampaignGoal } from '@/api/services/aiStudio';
 
 const GOALS: { value: CampaignGoal; label: string }[] = [
@@ -19,9 +20,11 @@ const GOALS: { value: CampaignGoal; label: string }[] = [
 interface EmailCampaignsToolProps {
   storeId: string;
   onCreditsChanged: () => void;
+  /** Live cost from credits.toolCosts (undefined while loading). */
+  creditCost?: number;
 }
 
-export function EmailCampaignsTool({ storeId, onCreditsChanged }: EmailCampaignsToolProps) {
+export function EmailCampaignsTool({ storeId, onCreditsChanged, creditCost }: EmailCampaignsToolProps) {
   const [campaignGoal, setCampaignGoal] = useState<CampaignGoal>('promo');
   const [tone, setTone] = useState<AiTone>('friendly');
 
@@ -82,7 +85,7 @@ export function EmailCampaignsTool({ storeId, onCreditsChanged }: EmailCampaigns
         )}
 
         <Button variant="primary" size="md" fullWidth loading={generating} onClick={() => handleGenerate()} icon={<Sparkles size={14} />} className="mt-5">
-          Generate with AI (5 credits)
+          Generate with AI{costLabel(creditCost)}
         </Button>
       </div>
 

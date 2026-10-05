@@ -15,6 +15,7 @@ import {
   type PlatformPlan, type StorePlatformSubscription, type EntitlementsSummary, type AddonPurchase, type AddonType,
   type PlatformPlanInvoice, type PlanChangePreview,
 } from '@/api/services/platformPlans';
+import { apiGetAiStudioCredits } from '@/api/services/aiStudio';
 
 const INVOICE_STATUS_STYLE: Record<string, string> = {
   paid: 'bg-[#e3f4ea] text-[#1e7a3c]',
@@ -24,8 +25,10 @@ const INVOICE_STATUS_STYLE: Record<string, string> = {
   partially_refunded: 'bg-bone text-slate',
 };
 
+// extra_ai_credits gets its "(+N)" suffix from the live AI Studio credits
+// config (buyCredits.creditsPerUnit) — see addonLabel() below.
 const ADDON_LABELS: Record<AddonType, string> = {
-  extra_ai_credits: 'Extra AI Credits (+500)',
+  extra_ai_credits: 'Extra AI Credits',
   extra_staff_seat: 'Extra Staff Seat',
   priority_marketplace_placement: 'Priority Marketplace Placement',
   advanced_tax_compliance: 'Advanced Tax Compliance',
@@ -84,6 +87,22 @@ export default function StorePlanBilling() {
   const [cancelBusy, setCancelBusy] = useState(false);
   const [reactivateBusy, setReactivateBusy] = useState(false);
   const [portalBusy, setPortalBusy] = useState(false);
+  const [creditsPerUnit, setCreditsPerUnit] = useState<number | null>(null);
+
+  // Credits per "Extra AI Credits" unit — best-effort; the label just drops the number if it fails.
+  useEffect(() => {
+    if (!storeId) return;
+    let cancelled = false;
+    apiGetAiStudioCredits(storeId)
+      .then(res => { if (!cancelled) setCreditsPerUnit(res.data?.buyCredits?.creditsPerUnit ?? null); })
+      .catch(() => { /* label falls back to no number */ });
+    return () => { cancelled = true; };
+  }, [storeId]);
+
+  const addonLabel = (type: AddonType) =>
+    type === 'extra_ai_credits' && creditsPerUnit
+      ? `${ADDON_LABELS[type]} (+${creditsPerUnit.toLocaleString()})`
+      : ADDON_LABELS[type];
 
   const load = useCallback(() => {
     if (!storeId) return;
@@ -373,7 +392,7 @@ export default function StorePlanBilling() {
               {addons.map(a => (
                 <div key={a._id} className="flex items-center justify-between gap-3 flex-wrap px-5 py-3 border-b border-[#f0eee6] last:border-b-0">
                   <div className="min-w-0">
-                    <p className="text-[13px] font-medium text-carbon">{ADDON_LABELS[a.addonType]}</p>
+                    <p className="text-[13px] font-medium text-carbon">{addonLabel(a.addonType)}</p>
                     <p className="text-[11px] text-slate">Qty {a.quantity} · ${a.amountUSD.toFixed(2)}/mo</p>
                   </div>
                   <button onClick={() => { setCancelingAddon(a); setActionError(''); }} className="px-2.5 py-1 bg-white border border-bone rounded-[6px] text-[11px] text-error cursor-pointer shrink-0">Cancel</button>
@@ -424,7 +443,7 @@ export default function StorePlanBilling() {
             {PURCHASABLE_ADDONS.map(type => (
               <button key={type} disabled={addonBusy} onClick={() => handlePurchaseAddon(type)}
                 className="text-left px-3.5 py-3 rounded-lg bg-cream border border-bone cursor-pointer hover:border-brand-orange/40 disabled:opacity-50 disabled:cursor-wait">
-                <span className="text-[13px] font-medium text-charcoal">{ADDON_LABELS[type]}</span>
+                <span className="text-[13px] font-medium text-charcoal">{addonLabel(type)}</span>
               </button>
             ))}
           </div>
@@ -503,7 +522,7 @@ export default function StorePlanBilling() {
           </>}
         >
           <p className="text-[13px] text-charcoal">
-            Cancel <strong>{ADDON_LABELS[cancelingAddon.addonType]}</strong>? This takes effect immediately.
+            Cancel <strong>{addonLabel(cancelingAddon.addonType)}</strong>? This takes effect immediately.
           </p>
           {actionError && <p className="text-[12px] text-error mt-2">{actionError}</p>}
         </Modal>

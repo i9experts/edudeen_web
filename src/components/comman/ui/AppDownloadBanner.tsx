@@ -8,6 +8,10 @@ import { clsx } from 'clsx';
 import { StoreBadgeChip, RatingRow, RealAppQr, useAppQrDataUrl, GOOGLE_PLAY_URL } from './AppPromoParts';
 import { apiGetPlatformStats, type PlatformStats } from '@/api/services/store';
 import { apiSubscribeNewsletter } from '@/api/services/newsletter';
+import { apiGetAllProducts, type MarketplaceProduct } from '@/api/services/marketplace';
+import { useCategoryTree } from '@/hooks/marketplace/useCategoryTree';
+import { useTopBarDeals } from '@/hooks/useTopBarDeals';
+import { useCountdownTo } from '@/hooks/useCountdownTo';
 
 const compactNumber = new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 });
 
@@ -66,68 +70,69 @@ function BottomTabBar({ active }: { active: number }) {
   );
 }
 
-// ── "My Orders" screen — back phone. Real Rs. (PKR) formatting and plain
-// 4-digit order numbers, matching how the actual app displays them
-// elsewhere — not USD `$`/a fabricated long order id. ──
+// ── "Popular now" screen — back phone: the marketplace's real best sellers
+// (by purchases), not invented orders. Shows neutral placeholders until loaded.
+let popularCache: MarketplaceProduct[] | null = null;
+let popularInflight: Promise<MarketplaceProduct[]> | null = null;
+function loadPopular() {
+  if (popularCache) return Promise.resolve(popularCache);
+  popularInflight ??= apiGetAllProducts(1, 3, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, 'popularity')
+    .then(r => (popularCache = r.data?.products ?? []))
+    .catch(() => (popularCache = []));
+  return popularInflight;
+}
+function usePopularProducts() {
+  const [items, setItems] = useState<MarketplaceProduct[]>(() => popularCache ?? []);
+  useEffect(() => { let alive = true; loadPopular().then(p => { if (alive) setItems(p); }); return () => { alive = false; }; }, []);
+  return items;
+}
+const priceOf = (p: MarketplaceProduct) => ((p.variants ?? []).find(v => v.isDefault) ?? p.variants?.[0])?.price ?? null;
+
 function OrdersScreenMockup() {
-  const tabs = ['All', 'Processing', 'Shipped', 'Delivered'];
-  const orders = [
-    { id: '1234', status: 'Processing', color: 'bg-[#fef3c7] text-[#b45309]', items: '2 items', price: 3998 },
-    { id: '1233', status: 'Shipped',    color: 'bg-info-bg text-info',       items: '1 item',  price: 1499 },
-    { id: '1232', status: 'Delivered',  color: 'bg-success-bg text-success', items: '3 items', price: 5999 },
-  ];
+  const products = usePopularProducts();
   return (
     <div className="relative w-full h-full bg-white overflow-hidden flex flex-col">
       <StatusBar />
       <div className="px-[14px] pt-[6px] pb-[8px]">
-        <p className="text-[13px] font-bold text-carbon">My Orders</p>
-      </div>
-      <div className="flex items-center gap-[14px] px-[14px] border-b border-bone">
-        {tabs.map((t, i) => (
-          <span key={t} className={clsx(
-            'text-[8px] font-semibold pb-[7px] border-b-2',
-            i === 0 ? 'text-brand-orange border-brand-orange' : 'text-slate border-transparent',
-          )}>
-            {t}
-          </span>
-        ))}
+        <p className="text-[13px] font-bold text-carbon">Popular now</p>
       </div>
       <div className="flex flex-col gap-[7px] px-[10px] pt-[9px] overflow-hidden">
-        {orders.map((o, i) => (
-          <div key={i} className="flex items-center gap-[8px] rounded-[10px] border border-bone p-[8px]">
-            <div className="w-9 h-9 rounded-[7px] bg-brand-pale-orange shrink-0" />
+        {(products.length ? products : [null, null, null]).map((p, i) => (
+          <div key={p?._id ?? i} className="flex items-center gap-[8px] rounded-[10px] border border-bone p-[8px]">
+            {p?.images?.[0]
+              ? <img src={p.images[0]} alt="" className="w-9 h-9 rounded-[7px] object-cover shrink-0" />
+              : <div className="w-9 h-9 rounded-[7px] bg-brand-pale-orange shrink-0" />}
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-[5px]">
-                <p className="text-[8px] font-semibold text-carbon truncate">Order #{o.id}</p>
-                <span className={clsx('shrink-0 px-[6px] py-[1.5px] rounded-full text-[6.5px] font-semibold', o.color)}>{o.status}</span>
-              </div>
-              <p className="text-[7px] text-slate mt-[2px]">{o.items} · Rs. {o.price.toLocaleString()}</p>
+              {p ? (
+                <>
+                  <p className="text-[8px] font-semibold text-carbon truncate">{p.name}</p>
+                  <p className="text-[7px] text-slate mt-[2px]">{priceOf(p) != null ? `Rs. ${priceOf(p)!.toLocaleString()}` : ''}</p>
+                </>
+              ) : (
+                <>
+                  <div className="h-[6px] w-3/4 rounded bg-bone" />
+                  <div className="h-[5px] w-1/3 rounded bg-bone mt-[4px]" />
+                </>
+              )}
             </div>
           </div>
         ))}
       </div>
-      <p className="text-center text-[7.5px] font-semibold text-brand-orange mt-[8px]">View all orders</p>
       <BottomTabBar active={3} />
     </div>
   );
 }
 
 // ── Home / discover screen — front phone ───────────────────────────────────────
-const HOME_CATEGORIES = [
-  { Icon: BookMarked,    label: 'Quran' },
-  { Icon: GraduationCap, label: 'Courses' },
-  { Icon: Pencil,        label: 'Stationery' },
-  { Icon: BookOpen,      label: 'Books' },
-];
-
-// Rs. (PKR), matching how the real Flash Sale rail prices things elsewhere
-// in the app — not a fabricated USD price.
-const FLASH_DEAL_PRODUCTS = [
-  { name: 'Tajweed Quran (Hardback)', color: '#1F3A2B', price: 2499,   compareAt: 4165,   pct: 40 },
-  { name: 'Grade 5 Maths Workbook',   color: '#E4F0DA', price: 799,    compareAt: 1598,   pct: 50 },
-];
+const CATEGORY_ICONS = [BookMarked, GraduationCap, Pencil, BookOpen];
 
 export function HomeScreenMockup() {
+  const { tree } = useCategoryTree();
+  const deals = useTopBarDeals();
+  const saleEnd = (deals?.campaigns ?? []).map(c => c.endDate).sort()[0] ?? null;
+  const countdown = useCountdownTo(saleEnd);
+  const flash = (deals?.flashDeals ?? []).slice(0, 2);
+  const categories = tree.slice(0, 4);
   return (
     <div className="relative w-full h-full bg-white overflow-hidden flex flex-col">
       <StatusBar />
@@ -158,37 +163,51 @@ export function HomeScreenMockup() {
           <span className="text-[7px] text-brand-orange font-semibold">See all &gt;</span>
         </div>
         <div className="flex items-center justify-between mb-[10px]">
-          {HOME_CATEGORIES.map(({ Icon, label }) => (
-            <div key={label} className="flex flex-col items-center gap-[4px]">
-              <span className="w-[26px] h-[26px] rounded-full bg-cream border border-bone flex items-center justify-center">
-                <Icon size={12} className="text-brand-orange" />
-              </span>
-              <span className="text-[5.5px] text-slate whitespace-nowrap">{label}</span>
-            </div>
-          ))}
+          {categories.map((c, i) => {
+            const Icon = CATEGORY_ICONS[i % CATEGORY_ICONS.length];
+            return (
+              <div key={c._id} className="flex flex-col items-center gap-[4px] min-w-0">
+                <span className="w-[26px] h-[26px] rounded-full bg-cream border border-bone flex items-center justify-center">
+                  <Icon size={12} className="text-brand-orange" />
+                </span>
+                <span className="text-[5.5px] text-slate whitespace-nowrap truncate max-w-[34px]">{c.name}</span>
+              </div>
+            );
+          })}
         </div>
 
         <div className="flex items-center justify-between mb-[6px]">
           <p className="text-[8.5px] font-bold text-carbon flex items-center gap-[3px]">
             <Zap size={9} className="text-brand-orange fill-brand-orange" /> Flash Sale
           </p>
-          <span className="text-[6.5px] font-semibold text-error tabular-nums">Ends in 06:25:43</span>
+          {countdown && <span className="text-[6.5px] font-semibold text-error tabular-nums">Ends in {countdown.h}:{countdown.m}:{countdown.s}</span>}
         </div>
         <div className="grid grid-cols-2 gap-[7px]">
-          {FLASH_DEAL_PRODUCTS.map((p, i) => (
-            <div key={i} className="rounded-[8px] border border-bone overflow-hidden relative">
-              <div className="aspect-square relative" style={{ background: p.color }}>
-                <span className="absolute top-[3px] start-[3px] px-[4px] py-[1px] rounded-[3px] text-[5px] font-bold bg-[#e11d48] text-white">-{p.pct}%</span>
-              </div>
-              <div className="px-[5px] py-[4px]">
-                <p className="text-[6px] font-semibold text-charcoal truncate">{p.name}</p>
-                <div className="flex items-baseline gap-[3px]">
-                  <p className="text-[7px] font-bold text-carbon">Rs. {p.price.toLocaleString()}</p>
+          {(flash.length ? flash : [null, null]).map((d, i) => {
+            const v = d ? ((d.product.variants ?? []).find(x => x.isDefault) ?? d.product.variants?.[0]) : null;
+            return (
+              <div key={d?.product._id ?? i} className="rounded-[8px] border border-bone overflow-hidden relative">
+                <div className="aspect-square relative bg-cream">
+                  {d?.product.images?.[0] && <img src={d.product.images[0]} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+                  {d && <span className="absolute top-[3px] start-[3px] px-[4px] py-[1px] rounded-[3px] text-[5px] font-bold bg-[#e11d48] text-white">-{d.pct}%</span>}
                 </div>
-                <p className="text-[5px] text-slate line-through">Rs. {p.compareAt.toLocaleString()}</p>
+                <div className="px-[5px] py-[4px]">
+                  {d && v ? (
+                    <>
+                      <p className="text-[6px] font-semibold text-charcoal truncate">{d.product.name}</p>
+                      <p className="text-[7px] font-bold text-carbon">Rs. {v.price.toLocaleString()}</p>
+                      {v.compareAtPrice ? <p className="text-[5px] text-slate line-through">Rs. {v.compareAtPrice.toLocaleString()}</p> : null}
+                    </>
+                  ) : (
+                    <>
+                      <div className="h-[5px] w-3/4 rounded bg-bone" />
+                      <div className="h-[5px] w-1/2 rounded bg-bone mt-[3px]" />
+                    </>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
       <BottomTabBar active={0} />
@@ -497,7 +516,7 @@ export function AppDownloadBanner({ className, variant = 'full' }: { className?:
   const trustStats = [
     { Icon: ShoppingBag, value: stats ? `${compactNumber.format(stats.buyersCount)}+` : '—', label: 'Happy Shoppers' },
     { Icon: ShieldCheck, value: 'Secure', label: 'Checkout' },
-    { Icon: Award,       value: stats ? `${compactNumber.format(stats.storesCount)}+` : '—', label: 'Verified Stores' },
+    { Icon: Award,       value: stats ? `${compactNumber.format(stats.storesCount)}+` : '—', label: 'Stores' },
     { Icon: Headphones,  value: 'Help', label: 'When You Need It' },
   ];
 

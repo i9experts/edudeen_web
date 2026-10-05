@@ -4,10 +4,18 @@ import { clsx } from 'clsx';
 import { DialogShell } from './DialogShell';
 import { Button } from './Button';
 import { EdudeenIcon } from './EdudeenLogo';
+import { GOOGLE_PLAY_URL } from './AppPromoParts';
 
-// Internal test track — swap for the public Play Store listing once Edudeen
-// graduates out of internal testing.
-const PLAY_STORE_URL = 'https://play.google.com/apps/internaltest/4699462862361720775';
+// Single source of truth for the Play listing lives in AppPromoParts.
+const PLAY_STORE_URL = GOOGLE_PLAY_URL;
+
+/** No iOS app yet — never push iPhone/iPad users toward the Play Store. */
+function isIOS(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent || '';
+  // iPadOS 13+ reports itself as a Mac; detect it via touch support.
+  return /iPad|iPhone|iPod/i.test(ua) || (/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1);
+}
 
 const PERKS = [
   { Icon: Zap,          label: 'One-tap checkout' },
@@ -18,9 +26,8 @@ const PERKS = [
 const DISMISS_KEY = 'edudeen_app_open_prompt_dismissed';
 
 /**
- * Mobile-only "continue in app" interstitial — mounted from BuyerLayout,
- * which sits under RootLayout's `<ErrorBoundary key={pathname}>` and so
- * remounts on every navigation. Once dismissed (X or "Continue in Browser")
+ * Mobile-only "continue in app" interstitial — mounted from BuyerLayout.
+ * Once dismissed (X or "Continue in Browser")
  * it stays hidden for the rest of the browser tab's session via
  * `sessionStorage` — opening the app instead doesn't set the flag, since
  * the tab is about to leave the site anyway.
@@ -28,7 +35,7 @@ const DISMISS_KEY = 'edudeen_app_open_prompt_dismissed';
 export function AppOpenPrompt() {
   const [dismissed, setDismissed] = useState(() => sessionStorage.getItem(DISMISS_KEY) === '1');
 
-  if (dismissed) return null;
+  if (dismissed || isIOS()) return null;
 
   const close = () => {
     sessionStorage.setItem(DISMISS_KEY, '1');
@@ -90,6 +97,7 @@ export function AppOpenPrompt() {
  * dismissed. Always does the same single action: jump straight to the app.
  */
 export function AppOpenFab() {
+  if (isIOS()) return null;
   return (
     <button
       onClick={() => { window.location.href = PLAY_STORE_URL; }}

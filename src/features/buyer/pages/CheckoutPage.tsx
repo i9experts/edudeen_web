@@ -12,9 +12,9 @@ import { shippingZoneLabel, zonesForAddress, type ShippingZone } from '@/api/ser
 // still be placed (free shipping) before an admin sets up delivery prices.
 const STANDARD_DELIVERY: ShippingZone = {
   _id: '__standard', country: 'Pakistan', province: null, city: null, shippingPrice: 0,
-  estimatedDeliveryTime: '3-7 days', status: 'active', isDelete: false, createdAt: '', updatedAt: '',
+  estimatedDeliveryTime: '', status: 'active', isDelete: false, createdAt: '', updatedAt: '',
 };
-const zoneTitle = (z: ShippingZone) => (z._id === STANDARD_DELIVERY._id ? 'Standard delivery' : shippingZoneLabel(z));
+const zoneTitle = (z: ShippingZone) => (z._id === STANDARD_DELIVERY._id ? 'Delivery arranged by the seller' : shippingZoneLabel(z));
 // Zone prices are always PKR, whatever currency the checkout is in.
 const zonePrice = (z: ShippingZone) => (z.shippingPrice > 0 ? `Rs ${z.shippingPrice.toLocaleString()}` : 'Free');
 import { apiGetMyAddresses, type Address, type AddressPayload } from '@/api/services/address';
@@ -735,16 +735,23 @@ export function CheckoutPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step, selectedZoneId, matchingZones.length, matchingZones[0]?._id]);
 
-  // The whole cart checks out together — one order, no more splitting by type.
-  const orderSubtotal = checkout
-    ? checkout.items.reduce((s, i) => s + i.totalPrice, 0)
-    : cartItems.reduce((s, i) => s + (i.itemTotal ?? (i.unitPrice ?? i.price ?? 0) * i.quantity), 0);
-
-  const shipping = summary?.shippingFee ?? selectedZone?.shippingPrice ?? 0;
-  const tax      = summary?.taxAmount ?? 0;
+  // Once a checkout exists the server's figures are the only source of truth:
+  // it converts every line into the checkout currency and has already taken
+  // every discount off the item prices, so the total is `totalAmount` as-is.
+  // (Summing item prices here mixed seller currencies with a PKR shipping fee
+  // and took coupons off twice.) Before that, it's an estimate from the cart.
+  const shipping = checkout?.shippingFee ?? summary?.shippingFee ?? selectedZone?.shippingPrice ?? 0;
+  const tax      = checkout?.taxAmount ?? summary?.taxAmount ?? 0;
   const couponDiscount = checkout?.couponDiscountUSD ?? 0;
   const giftCardDiscount = checkout?.giftCardDiscountUSD ?? 0;
-  const total    = Math.max(0, orderSubtotal + (isDigital ? 0 : shipping) + tax - couponDiscount - giftCardDiscount);
+  const bakedInDiscounts = (summary?.subscriberSavingsUSD ?? 0) + (summary?.campaignDiscountUSD ?? 0) + (summary?.autoDiscountUSD ?? 0);
+  const total = checkout
+    ? checkout.totalAmount
+    : cartItems.reduce((s, i) => s + (i.itemTotal ?? (i.unitPrice ?? i.price ?? 0) * i.quantity), 0);
+  // Subtotal before discounts, so the summary adds up: subtotal − discounts + shipping + tax = total.
+  const orderSubtotal = checkout
+    ? Math.max(0, total - (isDigital ? 0 : shipping) - tax + bakedInDiscounts + couponDiscount + giftCardDiscount)
+    : total;
 
   // ── Handlers ─────────────────────────────────────────────────────────────
   async function handleApplyCoupon() {
@@ -1364,7 +1371,7 @@ export function CheckoutPage() {
                                   {zoneTitle(selectedZone)}
                                 </p>
                                 <p className="text-[12px] text-slate mt-[1px]">
-                                  Estimated delivery: {selectedZone.estimatedDeliveryTime}
+                                  {selectedZone.estimatedDeliveryTime ? `Estimated delivery: ${selectedZone.estimatedDeliveryTime}` : 'The seller will contact you about delivery'}
                                 </p>
                               </div>
                               <span className="text-[13px] font-bold text-carbon ms-4 flex-shrink-0">
@@ -1408,7 +1415,7 @@ export function CheckoutPage() {
                                     {zoneTitle(zone)}
                                   </p>
                                   <p className="text-[12px] text-slate mt-[1px]">
-                                    Estimated delivery: {zone.estimatedDeliveryTime}
+                                    {zone.estimatedDeliveryTime ? `Estimated delivery: ${zone.estimatedDeliveryTime}` : 'The seller will contact you about delivery'}
                                   </p>
                                 </div>
                                 <span className="text-[13px] font-bold text-carbon flex-shrink-0">
@@ -1448,7 +1455,7 @@ export function CheckoutPage() {
                 <div className="px-5 py-3 text-[13px] text-carbon">
                   <span className="font-medium">{zoneTitle(selectedZone)}</span>
                   {' — '}
-                  {zonePrice(selectedZone)} · {selectedZone.estimatedDeliveryTime}
+                  {zonePrice(selectedZone)}{selectedZone.estimatedDeliveryTime ? `· ${selectedZone.estimatedDeliveryTime}` : ''}
                 </div>
               )}
             </div>

@@ -298,7 +298,7 @@ export function ProfileAvatar({ withNotifications = false, compact = false }: { 
 
   useEffect(() => { if (withNotifications) fetchNotifications(); }, [withNotifications, fetchNotifications]);
   useEffect(() => { if (withNotifications && open) fetchNotifications(); }, [withNotifications, open, fetchNotifications]);
-  const [pos, setPos] = useState<{ top?: number; bottom?: number; right?: number }>({});
+  const [pos, setPos] = useState<{ top?: number; bottom?: number; left?: number }>({});
   const triggerRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -323,9 +323,15 @@ export function ProfileAvatar({ withNotifications = false, compact = false }: { 
     const openUpward = spaceBelow < panelHeight + GAP && rect.top > panelHeight;
     setPos({
       [openUpward ? 'bottom' : 'top']: openUpward ? window.innerHeight - rect.top + GAP : rect.bottom + GAP,
-      right: Math.max(8, window.innerWidth - rect.right),
+      // Line the panel up with the trigger's outer edge — its right edge in
+      // LTR, its left edge in RTL (Urdu puts the avatar on the left) — then
+      // keep it inside the viewport either way.
+      left: Math.min(
+        Math.max(8, document.documentElement.dir === 'rtl' ? rect.left : rect.right - panelWidth),
+        Math.max(8, window.innerWidth - panelWidth - 8),
+      ),
     });
-  }, [panelHeight]);
+  }, [panelHeight, panelWidth]);
 
   useEffect(() => {
     if (!open) return;
@@ -394,7 +400,7 @@ export function ProfileAvatar({ withNotifications = false, compact = false }: { 
           onMouseLeave={scheduleClose}
           style={{ position: 'fixed', zIndex: 100, width: panelWidth, ...pos }}
           className={clsx(
-            'transition-all duration-200 origin-top-right',
+            'transition-all duration-200 origin-top-right rtl:origin-top-left',
             open ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 -translate-y-1 pointer-events-none',
           )}
         >

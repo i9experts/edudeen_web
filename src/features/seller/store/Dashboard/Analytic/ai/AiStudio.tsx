@@ -28,6 +28,7 @@ export function StoreAIStudio() {
   const { storeId } = useStoreWorkspace();
   const [activeTool, setActiveTool] = useState<AiToolType>('listing_writer');
   const { data: credits, loading: creditsLoading, refetch: refetchCredits } = useAiStudioCredits(storeId);
+  const costs = credits?.toolCosts;
 
   return (
     <>
@@ -68,12 +69,13 @@ export function StoreAIStudio() {
         </div>
 
         {/* ── Active tool workspace ── */}
-        {activeTool === 'listing_writer'    && <ListingWriterTool storeId={storeId} onCreditsChanged={refetchCredits} />}
-        {activeTool === 'seo_booster'       && <SeoBoosterTool storeId={storeId} onCreditsChanged={refetchCredits} />}
-        {activeTool === 'email_campaigns'   && <EmailCampaignsTool storeId={storeId} onCreditsChanged={refetchCredits} />}
-        {activeTool === 'worksheet_builder' && <WorksheetBuilderTool storeId={storeId} onCreditsChanged={refetchCredits} />}
-        {activeTool === 'price_optimizer'   && <PriceOptimizerTool storeId={storeId} onCreditsChanged={refetchCredits} />}
-        {activeTool === 'image_enhancer'    && <ImageEnhancerTool storeId={storeId} onCreditsChanged={refetchCredits} />}
+        {/* Button costs come from the live credits.toolCosts, not hardcoded numbers. */}
+        {activeTool === 'listing_writer'    && <ListingWriterTool storeId={storeId} onCreditsChanged={refetchCredits} creditCost={costs?.listing_writer} />}
+        {activeTool === 'seo_booster'       && <SeoBoosterTool storeId={storeId} onCreditsChanged={refetchCredits} creditCost={costs?.seo_booster} />}
+        {activeTool === 'email_campaigns'   && <EmailCampaignsTool storeId={storeId} onCreditsChanged={refetchCredits} creditCost={costs?.email_campaigns} />}
+        {activeTool === 'worksheet_builder' && <WorksheetBuilderTool storeId={storeId} onCreditsChanged={refetchCredits} creditCost={costs?.worksheet_builder} />}
+        {activeTool === 'price_optimizer'   && <PriceOptimizerTool storeId={storeId} onCreditsChanged={refetchCredits} creditCost={costs?.price_optimizer} />}
+        {activeTool === 'image_enhancer'    && <ImageEnhancerTool storeId={storeId} onCreditsChanged={refetchCredits} creditCost={costs?.image_enhancer} />}
       </div>
     </>
   );

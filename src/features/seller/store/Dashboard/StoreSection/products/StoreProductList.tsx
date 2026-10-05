@@ -44,10 +44,8 @@ export default function StoreProductList() {
   const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
 
   const LIMIT = 10;
-  const SEARCH_LIMIT = 1000;
   const [refreshKey, setRefreshKey] = useState(0);
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const isSearching = debouncedSearch.trim().length > 0;
 
   const [sort, setSort] = useState<TableSort | null>(null);
 
@@ -58,21 +56,25 @@ export default function StoreProductList() {
   };
 
   useEffect(() => {
-    const id = setTimeout(() => setDebouncedSearch(search), 300);
+    if (search.trim() === debouncedSearch) return;
+    const id = setTimeout(() => {
+      // Server-side name/SKU search (?q=); a new term restarts at page 1.
+      setPage(1);
+      setDebouncedSearch(search.trim());
+    }, 300);
     return () => clearTimeout(id);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search]);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    // When searching, fetch a much larger page so the search covers the whole
-    // catalog rather than just the currently-visible page (no server-side search endpoint exists).
-    const [fetchPage, fetchLimit] = isSearching ? [1, SEARCH_LIMIT] : [page, LIMIT];
-    apiGetStoreInventory(storeId, fetchPage, fetchLimit)
+    apiGetStoreInventory(storeId, page, LIMIT, { q: debouncedSearch })
       .then(res => {
         if (cancelled) return;
         setProducts(res.data.products ?? []);
-        setStats(res.data.stats);
+        // Stats cards describe the whole store, not just search matches.
+        if (!debouncedSearch) setStats(res.data.stats);
         setTotalProducts(res.data.pagination.totalProducts);
       })
       .catch((err: unknown) => {
@@ -80,7 +82,7 @@ export default function StoreProductList() {
       })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [storeId, page, refreshKey, isSearching]);
+  }, [storeId, page, refreshKey, debouncedSearch]);
 
   const goAdd    = () => navigate(`/store/${storeId}/products/add`);
   const goEdit   = (p: InventoryProduct) => navigate(`/store/${storeId}/products/edit/${p.productId}`);
@@ -89,7 +91,6 @@ export default function StoreProductList() {
   const handlePageChange = (p: number) => {
     setLoading(true);
     setError('');
-    setSearch('');
     setPage(p);
   };
 
@@ -129,12 +130,7 @@ export default function StoreProductList() {
     }
   };
 
-  const filtered = isSearching
-    ? products.filter(p =>
-        p.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-        p.sku.toLowerCase().includes(debouncedSearch.toLowerCase())
-      )
-    : products;
+  const filtered = products;
 
   const sorted = sort
     ? [...filtered].sort((a, b) => {
@@ -278,7 +274,7 @@ export default function StoreProductList() {
                 description: search ? 'Try a different name or SKU.' : 'Add physical items, digital downloads, or services to start selling.',
                 action: search ? undefined : { label: 'Add Your First Product', onClick: goAdd, icon: <Plus size={15} /> },
               }}
-              pagination={isSearching ? undefined : {
+              pagination={{
                 page,
                 total:    totalProducts,
                 perPage:  LIMIT,

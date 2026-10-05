@@ -139,9 +139,13 @@ export function ActionMenu({ items, align = 'right', className, trigger, trigger
       ? window.innerHeight - rect.top + GAP
       : rect.bottom + GAP;
 
-    next[align === 'right' ? 'right' : 'left'] = align === 'right'
-      ? window.innerWidth - rect.right
-      : rect.left;
+    // `align` is the trigger edge the menu hangs from in LTR; RTL mirrors it,
+    // otherwise a menu on the (now left-hand) end edge opens off-screen.
+    const rtl  = document.documentElement.dir === 'rtl';
+    const side = (align === 'right') !== rtl ? 'right' : 'left';
+    next[side] = side === 'right'
+      ? Math.max(8, window.innerWidth - rect.right)
+      : Math.max(8, rect.left);
 
     setPos(next);
   }, [items.length, align]);

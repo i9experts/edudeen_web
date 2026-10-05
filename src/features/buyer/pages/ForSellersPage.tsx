@@ -7,6 +7,7 @@ import { SkeletonBox } from '@/components/comman/ui';
 import { ArrowRight, GraduationCap, Palette, Store, BookOpen, Library, Building2, Gift, Hammer, Download, Sparkles, BarChart2, PackageCheck, CreditCard, Lock } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { apiGetPlatformStats, type PlatformStats } from '@/api/services/store';
+import { usePublicPlatformConfig } from '@/hooks/usePublicPlatformConfig';
 import { Reveal, RevealStagger } from '@/components/comman/motion/Reveal';
 import { MagneticButton } from '@/components/comman/motion/MagneticButton';
 import { ClipReveal } from '@/components/comman/motion/ClipReveal';
@@ -35,9 +36,23 @@ const FEATURES: { Icon: LucideIcon; title: string; desc: string }[] = [
   { Icon: Sparkles,    title: 'AI Tools',             desc: 'AI-powered listing optimization and pricing.'      },
   { Icon: BarChart2,   title: 'Analytics',            desc: 'Real-time sales data and customer insights.'       },
   { Icon: PackageCheck, title: 'Inventory Tracking',  desc: 'Per-edition stock for printed books and supplies.' },
-  { Icon: CreditCard,  title: 'Fast Payouts',         desc: 'Get paid within 2 business days, every time.'     },
+  // desc is replaced at render time with the real payout schedule (see payoutDescription).
+  { Icon: CreditCard,  title: 'Payouts',              desc: 'Scheduled payouts, or request one from your balance.' },
   { Icon: Lock,        title: 'Seller Protection',    desc: 'Fraud protection and dispute resolution support.'  },
 ];
+
+// Mirrors the backend PAYOUT_FREQUENCIES (admin-config payoutConfig.payoutFrequency)
+// plus the on-demand "request payout" action sellers always have.
+function payoutDescription(frequency?: string | null): string {
+  switch (frequency) {
+    case 'daily':    return 'Automatic daily payouts, or request one from your available balance.';
+    case 'weekly':   return 'Automatic weekly payouts, or request one from your available balance.';
+    case 'biweekly': return 'Automatic payouts every two weeks, or request one from your available balance.';
+    case 'monthly':  return 'Automatic monthly payouts, or request one from your available balance.';
+    case 'manual':   return 'Request a payout from your available balance whenever you like.';
+    default:         return 'Scheduled payouts, or request one from your available balance.';
+  }
+}
 
 export function ForSellersPage() {
   const navigate = useNavigate();
@@ -56,12 +71,20 @@ export function ForSellersPage() {
     return () => { cancelled = true; };
   }, []);
 
-  const statItems = stats ? [
-    { value: stats.sellersCount, format: (n: number) => `${compactNumber.format(n)}+`, label: 'Active Sellers' },
-    { value: stats.gmv,          format: (n: number) => `${compactCurrency.format(n)}+`, label: 'GMV Processed' },
-    { value: stats.buyersCount,  format: (n: number) => `${compactNumber.format(n)}+`,  label: 'Registered Buyers' },
-    { value: stats.ratingCount > 0 ? stats.avgRating : null, format: (n: number) => `${n.toFixed(1)} ★`, label: 'Average Rating' },
-  ] : [];
+  // Only real, finite numbers — a missing/undefined field drops its stat
+  // instead of rendering "NaN+".
+  const num = (v: unknown): number | null => (typeof v === 'number' && Number.isFinite(v) ? v : null);
+  const statItems = stats ? ([
+    { value: num(stats.sellersCount), format: (n: number) => `${compactNumber.format(n)}+`, label: 'Active Sellers' },
+    { value: num(stats.gmv),          format: (n: number) => `${compactCurrency.format(n)}+`, label: 'GMV Processed' },
+    { value: num(stats.buyersCount),  format: (n: number) => `${compactNumber.format(n)}+`,  label: 'Registered Buyers' },
+    { value: (num(stats.ratingCount) ?? 0) > 0 ? num(stats.avgRating) : null, format: (n: number) => `${n.toFixed(1)} ★`, label: 'Average Rating' },
+  ] as { value: number | null; format: (n: number) => string; label: string }[]).filter(s => s.value !== null && s.value > 0) : [];
+
+  // Payout copy backed by the real platform payout policy (admin config).
+  const { config: publicConfig } = usePublicPlatformConfig();
+  const payoutDesc = payoutDescription(publicConfig?.payout?.frequency);
+  const features = FEATURES.map(f => (f.title === 'Payouts' ? { ...f, desc: payoutDesc } : f));
 
   return (
     <div className="bg-white min-h-full">
@@ -145,7 +168,7 @@ export function ForSellersPage() {
         <div className="max-w-[1100px] mx-auto">
           <SectionHeading title="Everything you need to sell what you teach" subtitle="One subscription. Every tool. Zero technical headaches." align="center" className="mb-12" size="lg" />
           <RevealStagger className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" step={0.05} y={16}>
-            {FEATURES.map(f => (
+            {features.map(f => (
               <PremiumCard key={f.title} className="px-[18px] py-5">
                 <f.Icon size={28} className="block mb-3 text-brand-orange" />
                 <p className="text-[13px] font-bold text-carbon mb-[6px]">{f.title}</p>
@@ -183,7 +206,7 @@ export function ForSellersPage() {
 
       {/* ── CTA ──────────────────────────────────────────────────────────── */}
       <div className="bg-carbon px-4 md:px-8 lg:px-12 py-12 md:py-[72px] text-center">
-        <SectionHeading title="Start selling for free today" subtitle="No credit card required. Get your store live in minutes. Upgrade when you're ready." tone="dark" align="center" size="lg" className="mb-9" />
+        <SectionHeading title="Start selling for free today" subtitle="Get your store live in minutes. Upgrade when you're ready." tone="dark" align="center" size="lg" className="mb-9" />
         <Reveal>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <MagneticButton>

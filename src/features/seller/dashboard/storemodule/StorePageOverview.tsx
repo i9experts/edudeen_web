@@ -15,6 +15,9 @@ import { apiGetStoreTheme, apiUpdateStoreThemeColors, apiUpdateIdentityBanner, a
 import { getStorePagePath, getStorefrontUrl } from '@/utils/storefrontUrl';
 import { STORE_ACCENT_SWATCHES, storeCoverGradient } from '@/features/storefront/StorefrontContext';
 import { ProductCoverFallback } from '@/components/comman/marketplace/ProductCoverFallback';
+import { apiGetFinanceDashboard } from '@/api/services/finance';
+import { useDebouncedValue } from '@/hooks/seller/useInventorySearch';
+import { commissionPctFromFee, formatPct } from '@/features/seller/store/Dashboard/Operations/finance/commissionCopy';
 
 const MAX_FEATURED = 8;
 const ANNOUNCEMENT_TYPES: { value: StoreAnnouncementType; label: string }[] = [
@@ -126,12 +129,42 @@ export function StorePageOverview() {
     return () => { cancelled = true; };
   }, [store, storeId]);
 
+  // Featured-product picker: first 50 listed products, then server-side search
+  // as the seller types so any listed product can be featured. `knownProducts`
+  // remembers everything seen so picked items still preview after a new search.
+  const [productQuery, setProductQuery] = useState('');
+  const debouncedProductQuery = useDebouncedValue(productQuery.trim(), 300);
+  const [productsLoading, setProductsLoading] = useState(true);
+  const [listedTotal, setListedTotal] = useState<number | null>(null);
+  const [knownProducts, setKnownProducts] = useState<Record<string, PublicStoreProduct>>({});
   useEffect(() => {
     if (!storeId) return;
-    apiGetPublicStoreProducts(storeId, { page: 1, limit: 50 })
-      .then(res => setProducts(res.data?.products ?? []))
-      .catch(() => setProducts([]));
+    let cancelled = false;
+    setProductsLoading(true);
+    apiGetPublicStoreProducts(storeId, { page: 1, limit: 50, search: debouncedProductQuery || undefined })
+      .then(res => {
+        if (cancelled) return;
+        const list = res.data?.products ?? [];
+        setProducts(list);
+        setKnownProducts(prev => ({ ...prev, ...Object.fromEntries(list.map(p => [p._id, p])) }));
+        if (!debouncedProductQuery) setListedTotal(res.data?.pagination?.total ?? list.length);
+      })
+      .catch(() => { if (!cancelled) setProducts([]); })
+      .finally(() => { if (!cancelled) setProductsLoading(false); });
+    return () => { cancelled = true; };
+  }, [storeId, debouncedProductQuery]);
+
+  // Real commission rate for the "earnings" line (0 → "No commission").
+  const [commissionPct, setCommissionPct] = useState<number | null>(null);
+  useEffect(() => {
+    if (!storeId) return;
+    let cancelled = false;
+    apiGetFinanceDashboard(storeId)
+      .then(d => { if (!cancelled) setCommissionPct(commissionPctFromFee(d?.feeBreakdown?.transactionFee)); })
+      .catch(() => { /* line falls back to neutral copy */ });
+    return () => { cancelled = true; };
   }, [storeId]);
+  const listedCount = listedTotal ?? products.length;
 
   const set = <K extends keyof Draft>(key: K, value: Draft[K]) => setDraft(d => (d ? { ...d, [key]: value } : d));
   const changed = (keys: (keyof Draft)[]) => !!draft && !!initial && keys.some(k => JSON.stringify(draft[k]) !== JSON.stringify(initial[k]));
@@ -211,8 +244,8 @@ export function StorePageOverview() {
   };
 
   const featuredProducts = useMemo(
-    () => (draft?.featured ?? []).map(id => products.find(p => p._id === id)).filter(Boolean) as PublicStoreProduct[],
-    [draft?.featured, products],
+    () => (draft?.featured ?? []).map(id => knownProducts[id]).filter(Boolean) as PublicStoreProduct[],
+    [draft?.featured, knownProducts],
   );
 
   const actions = (
@@ -332,7 +365,19 @@ export function StorePageOverview() {
             </Section>
 
             <Section icon={<Star size={15} />} title={`Featured products (${draft.featured.length}/${MAX_FEATURED})`} hint="Pick your best sellers — they show in a row above all your products, in the order you pick them.">
-              {products.length === 0 ? (
+              {(listedCount > products.length || productQuery) && (
+                <Input
+                  placeholder="Search your listed products…"
+                  value={productQuery}
+                  onChange={e => setProductQuery(e.target.value)}
+                  className="mb-3"
+                />
+              )}
+              {productsLoading && products.length === 0 ? (
+                <p className="text-[12.5px] text-slate flex items-center gap-1.5"><Loader2 size={13} className="animate-spin" /> Loading products…</p>
+              ) : products.length === 0 && debouncedProductQuery ? (
+                <p className="text-[12.5px] text-slate">No listed products match “{debouncedProductQuery}”.</p>
+              ) : products.length === 0 ? (
                 <p className="text-[12.5px] text-slate">
                   No listed products yet. <button onClick={() => navigate(`/store/${storeId}/products/add`)} className="bg-transparent border-none p-0 text-brand-orange font-semibold underline cursor-pointer">Add a product</button> — make sure "List on Edudeen" is on.
                 </p>
@@ -385,7 +430,7 @@ export function StorePageOverview() {
                     <span className="block font-serif text-[18px] text-white leading-tight truncate">{draft.name || 'Your store'}</span>
                     <span className="block text-[11px] text-white/85 truncate">{draft.tagline || draft.description || 'Add a headline'}</span>
                     <span className="block text-[10.5px] text-white/75 mt-0.5">
-                      {[draft.showFollowerCount && 'Followers', draft.showProductCount && `${products.length} products`].filter(Boolean).join(' · ')}
+                      {[draft.showFollowerCount && 'Followers', draft.showProductCount && `${listedCount} products`].filter(Boolean).join(' · ')}
                     </span>
                   </span>
                 </div>
@@ -406,7 +451,7 @@ export function StorePageOverview() {
               )}
               <div className="px-3 py-3 border-t border-bone">
                 <p className="text-[12px] font-bold text-carbon">All products</p>
-                <p className="text-[11px] text-slate">{products.length} listed · Edudeen cart & checkout</p>
+                <p className="text-[11px] text-slate">{listedCount} listed · Edudeen cart & checkout</p>
               </div>
             </div>
 
@@ -420,7 +465,7 @@ export function StorePageOverview() {
               </div>
               <div className="mt-3 flex flex-col gap-1.5 text-[12px] text-slate">
                 <span className="flex items-center gap-1.5"><ShoppingCart size={13} className="text-brand-orange" /> Buyers check out through Edudeen</span>
-                <span className="flex items-center gap-1.5"><ShieldCheck size={13} className="text-brand-orange" /> No commission — earnings paid monthly</span>
+                <span className="flex items-center gap-1.5"><ShieldCheck size={13} className="text-brand-orange" /> {commissionPct === 0 ? 'No commission — earnings paid monthly' : commissionPct ? `${formatPct(commissionPct)} commission — earnings paid monthly` : 'Earnings paid monthly'}</span>
               </div>
             </div>
           </aside>

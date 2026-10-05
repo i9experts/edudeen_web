@@ -4,6 +4,8 @@ import { Button } from '@/components/comman/ui/Button';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
+  /** Changing this clears a caught error (e.g. the route path) without remounting the children. */
+  resetKey?: unknown;
 }
 
 interface ErrorBoundaryState {
@@ -21,6 +23,10 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     console.error('[ErrorBoundary] Uncaught error:', error, info.componentStack);
+  }
+
+  componentDidUpdate(prev: ErrorBoundaryProps) {
+    if (this.state.error && prev.resetKey !== this.props.resetKey) this.setState({ error: null });
   }
 
   handleReset = () => this.setState({ error: null });

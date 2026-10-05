@@ -45,7 +45,12 @@ export function StoreReviews() {
     let cancelled = false;
     setLoading(true);
     setError('');
-    apiGetStoreReviews(storeId, { page, rating: ratingFilter ? parseInt(ratingFilter) : undefined })
+    apiGetStoreReviews(storeId, {
+      page,
+      rating: ratingFilter ? parseInt(ratingFilter) : undefined,
+      // Reply/flag filter runs server-side so it spans every page.
+      status: (sortFilter || undefined) as 'replied' | 'unreplied' | 'flagged' | undefined,
+    })
       .then(res => {
         if (cancelled) return;
         setReviews(res.data.reviews ?? []);
@@ -55,16 +60,11 @@ export function StoreReviews() {
       .catch(err => { if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load reviews.'); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [storeId, page, ratingFilter, refreshKey]);
+  }, [storeId, page, ratingFilter, sortFilter, refreshKey]);
 
   function reload() { setRefreshKey(k => k + 1); }
 
-  const filtered = reviews.filter(r => {
-    if (sortFilter === 'replied'   && !r.sellerReply) return false;
-    if (sortFilter === 'unreplied' && r.sellerReply)   return false;
-    if (sortFilter === 'flagged'   && !r.isFlagged)    return false;
-    return true;
-  });
+  const filtered = reviews;
 
   async function handleFlag(r: StoreReviewEntry) {
     setActionError('');
@@ -267,7 +267,7 @@ export function StoreReviews() {
             </select>
             <select
               value={sortFilter}
-              onChange={e => setSortFilter(e.target.value)}
+              onChange={e => { setSortFilter(e.target.value); setPage(1); }}
               className="w-full sm:w-[140px] px-3 py-2 text-[13px] border border-bone rounded-lg bg-white text-charcoal outline-none cursor-pointer"
             >
               <option value="">All</option>

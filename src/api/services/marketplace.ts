@@ -72,6 +72,8 @@ export interface ActiveCampaignBadge {
 export interface MarketplaceProduct {
   _id:               string;
   name:              string;
+  /** Admin-picked "Featured by Edudeen" listing. */
+  isFeatured?:       boolean;
   sellerId:          string;
   storeId?:          string;
   storeSlug?:        string | null;
@@ -172,6 +174,8 @@ export interface BrowseParams {
   curriculum?:    string;
   /** Suitable for a child of this age. */
   age?:           number;
+  /** Only listings an admin has featured. */
+  featured?:      boolean;
   page?:          number;
   /** Server caps this at 50. */
   limit?:         number;
@@ -195,6 +199,7 @@ export function apiBrowseProducts(p: BrowseParams) {
   if (p.sortBy) params.set('sortBy', p.sortBy);
   if (p.curriculum) params.set('curriculum', p.curriculum);
   if (p.age != null) params.set('age', String(p.age));
+  if (p.featured) params.set('featured', '1');
   return client.get<never, ProductsByCategoryResponse>(
     `${ENDPOINTS.MARKETPLACE.PRODUCTS_BY_CATEGORY}?${params.toString()}`,
   );

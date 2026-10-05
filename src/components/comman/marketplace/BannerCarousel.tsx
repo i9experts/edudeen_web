@@ -36,6 +36,11 @@ interface BannerCarouselProps {
 
 const ROTATE_MS = 5000;
 
+function isExternalLink(url: string) {
+  if (url.startsWith('/')) return false;
+  try { return new URL(url).host !== window.location.host; } catch { return true; }
+}
+
 /** Promotional banner carousel — full-bleed background layer. Fills its nearest
  *  `relative`-positioned, sized parent (`absolute inset-0`). Every slide is
  *  mounted up front (the admin-configurable per-placement limit keeps this to
@@ -146,7 +151,14 @@ export function BannerCarousel({ banners, entityType, fit = 'cover' }: BannerCar
             )}
           >
             {isActive && banner.linkUrl ? (
-              <a href={banner.linkUrl} target="_blank" rel="noreferrer" onClick={handleClick} className="absolute inset-0">
+              // Links inside Edudeen (a category, product, sale…) open in place;
+              // only outside sites get a new tab.
+              <a
+                href={banner.linkUrl}
+                {...(isExternalLink(banner.linkUrl) ? { target: '_blank', rel: 'noreferrer' } : {})}
+                onClick={handleClick}
+                className="absolute inset-0"
+              >
                 {img}
               </a>
             ) : (

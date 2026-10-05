@@ -5,8 +5,9 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import {
   useGlobalCommissionDefault, useSetGlobalCommissionDefault, useGlobalCommissionHistory,
   useSellerCommissionOverrides, useSetSellerCommissionOverride, useRemoveSellerCommissionOverride,
-  useResolveCommissionRate,
+  useResolveCommissionRate, useSellerCommissionHistory,
 } from '@/hooks/admin/useCommissionRules';
+import { useToast } from '@/contexts/ToastContext';
 import { useAdminSellerBalances } from '@/hooks/admin/useAdminFinance';
 import type { CommissionRateSource, SellerOverrideRow } from '@/api/services/commissionRules';
 import { Button, Modal, Input, Textarea, ActionMenu, SkeletonBox, SearchInput, Table, type TableColumn } from '@/components/comman/ui';
@@ -128,6 +129,32 @@ function GlobalDefaultCard() {
   );
 }
 
+// ── Per-seller rate history ───────────────────────────────────────────────────
+function SellerRateHistory({ storeId }: { storeId: string }) {
+  const { history, loading, error } = useSellerCommissionHistory(storeId);
+  return (
+    <div className="flex flex-col gap-1.5">
+      <p className="text-[11.5px] font-semibold text-charcoal flex items-center gap-1"><History size={12} /> Override history</p>
+      {loading ? (
+        <SkeletonBox height={40} rounded="6px" />
+      ) : error ? (
+        <p className="text-[11.5px] text-error">{error}</p>
+      ) : history.length === 0 ? (
+        <p className="text-[11px] text-slate">No overrides have been set for this store.</p>
+      ) : history.map(h => (
+        <div key={h._id} className="flex justify-between gap-3 text-[11.5px]">
+          <span className={h.isActive ? 'font-semibold text-carbon' : 'text-slate'}>
+            {pct(h.rate)}{h.isActive ? ' (current)' : ''}{h.notes ? ` — ${h.notes}` : ''}
+          </span>
+          <span className="text-slate whitespace-nowrap">
+            {formatDate(h.createdAt)}{h.supersededAt ? ` → ${formatDate(h.supersededAt)}` : ''}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ── Add/Edit seller override modal ────────────────────────────────────────────
 function SellerOverrideModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
   const [search, setSearch] = useState('');
@@ -198,6 +225,9 @@ function SellerOverrideModal({ onClose, onSaved }: { onClose: () => void; onSave
             )}
             <Input label="Override rate (%)" type="number" min={0} max={100} step="0.01" value={ratePercent} onChange={(e) => setRatePercent(e.target.value)} error={validationError || undefined} />
             <Textarea label="Notes (optional)" value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} placeholder="Negotiated rate for a high-volume seller" />
+            <div className="border-t border-bone pt-2">
+              <SellerRateHistory storeId={selectedStoreId} />
+            </div>
           </>
         )}
         {error && <p className="text-[12px] text-error">{error}</p>}
@@ -215,12 +245,14 @@ export function AdminCommissionRules() {
   const [adding, setAdding] = useState(false);
   const [removingRow, setRemovingRow] = useState<SellerOverrideRow | null>(null);
   const [removeError, setRemoveError] = useState('');
+  const [historyRow, setHistoryRow] = useState<SellerOverrideRow | null>(null);
+  const toast = useToast();
 
   async function handleRemove() {
     if (!removingRow) return;
     setRemoveError('');
     const ok = await remove(removingRow.storeId!);
-    if (ok) { setRemovingRow(null); refetch(); }
+    if (ok) { setRemovingRow(null); toast.success('Override removed'); refetch(); }
     else setRemoveError('Failed to remove override.');
   }
 
@@ -233,6 +265,7 @@ export function AdminCommissionRules() {
       key: 'actions', header: '',
       render: r => (
         <ActionMenu align="right" items={[
+          { label: 'Rate History', icon: <History size={13} />, onClick: () => setHistoryRow(r) },
           { label: 'Remove Override', icon: <Trash2 size={13} />, danger: true, onClick: () => { setRemovingRow(r); setRemoveError(''); } },
         ]} />
       ),
@@ -276,8 +309,18 @@ export function AdminCommissionRules() {
       {adding && (
         <SellerOverrideModal
           onClose={() => setAdding(false)}
-          onSaved={() => { setAdding(false); refetch(); }}
+          onSaved={() => { setAdding(false); toast.success('Override saved'); refetch(); }}
         />
+      )}
+
+      {historyRow?.storeId && (
+        <Modal mobileSheet
+          title={`Rate history — ${historyRow.storeName}`}
+          onClose={() => setHistoryRow(null)}
+          footer={<Button variant="ghost" onClick={() => setHistoryRow(null)}>Close</Button>}
+        >
+          <SellerRateHistory storeId={historyRow.storeId} />
+        </Modal>
       )}
 
       {removingRow && (

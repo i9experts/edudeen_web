@@ -8,6 +8,11 @@ import {
   type SellerReturnItem, type ReturnStatus,
 } from '@/api/services/orders';
 import { currencySymbol } from '@/utils/currency';
+import { useDebouncedValue } from '@/hooks/seller/useInventorySearch';
+import { SellerRefundRequests } from './SellerRefundRequests';
+
+// Fixed server-side page size of GET /orders/returns.
+const RETURNS_PER_PAGE = 10;
 
 const statusStyle: Record<string, { bg: string; color: string }> = {
   requested:          { bg: '#FFF4DC', color: '#B36200' },
@@ -113,29 +118,30 @@ export function StoreReturnList() {
   const [search, setSearch]   = useState('');
   const [status, setStatus]   = useState('');
   const [reviewing, setReviewing] = useState<SellerReturnItem | null>(null);
+  const [page, setPage]       = useState(1);
+  const [total, setTotal]     = useState(0);
 
-  const refetch = useCallback(() => setRefreshKey(k => k + 1), []);
+  const refetch = useCallback(() => { setError(''); setRefreshKey(k => k + 1); }, []);
+
+  // Search runs server-side (?q=), debounced; a new term or status restarts at page 1.
+  const q = useDebouncedValue(search.trim(), 300);
+  useEffect(() => { setPage(1); }, [q, status]);
 
   useEffect(() => {
     if (!storeId) return;
     let cancelled = false;
     setLoading(true);
-    apiGetSellerReturns({ storeId, status: status || undefined })
+    apiGetSellerReturns({ storeId, status: status || undefined, page, q: q || undefined })
       .then(res => {
         if (cancelled) return;
         setReturns(res.data.returns ?? []);
         setStats(res.data.stats);
+        setTotal(res.data.pagination?.total ?? 0);
       })
       .catch((err: unknown) => { if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load returns.'); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [storeId, status, refreshKey]);
-
-  const filtered = returns.filter(r => {
-    const q = search.toLowerCase();
-    if (q && !r.orderNumber.toLowerCase().includes(q) && !r.customer.name.toLowerCase().includes(q) && !r.productName.toLowerCase().includes(q)) return false;
-    return true;
-  });
+  }, [storeId, status, refreshKey, page, q]);
 
   const columns: TableColumn<SellerReturnItem>[] = [
     { key: 'orderNumber', header: 'Order', render: r => <span className="font-bold text-brand-deep-orange whitespace-nowrap">{r.orderNumber}</span> },
@@ -192,6 +198,8 @@ export function StoreReturnList() {
           ))}
         </div>
 
+        <SellerRefundRequests storeId={storeId} />
+
         {/* ── Return Policy Summary ── */}
         <div className="bg-white border border-bone rounded-[10px] px-[22px] py-[18px]">
           <p className="text-[14px] font-semibold text-carbon mb-1.5">Return Policy Summary</p>
@@ -245,17 +253,12 @@ export function StoreReturnList() {
             {/* Table */}
             <Table
               columns={columns}
-              data={filtered}
+              data={returns}
               keyExtractor={r => r.itemId}
               loading={loading}
-              emptyState={{ title: 'No return requests match your filters.' }}
+              emptyState={{ title: q || status ? 'No return requests match your filters.' : 'No return requests yet.' }}
+              pagination={{ page, total, perPage: RETURNS_PER_PAGE, onChange: setPage, label: 'return requests' }}
             />
-
-            <div className="px-5 py-3 border-t border-bone">
-              <span className="text-xs text-slate">
-                Showing {filtered.length} of {returns.length} return requests
-              </span>
-            </div>
           </div>
         )}
       </div>

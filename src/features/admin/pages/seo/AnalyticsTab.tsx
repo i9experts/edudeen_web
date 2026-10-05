@@ -18,10 +18,10 @@ export function AnalyticsTab() {
   return (
     <div className="flex flex-col gap-5">
       <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
-        <MetricCard label="Clicks (28d)" value={(overview?.clicks ?? 0).toLocaleString()} icon={<MousePointerClick size={16} />} loading={overviewLoading} />
-        <MetricCard label="Impressions (28d)" value={(overview?.impressions ?? 0).toLocaleString()} icon={<Eye size={16} />} loading={overviewLoading} />
+        <MetricCard label="Clicks (28d)" value={overview?.clicks != null ? overview.clicks.toLocaleString() : '—'} icon={<MousePointerClick size={16} />} loading={overviewLoading} />
+        <MetricCard label="Impressions (28d)" value={overview?.impressions != null ? overview.impressions.toLocaleString() : '—'} icon={<Eye size={16} />} loading={overviewLoading} />
         <MetricCard label="Avg CTR" value={overview?.avgCtr != null ? `${(overview.avgCtr * 100).toFixed(1)}%` : '—'} icon={<Percent size={16} />} loading={overviewLoading} />
-        <MetricCard label="Organic Sessions (28d)" value={(overview?.organicSessions ?? 0).toLocaleString()} icon={<TrendingUp size={16} />} loading={overviewLoading} />
+        <MetricCard label="Organic Sessions (28d)" value={overview?.organicSessions != null ? overview.organicSessions.toLocaleString() : '—'} icon={<TrendingUp size={16} />} loading={overviewLoading} />
       </div>
 
       <Card>

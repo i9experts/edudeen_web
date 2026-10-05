@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
-import { ArrowRight, Sparkles, User, Lock, Star, Receipt, MessageSquare, Check } from 'lucide-react';
+import { ArrowRight, Sparkles, Puzzle, Star, Receipt, MessageSquare, Check } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useFaqs } from '@/hooks/useFaqs';
 import { useSellEntry } from '@/hooks/auth/useSellEntry';
-import { apiBrowsePlatformPlans, type PlatformPlan } from '@/api/services/platformPlans';
+import {
+  apiBrowsePlatformPlans, apiGetPublicAddonCatalog,
+  type PlatformPlan, type PublicAddonCatalogItem,
+} from '@/api/services/platformPlans';
 import { Reveal, RevealStagger } from '@/components/comman/motion/Reveal';
 import { MagneticButton } from '@/components/comman/motion/MagneticButton';
 import { SectionHeading } from '@/components/comman/motion/SectionHeading';
@@ -15,39 +18,26 @@ import { AnimatedCounter } from '@/components/comman/motion/AnimatedCounter';
 
 const SERIF = "Georgia, 'Times New Roman', serif";
 
-// ── Add-ons exact from reference ──────────────────────────────────────────────
-const ADDONS: { Icon: LucideIcon; name: string; price: string; unit: string }[] = [
-  { Icon: Sparkles,       name: 'Extra AI Credits',              price: '$10',   unit: 'per 500 credits'       },
-  { Icon: User,           name: 'Additional Staff Seats',         price: '$5',    unit: 'per seat / month'      },
-  { Icon: Lock,           name: 'Custom Domain SSL',              price: 'Free',  unit: 'included on Pro+'      },
-  { Icon: Star,           name: 'Priority Marketplace Placement', price: '$29',   unit: 'per month'             },
-  { Icon: Receipt,        name: 'Advanced Tax Compliance',        price: '$15',   unit: 'per month'             },
-  { Icon: MessageSquare,  name: 'SMS Notifications',              price: '$0.05', unit: 'per message'           },
-];
+// ── Add-ons — names/prices come from the live catalog (the same table a
+// purchase charges); only the icon is chosen here. ───────────────────────────
+const ADDON_ICONS: Record<string, LucideIcon> = {
+  extra_ai_credits:               Sparkles,
+  priority_marketplace_placement: Star,
+  advanced_tax_compliance:        Receipt,
+  sms_notifications:              MessageSquare,
+};
 
-// ── FAQ fallback (shown until admin adds FAQs under the "pricing" category) ───
-const FALLBACK_FAQS = [
-  {
-    q: 'Can I switch plans anytime?',
-    a: "Yes. You can upgrade or downgrade your plan at any time. Changes take effect immediately and we'll prorate any billing differences.",
-  },
-  {
-    q: 'What counts as a transaction fee?',
-    a: 'Transaction fees apply to each sale made through your Edudeen store or marketplace listing. Sales of digital resources (courses, eBooks, worksheets) and physical items (printed books, school supplies) both count.',
-  },
-  {
-    q: 'Do you offer discounts for educators or non-profits?',
-    a: "We don't have a standard educator or non-profit discount yet. If you're a school, madrasa or non-profit with special needs, contact us and we'll see what we can do.",
-  },
-  {
-    q: 'What payment methods do you accept?',
-    a: 'We accept all major credit and debit cards (Visa, Mastercard, Amex) through Stripe, and bank transfer.',
-  },
-  {
-    q: 'Is there a free trial on paid plans?',
-    a: 'Yes — both Professional and Business plans include a 14-day free trial with full access. No credit card required to start.',
-  },
-];
+function formatUSD(n: number) {
+  return Number.isInteger(n) ? `$${n}` : `$${n.toFixed(2)}`;
+}
+
+function addonUnit(a: PublicAddonCatalogItem) {
+  return a.recurring ? `per ${a.unitLabel}` : `one-time · ${a.unitLabel}`;
+}
+
+// FAQs shown here are only the admin-authored ones filed under a pricing /
+// billing / plans category — never generic or hard-coded answers.
+const PRICING_FAQ_CATEGORY = /pricing|billing|plan|subscription/i;
 
 // ── Component ─────────────────────────────────────────────────────────────────
 export function PricingPage() {
@@ -65,19 +55,42 @@ export function PricingPage() {
       .finally(() => setPlansLoading(false));
   }, []);
 
+  const [addons, setAddons] = useState<PublicAddonCatalogItem[]>([]);
+  useEffect(() => {
+    apiGetPublicAddonCatalog()
+      .then(res => setAddons(res.data ?? []))
+      .catch(() => {}); // non-critical — the add-ons section just stays hidden
+  }, []);
+
   const { faqs: liveFaqs } = useFaqs();
-  const faqs = liveFaqs.length > 0
-    ? liveFaqs.map(f => ({ q: f.question, a: f.answer }))
-    : FALLBACK_FAQS;
+  const faqs = liveFaqs
+    .filter(f => PRICING_FAQ_CATEGORY.test(f.category ?? ''))
+    .map(f => ({ q: f.question, a: f.answer }));
 
   // `yearlyPriceUSD` is the full annual charge (not a monthly-equivalent) — the
   // toggle shows a per-month figure either way, with the real annual total below it.
+  // A plan with no yearly price is never shown an invented "×12" annual figure.
+  const hasYearly = (plan: PlatformPlan) => plan.yearlyPriceUSD != null && plan.yearlyPriceUSD > 0;
   const monthlyEquivalent = (plan: PlatformPlan): number =>
-    billing === 'annual'
-      ? Math.round((plan.yearlyPriceUSD ?? (plan.monthlyPriceUSD ?? 0) * 12) / 12)
+    billing === 'annual' && hasYearly(plan)
+      ? Math.round((plan.yearlyPriceUSD as number) / 12)
       : (plan.monthlyPriceUSD ?? 0);
-  const yearlyTotal = (plan: PlatformPlan): number =>
-    plan.yearlyPriceUSD ?? (plan.monthlyPriceUSD ?? 0) * 12;
+
+  const paidPlans = plans.filter(p => !p.isFree && !p.isCustomPricing);
+  const anyYearly = paidPlans.some(hasYearly);
+  // Real annual saving vs paying monthly for 12 months — the best across plans.
+  const maxAnnualSavingPct = paidPlans.reduce((best, p) => {
+    if (!hasYearly(p) || !p.monthlyPriceUSD) return best;
+    const pct = Math.round((1 - (p.yearlyPriceUSD as number) / (p.monthlyPriceUSD * 12)) * 100);
+    return pct > best ? pct : best;
+  }, 0);
+  const maxTrialDays = paidPlans.reduce((m, p) => Math.max(m, p.trialDays ?? 0), 0);
+  const hasFreePlan = plans.some(p => p.isFree);
+
+  // Fall back to monthly if annual billing isn't offered by any plan.
+  useEffect(() => {
+    if (!plansLoading && !anyYearly && billing === 'annual') setBilling('monthly');
+  }, [plansLoading, anyYearly, billing]);
 
   return (
     <div className="bg-cream min-h-full">
@@ -88,7 +101,7 @@ export function PricingPage() {
         <Reveal delay={0}>
           <div className="inline-flex items-center gap-2 bg-brand-pale-orange border border-[rgba(23,71,113,0.3)] rounded-[20px] px-[14px] py-[5px] mb-5">
             <span className="text-[12px] text-brand-deep-orange font-medium">
-              No credit card required • Cancel anytime
+              {maxTrialDays > 0 ? `Up to ${maxTrialDays}-day free trial on paid plans • Cancel anytime` : 'Cancel anytime'}
             </span>
           </div>
         </Reveal>
@@ -100,11 +113,13 @@ export function PricingPage() {
         </Reveal>
         <Reveal delay={0.16}>
           <p className="block text-sm md:text-[16px] text-slate leading-[1.6] mb-8">
-            Start free. Scale as you grow. Every plan includes your own storefront, digital delivery, and AI-powered tools.
+            {hasFreePlan ? 'Start free. ' : ''}Scale as you grow. Every plan includes your own storefront, digital delivery, and AI-powered tools.
           </p>
         </Reveal>
 
         {/* Billing toggle — pill selector style (exact reference) */}
+        {/* Only offered when at least one plan has a real yearly price. */}
+        {anyYearly && (
         <Reveal delay={0.24}>
           <div className="inline-flex bg-bone rounded-[10px] p-1 mb-12" role="group" aria-label="Billing interval">
             {(['monthly', 'annual'] as const).map(b => (
@@ -121,13 +136,14 @@ export function PricingPage() {
                 <span className={clsx('text-[13px] capitalize', billing === b ? 'font-semibold text-carbon' : 'font-normal text-slate')}>
                   {b}
                 </span>
-                {b === 'annual' && (
-                  <span className="text-[10px] font-semibold text-success">Save 20%</span>
+                {b === 'annual' && maxAnnualSavingPct > 0 && (
+                  <span className="text-[10px] font-semibold text-success">Save up to {maxAnnualSavingPct}%</span>
                 )}
               </button>
             ))}
           </div>
         </Reveal>
+        )}
       </div>
 
       {/* ── Plan Cards — live from the admin-managed platform-plan catalog.
@@ -185,7 +201,7 @@ export function PricingPage() {
                 )}
                 {billing === 'annual' && !plan.isFree && !plan.isCustomPricing && (
                   <p className={clsx('text-[11px] mt-1', isFeatured ? 'text-brand-orange' : 'text-success')}>
-                    Billed ${yearlyTotal(plan)}/year
+                    {hasYearly(plan) ? `Billed $${plan.yearlyPriceUSD}/year` : 'Monthly billing only'}
                   </p>
                 )}
                 {plan.trialDays > 0 && !plan.isFree && !plan.isCustomPricing && (
@@ -206,7 +222,7 @@ export function PricingPage() {
                     isFeatured ? 'border-brand-orange bg-brand-orange text-white' : 'border-bone bg-transparent text-charcoal',
                   )}
                 >
-                  {plan.isCustomPricing ? 'Contact Sales' : plan.isFree ? 'Start Free' : 'Start Free Trial'}
+                  {plan.isCustomPricing ? 'Contact Sales' : plan.isFree ? 'Start Free' : plan.trialDays > 0 ? 'Start Free Trial' : 'Get Started'}
                 </button>
               </MagneticButton>
 
@@ -229,26 +245,32 @@ export function PricingPage() {
         })}
       </RevealStagger>
 
-      {/* ── Add-ons ───────────────────────────────────────────────────────── */}
+      {/* ── Add-ons — live catalog; hidden when there are none ─────────────── */}
+      {addons.length > 0 && (
       <div className="px-4 md:px-8 lg:px-12 pb-16 max-w-[1200px] mx-auto">
         <SectionHeading title="Add-ons & extras" subtitle="Extend your plan with exactly what you need." className="mb-7" />
         <RevealStagger className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[14px]" step={0.05} y={14}>
-          {ADDONS.map(a => (
-            <PremiumCard key={a.name} className="px-5 py-[18px] flex gap-[14px] items-center">
-              <a.Icon size={28} className="text-brand-orange flex-shrink-0" />
-              <div className="flex-1">
-                <p className="text-[13px] font-semibold text-carbon mb-[2px]">{a.name}</p>
-                <p className="text-[11px] text-slate">{a.unit}</p>
-              </div>
-              <span className="text-[14px] font-bold text-brand-orange flex-shrink-0">
-                {a.price}
-              </span>
-            </PremiumCard>
-          ))}
+          {addons.map(a => {
+            const Icon = ADDON_ICONS[a.addonType] ?? Puzzle;
+            return (
+              <PremiumCard key={a.addonType} className="px-5 py-[18px] flex gap-[14px] items-center">
+                <Icon size={28} className="text-brand-orange flex-shrink-0" />
+                <div className="flex-1">
+                  <p className="text-[13px] font-semibold text-carbon mb-[2px]">{a.name}</p>
+                  <p className="text-[11px] text-slate">{addonUnit(a)}</p>
+                </div>
+                <span className="text-[14px] font-bold text-brand-orange flex-shrink-0">
+                  {formatUSD(a.priceUSD)}
+                </span>
+              </PremiumCard>
+            );
+          })}
         </RevealStagger>
       </div>
+      )}
 
-      {/* ── FAQ ───────────────────────────────────────────────────────────── */}
+      {/* ── FAQ — admin-authored pricing FAQs only; hidden when none ───────── */}
+      {faqs.length > 0 && (
       <div className="bg-white px-4 md:px-8 lg:px-12 py-16 border-t border-bone">
         <div className="max-w-[720px] mx-auto">
           <SectionHeading title="Frequently asked questions" align="center" size="lg" className="mb-10" />
@@ -269,10 +291,17 @@ export function PricingPage() {
           </RevealStagger>
         </div>
       </div>
+      )}
 
       {/* ── Bottom CTA ────────────────────────────────────────────────────── */}
       <div className="bg-carbon px-4 md:px-8 lg:px-12 py-16 text-center">
-        <SectionHeading title="Start selling today — it's free" subtitle="No credit card required. Cancel or upgrade anytime." tone="dark" align="center" size="lg" className="mb-8" />
+        <SectionHeading
+          title={hasFreePlan ? "Start selling today — it's free" : 'Start selling today'}
+          subtitle={maxTrialDays > 0
+            ? `Paid plans include up to a ${maxTrialDays}-day free trial. Cancel or upgrade anytime.`
+            : 'Cancel or upgrade anytime.'}
+          tone="dark" align="center" size="lg" className="mb-8"
+        />
         <Reveal>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <MagneticButton>
@@ -280,7 +309,7 @@ export function PricingPage() {
                 onClick={() => sellEntry.go()}
                 className="px-6 py-[13px] rounded-lg text-[15px] font-medium cursor-pointer bg-brand-orange text-white border-none transition-all duration-[180ms] w-full sm:w-auto"
               >
-                Create Free Account <ArrowRight size={14} className="inline align-middle ms-1" />
+                {hasFreePlan ? 'Create Free Account' : 'Create Seller Account'} <ArrowRight size={14} className="inline align-middle ms-1" />
               </button>
             </MagneticButton>
             <button

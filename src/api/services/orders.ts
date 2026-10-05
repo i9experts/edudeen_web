@@ -134,7 +134,8 @@ export interface SellerReturnItem {
   returnRequestedAt:  string;
 }
 
-export interface SellerReturnsParams { storeId?: string; status?: string; page?: number }
+/** `q` = order number / item name / buyer name or email (server-side, list only — stats stay store-wide). 10 per page. */
+export interface SellerReturnsParams { storeId?: string; status?: string; page?: number; q?: string }
 interface SellerReturnsResponse {
   success: boolean;
   data: {

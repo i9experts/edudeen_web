@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { apiGetBanners, apiGetBannerCount, type Banner, type BannerCountData } from '@/api/services/banner';
+import {
+  apiGetBanners, apiGetBannerCount, SELECTABLE_PROMOTION_PLACEMENTS, type Banner, type BannerCountData,
+} from '@/api/services/banner';
 
 export function useAdminBanners() {
   const [banners, setBanners] = useState<Banner[]>([]);
@@ -19,16 +21,21 @@ export function useAdminBanners() {
   return { banners, loading, error, refetch };
 }
 
+/** Active-banner count vs. the visible (rotating) limit for every selectable
+ *  placement — the endpoint answers one placement per call. A failed lookup
+ *  is just left out (this only drives an advisory warning). */
 export function useBannerCount(refreshKey: number) {
-  const [count, setCount] = useState<BannerCountData | null>(null);
+  const [counts, setCounts] = useState<BannerCountData[]>([]);
 
   useEffect(() => {
     let cancelled = false;
-    apiGetBannerCount()
-      .then(res => { if (!cancelled) setCount(res.data); })
-      .catch(() => {});
+    Promise.allSettled(SELECTABLE_PROMOTION_PLACEMENTS.map(p => apiGetBannerCount(p)))
+      .then(results => {
+        if (cancelled) return;
+        setCounts(results.flatMap(r => (r.status === 'fulfilled' && r.value?.data ? [r.value.data] : [])));
+      });
     return () => { cancelled = true; };
   }, [refreshKey]);
 
-  return count;
+  return counts;
 }

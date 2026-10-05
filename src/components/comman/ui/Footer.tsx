@@ -1,10 +1,12 @@
 import { useT } from '@/contexts/languageCtx';
-import { useState } from 'react';
+import { useState, type ReactElement } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
 import { Send, Check, ChevronDown, ArrowUp, Mail } from 'lucide-react';
 import { EdudeenLogo } from './EdudeenLogo';
-import { AppleGlyph, GooglePlayGlyph } from './AppPromoParts';
+import { AppleGlyph, GooglePlayGlyph, GOOGLE_PLAY_URL } from './AppPromoParts';
+import { usePublicPlatformConfig } from '@/hooks/usePublicPlatformConfig';
+import type { SocialNetwork } from '@/api/services/publicPlatformConfig';
 import { apiSubscribeNewsletter } from '../../../api/services/newsletter';
 import { scrollRootToTop } from '@/utils/scrollRoot';
 import { useSellEntry } from '@/hooks/auth/useSellEntry';
@@ -106,29 +108,40 @@ function LinkedinGlyph() {
   );
 }
 
-const SOCIALS = [
-  { label: 'Facebook',  Glyph: FacebookGlyph },
-  { label: 'Instagram', Glyph: InstagramGlyph },
-  { label: 'X',         Glyph: XGlyph },
-  { label: 'LinkedIn',  Glyph: LinkedinGlyph },
+// Which networks get an icon. The URLs come from Admin → Platform Config
+// (public config endpoint); a network without a link set shows nothing.
+const SOCIALS: { key: SocialNetwork; label: string; Glyph: () => ReactElement }[] = [
+  { key: 'facebook',  label: 'Facebook',  Glyph: FacebookGlyph },
+  { key: 'instagram', label: 'Instagram', Glyph: InstagramGlyph },
+  { key: 'x',         label: 'X',         Glyph: XGlyph },
+  { key: 'linkedin',  label: 'LinkedIn',  Glyph: LinkedinGlyph },
 ];
 
-// Decorative only — no real store listing to link to yet. `role="img"` (not
-// a button) so screen readers don't announce a control that does nothing.
+// Android links to the real Play Store listing; there's no iOS app yet, so
+// that badge says so instead of pretending to be a link.
 function AppBadge({ platform }: { platform: 'ios' | 'android' }) {
   const isIos = platform === 'ios';
-  return (
-    <div
-      role="img"
-      aria-label={isIos ? 'Download on the App Store' : 'Get it on Google Play'}
-      className="flex items-center gap-2.5 h-11 px-3.5 rounded-[9px] bg-carbon text-white select-none w-fit"
-    >
+  const inner = (
+    <>
       {isIos ? <AppleGlyph size={18} /> : <GooglePlayGlyph size={16} />}
       <span className="leading-none">
-        <span className="block text-[8px] text-white/70 tracking-[0.04em]">{isIos ? 'Download on the' : 'GET IT ON'}</span>
+        <span className="block text-[8px] text-white/70 tracking-[0.04em]">{isIos ? 'Coming soon on the' : 'GET IT ON'}</span>
         <span className="block text-[12.5px] font-bold mt-[2px]">{isIos ? 'App Store' : 'Google Play'}</span>
       </span>
-    </div>
+    </>
+  );
+  if (isIos) {
+    return (
+      <div role="img" aria-label="iOS app coming soon" className="flex items-center gap-2.5 h-11 px-3.5 rounded-[9px] bg-carbon/60 text-white select-none w-fit">
+        {inner}
+      </div>
+    );
+  }
+  return (
+    <a href={GOOGLE_PLAY_URL} target="_blank" rel="noreferrer" aria-label="Get it on Google Play"
+      className="flex items-center gap-2.5 h-11 px-3.5 rounded-[9px] bg-carbon text-white no-underline w-fit hover:bg-black transition-colors">
+      {inner}
+    </a>
   );
 }
 
@@ -230,6 +243,9 @@ function FooterColumn({ heading, links, navigate }: { heading: string; links: Fo
 }
 
 export function Footer({ showNewsletter = true }: { showNewsletter?: boolean }) {
+  const { config } = usePublicPlatformConfig();
+  const socialLinks = config?.socialLinks ?? {};
+  const socials = SOCIALS.filter(s => !!socialLinks[s.key]);
   const navigate = useNavigate();
   const sellEntry = useSellEntry();
   // "Start Selling" is the only footer link that means seller intent — route
@@ -277,19 +293,22 @@ export function Footer({ showNewsletter = true }: { showNewsletter?: boolean }) 
               {CONTACT_EMAIL}
             </a>
 
-            {/* Decorative only — no real social accounts to link to yet */}
-            <div className="flex items-center gap-2.5 mt-5">
-              {SOCIALS.map(({ label, Glyph }) => (
-                <div
-                  key={label}
-                  role="img"
-                  aria-label={label}
-                  className="w-9 h-9 rounded-full border border-bone bg-white flex items-center justify-center text-slate select-none"
-                >
-                  <Glyph />
-                </div>
-              ))}
-            </div>
+            {socials.length > 0 && (
+              <div className="flex items-center gap-2.5 mt-5">
+                {socials.map(({ key, label, Glyph }) => (
+                  <a
+                    key={key}
+                    href={socialLinks[key]}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label={`Edudeen on ${label}`}
+                    className="w-9 h-9 rounded-full border border-bone bg-white flex items-center justify-center text-slate hover:text-brand-orange hover:border-brand-orange/40 transition-colors"
+                  >
+                    <Glyph />
+                  </a>
+                ))}
+              </div>
+            )}
           </div>
 
           {footerColumns.map(col => (

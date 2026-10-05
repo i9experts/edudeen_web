@@ -5,15 +5,18 @@ import { Input } from '@/components/comman/ui/Input';
 import { Toggle } from '@/components/comman/ui/Toggle';
 import { Button } from '@/components/comman/ui/Button';
 import { useGenerateWorksheet } from '@/hooks/seller/useAiStudio';
+import { costLabel } from '../components/costLabel';
 
 const GRADE_LEVELS = ['Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8'];
 
 interface WorksheetBuilderToolProps {
   storeId: string;
   onCreditsChanged: () => void;
+  /** Live cost from credits.toolCosts (undefined while loading). */
+  creditCost?: number;
 }
 
-export function WorksheetBuilderTool({ storeId, onCreditsChanged }: WorksheetBuilderToolProps) {
+export function WorksheetBuilderTool({ storeId, onCreditsChanged, creditCost }: WorksheetBuilderToolProps) {
   const [subject, setSubject] = useState('');
   const [gradeLevel, setGradeLevel] = useState(GRADE_LEVELS[2]);
   const [topics, setTopics] = useState('');
@@ -92,7 +95,7 @@ export function WorksheetBuilderTool({ storeId, onCreditsChanged }: WorksheetBui
         )}
 
         <Button variant="primary" size="md" fullWidth loading={generating} disabled={!canGenerate} onClick={() => handleGenerate()} icon={<Sparkles size={14} />} className="mt-5">
-          Generate with AI (10 credits)
+          Generate with AI{costLabel(creditCost)}
         </Button>
       </div>
 

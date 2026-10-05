@@ -7,11 +7,9 @@ import { ENDPOINTS } from '../endpoints';
 export const PROMOTION_PLACEMENTS = ['homepageHero', 'marketplaceHero', 'educationHero', 'categoryHero'] as const;
 export type PromotionPlacement = (typeof PROMOTION_PLACEMENTS)[number];
 
-// The buyer-facing Homepage has no hero banner surface wired up at all (only
-// Marketplace/Education Marketplace render a BannerCarousel) — so it's kept
-// out of every seller/admin-facing placement picker to avoid offering a
-// placement that doesn't actually show anywhere yet.
-export const SELECTABLE_PROMOTION_PLACEMENTS = PROMOTION_PLACEMENTS.filter((p) => p !== 'homepageHero');
+// Every placement now has a buyer surface: homepageHero (Homepage), marketplaceHero
+// (/search), educationHero (/learn), categoryHero (/c/:slug) — see PlacementBanner.
+export const SELECTABLE_PROMOTION_PLACEMENTS = PROMOTION_PLACEMENTS;
 
 export type BannerStatus = 'draft' | 'scheduled' | 'active' | 'paused' | 'expired';
 

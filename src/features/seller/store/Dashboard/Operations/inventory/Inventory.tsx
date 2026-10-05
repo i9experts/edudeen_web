@@ -24,7 +24,41 @@ import {
 } from '@/api/services/product';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { currencySymbol } from '@/utils/currency';
+import { useDebouncedValue } from '@/hooks/seller/useInventorySearch';
 import { ProductCell, ProductStatsGrid } from '../../components/ProductListShared';
+
+// ── CSV export ────────────────────────────────────────────────────────────────
+// The analytics "products" export is a sales report, not a stock list, so the
+// inventory CSV is built here from the inventory endpoint itself (all pages).
+const EXPORT_PAGE_SIZE = 100;
+
+function csvCell(value: unknown): string {
+  let s = value === null || value === undefined ? '' : String(value);
+  // Neutralise spreadsheet formula injection (= + - @ at the start of a cell).
+  if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`;
+  return `"${s.replace(/"/g, '""')}"`;
+}
+
+async function exportInventoryCsv(storeId: string, q: string, currency: string | undefined) {
+  const rows: InventoryProduct[] = [];
+  for (let page = 1; ; page++) {
+    const res = await apiGetStoreInventory(storeId, page, EXPORT_PAGE_SIZE, { q });
+    rows.push(...(res.data.products ?? []));
+    if (page >= (res.data.pagination.totalPages || 1)) break;
+  }
+  const header = ['Name', 'SKU', 'Type', 'Status', `Price (${currency ?? 'USD'})`, 'Stock', 'Stock status', 'All-time sales'];
+  const lines = rows.map(p => [
+    p.name, p.sku ?? '', p.productType ?? p.type, p.status, p.price,
+    typeof p.stock === 'number' ? p.stock : 'Unlimited', p.stockStatus, p.allTimeSales,
+  ].map(csvCell).join(','));
+  const blob = new Blob([`﻿${[header.map(csvCell).join(','), ...lines].join('\r\n')}`], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `inventory-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export function StoreInventory() {
@@ -47,17 +81,31 @@ export function StoreInventory() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [lowStock,   setLowStock]   = useState<LowStockSummaryData | null>(null);
 
+  const [exporting,  setExporting]  = useState(false);
+  const [exportError, setExportError] = useState('');
+
   const LIMIT = 10;
+
+  // Server-side name/SKU search; a new term restarts at page 1.
+  const q = useDebouncedValue(search.trim(), 300);
+  const [appliedQ, setAppliedQ] = useState('');
+  if (q !== appliedQ) {
+    setAppliedQ(q);
+    setPage(1);
+    setLoading(true);
+    setError('');
+  }
 
   useEffect(() => {
     if (!storeId) return;
     let cancelled = false;
 
-    apiGetStoreInventory(storeId, page, LIMIT)
+    apiGetStoreInventory(storeId, page, LIMIT, { q: appliedQ })
       .then(res => {
         if (cancelled) return;
         setProducts(res.data.products ?? []);
-        setStats(res.data.stats);
+        // Stats cards describe the whole store, not just search matches.
+        if (!appliedQ) setStats(res.data.stats);
         setTotalProducts(res.data.pagination.totalProducts);
       })
       .catch((err: unknown) => {
@@ -66,7 +114,7 @@ export function StoreInventory() {
       .finally(() => { if (!cancelled) setLoading(false); });
 
     return () => { cancelled = true; };
-  }, [storeId, page, refreshKey]);
+  }, [storeId, page, refreshKey, appliedQ]);
 
   // Low-stock detail list — independent of pagination, only re-runs on store/refresh.
   useEffect(() => {
@@ -85,8 +133,16 @@ export function StoreInventory() {
   const handlePageChange = (p: number) => {
     setLoading(true);
     setError('');
-    setSearch('');
     setPage(p);
+  };
+
+  const handleExport = () => {
+    if (!storeId || exporting) return;
+    setExporting(true);
+    setExportError('');
+    exportInventoryCsv(storeId, appliedQ, store?.baseCurrency)
+      .catch((err: unknown) => setExportError(err instanceof Error ? err.message : 'Export failed.'))
+      .finally(() => setExporting(false));
   };
 
   const handleRetry = () => {
@@ -95,12 +151,7 @@ export function StoreInventory() {
     setRefreshKey(k => k + 1);
   };
 
-  const filtered = search.trim()
-    ? products.filter(p =>
-        p.name.toLowerCase().includes(search.toLowerCase()) ||
-        p.sku.toLowerCase().includes(search.toLowerCase())
-      )
-    : products;
+  const filtered = products;
 
   // ── Columns ──────────────────────────────────────────────────────────────────
   const columns: TableColumn<InventoryProduct>[] = [
@@ -170,11 +221,13 @@ export function StoreInventory() {
         actions={
           <>
             <button
-              title="Export"
-              className="flex items-center gap-1.5 bg-white text-graphite border border-bone rounded-[9px] px-2.5 sm:px-4 py-[9px] text-[13px] font-medium cursor-pointer transition-colors duration-150 hover:bg-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/50"
+              title={appliedQ ? 'Export matching products (CSV)' : 'Export all products (CSV)'}
+              onClick={handleExport}
+              disabled={exporting || (!loading && totalProducts === 0)}
+              className="flex items-center gap-1.5 bg-white text-graphite border border-bone rounded-[9px] px-2.5 sm:px-4 py-[9px] text-[13px] font-medium cursor-pointer transition-colors duration-150 hover:bg-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Download size={14} className="sm:hidden" />
-              <span className="hidden sm:inline">Export</span>
+              <span className="hidden sm:inline">{exporting ? 'Exporting…' : 'Export'}</span>
             </button>
             <button
               onClick={goAdd}
@@ -218,6 +271,13 @@ export function StoreInventory() {
               )}
             </div>
           </Card>
+        )}
+
+        {exportError && (
+          <div role="alert" className="bg-error-bg border border-error-border rounded-[10px] px-4 py-3 flex items-center gap-3">
+            <AlertCircle size={16} className="text-error shrink-0" />
+            <span className="text-[13px] text-error flex-1">Couldn’t export inventory: {exportError}</span>
+          </div>
         )}
 
         {/* Error */}

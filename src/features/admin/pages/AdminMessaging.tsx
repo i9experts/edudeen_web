@@ -1,9 +1,17 @@
 import { useId, useRef, useState } from 'react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { X, MessageSquare, Flag, Paperclip, Inbox, FlagOff } from 'lucide-react';
-import { useAdminConversations, useAdminReports, useAdminConversationDetail } from '@/hooks/messaging/useAdminMessaging';
+import { useAdminConversationDetail } from '@/hooks/messaging/useAdminMessaging';
+import { useAdminConversationRows, useAdminReportRows } from '@/hooks/admin/useAdminMessaging';
 import { useMessages } from '@/hooks/messaging/useMessages';
-import type { ReportStatus, TargetType, Conversation, Report } from '@/api/services/messaging';
+import {
+  apiAdminUpdateMessagingReport,
+  type ReportStatus, type TargetType, type AdminConversationRow, type AdminReportRow,
+} from '@/api/services/messaging';
+import { Button } from '@/components/comman/ui/Button';
+import { Modal } from '@/components/comman/ui/Modal';
+import { Textarea } from '@/components/comman/ui/Input';
+import { useToast } from '@/contexts/ToastContext';
 import { SkeletonBox } from '@/components/comman/ui/SkeletonBox';
 import { useFocusTrap } from '@/components/comman/ui/useFocusTrap';
 import { Table, type TableColumn } from '@/components/comman/ui/Table';
@@ -60,7 +68,9 @@ function ConversationDrawer({ conversationId, onClose }: { conversationId: strin
               {messages.map(m => (
                 <div key={m._id} className="border border-bone rounded-[9px] px-3 py-[10px]">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-[11px] font-semibold text-slate uppercase">{m.senderRole} · {m.senderId.slice(-6)}</span>
+                    <span className="text-[11px] font-semibold text-slate uppercase">
+                      {m.senderRole} · {(m.senderId === conversation?.buyerId ? conversation?.buyer?.name : m.senderId === conversation?.sellerId ? conversation?.store?.name : null) ?? m.senderId.slice(-6)}
+                    </span>
                     <span className="text-[10px] text-slate">{fmt(m.createdAt)}</span>
                   </div>
                   {m.type === 'text' && <p className="text-[13px] text-charcoal">{m.text}</p>}
@@ -83,11 +93,27 @@ function ConversationDrawer({ conversationId, onClose }: { conversationId: strin
 }
 
 // ── Conversations tab ────────────────────────────────────────────────────────
+type ConversationFilters = { storeId: string; buyerId: string; sellerId: string; isArchived: string };
+const EMPTY_FILTERS: ConversationFilters = { storeId: '', buyerId: '', sellerId: '', isArchived: '' };
+const OBJECT_ID_RE = /^[a-f0-9]{24}$/i;
+
+/** A resolved name with the id fragment underneath, so admins can still copy/filter by id. */
+function NameCell({ name, id, sub }: { name?: string | null; id?: string; sub?: string | null }) {
+  return (
+    <div className="min-w-0 max-w-[200px]">
+      <p className="text-graphite truncate" title={name ?? undefined}>{name ?? (id ? 'Unknown' : '—')}</p>
+      {(sub || id) && <p className="text-[10.5px] text-slate truncate" title={id}>{sub ?? `…${id?.slice(-8)}`}</p>}
+    </div>
+  );
+}
+
 function ConversationsPanel() {
-  const [filters, setFilters] = useState<{ storeId: string; buyerId: string; sellerId: string; isArchived: string }>({
-    storeId: '', buyerId: '', sellerId: '', isArchived: '',
-  });
-  const { conversations, loading, error, refetch } = useAdminConversations({
+  // Filters are edited as a draft and applied on "Apply" (or Enter) — a
+  // half-typed id would otherwise fire a request on every keystroke.
+  const [draft, setDraft] = useState<ConversationFilters>(EMPTY_FILTERS);
+  const [filters, setFilters] = useState<ConversationFilters>(EMPTY_FILTERS);
+  const [filterError, setFilterError] = useState('');
+  const { conversations, loading, error } = useAdminConversationRows({
     storeId:    filters.storeId  || undefined,
     buyerId:    filters.buyerId  || undefined,
     sellerId:   filters.sellerId || undefined,
@@ -95,11 +121,26 @@ function ConversationsPanel() {
   });
   const [viewingId, setViewingId] = useState<string | null>(null);
 
-  const columns: TableColumn<Conversation>[] = [
+  function applyFilters() {
+    const trimmed = { ...draft, storeId: draft.storeId.trim(), buyerId: draft.buyerId.trim(), sellerId: draft.sellerId.trim() };
+    const bad = (['storeId', 'buyerId', 'sellerId'] as const).find(k => trimmed[k] && !OBJECT_ID_RE.test(trimmed[k]));
+    if (bad) { setFilterError(`${bad === 'storeId' ? 'Store' : bad === 'buyerId' ? 'Buyer' : 'Seller'} ID must be a full 24-character ID.`); return; }
+    setFilterError('');
+    setDraft(trimmed);
+    setFilters(trimmed);
+  }
+
+  function clearFilters() { setFilterError(''); setDraft(EMPTY_FILTERS); setFilters(EMPTY_FILTERS); }
+
+  const dirty = JSON.stringify(draft) !== JSON.stringify(filters);
+  const anyFilter = Object.values(filters).some(Boolean);
+  const onEnter = (e: React.KeyboardEvent) => { if (e.key === 'Enter') applyFilters(); };
+
+  const columns: TableColumn<AdminConversationRow>[] = [
     { key: '_id', header: 'Conversation', render: c => <span className="font-bold text-brand-deep-orange whitespace-nowrap">{c._id.slice(-8).toUpperCase()}</span> },
-    { key: 'storeId', header: 'Store', render: c => <span className="text-graphite whitespace-nowrap">{c.storeId?.slice(-8) ?? '—'}</span> },
-    { key: 'buyerId', header: 'Buyer', render: c => <span className="text-graphite whitespace-nowrap">{c.buyerId?.slice(-8) ?? '—'}</span> },
-    { key: 'sellerId', header: 'Seller', render: c => <span className="text-graphite whitespace-nowrap">{c.sellerId?.slice(-8) ?? '—'}</span> },
+    { key: 'storeId', header: 'Store', render: c => <NameCell name={c.storeName} id={c.storeId} /> },
+    { key: 'buyerId', header: 'Buyer', render: c => <NameCell name={c.buyerName} id={c.buyerId} sub={c.buyerEmail} /> },
+    { key: 'sellerId', header: 'Seller', render: c => <NameCell name={c.sellerName} id={c.sellerId} /> },
     {
       key: 'isArchived', header: 'Status',
       render: c => (
@@ -123,16 +164,24 @@ function ConversationsPanel() {
   return (
     <div className="bg-white border border-bone rounded-[10px] overflow-hidden">
       <div className="px-5 py-[14px] border-b border-bone flex gap-[10px] items-center flex-wrap">
-        <input placeholder="Store ID"  value={filters.storeId}  onChange={e => setFilters(f => ({ ...f, storeId: e.target.value }))}  className="px-3 py-2 rounded-lg border border-bone text-[13px] bg-white outline-none w-[160px] transition-colors duration-150 focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/10" />
-        <input placeholder="Buyer ID"  value={filters.buyerId}  onChange={e => setFilters(f => ({ ...f, buyerId: e.target.value }))}  className="px-3 py-2 rounded-lg border border-bone text-[13px] bg-white outline-none w-[160px] transition-colors duration-150 focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/10" />
-        <input placeholder="Seller ID" value={filters.sellerId} onChange={e => setFilters(f => ({ ...f, sellerId: e.target.value }))} className="px-3 py-2 rounded-lg border border-bone text-[13px] bg-white outline-none w-[160px] transition-colors duration-150 focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/10" />
-        <select value={filters.isArchived} onChange={e => setFilters(f => ({ ...f, isArchived: e.target.value }))}
+        <input placeholder="Store ID"  value={draft.storeId}  onKeyDown={onEnter} onChange={e => setDraft(f => ({ ...f, storeId: e.target.value }))}  className="px-3 py-2 rounded-lg border border-bone text-[13px] bg-white outline-none w-[160px] transition-colors duration-150 focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/10" />
+        <input placeholder="Buyer ID"  value={draft.buyerId}  onKeyDown={onEnter} onChange={e => setDraft(f => ({ ...f, buyerId: e.target.value }))}  className="px-3 py-2 rounded-lg border border-bone text-[13px] bg-white outline-none w-[160px] transition-colors duration-150 focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/10" />
+        <input placeholder="Seller ID" value={draft.sellerId} onKeyDown={onEnter} onChange={e => setDraft(f => ({ ...f, sellerId: e.target.value }))} className="px-3 py-2 rounded-lg border border-bone text-[13px] bg-white outline-none w-[160px] transition-colors duration-150 focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/10" />
+        <select value={draft.isArchived} onChange={e => setDraft(f => ({ ...f, isArchived: e.target.value }))}
           className="px-3 py-2 rounded-lg border border-bone text-[13px] bg-white outline-none cursor-pointer transition-colors duration-150 hover:border-slate/40 focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/10">
           <option value="">All statuses</option>
           <option value="false">Active</option>
           <option value="true">Archived</option>
         </select>
-        <button onClick={refetch} className="px-3 py-2 rounded-lg border border-bone text-[13px] bg-cream cursor-pointer outline-none transition-colors duration-150 hover:bg-bone focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-brand-orange/50">Apply</button>
+        <button onClick={applyFilters} disabled={loading}
+          className="px-3 py-2 rounded-lg border border-bone text-[13px] cursor-pointer outline-none transition-colors duration-150 hover:bg-bone disabled:opacity-60 disabled:cursor-wait focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-brand-orange/50"
+          style={{ background: dirty ? '#FFF4DC' : 'var(--color-cream, #FAF7F2)' }}>
+          Apply
+        </button>
+        {(anyFilter || dirty) && (
+          <button onClick={clearFilters} className="px-2 py-2 text-[12.5px] text-slate bg-transparent border-none cursor-pointer hover:text-charcoal">Clear</button>
+        )}
+        {filterError && <p className="basis-full text-[12px] text-error m-0">{filterError}</p>}
       </div>
 
       {error ? (
@@ -156,22 +205,90 @@ function ConversationsPanel() {
 const STATUS_OPTS: (ReportStatus | '')[] = ['', 'pending', 'reviewed', 'resolved'];
 const TARGET_OPTS:  (TargetType  | '')[] = ['', 'user', 'message', 'conversation'];
 
+// Resolve modal — optional admin notes are stored on the report.
+function ResolveReportModal({ report, onClose, onDone }: { report: AdminReportRow; onClose: () => void; onDone: () => void }) {
+  const [notes, setNotes] = useState(report.adminNotes ?? '');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const toast = useToast();
+
+  async function submit() {
+    setBusy(true);
+    setError('');
+    try {
+      await apiAdminUpdateMessagingReport(report._id, { status: 'resolved', adminNotes: notes.trim() || undefined });
+      toast.success('Report resolved');
+      onDone();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to resolve report.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Modal mobileSheet
+      title="Resolve Report"
+      onClose={onClose}
+      footer={<>
+        <Button variant="ghost" onClick={onClose} disabled={busy}>Cancel</Button>
+        <Button onClick={submit} loading={busy}>Resolve</Button>
+      </>}
+    >
+      <div className="flex flex-col gap-3">
+        <p className="text-[13px] text-charcoal leading-[1.6]">
+          Close this <strong>{report.targetType}</strong> report ({report.reason}{report.details ? ` — ${report.details}` : ''})?
+          Resolving records the outcome; take any action on the account separately (e.g. suspend from Users).
+        </p>
+        <Textarea label="Admin notes (optional)" rows={3} maxLength={1000} value={notes} onChange={e => setNotes(e.target.value)} placeholder="What was found / done…" />
+        {error && <p className="text-[12px] text-error">{error}</p>}
+      </div>
+    </Modal>
+  );
+}
+
 function ReportsPanel() {
   const [status,     setStatus]     = useState<ReportStatus | ''>('');
   const [targetType, setTargetType] = useState<TargetType | ''>('');
   const [page, setPage] = useState(1);
-  const { reports, loading, error } = useAdminReports({
+  const { reports, loading, error, refetch } = useAdminReportRows({
     status:     status || undefined,
     targetType: targetType || undefined,
     page, limit: 30,
   });
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState('');
+  const [resolving, setResolving] = useState<AdminReportRow | null>(null);
+  const [viewingConv, setViewingConv] = useState<string | null>(null);
+  const toast = useToast();
 
-  const columns: TableColumn<Report>[] = [
+  async function markReviewed(r: AdminReportRow) {
+    setBusyId(r._id);
+    setActionError('');
+    try {
+      await apiAdminUpdateMessagingReport(r._id, { status: 'reviewed' });
+      toast.success('Report marked as reviewed');
+      refetch();
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Failed to update report.');
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  const columns: TableColumn<AdminReportRow>[] = [
     { key: '_id', header: 'Report', render: r => <span className="font-bold text-brand-deep-orange whitespace-nowrap flex items-center gap-1"><Flag size={11} /> {r._id.slice(-8).toUpperCase()}</span> },
     { key: 'targetType', header: 'Type', render: r => <span className="text-graphite capitalize whitespace-nowrap">{r.targetType}</span> },
-    { key: 'targetId', header: 'Target', render: r => <span className="text-graphite whitespace-nowrap">{r.targetId.slice(-8)}</span> },
-    { key: 'reporterId', header: 'Reporter', render: r => <span className="text-graphite whitespace-nowrap">{r.reporterId?.slice(-8) ?? '—'}</span> },
-    { key: 'reason', header: 'Reason', render: r => <span className="text-graphite max-w-[220px] truncate block">{r.reason}{r.details ? ` — ${r.details}` : ''}</span> },
+    {
+      key: 'targetId', header: 'Target',
+      render: r => r.targetType === 'user'
+        ? <NameCell name={r.targetName} id={r.targetId} />
+        : r.targetType === 'conversation'
+          ? <button onClick={() => setViewingConv(r.targetId)} className="text-brand-orange underline bg-transparent border-none p-0 cursor-pointer text-[13px] whitespace-nowrap">Open …{r.targetId.slice(-6)}</button>
+          : <span className="text-graphite whitespace-nowrap">Message …{r.targetId.slice(-6)}</span>,
+    },
+    { key: 'reporterId', header: 'Reporter', render: r => <NameCell name={r.reporterName} id={r.reporterId} sub={r.reporterRole} /> },
+    { key: 'reason', header: 'Reason', render: r => <span className="text-graphite max-w-[220px] truncate block" title={r.adminNotes ? `Notes: ${r.adminNotes}` : undefined}>{r.reason}{r.details ? ` — ${r.details}` : ''}</span> },
     {
       key: 'status', header: 'Status',
       render: r => (
@@ -185,10 +302,24 @@ function ReportsPanel() {
       ),
     },
     { key: 'createdAt', header: 'Created', render: r => <span className="text-slate whitespace-nowrap">{fmt(r.createdAt)}</span> },
+    {
+      key: 'actions', header: '',
+      render: r => r.status === 'resolved' ? null : (
+        <div className="flex gap-[6px]">
+          {r.status === 'pending' && (
+            <Button size="xs" variant="outline" loading={busyId === r._id} disabled={!!busyId} onClick={() => markReviewed(r)}>Mark reviewed</Button>
+          )}
+          <Button size="xs" variant="secondary" disabled={busyId === r._id} onClick={() => { setActionError(''); setResolving(r); }}>Resolve</Button>
+        </div>
+      ),
+    },
   ];
 
   return (
     <div className="bg-white border border-bone rounded-[10px] overflow-hidden">
+      {actionError && <div className="mx-5 mt-4 bg-error-bg border border-error-border rounded-lg px-4 py-2.5 text-[12.5px] text-error">{actionError}</div>}
+      {resolving && <ResolveReportModal report={resolving} onClose={() => setResolving(null)} onDone={() => { setResolving(null); refetch(); }} />}
+      {viewingConv && <ConversationDrawer conversationId={viewingConv} onClose={() => setViewingConv(null)} />}
       <div className="px-5 py-[14px] border-b border-bone flex gap-[10px] items-center flex-wrap">
         <select value={status} onChange={e => { setStatus(e.target.value as ReportStatus | ''); setPage(1); }}
           className="px-3 py-2 rounded-lg border border-bone text-[13px] bg-white outline-none cursor-pointer transition-colors duration-150 hover:border-slate/40 focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/10">

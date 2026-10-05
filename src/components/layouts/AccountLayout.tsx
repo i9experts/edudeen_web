@@ -9,6 +9,7 @@ import {
   ChevronLeft, PanelLeftClose, PanelLeftOpen, type LucideIcon,
 } from 'lucide-react';
 import { useWishlistContext } from '@/contexts/WishlistContext';
+import { useNotification } from '@/contexts/NotificationContext';
 import { useConversations } from '@/hooks/messaging/useConversations';
 import { EdudeenIcon } from '@/components/comman/ui/EdudeenLogo';
 import { PlatformTopBar } from '@/components/comman/ui/PlatformTopBar';
@@ -28,6 +29,9 @@ export function useNavGroups(): NavGroup[] {
   // the Wishlist badge already does.
   const { conversations } = useConversations();
   const messagesUnread = conversations.reduce((n, c) => n + c.buyerUnread, 0);
+  // NotificationContext already tracks the unread count (initial fetch +
+  // socket `notification:unread-count` pushes) — reuse it, no extra request.
+  const { unreadCount: notificationsUnread } = useNotification();
 
   return [
     {
@@ -52,7 +56,7 @@ export function useNavGroups(): NavGroup[] {
       group: t('Updates'),
       items: [
         { id: 'messages',      label: t('Messages'),      Icon: MessageSquare, path: 'messages', badge: messagesUnread },
-        { id: 'notifications', label: t('Notifications'), Icon: Bell,          path: 'notifications' },
+        { id: 'notifications', label: t('Notifications'), Icon: Bell,          path: 'notifications', badge: notificationsUnread },
       ],
     },
     {

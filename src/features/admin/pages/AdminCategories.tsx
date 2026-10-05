@@ -1,8 +1,13 @@
 import { useEffect, useState } from 'react';
-import { Plus, ChevronRight, FolderTree, Tag, ImagePlus, Loader2, ListFilter } from 'lucide-react';
+import { Plus, ChevronRight, FolderTree, Tag, ImagePlus, Loader2, ListFilter, Pencil, Trash2, ArrowUp, ArrowDown } from 'lucide-react';
 import { clsx } from 'clsx';
 import { usePageTitle } from '@/hooks/usePageTitle';
-import { apiGetCategoryTree, apiAddCategory, type CategoryNode } from '@/api/services/categories';
+import {
+  apiAddCategory, apiAdminGetCategoryTree, apiAdminUpdateCategory, apiAdminDeleteCategory, apiAdminReorderCategories,
+  type CategoryNode, type UpdateCategoryPayload,
+} from '@/api/services/categories';
+import { Toggle } from '@/components/comman/ui/Toggle';
+import { useToast } from '@/contexts/ToastContext';
 import { AttributeManagerModal } from './AttributeManagerModal';
 import { useUpload } from '@/hooks/upload/useUpload';
 import { Button } from '@/components/comman/ui/Button';
@@ -150,12 +155,185 @@ function AddCategoryModal({ mainCategories, initial, onClose, onSaved }: {
   );
 }
 
-// ── Tree row ──────────────────────────────────────────────────────────────────
-function CategoryRow({ node, depth, onManageAttributes }: {
-  node: CategoryNode; depth: number; onManageAttributes: (node: CategoryNode) => void;
+// ── Edit Category modal ──────────────────────────────────────────────────────
+// Slug and parent are fixed server-side (the slug is a public URL), so only the
+// display fields and the active flag can change here.
+function EditCategoryModal({ category, onClose, onSaved }: {
+  category: CategoryNode; onClose: () => void; onSaved: () => void;
 }) {
+  const [name,        setName]        = useState(category.name);
+  const [description, setDescription] = useState(category.description ?? '');
+  const [image,       setImage]       = useState(category.image ?? '');
+  const [preview,     setPreview]     = useState('');
+  const [isActive,    setIsActive]    = useState(category.status !== 'inactive');
+  const [saving,      setSaving]      = useState(false);
+  const [error,       setError]       = useState('');
+  const { upload: uploadImage, uploading: imageUploading } = useUpload('public');
+
+  const handleImageFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPreview(URL.createObjectURL(file));
+    uploadImage(file)
+      .then(data => setImage(data.url))
+      .catch(() => setPreview(''));
+  };
+
+  async function submit() {
+    if (!name.trim()) { setError('Category name is required.'); return; }
+    const payload: UpdateCategoryPayload = {};
+    if (name.trim() !== category.name) payload.name = name.trim();
+    if (description.trim() !== (category.description ?? '')) payload.description = description.trim();
+    if (image.trim() && image.trim() !== (category.image ?? '')) payload.image = image.trim();
+    if (isActive !== (category.status !== 'inactive')) payload.isActive = isActive;
+    if (Object.keys(payload).length === 0) { onClose(); return; }
+    setError('');
+    setSaving(true);
+    try {
+      await apiAdminUpdateCategory(category._id, payload);
+      onSaved();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update category.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Modal mobileSheet
+      title="Edit Category"
+      width={520}
+      onClose={onClose}
+      footer={
+        <>
+          <Button variant="outline" onClick={onClose} disabled={saving}>Cancel</Button>
+          <Button onClick={submit} loading={saving} disabled={imageUploading}>Save Changes</Button>
+        </>
+      }
+    >
+      <div className="flex flex-col gap-4">
+        <Input label="Name" value={name} maxLength={50} onChange={e => setName(e.target.value)} />
+        <Textarea label="Description (optional)" rows={3} maxLength={500} value={description} onChange={e => setDescription(e.target.value)} />
+        <div>
+          <label className="block text-[12px] font-medium text-charcoal mb-[6px]">Image</label>
+          <div className="flex items-center gap-3">
+            <label className={clsx(
+              'size-[52px] rounded-lg bg-cream border-2 border-dashed border-bone flex items-center justify-center shrink-0 overflow-hidden transition-colors',
+              imageUploading ? 'cursor-wait opacity-60' : 'cursor-pointer hover:border-brand-orange',
+            )}>
+              {imageUploading
+                ? <Loader2 size={18} className="text-brand-orange animate-spin" />
+                : preview || image
+                  ? <img loading="lazy" decoding="async" src={preview || image} alt="" className="w-full h-full object-cover" />
+                  : <ImagePlus size={18} className="text-slate" />}
+              <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={handleImageFile} disabled={imageUploading} />
+            </label>
+            <p className="text-[11px] text-slate leading-[1.4]">
+              {imageUploading ? 'Uploading…' : image ? 'Click to replace the image.' : 'PNG, JPG or WebP.'}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-[13px] font-medium text-charcoal">Active</p>
+            <p className="text-[11px] text-slate">Inactive categories are hidden from buyers and sellers but keep their products.</p>
+          </div>
+          <Toggle checked={isActive} onChange={setIsActive} />
+        </div>
+        <p className="text-[11px] text-slate">The category's URL (/marketplace/{category.slug}) stays the same when renamed.</p>
+        {error && <p className="text-[12px] text-error">{error}</p>}
+      </div>
+    </Modal>
+  );
+}
+
+// ── Delete Category modal ────────────────────────────────────────────────────
+// The server refuses to delete a category that still has subcategories, and
+// refuses one still used by products/stores unless they're moved to another
+// category at the same level (another main category, or a sibling
+// subcategory under the same main category).
+function DeleteCategoryModal({ category, siblings, onClose, onDeleted }: {
+  category: CategoryNode; siblings: CategoryNode[]; onClose: () => void; onDeleted: (msg: string) => void;
+}) {
+  const targets = siblings.filter(s => s._id !== category._id && s.status !== 'inactive');
+  const [reassignTo, setReassignTo] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const isMain = !category.parentId;
+
+  async function submit() {
+    setError('');
+    setBusy(true);
+    try {
+      const res = await apiAdminDeleteCategory(category._id, reassignTo || undefined);
+      const moved = res.data?.reassigned;
+      onDeleted(moved
+        ? `Deleted "${category.name}" — moved ${moved.products} product(s)${isMain ? ` and ${moved.stores} store(s)` : ''}.`
+        : `Deleted "${category.name}".`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete category.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Modal mobileSheet
+      title="Delete Category"
+      width={480}
+      onClose={onClose}
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose} disabled={busy}>Cancel</Button>
+          <Button variant="danger" onClick={submit} loading={busy} disabled={category.children.length > 0}>Delete Category</Button>
+        </>
+      }
+    >
+      <div className="flex flex-col gap-3">
+        <p className="text-[13px] text-charcoal leading-[1.6]">
+          Delete <strong>{category.name}</strong>? It will disappear from the marketplace.
+        </p>
+        {category.children.length > 0 ? (
+          <p className="text-[12px] text-error bg-error-bg border border-error-border rounded-lg px-3 py-2">
+            This category still has {category.children.length} subcategor{category.children.length === 1 ? 'y' : 'ies'}. Delete those first.
+          </p>
+        ) : (
+          <>
+            <Select label="Move its products to" value={reassignTo} onChange={e => setReassignTo(e.target.value)}>
+              <option value="">Don't move — only delete if nothing uses it</option>
+              {targets.map(t => <option key={t._id} value={t._id}>{t.name}</option>)}
+            </Select>
+            <p className="text-[11px] text-slate leading-[1.5]">
+              {isMain
+                ? 'Products and stores in this main category will be moved to the one you pick.'
+                : 'Products in this subcategory will be moved to the sibling subcategory you pick.'}
+              {' '}If it's still in use and you don't pick one, the delete is refused.
+            </p>
+          </>
+        )}
+        {error && <p className="text-[12px] text-error">{error}</p>}
+      </div>
+    </Modal>
+  );
+}
+
+// ── Tree row ──────────────────────────────────────────────────────────────────
+interface RowActions {
+  onManageAttributes: (node: CategoryNode) => void;
+  onEdit: (node: CategoryNode) => void;
+  onDelete: (node: CategoryNode, siblings: CategoryNode[]) => void;
+  onMove: (siblings: CategoryNode[], index: number, dir: -1 | 1) => void;
+  reordering: boolean;
+}
+
+function CategoryRow({ node, depth, siblings, index, actions }: {
+  node: CategoryNode; depth: number; siblings: CategoryNode[]; index: number; actions: RowActions;
+}) {
+  const { onManageAttributes, onEdit, onDelete, onMove, reordering } = actions;
   const [expanded, setExpanded] = useState(depth === 0);
   const hasChildren = node.children.length > 0;
+  const inactive = node.status === 'inactive';
+  const arrowCls = 'p-1 rounded-md text-slate hover:text-brand-orange disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer bg-transparent border-none';
 
   return (
     <div>
@@ -172,7 +350,10 @@ function CategoryRow({ node, depth, onManageAttributes }: {
           {depth === 0
             ? <FolderTree size={14} className="text-brand-orange shrink-0" />
             : <Tag size={12} className="text-slate shrink-0" />}
-          <span className={depth === 0 ? 'text-[13px] font-semibold text-charcoal' : 'text-[13px] text-graphite'}>{node.name}</span>
+          <span className={clsx(depth === 0 ? 'text-[13px] font-semibold text-charcoal' : 'text-[13px] text-graphite', inactive && 'opacity-60')}>{node.name}</span>
+          {inactive && (
+            <span className="text-[10px] font-semibold px-1.5 py-[1px] rounded bg-cream border border-bone text-slate ml-1">Inactive</span>
+          )}
           {node.createdByRole && (
             <span className="text-[10px] text-slate capitalize ml-1">· added by {node.createdByRole}</span>
           )}
@@ -180,16 +361,40 @@ function CategoryRow({ node, depth, onManageAttributes }: {
             <span className="text-[11px] text-slate ml-1">· no subcategories</span>
           )}
         </div>
+        <div className="flex items-center shrink-0">
+          <button type="button" aria-label={`Move ${node.name} up`} title="Move up" className={arrowCls}
+            disabled={reordering || index === 0} onClick={() => onMove(siblings, index, -1)}>
+            <ArrowUp size={13} />
+          </button>
+          <button type="button" aria-label={`Move ${node.name} down`} title="Move down" className={arrowCls}
+            disabled={reordering || index === siblings.length - 1} onClick={() => onMove(siblings, index, 1)}>
+            <ArrowDown size={13} />
+          </button>
+        </div>
         <button
           type="button"
           onClick={() => onManageAttributes(node)}
           className="flex items-center gap-1 text-[11px] font-semibold text-slate hover:text-brand-orange px-2 py-1 rounded-md shrink-0"
         >
-          <ListFilter size={12} /> Attributes
+          <ListFilter size={12} /> <span className="hidden sm:inline">Attributes</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => onEdit(node)}
+          className="flex items-center gap-1 text-[11px] font-semibold text-slate hover:text-brand-orange px-2 py-1 rounded-md shrink-0"
+        >
+          <Pencil size={12} /> <span className="hidden sm:inline">Edit</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => onDelete(node, siblings)}
+          className="flex items-center gap-1 text-[11px] font-semibold text-slate hover:text-error px-2 py-1 rounded-md shrink-0"
+        >
+          <Trash2 size={12} /> <span className="hidden sm:inline">Delete</span>
         </button>
       </div>
-      {expanded && node.children.map(child => (
-        <CategoryRow key={child._id} node={child} depth={depth + 1} onManageAttributes={onManageAttributes} />
+      {expanded && node.children.map((child, i) => (
+        <CategoryRow key={child._id} node={child} depth={depth + 1} siblings={node.children} index={i} actions={actions} />
       ))}
     </div>
   );
@@ -204,17 +409,49 @@ export function AdminCategories() {
   const [adding, setAdding] = useState(false);
   const [prefill, setPrefill] = useState<CategorySuggestion | null>(null);
   const [managingAttrsFor, setManagingAttrsFor] = useState<CategoryNode | null>(null);
+  const [editing, setEditing] = useState<CategoryNode | null>(null);
+  const [deleting, setDeleting] = useState<{ node: CategoryNode; siblings: CategoryNode[] } | null>(null);
+  const [reordering, setReordering] = useState(false);
+  const toast = useToast();
 
-  const load = () => {
-    setLoading(true);
+  // `quiet` refreshes without swapping the tree for skeletons (keeps expanded rows).
+  const load = (quiet = false) => {
+    if (!quiet) setLoading(true);
     setError('');
-    apiGetCategoryTree()
+    apiAdminGetCategoryTree()
       .then(res => setTree(res.data ?? []))
       .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Failed to load categories.'))
       .finally(() => setLoading(false));
   };
 
-  useEffect(load, []);
+  useEffect(() => load(), []);
+
+  // Swap a category with its neighbour, then persist the whole sibling list's
+  // order as 0..n-1 so ties left over from older data (all sortOrder 0) resolve.
+  async function handleMove(siblings: CategoryNode[], index: number, dir: -1 | 1) {
+    const target = index + dir;
+    if (target < 0 || target >= siblings.length) return;
+    const next = [...siblings];
+    [next[index], next[target]] = [next[target], next[index]];
+    setReordering(true);
+    try {
+      await apiAdminReorderCategories(next.map((c, i) => ({ id: c._id, sortOrder: i })));
+      toast.success('Order updated');
+      load(true);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to reorder categories.');
+    } finally {
+      setReordering(false);
+    }
+  }
+
+  const rowActions: RowActions = {
+    onManageAttributes: setManagingAttrsFor,
+    onEdit: setEditing,
+    onDelete: (node, siblings) => setDeleting({ node, siblings }),
+    onMove: handleMove,
+    reordering,
+  };
 
   const countAll = (nodes: CategoryNode[]): number =>
     nodes.reduce((acc, n) => acc + 1 + countAll(n.children), 0);
@@ -261,8 +498,8 @@ export function AdminCategories() {
               description="Create the first main category to get started."
             />
           ) : (
-            tree.map(cat => (
-              <CategoryRow key={cat._id} node={cat} depth={0} onManageAttributes={setManagingAttrsFor} />
+            tree.map((cat, i) => (
+              <CategoryRow key={cat._id} node={cat} depth={0} siblings={tree} index={i} actions={rowActions} />
             ))
           )}
         </div>
@@ -273,17 +510,34 @@ export function AdminCategories() {
           subcategories from their dashboard.
         </p>
         <p className="text-[12px] text-slate mt-2 leading-[1.6] max-w-[640px] bg-cream border border-bone rounded-lg px-3 py-2">
-          Good to know: categories can be added here, but renaming or removing them isn't available yet.
-          Double-check the name before creating — your existing categories and products aren't affected.
+          Good to know: renaming keeps the category's URL. Use the arrows to change the order buyers see.
+          Deleting asks where to move the category's products; inactive categories stay listed here so you can re-enable them.
         </p>
       </div>
 
       {adding && (
         <AddCategoryModal
-          mainCategories={tree}
+          mainCategories={tree.filter(c => c.status !== 'inactive')}
           initial={prefill}
           onClose={() => setAdding(false)}
-          onSaved={() => { setAdding(false); load(); }}
+          onSaved={() => { setAdding(false); toast.success('Category created'); load(true); }}
+        />
+      )}
+
+      {editing && (
+        <EditCategoryModal
+          category={editing}
+          onClose={() => setEditing(null)}
+          onSaved={() => { setEditing(null); toast.success('Category updated'); load(true); }}
+        />
+      )}
+
+      {deleting && (
+        <DeleteCategoryModal
+          category={deleting.node}
+          siblings={deleting.siblings}
+          onClose={() => setDeleting(null)}
+          onDeleted={msg => { setDeleting(null); toast.success(msg); load(true); }}
         />
       )}
 

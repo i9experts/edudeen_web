@@ -617,20 +617,22 @@
 .filter-check-pop { animation: filter-check-pop 200ms var(--ease-out); }
 
 /* ── Urdu interface (LanguageContext) ──────────────────────────────────────
-   "Edudeen Urdu" only covers Arabic-script characters (unicode-range), so in
-   Urdu mode English words, numbers and prices keep the normal Arial/Georgia
-   faces and nothing changes size. The overrides keep Urdu lines the same
-   height as English ones, so switching language doesn't move the layout. */
+   Urdu is set in Nastaliq (Noto Nastaliq Urdu) — the script Urdu readers
+   expect, as on BBC Urdu / Geo / Express. "Edudeen Urdu" only covers
+   Arabic-script characters (unicode-range), so English words, numbers and
+   prices in Urdu mode keep the normal Arial/Georgia faces. Nastaliq's tall
+   letters get the metric overrides and extra line spacing below so they
+   neither clip nor collide. */
 @font-face {
   font-family: 'Edudeen Urdu';
   font-style: normal;
   font-weight: 400 500;
   font-display: swap;
-  src: url('./assets/fonts/noto-naskh-arabic-arabic-400-normal.woff2') format('woff2');
+  src: url('./assets/fonts/noto-nastaliq-urdu-arabic-400-normal.woff2') format('woff2');
   unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF, U+200C-200F;
-  size-adjust: 112%;
-  ascent-override: 92%;
-  descent-override: 32%;
+  size-adjust: 104%;
+  ascent-override: 100%;
+  descent-override: 50%;
   line-gap-override: 0%;
 }
 @font-face {
@@ -638,11 +640,11 @@
   font-style: normal;
   font-weight: 600;
   font-display: swap;
-  src: url('./assets/fonts/noto-naskh-arabic-arabic-600-normal.woff2') format('woff2');
+  src: url('./assets/fonts/noto-nastaliq-urdu-arabic-600-normal.woff2') format('woff2');
   unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF, U+200C-200F;
-  size-adjust: 112%;
-  ascent-override: 92%;
-  descent-override: 32%;
+  size-adjust: 104%;
+  ascent-override: 100%;
+  descent-override: 50%;
   line-gap-override: 0%;
 }
 @font-face {
@@ -650,11 +652,11 @@
   font-style: normal;
   font-weight: 700 900;
   font-display: swap;
-  src: url('./assets/fonts/noto-naskh-arabic-arabic-700-normal.woff2') format('woff2');
+  src: url('./assets/fonts/noto-nastaliq-urdu-arabic-700-normal.woff2') format('woff2');
   unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF, U+200C-200F;
-  size-adjust: 112%;
-  ascent-override: 92%;
-  descent-override: 32%;
+  size-adjust: 104%;
+  ascent-override: 100%;
+  descent-override: 50%;
   line-gap-override: 0%;
 }
 .font-urdu { font-family: 'Edudeen Urdu', var(--font-sans); }
@@ -663,6 +665,11 @@
 /* Uppercase + wide letter-spacing breaks joined Urdu letters apart. */
 .lang-ur .uppercase { text-transform: none; }
 .lang-ur [class*="tracking-"] { letter-spacing: 0; }
+/* Nastaliq needs more room between lines than Latin text; tight English
+   leading would make wrapped Urdu lines overlap. */
+.lang-ur body { line-height: 1.8; }
+.lang-ur [class*="leading-"]:not(.leading-none) { line-height: 1.75; }
+.lang-ur h1, .lang-ur h2, .lang-ur h3 { line-height: 1.6; }
 /* Arrows and chevrons point the reading direction. */
 [dir='rtl'] .lucide-arrow-right,
 [dir='rtl'] .lucide-arrow-left,

@@ -20,13 +20,11 @@ const CLOSING_TAB_ICONS = [Home, ShoppingBag, Package, User] as const;
 const compactNumber   = new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 });
 const compactCurrency = new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1, style: 'currency', currency: 'USD' });
 
-// Phone-mockup sample rows, used only until real catalogue items load. Stats,
-// avatars and ratings never fall back to made-up figures.
-const FALLBACK_PREVIEW_ITEMS = [
-  { id: 'fallback-1', name: 'Tajweed Quran (Colour-Coded)', images: [] as string[], price: 24.99,  currency: 'USD' },
-  { id: 'fallback-2', name: 'Arabic for Beginners Course',  images: [] as string[], price: 39.99,  currency: 'USD' },
-  { id: 'fallback-3', name: 'Grade 5 Maths Workbook',       images: [] as string[], price: 9.99,   currency: 'USD' },
-];
+// Stats, avatars, ratings and phone-mockup rows never fall back to made-up
+// figures or products — they render from real data or not at all.
+
+/** A finite number, else null — keeps a missing stats field from becoming "NaN+". */
+const finite = (v: unknown): number | null => (typeof v === 'number' && Number.isFinite(v) ? v : null);
 
 // Fills the gap between the CTA copy and the phone mockup — same trust
 // language already used in the hero/trust-bar sections on this page, not
@@ -76,29 +74,32 @@ export function ClosingCtaBanner({ className }: { className?: string }) {
     return () => { cancelled = true; };
   }, []);
 
-  // Real platform numbers once loaded; the fixed reference figures until then.
-  const realStatItems = stats ? [
-    { value: `${compactNumber.format(stats.sellersCount)}+`,  label: 'Active Sellers' },
-    { value: `${compactCurrency.format(stats.gmv)}+`,         label: 'GMV Processed' },
-    { value: `${compactNumber.format(stats.buyersCount)}+`,   label: 'Happy Buyers' },
-    ...(stats.ratingCount > 0 ? [{ value: `${stats.avgRating.toFixed(1)}★`, label: 'Store Rating' }] : []),
-  ] : [];
-  // Real numbers only — nothing is shown until the stats API answers.
-  const displayStatItems = realStatItems;
+  // Real platform numbers only — nothing is shown until the stats API answers,
+  // and a missing/zero field drops its stat instead of rendering "NaN+"/"0+".
+  const sellers = finite(stats?.sellersCount);
+  const gmv     = finite(stats?.gmv);
+  const buyers  = finite(stats?.buyersCount);
+  const ratingCount = finite(stats?.ratingCount) ?? 0;
+  const avgRating   = finite(stats?.avgRating);
+  const hasRealRating = ratingCount > 0 && avgRating !== null;
+  const displayStatItems = [
+    ...(sellers ? [{ value: `${compactNumber.format(sellers)}+`, label: 'Active Sellers' }] : []),
+    ...(gmv     ? [{ value: `${compactCurrency.format(gmv)}+`,   label: 'GMV Processed' }] : []),
+    ...(buyers  ? [{ value: `${compactNumber.format(buyers)}+`,  label: 'Registered Buyers' }] : []),
+    ...(hasRealRating ? [{ value: `${(avgRating as number).toFixed(1)}★`, label: 'Store Rating' }] : []),
+  ];
 
-  const hasRealRating = !!stats && stats.ratingCount > 0;
   const avatarNames = testimonials.slice(0, 5).map(t => t.name);
 
-  // Real catalog items with an actual photo when available; the fixed
-  // reference product list otherwise (ProductImage already renders a clean
-  // fallback glyph for an empty images array, so these still look intentional).
-  const realPreviewItems = previewProducts.filter(p => (p.images ?? []).length > 0).slice(0, 3);
-  const previewRows = realPreviewItems.length > 0
-    ? realPreviewItems.map(p => {
-        const dv = (p.variants ?? []).find(v => v.isDefault) ?? p.variants?.[0];
-        return { id: p._id, name: p.name, images: p.images ?? [], price: dv?.price, currency: dv?.currency };
-      })
-    : FALLBACK_PREVIEW_ITEMS;
+  // Real catalogue items only — ones with a photo first, then the rest (the
+  // ProductImage cover fallback renders cleanly for an empty images array).
+  // With no products the phone mockup is simply not rendered.
+  const withPhotos = previewProducts.filter(p => (p.images ?? []).length > 0);
+  const withoutPhotos = previewProducts.filter(p => (p.images ?? []).length === 0);
+  const previewRows = [...withPhotos, ...withoutPhotos].slice(0, 3).map(p => {
+    const dv = (p.variants ?? []).find(v => v.isDefault) ?? p.variants?.[0];
+    return { id: p._id, name: p.name, images: p.images ?? [], price: dv?.price, currency: dv?.currency };
+  });
 
   return (
     <section className={clsx('grain-overlay relative overflow-hidden bg-gradient-to-br from-brand-orange via-[#66AD36] to-brand-deep-orange', className)}>
@@ -145,9 +146,9 @@ export function ClosingCtaBanner({ className }: { className?: string }) {
               {hasRealRating && (
                 <div className="flex items-center gap-[4px]">
                   <Star size={13} className="text-white fill-white" />
-                  <span className="text-[13px] font-bold text-white">{stats!.avgRating.toFixed(1)}/5</span>
+                  <span className="text-[13px] font-bold text-white">{(avgRating as number).toFixed(1)}/5</span>
                   <span className="text-[11px] text-white/70 whitespace-nowrap">
-                    From {compactNumber.format(stats!.ratingCount)} reviews
+                    From {compactNumber.format(ratingCount)} reviews
                   </span>
                 </div>
               )}
@@ -203,6 +204,7 @@ export function ClosingCtaBanner({ className }: { className?: string }) {
          catalog items when available (the fixed reference list otherwise). A
          soft glow + contact shadow ground the pair instead of letting them
          float in the empty space beside the CTA copy. */}
+      {previewRows.length > 0 && (
       <div className="hidden lg:flex items-end justify-center absolute end-2 lg:end-8 top-1/2 -translate-y-1/2 pb-2 z-[2]">
         <div
           className="absolute inset-0 pointer-events-none"
@@ -222,7 +224,8 @@ export function ClosingCtaBanner({ className }: { className?: string }) {
           <div className="relative w-full h-full bg-white overflow-hidden flex flex-col">
             <StatusBar />
             <div className="px-[12px] pt-[6px] flex-1">
-              <p className="text-[13px] font-bold text-carbon mb-[9px]">My Orders</p>
+              {/* Catalogue products, so it's titled as what it is — not an order list. */}
+              <p className="text-[13px] font-bold text-carbon mb-[9px]">Popular now</p>
               <div className="flex flex-col gap-[7px]">
                 {previewRows.map(row => (
                   <div key={row.id} className="flex items-center gap-[9px] rounded-[10px] border border-bone p-[8px]">
@@ -239,12 +242,13 @@ export function ClosingCtaBanner({ className }: { className?: string }) {
             </div>
             <div className="mt-auto h-[34px] border-t border-bone flex items-center justify-around bg-white shrink-0">
               {CLOSING_TAB_ICONS.map((Icon, i) => (
-                <Icon key={i} size={13} className={i === 2 ? 'text-brand-orange' : 'text-slate/60'} />
+                <Icon key={i} size={13} className={i === 1 ? 'text-brand-orange' : 'text-slate/60'} />
               ))}
             </div>
           </div>
         </PhoneShell>
       </div>
+      )}
     </section>
   );
 }

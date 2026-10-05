@@ -1,11 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
 import { Camera, Check, Loader2, MapPin, Phone, UserCircle, AlertTriangle, Trash2 } from 'lucide-react';
 import { useGetProfile, invalidateProfileCache } from '@/hooks/auth/useGetProfile';
 import { useEditProfile } from '@/hooks/auth/useEditProfile';
 import { apiDeleteAccount } from '@/api/services/users';
-import { TokenStorage } from '@/api/services/auth';
+import { TokenStorage, apiEditProfile } from '@/api/services/auth';
+import { useUpload } from '@/hooks/upload/useUpload';
 import { Card, PageHeader, Badge, SkeletonBox, Modal, Button } from '@/components/comman/ui';
 import { useToast } from '@/contexts/ToastContext';
 
@@ -29,7 +30,7 @@ function SectionHeading({ icon, title }: { icon: React.ReactNode; title: string 
 export function PersonalInfo() {
   const navigate = useNavigate();
   const toast = useToast();
-  const { profile, loading } = useGetProfile();
+  const { profile, loading, refetch } = useGetProfile();
   const { execute: editProfile, loading: saving, error: saveError, success: saved } = useEditProfile();
 
   const [firstName, setFirstName] = useState('');
@@ -66,6 +67,34 @@ export function PersonalInfo() {
     }
   };
 
+  // Profile photo: public upload → save the returned URL on the profile.
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { upload: uploadImage, uploading: imageUploading } = useUpload('public');
+  const [avatarSaving, setAvatarSaving] = useState(false);
+  const avatarBusy = imageUploading || avatarSaving;
+
+  const handleAvatarSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // allow re-picking the same file later
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { toast.error('Please choose an image file.'); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error('Image must be 5 MB or smaller.'); return; }
+    try {
+      const { url } = await uploadImage(file);
+      setAvatarSaving(true);
+      await apiEditProfile({ profileImage: url });
+      // Keep the cached session user (navbar avatar) in sync.
+      const stored = TokenStorage.getUser<Record<string, unknown>>();
+      if (stored) TokenStorage.saveUser({ ...stored, image: url });
+      refetch(); // force-reload the shared profile so every avatar updates
+      toast.success('Profile photo updated');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to update profile photo.');
+    } finally {
+      setAvatarSaving(false);
+    }
+  };
+
   const initials = profile?.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() ?? '..';
 
   return (
@@ -85,8 +114,25 @@ export function PersonalInfo() {
                       ? <img loading="lazy" decoding="async" src={profile.profileImage} alt={profile.name} className="w-full h-full object-cover" />
                       : initials}
                 </div>
-                <button className="absolute bottom-0 end-0 w-[24px] h-[24px] rounded-full bg-brand-orange border-2 border-white flex items-center justify-center cursor-pointer">
-                  <Camera size={11} className="text-white" />
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleAvatarSelected}
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={loading || avatarBusy}
+                  aria-label="Change profile photo"
+                  title="Change profile photo"
+                  className={clsx(
+                    'absolute bottom-0 end-0 w-[24px] h-[24px] rounded-full bg-brand-orange border-2 border-white flex items-center justify-center',
+                    avatarBusy ? 'cursor-wait opacity-80' : 'cursor-pointer',
+                  )}
+                >
+                  {avatarBusy ? <Loader2 size={11} className="text-white animate-spin" /> : <Camera size={11} className="text-white" />}
                 </button>
               </div>
               <div className="min-w-0">

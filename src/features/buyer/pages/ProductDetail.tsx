@@ -40,6 +40,8 @@ import { QuoteRequestDialog } from '@/features/buyer/components/QuoteRequestDial
 import { ProductQuestions } from '@/features/buyer/components/ProductQuestions';
 import { BundleOffer } from '@/features/buyer/components/BundleOffer';
 import { CourseOrLiveInfo } from '@/features/buyer/components/CourseOrLiveInfo';
+import { ShippingZonesSummary } from '@/features/buyer/components/ShippingZonesSummary';
+import { syncRecentlyViewed } from '@/utils/recentlyViewedSync';
 import { currencySymbol } from '@/utils/currency';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 
@@ -435,8 +437,8 @@ export function ProductDetail() {
 
   useEffect(() => { setQty(1); }, [activeVariant?._id]);
 
-  // Recently Viewed — client-tracked snapshot (no view-history API exists),
-  // surfaced in the navbar search dropdown's empty state.
+  // Recently viewed — kept on this device, and on the account when signed in
+  // (so it follows the buyer across devices); shown in the search dropdown.
   useEffect(() => {
     if (!product) return;
     pushRecentlyViewed({
@@ -446,6 +448,7 @@ export function ProductDetail() {
       price: activeVariant?.price ?? null,
       currency: activeVariant?.currency,
     });
+    void syncRecentlyViewed(product._id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product?._id]);
 
@@ -986,10 +989,11 @@ export function ProductDetail() {
 
                 {activeTab === 'shipping' && (
                   <div className="flex flex-col gap-4">
+                    {!isDigital && <ShippingZonesSummary sellerName={product.sellerName} />}
                     {[
-                      isDigital
-                        ? { Icon: Download, label: 'Instant Digital Delivery', value: 'Download link available immediately after purchase' }
-                        : { Icon: Truck, label: 'Shipping', value: 'Ships after purchase — rate calculated at checkout' },
+                      ...(isDigital
+                        ? [{ Icon: Download, label: 'Instant Digital Delivery', value: 'Download link available immediately after purchase' }]
+                        : []),
                       { Icon: Package, label: 'Seller Fulfilled', value: `Sold and shipped by ${product.sellerName ?? 'seller'}` },
                       { Icon: ClipboardList, label: 'SKU', value: activeVariant?.sku ?? '—' },
                     ].map(row => (

@@ -104,7 +104,12 @@ export interface AdminOverviewData {
 // ── B. Revenue analytics ────────────────────────────────────────────────────────
 
 export interface RevenuePoint { date: string; grossRevenue: number; netRevenue: number }
-export interface AdminRevenueOverTimeData { granularity: AnalyticsGranularity; series: RevenuePoint[] }
+export interface AdminRevenueOverTimeData {
+  granularity: AnalyticsGranularity;
+  series: RevenuePoint[];
+  /** Only set when every summed order is in one currency; absent = mixed, unconverted amounts. */
+  currency?: string;
+}
 
 export interface AdminRevenueBreakdownPreviousPeriod {
   period: AnalyticsPeriod;

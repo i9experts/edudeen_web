@@ -1,26 +1,37 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Package2, Plus, Pencil, Trash2, ExternalLink, Search } from 'lucide-react';
 import { clsx } from 'clsx';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useStoreWorkspace, StorePageHeader } from '@/components/layouts/StoreLayout';
 import { Card, Button, Input, Textarea, Modal, SkeletonBox, EmptyState, Toggle } from '@/components/comman/ui';
 import { useToast } from '@/contexts/ToastContext';
-import { apiGetStoreInventory, type InventoryProduct } from '@/api/services/product';
+import { type InventoryProduct } from '@/api/services/product';
+import { useInventorySearch } from '@/hooks/seller/useInventorySearch';
 import { apiGetSellerBundles, apiCreateBundle, apiUpdateBundle, apiDeleteBundle, type SellerBundle } from '@/api/services/classroom';
 
-function BundleForm({ storeId, bundle, products, onClose, onSaved }: {
-  storeId: string; bundle: SellerBundle | null; products: InventoryProduct[]; onClose: () => void; onSaved: () => void;
+function BundleForm({ storeId, bundle, onClose, onSaved }: {
+  storeId: string; bundle: SellerBundle | null; onClose: () => void; onSaved: () => void;
 }) {
   const toast = useToast();
   const [name, setName] = useState(bundle?.name ?? '');
   const [description, setDescription] = useState(bundle?.description ?? '');
   const [pct, setPct] = useState(String(bundle?.discountPercent ?? 15));
   const [picked, setPicked] = useState<string[]>(bundle?.productIds ?? []);
-  const [q, setQ] = useState('');
   const [busy, setBusy] = useState(false);
 
-  const visible = useMemo(() => products.filter(p => p.status === 'active' && p.name.toLowerCase().includes(q.toLowerCase())), [products, q]);
-  const total = picked.reduce((s, id) => s + (products.find(p => p.productId === id)?.price ?? 0), 0);
+  // Live products only; first 100 up-front, typing searches the whole catalog server-side.
+  const { products, loading: productsLoading, error: productsError, query: q, setQuery: setQ, searching } =
+    useInventorySearch(storeId, { limit: 100, status: 'active' });
+  // Every product seen so far, so picked items keep counting toward the total
+  // even when the current search doesn't return them.
+  const [seen, setSeen] = useState<Record<string, InventoryProduct>>({});
+  useEffect(() => {
+    if (products.length) setSeen(prev => ({ ...prev, ...Object.fromEntries(products.map(p => [p.productId, p])) }));
+  }, [products]);
+
+  const visible = products;
+  // Only quote a total once every picked item's price is known.
+  const total = picked.every(id => seen[id]) ? picked.reduce((s, id) => s + (seen[id]?.price ?? 0), 0) : 0;
   const pctNum = Number(pct);
   const toggle = (id: string) => setPicked(prev => prev.includes(id) ? prev.filter(x => x !== id) : prev.length >= 20 ? prev : [...prev, id]);
 
@@ -68,7 +79,9 @@ function BundleForm({ storeId, bundle, products, onClose, onSaved }: {
                 </li>
               );
             })}
-            {visible.length === 0 && <li className="text-[12.5px] text-slate py-2">No live products match.</li>}
+            {productsLoading && visible.length === 0 && <li className="text-[12.5px] text-slate py-2">{searching ? 'Searching…' : 'Loading products…'}</li>}
+            {productsError && <li className="text-[12.5px] text-error py-2">{productsError}</li>}
+            {!productsLoading && !productsError && visible.length === 0 && <li className="text-[12.5px] text-slate py-2">{searching ? 'No live products match.' : 'No live products yet.'}</li>}
           </ul>
         </div>
       </div>
@@ -82,13 +95,11 @@ export default function StoreBundles() {
   const toast = useToast();
   const { storeId } = useStoreWorkspace();
   const [bundles, setBundles] = useState<SellerBundle[] | null>(null);
-  const [products, setProducts] = useState<InventoryProduct[]>([]);
   const [editing, setEditing] = useState<SellerBundle | 'new' | null>(null);
 
   const load = () => apiGetSellerBundles(storeId).then(res => setBundles(res.data ?? [])).catch(() => setBundles([]));
   useEffect(() => {
     void load();
-    apiGetStoreInventory(storeId, 1, 200).then(res => setProducts(res.data.products)).catch(() => {});
   }, [storeId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const setActive = async (b: SellerBundle, isActive: boolean) => {
@@ -136,7 +147,7 @@ export default function StoreBundles() {
         ))}
       </div>
       {editing && (
-        <BundleForm storeId={storeId} bundle={editing === 'new' ? null : editing} products={products} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); void load(); }} />
+        <BundleForm storeId={storeId} bundle={editing === 'new' ? null : editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); void load(); }} />
       )}
     </>
   );

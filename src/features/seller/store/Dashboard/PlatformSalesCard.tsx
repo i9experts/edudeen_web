@@ -5,10 +5,14 @@ import { clsx } from 'clsx';
 import { Button } from '@/components/comman/ui';
 import { useStoreCampaigns } from '@/hooks/store/useStoreCampaigns';
 import type { JoinableCampaign } from '@/api/services/marketing';
+import { useStoreWorkspace } from '@/components/layouts/StoreLayout';
+import { currencySymbol } from '@/utils/currency';
 
-function offLabel(c: JoinableCampaign) {
+// A fixed discount is denominated in the campaign's own currency (the platform
+// pivot); fall back to the store's base currency only if it's missing.
+function offLabel(c: JoinableCampaign, storeCurrency?: string | null) {
   if (!c.discountValue) return null;
-  return c.discountType === 'percentage' ? `${c.discountValue}% off` : `$${c.discountValue} off`;
+  return c.discountType === 'percentage' ? `${c.discountValue}% off` : `${currencySymbol(c.currency ?? storeCurrency)}${c.discountValue} off`;
 }
 
 function whenLabel(c: JoinableCampaign) {
@@ -27,6 +31,7 @@ function whenLabel(c: JoinableCampaign) {
  *  there are none. */
 export function PlatformSalesCard({ storeId }: { storeId: string }) {
   const navigate = useNavigate();
+  const { store } = useStoreWorkspace();
   const { campaigns, loading, toggle } = useStoreCampaigns(storeId);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState('');
@@ -62,7 +67,7 @@ export function PlatformSalesCard({ storeId }: { storeId: string }) {
 
       <ul className="divide-y divide-bone">
         {shown.map(c => {
-          const off = offLabel(c);
+          const off = offLabel(c, store?.baseCurrency);
           const isPlatform = c.sponsorType === 'platform';
           return (
             <li key={c._id} className="flex flex-col sm:flex-row sm:items-center gap-3 px-5 sm:px-6 py-4">

@@ -8,6 +8,7 @@ import { getStorePagePath } from '@/utils/storefrontUrl';
 import { money, discountLines } from './orderFormat';
 import { LICENSE_LABEL } from '@/constants/learning';
 import { DigitalFileDownloads } from '@/features/buyer/components/DigitalFileDownloads';
+import { RefundRequestPanel } from '@/features/buyer/components/RefundRequestPanel';
 
 const PAYMENT_LABEL: Record<string, string> = {
   stripe: 'Card', cash_on_delivery: 'Cash on delivery', manual_bank_transfer: 'Bank transfer',
@@ -150,6 +151,9 @@ export function OrderDetailPage() {
           </dl>
         </Card>
       </div>
+
+      {/* Item-level refund requests (reviewed by the seller / Edudeen). */}
+      <RefundRequestPanel order={order} />
     </div>
   );
 }

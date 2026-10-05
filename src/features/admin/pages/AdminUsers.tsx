@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { usePageTitle } from '@/hooks/usePageTitle';
-import { useAdminUsersStats, useAdminUsersList, useAdminUserActions } from '@/hooks/admin/useAdminUsers';
+import { useAdminUsersStats, useAdminUsersList, useAdminUserActions, useAdminUserDetail } from '@/hooks/admin/useAdminUsers';
+import { useToast } from '@/contexts/ToastContext';
 import type { AccountRole, AccountRow } from '@/api/services/users/adminUsers';
 import { Table, StatusBadge, Badge, Button, Modal, SkeletonBox, SearchInput, FilterDropdown, MetricCard } from '@/components/comman/ui';
 import { AdminStudioHeader } from '@/features/admin/components/studio';
@@ -25,13 +26,20 @@ function initialsOf(name: string) {
 }
 
 // ── Account detail modal ──────────────────────────────────────────────────────
-function AccountDetailModal({ account, onClose, onChanged }: { account: AccountRow; onClose: () => void; onChanged: () => void }) {
+function DetailField({ label, children }: { label: string; children: ReactNode }) {
+  return <div className="min-w-0"><p className="text-[11px] text-slate mb-0.5">{label}</p><div className="text-charcoal break-words">{children}</div></div>;
+}
+
+function AccountDetailModal({ account, onClose, onChanged }: { account: AccountRow; onClose: () => void; onChanged: (msg: string) => void }) {
   const { suspend, unsuspend, processingId, error } = useAdminUserActions();
-  const isSuspended = account.status === 'suspended';
+  // The list row only carries summary fields — load the full account when opened.
+  const { detail, loading: detailLoading, error: detailError, reload } = useAdminUserDetail(account.role, account.id);
+  const status = detail?.status ?? account.status;
+  const isSuspended = status === 'suspended';
 
   async function toggle() {
     const ok = isSuspended ? await unsuspend(account.role, account.id) : await suspend(account.role, account.id);
-    if (ok) onChanged();
+    if (ok) onChanged(isSuspended ? 'Account unsuspended' : 'Account suspended');
   }
 
   return (
@@ -61,11 +69,35 @@ function AccountDetailModal({ account, onClose, onChanged }: { account: AccountR
           </div>
         </div>
         <div className="grid grid-cols-2 gap-3 text-[13px]">
-          <div><p className="text-[11px] text-slate mb-0.5">Role</p><Badge color={ROLE_COLOR[account.role]} size="sm">{ROLE_LABEL[account.role]}</Badge></div>
-          <div><p className="text-[11px] text-slate mb-0.5">Status</p><StatusBadge status={account.status} size="sm" /></div>
-          <div><p className="text-[11px] text-slate mb-0.5">Plan</p><span className="text-charcoal capitalize">{account.plan}</span></div>
-          <div><p className="text-[11px] text-slate mb-0.5">Joined</p><span className="text-charcoal">{formatDate(account.createdAt)}</span></div>
+          <DetailField label="Role"><Badge color={ROLE_COLOR[account.role]} size="sm">{ROLE_LABEL[account.role]}</Badge></DetailField>
+          <DetailField label="Status"><StatusBadge status={status} size="sm" /></DetailField>
+          <DetailField label="Plan"><span className="capitalize">{account.plan}</span></DetailField>
+          <DetailField label="Joined">{formatDate(account.createdAt)}</DetailField>
+          {detailLoading ? (
+            Array.from({ length: 4 }).map((_, i) => <SkeletonBox key={i} height={34} rounded="6px" />)
+          ) : detail ? (
+            <>
+              <DetailField label="Phone">{detail.phone || '—'}</DetailField>
+              <DetailField label="Email verified">{detail.isVerified ? 'Yes' : 'No'}</DetailField>
+              <DetailField label="Sign-in method"><span className="capitalize">{detail.authProvider || 'email'}</span></DetailField>
+              <DetailField label="Last updated">{detail.updatedAt ? formatDate(detail.updatedAt) : '—'}</DetailField>
+              {detail.address && <div className="col-span-2"><DetailField label="Address">{detail.address}</DetailField></div>}
+              {account.role === 'seller' && (
+                <>
+                  <DetailField label="Onboarding">{detail.isOnboarded ? 'Completed' : 'Not finished'}</DetailField>
+                  <DetailField label="Stripe payouts"><span className="capitalize">{(detail.stripeConnectStatus ?? 'not_connected').replace('_', ' ')}</span></DetailField>
+                </>
+              )}
+              <div className="col-span-2"><DetailField label="Account ID"><span className="text-[12px] text-slate font-mono">{account.id}</span></DetailField></div>
+            </>
+          ) : null}
         </div>
+        {detailError && (
+          <p className="text-[12px] text-error">
+            Couldn't load full details: {detailError}{' '}
+            <button onClick={reload} className="underline bg-transparent border-none p-0 text-error cursor-pointer text-[12px]">Retry</button>
+          </p>
+        )}
         {error && <p className="text-[12px] text-error">{error}</p>}
       </div>
     </Modal>
@@ -97,6 +129,7 @@ export function AdminUsers() {
 
   const [viewing, setViewing] = useState<AccountRow | null>(null);
   const [confirming, setConfirming] = useState<AccountRow | null>(null);
+  const toast = useToast();
 
   function refreshAll() { refetchStats(); refetch(); }
 
@@ -104,7 +137,7 @@ export function AdminUsers() {
     if (!confirming) return;
     const isSuspended = confirming.status === 'suspended';
     const ok = isSuspended ? await unsuspend(confirming.role, confirming.id) : await suspend(confirming.role, confirming.id);
-    if (ok) { setConfirming(null); refreshAll(); }
+    if (ok) { setConfirming(null); toast.success(isSuspended ? 'Account unsuspended' : 'Account suspended'); refreshAll(); }
   }
 
   const columns: TableColumn<AccountRow>[] = [
@@ -164,7 +197,7 @@ export function AdminUsers() {
             <>
               <MetricCard label="Total Buyer Accounts" value={formatNumber(stats.totalBuyers)} />
               <MetricCard label="Active Seller Accounts" value={formatNumber(stats.activeSellerAccounts)} />
-              <MetricCard label="Suspended" value={formatNumber(stats.suspended)} sub="Under review" />
+              <MetricCard label="Suspended" value={formatNumber(stats.suspended)} sub="Buyers + sellers blocked from signing in" />
             </>
           ) : null}
         </div>
@@ -191,7 +224,7 @@ export function AdminUsers() {
         )}
       </div>
 
-      {viewing && <AccountDetailModal account={viewing} onClose={() => setViewing(null)} onChanged={() => { setViewing(null); refreshAll(); }} />}
+      {viewing && <AccountDetailModal account={viewing} onClose={() => setViewing(null)} onChanged={msg => { setViewing(null); toast.success(msg); refreshAll(); }} />}
 
       {confirming && (
         <Modal mobileSheet

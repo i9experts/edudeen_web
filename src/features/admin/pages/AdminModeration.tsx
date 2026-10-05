@@ -8,7 +8,8 @@ import type { TableColumn } from '@/components/comman/ui';
 import type { BadgeColor } from '@/types';
 import { AnalyticsErrorState } from '@/components/comman/analytics/AnalyticsErrorState';
 import { formatDate } from '@/components/comman/analytics/format';
-import { AlertCircle, AlertTriangle, Info, SearchX, Eye, Check, Trash2, ShieldCheck } from 'lucide-react';
+import { AlertCircle, AlertTriangle, Info, SearchX, Eye, Check, Trash2, ShieldCheck, ClipboardCheck, Loader2 } from 'lucide-react';
+import { useToast } from '@/contexts/ToastContext';
 import type { LucideIcon } from 'lucide-react';
 
 const RISK: Record<RiskLevel, { label: string; color: BadgeColor; Icon: LucideIcon }> = {
@@ -37,13 +38,27 @@ function RiskBadge({ risk }: { risk: RiskLevel }) {
 }
 
 // ── Report detail modal ───────────────────────────────────────────────────────
-function ReportDetailModal({ report, onClose, onApproved }: { report: ModerationReportRow; onClose: () => void; onApproved: () => void }) {
-  const { approve, processingId, error } = useModerationActions();
+function ReportDetailModal({ report, onClose, onDone, onRemove }: {
+  report: ModerationReportRow; onClose: () => void; onDone: (msg: string) => void; onRemove: () => void;
+}) {
+  const { approve, markReviewed, processingId, error } = useModerationActions();
+  const [busy, setBusy] = useState<'approve' | 'review' | null>(null);
 
   async function handleApprove() {
+    setBusy('approve');
     const ok = await approve(report._id);
-    if (ok) onApproved();
+    setBusy(null);
+    if (ok) onDone(report.targetType === 'review' ? 'Report dismissed' : 'Report approved');
   }
+
+  async function handleMarkReviewed() {
+    setBusy('review');
+    const ok = await markReviewed(report._id);
+    setBusy(null);
+    if (ok) onDone('Report marked as reviewed');
+  }
+
+  const working = processingId === report._id;
 
   return (
     <Modal mobileSheet
@@ -51,8 +66,14 @@ function ReportDetailModal({ report, onClose, onApproved }: { report: Moderation
       onClose={onClose}
       footer={<>
         <Button variant="ghost" onClick={onClose}>Close</Button>
-        <Button variant="secondary" onClick={handleApprove} loading={processingId === report._id}>
+        {report.status !== 'reviewed' && (
+          <Button variant="outline" onClick={handleMarkReviewed} loading={busy === 'review'} disabled={working}>Mark reviewed</Button>
+        )}
+        <Button variant="secondary" onClick={handleApprove} loading={busy === 'approve'} disabled={working}>
           {report.targetType === 'review' ? 'Dismiss report' : 'Approve — No Action'}
+        </Button>
+        <Button variant="danger" onClick={onRemove} disabled={working}>
+          {report.targetType === 'seller' ? 'Suspend' : report.targetType === 'review' ? 'Remove review' : 'Remove'}
         </Button>
       </>}
     >
@@ -75,10 +96,12 @@ function ReportDetailModal({ report, onClose, onApproved }: { report: Moderation
             <p className="text-[13px] text-charcoal leading-[1.6]">{report.details}</p>
           </div>
         )}
-        <p className="text-[11px] text-slate">Reported {formatDate(report.createdAt)}</p>
+        <p className="text-[11px] text-slate">
+          Reported {formatDate(report.createdAt)}{report.status === 'reviewed' ? ' · Marked reviewed' : ''}
+        </p>
         {report.targetType === 'review' && (
           <p className="text-[11.5px] text-slate bg-cream border border-bone rounded-md px-2.5 py-2">
-            Dismissing closes this report. The review itself stays published — reviews can't be removed from this screen yet.
+            Dismissing closes this report and keeps the review published. Removing hides the review and updates the product's and store's star rating.
           </p>
         )}
         {error && <p className="text-[12px] text-error">{error}</p>}
@@ -108,7 +131,8 @@ export function AdminModeration() {
   );
 
   const { data, loading, error, refetch } = useModerationQueue(query);
-  const { approve, remove, processingId, error: actionError } = useModerationActions();
+  const { approve, remove, markReviewed, processingId, error: actionError } = useModerationActions();
+  const toast = useToast();
 
   const [viewing, setViewing] = useState<ModerationReportRow | null>(null);
   const [removing, setRemoving] = useState<ModerationReportRow | null>(null);
@@ -117,13 +141,23 @@ export function AdminModeration() {
 
   async function handleApprove(report: ModerationReportRow) {
     const ok = await approve(report._id);
-    if (ok) refreshAll();
+    if (ok) { toast.success(report.targetType === 'review' ? 'Report dismissed' : 'Report approved'); refreshAll(); }
+  }
+
+  async function handleMarkReviewed(report: ModerationReportRow) {
+    const ok = await markReviewed(report._id);
+    if (ok) { toast.success('Report marked as reviewed'); refreshAll(); }
   }
 
   async function handleRemove() {
     if (!removing) return;
+    const target = removing.targetType;
     const ok = await remove(removing._id);
-    if (ok) { setRemoving(null); refreshAll(); }
+    if (ok) {
+      setRemoving(null);
+      toast.success(target === 'seller' ? 'Seller suspended' : target === 'review' ? 'Review removed' : 'Listing removed');
+      refreshAll();
+    }
   }
 
   const columns: TableColumn<ModerationReportRow>[] = [
@@ -139,17 +173,22 @@ export function AdminModeration() {
       render: (r) => (
         <div className="flex gap-[6px]">
           <Button size="xs" variant="outline" icon={<Eye size={11} />} onClick={() => setViewing(r)}>Review</Button>
-          <Button size="xs" variant="secondary" icon={<Check size={11} />} loading={processingId === r._id} onClick={() => handleApprove(r)}>
-            {r.targetType === 'review' ? 'Dismiss report' : 'Approve'}
-          </Button>
-          {/* Removing a review isn't supported server-side (the moderation
-              "remove" action only delists listings / suspends sellers), so
-              review reports can only be dismissed. */}
-          {r.targetType !== 'review' && (
-            <Button size="xs" variant="danger" icon={<Trash2 size={11} />} disabled={processingId === r._id} onClick={() => setRemoving(r)}>
-              {r.targetType === 'seller' ? 'Suspend' : 'Remove'}
+          {r.status === 'reviewed' ? (
+            <Badge color="gray" size="sm">Reviewed</Badge>
+          ) : (
+            <Button size="xs" variant="outline" icon={<ClipboardCheck size={11} />} disabled={processingId === r._id} onClick={() => handleMarkReviewed(r)}>
+              Mark reviewed
             </Button>
           )}
+          <Button size="xs" variant="secondary" icon={<Check size={11} />} disabled={processingId === r._id} onClick={() => handleApprove(r)}>
+            {r.targetType === 'review' ? 'Dismiss report' : 'Approve'}
+          </Button>
+          {/* "Remove" delists a listing, suspends a seller, or hides a review
+              (and recomputes its product/store rating) — server-side. */}
+          <Button size="xs" variant="danger" icon={<Trash2 size={11} />} disabled={processingId === r._id} onClick={() => setRemoving(r)}>
+            {r.targetType === 'seller' ? 'Suspend' : 'Remove'}
+          </Button>
+          {processingId === r._id && <Loader2 size={13} className="animate-spin text-slate self-center" />}
         </div>
       ),
     },
@@ -205,7 +244,8 @@ export function AdminModeration() {
         <ReportDetailModal
           report={viewing}
           onClose={() => setViewing(null)}
-          onApproved={() => { setViewing(null); refreshAll(); }}
+          onDone={msg => { setViewing(null); toast.success(msg); refreshAll(); }}
+          onRemove={() => { setRemoving(viewing); setViewing(null); }}
         />
       )}
 
@@ -216,15 +256,18 @@ export function AdminModeration() {
           footer={<>
             <Button variant="ghost" onClick={() => setRemoving(null)}>Cancel</Button>
             <Button variant="danger" onClick={handleRemove} loading={processingId === removing._id}>
-              {removing.targetType === 'seller' ? 'Suspend Seller' : 'Remove Listing'}
+              {removing.targetType === 'seller' ? 'Suspend Seller' : removing.targetType === 'review' ? 'Remove Review' : 'Remove Listing'}
             </Button>
           </>}
         >
           <p className="text-[13px] text-charcoal leading-[1.6]">
             {removing.targetType === 'seller'
               ? <>Suspend "<strong>{removing.itemLabel}</strong>"? Their account will be immediately blocked from the platform.</>
-              : <>Remove "<strong>{removing.itemLabel}</strong>" from the marketplace? It will be delisted immediately.</>}
+              : removing.targetType === 'review'
+                ? <>Remove this review ({removing.itemLabel})? It will be hidden from the product page and the product's and store's ratings will be recalculated.</>
+                : <>Remove "<strong>{removing.itemLabel}</strong>" from the marketplace? It will be delisted immediately.</>}
           </p>
+          {actionError && <p className="text-[12px] text-error mt-2">{actionError}</p>}
         </Modal>
       )}
       </div>

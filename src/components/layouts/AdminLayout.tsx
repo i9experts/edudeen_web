@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { Outlet, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { clsx } from 'clsx';
 import {
   LayoutDashboard, Users, Shield, Store, DollarSign, Bell, Settings, UserCog,
   PanelLeftClose, PanelLeftOpen, MessageSquare, Image as ImageIcon, HelpCircle, FolderTree, RefreshCw,
   BarChart3, Layers, Search, Sparkles, Tag, LogOut, MessageCircle, Landmark, Percent, Coins, UserPlus, Activity,
-  ChevronDown, TrendingUp, ChevronRight, Quote, CalendarCheck, Undo2, Truck, ShoppingBag, BookMarked,
+  ChevronDown, TrendingUp, ChevronRight, Quote, CalendarCheck, Undo2, Truck, ShoppingBag, BookMarked, Smartphone,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useGetProfile } from '@/hooks/auth/useGetProfile';
@@ -56,6 +56,7 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { id: 'contact',       Icon: MessageCircle,   label: 'Contact Messages',path: '/admin/contact'       },
   { id: 'testimonials',  Icon: Quote,           label: 'Testimonials',   path: '/admin/testimonials'  },
   { id: 'announcements', Icon: Bell,            label: 'Announcements',   path: '/admin/announcements' },
+  { id: 'app-slides',    Icon: Smartphone,      label: 'App Intro Slides', path: '/admin/app-slides'  },
   { id: 'config',        Icon: Settings,        label: 'Platform Config', path: '/admin/config'        },
   { id: 'settings',      Icon: UserCog,         label: 'My Settings',     path: '/admin/settings'      },
 ];
@@ -81,7 +82,7 @@ export const ADMIN_MODULES: AdminModule[] = [
   { id: 'people',    label: 'Users & Communication', Icon: Users,          ids: ['users', 'leads', 'moderation', 'messages', 'contact'] },
   { id: 'growth',    label: 'Growth',                Icon: TrendingUp,     ids: ['marketing', 'picks', 'seo', 'ai-studio'] },
   { id: 'finance',   label: 'Finance',               Icon: DollarSign,     ids: ['finance', 'monthly-payouts', 'manual-payments', 'commission-rules', 'fx-settings'] },
-  { id: 'content',   label: 'Content',               Icon: ImageIcon,      ids: ['banners', 'faqs', 'testimonials', 'announcements'] },
+  { id: 'content',   label: 'Content',               Icon: ImageIcon,      ids: ['banners', 'faqs', 'testimonials', 'announcements', 'app-slides'] },
   { id: 'analytics', label: 'Analytics',             Icon: BarChart3,       ids: ['analytics'] },
   { id: 'system',    label: 'System',                Icon: Settings,       ids: ['activity-log', 'config'] },
 ];
@@ -556,7 +557,7 @@ export function AdminLayout() {
           <span className="text-[10px] font-bold text-brand-royal uppercase tracking-[0.15em]">Team workspace</span>
         </div>
         <main id="admin-main" className="flex-1 overflow-y-auto overscroll-contain pb-[72px] lg:pb-10">
-          <Outlet />
+          <Suspense fallback={null}><Outlet /></Suspense>
         </main>
       </div>
       <AdminBottomNav />

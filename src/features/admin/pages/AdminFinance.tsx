@@ -47,6 +47,9 @@ const TABS: Tab[] = [
   { id: 'reports', label: 'Reports', icon: <FileText size={14} /> },
 ];
 
+/** Tabs whose endpoints take no date/store/seller params. */
+const UNFILTERED_TABS = new Set(['sellers', 'payouts', 'payout-methods']);
+
 export function AdminFinance() {
   usePageTitle('Finance');
   // The active tab lives in the URL (?tab=…) so a tab can be deep-linked —
@@ -61,7 +64,7 @@ export function AdminFinance() {
   };
   const [filters, setFilters] = useState(DEFAULT_ADMIN_FINANCE_FILTERS);
   const [csvSection, setCsvSection] = useState(TAB_TO_CSV_SECTION.overview);
-  const { exportReport, exporting } = useAdminFinanceExport();
+  const { exportReport, exporting, error: exportError } = useAdminFinanceExport();
 
   useEffect(() => { setCsvSection(TAB_TO_CSV_SECTION[activeTab] ?? 'transactions'); }, [activeTab]);
 
@@ -77,9 +80,21 @@ export function AdminFinance() {
     <div className={`${ADMIN_GUTTER} pt-6 pb-8 flex flex-col gap-5`}>
       <TabBar tabs={TABS} active={activeTab} onChange={setActiveTab} />
 
-      {/* The date-range filter bar drives every tab except Monthly Payouts,
-          which has its own month + currency controls. */}
-      {activeTab !== 'monthly-payouts' && (
+      {/* The date-range filter bar drives the tabs whose API takes those
+          params. Sellers / Payouts / Payout Methods show live balances and
+          queues (their endpoints ignore date/store/seller), and Monthly
+          Payouts has its own month + currency controls — so no bar there. */}
+      {UNFILTERED_TABS.has(activeTab) && TAB_TO_CSV_SECTION[activeTab] && (
+        <div className="flex items-center justify-between gap-3 flex-wrap bg-white border border-bone rounded-xl px-4 py-3">
+          <p className="text-[12px] text-slate m-0">Live view — date, store and seller filters don't apply to this tab.</p>
+          <Button variant="outline" size="sm" loading={exporting}
+            onClick={() => exportReport({ format: 'csv', section: TAB_TO_CSV_SECTION[activeTab] as never })}>
+            Export CSV
+          </Button>
+        </div>
+      )}
+      {exportError && activeTab !== 'monthly-payouts' && <p className="text-[12px] text-error -mt-2">{exportError}</p>}
+      {activeTab !== 'monthly-payouts' && !UNFILTERED_TABS.has(activeTab) && (
       <AnalyticsFilterBar
         filters={filters}
         onChange={setFilters}

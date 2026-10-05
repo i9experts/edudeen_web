@@ -76,7 +76,8 @@ function nextPresetWindow(p: SalePreset) {
   const clamp = (s: Date, e: Date) => ({ start: s < now ? now : s, end: e });
   if ('lunar' in p) {
     const year = Object.keys(p.lunar).map(Number).sort().find(y => new Date(`${p.lunar[y][1]}T23:59:00`) >= now);
-    if (year == null) return clamp(now, new Date(now.getTime() + 30 * 864e5));
+    // Past the dates in the table: no guess — the admin sets the dates.
+    if (year == null) return null;
     return clamp(new Date(`${p.lunar[year][0]}T00:00:00`), new Date(`${p.lunar[year][1]}T23:59:00`));
   }
   let year = now.getFullYear();
@@ -145,8 +146,9 @@ function CreateCampaignModal({ campaign, onClose, onSaved }: { campaign?: Campai
                     const w = nextPresetWindow(p);
                     setName(p.label);
                     setDescription(p.description);
-                    setStartDate(toDatetimeLocalValue(w.start.toISOString()));
-                    setEndDate(toDatetimeLocalValue(w.end.toISOString()));
+                    // No known dates for this year (lunar table ran out) → leave the dates for the admin.
+                    setStartDate(w ? toDatetimeLocalValue(w.start.toISOString()) : '');
+                    setEndDate(w ? toDatetimeLocalValue(w.end.toISOString()) : '');
                     setDiscountType('percentage');
                     setDiscountValue(String(p.discount));
                   }}
@@ -913,9 +915,14 @@ function PromotionsTab() {
   const [showCalendar, setShowCalendar] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
 
-  useEffect(() => {
-    apiGetAdminPromotionAnalytics().then((res) => setAnalytics(res.data)).catch(() => {});
-  }, []);
+  const [analyticsError, setAnalyticsError] = useState('');
+  const loadAnalytics = () => {
+    setAnalyticsError('');
+    apiGetAdminPromotionAnalytics()
+      .then((res) => setAnalytics(res.data))
+      .catch((err) => setAnalyticsError(err instanceof Error ? err.message : 'Could not load promotion analytics.'));
+  };
+  useEffect(() => { loadAnalytics(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   function refetch() {
     setLoading(true);
@@ -955,6 +962,7 @@ function PromotionsTab() {
 
   return (
     <div className="flex flex-col gap-4 pt-4">
+      {analyticsError && <AnalyticsErrorState message={analyticsError} onRetry={loadAnalytics} />}
       {analytics && (
         <div className="grid grid-cols-2 sm:grid-cols-6 gap-3">
           {[

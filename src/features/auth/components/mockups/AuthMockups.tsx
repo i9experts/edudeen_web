@@ -1,4 +1,6 @@
+import { useEffect, useState } from 'react';
 import { clsx } from 'clsx';
+import { apiGetPlatformStats, type PlatformStats } from '@/api/services/store';
 import {
   Star, ShoppingBag, TrendingUp, ShieldCheck, KeyRound, Mail,
   Fingerprint, CheckCircle2, ArrowUpRight, Store, Package, Users, Wallet,
@@ -49,16 +51,16 @@ export function MarketplaceMockup() {
         </div>
         <div className="grid grid-cols-2 gap-[clamp(4px,1vh,10px)]">
           {[
-            { grad: 'from-brand-orange to-brand-deep-orange', price: '$24' },
-            { grad: 'from-success to-info',            price: '$58' },
-            { grad: 'from-warning to-brand-orange',          price: '$12' },
-            { grad: 'from-info to-[#6b4ee6]',             price: '$36' },
+            { grad: 'from-brand-orange to-brand-deep-orange' },
+            { grad: 'from-success to-info' },
+            { grad: 'from-warning to-brand-orange' },
+            { grad: 'from-info to-[#6b4ee6]' },
           ].map((p, i) => (
             <div key={i} className="rounded-[10px] bg-white/[0.06] border border-white/10 overflow-hidden">
               <div className={clsx('h-[clamp(28px,6vh,48px)] bg-gradient-to-br', p.grad)} />
               <div className="px-2 py-[6px] flex items-center justify-between">
                 <div className="h-[5px] w-8 rounded-full bg-white/25" />
-                <span className="text-[10px] font-bold text-white/85">{p.price}</span>
+                <span className="h-[5px] w-5 rounded-full bg-white/40" />
               </div>
             </div>
           ))}
@@ -76,7 +78,6 @@ export function MarketplaceMockup() {
         <div className="flex items-center gap-[2px]">
           {Array.from({ length: 5 }).map((_, i) => <Star key={i} size={9} className="text-brand-orange fill-brand-orange" />)}
         </div>
-        <span className="text-[10px] text-white/70">4.8</span>
       </FloatingChip>
     </div>
   );
@@ -92,10 +93,10 @@ export function DashboardMockup() {
         <div className="flex items-center justify-between mb-3">
           <span className="text-[11.5px] font-semibold text-white">Store revenue</span>
           <span className="flex items-center gap-1 text-[10px] font-semibold text-[#4ade80]">
-            <ArrowUpRight size={11} /> 24%
+            <ArrowUpRight size={11} />
           </span>
         </div>
-        <p className="text-[22px] font-bold text-white mb-3">$4,285.00</p>
+        <div className="h-[14px] w-28 rounded-full bg-white/25 mb-3" aria-hidden />
         <div className="flex items-end gap-[6px] h-14">
           {bars.map((h, i) => (
             <div key={i} className="flex-1 rounded-t-[4px] bg-gradient-to-t from-brand-orange to-brand-deep-orange/70" style={{ height: `${h}%` }} />
@@ -230,13 +231,13 @@ export function SellerDashboardMockup() {
         </div>
         <div className="grid grid-cols-3 gap-2">
           {[
-            { Icon: Wallet,  label: 'Revenue',   value: '$4.2k' },
-            { Icon: Package, label: 'Orders',    value: '128'   },
-            { Icon: Users,   label: 'Customers', value: '86'    },
+            { Icon: Wallet,  label: 'Revenue',   value: null },
+            { Icon: Package, label: 'Orders',    value: null   },
+            { Icon: Users,   label: 'Customers', value: null    },
           ].map(({ Icon, label, value }) => (
             <div key={label} className="rounded-[10px] bg-white/[0.06] border border-white/10 px-2 py-[8px]">
               <Icon size={12} className="text-white/60 mb-1" />
-              <p className="text-[12px] font-bold text-white leading-tight">{value}</p>
+              {value ?? <div className="h-[9px] w-8 rounded-full bg-white/30 mb-[3px]" aria-hidden />}
               <p className="text-[9px] text-white/50 leading-tight">{label}</p>
             </div>
           ))}
@@ -253,6 +254,9 @@ export function SellerDashboardMockup() {
 
 /* ── Admin Login → Platform control branding ──────────────────────────────── */
 export function AdminControlMockup() {
+  const [stats, setStats] = useState<PlatformStats | null>(null);
+  useEffect(() => { apiGetPlatformStats().then(r => setStats(r.data ?? null)).catch(() => {}); }, []);
+  const fmt = (n?: number) => (typeof n === 'number' && Number.isFinite(n) ? new Intl.NumberFormat('en', { notation: 'compact' }).format(n) : '—');
   return (
     <div className="relative w-full max-w-[280px] mx-auto py-[clamp(6px,2vh,24px)]">
       <GlowOrb className="w-40 h-40 bg-error/25 -top-4 -end-4" />
@@ -265,14 +269,14 @@ export function AdminControlMockup() {
             <span className="text-[11.5px] font-semibold text-white">Platform status</span>
           </div>
           <span className="flex items-center gap-1 text-[10px] font-semibold text-[#4ade80]">
-            <span className="size-1.5 rounded-full bg-[#4ade80]" /> All systems normal
+            <span className="size-1.5 rounded-full bg-[#4ade80]" /> Live
           </span>
         </div>
         <div className="grid grid-cols-3 gap-2">
           {[
-            { label: 'Sellers',  value: '2,481' },
-            { label: 'Orders',   value: '18.2k' },
-            { label: 'Uptime',   value: '99.98%' },
+            { label: 'Sellers', value: fmt(stats?.sellersCount) },
+            { label: 'Buyers',  value: fmt(stats?.buyersCount) },
+            { label: 'Stores',  value: fmt(stats?.storesCount) },
           ].map(({ label, value }) => (
             <div key={label} className="rounded-[10px] bg-white/[0.06] border border-white/10 px-2 py-[8px]">
               <p className="text-[12px] font-bold text-white leading-tight">{value}</p>

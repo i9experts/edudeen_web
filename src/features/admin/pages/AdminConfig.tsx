@@ -1,3 +1,4 @@
+import { SocialLinksCard } from './SocialLinksCard';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -317,6 +318,7 @@ export function AdminConfig() {
             <EmailConfigCard config={config} onSaved={setConfig} />
           </div>
           <ManualPaymentConfigCard config={config} onSaved={setConfig} />
+          <SocialLinksCard />
         </>
       ) : null}
       </div>

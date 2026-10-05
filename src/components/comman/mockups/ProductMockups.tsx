@@ -10,6 +10,11 @@ import { PhoneShell, StatusBar } from '@/components/comman/ui/AppDownloadBanner'
 import { unsplashUrl } from '@/assets/stockPhotos';
 
 // ── Shared "browser chrome" strip reused by every desktop-shaped mockup ──────
+/** Placeholder for a figure in these illustrations — never an invented number. */
+function Ph({ w = 'w-10', tone = 'bg-bone' }: { w?: string; tone?: string }) {
+  return <span aria-hidden className={clsx('inline-block h-[7px] rounded-full align-middle', w, tone)} />;
+}
+
 function BrowserChrome({ label }: { label: string }) {
   return (
     <div className="flex items-center gap-2 px-3 py-2 bg-cream border-b border-bone">
@@ -27,10 +32,10 @@ function BrowserChrome({ label }: { label: string }) {
 // copy/prices), same convention already used by Homepage's showcase mockups.
 // ────────────────────────────────────────────────────────────────────────────
 const STORE_PRODUCTS = [
-  { name: 'The Noble Quran (Tajweed)', price: '$24', img: 'quran' as const },
-  { name: 'Arabic for Beginners Course', price: '$39', img: 'onlineStudy' as const },
-  { name: 'Grade 5 Maths Worksheets', price: '$9', img: 'examPaper' as const },
-  { name: 'A5 Study Notebook Set',  price: '$12', img: 'notebookPen' as const },
+  { name: 'The Noble Quran (Tajweed)', img: 'quran' as const },
+  { name: 'Arabic for Beginners Course', img: 'onlineStudy' as const },
+  { name: 'Grade 5 Maths Worksheets', img: 'examPaper' as const },
+  { name: 'A5 Study Notebook Set', img: 'notebookPen' as const },
 ];
 
 export function StorefrontPreview({ className }: { className?: string }) {
@@ -58,7 +63,7 @@ export function StorefrontPreview({ className }: { className?: string }) {
             </div>
             <div className="p-[7px]">
               <p className="text-[9.5px] font-semibold text-carbon truncate">{p.name}</p>
-              <p className="text-[10px] font-bold text-brand-orange">{p.price}</p>
+              <Ph w="w-8" tone="bg-brand-orange/30" />
             </div>
           </div>
         ))}
@@ -72,9 +77,9 @@ export function StorefrontPreview({ className }: { className?: string }) {
 // ────────────────────────────────────────────────────────────────────────────
 const CHART_BARS = [30, 45, 38, 60, 52, 70, 64, 80, 74, 90, 82, 96];
 const RECENT_ORDERS = [
-  { id: '#3921', customer: 'M. Ahmed', amount: 'Rs 4,200', status: 'Paid' },
-  { id: '#3920', customer: 'S. Khan',  amount: 'Rs 1,850', status: 'Packed' },
-  { id: '#3919', customer: 'A. Raza',  amount: 'Rs 6,400', status: 'Paid' },
+  { id: 'order-1', status: 'Paid' },
+  { id: 'order-2', status: 'Packed' },
+  { id: 'order-3', status: 'Paid' },
 ];
 const TOP_PRODUCTS = [
   { name: 'Tajweed Basics Course',   units: 84,  img: 'quran' as const },
@@ -94,19 +99,19 @@ export function SellerDashboardPreview({ className }: { className?: string }) {
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-[8px] mb-4">
           {[
-            { label: 'Revenue',   value: '$18.4k', trend: '+12%', up: true,  Icon: DollarSign },
-            { label: 'Orders',    value: '412',    trend: '+8%',  up: true,  Icon: Package },
-            { label: 'Customers', value: '1,204',  trend: '+5%',  up: true,  Icon: Users },
-            { label: 'Refunds',   value: '1.2%',    trend: '-0.4%', up: false, Icon: TrendingDown },
-          ].map(({ label, value, trend, up, Icon }) => (
+            { label: 'Revenue', up: true, Icon: DollarSign },
+            { label: 'Orders', up: true, Icon: Package },
+            { label: 'Customers', up: true, Icon: Users },
+            { label: 'Refunds', up: false, Icon: TrendingDown },
+          ].map(({ label, up, Icon }) => (
             <div key={label} className="rounded-lg bg-cream p-2.5">
               <div className="flex items-center justify-between mb-1">
                 <Icon size={12} className="text-slate" />
                 <span className={clsx('flex items-center gap-[2px] text-[8.5px] font-semibold', up ? 'text-success' : 'text-error')}>
-                  {up ? <TrendingUp size={9} /> : <TrendingDown size={9} />}{trend}
+                  {up ? <TrendingUp size={9} /> : <TrendingDown size={9} />}
                 </span>
               </div>
-              <p className="text-[13px] font-bold text-carbon leading-tight">{value}</p>
+              <p className="leading-tight"><Ph w="w-12" tone="bg-carbon/20" /></p>
               <p className="text-[8.5px] text-slate leading-tight">{label}</p>
             </div>
           ))}
@@ -124,9 +129,9 @@ export function SellerDashboardPreview({ className }: { className?: string }) {
             <div className="flex flex-col gap-[6px]">
               {RECENT_ORDERS.map(o => (
                 <div key={o.id} className="flex items-center justify-between text-[9.5px]">
-                  <span className="text-slate">{o.id} · {o.customer}</span>
+                  <Ph w="w-20" />
                   <span className="flex items-center gap-1.5">
-                    <span className="font-semibold text-carbon">{o.amount}</span>
+                    <Ph w="w-10" tone="bg-carbon/20" />
                     <span className={clsx('text-[8px] font-bold px-[6px] py-[1px] rounded-full', o.status === 'Paid' ? 'bg-success-bg text-success' : 'bg-warning-bg text-warning')}>{o.status}</span>
                   </span>
                 </div>
@@ -169,12 +174,12 @@ export function AnalyticsPreview({ className }: { className?: string }) {
       </div>
       <div className="grid grid-cols-3 gap-2">
         {[
-          { label: 'Revenue', value: '$18.4k' },
-          { label: 'Orders', value: '412' },
-          { label: 'Avg. Order', value: '$44.60' },
+          { label: 'Revenue' },
+          { label: 'Orders' },
+          { label: 'Avg. Order' },
         ].map(s => (
           <div key={s.label} className="rounded-lg bg-cream px-2.5 py-2 text-center">
-            <p className="text-[13px] font-bold text-carbon">{s.value}</p>
+            <p><Ph w="w-12" tone="bg-carbon/20" /></p>
             <p className="text-[9px] text-slate">{s.label}</p>
           </div>
         ))}
@@ -239,7 +244,7 @@ export function InventoryPreview({ className }: { className?: string }) {
       <div className="p-4 sm:p-5">
         <div className="flex items-center justify-between mb-3">
           <p className="text-[12.5px] font-bold text-carbon">Stock levels</p>
-          <span className="text-[9.5px] text-slate">4 products</span>
+          <Ph w="w-12" />
         </div>
         <div className="flex flex-col gap-2.5 mb-3">
           {STOCK_LEVELS.map(item => {
@@ -250,7 +255,7 @@ export function InventoryPreview({ className }: { className?: string }) {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-[10.5px] font-medium text-charcoal truncate">{item.name}</span>
-                    <span className={clsx('text-[10px] font-bold shrink-0', low ? 'text-error' : 'text-carbon')}>{item.stock} left</span>
+                    <span className={clsx('text-[10px] font-bold shrink-0', low ? 'text-error' : 'text-carbon')}>{low ? 'Low stock' : 'In stock'}</span>
                   </div>
                   <div className="h-[4px] rounded-full bg-bone overflow-hidden">
                     <div className={clsx('h-full rounded-full', low ? 'bg-error' : 'bg-brand-orange')} style={{ width: `${Math.min(100, item.pct)}%` }} />
@@ -279,9 +284,9 @@ export function InventoryPreview({ className }: { className?: string }) {
 // ────────────────────────────────────────────────────────────────────────────
 const ORDER_STAGES = ['New', 'Processing', 'Shipped', 'Delivered'];
 const CUSTOMER_ORDERS = [
-  { customer: 'M. Ahmed', orders: 4, spent: 'Rs 18,400' },
-  { customer: 'S. Khan',  orders: 2, spent: 'Rs 6,150' },
-  { customer: 'A. Raza',  orders: 7, spent: 'Rs 31,900' },
+  { customer: 'row-1' },
+  { customer: 'row-2' },
+  { customer: 'row-3' },
 ];
 
 export function OrdersTimelinePreview({ className }: { className?: string }) {
@@ -299,8 +304,8 @@ export function OrdersTimelinePreview({ className }: { className?: string }) {
       <BrowserChrome label="yourstore — orders" />
       <div className="p-4 sm:p-5">
         <div className="flex items-center justify-between mb-4">
-          <p className="text-[12.5px] font-bold text-carbon">Order #3921</p>
-          <span className="text-[10px] font-semibold text-brand-orange">Rs 4,200</span>
+          <p className="text-[12.5px] font-bold text-carbon">Order</p>
+          <Ph w="w-12" tone="bg-brand-orange/30" />
         </div>
 
         <div className="relative flex items-center justify-between mb-5 px-1">
@@ -327,9 +332,9 @@ export function OrdersTimelinePreview({ className }: { className?: string }) {
         <div className="flex flex-col gap-[6px]">
           {CUSTOMER_ORDERS.map(c => (
             <div key={c.customer} className="flex items-center justify-between text-[10px]">
-              <span className="text-charcoal">{c.customer}</span>
-              <span className="text-slate">{c.orders} orders</span>
-              <span className="font-semibold text-carbon">{c.spent}</span>
+              <Ph w="w-16" />
+              <Ph w="w-10" />
+              <Ph w="w-10" tone="bg-carbon/20" />
             </div>
           ))}
         </div>

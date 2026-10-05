@@ -1,4 +1,5 @@
-import { MetricCard, Table, type TableColumn, StatusBadge } from '@/components/comman/ui';
+import { useState } from 'react';
+import { MetricCard, Table, type TableColumn, StatusBadge, Button } from '@/components/comman/ui';
 import { BarChart } from '@/components/comman/charts';
 import {
   useAdminRefundReport,
@@ -7,8 +8,16 @@ import {
   useAdminTaxReports,
   useAdminReconciliationHistory,
   useAdminFxExposure,
+  useAdminRunReconciliation,
 } from '@/hooks/admin/useAdminFinance';
-import type { AdminFinanceParams, RefundByStoreRow, TaxReportRow, ReconciliationRunRow } from '@/api/services/finance/adminFinance';
+import type {
+  AdminFinanceParams, RefundByStoreRow, TaxReportRow, ReconciliationRunRow, AdminReconciliationData,
+} from '@/api/services/finance/adminFinance';
+import { useToast } from '@/contexts/ToastContext';
+import { RefreshCw } from 'lucide-react';
+
+/** The Settlement and Refund reports follow the filter bar; the rest are fixed windows. */
+const IGNORES_FILTERS = 'Not affected by the date/store/seller filters above.';
 import { AnalyticsErrorState } from '@/components/comman/analytics/AnalyticsErrorState';
 import { ChartCardSkeleton, TableCardSkeleton } from '@/components/comman/analytics/AnalyticsSkeletons';
 import { formatCurrency } from '@/components/comman/analytics/format';
@@ -22,6 +31,17 @@ export function FinanceReportsTab({ params }: { params: AdminFinanceParams }) {
   const taxReports = useAdminTaxReports({});
   const reconciliation = useAdminReconciliationHistory(14);
   const exposure = useAdminFxExposure();
+  const runRecon = useAdminRunReconciliation();
+  const [lastRun, setLastRun] = useState<AdminReconciliationData | null>(null);
+  const toast = useToast();
+
+  async function handleRunReconciliation() {
+    const result = await runRecon.run(1);
+    if (!result) return;
+    setLastRun(result);
+    toast.success(result.hasAnyDiscrepancy ? 'Reconciliation finished — drift found' : 'Reconciliation finished — no drift');
+    reconciliation.refetch();
+  }
 
   const reconciliationColumns: TableColumn<ReconciliationRunRow>[] = [
     { key: 'runAt', header: 'Run', render: (r) => new Date(r.runAt).toLocaleString() },
@@ -63,7 +83,10 @@ export function FinanceReportsTab({ params }: { params: AdminFinanceParams }) {
         <AnalyticsErrorState message={settlement.error} onRetry={settlement.refetch} />
       ) : settlement.data ? (
         <div className="bg-white border border-bone rounded-xl px-5 py-5 flex flex-col gap-4">
-          <p className="font-serif font-normal text-[19px] sm:text-[21px] text-carbon leading-[1.25]">Settlement Report</p>
+          <div>
+            <p className="font-serif font-normal text-[19px] sm:text-[21px] text-carbon leading-[1.25]">Settlement Report</p>
+            <p className="text-[12px] text-slate">Follows the date/store/seller filters above.</p>
+          </div>
           {settlement.data.byCurrency.map((c) => (
             <div key={c.currency}>
               <p className="text-[12px] font-semibold text-slate uppercase tracking-[0.06em] mb-2">{c.currency}</p>
@@ -93,7 +116,7 @@ export function FinanceReportsTab({ params }: { params: AdminFinanceParams }) {
           <BarChart
             key={currency}
             title={`Monthly GMV (${currency})`}
-            subtitle="Last 6 months"
+            subtitle="Last 6 months · not affected by the filters above"
             data={(monthly.data?.monthly ?? []).map((m) => ({
               label: m.month,
               gmv: m.byCurrency.find((c) => c.currency === currency)?.gmv ?? 0,
@@ -121,16 +144,39 @@ export function FinanceReportsTab({ params }: { params: AdminFinanceParams }) {
             ))}
             <MetricCard label="Total (USD-equivalent)" value={formatMoneyCompact(exposure.data.totalUSDEquivalent, 'USD')} sub={`Threshold ${formatMoneyCompact(exposure.data.threshold, 'USD')}`} />
           </div>
-          <p className="text-[11px] text-slate">Pending-settlement balances converted to USD at today's rate — a daily check alerts admins if this crosses the configured threshold. Visibility only, no automatic hedging.</p>
+          <p className="text-[11px] text-slate">Pending-settlement balances converted to USD at today's rate — a daily check alerts admins if this crosses the configured threshold. Visibility only, no automatic hedging. {IGNORES_FILTERS}</p>
         </div>
       ) : null}
 
       {/* Reconciliation — daily buyer-collected vs. ledger comparison */}
       <div className="bg-white border border-bone rounded-xl">
-        <div className="px-5 pt-4 pb-3">
-          <p className="font-serif font-normal text-[19px] sm:text-[21px] text-carbon leading-[1.25]">Reconciliation Runs</p>
-          <p className="text-[12px] text-slate">Daily comparison of buyer collections against the finance ledger, per currency.</p>
+        <div className="px-5 pt-4 pb-3 flex items-start justify-between gap-3 flex-wrap">
+          <div className="min-w-0">
+            <p className="font-serif font-normal text-[19px] sm:text-[21px] text-carbon leading-[1.25]">Reconciliation Runs</p>
+            <p className="text-[12px] text-slate">Daily comparison of buyer collections against the finance ledger, per currency. {IGNORES_FILTERS}</p>
+          </div>
+          <Button variant="outline" size="sm" icon={<RefreshCw size={13} />} loading={runRecon.running} onClick={handleRunReconciliation}>
+            Run reconciliation now
+          </Button>
         </div>
+        {runRecon.error && <p className="px-5 pb-3 text-[12px] text-error">{runRecon.error}</p>}
+        {lastRun && (
+          <div className="mx-5 mb-3 bg-cream border border-bone rounded-lg px-3 py-2.5 flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+              <p className="text-[12px] font-semibold text-charcoal m-0">Last {lastRun.windowDays * 24} hours — run just now</p>
+              <StatusBadge status={lastRun.hasAnyDiscrepancy ? 'Flagged' : 'Active'} />
+            </div>
+            {lastRun.byCurrency.length === 0 ? (
+              <p className="text-[11.5px] text-slate m-0">No orders or ledger entries in this window.</p>
+            ) : lastRun.byCurrency.map(c => (
+              <p key={c.currency} className="text-[11.5px] text-slate m-0">
+                <span className="font-semibold text-charcoal">{c.currency}</span>: collected {formatMoneyCompact(c.buyerCollected, c.currency)} ({c.orderCount} orders)
+                {' '}· ledger {formatMoneyCompact(c.expectedFromLedger, c.currency)} · drift{' '}
+                <span className={c.hasDiscrepancy ? 'text-error font-semibold' : ''}>{formatMoneyCompact(c.drift, c.currency)}</span>
+              </p>
+            ))}
+          </div>
+        )}
         {reconciliation.error ? (
           <div className="px-5 pb-5"><AnalyticsErrorState message={reconciliation.error} onRetry={reconciliation.refetch} /></div>
         ) : (
@@ -167,7 +213,7 @@ export function FinanceReportsTab({ params }: { params: AdminFinanceParams }) {
       <div className="bg-white border border-bone rounded-xl">
         <div className="px-5 pt-4 pb-3">
           <p className="font-serif font-normal text-[19px] sm:text-[21px] text-carbon leading-[1.25]">Tax Reports</p>
-          <p className="text-[12px] text-slate">Generated per-store by sellers (Finance → Tax Reports).</p>
+          <p className="text-[12px] text-slate">Generated per-store by sellers (Finance → Tax Reports). {IGNORES_FILTERS}</p>
         </div>
         {taxReports.error ? (
           <div className="px-5 pb-5"><AnalyticsErrorState message={taxReports.error} onRetry={taxReports.refetch} /></div>

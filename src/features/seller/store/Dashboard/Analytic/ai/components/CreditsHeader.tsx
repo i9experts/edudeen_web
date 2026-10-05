@@ -68,7 +68,7 @@ export function CreditsHeader({ storeId, credits, loading, onCreditsChanged }: C
         )}
         <p className="text-[13px] text-[#b0aea8] mt-1">AI credits left this month</p>
         <Button variant="secondary" size="sm" loading={buying} onClick={handleBuyCredits} className="mt-3">
-          Buy 500 Credits
+          {credits?.buyCredits?.creditsPerUnit ? `Buy ${credits.buyCredits.creditsPerUnit.toLocaleString()} Credits` : 'Buy Credits'}
         </Button>
       </div>
     </div>

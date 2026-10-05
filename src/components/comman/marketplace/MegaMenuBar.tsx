@@ -228,7 +228,8 @@ export function CategoriesMegaContent({
 
 export function FlashSaleMegaContent({ flashDeals, countdown, onProductClick }: {
   flashDeals: { product: MarketplaceProduct; pct: number }[];
-  countdown:  { h: string; m: string; s: string };
+  /** Time left in the live sale campaign; null when no sale is running (no timer shown). */
+  countdown:  { h: string; m: string; s: string } | null;
   onProductClick: (id: string) => void;
 }) {
   return (
@@ -254,7 +255,7 @@ export function FlashSaleMegaContent({ flashDeals, countdown, onProductClick }: 
           <p className="hidden lg:block text-[10.5px] text-white/80 mb-3 leading-snug">Deep discounts, while stock lasts.</p>
         </div>
 
-        <div className="relative z-[1] flex flex-col items-center shrink-0">
+        {countdown && <div className="relative z-[1] flex flex-col items-center shrink-0">
           <span className="text-[7.5px] font-bold uppercase tracking-[0.1em] text-white/70 mb-[3px] lg:mb-[6px]">Ends In</span>
           <div className="flex items-center gap-[5px]">
             <CountdownUnit value={Number(countdown.h)} label="Hrs" size="sm" />
@@ -263,7 +264,7 @@ export function FlashSaleMegaContent({ flashDeals, countdown, onProductClick }: 
             <span className="pb-[10px] text-[13px] font-bold leading-none text-white/50">:</span>
             <CountdownUnit value={Number(countdown.s)} label="Sec" size="sm" />
           </div>
-        </div>
+        </div>}
       </div>
 
       <div className="w-full lg:flex-1 lg:min-w-0">
@@ -490,7 +491,7 @@ export function MegaMenuBar({
   bestRated?: MarketplaceProduct[];
   flashDeals: { product: MarketplaceProduct; pct: number }[];
   topStores:  PublicStoreListItem[];
-  countdown:  { h: string; m: string; s: string };
+  countdown:  { h: string; m: string; s: string } | null;
   onShopCategory?: (id: string) => void;
   onProductClick: (id: string) => void;
   onStoreClick:   (slug: string) => void;

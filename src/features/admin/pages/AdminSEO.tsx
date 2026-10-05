@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   LineChart, Settings, ListChecks, FileText, FolderTree, HelpCircle,
   Map, ArrowRightLeft, Link2, Plug, Radar,
@@ -35,7 +36,12 @@ const TABS: Tab[] = [
 
 export function AdminSEO() {
   usePageTitle('SEO');
-  const [activeTab, setActiveTab] = useState('analytics');
+  // `?tab=` lets other pages (e.g. the OAuth callback) link straight to a tab.
+  const [searchParams] = useSearchParams();
+  const initialTab = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState(
+    initialTab && TABS.some(t => t.id === initialTab) ? initialTab : 'analytics',
+  );
 
   return (
     <div className="px-4 sm:px-7 pt-6 pb-8 flex flex-col gap-5">

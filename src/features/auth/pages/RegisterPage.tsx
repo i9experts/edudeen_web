@@ -20,7 +20,7 @@ import { motion } from 'motion/react';
 const fadeSlide = { initial: { opacity: 0, y: -6 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] as const } };
 
 const HIGHLIGHTS = [
-  { Icon: ShoppingBag, text: 'Shop from thousands of independent sellers' },
+  { Icon: ShoppingBag, text: 'Shop from independent teachers and educators' },
   { Icon: Store,       text: 'Launch your own store in minutes' },
   { Icon: TrendingUp,  text: 'Grow your business with built-in analytics' },
 ];

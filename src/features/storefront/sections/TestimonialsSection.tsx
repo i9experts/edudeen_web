@@ -1,4 +1,6 @@
+import { useEffect, useState } from 'react';
 import { Star } from 'lucide-react';
+import { apiGetPublicStoreReviews } from '@/api/services/publicStoreReviews';
 import { clsx } from 'clsx';
 import { useStorefront } from '../StorefrontContext';
 
@@ -24,8 +26,34 @@ function Avatar({ t, cfg }: { t: TestimonialBlock; cfg: ReturnType<typeof useSto
     : <div className="w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-bold text-white shrink-0" style={{ background: cfg.primaryColor }}>{t.authorName[0]}</div>;
 }
 
-export function TestimonialsSection({ settings, blocks }: { settings: { heading?: string }; blocks: TestimonialBlock[] }) {
-  const { cfg } = useStorefront();
+export function TestimonialsSection({ settings, blocks: sellerBlocks }: { settings: { heading?: string }; blocks: TestimonialBlock[] }) {
+  const { cfg, store } = useStorefront();
+
+  // No seller-written quotes → fall back to this store's real buyer reviews
+  // (best recent written ones). Still renders nothing if there are none.
+  const [reviewBlocks, setReviewBlocks] = useState<TestimonialBlock[]>([]);
+  const needsFallback = sellerBlocks.length === 0;
+  useEffect(() => {
+    if (!needsFallback || !store?.storeId) return;
+    let cancelled = false;
+    apiGetPublicStoreReviews(store.storeId, { limit: 6, minRating: 4 })
+      .then(res => {
+        if (cancelled) return;
+        setReviewBlocks((res.data?.reviews ?? [])
+          .filter(r => r.comment.trim())
+          .map(r => ({
+            quote:      r.comment,
+            authorName: r.customerName,
+            authorRole: r.isVerifiedPurchase ? 'Verified buyer' : undefined,
+            avatarUrl:  r.avatarUrl ?? undefined,
+            rating:     r.rating ?? undefined,
+          })));
+      })
+      .catch(() => { /* fallback is best-effort — section just stays hidden */ });
+    return () => { cancelled = true; };
+  }, [needsFallback, store?.storeId]);
+
+  const blocks = needsFallback ? reviewBlocks : sellerBlocks;
   if (blocks.length === 0) return null;
 
   const heading = settings.heading && (

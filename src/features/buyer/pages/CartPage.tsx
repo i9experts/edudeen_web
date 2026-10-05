@@ -4,6 +4,7 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { useCartContext } from '@/contexts/CartContext';
 import { useWishlistContext } from '@/contexts/WishlistContext';
 import { useProductsByCategory } from '@/hooks/marketplace/useProductsByCategory';
+import { apiGetAlsoBought, type MarketplaceProduct } from '@/api/services/marketplace';
 import { Button } from '@/components/comman/ui/Button';
 import { BuyerNavbar, Breadcrumb, Footer, SkeletonBox, getRecentlyViewed } from '@/components/comman/ui';
 import { ProductCard } from '@/components/comman/marketplace/ProductCard';
@@ -48,6 +49,35 @@ export function CartPage() {
   // already in the cart. A genuine discovery rail, not a fabricated "bundle
   // savings" claim — Edudeen has no bundle-pricing data model to back that up.
   const { products: discoveryPool } = useProductsByCategory(1, 12);
+
+  // "Customers also bought" for the cart's own products (first few distinct
+  // ones), merged round-robin so each cart item contributes, deduped.
+  const cartKey = Array.from(new Set((cart?.items ?? []).map(i => i.productId))).sort().join(',');
+  const [alsoBought, setAlsoBought] = useState<MarketplaceProduct[]>([]);
+  useEffect(() => {
+    const ids = cartKey ? cartKey.split(',').slice(0, 4) : [];
+    if (ids.length === 0) { setAlsoBought([]); return; }
+    let cancelled = false;
+    Promise.all(ids.map(id => apiGetAlsoBought(id, 6).then(r => r.data?.products ?? []).catch(() => [] as MarketplaceProduct[])))
+      .then(lists => {
+        if (cancelled) return;
+        const inCart = new Set(ids);
+        const seen = new Set<string>();
+        const merged: MarketplaceProduct[] = [];
+        const longest = Math.max(0, ...lists.map(l => l.length));
+        for (let i = 0; i < longest; i++) {
+          for (const list of lists) {
+            const p = list[i];
+            if (!p || seen.has(p._id) || inCart.has(p._id)) continue;
+            seen.add(p._id);
+            merged.push(p);
+          }
+        }
+        setAlsoBought(merged);
+      });
+    return () => { cancelled = true; };
+  }, [cartKey]);
+
   const { isWishlisted, wishlisting, toggleWishlist } = useWishlistContext();
   const [addToCartFailedId, setAddToCartFailedId] = useState<string | null>(null);
   const lastAddAttemptRef = useRef<string | null>(null);
@@ -108,7 +138,11 @@ export function CartPage() {
   const recentlyViewed = isEmpty ? getRecentlyViewed() : [];
 
   const cartProductIds = new Set(items.map(i => i.productId));
-  const discoveryItems = discoveryPool.filter(p => !cartProductIds.has(p._id)).slice(0, 5);
+  // Prefer real "bought together / similar" picks for what's in the cart;
+  // the generic catalogue pool is only the fallback (empty cart, or no
+  // related products came back).
+  const relatedPool = alsoBought.filter(p => !cartProductIds.has(p._id));
+  const discoveryItems = (relatedPool.length > 0 ? relatedPool : discoveryPool.filter(p => !cartProductIds.has(p._id))).slice(0, 5);
 
   // Every line is converted from its OWN native (seller) currency into the
   // buyer's currently-selected display currency — this is what makes the

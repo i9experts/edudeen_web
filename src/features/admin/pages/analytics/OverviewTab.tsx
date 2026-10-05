@@ -6,8 +6,12 @@ import type { BaseAnalyticsParams } from '@/api/services/analytics/adminAnalytic
 import { AnalyticsErrorState } from '@/components/comman/analytics/AnalyticsErrorState';
 import { ChartCardSkeleton } from '@/components/comman/analytics/AnalyticsSkeletons';
 import { formatCurrency, formatNumber, formatPercent, formatBucketLabel, formatDate } from '@/components/comman/analytics/format';
+import { currencySymbol } from '@/utils/currency';
 
 interface ComparisonRow { metric: string; current: string; previous: string }
+
+/** Must match the number of entries in `metrics` below. */
+const METRIC_CARD_COUNT = 12;
 
 export function OverviewTab({ params, compareToPreviousPeriod }: { params: BaseAnalyticsParams; compareToPreviousPeriod: boolean }) {
   const overview = useAdminAnalyticsOverview(params);
@@ -25,6 +29,9 @@ export function OverviewTab({ params, compareToPreviousPeriod }: { params: BaseA
   // has actually loaded, never a placeholder shape (see MetricCard's own
   // "never fabricate one" note on `sparkline`).
   const revenueSparkline = revenue.data?.series.map(p => p.netRevenue);
+  // The platform-wide series sums order subtotals as stored, so it only has a
+  // single currency when the API says so — never assume USD.
+  const revenueCurrency = revenue.data?.currency;
   const ordersSparkline = orders.data?.series.map(p => p.orderCount);
 
   const metrics = d && [
@@ -73,7 +80,7 @@ export function OverviewTab({ params, compareToPreviousPeriod }: { params: BaseA
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
         {loading || !metrics
-          ? Array.from({ length: 10 }).map((_, i) => <MetricCard key={i} label="" value="" loading />)
+          ? Array.from({ length: METRIC_CARD_COUNT }).map((_, i) => <MetricCard key={i} label="" value="" loading />)
           : metrics.map(m => <MetricCard key={m.label} {...m} />)}
       </div>
 
@@ -101,7 +108,9 @@ export function OverviewTab({ params, compareToPreviousPeriod }: { params: BaseA
         ) : (
           <LineChart
             title="Revenue Over Time"
-            subtitle="Gross vs. net, platform-wide"
+            subtitle={revenueCurrency
+              ? `Gross vs. net, platform-wide (${revenueCurrency})`
+              : 'Gross vs. net, platform-wide · each order in its own currency, not converted'}
             data={(revenue.data?.series ?? []).map(p => ({
               label: formatBucketLabel(p.date, revenue.data!.granularity),
               gross: p.grossRevenue,
@@ -111,7 +120,7 @@ export function OverviewTab({ params, compareToPreviousPeriod }: { params: BaseA
               { dataKey: 'gross', label: 'Gross Revenue', color: '#64727B' },
               { dataKey: 'net', label: 'Net Revenue', color: '#174771' },
             ]}
-            valuePrefix="$"
+            valuePrefix={revenueCurrency ? currencySymbol(revenueCurrency) : ''}
           />
         )}
 

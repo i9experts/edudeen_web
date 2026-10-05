@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import {
   CheckCircle2, MapPin, Package, ShoppingBag, Download,
-  ArrowRight, Home, Truck, Box, BadgeCheck, Star, ClipboardList,
+  ArrowRight, Box, Star, ClipboardList,
 } from 'lucide-react';
 import type { PlacedOrder, OrderItem, OrderDeliveryAddress } from '@/api/services/payment';
 import { DigitalFileDownloads } from '@/features/buyer/components/DigitalFileDownloads';
@@ -11,6 +11,7 @@ import { clsx } from 'clsx';
 import { Button } from '@/components/comman/ui/Button';
 import { BuyerNavbar, Footer } from '@/components/comman/ui';
 import { currencySymbol } from '@/utils/currency';
+import { buildOrderProgress, OrderProgressTrack } from './account/orderProgress';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // OrderItemRow
@@ -107,50 +108,28 @@ function AddressSection({ addr }: { addr: OrderDeliveryAddress }) {
 // ─────────────────────────────────────────────────────────────────────────────
 // OrderTimeline — shows status flow for physical orders
 // ─────────────────────────────────────────────────────────────────────────────
-const TIMELINE_STEPS = [
-  { icon: BadgeCheck, label: 'Confirmed' },
-  { icon: Box,        label: 'Processing' },
-  { icon: Truck,      label: 'Shipped' },
-  { icon: Home,       label: 'Delivered' },
-];
-
-function OrderTimeline({ currentStatus }: { currentStatus: string }) {
-  const activeIdx = currentStatus === 'completed' ? 3
-    : currentStatus === 'shipped'    ? 2
-    : currentStatus === 'processing' ? 1
-    : 0;
-
+// Real statuses only — unpaid card/bank orders show "Awaiting payment", COD
+// shows "Confirmed · Pay on delivery", and delivered/completed both reach the
+// final step (see account/orderProgress.tsx).
+function OrderTimeline({ order }: { order: PlacedOrder }) {
+  const steps = buildOrderProgress({
+    orderStatus: order.orderStatus,
+    isPaid:      order.isPaid,
+    paymentType: order.paymentMethod,
+    createdAt:   order.orderDate,
+    paidAt:      order.paymentDate,
+  });
+  if (!steps) {
+    return (
+      <section className="pt-4 mt-1 border-t border-bone">
+        <p className="text-[12px] font-semibold text-error">This order was cancelled.</p>
+      </section>
+    );
+  }
   return (
     <section className="pt-4 mt-1 border-t border-bone">
       <h3 className="text-[11px] font-bold text-slate uppercase tracking-[0.07em] mb-4">Order Progress</h3>
-      <div className="relative flex items-start justify-between">
-        {/* track line */}
-        <div className="absolute top-[13px] start-[13px] end-[13px] h-[2px] bg-bone rounded-full" />
-        <div
-          className="absolute top-[13px] start-[13px] h-[2px] bg-success rounded-full transition-all duration-500"
-          style={{ width: `${(activeIdx / (TIMELINE_STEPS.length - 1)) * 100}%` }}
-        />
-        {TIMELINE_STEPS.map(({ icon: Icon, label }, i) => {
-          const done   = i < activeIdx;
-          const active = i === activeIdx;
-          return (
-            <div key={label} className="relative z-10 flex flex-col items-center gap-[6px]">
-              <div className={clsx(
-                'w-7 h-7 rounded-full flex items-center justify-center transition-all',
-                done   ? 'bg-success text-white'
-                : active ? 'bg-brand-orange text-white ring-4 ring-brand-pale-orange'
-                : 'bg-bone text-slate',
-              )}>
-                <Icon size={13} />
-              </div>
-              <span className={clsx(
-                'text-[10px] font-semibold whitespace-nowrap',
-                done ? 'text-success' : active ? 'text-brand-orange' : 'text-slate',
-              )}>{label}</span>
-            </div>
-          );
-        })}
-      </div>
+      <OrderProgressTrack steps={steps} />
     </section>
   );
 }
@@ -202,7 +181,7 @@ function OrderCard({ order }: { order: PlacedOrder }) {
           canReview={order.isPaid && order.orderStatus === 'completed'}
         />
         {!allDigital && order.deliveryAddress && <AddressSection addr={order.deliveryAddress} />}
-        {!allDigital && <OrderTimeline currentStatus={order.orderStatus} />}
+        {!allDigital && <OrderTimeline order={order} />}
       </div>
 
       {/* Price footer — always the order's own real charged currency

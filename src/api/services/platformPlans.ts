@@ -79,6 +79,21 @@ export function apiBrowsePlatformPlans() {
   return client.get<never, ApiResponse<PlatformPlan[]>>(`${BASE}/public`);
 }
 
+/** One entry of the public add-on catalog — the same price a purchase charges. */
+export interface PublicAddonCatalogItem {
+  addonType: AddonType | string;
+  name:      string;
+  priceUSD:  number;
+  recurring: boolean;
+  /** e.g. '500 credits', 'month', 'month (base enablement fee)'. */
+  unitLabel: string;
+}
+
+/** GET /api/platform-plans/public/addons — no auth. */
+export function apiGetPublicAddonCatalog() {
+  return client.get<never, ApiResponse<PublicAddonCatalogItem[]>>(`${BASE}/public/addons`);
+}
+
 // ── Seller ────────────────────────────────────────────────────────────────────
 export function apiGetSellerPlatformOverview() {
   return client.get<never, ApiResponse<{

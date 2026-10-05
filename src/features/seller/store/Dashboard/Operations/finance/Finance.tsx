@@ -22,12 +22,14 @@ import {
   type FinanceDashboard, type Transaction, type TransactionType, type PayoutMethod,
   type PayoutMethodType, type Payout, type PayoutStatus,
 } from '@/api/services/finance';
+import { payoutNote, commissionPctFromFee } from './commissionCopy';
 
 // Payout model: buyers pay Edudeen; Edudeen pays each seller once a month,
 // after commission. Sellers never request payouts or set a schedule, so the
 // old "Request Payout" / "Update Schedule" controls and the flat-rate
 // "Pending Tax" / tax-report estimates are intentionally not shown here.
-const PAYOUT_NOTE = 'No commission — Edudeen pays your full earnings monthly, minus card processing fees.';
+// The payout note is built from the store's real commission rate
+// (feeBreakdown.transactionFee) — see commissionCopy.ts.
 
 const TYPE_STYLE: Record<TransactionType, { color: BadgeColor; label: string }> = {
   sale:       { color: 'green',  label: 'Sale' },
@@ -304,6 +306,7 @@ export function StoreFinance() {
   }
 
   const activeWallet = dashboard?.wallets?.find(w => w.currency === activeCurrency) ?? dashboard?.wallets?.[0] ?? null;
+  const PAYOUT_NOTE = payoutNote(commissionPctFromFee(dashboard?.feeBreakdown?.transactionFee));
 
   const header = (
     <>

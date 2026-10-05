@@ -11,6 +11,7 @@ import { TokenStorage } from '@/api/services/auth';
 import { useTopBarDeals, timeLeft } from '@/hooks/useTopBarDeals';
 import { useCategoryTree, categoryPath } from '@/hooks/marketplace/useCategoryTree';
 import { getRecentlyViewed, clearRecentlyViewed, type RecentlyViewedItem } from '@/components/comman/ui/BuyerNavbar';
+import { fetchRecentlyViewed } from '@/utils/recentlyViewedSync';
 import { ProductCoverFallback } from '@/components/comman/marketplace/ProductCoverFallback';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 import { currencySymbol } from '@/utils/currency';
@@ -219,7 +220,17 @@ export function QuickAccessRail() {
   const close = useCallback(() => setOpen(null), []);
   const show = (id: PanelId) => {
     if (hoverTimer.current) window.clearTimeout(hoverTimer.current);
-    if (id === 'recent') setRecent(getRecentlyViewed());
+    if (id === 'recent') {
+      setRecent(getRecentlyViewed());
+      // Signed in: include what they viewed on other devices.
+      fetchRecentlyViewed(8).then(remote => {
+        if (!remote.length) return;
+        setRecent(local => {
+          const merged = [...remote.map(r => ({ ...r, id: r.slug ?? r.id })), ...local];
+          return merged.filter((it, i) => merged.findIndex(x => x.id === it.id) === i).slice(0, 8);
+        });
+      });
+    }
     setOpen(id);
   };
   const scheduleClose = () => {

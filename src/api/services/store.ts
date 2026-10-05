@@ -441,10 +441,11 @@ interface PaginatedCustomers {
   customers:  StoreCustomer[];
 }
 
-/** GET /api/store/:storeId/customers  (seller only) */
-export function apiGetStoreCustomers(storeId: string, page = 1, limit = 20) {
+/** GET /api/store/:storeId/customers  (seller only). `q` = case-insensitive name/email search. */
+export function apiGetStoreCustomers(storeId: string, page = 1, limit = 20, q = '') {
+  const search = q.trim() ? `&q=${encodeURIComponent(q.trim())}` : '';
   return client.get<never, ApiResponse<PaginatedCustomers>>(
-    `${ENDPOINTS.STORE.CUSTOMERS.LIST(storeId)}?page=${page}&limit=${limit}`,
+    `${ENDPOINTS.STORE.CUSTOMERS.LIST(storeId)}?page=${page}&limit=${limit}${search}`,
   );
 }
 

@@ -115,6 +115,8 @@ export interface StoreReviewsQuery {
   page?:      number;
   rating?:    number | 'all';
   productId?: string;
+  /** Seller-reply / flag filter, applied server-side. */
+  status?:    'replied' | 'unreplied' | 'flagged';
 }
 
 interface ApiResponse<T> { success: boolean; message?: string; data: T }
@@ -180,6 +182,7 @@ export function apiGetStoreReviews(storeId: string, query: StoreReviewsQuery = {
   if (query.page) params.set('page', String(query.page));
   if (query.rating && query.rating !== 'all') params.set('rating', String(query.rating));
   if (query.productId) params.set('productId', query.productId);
+  if (query.status) params.set('status', query.status);
   const qs = params.toString();
   return client.get<never, ApiResponse<{ stats: StoreReviewStats; pagination: Pagination; reviews: StoreReviewEntry[] }>>(
     `${ENDPOINTS.RATING.STORE_REVIEWS(storeId)}${qs ? `?${qs}` : ''}`,

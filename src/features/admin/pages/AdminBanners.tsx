@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Plus, ImageIcon, ExternalLink, Pencil, Trash2, Pause, Play } from 'lucide-react';
+import { Plus, ImageIcon, ExternalLink, Pencil, Trash2, Pause, Play, AlertTriangle } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
-import { useAdminBanners } from '@/hooks/admin/useAdminBanners';
+import { useAdminBanners, useBannerCount } from '@/hooks/admin/useAdminBanners';
 import {
   apiCreateBannerFromUrl, apiUpdateBanner, apiDeleteBanner, apiPauseBanner, apiResumeBanner,
   bannerPlacements, SELECTABLE_PROMOTION_PLACEMENTS, type Banner, type PromotionPlacement,
@@ -132,7 +132,12 @@ function BannerFormModal({
 // ── Main page ─────────────────────────────────────────────────────────────────
 export function AdminBanners() {
   usePageTitle('Banners');
-  const { banners, loading, error, refetch } = useAdminBanners();
+  const { banners, loading, error, refetch: refetchBanners } = useAdminBanners();
+  // Bumped after every change so the per-placement counts reload with the list.
+  const [countKey, setCountKey] = useState(0);
+  const counts = useBannerCount(countKey);
+  const oversubscribed = counts.filter(c => c.isOversubscribed || c.current > c.visibleLimit);
+  const refetch = () => { refetchBanners(); setCountKey(k => k + 1); };
   const [editing, setEditing] = useState<Banner | 'new' | null>(null);
   const [deleting, setDeleting] = useState<Banner | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
@@ -188,6 +193,19 @@ export function AdminBanners() {
       />
 
       <div className="px-4 sm:px-7 pt-6 pb-8">
+        {oversubscribed.length > 0 && (
+          <div className="mb-4 bg-warning-bg border border-warning-border rounded-lg px-4 py-2.5 text-[12.5px] text-charcoal flex items-start gap-2">
+            <AlertTriangle size={15} className="text-warning shrink-0 mt-[2px]" />
+            <div>
+              {oversubscribed.map(c => (
+                <p key={c.placement} className="m-0">
+                  <strong>{PLACEMENT_LABEL[c.placement] ?? c.placement}</strong> has {c.current} active banners but only shows {c.visibleLimit} at a time — the ones with the highest Display Order won't be seen.
+                </p>
+              ))}
+              <p className="m-0 mt-1 text-[11.5px] text-slate">Pause some, or raise the limit in Platform Config.</p>
+            </div>
+          </div>
+        )}
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {Array.from({ length: 4 }).map((_, i) => (

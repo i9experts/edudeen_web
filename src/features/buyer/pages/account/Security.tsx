@@ -1,5 +1,7 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
+import { AuthContext, apiResendOtp, type AppRole } from '@/api/services/auth';
 import { Shield, Mail, Check, Loader2, KeyRound, Eye, EyeOff } from 'lucide-react';
 import { useGetProfile } from '@/hooks/auth/useGetProfile';
 import { apiChangePassword } from '@/api/services/users';
@@ -36,6 +38,7 @@ function PasswordField({ label, value, onChange }: { label: string; value: strin
 
 // Real route for what used to live behind Settings' ?tab=security.
 export function Security() {
+  const navigate = useNavigate();
   const { profile, loading } = useGetProfile();
 
   const [currentPassword, setCurrentPassword] = useState('');
@@ -43,6 +46,35 @@ export function Security() {
   const [pwSaving, setPwSaving] = useState(false);
   const [pwError, setPwError] = useState('');
   const [pwSuccess, setPwSuccess] = useState(false);
+
+  // A social-only account (e.g. created with Google) has no password at all.
+  // `hasPassword` comes from the profile API; older API builds don't send it,
+  // in which case we assume a password exists (the pre-existing behaviour).
+  const provider = profile?.authProvider ?? null;
+  const providerLabel =
+    provider === 'google' ? 'Google' :
+    provider === 'facebook' ? 'Facebook' :
+    provider === 'apple' ? 'Apple' : null;
+  const socialOnly = profile?.hasPassword === false;
+
+  // Unverified email → send a fresh OTP and hand off to the existing verify page.
+  const [resending, setResending] = useState(false);
+  const [resendError, setResendError] = useState('');
+  const handleResendVerification = async () => {
+    if (!profile) return;
+    setResendError('');
+    setResending(true);
+    try {
+      const role: AppRole = profile.role === 'seller' ? 'seller' : 'user';
+      await apiResendOtp({ email: profile.email, role });
+      AuthContext.set({ email: profile.email, role, flow: 'register' });
+      navigate('/verify-otp');
+    } catch (err) {
+      setResendError(err instanceof Error ? err.message : 'Failed to send a verification code.');
+    } finally {
+      setResending(false);
+    }
+  };
 
   const handleChangePassword = async () => {
     setPwError(''); setPwSuccess(false);
@@ -83,16 +115,48 @@ export function Security() {
               {profile?.isVerified ? (<><Check size={9} className="me-[2px]" /> Verified</>) : 'Unverified'}
             </Badge>
           )}
+          {!loading && profile && !profile.isVerified && (
+            <button
+              type="button"
+              onClick={handleResendVerification}
+              disabled={resending}
+              className={clsx(
+                'px-3 py-[6px] rounded-[8px] text-[11px] font-semibold bg-brand-orange text-white border-none flex items-center gap-1 shrink-0',
+                resending ? 'cursor-wait opacity-70' : 'cursor-pointer hover:bg-brand-deep-orange transition-colors',
+              )}
+            >
+              {resending && <Loader2 size={11} className="animate-spin" />}
+              {resending ? 'Sending…' : 'Verify email'}
+            </button>
+          )}
         </div>
+        {resendError && <p className="px-6 pt-3 text-[11px] text-error font-medium">{resendError}</p>}
 
         <div className="p-6">
           <div className="flex items-center gap-2.5 mb-4">
             <div className="w-8 h-8 rounded-[9px] bg-brand-pale-orange flex items-center justify-center shrink-0">
               <KeyRound size={14} className="text-brand-orange" />
             </div>
-            <p className="text-[13px] font-bold text-charcoal">Change Password</p>
+            <p className="text-[13px] font-bold text-charcoal">{socialOnly ? 'Password' : 'Change Password'}</p>
           </div>
 
+          {socialOnly ? (
+            <div className="flex flex-col gap-3">
+              <p className="text-[12px] text-slate leading-relaxed">
+                You sign in with {providerLabel ?? 'a social account'}, so this account has no password yet.
+                To add one, request a reset code for {profile?.email ?? 'your email'} and choose a new password.
+              </p>
+              <div>
+                <button
+                  type="button"
+                  onClick={() => navigate('/forgot-password')}
+                  className="px-6 py-[11px] bg-brand-orange border-none rounded-[10px] text-[13px] font-semibold text-white cursor-pointer hover:bg-brand-deep-orange transition-colors"
+                >
+                  Set a password
+                </button>
+              </div>
+            </div>
+          ) : (<>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
             <PasswordField label="Current Password" value={currentPassword} onChange={setCurrentPassword} />
             <PasswordField label="New Password" value={newPassword} onChange={setNewPassword} />
@@ -113,6 +177,7 @@ export function Security() {
             {pwSuccess && <span className="text-[11px] text-success font-medium mt-4">Password changed successfully</span>}
             {pwError && <span className="text-[11px] text-error font-medium mt-4">{pwError}</span>}
           </div>
+          </>)}
         </div>
       </Card>
 
@@ -126,8 +191,20 @@ export function Security() {
         <div className="p-6 flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <span className="text-[12.5px] text-graphite">Password protection</span>
-            <Badge color="green" size="sm" dot>Active</Badge>
+            {loading ? (
+              <SkeletonBox width={60} height={16} rounded="999px" />
+            ) : socialOnly ? (
+              <Badge color="gray" size="sm" dot>Not set</Badge>
+            ) : (
+              <Badge color="green" size="sm" dot>Active</Badge>
+            )}
           </div>
+          {!loading && providerLabel && (
+            <div className="flex items-center justify-between">
+              <span className="text-[12.5px] text-graphite">Sign-in method</span>
+              <Badge color="gray" size="sm">Signed in with {providerLabel}</Badge>
+            </div>
+          )}
           <div className="flex items-center justify-between">
             <span className="text-[12.5px] text-graphite">Email verification</span>
             <Badge color={profile?.isVerified ? 'green' : 'gray'} size="sm" dot>{profile?.isVerified ? 'Verified' : 'Unverified'}</Badge>

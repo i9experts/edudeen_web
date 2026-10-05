@@ -45,6 +45,9 @@ const REPORT_STATUS: Record<ModerationReportRow['status'], { label: string; colo
   resolved: { label: 'Resolved',       color: 'green' },
 };
 
+/** Number of "Marketplace, last 30 days" cards — keeps the loading skeleton the same size as the real grid. */
+const OVERVIEW_METRIC_COUNT = 7;
+
 const RISK_COLOR: Record<ModerationReportRow['riskLevel'], 'red' | 'yellow' | 'gray'> = { high: 'red', medium: 'yellow', low: 'gray' };
 
 const TARGET_LABEL: Record<ModerationReportRow['targetType'], string> = { listing: 'Listing', seller: 'Seller', review: 'Review' };
@@ -92,6 +95,7 @@ export function AdminOverview() {
     return () => { cancelled = true; };
   }, []);
 
+  // OVERVIEW_METRIC_COUNT (skeleton count) must match the entries below.
   const metrics = overview ? [
     { label: 'GMV (30 days)',             value: formatCurrency(overview.totalGMV),                trend: overview.totalRevenueChangePercent != null ? formatPercent(overview.totalRevenueChangePercent, { signed: true }) : undefined, trendUp: (overview.totalRevenueChangePercent ?? 0) >= 0, sub: undefined, icon: <DollarSign size={16} /> },
     { label: 'Edudeen commission (30 days)', value: formatCurrency(overview.platformCommission),   trend: undefined, trendUp: true, sub: `${formatCurrency(overview.platformEarnings)} total platform earnings`, icon: <Percent size={16} /> },
@@ -231,7 +235,7 @@ export function AdminOverview() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
           {loading ? (
-            Array.from({ length: 6 }).map((_, i) => <MetricCard key={i} label="" value="" loading />)
+            Array.from({ length: OVERVIEW_METRIC_COUNT }).map((_, i) => <MetricCard key={i} label="" value="" loading />)
           ) : metrics.map((m) => (
             <MetricCard key={m.label} label={m.label} value={m.value} trend={m.trend} trendUp={m.trendUp} sub={m.sub} icon={m.icon} />
           ))}

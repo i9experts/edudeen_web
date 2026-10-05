@@ -100,19 +100,21 @@ export function useResolveCommissionRate(storeId: string | null) {
 export function useSellerCommissionHistory(storeId: string | null) {
   const [history, setHistory] = useState<CommissionRule[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    if (!storeId) { setHistory([]); return; }
+    if (!storeId) { setHistory([]); setError(''); return; }
     let cancelled = false;
     setLoading(true);
+    setError('');
     apiGetSellerCommissionHistory(storeId)
       .then(res => { if (!cancelled) setHistory(res ?? []); })
-      .catch(() => {})
+      .catch((err: unknown) => { if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load rate history.'); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, [storeId]);
 
-  return { history, loading };
+  return { history, loading, error };
 }
 
 export function useSetSellerCommissionOverride() {

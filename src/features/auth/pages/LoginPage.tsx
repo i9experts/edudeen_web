@@ -167,7 +167,7 @@ export function LoginPage() {
   return (
     <AuthSplitLayout
       heading={<>Commerce. <span className="text-brand-orange">Solved</span></>}
-      subtext="Join thousands of buyers and sellers building their business on Edudeen's marketplace."
+      subtext="Join the teachers, parents and educators buying and selling learning resources on Edudeen."
       highlights={HIGHLIGHTS}
       visual={<MarketplaceMockup />}
     >

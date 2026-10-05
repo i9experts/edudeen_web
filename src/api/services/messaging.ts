@@ -272,3 +272,34 @@ export function apiAdminGetConversationById(id: string) {
 export function apiAdminGetReports(params?: GetReportsParams) {
   return client.get<never, Paginated & { reports: Report[] }>(ENDPOINTS.MESSAGING.ADMIN.GET_REPORTS, { params });
 }
+
+/** Admin list rows carry names resolved server-side (null when the account no longer exists). */
+export interface AdminConversationRow extends Conversation {
+  storeName?:  string | null;
+  buyerName?:  string | null;
+  buyerEmail?: string | null;
+  sellerName?: string | null;
+}
+
+export interface AdminReportRow extends Report {
+  reporterName?: string | null;
+  /** Only for `targetType: 'user'`. */
+  targetName?:   string | null;
+}
+
+export function apiAdminListConversationRows(params?: AdminListConversationsParams) {
+  return client.get<never, Paginated & { conversations: AdminConversationRow[] }>(
+    ENDPOINTS.MESSAGING.ADMIN.LIST_CONVERSATIONS, { params },
+  );
+}
+
+export function apiAdminListReportRows(params?: GetReportsParams) {
+  return client.get<never, Paginated & { reports: AdminReportRow[] }>(ENDPOINTS.MESSAGING.ADMIN.GET_REPORTS, { params });
+}
+
+export interface AdminUpdateMessagingReportPayload { status: 'reviewed' | 'resolved'; adminNotes?: string }
+
+/** Admin triage of a messaging report — `PATCH /api/messaging/admin/reports/:id`. */
+export function apiAdminUpdateMessagingReport(id: string, payload: AdminUpdateMessagingReportPayload) {
+  return client.patch<never, Report>(`/api/messaging/admin/reports/${id}`, payload);
+}

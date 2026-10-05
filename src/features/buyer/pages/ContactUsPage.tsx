@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Mail, LifeBuoy, Clock, Send, Check, ArrowRight } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { Button, Input, Textarea, Select } from '@/components/comman/ui';
@@ -12,9 +12,9 @@ import { motion } from 'motion/react';
 
 const TOPICS = ['General question', 'Order or delivery', 'Billing & payments', 'Selling on Edudeen', 'Report a problem'];
 
-const CONTACT_CARDS = [
-  { Icon: Mail,     label: 'Email us',        value: 'support@edudeen.com' },
-  { Icon: LifeBuoy,  label: 'Help Center',     value: 'Browse FAQs & guides' },
+const CONTACT_CARDS: { Icon: typeof Mail; label: string; value: string; href?: string; to?: string }[] = [
+  { Icon: Mail,     label: 'Email us',        value: 'support@edudeen.com', href: 'mailto:support@edudeen.com' },
+  { Icon: LifeBuoy,  label: 'Help Center',     value: 'Browse FAQs & guides', to: '/faq' },
   { Icon: Clock,     label: 'Response time',   value: 'Usually within 24 hours' },
 ];
 
@@ -57,17 +57,22 @@ export function ContactUsPage() {
 
       {/* ── Contact info cards ── */}
       <RevealStagger className="max-w-[840px] mx-auto px-4 md:px-8 lg:px-12 pb-10 grid grid-cols-1 sm:grid-cols-3 gap-3" step={0.06} y={14}>
-        {CONTACT_CARDS.map(({ Icon, label, value }) => (
-          <PremiumCard key={label} className="p-5 flex items-start gap-3">
-            <div className="w-9 h-9 rounded-lg bg-brand-pale-orange flex items-center justify-center shrink-0">
-              <Icon size={16} className="text-brand-orange" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-[12px] font-semibold text-carbon">{label}</p>
-              <p className="text-[12px] text-slate mt-0.5 truncate">{value}</p>
-            </div>
-          </PremiumCard>
-        ))}
+        {CONTACT_CARDS.map(({ Icon, label, value, href, to }) => {
+          const card = (
+            <PremiumCard className="p-5 flex items-start gap-3 h-full">
+              <div className="w-9 h-9 rounded-lg bg-brand-pale-orange flex items-center justify-center shrink-0">
+                <Icon size={16} className="text-brand-orange" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[12px] font-semibold text-carbon">{label}</p>
+                <p className="text-[12px] text-slate mt-0.5 truncate">{value}</p>
+              </div>
+            </PremiumCard>
+          );
+          if (to) return <Link key={label} to={to} className="block no-underline text-inherit">{card}</Link>;
+          if (href) return <a key={label} href={href} className="block no-underline text-inherit">{card}</a>;
+          return <div key={label}>{card}</div>;
+        })}
       </RevealStagger>
 
       {/* ── Contact form ── */}

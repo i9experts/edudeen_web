@@ -16,6 +16,9 @@ export const TokenStorage = {
   save(accessToken: string, refreshToken: string, remember = true) {
     setAuthCookie('accessToken',  accessToken,  remember);
     setAuthCookie('refreshToken', refreshToken, remember);
+    // Read back by the 401 refresh path in `api/client.ts` so a refreshed
+    // token pair keeps the same cookie lifetime ("remember me") as login.
+    setAuthCookie('authRemember', remember ? '1' : '0', remember);
     // Every real login path (LoginPage, AuthGateModal, social login, OTP
     // verify) funnels through this one function — firing here, rather than
     // duplicating a "just logged in" signal at each call site, is what lets
@@ -30,6 +33,7 @@ export const TokenStorage = {
     deleteAuthCookie('accessToken');
     deleteAuthCookie('refreshToken');
     deleteAuthCookie('user');
+    deleteAuthCookie('authRemember');
     sessionStorage.removeItem('authCtx');
     // Mirror of the login event in save() — lets account-scoped state
     // (wishlist, cart) drop the previous user's data without a page reload.
@@ -233,6 +237,11 @@ export interface ProfileData {
    *  which case it's the cross-device source of truth for checkout/display
    *  currency (see CurrencyPreferenceContext). */
   currencyPreference: 'PKR' | 'USD' | null;
+  /** Social provider the account was created/linked with (absent for email sign-ups). */
+  authProvider?: 'google' | 'facebook' | 'apple' | string | null;
+  /** False for a social-only account that never set a password. Optional —
+   *  older API builds don't send it. */
+  hasPassword?: boolean;
   createdAt:    string;
   updatedAt:    string;
 }
@@ -281,3 +290,8 @@ export function apiSocialLogin(payload: SocialLoginPayload) {
   return client.post<never, ApiResponse<LoginData>>(ENDPOINTS.AUTH.SOCIAL_LOGIN, payload);
 }
 
+
+/** Admin-only: add another admin (POST /api/auth/admin/create-admin). */
+export function apiCreateAdmin(payload: { name: string; email: string; password: string; phone?: string }) {
+  return client.post<never, { success: boolean; message?: string }>('/api/auth/admin/create-admin', payload);
+}

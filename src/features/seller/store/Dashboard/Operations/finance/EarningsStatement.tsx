@@ -9,6 +9,7 @@ import {
 import {
   StudioPanel, StudioWorkflow, StudioPill, StudioTable, StudioEyebrow,
 } from '@/features/seller/components/studio/Studio';
+import { formatPct } from './commissionCopy';
 
 // ── Month helpers (YYYY-MM, local time) ──────────────────────────────────────
 function monthKey(d: Date) {
@@ -46,11 +47,19 @@ const PAYOUT_TONE: Record<string, 'green' | 'amber' | 'gray' | 'blue' | 'red'> =
   pending: 'amber', processing: 'blue', completed: 'green', paid: 'green', failed: 'red', rejected: 'red',
 };
 
-const HOW_YOU_GET_PAID = [
-  { tag: 'Checkout',   title: 'Buyers pay Edudeen',        body: 'Card and online payments are collected securely by Edudeen on your behalf when a buyer checks out.' },
-  { tag: 'Fees',       title: 'Only card fees come off',    body: 'Edudeen takes no commission — only the card processing fee and any refunds are taken out of each sale.' },
-  { tag: 'Payout',     title: 'Net earnings paid monthly',  body: 'Card sales become payable after a 14-day clearing hold. What remains is paid to your payout method on the 1st of the following month, after admin approval.' },
-];
+/** Fees step reflects the statement's real commission rate (pct null = unknown). */
+function howYouGetPaid(pct: number | null) {
+  const fees = pct === 0
+    ? { title: 'Only card fees come off', body: 'Edudeen takes no commission — only the card processing fee and any refunds are taken out of each sale.' }
+    : pct === null
+      ? { title: 'Commission and card fees', body: 'Edudeen’s commission (if any), the card processing fee and any refunds are taken out of each sale.' }
+      : { title: 'Commission and card fees', body: `Edudeen takes a ${formatPct(pct)} commission; that, the card processing fee and any refunds are taken out of each sale.` };
+  return [
+    { tag: 'Checkout', title: 'Buyers pay Edudeen',       body: 'Card and online payments are collected securely by Edudeen on your behalf when a buyer checks out.' },
+    { tag: 'Fees',     ...fees },
+    { tag: 'Payout',   title: 'Net earnings paid monthly', body: 'Card sales become payable after a 14-day clearing hold. What remains is paid to your payout method on the 1st of the following month, after admin approval.' },
+  ];
+}
 
 interface Props {
   storeId: string;
@@ -324,7 +333,12 @@ export function EarningsStatement({ storeId, currencies, defaultCurrency }: Prop
 
       {/* How you get paid — always visible, even before the statement loads */}
       <StudioPanel title="How you get paid">
-        <StudioWorkflow steps={HOW_YOU_GET_PAID} />
+        <StudioWorkflow steps={howYouGetPaid(
+          statement?.commissionRate == null || Number.isNaN(statement.commissionRate)
+            ? null
+            // Same either-unit handling as formatCommissionRate: 0.1 or 10 → 10.
+            : statement.commissionRate > 0 && statement.commissionRate <= 1 ? statement.commissionRate * 100 : statement.commissionRate,
+        )} />
         <div className="mt-6 flex gap-3 rounded-lg bg-[#faf0d4]/60 border border-[#f0e2b0] px-4 py-3">
           <Info size={17} className="text-[#755600] shrink-0 mt-[2px]" />
           <p className="text-[13.5px] text-carbon leading-relaxed">

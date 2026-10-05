@@ -59,8 +59,9 @@ export function RootLayout() {
         ref={el => { scrollRootRef.current = el; }}
         className="fixed inset-0 overflow-y-auto"
       >
-        {/* keyed by pathname so navigating to a new route always remounts past a caught error */}
-        <ErrorBoundary key={pathname}>
+        {/* resetKey (not key) — a new path clears a caught error, but the layouts
+            (dashboard sidebars etc.) stay mounted instead of rebuilding on every click */}
+        <ErrorBoundary resetKey={pathname}>
           <Suspense fallback={<PageSpinner />}>
             <Outlet />
           </Suspense>

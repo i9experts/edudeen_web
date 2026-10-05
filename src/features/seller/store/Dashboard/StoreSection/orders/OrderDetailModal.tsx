@@ -1,8 +1,8 @@
-import { useState } from 'react';
-import { Truck, CheckCheck, RefreshCw, Info } from 'lucide-react';
-import { Modal, Button, Badge, StatusBadge, Input } from '@/components/comman/ui';
+import { useEffect, useState } from 'react';
+import { Truck, CheckCheck, RefreshCw } from 'lucide-react';
+import { Modal, Button, Badge, StatusBadge, Input, SkeletonBox } from '@/components/comman/ui';
 import { apiMarkOrderPaid, apiUpdateOrderStatus } from '@/api/services/orders';
-import type { SellerOrder } from '@/api/services/product';
+import { apiGetSellerOrderDetail, type SellerOrder, type SellerOrderDetail } from '@/api/services/product';
 import { currencySymbol } from '@/utils/currency';
 
 export type SellerOrderStatus = 'processing' | 'shipped' | 'delivered' | 'completed';
@@ -56,12 +56,28 @@ export function OrderDetailModal({ order, storeId, onClose, onUpdated }: Props) 
 
   const sym = currencySymbol(order.currency ?? undefined);
 
+  // Full item list + shipping address come from the seller-scoped detail endpoint.
+  const [detail, setDetail]               = useState<SellerOrderDetail | null>(null);
+  const [detailLoading, setDetailLoading] = useState(true);
+  const [detailError, setDetailError]     = useState('');
+  const [detailKey, setDetailKey]         = useState(0);
+  useEffect(() => {
+    let cancelled = false;
+    setDetailLoading(true);
+    setDetailError('');
+    apiGetSellerOrderDetail(storeId, order.orderId)
+      .then(res => { if (!cancelled) setDetail(res.data); })
+      .catch((err: unknown) => { if (!cancelled) setDetailError(err instanceof Error ? err.message : 'Failed to load order details.'); })
+      .finally(() => { if (!cancelled) setDetailLoading(false); });
+    return () => { cancelled = true; };
+  }, [storeId, order.orderId, detailKey]);
+
   const run = (key: string, fn: () => Promise<unknown>, patch: Partial<SellerOrder>) => {
     if (busy) return;
     setBusy(key);
     setError('');
     fn()
-      .then(() => onUpdated(order.orderId, patch))
+      .then(() => { onUpdated(order.orderId, patch); setDetailKey(k => k + 1); })
       .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Action failed.'))
       .finally(() => setBusy(null));
   };
@@ -92,12 +108,12 @@ export function OrderDetailModal({ order, storeId, onClose, onUpdated }: Props) 
           <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate mb-1">Buyer</p>
           <Row label="Name">{order.customer.name}</Row>
           <Row label="Email">{order.customer.email || '—'}</Row>
+          {detail?.customer.phone && <Row label="Phone">{detail.customer.phone}</Row>}
         </section>
 
         <section>
           <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate mb-1">Order</p>
           <Row label="Placed">{new Date(order.date).toLocaleString('en-PK', { dateStyle: 'medium', timeStyle: 'short' })}</Row>
-          <Row label="Item">{order.product || '—'}</Row>
           <Row label="Type"><Badge color={order.type === 'digital' ? 'blue' : 'orange'}>{typeLabel}</Badge></Row>
           <Row label="Status"><StatusBadge status={order.status} /></Row>
           <Row label="Your subtotal"><span className="font-bold">{sym}{order.amount.toLocaleString()}</span></Row>
@@ -120,10 +136,69 @@ export function OrderDetailModal({ order, storeId, onClose, onUpdated }: Props) 
           )}
         </section>
 
-        <div className="flex items-start gap-2 text-[12px] text-slate bg-cream border border-bone rounded-lg px-3 py-2.5">
-          <Info size={14} className="shrink-0 mt-[1px]" />
-          <span>The full item list and the buyer’s shipping address aren’t available in the seller order view yet — contact the buyer through Messages if you need delivery details.</span>
-        </div>
+        <section>
+          <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate mb-1">Items</p>
+          {detailLoading ? (
+            <div className="flex flex-col gap-2 py-1">
+              <SkeletonBox height={40} rounded="8px" />
+              <SkeletonBox height={40} rounded="8px" />
+            </div>
+          ) : detailError ? (
+            <div className="flex items-center justify-between gap-3 py-2">
+              <p role="alert" className="text-[12.5px] text-error">{detailError}</p>
+              <Button variant="outline" size="xs" onClick={() => setDetailKey(k => k + 1)}>Retry</Button>
+            </div>
+          ) : !detail || detail.items.length === 0 ? (
+            <p className="text-[12.5px] text-slate py-2">{order.product || 'No items.'}</p>
+          ) : (
+            <ul className="flex flex-col">
+              {detail.items.map((it, i) => {
+                const extras = [
+                  it.licenseType ? `${it.licenseType.replace(/_/g, ' ')} license` : null,
+                  ...it.options.map(o => `${o.name}: ${o.value}`),
+                  it.sku ? `SKU ${it.sku}` : null,
+                ].filter(Boolean);
+                return (
+                  <li key={`${it.productId}-${it.variantId ?? i}`} className="flex items-start justify-between gap-4 py-2 border-b border-bone last:border-b-0">
+                    <div className="min-w-0">
+                      <p className="text-[13px] text-carbon font-medium break-words">{it.name}</p>
+                      {extras.length > 0 && <p className="text-[11.5px] text-slate">{extras.join(' · ')}</p>}
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-[13px] font-semibold text-carbon">{sym}{it.totalPrice.toLocaleString()}</p>
+                      <p className="text-[11.5px] text-slate">{it.quantity} × {sym}{it.price.toLocaleString()}</p>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
+
+        {needsShipping(order) && !detailLoading && !detailError && (
+          <section>
+            <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate mb-1">Shipping address</p>
+            {detail?.shippingAddress ? (
+              <div className="text-[13px] text-carbon leading-[1.5] py-1">
+                <p className="font-semibold">{detail.shippingAddress.recipientName}</p>
+                <p>{detail.shippingAddress.addressLine1}</p>
+                {detail.shippingAddress.addressLine2 && <p>{detail.shippingAddress.addressLine2}</p>}
+                <p>{[detail.shippingAddress.city, detail.shippingAddress.state, detail.shippingAddress.zipCode].filter(Boolean).join(', ')}</p>
+                <p className="text-slate">{detail.shippingAddress.phoneNumber}</p>
+              </div>
+            ) : (
+              <p className="text-[12.5px] text-slate py-1">No shipping address on this order — contact the buyer through Messages.</p>
+            )}
+            {detail?.tracking?.trackingNumber && (
+              <Row label="Tracking">
+                {detail.tracking.carrier ? `${detail.tracking.carrier} · ` : ''}
+                {detail.tracking.trackingUrl && /^https?:\/\//i.test(detail.tracking.trackingUrl)
+                  ? <a href={detail.tracking.trackingUrl} target="_blank" rel="noopener noreferrer" className="text-brand-orange underline">{detail.tracking.trackingNumber}</a>
+                  : detail.tracking.trackingNumber}
+              </Row>
+            )}
+          </section>
+        )}
 
         {canShip(order) && (
           <section>

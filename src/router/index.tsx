@@ -118,9 +118,13 @@ const StoreCategories    = lazy(() => import('@/features/seller/store/Dashboard/
 const StoreCollections   = lazy(() => import('@/features/seller/store/Dashboard/Manage/StoreCollections'));
 const StoreBundles       = lazy(() => import('@/features/seller/store/Dashboard/Manage/StoreBundles'));
 const BundlePage         = lazy(() => named(import('@/features/buyer/pages/BundlePage'), 'BundlePage'));
+// OAuth return page for Search Console / GA4 / Merchant Center / Bing (admin and seller).
+const AdminSeoCallback   = lazy(() => import('@/features/admin/components/seo/SeoIntegrationCallback').then(m => ({ default: () => <m.SeoIntegrationCallback side="admin" /> })));
+const SellerSeoCallback  = lazy(() => import('@/features/admin/components/seo/SeoIntegrationCallback').then(m => ({ default: () => <m.SeoIntegrationCallback side="seller" /> })));
 const CoursePlayerPage   = lazy(() => named(import('@/features/buyer/pages/CoursePlayerPage'), 'CoursePlayerPage'));
 const CertificatePage    = lazy(() => named(import('@/features/buyer/pages/CertificatePage'), 'CertificatePage'));
 const ShelfPage          = lazy(() => named(import('@/features/buyer/pages/ShelfPage'), 'ShelfPage'));
+const AdminOnboardingSlides = lazy(() => named(import('@/features/admin/pages/AdminOnboardingSlides'), 'AdminOnboardingSlides'));
 const AdminShelves       = lazy(() => named(import('@/features/admin/pages/AdminShelves'), 'AdminShelves'));
 const StorePlanBilling   = lazy(() => import('@/features/seller/store/Dashboard/Manage/StorePlanBilling'));
 const StoreVerification  = lazy(() => named(import('@/features/seller/store/Dashboard/Manage/StoreVerification'), 'StoreVerification'));
@@ -306,6 +310,7 @@ const mainRouter = createBrowserRouter([
       { path: '/quotes/:quoteId/print', element: <QuotationPrint /> },
       { path: '/course/:slug', element: <CoursePlayerPage /> },
       { path: '/certificates/:code', element: <CertificatePage /> },
+      { path: '/seo/integrations/callback', element: <SellerSeoCallback /> },
 
       // ── Auth ──────────────────────────────────────────────────────────
       { path: '/login',           element: <LoginPage /> },
@@ -400,6 +405,7 @@ const mainRouter = createBrowserRouter([
           { path: 'refunds',      element: <RequireRole role="admin"><AdminRefunds /></RequireRole> },
           { path: 'shipping-zones', element: <RequireRole role="admin"><AdminShippingZones /></RequireRole> },
           { path: 'picks', element: <RequireRole role="admin"><AdminShelves /></RequireRole> },
+          { path: 'app-slides', element: <RequireRole role="admin"><AdminOnboardingSlides /></RequireRole> },
           { path: 'orders',       element: <RequireRole role="admin"><AdminOrders /></RequireRole> },
           { path: 'marketplace',  element: <RequireRole role="admin"><AdminMarketplace /></RequireRole> },
           { path: 'categories',   element: <AdminCategories /> },
@@ -418,6 +424,7 @@ const mainRouter = createBrowserRouter([
           { path: 'marketing',    element: <RequireRole role="admin"><AdminMarketing /></RequireRole> },
           { path: 'settings',     element: <AdminSettings /> },
           { path: 'seo',          element: <RequireRole role="admin"><AdminSEO /></RequireRole> },
+          { path: 'seo/integrations/callback', element: <RequireRole role="admin"><AdminSeoCallback /></RequireRole> },
           { path: 'ai-studio',    element: <RequireRole role="admin"><AdminAiStudio /></RequireRole> },
         ],
       },

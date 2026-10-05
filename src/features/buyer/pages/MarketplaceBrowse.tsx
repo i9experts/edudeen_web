@@ -1,7 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { PlacementBanner } from '@/components/comman/marketplace/PlacementBanner';
+import type { PromotionPlacement } from '@/api/services/banner';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { clsx } from 'clsx';
-import { SearchX, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { SearchX, X, ChevronLeft, ChevronRight, ChevronDown, Check, List, LayoutGrid } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useWishlistContext } from '@/contexts/WishlistContext';
 import { useCategoryTree, categoryPath } from '@/hooks/marketplace/useCategoryTree';
@@ -67,7 +69,7 @@ function useBrowseState() {
   return { state, update, params };
 }
 
-export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, subcategories, showCategoryFilter, emptyHint, fixedGrade, subcategoryHref = categoryPath, subcategoriesLabel }: {
+export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, subcategories, showCategoryFilter, emptyHint, fixedGrade, subcategoryHref = categoryPath, subcategoriesLabel, bannerPlacement }: {
   title: string;
   eyebrow?: string;
   intro?: string | null;
@@ -80,6 +82,8 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
   fixedGrade?: string;
   subcategoryHref?: (node: CategoryNode) => string;
   subcategoriesLabel?: string;
+  /** Admin banners / paid promotions shown above the results (Admin → Banners). */
+  bannerPlacement?: PromotionPlacement;
 }) {
   const navigate = useNavigate();
   const { state, update } = useBrowseState();
@@ -91,6 +95,7 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [reload, setReload] = useState(0);
+  const [view, setView] = useBrowseView();
 
   const effectiveCategory = categoryId ?? (state.cat || undefined);
   const maxPrice = state.free ? 0 : state.max;
@@ -166,6 +171,7 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
       <main id="browse-top" className="max-w-[1480px] mx-auto px-[5%] md:px-[4%] pt-4 md:pt-6 pb-12 scroll-mt-28">
         <Breadcrumb className="mb-1" items={breadcrumb} />
 
+        {bannerPlacement && <PlacementBanner placement={bannerPlacement} className="mb-5" />}
         <header className="mb-5">
           {eyebrow && <p className="text-[12px] font-bold tracking-[0.15em] uppercase text-brand-royal mb-1">{eyebrow}</p>}
           <h1 className="font-serif font-normal text-[28px] md:text-[36px] leading-[1.15] text-carbon text-balance">{title}</h1>
@@ -189,17 +195,7 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
         {/* Toolbar */}
         <div className="flex flex-wrap items-center gap-3 mb-3">
           <FiltersButton count={chips.length} onClick={() => setDrawerOpen(true)} />
-          <label className="inline-flex items-center gap-2 text-[14px] text-slate">
-            <span>Sort</span>
-            <select
-              id="browse-sort"
-              value={state.sort}
-              onChange={e => update({ sort: e.target.value || undefined })}
-              className="rounded-full border border-bone bg-white px-4 py-[9px] text-[14px] font-semibold text-carbon cursor-pointer outline-none focus:border-brand-orange"
-            >
-              {SORTS.map(s => <option key={s.value || 'newest'} value={s.value}>{s.label}</option>)}
-            </select>
-          </label>
+          <SortMenu value={state.sort} onChange={v => update({ sort: v || undefined })} />
           <label className="inline-flex items-center gap-2 text-[14px] font-medium text-carbon cursor-pointer select-none">
             <input type="checkbox" id="browse-free" checked={state.free} onChange={e => update({ free: e.target.checked || undefined })} className="w-4 h-4 accent-brand-orange" />
             Free only
@@ -207,6 +203,7 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
           <p className="ms-auto text-[13.5px] text-slate tabular-nums" aria-live="polite">
             {loading ? 'Searching…' : total === 0 ? 'No results' : `${from.toLocaleString()}–${to.toLocaleString()} of ${total.toLocaleString()} results`}
           </p>
+          <ViewToggle value={view} onChange={setView} />
         </div>
 
         {chips.length > 0 && (
@@ -234,9 +231,20 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
             <button type="button" onClick={() => setReload(r => r + 1)} className="rounded-full bg-carbon text-white px-5 py-2 text-[14px] font-semibold border-none cursor-pointer">Try again</button>
           </div>
         ) : loading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-4 md:gap-x-6 gap-y-8">
-            {Array.from({ length: 8 }, (_, i) => <ResourceCardSkeleton key={i} />)}
-          </div>
+          view === 'list' ? (
+            <div className="border-t border-bone">
+              {Array.from({ length: 5 }, (_, i) => (
+                <div key={i} className="flex gap-4 sm:gap-6 py-5 border-b border-bone animate-pulse">
+                  <div className="w-[112px] sm:w-[168px] aspect-square rounded-xl bg-bone shrink-0" />
+                  <div className="flex-1"><div className="h-3 w-1/3 bg-bone rounded" /><div className="h-4 w-3/4 bg-bone rounded mt-3" /><div className="h-3 w-1/4 bg-bone rounded mt-3" /></div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-4 md:gap-x-6 gap-y-8">
+              {Array.from({ length: 8 }, (_, i) => <ResourceCardSkeleton key={i} />)}
+            </div>
+          )
         ) : products.length === 0 ? (
           <EmptyState
             icon={<SearchX size={28} className="text-slate" />}
@@ -245,7 +253,7 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
             action={chips.length ? { label: 'Clear filters', onClick: clearAll } : { label: 'Browse all resources', onClick: () => navigate('/') }}
           />
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-4 md:gap-x-6 gap-y-8">
+          <div className={view === 'list' ? 'border-t border-bone' : 'grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-4 md:gap-x-6 gap-y-8'}>
             {products.map((p, i) => {
               const dv = (p.variants ?? []).find(v => v.isDefault) ?? p.variants?.[0];
               const vId = dv?._id ?? '';
@@ -253,6 +261,7 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
                 <ResourceCard
                   key={p._id}
                   index={i}
+                  layout={view}
                   product={p}
                   onClick={slug => navigate(`/product/${slug}`)}
                   isWishlisted={isWishlisted(p._id, vId)}
@@ -341,6 +350,100 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
   );
 }
 
+type BrowseView = 'grid' | 'list';
+const VIEW_KEY = 'edudeen.browseView';
+
+/** Grid/list choice — remembered per browser (a convenience, so storage may fail). */
+function useBrowseView(): [BrowseView, (v: BrowseView) => void] {
+  const [view, setView] = useState<BrowseView>(() => {
+    try { return localStorage.getItem(VIEW_KEY) === 'list' ? 'list' : 'grid'; } catch { return 'grid'; }
+  });
+  const set = useCallback((v: BrowseView) => {
+    setView(v);
+    try { localStorage.setItem(VIEW_KEY, v); } catch { /* storage unavailable */ }
+  }, []);
+  return [view, set];
+}
+
+/** "Sort by: Newest ⌄" — opens a small menu of sort orders. */
+function SortMenu({ value, onChange }: { value: MarketplaceSortBy | ''; onChange: (v: MarketplaceSortBy | '') => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const current = SORTS.find(s => s.value === value) ?? SORTS[0];
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => { document.removeEventListener('mousedown', onDown); document.removeEventListener('keydown', onKey); };
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        id="browse-sort"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => setOpen(o => !o)}
+        className="inline-flex items-center gap-2 rounded-full bg-transparent border-none px-2 py-[9px] text-[15px] text-carbon cursor-pointer hover:bg-[#f3f5f6]"
+      >
+        <span>Sort by:</span>
+        <b className="font-bold">{current.label}</b>
+        <ChevronDown size={17} className={clsx('transition-transform', open && 'rotate-180')} aria-hidden />
+      </button>
+      {open && (
+        <ul role="listbox" aria-label="Sort by" className="absolute start-0 top-full mt-1 z-30 min-w-[220px] list-none m-0 p-1.5 bg-white border border-bone rounded-xl shadow-[0_12px_32px_rgba(0,0,0,0.12)]">
+          {SORTS.map(s => (
+            <li key={s.value || 'newest'}>
+              <button
+                type="button"
+                role="option"
+                aria-selected={s.value === value}
+                onClick={() => { onChange(s.value); setOpen(false); }}
+                className={clsx(
+                  'w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-start text-[14px] border-none cursor-pointer',
+                  s.value === value ? 'bg-[#f3f5f6] font-bold text-carbon' : 'bg-transparent text-carbon hover:bg-[#f7f8f9]',
+                )}
+              >
+                {s.label}
+                {s.value === value && <Check size={15} className="text-success" aria-hidden />}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+/** List / grid switch — a pill with the active view ringed in green. */
+function ViewToggle({ value, onChange }: { value: BrowseView; onChange: (v: BrowseView) => void }) {
+  const opt = (v: BrowseView, Icon: typeof List, label: string) => (
+    <button
+      type="button"
+      onClick={() => onChange(v)}
+      aria-pressed={value === v}
+      aria-label={label}
+      title={label}
+      className={clsx(
+        'size-[38px] rounded-full flex items-center justify-center cursor-pointer transition-colors',
+        value === v ? 'bg-[#e9f8f0] border-2 border-[#3ccf8e] text-carbon' : 'bg-transparent border-2 border-transparent text-carbon hover:bg-[#f3f5f6]',
+      )}
+    >
+      <Icon size={18} aria-hidden />
+    </button>
+  );
+  return (
+    <div role="group" aria-label="View" className="inline-flex items-center gap-1 p-[3px] rounded-full border border-bone bg-white">
+      {opt('list', List, 'List view')}
+      {opt('grid', LayoutGrid, 'Grid view')}
+    </div>
+  );
+}
+
 /** 1 … 4 5 [6] 7 8 … 20 */
 function pageList(current: number, total: number): (number | '…')[] {
   if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
@@ -364,6 +467,7 @@ export function SearchResultsPage() {
       eyebrow={state.q ? 'Search' : undefined}
       breadcrumb={[{ label: 'Home', path: '/' }, { label: state.q ? `Search: ${state.q}` : 'All resources' }]}
       showCategoryFilter
+      bannerPlacement="marketplaceHero"
       emptyHint="Check the spelling, or try a broader word like “maths” or “Quran”."
     />
   );
@@ -412,6 +516,7 @@ export function CategoryPage() {
       categoryId={entry.node._id}
       subcategories={subs.filter(s => s._id !== entry.node._id)}
       showCategoryFilter={false}
+      bannerPlacement="categoryHero"
       emptyHint="Sellers haven't listed anything in this category yet."
     />
   );

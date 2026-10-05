@@ -345,11 +345,17 @@ export function apiDeleteVariant(productId: string, variantId: string) {
   return client.delete<never, ApiResponse<ProductVariant[]>>(ENDPOINTS.PRODUCT.VARIANTS.DELETE(productId, variantId));
 }
 
-export function apiGetStoreInventory(storeId: string, page = 1, limit = 10, filters: { status?: 'active' | 'draft' | 'archived' } = {}) {
-  // Backend supports ?status= (and counts stats.totalProducts on the same filter).
-  const status = filters.status ? `&status=${filters.status}` : '';
+export function apiGetStoreInventory(
+  storeId: string, page = 1, limit = 10,
+  filters: { status?: 'active' | 'draft' | 'archived'; q?: string } = {},
+) {
+  // Backend supports ?status= and ?q= (name/SKU, case-insensitive) and counts
+  // stats.totalProducts on the same filter. `limit` is capped at 100 server-side.
+  const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+  if (filters.status) params.set('status', filters.status);
+  if (filters.q?.trim()) params.set('q', filters.q.trim());
   return client.get<never, ApiResponse<GetInventoryData>>(
-    `${ENDPOINTS.INVENTORY.GET_STORE_INVENTORY(storeId)}?page=${page}&limit=${limit}${status}`,
+    `${ENDPOINTS.INVENTORY.GET_STORE_INVENTORY(storeId)}?${params.toString()}`,
   );
 }
 
@@ -406,12 +412,13 @@ export interface GetSellerOrdersData {
 
 /** Server-side filters supported by GET /orders/seller-orders/:storeId
  *  (orders.service getSellerOrders): `status` matches sellerOrders.status,
- *  `type` matches sellerOrders.fulfillmentType. There is no search param —
- *  and the backend caps `limit` at 50. */
+ *  `type` matches sellerOrders.fulfillmentType, `q` searches order number /
+ *  buyer name or email / this store's item names. The backend caps `limit` at 50. */
 export interface SellerOrderFilters {
   status?: string;
   type?:   'physical' | 'digital' | 'mixed' | '';
   time?:   'today' | 'week' | 'month' | '';
+  q?:      string;
 }
 
 export function apiGetSellerOrders(storeId: string, page = 1, limit = 10, filters: SellerOrderFilters = {}) {
@@ -419,8 +426,60 @@ export function apiGetSellerOrders(storeId: string, page = 1, limit = 10, filter
   if (filters.status) params.set('status', filters.status);
   if (filters.type)   params.set('type', filters.type);
   if (filters.time)   params.set('time', filters.time);
+  if (filters.q?.trim()) params.set('q', filters.q.trim());
   return client.get<never, ApiResponse<GetSellerOrdersData>>(
     `${ENDPOINTS.SELLER_ACCOUNT.GET_SELLER_ORDERS(storeId)}?${params.toString()}`,
+  );
+}
+
+export interface SellerOrderDetailItem {
+  productId:   string;
+  variantId:   string | null;
+  name:        string;
+  image:       string | null;
+  sku:         string | null;
+  type:        'physical' | 'digital';
+  productType: string | null;
+  options:     { name: string; value: string }[];
+  licenseType: string | null;
+  quantity:    number;
+  price:       number;
+  totalPrice:  number;
+  status:      string | null;
+}
+
+export interface SellerOrderShippingAddress {
+  recipientName: string;
+  phoneNumber:   string;
+  addressLine1:  string;
+  addressLine2:  string | null;
+  city:          string;
+  state:         string;
+  zipCode:       string;
+}
+
+export interface SellerOrderDetail {
+  orderId:         string;
+  orderNumber:     string;
+  date:            string;
+  currency:        string;
+  isPaid:          boolean;
+  paymentType:     string;
+  customer:        SellerOrderCustomer & { phone: string | null };
+  shippingAddress: SellerOrderShippingAddress | null;
+  status:          string;
+  type:            'physical' | 'digital' | 'mixed';
+  subtotal:        number;
+  tracking:        { carrier: string | null; trackingNumber: string | null; trackingUrl: string | null } | null;
+  shippedAt:       string | null;
+  deliveredAt:     string | null;
+  items:           SellerOrderDetailItem[];
+}
+
+/** GET /api/orders/seller-orders/:storeId/:orderId — this store's part of one order (owner only). */
+export function apiGetSellerOrderDetail(storeId: string, orderId: string) {
+  return client.get<never, ApiResponse<SellerOrderDetail>>(
+    `${ENDPOINTS.SELLER_ACCOUNT.GET_SELLER_ORDERS(storeId)}/${orderId}`,
   );
 }
 

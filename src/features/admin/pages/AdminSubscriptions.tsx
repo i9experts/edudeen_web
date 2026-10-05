@@ -5,6 +5,7 @@ import { Modal } from '@/components/comman/ui/Modal';
 import { Button } from '@/components/comman/ui/Button';
 import { SkeletonBox, Table, type TableColumn } from '@/components/comman/ui';
 import { AdminStudioHeader } from '@/features/admin/components/studio';
+import { useToast } from '@/contexts/ToastContext';
 import {
   apiAdminGetOverview, apiAdminGetStoreBreakdown, apiAdminGetStoreDetail,
   apiAdminGetPaymentFailures, apiAdminGetSubscriptionDetail, apiAdminSuspendPlan, apiAdminUnsuspendPlan,
@@ -30,6 +31,8 @@ function WebhooksPanel() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [retryingId, setRetryingId] = useState<string | null>(null);
+  const [retryError, setRetryError] = useState<{ id: string; message: string } | null>(null);
+  const toast = useToast();
 
   const load = () => {
     setLoading(true);
@@ -43,7 +46,16 @@ function WebhooksPanel() {
 
   async function retry(id: string) {
     setRetryingId(id);
-    try { await apiAdminRetryWebhook(id); load(); } finally { setRetryingId(null); }
+    setRetryError(null);
+    try {
+      await apiAdminRetryWebhook(id);
+      toast.success('Webhook re-processed');
+      load();
+    } catch (err) {
+      setRetryError({ id, message: err instanceof Error ? err.message : 'Retry failed.' });
+    } finally {
+      setRetryingId(null);
+    }
   }
 
   const columns: TableColumn<WebhookEvent>[] = [
@@ -61,9 +73,12 @@ function WebhooksPanel() {
     {
       key: 'actions', header: '',
       render: ev => ev.status === 'failed' ? (
-        <button disabled={retryingId === ev._id} onClick={() => retry(ev._id)} className="px-2.5 py-1 bg-white border border-bone rounded-[6px] text-[11px] text-graphite cursor-pointer disabled:opacity-50">
-          {retryingId === ev._id ? 'Retrying…' : 'Retry'}
-        </button>
+        <div className="flex flex-col items-start gap-1">
+          <button disabled={retryingId === ev._id} onClick={() => retry(ev._id)} className="px-2.5 py-1 bg-white border border-bone rounded-[6px] text-[11px] text-graphite cursor-pointer disabled:opacity-50">
+            {retryingId === ev._id ? 'Retrying…' : 'Retry'}
+          </button>
+          {retryError?.id === ev._id && <span className="text-[11px] text-error max-w-[220px]">{retryError.message}</span>}
+        </div>
       ) : null,
     },
   ];

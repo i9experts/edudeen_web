@@ -4,7 +4,7 @@ import axios, { type AxiosResponse, type InternalAxiosRequestConfig } from 'axio
 // `utils/authCookie.ts`. Imported directly (not via `services/auth.ts`'s
 // `TokenStorage`) to avoid a circular import, since `auth.ts` itself imports
 // this `client` module.
-import { getAuthCookie, deleteAuthCookie } from '@/utils/authCookie';
+import { getAuthCookie, setAuthCookie, deleteAuthCookie } from '@/utils/authCookie';
 import { API_BASE_URL, API_URL_MISSING } from './apiBase';
 
 // Endpoints where a 401 means "this specific attempt was rejected" (wrong
@@ -69,6 +69,39 @@ client.interceptors.request.use(
   err => Promise.reject(err),
 );
 
+// ── Access-token refresh (single-flight) ─────────────────────────────────────
+// A 401 on a normal request first tries to swap the refresh token for a new
+// pair (POST /api/auth/refresh → { data: { token: { accessToken, refreshToken } } }).
+// Only ONE refresh call is ever in flight: concurrent 401s all await the same
+// promise, then each retries its own request exactly once. If the refresh
+// itself fails, every waiter falls through to the logout redirect below.
+const REFRESH_PATH = '/api/auth/refresh';
+// Never try to refresh for these — a 401 there isn't an expired session.
+const NO_REFRESH_PATHS = [...AUTH_ATTEMPT_PATHS, REFRESH_PATH, '/api/auth/logout'];
+
+let refreshInFlight: Promise<string | null> | null = null;
+
+function refreshAccessToken(): Promise<string | null> {
+  if (refreshInFlight) return refreshInFlight;
+  const refreshToken = getAuthCookie('refreshToken');
+  if (!refreshToken) return Promise.resolve(null);
+  refreshInFlight = axios
+    // Bare axios (not `client`) so this call never re-enters the interceptors.
+    .post(`${API_BASE_URL}${REFRESH_PATH}`, { refreshToken }, { headers: { 'Content-Type': 'application/json' }, timeout: 15_000 })
+    .then(res => {
+      const tokens = res.data?.data?.token;
+      if (!tokens?.accessToken || !tokens?.refreshToken) return null;
+      // Keep the same cookie lifetime the user chose at login ("remember me").
+      const persistent = getAuthCookie('authRemember') !== '0';
+      setAuthCookie('accessToken', tokens.accessToken, persistent);
+      setAuthCookie('refreshToken', tokens.refreshToken, persistent);
+      return tokens.accessToken as string;
+    })
+    .catch(() => null)
+    .finally(() => { refreshInFlight = null; });
+  return refreshInFlight;
+}
+
 // ── Response interceptor — normalize errors, handle 401 ──────────────────────
 client.interceptors.response.use(
   (res: AxiosResponse) => {
@@ -86,7 +119,20 @@ client.interceptors.response.use(
     }
     return res.data;   // unwrap → caller gets { success, message, data } (or module-specific equivalent)
   },
-  err => {
+  async err => {
+    // Expired access token → refresh once, then replay the original request.
+    const original = err.config as (InternalAxiosRequestConfig & { _retriedAfterRefresh?: boolean }) | undefined;
+    const skipRefresh = NO_REFRESH_PATHS.some(p => original?.url?.includes(p));
+    if (err.response?.status === 401 && original && !original._retriedAfterRefresh && !skipRefresh && getAuthCookie('refreshToken')) {
+      original._retriedAfterRefresh = true;
+      const newToken = await refreshAccessToken();
+      if (newToken) {
+        if (original.headers) original.headers.Authorization = `Bearer ${newToken}`;
+        return client(original);
+      }
+      // Refresh failed — fall through to the logout handling below.
+    }
+
     const msg: string =
       err.response?.data?.message ||
       err.message ||
@@ -100,6 +146,7 @@ client.interceptors.response.use(
       deleteAuthCookie('accessToken');
       deleteAuthCookie('refreshToken');
       deleteAuthCookie('user');
+      deleteAuthCookie('authRemember');
       sessionStorage.removeItem('authCtx');
       // Carries the page the user was on back through login so a session
       // expiring mid-task doesn't strand them on the role's default

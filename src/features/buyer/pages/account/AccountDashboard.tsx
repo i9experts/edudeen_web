@@ -25,7 +25,7 @@ function RecentOrderRow({ order }: { order: OrderSummary }) {
   const itemCount = (order.stores ?? []).reduce((n, s) => n + s.itemCount, 0);
   return (
     <button
-      onClick={() => navigate('/account/orders')}
+      onClick={() => navigate(`/account/orders/${order.orderId}`)}
       className="group w-full flex items-center gap-3 px-4 py-3 text-start bg-transparent border-none cursor-pointer hover:bg-cream transition-colors rounded-[10px]"
     >
       <div className="w-9 h-9 rounded-[9px] bg-brand-pale-orange flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-110">
@@ -437,9 +437,11 @@ export function AccountDashboard() {
               </Badge>
             </div>
             <div className="flex items-center gap-2 mb-3.5">
-              <ShieldCheck size={13} className="text-success" />
+              <ShieldCheck size={13} className={profile?.hasPassword === false ? 'text-slate' : 'text-success'} />
               <span className="text-[12px] text-graphite flex-1">Password protection</span>
-              <Badge color="green" size="sm">Active</Badge>
+              {profile?.hasPassword === false
+                ? <Badge color="gray" size="sm">Not set</Badge>
+                : <Badge color="green" size="sm">Active</Badge>}
             </div>
             <Button variant="outline" size="sm" fullWidth onClick={() => navigate('/account/security')}>
               Manage Security

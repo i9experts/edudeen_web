@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useLogin } from '@/hooks/auth/useLogin';
 import { safeRedirectPath } from '@/utils/safeRedirect';
+import { getMainAppUrl } from '@/utils/storefrontUrl';
 import { Input } from '@/components/comman/ui/Input';
 import { Button } from '@/components/comman/ui/Button';
 import { useStorefront } from './StorefrontContext';
@@ -64,10 +65,24 @@ export function StorefrontLoginPage() {
             </button>
           }
         />
+        {/* Password reset lives on the main Edudeen app (same account, shared
+           auth cookie), not on this store's subdomain router. */}
+        <div className="-mt-2 flex justify-end">
+          <a href={getMainAppUrl('/forgot-password')} className="text-[12px] font-medium text-slate hover:text-carbon hover:underline">
+            Forgot password?
+          </a>
+        </div>
         <Button type="submit" variant="primary" fullWidth loading={login.loading}>
           Sign In
         </Button>
       </form>
+
+      <p className="text-[12.5px] text-slate text-center mt-5">
+        New here?{' '}
+        <a href={getMainAppUrl('/register')} className="font-semibold text-carbon hover:underline">
+          Create an account
+        </a>
+      </p>
     </div>
   );
 }
