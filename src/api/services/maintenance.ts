@@ -69,6 +69,7 @@ export interface MaintenanceStatus {
   startsAt?: string | null;
   endsAt?: string | null;
   statusNote?: string;
+  scopeMessages?: Record<string, { title?: string; message?: string }>;
   updatedAt?: string | null;
 }
 
@@ -93,4 +94,5 @@ export interface MaintenancePayload {
   startsAt?: string | null;
   endsAt?: string | null;
   statusNote?: string;
+  scopeMessages?: Record<string, { title?: string; message?: string }>;
 }

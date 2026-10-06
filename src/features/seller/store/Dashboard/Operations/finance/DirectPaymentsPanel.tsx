@@ -1,4 +1,5 @@
-﻿import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { clsx } from 'clsx';
 import { Check, X, Landmark, Loader2, ExternalLink } from 'lucide-react';
 import { Button, Input, Modal, Textarea } from '@/components/comman/ui';
 import { useToast } from '@/contexts/ToastContext';
@@ -93,6 +94,11 @@ export function DirectPaymentsPanel({ storeId }: { storeId: string }) {
                 <p className="text-[11.5px] text-slate m-0">
                   {p.senderName ? `Sender: ${p.senderName} · ` : ''}{p.transactionReference ? `Ref: ${p.transactionReference} · ` : ''}{new Date(p.createdAt).toLocaleString()}
                 </p>
+                {p.receiptCheck && p.receiptCheck.status !== 'skipped' && (
+                  <p className={clsx('text-[11.5px] font-semibold m-0 mt-0.5', p.receiptCheck.status === 'match' ? 'text-success' : 'text-error')}>
+                    {p.receiptCheck.status === 'match' ? '✓ ' : '⚠ '}{p.receiptCheck.note}
+                  </p>
+                )}
               </div>
               <Button size="xs" variant="ghost" icon={<ExternalLink size={12} />} onClick={() => viewProof(p)}>Receipt</Button>
               <Button size="xs" variant="primary" loading={busy === p._id} onClick={() => approve(p)}><Check size={12} /> Received</Button>

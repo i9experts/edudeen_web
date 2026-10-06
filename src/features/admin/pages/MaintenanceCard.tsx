@@ -37,6 +37,8 @@ export function MaintenanceCard({ config, onSaved }: { config: PlatformConfig; o
   const [startsAt, setStartsAt] = useState(toLocalInput(m?.startsAt));
   const [endsAt, setEndsAt] = useState(toLocalInput(m?.endsAt));
   const [statusNote, setStatusNote] = useState(m?.statusNote ?? '');
+  const [own, setOwn] = useState<Record<string, { title?: string; message?: string }>>(m?.scopeMessages ?? {});
+  const setOwnField = (scope: string, field: 'title' | 'message', v: string) => setOwn(cur => ({ ...cur, [scope]: { ...cur[scope], [field]: v } }));
   const [confirming, setConfirming] = useState(false);
   const [localError, setLocalError] = useState('');
 
@@ -62,6 +64,8 @@ export function MaintenanceCard({ config, onSaved }: { config: PlatformConfig; o
     maintenanceMode: enable, scopes, type,
     title: title.trim() || info.defaultTitle, message: message.trim() || info.defaultMessage,
     startsAt: toIso(startsAt), endsAt: toIso(endsAt), statusNote: statusNote.trim(),
+    // Only for scopes that are still selected.
+    scopeMessages: Object.fromEntries(Object.entries(own).filter(([k]) => scopes.includes(k as MaintenanceScope))),
   });
 
   async function apply(enable: boolean) {
@@ -138,6 +142,19 @@ export function MaintenanceCard({ config, onSaved }: { config: PlatformConfig; o
             );
           })}
         </div>
+        {/* Own wording per selected feature */}
+        {scopes.some(s => s.startsWith('feature:')) && (
+          <div className="mt-4 flex flex-col gap-3">
+            <p className="text-[12px] font-semibold text-charcoal m-0">Different message for a feature (optional — empty uses the general message below)</p>
+            {scopes.filter(s => s.startsWith('feature:')).map(s => (
+              <div key={s} className="rounded-lg border border-bone px-3 py-3 flex flex-col gap-2">
+                <p className="text-[12.5px] font-bold text-carbon m-0">{scopeLabel(s)}</p>
+                <Input label="Headline" value={own[s]?.title ?? ''} onChange={e => setOwnField(s, 'title', e.target.value)} maxLength={120} />
+                <Textarea label="Message" rows={2} value={own[s]?.message ?? ''} onChange={e => setOwnField(s, 'message', e.target.value)} maxLength={1000} />
+              </div>
+            ))}
+          </div>
+        )}
         {/* What users read */}
         <div className="grid grid-cols-1 gap-3 mt-5">
           <Input label="Headline users see" value={title} onChange={e => setTitle(e.target.value)} placeholder={info.defaultTitle} maxLength={120} />

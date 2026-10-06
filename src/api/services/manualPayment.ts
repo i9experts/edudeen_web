@@ -36,6 +36,8 @@ export interface ManualPaymentProof {
   fxRateUsed: number;
   proofImageUrl: string | null;
   transactionReference: string | null;
+  /** Advisory AI read of the receipt screenshot (bank transfers paid to a seller). */
+  receiptCheck?: { status: 'match' | 'mismatch' | 'unreadable' | 'skipped'; amountRead: number | null; note: string } | null;
   senderName: string | null;
   status: ManualPaymentProofStatus;
   reviewedByAdminId: string | null;
