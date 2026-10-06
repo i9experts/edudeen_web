@@ -35,7 +35,7 @@ const TABS: Tab[] = [
 ];
 
 const PLACEMENT_LABEL: Record<PromotionPlacement, string> = {
-  homepageHero: 'Homepage Hero', marketplaceHero: 'Marketplace Hero', educationHero: 'Education Marketplace Hero', categoryHero: 'Category Hero',
+  homepageHero: 'Homepage Hero', marketplaceHero: 'Marketplace Hero', educationHero: 'Education Marketplace Hero', categoryHero: 'Category Hero', productPage: 'Product Page Banner',
 };
 
 // ═══════════════════════════════ Campaigns ═══════════════════════════════════
@@ -634,6 +634,7 @@ const PLACEMENT_STYLE: Record<PromotionPlacement, { Icon: typeof Store; accent: 
   marketplaceHero: { Icon: Store, accent: '#1D5EAE', bg: '#EAF1FB' },
   educationHero: { Icon: GraduationCap, accent: '#7B3DAE', bg: '#F4EAFB' },
   categoryHero: { Icon: LayoutGrid, accent: '#1E7A8C', bg: '#E6F5F5' },
+  productPage: { Icon: LayoutGrid, accent: '#B8651E', bg: '#FBEFE3' },
 };
 
 function daysBetween(a: string, b: string) {
@@ -779,6 +780,7 @@ const PLACEMENT_LIMIT_META: { key: keyof PlacementLimits; label: string }[] = [
   { key: 'marketplaceHero', label: 'Marketplace Hero' },
   { key: 'educationHero', label: 'Education Marketplace Hero' },
   { key: 'categoryHero', label: 'Category Hero' },
+  { key: 'productPage', label: 'Product Page Banner' },
   { key: 'storeHero', label: 'Store Hero (per store)' },
   { key: 'storeFeaturedProducts', label: 'Store Featured Products' },
 ];

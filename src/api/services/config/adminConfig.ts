@@ -35,6 +35,7 @@ export interface PlacementLimits {
   marketplaceHero: number;
   educationHero: number;
   categoryHero: number;
+  productPage: number;
   storeHero: number;
   storeFeaturedProducts: number;
 }

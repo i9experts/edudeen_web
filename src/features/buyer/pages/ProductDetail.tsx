@@ -40,6 +40,7 @@ import { QuoteRequestDialog } from '@/features/buyer/components/QuoteRequestDial
 import { ProductQuestions } from '@/features/buyer/components/ProductQuestions';
 import { BundleOffer } from '@/features/buyer/components/BundleOffer';
 import { CourseOrLiveInfo } from '@/features/buyer/components/CourseOrLiveInfo';
+import { PlacementBanner } from '@/components/comman/marketplace/PlacementBanner';
 import { ShippingZonesSummary } from '@/features/buyer/components/ShippingZonesSummary';
 import { syncRecentlyViewed } from '@/utils/recentlyViewedSync';
 import { currencySymbol } from '@/utils/currency';
@@ -639,6 +640,9 @@ export function ProductDetail() {
             ...(subCategory ? [{ label: subCategory.name, path: categoryPath(subCategory) }] : []),
             { label: product.name },
           ]} />
+
+          {/* Edudeen's own banner for product pages (Admin → Banners → Product Page Banner). Renders nothing until one is published. */}
+          <PlacementBanner placement="productPage" className="mb-6 sm:!aspect-[4/1] lg:!aspect-[6/1]" />
 
           {/* ── Gallery + Purchase panel ─────────────────────────────────────── */}
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-6 items-start min-w-0 mb-8">

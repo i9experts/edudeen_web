@@ -59,7 +59,7 @@ const HIDDEN_TABS: { id: Tab; label: string; Icon: LucideIcon }[] = [
 ];
 
 const PLACEMENT_LABEL: Record<PromotionPlacement, string> = {
-  homepageHero: 'Homepage Hero', marketplaceHero: 'Marketplace Hero', educationHero: 'Education Marketplace Hero', categoryHero: 'Category Hero',
+  homepageHero: 'Homepage Hero', marketplaceHero: 'Marketplace Hero', educationHero: 'Education Marketplace Hero', categoryHero: 'Category Hero', productPage: 'Product Page Banner',
 };
 
 const PROMOTION_STATUS_STYLE: Record<PromotionRequest['status'], { bg: string; color: string; label: string }> = {

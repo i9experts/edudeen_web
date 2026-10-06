@@ -4,12 +4,14 @@ import { ENDPOINTS } from '../endpoints';
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
 // ─────────────────────────────────────────────────────────────────────────────
-export const PROMOTION_PLACEMENTS = ['homepageHero', 'marketplaceHero', 'educationHero', 'categoryHero'] as const;
+export const PROMOTION_PLACEMENTS = ['homepageHero', 'marketplaceHero', 'educationHero', 'categoryHero', 'productPage'] as const;
 export type PromotionPlacement = (typeof PROMOTION_PLACEMENTS)[number];
 
 // Every placement now has a buyer surface: homepageHero (Homepage), marketplaceHero
 // (/search), educationHero (/learn), categoryHero (/c/:slug) — see PlacementBanner.
-export const SELECTABLE_PROMOTION_PLACEMENTS = PROMOTION_PLACEMENTS;
+// productPage (the banner on every product page) is the platform's own slot: admins can put banners there, sellers cannot buy it.
+export const SELECTABLE_PROMOTION_PLACEMENTS = PROMOTION_PLACEMENTS.filter(p => p !== 'productPage');
+export const ADMIN_BANNER_PLACEMENTS = PROMOTION_PLACEMENTS;
 
 export type BannerStatus = 'draft' | 'scheduled' | 'active' | 'paused' | 'expired';
 

@@ -4,7 +4,7 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { useAdminBanners, useBannerCount } from '@/hooks/admin/useAdminBanners';
 import {
   apiCreateBannerFromUrl, apiUpdateBanner, apiDeleteBanner, apiPauseBanner, apiResumeBanner,
-  bannerPlacements, SELECTABLE_PROMOTION_PLACEMENTS, type Banner, type PromotionPlacement,
+  bannerPlacements, ADMIN_BANNER_PLACEMENTS, type Banner, type PromotionPlacement,
 } from '@/api/services/banner';
 import { Button } from '@/components/comman/ui/Button';
 import { AdminStudioHeader } from '@/features/admin/components/studio';
@@ -19,6 +19,7 @@ const PLACEMENT_LABEL: Record<PromotionPlacement, string> = {
   marketplaceHero: 'Marketplace Hero',
   educationHero: 'Education Marketplace Hero',
   categoryHero: 'Category Hero',
+  productPage: 'Product Page Banner',
 };
 
 const STATUS_STYLE: Record<Banner['status'], { bg: string; color: string; label: string }> = {
@@ -104,7 +105,7 @@ function BannerFormModal({
           <label className="block text-[12px] font-medium text-charcoal mb-1.5">Placement</label>
           <p className="text-[11px] text-slate/70 mb-1.5">Pick one or more — this banner will rotate on every placement checked.</p>
           <div className="flex flex-col gap-1.5">
-            {SELECTABLE_PROMOTION_PLACEMENTS.map(p => (
+            {ADMIN_BANNER_PLACEMENTS.map(p => (
               <label key={p} className="flex items-center gap-2 text-[13px] text-charcoal cursor-pointer select-none">
                 <input
                   type="checkbox"
