@@ -1,5 +1,6 @@
 import { PlacementBanner } from '@/components/comman/marketplace/PlacementBanner';
 import { DealsBanner } from '@/components/comman/ui/DealsBanner';
+import { FeatureMaintenance } from '@/components/comman/ui/FeatureMaintenance';
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { X } from 'lucide-react';
@@ -548,6 +549,8 @@ export function Homepage() {
           ))}
         </div>
 
+        {/* While an admin has the flash sale / deals under maintenance, their message replaces this block. */}
+        <FeatureMaintenance feature="flash_sale">
         {/* ── Live sale campaign (Admin → Marketing → Campaigns), with its banner image ── */}
         <DealsBanner className="!px-0 !pt-0 mb-12" />
 
@@ -588,6 +591,7 @@ export function Homepage() {
             </div>
           </section>
         )}
+        </FeatureMaintenance>
 
         {/* ── Edudeen picks (curated shelves) ── */}
         {/* ── Featured by Edudeen (admin-featured listings) ── */}

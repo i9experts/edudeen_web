@@ -1,16 +1,46 @@
 import client from '@/api/client';
 
-export type MaintenanceScope = 'all' | 'buyer' | 'seller' | 'checkout' | 'uploads';
+export type MaintenanceFeature =
+  | 'flash_sale' | 'search' | 'categories' | 'product_page' | 'cart' | 'reviews' | 'messaging' | 'stores' | 'learn' | 'orders';
+export type BaseMaintenanceScope = 'all' | 'buyer' | 'seller' | 'checkout' | 'uploads';
+export type MaintenanceScope = BaseMaintenanceScope | `feature:${MaintenanceFeature}`;
 export type MaintenanceType = 'scheduled_upgrade' | 'database' | 'payments' | 'security' | 'performance' | 'emergency' | 'other';
 
-/** What is down — shown to admins when picking, and to users on the maintenance page. */
-export const MAINTENANCE_SCOPE_INFO: Record<MaintenanceScope, { label: string; hint: string }> = {
+/** Whole areas an admin can take down. */
+export const MAINTENANCE_AREA_INFO: Record<BaseMaintenanceScope, { label: string; hint: string }> = {
   all:      { label: 'Whole platform',        hint: 'Everything except admin tools and sign-in' },
   buyer:    { label: 'Shopping & browsing',   hint: 'Home, search, categories, product pages, reviews, wishlist' },
   seller:   { label: 'Seller dashboards',     hint: 'Store management, products, finance, marketing' },
   checkout: { label: 'Checkout & payments',   hint: 'Placing orders, card and bank-transfer payments' },
   uploads:  { label: 'File uploads',          hint: 'Images, digital files and payment proofs' },
 };
+
+/** Single features / pages — everything else keeps working; users see the admin's message in that spot. */
+export const MAINTENANCE_FEATURE_INFO: Record<MaintenanceFeature, { label: string; hint: string }> = {
+  flash_sale:   { label: 'Flash sale & deals',   hint: 'Flash-sale section, deals banner and sale countdowns' },
+  search:       { label: 'Search',               hint: 'The search box suggestions and the search results page' },
+  categories:   { label: 'Category pages',       hint: 'Browsing a category or sub-category' },
+  product_page: { label: 'Product pages',        hint: 'Opening a product (details, previews, "also bought")' },
+  cart:         { label: 'Cart & wishlist',      hint: 'The cart and saved items' },
+  reviews:      { label: 'Reviews',              hint: 'Reading and writing reviews' },
+  messaging:    { label: 'Messages',             hint: 'Buyer–seller chat' },
+  stores:       { label: 'Stores',               hint: 'Seller storefronts and store search' },
+  learn:        { label: 'Learn by grade',       hint: 'The grade and curriculum landing pages' },
+  orders:       { label: 'My orders',            hint: 'Order history and tracking' },
+};
+
+export const MAINTENANCE_FEATURES = Object.keys(MAINTENANCE_FEATURE_INFO) as MaintenanceFeature[];
+
+export const featureScope = (f: MaintenanceFeature): MaintenanceScope => `feature:${f}`;
+
+/** Human label for any scope (area or feature). */
+export function scopeLabel(s: string): string {
+  if (s.startsWith('feature:')) return MAINTENANCE_FEATURE_INFO[s.slice(8) as MaintenanceFeature]?.label ?? s;
+  return MAINTENANCE_AREA_INFO[s as BaseMaintenanceScope]?.label ?? s;
+}
+
+/** Kept for existing imports: area info by scope. */
+export const MAINTENANCE_SCOPE_INFO = MAINTENANCE_AREA_INFO;
 
 /** The kind of work — each one is what big platforms announce, in plain words. */
 export const MAINTENANCE_TYPE_INFO: Record<MaintenanceType, { label: string; blurb: string; defaultTitle: string; defaultMessage: string }> = {
@@ -40,6 +70,13 @@ export interface MaintenanceStatus {
   endsAt?: string | null;
   statusNote?: string;
   updatedAt?: string | null;
+}
+
+/** True when `feature` is currently down (maintenance live and that feature, or the whole platform / browsing side, is selected). */
+export function isFeatureDown(status: MaintenanceStatus | null, feature: MaintenanceFeature): boolean {
+  if (!status || status.state !== 'active') return false;
+  const s = status.scopes ?? [];
+  return s.includes(featureScope(feature)) || s.includes('all') || (s.includes('buyer') && feature !== 'orders' && feature !== 'messaging');
 }
 
 /** Public — read by the maintenance page and the site-wide notice. */

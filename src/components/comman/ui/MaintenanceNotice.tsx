@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { CalendarClock, AlertTriangle, X } from 'lucide-react';
 import { useMaintenanceStatus } from '@/hooks/useMaintenanceStatus';
-import { MAINTENANCE_SCOPE_INFO } from '@/api/services/maintenance';
+import { scopeLabel } from '@/api/services/maintenance';
 
 /** Site-wide strip: a heads-up before scheduled maintenance, or "this part is down" while a partial one runs. */
 export function MaintenanceNotice() {
@@ -19,7 +19,7 @@ export function MaintenanceNotice() {
   const key = `${status.state}-${status.startsAt}-${status.updatedAt ?? ''}`;
   if (hidden === key) return null;
 
-  const what = scopes.includes('all') ? 'The whole platform' : scopes.map(s => MAINTENANCE_SCOPE_INFO[s].label).join(', ');
+  const what = scopes.includes('all') ? 'The whole platform' : scopes.map(s => scopeLabel(s)).join(', ');
   const fmt = (iso?: string | null) => (iso ? new Date(iso).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : '');
   const text = status.state === 'scheduled'
     ? `${status.title || 'Scheduled maintenance'}: ${what} will be unavailable from ${fmt(status.startsAt)}${status.endsAt ? ` until about ${fmt(status.endsAt)}` : ''}.`

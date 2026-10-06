@@ -5,10 +5,11 @@ import { Button, Input, Textarea, Modal } from '@/components/comman/ui';
 import { useUpdateMaintenanceMode } from '@/hooks/admin/useAdminConfig';
 import type { PlatformConfig } from '@/api/services/config/adminConfig';
 import {
-  MAINTENANCE_SCOPE_INFO, MAINTENANCE_TYPE_INFO, type MaintenanceScope, type MaintenanceType,
+  MAINTENANCE_AREA_INFO, MAINTENANCE_FEATURE_INFO, MAINTENANCE_FEATURES, MAINTENANCE_TYPE_INFO, featureScope, scopeLabel,
+  type BaseMaintenanceScope, type MaintenanceScope, type MaintenanceType,
 } from '@/api/services/maintenance';
 
-const SCOPES = Object.keys(MAINTENANCE_SCOPE_INFO) as MaintenanceScope[];
+const AREAS = Object.keys(MAINTENANCE_AREA_INFO) as BaseMaintenanceScope[];
 const TYPES = Object.keys(MAINTENANCE_TYPE_INFO) as MaintenanceType[];
 
 const toLocalInput = (iso?: string | null) => {
@@ -107,19 +108,36 @@ export function MaintenanceCard({ config, onSaved }: { config: PlatformConfig; o
         </div>
 
         {/* What is affected */}
-        <p className="text-[12px] font-semibold text-charcoal mt-5 mb-2">What is affected?</p>
+        <p className="text-[12px] font-semibold text-charcoal mt-5 mb-2">Which part of the platform?</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {SCOPES.map(s => (
+          {AREAS.map(s => (
             <label key={s} className={clsx('flex items-start gap-2 rounded-lg border px-3 py-2 cursor-pointer', scopes.includes(s) ? 'border-brand-orange bg-brand-pale-orange/30' : 'border-bone')}>
               <input type="checkbox" checked={scopes.includes(s)} onChange={() => toggleScope(s)} className="mt-[3px] accent-brand-orange" />
               <span>
-                <span className="block text-[13px] font-semibold text-carbon">{MAINTENANCE_SCOPE_INFO[s].label}</span>
-                <span className="block text-[11.5px] text-slate">{MAINTENANCE_SCOPE_INFO[s].hint}</span>
+                <span className="block text-[13px] font-semibold text-carbon">{scopeLabel(s)}</span>
+                <span className="block text-[11.5px] text-slate">{MAINTENANCE_AREA_INFO[s].hint}</span>
               </span>
             </label>
           ))}
         </div>
 
+        {/* One feature / page only */}
+        <p className="text-[12px] font-semibold text-charcoal mt-5 mb-1">…or just one feature or page</p>
+        <p className="text-[11.5px] text-slate mt-0 mb-2">The rest of the site keeps working. Visitors who open that page or section see your message there.</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+          {MAINTENANCE_FEATURES.map(f => {
+            const sc = featureScope(f);
+            return (
+              <label key={f} className={clsx('flex items-start gap-2 rounded-lg border px-3 py-2 cursor-pointer', scopes.includes(sc) ? 'border-brand-orange bg-brand-pale-orange/30' : 'border-bone')}>
+                <input type="checkbox" checked={scopes.includes(sc)} onChange={() => toggleScope(sc)} className="mt-[3px] accent-brand-orange" />
+                <span>
+                  <span className="block text-[13px] font-semibold text-carbon">{MAINTENANCE_FEATURE_INFO[f].label}</span>
+                  <span className="block text-[11.5px] text-slate">{MAINTENANCE_FEATURE_INFO[f].hint}</span>
+                </span>
+              </label>
+            );
+          })}
+        </div>
         {/* What users read */}
         <div className="grid grid-cols-1 gap-3 mt-5">
           <Input label="Headline users see" value={title} onChange={e => setTitle(e.target.value)} placeholder={info.defaultTitle} maxLength={120} />
@@ -141,7 +159,7 @@ export function MaintenanceCard({ config, onSaved }: { config: PlatformConfig; o
           <p className="text-[14px] font-bold text-carbon m-0">{title.trim() || info.defaultTitle}</p>
           <p className="text-[12.5px] text-charcoal m-0 mt-1">{message.trim() || info.defaultMessage}</p>
           <p className="text-[11.5px] text-slate m-0 mt-2">
-            Affects: {scopes.includes('all') ? MAINTENANCE_SCOPE_INFO.all.label : scopes.map(s => MAINTENANCE_SCOPE_INFO[s].label).join(', ')}
+            Affects: {scopes.includes('all') ? MAINTENANCE_AREA_INFO.all.label : scopes.map(s => scopeLabel(s)).join(', ')}
             {endsAt && ` · Back around ${new Date(endsAt).toLocaleString()}`}
           </p>
         </div>
@@ -167,7 +185,7 @@ export function MaintenanceCard({ config, onSaved }: { config: PlatformConfig; o
         <Modal mobileSheet title="Turn on maintenance now?" onClose={() => setConfirming(false)}
           footer={<><Button variant="ghost" onClick={() => setConfirming(false)}>Cancel</Button><Button variant="danger" loading={submitting} onClick={() => apply(true)}>Turn on now</Button></>}>
           <p className="text-[13px] text-charcoal leading-[1.6] px-5 py-4 m-0">
-            This immediately blocks <b>{scopes.includes('all') ? 'the whole platform' : scopes.map(s => MAINTENANCE_SCOPE_INFO[s].label.toLowerCase()).join(', ')}</b> for every buyer and seller.
+            This immediately blocks <b>{scopes.includes('all') ? 'the whole platform' : scopes.map(s => scopeLabel(s).toLowerCase()).join(', ')}</b> for every buyer and seller.
             Admin tools and sign-in stay available. Prefer a heads-up first? Set a start time to schedule it instead.
           </p>
         </Modal>

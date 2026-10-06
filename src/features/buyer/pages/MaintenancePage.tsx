@@ -4,7 +4,7 @@ import { Construction, Database, CreditCard, ShieldCheck, Gauge, Siren, Wrench, 
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useMaintenanceStatus } from '@/hooks/useMaintenanceStatus';
 import { EdudeenLogo } from '@/components/comman/ui';
-import { MAINTENANCE_SCOPE_INFO, MAINTENANCE_TYPE_INFO, type MaintenanceType } from '@/api/services/maintenance';
+import { scopeLabel, MAINTENANCE_TYPE_INFO, type MaintenanceType } from '@/api/services/maintenance';
 
 const ICON: Record<MaintenanceType, LucideIcon> = {
   scheduled_upgrade: Construction, database: Database, payments: CreditCard, security: ShieldCheck, performance: Gauge, emergency: Siren, other: Wrench,
@@ -28,7 +28,9 @@ export function MaintenancePage() {
   const left = useCountdown(status?.state === 'active' ? status.endsAt : null);
 
   // Maintenance ended (or never applied to the whole site) — go back.
-  if (status && status.state !== 'active') return <Navigate to="/" replace />;
+  // (A single feature being down never needs this full page — that feature shows its own message.)
+  const wholeSite = (status?.scopes ?? ['all']).some(s => s === 'all' || s === 'buyer');
+  if (status && (status.state !== 'active' || !wholeSite)) return <Navigate to="/" replace />;
 
   const type: MaintenanceType = status?.type ?? 'scheduled_upgrade';
   const info = MAINTENANCE_TYPE_INFO[type];
@@ -51,7 +53,7 @@ export function MaintenancePage() {
 
       <ul className="list-none m-0 p-0 flex flex-wrap justify-center gap-2 mb-5" aria-label="Affected areas">
         {scopes.map(s => (
-          <li key={s} className="text-[12px] text-charcoal bg-white border border-bone rounded-full px-3 py-1">{MAINTENANCE_SCOPE_INFO[s].label}</li>
+          <li key={s} className="text-[12px] text-charcoal bg-white border border-bone rounded-full px-3 py-1">{scopeLabel(s)}</li>
         ))}
       </ul>
 

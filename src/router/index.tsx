@@ -13,6 +13,7 @@ import { SellerStoreRedirect } from './SellerStoreRedirect';
 import { AdminLayout }  from '@/components/layouts/AdminLayout';
 import { StoreLayout }  from '@/components/layouts/StoreLayout';
 import { RequireRole }  from './RequireRole';
+import { FeatureMaintenance } from '@/components/comman/ui/FeatureMaintenance';
 
 // Critical conversion-path pages — eagerly imported so the highest-traffic
 // storefront flow (home → login/register → product → cart → checkout)
@@ -244,13 +245,13 @@ const mainRouter = createBrowserRouter([
             children: [
               { index: true,          element: <Navigate to="dashboard" replace /> },
               { path: 'dashboard',     element: <AccountDashboard /> },
-              { path: 'orders',        element: <AccountOrders /> },
-              { path: 'orders/:orderId', element: <AccountOrderDetail /> },
+              { path: 'orders',        element: <FeatureMaintenance feature="orders"><AccountOrders /></FeatureMaintenance> },
+              { path: 'orders/:orderId', element: <FeatureMaintenance feature="orders"><AccountOrderDetail /></FeatureMaintenance> },
               { path: 'downloads',     element: <AccountDownloads /> },
               { path: 'lists',         element: <AccountLists /> },
               { path: 'quotes',        element: <AccountQuotes /> },
-              { path: 'wishlist',      element: <AccountWishlist /> },
-              { path: 'reviews',       element: <AccountReviews /> },
+              { path: 'wishlist',      element: <FeatureMaintenance feature="cart"><AccountWishlist /></FeatureMaintenance> },
+              { path: 'reviews',       element: <FeatureMaintenance feature="reviews"><AccountReviews /></FeatureMaintenance> },
               { path: 'payments',      element: <AccountPayments /> },
               { path: 'profile',       element: <AccountProfile /> },
               { path: 'security',      element: <AccountSecurity /> },
@@ -259,7 +260,7 @@ const mainRouter = createBrowserRouter([
               { path: 'subscriptions', element: <AccountSubscriptions /> },
               // Settings merged into Profile — old bookmarks/links still land somewhere real.
               { path: 'settings',      element: <Navigate to="/account/profile" replace /> },
-              { path: 'messages',      element: <AccountMessages /> },
+              { path: 'messages',      element: <FeatureMaintenance feature="messaging"><AccountMessages /></FeatureMaintenance> },
             ],
           },
           // Pages with their own embedded navbar (no PublicLayout wrapper needed)
@@ -269,15 +270,15 @@ const mainRouter = createBrowserRouter([
           { path: 'marketplace/:slugOrId?', element: <MarketplaceRedirect /> },
           { path: 'education/:levelSlug?',  element: <Navigate to="/" replace /> },
           { path: 'EducationMarketplace',   element: <Navigate to="/" replace /> },
-          { path: 'cart',            element: <CartPage /> },
+          { path: 'cart',            element: <FeatureMaintenance feature="cart" variant="page"><CartPage /></FeatureMaintenance> },
           { path: 'checkout',        element: <CheckoutPage /> },
           { path: 'order-success',   element: <OrderSuccessPage /> },
-          { path: 'product/:slug',   element: <ProductDetail /> },
-          { path: 'search',          element: <MarketplaceSearchPage /> },
-          { path: 'c/:slug',         element: <MarketplaceCategoryPage /> },
+          { path: 'product/:slug',   element: <FeatureMaintenance feature="product_page" variant="page"><ProductDetail /></FeatureMaintenance> },
+          { path: 'search',          element: <FeatureMaintenance feature="search" variant="page"><MarketplaceSearchPage /></FeatureMaintenance> },
+          { path: 'c/:slug',         element: <FeatureMaintenance feature="categories" variant="page"><MarketplaceCategoryPage /></FeatureMaintenance> },
           // Grade and subject landing pages (/learn/primary-school/mathematics).
-          { path: 'learn',           element: <LearnHubPage /> },
-          { path: 'learn/:level/:subject?', element: <LearnLevelPage /> },
+          { path: 'learn',           element: <FeatureMaintenance feature="learn" variant="page"><LearnHubPage /></FeatureMaintenance> },
+          { path: 'learn/:level/:subject?', element: <FeatureMaintenance feature="learn" variant="page"><LearnLevelPage /></FeatureMaintenance> },
           { path: 'lists/:slug', element: <PublicListPage /> },
           { path: 'bundles/:slug', element: <BundlePage /> },
           { path: 'picks/:slug', element: <ShelfPage /> },
