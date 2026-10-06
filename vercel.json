@@ -1,5 +1,53 @@
 {
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
-  ]
+    "rewrites":  [
+                     {
+                         "destination":  "https://api.edudeen.com/robots.txt",
+                         "source":  "/robots.txt"
+                     },
+                     {
+                         "destination":  "https://api.edudeen.com/sitemap.xml",
+                         "source":  "/sitemap.xml"
+                     },
+                     {
+                         "destination":  "https://api.edudeen.com/sitemap-:suffix.xml",
+                         "source":  "/sitemap-:suffix.xml"
+                     },
+                     {
+                         "destination":  "https://api.edudeen.com/seo-render/product/:slug",
+                         "source":  "/product/:slug",
+                         "has":  [
+                                     {
+                                         "key":  "user-agent",
+                                         "value":  ".*(Googlebot|bingbot|BingPreview|DuckDuckBot|YandexBot|Baiduspider|Applebot|facebookexternalhit|Twitterbot|LinkedInBot|Slackbot|WhatsApp|TelegramBot|Pinterestbot).*",
+                                         "type":  "header"
+                                     }
+                                 ]
+                     },
+                     {
+                         "destination":  "https://api.edudeen.com/seo-render/category/:slug",
+                         "source":  "/c/:slug",
+                         "has":  [
+                                     {
+                                         "key":  "user-agent",
+                                         "value":  ".*(Googlebot|bingbot|BingPreview|DuckDuckBot|YandexBot|Baiduspider|Applebot|facebookexternalhit|Twitterbot|LinkedInBot|Slackbot|WhatsApp|TelegramBot|Pinterestbot).*",
+                                         "type":  "header"
+                                     }
+                                 ]
+                     },
+                     {
+                         "destination":  "https://api.edudeen.com/seo-render/store/:slug",
+                         "source":  "/shop/:slug",
+                         "has":  [
+                                     {
+                                         "key":  "user-agent",
+                                         "value":  ".*(Googlebot|bingbot|BingPreview|DuckDuckBot|YandexBot|Baiduspider|Applebot|facebookexternalhit|Twitterbot|LinkedInBot|Slackbot|WhatsApp|TelegramBot|Pinterestbot).*",
+                                         "type":  "header"
+                                     }
+                                 ]
+                     },
+                     {
+                         "destination":  "/index.html",
+                         "source":  "/(.*)"
+                     }
+                 ]
 }
