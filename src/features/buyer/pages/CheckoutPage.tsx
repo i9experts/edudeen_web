@@ -462,7 +462,7 @@ export function CheckoutPage() {
   const [selectedAddr, setSelectedAddr] = useState<Address | null>(null);
 
   // Shipping
-  const { zones, loading: zonesLoading } = useShippingZones();
+  const { zones, loading: zonesLoading, error: zonesError, refetch: refetchZones } = useShippingZones();
   const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
   const [shippingDropOpen, setShippingDropOpen] = useState(false);
 
@@ -722,7 +722,9 @@ export function CheckoutPage() {
   // then country-wide ones. (This used to crash on a zone with no city or
   // province, and offered other cities' zones when none matched.) While an
   // admin hasn't set up any zones yet, standard delivery keeps checkout open.
-  const noZonesConfigured = !zonesLoading && zones.length === 0;
+  // A failed zones request is NOT "no zones set up" — treating it that way sent
+  // the order without a delivery option and the server (rightly) refused it.
+  const noZonesConfigured = !zonesLoading && !zonesError && zones.length === 0;
   const matchingZones = noZonesConfigured
     ? [STANDARD_DELIVERY]
     : selectedAddr ? zonesForAddress(zones, { city: selectedAddr.city, state: selectedAddr.state }) : [];
@@ -1343,7 +1345,10 @@ export function CheckoutPage() {
                       {matchingZones.length === 0 && (
                         <div role="alert" className="flex items-start gap-2 text-[12.5px] text-charcoal bg-cream border border-bone rounded-[8px] px-3 py-3">
                           <AlertCircle size={14} className="mt-[1px] flex-shrink-0 text-brand-orange" />
-                          <div>
+                          {zonesError ? (<div>
+                            <p className="font-semibold text-carbon">Couldn't load delivery options</p>
+                            <p className="text-slate mt-[2px]">{zonesError}{' '}<button type="button" onClick={refetchZones} className="text-brand-orange font-semibold bg-transparent border-0 p-0 cursor-pointer">Try again</button></p>
+                          </div>) : (<div>
                             <p className="font-semibold text-carbon">We don't deliver to {selectedAddr?.city || 'this address'} yet</p>
                             <p className="text-slate mt-[2px]">
                               Try another address, or contact support@edudeen.com.{' '}
@@ -1351,7 +1356,7 @@ export function CheckoutPage() {
                                 Change address
                               </button>
                             </p>
-                          </div>
+                          </div>)}
                         </div>
                       )}
                       {/* Dropdown trigger */}
