@@ -142,7 +142,7 @@ export function apiSaveOnboardingDraft(draft: OnboardingDraft) {
 }
 
 export function apiGetStorePlatformPlan(storeId: string) {
-  return client.get<never, ApiResponse<StorePlatformSubscription>>(`${BASE}/${storeId}`);
+  return client.get<never, ApiResponse<StorePlatformSubscription | null>>(`${BASE}/${storeId}`);
 }
 
 export function apiGetStoreEntitlements(storeId: string) {
