@@ -125,7 +125,7 @@ function PlanFormModal({ plan, onClose, onSaved }: { plan: PlatformPlan | 'new';
         <div>
           <p className="text-[12px] font-semibold text-charcoal mb-2">Limits</p>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
-            <Input label="Max products (-1=∞)" type="number" value={limits.maxProducts ?? ''} onChange={e => setLimit('maxProducts', Number(e.target.value))} />
+            {/* Product count isn't capped on any plan, so there is no field for it. */}
             {/* `maxStaffAccounts`, `slaUptimePercent` and `maxPosLocations` are
                 intentionally not editable here (not relevant to an education
                 shop) but stay in `limits`, so the saved values are preserved. */}
