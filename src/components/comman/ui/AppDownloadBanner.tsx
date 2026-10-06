@@ -5,7 +5,7 @@ import {
   Check, Send, Percent,
 } from 'lucide-react';
 import { clsx } from 'clsx';
-import { StoreBadgeChip, RatingRow, RealAppQr, useAppQrDataUrl, GOOGLE_PLAY_URL } from './AppPromoParts';
+import { StoreBadgeChip, RealAppQr, useAppQrDataUrl, GOOGLE_PLAY_URL } from './AppPromoParts';
 import { apiGetPlatformStats, type PlatformStats } from '@/api/services/store';
 import { apiSubscribeNewsletter } from '@/api/services/newsletter';
 import { apiGetAllProducts, type MarketplaceProduct } from '@/api/services/marketplace';
@@ -378,7 +378,7 @@ function CompactAppDownloadBanner({ className }: { className?: string }) {
 
   return (
     <section className={clsx('flex flex-col gap-3 md:grid md:grid-cols-[3fr_1fr] md:gap-4', className)}>
-      <div className="relative md:min-h-[236px] rounded-2xl bg-gradient-to-br from-carbon to-charcoal px-5 sm:px-6 md:px-7 lg:px-8 py-5 md:py-4 flex flex-col justify-center">
+      <div className="relative md:min-h-[236px] rounded-2xl border border-bone bg-brand-pale-orange px-5 sm:px-6 md:px-7 lg:px-8 py-5 md:py-4 flex flex-col justify-center">
         {/* Decorative background layer only — clipped to the rounded corners
             on its own (this layer, not the card itself, gets `overflow-
             hidden`), so the phone mockups below (a sibling, not a child of
@@ -386,12 +386,12 @@ function CompactAppDownloadBanner({ className }: { className?: string }) {
             edge for the floating-app effect instead of getting cut off. */}
         <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
           <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-brand-orange to-[#66AD36]" />
-          <div className="absolute w-[160px] h-[160px] rounded-full bg-[#3a3633] -top-12 -end-8" />
+          <div className="absolute w-[160px] h-[160px] rounded-full bg-white/60 -top-12 -end-8" />
           {/* Purely decorative — no carousel behind this banner, just the same
              small dot accent the reference design has near the phone cluster. */}
           <div className="hidden md:flex absolute bottom-3 end-[70px] lg:end-[86px] items-center gap-[5px]">
             <span className="size-[5px] rounded-full bg-brand-orange/70" />
-            <span className="size-[5px] rounded-full bg-white/25" />
+            <span className="size-[5px] rounded-full bg-brand-orange/25" />
           </div>
         </div>
 
@@ -405,16 +405,16 @@ function CompactAppDownloadBanner({ className }: { className?: string }) {
            copy → QR → phones column order. */}
         <div className="relative z-[1] flex flex-col items-center text-center gap-4 md:grid md:grid-cols-[minmax(0,1.45fr)_minmax(90px,0.5fr)_minmax(220px,0.9fr)] md:items-center md:text-start md:gap-3 lg:gap-5">
           <div className="order-1 min-w-0">
-            <h3 className="text-[19px] sm:text-[21px] md:text-[22px] lg:text-[25px] font-bold text-white mb-1.5 leading-[1.2] tracking-tight md:whitespace-nowrap">
-              Shop <span className="text-brand-orange">smarter.</span> Anywhere, anytime.
+            <h3 className="font-serif font-normal text-[21px] sm:text-[23px] md:text-[24px] lg:text-[27px] text-carbon mb-1.5 leading-[1.2] md:whitespace-nowrap">
+              Shop <span className="text-brand-royal">smarter.</span> Anywhere, anytime.
             </h3>
-            <p className="text-[12px] md:text-[12px] text-[#b0aea8] max-w-[280px] mx-auto md:mx-0 leading-snug mb-3">
+            <p className="text-[12.5px] text-graphite max-w-[280px] mx-auto md:mx-0 leading-snug mb-3">
               Track orders, get app-only deals and shop faster with the Edudeen app.
             </p>
             {/* Real, visible CTAs — never hidden behind the phones/QR, which
                sit in their own dedicated grid columns, not on top of this. */}
             <div className="flex items-center justify-center md:justify-start gap-2">
-              <StoreBadgeChip platform="ios" />
+              <StoreBadgeChip platform="ios" onLight />
               <a
                 href={GOOGLE_PLAY_URL}
                 target="_blank"
@@ -422,7 +422,7 @@ function CompactAppDownloadBanner({ className }: { className?: string }) {
                 aria-label="Get it on Google Play"
                 className="rounded-[9px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange"
               >
-                <StoreBadgeChip platform="android" />
+                <StoreBadgeChip platform="android" onLight />
               </a>
             </div>
           </div>
@@ -437,9 +437,9 @@ function CompactAppDownloadBanner({ className }: { className?: string }) {
           <div className="order-2 md:order-3 flex items-center justify-center relative w-full min-h-[170px] md:min-h-[180px] py-2 md:py-3">
             <div
               className="absolute inset-0 pointer-events-none"
-              style={{ background: 'radial-gradient(ellipse 75% 70% at 50% 55%, rgba(23,71,113,0.28) 0%, rgba(23,71,113,0.10) 45%, transparent 75%)' }}
+              style={{ background: 'radial-gradient(ellipse 75% 70% at 50% 55%, rgba(57,120,184,0.22) 0%, rgba(57,120,184,0.08) 45%, transparent 75%)' }}
             />
-            <div className="absolute bottom-2 w-[74px] h-[10px] rounded-[50%] bg-black/25 blur-[2px]" />
+            <div className="absolute bottom-2 w-[74px] h-[10px] rounded-[50%] bg-black/15 blur-[2px]" />
             <PhoneShell primary={false} size="sm" heightPx={165} className="-me-[38px] -rotate-[7deg]">
               <OrdersScreenMockup />
             </PhoneShell>
@@ -459,18 +459,18 @@ function CompactAppDownloadBanner({ className }: { className?: string }) {
               target="_blank"
               rel="noreferrer"
               aria-label="Scan to download the Edudeen app"
-              className="block rounded-xl border border-white/15 bg-white p-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange"
+              className="block rounded-xl border border-bone bg-white p-2 shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange"
             >
               {qrDataUrl
                 ? <img src={qrDataUrl} alt="" width={68} height={68} className="block" />
                 : <div className="w-[68px] h-[68px]" />}
             </a>
-            <p className="text-[9.5px] text-[#b0aea8] leading-tight whitespace-nowrap">Scan to download</p>
+            <p className="text-[10px] font-medium text-carbon leading-tight whitespace-nowrap">Scan to download</p>
           </div>
         </div>
       </div>
 
-      <div className="md:min-h-[236px] rounded-2xl bg-brand-pale-orange px-6 py-4 flex flex-col justify-center gap-2">
+      <div className="md:min-h-[236px] rounded-2xl border border-bone bg-white px-6 py-4 flex flex-col justify-center gap-2">
         <p className="text-[14px] font-bold text-carbon leading-tight">Get deals before anyone else</p>
         <p className="text-[10.5px] text-charcoal/70 leading-snug">Sign up for exclusive offers, new arrivals and price-drop alerts.</p>
         <NewsletterMini />
@@ -521,36 +521,36 @@ export function AppDownloadBanner({ className, variant = 'full' }: { className?:
   ];
 
   return (
-    <section className={clsx('relative overflow-hidden rounded-2xl bg-gradient-to-br from-carbon to-charcoal', className)}>
+    <section className={clsx('relative overflow-hidden rounded-2xl border border-bone bg-brand-pale-orange', className)}>
       {/* Thin top accent line */}
       <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-brand-orange to-[#66AD36]" />
 
       {/* Soft ambient circle + faint dotted-grid texture — CSS only. No orange
           here — the only orange glow in this banner lives locally behind the
           phone mockups (see the phone-cluster spotlight below), not hero-wide. */}
-      <div className="absolute w-[280px] h-[280px] rounded-full bg-[#3a3633] -top-20 -end-16 pointer-events-none" />
+      <div className="absolute w-[280px] h-[280px] rounded-full bg-white/60 -top-20 -end-16 pointer-events-none" />
       <div
-        className="hidden lg:block absolute end-0 top-0 bottom-0 w-[40%] opacity-[0.05] pointer-events-none"
-        style={{ backgroundImage: 'radial-gradient(rgba(255,255,255,0.7) 1px, transparent 1px)', backgroundSize: '20px 20px' }}
+        className="hidden lg:block absolute end-0 top-0 bottom-0 w-[40%] opacity-[0.07] pointer-events-none"
+        style={{ backgroundImage: 'radial-gradient(rgba(23,71,113,0.8) 1px, transparent 1px)', backgroundSize: '20px 20px' }}
       />
 
       <div className="relative z-[1] px-6 sm:px-8 lg:px-10 pt-6 sm:pt-7 pb-5 grid grid-cols-1 lg:grid-cols-[1.1fr_auto_auto] items-center gap-6 lg:gap-8">
 
         {/* Copy + features */}
         <div className="text-center lg:text-start min-w-0">
-          <div className="inline-flex items-center gap-2 rounded-full px-3 py-1 mb-3 bg-[rgba(23,71,113,0.15)] border border-[rgba(23,71,113,0.3)]">
+          <div className="inline-flex items-center gap-2 rounded-full px-3 py-1 mb-3 bg-white border border-bone">
             <ShoppingBag size={12} className="text-brand-orange shrink-0" />
             <span className="text-[11px] font-medium text-brand-orange">Edudeen Mobile</span>
           </div>
-          <h3 className="text-[22px] sm:text-[25px] lg:text-[28px] font-bold text-white mb-2 leading-[1.15] tracking-tight">
-            Shop <span className="text-brand-orange">smarter.</span> Anywhere, anytime.
+          <h3 className="font-serif font-normal text-[24px] sm:text-[28px] lg:text-[32px] text-carbon mb-2 leading-[1.15]">
+            Shop <span className="text-brand-royal">smarter.</span> Anywhere, anytime.
           </h3>
-          <p className="text-[12.5px] sm:text-[13px] text-[#b0aea8] max-w-[420px] mx-auto lg:mx-0 leading-relaxed mb-3">
+          <p className="text-[13px] sm:text-[14px] text-graphite max-w-[420px] mx-auto lg:mx-0 leading-relaxed mb-3">
             One-tap checkout, live order tracking, and app-only deals — right in your pocket.
           </p>
 
           <div className="flex items-center justify-center lg:justify-start gap-2 mb-4">
-            <RatingRow />
+            <p className="flex items-center gap-1.5 text-[11.5px] text-slate m-0"><Sparkles size={12} className="text-brand-royal" /> Available now on Android — iOS coming soon</p>
           </div>
 
           {/* Feature cards */}
@@ -560,11 +560,11 @@ export function AppDownloadBanner({ className, variant = 'full' }: { className?:
                 key={title}
                 className="flex items-center gap-[10px] text-start rounded-xl px-1 py-1"
               >
-                <span className="w-8 h-8 rounded-[9px] border border-brand-orange/25 bg-brand-orange/[0.12] flex items-center justify-center shrink-0">
+                <span className="w-8 h-8 rounded-[9px] border border-bone bg-white flex items-center justify-center shrink-0">
                   <Icon size={14} className="text-brand-orange" />
                 </span>
                 <span className="min-w-0">
-                  <p className="text-[12px] font-semibold text-white leading-tight">{title}</p>
+                  <p className="text-[12.5px] font-semibold text-carbon leading-tight">{title}</p>
                   <p className="text-[10.5px] text-slate leading-tight mt-[1px]">{sub}</p>
                 </span>
               </li>
@@ -574,7 +574,7 @@ export function AppDownloadBanner({ className, variant = 'full' }: { className?:
           {/* Google Play links to the real internal-test build; App Store
               stays the decorative/non-clickable chip — no iOS build yet. */}
           <div className="flex items-center justify-center lg:justify-start gap-3">
-            <StoreBadgeChip platform="ios" />
+            <StoreBadgeChip platform="ios" onLight />
             <a
               href={GOOGLE_PLAY_URL}
               target="_blank"
@@ -582,7 +582,7 @@ export function AppDownloadBanner({ className, variant = 'full' }: { className?:
               aria-label="Get it on Google Play"
               className="rounded-[9px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange"
             >
-              <StoreBadgeChip platform="android" />
+              <StoreBadgeChip platform="android" onLight />
             </a>
           </div>
         </div>
@@ -590,13 +590,13 @@ export function AppDownloadBanner({ className, variant = 'full' }: { className?:
         {/* QR code — its own column, beside the phones (not attached to them).
             Real, scannable — links to the Google Play internal-test build. */}
         <div className="hidden lg:flex flex-col items-start gap-[8px] shrink-0">
-          <div className="rounded-2xl border-2 border-brand-orange/50 p-3">
+          <div className="rounded-2xl border border-bone bg-white p-3 shadow-sm">
             <RealAppQr size={84} />
           </div>
-          <p className="text-[11px] text-[#b0aea8] leading-tight">Scan to download</p>
+          <p className="text-[12px] font-medium text-carbon leading-tight">Scan to download</p>
           <div className="flex items-center gap-[6px]">
-            <Sparkles size={13} className="text-brand-orange" />
-            <p className="text-[10.5px] text-brand-orange italic whitespace-nowrap">Android only — iOS coming soon</p>
+            <Sparkles size={13} className="text-brand-royal" />
+            <p className="text-[10.5px] text-slate whitespace-nowrap">Android only — iOS coming soon</p>
           </div>
         </div>
 
@@ -607,10 +607,10 @@ export function AppDownloadBanner({ className, variant = 'full' }: { className?:
               phone cluster, fading to nothing well before the hero's edges. */}
           <div
             className="absolute inset-0 pointer-events-none"
-            style={{ background: 'radial-gradient(ellipse 65% 60% at 50% 55%, rgba(23,71,113,0.30) 0%, rgba(23,71,113,0.12) 40%, transparent 72%)' }}
+            style={{ background: 'radial-gradient(ellipse 65% 60% at 50% 55%, rgba(57,120,184,0.22) 0%, rgba(57,120,184,0.08) 40%, transparent 72%)' }}
           />
           {/* Contact shadow — grounds the phones on the pedestal */}
-          <div className="absolute bottom-0 w-[220px] h-[30px] rounded-[50%] bg-black/25 blur-[2px]" />
+          <div className="absolute bottom-0 w-[220px] h-[30px] rounded-[50%] bg-black/15 blur-[3px]" />
 
           <PhoneShell primary={false} className="-me-[86px] -translate-x-[14px] translate-y-[16px] -rotate-[15deg]">
             <OrdersScreenMockup />
@@ -623,15 +623,15 @@ export function AppDownloadBanner({ className, variant = 'full' }: { className?:
 
       {/* Trust stats — its own rounded/bordered card, sitting at the bottom of the banner */}
       <div className="relative z-[1] px-6 sm:px-8 lg:px-10 pb-6">
-        <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 sm:px-6 py-[14px]">
+        <div className="rounded-2xl border border-bone bg-white px-4 sm:px-6 py-[14px]">
           <div className="grid grid-cols-2 sm:flex sm:items-center sm:justify-between gap-3">
             {trustStats.map(({ Icon, value, label }, i) => (
-              <div key={label} className={clsx('flex items-center gap-[8px]', i > 0 && 'sm:border-s sm:border-white/10 sm:ps-4')}>
-                <span className="w-7 h-7 rounded-full bg-white/[0.06] flex items-center justify-center shrink-0">
+              <div key={label} className={clsx('flex items-center gap-[8px]', i > 0 && 'sm:border-s sm:border-bone sm:ps-4')}>
+                <span className="w-7 h-7 rounded-full bg-brand-pale-orange flex items-center justify-center shrink-0">
                   <Icon size={13} className="text-brand-orange" />
                 </span>
                 <span>
-                  <p className="text-[13px] font-bold text-white leading-none">{value}</p>
+                  <p className="text-[13px] font-bold text-carbon leading-none">{value}</p>
                   <p className="text-[10px] text-slate mt-[2px] whitespace-nowrap">{label}</p>
                 </span>
               </div>

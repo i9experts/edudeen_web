@@ -73,14 +73,16 @@ export function GooglePlayGlyph({ size = 15, className }: { size?: number; class
 // a solid standalone card — callers are responsible for integrating these
 // into whatever glassy/transparent surface fits their context.
 
-export function StoreBadgeChip({ platform, compact = false }: { platform: 'ios' | 'android'; compact?: boolean }) {
+/** onLight renders the classic solid-dark store badge for light backgrounds; the default glass chip is for dark surfaces. */
+export function StoreBadgeChip({ platform, compact = false, onLight = false }: { platform: 'ios' | 'android'; compact?: boolean; onLight?: boolean }) {
   const isIos = platform === 'ios';
   return (
     <div
       role="img"
       aria-label={isIos ? 'Download on the App Store' : 'Get it on Google Play'}
       className={clsx(
-        'flex items-center gap-[7px] rounded-[9px] border border-white/20 bg-white/10 backdrop-blur-sm select-none transition-colors hover:bg-white/[0.16]',
+        'flex items-center gap-[7px] rounded-[9px] border select-none transition-colors',
+        onLight ? 'border-carbon bg-carbon hover:bg-charcoal' : 'border-white/20 bg-white/10 backdrop-blur-sm hover:bg-white/[0.16]',
         compact ? 'px-2.5 py-[6px]' : 'px-3.5 py-[9px]',
       )}
     >
