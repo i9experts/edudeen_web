@@ -195,12 +195,12 @@ function ManualBankTransferSlot({
 
   useEffect(() => {
     let cancelled = false;
-    apiGetManualPaymentBankDetails()
+    apiGetManualPaymentBankDetails(checkoutId)
       .then(res => { if (!cancelled) setBankDetails(res.data); })
       .catch(err => { if (!cancelled) setDetailsError(err instanceof Error ? err.message : 'Bank transfer is not available right now.'); })
       .finally(() => { if (!cancelled) setLoadingDetails(false); });
     return () => { cancelled = true; };
-  }, []);
+  }, [checkoutId]);
 
   async function handleSubmit() {
     if (!file) { setError('Please upload a screenshot or photo of your transfer receipt.'); return; }

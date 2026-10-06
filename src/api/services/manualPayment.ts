@@ -7,6 +7,8 @@ import { ENDPOINTS } from '../endpoints';
 export type ManualPaymentProofStatus = 'pending' | 'approved' | 'rejected';
 
 export interface ManualPaymentBankDetails {
+  /** The seller (store) the buyer pays directly. */
+  payeeName?: string | null;
   bankName: string | null;
   accountTitle: string | null;
   accountNumber: string | null;
@@ -52,8 +54,8 @@ export interface AdminManualPaymentProof extends ManualPaymentProof {
 // ─────────────────────────────────────────────────────────────────────────────
 // BUYER
 // ─────────────────────────────────────────────────────────────────────────────
-export function apiGetManualPaymentBankDetails() {
-  return client.get<never, { success: boolean; data: ManualPaymentBankDetails }>(ENDPOINTS.MANUAL_PAYMENT.BANK_DETAILS);
+export function apiGetManualPaymentBankDetails(checkoutId: string) {
+  return client.get<never, { success: boolean; data: ManualPaymentBankDetails }>(ENDPOINTS.MANUAL_PAYMENT.BANK_DETAILS, { params: { checkoutId } });
 }
 
 export function apiSubmitManualPayment(
@@ -121,4 +123,31 @@ export function apiAdminApproveManualPayment(proofId: string) {
 
 export function apiAdminRejectManualPayment(proofId: string, reason: string) {
   return client.patch<never, { success: boolean; data: ManualPaymentProof }>(ENDPOINTS.MANUAL_PAYMENT.ADMIN.REJECT(proofId), { reason });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SELLER — direct bank transfers (the buyer pays the seller's own account)
+// ─────────────────────────────────────────────────────────────────────────────
+export interface StorePaymentSettings {
+  bankName: string | null; accountTitle: string | null; accountNumber: string | null; iban: string | null;
+  jazzcashNumber: string | null; easypaisaNumber: string | null; instructions: string | null;
+}
+
+export function apiGetStorePaymentSettings(storeId: string) {
+  return client.get<never, { success: boolean; data: { directPayment: StorePaymentSettings | null; enabled: boolean } }>(`/api/seller/manual-payments/${storeId}/settings`);
+}
+export function apiSaveStorePaymentSettings(storeId: string, body: Partial<StorePaymentSettings>) {
+  return client.put<never, { success: boolean; data: { directPayment: StorePaymentSettings | null; enabled: boolean } }>(`/api/seller/manual-payments/${storeId}/settings`, body);
+}
+export function apiGetSellerTransferProofs(storeId: string, status?: ManualPaymentProofStatus) {
+  return client.get<never, { success: boolean; data: { proofs: AdminManualPaymentProof[]; total: number } }>(`/api/seller/manual-payments/${storeId}/proofs`, { params: { status, limit: 30 } });
+}
+export function apiGetSellerProofUrl(storeId: string, proofId: string) {
+  return client.get<never, { success: boolean; data: { url: string | null } }>(`/api/seller/manual-payments/${storeId}/proofs/${proofId}/proof-url`);
+}
+export function apiSellerApproveTransfer(storeId: string, proofId: string) {
+  return client.patch<never, { success: boolean }>(`/api/seller/manual-payments/${storeId}/proofs/${proofId}/approve`);
+}
+export function apiSellerRejectTransfer(storeId: string, proofId: string, reason: string) {
+  return client.patch<never, { success: boolean }>(`/api/seller/manual-payments/${storeId}/proofs/${proofId}/reject`, { reason });
 }

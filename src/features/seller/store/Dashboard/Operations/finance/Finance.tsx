@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { DirectPaymentsPanel } from './DirectPaymentsPanel';
 import { clsx } from 'clsx';
 import { Download, Plus, X, Star, AlertTriangle, CalendarCheck } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -320,6 +321,7 @@ export function StoreFinance() {
           </Button>
         }
       />
+      <DirectPaymentsPanel storeId={storeId} />
       <div className="px-4 md:px-8 pt-4 flex flex-col gap-3">
         <div className="flex items-center gap-2 text-[12.5px] text-carbon bg-info-bg border border-[#bfdcf3] rounded-lg px-3 py-2">
           <CalendarCheck size={14} className="shrink-0 text-brand-royal" />

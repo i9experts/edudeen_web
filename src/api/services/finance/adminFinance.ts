@@ -389,6 +389,17 @@ export function apiAdminRetryPayout(payoutId: string) {
   return client.patch<never, ApiResponse<PayoutRow>>(ENDPOINTS.FINANCE.ADMIN.RETRY_PAYOUT(payoutId));
 }
 
+export interface PayoutDestination {
+  payoutId: string; amount: number; currency: string; type: string | null;
+  bankName: string | null; accountHolder: string | null; accountNumber: string | null; last4: string | null;
+  routingNumber: string | null; externalAccountId: string | null; needsReentry: boolean;
+}
+
+/** Full (decrypted) account to pay a seller's payout to — admin only, every view is audit-logged. */
+export function apiAdminGetPayoutDestination(payoutId: string) {
+  return client.get<never, ApiResponse<PayoutDestination>>(`/api/admin/finance/payouts/${payoutId}/destination`);
+}
+
 export function apiAdminProcessClearing() {
   return client.post<never, ApiResponse<ClearingResultData>>(ENDPOINTS.FINANCE.ADMIN.PROCESS_CLEARING);
 }

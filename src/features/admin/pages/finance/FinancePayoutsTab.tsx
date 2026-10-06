@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { FilterDropdown, Table, Button, Input, Modal, type TableColumn } from '@/components/comman/ui';
 import { RefreshCw, Wallet } from 'lucide-react';
 import { useAdminPayoutQueue, useAdminPayoutActions, useAdminProcessClearing } from '@/hooks/admin/useAdminFinance';
-import type { PayoutRow } from '@/api/services/finance/adminFinance';
+import { apiAdminGetPayoutDestination, type PayoutRow, type PayoutDestination } from '@/api/services/finance/adminFinance';
 import { AnalyticsErrorState } from '@/components/comman/analytics/AnalyticsErrorState';
 import { formatDate } from '@/components/comman/analytics/format';
 import { formatMoneyCompact } from '@/utils/currency';
@@ -22,6 +22,16 @@ export function FinancePayoutsTab() {
   const queue = useAdminPayoutQueue({ status: (status || undefined) as never, page, limit: 15 });
   const { approvePayout, rejectPayout, retryPayout, processingId, error } = useAdminPayoutActions();
   const clearing = useAdminProcessClearing();
+
+  const [dest, setDest] = useState<PayoutDestination | null>(null);
+  const [destLoadingId, setDestLoadingId] = useState<string | null>(null);
+  const [destError, setDestError] = useState('');
+  const showDestination = async (id: string) => {
+    setDestLoadingId(id); setDestError('');
+    try { setDest((await apiAdminGetPayoutDestination(id)).data); }
+    catch (err) { setDestError(err instanceof Error ? err.message : 'Could not load the payout details.'); }
+    finally { setDestLoadingId(null); }
+  };
 
   const [rejectingId, setRejectingId] = useState<string | null>(null);
   const [reason, setReason] = useState('');
@@ -53,6 +63,7 @@ export function FinancePayoutsTab() {
     { key: 'createdAt', header: 'Requested', render: (p) => formatDate(p.createdAt) },
     { key: 'actions', header: '', align: 'right', render: (p) => (
       <div className="flex items-center justify-end gap-2">
+        <Button size="xs" variant="ghost" onClick={() => showDestination(p._id)} loading={destLoadingId === p._id}>Pay to</Button>
         {(p.status === 'pending' || p.status === 'processing') && (
           <>
             <Button size="xs" variant="outline" onClick={() => handleApprove(p._id)} loading={processingId === p._id}>Approve</Button>
@@ -83,7 +94,7 @@ export function FinancePayoutsTab() {
             : clearing.result.byCurrency.map((c) => formatMoneyCompact(c.amount, c.currency)).join(' + ')} moved to available balance.
         </p>
       )}
-      {(error || clearing.error) && <p className="text-[12px] text-error">{error || clearing.error}</p>}
+      {(error || clearing.error || destError) && <p className="text-[12px] text-error">{error || clearing.error || destError}</p>}
 
       {queue.error ? (
         <AnalyticsErrorState message={queue.error} onRetry={queue.refetch} />
@@ -102,6 +113,25 @@ export function FinancePayoutsTab() {
         />
       )}
 
+      {dest && (
+        <Modal mobileSheet title="Send this payout to" onClose={() => setDest(null)} footer={<Button variant="ghost" onClick={() => setDest(null)}>Close</Button>}>
+          <dl className="grid grid-cols-[120px_1fr] gap-x-3 gap-y-2 text-[13px] m-0">
+            <dt className="text-slate">Amount</dt><dd className="m-0 font-semibold">{formatMoneyCompact(dest.amount, dest.currency)}</dd>
+            <dt className="text-slate">Method</dt><dd className="m-0">{dest.type ?? '—'}</dd>
+            <dt className="text-slate">Bank / wallet</dt><dd className="m-0">{dest.bankName ?? '—'}</dd>
+            <dt className="text-slate">Account title</dt><dd className="m-0">{dest.accountHolder ?? '—'}</dd>
+            <dt className="text-slate">Account no. / IBAN</dt>
+            <dd className="m-0 font-mono break-all">{dest.accountNumber ?? (dest.last4 ? `•••• ${dest.last4}` : '—')}</dd>
+            {dest.routingNumber && (<><dt className="text-slate">Routing</dt><dd className="m-0 font-mono">{dest.routingNumber}</dd></>)}
+            {dest.externalAccountId && (<><dt className="text-slate">Account ID</dt><dd className="m-0 font-mono break-all">{dest.externalAccountId}</dd></>)}
+          </dl>
+          {dest.needsReentry && (
+            <p className="text-[12px] text-error bg-error-bg border border-error-border rounded-lg px-3 py-2 mt-3 mb-0">
+              Only the last 4 digits are on file — this account was added before full numbers were saved. Ask the seller to re-enter it in Finance → Payout methods.
+            </p>
+          )}
+        </Modal>
+      )}
       {rejectingId && (
         <Modal mobileSheet
           title="Reject Payout"
