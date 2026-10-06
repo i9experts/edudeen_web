@@ -1,4 +1,5 @@
 import client from '../../client';
+import type { MaintenancePayload } from '@/api/services/maintenance';
 import { ENDPOINTS } from '../../endpoints';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -93,6 +94,8 @@ export interface PayoutConfig {
 export interface PlatformConfig {
   _id: string;
   maintenanceMode: boolean;
+  /** What is under maintenance, why and until when; absent on an older config document. */
+  maintenance?: (Omit<MaintenancePayload, 'maintenanceMode'> & { enabled: boolean; updatedAt?: string | null }) | null;
   /** May be absent on an older config document — the backend then falls back to its defaults (USD 5 / PKR 1500 / monthly). */
   payoutConfig?: PayoutConfig;
   featureFlags: FeatureFlags;
@@ -127,8 +130,8 @@ export function apiUpdateEmailConfig(payload: Partial<EmailConfig>) {
   return client.put<never, ApiResponse<PlatformConfig>>(ENDPOINTS.PLATFORM_CONFIG.UPDATE_EMAIL, payload);
 }
 
-export function apiUpdateMaintenanceMode(maintenanceMode: boolean) {
-  return client.patch<never, ApiResponse<PlatformConfig>>(ENDPOINTS.PLATFORM_CONFIG.UPDATE_MAINTENANCE, { maintenanceMode });
+export function apiUpdateMaintenanceMode(payload: MaintenancePayload) {
+  return client.patch<never, ApiResponse<PlatformConfig>>(ENDPOINTS.PLATFORM_CONFIG.UPDATE_MAINTENANCE, payload);
 }
 
 export function apiUpdatePlacementLimits(payload: Partial<PlacementLimits>) {

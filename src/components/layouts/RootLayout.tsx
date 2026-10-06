@@ -4,6 +4,7 @@ import { ErrorBoundary } from '@/components/comman/ErrorBoundary';
 import { scrollRootRef } from '@/utils/scrollRoot';
 import { AuthGateModal } from '@/components/comman/ui/AuthGateModal';
 import { ToastContainer } from '@/components/comman/ui/ToastContainer';
+import { MaintenanceNotice } from '@/components/comman/ui/MaintenanceNotice';
 import { GoogleOneTapPrompt } from '@/components/comman/ui/GoogleOneTapPrompt';
 import { LanguageRouteSync } from '@/contexts/LanguageContext';
 
@@ -45,6 +46,7 @@ export function RootLayout() {
   return (
     <>
       <TopProgressBar />
+      <MaintenanceNotice />
       <AuthGateModal />
       <ToastContainer />
       <GoogleOneTapPrompt />

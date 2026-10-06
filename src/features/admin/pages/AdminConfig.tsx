@@ -1,4 +1,5 @@
 import { SocialLinksCard } from './SocialLinksCard';
+import { MaintenanceCard } from './MaintenanceCard';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -7,13 +8,12 @@ import {
   useUpdateAiConfig,
   useUpdateEmailConfig,
   useUpdateManualPaymentConfig,
-  useUpdateMaintenanceMode,
 } from '@/hooks/admin/useAdminConfig';
 import type { PlatformConfig, AiConfig, EmailConfig, ManualPaymentConfig } from '@/api/services/config/adminConfig';
-import { Toggle, Input, Textarea, Select, Button, Modal, SkeletonBox } from '@/components/comman/ui';
+import { Toggle, Input, Textarea, Select, Button, SkeletonBox } from '@/components/comman/ui';
 import { AdminStudioHeader } from '@/features/admin/components/studio';
 import { AnalyticsErrorState } from '@/components/comman/analytics/AnalyticsErrorState';
-import { AlertCircle, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
 
 const AI_MODELS = ['claude-sonnet-5', 'claude-haiku-4-5', 'claude-opus-4-8'];
 const EMAIL_PROVIDERS = ['SendGrid', 'Mailgun', 'AWS SES', 'Postmark'];
@@ -35,64 +35,6 @@ function useSavedFlash() {
     setTimeout(() => setSaved(false), 2500);
   };
   return { saved, flash };
-}
-
-// ── Maintenance Mode card ─────────────────────────────────────────────────────
-function MaintenanceCard({ config, onSaved }: { config: PlatformConfig; onSaved: (c: PlatformConfig) => void }) {
-  const { update, submitting, error } = useUpdateMaintenanceMode();
-  const [confirming, setConfirming] = useState(false);
-
-  async function apply(next: boolean) {
-    const ok = await update(next);
-    if (ok) onSaved({ ...config, maintenanceMode: next });
-    setConfirming(false);
-  }
-
-  return (
-    <>
-      <div
-        className="bg-white rounded-[10px] px-[22px] py-5 transition-[border-color] duration-200"
-        style={{ border: config.maintenanceMode ? '2px solid #C13030' : '1px solid #E1E7EA' }}
-      >
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <p className="font-serif font-normal text-[19px] sm:text-[21px] text-carbon leading-[1.25] flex items-center gap-[6px] mb-[3px]">
-              <AlertCircle size={15} className="text-error" /> Maintenance Mode
-            </p>
-            <p className="text-[12px] text-slate">When enabled, the platform shows a maintenance page to all users.</p>
-          </div>
-          <Toggle
-            checked={config.maintenanceMode}
-            disabled={submitting}
-            onChange={(next) => (next ? setConfirming(true) : apply(false))}
-          />
-        </div>
-        {config.maintenanceMode && (
-          <p className="mt-3 text-[11px] font-semibold text-error flex items-center gap-1">
-            <AlertTriangle size={11} /> Maintenance mode is ON — users cannot access the platform.
-          </p>
-        )}
-        {error && <p className="mt-2 text-[12px] text-error">{error}</p>}
-      </div>
-
-      {confirming && (
-        <Modal mobileSheet
-          title="Enable Maintenance Mode?"
-          onClose={() => setConfirming(false)}
-          footer={
-            <>
-              <Button variant="ghost" onClick={() => setConfirming(false)}>Cancel</Button>
-              <Button variant="danger" loading={submitting} onClick={() => apply(true)}>Enable Maintenance Mode</Button>
-            </>
-          }
-        >
-          <p className="text-[13px] text-charcoal leading-[1.6]">
-            This immediately shows a maintenance page to every buyer and seller on the platform. Are you sure?
-          </p>
-        </Modal>
-      )}
-    </>
-  );
 }
 
 // ── AI Configuration card ─────────────────────────────────────────────────────

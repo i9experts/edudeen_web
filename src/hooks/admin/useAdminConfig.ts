@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import type { MaintenancePayload } from '@/api/services/maintenance';
 import { useAnalyticsQuery } from '@/hooks/useAnalyticsQuery';
 import {
   apiGetPlatformConfig,
@@ -174,12 +175,11 @@ export function useUpdateMaintenanceMode() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
-  const update = useCallback(async (maintenanceMode: boolean) => {
+  const update = useCallback(async (payload: MaintenancePayload) => {
     setSubmitting(true);
     setError('');
     try {
-      await apiUpdateMaintenanceMode(maintenanceMode);
-      return true;
+      return (await apiUpdateMaintenanceMode(payload)).data ?? true;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update maintenance mode.');
       return false;

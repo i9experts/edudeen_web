@@ -133,7 +133,7 @@ client.interceptors.response.use(
       // Refresh failed — fall through to the logout handling below.
     }
 
-    const msg: string =
+    let msg: string =
       err.response?.data?.message ||
       err.message ||
       'Something went wrong. Please try again.';
@@ -159,7 +159,15 @@ client.interceptors.response.use(
     // Platform-wide maintenance mode (see main.ts) — admin/auth routes are
     // exempted server-side, so this only ever fires for buyer/seller calls.
     if (err.response?.status === 503 && err.response?.data?.maintenanceMode === true) {
-      if (window.location.pathname !== '/maintenance') window.location.href = '/maintenance';
+      const d = err.response.data as { scope?: string; title?: string; message?: string };
+      // The whole site (or the browsing side of it) is down: show the full page.
+      // A single area (checkout, seller tools, uploads) only fails that action,
+      // with the admin's own explanation, and the rest of the site stays usable.
+      if (d.scope === 'all' || d.scope === 'buyer') {
+        if (window.location.pathname !== '/maintenance') window.location.href = '/maintenance';
+      } else {
+        msg = [d.title, d.message].filter(Boolean).join(' — ') || msg;
+      }
     }
 
     // `isNetworkError` distinguishes "the request never reached the server" (no
