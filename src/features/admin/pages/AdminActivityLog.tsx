@@ -58,7 +58,12 @@ export function AdminActivityLog() {
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState('');
 
-  const from = dateRange === 'last7' ? daysAgo(7) : dateRange === 'last30' ? daysAgo(30) : dateRange === 'last90' ? daysAgo(90) : undefined;
+  // Computed once per range choice. `daysAgo` embeds "now" to the millisecond, so
+  // recomputing it every render changed the query each time and refetched forever.
+  const from = useMemo(
+    () => (dateRange === 'last7' ? daysAgo(7) : dateRange === 'last30' ? daysAgo(30) : dateRange === 'last90' ? daysAgo(90) : undefined),
+    [dateRange],
+  );
 
   const query = useMemo(
     () => ({
