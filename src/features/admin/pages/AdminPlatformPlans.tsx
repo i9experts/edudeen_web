@@ -20,7 +20,7 @@ const ADDON_LABELS: Record<string, string> = {
 };
 
 const DEFAULT_LIMITS: PlatformPlanLimits = {
-  maxProducts: 25, maxStaffAccounts: 1, maxPosLocations: 1, aiCreditsPerMonth: 0, transactionFeeRate: 0.05,
+  maxProducts: 25, maxStaffAccounts: 1, maxPosLocations: 1, aiCreditsPerMonth: 0, transactionFeeRate: 0,
   customDomainAllowed: false, whiteLabelAllowed: false, loyaltyProgramAllowed: false, subscriptionProductsAllowed: false,
   advancedAnalyticsAllowed: false, abandonedCartRecoveryAllowed: false, emailCampaignsAllowed: false,
   apiWebhooksAllowed: false, dedicatedAccountManager: false, prioritySupport: false, marketplaceFeaturedBadge: false,
@@ -49,6 +49,49 @@ const BOOL_FLAGS: { key: BooleanKeys<PlatformPlanLimits>; label: string }[] = [
   { key: 'customRedirectsAllowed', label: 'Custom redirects' },
 ];
 
+type PlanTemplate = {
+  label: string; hint: string; name: string; badge: string; description: string; isFree: boolean;
+  monthly: string; yearly: string; trialDays: string; sortOrder: string; bullets: string[]; limits: Partial<PlatformPlanLimits>;
+};
+
+// One-click starting points for a new plan — everything stays editable.
+const PLAN_TEMPLATES: PlanTemplate[] = [
+  {
+    label: 'Free trial', hint: '15 days, limited', name: 'Free Trial', badge: '', isFree: true, monthly: '', yearly: '', trialDays: '15', sortOrder: '0',
+    description: 'Try Edudeen free for 15 days. No card needed.',
+    bullets: ['Your own Edudeen store', 'Up to 3 active promotions', 'Instant digital delivery', 'Basic sales reports', '15 days free, then pick a paid plan'],
+    limits: { aiCreditsPerMonth: 20, maxActiveStoreBanners: 1, maxActivePromotions: 3 },
+  },
+  {
+    label: 'Basic', hint: '$9 / month', name: 'Basic', badge: '', isFree: false, monthly: '9', yearly: '90', trialDays: '0', sortOrder: '1',
+    description: 'Everything you need to start selling your educational resources.',
+    bullets: ['Your own branded store', 'Unlimited products', 'Instant digital delivery', 'Bank transfers paid straight to you', 'Basic sales reports'],
+    limits: { aiCreditsPerMonth: 100, maxActiveStoreBanners: 3, maxActivePromotions: 5, emailCampaignsAllowed: true },
+  },
+  {
+    label: 'Pro', hint: '$29 / month', name: 'Pro', badge: 'Popular', isFree: false, monthly: '29', yearly: '290', trialDays: '0', sortOrder: '2',
+    description: 'Premium tools to grow your store and reach more learners.',
+    bullets: ['Everything in Basic', 'Advanced analytics and SEO tools', 'AI SEO suggestions', 'Email campaigns and loyalty program', 'Priority support', 'Featured badge on the marketplace'],
+    limits: {
+      aiCreditsPerMonth: 500, maxActiveStoreBanners: -1, maxActivePromotions: -1, loyaltyProgramAllowed: true, subscriptionProductsAllowed: true,
+      advancedAnalyticsAllowed: true, emailCampaignsAllowed: true, prioritySupport: true, marketplaceFeaturedBadge: true,
+      advancedSeoToolsAllowed: true, seoAiSuggestionsAllowed: true, searchConsoleIntegrationAllowed: true, customRedirectsAllowed: true,
+    },
+  },
+];
+
+function FormSection({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
+  return (
+    <section className="rounded-xl border border-bone p-4 flex flex-col gap-3">
+      <div>
+        <p className="text-[13px] font-bold text-carbon">{title}</p>
+        {hint && <p className="text-[11.5px] text-slate mt-[2px]">{hint}</p>}
+      </div>
+      {children}
+    </section>
+  );
+}
+
 function PlanFormModal({ plan, onClose, onSaved }: { plan: PlatformPlan | 'new'; onClose: () => void; onSaved: () => void }) {
   const isEdit = plan !== 'new';
   const p = isEdit ? plan : null;
@@ -62,21 +105,32 @@ function PlanFormModal({ plan, onClose, onSaved }: { plan: PlatformPlan | 'new';
   const [sortOrder, setSortOrder] = useState(p ? String(p.sortOrder ?? 0) : '0');
   const [isPubliclyVisible, setIsPubliclyVisible] = useState(p?.isPubliclyVisible ?? true);
   const [featuresText, setFeaturesText] = useState(p?.featureBullets?.join('\n') ?? '');
+  // Edudeen sales are commission-free, so a new plan's fee starts at 0.
   const [limits, setLimits] = useState<PlatformPlanLimits>(p?.limits ?? DEFAULT_LIMITS);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
   const setLimit = <K extends keyof PlatformPlanLimits>(k: K, v: PlatformPlanLimits[K]) => setLimits(prev => ({ ...prev, [k]: v }));
 
+  function applyTemplate(t: PlanTemplate) {
+    setName(t.name); setBadge(t.badge); setDescription(t.description); setIsFree(t.isFree);
+    setMonthlyPrice(t.monthly); setYearlyPrice(t.yearly); setTrialDays(t.trialDays); setSortOrder(t.sortOrder);
+    setFeaturesText(t.bullets.join('\n'));
+    setLimits({ ...DEFAULT_LIMITS, ...t.limits });
+    setIsPubliclyVisible(true); setError('');
+  }
+
   async function submit() {
     if (!name.trim()) { setError('Plan name is required.'); return; }
+    if (isFree && !(Number(trialDays) > 0)) { setError('A free plan needs trial days (for example 15).'); return; }
+    if (!isFree && !(Number(monthlyPrice) > 0)) { setError('Enter the monthly price.'); return; }
     setError(''); setSaving(true);
     try {
       const payload = {
         name: name.trim(), description: description.trim() || undefined, badge: badge.trim() || undefined,
-        isFree, monthlyPriceUSD: monthlyPrice ? Number(monthlyPrice) : undefined,
-        yearlyPriceUSD: yearlyPrice ? Number(yearlyPrice) : undefined,
-        trialDays: Number(trialDays) || 0,
+        isFree, monthlyPriceUSD: !isFree && monthlyPrice ? Number(monthlyPrice) : undefined,
+        yearlyPriceUSD: !isFree && yearlyPrice ? Number(yearlyPrice) : undefined,
+        trialDays: isFree ? Number(trialDays) || 0 : 0,
         sortOrder: Number(sortOrder) || 0,
         isPubliclyVisible,
         featureBullets: featuresText.split('\n').map(f => f.trim()).filter(Boolean),
@@ -94,74 +148,89 @@ function PlanFormModal({ plan, onClose, onSaved }: { plan: PlatformPlan | 'new';
     <Modal mobileSheet title={isEdit ? 'Edit Platform Plan' : 'Create Platform Plan'} width={640} onClose={onClose}
       footer={<><Button variant="outline" onClick={onClose}>Cancel</Button><Button onClick={submit} loading={saving}>{isEdit ? 'Save Changes' : 'Create Plan'}</Button></>}>
       <div className="flex flex-col gap-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Input label="Plan Name" value={name} onChange={e => setName(e.target.value)} />
-          <Input label="Badge (optional)" placeholder="Popular" value={badge} onChange={e => setBadge(e.target.value)} />
-        </div>
-        <Textarea label="Description" rows={2} value={description} onChange={e => setDescription(e.target.value)} />
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <Input label="Monthly $" type="number" min={0} value={monthlyPrice} onChange={e => setMonthlyPrice(e.target.value)} disabled={isFree} />
-          <Input label="Yearly $ (optional)" type="number" min={0} value={yearlyPrice} onChange={e => setYearlyPrice(e.target.value)} disabled={isFree} />
-          <Input label="Trial Days" type="number" min={0} value={trialDays} onChange={e => setTrialDays(e.target.value)} />
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Input
-            label="Sort order (lower = shown first)" type="number" value={sortOrder}
-            onChange={e => setSortOrder(e.target.value)}
-          />
+        {!isEdit && (
           <div>
-            <p className="block text-[12px] font-medium text-charcoal mb-1.5">Visibility</p>
-            <label className="flex items-center gap-2 text-[12.5px] text-charcoal h-[38px]">
-              <input type="checkbox" checked={isPubliclyVisible} onChange={e => setIsPubliclyVisible(e.target.checked)} />
-              Show on public pricing page
-            </label>
-          </div>
-        </div>
-        <label className="flex items-center gap-2 text-[12.5px] text-charcoal">
-          <input type="checkbox" checked={isFree} onChange={e => setIsFree(e.target.checked)} /> Free plan (no charge)
-        </label>
-        <Textarea label="Feature bullets (one per line)" rows={3} value={featuresText} onChange={e => setFeaturesText(e.target.value)} />
-
-        <div>
-          <p className="text-[12px] font-semibold text-charcoal mb-2">Limits</p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
-            {/* Product count isn't capped on any plan, so there is no field for it. */}
-            {/* `maxStaffAccounts`, `slaUptimePercent` and `maxPosLocations` are
-                intentionally not editable here (not relevant to an education
-                shop) but stay in `limits`, so the saved values are preserved. */}
-            <Input label="AI credits/mo" type="number" value={limits.aiCreditsPerMonth ?? ''} onChange={e => setLimit('aiCreditsPerMonth', Number(e.target.value))} />
-            <Input label="Max store banners (-1=∞)" type="number" value={limits.maxActiveStoreBanners ?? ''} onChange={e => setLimit('maxActiveStoreBanners', Number(e.target.value))} />
-            <Input label="Max active promotions (-1=∞)" type="number" value={limits.maxActivePromotions ?? ''} onChange={e => setLimit('maxActivePromotions', Number(e.target.value))} />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,180px)_1fr] gap-x-3 gap-y-1 items-start mb-3">
-            <Input label="Txn fee (0-1)" type="number" step="0.01" min={0} max={1} value={limits.transactionFeeRate ?? ''} onChange={e => setLimit('transactionFeeRate', Number(e.target.value))} />
-            <p className="text-[11.5px] text-slate leading-[1.5] sm:pt-[26px]">
-              Commission Edudeen keeps on each sale (0.05 = 5%). This plan's fee overrides the global commission rule for stores on this plan;
-              only a seller-specific override in Commission Rules takes precedence over it.
-            </p>
-          </div>
-          <p className="text-[11.5px] text-slate mb-3">
-            "AI credits/mo" is the monthly AI allowance each store on this plan receives — this is the setting that's actually used.
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {BOOL_FLAGS.map(f => {
-              const active = !!limits[f.key];
-              return (
-                <button key={f.key} type="button" onClick={() => setLimit(f.key, !active)}
-                  className="px-2.5 py-1 rounded-full text-[11px] font-medium border cursor-pointer"
-                  style={{ background: active ? '#174771' : '#fff', color: active ? '#fff' : '#486071', borderColor: active ? '#174771' : '#E1E7EA' }}>
-                  {f.label}
+            <p className="text-[12px] font-semibold text-charcoal mb-2">Start from a template</p>
+            <div className="grid grid-cols-3 gap-2">
+              {PLAN_TEMPLATES.map(t => (
+                <button key={t.label} type="button" onClick={() => applyTemplate(t)}
+                  className="rounded-lg border border-bone bg-white px-3 py-2 text-start cursor-pointer hover:border-brand-orange/50 transition-colors">
+                  <p className="text-[12.5px] font-bold text-carbon">{t.label}</p>
+                  <p className="text-[10.5px] text-slate">{t.hint}</p>
                 </button>
-              );
-            })}
+              ))}
+            </div>
           </div>
-        </div>
+        )}
+
+        <FormSection title="Basics">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Input label="Plan name" value={name} onChange={e => setName(e.target.value)} />
+            <Input label="Badge (optional)" placeholder="Popular" value={badge} onChange={e => setBadge(e.target.value)} />
+          </div>
+          <Textarea label="Short description" rows={2} value={description} onChange={e => setDescription(e.target.value)} />
+        </FormSection>
+
+        <FormSection title="Price">
+          <div className="grid grid-cols-2 gap-2">
+            {([[false, 'Paid plan', 'Monthly fee'], [true, 'Free trial', 'Free for some days, no card']] as const).map(([val, label, hint]) => (
+              <button key={label} type="button" onClick={() => setIsFree(val)}
+                className={`rounded-lg border-2 px-3 py-2 text-start cursor-pointer ${isFree === val ? 'border-brand-orange bg-brand-pale-orange/40' : 'border-bone bg-white'}`}>
+                <p className="text-[12.5px] font-bold text-carbon">{label}</p>
+                <p className="text-[10.5px] text-slate">{hint}</p>
+              </button>
+            ))}
+          </div>
+          {isFree ? (
+            <Input label="Trial length (days)" type="number" min={1} value={trialDays} onChange={e => setTrialDays(e.target.value)} />
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Input label="Monthly price ($)" type="number" min={0} value={monthlyPrice} onChange={e => setMonthlyPrice(e.target.value)} />
+              <Input label="Yearly price ($, optional)" type="number" min={0} value={yearlyPrice} onChange={e => setYearlyPrice(e.target.value)} />
+            </div>
+          )}
+        </FormSection>
+
+        <FormSection title="What sellers get" hint="Bullets are shown on the plan card — one per line.">
+          <Textarea label="Feature bullets" rows={4} value={featuresText} onChange={e => setFeaturesText(e.target.value)} />
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            {/* Product count isn't capped on any plan, so there is no field for it. */}
+            <Input label="AI credits per month" type="number" value={limits.aiCreditsPerMonth ?? ''} onChange={e => setLimit('aiCreditsPerMonth', Number(e.target.value))} />
+            <Input label="Store banners (-1 = unlimited)" type="number" value={limits.maxActiveStoreBanners ?? ''} onChange={e => setLimit('maxActiveStoreBanners', Number(e.target.value))} />
+            <Input label="Promotions (-1 = unlimited)" type="number" value={limits.maxActivePromotions ?? ''} onChange={e => setLimit('maxActivePromotions', Number(e.target.value))} />
+          </div>
+          <div>
+            <p className="text-[11.5px] text-slate mb-2">Tap to switch tools on or off for this plan:</p>
+            <div className="flex flex-wrap gap-2">
+              {BOOL_FLAGS.map(f => {
+                const active = !!limits[f.key];
+                return (
+                  <button key={f.key} type="button" onClick={() => setLimit(f.key, !active)}
+                    className="px-2.5 py-1 rounded-full text-[11px] font-medium border cursor-pointer"
+                    style={{ background: active ? '#174771' : '#fff', color: active ? '#fff' : '#486071', borderColor: active ? '#174771' : '#E1E7EA' }}>
+                    {f.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </FormSection>
+
+        <details className="rounded-xl border border-bone px-4 py-3">
+          <summary className="text-[12.5px] font-semibold text-carbon cursor-pointer">Advanced</summary>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+            <Input label="Display order (lower shows first)" type="number" value={sortOrder} onChange={e => setSortOrder(e.target.value)} />
+            <Input label="Commission on sales (0 = none)" type="number" step="0.01" min={0} max={1} value={limits.transactionFeeRate ?? ''} onChange={e => setLimit('transactionFeeRate', Number(e.target.value))} />
+          </div>
+          <label className="flex items-center gap-2 text-[12.5px] text-charcoal mt-3">
+            <input type="checkbox" checked={isPubliclyVisible} onChange={e => setIsPubliclyVisible(e.target.checked)} /> Show this plan to sellers
+          </label>
+        </details>
         {error && <p className="text-[12px] text-error">{error}</p>}
       </div>
     </Modal>
   );
 }
-
 // ── Subscribers modal ────────────────────────────────────────────────────────
 function SubscribersModal({ plan, onClose }: { plan: PlatformPlan; onClose: () => void }) {
   const [subs, setSubs] = useState<StorePlatformSubscription[]>([]);

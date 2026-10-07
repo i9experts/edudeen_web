@@ -75,6 +75,11 @@ export interface EntitlementsSummary {
 interface ApiResponse<T> { success: boolean; message?: string; data: T }
 
 // ── Public ────────────────────────────────────────────────────────────────────
+/** Can this signed-in account still start the one-time free trial? */
+export function apiFreeTrialEligibility() {
+  return client.get<never, ApiResponse<{ eligible: boolean }>>(`/free-trial-eligibility`);
+}
+
 export function apiBrowsePlatformPlans() {
   return client.get<never, ApiResponse<PlatformPlan[]>>(`${BASE}/public`);
 }

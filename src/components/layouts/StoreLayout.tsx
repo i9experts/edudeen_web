@@ -640,6 +640,15 @@ function PlatformBillingBanner() {
   if (!sub) return null;
   const goToBilling = () => navigate(`/store/${storeId}/plan-billing`);
 
+  if (sub.status === 'expired') {
+    return (
+      <button onClick={goToBilling} className="flex w-full items-center justify-center gap-2 px-4 py-2 text-[12.5px] font-medium text-error bg-error-bg border-b border-error-border cursor-pointer">
+        <AlertTriangle size={14} className="shrink-0" />
+        Your free trial has ended — choose a plan to keep adding products and selling.
+        <span className="underline font-semibold">Choose a plan</span>
+      </button>
+    );
+  }
   if (sub.status === 'past_due') {
     return (
       <button onClick={goToBilling} className="flex w-full items-center justify-center gap-2 px-4 py-2 text-[12.5px] font-medium text-error bg-error-bg border-b border-error-border cursor-pointer">
@@ -665,7 +674,7 @@ function PlatformBillingBanner() {
         <button onClick={goToBilling} className="flex w-full items-center justify-center gap-2 px-4 py-2 text-[12.5px] font-medium text-[#1a5a8a] bg-info-bg border-b border-[#bfdcf3] cursor-pointer">
           <Clock size={14} className="shrink-0" />
           Your trial ends in {daysLeft} day{daysLeft === 1 ? '' : 's'}.
-          <span className="underline font-semibold">Add a payment method</span>
+          <span className="underline font-semibold">{sub.amountUSD === 0 ? 'Choose a plan' : 'Add a payment method'}</span>
         </button>
       );
     }

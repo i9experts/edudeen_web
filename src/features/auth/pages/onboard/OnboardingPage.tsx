@@ -17,7 +17,7 @@ import { apiGetCategoryTree, type CategoryNode } from '@/api/services/categories
 import { getStorefrontUrl } from '@/utils/storefrontUrl';
 import {
   apiCreateOnboardingSetupIntent, apiConfirmOnboardingPaymentMethod, apiGetOnboardingProgress, apiSaveOnboardingDraft,
-  apiBrowsePlatformPlans, apiChangePlatformPlan, type PlatformPlan,
+  apiBrowsePlatformPlans, apiChangePlatformPlan, apiFreeTrialEligibility, type PlatformPlan,
 } from '@/api/services/platformPlans';
 import { apiGetMyStores } from '@/api/services/store';
 import { resolveSellerDestination } from '@/utils/sellerRouting';
@@ -298,11 +298,12 @@ function Step2Payment({ form, setForm, onNext, onBack, step, maxReached, onStepC
 
   useEffect(() => {
     let cancelled = false;
-    apiBrowsePlatformPlans()
-      .then(res => {
+    // The free trial is one per seller — hidden once it has been used.
+    Promise.all([apiBrowsePlatformPlans(), apiFreeTrialEligibility().then(r => r.data.eligible).catch(() => true)])
+      .then(([res, canTrial]) => {
         if (cancelled) return;
         const paid = (res.data ?? [])
-          .filter(p => p.status === 'active' && !p.isFree && !p.isCustomPricing && (p.monthlyPriceUSD ?? 0) > 0)
+          .filter(p => p.status === 'active' && !p.isCustomPricing && ((p.isFree && p.trialDays > 0 && canTrial) || (!p.isFree && (p.monthlyPriceUSD ?? 0) > 0)))
           .sort((a, b) => a.sortOrder - b.sortOrder);
         setPlans(paid);
       })
@@ -408,8 +409,8 @@ function Step2Payment({ form, setForm, onNext, onBack, step, maxReached, onStepC
                       )}
                     </div>
                     <div className="text-end shrink-0">
-                      <p className="text-[18px] font-bold text-brand-orange leading-none">${(p.monthlyPriceUSD ?? 0).toLocaleString()}</p>
-                      <p className="text-[10.5px] text-slate mt-1">per month</p>
+                      <p className="text-[18px] font-bold text-brand-orange leading-none">{p.isFree ? 'Free' : ('$' + (p.monthlyPriceUSD ?? 0).toLocaleString())}</p>
+                      <p className="text-[10.5px] text-slate mt-1">{p.isFree ? `for ${p.trialDays} days` : 'per month'}</p>
                     </div>
                   </div>
                 </button>
@@ -419,7 +420,13 @@ function Step2Payment({ form, setForm, onNext, onBack, step, maxReached, onStepC
         )}
 
         {/* Card */}
-        {plans && plans.length > 0 && (
+        {selected?.isFree && (
+          <div className="flex items-start gap-2 text-[12px] text-charcoal bg-success-bg border border-success/30 rounded-[8px] px-3 py-3 mb-4">
+            <Check size={14} className="mt-[1px] shrink-0 text-success" />
+            <p>No card needed. Your {selected.trialDays}-day free trial starts when your store opens. After that, choose a paid plan from Plan &amp; Billing to keep selling.</p>
+          </div>
+        )}
+        {plans && plans.length > 0 && !selected?.isFree && (
           <>
             <p className="text-[12px] font-bold text-carbon uppercase tracking-[0.05em] pb-2 mb-3 border-b border-bone">Payment method</p>
             {alreadyConfirmed ? (
@@ -475,7 +482,7 @@ function Step2Payment({ form, setForm, onNext, onBack, step, maxReached, onStepC
             <ArrowLeft size={14} className="inline align-middle me-1" /> Back
           </Button>
           {/* No skip — a store can't be opened without a plan and a card. */}
-          {alreadyConfirmed && (
+          {(alreadyConfirmed || selected?.isFree) && (
             <Button variant="primary" size="md" onClick={() => selected && onNext()} disabled={!selected} className="flex-1">
               {selected ? <span>Continue <ArrowRight size={14} className="inline align-middle ms-1" /></span> : 'Pick a plan to continue'}
             </Button>
@@ -641,14 +648,14 @@ function Step5Review({ form, submitting, submitError, onSubmit, onBack, step, ma
           <p className="text-[12px] font-bold text-carbon uppercase tracking-[0.05em] pb-2 mb-3 border-b border-bone">Plan</p>
           <div className="flex items-center justify-between gap-3">
             <p className="text-[12.5px] font-semibold text-carbon">{form.planName || '—'}</p>
-            <p className="text-[12.5px] font-semibold text-brand-orange">${form.planPriceUSD.toLocaleString()} / month</p>
+            <p className="text-[12.5px] font-semibold text-brand-orange">{form.planPriceUSD === 0 ? 'Free trial' : `$${form.planPriceUSD.toLocaleString()} / month`}</p>
           </div>
         </div>
 
         <div className="flex items-start gap-2 text-start mb-6 bg-success-bg rounded-xl px-[14px] py-[12px]">
           <ShieldCheck size={16} className="text-success shrink-0 mt-[1px]" />
           <p className="text-[12.5px] text-success leading-[1.6]">
-            Launching charges your saved card ${form.planPriceUSD.toLocaleString()} for the first month, then monthly. Every sale is yours in full (minus the card processing fee), paid out by Edudeen monthly.
+            {form.planPriceUSD === 0 ? 'Your free trial starts when your store opens — no payment now. Every sale is yours in full.' : `Launching charges your saved card $${form.planPriceUSD.toLocaleString()} for the first month, then monthly. Every sale is yours in full (minus the card processing fee), paid out by Edudeen monthly.`}
           </p>
         </div>
 
@@ -847,6 +854,8 @@ export function OnboardingPage() {
   // the first month (3-D Secure, if the bank asks, is finished here).
   // Returns an error message, or null once paid.
   const startPlan = async (storeId: string): Promise<string | null> => {
+    // The free trial needs no payment — the store already starts on it.
+    if (form.planPriceUSD === 0) return null;
     try {
       const res = await apiChangePlatformPlan(storeId, form.planId, 'monthly');
       const data = res.data as unknown as { requiresAction?: boolean; clientSecret?: string | null };

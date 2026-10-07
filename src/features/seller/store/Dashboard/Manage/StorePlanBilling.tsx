@@ -214,9 +214,16 @@ export default function StorePlanBilling() {
 
   const trialDaysLeft = current?.trialEndsAt ? daysUntil(current.trialEndsAt) : null;
   const isPastDue = current?.status === 'past_due';
+  const isExpired = current?.status === 'expired';
   const isCancelPending = !!current?.cancelAtPeriodEnd;
 
   const banner = useMemo(() => {
+    if (isExpired) {
+      return {
+        tone: 'error' as const, Icon: AlertTriangle,
+        text: 'Your free trial has ended. Choose a paid plan below to keep adding products and selling.',
+      };
+    }
     if (isPastDue) {
       return {
         tone: 'error' as const, Icon: AlertTriangle,
@@ -355,7 +362,8 @@ export default function StorePlanBilling() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {plans.map(plan => {
+          {/* The free trial is a one-time offer — only paid plans are listed here. */}
+          {plans.filter(p => !(p.isFree && p.trialDays > 0)).map(plan => {
             const isCurrent = current?.platformPlanId === plan._id;
             const price = interval === 'yearly' && plan.yearlyPriceUSD != null ? plan.yearlyPriceUSD : plan.monthlyPriceUSD;
             return (
