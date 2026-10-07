@@ -793,6 +793,23 @@ export function OnboardingPage() {
     return () => { cancelled = true; };
   }, []);
 
+  // The plan picked on /become-a-seller is applied up front, so a free plan can
+  // skip the payment step entirely (a paid one goes through it).
+  useEffect(() => {
+    if (progressLoading) return;
+    let wanted: string | null = null;
+    try { wanted = sessionStorage.getItem('sellPlanId'); } catch { /* storage blocked */ }
+    if (!wanted) return;
+    let cancelled = false;
+    apiBrowsePlatformPlans()
+      .then(res => {
+        const p = (res.data ?? []).find(x => x._id === wanted);
+        if (!cancelled && p) setForm(prev => ({ ...prev, planId: p._id, planName: p.name, planPriceUSD: p.isFree ? 0 : (p.monthlyPriceUSD ?? 0) }));
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [progressLoading]);
+
   // Store setup is a seller-only flow — a logged-out visitor is sent to
   // /login (redirect back here after), and a logged-in buyer is sent to
   // their own home instead of ever seeing seller store setup. Placed after
@@ -818,7 +835,14 @@ export function OnboardingPage() {
       return n;
     });
   };
-  const back   = () => setStep(s => Math.max(s - 1, 1));
+  const freePlanChosen = !!form.planId && form.planPriceUSD === 0;
+  // Free plan: store details, then straight on (no payment step). Paid: details, then payment.
+  const afterStoreInfo = () => {
+    if (!freePlanChosen) { next(); return; }
+    setStep(3);
+    setMaxReached(m => { const newMax = Math.max(m, 3); saveDraft(3, newMax); return newMax; });
+  };
+  const back   = () => setStep(s => (s === 3 && freePlanChosen ? 1 : Math.max(s - 1, 1)));
   const jumpTo = (target: number) => setStep(target);
 
   // The ONE place the store gets created — never earlier. By the time this
@@ -924,7 +948,7 @@ export function OnboardingPage() {
     >
       <div className="flex-1 flex items-start justify-center px-6 py-6">
         <StepPane step={step}>
-          {step === 1 && <Step1StoreInfo form={form} setForm={setForm} onNext={next} step={step} maxReached={maxReached} onStepClick={jumpTo} />}
+          {step === 1 && <Step1StoreInfo form={form} setForm={setForm} onNext={afterStoreInfo} step={step} maxReached={maxReached} onStepClick={jumpTo} />}
           {step === 2 && <Step2Payment form={form} setForm={setForm} onNext={next} onBack={back} step={step} maxReached={maxReached} onStepClick={jumpTo} alreadyConfirmed={alreadyConfirmed} onCardSaved={() => setAlreadyConfirmed(true)} />}
           {step === 3 && <Step3SellerType form={form} setForm={setForm} onNext={next} onBack={back} step={step} maxReached={maxReached} onStepClick={jumpTo} />}
           {step === 4 && <Step4WhatYouSell form={form} setForm={setForm} onNext={next} onBack={back} step={step} maxReached={maxReached} onStepClick={jumpTo} />}
