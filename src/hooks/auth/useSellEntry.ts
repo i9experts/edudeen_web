@@ -27,7 +27,7 @@ export function useSellEntry() {
     const role = user?.role;
 
     if (!TokenStorage.isLoggedIn() || role !== 'seller') {
-      navigate('/register?role=seller');
+      navigate('/become-a-seller');
       return;
     }
 

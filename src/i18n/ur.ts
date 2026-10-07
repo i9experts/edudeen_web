@@ -73,6 +73,7 @@ export const UR: Record<string, string> = {
   'Get the Edudeen app': 'ایجوڈین ایپ حاصل کریں',
   'Browse products, chat with sellers, and manage and pay for your orders with the Edudeen app — anytime, anywhere.': 'ایجوڈین ایپ پر مصنوعات دیکھیں، فروخت کنندگان سے بات کریں اور اپنے آرڈرز سنبھالیں — کبھی بھی، کہیں بھی۔',
   'Scan or click to download the Edudeen Android app': 'ایجوڈین اینڈرائیڈ ایپ کے لیے اسکین یا کلک کریں',
+  'Open your own store': 'اپنا اسٹور کھولیں',
   'Sell on Edudeen': 'ایجوڈین پر فروخت کریں',
   'Launch your own branded store — no coding.': 'اپنا برانڈڈ اسٹور بنائیں — کوڈنگ کے بغیر۔',
 
@@ -357,6 +358,9 @@ export const UR: Record<string, string> = {
   'No questions yet — be the first to ask.': 'ابھی کوئی سوال نہیں — سب سے پہلے پوچھیں۔',
   'Waiting for the seller\'s answer': 'فروخت کنندہ کے جواب کا انتظار',
   'Visit Store': 'اسٹور دیکھیں',
+  'Visit store': 'اسٹور دیکھیں',
+  'Sold by': 'فروخت کنندہ',
+  'reviews': 'ریویوز',
   'Follow': 'فالو کریں',
   'Following': 'فالو کر رہے ہیں',
   'Followers': 'فالوورز',

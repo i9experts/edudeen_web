@@ -37,7 +37,9 @@ export function useVerifyOtp() {
       // resolver is still the source of truth rather than a hardcoded
       // guess. The token is already saved above, so there's no reason to
       // ever bounce through /login.
-      const destination = role === 'seller' ? await resolveSellerDestinationRemote() : getRoleRedirect(role);
+      let afterAuth: string | null = null;
+      try { afterAuth = sessionStorage.getItem('afterAuthPath'); sessionStorage.removeItem('afterAuthPath'); } catch { /* storage blocked */ }
+      const destination = role === 'seller' ? await resolveSellerDestinationRemote() : (afterAuth?.startsWith('/') && !afterAuth.startsWith('//') ? afterAuth : getRoleRedirect(role));
       navigate(destination, { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Invalid or expired code. Please try again.');

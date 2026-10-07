@@ -322,6 +322,16 @@ function Step2Payment({ form, setForm, onNext, onBack, step, maxReached, onStepC
   // A plan picked in an earlier session that's no longer offered is dropped.
   const selected = plans?.find(p => p._id === form.planId) ?? null;
 
+  // The plan picked on /become-a-seller is applied once the plans have loaded.
+  useEffect(() => {
+    if (!plans || form.planId) return;
+    let wanted: string | null = null;
+    try { wanted = sessionStorage.getItem('sellPlanId'); } catch { /* storage blocked */ }
+    const p = wanted ? plans.find(x => x._id === wanted) : null;
+    if (p) setForm({ ...form, planId: p._id, planName: p.name, planPriceUSD: p.monthlyPriceUSD ?? 0 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [plans]);
+
   const choose = (p: PlatformPlan) =>
     setForm({ ...form, planId: p._id, planName: p.name, planPriceUSD: p.monthlyPriceUSD ?? 0 });
 

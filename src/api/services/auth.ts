@@ -202,6 +202,11 @@ export function apiLogin(payload: LoginPayload) {
   return client.post<never, ApiResponse<LoginData>>(ENDPOINTS.AUTH.LOGIN, payload);
 }
 
+/** POST /auth/become-seller — a signed-in buyer opens a seller account on the same email */
+export function apiBecomeSeller() {
+  return client.post<never, ApiResponse<LoginData>>(ENDPOINTS.AUTH.BECOME_SELLER);
+}
+
 /** POST /auth/verifyOtp — verifies OTP after register, returns tokens */
 export function apiVerifyOtp(payload: VerifyOtpPayload) {
   return client.post<never, ApiResponse<VerifyOtpData>>(ENDPOINTS.AUTH.VERIFY_OTP, payload);

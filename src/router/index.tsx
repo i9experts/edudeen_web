@@ -40,6 +40,7 @@ import { NewPasswordPage }    from '@/features/auth/pages/NewPasswordPage';
 import { Homepage }             from '@/features/buyer/pages/Homepage';
 import { PricingPage }          from '@/features/buyer/pages/PricingPage';
 import { ForSellersPage }       from '@/features/buyer/pages/ForSellersPage';
+import { BecomeSellerPage }     from '@/features/buyer/pages/BecomeSellerPage';
 import { FaqPage }              from '@/features/buyer/pages/FaqPage';
 import { PrivacyPolicyPage }    from '@/features/buyer/pages/PrivacyPolicyPage';
 import { DeleteAccountPage }    from '@/features/buyer/pages/DeleteAccountPage';
@@ -223,6 +224,7 @@ const mainRouter = createBrowserRouter([
             children: [
               { path: 'pricing',         element: <NotForBuyers><PricingPage /></NotForBuyers> },
               { path: 'sellers',         element: <NotForBuyers><ForSellersPage /></NotForBuyers> },
+              { path: 'become-a-seller', element: <BecomeSellerPage /> },
               { path: 'faq',             element: <FaqPage /> },
               { path: 'help',            element: <Navigate to="/faq" replace /> },
               { path: 'privacy-policy',  element: <PrivacyPolicyPage /> },

@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
 import {
   User, LayoutDashboard, LogOut, ShoppingBag,
-  ChevronRight, Shield, type LucideIcon,
+  ChevronRight, Shield, Store, type LucideIcon,
 } from 'lucide-react';
 import { useGetProfile } from '@/hooks/auth/useGetProfile';
 import { TokenStorage, apiLogout } from '@/api/services/auth';
@@ -168,9 +168,9 @@ function MenuItem({
 // DropdownMenu
 // ─────────────────────────────────────────────────────────────────────────────
 function DropdownMenu({
-  hasBuyer, hasDash, isAdmin, onNavigate, onLogout,
+  hasBuyer, hasDash, isAdmin, canSell, onNavigate, onLogout,
 }: {
-  hasBuyer: boolean; hasDash: boolean; isAdmin: boolean;
+  hasBuyer: boolean; hasDash: boolean; isAdmin: boolean; canSell: boolean;
   onNavigate: (path: string) => void; onLogout: () => void;
 }) {
   return (
@@ -190,6 +190,14 @@ function DropdownMenu({
             label="My Orders"
             sublabel="Track your purchases"
             onClick={() => onNavigate('/account/orders')}
+          />
+        )}
+        {canSell && (
+          <MenuItem
+            icon={Store}
+            label="Sell on Edudeen"
+            sublabel="Open your own store"
+            onClick={() => onNavigate('/become-a-seller')}
           />
         )}
         {hasDash && (
@@ -242,7 +250,8 @@ function ProfileDropdown({
   const role      = profile?.role;
   const isSeller  = role === 'seller';
   const isAdmin   = role === 'admin';
-  const hasBuyer  = SHOW_BUYER_FEATURES && (role === 'user' || isSeller || isAdmin);
+  const isBuyer   = role === 'user';
+  const hasBuyer  = isBuyer || (SHOW_BUYER_FEATURES && (isSeller || isAdmin));
   const hasSeller = isSeller;
   const hasAdmin  = isAdmin;
   const hasDash   = isSeller || isAdmin;
@@ -270,6 +279,7 @@ function ProfileDropdown({
       )}
       <DropdownMenu
         hasBuyer={hasBuyer}
+        canSell={isBuyer}
         hasDash={hasDash}
         isAdmin={isAdmin}
         onNavigate={onNavigate}

@@ -691,7 +691,12 @@ export function ProductDetail() {
                         if the store lookup hasn't resolved (or has no name). */}
                     {(storeData?.name ?? product.sellerName) && <>by {storeData?.name ?? product.sellerName}</>}
                     {product.averageRating > 0 && (
-                      <span className="flex items-center gap-[3px]">
+                      <span
+                        role="link" tabIndex={0}
+                        onClick={() => document.getElementById('reviews')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                        onKeyDown={e => { if (e.key === 'Enter') document.getElementById('reviews')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}
+                        className="flex items-center gap-[3px] cursor-pointer hover:underline"
+                      >
                         • <Star size={11} className="text-brand-orange fill-brand-orange" />
                         {product.averageRating.toFixed(1)} ({product.totalRatings} reviews)
                       </span>
@@ -830,6 +835,34 @@ export function ProductDetail() {
                       </button>
                     )}
                   </div>
+
+                  {/* Seller trust card — who is selling, visible without opening the Seller tab */}
+                  {storeId && (storeData?.name ?? product.sellerName) && (
+                    <div className="rounded-xl border border-bone bg-white px-3 py-3 mb-3 flex items-center gap-3">
+                      <div className="scale-[0.7] origin-start -me-3 shrink-0"><SellerLogoAvatar logo={storeData?.logo} name={storeData?.name ?? product.sellerName ?? '?'} /></div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[10px] uppercase tracking-[0.06em] text-slate leading-none mb-[3px]">{t('Sold by')}</p>
+                        <p className="text-[13px] font-bold text-carbon truncate flex items-center gap-1">
+                          {storeData?.name ?? product.sellerName}
+                          {storeData?.badges?.includes('verified') && <ShieldCheck size={13} className="text-success shrink-0" aria-label="Verified seller" />}
+                        </p>
+                        {(storeData?.reviewCount ?? 0) > 0 && (
+                          <p className="text-[11px] text-slate flex items-center gap-1 mt-[2px]">
+                            <Star size={10} className="text-brand-orange fill-brand-orange" />
+                            {(storeData?.averageRating ?? 0).toFixed(1)} · {storeData?.reviewCount} {t('reviews')}
+                          </p>
+                        )}
+                      </div>
+                      {product.storeSlug && (
+                        <button
+                          onClick={() => navigate(getStorePagePath(product.storeSlug!))}
+                          className="shrink-0 text-[12px] font-semibold text-brand-orange hover:underline cursor-pointer bg-transparent border-none"
+                        >
+                          {t('Visit store')}
+                        </button>
+                      )}
+                    </div>
+                  )}
 
                   {/* Trust row */}
                   <div className="rounded-xl border border-bone bg-cream/60 px-4 py-3 mb-4 grid grid-cols-2 gap-3">
