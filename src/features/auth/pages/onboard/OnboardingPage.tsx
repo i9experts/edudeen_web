@@ -93,23 +93,27 @@ const DEFAULT_CURRENCY: SupportedCurrency = 'PKR';
 // ── Step Progress header — lives inside each step's card, same badge +
 // progress-line + circle treatment as CheckoutPage's step header, instead of
 // a standalone bar pinned above the card.
+// Set by OnboardingPage on every render: a free plan has no payment step, so the header hides it.
+const STEP_FLAGS = { skipPayment: false };
+
 function OnboardingStepHeader({ step, maxReached, onStepClick }: { step: number; maxReached: number; onStepClick: (step: number) => void }) {
+  const visible = STEPS.map((label, i) => ({ label, n: i + 1 })).filter(s => !(STEP_FLAGS.skipPayment && s.n === 2));
+  const pos = Math.max(0, visible.findIndex(s => s.n === step)) + 1;
   return (
     <div className="pb-4 mb-7 border-b border-bone">
       <div className="flex items-center justify-between mb-4">
         <p className="text-[13px] font-bold text-carbon">{STEPS[step - 1]}</p>
         <span className="text-[11px] font-semibold px-3 py-1 rounded-full bg-brand-pale-orange text-brand-orange">
-          Step {step} of {STEPS.length}
+          Step {pos} of {visible.length}
         </span>
       </div>
       <div className="relative flex justify-between items-start w-full">
         <div className="absolute top-3 start-0 end-0 h-[2px] bg-bone rounded-full" />
         <div
           className="absolute top-3 start-0 h-[2px] bg-brand-orange rounded-full transition-all duration-300"
-          style={{ width: `${((step - 1) / (STEPS.length - 1)) * 100}%` }}
+          style={{ width: `${((pos - 1) / (visible.length - 1)) * 100}%` }}
         />
-        {STEPS.map((label, i) => {
-          const n = i + 1;
+        {visible.map(({ label, n }, idx) => {
           const done = n <= maxReached && n !== step;
           const active = n === step;
           const clickable = n <= maxReached && n !== step;
@@ -125,7 +129,7 @@ function OnboardingStepHeader({ step, maxReached, onStepClick }: { step: number;
                   active ? 'bg-brand-orange text-white ring-4 ring-brand-pale-orange' :
                     'bg-bone text-slate',
               )}>
-                {done ? <Check size={12} /> : n}
+                {done ? <Check size={12} /> : idx + 1}
               </div>
               <span className={clsx(
                 'hidden sm:block text-[10px] font-semibold whitespace-nowrap',
@@ -837,6 +841,7 @@ export function OnboardingPage() {
     });
   };
   const freePlanChosen = !!form.planId && form.planPriceUSD === 0;
+  STEP_FLAGS.skipPayment = freePlanChosen;
   // Free plan: store details, then straight on (no payment step). Paid: details, then payment.
   const afterStoreInfo = () => {
     if (!freePlanChosen) { next(); return; }
