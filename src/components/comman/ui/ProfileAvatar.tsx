@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
 import {
   User, LayoutDashboard, LogOut, ShoppingBag,
-  ChevronRight, Shield, Store, type LucideIcon,
+  ChevronRight, Shield, Store, Package, Wallet, CreditCard, type LucideIcon,
 } from 'lucide-react';
 import { useGetProfile } from '@/hooks/auth/useGetProfile';
 import { TokenStorage, apiLogout } from '@/api/services/auth';
@@ -209,6 +209,14 @@ function DropdownMenu({
           />
         )}
         {hasDash && !isAdmin && (
+          <>
+            <MenuItem icon={Package} label="Products" sublabel="Add and manage your listings" onClick={() => onNavigate('/seller/products')} />
+            <MenuItem icon={ShoppingBag} label="Orders" sublabel="Sales and fulfilment" onClick={() => onNavigate('/seller/orders')} />
+            <MenuItem icon={Wallet} label="Finance" sublabel="Earnings and payouts" onClick={() => onNavigate('/seller/finance')} />
+            <MenuItem icon={CreditCard} label="Plan & Billing" sublabel="Your Edudeen plan" onClick={() => onNavigate('/seller/plan-billing')} />
+          </>
+        )}
+        {hasDash && !isAdmin && (
           <MenuItem
             icon={User}
             label="Account"
@@ -239,13 +247,14 @@ const SHOW_BUYER_FEATURES = false;
 // ProfileDropdown
 // ─────────────────────────────────────────────────────────────────────────────
 function ProfileDropdown({
-  profile, initials, onNavigate, onLogout, withNotifications,
+  profile, initials, onNavigate, onLogout, withNotifications, maxHeight,
 }: {
   profile: ReturnType<typeof useGetProfile>['profile'];
   initials: string;
   onNavigate: (path: string) => void;
   onLogout: () => void;
   withNotifications: boolean;
+  maxHeight?: number;
 }) {
   const role      = profile?.role;
   const isSeller  = role === 'seller';
@@ -261,7 +270,7 @@ function ProfileDropdown({
       {/* Arrow indicator — a rotated square clipped by the panel's own border/bg,
           connecting the floating panel visually back to its trigger. */}
       <div className="absolute -top-[7px] end-[14px] w-3 h-3 bg-white border-t border-s border-bone rotate-45" />
-      <div className="relative bg-white border border-bone rounded-[16px] overflow-hidden">
+      <div className="relative bg-white border border-bone rounded-[16px] overflow-y-auto overscroll-contain" style={maxHeight ? { maxHeight } : undefined}>
       <DropdownHeader
         profileImage={profile?.profileImage}
         name={profile?.name}
@@ -309,6 +318,7 @@ export function ProfileAvatar({ withNotifications = false, compact = false }: { 
   useEffect(() => { if (withNotifications) fetchNotifications(); }, [withNotifications, fetchNotifications]);
   useEffect(() => { if (withNotifications && open) fetchNotifications(); }, [withNotifications, open, fetchNotifications]);
   const [pos, setPos] = useState<{ top?: number; bottom?: number; left?: number }>({});
+  const [maxHeight, setMaxHeight] = useState<number | undefined>(undefined);
   const triggerRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -330,7 +340,9 @@ export function ProfileAvatar({ withNotifications = false, compact = false }: { 
     if (!rect) return;
     const GAP = 10;
     const spaceBelow = window.innerHeight - rect.bottom;
-    const openUpward = spaceBelow < panelHeight + GAP && rect.top > panelHeight;
+    const openUpward = spaceBelow < panelHeight + GAP && rect.top > spaceBelow;
+    // Never taller than the room available — the menu scrolls inside instead of running off screen.
+    setMaxHeight(Math.max(180, (openUpward ? rect.top : spaceBelow) - GAP - 12));
     setPos({
       [openUpward ? 'bottom' : 'top']: openUpward ? window.innerHeight - rect.top + GAP : rect.bottom + GAP,
       // Line the panel up with the trigger's outer edge — its right edge in
@@ -420,6 +432,7 @@ export function ProfileAvatar({ withNotifications = false, compact = false }: { 
             onNavigate={handleNavigate}
             onLogout={handleLogout}
             withNotifications={withNotifications}
+            maxHeight={maxHeight}
           />
         </div>,
         document.body,

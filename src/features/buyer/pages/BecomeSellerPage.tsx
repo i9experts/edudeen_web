@@ -9,6 +9,7 @@ import { SkeletonBox } from '@/components/comman/ui/SkeletonBox';
 import { TokenStorage, apiBecomeSeller, type AppRole } from '@/api/services/auth';
 import { apiBrowsePlatformPlans, apiFreeTrialEligibility, type PlatformPlan } from '@/api/services/platformPlans';
 import { apiGetPlatformStats, type PlatformStats } from '@/api/services/store';
+import { invalidateProfileCache } from '@/hooks/auth/useGetProfile';
 import { resolveSellerDestinationRemote } from '@/utils/sellerRouting';
 
 const SERIF = "Georgia, 'Times New Roman', serif";
@@ -63,6 +64,7 @@ export function BecomeSellerPage() {
         const res = await apiBecomeSeller();
         TokenStorage.save(res.data.token.accessToken, res.data.token.refreshToken);
         TokenStorage.saveUser(res.data.user);
+        invalidateProfileCache(); // the menu must now show the seller account, not the buyer one
       }
       // Store details form first; the chosen plan is paid for in its "Plan & Payment" step.
       navigate(await resolveSellerDestinationRemote(), { replace: true });
