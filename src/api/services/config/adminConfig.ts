@@ -159,3 +159,8 @@ export function apiUpdateFxConfig(payload: Partial<FxConfig>) {
 export function apiUpdateSocialLinks(links: Partial<Record<'facebook' | 'instagram' | 'linkedin' | 'youtube' | 'tiktok' | 'x', string>>) {
   return client.put<never, { success: boolean; message?: string }>('/api/admin/platform-config/social-links', links);
 }
+
+/** PUT /api/admin/platform-config/home-content — homepage hero/promise/trust copy (blank = default). */
+export function apiUpdateHomeContent(content: import('../publicPlatformConfig').HomeContent) {
+  return client.put<never, { success: boolean; message?: string }>('/api/admin/platform-config/home-content', content);
+}

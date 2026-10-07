@@ -11,7 +11,7 @@ import type { MarketplaceProduct } from '@/api/services/marketplace';
 import { type CategoryNode } from '@/api/services/categories';
 import { isBuyerSession } from '@/hooks/auth/useIsBuyer';
 import { type PublicStoreListItem } from '@/api/services/store';
-import { RealAppQr, AppleGlyph, GooglePlayGlyph, GOOGLE_PLAY_URL } from '@/components/comman/ui/AppPromoParts';
+import { RealAppQr, AppleGlyph, GooglePlayGlyph, useGooglePlayUrl } from '@/components/comman/ui/AppPromoParts';
 import { StoreFeatureCard, useCompactOnScroll, CountdownUnit } from '@/components/comman/ui';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 import { currencySymbol } from '@/utils/currency';
@@ -396,6 +396,7 @@ const ABOUT_CARDS: { image: string; title: string; description: string; path: st
 ];
 
 function AboutMegaContent({ onNavigate }: { onNavigate: (path: string) => void }) {
+  const GOOGLE_PLAY_URL = useGooglePlayUrl();
   // No "Sell on Edudeen" card for a signed-in buyer.
   const cards = isBuyerSession() ? ABOUT_CARDS.filter(c => c.path !== '/sellers') : ABOUT_CARDS;
   return (

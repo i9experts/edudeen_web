@@ -1,4 +1,5 @@
 import { PlacementBanner } from '@/components/comman/marketplace/PlacementBanner';
+import { usePublicPlatformConfig } from '@/hooks/usePublicPlatformConfig';
 import { DealsBanner } from '@/components/comman/ui/DealsBanner';
 import { FeatureMaintenance } from '@/components/comman/ui/FeatureMaintenance';
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
@@ -72,22 +73,6 @@ const SORT_LABELS: Record<SortFilter, string> = {
   high:     'Price: high to low',
 };
 
-// Fixed subject tabs. When an admin category with a matching name exists it
-// filters server-side by that category; otherwise the tab matches on the
-// product's name, description and tags.
-const SUBJECT_TABS: { id: string; label: string; category: RegExp; keywords: RegExp }[] = [
-  { id: 'tarbiyyah',     label: 'Tarbiyyah',       category: /tarbiy/i,
-    keywords: /tarbiy|islam|quran|qur'an|seerah|sirah|dua|salah|namaz|hadith|akhlaq|deen|tajweed|prophet|ramadan|wudu/i },
-  { id: 'arabic-urdu',   label: 'Arabic & Urdu',   category: /arabic|urdu/i,
-    keywords: /arabic|urdu|qaida|noorani|عربي|اردو/i },
-  { id: 'english',       label: 'English',         category: /^english/i,
-    keywords: /english|phonics|grammar|spelling|vocabulary|reading|writing|alphabet tracing/i },
-  { id: 'maths-science', label: 'Maths & Science', category: /math|science|stem/i,
-    keywords: /math|maths|science|stem|physics|chemistry|biology|arithmetic|numbers|geometry|algebra/i },
-  { id: 'homeschooling', label: 'Homeschooling',   category: /home ?school/i,
-    keywords: /home ?school|curriculum|lesson plan|planner|unit study|montessori/i },
-];
-
 const LANGUAGES: { value: string; label: string; match: RegExp }[] = [
   { value: 'english', label: 'English', match: /english/i },
   { value: 'arabic',  label: 'Arabic',  match: /arabic|عربي/i },
@@ -145,6 +130,10 @@ const linkButtonClass = sectionLinkClass;
  * real API data; each section self-hides until it has something to show.
  */
 export function Homepage() {
+  // Admin-editable copy (Admin → Platform Config → Homepage content); blank = built-in default below.
+  const { config: publicConfig } = usePublicPlatformConfig();
+  const hc = publicConfig?.homeContent ?? {};
+  const trustItems = TRUST_ITEMS.map((d, i) => { const o = hc.trustItems?.[i]; return o?.label ? { ...d, label: o.label, sub: o.sub } : d; });
   const navigate = useNavigate();
   // Edudeen's curated, seasonal shelves ("Exam ki tayyari" etc.), set by the admin team.
   const [shelves, setShelves] = useState<CuratedShelf[]>([]);
@@ -238,18 +227,14 @@ export function Homepage() {
   useEffect(() => { setLimit(PAGE_SIZE); }, [subject, level, language, sort, freeOnly, filters, searchQ]);
 
   const allCategories = useMemo(() => flattenCategories(categories), [categories]);
-  const shopTabs = useMemo<ShopTab[]>(() => {
-    const used = new Set<string>();
-    const subjects = SUBJECT_TABS.map(t => {
-      const node = allCategories.find(c => t.category.test(c.name));
-      if (node) used.add(node._id);
-      return { id: t.id, label: t.label, categoryId: node?._id, keywords: node ? undefined : t.keywords, node };
-    });
-    const extra = categories
-      .filter(c => !used.has(c._id))
-      .map(c => ({ id: catTabId(c._id), label: c.name, categoryId: c._id, node: c }));
-    return [...subjects, ...extra];
-  }, [categories, allCategories]);
+  // Subject tabs come straight from the admin's categories (Admin → Categories).
+  const shopTabs = useMemo<ShopTab[]>(() => categories.map(c => ({ id: catTabId(c._id), label: c.name, categoryId: c._id, node: c })), [categories]);
+
+  // The category the hero's second button and the feature block open: the admin's pick, else the first category.
+  const featuredTab = useMemo<ShopTab | null>(() => {
+    const want = (hc.featuredCategory ?? '').trim().toLowerCase();
+    return (want ? shopTabs.find(t => t.label.toLowerCase().includes(want)) : undefined) ?? shopTabs[0] ?? null;
+  }, [shopTabs, hc.featuredCategory]);
 
   // A tab id, or `cat-<id>` for a subcategory picked from the mega menu.
   const subjectTab: ShopTab | null = useMemo(() => {
@@ -506,45 +491,45 @@ export function Homepage() {
         <section className="grid grid-cols-1 md:grid-cols-[1.2fr_1fr] md:min-h-[280px] rounded-[18px] overflow-hidden bg-[#eaf2f8] mb-[25px]">
           <div className="p-[25px] md:p-[30px] lg:py-[35px] lg:px-[40px]">
             <p className="text-[12px] font-bold tracking-[0.15em] uppercase text-brand-royal mb-[13px]">
-              For curious minds &amp; caring hearts
+              {hc.heroEyebrow || 'For curious minds & caring hearts'}
             </p>
             <h1 className="font-serif font-normal text-[34px] md:text-[44px] leading-[1.12] tracking-[-1px] text-carbon mb-[14px]">
-              Big discoveries.<br />
-              <span className="text-brand-royal">Beautiful beginnings.</span>
+              {hc.heroTitle || 'Big discoveries.'}<br />
+              <span className="text-brand-royal">{hc.heroHighlight || 'Beautiful beginnings.'}</span>
             </h1>
             <p className="max-w-[450px] text-[15px] md:text-[16px] leading-[1.5] text-graphite mb-[21px]">
-              Physical products, digital downloads and educational resources from sellers you can trust — for the lessons you teach and the values you nurture.
+              {hc.heroText || 'Physical products, digital downloads and educational resources from sellers you can trust — for the lessons you teach and the values you nurture.'}
             </p>
             <div className="flex flex-wrap items-center gap-3">
               <button
                 onClick={scrollToResources}
                 className="inline-block bg-brand-orange text-white border border-brand-orange rounded-lg px-5 py-[11px] text-[14px] font-bold cursor-pointer hover:brightness-95"
               >
-                Find your next resource
+                {hc.heroPrimaryLabel || 'Find your next resource'}
               </button>
               <button
-                onClick={() => selectSubject('tarbiyyah')}
+                onClick={() => selectSubject(featuredTab?.id ?? null)}
                 className="inline-block bg-white text-brand-orange border border-[#c5d2db] rounded-lg px-5 py-[11px] text-[14px] font-bold cursor-pointer hover:brightness-95"
               >
-                Explore Tarbiyyah
+                {hc.heroSecondaryLabel || (featuredTab ? ('Explore ' + featuredTab.label) : 'Browse all')}
               </button>
             </div>
           </div>
           <div className="relative h-[170px] md:h-auto bg-[#ddeaf2] overflow-hidden">
             <img
-              src={heroImage}
+              src={hc.heroImageUrl || heroImage}
               alt="Learning workbooks and colourful stationery arranged on a desk"
               className="absolute inset-0 w-full h-full object-cover"
             />
             <div className="absolute bottom-[22px] end-[22px] hidden sm:block bg-white px-[19px] py-3 rounded-[10px] text-[14px] text-carbon shadow-[0_8px_30px_rgba(19,57,86,0.09)]">
-              A little learning. A lasting difference.
+              {hc.heroBadge || 'A little learning. A lasting difference.'}
             </div>
           </div>
         </section>
 
         {/* ── Promise strip ── */}
         <div className="flex flex-wrap justify-between md:justify-center gap-x-[15px] gap-y-2 md:gap-x-10 pt-2 pb-[27px] text-[12px] md:text-[14px] text-carbon border-b border-bone mb-[30px]">
-          {['For home & classroom', 'Preview before you choose', 'Created by educators', 'Verified sellers'].map(t => (
+          {(hc.promiseItems?.length ? hc.promiseItems : ['For home & classroom', 'Preview before you choose', 'Created by educators', 'Verified sellers']).map(t => (
             <span key={t}><span className="text-brand-green">✓</span> {t}</span>
           ))}
         </div>
@@ -774,13 +759,13 @@ export function Homepage() {
         {/* ── Collections ── */}
         <section className={clsx('mb-12 grid grid-cols-1 gap-[22px]', !isBuyer && 'md:grid-cols-2')}>
           <div className="rounded-[14px] p-7 bg-[#edf5e7]">
-            <p className="text-[12px] font-bold tracking-[0.15em] uppercase text-brand-royal mb-[13px]">The Tarbiyyah collection</p>
-            <h2 className="font-serif font-normal text-[27px] leading-[1.2] text-carbon mb-[10px]">Small habits. Strong character.</h2>
+            <p className="text-[12px] font-bold tracking-[0.15em] uppercase text-brand-royal mb-[13px]">{hc.featureEyebrow || (featuredTab ? ('The ' + featuredTab.label + ' collection') : 'Featured collection')}</p>
+            <h2 className="font-serif font-normal text-[27px] leading-[1.2] text-carbon mb-[10px]">{hc.featureHeading || 'Small habits. Strong character.'}</h2>
             <p className="text-[14px] text-carbon max-w-[390px] mb-4">
-              Bring kindness, gratitude and everyday good manners into your learning moments.
+              {hc.featureText || 'Bring kindness, gratitude and everyday good manners into your learning moments.'}
             </p>
-            <button onClick={() => selectSubject('tarbiyyah')} className={linkButtonClass}>
-              Explore character-building resources →
+            <button onClick={() => selectSubject(featuredTab?.id ?? null)} className={linkButtonClass}>
+              {hc.featureLinkLabel || 'Explore character-building resources →'}
             </button>
           </div>
           {!isBuyer && (
@@ -813,7 +798,7 @@ export function Homepage() {
         {/* ── Trust ── */}
         <section className="mb-12">
           <SectionHead eyebrow="Shop with confidence" title="Why buyers choose Edudeen" />
-          <TrustServiceStrip variant="card" items={TRUST_ITEMS} />
+          <TrustServiceStrip variant="card" items={trustItems} />
         </section>
 
         {/* ── Platform stats — self-hides until there's real data ── */}

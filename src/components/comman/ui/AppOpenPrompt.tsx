@@ -4,10 +4,9 @@ import { clsx } from 'clsx';
 import { DialogShell } from './DialogShell';
 import { Button } from './Button';
 import { EdudeenIcon } from './EdudeenLogo';
-import { GOOGLE_PLAY_URL } from './AppPromoParts';
+import { useGooglePlayUrl } from './AppPromoParts';
 
 // Single source of truth for the Play listing lives in AppPromoParts.
-const PLAY_STORE_URL = GOOGLE_PLAY_URL;
 
 /** No iOS app yet — never push iPhone/iPad users toward the Play Store. */
 function isIOS(): boolean {
@@ -33,6 +32,7 @@ const DISMISS_KEY = 'edudeen_app_open_prompt_dismissed';
  * the tab is about to leave the site anyway.
  */
 export function AppOpenPrompt() {
+  const PLAY_STORE_URL = useGooglePlayUrl();
   const [dismissed, setDismissed] = useState(() => sessionStorage.getItem(DISMISS_KEY) === '1');
 
   if (dismissed || isIOS()) return null;
@@ -97,6 +97,7 @@ export function AppOpenPrompt() {
  * dismissed. Always does the same single action: jump straight to the app.
  */
 export function AppOpenFab() {
+  const PLAY_STORE_URL = useGooglePlayUrl();
   if (isIOS()) return null;
   return (
     <button

@@ -1,4 +1,5 @@
 import { SocialLinksCard } from './SocialLinksCard';
+import { HomeContentCard } from './HomeContentCard';
 import { MaintenanceCard } from './MaintenanceCard';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -260,6 +261,7 @@ export function AdminConfig() {
             <EmailConfigCard config={config} onSaved={setConfig} />
           </div>
           <ManualPaymentConfigCard config={config} onSaved={setConfig} />
+          <HomeContentCard />
           <SocialLinksCard />
         </>
       ) : null}

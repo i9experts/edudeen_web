@@ -7,6 +7,7 @@ import { scrollRootRef } from '@/utils/scrollRoot';
 import { Reveal } from '@/components/comman/motion/Reveal';
 import { MagneticButton } from '@/components/comman/motion/MagneticButton';
 import { PremiumCard } from '@/components/comman/motion/PremiumCard';
+import { usePublicPlatformConfig } from '@/hooks/usePublicPlatformConfig';
 
 const SERIF = "Georgia, 'Times New Roman', serif";
 const WORDS_PER_MINUTE = 200;
@@ -37,6 +38,29 @@ interface LegalPageLayoutProps {
   lastUpdated:   string;
   sections:      LegalSection[];
   relatedPages?: RelatedLegalPage[];
+  /** Route key (e.g. 'privacy-policy'): text the admin wrote for this page replaces the built-in sections. */
+  pageKey?: string;
+}
+
+/** Admin text format: a line starting with ##  begins a section; blank lines separate paragraphs. */
+function parseLegalText(text: string): LegalSection[] {
+  const sections: LegalSection[] = [];
+  let cur: LegalSection | null = null;
+  for (const block of text.replace(/\r/g, '').split(/\n\s*\n/)) {
+    const t = block.trim();
+    if (!t) continue;
+    const heading = t.match(/^##\s+(.+)$/m);
+    if (heading && t.startsWith('##')) {
+      cur = { id: 's' + (sections.length + 1), title: heading[1].trim(), body: [] };
+      sections.push(cur);
+      const rest = t.slice(t.indexOf('\n') + 1).trim();
+      if (t.includes('\n') && rest) cur.body.push(rest);
+    } else {
+      if (!cur) { cur = { id: 's1', title: 'Overview', body: [] }; sections.push(cur); }
+      cur.body.push(t);
+    }
+  }
+  return sections;
 }
 
 const CALLOUT_STYLES: Record<LegalCallout['type'], { icon: typeof Info; wrap: string; icon_: string }> = {
@@ -86,9 +110,17 @@ function useRevealOnScroll<T extends HTMLElement>(id: string, revealed: Set<stri
  *  card chrome, a sticky scoll-spy table of contents, a top reading-progress
  *  bar, and print/copy-link actions. The two pages only ever differ in their
  *  content array. */
-export function LegalPageLayout({ title, subtitle, lastUpdated, sections, relatedPages = [] }: LegalPageLayoutProps) {
+export function LegalPageLayout({ title, subtitle, lastUpdated: lastUpdatedProp, sections: sectionsProp, relatedPages = [], pageKey }: LegalPageLayoutProps) {
   const navigate = useNavigate();
-  const [activeId, setActiveId] = useState(sections[0]?.id ?? '');
+  const { config } = usePublicPlatformConfig();
+  const override = pageKey ? config?.homeContent?.legalPages?.[pageKey] : undefined;
+  const parsed = override?.text ? parseLegalText(override.text) : [];
+  const sections = parsed.length ? parsed : sectionsProp;
+  const lastUpdated = (parsed.length && override?.lastUpdated) || lastUpdatedProp;
+  const [activeId, setActiveIdState] = useState(sections[0]?.id ?? '');
+  const setActiveId = setActiveIdState;
+  // The admin text can arrive after first render — keep the highlighted section valid.
+  useEffect(() => { if (!sections.some(s => s.id === activeId)) setActiveIdState(sections[0]?.id ?? ''); }, [sections, activeId]);
   const [progress, setProgress] = useState(0);
   const [copied, setCopied] = useState(false);
   const [revealed, setRevealed] = useState<Set<string>>(new Set());

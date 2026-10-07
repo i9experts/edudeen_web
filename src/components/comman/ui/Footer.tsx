@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
 import { Send, Check, ChevronDown, ArrowUp, Mail } from 'lucide-react';
 import { EdudeenLogo } from './EdudeenLogo';
-import { AppleGlyph, GooglePlayGlyph, GOOGLE_PLAY_URL } from './AppPromoParts';
+import { AppleGlyph, GooglePlayGlyph, useGooglePlayUrl } from './AppPromoParts';
 import { usePublicPlatformConfig } from '@/hooks/usePublicPlatformConfig';
 import type { SocialNetwork } from '@/api/services/publicPlatformConfig';
 import { apiSubscribeNewsletter } from '../../../api/services/newsletter';
@@ -120,6 +120,7 @@ const SOCIALS: { key: SocialNetwork; label: string; Glyph: () => ReactElement }[
 // Android links to the real Play Store listing; there's no iOS app yet, so
 // that badge says so instead of pretending to be a link.
 function AppBadge({ platform }: { platform: 'ios' | 'android' }) {
+  const GOOGLE_PLAY_URL = useGooglePlayUrl();
   const isIos = platform === 'ios';
   const inner = (
     <>

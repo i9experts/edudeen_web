@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { usePublicPlatformConfig } from '@/hooks/usePublicPlatformConfig';
 import { Sparkles } from 'lucide-react';
 import { clsx } from 'clsx';
 import QRCode from 'qrcode';
@@ -7,6 +8,12 @@ import QRCode from 'qrcode';
 // so every App Store badge across the app stays the decorative/non-clickable
 // chip while every Google Play badge/QR links here for real.
 export const GOOGLE_PLAY_URL = 'https://play.google.com/apps/internaltest/4699462862361720775';
+
+/** The Play Store link — admin-editable (Admin → Platform Config → Homepage content); falls back to the built-in link. */
+export function useGooglePlayUrl(): string {
+  const { config } = usePublicPlatformConfig();
+  return config?.homeContent?.googlePlayUrl || GOOGLE_PLAY_URL;
+}
 
 export function useAppQrDataUrl(value: string) {
   const [dataUrl, setDataUrl] = useState<string | null>(null);
@@ -25,6 +32,7 @@ export function useAppQrDataUrl(value: string) {
 // QrGlyph it replaces everywhere, so it drops in without touching callers'
 // surrounding layout.
 export function RealAppQr({ size = 74, className }: { size?: number; className?: string }) {
+  const GOOGLE_PLAY_URL = useGooglePlayUrl();
   const dataUrl = useAppQrDataUrl(GOOGLE_PLAY_URL);
   const inner = size - 18;
   return (

@@ -95,6 +95,7 @@ export function PrivacyPolicyPage() {
   usePageTitle('Privacy Policy');
   return (
     <LegalPageLayout
+      pageKey="privacy-policy"
       title="Privacy Policy"
       subtitle="How Edudeen collects, uses, and protects your information."
       lastUpdated="July 24, 2026"

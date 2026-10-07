@@ -106,6 +106,7 @@ export function TermsOfServicePage() {
   usePageTitle('Terms of Service');
   return (
     <LegalPageLayout
+      pageKey="terms-of-service"
       title="Terms of Service"
       subtitle="The rules and guidelines for using Edudeen as a buyer or seller."
       lastUpdated="July 24, 2026"

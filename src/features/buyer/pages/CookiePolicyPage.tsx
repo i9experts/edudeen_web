@@ -73,6 +73,7 @@ export function CookiePolicyPage() {
   usePageTitle('Cookie Policy');
   return (
     <LegalPageLayout
+      pageKey="cookie-policy"
       title="Cookie Policy"
       subtitle="How Edudeen uses cookies and similar technologies."
       lastUpdated="July 24, 2026"

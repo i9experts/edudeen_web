@@ -1,10 +1,11 @@
 import { clsx } from 'clsx';
 import { Smartphone, GraduationCap } from 'lucide-react';
-import { RealAppQr, StoreBadgeChip, RatingRow, PhoneMockup, FloatingMiniCard, GOOGLE_PLAY_URL } from './AppPromoParts';
+import { RealAppQr, StoreBadgeChip, RatingRow, PhoneMockup, FloatingMiniCard, useGooglePlayUrl } from './AppPromoParts';
 
 // Google Play links to the real internal-test build in every card below;
 // App Store stays the decorative/non-clickable chip — no iOS build yet.
 function AndroidBadgeLink({ compact }: { compact?: boolean }) {
+  const GOOGLE_PLAY_URL = useGooglePlayUrl();
   return (
     <a
       href={GOOGLE_PLAY_URL}

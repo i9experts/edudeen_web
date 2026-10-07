@@ -5,7 +5,7 @@ import {
   Check, Send, Percent,
 } from 'lucide-react';
 import { clsx } from 'clsx';
-import { StoreBadgeChip, RealAppQr, useAppQrDataUrl, GOOGLE_PLAY_URL } from './AppPromoParts';
+import { StoreBadgeChip, RealAppQr, useAppQrDataUrl, useGooglePlayUrl } from './AppPromoParts';
 import { apiGetPlatformStats, type PlatformStats } from '@/api/services/store';
 import { apiSubscribeNewsletter } from '@/api/services/newsletter';
 import { apiGetAllProducts, type MarketplaceProduct } from '@/api/services/marketplace';
@@ -374,6 +374,7 @@ function NewsletterMini() {
 // PhoneShell mockups, NewsletterMini's working form) is unchanged, only the
 // wrapper/breakpoints/order moved.
 function CompactAppDownloadBanner({ className }: { className?: string }) {
+  const GOOGLE_PLAY_URL = useGooglePlayUrl();
   const qrDataUrl = useAppQrDataUrl(GOOGLE_PLAY_URL);
 
   return (
@@ -495,6 +496,7 @@ function CompactAppDownloadBanner({ className }: { className?: string }) {
 }
 
 export function AppDownloadBanner({ className, variant = 'full' }: { className?: string; variant?: 'full' | 'compact' }) {
+  const GOOGLE_PLAY_URL = useGooglePlayUrl();
   // Self-fetches — this banner is reused across several pages that don't already
   // load platform stats, so it can't rely on a prop from the caller. Hooks run
   // before the compact early-return below (Rules of Hooks); compact skips the fetch.
