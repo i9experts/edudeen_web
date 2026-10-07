@@ -215,6 +215,12 @@ export default function StorePlanBilling() {
   const trialDaysLeft = current?.trialEndsAt ? daysUntil(current.trialEndsAt) : null;
   const isPastDue = current?.status === 'past_due';
   const isExpired = current?.status === 'expired';
+  // When the current plan ends: a trial's end date, otherwise the paid period's end. Free plans without a trial never end.
+  const planEndsAt = isExpired ? null
+    : current?.status === 'trialing' && current.trialEndsAt ? current.trialEndsAt
+    : current && current.amountUSD > 0 ? current.currentPeriodEnd : null;
+  const planDaysLeft = planEndsAt ? Math.max(0, daysUntil(planEndsAt)) : null;
+  const daysLeftText = planDaysLeft == null ? '' : planDaysLeft === 0 ? 'ends today' : `${planDaysLeft} day${planDaysLeft === 1 ? '' : 's'} left`;
   const isCancelPending = !!current?.cancelAtPeriodEnd;
 
   const banner = useMemo(() => {
@@ -306,10 +312,12 @@ export default function StorePlanBilling() {
           <div className="bg-white border border-bone rounded-[10px] px-5 py-4">
             <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
               <div>
-                <p className="text-[13px] font-bold text-carbon">Current Plan — {entitlements.currentPlanName}</p>
+                <p className="text-[13px] font-bold text-carbon">Your current plan — {entitlements.currentPlanName}</p>
                 <p className="text-[11.5px] text-slate mt-[3px]">
                   {current.amountUSD > 0 ? `$${current.amountUSD.toFixed(2)}/${current.billingInterval === 'yearly' ? 'yr' : 'mo'} · ` : ''}
-                  Renews {new Date(current.nextBillingDate).toLocaleDateString()}
+                  {isExpired ? 'Ended — choose a plan to continue'
+                    : planEndsAt ? `${current.status === 'trialing' ? 'Trial ends' : isCancelPending ? 'Ends' : 'Renews'} ${new Date(planEndsAt).toLocaleDateString()} · ${daysLeftText}`
+                    : 'No end date'}
                 </p>
               </div>
               <div className="flex items-center gap-2 flex-wrap">
@@ -339,7 +347,7 @@ export default function StorePlanBilling() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <UsageBar label="Products" used={entitlements.maxProducts.used} max={entitlements.maxProducts.limit} Icon={Package} />
               <UsageBar
-                label="AI Credits (balance)"
+                label="AI Credits used"
                 used={entitlements.aiCredits.monthlyAllowance === -1 ? entitlements.aiCredits.balance : Math.max(0, entitlements.aiCredits.monthlyAllowance - entitlements.aiCredits.balance)}
                 max={entitlements.aiCredits.monthlyAllowance}
                 Icon={Sparkles}
@@ -362,27 +370,35 @@ export default function StorePlanBilling() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {/* The free trial is a one-time offer — only paid plans are listed here. */}
-          {plans.filter(p => !(p.isFree && p.trialDays > 0)).map(plan => {
+          {plans.map(plan => {
             const isCurrent = current?.platformPlanId === plan._id;
             const price = interval === 'yearly' && plan.yearlyPriceUSD != null ? plan.yearlyPriceUSD : plan.monthlyPriceUSD;
             return (
               <div key={plan._id} className="bg-white border rounded-[10px] px-5 py-4 flex flex-col" style={{ borderColor: isCurrent ? '#174771' : '#E8E6DC', borderWidth: isCurrent ? 2 : 1 }}>
                 <div className="flex items-start justify-between mb-1">
                   <p className="text-[15px] font-bold text-carbon">{plan.name}</p>
-                  {plan.badge && <span className="text-[10px] font-bold px-2 py-[2px] rounded-full bg-brand-pale-orange text-brand-deep-orange">{plan.badge}</span>}
+                  {isCurrent
+                    ? <span className="text-[10px] font-bold px-2 py-[2px] rounded-full bg-[#e3f4ea] text-[#1e7a3c]">Your current plan</span>
+                    : plan.badge && <span className="text-[10px] font-bold px-2 py-[2px] rounded-full bg-brand-pale-orange text-brand-deep-orange">{plan.badge}</span>}
                 </div>
                 <p className="text-[20px] font-bold text-brand-orange mb-2">
-                  {plan.isFree ? 'Free' : plan.isCustomPricing ? 'Custom' : `$${price}/${interval === 'yearly' ? 'yr' : 'mo'}`}
+                  {plan.isFree ? `Free${plan.trialDays > 0 ? ` · ${plan.trialDays} days` : ''}` : plan.isCustomPricing ? 'Custom' : `$${price}/${interval === 'yearly' ? 'yr' : 'mo'}`}
                 </p>
+                {isCurrent && planEndsAt && <p className="text-[11.5px] font-semibold text-[#1e7a3c] mb-2">{daysLeftText} · {current?.status === 'trialing' ? 'ends' : 'renews'} {new Date(planEndsAt).toLocaleDateString()}</p>}
                 <ul className="flex flex-col gap-1.5 mb-4 p-0 list-none flex-1">
                   {plan.featureBullets.map(f => (
                     <li key={f} className="flex items-start gap-1.5 text-[12px] text-graphite"><Check size={12} className="text-brand-orange mt-[2px] shrink-0" />{f}</li>
                   ))}
                 </ul>
-                <Button size="sm" variant={isCurrent ? 'outline' : 'primary'} disabled={isCurrent} loading={changingId === plan._id} onClick={() => { setConfirmingPlan(plan); setActionError(''); }}>
-                  {isCurrent ? 'Current Plan' : 'Switch to this plan'}
-                </Button>
+                {(() => {
+                  // The free trial is a one-time offer — it can't be switched back to.
+                  const trialPlan = plan.isFree && plan.trialDays > 0;
+                  return (
+                    <Button size="sm" variant={isCurrent || trialPlan ? 'outline' : 'primary'} disabled={isCurrent || trialPlan} loading={changingId === plan._id} onClick={() => { setConfirmingPlan(plan); setActionError(''); }}>
+                      {isCurrent ? 'Current Plan' : trialPlan ? 'One-time free trial' : 'Switch to this plan'}
+                    </Button>
+                  );
+                })()}
               </div>
             );
           })}

@@ -7,6 +7,7 @@ import { ToastContainer } from '@/components/comman/ui/ToastContainer';
 import { MaintenanceNotice } from '@/components/comman/ui/MaintenanceNotice';
 import { GoogleOneTapPrompt } from '@/components/comman/ui/GoogleOneTapPrompt';
 import { LanguageRouteSync } from '@/contexts/LanguageContext';
+import { useGlobalEdgeHoverScroll } from '@/hooks/useGlobalEdgeHoverScroll';
 
 function PageSpinner() {
   return (
@@ -30,6 +31,7 @@ function TopProgressBar() {
 }
 
 export function RootLayout() {
+  useGlobalEdgeHoverScroll();
   const { pathname } = useLocation();
 
   // `window` never scrolls in this app (see the div below) and nothing

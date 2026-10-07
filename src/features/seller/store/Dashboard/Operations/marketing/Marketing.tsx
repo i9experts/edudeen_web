@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+
 import { useSearchParams } from 'react-router-dom';
 import { useStoreCampaigns } from '@/hooks/store/useStoreCampaigns';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -405,6 +406,7 @@ export function StoreMarketing() {
   const [searchParams, setSearchParams] = useSearchParams();
   const urlTab = searchParams.get('tab');
   const tab: Tab = TABS.some(t => t.id === urlTab) ? urlTab as Tab : 'coupons';
+
   const setTab = (next: Tab) => setSearchParams(p => { const q = new URLSearchParams(p); q.set('tab', next); return q; }, { replace: true });
 
   // Featured & Collections (pinned products)

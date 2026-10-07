@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { LayoutDashboard, DollarSign, Package, Users, Globe2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { LayoutDashboard, DollarSign, Package, Users, Globe2, Lock } from 'lucide-react';
+import { Button } from '@/components/comman/ui/Button';
+import { apiGetStoreEntitlements } from '@/api/services/platformPlans';
 import { TabBar, type Tab } from '@/components/comman/ui';
 import { AnalyticsFilterBar } from '@/components/comman/analytics/AnalyticsFilterBar';
 import { useSellerAnalyticsExport } from '@/hooks/seller/useSellerAnalytics';
@@ -52,7 +55,19 @@ interface SellerAnalyticsViewProps {
  * Export (PDF/CSV) stays single-store only — hidden when `storeId` is null.
  */
 export function SellerAnalyticsView({ storeId, currency }: SellerAnalyticsViewProps) {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
+  // Everything beyond the Overview tab is the "Advanced analytics" plan feature.
+  const [advanced, setAdvanced] = useState<{ allowed: boolean; requiredPlan: string | null } | null>(null);
+  useEffect(() => {
+    if (!storeId) return;
+    let cancelled = false;
+    apiGetStoreEntitlements(storeId)
+      .then(res => { if (!cancelled) setAdvanced((res.data.advancedAnalyticsAllowed as { allowed: boolean; requiredPlan: string | null } | undefined) ?? null); })
+      .catch(() => {}); // unknown → leave unlocked; the server still enforces the plan
+    return () => { cancelled = true; };
+  }, [storeId]);
+  const locked = !!storeId && advanced?.allowed === false && activeTab !== 'overview';
   const [filters, setFilters] = useState(DEFAULT_SELLER_ANALYTICS_FILTERS);
   const [csvSection, setCsvSection] = useState(TAB_TO_CSV_SECTION.overview);
   const { exportReport, exporting } = useSellerAnalyticsExport();
@@ -72,16 +87,26 @@ export function SellerAnalyticsView({ storeId, currency }: SellerAnalyticsViewPr
         csvSections={CSV_SECTION_OPTIONS}
         csvSection={csvSection}
         onCsvSectionChange={setCsvSection}
-        showExport={!!storeId}
+        showExport={!!storeId && advanced?.allowed !== false}
       />
 
       <TabBar tabs={TABS} active={activeTab} onChange={setActiveTab} />
 
+      {locked && (
+        <div className="flex flex-col items-center text-center gap-3 bg-white border border-bone rounded-xl px-6 py-12">
+          <div className="size-12 rounded-full bg-brand-pale-orange flex items-center justify-center"><Lock size={20} className="text-brand-orange" /></div>
+          <p className="text-[15px] font-bold text-carbon">Advanced analytics is not in your plan</p>
+          <p className="text-[12.5px] text-slate max-w-[420px] leading-[1.6]">
+            Your Overview stays free. Upgrade{advanced?.requiredPlan ? ` to the ${advanced.requiredPlan} plan` : ''} to unlock revenue, product, customer, traffic and payment reports and exports.
+          </p>
+          <Button variant="primary" size="md" onClick={() => navigate(`/store/${storeId}/plan-billing`)}>See plans</Button>
+        </div>
+      )}
       {activeTab === 'overview'  && <SellerOverviewTab params={params} compareToPreviousPeriod={filters.compareToPreviousPeriod} currency={currency} />}
-      {activeTab === 'revenue'   && <SellerRevenueTab params={params} currency={currency} />}
-      {activeTab === 'products'  && <SellerProductsTab params={params} currency={currency} />}
-      {activeTab === 'customers' && <SellerCustomersTab params={params} currency={currency} />}
-      {activeTab === 'traffic'   && <SellerTrafficPaymentsTab params={params} currency={currency} />}
+      {!locked && activeTab === 'revenue'   && <SellerRevenueTab params={params} currency={currency} />}
+      {!locked && activeTab === 'products'  && <SellerProductsTab params={params} currency={currency} />}
+      {!locked && activeTab === 'customers' && <SellerCustomersTab params={params} currency={currency} />}
+      {!locked && activeTab === 'traffic'   && <SellerTrafficPaymentsTab params={params} currency={currency} />}
     </div>
   );
 }

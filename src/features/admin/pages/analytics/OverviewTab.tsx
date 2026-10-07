@@ -42,7 +42,7 @@ export function OverviewTab({ params, compareToPreviousPeriod }: { params: BaseA
       trendUp: (d.totalRevenueChangePercent ?? 0) >= 0,
       sparkline: revenueSparkline,
     },
-    { label: 'Platform Earnings', value: formatCurrency(d.platformEarnings), icon: <DollarSign size={16} />, sub: `Commission ${formatCurrency(d.platformCommission)} + Subs ${formatCurrency(d.subscriptionRevenue)}` },
+    { label: 'Platform Earnings', value: formatCurrency(d.platformEarnings), icon: <DollarSign size={16} />, sub: d.platformCommission > 0 ? `Commission ${formatCurrency(d.platformCommission)} + Subs ${formatCurrency(d.subscriptionRevenue)}` : `Seller plan fees ${formatCurrency(d.subscriptionRevenue)}` },
     {
       label: 'Total Orders', value: formatNumber(d.totalOrders), icon: <ShoppingCart size={16} />,
       trend: `${d.totalOrdersChange >= 0 ? '+' : ''}${d.totalOrdersChange} vs prev.`, trendUp: d.totalOrdersChange >= 0,

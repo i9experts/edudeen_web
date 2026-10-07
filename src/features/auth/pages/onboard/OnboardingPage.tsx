@@ -672,7 +672,7 @@ function Step5Review({ form, submitting, submitError, onSubmit, onBack, step, ma
           </Button>
           <MagneticButton className="flex-1">
             <Button variant="primary" size="lg" fullWidth onClick={onSubmit} loading={submitting} disabled={!form.planId}>
-              Pay &amp; Launch My Store
+              {form.planPriceUSD === 0 ? 'Launch My Store' : 'Pay &amp; Launch My Store'}
             </Button>
           </MagneticButton>
         </div>
@@ -722,9 +722,9 @@ function StoreReadyConfirmation({ store, paymentError, retrying, onRetry }: {
         >
           <Check size={26} className="text-success" />
         </motion.div>
-        <h1 className="text-[28px] font-bold text-carbon mb-[10px]">Your store is live!</h1>
+        <h1 className="text-[28px] font-bold text-carbon mb-[10px]">{(store as { status?: string } | null)?.status === 'pending' ? 'Your store is created!' : 'Your store is live!'}</h1>
         <p className="text-[14px] text-slate leading-[1.7] mb-7 max-w-[420px] mx-auto">
-          {store?.name || 'Your store'} is ready on Edudeen — start adding products and customizing your storefront right away.
+          {store?.name || 'Your store'} is ready to set up — start adding products and customizing your storefront right away.{(store as { status?: string } | null)?.status === 'pending' ? ' It becomes visible to buyers once Edudeen approves it.' : ''}
         </p>
         <MagneticButton className="block">
           <Button variant="primary" size="lg" fullWidth onClick={() => navigate(`/store/${store?._id}/dashboard`, { replace: true })}>
@@ -772,7 +772,8 @@ export function OnboardingPage() {
       .then(res => {
         if (cancelled) return;
         const { draft, hasPlatformPaymentMethod } = res.data;
-        if (draft) {
+        // A draft saved by an older API build could hold null step/form — treat it as no draft.
+        if (draft && draft.form && draft.step) {
           setStep(draft.step);
           setMaxReached(draft.maxReached);
           const restored = draft.form as Partial<StoreForm>;

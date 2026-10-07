@@ -25,6 +25,7 @@ import { LoginPage }    from '@/features/auth/pages/LoginPage';
 import { RegisterPage } from '@/features/auth/pages/RegisterPage';
 import { MarketplaceRedirect } from '@/features/buyer/pages/MarketplaceRedirect';
 import { NotForBuyers } from '@/router/NotForBuyers';
+import { StorePathTabs } from '@/router/StorePathTabs';
 import { OnboardingPage } from '@/features/auth/pages/onboard/OnboardingPage';
 
 // Remaining auth pages — eagerly imported too (no lazy/Suspense split), same
@@ -39,7 +40,6 @@ import { NewPasswordPage }    from '@/features/auth/pages/NewPasswordPage';
 // explicit instruction.
 import { Homepage }             from '@/features/buyer/pages/Homepage';
 import { PricingPage }          from '@/features/buyer/pages/PricingPage';
-import { ForSellersPage }       from '@/features/buyer/pages/ForSellersPage';
 import { BecomeSellerPage }     from '@/features/buyer/pages/BecomeSellerPage';
 import { FaqPage }              from '@/features/buyer/pages/FaqPage';
 import { PrivacyPolicyPage }    from '@/features/buyer/pages/PrivacyPolicyPage';
@@ -208,6 +208,17 @@ const storefrontRouter = createBrowserRouter([
 ]);
 
 // ── Main app router (marketplace/buyer/seller/admin — the apex domain) ────────
+// Related store pages grouped under one sidebar entry (each tab keeps its own URL).
+const CATALOG_TABS = [
+  { id: 'categories',  label: 'Categories',  element: <StoreCategories /> },
+  { id: 'collections', label: 'Collections', element: <StoreCollections /> },
+  { id: 'bundles',     label: 'Bundles',     element: <StoreBundles /> },
+];
+const FEEDBACK_TABS = [
+  { id: 'reviews',   label: 'Reviews',   element: <StoreReviews /> },
+  { id: 'questions', label: 'Questions', element: <StoreQuestions /> },
+];
+
 const mainRouter = createBrowserRouter([
   {
     element: <RootLayout />,
@@ -223,7 +234,7 @@ const mainRouter = createBrowserRouter([
             element: <PublicLayout />,
             children: [
               { path: 'pricing',         element: <NotForBuyers><PricingPage /></NotForBuyers> },
-              { path: 'sellers',         element: <NotForBuyers><ForSellersPage /></NotForBuyers> },
+              { path: 'sellers',         element: <Navigate to="/become-a-seller" replace /> },
               { path: 'become-a-seller', element: <BecomeSellerPage /> },
               { path: 'faq',             element: <FaqPage /> },
               { path: 'help',            element: <Navigate to="/faq" replace /> },
@@ -268,10 +279,8 @@ const mainRouter = createBrowserRouter([
           // Pages with their own embedded navbar (no PublicLayout wrapper needed)
           { index: true,             element: <Homepage /> },
           // The homepage is the shop — the old separate marketplace pages
-          // (/marketplace, /education) forward there so old links keep working.
+          // (/marketplace) forward there so old links keep working.
           { path: 'marketplace/:slugOrId?', element: <MarketplaceRedirect /> },
-          { path: 'education/:levelSlug?',  element: <Navigate to="/" replace /> },
-          { path: 'EducationMarketplace',   element: <Navigate to="/" replace /> },
           { path: 'cart',            element: <FeatureMaintenance feature="cart" variant="page"><CartPage /></FeatureMaintenance> },
           { path: 'checkout',        element: <CheckoutPage /> },
           { path: 'order-success',   element: <OrderSuccessPage /> },
@@ -365,17 +374,17 @@ const mainRouter = createBrowserRouter([
           { path: 'analytics',                        element: <StoreAnalytics /> },
           { path: 'settings',                         element: <StoreSettings /> },
           { path: 'account',                          element: <SellerSettings /> },
-          { path: 'categories',                       element: <StoreCategories /> },
-          { path: 'collections',                      element: <StoreCollections /> },
-          { path: 'bundles',                          element: <StoreBundles /> },
+          { path: 'categories',                       element: <StorePathTabs tabs={CATALOG_TABS} /> },
+          { path: 'collections',                      element: <StorePathTabs tabs={CATALOG_TABS} /> },
+          { path: 'bundles',                          element: <StorePathTabs tabs={CATALOG_TABS} /> },
           { path: 'plan-billing',                     element: <StorePlanBilling /> },
           { path: 'verification',                     element: <StoreVerification /> },
           { path: 'storebuilder',                     element: <StorePageOverview /> },
           { path: 'returns',                          element: <StoreReturnList /> },
           { path: 'seo',                              element: <StoreSEO /> },
           { path: 'ai/studio',                        element: <StoreAIStudio /> },
-          { path: 'reviews',                          element: <StoreReviews /> },
-          { path: 'questions',                        element: <StoreQuestions /> },
+          { path: 'reviews',                          element: <StorePathTabs tabs={FEEDBACK_TABS} /> },
+          { path: 'questions',                        element: <StorePathTabs tabs={FEEDBACK_TABS} /> },
           { path: 'quotes',                           element: <StoreQuotes /> },
           { path: 'finance',                          element: <StoreFinance /> },
           { path: 'inventory',                        element: <StoreInventory /> },
@@ -386,12 +395,6 @@ const mainRouter = createBrowserRouter([
           { path: 'integrations',                     element: <Navigate to="../dashboard" replace /> },
           { path: 'activity',                         element: <Navigate to="../settings" replace /> },
           { path: 'followers',                        element: <Navigate to="../customer/list" replace /> },
-          // Retired in-person POS URLs (Edudeen is online-only) — old
-          // bookmarks land on the store dashboard instead of a 404.
-          { path: 'pos',                              element: <Navigate to="../dashboard" replace /> },
-          { path: 'pos/register',                     element: <Navigate to="../dashboard" replace /> },
-          { path: 'pos/login',                        element: <Navigate to="../dashboard" replace /> },
-          { path: 'pos-admin',                        element: <Navigate to="../dashboard" replace /> },
           { path: 'shipping',                         element: <SellerShipping /> },
           { path: 'messages',                         element: <SellerMessages /> },
         ],

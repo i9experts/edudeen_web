@@ -38,7 +38,7 @@ export function FinanceOverviewTab({ params }: { params: AdminFinanceParams }) {
                 else is supporting context, not a competing headline. */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <MetricCard label="GMV" value={formatMoneyCompact(c.gmv, c.currency)} icon={<DollarSign size={18} />} />
-              <MetricCard label="Platform Earnings" value={formatMoneyCompact(c.platformEarnings, c.currency)} icon={<Percent size={18} />} sub={`Commission ${formatMoneyCompact(c.platformCommission, c.currency)} + Subs ${formatMoneyCompact(c.subscriptionRevenue, c.currency)}`} />
+              <MetricCard label="Platform Earnings" value={formatMoneyCompact(c.platformEarnings, c.currency)} icon={<Percent size={18} />} sub={c.platformCommission > 0 ? `Commission ${formatMoneyCompact(c.platformCommission, c.currency)} + Subs ${formatMoneyCompact(c.subscriptionRevenue, c.currency)}` : `Seller plan fees ${formatMoneyCompact(c.subscriptionRevenue, c.currency)}`} />
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">

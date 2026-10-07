@@ -6,9 +6,9 @@ import type { LucideIcon } from 'lucide-react';
 import {
   LayoutDashboard, Package, ShoppingBag, Users, BarChart2,
   Settings, Sparkles, ChevronLeft, ChevronRight, Store,
-  Megaphone, Star, Search, Wallet, FileSpreadsheet, MessageCircleQuestion, Package2, Truck, Boxes, Gift,
+  Megaphone, Star, Search, Wallet, FileSpreadsheet, Truck, Boxes, Gift,
   MessageSquare, FolderTree, RefreshCw, Undo2, CreditCard,
-  PanelLeftClose, PanelLeftOpen, AlertTriangle, AlertCircle, XCircle, Clock, LogOut, Layers, UserRound,
+  PanelLeftClose, PanelLeftOpen, AlertTriangle, AlertCircle, XCircle, Clock, LogOut, UserRound,
 } from 'lucide-react';
 import { EdudeenIcon, EdudeenLogo } from '@/components/comman/ui/EdudeenLogo';
 import { apiGetStoreById, type StoreData } from '@/api/services/store';
@@ -52,9 +52,7 @@ export const NAV: { group: string; items: NavItem[] }[] = [
     items: [
       { id: 'products',      Icon: ShoppingBag,   label: 'Products',      path: 'products'     },
       { id: 'inventory',     Icon: Boxes,         label: 'Inventory',     path: 'inventory'    },
-      { id: 'categories',    Icon: FolderTree,    label: 'Categories',    path: 'categories'   },
-      { id: 'collections',   Icon: Layers,        label: 'Collections',   path: 'collections'  },
-      { id: 'bundles',       Icon: Package2,      label: 'Bundles',       path: 'bundles'      },
+      { id: 'categories',    Icon: FolderTree,    label: 'Categories & Bundles', path: 'categories' },
       { id: 'store-builder', Icon: Store,         label: 'Customize Store', path: 'storebuilder' },
     ],
   },
@@ -62,8 +60,7 @@ export const NAV: { group: string; items: NavItem[] }[] = [
     group: 'Customers',
     items: [
       { id: 'customers', Icon: Users,          label: 'Customers', path: 'customer/list' },
-      { id: 'reviews',   Icon: Star,           label: 'Reviews',   path: 'reviews'        },
-      { id: 'questions', Icon: MessageCircleQuestion, label: 'Questions', path: 'questions'   },
+      { id: 'reviews',   Icon: Star,           label: 'Reviews & Questions', path: 'reviews'        },
       { id: 'messages',  Icon: MessageSquare,  label: 'Messages',  path: 'messages'       },
     ],
   },
@@ -232,7 +229,11 @@ function queryMatches(query: string, search: string) {
 function isNavItemActive(path: string, pathname: string, search: string, storeId: string) {
   if (path.startsWith('/')) return pathname === path || pathname.startsWith(path + '/');
   const [seg, query] = path.split('?');
-  if (pathname !== `/store/${storeId}/${seg}`) return false;
+  // Merged pages (e.g. Questions lives under Reviews) keep their parent entry highlighted.
+  const MERGED: Record<string, string> = { questions: 'reviews', collections: 'categories', bundles: 'categories' };
+  const base = `/store/${storeId}/`;
+  const cur = pathname.startsWith(base) ? pathname.slice(base.length).split('/')[0] : '';
+  if ((MERGED[cur] ?? cur) !== seg) return false;
   // The only nav entry for this route stays highlighted whatever tab is open.
   const siblings = ALL_NAV_PATHS.filter(p => p.split('?')[0] === seg);
   if (siblings.length === 1) return true;
@@ -253,6 +254,13 @@ function StoreSidebar({ open, onToggle }: StoreSidebarProps) {
   const navigate     = useNavigate();
   const { pathname, search } = useLocation();
   const { store, storeId, loading } = useStoreWorkspace();
+  const [planName, setPlanName] = useState<string | null>(null);
+  useEffect(() => {
+    if (!storeId) return;
+    let cancelled = false;
+    apiGetStorePlatformPlan(storeId).then(res => { if (!cancelled) setPlanName(res.data?.plan?.name ?? null); }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [storeId]);
   const { open: paletteOpen, setOpen: setPaletteOpen } = useCommandPalette();
   const paletteItems = buildPaletteItems(navigate, storeId);
   const logout = useLogout();
@@ -346,7 +354,7 @@ function StoreSidebar({ open, onToggle }: StoreSidebarProps) {
                   <>
                     <p className="text-[13px] font-bold text-carbon leading-[1.3] truncate">{store?.name ?? 'Loading…'}</p>
                     <p className="text-[11px] text-slate leading-[1.3] truncate capitalize">
-                      {store?.plan ?? ''}{store?.slug ? ` · /${store.slug}` : ''}
+                      {planName ?? store?.plan ?? ''}{store?.slug ? ` · /${store.slug}` : ''}
                     </p>
                   </>
                 )}

@@ -1,6 +1,7 @@
 import { type ReactNode } from 'react';
 import { clsx } from 'clsx';
 
+
 export interface Tab {
   id:     string;
   label:  string;
@@ -18,6 +19,7 @@ interface TabBarProps {
 }
 
 export function TabBar({ tabs, active, onChange, className, dense = false }: TabBarProps) {
+
   return (
     <div className={clsx('border-b border-bone overflow-x-auto scrollbar-hide', className)}>
       <div className="flex items-center min-w-max">

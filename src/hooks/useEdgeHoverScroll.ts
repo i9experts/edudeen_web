@@ -14,6 +14,7 @@ export function useEdgeHoverScroll<T extends HTMLElement>({ edge = 0.22, maxSpee
 
   useEffect(() => {
     if (!el) return;
+    el.dataset.edgeHover = '1'; // the app-wide handler skips rows that already have this one
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
     let speed = 0;      // px per frame; negative = left

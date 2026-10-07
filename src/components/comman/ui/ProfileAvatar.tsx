@@ -322,6 +322,8 @@ export function ProfileAvatar({ withNotifications = false, compact = false }: { 
   const triggerRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // A click right after the hover-open must not toggle the menu shut again (mouse and touch both fire enter + click).
+  const hoverOpenedAt = useRef(0);
   const { profile, loading } = useGetProfile();
 
   const clearCloseTimer = () => { if (closeTimer.current) { clearTimeout(closeTimer.current); closeTimer.current = null; } };
@@ -395,12 +397,12 @@ export function ProfileAvatar({ withNotifications = false, compact = false }: { 
       <div
         ref={triggerRef}
         className="relative"
-        onMouseEnter={() => { clearCloseTimer(); setOpen(true); }}
+        onMouseEnter={() => { clearCloseTimer(); hoverOpenedAt.current = Date.now(); setOpen(true); }}
         onMouseLeave={scheduleClose}
       >
         <AvatarTrigger
           open={open}
-          onClick={() => setOpen(p => !p)}
+          onClick={() => setOpen(p => (p && Date.now() - hoverOpenedAt.current < 600 ? true : !p))}
           profileImage={profile?.profileImage}
           name={profile?.name}
           initials={initials}
