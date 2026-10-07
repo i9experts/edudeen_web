@@ -303,7 +303,7 @@ function Step2Payment({ form, setForm, onNext, onBack, step, maxReached, onStepC
       .then(([res, canTrial]) => {
         if (cancelled) return;
         const paid = (res.data ?? [])
-          .filter(p => p.status === 'active' && !p.isCustomPricing && ((p.isFree && p.trialDays > 0 && canTrial) || (!p.isFree && (p.monthlyPriceUSD ?? 0) > 0)))
+          .filter(p => !p.isCustomPricing && ((p.isFree && p.trialDays > 0 && canTrial) || (!p.isFree && (p.monthlyPriceUSD ?? 0) > 0)))
           .sort((a, b) => a.sortOrder - b.sortOrder);
         setPlans(paid);
       })

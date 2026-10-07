@@ -36,7 +36,7 @@ export function BecomeSellerPage() {
       .then(([res, canTrial]) => {
         if (cancelled) return;
         setPlans((res.data ?? []).filter(p => canTrial || !(p.isFree && p.trialDays > 0))
-          .filter(p => p.status === 'active' && !p.isCustomPricing && ((p.isFree && p.trialDays > 0) || (!p.isFree && (p.monthlyPriceUSD ?? 0) > 0)))
+          .filter(p => !p.isCustomPricing && ((p.isFree && p.trialDays > 0) || (!p.isFree && (p.monthlyPriceUSD ?? 0) > 0)))
           .sort((a, b) => a.sortOrder - b.sortOrder));
       })
       .catch(() => { if (!cancelled) { setPlans([]); setError('Could not load plans. Please refresh and try again.'); } });
