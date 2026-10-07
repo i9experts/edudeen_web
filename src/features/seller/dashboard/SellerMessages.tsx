@@ -197,9 +197,11 @@ export function SellerMessages() {
         title="Messages"
         subtitle="Respond to buyer questions and support requests."
         actions={
-          <span className="px-3 py-1 bg-[#fdecea] rounded-[6px] text-xs font-semibold text-[#c0392b]">
-            {unreadTotal ?? conversations.reduce((n, c) => n + c.sellerUnread, 0)} Unread
-          </span>
+          (unreadTotal ?? conversations.reduce((n, c) => n + c.sellerUnread, 0)) > 0 ? (
+            <span className="px-3 py-1 bg-[#fdecea] rounded-[6px] text-xs font-semibold text-[#c0392b]">
+              {unreadTotal ?? conversations.reduce((n, c) => n + c.sellerUnread, 0)} Unread
+            </span>
+          ) : undefined
         }
       />
 

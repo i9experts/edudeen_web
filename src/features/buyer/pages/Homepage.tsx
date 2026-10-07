@@ -564,7 +564,7 @@ export function Homepage() {
               action={countdown ? (
                 <span className="shrink-0 flex items-center gap-[6px] text-[12px] sm:text-[13px] font-semibold text-slate">
                   <span className="hidden sm:inline">Ends in</span>
-                  <span className="tabular-nums text-error font-bold">{countdown.h}:{countdown.m}:{countdown.s}</span>
+                  <span className="tabular-nums text-error font-bold">{Number(countdown.h) >= 24 ? `${Math.floor(Number(countdown.h) / 24)}d ${Number(countdown.h) % 24}h` : `${countdown.h}:${countdown.m}:${countdown.s}`}</span>
                 </span>
               ) : undefined}
             />

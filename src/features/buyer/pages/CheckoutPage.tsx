@@ -16,6 +16,15 @@ const STANDARD_DELIVERY: ShippingZone = {
 };
 const zoneTitle = (z: ShippingZone) => (z._id === STANDARD_DELIVERY._id ? 'Delivery arranged by the seller' : shippingZoneLabel(z));
 // Zone prices are always PKR, whatever currency the checkout is in.
+/** Joins address parts, skipping blanks and any part an earlier part already contains ("Karachi, Karachi"). */
+const dedupeAddressParts = (parts: (string | null | undefined)[]) => {
+  const kept: string[] = [];
+  for (const raw of parts) {
+    const p = raw?.trim();
+    if (p && !kept.some(k => k.toLowerCase().includes(p.toLowerCase()))) kept.push(p);
+  }
+  return kept.join(', ');
+};
 const zonePrice = (z: ShippingZone) => (z.shippingPrice > 0 ? `Rs ${z.shippingPrice.toLocaleString()}` : 'Free');
 import { apiGetMyAddresses, type Address, type AddressPayload } from '@/api/services/address';
 import { apiCreateCheckout, apiApplyCoupon, apiRemoveCoupon, apiApplyGiftCard, apiRemoveGiftCard, type Checkout, type CheckoutSummary, type SubscriptionSavingsHint } from '@/api/services/checkout';
@@ -490,6 +499,8 @@ export function CheckoutPage() {
   const [creatingCheckout, setCreatingCheckout] = useState(false);
   const [checkoutError, setCheckoutError] = useState('');
   const [checkout, setCheckout] = useState<Checkout | null>(null);
+  // Blank until the checkout has loaded — never guess a currency (it used to flash "$" for a Rs order).
+  const checkoutSymbol = checkout ? currencySymbol(checkout.currency) : '';
   const [summary, setSummary] = useState<CheckoutSummary | null>(null);
   const [allowedMethods, setAllowedMethods] = useState<string[]>([]);
   const [savingsHints, setSavingsHints] = useState<SubscriptionSavingsHint[]>([]);
@@ -560,8 +571,9 @@ export function CheckoutPage() {
   // Same for "only one method is actually usable" (e.g. card isn't set up
   // yet but bank transfer is) — pick the one that can complete the order.
   useEffect(() => {
-    if (effectiveMethods.length === 1) setSelectedMethod(effectiveMethods[0]);
-    else if (usableMethods.length === 1) setSelectedMethod(usableMethods[0]);
+    // Only ever pre-select a method the buyer can really complete; drop a selection that isn't usable.
+    if (usableMethods.length === 1) setSelectedMethod(usableMethods[0]);
+    else setSelectedMethod(prev => (prev && usableMethods.includes(prev) ? prev : null));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [effectiveMethods.length, usableMethods.length]);
 
@@ -1491,7 +1503,7 @@ export function CheckoutPage() {
                       <DigitalPaymentNotice physicalCount={physicalItemCount} onPhysicalOnly={switchToPhysicalOnly} onBack={() => navigate('/cart')} />
                     </div>
                   )}
-                  {effectiveMethods.length === 0 && !digitalPaymentBlocked && (
+                  {usableMethods.length === 0 && !digitalPaymentBlocked && (
                     <div className="flex items-start gap-2 text-[12px] text-error bg-error-bg border border-error-border rounded-[8px] px-3 py-3 mb-4">
                       <AlertCircle size={13} className="mt-[1px] flex-shrink-0" />
                       No payment method is available for this order right now. Please try again shortly or contact support.
@@ -1510,7 +1522,7 @@ export function CheckoutPage() {
                   <div className={clsx(digitalPaymentBlocked && 'hidden')}>
                     <Button
                       variant="primary" size="sm"
-                      disabled={!selectedMethod || digitalPaymentBlocked}
+                      disabled={!selectedMethod || !usableMethods.includes(selectedMethod) || digitalPaymentBlocked}
                       onClick={() => setStep(4)}
                       className="gap-1"
                     >
@@ -1524,9 +1536,9 @@ export function CheckoutPage() {
                 <div className="px-5 py-3 text-[13px] text-carbon">
                   <span className="font-medium">{PAYMENT_LABELS[selectedMethod]?.label ?? selectedMethod}</span>
                   {selectedMethod === 'split' && summary?.digitalSubtotal != null && summary?.physicalSubtotal != null ? (
-                    <> {' — '}{currencySymbol(checkout?.currency)} {summary.digitalSubtotal.toFixed(2)} now, {currencySymbol(checkout?.currency)} {summary.physicalSubtotal.toFixed(2)} on delivery</>
+                    <> {' — '}{checkoutSymbol} {summary.digitalSubtotal.toFixed(2)} now, {checkoutSymbol} {summary.physicalSubtotal.toFixed(2)} on delivery</>
                   ) : (
-                    <> {' — '}{currencySymbol(checkout?.currency)} {(chargeAmount ?? total).toFixed(2)}</>
+                    <> {' — '}{checkoutSymbol} {(chargeAmount ?? total).toFixed(2)}</>
                   )}
                 </div>
               )}
@@ -1549,21 +1561,21 @@ export function CheckoutPage() {
                     <div className="flex justify-between gap-3 text-[12.5px]">
                       <span className="text-slate flex-shrink-0">Deliver to</span>
                       <span className="font-medium text-carbon text-end">
-                        {selectedAddr?.recipientName} — {selectedAddr?.addressLine1}, {selectedAddr?.city}, {selectedAddr?.state}
+                        {selectedAddr?.recipientName} — {dedupeAddressParts([selectedAddr?.addressLine1, selectedAddr?.city, selectedAddr?.state])}
                       </span>
                     </div>
                     <div className="flex justify-between gap-3 text-[12.5px]">
                       <span className="text-slate flex-shrink-0">Shipping</span>
                       <span className="font-medium text-carbon text-end">
-                        {selectedZone ? `${selectedZone.city}, ${selectedZone.province} · ${currencySymbol(checkout?.currency)} ${selectedZone.shippingPrice.toLocaleString()}` : '—'}
+                        {selectedZone ? `${zoneTitle(selectedZone)} · ${selectedZone.shippingPrice > 0 ? `${checkoutSymbol} ${selectedZone.shippingPrice.toLocaleString()}` : 'Free'}` : '—'}
                       </span>
                     </div>
                     <div className="flex justify-between gap-3 text-[12.5px]">
                       <span className="text-slate flex-shrink-0">Payment</span>
                       <span className="font-medium text-carbon text-end">
                         {!selectedMethod ? '—' : selectedMethod === 'split' && summary?.digitalSubtotal != null && summary?.physicalSubtotal != null
-                          ? `${PAYMENT_LABELS.split.label} · ${currencySymbol(checkout?.currency)} ${summary.digitalSubtotal.toFixed(2)} now, ${currencySymbol(checkout?.currency)} ${summary.physicalSubtotal.toFixed(2)} on delivery`
-                          : `${PAYMENT_LABELS[selectedMethod]?.label ?? selectedMethod} · ${currencySymbol(checkout?.currency)} ${(chargeAmount ?? total).toFixed(2)}`}
+                          ? `${PAYMENT_LABELS.split.label} · ${checkoutSymbol} ${summary.digitalSubtotal.toFixed(2)} now, ${checkoutSymbol} ${summary.physicalSubtotal.toFixed(2)} on delivery`
+                          : `${PAYMENT_LABELS[selectedMethod]?.label ?? selectedMethod} · ${checkoutSymbol} ${(chargeAmount ?? total).toFixed(2)}`}
                       </span>
                     </div>
                   </div>
@@ -1604,7 +1616,7 @@ export function CheckoutPage() {
                   ) : (
                     <Button
                       variant="primary" size="lg"
-                      disabled={!selectedMethod}
+                      disabled={!selectedMethod || !usableMethods.includes(selectedMethod)}
                       loading={placing}
                       icon={!placing && <PackageCheck size={16} />}
                       onClick={handlePlaceOrder}
@@ -1626,7 +1638,7 @@ export function CheckoutPage() {
 
             {/* Items — the whole cart, one order */}
             <div className="flex flex-col gap-2 mb-5">
-              {(() => { const cur = currencySymbol(checkout?.currency); return checkout
+              {(() => { const cur = checkoutSymbol; return checkout
                 ? checkout.items.map(item => (
                   <div key={item.variantId} className="flex justify-between text-[12px]">
                     <span className="text-carbon truncate max-w-[150px]">
@@ -1661,13 +1673,13 @@ export function CheckoutPage() {
             <div className="flex flex-col gap-3 mb-5">
               <div className="flex justify-between text-[13px]">
                 <span className="text-slate">Subtotal</span>
-                <span className="font-semibold text-carbon">{currencySymbol(checkout?.currency)} {orderSubtotal.toLocaleString()}</span>
+                <span className="font-semibold text-carbon">{checkoutSymbol} {orderSubtotal.toLocaleString()}</span>
               </div>
               {!isDigital && (
                 <div className="flex justify-between text-[13px]">
                   <span className="text-slate">Shipping</span>
                   {selectedZone || summary
-                    ? <span className="font-semibold text-carbon">{currencySymbol(checkout?.currency)} {shipping.toLocaleString()}</span>
+                    ? <span className="font-semibold text-carbon">{checkoutSymbol} {shipping.toLocaleString()}</span>
                     : <span className="text-slate font-medium">Select method</span>
                   }
                 </div>
@@ -1675,13 +1687,13 @@ export function CheckoutPage() {
               {tax > 0 && (
                 <div className="flex justify-between text-[13px]">
                   <span className="text-slate">Tax</span>
-                  <span className="font-semibold text-carbon">{currencySymbol(checkout?.currency)} {tax.toLocaleString()}</span>
+                  <span className="font-semibold text-carbon">{checkoutSymbol} {tax.toLocaleString()}</span>
                 </div>
               )}
               {!!summary?.subscriberSavingsUSD && summary.subscriberSavingsUSD > 0 && (
                 <div className="flex justify-between text-[13px]">
                   <span className="text-success">Member savings</span>
-                  <span className="font-semibold text-success">-{currencySymbol(checkout?.currency)}{summary.subscriberSavingsUSD.toFixed(2)}</span>
+                  <span className="font-semibold text-success">-{checkoutSymbol}{summary.subscriberSavingsUSD.toFixed(2)}</span>
                 </div>
               )}
               {/* Already baked into each item's totalPrice at checkout-creation
@@ -1696,7 +1708,7 @@ export function CheckoutPage() {
               {!!summary?.campaignDiscountUSD && summary.campaignDiscountUSD > 0 && (
                 <div className="flex justify-between text-[13px]">
                   <span className="text-success">Sale discount</span>
-                  <span className="font-semibold text-success">-{currencySymbol(checkout?.currency)}{summary.campaignDiscountUSD.toFixed(2)}</span>
+                  <span className="font-semibold text-success">-{checkoutSymbol}{summary.campaignDiscountUSD.toFixed(2)}</span>
                 </div>
               )}
               {/* Same "already baked in" convention as the sale discount above —
@@ -1705,7 +1717,7 @@ export function CheckoutPage() {
               {!!summary?.autoDiscountUSD && summary.autoDiscountUSD > 0 && (
                 <div className="flex justify-between text-[13px]">
                   <span className="text-success">Discount</span>
-                  <span className="font-semibold text-success">-{currencySymbol(checkout?.currency)}{summary.autoDiscountUSD.toFixed(2)}</span>
+                  <span className="font-semibold text-success">-{checkoutSymbol}{summary.autoDiscountUSD.toFixed(2)}</span>
                 </div>
               )}
               {/* The backend rejects a coupon outright (see CheckoutService.applyCoupon)
@@ -1717,7 +1729,7 @@ export function CheckoutPage() {
                   <span className="flex items-center gap-1 text-success">
                     <CheckCircle2 size={12} /> Coupon ({checkout.couponCode})
                   </span>
-                  <span className="font-semibold text-success">-{currencySymbol(checkout?.currency)}{couponDiscount.toFixed(2)}</span>
+                  <span className="font-semibold text-success">-{checkoutSymbol}{couponDiscount.toFixed(2)}</span>
                 </div>
               )}
               {!!checkout?.giftCardCode && (
@@ -1725,7 +1737,7 @@ export function CheckoutPage() {
                   <span className="flex items-center gap-1 text-success">
                     <CheckCircle2 size={12} /> Gift card ({checkout.giftCardCode})
                   </span>
-                  <span className="font-semibold text-success">-{currencySymbol(checkout?.currency)}{giftCardDiscount.toFixed(2)}</span>
+                  <span className="font-semibold text-success">-{checkoutSymbol}{giftCardDiscount.toFixed(2)}</span>
                 </div>
               )}
             </div>
@@ -1806,7 +1818,7 @@ export function CheckoutPage() {
 
             <div className="flex justify-between text-[16px] font-bold">
               <span className="text-carbon">Total</span>
-              <span className="text-carbon">{currencySymbol(checkout?.currency)} {total.toLocaleString()}</span>
+              <span className="text-carbon">{checkoutSymbol} {total.toLocaleString()}</span>
             </div>
 
             {checkout && (

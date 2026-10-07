@@ -41,7 +41,7 @@ export const NAV: { group: string; items: NavItem[] }[] = [
   {
     group: 'Sales',
     items: [
-      { id: 'orders',   Icon: Package,  label: 'Orders',       path: 'orders'  },
+      { id: 'orders',   Icon: ShoppingBag,  label: 'Orders',       path: 'orders'  },
       { id: 'returns',  Icon: Undo2,    label: 'Returns',       path: 'returns' },
       { id: 'shipping', Icon: Truck,    label: 'Shipping',      path: 'shipping' },
       { id: 'quotes',   Icon: FileSpreadsheet, label: 'School Quotes', path: 'quotes' },
@@ -50,7 +50,7 @@ export const NAV: { group: string; items: NavItem[] }[] = [
   {
     group: 'Catalog',
     items: [
-      { id: 'products',      Icon: ShoppingBag,   label: 'Products',      path: 'products'     },
+      { id: 'products',      Icon: Package,   label: 'Products',      path: 'products'     },
       { id: 'inventory',     Icon: Boxes,         label: 'Inventory',     path: 'inventory'    },
       { id: 'categories',    Icon: FolderTree,    label: 'Categories & Bundles', path: 'categories' },
       { id: 'store-builder', Icon: Store,         label: 'Customize Store', path: 'storebuilder' },
@@ -153,8 +153,8 @@ export function StoreNavMenu({ storeId, onNavigate, excludeGroups = [], excludeI
 // double as a menu of everything.
 const STORE_TABS: { id: string; Icon: LucideIcon; label: string; path: string }[] = [
   { id: 'dashboard', Icon: LayoutDashboard, label: 'Dashboard', path: 'dashboard' },
-  { id: 'orders',    Icon: Package,         label: 'Orders',    path: 'orders'    },
-  { id: 'products',  Icon: ShoppingBag,     label: 'Products',  path: 'products'  },
+  { id: 'orders',    Icon: ShoppingBag,     label: 'Orders',    path: 'orders'    },
+  { id: 'products',  Icon: Package,         label: 'Products',  path: 'products'  },
   { id: 'messages',  Icon: MessageSquare,   label: 'Messages',  path: 'messages'  },
   { id: 'settings',  Icon: Settings,        label: 'Settings',  path: 'settings'  },
 ];
@@ -179,14 +179,14 @@ function StoreBottomNav() {
               onClick={() => goToTab(tab.path)}
               aria-current={active ? 'page' : undefined}
               aria-label={tab.label}
-              className="flex-1 flex flex-col items-center justify-center py-[11px] gap-[5px] cursor-pointer bg-transparent border-none"
+              className="flex-1 flex flex-col items-center justify-center py-[8px] gap-[4px] cursor-pointer bg-transparent border-none"
             >
               <tab.Icon
                 size={21}
                 strokeWidth={active ? 2.2 : 1.8}
                 className={clsx('transition-colors duration-150', active ? 'text-brand-orange' : 'text-slate')}
               />
-              <span className={clsx('w-[16px] h-[3px] rounded-full transition-colors duration-150', active ? 'bg-brand-orange' : 'bg-transparent')} />
+              <span className={clsx('text-[10px] leading-none font-medium', active ? 'text-brand-orange' : 'text-slate')}>{tab.label}</span>
             </button>
           );
         })}

@@ -167,7 +167,6 @@ export function CartPage() {
       <div className={clsx('max-w-[960px] mx-auto px-4 md:px-6 py-6 md:py-8', !isEmpty && items.length > 0 && 'pb-[88px] lg:pb-8')}>
         <Breadcrumb className="mb-4" items={[
           { label: 'Home', path: '/' },
-          { label: 'Home', path: '/' },
           { label: 'Cart' },
         ]} />
 

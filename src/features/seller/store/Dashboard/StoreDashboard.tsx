@@ -263,10 +263,13 @@ function TodaySnapshot({ today, currency }: { today: SellerTodaySummaryData; cur
       <div className="flex items-center gap-2">
         <span className="text-[13px] text-slate">Revenue</span>
         <span className="font-serif text-[18px] text-carbon">{formatMoneyCompact(today.revenue, currency)}</span>
-        <span className={`inline-flex items-center gap-0.5 text-[11px] font-semibold px-[7px] py-[2px] rounded-full ${up ? 'text-success bg-success-bg' : 'text-error bg-error-bg'}`}>
-          <TrendIcon size={11} />
-          {Math.abs(today.revenueChangePercent).toFixed(0)}%
-        </span>
+        {/* No change badge when there is nothing to compare (no revenue today, or no usable previous day). */}
+        {today.revenue > 0 && Number.isFinite(today.revenueChangePercent) && today.revenueChangePercent !== 0 && (
+          <span className={`inline-flex items-center gap-0.5 text-[11px] font-semibold px-[7px] py-[2px] rounded-full ${up ? 'text-success bg-success-bg' : 'text-error bg-error-bg'}`}>
+            <TrendIcon size={11} />
+            {Math.abs(today.revenueChangePercent).toFixed(0)}%
+          </span>
+        )}
       </div>
 
       <div className="flex items-center gap-2">
@@ -497,7 +500,7 @@ export default function StoreDashboard() {
               dataKey="revenue"
               xKey="month"
               title="Revenue Overview"
-              subtitle="Monthly revenue trend — last 6 months"
+              subtitle="Monthly revenue trend"
               height={300}
               valuePrefix={currencySymbol(store?.baseCurrency)}
               yTickFormatter={v => v >= 1000 ? `${currencySymbol(store?.baseCurrency)}${(v / 1000).toFixed(0)}k` : `${currencySymbol(store?.baseCurrency)}${v}`}

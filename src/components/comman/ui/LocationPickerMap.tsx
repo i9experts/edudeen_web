@@ -65,7 +65,7 @@ export function LocationPickerMap({ latitude, longitude, onChange, height = 220 
           Use my current location
         </button>
       </div>
-      <div className="rounded-[9px] overflow-hidden border border-bone" style={{ height }}>
+      <div className="relative isolate z-0 rounded-[9px] overflow-hidden border border-bone" style={{ height }}>
         <MapContainer center={center} zoom={hasPin ? 15 : 12} style={{ height: '100%', width: '100%' }}>
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
