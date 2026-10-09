@@ -117,7 +117,7 @@ export function StoreNavMenu({ storeId, onNavigate, excludeGroups = [], excludeI
         .map(section => (
         <div key={section.group} className="bg-white border border-bone rounded-2xl overflow-hidden">
           <div className="px-5 pt-4 pb-2">
-            <p className="text-[10.5px] font-bold text-slate uppercase tracking-[0.06em]">{section.group}</p>
+            <p className="text-[12px] font-bold text-slate uppercase tracking-[0.06em]">{section.group}</p>
           </div>
           <div className="divide-y divide-[#f3f2ec]">
             {section.items.map(item => {
@@ -399,7 +399,7 @@ function StoreSidebar({ open, onToggle }: StoreSidebarProps) {
           {NAV.map(section => (
             <div key={section.group} className="mb-3">
               {open
-                ? <p className="text-[11px] font-bold text-graphite px-3 py-1 uppercase tracking-[0.12em] mb-0.5">{section.group}</p>
+                ? <p className="text-[12px] font-bold text-graphite px-3 py-1 uppercase tracking-[0.12em] mb-0.5">{section.group}</p>
                 : <div className="h-px bg-bone mx-1 mb-2" />
               }
               {section.items.map(item => {
@@ -434,7 +434,7 @@ function StoreSidebar({ open, onToggle }: StoreSidebarProps) {
                     )}
                     {badge > 0 && (open ? (
                       <span className={clsx(
-                        'text-[9.5px] font-bold px-[6px] py-[1px] rounded-full leading-[14px] shrink-0',
+                        'text-[12px] font-bold px-[6px] py-[1px] rounded-full leading-[14px] shrink-0',
                         active ? 'bg-white text-brand-orange' : 'bg-brand-green text-white',
                       )}>
                         {badge} new sale{badge > 1 ? 's' : ''}
@@ -549,7 +549,7 @@ export function StorePageHeader({ title, subtitle, actions, eyebrow }: StorePage
         )}
         <div className="min-w-0">
           {eyebrowText && (
-            <p className="hidden sm:block text-[10.5px] font-bold text-brand-royal uppercase tracking-[0.15em] mb-[3px] truncate">{eyebrowText}</p>
+            <p className="hidden sm:block text-[12px] font-bold text-brand-royal uppercase tracking-[0.15em] mb-[3px] truncate">{eyebrowText}</p>
           )}
           <h1 className="font-serif font-normal text-[21px] md:text-[25px] text-carbon leading-[1.2] tracking-[-0.3px] truncate">{title}</h1>
           {subtitle && <p className="text-[12.5px] text-slate mt-0.5 truncate">{subtitle}</p>}

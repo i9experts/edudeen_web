@@ -117,7 +117,7 @@ export function FlashSaleCard({ product, onClick, onAddToCart, isAdding, addToCa
         {/* Category badge — compact, opaque (no blur/glass) */}
         <span className={clsx(
           'absolute rounded-full font-bold tracking-[0.02em] border bg-white',
-          compact ? 'top-[5px] start-[5px] px-[5px] py-[1px] text-[7px]' : 'top-[7px] start-[7px] px-[6px] py-[1.5px] text-[8px]',
+          compact ? 'top-[5px] start-[5px] px-[5px] py-[1px] text-[12px]' : 'top-[7px] start-[7px] px-[6px] py-[1.5px] text-[12px]',
           isDigital ? 'text-[#7c3aed] border-[#ddd6fe]' : 'text-[#3b6720] border-[#c7e0b5]',
         )}>
           {typeLabel}
@@ -127,7 +127,7 @@ export function FlashSaleCard({ product, onClick, onAddToCart, isAdding, addToCa
         {pctOff != null && pctOff > 0 && (
           <span className={clsx(
             'absolute rounded-full font-bold bg-error text-white',
-            compact ? 'top-[5px] end-[5px] px-[6px] py-[2px] text-[8px]' : 'top-[7px] end-[7px] px-[7px] py-[2.5px] text-[12px]',
+            compact ? 'top-[5px] end-[5px] px-[6px] py-[2px] text-[12px]' : 'top-[7px] end-[7px] px-[7px] py-[2.5px] text-[12px]',
           )}>
             -{pctOff}%
           </span>
@@ -181,7 +181,7 @@ export function FlashSaleCard({ product, onClick, onAddToCart, isAdding, addToCa
                   )}
                 </div>
                 {savings != null && savings > 0 && (
-                  <p className="text-[8px] font-semibold text-success">Save {priceSymbol}{savings.toLocaleString()}</p>
+                  <p className="text-[12px] font-semibold text-success">Save {priceSymbol}{savings.toLocaleString()}</p>
                 )}
               </div>
               <button
@@ -221,11 +221,11 @@ export function FlashSaleCard({ product, onClick, onAddToCart, isAdding, addToCa
                 />
               ))}
             </div>
-            <span className="text-[9.5px] font-semibold text-carbon">
+            <span className="text-[12px] font-semibold text-carbon">
               {product.averageRating > 0 ? product.averageRating.toFixed(1) : 'New'}
             </span>
             {ratingCount > 0 && (
-              <span className="text-[9.5px] text-slate">({ratingCount})</span>
+              <span className="text-[12px] text-slate">({ratingCount})</span>
             )}
           </div>
 

@@ -41,7 +41,7 @@ export function CountdownUnit({ value, label, size = 'md' }: { value: number; la
       >
         {String(value).padStart(2, '0')}
       </div>
-      <span className={clsx('font-semibold uppercase tracking-[0.06em] text-white/70', isSm ? 'text-[7px]' : 'text-[8.5px]')}>{label}</span>
+      <span className={clsx('font-semibold uppercase tracking-[0.06em] text-white/70', isSm ? 'text-[12px]' : 'text-[12px]')}>{label}</span>
     </div>
   );
 }
@@ -294,14 +294,14 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
                    scrim here, since there's no gradient backing behind
                    this block. */}
                 <div className="absolute start-1 end-1 top-1 z-[1] flex flex-col items-start gap-[3px] sm:hidden">
-                  <span className="inline-flex items-center gap-[4px] rounded-full bg-white/90 px-[7px] py-[2.5px] text-[8.5px] font-bold uppercase tracking-wide text-brand-deep-orange">
+                  <span className="inline-flex items-center gap-[4px] rounded-full bg-white/90 px-[7px] py-[2.5px] text-[12px] font-bold uppercase tracking-wide text-brand-deep-orange">
                     <Zap size={9} className="fill-brand-deep-orange" /> Limited Time
                   </span>
                   <span className="font-serif text-[13px] font-bold leading-tight text-white truncate max-w-full" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.85)' }}>
                     {campaign.name}
                   </span>
                   {metaText && (
-                    <span className="text-[8.5px] text-white/90 truncate max-w-full" style={{ textShadow: '0 1px 3px rgba(0,0,0,0.85)' }}>
+                    <span className="text-[12px] text-white/90 truncate max-w-full" style={{ textShadow: '0 1px 3px rgba(0,0,0,0.85)' }}>
                       {metaText}
                     </span>
                   )}
@@ -322,7 +322,7 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
                      styled for a light background, for sm and up). */}
                   <div className="flex items-center justify-between gap-3 mt-[3px]">
                     <div className="flex flex-col items-center gap-[3px]">
-                      <span className="text-[7.5px] font-bold uppercase tracking-[0.1em] text-white/70">Ends In</span>
+                      <span className="text-[12px] font-bold uppercase tracking-[0.1em] text-white/70">Ends In</span>
                       <div className="flex items-center gap-[3px]">
                         <MiniCountdownUnit key={`h${countdown.hours}`} value={countdown.hours} />
                         <span className="pb-[1px] text-[12px] font-bold leading-none text-white/50">:</span>
@@ -341,7 +341,7 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
               <div className="hidden w-px shrink-0 self-stretch bg-white/15 sm:my-3 sm:block" />
 
               <div className="hidden min-w-0 flex-1 flex-col justify-center gap-[5px] px-3.5 py-1.5 sm:flex sm:px-4 sm:py-0">
-                <span className="inline-flex w-fit items-center gap-[5px] rounded-full bg-white/90 px-[9px] py-[4px] text-[9px] font-bold uppercase tracking-wide text-brand-deep-orange">
+                <span className="inline-flex w-fit items-center gap-[5px] rounded-full bg-white/90 px-[9px] py-[4px] text-[12px] font-bold uppercase tracking-wide text-brand-deep-orange">
                   <Zap size={10} className="fill-brand-deep-orange" /> Limited Time
                 </span>
                 <span className="font-serif text-[16px] font-bold leading-tight tracking-[-0.005em] text-white truncate sm:text-[18px]">{campaign.name}</span>
@@ -360,7 +360,7 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
                  renders inside the image overlay above instead. */}
               <div className="hidden sm:flex sm:shrink-0 sm:flex-col sm:items-center sm:justify-center sm:gap-[9px] sm:px-4 sm:py-0">
                 <div className="flex flex-col items-center gap-[3px]">
-                  <span className="text-[7.5px] font-bold uppercase tracking-[0.1em] text-white/70">Ends In</span>
+                  <span className="text-[12px] font-bold uppercase tracking-[0.1em] text-white/70">Ends In</span>
                   <div className="flex items-center gap-[3px]">
                     <MiniCountdownUnit key={`h${countdown.hours}`} value={countdown.hours} />
                     <span className="pb-[1px] text-[12px] font-bold leading-none text-white/50">:</span>
@@ -399,59 +399,44 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
           <button
             key={campaign._id}
             onClick={() => navigate(`/?campaign=${encodeURIComponent(campaign._id)}`)}
-            className="campaign-fade group relative z-[1] grid w-full h-full gap-4 border-none bg-transparent text-start text-white outline-none cursor-pointer px-5 py-5 sm:px-7 sm:py-6 grid-cols-1 lg:grid-cols-[40%_35%_25%] lg:gap-0 lg:px-8 lg:py-0 lg:h-[188px]"
+            aria-label={`${campaign.name} — ${discountHeadline}. Shop the sale`}
+            className="campaign-fade group relative z-[1] flex w-full h-full flex-col gap-3 border-none bg-transparent text-start text-white outline-none cursor-pointer px-5 py-4 lg:flex-row lg:items-center lg:gap-6 lg:px-7 lg:py-0 lg:min-h-[112px]"
           >
-            {/* LEFT (40%) — badge, huge discount, title, description, meta, CTA.
-                5 text elements max, one line each — everything stays legible
-                inside a ~180px-tall card instead of sprawling. */}
-            <div className="flex min-w-0 flex-col justify-center gap-[5px] lg:pe-6">
-              <span className="inline-flex w-fit items-center gap-[5px] rounded-full bg-white px-[10px] py-[5px] text-[10px] font-bold uppercase tracking-wide text-brand-deep-orange whitespace-nowrap">
-                <Zap size={11} className="fill-brand-deep-orange" /> Limited Time
+            {/* LEFT — one tidy block: label, headline, name + description on one line. */}
+            <div className="flex min-w-0 flex-1 flex-col justify-center gap-[3px]">
+              <span className="inline-flex w-fit items-center gap-[5px] rounded-full bg-white/15 px-[10px] py-[3px] text-[12px] font-semibold uppercase tracking-[0.08em] text-white ring-1 ring-white/25">
+                <Zap size={11} className="fill-white" /> Limited time{campaign.sponsorType === 'platform' ? ' · Edudeen' : ''}
               </span>
-              <span className="font-serif text-[26px] sm:text-[29px] lg:text-[31px] font-bold leading-[1.05] tracking-[-0.01em] text-white">
+              <span className="font-serif text-[24px] sm:text-[27px] font-bold leading-[1.1] tracking-[-0.01em] text-white">
                 {discountHeadline}
               </span>
-              <span className="min-w-0 truncate text-[14px] sm:text-[15px] font-bold">{campaign.name}</span>
-              <p className="truncate text-[12px] text-white/85">{campaign.description || 'Limited time campaign'}</p>
-              {metaText && (
-                <p className="truncate text-[12px] font-medium text-white/65">{metaText}</p>
-              )}
-              <span className="mt-[3px] inline-flex w-fit items-center gap-[6px] text-[13px] font-bold text-white underline-offset-4 group-hover:underline">
-                Shop Now <ArrowRight size={13} className="transition-transform duration-150 group-hover:translate-x-0.5" />
-              </span>
+              <p className="truncate text-[13px] text-white/90">
+                <span className="font-semibold">{campaign.name}</span>
+                {campaign.description ? <span className="text-white/75"> · {campaign.description}</span> : null}
+              </p>
+              {metaText && <p className="hidden sm:block truncate text-[12px] text-white/65">{metaText}</p>}
             </div>
 
-            {/* CENTER (35%) — the product image as a bounded showcase panel
-                (never a bare floating image), bled slightly past the card's
-                top edge on desktop so it reads as the banner's focal point. */}
-            <div className="relative flex items-center justify-center">
-              <div className="relative w-full h-[130px] sm:h-[150px] lg:mt-[-14px] lg:h-[calc(100%+14px)] lg:max-w-[230px] rounded-[14px] border border-white/15 bg-white/10 backdrop-blur-sm p-2">
-                <CampaignImage src={campaign.bannerImage} />
-
-                {hasPercentOff && (
-                  <span className="absolute -top-2 -start-2 -rotate-6 flex flex-col items-center justify-center size-[42px] rounded-full bg-error text-white border-2 border-white/40">
-                    <span className="text-[12px] font-bold leading-none">-{campaign.discountValue}%</span>
-                    <span className="text-[5px] font-semibold uppercase tracking-wide leading-none mt-[1px]">off</span>
-                  </span>
-                )}
+            {/* MIDDLE — small product thumbnail, only when the campaign has an image (no empty glass panel). */}
+            {campaign.bannerImage && (
+              <div className="relative hidden lg:block h-[84px] w-[150px] shrink-0 overflow-hidden rounded-xl ring-1 ring-white/25 bg-white/10">
+                <CampaignImage src={campaign.bannerImage} fit="cover" />
               </div>
-            </div>
+            )}
 
-            {/* RIGHT (25%) — countdown + CTA */}
-            <div className="flex flex-col items-center justify-center gap-3 lg:ps-6">
-              <div className="countdown-pulse flex shrink-0 items-center gap-[6px]">
-                <CountdownUnit value={countdown.hours} label="hrs" size="sm" />
-                <span className="pb-4 text-white/40">:</span>
-                <CountdownUnit value={countdown.minutes} label="min" size="sm" />
-                <span className="pb-4 text-white/40">:</span>
-                <CountdownUnit value={countdown.seconds} label="sec" size="sm" />
+            {/* RIGHT — countdown + CTA on one row/column pair. */}
+            <div className="flex shrink-0 items-center justify-between gap-4 lg:flex-col lg:items-end lg:justify-center lg:gap-[8px]">
+              <div className="countdown-pulse flex items-center gap-[4px]" aria-label="Time left">
+                <MiniCountdownUnit key={`h${countdown.hours}`} value={countdown.hours} />
+                <span className="pb-[1px] text-[12px] font-bold leading-none text-white/60">:</span>
+                <MiniCountdownUnit key={`m${countdown.minutes}`} value={countdown.minutes} />
+                <span className="pb-[1px] text-[12px] font-bold leading-none text-white/60">:</span>
+                <MiniCountdownUnit key={`s${countdown.seconds}`} value={countdown.seconds} />
               </div>
-              <span className="flex shrink-0 items-center gap-[7px] rounded-full bg-white px-6 py-[10px] text-[13px] font-bold text-brand-deep-orange transition-[background-color,transform] duration-150 group-hover:bg-cream group-hover:scale-[1.03]">
-                Shop the Sale
+              <span className="inline-flex shrink-0 items-center gap-[6px] whitespace-nowrap rounded-full bg-white px-5 py-[8px] text-[13px] font-bold text-brand-deep-orange shadow-sm transition-[background-color,transform] duration-150 group-hover:bg-cream group-hover:scale-[1.03]">
+                Shop the sale <ArrowRight size={13} className="transition-transform duration-150 group-hover:translate-x-0.5" />
               </span>
-              <span className="text-[9px] font-semibold uppercase tracking-[0.08em] text-white/60">Ends Soon</span>
-            </div>
-          </button>
+            </div>          </button>
         )}
 
         {/* Carousel indicators — a bit bigger/more visible than a subtle hairline,

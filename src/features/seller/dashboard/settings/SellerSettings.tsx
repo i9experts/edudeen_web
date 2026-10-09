@@ -125,7 +125,7 @@ function MobileSellerMenu({ active, onSelect }: { active: SettingSection; onSele
       {SETTINGS_NAV.map(section => (
         <div key={section.group} className="bg-white border border-bone rounded-2xl overflow-hidden">
           <div className="px-5 pt-4 pb-2">
-            <p className={`text-[10.5px] font-bold uppercase tracking-[0.06em] ${section.isDanger ? 'text-[#C0392B]' : 'text-slate'}`}>
+            <p className={`text-[12px] font-bold uppercase tracking-[0.06em] ${section.isDanger ? 'text-[#C0392B]' : 'text-slate'}`}>
               {section.group}
             </p>
           </div>
@@ -329,7 +329,7 @@ export function SellerSettings() {
                         <p className="text-[17px] font-bold text-charcoal truncate">{profile?.name || 'Seller'}</p>
                         <p className="text-[12.5px] text-slate truncate mt-[3px]">{profile?.email ?? ''}</p>
                         <div className="flex items-center gap-1.5 mt-2">
-                          <span className="px-[9px] py-[3px] rounded-full text-[10.5px] font-bold uppercase tracking-wide bg-brand-orange/15 text-brand-deep-orange capitalize">{profile?.role ?? ''}</span>
+                          <span className="px-[9px] py-[3px] rounded-full text-[12px] font-bold uppercase tracking-wide bg-brand-orange/15 text-brand-deep-orange capitalize">{profile?.role ?? ''}</span>
                           {profile?.isVerified && (
                             <span className="px-[9px] py-[3px] rounded-full text-[12px] font-bold bg-success-bg text-success flex items-center gap-1">
                               <Check size={10} /> Verified
@@ -515,7 +515,7 @@ export function SellerSettings() {
                 <div key={group.group}>
                   {gi > 0 && <div className="h-px bg-[#f0eee6]" />}
                   <div className="px-4 pt-[10px] pb-1">
-                    <p className={`text-[10px] font-semibold uppercase tracking-[0.08em] ${group.isDanger ? 'text-[#c0392b]' : 'text-slate'}`}>
+                    <p className={`text-[12px] font-semibold uppercase tracking-[0.08em] ${group.isDanger ? 'text-[#c0392b]' : 'text-slate'}`}>
                       {group.group}
                     </p>
                   </div>

@@ -46,7 +46,7 @@ export function SocialPreviewCard({ ogTitle, ogDescription, ogImage, url, varian
         )}
       </div>
       <div className={clsx('p-3', variant === 'twitter' && 'border border-bone rounded-b-xl')}>
-        <p className="text-[11px] text-slate uppercase tracking-[0.04em] mb-1">{domainOf(url)}</p>
+        <p className="text-[12px] text-slate uppercase tracking-[0.04em] mb-1">{domainOf(url)}</p>
         <p className="text-[13px] font-semibold text-carbon leading-[1.35] mb-1 line-clamp-2">
           {ogTitle || 'Untitled page'}
         </p>

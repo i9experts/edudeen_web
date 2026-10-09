@@ -116,7 +116,7 @@ function LessonEditor({ lesson, index, count, onChange, onMove, onRemove }: {
         )}
         {lesson.type !== 'quiz' && (
           <label className="inline-flex items-center gap-2 text-[12.5px] text-charcoal cursor-pointer">
-            <Toggle size="sm" checked={lesson.isPreview} onChange={v => set('isPreview', v)} /> Free preview <span className="text-slate">(anyone can watch)</span>
+            <Toggle label="Free preview lesson" size="sm" checked={lesson.isPreview} onChange={v => set('isPreview', v)} /> Free preview <span className="text-slate">(anyone can watch)</span>
           </label>
         )}
       </div>
@@ -203,7 +203,7 @@ export default function CourseBuilder() {
         {sections.map((s, si) => (
           <Card key={s._id ?? `new-${si}`} padding="none">
             <div className="px-4 md:px-5 py-3 border-b border-bone flex items-center gap-2">
-              <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate shrink-0">Section {si + 1}</span>
+              <span className="text-[12px] font-bold uppercase tracking-[0.08em] text-slate shrink-0">Section {si + 1}</span>
               <div className="flex-1"><Input aria-label="Section title" value={s.title} maxLength={120} onChange={e => setSection(si, { title: e.target.value })} /></div>
               <button type="button" aria-label="Move section up" disabled={si === 0} onClick={() => edit(move(sections, si, -1))} className="p-1 bg-transparent border-none cursor-pointer text-slate disabled:opacity-30"><ChevronUp size={15} /></button>
               <button type="button" aria-label="Move section down" disabled={si === sections.length - 1} onClick={() => edit(move(sections, si, 1))} className="p-1 bg-transparent border-none cursor-pointer text-slate disabled:opacity-30"><ChevronDown size={15} /></button>
@@ -230,7 +230,7 @@ export default function CourseBuilder() {
 
         <Card>
           <label className="flex items-start gap-3 cursor-pointer">
-            <Toggle checked={certificate} onChange={v => { setCertificate(v); setDirty(true); }} />
+            <Toggle label="Certificate of completion" checked={certificate} onChange={v => { setCertificate(v); setDirty(true); }} />
             <span>
               <span className="flex items-center gap-1.5 text-[13.5px] font-bold text-carbon"><Award size={15} className="text-brand-gold" /> Certificate of completion</span>
               <span className="block text-[12.5px] text-slate mt-0.5">Learners who finish every lesson (and pass every quiz) get a certificate with a code anyone can verify on Edudeen.</span>

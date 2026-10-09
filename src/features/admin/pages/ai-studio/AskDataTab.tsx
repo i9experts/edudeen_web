@@ -28,7 +28,7 @@ export function AskDataTab() {
     <div className="bg-white border border-bone rounded-xl px-[22px] py-5 flex flex-col gap-3 max-w-[820px]">
       <p className="font-serif text-[19px] text-carbon">Ask your data</p>
       <p className="text-[12px] text-slate">Read-only reports: orders, top products and stores, listing status, signups, reviews, AI usage. Results may mix PKR and USD.</p>
-      <Textarea rows={3} value={q} onChange={e => setQ(e.target.value)} placeholder="e.g. Which stores earned the most in the last 30 days?" maxLength={500} />
+      <Textarea rows={3} aria-label="Your question about the platform data" value={q} onChange={e => setQ(e.target.value)} placeholder="e.g. Which stores earned the most in the last 30 days?" maxLength={500} />
       <div className="flex flex-wrap gap-2">
         {EXAMPLES.map(x => <button key={x} type="button" onClick={() => setQ(x)} className="text-[11px] px-2.5 py-1 rounded-full bg-cream border border-bone text-graphite hover:border-brand-royal">{x}</button>)}
       </div>

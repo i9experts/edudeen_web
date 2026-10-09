@@ -8,6 +8,7 @@ import { useCartContext } from '@/contexts/CartContext';
 import { Card, EmptyState, SkeletonBox, PageHeader, Modal, Button } from '@/components/comman/ui';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 import { currencySymbol } from '@/utils/currency';
+import { ShareSavedControl } from './ShareSavedControl';
 
 function WishlistImg({ images, name }: { images?: string[]; name: string }) {
   const [err, setErr] = useState(false);
@@ -102,9 +103,12 @@ export function Wishlist() {
           title="Saved"
           description={`${wishlistCount} item${wishlistCount !== 1 ? 's' : ''} saved`}
           actions={
-            <Button variant="ghost" size="sm" onClick={() => { setConfirmingClear(true); setClearError(''); }} disabled={clearing} className="text-error!">
-              Clear All
-            </Button>
+            <div className="flex items-center gap-1 flex-wrap justify-end">
+              <ShareSavedControl />
+              <Button variant="ghost" size="sm" onClick={() => { setConfirmingClear(true); setClearError(''); }} disabled={clearing} className="text-error!">
+                Clear All
+              </Button>
+            </div>
           }
         />
       </div>

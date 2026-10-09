@@ -73,12 +73,12 @@ function Cover({ product, tilt }: { product: MarketplaceProduct; tilt: number })
           />
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center text-center px-3 py-4" style={{ color: accent }}>
-            <span className="text-[8px] sm:text-[9px] tracking-[2px] uppercase">Learn with purpose</span>
+            <span className="text-[12px] tracking-[1px] uppercase">Learn with purpose</span>
             <strong className="block font-serif font-normal text-[19px] sm:text-[23px] leading-[1.08] my-3 line-clamp-3">
               {product.name}
             </strong>
             <small className="text-[12px] sm:text-[12px] text-[#5d6570] line-clamp-1">
-              {product.sellerName ?? 'Edudeen'}
+              {product.storeName ?? product.sellerName ?? 'Edudeen'}
             </small>
           </div>
         )}

@@ -73,11 +73,11 @@ function TestimonialFormModal({ testimonial, onClose, onSaved }: { testimonial: 
         <Input label="Display Order" type="number" min={0} value={order} onChange={e => setOrder(e.target.value)} />
         <div className="flex items-center justify-between">
           <span className="text-[13px] font-medium text-charcoal">Verified Seller badge</span>
-          <Toggle checked={isVerifiedSeller} onChange={setIsVerifiedSeller} />
+          <Toggle label="Verified seller badge" checked={isVerifiedSeller} onChange={setIsVerifiedSeller} />
         </div>
         <div className="flex items-center justify-between">
           <span className="text-[13px] font-medium text-charcoal">Published (visible on homepage)</span>
-          <Toggle checked={isActive} onChange={setIsActive} />
+          <Toggle label="Published on homepage" checked={isActive} onChange={setIsActive} />
         </div>
         {error && <p className="text-[12px] text-error">{error}</p>}
       </div>

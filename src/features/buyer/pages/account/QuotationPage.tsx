@@ -47,14 +47,14 @@ export function QuotationPage() {
 
         <section className="grid grid-cols-1 sm:grid-cols-2 gap-6 py-6 border-b border-bone">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate mb-1">Prepared for</p>
+            <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-slate mb-1">Prepared for</p>
             <p className="font-semibold">{q.institutionName}</p>
             <p className="text-graphite">{type}{q.city ? ` · ${q.city}` : ''}</p>
             <p className="text-graphite">Attn: {q.contactName} · {q.contactPhone}</p>
             {q.buyerEmail && <p className="text-graphite">{q.buyerEmail}</p>}
           </div>
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate mb-1">From</p>
+            <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-slate mb-1">From</p>
             <p className="font-semibold">{q.storeName}</p>
             {q.storeContactEmail && <p className="text-graphite">{q.storeContactEmail}</p>}
             {q.storeContactPhone && <p className="text-graphite">{q.storeContactPhone}</p>}
@@ -63,7 +63,7 @@ export function QuotationPage() {
 
         <table className="w-full mt-6 border-collapse">
           <thead>
-            <tr className="text-start text-[11px] uppercase tracking-[0.06em] text-slate border-b border-bone">
+            <tr className="text-start text-[12px] uppercase tracking-[0.06em] text-slate border-b border-bone">
               <th className="py-2 font-semibold">Item</th>
               <th className="py-2 font-semibold text-end">Qty</th>
               <th className="py-2 font-semibold text-end">Unit price</th>
@@ -86,20 +86,20 @@ export function QuotationPage() {
         )}
         {q.offer && (
           <section className="mt-6">
-            <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate mb-1">Payment terms</p>
+            <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-slate mb-1">Payment terms</p>
             <p className="text-graphite">{NET_TERMS_LABEL[q.offer.netTerms ?? 'none']}</p>
           </section>
         )}
         {(q.purchaseOrderNumber || q.purchaseOrderUrl) && (
           <section className="mt-6">
-            <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate mb-1">Purchase order</p>
+            <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-slate mb-1">Purchase order</p>
             {q.purchaseOrderNumber && <p className="text-graphite">PO number: <span className="font-mono">{q.purchaseOrderNumber}</span></p>}
             {q.purchaseOrderUrl && <p className="text-graphite print:hidden"><a href={q.purchaseOrderUrl} target="_blank" rel="noopener noreferrer" className="text-brand-orange underline">View purchase order file</a></p>}
           </section>
         )}
         {q.offer?.note && (
           <section className="mt-6">
-            <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate mb-1">Terms from the seller</p>
+            <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-slate mb-1">Terms from the seller</p>
             <p className="whitespace-pre-line text-graphite">{q.offer.note}</p>
           </section>
         )}

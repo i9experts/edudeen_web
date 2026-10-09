@@ -28,7 +28,7 @@ function StoreCell({ lead }: { lead: LeadRow }) {
 function DetailRow({ label, value }: { label: string; value: string | null | undefined }) {
   return (
     <div>
-      <p className="text-[10px] text-slate uppercase tracking-[0.05em]">{label}</p>
+      <p className="text-[12px] text-slate uppercase tracking-[0.05em]">{label}</p>
       <p className="text-[12.5px] font-semibold text-carbon mt-[2px]">{value || '—'}</p>
     </div>
   );

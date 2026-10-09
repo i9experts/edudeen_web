@@ -21,7 +21,7 @@ export function EducatorCard({ profile, verified, name, compact = false }: {
   return (
     <section aria-label="Meet the teacher" className="rounded-2xl border border-bone bg-white px-5 py-4">
       <div className="flex items-center gap-2 flex-wrap mb-1">
-        <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-brand-royal">Meet the teacher</p>
+        <p className="text-[12px] font-bold uppercase tracking-[0.12em] text-brand-royal">Meet the teacher</p>
         {verified && (
           <span className="inline-flex items-center gap-1 rounded-full bg-success-bg text-success text-[12px] font-semibold px-2 py-[2px]">
             <BadgeCheck size={12} /> Verified Educator

@@ -67,7 +67,7 @@ function Card({ title, step, need, hint, children }: { title: string; step?: num
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="font-serif font-normal text-[19px] sm:text-[21px] text-carbon leading-tight">{title}</h2>
             {need && (
-              <span className={`text-[11px] font-bold uppercase tracking-[0.08em] px-2 py-[2px] rounded-full ${NEED_STYLE[need]}`}>{need}</span>
+              <span className={`text-[12px] font-bold uppercase tracking-[0.08em] px-2 py-[2px] rounded-full ${NEED_STYLE[need]}`}>{need}</span>
             )}
           </div>
           {hint && <p className="text-[13px] text-slate mt-1 leading-relaxed">{hint}</p>}
@@ -721,7 +721,7 @@ export default function StoreAddProduct() {
 
           {/* Readiness checklist */}
           <section className="bg-white border border-bone rounded-xl px-5 py-5">
-            <p className="text-[11px] font-bold text-brand-royal uppercase tracking-[0.15em] mb-3">Ready to share?</p>
+            <p className="text-[12px] font-bold text-brand-royal uppercase tracking-[0.15em] mb-3">Ready to share?</p>
             <ul className="flex flex-col gap-2 list-none p-0 m-0">
               {checklist.map(item => (
                 <li key={item.label} className="flex items-center gap-2 text-[13px]">

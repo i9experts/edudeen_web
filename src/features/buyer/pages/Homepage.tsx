@@ -35,7 +35,7 @@ import { apiGetTestimonials, type Testimonial } from '@/api/services/testimonial
 import { apiGetPlatformStats, apiGetTopStores, type PlatformStats, type PublicStoreListItem } from '@/api/services/store';
 import { apiGetCategoryTree, type CategoryNode } from '@/api/services/categories';
 import { EDUCATION_LEVELS } from '@/api/services/product';
-import type { MarketplaceProduct, MarketplaceSortBy } from '@/api/services/marketplace';
+import { apiGetAllProducts, type MarketplaceProduct, type MarketplaceSortBy } from '@/api/services/marketplace';
 import { apiGetHomeShelves, type CuratedShelf } from '@/api/services/classroom';
 import { apiBrowseProducts } from '@/api/services/marketplace';
 import { RevealStagger } from '@/components/comman/motion/Reveal';
@@ -188,18 +188,31 @@ export function Homepage() {
   //    Marketplace page's own rails use ──
   const { products: featuredPool, loading: poolLoading } = useProductsByCategory(1, 24);
 
-  const flashDeals = featuredPool
+  // Deals are ranked over a much bigger slice of the catalogue than the first page (the old pool of 24
+  // missed higher discounts further down). Three pages of 50 are fetched once, in parallel.
+  const [dealsPool, setDealsPool] = useState<MarketplaceProduct[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all([1, 2, 3].map(pg => apiGetAllProducts(pg, 50).then(r => r.data?.products ?? []).catch(() => [] as MarketplaceProduct[])))
+      .then(pages => { if (!cancelled) setDealsPool(pages.flat()); });
+    return () => { cancelled = true; };
+  }, []);
+
+  const flashDeals = (dealsPool.length > 0 ? dealsPool : featuredPool)
     .map(p => {
       const dv = (p.variants ?? []).find(v => v.isDefault) ?? p.variants?.[0];
       const price = dv?.price ?? 0;
-      const compareAt = dv?.compareAtPrice ?? null;
-      const pct = compareAt != null && compareAt > price ? Math.round((1 - price / compareAt) * 100) : 0;
+      const compareAt = dv?.compareAtPrice != null && dv.compareAtPrice > price ? dv.compareAtPrice : null;
+      // A running percentage sale lowers the price further (cards and checkout apply the same percentage).
+      const salePct = p.activeCampaign?.discountType === 'percentage' && p.activeCampaign.discountValue ? p.activeCampaign.discountValue : 0;
+      const effective = salePct ? price * (1 - salePct / 100) : price;
+      const was = compareAt ?? (salePct ? price : null);
+      const pct = was != null && was > effective ? Math.round((1 - effective / was) * 100) : 0;
       return { product: p, pct };
     })
     .filter(x => x.pct > 0)
     .sort((a, b) => b.pct - a.pct)
     .slice(0, 10);
-
   const topPicks = [...featuredPool]
     .sort((a, b) => (b.purchaseCount + b.averageRating * 10) - (a.purchaseCount + a.averageRating * 10))
     .slice(0, 10);
@@ -464,7 +477,7 @@ export function Homepage() {
     <div className="bg-white min-h-full">
 
       {/* ── Header — the same navbar + mega-menu every shopping page uses ── */}
-      <div className="sticky top-0 z-50 [&>nav]:!border-b-0">
+      <div className="sticky top-[var(--navbar-top,0px)] z-50 [&>nav]:!border-b-0">
         <BuyerNavbar />
         <MegaMenuBar
           compact

@@ -128,7 +128,7 @@ export function Downloads() {
             {groups.map(([label, list]) => (
               <section key={label} aria-label={label}>
                 {groupBy !== 'none' && (
-                  <h2 className="px-4 md:px-5 pt-4 pb-1 text-[11px] font-bold uppercase tracking-[0.1em] text-slate">{label} · {list.length}</h2>
+                  <h2 className="px-4 md:px-5 pt-4 pb-1 text-[12px] font-bold uppercase tracking-[0.1em] text-slate">{label} · {list.length}</h2>
                 )}
                 <ul className="divide-y divide-[#f5f4ef] list-none p-0 m-0">
                   {list.map(item => (

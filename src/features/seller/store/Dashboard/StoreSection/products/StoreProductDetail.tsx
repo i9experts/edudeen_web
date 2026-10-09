@@ -200,20 +200,20 @@ export default function StoreProductDetail() {
             <div className="flex items-center gap-6 pt-4 mt-4 border-t border-bone">
               {!isDigital && (
                 <div>
-                  <p className="text-[10px] text-slate uppercase tracking-[0.06em] font-semibold">Stock</p>
+                  <p className="text-[12px] text-slate uppercase tracking-[0.06em] font-semibold">Stock</p>
                   <p className="text-[14px] font-bold text-charcoal mt-0.5">{v.stock} units</p>
                 </div>
               )}
               <div>
-                <p className="text-[10px] text-slate uppercase tracking-[0.06em] font-semibold">Marketplace</p>
+                <p className="text-[12px] text-slate uppercase tracking-[0.06em] font-semibold">Marketplace</p>
                 <p className="text-[14px] font-bold text-charcoal mt-0.5">{p.isListedOnEdudeen ? 'Listed' : 'Not listed'}</p>
               </div>
               <div>
-                <p className="text-[10px] text-slate uppercase tracking-[0.06em] font-semibold">Tags</p>
+                <p className="text-[12px] text-slate uppercase tracking-[0.06em] font-semibold">Tags</p>
                 <p className="text-[14px] font-bold text-charcoal mt-0.5">{(p.tags ?? []).length}</p>
               </div>
               <div>
-                <p className="text-[10px] text-slate uppercase tracking-[0.06em] font-semibold">Created</p>
+                <p className="text-[12px] text-slate uppercase tracking-[0.06em] font-semibold">Created</p>
                 <p className="text-[14px] font-bold text-charcoal mt-0.5">{formatDate(p.createdAt)}</p>
               </div>
             </div>

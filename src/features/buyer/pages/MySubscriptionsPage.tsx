@@ -385,7 +385,7 @@ function NotificationPreferencesPanel() {
         {(Object.keys(NOTIF_LABELS) as Array<keyof NotificationPreferences>).map(key => (
           <div key={key} className="flex items-center justify-between text-[13px] text-graphite py-1">
             {NOTIF_LABELS[key]}
-            <Toggle checked={prefs[key]} disabled={saving} onChange={() => toggle(key)} />
+            <Toggle label={NOTIF_LABELS[key]} checked={prefs[key]} disabled={saving} onChange={() => toggle(key)} />
           </div>
         ))}
       </div>

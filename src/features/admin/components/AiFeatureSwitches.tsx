@@ -64,7 +64,7 @@ export function AiFeatureSwitches() {
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <span className="text-[12px] text-graphite">All AI</span>
-          <Toggle checked={cfg.allEnabled} onChange={(v) => setFlag('__all', v)} />
+          <Toggle label="All AI features" checked={cfg.allEnabled} onChange={(v) => setFlag('__all', v)} />
         </div>
       </div>
 
@@ -78,7 +78,7 @@ export function AiFeatureSwitches() {
                   <p className="text-[12px] text-carbon truncate">{f.label}</p>
                   {g.id !== 'platform' && f.credits > 0 && <p className="text-[10px] text-slate">{f.credits} credits per use</p>}
                 </div>
-                <Toggle checked={f.enabled} disabled={busy === f.key || !cfg.allEnabled} onChange={(v) => setFlag(f.key, v)} />
+                <Toggle label={`${f.label} enabled`} checked={f.enabled} disabled={busy === f.key || !cfg.allEnabled} onChange={(v) => setFlag(f.key, v)} />
               </div>
             ))}
           </div>
@@ -89,7 +89,7 @@ export function AiFeatureSwitches() {
         <p className="text-[10px] font-semibold text-slate uppercase tracking-[0.08em] mb-2">Turn AI off for one store</p>
         <div className="flex flex-col sm:flex-row gap-2 sm:items-end">
           <div className="flex-1"><Input label="Store ID" value={storeId} onChange={(e) => setStoreId(e.target.value.trim())} placeholder="24-character store id" /></div>
-          <select value={storeFeature} onChange={(e) => setStoreFeature(e.target.value)} className="py-[9px] px-3 rounded-md border border-bone bg-white text-[13px] text-charcoal">
+          <select aria-label="AI feature to switch for this store" value={storeFeature} onChange={(e) => setStoreFeature(e.target.value)} className="py-[9px] px-3 rounded-md border border-bone bg-white text-[13px] text-charcoal">
             <option value="__all">All AI features</option>
             {cfg.features.map((f) => <option key={f.key} value={f.key}>{f.label}</option>)}
           </select>

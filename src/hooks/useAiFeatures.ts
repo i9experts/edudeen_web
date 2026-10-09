@@ -6,8 +6,6 @@ const cache = new Map<string, { at: number; state: AiFeaturesState }>();
 const inflight = new Map<string, Promise<AiFeaturesState>>();
 const TTL = 60_000;
 const OFF: AiFeaturesState = { available: false, studio: false, features: {} };
-// The six original AI Studio tools also run on the dev mock provider, so they follow "studio" instead of "available".
-const LEGACY = new Set(['listing_writer', 'price_optimizer', 'worksheet_builder', 'seo_booster', 'email_campaigns', 'image_enhancer']);
 
 function load(storeId?: string): Promise<AiFeaturesState> {
   const key = storeId ?? '';
@@ -35,6 +33,11 @@ export function useAiFeatures(storeId?: string) {
   return {
     loading: state === null,
     available: !!state?.available,
-    enabled: (key: string) => !!state && (LEGACY.has(key) ? !!(state.studio ?? state.available) : state.available) && state.features[key] !== false,
+    /** True only when the server has a real AI key AND the admin has not switched the feature off. */
+    enabled: (key: string) => !!state && state.available && state.features[key] !== false,
+    /** Features that do not need the AI key (voice search = browser speech to text): only the admin switch counts. */
+    flagOn: (key: string) => !!state && state.features[key] !== false,
+    /** Capabilities that need extra server configuration (image enhancer provider, TTS, embeddings). */
+    extras: state?.extras ?? { imageEnhancer: false, tts: false, semanticSearch: false },
   };
 }

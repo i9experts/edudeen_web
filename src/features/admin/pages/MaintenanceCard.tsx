@@ -172,7 +172,7 @@ export function MaintenanceCard({ config, onSaved }: { config: PlatformConfig; o
 
         {/* Preview */}
         <div className="mt-4 rounded-lg bg-cream border border-bone px-4 py-3">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-slate m-0 mb-1">Users will see</p>
+          <p className="text-[12px] font-bold uppercase tracking-wider text-slate m-0 mb-1">Users will see</p>
           <p className="text-[14px] font-bold text-carbon m-0">{title.trim() || info.defaultTitle}</p>
           <p className="text-[12.5px] text-charcoal m-0 mt-1">{message.trim() || info.defaultMessage}</p>
           <p className="text-[12px] text-slate m-0 mt-2">

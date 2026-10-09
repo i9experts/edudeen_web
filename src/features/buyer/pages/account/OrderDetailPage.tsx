@@ -110,7 +110,7 @@ export function OrderDetailPage() {
             <Timeline placedAt={order.createdAt} paidAt={order.paidAt} so={so} />
             {Array.isArray((so as any).trackingEvents) && (so as any).trackingEvents.length > 0 && (
               <div className="mt-4 pt-3 border-t border-bone">
-                <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate mb-1.5">Courier updates</p>
+                <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-slate mb-1.5">Courier updates</p>
                 <ul className="flex flex-col gap-1 list-none p-0 m-0">
                   {[...(so as any).trackingEvents].reverse().map((ev: any, i: number) => (
                     <li key={i} className="flex flex-wrap justify-between gap-x-3 text-[12.5px]">
@@ -146,7 +146,7 @@ export function OrderDetailPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card>
-          <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-slate mb-2"><MapPin size={12} /> Delivery address</p>
+          <p className="flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-[0.08em] text-slate mb-2"><MapPin size={12} /> Delivery address</p>
           {addr && Object.keys(addr).length ? (
             <p className="text-[13px] text-charcoal leading-relaxed">
               {addr.recipientName}{addr.phoneNumber ? ` · ${addr.phoneNumber}` : ''}<br />
@@ -155,7 +155,7 @@ export function OrderDetailPage() {
           ) : <p className="text-[13px] text-slate">Digital order — nothing to ship.</p>}
         </Card>
         <Card>
-          <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-slate mb-2"><CreditCard size={12} /> Payment</p>
+          <p className="flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-[0.08em] text-slate mb-2"><CreditCard size={12} /> Payment</p>
           <dl className="flex flex-col gap-1 text-[13px] tabular-nums">
             <div className="flex justify-between"><dt className="text-slate">Subtotal</dt><dd>{money(order.subtotal, order.currency)}</dd></div>
             {discounts.map(([l, v]) => <div key={l} className="flex justify-between"><dt className="text-slate">{l}</dt><dd className="text-success">−{money(v, order.currency)}</dd></div>)}

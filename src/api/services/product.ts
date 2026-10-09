@@ -254,6 +254,16 @@ export interface InventoryProduct {
   reviewNote?:  string | null;
   price:        number;
   allTimeSales: number;
+  /** Set for products whose stock can be edited inline (single variant). */
+  defaultVariantId?: string | null;
+  variantCount?:     number;
+}
+
+/** PATCH /api/products/stock/bulk — seller only; sets absolute stock per variant. */
+export function apiBulkUpdateStock(storeId: string, updates: { variantId: string; stock: number }[]) {
+  return client.patch<never, ApiResponse<{ updated: number; skipped: { variantId: string; reason: string }[] }>>(
+    ENDPOINTS.PRODUCT.BULK_STOCK, { storeId, updates },
+  );
 }
 
 export interface InventoryStats {

@@ -62,19 +62,19 @@ export function SellerFinancialDetailsModal({ storeId, onClose }: SellerFinancia
         <div className="flex flex-col gap-4">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="bg-cream rounded-lg px-3 py-2">
-              <p className="text-[11px] text-slate uppercase tracking-[0.05em]">Available</p>
+              <p className="text-[12px] text-slate uppercase tracking-[0.05em]">Available</p>
               <p className="text-[16px] font-bold text-charcoal">{formatMoneyCompact(d.balance.availableBalance, d.balance.currency)}</p>
             </div>
             <div className="bg-cream rounded-lg px-3 py-2">
-              <p className="text-[11px] text-slate uppercase tracking-[0.05em]">Pending</p>
+              <p className="text-[12px] text-slate uppercase tracking-[0.05em]">Pending</p>
               <p className="text-[16px] font-bold text-charcoal">{formatMoneyCompact(d.balance.pendingBalance, d.balance.currency)}</p>
             </div>
             <div className="bg-cream rounded-lg px-3 py-2">
-              <p className="text-[11px] text-slate uppercase tracking-[0.05em]">Lifetime Revenue</p>
+              <p className="text-[12px] text-slate uppercase tracking-[0.05em]">Lifetime Revenue</p>
               <p className="text-[16px] font-bold text-charcoal">{formatMoneyCompact(d.balance.totalRevenue, d.balance.currency)}</p>
             </div>
             <div className="bg-cream rounded-lg px-3 py-2">
-              <p className="text-[11px] text-slate uppercase tracking-[0.05em]">Lifetime Payouts</p>
+              <p className="text-[12px] text-slate uppercase tracking-[0.05em]">Lifetime Payouts</p>
               <p className="text-[16px] font-bold text-charcoal">{formatMoneyCompact(d.balance.totalPayouts, d.balance.currency)}</p>
             </div>
           </div>

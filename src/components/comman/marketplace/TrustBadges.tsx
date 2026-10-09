@@ -12,7 +12,7 @@ export function TrustBadges({ trust, className = '' }: { trust?: TrustInfo | nul
   if (!trust) return null;
   const ages = ageLabel(trust.ageAppropriateMin, trust.ageAppropriateMax);
   if (!trust.scholarReviewed && !ages) return null;
-  const pill = 'inline-flex items-center gap-1 text-[11.5px] font-semibold px-2 py-[2px] rounded-full bg-success-bg text-success';
+  const pill = 'inline-flex items-center gap-1 text-[12px] font-semibold px-2 py-[2px] rounded-full bg-success-bg text-success';
   return (
     <span className={`flex flex-wrap gap-1.5 ${className}`}>
       {trust.scholarReviewed && <span className={pill}><ShieldCheck size={11} aria-hidden="true" /> Scholar reviewed</span>}

@@ -40,7 +40,7 @@ export function EmojiPicker({ onSelect, className }: EmojiPickerProps) {
         <div className="absolute bottom-[46px] start-0 z-50 w-[260px] max-h-[280px] overflow-y-auto bg-white border border-bone rounded-[14px] p-[10px]">
           {EMOJI_GROUPS.map(group => (
             <div key={group.label} className="mb-[8px]">
-              <p className="text-[10px] font-semibold text-slate uppercase tracking-[0.05em] mb-[4px] px-[2px]">{group.label}</p>
+              <p className="text-[12px] font-semibold text-slate uppercase tracking-[0.05em] mb-[4px] px-[2px]">{group.label}</p>
               <div className="grid grid-cols-7 gap-[2px]">
                 {group.emojis.map(e => (
                   <button

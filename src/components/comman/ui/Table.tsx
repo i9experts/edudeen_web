@@ -267,7 +267,7 @@ export function Table<T = Record<string, unknown>>({
                       </div>
                     ) : (
                       <div key={col.key} className="flex items-start justify-between gap-3">
-                        <span className="text-[10.5px] font-semibold text-slate uppercase tracking-[0.05em] shrink-0 pt-[1px]">{col.header}</span>
+                        <span className="text-[12px] font-semibold text-slate uppercase tracking-[0.05em] shrink-0 pt-[1px]">{col.header}</span>
                         <span className="text-[13px] text-carbon text-end min-w-0">
                           {col.render ? col.render(row, i) : String((row as Record<string, unknown>)[col.key] ?? '')}
                         </span>

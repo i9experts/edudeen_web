@@ -887,11 +887,11 @@ export function StoreMarketing() {
         {/* Metrics — coupon numbers are real; email/cart features below have no backend yet */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="bg-white border border-bone rounded-[10px] px-5 py-4">
-            <p className="text-[11px] font-medium text-slate uppercase tracking-[0.06em] mb-1">Active Coupons</p>
+            <p className="text-[12px] font-medium text-slate uppercase tracking-[0.06em] mb-1">Active Coupons</p>
             <p className="text-[28px] font-bold text-carbon leading-[1.15]">{activeCount}</p>
           </div>
           <div className="bg-white border border-bone rounded-[10px] px-5 py-4">
-            <p className="text-[11px] font-medium text-slate uppercase tracking-[0.06em] mb-1">Total Redemptions</p>
+            <p className="text-[12px] font-medium text-slate uppercase tracking-[0.06em] mb-1">Total Redemptions</p>
             <p className="text-[28px] font-bold text-carbon leading-[1.15]">{totalRedemptions}</p>
           </div>
         </div>
@@ -993,7 +993,7 @@ export function StoreMarketing() {
                   ['Revenue', `$${promotionAnalytics.revenueUSD.toFixed(2)}`],
                 ].map(([label, value]) => (
                   <div key={label} className="bg-white border border-bone rounded-[10px] px-3.5 py-3">
-                    <p className="text-[10px] font-medium text-slate uppercase tracking-[0.06em] mb-1">{label}</p>
+                    <p className="text-[12px] font-medium text-slate uppercase tracking-[0.06em] mb-1">{label}</p>
                     <p className="text-[18px] font-bold text-carbon leading-[1.15]">{value}</p>
                   </div>
                 ))}
@@ -1068,7 +1068,7 @@ export function StoreMarketing() {
 
             {pinnedIds.length > 0 && (
               <div className="bg-white border border-bone rounded-[10px] px-[18px] py-4">
-                <p className="text-[11px] font-semibold text-slate uppercase tracking-[0.06em] mb-2">Pinned Order</p>
+                <p className="text-[12px] font-semibold text-slate uppercase tracking-[0.06em] mb-2">Pinned Order</p>
                 <div className="flex flex-col gap-1.5">
                   {pinnedIds.map((id, i) => {
                     const name = productNames[id];
@@ -1087,7 +1087,7 @@ export function StoreMarketing() {
             )}
 
             <div className="bg-white border border-bone rounded-[10px] px-[18px] py-4">
-              <p className="text-[11px] font-semibold text-slate uppercase tracking-[0.06em] mb-2">All Products</p>
+              <p className="text-[12px] font-semibold text-slate uppercase tracking-[0.06em] mb-2">All Products</p>
               {productSearchInput}
               {productSearch.error && <p className="text-xs text-error mb-2">{productSearch.error}</p>}
               {inventoryLoading ? (

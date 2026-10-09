@@ -15,6 +15,7 @@ import type { SellerOverviewData, RevenuePoint, SellerTodaySummaryData } from '@
 import type { InventoryProduct } from '@/api/services/product';
 import { apiStoreDashboardSummary, type OnboardingChecklist } from '@/api/services/storeDashboard';
 import { OnboardingChecklistCard } from './OnboardingChecklistCard';
+import { WeeklyDigestCard } from './Analytic/ai/components/WeeklyDigestCard';
 import { getStorefrontUrl } from '@/utils/storefrontUrl';
 import { formatNumber, formatBucketLabel } from '@/components/comman/analytics/format';
 import { formatMoneyCompact, formatMoney, currencySymbol } from '@/utils/currency';
@@ -144,7 +145,7 @@ function StoreInfoCard() {
       {/* URL + Product Types */}
       <div className="px-5 sm:px-6 py-4 border-b border-bone flex flex-col gap-3">
         <div>
-          <p className="text-[11px] font-bold text-brand-royal uppercase tracking-[0.14em] mb-1.5">Store URL</p>
+          <p className="text-[12px] font-bold text-brand-royal uppercase tracking-[0.14em] mb-1.5">Store URL</p>
           <div className="flex items-center gap-2 bg-cream rounded-lg px-[10px] py-[8px] border border-bone">
             <span className="flex-1 text-[13px] font-medium text-charcoal overflow-hidden text-ellipsis whitespace-nowrap">
               {store?.slug ? getStorefrontUrl(store.slug).replace(/^https?:\/\//, '') : '…'}
@@ -163,7 +164,7 @@ function StoreInfoCard() {
 
         {(store?.productTypes?.length ?? 0) > 0 && (
           <div>
-            <p className="text-[11px] font-bold text-brand-royal uppercase tracking-[0.14em] mb-1.5">
+            <p className="text-[12px] font-bold text-brand-royal uppercase tracking-[0.14em] mb-1.5">
               Product Types
             </p>
             <div className="flex flex-wrap gap-1">
@@ -447,6 +448,9 @@ export default function StoreDashboard() {
 
           {/* Admin sale campaigns — join right from the dashboard */}
           <PlatformSalesCard storeId={storeId} />
+
+          {/* Opt-in weekly AI digest (hidden when AI is off) */}
+          <WeeklyDigestCard storeId={storeId} />
 
           {/* Setup checklist (real data; hidden once complete) */}
           {metrics?.checklist && <OnboardingChecklistCard checklist={metrics.checklist} storeId={storeId} />}

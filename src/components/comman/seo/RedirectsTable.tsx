@@ -30,7 +30,7 @@ export function RedirectsTable({ data, pagination, onEdit, onDelete, onToggleAct
     { key: 'hitCount', header: 'Hits', align: 'right', render: r => r.hitCount ?? 0 },
     {
       key: 'isActive', header: 'Active', align: 'center',
-      render: r => <Toggle checked={r.isActive} onChange={next => onToggleActive(r, next)} size="sm" />,
+      render: r => <Toggle label={`Redirect ${r.source} active`} checked={r.isActive} onChange={next => onToggleActive(r, next)} size="sm" />,
     },
     {
       key: 'actions', header: '', align: 'right',

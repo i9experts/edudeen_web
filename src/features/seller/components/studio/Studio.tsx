@@ -48,7 +48,7 @@ export function StudioPanel({
 /** Small uppercase letter-spaced royal-blue label. */
 export function StudioEyebrow({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <p className={clsx('text-[11px] sm:text-[12px] font-bold text-brand-royal uppercase tracking-[0.15em]', className)}>
+    <p className={clsx('text-[12px] sm:text-[12px] font-bold text-brand-royal uppercase tracking-[0.15em]', className)}>
       {children}
     </p>
   );

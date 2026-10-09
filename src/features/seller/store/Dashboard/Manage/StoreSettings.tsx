@@ -91,7 +91,7 @@ function MobileStoreMenu({ active, onSelect }: { active: string; onSelect: (id: 
   return (
     <div className="lg:hidden bg-white border border-bone rounded-2xl overflow-hidden">
       <div className="px-5 pt-4 pb-2">
-        <p className="text-[10.5px] font-bold uppercase tracking-[0.06em] text-slate">Store</p>
+        <p className="text-[12px] font-bold uppercase tracking-[0.06em] text-slate">Store</p>
       </div>
       <div className="divide-y divide-[#f5f4ef]">
         {STORE_SETTINGS_NAV.map(item => {
@@ -762,7 +762,7 @@ export default function StoreSettings() {
                     <p className="text-[13px] font-medium text-charcoal">Cash on Delivery</p>
                     <p className="text-[12px] text-slate">Let buyers pay in cash when their physical order arrives.</p>
                   </div>
-                  <Toggle checked={codEnabled} onChange={setCodEnabled} />
+                  <Toggle label="Cash on delivery" checked={codEnabled} onChange={setCodEnabled} />
                 </div>
               </div>
 

@@ -214,7 +214,7 @@ export function LegalPageLayout({ title, subtitle, lastUpdated: lastUpdatedProp,
 
         {/* Table of contents — desktop only, sticky */}
         <nav aria-label="Table of contents" className="print:hidden hidden lg:block sticky top-16">
-          <p className="text-[11px] font-bold text-slate uppercase tracking-[0.08em] mb-3">On this page</p>
+          <p className="text-[12px] font-bold text-slate uppercase tracking-[0.08em] mb-3">On this page</p>
           <ul className="flex flex-col gap-[2px] border-s border-bone">
             {sections.map((s, i) => (
               <li key={s.id}>

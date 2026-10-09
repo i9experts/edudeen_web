@@ -87,7 +87,7 @@ export function ListingWriterTool({ storeId, onCreditsChanged, creditCost }: Lis
               {(['professional', 'friendly', 'academic'] as const).map(t => (
                 <button
                   key={t}
-                  onClick={() => setTone(t)}
+                  type="button" aria-pressed={tone === t} onClick={() => setTone(t)}
                   className="flex-1 py-2 rounded-lg text-xs font-medium cursor-pointer capitalize transition-all duration-150 border"
                   style={{
                     borderColor: tone === t ? '#174771' : '#E8E6DC',

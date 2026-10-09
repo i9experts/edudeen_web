@@ -103,7 +103,7 @@ export function LineChart({
             <Legend
               iconType="circle"
               iconSize={8}
-              wrapperStyle={{ fontSize: 11, fontFamily: CHART_FONT, color: '#8C8A82', paddingTop: 8 }}
+              wrapperStyle={{ fontSize: 12, fontFamily: CHART_FONT, color: '#8C8A82', paddingTop: 8 }}
             />
           )}
           {lines.map((line, i) => (

@@ -109,7 +109,7 @@ export function NotificationsPanel() {
             <>
               {/* Channel Delivery Settings */}
               <div className="flex flex-col gap-4 pb-4">
-                <p className="text-[11px] font-semibold text-slate uppercase tracking-[0.05em]">Delivery Channels</p>
+                <p className="text-[12px] font-semibold text-slate uppercase tracking-[0.05em]">Delivery Channels</p>
                 
                 <div className="flex justify-between items-start gap-4">
                   <div className="flex gap-3">
@@ -124,6 +124,7 @@ export function NotificationsPanel() {
                     </div>
                   </div>
                   <Toggle
+                    label="Push notifications"
                     checked={preferences?.pushEnabled ?? true}
                     onChange={(v) => handleTogglePref('pushEnabled', v)}
                   />
@@ -142,6 +143,7 @@ export function NotificationsPanel() {
                     </div>
                   </div>
                   <Toggle
+                    label="Email notifications"
                     checked={preferences?.emailEnabled ?? true}
                     onChange={(v) => handleTogglePref('emailEnabled', v)}
                   />
@@ -161,6 +163,7 @@ export function NotificationsPanel() {
                     </div>
                   </div>
                   <Toggle
+                    label="WhatsApp order updates"
                     checked={preferences?.whatsappEnabled ?? false}
                     onChange={(v) => handleTogglePref('whatsappEnabled', v)}
                   />
@@ -177,15 +180,33 @@ export function NotificationsPanel() {
                     </div>
                   </div>
                   <Toggle
+                    label="SMS order updates"
                     checked={preferences?.smsEnabled ?? false}
                     onChange={(v) => handleTogglePref('smsEnabled', v)}
+                  />
+                </div>
+
+                <div className="flex justify-between items-start gap-4 pt-2">
+                  <div className="flex gap-3">
+                    <div className="size-8 rounded-lg bg-bone flex items-center justify-center shrink-0">
+                      <MessageSquare size={15} className="text-slate" />
+                    </div>
+                    <div>
+                      <p className="text-[13px] font-semibold text-charcoal leading-none">Reminders and price alerts on WhatsApp/SMS</p>
+                      <p className="text-[12px] text-slate mt-1 leading-normal">Cart reminders, back-in-stock and price-drop alerts for saved items, and referral rewards. Needs WhatsApp or SMS turned on above and the Promotions topic enabled.</p>
+                    </div>
+                  </div>
+                  <Toggle
+                    label="Reminders and price alerts on WhatsApp or SMS"
+                    checked={preferences?.retentionChannelsEnabled ?? false}
+                    onChange={(v) => handleTogglePref('retentionChannelsEnabled', v)}
                   />
                 </div>
               </div>
 
               {/* Notification Category Filters */}
               <div className="flex flex-col gap-4 pt-4">
-                <p className="text-[11px] font-semibold text-slate uppercase tracking-[0.05em]">Notification Topics</p>
+                <p className="text-[12px] font-semibold text-slate uppercase tracking-[0.05em]">Notification Topics</p>
 
                 <div className="flex justify-between items-center gap-4">
                   <div className="flex items-center gap-3">
@@ -199,6 +220,7 @@ export function NotificationsPanel() {
                   </div>
                   <Toggle
                     size="sm"
+                    label="Orders and deliveries"
                     checked={preferences?.prefs?.orders ?? true}
                     onChange={(v) => handleTogglePref('orders', v)}
                   />
@@ -216,6 +238,7 @@ export function NotificationsPanel() {
                   </div>
                   <Toggle
                     size="sm"
+                    label="Direct messages"
                     checked={preferences?.prefs?.messages ?? true}
                     onChange={(v) => handleTogglePref('messages', v)}
                   />
@@ -233,6 +256,7 @@ export function NotificationsPanel() {
                   </div>
                   <Toggle
                     size="sm"
+                    label="Loyalty and reward points"
                     checked={preferences?.prefs?.loyalty ?? true}
                     onChange={(v) => handleTogglePref('loyalty', v)}
                   />
@@ -250,6 +274,7 @@ export function NotificationsPanel() {
                   </div>
                   <Toggle
                     size="sm"
+                    label="Subscriptions and plans"
                     checked={preferences?.prefs?.subscriptions ?? true}
                     onChange={(v) => handleTogglePref('subscriptions', v)}
                   />
@@ -324,7 +349,7 @@ export function NotificationsPanel() {
                       {notif.title}
                     </p>
                     {!notif.isRead && (
-                      <span className="px-1.5 py-[1px] rounded bg-brand-orange text-white text-[8px] font-bold uppercase tracking-[0.05em]">
+                      <span className="px-1.5 py-[1px] rounded bg-brand-orange text-white text-[12px] font-bold uppercase tracking-[0.05em]">
                         New
                       </span>
                     )}

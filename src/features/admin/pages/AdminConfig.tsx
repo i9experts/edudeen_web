@@ -1,6 +1,7 @@
 import { SocialLinksCard } from './SocialLinksCard';
 import { HomeContentCard } from './HomeContentCard';
 import { MaintenanceCard } from './MaintenanceCard';
+import { ReferralSettingsCard } from './ReferralSettingsCard';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -182,7 +183,7 @@ function ManualPaymentConfigCard({ config, onSaved }: { config: PlatformConfig; 
           <p className="font-serif font-normal text-[19px] sm:text-[21px] text-carbon leading-[1.25]">Manual Bank Transfer</p>
           <p className="text-[12px] text-slate">Legacy platform-account transfer (only used to review old proofs). Bank transfer at checkout is now offered per store: it appears as soon as that store's seller saves their own bank/wallet details in Finance → Direct payments, and the seller confirms the payment — this toggle does not add it to checkout.</p>
         </div>
-        <Toggle checked={form.enabled} onChange={(next) => setField('enabled', next)} />
+        <Toggle label="Manual bank transfer enabled" checked={form.enabled} onChange={(next) => setField('enabled', next)} />
       </div>
       <div className="flex flex-col gap-[14px]">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-[14px]">
@@ -264,6 +265,7 @@ export function AdminConfig() {
           </div>
           <ManualPaymentConfigCard config={config} onSaved={setConfig} />
           <HomeContentCard />
+          <ReferralSettingsCard />
           <SocialLinksCard />
         </>
       ) : null}

@@ -114,7 +114,7 @@ function ReviewModal({ request, onClose, onDone }: { request: RefundRequestRow; 
         </div>
 
         <div>
-          <p className="text-[11px] font-semibold text-slate uppercase tracking-[0.08em] mb-1">Reason</p>
+          <p className="text-[12px] font-semibold text-slate uppercase tracking-[0.08em] mb-1">Reason</p>
           <p className="text-[13px] text-charcoal leading-[1.6] whitespace-pre-wrap">{request.reason}</p>
         </div>
 

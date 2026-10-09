@@ -31,13 +31,14 @@ export function ProductPicker({ storeId, value, onChange, allowNone = true, none
       {showSearch && (
         <input
           type="search"
+          aria-label="Search your products"
           value={query}
           onChange={e => setQuery(e.target.value)}
           placeholder="Search products by name or SKU…"
           className="w-full px-3 py-2 text-[13px] border border-bone rounded-lg outline-none text-charcoal bg-white"
         />
       )}
-      <Select value={value} disabled={loading && products.length === 0} onChange={e => onChange(e.target.value)}>
+      <Select aria-label="Choose a product" value={value} disabled={loading && products.length === 0} onChange={e => onChange(e.target.value)}>
         {allowNone && <option value="">{noneLabel}</option>}
         {options.map(p => (
           <option key={p.productId} value={p.productId}>{p.name}</option>

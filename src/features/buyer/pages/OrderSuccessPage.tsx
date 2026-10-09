@@ -35,7 +35,7 @@ function OrderItemRow({ item, orderId, currency, canReview }: { item: OrderItem;
           <div className="flex items-center gap-1.5 flex-wrap mb-[2px]">
             <p className="text-[13px] font-semibold text-charcoal leading-tight truncate">{item.name}</p>
             {isDigital && (
-              <span className="shrink-0 text-[9px] font-bold px-1.5 py-[1px] rounded-full bg-[#eef0ff] text-[#3851d1] uppercase tracking-wide">
+              <span className="shrink-0 text-[12px] font-bold px-1.5 py-[1px] rounded-full bg-[#eef0ff] text-[#3851d1] uppercase tracking-wide">
                 Digital
               </span>
             )}
@@ -71,7 +71,7 @@ function OrderItemsSection({ items, orderId, currency, canReview }: { items: Ord
     <section>
       <div className="flex items-center gap-2 mb-1">
         <Box size={13} className="text-slate" />
-        <h3 className="text-[11px] font-bold text-slate uppercase tracking-[0.07em]">
+        <h3 className="text-[12px] font-bold text-slate uppercase tracking-[0.07em]">
           Items ({items.length})
         </h3>
       </div>
@@ -93,7 +93,7 @@ function AddressSection({ addr }: { addr: OrderDeliveryAddress }) {
     <section className="pt-4 mt-1 border-t border-bone">
       <div className="flex items-center gap-2 mb-3">
         <MapPin size={13} className="text-slate" />
-        <h3 className="text-[11px] font-bold text-slate uppercase tracking-[0.07em]">Delivery Address</h3>
+        <h3 className="text-[12px] font-bold text-slate uppercase tracking-[0.07em]">Delivery Address</h3>
       </div>
       <div className="bg-cream rounded-[10px] px-4 py-3 flex flex-col gap-[3px]">
         <p className="text-[13px] font-semibold text-charcoal">{addr.recipientName}</p>
@@ -130,7 +130,7 @@ function OrderTimeline({ order }: { order: PlacedOrder }) {
   }
   return (
     <section className="pt-4 mt-1 border-t border-bone">
-      <h3 className="text-[11px] font-bold text-slate uppercase tracking-[0.07em] mb-4">Order Progress</h3>
+      <h3 className="text-[12px] font-bold text-slate uppercase tracking-[0.07em] mb-4">Order Progress</h3>
       <OrderProgressTrack steps={steps} />
     </section>
   );
@@ -148,14 +148,14 @@ function OrderCard({ order }: { order: PlacedOrder }) {
       {/* Card header */}
       <header className="px-5 py-4 border-b border-bone flex items-center justify-between gap-3 flex-wrap">
         <div>
-          <p className="text-[10px] font-semibold text-slate uppercase tracking-[0.08em] mb-[3px]">Order</p>
+          <p className="text-[12px] font-semibold text-slate uppercase tracking-[0.08em] mb-[3px]">Order</p>
           <p className="text-[16px] font-bold text-brand-deep-orange font-mono leading-none">
             {order.orderNumber}
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <span className={clsx(
-            'px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide',
+            'px-3 py-1 rounded-full text-[12px] font-bold uppercase tracking-wide',
             order.orderStatus === 'completed' ? 'bg-[#e3f4ea] text-[#1a6b35]'
             : order.orderStatus === 'cancelled' ? 'bg-error-bg text-error'
             : 'bg-[#fff4dc] text-[#b36200]',

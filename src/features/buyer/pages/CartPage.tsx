@@ -15,6 +15,7 @@ import {
 import { ProductCoverFallback } from '@/components/comman/marketplace/ProductCoverFallback';
 import { clsx } from 'clsx';
 import { currencySymbol } from '@/utils/currency';
+import { computeCartTotals } from '@/utils/cartTotals';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 
 function CartItemImage({ images, name }: { images?: string[]; name: string }) {
@@ -153,16 +154,9 @@ export function CartPage() {
   // recomputed fresh, server-side, at checkout creation regardless.
   const { currency: displayCurrency, convert } = useCurrencyPreference();
   const displaySymbol = currencySymbol(displayCurrency);
-  const displayTotal = items.reduce((s, i) => {
-    const unit = i.unitPrice ?? i.price ?? 0;
-    const lineTotal = i.itemTotal ?? unit * i.quantity;
-    return s + convert(lineTotal, i.currency);
-  }, 0);
-  // Same rule checkout uses: a percentage sale takes that % off the subtotal; a fixed sale takes its amount (capped at the subtotal).
+  // Same maths as the checkout sidebar before the checkout exists (utils/cartTotals): one rule, so they cannot differ.
   const campaign = cart?.campaignDiscount ?? null;
-  const campaignAmount = !campaign || !campaign.discountType || campaign.discountValue == null ? 0
-    : Math.min(displayTotal, campaign.discountType === 'percentage' ? displayTotal * (campaign.discountValue / 100) : convert(campaign.discountValue, campaign.currency ?? 'PKR'));
-  const payableTotal = Math.max(0, displayTotal - campaignAmount);
+  const { subtotal: displayTotal, campaignAmount, payable: payableTotal } = computeCartTotals(items, campaign, convert);
 
   return (
     <div className="min-h-screen bg-cream">

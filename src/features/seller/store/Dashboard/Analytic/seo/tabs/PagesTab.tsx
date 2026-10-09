@@ -97,7 +97,7 @@ export function PagesTab({ storeId }: PagesTabProps) {
           </Field>
           <div className="flex items-center justify-between">
             <p className="text-[13px] font-medium text-carbon">No-index this page</p>
-            <Toggle checked={noindex} onChange={setNoindex} />
+            <Toggle label="No-index this page" checked={noindex} onChange={setNoindex} />
           </div>
         </div>
       )}

@@ -4,7 +4,7 @@ import {
   ShoppingBag, Plus, Download,
   AlertCircle, RefreshCw,
   AlertTriangle,
-  Eye, Pencil,
+  Eye, Pencil, Save, ArrowRight, CheckCircle2,
 } from 'lucide-react';
 import { useStoreWorkspace, StorePageHeader } from '@/components/layouts/StoreLayout';
 import {
@@ -15,10 +15,12 @@ import {
   SearchInput,
   SkeletonBox,
   ActionMenu,
+  Button,
 } from '@/components/comman/ui';
 import {
   apiGetStoreInventory,
   apiGetLowStockSummary,
+  apiBulkUpdateStock,
   type InventoryProduct,
   type LowStockSummaryData,
 } from '@/api/services/product';
@@ -83,6 +85,12 @@ export function StoreInventory() {
 
   const [exporting,  setExporting]  = useState(false);
   const [exportError, setExportError] = useState('');
+
+  // Inline stock edits: productId -> typed value (only single-variant physical products are editable).
+  const [edits,     setEdits]     = useState<Record<string, { typed: string; variantId: string; original: number }>>({});
+  const [saving,    setSaving]    = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const [savedMsg,  setSavedMsg]  = useState('');
 
   const LIMIT = 10;
 
@@ -153,6 +161,31 @@ export function StoreInventory() {
 
   const filtered = products;
 
+  // Changed rows only, validated as whole numbers >= 0.
+  const pendingEdits = Object.values(edits).filter(e => e.typed !== String(e.original));
+  const invalidEdit = pendingEdits.some(e => !/^\d{1,7}$/.test(e.typed.trim()));
+
+  const handleSaveStock = async () => {
+    if (!storeId || saving || pendingEdits.length === 0 || invalidEdit) return;
+    setSaving(true);
+    setSaveError('');
+    setSavedMsg('');
+    try {
+      const res = await apiBulkUpdateStock(storeId, pendingEdits.map(e => ({
+        variantId: e.variantId,
+        stock: Number(e.typed.trim()),
+      })));
+      const skipped = res.data?.skipped?.length ?? 0;
+      setEdits({});
+      setSavedMsg(skipped ? `Saved. ${skipped} item${skipped === 1 ? ' was' : 's were'} skipped.` : 'Stock saved.');
+      setRefreshKey(k => k + 1);
+    } catch (err: unknown) {
+      setSaveError(err instanceof Error ? err.message : 'Could not save stock.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   // ── Columns ──────────────────────────────────────────────────────────────────
   const columns: TableColumn<InventoryProduct>[] = [
     {
@@ -183,11 +216,34 @@ export function StoreInventory() {
     },
     {
       key: 'stock', header: 'Stock', align: 'right',
-      render: p => (
-        <span className="text-[13px] text-carbon">
-          {typeof p.stock === 'number' ? `${p.stock} units` : p.stock}
-        </span>
-      ),
+      render: p => {
+        const editable = p.type !== 'digital' && typeof p.stock === 'number' && !!p.defaultVariantId && (p.variantCount ?? 1) === 1;
+        if (!editable) {
+          return (
+            <span className="text-[13px] text-carbon" title={(p.variantCount ?? 1) > 1 ? 'Has several variants — edit stock per variant in the product.' : undefined}>
+              {typeof p.stock === 'number' ? `${p.stock} units` : p.stock}
+            </span>
+          );
+        }
+        const typed = edits[p.productId]?.typed;
+        const dirty = typed !== undefined && typed !== String(p.stock);
+        return (
+          <input
+            type="number"
+            inputMode="numeric"
+            min={0}
+            step={1}
+            value={typed ?? String(p.stock)}
+            aria-label={`Stock for ${p.name}`}
+            onChange={e => {
+              const v = e.target.value;
+              setSavedMsg('');
+              setEdits(prev => ({ ...prev, [p.productId]: { typed: v, variantId: p.defaultVariantId as string, original: p.stock as number } }));
+            }}
+            className={`w-[84px] text-end text-[13px] rounded-[7px] border px-2 py-[5px] bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/40 ${dirty ? 'border-brand-orange' : 'border-bone'}`}
+          />
+        );
+      },
     },
     {
       key: 'allTimeSales', header: 'Sales', align: 'right',
@@ -230,11 +286,11 @@ export function StoreInventory() {
               <span className="hidden sm:inline">{exporting ? 'Exporting…' : 'Export'}</span>
             </button>
             <button
-              onClick={goAdd}
-              title="Add Product"
+              onClick={() => navigate(`/store/${storeId}/products`)}
+              title="Manage products"
               className="flex items-center gap-1.5 bg-brand-orange text-white border-none rounded-[9px] px-2.5 sm:px-4 py-[9px] text-[13px] font-semibold cursor-pointer transition-colors duration-150 hover:bg-brand-deep-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-brand-orange/50"
             >
-              <Plus size={15} /> <span className="hidden sm:inline">Add Product</span>
+              <span className="hidden sm:inline">Manage products</span> <ArrowRight size={15} className="rtl:rotate-180" />
             </button>
           </>
         }
@@ -314,6 +370,27 @@ export function StoreInventory() {
                 </button>
               </div>
             </div>
+
+            {(pendingEdits.length > 0 || saveError || savedMsg) && (
+              <div role="status" className={`mx-5 mb-3 flex flex-wrap items-center gap-3 rounded-[10px] border px-4 py-2.5 ${saveError ? 'bg-error-bg border-error-border' : savedMsg && pendingEdits.length === 0 ? 'bg-success-bg border-success-border' : 'bg-brand-pale-orange border-brand-orange/30'}`}>
+                {savedMsg && pendingEdits.length === 0 && !saveError && <CheckCircle2 size={15} className="text-success shrink-0" />}
+                <span className={`text-[13px] flex-1 min-w-[160px] ${saveError ? 'text-error' : 'text-charcoal'}`}>
+                  {saveError
+                    ? saveError
+                    : pendingEdits.length > 0
+                      ? (invalidEdit ? 'Stock must be a whole number, 0 or more.' : `${pendingEdits.length} unsaved stock change${pendingEdits.length === 1 ? '' : 's'}`)
+                      : savedMsg}
+                </span>
+                {pendingEdits.length > 0 && (
+                  <>
+                    <Button variant="outline" size="xs" onClick={() => { setEdits({}); setSaveError(''); }} disabled={saving}>Discard</Button>
+                    <Button size="xs" onClick={handleSaveStock} disabled={saving || invalidEdit} icon={<Save size={12} />}>
+                      {saving ? 'Saving…' : 'Save changes'}
+                    </Button>
+                  </>
+                )}
+              </div>
+            )}
 
             {loading ? (
               <div className="px-5 pb-5 flex flex-col gap-3">

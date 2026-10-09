@@ -25,7 +25,7 @@ export function CanonicalRulesTable({ data, pagination, onEdit, onDelete, onTogg
     { key: 'canonicalUrl', header: 'Canonical URL', render: r => <span className="font-mono text-[12px]">{r.canonicalUrl}</span> },
     {
       key: 'isActive', header: 'Active', align: 'center',
-      render: r => <Toggle checked={r.isActive} onChange={next => onToggleActive(r, next)} size="sm" />,
+      render: r => <Toggle label={`Canonical rule ${r.pathPattern} active`} checked={r.isActive} onChange={next => onToggleActive(r, next)} size="sm" />,
     },
     {
       key: 'actions', header: '', align: 'right',

@@ -49,7 +49,7 @@ export function ListPage() {
 
   return (
     <div className="bg-white min-h-full">
-      <div className="sticky top-0 z-50"><BuyerNavbar /></div>
+      <div className="sticky top-[var(--navbar-top,0px)] z-50"><BuyerNavbar /></div>
       <main className="max-w-[1480px] mx-auto px-[5%] md:px-[4%] pt-4 md:pt-6 pb-12">
         <Breadcrumb className="mb-1" items={[{ label: 'Home', path: '/' }, ...(list?.isOwner ? [{ label: 'My Lists', path: '/account/lists' }] : []), { label: list?.name ?? 'List' }]} />
         {error ? (

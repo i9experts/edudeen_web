@@ -344,13 +344,13 @@ export function StorePageOverview() {
                 ))}
               </div>
               <div className="flex flex-col gap-2.5">
-                <label className="flex items-center justify-between gap-3 text-[13px] text-charcoal">Show follower count <Toggle checked={draft.showFollowerCount} onChange={v => set('showFollowerCount', v)} /></label>
-                <label className="flex items-center justify-between gap-3 text-[13px] text-charcoal">Show product count <Toggle checked={draft.showProductCount} onChange={v => set('showProductCount', v)} /></label>
+                <label className="flex items-center justify-between gap-3 text-[13px] text-charcoal">Show follower count <Toggle label="Show follower count" checked={draft.showFollowerCount} onChange={v => set('showFollowerCount', v)} /></label>
+                <label className="flex items-center justify-between gap-3 text-[13px] text-charcoal">Show product count <Toggle label="Show product count" checked={draft.showProductCount} onChange={v => set('showProductCount', v)} /></label>
               </div>
             </Section>
 
             <Section icon={<Megaphone size={15} />} title="Store announcement" hint="A short message across the top of your store — a sale, new arrivals, holiday hours.">
-              <label className="flex items-center justify-between gap-3 text-[13px] text-charcoal mb-3">Show announcement <Toggle checked={draft.announcementOn} onChange={v => set('announcementOn', v)} /></label>
+              <label className="flex items-center justify-between gap-3 text-[13px] text-charcoal mb-3">Show announcement <Toggle label="Show announcement" checked={draft.announcementOn} onChange={v => set('announcementOn', v)} /></label>
               {draft.announcementOn && (
                 <div className="flex flex-col gap-3">
                   <Input label="Message" placeholder="e.g. 15% off all Quran workbooks this week" maxLength={120} value={draft.announcementMessage} onChange={e => set('announcementMessage', e.target.value)} />
@@ -413,7 +413,7 @@ export function StorePageOverview() {
 
           {/* ── Live preview ── */}
           <aside className="lg:sticky lg:top-[104px] flex flex-col gap-4">
-            <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-slate">Preview</p>
+            <p className="text-[12px] font-bold uppercase tracking-[0.1em] text-slate">Preview</p>
             <div className="rounded-2xl overflow-hidden border border-bone bg-white">
               {draft.announcementOn && draft.announcementMessage.trim() && (
                 <div className="px-3 py-1.5 text-center text-[12px] font-semibold text-white" style={{ background: draft.accent }}>
@@ -457,7 +457,7 @@ export function StorePageOverview() {
             </div>
 
             <div className="rounded-2xl border border-bone bg-white p-4">
-              <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-slate mb-1.5">Your store link</p>
+              <p className="text-[12px] font-bold uppercase tracking-[0.1em] text-slate mb-1.5">Your store link</p>
               <div className="flex items-center gap-2 min-w-0">
                 <span className="text-[13px] text-carbon font-semibold truncate">{pageUrl.replace(/^https?:\/\//, '') || '…'}</span>
                 <button onClick={copyLink} disabled={!pageUrl} aria-label="Copy store link" className="shrink-0 size-7 rounded-md border border-bone bg-white flex items-center justify-center cursor-pointer hover:bg-cream disabled:opacity-50">

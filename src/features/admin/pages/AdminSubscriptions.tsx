@@ -146,12 +146,12 @@ function InsightsPanel() {
       {ltv && (
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-cream rounded-[8px] px-4 py-3">
-            <p className="text-[10px] text-slate uppercase tracking-wide mb-1">Avg. lifetime value (ended subscriptions)</p>
+            <p className="text-[12px] text-slate uppercase tracking-wide mb-1">Avg. lifetime value (ended subscriptions)</p>
             <p className="text-[18px] font-bold text-carbon">${ltv.realizedLtvUSD.toFixed(2)}</p>
             <p className="text-[12px] text-slate mt-0.5">{ltv.canceledSubscriptionsSampled} sampled</p>
           </div>
           <div className="bg-cream rounded-[8px] px-4 py-3">
-            <p className="text-[10px] text-slate uppercase tracking-wide mb-1">Avg. paid so far (active subscriptions)</p>
+            <p className="text-[12px] text-slate uppercase tracking-wide mb-1">Avg. paid so far (active subscriptions)</p>
             <p className="text-[18px] font-bold text-carbon">${ltv.activeAvgRevenueToDateUSD.toFixed(2)}</p>
             <p className="text-[12px] text-slate mt-0.5">{ltv.activeSubscriptionsSampled} sampled</p>
           </div>
@@ -256,7 +256,7 @@ function StoreDetailModal({ storeId, onClose }: { storeId: string; onClose: () =
           <div className="grid grid-cols-3 gap-2">
             {[['Monthly revenue', `$${data.mrr.toFixed(2)}`], ['Subscribers', String(data.activeSubscribersCount)], ['Cancellation rate', `${data.churnRate}%`]].map(([l, v]) => (
               <div key={l} className="bg-cream rounded-lg px-3 py-2.5 text-center">
-                <p className="text-[10px] text-slate uppercase tracking-wide">{l}</p>
+                <p className="text-[12px] text-slate uppercase tracking-wide">{l}</p>
                 <p className="text-[16px] font-bold text-carbon">{v}</p>
               </div>
             ))}
@@ -482,7 +482,7 @@ export function AdminSubscriptions() {
             <div key={i} className="bg-white border border-bone rounded-xl px-5 py-4 h-[84px] animate-pulse" />
           )) : metrics.map(m => (
             <div key={m.label} className="bg-white border border-bone rounded-xl px-5 py-4">
-              <p className="text-[11px] font-medium text-slate uppercase tracking-[0.06em] mb-1">{m.label}</p>
+              <p className="text-[12px] font-medium text-slate uppercase tracking-[0.06em] mb-1">{m.label}</p>
               <p className="text-[24px] font-bold text-carbon leading-[1.15]">{m.value}</p>
             </div>
           ))}

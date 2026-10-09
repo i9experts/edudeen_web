@@ -71,7 +71,7 @@ export function AppOpenPrompt() {
               <span className="w-7 h-7 rounded-full bg-brand-pale-orange flex items-center justify-center">
                 <Icon size={13} className="text-brand-orange" />
               </span>
-              <span className="text-[9.5px] font-medium text-charcoal leading-tight">{label}</span>
+              <span className="text-[12px] font-medium text-charcoal leading-tight">{label}</span>
             </li>
           ))}
         </ul>
@@ -111,7 +111,7 @@ export function AppOpenFab() {
       )}
     >
       <EdudeenIcon size={15} />
-      <span className="text-[10px] font-bold uppercase tracking-[0.04em]">
+      <span className="text-[12px] font-bold uppercase tracking-[0.04em]">
         Open
       </span>
     </button>

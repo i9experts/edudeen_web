@@ -51,7 +51,7 @@ function BuyerBottomNav() {
                   className={clsx('transition-colors duration-150', active ? 'text-brand-orange' : 'text-slate')}
                 />
                 {'badge' in tab && tab.badge > 0 && (
-                  <span className="absolute -top-1.5 -end-2 min-w-[15px] h-[15px] px-[3px] rounded-full bg-brand-orange text-white text-[12px] font-bold flex items-center justify-center">
+                  <span className="absolute -top-1.5 -end-2 min-w-[17px] h-[17px] px-[3px] rounded-full bg-brand-orange text-white text-[12px] leading-none font-bold flex items-center justify-center">
                     {tab.badge > 9 ? '9+' : tab.badge}
                   </span>
                 )}

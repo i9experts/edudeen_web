@@ -206,7 +206,7 @@ export function AdminFxSettings() {
                 <p className="text-[13px] font-bold text-carbon">Auto-refresh from provider</p>
                 <p className="text-[12px] text-slate mt-[2px]">Daily automatic rate refresh (sanity-band + abnormal-jump checked before ever becoming current).</p>
               </div>
-              <Toggle checked={fxConfig.autoRefreshEnabled} onChange={toggleAutoRefresh} disabled={savingConfig} />
+              <Toggle label="Auto-refresh rates from provider" checked={fxConfig.autoRefreshEnabled} onChange={toggleAutoRefresh} disabled={savingConfig} />
             </div>
             {configError && <p className="text-[12px] text-error mt-2 flex items-center gap-1"><AlertTriangle size={13} /> {configError}</p>}
           </div>

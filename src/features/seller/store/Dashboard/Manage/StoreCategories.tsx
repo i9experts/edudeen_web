@@ -27,7 +27,7 @@ export default function StoreCategories() {
             <FolderTree size={19} style={{ color: '#174771' }} />
           </div>
           <div className="min-w-0">
-            <p className="text-[11px] font-medium text-slate uppercase tracking-[0.06em] mb-0.5">Main Category</p>
+            <p className="text-[12px] font-medium text-slate uppercase tracking-[0.06em] mb-0.5">Main Category</p>
             {!store ? (
               <div className="animate-pulse w-32 h-4 rounded bg-bone" />
             ) : (

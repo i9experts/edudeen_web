@@ -64,7 +64,7 @@ export function SolutionPage() {
         </div>
         <div className="relative z-[1] px-4 md:px-8 lg:px-12 pt-20 md:pt-28 pb-16 md:pb-20 max-w-[640px]">
           <Reveal delay={0}>
-            <p className="text-[11px] font-semibold text-brand-orange uppercase tracking-[0.12em] mb-3">Built for {solution.name}</p>
+            <p className="text-[12px] font-semibold text-brand-orange uppercase tracking-[0.12em] mb-3">Built for {solution.name}</p>
           </Reveal>
           <Reveal delay={0.08}>
             <h1 className="text-[26px] sm:text-[36px] lg:text-[42px] font-bold text-white leading-[1.15] mb-4" style={{ fontFamily: SERIF }}>
@@ -88,7 +88,7 @@ export function SolutionPage() {
 
       <div className="px-4 md:px-8 lg:px-12 py-14 md:py-16 max-w-[1100px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
         <Reveal>
-          <p className="text-[11px] font-semibold text-brand-orange uppercase tracking-[0.1em] mb-3">What you get</p>
+          <p className="text-[12px] font-semibold text-brand-orange uppercase tracking-[0.1em] mb-3">What you get</p>
           <div className="flex flex-col gap-3">
             {solution.highlights.map(h => (
               <div key={h} className="flex items-start gap-2.5">

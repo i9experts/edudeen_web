@@ -50,7 +50,10 @@ export interface Cart {
   totalPrice: number;
   status?:    string;
   /** The store's running sale, applied at checkout — shown in the cart so the price doesn't change at the last step. */
-  campaignDiscount?:  { name: string; discountType: 'percentage' | 'fixed' | null; discountValue: number | null; currency: string | null } | null;
+  /** `amount` is in `currency` (the cart's own currency). `discountValue` is a percent, or - for a fixed sale - an amount in `valueCurrency` (USD unless stated). */
+  campaignDiscount?:  { name: string; discountType: 'percentage' | 'fixed' | null; discountValue: number | null; currency: string | null; valueCurrency?: string | null; amount?: number } | null;
+  /** The currency the cart's own amounts are in (single-store carts). */
+  currency?:  string | null;
   /** Main-site only: the per-store carts this merged view was built from.
    *  Checkout is always one store at a time. */
   stores?:    StoreCart[];

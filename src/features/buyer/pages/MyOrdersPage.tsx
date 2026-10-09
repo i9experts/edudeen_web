@@ -216,7 +216,7 @@ function FilterTabs({
             {tab.label}
             {count > 0 && (
               <span className={clsx(
-                'min-w-[16px] h-[16px] px-1 rounded-full text-[12px] font-bold flex items-center justify-center',
+                'min-w-[18px] h-[18px] px-1 rounded-full text-[12px] font-bold flex items-center justify-center',
                 isActive ? 'bg-white/25 text-white' : 'bg-bone text-charcoal',
               )}>
                 {count}
@@ -297,7 +297,7 @@ function OrderCard({ order, onChanged }: { order: OrderSummary; onChanged: () =>
           <div className="px-4 md:px-5 pt-4 pb-2">
             <div className="flex items-center gap-1.5 mb-1">
               <Box size={11} className="text-slate" />
-              <p className="text-[10px] font-bold text-slate uppercase tracking-[0.07em]">Items ({items.length})</p>
+              <p className="text-[12px] font-bold text-slate uppercase tracking-[0.07em]">Items ({items.length})</p>
             </div>
             {items.map((item, i) => (
               <OrderItemRow key={item.itemId ?? i} item={item} orderId={order.orderId} orderStatus={order.orderStatus} currency={order.currency} />
@@ -309,7 +309,7 @@ function OrderCard({ order, onChanged }: { order: OrderSummary; onChanged: () =>
             <div className="px-4 md:px-5 pb-4 pt-3 border-t border-bone">
               <div className="flex items-center gap-1.5 mb-3">
                 <MapPin size={11} className="text-slate" />
-                <p className="text-[10px] font-bold text-slate uppercase tracking-[0.07em]">Delivery Address</p>
+                <p className="text-[12px] font-bold text-slate uppercase tracking-[0.07em]">Delivery Address</p>
               </div>
               <div className="bg-cream rounded-[9px] px-3 md:px-4 py-3">
                 <p className="text-[12px] font-semibold text-charcoal">{addr.recipientName}</p>
@@ -327,7 +327,7 @@ function OrderCard({ order, onChanged }: { order: OrderSummary; onChanged: () =>
           {/* Timeline */}
           {!allDigital && order.orderStatus !== 'cancelled' && (
             <div className="px-4 md:px-5 pb-4 pt-3 border-t border-bone">
-              <p className="text-[10px] font-bold text-slate uppercase tracking-[0.07em] mb-4">Order Progress</p>
+              <p className="text-[12px] font-bold text-slate uppercase tracking-[0.07em] mb-4">Order Progress</p>
               <OrderTimeline order={order} />
             </div>
           )}
@@ -337,7 +337,7 @@ function OrderCard({ order, onChanged }: { order: OrderSummary; onChanged: () =>
             <div className="px-4 md:px-5 pb-4 pt-3 border-t border-bone">
               <div className="flex items-center gap-1.5 mb-3">
                 <Truck size={11} className="text-slate" />
-                <p className="text-[10px] font-bold text-slate uppercase tracking-[0.07em]">Tracking</p>
+                <p className="text-[12px] font-bold text-slate uppercase tracking-[0.07em]">Tracking</p>
               </div>
               <div className="flex flex-col gap-2">
                 {order.stores.filter(s => s.tracking?.trackingNumber).map(s => (

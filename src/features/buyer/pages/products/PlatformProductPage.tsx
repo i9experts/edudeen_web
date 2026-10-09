@@ -56,7 +56,7 @@ export function PlatformProductPage() {
         <div className="max-w-[1100px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
           <div>
             <Reveal delay={0}>
-              <p className="text-[11px] font-semibold text-brand-deep-orange uppercase tracking-[0.12em] mb-3">{product.tagline}</p>
+              <p className="text-[12px] font-semibold text-brand-deep-orange uppercase tracking-[0.12em] mb-3">{product.tagline}</p>
             </Reveal>
             <Reveal delay={0.06}>
               <h1 className="text-[28px] sm:text-[36px] lg:text-[42px] font-bold text-carbon leading-[1.15] mb-4" style={{ fontFamily: SERIF }}>
@@ -104,7 +104,7 @@ export function PlatformProductPage() {
       <div className="bg-cream px-4 md:px-8 lg:px-12 py-14 md:py-16">
         <div className="max-w-[1100px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10">
           <Reveal>
-            <p className="text-[11px] font-semibold text-brand-orange uppercase tracking-[0.1em] mb-3">What's included</p>
+            <p className="text-[12px] font-semibold text-brand-orange uppercase tracking-[0.1em] mb-3">What's included</p>
             <div className="flex flex-col gap-2.5">
               {product.features.map(f => (
                 <div key={f} className="flex items-start gap-2.5">
@@ -115,7 +115,7 @@ export function PlatformProductPage() {
             </div>
           </Reveal>
           <Reveal delay={0.1}>
-            <p className="text-[11px] font-semibold text-brand-orange uppercase tracking-[0.1em] mb-3">Common use cases</p>
+            <p className="text-[12px] font-semibold text-brand-orange uppercase tracking-[0.1em] mb-3">Common use cases</p>
             <div className="flex flex-col gap-2.5">
               {product.useCases.map(u => (
                 <div key={u} className="flex items-start gap-2.5">

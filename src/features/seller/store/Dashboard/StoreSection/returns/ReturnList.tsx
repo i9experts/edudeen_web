@@ -87,7 +87,7 @@ function ReturnActionModal({
           <p className="text-[12px] text-slate">Amount: {currencySymbol(currency)}{item.amount.toLocaleString()}</p>
         </div>
         <div className="bg-cream rounded-[9px] px-3 py-[10px]">
-          <p className="text-[11px] font-semibold text-slate uppercase tracking-[0.05em] mb-1">Customer's Reason</p>
+          <p className="text-[12px] font-semibold text-slate uppercase tracking-[0.05em] mb-1">Customer's Reason</p>
           <p className="text-[13px] text-charcoal">{item.returnReason}</p>
         </div>
         {action === 'reject' && (
@@ -192,7 +192,7 @@ export function StoreReturnList() {
             { label: 'Total Refunded (30d)', value: stats ? `${formatMoney(stats.totalRefunded, store?.baseCurrency)}` : '—' },
           ].map(m => (
             <div key={m.label} className="bg-white border border-bone rounded-[10px] px-5 py-4">
-              <p className="text-[11px] font-medium text-slate uppercase tracking-[0.06em] mb-1">{m.label}</p>
+              <p className="text-[12px] font-medium text-slate uppercase tracking-[0.06em] mb-1">{m.label}</p>
               <p className="text-[28px] font-bold text-carbon leading-[1.15]">{loading ? '—' : m.value}</p>
             </div>
           ))}

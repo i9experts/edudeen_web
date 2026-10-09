@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { BookMarked, Plus, Pencil, Trash2, ExternalLink, X, Search } from 'lucide-react';
 import { clsx } from 'clsx';
+import { Link } from 'react-router-dom';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { Button, Modal, EmptyState, SkeletonBox, Input, Textarea, Select, Card, Toggle, ImageUpload } from '@/components/comman/ui';
 import { AdminStudioHeader, ADMIN_GUTTER } from '@/features/admin/components/studio';
@@ -149,7 +150,7 @@ function ShelfForm({ initial, onClose, onSaved }: { initial: Draft; onClose: () 
             <option value="active">Live</option>
           </Select>
         </div>
-        <label className="inline-flex items-center gap-2 text-[13px] text-charcoal cursor-pointer"><Toggle size="sm" checked={d.showOnHome} onChange={v => set('showOnHome', v)} /> Show as a row on the homepage</label>
+        <label className="inline-flex items-center gap-2 text-[13px] text-charcoal cursor-pointer"><Toggle label="Show as a row on the homepage" size="sm" checked={d.showOnHome} onChange={v => set('showOnHome', v)} /> Show as a row on the homepage</label>
       </div>
     </Modal>
   );
@@ -187,7 +188,7 @@ export function AdminShelves() {
         eyebrow="Edudeen team workspace · Growth"
         title="Edudeen Picks"
         subtitle="Curated shelves across every store — “Exam ki tayyari”, “Back to school”, “Ramzan for kids”. Live picks show as rows on the homepage and at /picks/…"
-        actions={<Button variant="primary" icon={<Plus size={15} />} onClick={() => setEditing(empty())}>New pick</Button>}
+        actions={<><Link to="/admin/learning-paths" className="text-[12.5px] text-slate no-underline hover:text-brand-orange me-3">Learning paths</Link><Button variant="primary" icon={<Plus size={15} />} onClick={() => setEditing(empty())}>New pick</Button></>}
       />
       <div className={clsx(ADMIN_GUTTER, 'pt-6 pb-8 flex flex-col gap-3')}>
         {rows === null ? <SkeletonBox height={120} rounded="12px" /> : rows.length === 0 ? (

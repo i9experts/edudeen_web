@@ -8,6 +8,7 @@ import { TokenStorage, apiEditProfile } from '@/api/services/auth';
 import { useUpload } from '@/hooks/upload/useUpload';
 import { Card, PageHeader, Badge, SkeletonBox } from '@/components/comman/ui';
 import { useToast } from '@/contexts/ToastContext';
+import { PhoneVerifyCard } from './PhoneVerifyCard';
 
 const INPUT_CLS = 'w-full py-[11px] px-[14px] text-[13px] border border-bone rounded-[10px] outline-none text-charcoal bg-white box-border focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/10 transition-colors';
 const LABEL_CLS = 'text-[12px] font-medium text-graphite mb-[6px] block';
@@ -202,6 +203,7 @@ export function PersonalInfo() {
             </div>
           </Card>
 
+          {!loading && <PhoneVerifyCard profilePhone={profile?.phone} />}
 
       </div>
 

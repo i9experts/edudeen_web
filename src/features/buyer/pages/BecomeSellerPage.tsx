@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useHasSellerAccount, useSwitchToStore } from '@/hooks/auth/useSellerAccount';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Check, Loader2, ArrowRight, ChevronDown, Star, BarChart2, Bell, Store, BookOpen, Headphones, Users } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -28,6 +29,9 @@ export function BecomeSellerPage() {
   const [error, setError] = useState('');
   const [busyId, setBusyId] = useState<string | null>(null);
   const [stats, setStats] = useState<PlatformStats | null>(null);
+  // A buyer who already has a seller account should go to their store, not through plans again.
+  const hasSellerAccount = useHasSellerAccount();
+  const { switchToStore, busy: switching, error: switchError } = useSwitchToStore(navigate);
 
   useEffect(() => {
     let cancelled = false;
@@ -98,6 +102,19 @@ export function BecomeSellerPage() {
 
   return (
     <div className="bg-cream">
+      {hasSellerAccount && (
+        <div className="px-4 md:px-10 pt-5">
+          <div className="max-w-[1100px] mx-auto flex flex-wrap items-center justify-between gap-3 rounded-xl border border-brand-orange/30 bg-brand-pale-orange px-5 py-3">
+            <div className="min-w-0">
+              <p className="text-[14px] font-bold text-carbon">You already have a seller account</p>
+              <p className="text-[12.5px] text-slate">Go straight to your store — no new plan or sign-up needed.</p>
+              {switchError && <p className="text-[12px] text-error mt-1" role="alert">{switchError}</p>}
+            </div>
+            <Button variant="primary" size="md" loading={switching} onClick={switchToStore}>Switch to your store</Button>
+          </div>
+        </div>
+      )}
+
       {/* Hero */}
       <section className="px-4 md:px-10 pt-12 md:pt-16 pb-12 text-white" style={{ background: NAVY }}>
         <div className="max-w-[1100px] mx-auto grid grid-cols-1 md:grid-cols-[1.1fr_1fr] gap-10 items-center">
@@ -152,7 +169,7 @@ export function BecomeSellerPage() {
               {plans.map(p => (
                 <div key={p._id} className="relative rounded-2xl bg-white border border-bone p-7 flex flex-col shadow-sm">
                   <div className="flex items-center justify-between gap-2 mb-4">
-                    <p className="text-[11px] font-bold tracking-[0.08em] uppercase text-slate">{p.name}</p>
+                    <p className="text-[12px] font-bold tracking-[0.08em] uppercase text-slate">{p.name}</p>
                     {p.badge && <span className="text-[12px] font-bold bg-brand-pale-orange text-brand-deep-orange px-2 py-[2px] rounded">{p.badge}</span>}
                   </div>
                   <p className="mb-1">
@@ -242,7 +259,7 @@ export function BecomeSellerPage() {
           ].map(({ Icon, t, d, to }) => (
             <button key={t} onClick={() => navigate(to)} className="text-start rounded-2xl bg-white border border-bone p-6 cursor-pointer hover:border-brand-orange/40 transition-colors">
               <div className="w-10 h-10 rounded-xl bg-brand-pale-orange flex items-center justify-center mb-3"><Icon size={18} className="text-brand-orange" /></div>
-              <p className="text-[11px] font-bold tracking-[0.06em] uppercase text-slate mb-1">{t}</p>
+              <p className="text-[12px] font-bold tracking-[0.06em] uppercase text-slate mb-1">{t}</p>
               <p className="text-[13px] text-charcoal leading-[1.6]">{d}</p>
             </button>
           ))}

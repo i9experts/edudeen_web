@@ -32,7 +32,7 @@ export function TrustBadgesEditor({ listingId, initial, sellerAgeHint }: { listi
 
   return (
     <div className="rounded-lg border border-bone px-3 py-3 flex flex-col gap-2.5">
-      <p className="text-[11px] uppercase tracking-[0.06em] text-slate font-semibold flex items-center gap-1.5"><ShieldCheck size={12} /> Trust badges</p>
+      <p className="text-[12px] uppercase tracking-[0.06em] text-slate font-semibold flex items-center gap-1.5"><ShieldCheck size={12} /> Trust badges</p>
       <label className="flex items-center gap-2 text-[13px] text-charcoal cursor-pointer">
         <input type="checkbox" checked={scholar} onChange={e => setScholar(e.target.checked)} className="w-[15px] h-[15px] accent-brand-orange" />
         Scholar reviewed (content checked for accuracy and suitability)

@@ -46,7 +46,7 @@ export function AiModerationPanel({ listingId }: { listingId: string }) {
   return (
     <div className="rounded-lg border border-bone px-3 py-3 bg-brand-pale-orange/40">
       <div className="flex items-center justify-between gap-2 mb-2">
-        <p className="text-[11px] uppercase tracking-[0.06em] text-slate font-semibold flex items-center gap-1.5"><Sparkles size={12} /> AI pre-check (advisory)</p>
+        <p className="text-[12px] uppercase tracking-[0.06em] text-slate font-semibold flex items-center gap-1.5"><Sparkles size={12} /> AI pre-check (advisory)</p>
         <Button size="sm" variant="outline" loading={busy} onClick={run}>{review ? 'Re-run' : 'Run AI check'}</Button>
       </div>
       {!review && !busy && <p className="text-[12px] text-slate">Claude reviews the text and photos and suggests a decision. You make the final call.</p>}
@@ -61,7 +61,7 @@ export function AiModerationPanel({ listingId }: { listingId: string }) {
           {review.qualityIssues.length > 0 && (
             <div><p className="text-slate">Quality issues</p><ul className="list-disc ps-4 text-charcoal">{review.qualityIssues.map((r, i) => <li key={i}>{r}</li>)}</ul></div>
           )}
-          <p className="text-[10.5px] text-slate">AI can be wrong. Nothing is approved or rejected automatically.</p>
+          <p className="text-[12px] text-slate">AI can be wrong. Nothing is approved or rejected automatically.</p>
         </div>
       )}
     </div>

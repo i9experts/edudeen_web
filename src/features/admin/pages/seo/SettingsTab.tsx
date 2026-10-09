@@ -71,7 +71,7 @@ export function SettingsTab() {
             <p className="text-[13px] font-semibold text-carbon">AI SEO — Platform Kill Switch</p>
             <p className="text-[12px] text-slate mt-[2px]">When disabled, sellers cannot generate AI SEO suggestions platform-wide.</p>
           </div>
-          <Toggle checked={!!form.aiSeoEnabled} onChange={aiSeoEnabled => setForm(f => ({ ...f, aiSeoEnabled }))} />
+          <Toggle label="AI SEO platform kill switch" checked={!!form.aiSeoEnabled} onChange={aiSeoEnabled => setForm(f => ({ ...f, aiSeoEnabled }))} />
         </div>
       </Card>
 

@@ -57,7 +57,7 @@ export function ProductCoverFallback({ name, size = 'sm', className }: {
         style={{ borderTopColor: accent, color: accent }}
       >
         {size === 'lg' && (
-          <span className="text-[10px] tracking-[2px] uppercase mb-3">Learn with purpose</span>
+          <span className="text-[12px] tracking-[1px] uppercase mb-3">Learn with purpose</span>
         )}
         <span className={clsx('font-serif break-words', TEXT[size])}>{name}</span>
       </div>

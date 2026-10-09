@@ -50,7 +50,7 @@ export function GiftOptions({ checkoutId }: { checkoutId: string }) {
         placeholder="Write a short note for the receiver"
         className="w-full py-2 px-3 text-[13px] border border-bone rounded-lg outline-none bg-white text-charcoal focus:border-brand-orange"
       />
-      <div className="flex justify-between text-[11.5px] mt-1">
+      <div className="flex justify-between text-[12px] mt-1">
         <span role="status" className={status === 'error' ? 'text-error' : 'text-slate'}>
           {status === 'saving' ? 'Saving…' : status === 'saved' ? 'Saved' : status === 'error' ? error : ''}
         </span>

@@ -90,14 +90,14 @@ function OrderDetailModal({ id, onClose, onChanged }: { id: string; onClose: () 
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="rounded-lg border border-bone px-3 py-2">
-              <p className="text-[10.5px] uppercase tracking-[0.06em] text-slate font-semibold mb-1">Buyer</p>
+              <p className="text-[12px] uppercase tracking-[0.06em] text-slate font-semibold mb-1">Buyer</p>
               {order.buyer ? <>
                 <p className="font-semibold text-carbon">{order.buyer.name}</p>
                 <p className="text-slate break-all">{order.buyer.email}{order.buyer.phone ? ` · ${order.buyer.phone}` : ''}</p>
               </> : <p className="text-slate">Account deleted</p>}
             </div>
             <div className="rounded-lg border border-bone px-3 py-2">
-              <p className="text-[10.5px] uppercase tracking-[0.06em] text-slate font-semibold mb-1">Ship to</p>
+              <p className="text-[12px] uppercase tracking-[0.06em] text-slate font-semibold mb-1">Ship to</p>
               {order.shippingAddress ? (
                 <p className="text-charcoal">
                   {order.shippingAddress.recipientName}{order.shippingAddress.phoneNumber ? ` · ${order.shippingAddress.phoneNumber}` : ''}<br />

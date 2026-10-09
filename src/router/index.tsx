@@ -131,6 +131,10 @@ const CertificatePage    = lazy(() => named(import('@/features/buyer/pages/Certi
 const ShelfPage          = lazy(() => named(import('@/features/buyer/pages/ShelfPage'), 'ShelfPage'));
 const AdminOnboardingSlides = lazy(() => named(import('@/features/admin/pages/AdminOnboardingSlides'), 'AdminOnboardingSlides'));
 const AdminShelves       = lazy(() => named(import('@/features/admin/pages/AdminShelves'), 'AdminShelves'));
+const AdminLearningPaths = lazy(() => named(import('@/features/admin/pages/AdminLearningPaths'), 'AdminLearningPaths'));
+const SharedWishlistPage = lazy(() => named(import('@/features/buyer/pages/SharedWishlistPage'), 'SharedWishlistPage'));
+const LearningPathsIndexPage = lazy(() => named(import('@/features/buyer/pages/LearningPathPages'), 'LearningPathsIndexPage'));
+const LearningPathPage   = lazy(() => named(import('@/features/buyer/pages/LearningPathPages'), 'LearningPathPage'));
 const StorePlanBilling   = lazy(() => import('@/features/seller/store/Dashboard/Manage/StorePlanBilling'));
 const StoreVerification  = lazy(() => named(import('@/features/seller/store/Dashboard/Manage/StoreVerification'), 'StoreVerification'));
 const StoreOrderList     = lazy(() => named(import('@/features/seller/store/Dashboard/StoreSection/orders/OrderList'),        'StoreOrderList'));
@@ -298,6 +302,9 @@ const mainRouter = createBrowserRouter([
           { path: 'learn',           element: <FeatureMaintenance feature="learn" variant="page"><LearnHubPage /></FeatureMaintenance> },
           { path: 'learn/:level/:subject?', element: <FeatureMaintenance feature="learn" variant="page"><LearnLevelPage /></FeatureMaintenance> },
           { path: 'lists/:slug', element: <PublicListPage /> },
+          { path: 'wishlist/shared/:token', element: <SharedWishlistPage /> },
+          { path: 'learning-paths', element: <FeatureMaintenance feature="learn" variant="page"><LearningPathsIndexPage /></FeatureMaintenance> },
+          { path: 'learning-paths/:slug', element: <FeatureMaintenance feature="learn" variant="page"><LearningPathPage /></FeatureMaintenance> },
           { path: 'bundles/:slug', element: <BundlePage /> },
           { path: 'picks/:slug', element: <ShelfPage /> }, { path: 'seasonal/:slug', element: <ShelfPage /> },
         ],
@@ -422,6 +429,7 @@ const mainRouter = createBrowserRouter([
           { path: 'refunds',      element: <RequireRole role="admin"><AdminRefunds /></RequireRole> },
           { path: 'shipping-zones', element: <RequireRole role="admin"><AdminShippingZones /></RequireRole> },
           { path: 'picks', element: <RequireRole role="admin"><AdminShelves /></RequireRole> },
+          { path: 'learning-paths', element: <RequireRole role="admin"><AdminLearningPaths /></RequireRole> },
           { path: 'app-slides', element: <RequireRole role="admin"><AdminOnboardingSlides /></RequireRole> },
           { path: 'orders',       element: <RequireRole role="admin"><AdminOrders /></RequireRole> },
           { path: 'marketplace',  element: <RequireRole role="admin"><AdminMarketplace /></RequireRole> },

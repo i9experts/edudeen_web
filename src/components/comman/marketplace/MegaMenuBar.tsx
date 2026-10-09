@@ -12,7 +12,7 @@ import { type CategoryNode } from '@/api/services/categories';
 import { isBuyerSession } from '@/hooks/auth/useIsBuyer';
 import { type PublicStoreListItem } from '@/api/services/store';
 import { RealAppQr, AppleGlyph, GooglePlayGlyph, useGooglePlayUrl } from '@/components/comman/ui/AppPromoParts';
-import { StoreFeatureCard, useCompactOnScroll, CountdownUnit } from '@/components/comman/ui';
+import { StoreFeatureCard, useCompactOnScroll, CountdownUnit, ActionMenu } from '@/components/comman/ui';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 import { currencySymbol } from '@/utils/currency';
 import aboutImg1 from '@/assets/about/about-1.jfif';
@@ -67,10 +67,10 @@ export function RailCard({ product, onClick, badge, rank, size = 'md', stockLabe
         <div className="flex items-baseline gap-[4px]">
           <span className={clsx('font-bold text-carbon', isSm ? 'text-[12px]' : 'text-[12px]')}>{price != null ? `${priceSymbol}${price.toLocaleString()}` : '—'}</span>
           {compareAt != null && compareAt > (price ?? 0) && (
-            <span className="text-[9.5px] text-slate line-through">{priceSymbol}{compareAt.toLocaleString()}</span>
+            <span className="text-[12px] text-slate line-through">{priceSymbol}{compareAt.toLocaleString()}</span>
           )}
         </div>
-        <span className="flex items-center gap-[2px] text-[9.5px] text-slate mt-[3px]">
+        <span className="flex items-center gap-[2px] text-[12px] text-slate mt-[3px]">
           <Star size={8} className={product.averageRating > 0 ? 'text-brand-orange fill-brand-orange' : 'text-bone fill-bone'} />
           {product.averageRating > 0 ? product.averageRating.toFixed(1) : 'New'}
         </span>
@@ -118,7 +118,7 @@ const RAIL_GRID_CLS = 'flex gap-2.5 overflow-x-auto scrollbar-hide -mx-4 px-4 pb
 // (a shared component can't drift the way 8 copy-pasted <p> tags eventually do).
 export function MegaSectionLabel({ children }: { children: ReactNode }) {
   return (
-    <p className="text-[10.5px] font-bold text-slate uppercase tracking-[0.07em] mb-3">
+    <p className="text-[12px] font-bold text-slate uppercase tracking-[0.07em] mb-3">
       {children}
     </p>
   );
@@ -256,7 +256,7 @@ export function FlashSaleMegaContent({ flashDeals, countdown, onProductClick }: 
         </div>
 
         {countdown && <div className="relative z-[1] flex flex-col items-center shrink-0">
-          <span className="text-[7.5px] font-bold uppercase tracking-[0.1em] text-white/70 mb-[3px] lg:mb-[6px]">Ends In</span>
+          <span className="text-[12px] font-bold uppercase tracking-[0.1em] text-white/70 mb-[3px] lg:mb-[6px]">Ends In</span>
           <div className="flex items-center gap-[5px]">
             <CountdownUnit value={Number(countdown.h)} label="Hrs" size="sm" />
             <span className="pb-[10px] text-[13px] font-bold leading-none text-white/50">:</span>
@@ -694,25 +694,19 @@ export function MegaMenuBar({
             'hidden md:flex items-center gap-x-4 gap-y-2 flex-wrap text-slate whitespace-nowrap ms-auto',
             compact ? 'text-[12px]' : 'text-[12.5px]',
           )}>
-            <span className="flex items-center gap-1 shrink-0">
-              <BadgeCheck size={compact ? 11 : 13} className="text-success" /> {t('Verified Sellers')}
-            </span>
-            <span className="flex items-center gap-1 shrink-0">
-              <ShieldCheck size={compact ? 11 : 13} className="text-success" /> {t('Verified Stores')}
-            </span>
-            <span className="w-px h-4 bg-bone shrink-0" />
-            <button
-              onClick={() => onNavigate(TokenStorage.isLoggedIn() ? '/account/orders' : '/login')}
-              className="shrink-0 bg-transparent border-none cursor-pointer text-slate hover:text-brand-orange transition-colors p-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange"
-            >
-              {t('Track Order')}
-            </button>
-            <button onClick={() => onNavigate('/faq')} className="shrink-0 bg-transparent border-none cursor-pointer text-slate hover:text-brand-orange transition-colors p-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange">
-              {t('Help Center')}
-            </button>
-            <button onClick={() => onNavigate('/contact-us')} className="shrink-0 bg-transparent border-none cursor-pointer text-slate hover:text-brand-orange transition-colors p-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange">
-              {t('Contact')}
-            </button>
+            {/* Secondary links live in one compact menu so the bar stays a single line. */}
+            <ActionMenu
+              ariaLabel={t('More links')}
+              trigger={<>{t('More')}<ChevronDown size={12} /></>}
+              triggerClassName="flex items-center gap-1 bg-transparent border-none cursor-pointer text-slate hover:text-brand-orange transition-colors p-0 text-[12px] font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange"
+              items={[
+                { label: t('Verified Sellers'), icon: <BadgeCheck size={14} className="text-success" />, onClick: () => onNavigate('/about') },
+                { label: t('Verified Stores'),  icon: <ShieldCheck size={14} className="text-success" />, onClick: () => onNavigate('/about') },
+                { label: t('Track Order'),      onClick: () => onNavigate(TokenStorage.isLoggedIn() ? '/account/orders' : '/login') },
+                { label: t('Help Center'),      onClick: () => onNavigate('/faq') },
+                { label: t('Contact'),          onClick: () => onNavigate('/contact-us') },
+              ]}
+            />
           </span>
         </div>
       </div>

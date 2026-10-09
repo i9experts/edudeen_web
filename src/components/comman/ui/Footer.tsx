@@ -125,7 +125,7 @@ function AppBadge({ platform }: { platform: 'ios' | 'android' }) {
     <>
       {isIos ? <AppleGlyph size={18} /> : <GooglePlayGlyph size={16} />}
       <span className="leading-none">
-        <span className="block text-[8px] text-white/70 tracking-[0.04em]">{isIos ? (appStoreUrl ? 'Download on the' : 'Coming soon on the') : 'GET IT ON'}</span>
+        <span className="block text-[12px] text-white/70 tracking-[0.04em]">{isIos ? (appStoreUrl ? 'Download on the' : 'Coming soon on the') : 'GET IT ON'}</span>
         <span className="block text-[12.5px] font-bold mt-[2px]">{isIos ? 'App Store' : 'Google Play'}</span>
       </span>
     </>

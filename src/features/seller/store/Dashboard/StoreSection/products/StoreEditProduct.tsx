@@ -50,9 +50,10 @@ function Card({ title, children }: { title: string; children: ReactNode }) {
     </div>
   );
 }
-function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
   return (
     <button type="button" onClick={() => onChange(!checked)}
+      role="switch" aria-checked={checked} aria-label={label}
       className="w-10 h-[22px] rounded-[11px] border-none cursor-pointer p-0 relative shrink-0 transition-colors duration-[180ms]"
       style={{ background: checked ? '#174771' : '#D1D5DB' }}>
       <span className="absolute top-[3px] w-4 h-4 rounded-full bg-white border border-charcoal/10 transition-[left] duration-[180ms]"
@@ -607,14 +608,14 @@ export default function StoreEditProduct() {
                     <p className="text-[13px] font-semibold text-charcoal">PDF Stamping</p>
                     <p className="text-[12px] text-slate mt-0.5">Watermark PDFs with the buyer's name</p>
                   </div>
-                  <Toggle checked={dig.pdfStampingEnabled} onChange={v => sd('pdfStampingEnabled', v)} />
+                  <Toggle label="PDF stamping" checked={dig.pdfStampingEnabled} onChange={v => sd('pdfStampingEnabled', v)} />
                 </div>
                 <div className="flex items-center justify-between py-0.5">
                   <div>
                     <p className="text-[13px] font-semibold text-charcoal">Buyer Preview</p>
                     <p className="text-[12px] text-slate mt-0.5">Let buyers see a watermarked/trimmed preview before purchase</p>
                   </div>
-                  <Toggle checked={dig.previewEnabled} onChange={v => sd('previewEnabled', v)} />
+                  <Toggle label="Buyer preview" checked={dig.previewEnabled} onChange={v => sd('previewEnabled', v)} />
                 </div>
               </div>
             </Card>
@@ -720,6 +721,7 @@ export default function StoreEditProduct() {
               <div className="flex items-center justify-between">
                 <span className="text-[12px] text-charcoal">Also list in Edudeen Marketplace</span>
                 <Toggle
+                  label="Also list in Edudeen Marketplace"
                   checked={cur.isListedOnEdudeen}
                   onChange={v => pType === 'physical' ? sp('isListedOnEdudeen', v) : sd('isListedOnEdudeen', v)}
                 />

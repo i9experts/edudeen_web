@@ -58,14 +58,14 @@ export function InvoicePage() {
 
         <section className="grid grid-cols-1 sm:grid-cols-2 gap-6 py-6 border-b border-bone">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate mb-1">Billed to</p>
+            <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-slate mb-1">Billed to</p>
             <p className="font-semibold">{addr?.recipientName || buyer?.name || 'Customer'}</p>
             {buyer?.email && <p>{buyer.email}</p>}
             {addr?.addressLine1 && <p className="text-graphite">{[addr.addressLine1, addr.addressLine2, addr.city, addr.state, addr.zipCode].filter(Boolean).join(', ')}</p>}
             {addr?.phoneNumber && <p className="text-graphite">{addr.phoneNumber}</p>}
           </div>
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate mb-1">Sold by</p>
+            <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-slate mb-1">Sold by</p>
             {sellers.map(s => (
               <p key={s.name}><span className="font-semibold">{s.name}</span>{s.email ? ` · ${s.email}` : ''}{s.phone ? ` · ${s.phone}` : ''}</p>
             ))}
@@ -75,7 +75,7 @@ export function InvoicePage() {
 
         <table className="w-full mt-6 border-collapse">
           <thead>
-            <tr className="text-start text-[11px] uppercase tracking-[0.06em] text-slate border-b border-bone">
+            <tr className="text-start text-[12px] uppercase tracking-[0.06em] text-slate border-b border-bone">
               <th className="py-2 font-semibold">Item</th>
               <th className="py-2 font-semibold text-end">Qty</th>
               <th className="py-2 font-semibold text-end">Unit price</th>

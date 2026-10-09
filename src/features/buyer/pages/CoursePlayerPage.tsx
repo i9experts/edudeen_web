@@ -134,7 +134,7 @@ export function CoursePlayerPage() {
     <nav aria-label="Course content" className="flex flex-col gap-4">
       {view.sections.map((s, si) => (
         <div key={s._id}>
-          <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate mb-1.5">Section {si + 1} · {s.title}</p>
+          <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-slate mb-1.5">Section {si + 1} · {s.title}</p>
           <ul className="list-none p-0 m-0 flex flex-col gap-0.5">
             {s.lessons.map(l => {
               const Icon = ICON[l.type];

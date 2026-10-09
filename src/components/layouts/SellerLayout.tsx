@@ -134,7 +134,7 @@ function SidebarStoreSwitcher() {
 
       {open && (
         <div className="absolute left-0 right-0 top-[calc(100%+6px)] z-[200] bg-white border border-bone rounded-xl p-[6px] shadow-[0_12px_32px_rgba(21,45,67,0.12)]">
-          <p className="text-[10.5px] font-bold text-brand-royal uppercase tracking-[0.14em] px-[10px] pt-1 pb-2">
+          <p className="text-[12px] font-bold text-brand-royal uppercase tracking-[0.14em] px-[10px] pt-1 pb-2">
             Switch Store
           </p>
           <div className="max-h-[205px] overflow-y-auto">
@@ -280,7 +280,7 @@ function SellerSidebar({ open, onToggle }: SellerSidebarProps) {
           {NAV_SECTIONS.map(section => (
             <div key={section.label} className="mb-3">
               {open
-                ? <p className="text-[11px] font-bold text-graphite block px-3 py-1 uppercase tracking-[0.12em] mb-0.5">{section.label}</p>
+                ? <p className="text-[12px] font-bold text-graphite block px-3 py-1 uppercase tracking-[0.12em] mb-0.5">{section.label}</p>
                 : <div className="h-px bg-bone mx-1 mb-2" />
               }
 
@@ -391,7 +391,7 @@ function SellerSidebar({ open, onToggle }: SellerSidebarProps) {
                 ? <div className="animate-pulse w-full h-full bg-bone" />
                 : profile?.profileImage
                   ? <img loading="lazy" decoding="async" src={profile.profileImage} alt={profile.name} className="w-full h-full object-cover" />
-                  : <span className="text-[10px] font-bold text-brand-orange">{profile?.name?.slice(0, 2).toUpperCase() ?? '--'}</span>
+                  : <span className="text-[12px] font-bold text-brand-orange">{profile?.name?.slice(0, 2).toUpperCase() ?? '--'}</span>
               }
             </div>
             {open && (
@@ -489,18 +489,22 @@ export interface SellerPageHeaderProps {
   title:     string;
   subtitle?: string;
   actions?:  ReactNode;
-  /** Small royal-blue label above the title. Defaults to "Edudeen creator studio". Pass '' to hide. */
+  /** Small royal-blue label above the title. Defaults to the store name (the seller's name with several stores). Pass '' to hide. */
   eyebrow?:  string;
 }
 
 // Studio-style sticky page bar: blue letter-spaced eyebrow, serif title,
 // muted sub-line, actions on the right.
-export function SellerPageHeader({ title, subtitle, actions, eyebrow = 'Edudeen creator studio' }: SellerPageHeaderProps) {
+export function SellerPageHeader({ title, subtitle, actions, eyebrow }: SellerPageHeaderProps) {
+  const { stores } = useActiveStore();
+  const { profile } = useGetProfile();
+  // Same rule as StorePageHeader: the store's name (one store), else the seller's name.
+  const eyebrowText = eyebrow ?? (stores.length === 1 ? stores[0].name : profile?.name ?? '');
   return (
     <div className="bg-white/95 backdrop-blur-md border-b border-bone px-4 md:px-8 py-[14px] flex items-center justify-between gap-3 sticky top-0 z-10 shrink-0">
       <div className="min-w-0">
-        {eyebrow && (
-          <p className="hidden sm:block text-[10.5px] font-bold text-brand-royal uppercase tracking-[0.15em] mb-[3px] truncate">{eyebrow}</p>
+        {eyebrowText && (
+          <p className="hidden sm:block text-[12px] font-bold text-brand-royal uppercase tracking-[0.15em] mb-[3px] truncate">{eyebrowText}</p>
         )}
         <h1 className="font-serif font-normal text-[21px] md:text-[25px] text-carbon leading-[1.2] tracking-[-0.3px] truncate">{title}</h1>
         {subtitle && <p className="text-[12.5px] text-slate mt-0.5 truncate">{subtitle}</p>}

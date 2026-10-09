@@ -19,16 +19,18 @@ interface ImageEnhancerToolProps {
   onCreditsChanged: () => void;
   /** Live cost from credits.toolCosts (undefined while loading). */
   creditCost?: number;
+  /** True when the server has no image-enhancement provider configured (CLOUDINARY_AI_ENABLED). */
+  unavailable?: boolean;
 }
 
-export function ImageEnhancerTool({ storeId, onCreditsChanged, creditCost }: ImageEnhancerToolProps) {
+export function ImageEnhancerTool({ storeId, onCreditsChanged, creditCost, unavailable }: ImageEnhancerToolProps) {
   const [imageUrl, setImageUrl] = useState('');
   const [enhancementType, setEnhancementType] = useState<EnhancementType>('upscale');
 
   const { start, generating, error, errorCode, result } = useImageEnhance();
 
   const handleGenerate = async () => {
-    if (!imageUrl) return;
+    if (!imageUrl || unavailable) return;
     await start(storeId, { imageUrl, enhancementType });
     onCreditsChanged();
   };
@@ -56,13 +58,19 @@ export function ImageEnhancerTool({ storeId, onCreditsChanged, creditCost }: Ima
           </Field>
         </div>
 
+        {unavailable && (
+          <p role="status" className="text-[12px] text-graphite mt-3 bg-cream border border-bone rounded-md px-3 py-2">
+            Image enhancement is not available right now. No credits are charged. You can still use Photo Check for alt text and quality feedback.
+          </p>
+        )}
+
         {error && (
           <p className="text-[12px] text-error mt-3 bg-error-bg rounded-md px-3 py-2">
             {error}{errorCode === 'INSUFFICIENT_AI_CREDITS' ? ' — buy more credits above to continue.' : ''}
           </p>
         )}
 
-        <Button variant="primary" size="md" fullWidth loading={generating} disabled={!imageUrl} onClick={handleGenerate} icon={<Sparkles size={14} />} className="mt-5">
+        <Button variant="primary" size="md" fullWidth loading={generating} disabled={!imageUrl || unavailable} onClick={handleGenerate} icon={<Sparkles size={14} />} className="mt-5">
           Enhance with AI{costLabel(creditCost)}
         </Button>
       </div>

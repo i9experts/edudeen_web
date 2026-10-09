@@ -238,7 +238,7 @@ function EditCategoryModal({ category, onClose, onSaved }: {
             <p className="text-[13px] font-medium text-charcoal">Active</p>
             <p className="text-[12px] text-slate">Inactive categories are hidden from buyers and sellers but keep their products.</p>
           </div>
-          <Toggle checked={isActive} onChange={setIsActive} />
+          <Toggle label="Category active" checked={isActive} onChange={setIsActive} />
         </div>
         <p className="text-[12px] text-slate">The category's URL (/marketplace/{category.slug}) stays the same when renamed.</p>
         {error && <p className="text-[12px] text-error">{error}</p>}

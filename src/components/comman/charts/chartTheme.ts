@@ -10,7 +10,7 @@ import { COLORS } from '@/constants/tokens';
 export const CHART_FONT = "Arial, Helvetica, sans-serif";
 
 /** Shared axis tick style (XAxis / YAxis / Legend text). */
-export const CHART_TICK = { fontSize: 11, fill: COLORS.slate, fontFamily: CHART_FONT };
+export const CHART_TICK = { fontSize: 12, fill: COLORS.slate, fontFamily: CHART_FONT };
 
 /** Shared cartesian grid style. */
 export const CHART_GRID = { stroke: COLORS.bone, strokeDasharray: '4 4' };

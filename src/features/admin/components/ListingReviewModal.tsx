@@ -69,7 +69,7 @@ export function ListingReviewModal({ listingId, onClose, onDone }: { listingId: 
 
   return (
     <Modal
-      title="Review listing"
+      title={data && !canDecide ? 'Listing and trust badges' : 'Review listing'}
       onClose={onClose}
       width={720}
       mobileSheet
@@ -140,20 +140,20 @@ export function ListingReviewModal({ listingId, onClose, onDone }: { listingId: 
               ...(data.scheduledAt ? [['Go-live date', new Date(data.scheduledAt).toLocaleString()]] : []),
             ].map(([k, v]) => (
               <div key={k} className="min-w-0">
-                <dt className="text-[10.5px] uppercase tracking-[0.06em] text-slate font-semibold">{k}</dt>
+                <dt className="text-[12px] uppercase tracking-[0.06em] text-slate font-semibold">{k}</dt>
                 <dd className="text-carbon font-medium capitalize break-words">{v}</dd>
               </div>
             ))}
           </dl>
 
           <div>
-            <p className="text-[11px] uppercase tracking-[0.06em] text-slate font-semibold mb-1">Description</p>
+            <p className="text-[12px] uppercase tracking-[0.06em] text-slate font-semibold mb-1">Description</p>
             <p className="text-charcoal whitespace-pre-line max-h-[180px] overflow-y-auto leading-relaxed">{data.description || '—'}</p>
           </div>
 
           {data.digital && (
             <div>
-              <p className="text-[11px] uppercase tracking-[0.06em] text-slate font-semibold mb-1">Files buyers get</p>
+              <p className="text-[12px] uppercase tracking-[0.06em] text-slate font-semibold mb-1">Files buyers get</p>
               {data.digital.files.length === 0 ? <p className="text-error">No files uploaded.</p> : (
                 <ul className="flex flex-col gap-1">
                   {data.digital.files.map(f => (
@@ -170,7 +170,7 @@ export function ListingReviewModal({ listingId, onClose, onDone }: { listingId: 
           )}
 
           <div className="rounded-lg border border-bone px-3 py-2">
-            <p className="text-[11px] uppercase tracking-[0.06em] text-slate font-semibold mb-1">Check before approving</p>
+            <p className="text-[12px] uppercase tracking-[0.06em] text-slate font-semibold mb-1">Check before approving</p>
             <ul className="list-disc pl-4 text-charcoal flex flex-col gap-0.5">
               {CHECKLIST.map(c => <li key={c}>{c}</li>)}
             </ul>

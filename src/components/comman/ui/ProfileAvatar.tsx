@@ -1,4 +1,5 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
+import { useHasSellerAccount, useSwitchToStore } from '@/hooks/auth/useSellerAccount';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
@@ -83,7 +84,7 @@ function AvatarTrigger({
       )}
     >
       {badge > 0 && (
-        <span className="absolute -top-[3px] -end-[3px] z-[1] min-w-[15px] h-[15px] bg-[#c0392b] text-white text-[8px] font-bold rounded-full flex items-center justify-center px-[3px] border border-white leading-none">
+        <span className="absolute -top-[3px] -end-[3px] z-[1] min-w-[17px] h-[17px] bg-[#c0392b] text-white text-[12px] font-bold rounded-full flex items-center justify-center px-[3px] border border-white leading-none">
           {badge > 99 ? '99+' : badge}
         </span>
       )}
@@ -168,9 +169,9 @@ function MenuItem({
 // DropdownMenu
 // ─────────────────────────────────────────────────────────────────────────────
 function DropdownMenu({
-  hasBuyer, hasDash, isAdmin, canSell, onNavigate, onLogout,
+  hasBuyer, hasDash, isAdmin, canSell, hasSellerAccount, onSwitchStore, onNavigate, onLogout,
 }: {
-  hasBuyer: boolean; hasDash: boolean; isAdmin: boolean; canSell: boolean;
+  hasBuyer: boolean; hasDash: boolean; isAdmin: boolean; canSell: boolean; hasSellerAccount: boolean; onSwitchStore: () => void;
   onNavigate: (path: string) => void; onLogout: () => void;
 }) {
   return (
@@ -192,14 +193,9 @@ function DropdownMenu({
             onClick={() => onNavigate('/account/orders')}
           />
         )}
-        {canSell && (
-          <MenuItem
-            icon={Store}
-            label="Sell on Edudeen"
-            sublabel="Open your own store"
-            onClick={() => onNavigate('/become-a-seller')}
-          />
-        )}
+        {canSell && (hasSellerAccount
+          ? <MenuItem icon={Store} label="Switch to your store" sublabel="Open your seller account" onClick={onSwitchStore} />
+          : <MenuItem icon={Store} label="Sell on Edudeen" sublabel="Open your own store" onClick={() => onNavigate('/become-a-seller')} />)}
         {hasDash && (
           <MenuItem
             icon={isAdmin ? Shield : LayoutDashboard}
@@ -247,7 +243,7 @@ const SHOW_BUYER_FEATURES = false;
 // ProfileDropdown
 // ─────────────────────────────────────────────────────────────────────────────
 function ProfileDropdown({
-  profile, initials, onNavigate, onLogout, withNotifications, maxHeight,
+  profile, initials, onNavigate, onLogout, withNotifications, maxHeight, hasSellerAccount, onSwitchStore,
 }: {
   profile: ReturnType<typeof useGetProfile>['profile'];
   initials: string;
@@ -255,6 +251,8 @@ function ProfileDropdown({
   onLogout: () => void;
   withNotifications: boolean;
   maxHeight?: number;
+  hasSellerAccount: boolean | null;
+  onSwitchStore: () => void;
 }) {
   const role      = profile?.role;
   const isSeller  = role === 'seller';
@@ -289,6 +287,8 @@ function ProfileDropdown({
       <DropdownMenu
         hasBuyer={hasBuyer}
         canSell={isBuyer}
+        hasSellerAccount={hasSellerAccount === true}
+        onSwitchStore={onSwitchStore}
         hasDash={hasDash}
         isAdmin={isAdmin}
         onNavigate={onNavigate}
@@ -325,6 +325,8 @@ export function ProfileAvatar({ withNotifications = false, compact = false }: { 
   // A click right after the hover-open must not toggle the menu shut again (mouse and touch both fire enter + click).
   const hoverOpenedAt = useRef(0);
   const { profile, loading } = useGetProfile();
+  const hasSellerAccount = useHasSellerAccount();
+  const { switchToStore } = useSwitchToStore(navigate);
 
   const clearCloseTimer = () => { if (closeTimer.current) { clearTimeout(closeTimer.current); closeTimer.current = null; } };
   const scheduleClose = () => { clearCloseTimer(); closeTimer.current = setTimeout(() => setOpen(false), CLOSE_DELAY_MS); };
@@ -435,6 +437,8 @@ export function ProfileAvatar({ withNotifications = false, compact = false }: { 
             onLogout={handleLogout}
             withNotifications={withNotifications}
             maxHeight={maxHeight}
+            hasSellerAccount={hasSellerAccount}
+            onSwitchStore={() => { setOpen(false); void switchToStore(); }}
           />
         </div>,
         document.body,

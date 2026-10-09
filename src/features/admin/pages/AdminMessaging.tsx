@@ -68,7 +68,7 @@ function ConversationDrawer({ conversationId, onClose }: { conversationId: strin
               {messages.map(m => (
                 <div key={m._id} className="border border-bone rounded-[9px] px-3 py-[10px]">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-[11px] font-semibold text-slate uppercase">
+                    <span className="text-[12px] font-semibold text-slate uppercase">
                       {m.senderRole} · {(m.senderId === conversation?.buyerId ? conversation?.buyer?.name : m.senderId === conversation?.sellerId ? conversation?.store?.name : null) ?? m.senderId.slice(-6)}
                     </span>
                     <span className="text-[12px] text-slate">{fmt(m.createdAt)}</span>

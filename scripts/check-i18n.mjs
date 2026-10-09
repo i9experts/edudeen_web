@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env node
+#!/usr/bin/env node
 // Lists literal UI strings in the buyer-facing pages that have no Urdu entry in src/i18n/ur.ts.
 // Report mode (default) never fails; pass --strict to exit 1 when anything is untranslated.
 // Usage: npm run i18n:check [-- --strict] [-- --all]   (--all also scans shared components + layouts)
@@ -27,7 +27,7 @@ if (all) dirs.push(path.join(root, 'components', 'comman'), path.join(root, 'com
 
 const found = new Map(); // text -> Set(file:line)
 function add(text, file, line) {
-  const s = text.replace(/\s+/g, ' ').trim();
+  const s = text.replace(/&amp;/g, '&').replace(/&apos;/g, "'").replace(/&quot;/g, '"').replace(/&nbsp;/g, ' ').replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/\s+/g, ' ').trim();
   if (s.length < 2 || !/[A-Za-z]{2}/.test(s)) return;
   if (/^[a-z0-9_.\-/#:@]+$/.test(s) && !s.includes(' ')) return; // identifiers / urls / classnames
   if (known(s)) return;

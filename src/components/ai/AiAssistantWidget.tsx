@@ -19,6 +19,7 @@ export function AiAssistantWidget() {
 }
 
 function AssistantInner() {
+  const { pathname } = useLocation();
   const { enabled } = useAiFeatures();
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState('');
@@ -49,7 +50,7 @@ function AssistantInner() {
       {!open && (
         <button
           type="button" onClick={() => setOpen(true)} aria-label="Open shopping assistant"
-          className="fixed z-40 bottom-24 md:bottom-6 end-4 flex items-center gap-2 rounded-full bg-brand-royal text-white shadow-lg px-4 py-3 text-[13px] font-semibold hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/60"
+          className={`fixed z-40 ${pathname.startsWith('/product/') ? 'bottom-40' : 'bottom-24'} md:bottom-6 end-4 flex items-center gap-2 rounded-full bg-brand-royal text-white shadow-lg px-4 py-3 text-[13px] font-semibold hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/60`}
         >
           <Sparkles size={16} /> Ask Edudeen
         </button>

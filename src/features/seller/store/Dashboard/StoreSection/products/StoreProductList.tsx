@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   ShoppingBag, Plus,
   RefreshCw, TrendingUp,
-  Eye, Pencil, Trash2,
+  Eye, Pencil, Trash2, ArrowRight,
 } from 'lucide-react';
 import { useStoreWorkspace, StorePageHeader } from '@/components/layouts/StoreLayout';
 import {
@@ -22,7 +22,7 @@ import {
   type InventoryProduct,
 } from '@/api/services/product';
 import { currencySymbol } from '@/utils/currency';
-import { ProductCell, ProductStatsGrid } from '../../components/ProductListShared';
+import { ProductCell } from '../../components/ProductListShared';
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function StoreProductList() {
@@ -31,7 +31,6 @@ export default function StoreProductList() {
 
   const [products,      setProducts]      = useState<InventoryProduct[]>([]);
   const [totalProducts, setTotalProducts] = useState(0);
-  const [stats,         setStats]         = useState<{ totalProducts: number; inStock: number; lowStock: number; outOfStock: number } | null>(null);
   const [page,          setPage]          = useState(1);
   const [search,        setSearch]        = useState('');
   const [loading,       setLoading]       = useState(true);
@@ -74,7 +73,6 @@ export default function StoreProductList() {
         if (cancelled) return;
         setProducts(res.data.products ?? []);
         // Stats cards describe the whole store, not just search matches.
-        if (!debouncedSearch) setStats(res.data.stats);
         setTotalProducts(res.data.pagination.totalProducts);
       })
       .catch((err: unknown) => {
@@ -230,8 +228,13 @@ export default function StoreProductList() {
 
       <div className="px-4 md:px-8 py-6 flex flex-col gap-5">
 
-        {/* ── Stats ──────────────────────────────────────────────────── */}
-        <ProductStatsGrid stats={stats} loading={loading} />
+        {/* Stock KPIs live on the Inventory page (single source) - just link there. */}
+        <button
+          onClick={() => navigate(`/store/${storeId}/inventory`)}
+          className="self-start inline-flex items-center gap-1.5 bg-transparent border-none p-0 text-[13px] font-semibold text-brand-orange cursor-pointer hover:underline"
+        >
+          Manage stock levels in Inventory <ArrowRight size={13} className="rtl:rotate-180" />
+        </button>
 
         {/* ── Error ──────────────────────────────────────────────────── */}
         {error && <InlineError message={error} onRetry={handleRetry} />}

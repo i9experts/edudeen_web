@@ -403,7 +403,7 @@ export function SellerStorefront() {
       {showMembership && plans.length > 0 && (
         <div id="store-membership" className="border-t border-bone py-10 px-4 sm:px-6 lg:px-10" style={{ background: cfg.bgColor }}>
           <div className="max-w-[900px] mx-auto text-center mb-8">
-            <span className="inline-block text-[10px] font-bold uppercase tracking-[0.12em] rounded-full px-3 py-1 mb-3" style={{ color: cfg.primaryColor, background: `${cfg.primaryColor}18` }}>
+            <span className="inline-block text-[12px] font-bold uppercase tracking-[0.12em] rounded-full px-3 py-1 mb-3" style={{ color: cfg.primaryColor, background: `${cfg.primaryColor}18` }}>
               Store Membership
             </span>
             <h2 className="text-[22px] sm:text-[26px] font-bold mb-2" style={{ color: cfg.textColor }}>Shop {store.name} for less, every time</h2>
@@ -433,7 +433,7 @@ export function SellerStorefront() {
               return (
                 <div key={plan._id} className="relative bg-white rounded-2xl p-6 flex flex-col" style={{ border: isPopular ? `2px solid ${cfg.primaryColor}` : '1px solid #E8E6DC' }}>
                   {isPopular && (
-                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide text-white" style={{ background: cfg.primaryColor }}>
+                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[12px] font-bold uppercase tracking-wide text-white" style={{ background: cfg.primaryColor }}>
                       Most Popular
                     </span>
                   )}

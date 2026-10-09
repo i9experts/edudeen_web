@@ -571,7 +571,7 @@ export function StoreSubscriptions() {
             <div key={i} className="bg-white border border-bone rounded-[10px] px-5 py-4 h-[84px] animate-pulse" />
           )) : metrics.map(m => (
             <div key={m.label} className="bg-white border border-bone rounded-[10px] px-5 py-4">
-              <p className="text-[11px] font-medium text-slate uppercase tracking-[0.06em] mb-1">{m.label}</p>
+              <p className="text-[12px] font-medium text-slate uppercase tracking-[0.06em] mb-1">{m.label}</p>
               <p className="text-[28px] font-bold text-carbon leading-[1.15]">{m.value}</p>
             </div>
           ))}
@@ -583,20 +583,20 @@ export function StoreSubscriptions() {
             <p className="text-[13px] font-bold text-carbon mb-3">Subscribers vs. Regular Customers</p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <div>
-                <p className="text-[10px] text-slate uppercase tracking-wide mb-1">Subscriber Revenue</p>
+                <p className="text-[12px] text-slate uppercase tracking-wide mb-1">Subscriber Revenue</p>
                 <p className="text-[18px] font-bold text-success">${dashboard.subscriberEconomics.subscriberRevenue.toFixed(2)}</p>
               </div>
               <div>
-                <p className="text-[10px] text-slate uppercase tracking-wide mb-1">Regular Revenue</p>
+                <p className="text-[12px] text-slate uppercase tracking-wide mb-1">Regular Revenue</p>
                 <p className="text-[18px] font-bold text-carbon">${dashboard.subscriberEconomics.regularRevenue.toFixed(2)}</p>
               </div>
               <div>
-                <p className="text-[10px] text-slate uppercase tracking-wide mb-1">Orders/Subscriber</p>
+                <p className="text-[12px] text-slate uppercase tracking-wide mb-1">Orders/Subscriber</p>
                 <p className="text-[18px] font-bold text-carbon">{dashboard.subscriberEconomics.avgOrdersPerSubscriber}</p>
                 <p className="text-[12px] text-slate">vs {dashboard.subscriberEconomics.avgOrdersPerRegularCustomer} regular</p>
               </div>
               <div>
-                <p className="text-[10px] text-slate uppercase tracking-wide mb-1">Member Savings Given</p>
+                <p className="text-[12px] text-slate uppercase tracking-wide mb-1">Member Savings Given</p>
                 <p className="text-[18px] font-bold text-brand-orange">${dashboard.subscriberEconomics.totalCustomerSavingsUSD.toFixed(2)}</p>
               </div>
             </div>
@@ -698,19 +698,19 @@ export function StoreSubscriptions() {
             <p className="text-[13px] font-bold text-carbon mb-3">Advanced Analytics</p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
               <div>
-                <p className="text-[10px] text-slate uppercase tracking-wide mb-1">Conversion Rate</p>
+                <p className="text-[12px] text-slate uppercase tracking-wide mb-1">Conversion Rate</p>
                 <p className="text-[18px] font-bold text-carbon">{advanced.conversionRatePercent}%</p>
               </div>
               <div>
-                <p className="text-[10px] text-slate uppercase tracking-wide mb-1">30d Retention</p>
+                <p className="text-[12px] text-slate uppercase tracking-wide mb-1">30d Retention</p>
                 <p className="text-[18px] font-bold text-carbon">{advanced.retention30dPercent}%</p>
               </div>
               <div>
-                <p className="text-[10px] text-slate uppercase tracking-wide mb-1">Realized LTV</p>
+                <p className="text-[12px] text-slate uppercase tracking-wide mb-1">Realized LTV</p>
                 <p className="text-[18px] font-bold text-success">${advanced.realizedLtvUSD.toFixed(2)}</p>
               </div>
               <div>
-                <p className="text-[10px] text-slate uppercase tracking-wide mb-1">Upgrades / Downgrades</p>
+                <p className="text-[12px] text-slate uppercase tracking-wide mb-1">Upgrades / Downgrades</p>
                 <p className="text-[18px] font-bold text-carbon">{advanced.upgradeCount} / {advanced.downgradeCount}</p>
               </div>
             </div>

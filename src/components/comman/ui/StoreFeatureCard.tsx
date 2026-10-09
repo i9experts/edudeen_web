@@ -52,7 +52,7 @@ export function StoreFeatureCard({ store, onClick, className }: {
         fallbackStyle={{ background: EDUDEEN_DEFAULT_COVER_GRADIENT }}
       >
         {isTopSeller && (
-          <span className="absolute top-[8px] end-[8px] inline-flex items-center gap-[3px] px-[7px] py-[3px] rounded-full bg-carbon/80 backdrop-blur-sm text-white text-[9.5px] font-bold">
+          <span className="absolute top-[8px] end-[8px] inline-flex items-center gap-[3px] px-[7px] py-[3px] rounded-full bg-carbon/80 backdrop-blur-sm text-white text-[12px] font-bold">
             <TrendingUp size={9} /> Top Seller
           </span>
         )}

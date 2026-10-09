@@ -115,7 +115,7 @@ export function CommandPalette({ items, open, onClose }: CommandPaletteProps) {
           {groups.map(group => (
             <div key={group.group || '__ungrouped'} className="mb-1">
               {group.group && (
-                <p className="text-[10px] font-semibold text-slate uppercase tracking-[0.08em] px-4 py-1">
+                <p className="text-[12px] font-semibold text-slate uppercase tracking-[0.08em] px-4 py-1">
                   {group.group}
                 </p>
               )}

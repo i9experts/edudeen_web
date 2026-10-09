@@ -28,7 +28,7 @@ export function SellerShipping() {
         </div>
 
         <div className="bg-white border border-bone rounded-[10px] px-5 py-4 max-w-[320px]">
-          <p className="text-[11px] font-medium text-slate uppercase tracking-[0.06em] mb-1">Live Zones</p>
+          <p className="text-[12px] font-medium text-slate uppercase tracking-[0.06em] mb-1">Live Zones</p>
           <p className="text-[28px] font-bold text-carbon leading-[1.15]">{loading ? '—' : liveZones.length}</p>
           <p className="text-xs text-slate mt-1">Used at checkout</p>
         </div>

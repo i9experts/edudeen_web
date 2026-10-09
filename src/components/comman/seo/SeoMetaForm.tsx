@@ -54,7 +54,7 @@ export function SeoMetaForm({ value, onChange, previewUrl, disabled, loading, cl
     <div className={clsx('flex flex-col gap-4', className)}>
       {previewUrl && (value.metaTitle || value.metaDescription) && (
         <div className="bg-cream border border-bone rounded-lg px-4 py-3">
-          <p className="text-[11px] font-medium text-slate uppercase tracking-[0.05em] mb-2">Search Preview</p>
+          <p className="text-[12px] font-medium text-slate uppercase tracking-[0.05em] mb-2">Search Preview</p>
           <p className="text-[15px] font-medium text-info leading-[1.4] mb-[3px] truncate">
             {value.metaTitle || 'Untitled page'}
           </p>
@@ -189,7 +189,7 @@ export function SeoMetaForm({ value, onChange, previewUrl, disabled, loading, cl
             {value.noindex ? 'This page will be excluded from search results.' : 'This page is discoverable by search engines.'}
           </p>
         </div>
-        <Toggle checked={!!value.noindex} onChange={noindex => onChange({ noindex })} disabled={disabled} />
+        <Toggle label="No-index this page" checked={!!value.noindex} onChange={noindex => onChange({ noindex })} disabled={disabled} />
       </div>
     </div>
   );

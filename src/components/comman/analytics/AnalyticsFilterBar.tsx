@@ -63,6 +63,7 @@ export function AnalyticsFilterBar<T extends BaseAnalyticsUIFilters>({
 
         <label className="flex items-center gap-2 cursor-pointer select-none">
           <Toggle
+            label="Compare to previous period"
             checked={filters.compareToPreviousPeriod}
             onChange={v => patch({ compareToPreviousPeriod: v } as Partial<T>)}
             size="sm"

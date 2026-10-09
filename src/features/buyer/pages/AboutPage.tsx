@@ -32,7 +32,7 @@ export function AboutPage() {
     <div className="bg-white min-h-full">
       <div className="px-4 md:px-8 lg:px-12 pt-14 md:pt-20 pb-12 max-w-[760px] mx-auto text-center">
         <Reveal delay={0}>
-          <p className="text-[11px] font-semibold text-brand-orange uppercase tracking-[0.12em] mb-3">{ab.eyebrow || 'About Edudeen'}</p>
+          <p className="text-[12px] font-semibold text-brand-orange uppercase tracking-[0.12em] mb-3">{ab.eyebrow || 'About Edudeen'}</p>
         </Reveal>
         <Reveal delay={0.08}>
           <h1 className="text-[28px] sm:text-[40px] font-bold text-carbon leading-[1.15] mb-5" style={{ fontFamily: SERIF }}>
@@ -62,7 +62,7 @@ export function AboutPage() {
             <img src={aboutImg1} alt="" className="rounded-2xl w-full object-cover aspect-[4/3]" loading="lazy" />
           </Reveal>
           <Reveal delay={0.1}>
-            <p className="text-[11px] font-semibold text-brand-orange uppercase tracking-[0.1em] mb-3">{ab.approachEyebrow || 'Our approach'}</p>
+            <p className="text-[12px] font-semibold text-brand-orange uppercase tracking-[0.1em] mb-3">{ab.approachEyebrow || 'Our approach'}</p>
             <h2 className="text-[22px] sm:text-[26px] font-bold text-carbon leading-[1.3] mb-4" style={{ fontFamily: SERIF }}>
               {ab.approachHeading || 'Easy to start, verified to trust.'}
             </h2>
@@ -79,7 +79,7 @@ export function AboutPage() {
             <img src={aboutImg2} alt="" className="rounded-2xl w-full object-cover aspect-[4/3]" loading="lazy" />
           </Reveal>
           <Reveal delay={0.1} className="lg:order-1">
-            <p className="text-[11px] font-semibold text-brand-orange uppercase tracking-[0.1em] mb-3">{ab.headedEyebrow || "Where we're headed"}</p>
+            <p className="text-[12px] font-semibold text-brand-orange uppercase tracking-[0.1em] mb-3">{ab.headedEyebrow || "Where we're headed"}</p>
             <h2 className="text-[22px] sm:text-[26px] font-bold text-carbon leading-[1.3] mb-4" style={{ fontFamily: SERIF }}>
               {ab.headedHeading || 'More independence for every seller.'}
             </h2>

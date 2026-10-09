@@ -6,7 +6,8 @@ import { Toggle } from '@/components/comman/ui/Toggle';
 import { Button } from '@/components/comman/ui/Button';
 import { useGenerateWorksheet } from '@/hooks/seller/useAiStudio';
 import { costLabel } from '../components/costLabel';
-import { apiWorksheetHtml } from '@/api/services/aiFeatures';
+import type { SheetContent } from '@/api/services/aiFeatures';
+import { SheetExportActions } from '../components/SheetExportActions';
 
 const GRADE_LEVELS = ['Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8'];
 
@@ -38,23 +39,6 @@ export function WorksheetBuilderTool({ storeId, onCreditsChanged, creditCost }: 
       regenerateFromId,
     });
     onCreditsChanged();
-  };
-
-  const [printing, setPrinting] = useState(false);
-  const [printError, setPrintError] = useState('');
-  // Printable HTML is rendered by the API from the saved structured worksheet (no AI call, no credits).
-  const printWorksheet = async () => {
-    if (!result) return;
-    setPrinting(true); setPrintError('');
-    try {
-      const res = await apiWorksheetHtml(storeId, result.generationId, includeAnswerKey);
-      const w = window.open('', '_blank');
-      if (!w) { setPrintError('Allow pop-ups to open the printable worksheet.'); return; }
-      w.document.open(); w.document.write(res.data.html); w.document.close();
-      w.focus(); setTimeout(() => w.print(), 400);
-    } catch (err) {
-      setPrintError(err instanceof Error ? err.message : 'Could not open the printable worksheet.');
-    } finally { setPrinting(false); }
   };
 
   const downloadJson = () => {
@@ -151,8 +135,7 @@ export function WorksheetBuilderTool({ storeId, onCreditsChanged, creditCost }: 
                 ))}
               </div>
             </div>
-            <Button variant="primary" size="md" loading={printing} onClick={printWorksheet}>Print / Save as PDF</Button>
-            {printError && <p className="text-[11px] text-error">{printError}</p>}
+            <SheetExportActions storeId={storeId} generationId={result.generationId} content={{ title: result.title, sections: result.sections } as SheetContent} includeAnswers={includeAnswerKey} />
             <Button variant="outline" size="md" onClick={downloadJson}>Download Worksheet (JSON)</Button>
             <Button variant="outline" size="md" loading={generating} onClick={() => handleGenerate(result.generationId)}>Regenerate</Button>
           </div>

@@ -43,7 +43,7 @@ export function MaintenancePage() {
       <div className="w-16 h-16 rounded-2xl bg-brand-pale-orange flex items-center justify-center mb-6">
         <Icon size={28} className="text-brand-orange" />
       </div>
-      <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-brand-orange mb-2">{info.label}</span>
+      <span className="text-[12px] font-bold uppercase tracking-[0.14em] text-brand-orange mb-2">{info.label}</span>
       <h1 className="text-[22px] font-bold text-charcoal mb-2">{status?.title || info.defaultTitle}</h1>
       <p className="text-[14px] text-slate max-w-[440px] leading-[1.6] mb-5">{status?.message || info.defaultMessage}</p>
 

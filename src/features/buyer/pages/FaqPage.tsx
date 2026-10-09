@@ -154,7 +154,7 @@ export function FaqPage() {
             <div className="flex flex-col gap-9">
               {[...grouped.entries()].map(([cat, items]) => (
                 <div key={cat}>
-                  <p className="text-[11px] font-bold text-brand-orange uppercase tracking-[0.08em] mb-1">{cat}</p>
+                  <p className="text-[12px] font-bold text-brand-orange uppercase tracking-[0.08em] mb-1">{cat}</p>
                   <div>
                     {items.map(faq => <FaqAccordionItem key={faq._id} question={faq.question} answer={faq.answer} />)}
                   </div>

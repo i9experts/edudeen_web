@@ -105,8 +105,8 @@ function OrdersScreenMockup() {
             <div className="min-w-0 flex-1">
               {p ? (
                 <>
-                  <p className="text-[8px] font-semibold text-carbon truncate">{p.name}</p>
-                  <p className="text-[7px] text-slate mt-[2px]">{priceOf(p) != null ? `Rs. ${priceOf(p)!.toLocaleString()}` : ''}</p>
+                  <p className="text-[12px] font-semibold text-carbon truncate">{p.name}</p>
+                  <p className="text-[12px] text-slate mt-[2px]">{priceOf(p) != null ? `Rs. ${priceOf(p)!.toLocaleString()}` : ''}</p>
                 </>
               ) : (
                 <>
@@ -146,21 +146,21 @@ export function HomeScreenMockup() {
       <div className="px-[11px]">
         <div className="flex items-center gap-[6px] rounded-full border border-bone bg-cream px-[10px] py-[6px] mb-[9px]">
           <Search size={10} className="text-slate" />
-          <span className="text-[7.5px] text-slate">Search books, courses, stores...</span>
+          <span className="text-[12px] text-slate">Search books, courses, stores...</span>
         </div>
 
         <div className="rounded-[12px] bg-gradient-to-br from-brand-orange to-brand-deep-orange px-[11px] py-[10px] flex items-center justify-between mb-[10px]">
           <div>
-            <p className="text-[8.5px] font-bold text-white leading-tight">Learn anywhere</p>
-            <p className="text-[7px] text-white/85 leading-tight mt-[1px]">Your downloads, on the go</p>
-            <span className="inline-block mt-[5px] px-[8px] py-[2.5px] rounded-full bg-white text-[6.5px] font-bold text-brand-deep-orange">Browse</span>
+            <p className="text-[12px] font-bold text-white leading-tight">Learn anywhere</p>
+            <p className="text-[12px] text-white/85 leading-tight mt-[1px]">Your downloads, on the go</p>
+            <span className="inline-block mt-[5px] px-[8px] py-[2.5px] rounded-full bg-white text-[12px] font-bold text-brand-deep-orange">Browse</span>
           </div>
           <Gift size={22} className="text-white/90 shrink-0" />
         </div>
 
         <div className="flex items-center justify-between mb-[6px]">
-          <p className="text-[8.5px] font-bold text-carbon">Categories</p>
-          <span className="text-[7px] text-brand-orange font-semibold">See all &gt;</span>
+          <p className="text-[12px] font-bold text-carbon">Categories</p>
+          <span className="text-[12px] text-brand-orange font-semibold">See all &gt;</span>
         </div>
         <div className="flex items-center justify-between mb-[10px]">
           {categories.map((c, i) => {
@@ -177,10 +177,10 @@ export function HomeScreenMockup() {
         </div>
 
         <div className="flex items-center justify-between mb-[6px]">
-          <p className="text-[8.5px] font-bold text-carbon flex items-center gap-[3px]">
+          <p className="text-[12px] font-bold text-carbon flex items-center gap-[3px]">
             <Zap size={9} className="text-brand-orange fill-brand-orange" /> Flash Sale
           </p>
-          {countdown && <span className="text-[6.5px] font-semibold text-error tabular-nums">Ends in {countdown.h}:{countdown.m}:{countdown.s}</span>}
+          {countdown && <span className="text-[12px] font-semibold text-error tabular-nums">Ends in {countdown.h}:{countdown.m}:{countdown.s}</span>}
         </div>
         <div className="grid grid-cols-2 gap-[7px]">
           {(flash.length ? flash : [null, null]).map((d, i) => {
@@ -194,8 +194,8 @@ export function HomeScreenMockup() {
                 <div className="px-[5px] py-[4px]">
                   {d && v ? (
                     <>
-                      <p className="text-[6px] font-semibold text-charcoal truncate">{d.product.name}</p>
-                      <p className="text-[7px] font-bold text-carbon">Rs. {v.price.toLocaleString()}</p>
+                      <p className="text-[12px] font-semibold text-charcoal truncate">{d.product.name}</p>
+                      <p className="text-[12px] font-bold text-carbon">Rs. {v.price.toLocaleString()}</p>
                       {v.compareAtPrice ? <p className="text-[5px] text-slate line-through">Rs. {v.compareAtPrice.toLocaleString()}</p> : null}
                     </>
                   ) : (

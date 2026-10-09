@@ -221,8 +221,8 @@ export function DocumentUploadCard({ doc, uploading, disabled, onUpload }: {
         <div className="flex items-center gap-2 flex-wrap">
           <p className="text-[13px] font-semibold text-carbon">{meta.label}</p>
           {doc.required
-            ? <span className="text-[9.5px] font-bold uppercase tracking-wide text-brand-deep-orange bg-brand-pale-orange rounded-full px-[7px] py-[2px]">Required</span>
-            : <span className="text-[9.5px] font-medium text-slate bg-bone rounded-full px-[7px] py-[2px]">Optional</span>}
+            ? <span className="text-[12px] font-bold uppercase tracking-wide text-brand-deep-orange bg-brand-pale-orange rounded-full px-[7px] py-[2px]">Required</span>
+            : <span className="text-[12px] font-medium text-slate bg-bone rounded-full px-[7px] py-[2px]">Optional</span>}
         </div>
         <p className="text-[12px] text-slate mt-[2px] leading-[1.4]">{meta.desc}</p>
         {uploaded && (

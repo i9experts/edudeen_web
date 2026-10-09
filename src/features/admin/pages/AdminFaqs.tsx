@@ -58,7 +58,7 @@ function FaqFormModal({ faq, onClose, onSaved }: { faq: Faq | null; onClose: () 
         </div>
         <div className="flex items-center justify-between">
           <span className="text-[13px] font-medium text-charcoal">Active</span>
-          <Toggle checked={isActive} onChange={setIsActive} />
+          <Toggle label="FAQ active" checked={isActive} onChange={setIsActive} />
         </div>
         {error && <p className="text-[12px] text-error">{error}</p>}
       </div>

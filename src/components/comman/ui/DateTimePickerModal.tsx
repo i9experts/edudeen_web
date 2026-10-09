@@ -141,7 +141,7 @@ export function DateTimePickerModal({ value, onChange, onClose }: DateTimePicker
 
             <div className="grid grid-cols-7 mb-1">
               {WEEK_DAYS.map(d => (
-                <div key={d} className="text-center text-[10px] font-bold text-slate uppercase tracking-wide py-1">
+                <div key={d} className="text-center text-[12px] font-bold text-slate uppercase tracking-wide py-1">
                   {d}
                 </div>
               ))}
@@ -180,7 +180,7 @@ export function DateTimePickerModal({ value, onChange, onClose }: DateTimePicker
 
           {/* Time section */}
           <div className="px-5 pt-4 pb-3">
-            <p className="text-[10px] font-bold uppercase tracking-[0.09em] text-slate mb-3">Time</p>
+            <p className="text-[12px] font-bold uppercase tracking-[0.09em] text-slate mb-3">Time</p>
 
             {/* Digital display: HH : MM + AM/PM */}
             <div className="flex items-center justify-center gap-2 mb-5">
@@ -307,7 +307,7 @@ export function DateTimePickerModal({ value, onChange, onClose }: DateTimePicker
             style={{ background: sel ? '#EAF2F8' : '#F5F4EF', borderColor: sel ? 'rgba(23,71,113,0.3)' : '#E8E6DC' }}
           >
             <p
-              className="text-[10px] font-bold uppercase tracking-[0.07em] mb-[3px]"
+              className="text-[12px] font-bold uppercase tracking-[0.07em] mb-[3px]"
               style={{ color: sel ? '#174771' : '#8C8A82' }}
             >
               {sel ? 'Going live on' : 'No date selected'}

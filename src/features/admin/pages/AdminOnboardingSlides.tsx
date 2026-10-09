@@ -110,7 +110,7 @@ export function AdminOnboardingSlides() {
               {s.subtitle && <p className="text-[12.5px] text-slate line-clamp-2">{s.subtitle}</p>}
             </div>
             <label className="inline-flex items-center gap-1.5 text-[12px] text-slate cursor-pointer">
-              <Toggle size="sm" checked={s.isActive} disabled={busyId === s._id} onChange={v => toggle(s, v)} /> {s.isActive ? 'Active' : 'Hidden'}
+              <Toggle label={`Slide ${s.title} active`} size="sm" checked={s.isActive} disabled={busyId === s._id} onChange={v => toggle(s, v)} /> {s.isActive ? 'Active' : 'Hidden'}
             </label>
             <div className="flex">
               <button type="button" aria-label="Move up" disabled={i === 0} onClick={() => move(i, -1)} className="p-1.5 bg-transparent border-none cursor-pointer text-slate disabled:opacity-30"><ChevronUp size={16} /></button>

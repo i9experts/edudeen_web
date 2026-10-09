@@ -82,7 +82,7 @@ export function NotificationsMenuSection({ onNavigate }: { onNavigate: (path: st
   return (
     <div className="px-[6px] pt-2 pb-1">
       <div className="flex items-center justify-between px-3 pb-1.5">
-        <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.06em] text-slate">
+        <span className="flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-[0.06em] text-slate">
           <Bell size={12} /> Notifications
           {unreadCount > 0 && (
             <span className="px-1.5 py-[1px] rounded-full text-[12px] font-bold bg-[#c0392b] text-white normal-case tracking-normal">
@@ -198,7 +198,7 @@ export function NotificationBell() {
       >
         <Bell size={16} className="text-brand-orange" />
         {unreadCount > 0 && (
-          <span className="absolute -top-[3px] -end-[3px] min-w-[15px] h-[15px] bg-[#c0392b] text-white text-[8px] font-bold rounded-full flex items-center justify-center px-[3px] border border-white leading-none">
+          <span className="absolute -top-[3px] -end-[3px] min-w-[17px] h-[17px] bg-[#c0392b] text-white text-[12px] font-bold rounded-full flex items-center justify-center px-[3px] border border-white leading-none">
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}

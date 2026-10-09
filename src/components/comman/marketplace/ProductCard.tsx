@@ -375,15 +375,15 @@ export const ProductCard = memo(function ProductCard({ product, onClick, onAddTo
         </p>
 
         {!compact && !isList && product.description && (
-          <p className="text-[9.5px] text-slate/85 leading-[1.35] line-clamp-1 mb-1">
+          <p className="text-[12px] text-slate/85 leading-[1.35] line-clamp-1 mb-1">
             {product.description}
           </p>
         )}
 
-        {!compact && product.sellerName && (
+        {!compact && (product.storeName ?? product.sellerName) && (
           <p className={clsx('flex items-center gap-[4px] text-[12px] text-slate truncate', isList ? '' : 'mb-1')}>
             <Store size={9} className="text-slate/60 shrink-0" />
-            {product.sellerName}
+            {product.storeName ?? product.sellerName}
             {product.sellerVerified && (
               <BadgeCheck size={11} className="text-brand-orange fill-brand-pale-orange shrink-0" />
             )}
@@ -394,7 +394,7 @@ export const ProductCard = memo(function ProductCard({ product, onClick, onAddTo
           <div className="flex items-center gap-[6px] min-w-0">
             <StarRating rating={product.averageRating} count={ratingCount} />
             {!compact && product.purchaseCount > 0 && (
-              <span className="text-[9.5px] text-slate hidden sm:inline whitespace-nowrap">· {product.purchaseCount} sold</span>
+              <span className="text-[12px] text-slate hidden sm:inline whitespace-nowrap">· {product.purchaseCount} sold</span>
             )}
           </div>
           {/* Stock status — merged into the rating row instead of its own

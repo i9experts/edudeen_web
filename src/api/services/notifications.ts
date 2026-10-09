@@ -48,6 +48,8 @@ export interface NotificationPreferenceData {
   /** Opt-in WhatsApp / SMS order messages (off by default). */
   whatsappEnabled?: boolean;
   smsEnabled?:      boolean;
+  /** Opt-in WhatsApp / SMS cart reminders, price and stock alerts, referral rewards (off by default). */
+  retentionChannelsEnabled?: boolean;
   language?:        'en' | 'ur';
   createdAt:    string;
   updatedAt:    string;

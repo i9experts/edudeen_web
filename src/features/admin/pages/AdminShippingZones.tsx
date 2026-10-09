@@ -172,7 +172,7 @@ export function AdminShippingZones() {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-[13px]">
-                <thead className="bg-cream text-[11px] uppercase tracking-[0.06em] text-slate">
+                <thead className="bg-cream text-[12px] uppercase tracking-[0.06em] text-slate">
                   <tr>
                     <th className="px-5 py-3 font-semibold">Delivers to</th>
                     <th className="px-5 py-3 font-semibold">Price</th>

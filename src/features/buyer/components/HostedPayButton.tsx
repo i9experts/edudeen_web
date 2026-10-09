@@ -47,7 +47,7 @@ export function HostedPayButton({ provider, checkoutId, label }: { provider: Hos
       <Button variant="primary" size="lg" loading={busy} icon={!busy && <ExternalLink size={16} />} onClick={start} className="gap-2 w-full justify-center">
         {busy ? 'Redirecting…' : `Pay with ${label}`}
       </Button>
-      <p className="text-[11.5px] text-slate mt-2 text-center">You will be taken to {label} to complete the payment securely.</p>
+      <p className="text-[12px] text-slate mt-2 text-center">You will be taken to {label} to complete the payment securely.</p>
     </div>
   );
 }

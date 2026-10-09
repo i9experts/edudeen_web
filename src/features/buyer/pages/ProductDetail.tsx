@@ -283,13 +283,13 @@ function RelatedCard({ id, name, image, price: nativePrice, compareAtPrice: nati
         {/* Badges */}
         <div className="absolute top-[6px] start-[6px] flex flex-col gap-1 items-start">
           {pctOff != null && pctOff > 0 && (
-            <span className="text-[9.5px] font-bold text-white bg-error px-[6px] py-[2px] rounded-md">-{pctOff}%</span>
+            <span className="text-[12px] font-bold text-white bg-error px-[6px] py-[2px] rounded-md">-{pctOff}%</span>
           )}
           {isBestseller && (
-            <span className="flex items-center gap-[3px] text-[9.5px] font-bold text-white bg-brand-deep-orange px-[6px] py-[2px] rounded-md"><Flame size={9} /> Bestseller</span>
+            <span className="flex items-center gap-[3px] text-[12px] font-bold text-white bg-brand-deep-orange px-[6px] py-[2px] rounded-md"><Flame size={9} /> Bestseller</span>
           )}
           {isNew && !isBestseller && (
-            <span className="flex items-center gap-[3px] text-[9.5px] font-bold text-white bg-success px-[6px] py-[2px] rounded-md"><Sparkles size={9} /> New</span>
+            <span className="flex items-center gap-[3px] text-[12px] font-bold text-white bg-success px-[6px] py-[2px] rounded-md"><Sparkles size={9} /> New</span>
           )}
         </div>
 
@@ -914,7 +914,7 @@ export function ProductDetail() {
                       <dl className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-3 rounded-xl border border-bone bg-cream/60 px-4 py-3 mb-5">
                         {learningDetails.map(d => (
                           <div key={d.label} className="min-w-0">
-                            <dt className="text-[10.5px] font-semibold uppercase tracking-[0.06em] text-slate">{t(d.label)}</dt>
+                            <dt className="text-[12px] font-semibold uppercase tracking-[0.06em] text-slate">{t(d.label)}</dt>
                             <dd className="text-[13px] font-semibold text-carbon mt-[2px] break-words">{d.value}</dd>
                           </div>
                         ))}

@@ -28,7 +28,7 @@ export function SectionHeading({ kicker, title, subtitle, align = 'left', tone =
       {kicker && (
         <div className={clsx('inline-flex items-center gap-2 mb-3', align === 'center' && 'justify-center')}>
           <span className={clsx('w-[6px] h-[6px] rounded-full', isDark ? 'bg-brand-orange' : 'bg-brand-orange')} />
-          <span className={clsx('text-[11px] font-semibold uppercase tracking-[0.12em]', isDark ? 'text-brand-orange' : 'text-brand-deep-orange')}>
+          <span className={clsx('text-[12px] font-semibold uppercase tracking-[0.12em]', isDark ? 'text-brand-orange' : 'text-brand-deep-orange')}>
             {kicker}
           </span>
         </div>

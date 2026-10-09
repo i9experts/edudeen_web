@@ -3,7 +3,8 @@ import client from '../client';
 // Phase 5 AI features (Claude). Paths live here to keep this module self-contained.
 interface Res<T> { success: boolean; message?: string; data: T }
 
-export interface AiFeaturesState { available: boolean; studio?: boolean; features: Record<string, boolean> }
+export interface AiExtras { imageEnhancer: boolean; tts: boolean; semanticSearch: boolean }
+export interface AiFeaturesState { available: boolean; studio?: boolean; features: Record<string, boolean>; extras?: AiExtras }
 
 /** User-facing message + code from an AI endpoint failure (402 credits, 403 switched off, 503 unavailable, 429 rate limit). */
 export function aiErrorInfo(err: unknown): { message: string; code?: string } {
@@ -80,6 +81,24 @@ export const apiProductCover = (storeId: string, productId: string) => client.po
 export interface ImageCheckResult { altText: string; qualityScore: number; issues: string[]; suggestions: string[] }
 export const apiImageCheck = (storeId: string, imageUrl: string, productName?: string) =>
   client.post<never, Res<ImageCheckResult>>(`${S(storeId)}/image-check`, { imageUrl, productName });
+
+// Quiz generator + worksheet/quiz export (Phase 5 follow-ups)
+export type SheetQuestionType = 'multiple_choice' | 'true_false' | 'short_answer' | 'fill_in_blank' | 'open_ended';
+export interface SheetQuestion { type: SheetQuestionType; prompt: string; choices?: string[]; answer?: string; explanation?: string }
+export interface SheetSection { instructions?: string; questions: SheetQuestion[] }
+export interface SheetContent { title: string; sections: SheetSection[]; language?: 'en' | 'ur'; grade?: string }
+export interface QuizRequest { sourceText?: string; productId?: string; grade?: string; language?: 'en' | 'ur'; mcq?: number; trueFalse?: number; short?: number; title?: string }
+export const apiGenerateQuiz = (storeId: string, body: QuizRequest) =>
+  client.post<never, Res<{ generationId: string | null; quiz: SheetContent; creditsCharged: number }>>(`${S(storeId)}/quiz`, body);
+export const apiSheetHtml = (storeId: string, content: SheetContent, includeAnswers: boolean) =>
+  client.post<never, Res<{ html: string; title: string }>>(`${S(storeId)}/sheet/html`, { content, includeAnswers });
+export const apiSaveSheetAsProduct = (storeId: string, body: { generationId?: string; content?: SheetContent; title?: string; includeAnswers?: boolean }) =>
+  client.post<never, Res<{ productId: string | null; name: string; status: string; price: number }>>(`${S(storeId)}/sheet/save-as-product`, body);
+
+export interface DigestSettings { weeklyDigestEnabled: boolean; lastRunAt: string | null; creditsPerDigest: number; aiAvailable: boolean }
+export const apiDigestSettings = (storeId: string) => client.get<never, Res<DigestSettings>>(`${S(storeId)}/insights/settings`);
+export const apiSetDigestSettings = (storeId: string, weeklyDigestEnabled: boolean) =>
+  client.put<never, Res<{ weeklyDigestEnabled: boolean }>>(`${S(storeId)}/insights/settings`, { weeklyDigestEnabled });
 
 export const apiWorksheetHtml = (storeId: string, generationId: string, answers: boolean) =>
   client.get<never, Res<{ html: string; title: string }>>(`${S(storeId)}/worksheets/${generationId}/html?answers=${answers ? 1 : 0}`);

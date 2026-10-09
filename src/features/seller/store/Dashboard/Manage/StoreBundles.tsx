@@ -137,7 +137,7 @@ export default function StoreBundles() {
                 {b.products.some(p => p.status !== 'active') && <p className="text-[12px] text-amber-700 mt-1">Some items aren't live, so buyers can't see this bundle until they are.</p>}
               </div>
               <div className="flex items-center gap-1">
-                <label className="inline-flex items-center gap-1.5 text-[12px] text-slate cursor-pointer"><Toggle size="sm" checked={b.isActive} onChange={v => setActive(b, v)} /> {b.isActive ? 'On' : 'Off'}</label>
+                <label className="inline-flex items-center gap-1.5 text-[12px] text-slate cursor-pointer"><Toggle label={`Bundle ${b.name ?? ""} active`} size="sm" checked={b.isActive} onChange={v => setActive(b, v)} /> {b.isActive ? 'On' : 'Off'}</label>
                 <a href={`/bundles/${b.slug}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[12px] text-slate px-2 no-underline hover:text-brand-orange"><ExternalLink size={12} /> View</a>
                 <Button variant="ghost" size="xs" onClick={() => setEditing(b)}><Pencil size={12} /> Edit</Button>
                 <Button variant="ghost" size="xs" className="text-error" onClick={() => remove(b)}><Trash2 size={12} /></Button>

@@ -143,7 +143,7 @@ export function AdminNavMenu({ excludeItemIds = [] }: { excludeItemIds?: string[
         .map(module => (
         <div key={module.id} className="bg-white border border-bone rounded-xl overflow-hidden">
           <div className="px-5 pt-4 pb-2">
-            <p className="text-[11px] font-bold text-brand-royal uppercase tracking-[0.15em]">{module.label}</p>
+            <p className="text-[12px] font-bold text-brand-royal uppercase tracking-[0.15em]">{module.label}</p>
           </div>
           <div className="divide-y divide-bone">
             {module.items.map(item => {
@@ -338,7 +338,7 @@ function AdminSidebar({ open, onToggle }: AdminSidebarProps) {
               {paletteHint}
               {toggleBtn}
             </div>
-            <p className="mt-3 text-[10.5px] font-bold text-brand-royal uppercase tracking-[0.15em]">Team workspace</p>
+            <p className="mt-3 text-[12px] font-bold text-brand-royal uppercase tracking-[0.15em]">Team workspace</p>
           </div>
         ) : (
           <div className="pt-5 pb-4 flex flex-col items-center gap-[6px] shrink-0 border-b border-bone">
@@ -570,7 +570,7 @@ export function AdminLayout() {
         {/* Mobile top bar — brand only; navigation lives in AdminBottomNav. */}
         <div className="lg:hidden shrink-0 flex items-center justify-between gap-3 px-4 py-2.5 bg-white border-b border-bone">
           <EdudeenLogo size={20} />
-          <span className="text-[10px] font-bold text-brand-royal uppercase tracking-[0.15em]">Team workspace</span>
+          <span className="text-[12px] font-bold text-brand-royal uppercase tracking-[0.15em]">Team workspace</span>
         </div>
         <main id="admin-main" className="flex-1 overflow-y-auto overscroll-contain pb-[72px] lg:pb-10">
           <Suspense fallback={null}><Outlet /></Suspense>

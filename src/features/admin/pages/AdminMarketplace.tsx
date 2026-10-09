@@ -11,7 +11,7 @@ import { AdminStudioHeader } from '@/features/admin/components/studio';
 import type { TableColumn } from '@/components/comman/ui';
 import { AnalyticsErrorState } from '@/components/comman/analytics/AnalyticsErrorState';
 import { formatCurrency, formatNumber } from '@/components/comman/analytics/format';
-import { Star, StoreIcon, RefreshCw, GraduationCap, Trash2, ClipboardCheck } from 'lucide-react';
+import { Star, StoreIcon, RefreshCw, GraduationCap, Trash2, ClipboardCheck, ShieldCheck } from 'lucide-react';
 
 const STATUS_OPTIONS = [
   { value: 'pending_review', label: 'Waiting for review' },
@@ -128,6 +128,8 @@ export function AdminMarketplace() {
                   disabled: processingId === r.storeId,
                   onClick: () => toggleEducatorBadge(r),
                 },
+                // Active listings are not in the review queue, so the trust-badge editor (inside the review modal) is reached from here.
+                ...(r.status === 'pending_review' || r.status === 'rejected' ? [] : [{ label: 'Edit badges', icon: <ShieldCheck size={13} />, onClick: () => setReviewing(r.id) }]),
                 { label: 'Remove Listing', icon: <Trash2 size={13} />, danger: true, onClick: () => setRemoving(r) },
               ]}
             />

@@ -165,7 +165,7 @@ export function HelpBotTool({ storeId }: ToolProps) {
   return (
     <Panel title="Seller help assistant" icon={<LifeBuoy size={15} />}>
       <p className="text-xs text-slate mb-3">Free. Answers come only from the Edudeen help articles.</p>
-      <Textarea rows={3} value={q} onChange={e => setQ(e.target.value)} placeholder="e.g. How do I add my bank account for bank transfers?" />
+      <Textarea rows={3} aria-label="Your question" value={q} onChange={e => setQ(e.target.value)} placeholder="e.g. How do I add my bank account for bank transfers?" />
       <Button variant="primary" size="md" className="mt-3" loading={busy} disabled={q.trim().length < 3} onClick={ask}>Ask</Button>
       <ErrorLine msg={error} />
       {res && (
@@ -253,7 +253,7 @@ export function PhotoCheckTool({ storeId, onCreditsChanged, creditCost }: ToolPr
         {!res ? <p className="text-xs text-slate py-10 text-center">Upload a photo to see feedback.</p> : (
           <div className="flex flex-col gap-3">
             <div><Label>Quality score</Label><p className="text-[28px] font-bold text-brand-orange leading-none">{res.qualityScore}/10</p></div>
-            <div><Label>Alt text (editable)</Label><Textarea rows={2} value={res.altText} onChange={e => setRes({ ...res, altText: e.target.value })} /></div>
+            <div><Label>Alt text (editable)</Label><Textarea rows={2} aria-label="Alt text" value={res.altText} onChange={e => setRes({ ...res, altText: e.target.value })} /></div>
             {res.issues.length > 0 && <div><Label>Issues</Label><ul className="list-disc ps-4 text-xs text-graphite">{res.issues.map((x, i) => <li key={i}>{x}</li>)}</ul></div>}
             {res.suggestions.length > 0 && <div><Label>Suggestions</Label><ul className="list-disc ps-4 text-xs text-graphite">{res.suggestions.map((x, i) => <li key={i}>{x}</li>)}</ul></div>}
           </div>

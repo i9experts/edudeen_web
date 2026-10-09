@@ -166,7 +166,7 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
 
   return (
     <div className="bg-white min-h-full">
-      <div className="sticky top-0 z-50"><BuyerNavbar /></div>
+      <div className="sticky top-[var(--navbar-top,0px)] z-50"><BuyerNavbar /></div>
 
       <main id="browse-top" className="max-w-[1480px] mx-auto px-[5%] md:px-[4%] pt-4 md:pt-6 pb-12 scroll-mt-28">
         <Breadcrumb className="mb-1" items={breadcrumb} />
@@ -493,7 +493,7 @@ export function CategoryPage() {
   if (!entry) {
     return (
       <div className="bg-white min-h-full">
-        <div className="sticky top-0 z-50"><BuyerNavbar /></div>
+        <div className="sticky top-[var(--navbar-top,0px)] z-50"><BuyerNavbar /></div>
         <main className="max-w-[1480px] mx-auto px-[5%] md:px-[4%] pt-6 pb-12">
           <div className="h-8 w-64 bg-bone rounded animate-pulse mb-6" />
           <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-8">

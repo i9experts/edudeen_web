@@ -108,14 +108,14 @@ export function OrderDetailModal({ order, storeId, onClose, onUpdated }: Props) 
     <Modal title={`Order ${order.orderNumber}`} onClose={onClose} width={520} mobileSheet>
       <div className="flex flex-col gap-5">
         <section>
-          <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate mb-1">Buyer</p>
+          <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-slate mb-1">Buyer</p>
           <Row label="Name">{order.customer.name}</Row>
           <Row label="Email">{order.customer.email || '—'}</Row>
           {detail?.customer.phone && <Row label="Phone">{detail.customer.phone}</Row>}
         </section>
 
         <section>
-          <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate mb-1">Order</p>
+          <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-slate mb-1">Order</p>
           <Row label="Placed">{new Date(order.date).toLocaleString('en-PK', { dateStyle: 'medium', timeStyle: 'short' })}</Row>
           <Row label="Type"><Badge color={order.type === 'digital' ? 'blue' : 'orange'}>{typeLabel}</Badge></Row>
           <Row label="Status"><StatusBadge status={order.status} /></Row>
@@ -124,14 +124,14 @@ export function OrderDetailModal({ order, storeId, onClose, onUpdated }: Props) 
 
         {(detail?.giftWrap || detail?.giftMessage) && (
           <section>
-            <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate mb-1">Gift</p>
+            <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-slate mb-1">Gift</p>
             {detail?.giftWrap && <Row label="Gift wrap">Requested</Row>}
             {detail?.giftMessage && <Row label="Message"><span className="whitespace-pre-line">{detail.giftMessage}</span></Row>}
           </section>
         )}
 
         <section>
-          <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate mb-1">Payment</p>
+          <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-slate mb-1">Payment</p>
           <Row label="Method"><span className="capitalize">{paymentLabel(order.paymentType)}</span></Row>
           <Row label="Status">
             {order.isPaid
@@ -149,7 +149,7 @@ export function OrderDetailModal({ order, storeId, onClose, onUpdated }: Props) 
         </section>
 
         <section>
-          <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate mb-1">Items</p>
+          <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-slate mb-1">Items</p>
           {detailLoading ? (
             <div className="flex flex-col gap-2 py-1">
               <SkeletonBox height={40} rounded="8px" />
@@ -189,7 +189,7 @@ export function OrderDetailModal({ order, storeId, onClose, onUpdated }: Props) 
 
         {needsShipping(order) && !detailLoading && !detailError && (
           <section>
-            <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate mb-1">Shipping address</p>
+            <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-slate mb-1">Shipping address</p>
             {detail?.shippingAddress ? (
               <div className="text-[13px] text-carbon leading-[1.5] py-1">
                 <p className="font-semibold">{detail.shippingAddress.recipientName}</p>
@@ -213,7 +213,7 @@ export function OrderDetailModal({ order, storeId, onClose, onUpdated }: Props) 
 
         {canShip(order) && (
           <section>
-            <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate mb-2">Ship this order</p>
+            <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-slate mb-2">Ship this order</p>
             <div className="flex flex-col gap-2.5">
               <CourierBooking
                 orderId={order.orderId}
@@ -235,7 +235,7 @@ export function OrderDetailModal({ order, storeId, onClose, onUpdated }: Props) 
 
         {(detail?.trackingEvents?.length ?? 0) > 0 && (
           <section>
-            <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate mb-1">Courier updates</p>
+            <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-slate mb-1">Courier updates</p>
             <ul className="flex flex-col">
               {[...(detail?.trackingEvents ?? [])].reverse().map((ev, i) => (
                 <li key={i} className="flex items-start justify-between gap-3 py-1.5 border-b border-bone last:border-b-0 text-[12.5px]">

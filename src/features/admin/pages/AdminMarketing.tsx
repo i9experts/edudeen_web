@@ -480,7 +480,7 @@ function CouponsTab() {
     { key: 'minOrderAmount', header: 'Min Order', render: (c) => <span className="text-[13px] text-graphite">{c.minOrderAmount != null ? formatCurrency(c.minOrderAmount) : '—'}</span> },
     { key: 'usage', header: 'Usage', render: (c) => <span className="text-[13px] text-graphite">{c.usageCount}{c.usageLimit ? ` / ${c.usageLimit}` : ''}</span> },
     { key: 'expiresAt', header: 'Expires', render: (c) => <span className="text-[13px] text-slate whitespace-nowrap">{c.expiresAt ? formatDate(c.expiresAt) : 'Never'}</span> },
-    { key: 'isActive', header: 'Active', render: (c) => <Toggle checked={c.isActive} onChange={() => toggleActive(c)} disabled={submitting} /> },
+    { key: 'isActive', header: 'Active', render: (c) => <Toggle label={`Coupon ${c.code} active`} checked={c.isActive} onChange={() => toggleActive(c)} disabled={submitting} /> },
     {
       key: 'actions',
       header: 'Actions',
@@ -686,15 +686,15 @@ function PromotionCalendarModal({ onClose }: { onClose: () => void }) {
             {/* Summary strip */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="bg-white border border-bone rounded-xl px-3.5 py-3">
-                <p className="text-[10px] font-medium text-slate uppercase tracking-[0.06em] mb-1">Scheduled</p>
+                <p className="text-[12px] font-medium text-slate uppercase tracking-[0.06em] mb-1">Scheduled</p>
                 <p className="text-[18px] font-bold text-carbon leading-[1.15]">{totalPromotions}</p>
               </div>
               <div className="bg-white border border-bone rounded-xl px-3.5 py-3">
-                <p className="text-[10px] font-medium text-slate uppercase tracking-[0.06em] mb-1">Revenue in Window</p>
+                <p className="text-[12px] font-medium text-slate uppercase tracking-[0.06em] mb-1">Revenue in Window</p>
                 <p className="text-[18px] font-bold text-carbon leading-[1.15]">{formatCurrency(totalRevenue)}</p>
               </div>
               <div className="rounded-[10px] px-3.5 py-3 border" style={{ background: conflictCount > 0 ? '#FDF3E7' : '#EAF7EF', borderColor: conflictCount > 0 ? '#F5D9A8' : '#CFEEDA' }}>
-                <p className="text-[10px] font-medium uppercase tracking-[0.06em] mb-1" style={{ color: conflictCount > 0 ? '#9A6A17' : '#1E7A3C' }}>Conflicts</p>
+                <p className="text-[12px] font-medium uppercase tracking-[0.06em] mb-1" style={{ color: conflictCount > 0 ? '#9A6A17' : '#1E7A3C' }}>Conflicts</p>
                 <p className="text-[18px] font-bold leading-[1.15]" style={{ color: conflictCount > 0 ? '#9A6A17' : '#1E7A3C' }}>{conflictCount}</p>
               </div>
             </div>
@@ -976,7 +976,7 @@ function PromotionsTab() {
             ['Ad Revenue', formatCurrency(analytics.platformRevenueUSD)],
           ].map(([label, value]) => (
             <div key={label} className="bg-white border border-bone rounded-xl px-3.5 py-3">
-              <p className="text-[10px] font-medium text-slate uppercase tracking-[0.06em] mb-1">{label}</p>
+              <p className="text-[12px] font-medium text-slate uppercase tracking-[0.06em] mb-1">{label}</p>
               <p className="text-[18px] font-bold text-carbon leading-[1.15]">{value}</p>
             </div>
           ))}

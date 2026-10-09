@@ -88,7 +88,7 @@ export function MiniCart({ accentColor }: { accentColor?: string }) {
           {cartCount > 99 ? '99+' : cartCount}
         </b>
         {cartCount > 0 && (
-          <span className="md:hidden absolute top-[-2px] end-[-4px] min-w-[16px] h-[16px] rounded-[8px] bg-brand-orange text-white text-[12px] font-bold leading-[16px] text-center px-1">
+          <span className="md:hidden absolute top-[-2px] end-[-4px] min-w-[17px] h-[17px] rounded-[9px] bg-brand-orange text-white text-[12px] font-bold leading-[17px] text-center px-1">
             {cartCount > 99 ? '99+' : cartCount}
           </span>
         )}

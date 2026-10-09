@@ -189,11 +189,11 @@ export default function StoreCustomerList() {
                   <div className="flex items-center gap-4 mt-3 pt-3 border-t border-[#f0eee6] w-full justify-center">
                     <div className="text-center">
                       <p className="text-[15px] font-bold text-carbon">{sel.orderCount}</p>
-                      <p className="text-[10px] text-slate uppercase tracking-[0.05em]">Orders</p>
+                      <p className="text-[12px] text-slate uppercase tracking-[0.05em]">Orders</p>
                     </div>
                     <div className="text-center">
                       <p className="text-[15px] font-bold text-carbon">{formatMoneyCompact(sel.totalSpent, store?.baseCurrency)}</p>
-                      <p className="text-[10px] text-slate uppercase tracking-[0.05em]">Spent</p>
+                      <p className="text-[12px] text-slate uppercase tracking-[0.05em]">Spent</p>
                     </div>
                   </div>
                 </div>

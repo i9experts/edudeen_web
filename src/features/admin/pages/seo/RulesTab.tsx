@@ -82,6 +82,7 @@ export function RulesTab() {
               <option value="error">Error</option>
             </Select>
             <Toggle
+              label={`${RULE_LABELS[rule.code] ?? rule.code} enabled`}
               checked={rule.enabled}
               disabled={submitting && busyCode === rule.code}
               onChange={next => handleToggle(rule, next)}

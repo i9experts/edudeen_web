@@ -233,8 +233,8 @@ export function ClosingCtaBanner({ className }: { className?: string }) {
                       <ProductImage images={row.images} name={row.name} className="w-full h-full object-cover" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-[9.5px] font-semibold text-charcoal truncate">{row.name}</p>
-                      {row.price != null && <p className="text-[8.5px] font-bold text-brand-orange mt-[2px]">{formatMoney(row.price, row.currency)}</p>}
+                      <p className="text-[12px] font-semibold text-charcoal truncate">{row.name}</p>
+                      {row.price != null && <p className="text-[12px] font-bold text-brand-orange mt-[2px]">{formatMoney(row.price, row.currency)}</p>}
                     </div>
                   </div>
                 ))}

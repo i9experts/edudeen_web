@@ -50,6 +50,8 @@ import {
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { currencySymbol } from '@/utils/currency';
+import { computeCartTotals } from '@/utils/cartTotals';
+import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 
 // ── Step badge ────────────────────────────────────────────────────────────────
 function StepBadge({ n, active, done }: { n: number; active: boolean; done: boolean }) {
@@ -427,6 +429,9 @@ export function CheckoutPage() {
   // different number of hooks on the next render the instant login succeeds
   // and this same component instance re-renders instead of navigating away).
   const { cart, loading: cartLoading, clearCart, refetch: refetchCart } = useCartContext();
+  // Before the checkout exists (steps 1-2) the sidebar shows the cart's own figures in the buyer's display currency,
+  // through the same maths as the Cart page; from step 3 on the server's checkout is the source of truth.
+  const { currency: displayCurrency, convert: convertToDisplay, ratesLoaded } = useCurrencyPreference();
 
   // Checkout is one store at a time. On the main marketplace site the cart
   // can span several stores — `?store=` picks which one this checkout is
@@ -774,13 +779,16 @@ export function CheckoutPage() {
   const couponDiscount = checkout?.couponDiscountUSD ?? 0;
   const giftCardDiscount = checkout?.giftCardDiscountUSD ?? 0;
   const bakedInDiscounts = (summary?.subscriberSavingsUSD ?? 0) + (summary?.campaignDiscountUSD ?? 0) + (summary?.autoDiscountUSD ?? 0);
-  const total = checkout
-    ? checkout.totalAmount
-    : cartItems.reduce((s, i) => s + (i.itemTotal ?? (i.unitPrice ?? i.price ?? 0) * i.quantity), 0);
+  // The running sale only applies to the whole store cart, not to a Buy Now line or a physical-only subset.
+  const estimate = computeCartTotals(cartItems, buyNow || physicalOnly ? null : cart?.campaignDiscount, convertToDisplay);
+  const estimateSymbol = ratesLoaded ? currencySymbol(displayCurrency) : '';
+  const total = checkout ? checkout.totalAmount : estimate.payable;
   // Subtotal before discounts, so the summary adds up: subtotal − discounts + shipping + tax = total.
   const orderSubtotal = checkout
     ? Math.max(0, total - (isDigital ? 0 : shipping) - tax + bakedInDiscounts + couponDiscount + giftCardDiscount)
-    : total;
+    : estimate.subtotal;
+  // Symbol for every sidebar amount: the checkout's own currency once it exists, else the display currency.
+  const summarySymbol = checkout ? checkoutSymbol : estimateSymbol;
 
   // ── Handlers ─────────────────────────────────────────────────────────────
   async function handleApplyCoupon() {
@@ -1657,7 +1665,7 @@ export function CheckoutPage() {
 
             {/* Items — the whole cart, one order */}
             <div className="flex flex-col gap-2 mb-5">
-              {(() => { const cur = checkoutSymbol; return checkout
+              {(() => { const cur = summarySymbol; return checkout
                 ? checkout.items.map(item => (
                   <div key={item.variantId} className="flex justify-between text-[12px]">
                     <span className="text-carbon truncate max-w-[150px]">
@@ -1671,7 +1679,7 @@ export function CheckoutPage() {
                 ))
                 : !cartLoading && cartItems.map(item => {
                   const price = item.unitPrice ?? item.price ?? 0;
-                  const ttl   = item.itemTotal ?? price * item.quantity;
+                  const ttl   = convertToDisplay(item.itemTotal ?? price * item.quantity, item.currency);
                   return (
                     <div key={item.productVariantId} className="flex justify-between text-[12px]">
                       <span className="text-carbon truncate max-w-[150px]">
@@ -1692,14 +1700,20 @@ export function CheckoutPage() {
             <div className="flex flex-col gap-3 mb-5">
               <div className="flex justify-between text-[13px]">
                 <span className="text-slate">Subtotal</span>
-                <span className="font-semibold text-carbon">{checkoutSymbol} {orderSubtotal.toLocaleString()}</span>
+                <span className="font-semibold text-carbon">{summarySymbol} {orderSubtotal.toLocaleString()}</span>
               </div>
+              {!checkout && estimate.campaignAmount > 0 && (
+                <div className="flex justify-between text-[13px]">
+                  <span className="text-success">{cart?.campaignDiscount?.name || 'Sale discount'}</span>
+                  <span className="font-semibold text-success">-{summarySymbol}{estimate.campaignAmount.toFixed(2)}</span>
+                </div>
+              )}
               {!isDigital && (
                 <div className="flex justify-between text-[13px]">
                   <span className="text-slate">Shipping</span>
-                  {selectedZone || summary
+                  {checkout || summary
                     ? <span className="font-semibold text-carbon">{checkoutSymbol} {shipping.toLocaleString()}</span>
-                    : <span className="text-slate font-medium">Select method</span>
+                    : <span className="text-slate font-medium">Calculated next</span>
                   }
                 </div>
               )}
@@ -1837,7 +1851,7 @@ export function CheckoutPage() {
 
             <div className="flex justify-between text-[16px] font-bold">
               <span className="text-carbon">Total</span>
-              <span className="text-carbon">{checkoutSymbol} {total.toLocaleString()}</span>
+              <span className="text-carbon">{summarySymbol} {total.toLocaleString()}</span>
             </div>
 
             {checkout && (

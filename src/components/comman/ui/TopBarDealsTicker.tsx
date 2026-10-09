@@ -79,7 +79,7 @@ export function TopBarDealsTicker({ className }: { className?: string }) {
       aria-live="polite"
     >
       <span className={clsx(
-        'shrink-0 inline-flex items-center gap-1 rounded-full px-2 py-[2px] text-[10.5px] font-bold uppercase tracking-[0.06em]',
+        'shrink-0 inline-flex items-center gap-1 rounded-full px-2 py-[2px] text-[12px] font-bold uppercase tracking-[0.06em]',
         item.kind === 'sale' ? 'bg-[#F4DC4C] text-[#152D43]' : 'bg-white/15 text-white',
       )}>
         <Icon size={11} className={item.kind === 'flash' ? 'fill-current' : undefined} />

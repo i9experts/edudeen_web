@@ -126,7 +126,7 @@ export function OrderProgressTrack({ steps }: { steps: ProgressStep[] }) {
               state === 'done' ? 'text-success' : state === 'active' ? 'text-brand-orange' : 'text-slate',
             )}>{label}</span>
             {(when || hint) && (
-              <span className="text-[9.5px] text-slate whitespace-nowrap -mt-[4px]">{when ?? hint}</span>
+              <span className="text-[12px] text-slate whitespace-nowrap -mt-[4px]">{when ?? hint}</span>
             )}
           </div>
         );

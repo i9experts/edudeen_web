@@ -159,7 +159,7 @@ export function ChatList({
           {showRecent && (
             <div className="absolute start-4 end-4 top-full mt-1 z-20 bg-white border border-bone rounded-[12px] py-2 overflow-hidden">
               <div className="flex items-center justify-between px-3 pb-1.5">
-                <span className="text-[10.5px] font-semibold text-slate uppercase tracking-[0.05em]">Recent</span>
+                <span className="text-[12px] font-semibold text-slate uppercase tracking-[0.05em]">Recent</span>
                 {onClearRecentSearches && (
                   <button
                     onMouseDown={e => e.preventDefault()}

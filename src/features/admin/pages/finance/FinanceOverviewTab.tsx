@@ -61,7 +61,7 @@ export function FinanceOverviewTab({ params }: { params: AdminFinanceParams }) {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {PAYOUT_STATUSES.map((status) => (
             <div key={status} className="bg-white border border-bone rounded-xl px-4 py-3">
-              <p className="text-[11px] font-medium text-slate uppercase tracking-[0.06em] mb-1">{status} payouts</p>
+              <p className="text-[12px] font-medium text-slate uppercase tracking-[0.06em] mb-1">{status} payouts</p>
               <p className="text-[20px] font-bold text-charcoal">{d.payoutQueue[status].count}</p>
               {/* Never a blended sum — one line per currency actually present */}
               {d.payoutQueue[status].byCurrency.map((c) => (

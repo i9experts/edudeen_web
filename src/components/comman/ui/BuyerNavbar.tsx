@@ -24,6 +24,7 @@ import { MiniCart } from './MiniCart';
 import { MiniWishlist } from './MiniWishlist';
 import { scrollRootRef } from '@/utils/scrollRoot';
 import { useSellEntry } from '@/hooks/auth/useSellEntry';
+import { VoiceSearchButton } from '@/components/ai/VoiceSearchButton';
 
 export interface BuyerNavbarSearchConfig {
   value: string;
@@ -128,7 +129,7 @@ function useUncontrolledSearch() {
 // ── Section header — one consistent label style for every dropdown section ──
 function SearchSectionLabel({ icon, tone = 'neutral', children }: { icon: React.ReactNode; tone?: 'neutral' | 'brand'; children: React.ReactNode }) {
   return (
-    <p className="flex items-center gap-[7px] text-[10px] font-bold text-slate uppercase tracking-[0.08em] mb-[10px]">
+    <p className="flex items-center gap-[7px] text-[12px] font-bold text-slate uppercase tracking-[0.08em] mb-[10px]">
       <span className={clsx(
         'flex size-[18px] items-center justify-center rounded-full shrink-0',
         tone === 'brand' ? 'bg-brand-pale-orange text-brand-deep-orange' : 'bg-bone/70 text-graphite',
@@ -599,6 +600,7 @@ export function SearchBox({
               <X size={14} />
             </button>
           )}
+          <VoiceSearchButton onText={(spoken) => { onChange(spoken); onSubmit(spoken); setOpen(false); onClose?.(); }} className="me-1" />
           {!isLg && (
             <button
               type="button"
@@ -1100,6 +1102,15 @@ export function BuyerNavbar({ variant = 'full', contextLabel, search, accentColo
     ro.observe(el);
     return () => ro.disconnect();
   }, [variant]);
+  // Pages wrap this navbar (plus e.g. the mega-menu) in their own sticky
+  // container, so a negative `top` on the <nav> alone never moved anything
+  // (the wrapper pinned it at 0). Publish the offset as a CSS variable the
+  // wrappers use as their own sticky `top` - the top bar then really slides away.
+  useEffect(() => {
+    const root = document.documentElement;
+    root.style.setProperty('--navbar-top', scrolled && topBarH ? `${-topBarH}px` : '0px');
+    return () => { root.style.removeProperty('--navbar-top'); };
+  }, [scrolled, topBarH]);
   const searchValue    = search?.value    ?? uncontrolled.value;
   const searchOnChange = search?.onChange ?? uncontrolled.onChange;
   // Below sm (~640px) there isn't room for logo + a real search input + wishlist/cart/
@@ -1139,7 +1150,7 @@ export function BuyerNavbar({ variant = 'full', contextLabel, search, accentColo
       {variant === 'full' && <div ref={topBarRef}><PlatformTopBar /></div>}
       {/* Fixed height — shrinking it on scroll shifted the page under the
          sticky header and made it jitter near the top. */}
-      <div className="flex items-center gap-3 md:gap-6 px-[5%] md:px-[4%] h-[64px] md:h-[80px]">
+      <div className="flex items-center gap-3 md:gap-6 px-[5%] md:px-[4%] h-[56px] md:h-[64px]">
 
         {/* Logo — hidden while the mobile search row is expanded so the input gets full width */}
         <button
@@ -1150,7 +1161,9 @@ export function BuyerNavbar({ variant = 'full', contextLabel, search, accentColo
             mobileSearchOpen ? 'hidden md:flex' : 'flex',
           )}
         >
-          <EdudeenLogo size={40} />
+          {/* Slightly smaller on phones so logo + search + saved + cart + Sign In all fit (also in Urdu). */}
+          <span className="sm:hidden flex"><EdudeenLogo size={32} /></span>
+          <span className="hidden sm:flex"><EdudeenLogo size={40} /></span>
           {contextLabel && (
             <>
               <span className="text-bone mx-1 hidden md:inline">|</span>

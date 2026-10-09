@@ -118,7 +118,7 @@ export function ActivityLogTab() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {metrics.map(m => (
           <div key={m.label} className="bg-white border border-bone rounded-[10px] px-5 py-4">
-            <p className="text-[11px] font-medium text-slate uppercase tracking-[0.06em] mb-1">{m.label}</p>
+            <p className="text-[12px] font-medium text-slate uppercase tracking-[0.06em] mb-1">{m.label}</p>
             <p className="text-[28px] font-bold text-carbon leading-[1.15]">{m.value}</p>
             {m.sub && <p className="text-xs text-slate mt-1">{m.sub}</p>}
           </div>

@@ -161,7 +161,7 @@ function OverviewTab({ storeId }: { storeId: string }) {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {metrics.map(m => (
           <div key={m.label} className="bg-white border border-bone rounded-[10px] px-5 py-4">
-            <p className="text-[11px] font-medium text-slate uppercase tracking-[0.06em] mb-1">{m.label}</p>
+            <p className="text-[12px] font-medium text-slate uppercase tracking-[0.06em] mb-1">{m.label}</p>
             <p className="text-[28px] font-bold text-carbon leading-[1.15]">{m.value}</p>
           </div>
         ))}
@@ -604,7 +604,7 @@ function AwardPointsModal({ storeId, member, onClose }: { storeId: string; membe
         </div>
       </div>
 
-      <p className="text-[11px] font-semibold text-slate uppercase tracking-[0.07em] mb-2">Recent History</p>
+      <p className="text-[12px] font-semibold text-slate uppercase tracking-[0.07em] mb-2">Recent History</p>
       <div className="flex flex-col gap-1.5 max-h-[160px] overflow-y-auto">
         {history.length === 0 ? (
           <p className="text-xs text-slate italic">No transactions yet.</p>

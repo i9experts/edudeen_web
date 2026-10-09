@@ -112,7 +112,7 @@ function MobileAdminMenu({ active, onSelect }: { active: Section; onSelect: (id:
       {NAV.map(group => (
         <div key={group.group}>
           <div className="px-5 pt-4 pb-2">
-            <p className="text-[10.5px] font-bold uppercase tracking-[0.06em] text-slate">{group.group}</p>
+            <p className="text-[12px] font-bold uppercase tracking-[0.06em] text-slate">{group.group}</p>
           </div>
           <div className="divide-y divide-bone">
             {group.items.map(item => {
@@ -450,7 +450,7 @@ export function AdminSettings() {
                 <div key={group.group}>
                   {gi > 0 && <div className="h-px bg-mist" />}
                   <div className="px-4 pt-[10px] pb-1">
-                    <p className={`text-[10px] font-semibold uppercase tracking-[0.08em] ${group.isDanger ? 'text-[#c0392b]' : 'text-slate'}`}>
+                    <p className={`text-[12px] font-semibold uppercase tracking-[0.08em] ${group.isDanger ? 'text-[#c0392b]' : 'text-slate'}`}>
                       {group.group}
                     </p>
                   </div>

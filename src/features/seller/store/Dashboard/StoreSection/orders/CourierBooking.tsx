@@ -80,7 +80,7 @@ export function CourierBooking({ orderId, storeId, existing, onBooked }: Props) 
         </div>
       )}
       {error && <p role="alert" className="text-[12px] text-error">{error}</p>}
-      <p className="text-[11.5px] text-slate">Or skip this and enter your own tracking number below.</p>
+      <p className="text-[12px] text-slate">Or skip this and enter your own tracking number below.</p>
     </div>
   );
 }

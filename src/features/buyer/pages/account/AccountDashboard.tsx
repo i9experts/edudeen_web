@@ -14,6 +14,7 @@ import { apiGetMyAddresses } from '@/api/services/address';
 import { Card, MetricCard, PageHeader, Badge, ProgressBar, Button, SkeletonBox, EmptyState, Avatar } from '@/components/comman/ui';
 import { currencySymbol } from '@/utils/currency';
 import { useNavGroups } from '@/components/layouts/AccountLayout';
+import { ReferralCard } from './ReferralCard';
 
 const STATUS_COLOR: Record<OrderStatus, 'orange' | 'blue' | 'green' | 'red'> = {
   pending: 'orange', processing: 'blue', shipped: 'blue',
@@ -78,7 +79,7 @@ function WelcomeHero({ name, image, memberSince }: { name?: string; image?: stri
           </div>
         )}
         <div className="min-w-0">
-          <p className="text-[11px] sm:text-[12px] font-bold tracking-[0.15em] uppercase text-brand-royal mb-1.5">Your Edudeen account</p>
+          <p className="text-[12px] sm:text-[12px] font-bold tracking-[0.15em] uppercase text-brand-royal mb-1.5">Your Edudeen account</p>
           <p className="font-serif font-normal text-[24px] sm:text-[30px] text-carbon leading-[1.15] tracking-[-0.5px] truncate">
             Welcome back{displayName ? `, ${displayName}` : ''}.
           </p>
@@ -196,7 +197,7 @@ function MobileAccountMenu({ isLoggedIn }: { isLoggedIn: boolean }) {
       {navGroups.map(section => (
         <Card key={section.group} padding="none" className="rounded-2xl overflow-hidden">
           <div className="px-5 pt-4 pb-2">
-            <p className="text-[10.5px] font-bold text-slate uppercase tracking-[0.06em]">{section.group}</p>
+            <p className="text-[12px] font-bold text-slate uppercase tracking-[0.06em]">{section.group}</p>
           </div>
           <div className="divide-y divide-[#f5f4ef]">
             {section.items.map(item => (
@@ -296,6 +297,8 @@ export function AccountDashboard() {
       </div>
 
       <MobileAccountMenu isLoggedIn={isLoggedIn} />
+
+      {isLoggedIn && <ReferralCard />}
 
       {/* Summary cards — desktop only; the mobile profile hero above already
          shows Orders/Wishlist/Addresses in its own stats strip, so this grid

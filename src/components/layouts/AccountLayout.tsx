@@ -149,7 +149,7 @@ function AccountSidebar({ open, onToggle }: SidebarProps) {
           {navGroups.map(section => (
             <div key={section.group} className="mb-1">
               {open
-                ? <p className="text-[11px] font-bold text-graphite px-2 py-1 uppercase tracking-[0.12em] mb-0.5">{section.group}</p>
+                ? <p className="text-[12px] font-bold text-graphite px-2 py-1 uppercase tracking-[0.12em] mb-0.5">{section.group}</p>
                 : <div className="h-px bg-[#d5dfe6] mx-1 mb-2" />
               }
               {section.items.map(item => {

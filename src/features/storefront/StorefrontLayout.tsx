@@ -93,7 +93,7 @@ export function StorefrontLayout() {
   return (
     <StorefrontProvider value={contextValue}>
       <div className="min-h-screen bg-white">
-        <div className="sticky top-0 z-50">
+        <div className="sticky top-[var(--navbar-top,0px)] z-50">
           <BuyerNavbar />
         </div>
         <div aria-hidden style={{ height: 3, background: EDUDEEN_GOLD_GRADIENT }} />
