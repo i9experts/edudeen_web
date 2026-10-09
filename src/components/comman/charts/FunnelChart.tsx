@@ -66,7 +66,7 @@ export function FunnelChart({
               {dropPct !== null && (
                 <div className="flex items-center gap-2 py-[5px]">
                   <div className="h-px w-8 bg-bone" />
-                  <span className="text-[10px] text-slate font-medium">−{dropPct}% drop</span>
+                  <span className="text-[12px] text-slate font-medium">−{dropPct}% drop</span>
                   <div className="h-px w-8 bg-bone" />
                 </div>
               )}

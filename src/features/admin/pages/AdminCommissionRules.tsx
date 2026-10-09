@@ -64,7 +64,7 @@ function GlobalDefaultCard() {
           <p className="font-serif font-normal text-[19px] sm:text-[21px] text-carbon leading-[1.25] flex items-center gap-[6px]">
             <Percent size={15} className="text-brand-orange" /> Global Default Commission
           </p>
-          <p className="text-[11px] text-slate mt-[2px]">
+          <p className="text-[12px] text-slate mt-[2px]">
             Applied to stores with no active platform plan and no seller-specific override.
           </p>
         </div>
@@ -88,7 +88,7 @@ function GlobalDefaultCard() {
 
       <button
         onClick={() => setShowHistory(s => !s)}
-        className="mt-3 flex items-center gap-1 text-[11.5px] font-medium text-brand-orange bg-transparent border-none cursor-pointer p-0"
+        className="mt-3 flex items-center gap-1 text-[12px] font-medium text-brand-orange bg-transparent border-none cursor-pointer p-0"
       >
         <History size={12} /> {showHistory ? 'Hide history' : 'View history'}
       </button>
@@ -97,9 +97,9 @@ function GlobalDefaultCard() {
           {historyLoading ? (
             <SkeletonBox height={40} rounded="6px" />
           ) : history.length === 0 ? (
-            <p className="text-[11px] text-slate">No changes recorded yet.</p>
+            <p className="text-[12px] text-slate">No changes recorded yet.</p>
           ) : history.map(h => (
-            <div key={h._id} className="flex justify-between text-[11.5px]">
+            <div key={h._id} className="flex justify-between text-[12px]">
               <span className={h.isActive ? 'font-semibold text-carbon' : 'text-slate'}>{pct(h.rate)}{h.notes ? ` — ${h.notes}` : ''}</span>
               <span className="text-slate">{formatDate(h.createdAt)}</span>
             </div>
@@ -134,15 +134,15 @@ function SellerRateHistory({ storeId }: { storeId: string }) {
   const { history, loading, error } = useSellerCommissionHistory(storeId);
   return (
     <div className="flex flex-col gap-1.5">
-      <p className="text-[11.5px] font-semibold text-charcoal flex items-center gap-1"><History size={12} /> Override history</p>
+      <p className="text-[12px] font-semibold text-charcoal flex items-center gap-1"><History size={12} /> Override history</p>
       {loading ? (
         <SkeletonBox height={40} rounded="6px" />
       ) : error ? (
-        <p className="text-[11.5px] text-error">{error}</p>
+        <p className="text-[12px] text-error">{error}</p>
       ) : history.length === 0 ? (
-        <p className="text-[11px] text-slate">No overrides have been set for this store.</p>
+        <p className="text-[12px] text-slate">No overrides have been set for this store.</p>
       ) : history.map(h => (
-        <div key={h._id} className="flex justify-between gap-3 text-[11.5px]">
+        <div key={h._id} className="flex justify-between gap-3 text-[12px]">
           <span className={h.isActive ? 'font-semibold text-carbon' : 'text-slate'}>
             {pct(h.rate)}{h.isActive ? ' (current)' : ''}{h.notes ? ` — ${h.notes}` : ''}
           </span>
@@ -207,7 +207,7 @@ function SellerOverrideModal({ onClose, onSaved }: { onClose: () => void; onSave
                   className="w-full text-left px-3 py-2.5 hover:bg-cream cursor-pointer border-none bg-transparent"
                 >
                   <p className="text-[13px] font-medium text-charcoal">{s.storeName}</p>
-                  <p className="text-[11px] text-slate">{s.sellerName} · {s.sellerEmail}</p>
+                  <p className="text-[12px] text-slate">{s.sellerName} · {s.sellerEmail}</p>
                 </button>
               ))}
             </div>
@@ -216,10 +216,10 @@ function SellerOverrideModal({ onClose, onSaved }: { onClose: () => void; onSave
           <>
             <div className="flex items-center justify-between bg-cream border border-bone rounded-[8px] px-3 py-2.5">
               <p className="text-[13px] font-semibold text-charcoal">{selectedStoreName}</p>
-              <button onClick={() => setSelectedStoreId(null)} className="text-[11.5px] text-brand-orange bg-transparent border-none cursor-pointer">Change</button>
+              <button onClick={() => setSelectedStoreId(null)} className="text-[12px] text-brand-orange bg-transparent border-none cursor-pointer">Change</button>
             </div>
             {resolved && (
-              <p className="text-[11.5px] text-slate">
+              <p className="text-[12px] text-slate">
                 Current effective rate: <span className="font-semibold text-carbon">{pct(resolved.rate)}</span> ({SOURCE_LABEL[resolved.source]})
               </p>
             )}
@@ -287,7 +287,7 @@ export function AdminCommissionRules() {
         <div className="px-5 py-[14px] border-b border-bone flex items-center justify-between gap-3 flex-wrap">
           <div className="min-w-0">
             <p className="font-serif font-normal text-[19px] sm:text-[21px] text-carbon leading-[1.25]">Seller Overrides</p>
-            <p className="text-[11px] text-slate">Always wins over plan-tier and global rates.</p>
+            <p className="text-[12px] text-slate">Always wins over plan-tier and global rates.</p>
           </div>
           <Button icon={<Plus size={14} />} size="sm" onClick={() => setAdding(true)} className="shrink-0">Add Override</Button>
         </div>

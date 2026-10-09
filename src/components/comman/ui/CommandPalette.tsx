@@ -102,7 +102,7 @@ export function CommandPalette({ items, open, onClose }: CommandPaletteProps) {
             placeholder="Search pages, actions…"
             className="flex-1 bg-transparent border-0 outline-none text-[14px] text-carbon placeholder:text-slate"
           />
-          <kbd className="text-[10px] font-semibold text-slate bg-cream border border-bone rounded-md px-[6px] py-[2px] shrink-0">
+          <kbd className="text-[12px] font-semibold text-slate bg-cream border border-bone rounded-md px-[6px] py-[2px] shrink-0">
             Esc
           </kbd>
         </div>

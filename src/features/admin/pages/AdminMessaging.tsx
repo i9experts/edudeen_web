@@ -42,7 +42,7 @@ function ConversationDrawer({ conversationId, onClose }: { conversationId: strin
         <div className="px-5 py-4 border-b border-bone flex items-center justify-between shrink-0">
           <div>
             <p id={titleId} className="text-[14px] font-bold text-charcoal">{conversation?.buyer?.name ?? 'Conversation'} · {conversation?.store?.name ?? conversationId.slice(-6).toUpperCase()}</p>
-            {conversation?.buyer?.email && <p className="text-[11px] text-slate">{conversation.buyer.email}</p>}
+            {conversation?.buyer?.email && <p className="text-[12px] text-slate">{conversation.buyer.email}</p>}
           </div>
           <button onClick={onClose} aria-label="Close conversation" className="w-7 h-7 flex items-center justify-center rounded-full bg-bone border-none cursor-pointer outline-none transition-colors duration-150 hover:bg-slate/20 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-brand-orange/50">
             <X size={13} className="text-charcoal" />
@@ -71,7 +71,7 @@ function ConversationDrawer({ conversationId, onClose }: { conversationId: strin
                     <span className="text-[11px] font-semibold text-slate uppercase">
                       {m.senderRole} · {(m.senderId === conversation?.buyerId ? conversation?.buyer?.name : m.senderId === conversation?.sellerId ? conversation?.store?.name : null) ?? m.senderId.slice(-6)}
                     </span>
-                    <span className="text-[10px] text-slate">{fmt(m.createdAt)}</span>
+                    <span className="text-[12px] text-slate">{fmt(m.createdAt)}</span>
                   </div>
                   {m.type === 'text' && <p className="text-[13px] text-charcoal">{m.text}</p>}
                   {m.type === 'product_share' && (
@@ -102,7 +102,7 @@ function NameCell({ name, id, sub }: { name?: string | null; id?: string; sub?: 
   return (
     <div className="min-w-0 max-w-[200px]">
       <p className="text-graphite truncate" title={name ?? undefined}>{name ?? (id ? 'Unknown' : '—')}</p>
-      {(sub || id) && <p className="text-[10.5px] text-slate truncate" title={id}>{sub ?? `…${id?.slice(-8)}`}</p>}
+      {(sub || id) && <p className="text-[12px] text-slate truncate" title={id}>{sub ?? `…${id?.slice(-8)}`}</p>}
     </div>
   );
 }
@@ -144,7 +144,7 @@ function ConversationsPanel() {
     {
       key: 'isArchived', header: 'Status',
       render: c => (
-        <span className="px-[10px] py-[3px] rounded-[5px] text-[11px] font-semibold"
+        <span className="px-[10px] py-[3px] rounded-[5px] text-[12px] font-semibold"
           style={{ background: c.isArchived ? '#EDF2F4' : '#EAF7EF', color: c.isArchived ? '#486071' : '#1E7A3C' }}>
           {c.isArchived ? 'Archived' : 'Active'}
         </span>
@@ -154,7 +154,7 @@ function ConversationsPanel() {
     {
       key: 'actions', header: '',
       render: c => (
-        <button onClick={() => setViewingId(c._id)} className="px-[10px] py-1 rounded-[6px] text-[11px] font-medium text-white border-none cursor-pointer bg-info flex items-center gap-1 outline-none transition-[filter,transform] duration-150 hover:brightness-110 active:scale-[0.96] focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-brand-orange/50">
+        <button onClick={() => setViewingId(c._id)} className="px-[10px] py-1 rounded-[6px] text-[12px] font-medium text-white border-none cursor-pointer bg-info flex items-center gap-1 outline-none transition-[filter,transform] duration-150 hover:brightness-110 active:scale-[0.96] focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-brand-orange/50">
           <MessageSquare size={11} /> View
         </button>
       ),
@@ -292,7 +292,7 @@ function ReportsPanel() {
     {
       key: 'status', header: 'Status',
       render: r => (
-        <span className="px-[10px] py-[3px] rounded-[5px] text-[11px] font-semibold"
+        <span className="px-[10px] py-[3px] rounded-[5px] text-[12px] font-semibold"
           style={{
             background: r.status === 'pending' ? '#FFF4DC' : r.status === 'reviewed' ? '#EAF3FB' : '#EAF7EF',
             color:      r.status === 'pending' ? '#B36200' : r.status === 'reviewed' ? '#2156A8' : '#1E7A3C',

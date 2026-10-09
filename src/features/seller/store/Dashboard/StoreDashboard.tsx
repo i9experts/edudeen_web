@@ -11,19 +11,16 @@ import { useStoreWorkspace, StorePageHeader } from '@/components/layouts/StoreLa
 import { PlatformSalesCard } from './PlatformSalesCard';
 import { AreaChart } from '@/components/comman/charts';
 import { MetricCard, SkeletonBox, Button, PageHeader } from '@/components/comman/ui';
-import {
-  apiSellerAnalyticsOverview, apiSellerAnalyticsRevenueOverTime, apiSellerAnalyticsToday,
-  type SellerOverviewData, type RevenuePoint, type SellerTodaySummaryData,
-} from '@/api/services/analytics/analytics';
-import { apiGetStoreInventory, type InventoryProduct } from '@/api/services/product';
+import type { SellerOverviewData, RevenuePoint, SellerTodaySummaryData } from '@/api/services/analytics/analytics';
+import type { InventoryProduct } from '@/api/services/product';
+import { apiStoreDashboardSummary, type OnboardingChecklist } from '@/api/services/storeDashboard';
+import { OnboardingChecklistCard } from './OnboardingChecklistCard';
 import { getStorefrontUrl } from '@/utils/storefrontUrl';
 import { formatNumber, formatBucketLabel } from '@/components/comman/analytics/format';
 import { formatMoneyCompact, formatMoney, currencySymbol } from '@/utils/currency';
 import {
   StudioPanel, StudioTextLink, StudioWorkflow, StudioPill, StudioTable,
 } from '@/features/seller/components/studio/Studio';
-
-const SHELF_SIZE = 6;
 
 interface StoreMetrics {
   overview:      SellerOverviewData;
@@ -33,6 +30,7 @@ interface StoreMetrics {
   activeProducts: number;
   shelf:         InventoryProduct[];
   today:         SellerTodaySummaryData;
+  checklist:     OnboardingChecklist;
 }
 
 function useStoreDashboardMetrics(storeId: string) {
@@ -48,24 +46,19 @@ function useStoreDashboardMetrics(storeId: string) {
     let cancelled = false;
     setLoading(true);
     setError('');
-    Promise.all([
-      apiSellerAnalyticsOverview({ storeId, range: '30d' }),
-      apiSellerAnalyticsRevenueOverTime({ storeId, range: '6m', granularity: 'month' }),
-      // Same inventory call as before, just a few rows instead of 1 so the
-      // "product shelf" panel can show the latest items too.
-      apiGetStoreInventory(storeId, 1, SHELF_SIZE),
-      apiSellerAnalyticsToday(storeId),
-      apiGetStoreInventory(storeId, 1, 1, { status: 'active' }),
-    ])
-      .then(([overviewRes, revenueRes, inventoryRes, todayRes, activeRes]) => {
+    // One aggregate call (was five parallel requests).
+    apiStoreDashboardSummary(storeId)
+      .then(res => {
         if (cancelled) return;
+        const d = res.data;
         setMetrics({
-          overview: overviewRes.data,
-          revenueSeries: revenueRes.data.series,
-          totalProducts: inventoryRes.data.stats.totalProducts,
-          activeProducts: activeRes.data.stats.totalProducts,
-          shelf: inventoryRes.data.products ?? [],
-          today: todayRes.data,
+          overview: d.overview,
+          revenueSeries: d.revenueSeries,
+          totalProducts: d.totalProducts,
+          activeProducts: d.activeProducts,
+          shelf: d.shelf as InventoryProduct[],
+          today: d.today,
+          checklist: d.checklist,
         });
       })
       .catch(err => { if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load store metrics.'); })
@@ -127,20 +120,20 @@ function StoreInfoCard() {
         </div>
         <div className="flex flex-wrap gap-[6px]">
           <span
-            className="inline-flex items-center gap-1 text-[11px] font-medium px-[9px] py-[3px] rounded-full capitalize"
+            className="inline-flex items-center gap-1 text-[12px] font-medium px-[9px] py-[3px] rounded-full capitalize"
             style={{ background: statusColor + '18', color: statusColor }}
           >
             <StatusIcon size={10} />
             {store?.status === 'active' ? 'Live' : (store?.status ?? '—')}
           </span>
           <span
-            className="text-[11px] font-medium px-[9px] py-[3px] rounded-full capitalize"
+            className="text-[12px] font-medium px-[9px] py-[3px] rounded-full capitalize"
             style={planStyle}
           >
             {store?.plan ?? '—'} plan
           </span>
           <span
-            className="text-[11px] font-medium px-[9px] py-[3px] rounded-full capitalize"
+            className="text-[12px] font-medium px-[9px] py-[3px] rounded-full capitalize"
             style={typeStyle}
           >
             {store?.sellerType ?? '—'}
@@ -165,7 +158,7 @@ function StoreInfoCard() {
               <Copy size={13} className={copied ? 'text-success' : 'text-slate'} />
             </button>
           </div>
-          {copied && <p className="text-[11px] text-success mt-1 font-medium" role="status">Copied!</p>}
+          {copied && <p className="text-[12px] text-success mt-1 font-medium" role="status">Copied!</p>}
         </div>
 
         {(store?.productTypes?.length ?? 0) > 0 && (
@@ -177,7 +170,7 @@ function StoreInfoCard() {
               {store!.productTypes!.map(pt => (
                 <span
                   key={pt}
-                  className="text-[11px] font-medium text-charcoal bg-mist px-[9px] py-[3px] rounded-full capitalize"
+                  className="text-[12px] font-medium text-charcoal bg-mist px-[9px] py-[3px] rounded-full capitalize"
                 >
                   {pt.replace(/_/g, ' ')}
                 </span>
@@ -265,7 +258,7 @@ function TodaySnapshot({ today, currency }: { today: SellerTodaySummaryData; cur
         <span className="font-serif text-[18px] text-carbon">{formatMoneyCompact(today.revenue, currency)}</span>
         {/* No change badge when there is nothing to compare (no revenue today, or no usable previous day). */}
         {today.revenue > 0 && Number.isFinite(today.revenueChangePercent) && today.revenueChangePercent !== 0 && (
-          <span className={`inline-flex items-center gap-0.5 text-[11px] font-semibold px-[7px] py-[2px] rounded-full ${up ? 'text-success bg-success-bg' : 'text-error bg-error-bg'}`}>
+          <span className={`inline-flex items-center gap-0.5 text-[12px] font-semibold px-[7px] py-[2px] rounded-full ${up ? 'text-success bg-success-bg' : 'text-error bg-error-bg'}`}>
             <TrendIcon size={11} />
             {Math.abs(today.revenueChangePercent).toFixed(0)}%
           </span>
@@ -454,6 +447,9 @@ export default function StoreDashboard() {
 
           {/* Admin sale campaigns — join right from the dashboard */}
           <PlatformSalesCard storeId={storeId} />
+
+          {/* Setup checklist (real data; hidden once complete) */}
+          {metrics?.checklist && <OnboardingChecklistCard checklist={metrics.checklist} storeId={storeId} />}
 
           {/* Metric Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">

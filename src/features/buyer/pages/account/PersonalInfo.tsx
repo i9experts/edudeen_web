@@ -1,13 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
-import { Camera, Check, Loader2, MapPin, Phone, UserCircle, AlertTriangle, Trash2 } from 'lucide-react';
-import { useGetProfile, invalidateProfileCache } from '@/hooks/auth/useGetProfile';
+import { Camera, Check, Loader2, MapPin, Phone, UserCircle } from 'lucide-react';
+import { useGetProfile } from '@/hooks/auth/useGetProfile';
 import { useEditProfile } from '@/hooks/auth/useEditProfile';
-import { apiDeleteAccount } from '@/api/services/users';
 import { TokenStorage, apiEditProfile } from '@/api/services/auth';
 import { useUpload } from '@/hooks/upload/useUpload';
-import { Card, PageHeader, Badge, SkeletonBox, Modal, Button } from '@/components/comman/ui';
+import { Card, PageHeader, Badge, SkeletonBox } from '@/components/comman/ui';
 import { useToast } from '@/contexts/ToastContext';
 
 const INPUT_CLS = 'w-full py-[11px] px-[14px] text-[13px] border border-bone rounded-[10px] outline-none text-charcoal bg-white box-border focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/10 transition-colors';
@@ -37,8 +36,6 @@ export function PersonalInfo() {
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
 
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (!profile) return;
@@ -53,19 +50,7 @@ export function PersonalInfo() {
     editProfile({ name, phone });
   };
 
-  const handleDeleteAccount = async () => {
-    setDeleting(true);
-    try {
-      await apiDeleteAccount();
-      TokenStorage.clear();
-      invalidateProfileCache();
-      navigate('/login');
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to delete account.');
-    } finally {
-      setDeleting(false);
-    }
-  };
+
 
   // Profile photo: public upload → save the returned URL on the profile.
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -175,7 +160,7 @@ export function PersonalInfo() {
                     <div className="flex items-center gap-[10px]">
                       <input readOnly value={profile?.email ?? ''} className={clsx(INPUT_CLS, 'flex-1 bg-cream text-slate cursor-default')} />
                       {profile?.isVerified && (
-                        <span className="px-3 py-[6px] rounded-[8px] text-[11px] font-semibold bg-success-bg text-success flex items-center gap-1 shrink-0">
+                        <span className="px-3 py-[6px] rounded-[8px] text-[12px] font-semibold bg-success-bg text-success flex items-center gap-1 shrink-0">
                           <Check size={10} /> Verified
                         </span>
                       )}
@@ -191,7 +176,7 @@ export function PersonalInfo() {
                     <button
                       type="button"
                       onClick={() => navigate('/account/addresses')}
-                      className="mt-2 inline-flex items-center gap-1 text-[11.5px] font-medium text-brand-orange bg-transparent border-none cursor-pointer p-0 hover:underline"
+                      className="mt-2 inline-flex items-center gap-1 text-[12px] font-medium text-brand-orange bg-transparent border-none cursor-pointer p-0 hover:underline"
                     >
                       <MapPin size={11} /> Manage delivery addresses
                     </button>
@@ -209,47 +194,18 @@ export function PersonalInfo() {
                       {saving && <Loader2 size={13} className="animate-spin" />}
                       {saving ? 'Saving…' : 'Save Changes'}
                     </button>
-                    {saved && <span className="text-[11px] text-success font-medium mt-4">Profile updated</span>}
-                    {saveError && <span className="text-[11px] text-error font-medium mt-4">{saveError}</span>}
+                    {saved && <span className="text-[12px] text-success font-medium mt-4">Profile updated</span>}
+                    {saveError && <span className="text-[12px] text-error font-medium mt-4">{saveError}</span>}
                   </div>
                 </>
               )}
             </div>
           </Card>
 
-          {/* Danger Zone — folded in from the old standalone Settings page,
-             the only content there that wasn't a duplicate of something
-             already on this page or in the sidebar/menu nav. */}
-          <Card padding="none" className="rounded-2xl overflow-hidden">
-            <div className="px-6 py-4 border-b border-[#f5bcbc] bg-error-bg/40 flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-[10px] bg-white border border-[#f5bcbc] flex items-center justify-center shrink-0">
-                <AlertTriangle size={16} className="text-error" />
-              </div>
-              <p className="text-[13px] font-bold text-error">Danger Zone</p>
-            </div>
-            <div className="p-6">
-              <p className="text-[12px] text-slate leading-relaxed mb-4">
-                Deleting your account signs you out and deactivates your profile immediately. This can't be undone from the app — you'll need to contact support to reactivate it.
-              </p>
-              <Button variant="danger" icon={<Trash2 size={13} />} onClick={() => setShowDeleteConfirm(true)}>
-                Delete Account
-              </Button>
-            </div>
-          </Card>
+
       </div>
 
-      {showDeleteConfirm && (
-        <Modal title="Delete your account?" onClose={() => setShowDeleteConfirm(false)} footer={
-          <>
-            <Button variant="ghost" onClick={() => setShowDeleteConfirm(false)}>Cancel</Button>
-            <Button variant="danger" onClick={handleDeleteAccount} loading={deleting}>Delete Account</Button>
-          </>
-        }>
-          <p className="text-[13px] text-slate">
-            This deactivates your account and signs you out immediately. You'll need to contact support to reactivate it.
-          </p>
-        </Modal>
-      )}
+
     </div>
   );
 }

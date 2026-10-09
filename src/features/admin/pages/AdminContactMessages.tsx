@@ -26,7 +26,7 @@ function DetailModal({ submission, onClose }: { submission: ContactSubmission; o
           </div>
           <StatusBadge status={STATUS_LABEL[submission.status]} />
         </div>
-        <p className="text-[11px] text-slate">{formatDate(submission.createdAt)}</p>
+        <p className="text-[12px] text-slate">{formatDate(submission.createdAt)}</p>
         <p className="text-[13px] text-charcoal leading-[1.6] whitespace-pre-wrap">{submission.message}</p>
       </div>
     </Modal>
@@ -84,7 +84,7 @@ export function AdminContactMessages() {
       render: s => (
         <div className="max-w-[180px]">
           <p className="font-semibold truncate">{s.name}</p>
-          <p className="text-[11px] text-slate truncate">{s.email}</p>
+          <p className="text-[12px] text-slate truncate">{s.email}</p>
         </div>
       ),
     },

@@ -1,4 +1,5 @@
 import { memo, useState } from 'react';
+import { SaleBadge } from '@/components/comman/ui/SaleBadge';
 import { Link } from 'react-router-dom';
 import { clsx } from 'clsx';
 import { Heart, Star } from 'lucide-react';
@@ -9,6 +10,7 @@ import { currencySymbol } from '@/utils/currency';
 import { getStorePagePath } from '@/utils/storefrontUrl';
 import { coverPaletteFor } from './ProductCoverFallback';
 import { ageLabel } from '@/constants/learning';
+import { TrustBadges } from './TrustBadges';
 
 // Same name-keyed palette as ProductCoverFallback, so a product keeps its
 // colours between the grid card and cart/wishlist/detail thumbnails.
@@ -75,7 +77,7 @@ function Cover({ product, tilt }: { product: MarketplaceProduct; tilt: number })
             <strong className="block font-serif font-normal text-[19px] sm:text-[23px] leading-[1.08] my-3 line-clamp-3">
               {product.name}
             </strong>
-            <small className="text-[9px] sm:text-[10px] text-[#5d6570] line-clamp-1">
+            <small className="text-[12px] sm:text-[12px] text-[#5d6570] line-clamp-1">
               {product.sellerName ?? 'Edudeen'}
             </small>
           </div>
@@ -104,17 +106,23 @@ export const ResourceCard = memo(function ResourceCard({
   const variant = (product.variants ?? []).find(v => v.isDefault) ?? product.variants?.[0];
   const variantId = variant?._id ?? '';
   const rawPrice = variant?.price ?? 0;
-  const price = convert(rawPrice, variant?.currency);
-  // Seller's "was" price — only when it's really higher than today's price.
-  const rawWas = variant?.compareAtPrice && variant.compareAtPrice > rawPrice ? variant.compareAtPrice : null;
-  const was = rawWas ? convert(rawWas, variant?.currency) : null;
-  const percentOff = rawWas ? Math.round((1 - rawPrice / rawWas) * 100) : 0;
   const campaign = product.activeCampaign;
+  // A running percentage sale is part of the price shown (checkout applies the same percentage), so cards,
+  // product page, cart and checkout agree. Fixed-amount sales are order-level: badge only.
+  const salePct = campaign?.discountType === 'percentage' && campaign.discountValue ? campaign.discountValue : null;
+  const effectiveRaw = salePct ? Math.round(rawPrice * (1 - salePct / 100)) : rawPrice;
+  const price = convert(effectiveRaw, variant?.currency);
+  // The "was" price: the seller's compare-at price when higher, otherwise the list price the sale is taken from.
+  const rawWas = variant?.compareAtPrice && variant.compareAtPrice > rawPrice ? variant.compareAtPrice : (salePct && rawPrice > 0 ? rawPrice : null);
+  const was = rawWas ? convert(rawWas, variant?.currency) : null;
+  const percentOff = rawWas ? Math.round((1 - effectiveRaw / rawWas) * 100) : 0;
   const campaignOff = campaign?.discountValue
     ? campaign.discountType === 'percentage' ? `${campaign.discountValue}% off` : `${currencySymbol(campaign.currency ?? 'USD')} ${campaign.discountValue} off`
     : null;
   const fmt = (n: number) => `${currencySymbol(displayCurrency)} ${n.toLocaleString(undefined, { maximumFractionDigits: displayCurrency === 'PKR' ? 0 : 2 })}`;
   const kind = product.productType ?? product.type ?? 'physical';
+  // Show the STORE (links to the store page), falling back to the person's name only when the API sent no store name.
+  const shopName = product.storeName ?? product.sellerName;
 
   const level = product.educationLevel
     ? (product.educationLevel === 'other' ? product.customLevel : LEVEL_LABEL.get(product.educationLevel)) ?? null
@@ -162,23 +170,24 @@ export const ResourceCard = memo(function ResourceCard({
             </div>
             {wishlistButton}
           </div>
-          {product.sellerName && (
+          {shopName && (
             product.storeSlug ? (
               <Link to={getStorePagePath(product.storeSlug)} className="self-start mt-1 text-[13px] font-bold text-brand-orange no-underline hover:underline truncate max-w-full">
-                {product.sellerName}
+                {shopName}
               </Link>
             ) : (
-              <span className="mt-1 text-[13px] text-slate truncate">{product.sellerName}</span>
+              <span className="mt-1 text-[13px] text-slate truncate">{shopName}</span>
             )
           )}
           <RatingLine rating={product.averageRating} count={product.totalRatings} className="mt-1" />
+          <TrustBadges trust={product.trust} className="mt-1.5" />
           <div className="flex items-center gap-2 flex-wrap mt-auto pt-3">
-            <strong className={clsx('text-[16px] sm:text-[18px]', was ? 'text-error' : 'text-carbon')}>
+            <strong className={clsx('num text-[16px] sm:text-[18px]', was ? 'text-error' : 'text-carbon')}>
               {rawPrice === 0 ? 'Free' : fmt(price)}
             </strong>
             {was && rawPrice > 0 && <s className="text-[12.5px] text-slate" aria-label={`Was ${fmt(was)}`}>{fmt(was)}</s>}
-            {badge && <span className="text-[11px] font-bold px-2 py-[3px] rounded-full bg-error text-white truncate max-w-[60%]">{badge}</span>}
-            <span className="ms-auto text-[11px] border border-[#dde5e8] px-[7px] py-[3px] rounded text-[#566773] shrink-0">{TYPE_LABEL[kind] ?? kind}</span>
+            {badge && <SaleBadge label={badge} />}
+            <span className="ms-auto text-[12px] border border-[#dde5e8] px-[7px] py-[3px] rounded text-[#566773] shrink-0">{TYPE_LABEL[kind] ?? kind}</span>
           </div>
         </div>
       </article>
@@ -196,7 +205,7 @@ export const ResourceCard = memo(function ResourceCard({
       </button>
 
       {(campaignOff || percentOff > 0) && (
-        <span className="absolute start-[7px] top-[7px] sm:start-3 sm:top-3 max-w-[70%] truncate text-[10.5px] sm:text-[11px] font-bold px-2 py-[3px] rounded-full bg-error text-white shadow-sm">
+        <span className="absolute start-[7px] top-[7px] sm:start-3 sm:top-3 max-w-[70%] truncate text-[12px] sm:text-[12px] font-bold px-2 py-[3px] rounded-full bg-error text-white shadow-sm">
           {campaign && campaignOff ? `${campaign.name} · ${campaignOff}` : `-${percentOff}%`}
         </span>
       )}
@@ -224,29 +233,30 @@ export const ResourceCard = memo(function ResourceCard({
       >
         {product.name}
       </button>
-      {product.sellerName && (
+      {shopName && (
         product.storeSlug ? (
           <Link
             to={getStorePagePath(product.storeSlug)}
             className="inline-block my-[5px] text-[13px] font-bold text-brand-orange border-b border-current pb-[2px] hover:text-brand-deep-orange truncate max-w-full"
           >
-            {product.sellerName}
+            {shopName}
           </Link>
         ) : (
-          <span className="block my-[5px] text-[13px] text-slate truncate">{product.sellerName}</span>
+          <span className="block my-[5px] text-[13px] text-slate truncate">{shopName}</span>
         )
       )}
       <RatingLine rating={product.averageRating} count={product.totalRatings} className="block mb-1" />
+      <TrustBadges trust={product.trust} className="mt-1" />
       <div className="flex items-center justify-between gap-2 mt-2">
         <span className="flex items-baseline gap-1.5 min-w-0 flex-wrap">
-          <strong className={clsx('text-[14px] sm:text-[16px]', was ? 'text-error' : 'text-carbon')}>
+          <strong className={clsx('num text-[14px] sm:text-[16px]', was ? 'text-error' : 'text-carbon')}>
             {rawPrice === 0 ? 'Free' : fmt(price)}
           </strong>
           {was && rawPrice > 0 && (
             <s className="text-[12px] text-slate" aria-label={`Was ${fmt(was)}`}>{fmt(was)}</s>
           )}
         </span>
-        <span className="text-[9px] sm:text-[11px] border border-[#dde5e8] px-[7px] py-[3px] rounded text-[#566773] shrink-0">
+        <span className="text-[12px] sm:text-[12px] border border-[#dde5e8] px-[7px] py-[3px] rounded text-[#566773] shrink-0">
           {TYPE_LABEL[kind] ?? kind}
         </span>
       </div>

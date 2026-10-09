@@ -24,7 +24,7 @@ type CoverSize = 'xs' | 'sm' | 'md' | 'lg';
 
 const TEXT: Record<CoverSize, string> = {
   xs: 'text-[8px] leading-[1.1] line-clamp-3',
-  sm: 'text-[10px] leading-[1.15] line-clamp-3',
+  sm: 'text-[12px] leading-[1.15] line-clamp-3',
   md: 'text-[13px] leading-[1.15] line-clamp-3',
   lg: 'text-[22px] sm:text-[28px] leading-[1.1] line-clamp-4',
 };

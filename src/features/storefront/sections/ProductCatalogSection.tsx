@@ -168,13 +168,13 @@ export function ProductCatalogSection({ settings }: { settings: ProductCatalogSe
                       <Heart size={11} className={clsx(isWishlisted(p._id, vId) ? 'text-[#e11d48] fill-[#e11d48]' : 'text-slate fill-none')} />
                     </button>
                     <div className="absolute top-[6px] start-[6px]">
-                      <span className={clsx('px-[5px] py-[2px] rounded-[4px] text-[9px] font-semibold border leading-none', isPhysical ? 'bg-[#edf5e7] text-[#3b6720] border-[#c7e0b5]' : 'bg-accent-violet-bg text-accent-violet border-accent-violet/25')}>
+                      <span className={clsx('px-[5px] py-[2px] rounded-[4px] text-[12px] font-semibold border leading-none', isPhysical ? 'bg-[#edf5e7] text-[#3b6720] border-[#c7e0b5]' : 'bg-accent-violet-bg text-accent-violet border-accent-violet/25')}>
                         {typeLabel}
                       </span>
                     </div>
                     {p.activeCampaign && (
                       <div className="absolute top-[6px] end-[6px]">
-                        <span className="flex items-center gap-[3px] px-[5px] py-[2px] rounded-[4px] text-[9px] font-bold leading-none bg-gradient-to-r from-brand-orange to-[#66AD36] text-white">
+                        <span className="flex items-center gap-[3px] px-[5px] py-[2px] rounded-[4px] text-[12px] font-bold leading-none bg-gradient-to-r from-brand-orange to-[#66AD36] text-white">
                           <Zap size={8} className="fill-white shrink-0" />
                           {p.activeCampaign.discountType && p.activeCampaign.discountValue != null
                             ? (p.activeCampaign.discountType === 'percentage' ? `${p.activeCampaign.discountValue}% OFF` : `${displaySymbol}${convert(p.activeCampaign.discountValue, p.activeCampaign.currency ?? 'USD')} OFF`)
@@ -184,10 +184,10 @@ export function ProductCatalogSection({ settings }: { settings: ProductCatalogSe
                     )}
                   </ProductCardImage>
                   <div className="px-2 pt-2 pb-2 sm:px-3 sm:pt-[10px] sm:pb-3">
-                    <p className="font-bold text-[11px] sm:text-[13px] mb-[3px] leading-[1.4] line-clamp-2" style={{ color: cfg.textColor }}>{p.name}</p>
+                    <p className="font-bold text-[12px] sm:text-[13px] mb-[3px] leading-[1.4] line-clamp-2" style={{ color: cfg.textColor }}>{p.name}</p>
                     {(p.averageRating ?? 0) > 0 && <StarRating rating={p.averageRating!} color={cfg.primaryColor} />}
                     {p.subscriberPrice != null && (
-                      <p className="text-[9px] sm:text-[10px] font-semibold mt-1" style={{ color: cfg.primaryColor }}>Members save {p.discountPercent}%</p>
+                      <p className="text-[12px] sm:text-[12px] font-semibold mt-1" style={{ color: cfg.primaryColor }}>Members save {p.discountPercent}%</p>
                     )}
                     <div className="flex items-center justify-between gap-1 mt-[6px] sm:mt-[10px]">
                       <span className="flex items-baseline gap-[6px] shrink-0">
@@ -198,7 +198,7 @@ export function ProductCatalogSection({ settings }: { settings: ProductCatalogSe
                           })()}
                         </span>
                         {p.subscriberPrice != null && p.defaultVariantPrice != null && (
-                          <span className="text-[10px] sm:text-[11px] line-through opacity-60" style={{ color: cfg.textColor }}>
+                          <span className="text-[12px] sm:text-[12px] line-through opacity-60" style={{ color: cfg.textColor }}>
                             {displaySymbol}{convert(p.defaultVariantPrice, store.baseCurrency).toLocaleString()}
                           </span>
                         )}

@@ -198,7 +198,7 @@ export function RegisterPage() {
 
           <div className="flex items-center gap-3 mb-3 lg:mb-4">
             <div className="flex-1 h-px bg-bone" />
-            <span className="text-[11px] text-slate">or continue with email</span>
+            <span className="text-[12px] text-slate">or continue with email</span>
             <div className="flex-1 h-px bg-bone" />
           </div>
         </>
@@ -278,7 +278,7 @@ export function RegisterPage() {
         <motion.div {...fadeSlide}>
           <div className="flex items-center gap-3 my-2.5 lg:my-4">
             <div className="flex-1 h-px bg-bone" />
-            <span className="text-[11px] text-slate">or continue with</span>
+            <span className="text-[12px] text-slate">or continue with</span>
             <div className="flex-1 h-px bg-bone" />
           </div>
 

@@ -161,7 +161,7 @@ function CreateCampaignModal({ campaign, onClose, onSaved }: { campaign?: Campai
                 </button>
               ))}
             </div>
-            <p className="text-[11px] text-slate mt-1.5">Fills in the name, the next dates and a suggested discount — edit anything before creating. Live campaigns show in the top bar of every page.</p>
+            <p className="text-[12px] text-slate mt-1.5">Fills in the name, the next dates and a suggested discount — edit anything before creating. Live campaigns show in the top bar of every page.</p>
           </div>
         )}
         <Input label="Campaign Name" placeholder="October Mega Sale" value={name} onChange={(e) => setName(e.target.value)} />
@@ -179,7 +179,7 @@ function CreateCampaignModal({ campaign, onClose, onSaved }: { campaign?: Campai
             label="Display Order (optional)" type="number" min={0} placeholder="0 = shown first"
             value={order} onChange={(e) => setOrder(e.target.value)}
           />
-          <p className="text-[11px] text-slate mt-1">
+          <p className="text-[12px] text-slate mt-1">
             Controls which campaign shows first when more than one is active on the deals banner — lower number = shown first. Leave blank to add it to the end of the rotation.
           </p>
         </div>
@@ -204,7 +204,7 @@ function CreateCampaignModal({ campaign, onClose, onSaved }: { campaign?: Campai
               )}
             >
               <p className="flex items-center gap-1.5 text-[13px] font-semibold text-charcoal"><User size={13} /> Seller Sponsored</p>
-              <p className="text-[11px] text-slate mt-1">Participating sellers give the discount out of their own payout — the platform's cost is $0.</p>
+              <p className="text-[12px] text-slate mt-1">Participating sellers give the discount out of their own payout — the platform's cost is $0.</p>
             </button>
             <button
               type="button"
@@ -215,7 +215,7 @@ function CreateCampaignModal({ campaign, onClose, onSaved }: { campaign?: Campai
               )}
             >
               <p className="flex items-center gap-1.5 text-[13px] font-semibold text-charcoal"><Building2 size={13} /> Platform Sponsored</p>
-              <p className="text-[11px] text-slate mt-1">The platform reimburses the discount — sellers keep their full payout, no margin lost by joining.</p>
+              <p className="text-[12px] text-slate mt-1">The platform reimburses the discount — sellers keep their full payout, no margin lost by joining.</p>
             </button>
           </div>
         </div>
@@ -304,7 +304,7 @@ function CampaignsTab() {
         ? (
           <div>
             <Badge size="sm" color="orange"><Building2 size={10} /> Platform</Badge>
-            {c.totalPlatformSubsidyUSD > 0 && <p className="text-[11px] text-slate mt-1">{formatCurrency(c.totalPlatformSubsidyUSD)} spent</p>}
+            {c.totalPlatformSubsidyUSD > 0 && <p className="text-[12px] text-slate mt-1">{formatCurrency(c.totalPlatformSubsidyUSD)} spent</p>}
           </div>
         )
         : <Badge size="sm"><User size={10} /> Seller</Badge>,
@@ -433,7 +433,7 @@ function CreateCouponModal({ coupon, onClose, onSaved }: { coupon?: PlatformCoup
     >
       <div className="flex flex-col gap-4">
         <Input label="Coupon Code" placeholder="WELCOME10" value={code} disabled={isEdit} onChange={(e) => setCode(e.target.value.toUpperCase())} />
-        {isEdit && <p className="text-[11px] text-slate -mt-2.5">Code and discount type can't be changed after creation — delete and create a new coupon instead.</p>}
+        {isEdit && <p className="text-[12px] text-slate -mt-2.5">Code and discount type can't be changed after creation — delete and create a new coupon instead.</p>}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Select label="Discount Type" value={discountType} disabled={isEdit} onChange={(e) => setDiscountType(e.target.value as 'percentage' | 'fixed')}>
             <option value="percentage">Percentage</option>
@@ -716,7 +716,7 @@ function PromotionCalendarModal({ onClose }: { onClose: () => void }) {
                           <style.Icon size={13} style={{ color: style.accent }} />
                         </span>
                         <p className="text-[12.5px] font-bold text-carbon">{PLACEMENT_LABEL[placement]}</p>
-                        <span className="text-[11px] text-slate">{items.length} scheduled</span>
+                        <span className="text-[12px] text-slate">{items.length} scheduled</span>
                       </div>
                       <div className="flex flex-col gap-1.5">
                         {[...items].sort((a, b) => a.startAt.localeCompare(b.startAt)).map((p) => {
@@ -729,13 +729,13 @@ function PromotionCalendarModal({ onClose }: { onClose: () => void }) {
                             >
                               <div className="flex-1 min-w-0">
                                 <p className="text-[12.5px] text-charcoal font-medium whitespace-nowrap">{formatDate(p.startAt)} – {formatDate(p.endAt)}</p>
-                                <p className="text-[11px] text-slate">{daysBetween(p.startAt, p.endAt)} day{daysBetween(p.startAt, p.endAt) !== 1 ? 's' : ''}</p>
+                                <p className="text-[12px] text-slate">{daysBetween(p.startAt, p.endAt)} day{daysBetween(p.startAt, p.endAt) !== 1 ? 's' : ''}</p>
                               </div>
                               <span className="text-[12.5px] font-semibold text-charcoal shrink-0">{formatCurrency(p.priceUSD)}</span>
                               {conflicted ? (
-                                <span className="flex items-center gap-1 text-[11px] font-medium text-[#9a6a17] bg-[#fdf3e7] px-2 py-1 rounded-md shrink-0"><AlertTriangle size={11} /> Overlap</span>
+                                <span className="flex items-center gap-1 text-[12px] font-medium text-[#9a6a17] bg-[#fdf3e7] px-2 py-1 rounded-md shrink-0"><AlertTriangle size={11} /> Overlap</span>
                               ) : (
-                                <span className="flex items-center gap-1 text-[11px] font-medium text-success bg-success-bg px-2 py-1 rounded-md shrink-0"><ShieldCheck size={11} /> Clear</span>
+                                <span className="flex items-center gap-1 text-[12px] font-medium text-success bg-success-bg px-2 py-1 rounded-md shrink-0"><ShieldCheck size={11} /> Clear</span>
                               )}
                             </div>
                           );
@@ -753,13 +753,13 @@ function PromotionCalendarModal({ onClose }: { onClose: () => void }) {
                       <Megaphone size={13} className="text-brand-deep-orange" />
                     </span>
                     <p className="text-[12.5px] font-bold text-carbon">Sale Campaigns</p>
-                    <span className="text-[11px] text-slate">{data.campaigns.length} running</span>
+                    <span className="text-[12px] text-slate">{data.campaigns.length} running</span>
                   </div>
                   <div className="flex flex-col gap-1.5">
                     {data.campaigns.map((c) => (
                       <div key={c._id} className="flex items-center justify-between gap-3 px-3.5 py-2.5 rounded-lg border-l-[3px] border-brand-orange bg-white border border-bone">
                         <span className="text-[12.5px] text-charcoal font-medium truncate">{c.name}</span>
-                        <span className="text-[11.5px] text-slate whitespace-nowrap">{formatDate(c.startDate)} – {formatDate(c.endDate)}</span>
+                        <span className="text-[12px] text-slate whitespace-nowrap">{formatDate(c.startDate)} – {formatDate(c.endDate)}</span>
                       </div>
                     ))}
                   </div>
@@ -838,7 +838,7 @@ function PromotionSettingsModal({ onClose }: { onClose: () => void }) {
           {/* Placement Limits */}
           <div>
             <p className="text-[13px] font-bold text-carbon mb-1">Placement Limits</p>
-            <p className="text-[11.5px] text-slate mb-3">How many banners rotate at once per placement. Creating banners is always unlimited — this only bounds the display.</p>
+            <p className="text-[12px] text-slate mb-3">How many banners rotate at once per placement. Creating banners is always unlimited — this only bounds the display.</p>
             <div className="flex flex-col divide-y divide-bone rounded-lg border border-bone overflow-hidden">
               {PLACEMENT_LIMIT_META.map((p) => (
                 <div key={p.key} className="flex items-center justify-between gap-3 px-3.5 py-2 bg-white">
@@ -862,7 +862,7 @@ function PromotionSettingsModal({ onClose }: { onClose: () => void }) {
           {/* Promotion Pricing */}
           <div>
             <p className="text-[13px] font-bold text-carbon mb-1">Promotion Pricing</p>
-            <p className="text-[11.5px] text-slate mb-3">Rate card sellers are quoted/charged for a paid placement. A blank rate stays unset (quotes show $0 for that unit).</p>
+            <p className="text-[12px] text-slate mb-3">Rate card sellers are quoted/charged for a paid placement. A blank rate stays unset (quotes show $0 for that unit).</p>
             <div className="overflow-x-auto rounded-lg border border-bone">
               <table className="w-full border-collapse text-[12px]">
                 <thead>
@@ -950,15 +950,15 @@ function PromotionsTab() {
       render: (r) => r.status === 'pending' ? (
         <div className="flex items-center gap-1.5 justify-center">
           <button onClick={() => setApproving(r)}
-            className="px-2.5 py-1 rounded-md text-[11px] font-semibold text-white bg-success border-0 cursor-pointer disabled:opacity-50 flex items-center gap-1">
+            className="px-2.5 py-1 rounded-md text-[12px] font-semibold text-white bg-success border-0 cursor-pointer disabled:opacity-50 flex items-center gap-1">
             <Check size={12} /> Approve
           </button>
           <button onClick={() => setRejecting(r)}
-            className="px-2.5 py-1 rounded-md text-[11px] font-semibold text-error bg-error-bg border-0 cursor-pointer disabled:opacity-50 flex items-center gap-1">
+            className="px-2.5 py-1 rounded-md text-[12px] font-semibold text-error bg-error-bg border-0 cursor-pointer disabled:opacity-50 flex items-center gap-1">
             <X size={12} /> Reject
           </button>
         </div>
-      ) : <span className="text-[11px] text-slate text-center block">—</span>,
+      ) : <span className="text-[12px] text-slate text-center block">—</span>,
     },
   ];
 

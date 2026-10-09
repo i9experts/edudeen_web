@@ -79,6 +79,9 @@ export interface MarketplaceProduct {
   storeSlug?:        string | null;
   slug:              string;
   description:       string;
+  /** Urdu copy (AI-translated and seller-reviewed); shown when the visitor browses in Urdu. */
+  nameUr?:           string | null;
+  descriptionUr?:    string | null;
   productType?:      'physical' | 'digital' | 'educational';
   type?:             'physical' | 'digital';
   categoryId:        string;
@@ -90,6 +93,8 @@ export interface MarketplaceProduct {
   tags?:             string[];
   /** Exam boards it follows — see constants/learning.ts. */
   curricula?:        string[];
+  /** Admin-assigned trust badges (listing review). */
+  trust?:            { scholarReviewed: boolean; ageAppropriateMin: number | null; ageAppropriateMax: number | null } | null;
   ageMin?:           number | null;
   ageMax?:           number | null;
   deliveryFormat?:   'download' | 'course' | 'live_class';
@@ -110,6 +115,8 @@ export interface MarketplaceProduct {
   updatedAt:         string;
   variants:          ProductVariant[];
   sellerName?:       string;
+  /** TODO(owner): list endpoints don't return the store name yet (only product detail does); cards fall back to sellerName until they do. */
+  storeName?:        string | null;
   sellerVerified?:   boolean;
   activeCampaign?:   ActiveCampaignBadge | null;
 }

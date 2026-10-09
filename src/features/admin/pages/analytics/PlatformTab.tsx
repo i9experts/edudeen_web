@@ -46,7 +46,7 @@ export function PlatformTab({ params }: { params: BaseAnalyticsParams }) {
       </div>
 
       {c?.note && (
-        <p className="text-[11px] text-slate bg-cream border border-bone rounded-lg px-3 py-2">{c.note}</p>
+        <p className="text-[12px] text-slate bg-cream border border-bone rounded-lg px-3 py-2">{c.note}</p>
       )}
     </div>
   );

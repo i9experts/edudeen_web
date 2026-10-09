@@ -137,7 +137,7 @@ function ShelfForm({ initial, onClose, onSaved }: { initial: Draft; onClose: () 
             {CURRICULA.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
           </Select>
           <Input label="Tags (comma separated)" value={tagText} onChange={e => setTagText(e.target.value)} placeholder="past papers, notes" />
-          <p className="sm:col-span-3 text-[11.5px] text-slate m-0">After your hand-picked items, the best-selling live products matching these are added (up to 60).</p>
+          <p className="sm:col-span-3 text-[12px] text-slate m-0">After your hand-picked items, the best-selling live products matching these are added (up to 60).</p>
         </fieldset>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 items-end">
@@ -198,8 +198,8 @@ export function AdminShelves() {
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <p className="text-[14.5px] font-bold text-carbon">{c.title}</p>
-                  <span className={clsx('rounded-full px-2 py-[2px] text-[11px] font-semibold', c.status === 'active' ? 'bg-green-50 text-success' : 'bg-fog text-slate')}>{c.status === 'active' ? 'Live' : 'Draft'}</span>
-                  {c.showOnHome && <span className="rounded-full px-2 py-[2px] text-[11px] font-semibold bg-brand-pale-orange text-brand-orange">Homepage #{c.order}</span>}
+                  <span className={clsx('rounded-full px-2 py-[2px] text-[12px] font-semibold', c.status === 'active' ? 'bg-green-50 text-success' : 'bg-fog text-slate')}>{c.status === 'active' ? 'Live' : 'Draft'}</span>
+                  {c.showOnHome && <span className="rounded-full px-2 py-[2px] text-[12px] font-semibold bg-brand-pale-orange text-brand-orange">Homepage #{c.order}</span>}
                 </div>
                 <p className="text-[12.5px] text-slate">{c.productIds.length} hand-picked · {window_(c)} · /picks/{c.slug}</p>
               </div>

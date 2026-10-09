@@ -35,7 +35,7 @@ const BASE =
   'focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-brand-orange/50';
 
 const SIZES: Record<ButtonSize, string> = {
-  xs: 'text-[11px] py-[5px]  px-3        rounded-md',
+  xs: 'text-[12px] py-[5px]  px-3        rounded-md',
   sm: 'text-[12px] py-[7px]  px-[14px]   rounded-md',
   md: 'text-[13px] py-[10px] px-[18px]   rounded-lg',
   lg: 'text-[15px] py-[13px] px-6        rounded-lg',

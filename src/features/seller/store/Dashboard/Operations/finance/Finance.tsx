@@ -107,7 +107,7 @@ function PayoutMethodModal({
           ))}
         </div>
         <div>
-          <label className="block text-[11px] font-medium text-charcoal mb-1">
+          <label className="block text-[12px] font-medium text-charcoal mb-1">
             Wallet / Currency{editing && ' (locked — this method already belongs to a wallet)'}
           </label>
           <div className="flex gap-2">
@@ -522,11 +522,11 @@ export function StoreFinance() {
                       </div>
                       <div className="flex items-center gap-1.5 shrink-0">
                         {!m.isDefault && (
-                          <button onClick={() => handleSetDefaultMethod(m._id)} className="text-[10px] text-slate hover:text-brand-orange cursor-pointer bg-transparent border-none">
+                          <button onClick={() => handleSetDefaultMethod(m._id)} className="text-[12px] text-slate hover:text-brand-orange cursor-pointer bg-transparent border-none">
                             Set default
                           </button>
                         )}
-                        <button onClick={() => setEditingMethod(m)} className="text-[10px] text-slate hover:text-brand-orange cursor-pointer bg-transparent border-none">
+                        <button onClick={() => setEditingMethod(m)} className="text-[12px] text-slate hover:text-brand-orange cursor-pointer bg-transparent border-none">
                           Edit
                         </button>
                         <button onClick={() => { setDeletingMethodId(m._id); setDeleteMethodError(''); }} aria-label="Delete payout method" className="text-slate hover:text-error cursor-pointer bg-transparent border-none">

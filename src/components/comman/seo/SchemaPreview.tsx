@@ -39,7 +39,7 @@ export function SchemaPreview({ jsonLd, loading, className }: SchemaPreviewProps
           {copied ? 'Copied' : 'Copy'}
         </Button>
       </div>
-      <pre className="bg-cream border border-bone rounded-lg p-3 text-[11.5px] leading-[1.6] text-charcoal overflow-auto max-h-[360px] whitespace-pre-wrap break-words">
+      <pre className="bg-cream border border-bone rounded-lg p-3 text-[12px] leading-[1.6] text-charcoal overflow-auto max-h-[360px] whitespace-pre-wrap break-words">
         {formatted || '// No structured data available yet.'}
       </pre>
     </Card>

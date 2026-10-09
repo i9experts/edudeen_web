@@ -53,7 +53,7 @@ function StoreBadges({ badges, sellerType }: { badges: string[]; sellerType: str
   return (
     <div className="flex flex-wrap gap-[5px] mt-[8px]">
       {items.map(b => (
-        <span key={b.label} className={clsx('inline-flex items-center gap-[3px] px-[7px] py-[3px] rounded-full text-[10px] font-semibold border', b.cls)}>
+        <span key={b.label} className={clsx('inline-flex items-center gap-[3px] px-[7px] py-[3px] rounded-full text-[12px] font-semibold border', b.cls)}>
           {b.icon}{b.label}
         </span>
       ))}
@@ -367,7 +367,7 @@ export function SellerStorefront() {
                       following ? 'bg-white text-charcoal border-white' : 'bg-transparent text-white border-[rgba(255,255,255,0.5)] hover:bg-[rgba(255,255,255,0.1)]')}>
                     {(followLoading || !followStatusLoaded) ? <Loader2 size={13} className="animate-spin inline" /> : following ? 'Following ✓' : 'Follow Store'}
                   </button>
-                  {followError && <p className="text-[11px] text-white bg-black/30 rounded-md px-2 py-1 max-w-[220px] text-center sm:text-end">{followError}</p>}
+                  {followError && <p className="text-[12px] text-white bg-black/30 rounded-md px-2 py-1 max-w-[220px] text-center sm:text-end">{followError}</p>}
                 </>
               )}
 
@@ -378,7 +378,7 @@ export function SellerStorefront() {
                     className="flex items-center gap-[6px] px-[14px] py-[7px] text-[13px] font-medium cursor-pointer transition-colors bg-white text-charcoal border border-white hover:bg-[rgba(255,255,255,0.9)] whitespace-nowrap">
                     {msgLoading ? <Loader2 size={13} className="animate-spin" /> : <MessageCircle size={13} />} Message
                   </button>
-                  {msgError && <p className="text-[11px] text-white bg-black/30 rounded-md px-2 py-1 max-w-[220px] text-center sm:text-end">{msgError}</p>}
+                  {msgError && <p className="text-[12px] text-white bg-black/30 rounded-md px-2 py-1 max-w-[220px] text-center sm:text-end">{msgError}</p>}
                 </>
               )}
             </div>
@@ -457,7 +457,7 @@ export function SellerStorefront() {
                     style={{ background: cfg.primaryColor }}>
                     {subscribingId === plan._id ? 'Subscribing…' : 'Become a Member'}
                   </button>
-                  <p className="text-[10.5px] text-slate text-center mt-2">Cancel anytime — no long-term commitment</p>
+                  <p className="text-[12px] text-slate text-center mt-2">Cancel anytime — no long-term commitment</p>
                 </div>
               );
             })}
@@ -472,7 +472,7 @@ export function SellerStorefront() {
               <div>
                 <p className="text-[12.5px] font-semibold text-emerald-800">Reward redeemed! Apply this code at checkout:</p>
                 <p className="text-[15px] font-mono font-bold text-emerald-900 tracking-wide">{redeemedVoucher.code}</p>
-                <p className="text-[10.5px] text-emerald-700">Valid until {new Date(redeemedVoucher.expiresAt).toLocaleDateString()}</p>
+                <p className="text-[12px] text-emerald-700">Valid until {new Date(redeemedVoucher.expiresAt).toLocaleDateString()}</p>
               </div>
               <button
                 onClick={() => { navigator.clipboard?.writeText(redeemedVoucher.code); toast.success('Code copied'); }}
@@ -498,7 +498,7 @@ export function SellerStorefront() {
                   <div key={r._id} className="flex items-center justify-between gap-3 bg-cream rounded-lg px-3.5 py-3">
                     <div>
                       <p className="text-[13px] font-semibold text-carbon">{r.name}</p>
-                      <p className="text-[11px] text-slate">
+                      <p className="text-[12px] text-slate">
                         {r.pointsCost.toLocaleString()} points — {r.type === 'fixed_discount' ? `${displaySymbol}${convert(r.discountValue ?? 0, store.baseCurrency).toLocaleString()} off` : 'Free product'}
                       </p>
                     </div>

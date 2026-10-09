@@ -27,7 +27,7 @@ interface NotificationContextValue {
   markAllAsRead: () => Promise<void>;
   deleteNotification: (id: string) => Promise<void>;
   fetchPreferences: () => Promise<void>;
-  updatePreferences: (dto: Partial<NotificationPreferenceFlags> & { pushEnabled?: boolean; emailEnabled?: boolean }) => Promise<void>;
+  updatePreferences: (dto: Partial<NotificationPreferenceFlags> & { pushEnabled?: boolean; emailEnabled?: boolean; whatsappEnabled?: boolean; smsEnabled?: boolean; language?: 'en' | 'ur' }) => Promise<void>;
   toast:         NotificationItem | null;
   clearToast:    () => void;
 }
@@ -122,7 +122,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const updatePrefs = useCallback(async (dto: Partial<NotificationPreferenceFlags> & { pushEnabled?: boolean; emailEnabled?: boolean }) => {
+  const updatePrefs = useCallback(async (dto: Partial<NotificationPreferenceFlags> & { pushEnabled?: boolean; emailEnabled?: boolean; whatsappEnabled?: boolean; smsEnabled?: boolean; language?: 'en' | 'ur' }) => {
     let snapshot: NotificationPreferenceData | null = null;
 
     setPreferences(prev => {

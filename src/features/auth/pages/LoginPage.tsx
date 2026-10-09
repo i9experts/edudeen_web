@@ -137,13 +137,12 @@ export function LoginPage() {
     }, { replace: true });
   }, [showChooser, freshEmailEntered, onPasswordStep, setSearchParams]);
 
-  const otherRole: AppRole = role === 'user' ? 'seller' : 'user';
-  const roleLabel = (r: AppRole) => (r === 'seller' ? 'seller' : 'buyer');
-  const switchRole = useCallback(() => setRole(otherRole), [otherRole]);
-
+  // The saved account remembers which kind of account it was; picking it signs in as that role
+  // (the buyer/seller switch stays available on the password step for people with both).
   const selectAccount = useCallback(() => {
+    if (remembered?.role) setRole(remembered.role);
     setSearchParams(prev => { const next = new URLSearchParams(prev); next.set('step', 'password'); return next; });
-  }, [setSearchParams]);
+  }, [setSearchParams, remembered?.role]);
 
   const backToPicker = useCallback(() => {
     setSearchParams(prev => { const next = new URLSearchParams(prev); next.delete('step'); return next; });
@@ -159,6 +158,27 @@ export function LoginPage() {
     setValue('email', '');
   }, [setSearchParams, setValue]);
 
+  // "Sign in as" — a clear Buyer | Seller choice (one email can own both accounts).
+  const roleSwitcher = !SELLER_ONLY_LOGIN ? (
+    <div className="mb-3 lg:mb-4">
+      <p className="text-[12px] text-slate mb-1.5 text-center lg:text-start">Sign in as</p>
+      <div role="radiogroup" aria-label="Sign in as" className="grid grid-cols-2 gap-1 p-1 rounded-lg bg-cream border border-bone">
+        {(['user', 'seller'] as const).map(r => (
+          <button
+            key={r} type="button" role="radio" aria-checked={role === r}
+            onClick={() => setRole(r)}
+            className={`py-[7px] rounded-md text-[12.5px] font-semibold cursor-pointer border-none transition-colors ${role === r ? 'bg-white text-brand-orange shadow-sm' : 'bg-transparent text-slate hover:text-carbon'}`}
+          >
+            {r === 'user' ? 'Buyer' : 'Seller'}
+          </button>
+        ))}
+      </div>
+      <p className="text-[12px] text-slate mt-1.5 text-center lg:text-start">
+        Store team?{' '}
+        <button type="button" onClick={() => navigate('/admin/login')} className="text-brand-orange font-semibold cursor-pointer bg-transparent border-none p-0">Admin sign in</button>
+      </p>
+    </div>
+  ) : null;
   // Signed in (the redirect effect above is already moving them on). Must stay
   // AFTER every hook — returning before the useCallbacks above crashed the
   // page with "Rendered fewer hooks than expected" the moment login succeeded.
@@ -166,7 +186,7 @@ export function LoginPage() {
 
   return (
     <AuthSplitLayout
-      heading={<>Commerce. <span className="text-brand-orange">Solved</span></>}
+      heading={<>Commerce. <span className="text-[#9CCBF2]">Solved</span></>}
       subtext="Join the teachers, parents and educators buying and selling learning resources on Edudeen."
       highlights={HIGHLIGHTS}
       visual={<MarketplaceMockup />}
@@ -192,9 +212,10 @@ export function LoginPage() {
               <Avatar name={remembered!.name} size={36} />
               <div className="min-w-0 flex-1">
                 <p className="text-[13px] font-semibold text-carbon truncate">{remembered!.name}</p>
-                <p className="text-[12px] text-slate truncate">{remembered!.email}</p>
+                <p className="text-[12px] text-slate truncate">{remembered!.email} · {remembered!.role === 'seller' ? 'Seller account' : 'Buyer account'}</p>
               </div>
             </button>
+            {roleSwitcher}
           </>
         ) : (
           <>
@@ -208,7 +229,7 @@ export function LoginPage() {
               <Avatar name={remembered!.name} size={40} />
               <div className="min-w-0 flex-1">
                 <p className="text-[13px] font-semibold text-carbon truncate">{remembered!.name}</p>
-                <p className="text-[12px] text-slate truncate">{remembered!.email}</p>
+                <p className="text-[12px] text-slate truncate">{remembered!.email} · {remembered!.role === 'seller' ? 'Seller account' : 'Buyer account'}</p>
               </div>
               <ChevronRight size={16} className="text-slate shrink-0" />
             </button>
@@ -225,16 +246,7 @@ export function LoginPage() {
         )
       ) : (
         <>
-          {!SELLER_ONLY_LOGIN && (
-            <p className="text-center lg:text-start mb-2.5 lg:mb-4">
-              <span className="text-[11.5px] text-slate">
-                Signing in as a <strong className="text-charcoal">{roleLabel(role)}</strong> —{' '}
-              </span>
-              <Button variant="link" size="sm" onClick={switchRole} className="font-semibold! text-[11.5px]!">
-                switch to {roleLabel(otherRole)}
-              </Button>
-            </p>
-          )}
+          {roleSwitcher}
 
           {/* Before an email is typed: full stacked social pills, one per
              row. Once the password field appears, the socials collapse into
@@ -260,7 +272,7 @@ export function LoginPage() {
 
               <div className="flex items-center gap-3 mb-3 lg:mb-4">
                 <div className="flex-1 h-px bg-bone" />
-                <span className="text-[11px] text-slate">or continue with email</span>
+                <span className="text-[12px] text-slate">or continue with email</span>
                 <div className="flex-1 h-px bg-bone" />
               </div>
             </>
@@ -352,7 +364,7 @@ export function LoginPage() {
 
               <div className="flex items-center gap-3 my-2.5 lg:my-4">
                 <div className="flex-1 h-px bg-bone" />
-                <span className="text-[11px] text-slate">or continue with</span>
+                <span className="text-[12px] text-slate">or continue with</span>
                 <div className="flex-1 h-px bg-bone" />
               </div>
 

@@ -85,6 +85,8 @@ function mergeStoreCarts(stores: StoreCart[]): Cart | null {
     totalItems: items.reduce((s, i) => s + i.quantity, 0),
     totalPrice: items.reduce((s, i) => s + (i.itemTotal ?? 0), 0),
     stores:     nonEmpty,
+    // A sale is per store; the merged view only shows it when there is a single store.
+    campaignDiscount: nonEmpty.length === 1 ? nonEmpty[0].campaignDiscount : undefined,
   });
 }
 
@@ -165,6 +167,8 @@ export function CartProvider({ storeId, children }: { storeId?: string; children
 
   const fetchCart = useCallback(() => {
     if (!TokenStorage.isLoggedIn()) { refreshGuestCartDisplay(); return; }
+    // Sellers/admins have no buyer cart: don't call buyer-only endpoints for them.
+    if (TokenStorage.isStaffSession()) { setCart(null); setLoading(false); return; }
     // No `storeId` = the main marketplace site: show every store's cart.
     if (!storeId) {
       setLoading(true);

@@ -164,7 +164,7 @@ function VariantOptionsField({ options, onChange }: { options: VariantOption[]; 
           </button>
         </div>
       )}
-      <p className="text-[11px] text-slate">Optional — leave empty for a single plain variant, or add up to 3 like Edition, Format, Language.</p>
+      <p className="text-[12px] text-slate">Optional — leave empty for a single plain variant, or add up to 3 like Edition, Format, Language.</p>
     </div>
   );
 }
@@ -678,7 +678,7 @@ export default function StoreAddProduct() {
                     <span className={`w-[8px] h-[8px] rounded-full shrink-0 ${dotCls}`} />
                     <span className="flex-1 min-w-0">
                       <span className={`block text-[13px] font-bold ${sel ? 'text-brand-orange' : 'text-carbon'}`}>{label}</span>
-                      <span className="block text-[11.5px] text-slate">{desc}</span>
+                      <span className="block text-[12px] text-slate">{desc}</span>
                     </span>
                     <span className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${sel ? 'bg-brand-orange border-brand-orange' : 'border-border-hover bg-white'}`}>
                       {sel && <Check size={9} className="text-white" strokeWidth={3.5} />}
@@ -703,7 +703,7 @@ export default function StoreAddProduct() {
             <div className="flex items-center justify-between gap-3 mt-4 pt-4 border-t border-bone">
               <div>
                 <p className="text-[13px] font-bold text-carbon">Also list on Edudeen Marketplace</p>
-                <p className="text-[11.5px] text-slate">Reach buyers beyond your own store</p>
+                <p className="text-[12px] text-slate">Reach buyers beyond your own store</p>
               </div>
               <Toggle
                 label="Also list on Edudeen Marketplace"
@@ -729,7 +729,7 @@ export default function StoreAddProduct() {
                     {item.done && <Check size={10} strokeWidth={3.5} />}
                   </span>
                   <span className={item.done ? 'text-carbon' : 'text-graphite'}>{item.label}</span>
-                  <span className="text-[11px] text-slate ml-auto">Required</span>
+                  <span className="text-[12px] text-slate ml-auto">Required</span>
                 </li>
               ))}
               {recommended.map(item => (
@@ -738,7 +738,7 @@ export default function StoreAddProduct() {
                     {item.done && <Check size={10} strokeWidth={3.5} />}
                   </span>
                   <span className={item.done ? 'text-carbon' : 'text-graphite'}>{item.label}</span>
-                  <span className="text-[11px] text-slate ml-auto">Recommended</span>
+                  <span className="text-[12px] text-slate ml-auto">Recommended</span>
                 </li>
               ))}
             </ul>

@@ -29,7 +29,7 @@ export function CategoriesTab({ storeId }: CategoriesTabProps) {
     <Card padding="none">
       <div className="px-5 py-3 border-b border-bone">
         <p className="text-[13px] font-semibold text-carbon">Category SEO</p>
-        <p className="text-[11px] text-slate mt-[2px]">
+        <p className="text-[12px] text-slate mt-[2px]">
           Categories are platform-curated — meta for these pages is managed by Edudeen admins.
         </p>
       </div>
@@ -37,7 +37,7 @@ export function CategoriesTab({ storeId }: CategoriesTabProps) {
         <div key={cat._id} className={`px-5 py-3 flex items-center justify-between ${i < data.length - 1 ? 'border-b border-[#f0eee6]' : ''}`}>
           <div className="min-w-0">
             <p className="text-[13px] font-medium text-carbon truncate">{cat.name}</p>
-            <p className="text-[11px] text-slate truncate mt-[2px]">{cat.seo?.metaTitle || 'No meta title set'}</p>
+            <p className="text-[12px] text-slate truncate mt-[2px]">{cat.seo?.metaTitle || 'No meta title set'}</p>
           </div>
         </div>
       ))}

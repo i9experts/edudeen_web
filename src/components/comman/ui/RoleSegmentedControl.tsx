@@ -87,7 +87,7 @@ export function RoleSegmentedControl({
                 )}
               </span>
               {opt.description && (
-                <span className={clsx('text-[10.5px] leading-[1.35] transition-colors duration-150', active ? 'text-slate' : 'text-slate/70')}>
+                <span className={clsx('text-[12px] leading-[1.35] transition-colors duration-150', active ? 'text-slate' : 'text-slate/70')}>
                   {opt.description}
                 </span>
               )}

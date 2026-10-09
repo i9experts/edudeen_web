@@ -199,7 +199,7 @@ export default function StoreProductList() {
       ) : p.status === 'rejected' ? (
         <div className="flex flex-col items-start gap-1 max-w-[220px]">
           <Badge color="red">Needs changes</Badge>
-          {p.reviewNote && <span className="text-[11.5px] text-error leading-snug line-clamp-3" title={p.reviewNote}>{p.reviewNote}</span>}
+          {p.reviewNote && <span className="text-[12px] text-error leading-snug line-clamp-3" title={p.reviewNote}>{p.reviewNote}</span>}
         </div>
       ) : <StatusBadge status={p.status} />,
     },
@@ -254,6 +254,7 @@ export default function StoreProductList() {
             </div>
 
             <Table
+              cardsBelow="lg"
               columns={columns}
               data={sorted}
               keyExtractor={p => p.productId}

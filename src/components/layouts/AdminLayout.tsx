@@ -16,6 +16,8 @@ import { CommandPalette } from '@/components/comman/ui/CommandPalette';
 import { Modal, Button, CopyIconButton } from '@/components/comman/ui';
 import { EdudeenLogo, EdudeenIcon } from '@/components/comman/ui/EdudeenLogo';
 import { PlatformTopBar } from '@/components/comman/ui/PlatformTopBar';
+import { MoreSheet } from '@/components/comman/ui/MoreSheet';
+import { MoreHorizontal } from 'lucide-react';
 import { useLockPageScroll } from '@/hooks/useLockPageScroll';
 import { apiGetListingReviewCount } from '@/api/services/marketplace/adminMarketplace';
 
@@ -178,13 +180,24 @@ const ADMIN_TABS: { id: string; Icon: LucideIcon; label: string; path: string }[
   { id: 'users',      Icon: Users,           label: 'Users',       path: '/admin/users'      },
   { id: 'marketplace',Icon: Store,           label: 'Listings', path: '/admin/marketplace' },
   { id: 'moderation', Icon: Shield,          label: 'Moderation',  path: '/admin/moderation' },
-  { id: 'settings',   Icon: Settings,        label: 'Settings',    path: '/admin/settings'   },
 ];
 
 function AdminBottomNav() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
+  const { search } = useLocation();
+  const [moreOpen, setMoreOpen] = useState(false);
   const isActive = (path: string) => (path === '/admin' ? pathname === '/admin' : pathname.startsWith(path));
+  // 5th tab: every admin module, grouped like the desktop sidebar.
+  const groups = ADMIN_MODULES.filter(m => m.id !== 'overview').map(m => ({
+    label: m.label,
+    items: m.ids.map(id => ADMIN_NAV.find(n => n.id === id)).filter((n): n is AdminNavItem => !!n).map(n => ({ id: n.id, label: n.label, Icon: n.Icon, active: isNavItemActive(n, pathname, search), onSelect: () => navigate(n.path) })),
+  })).filter(g => g.items.length > 0);
+  const accountNav = ADMIN_NAV.find(n => n.id === 'settings');
+  if (accountNav) {
+    groups.push({ label: 'Account', items: [{ id: accountNav.id, label: accountNav.label, Icon: accountNav.Icon, active: isNavItemActive(accountNav, pathname, search), onSelect: () => navigate(accountNav.path) }] });
+  }
+  const moreActive = !ADMIN_TABS.some(t => isActive(t.path)) && pathname.startsWith('/admin');
 
   return (
     <nav aria-label="Admin quick navigation" className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-bone pb-[env(safe-area-inset-bottom)]">
@@ -198,18 +211,23 @@ function AdminBottomNav() {
               onClick={() => navigate(tab.path)}
               aria-current={active ? 'page' : undefined}
               aria-label={tab.label}
-              className="flex-1 flex flex-col items-center justify-center py-[11px] gap-[5px] cursor-pointer bg-transparent border-none outline-none focus-visible:bg-brand-pale-orange"
+              className="flex-1 flex flex-col items-center justify-center py-[8px] gap-[4px] cursor-pointer bg-transparent border-none outline-none focus-visible:bg-brand-pale-orange"
             >
               <tab.Icon
                 size={21}
                 strokeWidth={active ? 2.2 : 1.8}
                 className={clsx('transition-colors duration-150', active ? 'text-brand-orange' : 'text-slate')}
               />
-              <span className={clsx('w-[16px] h-[3px] rounded-full transition-colors duration-150', active ? 'bg-brand-orange' : 'bg-transparent')} />
+              <span className={clsx('text-[12px] leading-none font-medium', active ? 'text-brand-orange' : 'text-slate')}>{tab.label}</span>
             </button>
           );
         })}
+        <button type="button" onClick={() => setMoreOpen(true)} aria-haspopup="dialog" aria-label="More modules" className="flex-1 flex flex-col items-center justify-center py-[8px] gap-[4px] cursor-pointer bg-transparent border-none outline-none focus-visible:bg-brand-pale-orange">
+          <MoreHorizontal size={21} strokeWidth={moreActive ? 2.2 : 1.8} className={clsx('transition-colors duration-150', moreActive ? 'text-brand-orange' : 'text-slate')} />
+          <span className={clsx('text-[12px] leading-none font-medium', moreActive ? 'text-brand-orange' : 'text-slate')}>More</span>
+        </button>
       </div>
+      <MoreSheet open={moreOpen} onClose={() => setMoreOpen(false)} groups={groups} title="All admin modules" />
     </nav>
   );
 }
@@ -286,7 +304,7 @@ function AdminSidebar({ open, onToggle }: AdminSidebarProps) {
       className={clsx(
         'flex items-center gap-1 rounded-md border border-bone bg-white text-slate hover:text-carbon hover:bg-cream transition-colors duration-150 cursor-pointer shrink-0',
         NAV_FOCUS,
-        open ? 'px-[7px] py-[3px] text-[10px] font-semibold' : 'size-8 justify-center text-[9px] font-semibold',
+        open ? 'px-[7px] py-[3px] text-[12px] font-semibold' : 'size-8 justify-center text-[12px] font-semibold',
       )}
     >
       {open ? '⌘K' : 'K'}
@@ -445,7 +463,7 @@ function AdminSidebar({ open, onToggle }: AdminSidebarProps) {
                             {item.label}
                           </span>
                           {badge > 0 && (
-                            <span aria-label={`${badge} waiting for review`} className={clsx('text-[10px] font-bold px-[6px] py-[1px] rounded-full leading-[14px] shrink-0', active ? 'bg-white text-brand-orange' : 'bg-info text-white')}>
+                            <span aria-label={`${badge} waiting for review`} className={clsx('text-[12px] font-bold px-[6px] py-[1px] rounded-full leading-[14px] shrink-0', active ? 'bg-white text-brand-orange' : 'bg-info text-white')}>
                               {badge > 99 ? '99+' : badge}
                             </span>
                           )}
@@ -477,7 +495,7 @@ function AdminSidebar({ open, onToggle }: AdminSidebarProps) {
                 isActive('/admin/settings') && 'bg-[#e3ecf3]',
               )}
             >
-              <div className="size-8 rounded-full shrink-0 bg-brand-orange flex items-center justify-center overflow-hidden text-[10.5px] font-bold text-white">
+              <div className="size-8 rounded-full shrink-0 bg-brand-orange flex items-center justify-center overflow-hidden text-[12px] font-bold text-white">
                 {profileLoading
                   ? <div className="animate-pulse w-full h-full bg-bone" />
                   : profile?.profileImage
@@ -494,7 +512,7 @@ function AdminSidebar({ open, onToggle }: AdminSidebarProps) {
                   ) : (
                     <>
                       <p className="text-[12.5px] font-semibold text-carbon leading-[1.3] truncate">{profile?.name ?? 'Admin'}</p>
-                      <p className="text-[11px] text-slate leading-[1.3] truncate">{profile?.email ?? '—'}</p>
+                      <p className="text-[12px] text-slate leading-[1.3] truncate">{profile?.email ?? '—'}</p>
                     </>
                   )}
                 </div>

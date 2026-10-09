@@ -87,20 +87,20 @@ function ReportDetailModal({ report, onClose, onDone, onRemove }: {
           {report.sellerName && <p className="text-[12px] text-slate">Seller: {report.sellerName}</p>}
         </div>
         <div>
-          <p className="text-[11px] font-medium text-graphite mb-1">Reason</p>
+          <p className="text-[12px] font-medium text-graphite mb-1">Reason</p>
           <p className="text-[13px] text-charcoal">{report.reason}</p>
         </div>
         {report.details && (
           <div>
-            <p className="text-[11px] font-medium text-graphite mb-1">Details</p>
+            <p className="text-[12px] font-medium text-graphite mb-1">Details</p>
             <p className="text-[13px] text-charcoal leading-[1.6]">{report.details}</p>
           </div>
         )}
-        <p className="text-[11px] text-slate">
+        <p className="text-[12px] text-slate">
           Reported {formatDate(report.createdAt)}{report.status === 'reviewed' ? ' · Marked reviewed' : ''}
         </p>
         {report.targetType === 'review' && (
-          <p className="text-[11.5px] text-slate bg-cream border border-bone rounded-md px-2.5 py-2">
+          <p className="text-[12px] text-slate bg-cream border border-bone rounded-md px-2.5 py-2">
             Dismissing closes this report and keeps the review published. Removing hides the review and updates the product's and store's star rating.
           </p>
         )}

@@ -289,7 +289,7 @@ export default function StorePlanBilling() {
         {actionError && (
           <div className="flex items-center justify-between gap-3 text-[13px] text-error bg-error-bg border border-error-border rounded-lg px-3 py-2">
             <span>{actionError}</span>
-            <button onClick={() => setActionError('')} className="text-[11px] font-semibold text-error bg-transparent border-none cursor-pointer shrink-0">Dismiss</button>
+            <button onClick={() => setActionError('')} className="text-[12px] font-semibold text-error bg-transparent border-none cursor-pointer shrink-0">Dismiss</button>
           </div>
         )}
 
@@ -313,7 +313,7 @@ export default function StorePlanBilling() {
             <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
               <div>
                 <p className="text-[13px] font-bold text-carbon">Your current plan — {entitlements.currentPlanName}</p>
-                <p className="text-[11.5px] text-slate mt-[3px]">
+                <p className="text-[12px] text-slate mt-[3px]">
                   {current.amountUSD > 0 ? `$${current.amountUSD.toFixed(2)}/${current.billingInterval === 'yearly' ? 'yr' : 'mo'} · ` : ''}
                   {isExpired ? 'Ended — choose a plan to continue'
                     : planEndsAt ? `${current.status === 'trialing' ? 'Trial ends' : isCancelPending ? 'Ends' : 'Renews'} ${new Date(planEndsAt).toLocaleDateString()} · ${daysLeftText}`
@@ -321,7 +321,7 @@ export default function StorePlanBilling() {
                 </p>
               </div>
               <div className="flex items-center gap-2 flex-wrap">
-                <span className={`text-[11px] font-semibold px-2 py-[3px] rounded-full capitalize ${
+                <span className={`text-[12px] font-semibold px-2 py-[3px] rounded-full capitalize ${
                   isPastDue ? 'bg-error-bg text-error' : isCancelPending ? 'bg-[#fdf2da] text-[#946200]' : 'bg-[#e3f4ea] text-[#1e7a3c]'
                 }`}>
                   {isCancelPending ? 'Canceling' : current.status}
@@ -361,7 +361,7 @@ export default function StorePlanBilling() {
           <div className="inline-flex bg-white rounded-full p-1 border border-bone">
             {(['monthly', 'yearly'] as const).map(iv => (
               <button key={iv} onClick={() => setInterval_(iv)}
-                className="px-3.5 py-[6px] rounded-full text-[11.5px] font-semibold cursor-pointer border-none capitalize"
+                className="px-3.5 py-[6px] rounded-full text-[12px] font-semibold cursor-pointer border-none capitalize"
                 style={{ background: interval === iv ? '#141413' : 'transparent', color: interval === iv ? '#fff' : '#8C8A82' }}>
                 {iv}
               </button>
@@ -378,13 +378,13 @@ export default function StorePlanBilling() {
                 <div className="flex items-start justify-between mb-1">
                   <p className="text-[15px] font-bold text-carbon">{plan.name}</p>
                   {isCurrent
-                    ? <span className="text-[10px] font-bold px-2 py-[2px] rounded-full bg-[#e3f4ea] text-[#1e7a3c]">Your current plan</span>
-                    : plan.badge && <span className="text-[10px] font-bold px-2 py-[2px] rounded-full bg-brand-pale-orange text-brand-deep-orange">{plan.badge}</span>}
+                    ? <span className="text-[12px] font-bold px-2 py-[2px] rounded-full bg-[#e3f4ea] text-[#1e7a3c]">Your current plan</span>
+                    : plan.badge && <span className="text-[12px] font-bold px-2 py-[2px] rounded-full bg-brand-pale-orange text-brand-deep-orange">{plan.badge}</span>}
                 </div>
                 <p className="text-[20px] font-bold text-brand-orange mb-2">
                   {plan.isFree ? `Free${plan.trialDays > 0 ? ` · ${plan.trialDays} days` : ''}` : plan.isCustomPricing ? 'Custom' : `$${price}/${interval === 'yearly' ? 'yr' : 'mo'}`}
                 </p>
-                {isCurrent && planEndsAt && <p className="text-[11.5px] font-semibold text-[#1e7a3c] mb-2">{daysLeftText} · {current?.status === 'trialing' ? 'ends' : 'renews'} {new Date(planEndsAt).toLocaleDateString()}</p>}
+                {isCurrent && planEndsAt && <p className="text-[12px] font-semibold text-[#1e7a3c] mb-2">{daysLeftText} · {current?.status === 'trialing' ? 'ends' : 'renews'} {new Date(planEndsAt).toLocaleDateString()}</p>}
                 <ul className="flex flex-col gap-1.5 mb-4 p-0 list-none flex-1">
                   {plan.featureBullets.map(f => (
                     <li key={f} className="flex items-start gap-1.5 text-[12px] text-graphite"><Check size={12} className="text-brand-orange mt-[2px] shrink-0" />{f}</li>
@@ -417,9 +417,9 @@ export default function StorePlanBilling() {
                 <div key={a._id} className="flex items-center justify-between gap-3 flex-wrap px-5 py-3 border-b border-[#f0eee6] last:border-b-0">
                   <div className="min-w-0">
                     <p className="text-[13px] font-medium text-carbon">{addonLabel(a.addonType)}</p>
-                    <p className="text-[11px] text-slate">Qty {a.quantity} · ${a.amountUSD.toFixed(2)}/mo</p>
+                    <p className="text-[12px] text-slate">Qty {a.quantity} · ${a.amountUSD.toFixed(2)}/mo</p>
                   </div>
-                  <button onClick={() => { setCancelingAddon(a); setActionError(''); }} className="px-2.5 py-1 bg-white border border-bone rounded-[6px] text-[11px] text-error cursor-pointer shrink-0">Cancel</button>
+                  <button onClick={() => { setCancelingAddon(a); setActionError(''); }} className="px-2.5 py-1 bg-white border border-bone rounded-[6px] text-[12px] text-error cursor-pointer shrink-0">Cancel</button>
                 </div>
               ))}
             </div>
@@ -438,18 +438,18 @@ export default function StorePlanBilling() {
                 <div key={inv._id} className="flex items-center justify-between gap-3 flex-wrap px-5 py-3 border-b border-[#f0eee6] last:border-b-0">
                   <div className="min-w-0">
                     <p className="text-[13px] font-medium text-carbon">{inv.invoiceNumber}</p>
-                    <p className="text-[11px] text-slate">
+                    <p className="text-[12px] text-slate">
                       {new Date(inv.createdAt).toLocaleDateString()} · ${inv.amountUSD.toFixed(2)}
                       {inv.refundedAmountUSD > 0 && <span className="text-error"> · ${inv.refundedAmountUSD.toFixed(2)} refunded</span>}
                     </p>
                   </div>
                   <div className="flex items-center gap-2.5 shrink-0">
-                    <span className={`text-[11px] font-semibold px-2 py-[3px] rounded-full capitalize ${INVOICE_STATUS_STYLE[inv.status] ?? 'bg-bone text-slate'}`}>
+                    <span className={`text-[12px] font-semibold px-2 py-[3px] rounded-full capitalize ${INVOICE_STATUS_STYLE[inv.status] ?? 'bg-bone text-slate'}`}>
                       {inv.status.replace('_', ' ')}
                     </span>
                     {(inv.hostedInvoiceUrl || inv.invoicePdfUrl) && (
                       <a href={inv.invoicePdfUrl ?? inv.hostedInvoiceUrl ?? '#'} target="_blank" rel="noreferrer"
-                        className="text-[11px] font-semibold text-brand-orange hover:underline">
+                        className="text-[12px] font-semibold text-brand-orange hover:underline">
                         Download
                       </a>
                     )}
@@ -532,7 +532,7 @@ export default function StorePlanBilling() {
             You'll keep full access to <strong>{entitlements?.currentPlanName}</strong> until{' '}
             {current && new Date(current.currentPeriodEnd).toDateString()}, then your store moves to the free plan. You can reactivate any time before that.
           </p>
-          <label className="block text-[11.5px] font-medium text-slate mb-1.5">Reason (optional — helps us improve)</label>
+          <label className="block text-[12px] font-medium text-slate mb-1.5">Reason (optional — helps us improve)</label>
           <Textarea value={cancelReason} onChange={e => setCancelReason(e.target.value)} rows={3} placeholder="Too expensive, missing a feature, switching platforms…" />
           {actionError && <p className="text-[12px] text-error mt-2">{actionError}</p>}
         </Modal>

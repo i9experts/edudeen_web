@@ -109,7 +109,7 @@ export function DonutChart({
           {/* Center label */}
           {centerLabel && (
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <p className="text-[11px] text-slate">{centerLabel}</p>
+              <p className="text-[12px] text-slate">{centerLabel}</p>
               <p className="text-[18px] font-bold text-charcoal leading-[1.2]">{total.toLocaleString()}</p>
             </div>
           )}

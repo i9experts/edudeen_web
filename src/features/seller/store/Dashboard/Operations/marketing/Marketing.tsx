@@ -142,14 +142,14 @@ function StoreBannerFormModal({ storeId, onClose, onSaved }: { storeId: string; 
         <div>
           <label className="block text-[12px] font-medium text-charcoal mb-1.5">Desktop Image</label>
           <FileDropSelect value={file} onChange={setFile} label="Click to upload desktop banner" />
-          <p className="mt-1.5 text-[11px] text-slate/70">
+          <p className="mt-1.5 text-[12px] text-slate/70">
             Recommended: 2560×720px (minimum 1280px wide) — renders full-width on desktop, so anything narrower will look blurry.
           </p>
         </div>
         <div>
           <label className="block text-[12px] font-medium text-charcoal mb-1.5">Mobile Image (optional)</label>
           <FileDropSelect value={mobileFile} onChange={setMobileFile} label="Click to upload mobile banner" />
-          <p className="mt-1.5 text-[11px] text-slate/70">Recommended: 1440×600px (minimum 640px wide).</p>
+          <p className="mt-1.5 text-[12px] text-slate/70">Recommended: 1440×600px (minimum 640px wide).</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
@@ -316,7 +316,7 @@ function PromotionRequestFormModal({ storeId, onClose, onSaved }: { storeId: str
               {DURATION_UNITS.map(u => <option key={u.value} value={u.value}>{u.label}</option>)}
             </select>
           </div>
-          <p className="text-[11px] text-slate mt-1.5">Any number of hours/days/weeks/months — pricing matches whichever unit fits the window. Or skip this and pick exact Start/End below.</p>
+          <p className="text-[12px] text-slate mt-1.5">Any number of hours/days/weeks/months — pricing matches whichever unit fits the window. Or skip this and pick exact Start/End below.</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Input label="Starts" type="datetime-local" value={startAt} onChange={e => setStartAt(e.target.value)} />
@@ -947,17 +947,17 @@ export function StoreMarketing() {
                       </div>
                       <div className="p-3 flex flex-col gap-2 flex-1">
                         <div className="flex items-center justify-between">
-                          <span className="px-[8px] py-[2px] rounded-[5px] text-[11px] font-semibold" style={{ background: st.bg, color: st.color }}>{st.label}</span>
-                          <span className="text-[11px] text-slate">{BANNER_TYPE_LABEL[b.type]}</span>
+                          <span className="px-[8px] py-[2px] rounded-[5px] text-[12px] font-semibold" style={{ background: st.bg, color: st.color }}>{st.label}</span>
+                          <span className="text-[12px] text-slate">{BANNER_TYPE_LABEL[b.type]}</span>
                         </div>
                         {b.ctaLabel && <p className="text-[12px] text-charcoal font-medium truncate">{b.ctaLabel}</p>}
                         <div className="flex items-center gap-2 mt-auto pt-2">
                           <button onClick={() => toggleBannerPause(b)} disabled={bannerBusyId === b._id}
-                            className="flex-1 px-[10px] py-[6px] rounded-[6px] text-[11px] font-medium text-charcoal bg-cream border border-bone cursor-pointer flex items-center justify-center gap-1 outline-none transition-colors duration-150 hover:bg-bone disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-brand-orange/50">
+                            className="flex-1 px-[10px] py-[6px] rounded-[6px] text-[12px] font-medium text-charcoal bg-cream border border-bone cursor-pointer flex items-center justify-center gap-1 outline-none transition-colors duration-150 hover:bg-bone disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-brand-orange/50">
                             {b.status === 'paused' ? <Play size={11} /> : <Pause size={11} />} {b.status === 'paused' ? 'Resume' : 'Pause'}
                           </button>
-                          <button onClick={() => removeBanner(b)} disabled={bannerBusyId === b._id}
-                            className="px-[10px] py-[6px] rounded-[6px] text-[11px] font-medium text-error bg-error-bg border border-error-border cursor-pointer flex items-center justify-center gap-1 outline-none transition-colors duration-150 hover:bg-error hover:text-white disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-brand-orange/50">
+                          <button aria-label="Delete" onClick={() => removeBanner(b)} disabled={bannerBusyId === b._id}
+                            className="px-[10px] py-[6px] rounded-[6px] text-[12px] font-medium text-error bg-error-bg border border-error-border cursor-pointer flex items-center justify-center gap-1 outline-none transition-colors duration-150 hover:bg-error hover:text-white disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-brand-orange/50">
                             <Trash2 size={11} />
                           </button>
                         </div>
@@ -1021,13 +1021,13 @@ export function StoreMarketing() {
                       <div className="p-4 flex flex-col gap-2">
                         <div className="flex items-center justify-between">
                           <span className="text-[13px] font-semibold text-carbon">{PLACEMENT_LABEL[r.placement]}</span>
-                          <span className="px-2.5 py-[3px] rounded-[5px] text-[11px] font-semibold" style={{ background: st.bg, color: st.color }}>{st.label}</span>
+                          <span className="px-2.5 py-[3px] rounded-[5px] text-[12px] font-semibold" style={{ background: st.bg, color: st.color }}>{st.label}</span>
                         </div>
-                        <p className="text-[11px] text-slate">
+                        <p className="text-[12px] text-slate">
                           {new Date(r.startAt).toLocaleDateString()} – {new Date(r.endAt).toLocaleDateString()} · ${r.priceUSD.toFixed(2)}
                         </p>
                         {r.status === 'rejected' && r.rejectionReason && (
-                          <p className="text-[11px] text-error bg-error-bg rounded-md px-2 py-1.5">{r.rejectionReason}</p>
+                          <p className="text-[12px] text-error bg-error-bg rounded-md px-2 py-1.5">{r.rejectionReason}</p>
                         )}
                         <div className="flex gap-2 mt-1">
                           {r.status === 'approved' && r.paymentStatus !== 'paid' && (
@@ -1074,11 +1074,11 @@ export function StoreMarketing() {
                     const name = productNames[id];
                     return (
                       <div key={id} className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-cream">
-                        <span className="text-[11px] text-slate w-4">{i + 1}</span>
+                        <span className="text-[12px] text-slate w-4">{i + 1}</span>
                         <span className="text-[13px] text-charcoal flex-1 truncate">{name ?? id}</span>
-                        <button onClick={() => movePinned(i, -1)} disabled={i === 0} className="p-1 rounded-md border-0 bg-transparent cursor-pointer disabled:opacity-30 hover:bg-bone"><ArrowUp size={13} /></button>
-                        <button onClick={() => movePinned(i, 1)} disabled={i === pinnedIds.length - 1} className="p-1 rounded-md border-0 bg-transparent cursor-pointer disabled:opacity-30 hover:bg-bone"><ArrowDown size={13} /></button>
-                        <button onClick={() => togglePin(id)} className="p-1 rounded-md border-0 bg-transparent cursor-pointer hover:bg-bone text-error"><Trash2 size={13} /></button>
+                        <button aria-label="Move up" onClick={() => movePinned(i, -1)} disabled={i === 0} className="p-1 rounded-md border-0 bg-transparent cursor-pointer disabled:opacity-30 hover:bg-bone"><ArrowUp size={13} /></button>
+                        <button aria-label="Move down" onClick={() => movePinned(i, 1)} disabled={i === pinnedIds.length - 1} className="p-1 rounded-md border-0 bg-transparent cursor-pointer disabled:opacity-30 hover:bg-bone"><ArrowDown size={13} /></button>
+                        <button aria-label="Delete" onClick={() => togglePin(id)} className="p-1 rounded-md border-0 bg-transparent cursor-pointer hover:bg-bone text-error"><Trash2 size={13} /></button>
                       </div>
                     );
                   })}
@@ -1193,7 +1193,7 @@ export function StoreMarketing() {
                       <div className="px-3 py-[5px] rounded-lg border-2 border-dashed border-brand-orange font-mono text-[13px] font-bold text-brand-deep-orange bg-brand-pale-orange">
                         {coupon.code}
                       </div>
-                      <span className="px-2.5 py-[3px] rounded-[5px] text-[11px] font-semibold" style={{ background: coupon.isActive ? '#E3F4EA' : '#F0EEE6', color: coupon.isActive ? '#1E7A3C' : '#5A5852' }}>
+                      <span className="px-2.5 py-[3px] rounded-[5px] text-[12px] font-semibold" style={{ background: coupon.isActive ? '#E3F4EA' : '#F0EEE6', color: coupon.isActive ? '#1E7A3C' : '#5A5852' }}>
                         {coupon.isActive ? 'Active' : 'Paused'}
                       </span>
                     </div>
@@ -1307,11 +1307,11 @@ export function StoreMarketing() {
                     <div className="flex items-center justify-between mb-1.5">
                       <p className="text-sm font-semibold text-carbon">{c.name}</p>
                       {c.isJoined && c.sponsorType !== 'platform' && (
-                        <span className="px-2.5 py-[3px] rounded-[5px] text-[11px] font-semibold shrink-0 ml-2 bg-success-bg text-success">Joined</span>
+                        <span className="px-2.5 py-[3px] rounded-[5px] text-[12px] font-semibold shrink-0 ml-2 bg-success-bg text-success">Joined</span>
                       )}
                     </div>
                     {c.description && <p className="text-xs text-slate mb-2">{c.description}</p>}
-                    <p className="text-[11px] text-slate mb-2">
+                    <p className="text-[12px] text-slate mb-2">
                       {new Date(c.startDate).toLocaleDateString()} – {new Date(c.endDate).toLocaleDateString()}
                       {c.discountType && c.discountValue != null && (
                         <> · {c.discountType === 'percentage' ? `${c.discountValue}% off` : `${currencySymbol(c.currency ?? 'USD')}${c.discountValue} off`}</>
@@ -1320,14 +1320,14 @@ export function StoreMarketing() {
                     {c.sponsorType === 'platform' ? (
                       <div className="flex items-start gap-1.5 mb-3 px-2.5 py-2 rounded-[7px] bg-success-bg">
                         <Building2 size={13} className="text-success shrink-0 mt-[1px]" />
-                        <p className="text-[11px] text-success font-medium leading-snug">
+                        <p className="text-[12px] text-success font-medium leading-snug">
                           Platform sponsored — Edudeen covers this discount. Your store is automatically included, no action needed.
                         </p>
                       </div>
                     ) : (
                       <div className="flex items-start gap-1.5 mb-3 px-2.5 py-2 rounded-[7px] bg-cream">
                         <User size={13} className="text-slate shrink-0 mt-[1px]" />
-                        <p className="text-[11px] text-slate leading-snug">
+                        <p className="text-[12px] text-slate leading-snug">
                           Seller sponsored — this discount comes out of your own payout for orders placed during the sale.
                         </p>
                       </div>
@@ -1376,7 +1376,7 @@ export function StoreMarketing() {
                   <div key={d._id} className="bg-white border border-bone rounded-[10px] px-[22px] py-5">
                     <div className="flex items-center justify-between mb-2">
                       <p className="text-[13px] font-bold text-carbon">{d.name}</p>
-                      <span className="px-2.5 py-[3px] rounded-[5px] text-[11px] font-semibold" style={{ background: d.isActive ? '#E3F4EA' : '#F0EEE6', color: d.isActive ? '#1E7A3C' : '#5A5852' }}>
+                      <span className="px-2.5 py-[3px] rounded-[5px] text-[12px] font-semibold" style={{ background: d.isActive ? '#E3F4EA' : '#F0EEE6', color: d.isActive ? '#1E7A3C' : '#5A5852' }}>
                         {d.isActive ? 'Active' : 'Paused'}
                       </span>
                     </div>
@@ -1460,7 +1460,7 @@ export function StoreMarketing() {
                   <label className="text-xs font-medium text-graphite mb-[5px] block">Products</label>
                   {productSearchInput}
                   {discountForm.productIds.length > 0 && (
-                    <p className="text-[11px] text-slate mb-1.5 truncate">
+                    <p className="text-[12px] text-slate mb-1.5 truncate">
                       Selected: {discountForm.productIds.map(id => productNames[id] ?? id).join(', ')}
                     </p>
                   )}
@@ -1611,7 +1611,7 @@ export function StoreMarketing() {
                           <td className="px-4 py-2.5 text-carbon">{currencySymbol(g.currency)}{g.balance.toFixed(2)} / {currencySymbol(g.currency)}{g.initialValue.toFixed(2)}</td>
                           <td className="px-4 py-2.5 text-slate capitalize">{g.issuedBy}</td>
                           <td className="px-4 py-2.5">
-                            <span className="px-2.5 py-[3px] rounded-[5px] text-[11px] font-semibold" style={{ background: g.status === 'active' ? '#E3F4EA' : '#F0EEE6', color: g.status === 'active' ? '#1E7A3C' : '#5A5852' }}>
+                            <span className="px-2.5 py-[3px] rounded-[5px] text-[12px] font-semibold" style={{ background: g.status === 'active' ? '#E3F4EA' : '#F0EEE6', color: g.status === 'active' ? '#1E7A3C' : '#5A5852' }}>
                               {g.status}
                             </span>
                           </td>
@@ -1621,7 +1621,7 @@ export function StoreMarketing() {
                               <button
                                 onClick={() => disableGiftCard(g)}
                                 disabled={giftCardDisableBusyId === g._id}
-                                className="px-2.5 py-1 bg-white border border-bone rounded-md text-[11px] text-error cursor-pointer hover:bg-error hover:text-white hover:border-error disabled:opacity-50"
+                                className="px-2.5 py-1 bg-white border border-bone rounded-md text-[12px] text-error cursor-pointer hover:bg-error hover:text-white hover:border-error disabled:opacity-50"
                               >
                                 {giftCardDisableBusyId === g._id ? '…' : 'Disable'}
                               </button>

@@ -8,7 +8,7 @@ import {
   Settings, Sparkles, ChevronLeft, ChevronRight, Store,
   Megaphone, Star, Search, Wallet, FileSpreadsheet, Truck, Boxes, Gift,
   MessageSquare, FolderTree, RefreshCw, Undo2, CreditCard,
-  PanelLeftClose, PanelLeftOpen, AlertTriangle, AlertCircle, XCircle, Clock, LogOut, UserRound,
+  MoreHorizontal, PanelLeftClose, Loader2, PanelLeftOpen, AlertTriangle, AlertCircle, XCircle, Clock, LogOut, UserRound,
 } from 'lucide-react';
 import { EdudeenIcon, EdudeenLogo } from '@/components/comman/ui/EdudeenLogo';
 import { apiGetStoreById, type StoreData } from '@/api/services/store';
@@ -17,6 +17,7 @@ import { useCommandPalette } from '@/hooks/useCommandPalette';
 import { useLogout } from '@/hooks/auth/useLogout';
 import { AnnouncementBanner, Modal, Button } from '@/components/comman/ui';
 import { PlatformTopBar } from '@/components/comman/ui/PlatformTopBar';
+import { MoreSheet } from '@/components/comman/ui/MoreSheet';
 import { useLockPageScroll } from '@/hooks/useLockPageScroll';
 import { CommandPalette, type CommandPaletteItem } from '@/components/comman/ui/CommandPalette';
 import { StoreWorkspaceCtx, useStoreWorkspace } from './StoreWorkspaceContext';
@@ -156,7 +157,6 @@ const STORE_TABS: { id: string; Icon: LucideIcon; label: string; path: string }[
   { id: 'orders',    Icon: ShoppingBag,     label: 'Orders',    path: 'orders'    },
   { id: 'products',  Icon: Package,         label: 'Products',  path: 'products'  },
   { id: 'messages',  Icon: MessageSquare,   label: 'Messages',  path: 'messages'  },
-  { id: 'settings',  Icon: Settings,        label: 'Settings',  path: 'settings'  },
 ];
 
 function StoreBottomNav() {
@@ -167,6 +167,17 @@ function StoreBottomNav() {
   const isActive = (path: string) => pathname === `/store/${storeId}/${path}`;
 
   const goToTab = (path: string) => navigate(`/store/${storeId}/${path}`);
+  const [moreOpen, setMoreOpen] = useState(false);
+  // 5th tab: every tool, grouped as in the desktop sidebar (Sales/Catalog/Customers/Growth/Finance/Settings).
+  const groups = NAV.filter(g => g.group !== 'Overview').map(g => ({
+    label: g.group,
+    items: g.items.map(i => ({
+      id: i.id, label: i.label, Icon: i.Icon,
+      active: pathname.startsWith(`/store/${storeId}/${i.path.split('?')[0]}`),
+      onSelect: () => navigate(`/store/${storeId}/${i.path}`),
+    })),
+  }));
+  const moreActive = !STORE_TABS.some(t => isActive(t.path)) && pathname.startsWith(`/store/${storeId}/`);
 
   return (
     <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-bone">
@@ -186,11 +197,22 @@ function StoreBottomNav() {
                 strokeWidth={active ? 2.2 : 1.8}
                 className={clsx('transition-colors duration-150', active ? 'text-brand-orange' : 'text-slate')}
               />
-              <span className={clsx('text-[10px] leading-none font-medium', active ? 'text-brand-orange' : 'text-slate')}>{tab.label}</span>
+              <span className={clsx('text-[12px] leading-none font-medium', active ? 'text-brand-orange' : 'text-slate')}>{tab.label}</span>
             </button>
           );
         })}
+        <button
+          type="button"
+          onClick={() => setMoreOpen(true)}
+          aria-haspopup="dialog"
+          aria-label="More tools"
+          className="flex-1 flex flex-col items-center justify-center py-[8px] gap-[4px] cursor-pointer bg-transparent border-none"
+        >
+          <MoreHorizontal size={21} strokeWidth={moreActive ? 2.2 : 1.8} className={clsx('transition-colors duration-150', moreActive ? 'text-brand-orange' : 'text-slate')} />
+          <span className={clsx('text-[12px] leading-none font-medium', moreActive ? 'text-brand-orange' : 'text-slate')}>More</span>
+        </button>
       </div>
+      <MoreSheet open={moreOpen} onClose={() => setMoreOpen(false)} groups={groups} title="All store tools" />
     </nav>
   );
 }
@@ -353,7 +375,7 @@ function StoreSidebar({ open, onToggle }: StoreSidebarProps) {
                 ) : (
                   <>
                     <p className="text-[13px] font-bold text-carbon leading-[1.3] truncate">{store?.name ?? 'Loading…'}</p>
-                    <p className="text-[11px] text-slate leading-[1.3] truncate capitalize">
+                    <p className="text-[12px] text-slate leading-[1.3] truncate capitalize">
                       {planName ?? store?.plan ?? ''}{store?.slug ? ` · /${store.slug}` : ''}
                     </p>
                   </>
@@ -365,7 +387,7 @@ function StoreSidebar({ open, onToggle }: StoreSidebarProps) {
           <div className="flex justify-center pb-3 shrink-0">
             <div
               title={store?.name}
-              className="size-9 rounded-[9px] shrink-0 bg-brand-pale-orange overflow-hidden flex items-center justify-center text-[11px] font-bold text-brand-orange"
+              className="size-9 rounded-[9px] shrink-0 bg-brand-pale-orange overflow-hidden flex items-center justify-center text-[12px] font-bold text-brand-orange"
             >
               {loading ? '…' : store?.logo ? <img loading="lazy" decoding="async" src={store.logo} className="w-full h-full object-cover" alt="" /> : initials}
             </div>
@@ -520,7 +542,7 @@ export function StorePageHeader({ title, subtitle, actions, eyebrow }: StorePage
           <button
             onClick={() => navigate(dashboardPath)}
             aria-label="Back to Store Dashboard"
-            className="lg:hidden size-8 -ml-1 rounded-md flex items-center justify-center text-charcoal hover:bg-cream transition-colors cursor-pointer shrink-0"
+            className="lg:hidden size-10 -ms-2 rounded-md flex items-center justify-center text-charcoal hover:bg-cream transition-colors cursor-pointer shrink-0"
           >
             <ChevronLeft size={19} />
           </button>
@@ -719,7 +741,12 @@ function GatedOutlet() {
   if (!loading && error) return <StoreWorkspaceError error={error} onRetry={refetch} />;
   // Own boundary: a page chunk still downloading never blanks the sidebar
   // with RootLayout's full-screen spinner.
-  return <Suspense fallback={null}><Outlet /></Suspense>;
+  // The fallback is a small centred spinner (not blank) so a page chunk that is still downloading reads as loading, not broken.
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center py-24" role="status" aria-label="Loading"><Loader2 size={22} className="text-brand-orange animate-spin" /></div>}>
+      <Outlet />
+    </Suspense>
+  );
 }
 
 function isFullBleedRoute(pathname: string) {

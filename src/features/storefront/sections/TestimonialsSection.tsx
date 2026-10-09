@@ -76,7 +76,7 @@ export function TestimonialsSection({ settings, blocks: sellerBlocks }: { settin
               <div className="flex flex-col items-center gap-1">
                 <Avatar t={t} cfg={cfg} />
                 <p className="text-[12.5px] font-semibold" style={{ color: cfg.textColor }}>{t.authorName}</p>
-                {t.authorRole && <p className="text-[11px] opacity-60" style={{ color: cfg.textColor }}>{t.authorRole}</p>}
+                {t.authorRole && <p className="text-[12px] opacity-60" style={{ color: cfg.textColor }}>{t.authorRole}</p>}
               </div>
             </div>
           ))}
@@ -104,7 +104,7 @@ export function TestimonialsSection({ settings, blocks: sellerBlocks }: { settin
               <Avatar t={t} cfg={cfg} />
               <div>
                 <p className="text-[12.5px] font-semibold" style={{ color: cfg.textColor }}>{t.authorName}</p>
-                {t.authorRole && <p className="text-[11px] opacity-60" style={{ color: cfg.textColor }}>{t.authorRole}</p>}
+                {t.authorRole && <p className="text-[12px] opacity-60" style={{ color: cfg.textColor }}>{t.authorRole}</p>}
               </div>
             </div>
           </div>

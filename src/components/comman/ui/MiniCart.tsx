@@ -88,7 +88,7 @@ export function MiniCart({ accentColor }: { accentColor?: string }) {
           {cartCount > 99 ? '99+' : cartCount}
         </b>
         {cartCount > 0 && (
-          <span className="md:hidden absolute top-[-2px] end-[-4px] min-w-[16px] h-[16px] rounded-[8px] bg-brand-orange text-white text-[9px] font-bold leading-[16px] text-center px-1">
+          <span className="md:hidden absolute top-[-2px] end-[-4px] min-w-[16px] h-[16px] rounded-[8px] bg-brand-orange text-white text-[12px] font-bold leading-[16px] text-center px-1">
             {cartCount > 99 ? '99+' : cartCount}
           </span>
         )}
@@ -124,7 +124,7 @@ export function MiniCart({ accentColor }: { accentColor?: string }) {
                 </div>
               </div>
               <p className="text-[13.5px] font-semibold text-charcoal">Your cart is empty</p>
-              <p className="text-[11.5px] text-slate mt-[3px] mb-5">Add books, courses or supplies to see them here.</p>
+              <p className="text-[12px] text-slate mt-[3px] mb-5">Add books, courses or supplies to see them here.</p>
               <Button variant="outline" size="sm" pill onClick={() => goTo('/cart')}>
                 Go to Cart
               </Button>
@@ -137,7 +137,7 @@ export function MiniCart({ accentColor }: { accentColor?: string }) {
                     <ItemThumb item={item} />
                     <div className="flex-1 min-w-0">
                       <p className="text-[12px] font-medium text-charcoal leading-tight line-clamp-1">{item.name}</p>
-                      <p className="text-[11px] text-slate mt-[3px]">Qty {item.quantity}</p>
+                      <p className="text-[12px] text-slate mt-[3px]">Qty {item.quantity}</p>
                     </div>
                     <p className="text-[12.5px] font-bold text-carbon shrink-0">${lineTotal(item).toLocaleString()}</p>
                   </div>
@@ -145,7 +145,7 @@ export function MiniCart({ accentColor }: { accentColor?: string }) {
               </div>
 
               {hiddenCount > 0 && (
-                <p className="text-[10.5px] text-slate text-center py-2 border-t border-bone bg-cream/40">
+                <p className="text-[12px] text-slate text-center py-2 border-t border-bone bg-cream/40">
                   +{hiddenCount} more item{hiddenCount !== 1 ? 's' : ''} in your cart
                 </p>
               )}

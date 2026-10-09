@@ -21,7 +21,7 @@ export function ProductCell({ p }: { p: InventoryProduct }) {
       </div>
       <div>
         <p className="text-[13px] font-medium text-charcoal mb-[1px]">{p.name}</p>
-        <p className="text-[11px] text-slate">SKU: {p.sku}</p>
+        <p className="text-[12px] text-slate">SKU: {p.sku}</p>
       </div>
     </div>
   );

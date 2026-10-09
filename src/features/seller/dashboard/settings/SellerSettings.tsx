@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { currencySymbol } from '@/utils/currency';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useGetProfile, invalidateProfileCache } from '@/hooks/auth/useGetProfile';
@@ -53,10 +54,10 @@ const SETTINGS_NAV: { group: string; isDanger?: boolean; items: { id: SettingSec
 // numbers from the same useMyStores() summary the "My Stores" page uses,
 // never fabricated).
 function MobileSellerHero({
-  name, email, image, role, isVerified, storeCount, totalProducts, totalRevenueUSD, loading,
+  name, email, image, role, isVerified, storeCount, totalProducts, totalRevenueUSD, currency, loading,
 }: {
   name?: string; email?: string; image?: string | null; role?: string; isVerified?: boolean;
-  storeCount: number; totalProducts: number; totalRevenueUSD: number; loading: boolean;
+  storeCount: number; totalProducts: number; totalRevenueUSD: number; currency?: string | null; loading: boolean;
 }) {
   return (
     <div className="lg:hidden -mx-4 -mt-5">
@@ -79,11 +80,11 @@ function MobileSellerHero({
         <p className="relative text-[19px] font-bold text-white mt-3 leading-tight">{name ?? 'Seller'}</p>
         {email && <p className="relative text-[13px] text-white/75 mt-[2px]">{email}</p>}
         <div className="relative flex items-center gap-1.5 mt-3">
-          <span className="inline-flex px-4 py-[6px] rounded-full bg-white/20 text-[11px] font-semibold text-white capitalize">
+          <span className="inline-flex px-4 py-[6px] rounded-full bg-white/20 text-[12px] font-semibold text-white capitalize">
             {role ?? 'Seller'} Account
           </span>
           {isVerified && (
-            <span className="inline-flex items-center gap-1 px-3 py-[6px] rounded-full bg-white/20 text-[11px] font-semibold text-white">
+            <span className="inline-flex items-center gap-1 px-3 py-[6px] rounded-full bg-white/20 text-[12px] font-semibold text-white">
               <Check size={10} /> Verified
             </span>
           )}
@@ -93,19 +94,19 @@ function MobileSellerHero({
       <div className="relative -mt-6 mx-4 rounded-t-[24px] bg-white px-2 pt-5 pb-4 flex items-center">
         <div className="flex-1 flex flex-col items-center gap-[2px]">
           <span className="text-[19px] font-bold text-brand-orange leading-none">{loading ? '—' : storeCount}</span>
-          <span className="text-[11px] text-slate">Stores</span>
+          <span className="text-[12px] text-slate">Stores</span>
         </div>
         <div className="w-px h-9 bg-bone" />
         <div className="flex-1 flex flex-col items-center gap-[2px]">
           <span className="text-[19px] font-bold text-brand-orange leading-none">{loading ? '—' : totalProducts.toLocaleString()}</span>
-          <span className="text-[11px] text-slate">Products</span>
+          <span className="text-[12px] text-slate">Products</span>
         </div>
         <div className="w-px h-9 bg-bone" />
         <div className="flex-1 flex flex-col items-center gap-[2px]">
           <span className="text-[19px] font-bold text-brand-orange leading-none">
-            {loading ? '—' : `$${totalRevenueUSD.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
+            {loading ? '—' : `${currencySymbol(currency)}${totalRevenueUSD.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
           </span>
-          <span className="text-[11px] text-slate">Revenue</span>
+          <span className="text-[12px] text-slate">Revenue</span>
         </div>
       </div>
     </div>
@@ -166,7 +167,7 @@ export function SellerSettings() {
   // via local state instead of real routes since this page has none).
   // Desktop ignores this entirely — content + sidebar are always shown there.
   const [mobileDrilledIn, setMobileDrilledIn] = useState(false);
-  const { summary: storesSummary, loading: storesLoading } = useMyStores();
+  const { summary: storesSummary, stores: myStoresList, loading: storesLoading } = useMyStores();
   const [firstName, setFirstName] = useState('');
   const [lastName,  setLastName]  = useState('');
   const [phone,     setPhone]     = useState('');
@@ -255,6 +256,7 @@ export function SellerSettings() {
               storeCount={storesSummary.storeCount}
               totalProducts={storesSummary.totalProducts}
               totalRevenueUSD={storesSummary.totalRevenueUSD}
+              currency={myStoresList[0]?.baseCurrency}
               loading={storesLoading}
             />
             <MobileSellerMenu active={active} onSelect={id => { setActive(id); setMobileDrilledIn(true); }} />
@@ -329,7 +331,7 @@ export function SellerSettings() {
                         <div className="flex items-center gap-1.5 mt-2">
                           <span className="px-[9px] py-[3px] rounded-full text-[10.5px] font-bold uppercase tracking-wide bg-brand-orange/15 text-brand-deep-orange capitalize">{profile?.role ?? ''}</span>
                           {profile?.isVerified && (
-                            <span className="px-[9px] py-[3px] rounded-full text-[10.5px] font-bold bg-success-bg text-success flex items-center gap-1">
+                            <span className="px-[9px] py-[3px] rounded-full text-[12px] font-bold bg-success-bg text-success flex items-center gap-1">
                               <Check size={10} /> Verified
                             </span>
                           )}
@@ -369,7 +371,7 @@ export function SellerSettings() {
                           className="flex-1 min-w-0 px-3 py-[10px] text-[13px] border border-bone rounded-lg outline-none text-slate bg-cream box-border"
                         />
                         {profile?.isVerified && (
-                          <span className="px-[10px] py-1 rounded-[5px] text-[11px] font-semibold bg-success-bg text-success flex items-center gap-1 shrink-0">
+                          <span className="px-[10px] py-1 rounded-[5px] text-[12px] font-semibold bg-success-bg text-success flex items-center gap-1 shrink-0">
                             <Check size={10} /> Verified
                           </span>
                         )}
@@ -407,8 +409,8 @@ export function SellerSettings() {
                         {saving && <Loader2 size={13} className="animate-spin" />}
                         {saving ? 'Saving…' : 'Save Changes'}
                       </button>
-                      {saved && <span className="text-[11px] text-success font-medium">Profile updated</span>}
-                      {saveError && <span className="text-[11px] text-error font-medium">{saveError}</span>}
+                      {saved && <span className="text-[12px] text-success font-medium">Profile updated</span>}
+                      {saveError && <span className="text-[12px] text-error font-medium">{saveError}</span>}
                     </div>
                     </div>
                   </>
@@ -467,8 +469,8 @@ export function SellerSettings() {
                     {pwSaving && <Loader2 size={13} className="animate-spin" />}
                     {pwSaving ? 'Updating…' : 'Update Password'}
                   </button>
-                  {pwSuccess && <span className="text-[11px] text-success font-medium">Password changed successfully</span>}
-                  {pwError && <span className="text-[11px] text-error font-medium">{pwError}</span>}
+                  {pwSuccess && <span className="text-[12px] text-success font-medium">Password changed successfully</span>}
+                  {pwError && <span className="text-[12px] text-error font-medium">{pwError}</span>}
                 </div>
               </div>
             )}

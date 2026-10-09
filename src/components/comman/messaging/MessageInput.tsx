@@ -151,7 +151,7 @@ export function MessageInput({
       {replyTo && (
         <div className="flex items-center gap-2 mb-[8px] px-3 py-[7px] bg-cream rounded-[10px] border-s-[3px] border-brand-orange transition-all duration-200 ease-out starting:opacity-0 starting:-translate-y-1">
           <div className="flex-1 min-w-0">
-            <p className="text-[11px] font-semibold text-brand-deep-orange">Replying to</p>
+            <p className="text-[12px] font-semibold text-brand-deep-orange">Replying to</p>
             <p className="text-[12px] text-slate truncate">{replyTo.text ?? `[${replyTo.type}]`}</p>
           </div>
           <button onClick={onCancelReply} aria-label="Cancel reply" className="p-1 rounded-full hover:bg-bone cursor-pointer bg-transparent border-none text-slate shrink-0">

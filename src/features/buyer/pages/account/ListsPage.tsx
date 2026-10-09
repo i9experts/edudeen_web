@@ -92,8 +92,8 @@ export function ListsPage() {
                 <div className="flex items-center gap-2">
                   <Link to={`/lists/${l.slug}`} className="text-[14.5px] font-bold text-carbon no-underline hover:text-brand-orange truncate">{l.name}</Link>
                   {l.isPublic
-                    ? <span className="inline-flex items-center gap-1 text-[11px] text-success shrink-0"><Globe size={11} /> Shared</span>
-                    : <span className="inline-flex items-center gap-1 text-[11px] text-slate shrink-0"><Lock size={11} /> Private</span>}
+                    ? <span className="inline-flex items-center gap-1 text-[12px] text-success shrink-0"><Globe size={11} /> Shared</span>
+                    : <span className="inline-flex items-center gap-1 text-[12px] text-slate shrink-0"><Lock size={11} /> Private</span>}
                 </div>
                 <p className="text-[12px] text-slate">{l.itemCount} {l.itemCount === 1 ? 'resource' : 'resources'}{l.description ? ` · ${l.description}` : ''}</p>
                 <div className="flex gap-1 mt-auto pt-2">

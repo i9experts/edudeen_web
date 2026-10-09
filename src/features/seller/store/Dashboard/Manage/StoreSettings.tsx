@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { useAiStudioCredits } from '@/hooks/seller/useAiStudio';
+import { currencySymbol } from '@/utils/currency';
 import { Save, Store, Loader2, CheckCircle, AlertCircle, Globe, Lock, History, ChevronLeft, ChevronRight, Copy, Check, CreditCard } from 'lucide-react';
 import { useStoreWorkspace, StorePageHeader, StoreNavMenu } from '@/components/layouts/StoreLayout';
 import { getStorefrontUrl } from '@/utils/storefrontUrl';
@@ -29,10 +31,10 @@ const STORE_SETTINGS_NAV: { id: string; label: string; Icon: typeof Store }[] = 
 // same useMyStores() list the "My Stores" page already uses — never
 // fabricated numbers.
 function MobileStoreHero({
-  name, slug, logo, status, productCount, totalSalesUSD, aiCredits, loading,
+  name, slug, logo, status, productCount, totalSalesUSD, currency, aiCredits, loading,
 }: {
   name?: string; slug?: string; logo?: string | null; status?: string;
-  productCount: number | null; totalSalesUSD: number | null; aiCredits: number; loading: boolean;
+  productCount: number | null; totalSalesUSD: number | null; currency?: string | null; aiCredits: number | null; loading: boolean;
 }) {
   return (
     <div className="lg:hidden -mx-4 -mt-3">
@@ -54,7 +56,7 @@ function MobileStoreHero({
         )}
         <p className="relative text-[19px] font-bold text-white mt-3 leading-tight">{name ?? 'Your Store'}</p>
         {slug && <p className="relative text-[13px] text-white/75 mt-[2px]">/{slug}</p>}
-        <span className="relative inline-flex mt-3 px-4 py-[6px] rounded-full bg-white/20 text-[11px] font-semibold text-white capitalize">
+        <span className="relative inline-flex mt-3 px-4 py-[6px] rounded-full bg-white/20 text-[12px] font-semibold text-white capitalize">
           {(status ?? 'pending').replace(/_/g, ' ')}
         </span>
       </div>
@@ -62,19 +64,19 @@ function MobileStoreHero({
       <div className="relative -mt-6 mx-4 rounded-t-[24px] bg-white px-2 pt-5 pb-4 flex items-center">
         <div className="flex-1 flex flex-col items-center gap-[2px]">
           <span className="text-[19px] font-bold text-brand-orange leading-none">{loading || productCount == null ? '—' : productCount}</span>
-          <span className="text-[11px] text-slate">Products</span>
+          <span className="text-[12px] text-slate">Products</span>
         </div>
         <div className="w-px h-9 bg-bone" />
         <div className="flex-1 flex flex-col items-center gap-[2px]">
           <span className="text-[19px] font-bold text-brand-orange leading-none">
-            {loading || totalSalesUSD == null ? '—' : `$${totalSalesUSD.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
+            {loading || totalSalesUSD == null ? '—' : `${currencySymbol(currency)}${totalSalesUSD.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
           </span>
-          <span className="text-[11px] text-slate">Revenue</span>
+          <span className="text-[12px] text-slate">Revenue</span>
         </div>
         <div className="w-px h-9 bg-bone" />
         <div className="flex-1 flex flex-col items-center gap-[2px]">
-          <span className="text-[19px] font-bold text-brand-orange leading-none">{aiCredits.toLocaleString()}</span>
-          <span className="text-[11px] text-slate">AI Credits</span>
+          <span className="text-[19px] font-bold text-brand-orange leading-none">{aiCredits == null ? '—' : aiCredits.toLocaleString()}</span>
+          <span className="text-[12px] text-slate">AI Credits</span>
         </div>
       </div>
     </div>
@@ -180,7 +182,7 @@ function CopyableRow({ label, value }: { label: string; value: string }) {
   };
   return (
     <div className="flex items-center justify-between gap-2 py-1">
-      <span className="text-[11px] text-slate w-14 shrink-0">{label}</span>
+      <span className="text-[12px] text-slate w-14 shrink-0">{label}</span>
       <code className="flex-1 text-[12px] text-charcoal bg-white border border-bone rounded-md px-2 py-1 truncate">{value}</code>
       <button type="button" onClick={copy} title="Copy" className="shrink-0 w-7 h-7 flex items-center justify-center rounded-md border-none bg-transparent text-slate hover:bg-white hover:text-charcoal cursor-pointer">
         {copied ? <Check size={13} className="text-success" /> : <Copy size={13} />}
@@ -256,7 +258,7 @@ function PaymentGatewayCard() {
           </p>
 
           {info && (
-            <span className={`inline-flex items-center gap-1.5 text-[11.5px] font-semibold px-2.5 py-1 rounded-full mb-3 ${info.cls}`}>
+            <span className={`inline-flex items-center gap-1.5 text-[12px] font-semibold px-2.5 py-1 rounded-full mb-3 ${info.cls}`}>
               <info.Icon size={12} /> {info.label}
             </span>
           )}
@@ -272,7 +274,7 @@ function PaymentGatewayCard() {
           )}
 
           {status?.status === 'active' && (
-            <p className="text-[11px] text-slate">
+            <p className="text-[12px] text-slate">
               Not seeing a store you expect here? Stripe Connect is tied to your seller account as a whole, not one specific store.
             </p>
           )}
@@ -372,11 +374,11 @@ function DomainWhiteLabelCard({ storeId, store, refetch }: {
               <div className="mt-3 flex flex-col gap-3">
                 <div className="flex items-center gap-2">
                   {isVerified ? (
-                    <span className="flex items-center gap-1.5 text-[11.5px] font-semibold text-success bg-success-bg px-2.5 py-1 rounded-full">
+                    <span className="flex items-center gap-1.5 text-[12px] font-semibold text-success bg-success-bg px-2.5 py-1 rounded-full">
                       <CheckCircle size={12} /> Verified — live on {store.customDomain}
                     </span>
                   ) : (
-                    <span className="flex items-center gap-1.5 text-[11.5px] font-semibold text-warning bg-warning-bg px-2.5 py-1 rounded-full">
+                    <span className="flex items-center gap-1.5 text-[12px] font-semibold text-warning bg-warning-bg px-2.5 py-1 rounded-full">
                       <AlertCircle size={12} /> Not verified yet
                     </span>
                   )}
@@ -388,12 +390,12 @@ function DomainWhiteLabelCard({ storeId, store, refetch }: {
                     <CopyableRow label="Type" value="CNAME" />
                     <CopyableRow label="Host" value={store.customDomain.split('.').slice(0, -2).join('.') || '@'} />
                     <CopyableRow label="Value" value={CUSTOM_DOMAIN_CNAME_TARGET} />
-                    <p className="text-[11px] text-slate mt-2">DNS changes can take a few minutes to a few hours to propagate. A bare root domain (no subdomain, e.g. just "yourbrand.com") may not support a CNAME record with your registrar — a subdomain like "shop.yourbrand.com" is the more universally supported option.</p>
+                    <p className="text-[12px] text-slate mt-2">DNS changes can take a few minutes to a few hours to propagate. A bare root domain (no subdomain, e.g. just "yourbrand.com") may not support a CNAME record with your registrar — a subdomain like "shop.yourbrand.com" is the more universally supported option.</p>
 
                     <div className="flex items-center gap-2 mt-3">
                       <Button size="sm" variant="outline" loading={verifying} onClick={verifyDomain}>Verify Domain</Button>
                       {verifyResult && !verifyResult.verified && (
-                        <p className="text-[11.5px] text-error">{verifyResult.reason}</p>
+                        <p className="text-[12px] text-error">{verifyResult.reason}</p>
                       )}
                     </div>
                   </div>
@@ -426,6 +428,9 @@ export default function StoreSettings() {
   const { store, storeId, loading, refetch } = useStoreWorkspace();
   const { stores: myStores } = useMyStores();
   const thisStoreListItem = myStores.find(s => s._id === storeId);
+  // The credit wallet is the one AI Studio uses — store.aiCredits is a legacy field that can disagree with it.
+  const aiCreditsQuery = useAiStudioCredits(storeId);
+  const aiCreditBalance = aiCreditsQuery.data?.balance ?? null;
 
   const [activeTab, setActiveTab] = useState('general');
   // Mobile-only: whether we've drilled into a tab from the store account-hub
@@ -508,7 +513,7 @@ export default function StoreSettings() {
         title="Store Settings"
         subtitle={store?.name ?? ''}
         actions={
-          activeTab === 'general' ? (
+          activeTab === 'general' && (isDirty || saving) ? (
             <button
               onClick={handleSave}
               disabled={!isDirty || saving}
@@ -538,7 +543,8 @@ export default function StoreSettings() {
             status={store?.status}
             productCount={thisStoreListItem?.productCount ?? null}
             totalSalesUSD={thisStoreListItem?.totalSalesUSD ?? null}
-            aiCredits={store?.aiCredits ?? 0}
+            currency={thisStoreListItem?.baseCurrency}
+            aiCredits={aiCreditBalance}
             loading={loading}
           />
           <MobileStoreMenu active={activeTab} onSelect={id => { setActiveTab(id); setMobileDrilledIn(true); }} />
@@ -615,7 +621,7 @@ export default function StoreSettings() {
                       onChange={urls => setLogo(urls[0] ?? '')}
                       maxFiles={1}
                     />
-                    <p className="text-[11px] text-slate">PNG, JPG or WebP</p>
+                    <p className="text-[12px] text-slate">PNG, JPG or WebP</p>
                   </div>
                 </Field>
 
@@ -626,7 +632,7 @@ export default function StoreSettings() {
                       onChange={urls => setCoverImage(urls[0] ?? '')}
                       maxFiles={1}
                     />
-                    <p className="text-[11px] text-slate">PNG, JPG or WebP</p>
+                    <p className="text-[12px] text-slate">PNG, JPG or WebP</p>
                   </div>
                 </Field>
               </div>
@@ -669,7 +675,7 @@ export default function StoreSettings() {
                   maxLength={100}
                   className={inputCls}
                 />
-                <p className="text-[11px] text-slate mt-1">A short line shown next to your store name on your storefront.</p>
+                <p className="text-[12px] text-slate mt-1">A short line shown next to your store name on your storefront.</p>
               </Field>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -698,7 +704,7 @@ export default function StoreSettings() {
                   readOnly
                   className={`${inputCls} text-slate cursor-default bg-[#f3f2ec]`}
                 />
-                <p className="text-[10px] text-slate mt-1">URL slug cannot be changed.</p>
+                <p className="text-[12px] text-slate mt-1">URL slug cannot be changed.</p>
               </Field>
 
               <Field label="Plan">
@@ -713,7 +719,7 @@ export default function StoreSettings() {
             {/* Right column */}
             <div className="bg-white rounded-xl p-4 sm:p-6 border border-bone">
               <p className="text-[14px] font-semibold text-charcoal mb-2">Product Types</p>
-              <p className="text-[11px] text-slate mb-4">What kind of products will you sell?</p>
+              <p className="text-[12px] text-slate mb-4">What kind of products will you sell?</p>
 
               <div className="flex flex-col gap-2.5">
                 {ALL_PRODUCT_TYPES.map(t => {
@@ -754,7 +760,7 @@ export default function StoreSettings() {
                 <div className="flex items-center justify-between gap-3 px-[14px] py-3 rounded-[9px] border border-bone bg-cream">
                   <div>
                     <p className="text-[13px] font-medium text-charcoal">Cash on Delivery</p>
-                    <p className="text-[11px] text-slate">Let buyers pay in cash when their physical order arrives.</p>
+                    <p className="text-[12px] text-slate">Let buyers pay in cash when their physical order arrives.</p>
                   </div>
                   <Toggle checked={codEnabled} onChange={setCodEnabled} />
                 </div>
@@ -766,7 +772,7 @@ export default function StoreSettings() {
                 {[
                   { label: 'Status',   value: store?.status   ?? '—' },
                   { label: 'Seller',   value: store?.sellerType ?? '—' },
-                  { label: 'AI Credits', value: String(store?.aiCredits ?? 0) },
+                  { label: 'AI Credits', value: aiCreditBalance == null ? '—' : String(aiCreditBalance) },
                 ].map(r => (
                   <div key={r.label} className="flex justify-between text-[12px] py-1.5 border-b border-[#f3f2ec]">
                     <span className="text-slate">{r.label}</span>

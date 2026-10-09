@@ -41,7 +41,7 @@ export function SolutionsOverviewPage() {
                 {s.highlights.slice(0, 2).map(h => (
                   <div key={h} className="flex items-start gap-1.5">
                     <Check size={12} className="text-success shrink-0 mt-[2px]" />
-                    <span className="text-[11.5px] text-charcoal leading-snug">{h}</span>
+                    <span className="text-[12px] text-charcoal leading-snug">{h}</span>
                   </div>
                 ))}
               </div>

@@ -6,6 +6,7 @@ import { Shield, Mail, Check, Loader2, KeyRound, Eye, EyeOff } from 'lucide-reac
 import { useGetProfile } from '@/hooks/auth/useGetProfile';
 import { apiChangePassword } from '@/api/services/users';
 import { Card, PageHeader, Badge, SkeletonBox } from '@/components/comman/ui';
+import { DeleteAccountSection } from './DeleteAccountSection';
 
 const INPUT_CLS = 'w-full py-[11px] px-[14px] text-[13px] border border-bone rounded-[10px] outline-none text-charcoal bg-white box-border focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/10 transition-colors';
 const LABEL_CLS = 'text-[12px] font-medium text-graphite mb-[6px] block';
@@ -107,7 +108,7 @@ export function Security() {
             {loading ? (
               <SkeletonBox width={140} height={11} className="mt-1" />
             ) : (
-              <p className="text-[11.5px] text-slate mt-[2px] truncate">{profile?.email ?? '—'}</p>
+              <p className="text-[12px] text-slate mt-[2px] truncate">{profile?.email ?? '—'}</p>
             )}
           </div>
           {!loading && (
@@ -121,7 +122,7 @@ export function Security() {
               onClick={handleResendVerification}
               disabled={resending}
               className={clsx(
-                'px-3 py-[6px] rounded-[8px] text-[11px] font-semibold bg-brand-orange text-white border-none flex items-center gap-1 shrink-0',
+                'px-3 py-[6px] rounded-[8px] text-[12px] font-semibold bg-brand-orange text-white border-none flex items-center gap-1 shrink-0',
                 resending ? 'cursor-wait opacity-70' : 'cursor-pointer hover:bg-brand-deep-orange transition-colors',
               )}
             >
@@ -130,7 +131,7 @@ export function Security() {
             </button>
           )}
         </div>
-        {resendError && <p className="px-6 pt-3 text-[11px] text-error font-medium">{resendError}</p>}
+        {resendError && <p className="px-6 pt-3 text-[12px] text-error font-medium">{resendError}</p>}
 
         <div className="p-6">
           <div className="flex items-center gap-2.5 mb-4">
@@ -174,8 +175,8 @@ export function Security() {
               {pwSaving && <Loader2 size={13} className="animate-spin" />}
               {pwSaving ? 'Updating…' : 'Update Password'}
             </button>
-            {pwSuccess && <span className="text-[11px] text-success font-medium mt-4">Password changed successfully</span>}
-            {pwError && <span className="text-[11px] text-error font-medium mt-4">{pwError}</span>}
+            {pwSuccess && <span className="text-[12px] text-success font-medium mt-4">Password changed successfully</span>}
+            {pwError && <span className="text-[12px] text-error font-medium mt-4">{pwError}</span>}
           </div>
           </>)}
         </div>
@@ -211,6 +212,7 @@ export function Security() {
           </div>
         </div>
       </Card>
+      <DeleteAccountSection />
     </div>
   );
 }

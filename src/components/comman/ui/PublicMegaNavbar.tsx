@@ -263,7 +263,7 @@ export function PublicMegaNavbar() {
                             </span>
                             <span>
                               <span className="block text-[13px] font-semibold text-carbon">{p.name}</span>
-                              <span className="block text-[11.5px] text-slate leading-snug mt-0.5">{p.tagline}</span>
+                              <span className="block text-[12px] text-slate leading-snug mt-0.5">{p.tagline}</span>
                             </span>
                           </Link>
                         );
@@ -310,7 +310,7 @@ export function PublicMegaNavbar() {
                         </div>
                         <div className="p-2.5">
                           <span className="block text-[12.5px] font-semibold text-carbon">{s.name}</span>
-                          <span className="block text-[11px] text-slate leading-snug mt-0.5">{s.headline}</span>
+                          <span className="block text-[12px] text-slate leading-snug mt-0.5">{s.headline}</span>
                         </div>
                       </Link>
                     ))}
@@ -338,7 +338,7 @@ export function PublicMegaNavbar() {
                         </span>
                         <span>
                           <span className="block text-[13px] font-semibold text-carbon">{r.label}</span>
-                          <span className="block text-[11.5px] text-slate leading-snug mt-0.5">{r.desc}</span>
+                          <span className="block text-[12px] text-slate leading-snug mt-0.5">{r.desc}</span>
                         </span>
                       </Link>
                     ))}

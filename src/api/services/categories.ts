@@ -1,5 +1,6 @@
 import client from '../client';
 import { ENDPOINTS } from '../endpoints';
+import { cachedRequest, invalidateCache } from './requestCache';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -46,7 +47,9 @@ export function apiGetCategoryTree(): Promise<CategoryTreeListResponse>;
 export function apiGetCategoryTree(id: string): Promise<CategoryTreeNodeResponse>;
 export function apiGetCategoryTree(id?: string) {
   const url = id ? `${ENDPOINTS.CATEGORIES.TREE}?id=${id}` : ENDPOINTS.CATEGORIES.TREE;
-  return client.get<never, CategoryTreeListResponse | CategoryTreeNodeResponse>(url);
+  // Shared 30s cache: several components/pages ask for the same tree on one screen.
+  return cachedRequest(`categories:tree:${id ?? 'all'}`, 30_000, () =>
+    client.get<never, CategoryTreeListResponse | CategoryTreeNodeResponse>(url));
 }
 
 export function apiGetCategoryById(id: string) {
@@ -55,7 +58,7 @@ export function apiGetCategoryById(id: string) {
 
 // Main categories (no parentId) are admin-only server-side; sellers may only add subcategories.
 export function apiAddCategory(payload: CategoryPayload) {
-  return client.post<never, CategoryCreateResponse>(ENDPOINTS.CATEGORIES.ADD, payload);
+  return client.post<never, CategoryCreateResponse>(ENDPOINTS.CATEGORIES.ADD, payload).finally(() => invalidateCache('categories:'));
 }
 
 // ── Admin taxonomy management ─────────────────────────────────────────────────
@@ -100,18 +103,18 @@ export async function apiAdminGetCategoryTree(): Promise<CategoryTreeListRespons
 }
 
 export function apiAdminUpdateCategory(id: string, payload: UpdateCategoryPayload) {
-  return client.patch<never, CategoryCreateResponse>(ADMIN_CATEGORY_ENDPOINTS.UPDATE(id), payload);
+  return client.patch<never, CategoryCreateResponse>(ADMIN_CATEGORY_ENDPOINTS.UPDATE(id), payload).finally(() => invalidateCache('categories:'));
 }
 
 /** Soft delete. `reassignTo` (a same-level category) receives the products/stores still using it. */
 export function apiAdminDeleteCategory(id: string, reassignTo?: string) {
   return client.delete<never, CategoryDeleteResponse>(ADMIN_CATEGORY_ENDPOINTS.DELETE(id), {
     params: reassignTo ? { reassignTo } : undefined,
-  });
+  }).finally(() => invalidateCache('categories:'));
 }
 
 export function apiAdminReorderCategories(items: { id: string; sortOrder: number }[]) {
   return client.patch<never, { success: boolean; message: string; data: { updated: number } }>(
     ADMIN_CATEGORY_ENDPOINTS.REORDER, { items },
-  );
+  ).finally(() => invalidateCache('categories:'));
 }

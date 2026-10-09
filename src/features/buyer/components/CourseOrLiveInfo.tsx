@@ -53,7 +53,7 @@ function CourseContent({ product }: { product: MarketplaceProduct }) {
                         <PlayCircle size={13} /> {loading === l._id ? 'Loading…' : 'Preview'}
                       </button>
                     ) : <Lock size={12} className="text-bone" aria-label="Unlocks after purchase" />}
-                    {l.durationMinutes ? <span className="text-[11.5px] text-slate w-10 text-end">{l.durationMinutes}m</span> : null}
+                    {l.durationMinutes ? <span className="text-[12px] text-slate w-10 text-end">{l.durationMinutes}m</span> : null}
                   </li>
                 );
               })}

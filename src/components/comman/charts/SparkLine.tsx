@@ -12,7 +12,7 @@ interface SparkTooltipProps {
 function SparkTooltip({ active, payload, valuePrefix = '', valueSuffix = '' }: SparkTooltipProps) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-white border border-bone rounded-md px-2 py-1 text-[11px]">
+    <div className="bg-white border border-bone rounded-md px-2 py-1 text-[12px]">
       <span className="font-bold text-charcoal">{valuePrefix}{payload[0].value.toLocaleString()}{valueSuffix}</span>
     </div>
   );

@@ -8,7 +8,7 @@ import { Card, Button, Input, Textarea, Modal, SkeletonBox, EmptyState } from '@
 import { TabBar } from '@/components/comman/ui/TabBar';
 import { useToast } from '@/contexts/ToastContext';
 import {
-  apiGetSellerQuotes, apiSendQuoteOffer, apiDeclineQuote, INSTITUTION_TYPES, QUOTE_STATUS_LABEL, QUOTE_TONE, type QuoteRequest,
+  apiGetSellerQuotes, apiSendQuoteOffer, apiDeclineQuote, INSTITUTION_TYPES, NET_TERMS_LABEL, QUOTE_STATUS_LABEL, QUOTE_TONE, type NetTerms, type QuoteRequest,
 } from '@/api/services/classroom';
 import { currencySymbol } from '@/utils/currency';
 
@@ -26,13 +26,14 @@ function OfferDialog({ q, storeId, currency, onDone, onClose }: { q: QuoteReques
   const [unit, setUnit] = useState(q.offer ? String(q.offer.unitPrice) : '');
   const [validUntil, setValidUntil] = useState(q.offer?.validUntil?.slice(0, 10) ?? in14);
   const [note, setNote] = useState(q.offer?.note ?? '');
+  const [netTerms, setNetTerms] = useState<NetTerms>(q.offer?.netTerms ?? 'none');
   const [busy, setBusy] = useState(false);
   const unitNum = Number(unit);
 
   const send = async () => {
     setBusy(true);
     try {
-      const res = await apiSendQuoteOffer(storeId, q._id, { unitPrice: unitNum, validUntil: validUntil ? new Date(`${validUntil}T23:59:59`).toISOString() : null, note });
+      const res = await apiSendQuoteOffer(storeId, q._id, { unitPrice: unitNum, validUntil: validUntil ? new Date(`${validUntil}T23:59:59`).toISOString() : null, note, netTerms });
       toast.success('Quote sent to the buyer');
       onDone(res.data);
     } catch (err) { toast.error(err instanceof Error ? err.message : 'Could not send.'); }
@@ -53,6 +54,12 @@ function OfferDialog({ q, storeId, currency, onDone, onClose }: { q: QuoteReques
           <Input label="Valid until" type="date" value={validUntil} min={new Date().toISOString().slice(0, 10)} onChange={e => setValidUntil(e.target.value)} />
         </div>
         {unitNum > 0 && <p className="text-[13px]">Total: <b>{fmt(Math.round(unitNum * q.quantity * 100) / 100, currency)}</b></p>}
+        <div>
+          <label htmlFor="quote-net-terms" className="block text-[12px] font-medium text-graphite mb-[6px]">Payment terms</label>
+          <select id="quote-net-terms" value={netTerms} onChange={e => setNetTerms(e.target.value as NetTerms)} className="w-full py-[9px] px-3 text-[13px] border border-bone rounded-lg bg-white text-charcoal">
+            {(Object.keys(NET_TERMS_LABEL) as NetTerms[]).map(k => <option key={k} value={k}>{NET_TERMS_LABEL[k]}</option>)}
+          </select>
+        </div>
         <Textarea label="Terms (optional)" rows={3} maxLength={1000} value={note} onChange={e => setNote(e.target.value)} placeholder="Payment by bank transfer, delivery in 7 days, school licence included…" />
       </div>
     </Modal>
@@ -95,7 +102,7 @@ export function StoreQuotes() {
           <Card key={q._id} padding="none">
             <div className="px-4 md:px-5 py-3 border-b border-bone flex items-center gap-2 flex-wrap">
               <span className="font-mono text-[13px] font-semibold text-carbon">{q.number}</span>
-              <span className={clsx('rounded-full px-2 py-[2px] text-[11px] font-semibold', QUOTE_TONE[q.status])}>{QUOTE_STATUS_LABEL[q.status]}</span>
+              <span className={clsx('rounded-full px-2 py-[2px] text-[12px] font-semibold', QUOTE_TONE[q.status])}>{QUOTE_STATUS_LABEL[q.status]}</span>
               <span className="ml-auto text-[12px] text-slate">{new Date(q.createdAt).toLocaleDateString()}</span>
             </div>
             <div className="px-4 md:px-5 py-4 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-4">
@@ -104,6 +111,12 @@ export function StoreQuotes() {
                 <p className="text-[13px] text-charcoal">{q.institutionName} <span className="text-slate">· {INSTITUTION_TYPES.find(t => t.value === q.institutionType)?.label}{q.city ? ` · ${q.city}` : ''}</span></p>
                 <p className="inline-flex items-center gap-1 text-[12.5px] text-graphite"><Phone size={12} /> {q.contactName} · <a href={`tel:${q.contactPhone}`} className="text-brand-orange">{q.contactPhone}</a>{q.buyerEmail ? ` · ${q.buyerEmail}` : ''}</p>
                 {q.message && <p className="text-[12.5px] text-graphite mt-1 whitespace-pre-line rounded-lg bg-cream px-3 py-2">{q.message}</p>}
+                {(q.purchaseOrderNumber || q.purchaseOrderUrl) && (
+                  <p className="text-[12.5px] text-graphite mt-1">
+                    Purchase order: {q.purchaseOrderNumber ? <b className="font-mono">{q.purchaseOrderNumber}</b> : null}
+                    {q.purchaseOrderUrl && <> {q.purchaseOrderNumber ? '· ' : ''}<a href={q.purchaseOrderUrl} target="_blank" rel="noopener noreferrer" className="text-brand-orange underline">view file</a></>}
+                  </p>
+                )}
                 {q.offer && <p className="text-[12.5px] text-slate mt-1">Your price: <b className="text-carbon">{fmt(q.offer.totalPrice, q.offer.currency)}</b> ({fmt(q.offer.unitPrice, q.offer.currency)} each){q.offer.validUntil ? ` · valid until ${new Date(q.offer.validUntil).toLocaleDateString()}` : ''}</p>}
               </div>
               <div className="flex md:flex-col gap-2 md:items-end flex-wrap">

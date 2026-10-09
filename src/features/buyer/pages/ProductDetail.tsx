@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { scrollRootRef } from '@/utils/scrollRoot';
 import { clsx } from 'clsx';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -9,7 +10,8 @@ import { useCartContext } from '@/contexts/CartContext';
 import { useWishlistContext } from '@/contexts/WishlistContext';
 import { useAuthGate } from '@/contexts/AuthGateContext';
 import { useToast } from '@/contexts/ToastContext';
-import { useT } from '@/contexts/languageCtx';
+import { useT, useLanguage } from '@/contexts/languageCtx';
+import { AiReviewSummary } from '@/components/ai/AiReviewSummary';
 import { TokenStorage } from '@/api/services/auth';
 import { apiGetAllProducts, apiGetProductSample, apiGetAlsoBought, type MarketplaceProduct, type ProductVariant } from '@/api/services/marketplace';
 import { apiStartConversation, apiSendMessage } from '@/api/services/messaging';
@@ -97,7 +99,7 @@ function ImageGallery({ images, name }: { images: string[]; name: string }) {
     <div className="flex flex-col lg:flex-row-reverse gap-3 min-w-0">
       {/* Main image */}
       <div
-        className="relative flex-1 min-w-0 h-[300px] md:h-[400px] lg:h-[460px] rounded-2xl overflow-hidden border border-bone bg-white group cursor-zoom-in"
+        className="relative flex-1 min-w-0 h-[300px] md:h-[400px] lg:h-[460px] max-h-[55vh] lg:max-h-none rounded-2xl overflow-hidden border border-bone bg-white group cursor-zoom-in"
         onMouseEnter={() => setZooming(true)}
         onMouseLeave={() => setZooming(false)}
         onMouseMove={onMouseMove}
@@ -121,7 +123,7 @@ function ImageGallery({ images, name }: { images: string[]; name: string }) {
                 }}
               />
             )}
-            <span className="absolute top-3 end-3 flex items-center gap-1 px-[9px] py-[5px] rounded-full bg-black/55 text-white text-[10.5px] font-medium opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm">
+            <span className="absolute top-3 end-3 flex items-center gap-1 px-[9px] py-[5px] rounded-full bg-black/55 text-white text-[12px] font-medium opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm">
               <ZoomIn size={12} /> Hover to zoom
             </span>
           </>
@@ -197,7 +199,7 @@ function VariantSelector({ variants, selected, onSelect }: {
               ))}
             </div>
             {name === 'License' && (
-              <p className="text-[11px] text-slate mt-[6px] leading-snug">
+              <p className="text-[12px] text-slate mt-[6px] leading-snug">
                 Personal use: just you. One classroom: one teacher with their students. Whole school: every teacher at your school.
               </p>
             )}
@@ -305,23 +307,23 @@ function RelatedCard({ id, name, image, price: nativePrice, compareAtPrice: nati
         )}
       </div>
       <div className="px-[10px] py-[9px]">
-        <p className="text-[11.5px] font-semibold text-carbon leading-tight line-clamp-2 mb-1 min-h-[28px]">{name}</p>
+        <p className="text-[12px] font-semibold text-carbon leading-tight line-clamp-2 mb-1 min-h-[28px]">{name}</p>
         <div className="flex items-center justify-between gap-1">
           <span className="flex items-baseline gap-1">
             <span className="text-[12.5px] font-bold text-carbon">{price != null ? `${symbol}${price.toLocaleString()}` : '—'}</span>
             {compareAtPrice != null && price != null && compareAtPrice > price && (
-              <span className="text-[10px] text-slate line-through">{symbol}{compareAtPrice.toLocaleString()}</span>
+              <span className="text-[12px] text-slate line-through">{symbol}{compareAtPrice.toLocaleString()}</span>
             )}
           </span>
           {!!rating && rating > 0 && (
-            <span className="flex items-center gap-[2px] text-[10px] text-slate shrink-0">
+            <span className="flex items-center gap-[2px] text-[12px] text-slate shrink-0">
               <Star size={9} className="text-brand-orange fill-brand-orange" />
               {rating.toFixed(1)}
             </span>
           )}
         </div>
         {(sold != null && sold > 0) || (reviewCount != null && reviewCount > 0) ? (
-          <p className="text-[10px] text-slate mt-[2px]">
+          <p className="text-[12px] text-slate mt-[2px]">
             {sold != null && sold > 0 ? `${sold} sold` : ''}
             {sold != null && sold > 0 && reviewCount != null && reviewCount > 0 ? ' · ' : ''}
             {reviewCount != null && reviewCount > 0 ? `${reviewCount} reviews` : ''}
@@ -354,6 +356,7 @@ export function ProductDetail() {
   const { requireAuth } = useAuthGate();
   const toast = useToast();
   const t = useT();
+  const { lang } = useLanguage();
 
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
   const [addedFeedback, setAddedFeedback] = useState(false);
@@ -377,6 +380,16 @@ export function ProductDetail() {
   const [answeredCount, setAnsweredCount] = useState<number | null>(null);
 
   const product = detail?.product ?? null;
+
+  // The mobile sticky price/CTA bar only appears once the inline purchase panel has scrolled away (no duplicate CTAs on screen).
+  const [showStickyBar, setShowStickyBar] = useState(false);
+  useEffect(() => {
+    // RootLayout's wrapper is the scroll container (scroll events don't bubble, so capture on document).
+    const onScroll = () => setShowStickyBar((scrollRootRef.current?.scrollTop ?? 0) > 520);
+    onScroll();
+    document.addEventListener('scroll', onScroll, { capture: true, passive: true });
+    return () => document.removeEventListener('scroll', onScroll, { capture: true });
+  }, []);
 
   // "#questions" (from an "answered" notification) opens the Q&A tab.
   useEffect(() => {
@@ -422,9 +435,6 @@ export function ProductDetail() {
   // tracking for it) is always available — previously this fell through to
   // `?? 0` and incorrectly showed/disabled the page as out of stock.
   const stock = isDigital || activeVariant?.unlimitedStock ? Infinity : (activeVariant?.stock ?? 0);
-  const pctOff = activeVariant?.compareAtPrice != null && activeVariant.compareAtPrice > activeVariant.price
-    ? Math.round((1 - activeVariant.price / activeVariant.compareAtPrice) * 100)
-    : null;
 
   // Converted from the variant's own native (store) currency into the
   // buyer's currently-selected display currency — this is what makes the
@@ -433,8 +443,16 @@ export function ProductDetail() {
   // fresh, server-side, at checkout creation regardless of this.
   const { currency: displayCurrency, convert } = useCurrencyPreference();
   const displaySymbol = currencySymbol(displayCurrency);
-  const displayPrice = activeVariant ? convert(activeVariant.price, activeVariant.currency) : null;
-  const displayCompareAt = activeVariant?.compareAtPrice != null ? convert(activeVariant.compareAtPrice, activeVariant.currency) : null;
+  const listPrice = activeVariant ? convert(activeVariant.price, activeVariant.currency) : null;
+  // A running percentage sale (admin campaign) is part of the price shown here — checkout applies the same
+  // percentage — so the product page, cart and checkout all agree. Fixed-amount sales are order-level and
+  // show only as a badge until the cart/checkout.
+  const campaignPct = product?.activeCampaign?.discountType === 'percentage' && product.activeCampaign.discountValue ? product.activeCampaign.discountValue : null;
+  const displayPrice = listPrice != null && campaignPct ? Math.round(listPrice * (1 - campaignPct / 100)) : listPrice;
+  const markdownWas = activeVariant?.compareAtPrice != null ? convert(activeVariant.compareAtPrice, activeVariant.currency) : null;
+  // Struck-through = the highest 'was' price (seller markdown, else the list price a sale starts from).
+  const displayCompareAt = campaignPct ? Math.max(listPrice ?? 0, markdownWas ?? 0) || null : markdownWas;
+  const pctOffShown = displayCompareAt != null && displayPrice != null && displayCompareAt > displayPrice ? Math.round((1 - displayPrice / displayCompareAt) * 100) : null;
 
   useEffect(() => { setQty(1); }, [activeVariant?._id]);
 
@@ -571,6 +589,12 @@ export function ProductDetail() {
   async function handleAddToCart(buyNow: boolean) {
     if (!product || !activeVariant) return;
     await addToCart(product._id, activeVariant._id, isPhysical ? 'physical' : 'digital');
+    // Buy Now checks out only this product and quantity — the cart's other
+    // items stay in the cart (the checkout page reads `?buyNow=`).
+    if (buyNow) {
+      navigate(`/checkout?store=${encodeURIComponent(product.storeId ?? '')}&buyNow=${product._id}:${activeVariant._id}:${qty}`);
+      return;
+    }
     for (let i = 1; i < qty; i++) {
       await updateQty(product._id, activeVariant._id, 'increase');
     }
@@ -598,6 +622,8 @@ export function ProductDetail() {
   const learningDetails: { label: string; value: string }[] = product ? [
     ...(gradeLabel ? [{ label: 'Grade / level', value: gradeLabel }] : []),
     ...(ageLabel(product.ageMin, product.ageMax) ? [{ label: 'Suitable for', value: ageLabel(product.ageMin, product.ageMax)! }] : []),
+    ...(product.trust?.scholarReviewed ? [{ label: 'Content review', value: 'Scholar reviewed by Edudeen' }] : []),
+    ...(ageLabel(product.trust?.ageAppropriateMin, product.trust?.ageAppropriateMax) ? [{ label: 'Age checked', value: ageLabel(product.trust?.ageAppropriateMin, product.trust?.ageAppropriateMax)! }] : []),
     ...(product.curricula?.length ? [{ label: 'Exam board', value: product.curricula.map(c => CURRICULUM_LABEL[c] ?? c).join(', ') }] : []),
     ...(subCategory ? [{ label: 'Subject area', value: subCategory.name }] : category ? [{ label: 'Subject area', value: category.name }] : []),
     ...attributes.filter(a => a.values.length).map(a => ({ label: a.label, value: a.values.join(', ') })),
@@ -665,11 +691,11 @@ export function ProductDetail() {
                         from the type badge — mirrors ProductCard.tsx's grid
                         card corner layout instead of bunching everything together. */}
                     <div className="flex items-center gap-2 flex-wrap">
-                      {pctOff != null && pctOff > 0 && <Badge color="red">-{pctOff}% OFF</Badge>}
+                      {pctOffShown != null && pctOffShown > 0 && <Badge color="red">-{pctOffShown}% OFF</Badge>}
                       {product.activeCampaign && (
                         <span
                           title={`${product.activeCampaign.name} — ends ${new Date(product.activeCampaign.endDate).toLocaleDateString()}`}
-                          className="flex items-center gap-1 rounded-full bg-gradient-to-r from-brand-orange to-[#66AD36] px-2.5 py-[3px] text-[11px] font-bold text-white"
+                          className="flex items-center gap-1 rounded-full bg-gradient-to-r from-brand-orange to-[#66AD36] px-2.5 py-[3px] text-[12px] font-bold text-white"
                         >
                           <Zap size={10} className="fill-white shrink-0" />
                           {product.activeCampaign.discountType && product.activeCampaign.discountValue != null
@@ -682,7 +708,7 @@ export function ProductDetail() {
                     </div>
                   </div>
                   <h1 className="text-[20px] font-bold text-carbon mb-[6px] leading-[1.35] break-words">
-                    {product.name}
+                    {lang === 'ur' && product.nameUr ? product.nameUr : product.name}
                   </h1>
                   <p className="text-[12px] text-slate mb-4 flex items-center gap-1 flex-wrap">
                     {/* "Sold by" prefers the store/brand name (what a buyer is
@@ -714,7 +740,7 @@ export function ProductDetail() {
                     )}
                   </div>
                   {activeVariant?.subscriberPrice != null && (
-                    <p className="text-[11.5px] font-semibold text-brand-orange mb-2">
+                    <p className="text-[12px] font-semibold text-brand-orange mb-2">
                       Members pay {displaySymbol}{convert(activeVariant.subscriberPrice, activeVariant.currency).toLocaleString()} — save {activeVariant.discountPercent}%
                     </p>
                   )}
@@ -843,8 +869,8 @@ export function ProductDetail() {
                         <ShieldCheck size={14} className="text-brand-orange" />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-[11.5px] font-semibold text-charcoal leading-tight truncate">{t('Secure checkout')}</p>
-                        <p className="text-[10px] text-slate mt-[1px] truncate">{t('Pay safely through Edudeen')}</p>
+                        <p className="text-[12px] font-semibold text-charcoal leading-tight truncate">{t('Secure checkout')}</p>
+                        <p className="text-[12px] text-slate mt-[1px] truncate">{t('Pay safely through Edudeen')}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-[8px] min-w-0">
@@ -852,8 +878,8 @@ export function ProductDetail() {
                         <Truck size={14} className="text-brand-orange" />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-[11.5px] font-semibold text-charcoal leading-tight truncate">{isDigital ? t('Instant delivery') : t('Shipped by the seller')}</p>
-                        <p className="text-[10px] text-slate mt-[1px] truncate">{isDigital ? t('Download right after purchase') : t('Track it from My Orders')}</p>
+                        <p className="text-[12px] font-semibold text-charcoal leading-tight truncate">{isDigital ? t('Instant delivery') : t('Shipped by the seller')}</p>
+                        <p className="text-[12px] text-slate mt-[1px] truncate">{isDigital ? t('Download right after purchase') : t('Track it from My Orders')}</p>
                       </div>
                     </div>
                   </div>
@@ -894,11 +920,11 @@ export function ProductDetail() {
                         ))}
                       </dl>
                     )}
-                    <p className="text-[13px] text-slate leading-[1.8] mb-4 whitespace-pre-line">{product.description || 'No description available.'}</p>
+                    <p className="text-[13px] text-slate leading-[1.8] mb-4 whitespace-pre-line">{(lang === 'ur' && product.descriptionUr) || product.description || 'No description available.'}</p>
                     {(product.tags?.length ?? 0) > 0 && (
                       <div className="flex flex-wrap gap-[6px]">
                         {product.tags!.map(tag => (
-                          <span key={tag} className="flex items-center gap-1 text-[11px] px-[9px] py-[3px] rounded-full bg-cream text-slate border border-bone">
+                          <span key={tag} className="flex items-center gap-1 text-[12px] px-[9px] py-[3px] rounded-full bg-cream text-slate border border-bone">
                             <Tag size={9} /> {tag}
                           </span>
                         ))}
@@ -978,19 +1004,19 @@ export function ProductDetail() {
                       <div className="rounded-xl bg-cream border border-bone p-3 text-center">
                         <Users size={14} className="text-brand-orange mx-auto mb-1" />
                         <p className="text-[13px] font-bold text-carbon leading-none">{storeData?.followersCount ?? 0}</p>
-                        <p className="text-[10px] text-slate mt-[3px]">Followers</p>
+                        <p className="text-[12px] text-slate mt-[3px]">Followers</p>
                       </div>
                       <div className="rounded-xl bg-cream border border-bone p-3 text-center">
                         <Package size={14} className="text-brand-orange mx-auto mb-1" />
                         <p className="text-[13px] font-bold text-carbon leading-none">{sellerProductsTotal || sellerProducts.length}</p>
-                        <p className="text-[10px] text-slate mt-[3px]">Products</p>
+                        <p className="text-[12px] text-slate mt-[3px]">Products</p>
                       </div>
                       <div className="rounded-xl bg-cream border border-bone p-3 text-center">
                         <Calendar size={14} className="text-brand-orange mx-auto mb-1" />
                         <p className="text-[13px] font-bold text-carbon leading-none">
                           {storeData?.createdAt ? new Date(storeData.createdAt).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }) : '—'}
                         </p>
-                        <p className="text-[10px] text-slate mt-[3px]">Joined</p>
+                        <p className="text-[12px] text-slate mt-[3px]">Joined</p>
                       </div>
                     </div>
                   </div>
@@ -1012,7 +1038,7 @@ export function ProductDetail() {
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="font-semibold text-[12px] text-charcoal mb-[2px]">{row.label}</div>
-                          <div className="text-[11px] text-slate break-words leading-[1.55]">{row.value}</div>
+                          <div className="text-[12px] text-slate break-words leading-[1.55]">{row.value}</div>
                         </div>
                       </div>
                     ))}
@@ -1023,6 +1049,7 @@ export function ProductDetail() {
 
           {/* ── Reviews ────────────────────────────────────────────────────────── */}
           <div id="reviews" className="bg-white rounded-2xl border border-bone p-6 mb-6 scroll-mt-24">
+            <AiReviewSummary productId={product._id} />
             <ProductReviewsSection productId={product._id} storeName={product.sellerName} />
           </div>
 
@@ -1098,10 +1125,10 @@ export function ProductDetail() {
       )}
 
       {/* Mobile sticky Add to Cart bar */}
-      {!loading && product && activeVariant && (
-        <div className="fixed bottom-0 inset-x-0 z-40 lg:hidden bg-white border-t border-bone px-4 py-3 flex items-center gap-3">
+      {!loading && product && activeVariant && showStickyBar && (
+        <div className="fixed bottom-16 inset-x-0 z-50 lg:hidden bg-white border-t border-bone px-4 py-3 flex items-center gap-3">
           <div className="min-w-0 flex-1">
-            <p className="text-[10px] text-slate leading-none mb-[3px]">Price</p>
+            <p className="text-[12px] text-slate leading-none mb-[3px]">Price</p>
             <p className="text-[17px] font-extrabold text-carbon leading-none truncate">{displaySymbol}{displayPrice?.toLocaleString()}</p>
           </div>
           <Button

@@ -96,7 +96,7 @@ export function FinanceMonthlySettlementTab({ onOpenPayouts }: { onOpenPayouts: 
     { key: 'available', header: 'Available', align: 'right', render: r => (
       <span className="inline-flex flex-col items-end">
         <span>{money(r.availableBalance)}</span>
-        {r.pendingBalance > 0 && <span className="text-[11px] text-slate">+{money(r.pendingBalance)} clearing</span>}
+        {r.pendingBalance > 0 && <span className="text-[12px] text-slate">+{money(r.pendingBalance)} clearing</span>}
       </span>
     ) },
     { key: 'method', header: 'Payout method', render: r => r.payoutMethod ? (
@@ -108,7 +108,7 @@ export function FinanceMonthlySettlementTab({ onOpenPayouts }: { onOpenPayouts: 
     { key: 'payout', header: 'Payout', render: r => r.payout ? (
       <span className="inline-flex flex-col items-end sm:items-start gap-1">
         <FinanceStatusBadge status={r.payout.status} />
-        <span className="text-[11px] text-slate">{money(r.payout.amount)}</span>
+        <span className="text-[12px] text-slate">{money(r.payout.amount)}</span>
       </span>
     ) : <Badge color="gray" size="sm">Not created</Badge> },
   ];

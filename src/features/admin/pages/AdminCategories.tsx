@@ -109,7 +109,7 @@ function AddCategoryModal({ mainCategories, initial, onClose, onSaved }: {
                     onClick={() => { setParentId(''); setName(s.name); setDescription(s.description); }}
                     aria-pressed={selected}
                     className={clsx(
-                      'px-2.5 py-1 rounded-full text-[11.5px] font-medium border cursor-pointer transition-colors',
+                      'px-2.5 py-1 rounded-full text-[12px] font-medium border cursor-pointer transition-colors',
                       selected ? 'bg-brand-orange text-white border-brand-orange' : 'bg-white text-graphite border-bone hover:border-brand-orange',
                     )}
                   >
@@ -118,7 +118,7 @@ function AddCategoryModal({ mainCategories, initial, onClose, onSaved }: {
                 );
               })}
             </div>
-            <p className="text-[11px] text-slate mt-[6px]">These match the subject tabs on the homepage. Picking one fills in the form; review it, then click Create Category.</p>
+            <p className="text-[12px] text-slate mt-[6px]">These match the subject tabs on the homepage. Picking one fills in the form; review it, then click Create Category.</p>
           </div>
         )}
         <Select label="Parent Category" value={parentId} onChange={e => setParentId(e.target.value)}>
@@ -142,7 +142,7 @@ function AddCategoryModal({ mainCategories, initial, onClose, onSaved }: {
                     : <ImagePlus size={18} className="text-slate" />}
                 <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={handleImageFile} disabled={imageUploading} />
               </label>
-              <p className="text-[11px] text-slate leading-[1.4]">
+              <p className="text-[12px] text-slate leading-[1.4]">
                 {imageUploading ? 'Uploading…' : image ? 'Image uploaded — click to replace.' : 'PNG, JPG or WebP.'}
               </p>
             </div>
@@ -228,7 +228,7 @@ function EditCategoryModal({ category, onClose, onSaved }: {
                   : <ImagePlus size={18} className="text-slate" />}
               <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={handleImageFile} disabled={imageUploading} />
             </label>
-            <p className="text-[11px] text-slate leading-[1.4]">
+            <p className="text-[12px] text-slate leading-[1.4]">
               {imageUploading ? 'Uploading…' : image ? 'Click to replace the image.' : 'PNG, JPG or WebP.'}
             </p>
           </div>
@@ -236,11 +236,11 @@ function EditCategoryModal({ category, onClose, onSaved }: {
         <div className="flex items-center justify-between gap-3">
           <div>
             <p className="text-[13px] font-medium text-charcoal">Active</p>
-            <p className="text-[11px] text-slate">Inactive categories are hidden from buyers and sellers but keep their products.</p>
+            <p className="text-[12px] text-slate">Inactive categories are hidden from buyers and sellers but keep their products.</p>
           </div>
           <Toggle checked={isActive} onChange={setIsActive} />
         </div>
-        <p className="text-[11px] text-slate">The category's URL (/marketplace/{category.slug}) stays the same when renamed.</p>
+        <p className="text-[12px] text-slate">The category's URL (/marketplace/{category.slug}) stays the same when renamed.</p>
         {error && <p className="text-[12px] text-error">{error}</p>}
       </div>
     </Modal>
@@ -303,7 +303,7 @@ function DeleteCategoryModal({ category, siblings, onClose, onDeleted }: {
               <option value="">Don't move — only delete if nothing uses it</option>
               {targets.map(t => <option key={t._id} value={t._id}>{t.name}</option>)}
             </Select>
-            <p className="text-[11px] text-slate leading-[1.5]">
+            <p className="text-[12px] text-slate leading-[1.5]">
               {isMain
                 ? 'Products and stores in this main category will be moved to the one you pick.'
                 : 'Products in this subcategory will be moved to the sibling subcategory you pick.'}
@@ -352,13 +352,13 @@ function CategoryRow({ node, depth, siblings, index, actions }: {
             : <Tag size={12} className="text-slate shrink-0" />}
           <span className={clsx(depth === 0 ? 'text-[13px] font-semibold text-charcoal' : 'text-[13px] text-graphite', inactive && 'opacity-60')}>{node.name}</span>
           {inactive && (
-            <span className="text-[10px] font-semibold px-1.5 py-[1px] rounded bg-cream border border-bone text-slate ml-1">Inactive</span>
+            <span className="text-[12px] font-semibold px-1.5 py-[1px] rounded bg-cream border border-bone text-slate ml-1">Inactive</span>
           )}
           {node.createdByRole && (
-            <span className="text-[10px] text-slate capitalize ml-1">· added by {node.createdByRole}</span>
+            <span className="text-[12px] text-slate capitalize ml-1">· added by {node.createdByRole}</span>
           )}
           {!hasChildren && depth === 0 && (
-            <span className="text-[11px] text-slate ml-1">· no subcategories</span>
+            <span className="text-[12px] text-slate ml-1">· no subcategories</span>
           )}
         </div>
         <div className="flex items-center shrink-0">
@@ -374,21 +374,21 @@ function CategoryRow({ node, depth, siblings, index, actions }: {
         <button
           type="button"
           onClick={() => onManageAttributes(node)}
-          className="flex items-center gap-1 text-[11px] font-semibold text-slate hover:text-brand-orange px-2 py-1 rounded-md shrink-0"
+          className="flex items-center gap-1 text-[12px] font-semibold text-slate hover:text-brand-orange px-2 py-1 rounded-md shrink-0"
         >
           <ListFilter size={12} /> <span className="hidden sm:inline">Attributes</span>
         </button>
         <button
           type="button"
           onClick={() => onEdit(node)}
-          className="flex items-center gap-1 text-[11px] font-semibold text-slate hover:text-brand-orange px-2 py-1 rounded-md shrink-0"
+          className="flex items-center gap-1 text-[12px] font-semibold text-slate hover:text-brand-orange px-2 py-1 rounded-md shrink-0"
         >
           <Pencil size={12} /> <span className="hidden sm:inline">Edit</span>
         </button>
         <button
           type="button"
           onClick={() => onDelete(node, siblings)}
-          className="flex items-center gap-1 text-[11px] font-semibold text-slate hover:text-error px-2 py-1 rounded-md shrink-0"
+          className="flex items-center gap-1 text-[12px] font-semibold text-slate hover:text-error px-2 py-1 rounded-md shrink-0"
         >
           <Trash2 size={12} /> <span className="hidden sm:inline">Delete</span>
         </button>
@@ -476,12 +476,12 @@ export function AdminCategories() {
                 key={s.name}
                 type="button"
                 onClick={() => { setPrefill(s); setAdding(true); }}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11.5px] font-medium border border-bone bg-white text-graphite cursor-pointer hover:border-brand-orange hover:text-brand-orange transition-colors"
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[12px] font-medium border border-bone bg-white text-graphite cursor-pointer hover:border-brand-orange hover:text-brand-orange transition-colors"
               >
                 <Plus size={11} /> {s.name}
               </button>
             ))}
-            <p className="basis-full text-[11px] text-slate">The homepage's subject tabs work best when a main category with the same name exists. Nothing is created until you confirm.</p>
+            <p className="basis-full text-[12px] text-slate">The homepage's subject tabs work best when a main category with the same name exists. Nothing is created until you confirm.</p>
           </div>
         )}
         <div className="bg-white border border-bone rounded-xl overflow-hidden">

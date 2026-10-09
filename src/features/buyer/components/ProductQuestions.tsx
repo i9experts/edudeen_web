@@ -54,7 +54,7 @@ export function ProductQuestions({ productId, onCount }: { productId: string; on
           aria-label="Your question"
         />
         <div className="flex items-center justify-between mt-2 gap-2 flex-wrap">
-          <p className="text-[11.5px] text-slate">The seller's answer is shown here for everyone.</p>
+          <p className="text-[12px] text-slate">The seller's answer is shown here for everyone.</p>
           <Button variant="primary" size="sm" loading={busy} disabled={!text.trim()} onClick={ask}>Ask the seller</Button>
         </div>
       </div>
@@ -73,10 +73,10 @@ export function ProductQuestions({ productId, onCount }: { productId: string; on
               ) : (
                 <p className="inline-flex items-center gap-1 text-[12px] text-amber-700 mt-1"><Clock size={12} /> Waiting for the seller's answer</p>
               )}
-              <p className="text-[11px] text-slate mt-1 flex items-center gap-2">
+              <p className="text-[12px] text-slate mt-1 flex items-center gap-2">
                 {q.isMine ? 'You' : q.askerName} · {when(q.createdAt)}{q.answeredAt ? ` · answered ${when(q.answeredAt)}` : ''}
                 {q.isMine && !q.answer && (
-                  <button type="button" onClick={() => remove(q._id)} className="inline-flex items-center gap-1 bg-transparent border-none p-0 text-slate hover:text-error cursor-pointer text-[11px]">
+                  <button type="button" onClick={() => remove(q._id)} className="inline-flex items-center gap-1 bg-transparent border-none p-0 text-slate hover:text-error cursor-pointer text-[12px]">
                     <Trash2 size={11} /> Delete
                   </button>
                 )}

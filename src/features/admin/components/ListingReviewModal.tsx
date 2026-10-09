@@ -6,6 +6,9 @@ import {
 } from '@/api/services/marketplace/adminMarketplace';
 import { EDUCATION_LEVELS } from '@/api/services/product';
 import { getStorePagePath } from '@/utils/storefrontUrl';
+import { AiModerationPanel } from './AiModerationPanel';
+import { TrustBadgesEditor } from './TrustBadgesEditor';
+import { ageLabel } from '@/constants/learning';
 
 const LICENSE: Record<string, string> = {
   personal: 'Personal use', single_classroom: 'One classroom', school: 'Whole school', commercial: 'Commercial',
@@ -97,7 +100,7 @@ export function ListingReviewModal({ listingId, onClose, onDone }: { listingId: 
             onChange={e => setReason(e.target.value)}
             placeholder="e.g. Please add the grade level and a cover image that shows the actual worksheet."
           />
-          <p className="text-[11.5px] text-slate">{reason.trim().length < 10 ? `At least 10 characters (${reason.trim().length}/10)` : 'Ready to send'}</p>
+          <p className="text-[12px] text-slate">{reason.trim().length < 10 ? `At least 10 characters (${reason.trim().length}/10)` : 'Ready to send'}</p>
           {error && <p role="alert" className="text-[12.5px] text-error">{error}</p>}
         </div>
       ) : (
@@ -162,7 +165,7 @@ export function ListingReviewModal({ listingId, onClose, onDone }: { listingId: 
                   ))}
                 </ul>
               )}
-              <p className="text-[11px] text-slate mt-1">Links work for 10 minutes.</p>
+              <p className="text-[12px] text-slate mt-1">Links work for 10 minutes.</p>
             </div>
           )}
 
@@ -172,6 +175,8 @@ export function ListingReviewModal({ listingId, onClose, onDone }: { listingId: 
               {CHECKLIST.map(c => <li key={c}>{c}</li>)}
             </ul>
           </div>
+          <TrustBadgesEditor listingId={listingId} initial={data.trust} sellerAgeHint={ageLabel(data.ageMin, data.ageMax)} />
+          <AiModerationPanel listingId={listingId} />
           {error && <p role="alert" className="text-[12.5px] text-error">{error}</p>}
         </div>
       )}

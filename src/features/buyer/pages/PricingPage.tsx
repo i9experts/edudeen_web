@@ -137,7 +137,7 @@ export function PricingPage() {
                   {b}
                 </span>
                 {b === 'annual' && maxAnnualSavingPct > 0 && (
-                  <span className="text-[10px] font-semibold text-success">Save up to {maxAnnualSavingPct}%</span>
+                  <span className="text-[12px] font-semibold text-success">Save up to {maxAnnualSavingPct}%</span>
                 )}
               </button>
             ))}
@@ -170,7 +170,7 @@ export function PricingPage() {
             >
               {/* Badge */}
               {plan.badge && (
-                <div className="absolute top-[-12px] left-1/2 -translate-x-1/2 bg-brand-orange text-white rounded-[20px] px-[14px] py-1 text-[11px] font-bold whitespace-nowrap">
+                <div className="absolute top-[-12px] left-1/2 -translate-x-1/2 bg-brand-orange text-white rounded-[20px] px-[14px] py-1 text-[12px] font-bold whitespace-nowrap">
                   {plan.badge}
                 </div>
               )}
@@ -179,7 +179,7 @@ export function PricingPage() {
               <p className={clsx('text-[15px] font-bold mb-2', isFeatured ? 'text-white' : 'text-carbon')}>
                 {plan.name}
               </p>
-              <p className={clsx('text-[11px] mb-5 leading-[1.5]', isFeatured ? 'text-[#b0aea8]' : 'text-slate')}>
+              <p className={clsx('text-[12px] mb-5 leading-[1.5]', isFeatured ? 'text-[#b0aea8]' : 'text-slate')}>
                 {plan.description ?? ' '}
               </p>
 
@@ -200,12 +200,12 @@ export function PricingPage() {
                   </div>
                 )}
                 {billing === 'annual' && !plan.isFree && !plan.isCustomPricing && (
-                  <p className={clsx('text-[11px] mt-1', isFeatured ? 'text-brand-orange' : 'text-success')}>
+                  <p className={clsx('text-[12px] mt-1', isFeatured ? 'text-brand-orange' : 'text-success')}>
                     {hasYearly(plan) ? `Billed $${plan.yearlyPriceUSD}/year` : 'Monthly billing only'}
                   </p>
                 )}
                 {plan.trialDays > 0 && !plan.isFree && !plan.isCustomPricing && (
-                  <p className={clsx('text-[11px] mt-1', isFeatured ? 'text-[#b0aea8]' : 'text-slate')}>
+                  <p className={clsx('text-[12px] mt-1', isFeatured ? 'text-[#b0aea8]' : 'text-slate')}>
                     {plan.trialDays}-day free trial
                   </p>
                 )}
@@ -257,7 +257,7 @@ export function PricingPage() {
                 <Icon size={28} className="text-brand-orange flex-shrink-0" />
                 <div className="flex-1">
                   <p className="text-[13px] font-semibold text-carbon mb-[2px]">{a.name}</p>
-                  <p className="text-[11px] text-slate">{addonUnit(a)}</p>
+                  <p className="text-[12px] text-slate">{addonUnit(a)}</p>
                 </div>
                 <span className="text-[14px] font-bold text-brand-orange flex-shrink-0">
                   {formatUSD(a.priceUSD)}

@@ -142,7 +142,7 @@ export function AuthSplitLayout({
             )}
           </div>
 
-          <p className="text-[11px] text-white/40 shrink-0">© {new Date().getFullYear()} Edudeen. All rights reserved.</p>
+          <p className="text-[12px] text-white/40 shrink-0">© {new Date().getFullYear()} Edudeen. All rights reserved.</p>
         </div>
       </div>
 

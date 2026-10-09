@@ -54,7 +54,7 @@ export function PaymentsTab({ params }: { params: BaseAnalyticsParams }) {
       </div>
 
       {d?.note && (
-        <p className="text-[11px] text-slate bg-cream border border-bone rounded-lg px-3 py-2">{d.note}</p>
+        <p className="text-[12px] text-slate bg-cream border border-bone rounded-lg px-3 py-2">{d.note}</p>
       )}
     </div>
   );

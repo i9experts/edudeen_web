@@ -71,11 +71,11 @@ export function SellerRefundRequests({ storeId }: { storeId: string }) {
               <div className="flex-1 min-w-[220px]">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-mono text-[12px] text-slate">Order …{r.orderId.slice(-6)}</span>
-                  <span className={clsx('rounded-full px-2 py-[2px] text-[11px] font-semibold capitalize', TONE[r.status])}>{r.status}</span>
-                  <span className="text-[11.5px] text-slate">{new Date(r.createdAt).toLocaleDateString()}</span>
+                  <span className={clsx('rounded-full px-2 py-[2px] text-[12px] font-semibold capitalize', TONE[r.status])}>{r.status}</span>
+                  <span className="text-[12px] text-slate">{new Date(r.createdAt).toLocaleDateString()}</span>
                 </div>
                 <p className="text-[13px] text-carbon mt-1 mb-0">{r.reason}</p>
-                <p className="text-[11.5px] text-slate mt-0.5 mb-0">{r.itemIds.length} item{r.itemIds.length === 1 ? '' : 's'}{r.buyerRefundAmount != null ? ` · refunded ${r.buyerRefundCurrency ?? ''} ${r.buyerRefundAmount.toLocaleString()}` : ''}{r.resolutionNotes ? ` · ${r.resolutionNotes}` : ''}</p>
+                <p className="text-[12px] text-slate mt-0.5 mb-0">{r.itemIds.length} item{r.itemIds.length === 1 ? '' : 's'}{r.buyerRefundAmount != null ? ` · refunded ${r.buyerRefundCurrency ?? ''} ${r.buyerRefundAmount.toLocaleString()}` : ''}{r.resolutionNotes ? ` · ${r.resolutionNotes}` : ''}</p>
               </div>
               {r.status === 'pending' && (
                 <div className="flex gap-2">

@@ -44,7 +44,7 @@ export function MarketplaceAppPromo({ tone = 'dark', className }: { tone?: Tone;
           <Smartphone size={14} />
         </div>
         <div className="min-w-0">
-          <p className={clsx('text-[11.5px] font-bold leading-tight', t.heading)}>Shop faster in the app</p>
+          <p className={clsx('text-[12px] font-bold leading-tight', t.heading)}>Shop faster in the app</p>
           <RatingRow />
         </div>
       </div>
@@ -120,7 +120,7 @@ export function AuthAppPromo({ className }: { className?: string }) {
           <span className="w-6 h-6 rounded-full bg-success/20 flex items-center justify-center shrink-0">
             <span className="w-2 h-2 rounded-full bg-[#4ade80]" />
           </span>
-          <span className="text-[10.5px] font-medium text-white/85 whitespace-nowrap">Order confirmed</span>
+          <span className="text-[12px] font-medium text-white/85 whitespace-nowrap">Order confirmed</span>
         </FloatingMiniCard>
 
         <FloatingMiniCard className="end-0 bottom-6 hidden sm:flex">

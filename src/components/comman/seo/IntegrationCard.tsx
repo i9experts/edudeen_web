@@ -86,18 +86,18 @@ export function IntegrationCard({
             <p className="text-[13px] font-semibold text-carbon truncate">{label}</p>
             <div className="flex items-center gap-[5px] mt-[2px]">
               <span className={clsx('w-[6px] h-[6px] rounded-full shrink-0', st.dot)} />
-              <span className={clsx('text-[11px] font-medium', st.text)}>{st.label}</span>
+              <span className={clsx('text-[12px] font-medium', st.text)}>{st.label}</span>
             </div>
           </div>
         </div>
       </div>
 
-      <p className="text-[11px] text-slate mb-3">
+      <p className="text-[12px] text-slate mb-3">
         Last synced: {relativeTime(lastSyncedAt)}
       </p>
 
       {status === 'error' && lastError && (
-        <p className="text-[11px] text-error bg-error-bg rounded-md px-2 py-1.5 mb-3 leading-[1.5]">{lastError}</p>
+        <p className="text-[12px] text-error bg-error-bg rounded-md px-2 py-1.5 mb-3 leading-[1.5]">{lastError}</p>
       )}
 
       <div className="flex items-center gap-2">

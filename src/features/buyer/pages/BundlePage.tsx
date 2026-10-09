@@ -54,7 +54,7 @@ export function BundlePage() {
                   <Button variant="primary" size="md" loading={adding} onClick={() => addAll(bundle.products, `Bundle added — ${bundle.discountPercent}% comes off at checkout`)}>
                     Add all {bundle.products.length} to cart
                   </Button>
-                  <p className="text-[11.5px] text-slate m-0">Discount applies at checkout with every item in your cart.</p>
+                  <p className="text-[12px] text-slate m-0">Discount applies at checkout with every item in your cart.</p>
                 </div>
               )}
             </header>

@@ -59,7 +59,7 @@ export function LocationPickerMap({ latitude, longitude, onChange, height = 220 
           type="button"
           onClick={useMyLocation}
           disabled={locating}
-          className="inline-flex items-center gap-[4px] text-[11px] font-semibold text-brand-orange bg-transparent border-none cursor-pointer hover:text-brand-deep-orange transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          className="inline-flex items-center gap-[4px] text-[12px] font-semibold text-brand-orange bg-transparent border-none cursor-pointer hover:text-brand-deep-orange transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {locating ? <Loader2 size={11} className="animate-spin" /> : <Crosshair size={11} />}
           Use my current location
@@ -87,7 +87,7 @@ export function LocationPickerMap({ latitude, longitude, onChange, height = 220 
           )}
         </MapContainer>
       </div>
-      <p className="text-[11px] text-slate mt-[6px]">
+      <p className="text-[12px] text-slate mt-[6px]">
         {hasPin ? 'Tap or drag the pin to adjust — this helps couriers find you faster.' : 'Tap anywhere on the map to drop a pin.'}
       </p>
     </div>

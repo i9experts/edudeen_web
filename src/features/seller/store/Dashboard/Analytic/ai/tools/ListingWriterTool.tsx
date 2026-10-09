@@ -28,8 +28,13 @@ export function ListingWriterTool({ storeId, onCreditsChanged, creditCost }: Lis
   const { generate, reset, generating, error, errorCode, result } = useGenerateListing();
   const { accept, submitting: accepting } = useAcceptAiGeneration();
 
+  // The seller can edit the AI draft; edits (when any) are sent with "Use This".
+  const [edTitle, setEdTitle] = useState<string | null>(null);
+  const [edDesc, setEdDesc] = useState<string | null>(null);
+
   const handleGenerate = async (regenerateFromId?: string) => {
     setAccepted(false);
+    setEdTitle(null); setEdDesc(null);
     await generate(storeId, {
       productType,
       keywords: keywords.split(',').map(k => k.trim()).filter(Boolean),
@@ -42,7 +47,10 @@ export function ListingWriterTool({ storeId, onCreditsChanged, creditCost }: Lis
 
   const handleUseThis = async () => {
     if (!result) return;
-    const ok = await accept(storeId, result.generationId, { applyToProduct: !!productId, productId: productId || undefined });
+    const edits: Record<string, unknown> = {};
+    if (edTitle !== null) edits.title = edTitle;
+    if (edDesc !== null) edits.description = edDesc;
+    const ok = await accept(storeId, result.generationId, { applyToProduct: !!productId, productId: productId || undefined, edits: Object.keys(edits).length ? edits : undefined });
     if (ok) setAccepted(true);
   };
 
@@ -134,15 +142,22 @@ export function ListingWriterTool({ storeId, onCreditsChanged, creditCost }: Lis
           <div className="flex flex-col gap-4">
             <div>
               <p className="text-[10px] font-semibold text-slate uppercase tracking-[0.08em] mb-2">Generated Title</p>
-              <div className="bg-cream border border-bone rounded-lg px-[14px] py-3 text-[13px] font-semibold text-charcoal leading-[1.5]">
-                {result.title}
-              </div>
+              <input
+                value={edTitle ?? result.title}
+                onChange={e => setEdTitle(e.target.value)}
+                aria-label="Generated title (editable)"
+                className="w-full bg-cream border border-bone rounded-lg px-[14px] py-3 text-[13px] font-semibold text-charcoal leading-[1.5] outline-none focus:border-brand-orange"
+              />
             </div>
             <div>
-              <p className="text-[10px] font-semibold text-slate uppercase tracking-[0.08em] mb-2">Generated Description</p>
-              <div className="bg-cream border border-bone rounded-lg px-[14px] py-3 text-xs text-graphite leading-[1.7]">
-                {result.description}
-              </div>
+              <p className="text-[10px] font-semibold text-slate uppercase tracking-[0.08em] mb-2">Generated Description <span className="normal-case font-normal">(you can edit before using)</span></p>
+              <textarea
+                value={edDesc ?? result.description}
+                onChange={e => setEdDesc(e.target.value)}
+                rows={7}
+                aria-label="Generated description (editable)"
+                className="w-full bg-cream border border-bone rounded-lg px-[14px] py-3 text-xs text-graphite leading-[1.7] outline-none focus:border-brand-orange resize-y"
+              />
             </div>
             <div>
               <p className="text-[10px] font-semibold text-slate uppercase tracking-[0.08em] mb-2">Suggested Tags</p>

@@ -16,7 +16,7 @@ import { Button } from './Button';
 
 const QUICK_LINKS = [
   { Icon: ShoppingBag,   label: 'Orders'   },
-  { Icon: Heart,         label: 'Wishlist' },
+  { Icon: Heart,         label: 'Saved' },
   { Icon: MessageSquare, label: 'Messages' },
 ];
 
@@ -94,7 +94,7 @@ export function SignInPreview() {
             </div>
             <div className="min-w-0">
               <p className="text-[13.5px] font-bold text-carbon leading-tight">Welcome to Edudeen</p>
-              <p className="text-[11px] text-slate mt-[2px]">Sign in to unlock your account</p>
+              <p className="text-[12px] text-slate mt-[2px]">Sign in to unlock your account</p>
             </div>
             <button
               onClick={() => setOpen(false)}
@@ -114,7 +114,7 @@ export function SignInPreview() {
                 className="flex flex-col items-center gap-1 py-2 rounded-[10px] bg-transparent border-none cursor-pointer text-slate hover:bg-cream hover:text-brand-orange transition-colors"
               >
                 <Icon size={16} />
-                <span className="text-[10px] font-medium">{label}</span>
+                <span className="text-[12px] font-medium">{label}</span>
               </button>
             ))}
           </div>
@@ -143,7 +143,7 @@ export function SignInPreview() {
             />
 
             <div className="flex items-center justify-between -mt-1">
-              <label className="flex items-center gap-[6px] text-[11px] text-slate cursor-pointer select-none">
+              <label className="flex items-center gap-[6px] text-[12px] text-slate cursor-pointer select-none">
                 <input
                   type="checkbox"
                   checked={remember}
@@ -155,14 +155,14 @@ export function SignInPreview() {
               <button
                 type="button"
                 onClick={() => navigate('/forgot-password')}
-                className="text-[11px] font-medium text-brand-orange bg-transparent border-none cursor-pointer p-0 hover:text-brand-deep-orange transition-colors"
+                className="text-[12px] font-medium text-brand-orange bg-transparent border-none cursor-pointer p-0 hover:text-brand-deep-orange transition-colors"
               >
                 Forgot password?
               </button>
             </div>
 
             {login.error && (
-              <p className="text-[11px] text-error flex items-center gap-1"><AlertTriangle size={11} className="shrink-0" /> {login.error}</p>
+              <p className="text-[12px] text-error flex items-center gap-1"><AlertTriangle size={11} className="shrink-0" /> {login.error}</p>
             )}
 
             <Button type="submit" variant="primary" size="md" pill fullWidth loading={login.loading} className="justify-center mt-1">
@@ -173,7 +173,7 @@ export function SignInPreview() {
           {/* Social login */}
           <div className="flex items-center gap-2 px-4 my-3">
             <div className="flex-1 h-px bg-bone" />
-            <span className="text-[10px] text-slate whitespace-nowrap">or continue with</span>
+            <span className="text-[12px] text-slate whitespace-nowrap">or continue with</span>
             <div className="flex-1 h-px bg-bone" />
           </div>
           <div className="px-4 pb-2">
@@ -181,7 +181,7 @@ export function SignInPreview() {
           </div>
 
           {social.error && (
-            <p className="text-[11px] text-error px-4 pb-3 flex items-start gap-1">
+            <p className="text-[12px] text-error px-4 pb-3 flex items-start gap-1">
               <AlertTriangle size={11} className="shrink-0 mt-[1px]" /> {social.error}
             </p>
           )}
@@ -190,13 +190,13 @@ export function SignInPreview() {
           <div className="px-4 pb-4 pt-3 border-t border-bone flex items-center justify-between">
             <button
               onClick={() => navigate('/register')}
-              className="text-[11.5px] font-medium text-brand-orange bg-transparent border-none cursor-pointer p-0 hover:text-brand-deep-orange transition-colors"
+              className="text-[12px] font-medium text-brand-orange bg-transparent border-none cursor-pointer p-0 hover:text-brand-deep-orange transition-colors"
             >
               Create account
             </button>
             <button
               onClick={() => navigate('/login')}
-              className="text-[11.5px] font-medium text-slate bg-transparent border-none cursor-pointer p-0 hover:text-charcoal transition-colors flex items-center gap-1"
+              className="text-[12px] font-medium text-slate bg-transparent border-none cursor-pointer p-0 hover:text-charcoal transition-colors flex items-center gap-1"
             >
               Full sign in <ArrowRight size={11} />
             </button>

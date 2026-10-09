@@ -153,7 +153,7 @@ export function BecomeSellerPage() {
                 <div key={p._id} className="relative rounded-2xl bg-white border border-bone p-7 flex flex-col shadow-sm">
                   <div className="flex items-center justify-between gap-2 mb-4">
                     <p className="text-[11px] font-bold tracking-[0.08em] uppercase text-slate">{p.name}</p>
-                    {p.badge && <span className="text-[10px] font-bold bg-brand-pale-orange text-brand-deep-orange px-2 py-[2px] rounded">{p.badge}</span>}
+                    {p.badge && <span className="text-[12px] font-bold bg-brand-pale-orange text-brand-deep-orange px-2 py-[2px] rounded">{p.badge}</span>}
                   </div>
                   <p className="mb-1">
                     <span className="text-[34px] font-extrabold text-carbon" style={{ fontFamily: SERIF }}>{p.isFree ? 'Free' : `$${(p.monthlyPriceUSD ?? 0).toLocaleString()}`}</span>

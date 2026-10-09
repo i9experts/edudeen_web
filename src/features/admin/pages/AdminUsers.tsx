@@ -6,6 +6,7 @@ import type { AccountRole, AccountRow } from '@/api/services/users/adminUsers';
 import { Table, StatusBadge, Badge, Button, Modal, SkeletonBox, SearchInput, FilterDropdown, MetricCard } from '@/components/comman/ui';
 import { AdminStudioHeader } from '@/features/admin/components/studio';
 import type { TableColumn } from '@/components/comman/ui';
+import { CellText } from '@/components/comman/ui/Table';
 import type { BadgeColor } from '@/types';
 import { AnalyticsErrorState } from '@/components/comman/analytics/AnalyticsErrorState';
 import { formatDate, formatNumber } from '@/components/comman/analytics/format';
@@ -21,13 +22,15 @@ const STATUS_OPTIONS = [
   { value: 'pending', label: 'Pending' },
 ];
 
+interface PersonRow { key: string; accounts: AccountRow[] }
+
 function initialsOf(name: string) {
   return name.split(' ').filter(Boolean).slice(0, 2).map((s) => s[0]).join('').toUpperCase() || '—';
 }
 
 // ── Account detail modal ──────────────────────────────────────────────────────
 function DetailField({ label, children }: { label: string; children: ReactNode }) {
-  return <div className="min-w-0"><p className="text-[11px] text-slate mb-0.5">{label}</p><div className="text-charcoal break-words">{children}</div></div>;
+  return <div className="min-w-0"><p className="text-[12px] text-slate mb-0.5">{label}</p><div className="text-charcoal break-words">{children}</div></div>;
 }
 
 function AccountDetailModal({ account, onClose, onChanged }: { account: AccountRow; onClose: () => void; onChanged: (msg: string) => void }) {
@@ -140,47 +143,73 @@ export function AdminUsers() {
     if (ok) { setConfirming(null); toast.success(isSuspended ? 'Account unsuspended' : 'Account suspended'); refreshAll(); }
   }
 
-  const columns: TableColumn<AccountRow>[] = [
+  // One row per person: accounts that share an email (e.g. buyer + seller) are grouped, each with its own role chip and actions.
+  // Grouping is per loaded page, so a person whose other account is on another page shows as separate rows until both load.
+  const people = useMemo<PersonRow[]>(() => {
+    const map = new Map<string, PersonRow>();
+    for (const a of data?.items ?? []) {
+      const key = a.email.trim().toLowerCase();
+      const row = map.get(key);
+      if (row) row.accounts.push(a); else map.set(key, { key, accounts: [a] });
+    }
+    return [...map.values()];
+  }, [data]);
+
+  const columns: TableColumn<PersonRow>[] = [
     {
       key: 'name',
-      header: 'User',
-      render: (u) => (
-        <div className="flex items-center gap-[10px]">
-          <div className="w-7 h-7 rounded-full bg-brand-pale-orange text-brand-deep-orange text-[9px] font-bold flex items-center justify-center shrink-0">
-            {initialsOf(u.name)}
+      header: 'Person',
+      render: (p) => {
+        const u = p.accounts[0];
+        return (
+          <div className="flex items-center gap-[10px] min-w-0">
+            <div className="w-7 h-7 rounded-full bg-brand-pale-orange text-brand-deep-orange text-[12px] font-bold flex items-center justify-center shrink-0">
+              {initialsOf(u.name)}
+            </div>
+            <div className="min-w-0">
+              <CellText max={200} className="text-[13px] font-semibold text-charcoal">{u.name}</CellText>
+              <CellText max={200} className="text-[12px] text-slate">{u.email}</CellText>
+            </div>
           </div>
-          <div>
-            <p className="text-[12px] font-semibold text-charcoal">{u.name}</p>
-            <p className="text-[11px] text-slate">{u.id.slice(-8)}</p>
-          </div>
-        </div>
-      ),
+        );
+      },
     },
-    { key: 'email', header: 'Email', render: (u) => <span className="text-[13px] text-graphite">{u.email}</span> },
-    { key: 'role', header: 'Role', render: (u) => <Badge color={ROLE_COLOR[u.role]} size="sm">{ROLE_LABEL[u.role]}</Badge> },
-    { key: 'plan', header: 'Plan', render: (u) => <span className="text-[13px] text-graphite capitalize">{u.plan}</span> },
-    { key: 'status', header: 'Status', render: (u) => <StatusBadge status={u.status} size="sm" /> },
-    { key: 'createdAt', header: 'Joined', render: (u) => <span className="text-[13px] text-slate whitespace-nowrap">{formatDate(u.createdAt)}</span> },
+    {
+      key: 'role', header: 'Roles',
+      render: (p) => <div className="flex flex-wrap gap-1">{p.accounts.map(u => <Badge key={u.id} color={ROLE_COLOR[u.role]} size="sm">{ROLE_LABEL[u.role]}</Badge>)}</div>,
+    },
+    { key: 'plan', header: 'Plan', render: (p) => <span className="text-[13px] text-graphite capitalize">{[...new Set(p.accounts.map(u => u.plan))].join(' / ')}</span> },
+    {
+      key: 'status', header: 'Status',
+      render: (p) => <div className="flex flex-col gap-1 items-start">{p.accounts.map(u => (
+        <span key={u.id} className="inline-flex items-center gap-1">{p.accounts.length > 1 && <span className="text-[12px] text-slate">{ROLE_LABEL[u.role]}:</span>}<StatusBadge status={u.status} size="sm" /></span>
+      ))}</div>,
+    },
+    { key: 'createdAt', header: 'Joined', render: (p) => <span className="num text-[13px] text-slate whitespace-nowrap">{formatDate(p.accounts.map(u => u.createdAt).sort()[0])}</span> },
     {
       key: 'actions',
       header: 'Actions',
-      render: (u) => (
-        <div className="flex gap-[6px]">
-          <Button size="xs" variant="outline" icon={<Eye size={11} />} onClick={() => setViewing(u)}>View</Button>
-          <Button
-            size="xs"
-            variant={u.status === 'suspended' ? 'secondary' : 'danger'}
-            icon={u.status === 'suspended' ? <CheckCircle2 size={11} /> : <Ban size={11} />}
-            disabled={processingId === u.id}
-            onClick={() => setConfirming(u)}
-          >
-            {u.status === 'suspended' ? 'Unsuspend' : 'Suspend'}
-          </Button>
+      render: (p) => (
+        <div className="flex flex-col gap-[6px]">
+          {p.accounts.map(u => (
+            <div key={u.id} className="flex gap-[6px] items-center">
+              {p.accounts.length > 1 && <span className="text-[12px] text-slate w-[52px] shrink-0">{ROLE_LABEL[u.role]}</span>}
+              <Button size="xs" variant="outline" icon={<Eye size={11} />} onClick={() => setViewing(u)}>View</Button>
+              <Button
+                size="xs"
+                variant={u.status === 'suspended' ? 'secondary' : 'danger'}
+                icon={u.status === 'suspended' ? <CheckCircle2 size={11} /> : <Ban size={11} />}
+                disabled={processingId === u.id}
+                onClick={() => setConfirming(u)}
+              >
+                {u.status === 'suspended' ? 'Unsuspend' : 'Suspend'}
+              </Button>
+            </div>
+          ))}
         </div>
       ),
     },
   ];
-
   return (
     <>
       <AdminStudioHeader eyebrow="Edudeen team workspace · People" title="Users & Sellers" subtitle="Manage all platform users, sellers and accounts." />
@@ -214,9 +243,10 @@ export function AdminUsers() {
           <div className="p-5"><AnalyticsErrorState message={error} onRetry={refetch} /></div>
         ) : (
           <Table
+            cardsBelow="lg"
             columns={columns}
-            data={data?.items ?? []}
-            keyExtractor={(u) => u.id}
+            data={people}
+            keyExtractor={(p) => p.key}
             loading={loading}
             emptyState={{ icon: <Users2 size={28} className="text-slate/50" />, title: 'No accounts match your filters', description: 'Try adjusting your search or clearing filters.' }}
             pagination={{ page, total: data?.total ?? 0, perPage: 10, onChange: setPage, label: 'accounts' }}

@@ -26,7 +26,7 @@ export function FinanceSellersTab() {
     { key: 'sellerName', header: 'Seller', render: (r) => (
       <div>
         <p className="font-medium">{r.sellerName}</p>
-        <p className="text-[11px] text-slate">{r.storeName}</p>
+        <p className="text-[12px] text-slate">{r.storeName}</p>
       </div>
     ) },
     { key: 'availableBalance', header: 'Available', align: 'right', render: (r) => formatMoneyCompact(r.availableBalance, r.currency) },

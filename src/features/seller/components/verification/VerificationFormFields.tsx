@@ -114,13 +114,13 @@ export function BusinessInfoFields({ values, onChange, disabled }: {
                   <span className="text-[13px] font-bold text-carbon">{opt.label}</span>
                   {selected && <Check size={13} className="text-brand-orange shrink-0" />}
                 </div>
-                <p className="text-[11px] text-slate leading-[1.4]">{opt.desc}</p>
+                <p className="text-[12px] text-slate leading-[1.4]">{opt.desc}</p>
               </button>
             );
           })}
         </div>
         {values.businessType && (
-          <div className="flex items-center gap-[6px] mt-3 text-[11.5px] text-brand-deep-orange font-medium">
+          <div className="flex items-center gap-[6px] mt-3 text-[12px] text-brand-deep-orange font-medium">
             <ShieldCheck size={13} />
             Applicable level: {VERIFICATION_LEVEL_LABELS[level].label}
           </div>
@@ -224,12 +224,12 @@ export function DocumentUploadCard({ doc, uploading, disabled, onUpload }: {
             ? <span className="text-[9.5px] font-bold uppercase tracking-wide text-brand-deep-orange bg-brand-pale-orange rounded-full px-[7px] py-[2px]">Required</span>
             : <span className="text-[9.5px] font-medium text-slate bg-bone rounded-full px-[7px] py-[2px]">Optional</span>}
         </div>
-        <p className="text-[11px] text-slate mt-[2px] leading-[1.4]">{meta.desc}</p>
+        <p className="text-[12px] text-slate mt-[2px] leading-[1.4]">{meta.desc}</p>
         {uploaded && (
           <div className="flex items-center gap-[6px] mt-[6px]">
-            <p className="text-[11px] text-success font-medium truncate max-w-[220px]">{doc.fileName}</p>
+            <p className="text-[12px] text-success font-medium truncate max-w-[220px]">{doc.fileName}</p>
             {doc.viewUrl && (
-              <a href={doc.viewUrl} target="_blank" rel="noopener noreferrer" className="text-[11px] text-brand-orange font-medium inline-flex items-center gap-[3px] hover:underline">
+              <a href={doc.viewUrl} target="_blank" rel="noopener noreferrer" className="text-[12px] text-brand-orange font-medium inline-flex items-center gap-[3px] hover:underline">
                 View <ExternalLink size={10} />
               </a>
             )}
@@ -237,7 +237,7 @@ export function DocumentUploadCard({ doc, uploading, disabled, onUpload }: {
         )}
       </div>
       <label className={clsx(
-        'shrink-0 inline-flex items-center gap-[6px] px-3 py-[7px] rounded-lg text-[11.5px] font-semibold border cursor-pointer transition-colors duration-150',
+        'shrink-0 inline-flex items-center gap-[6px] px-3 py-[7px] rounded-lg text-[12px] font-semibold border cursor-pointer transition-colors duration-150',
         uploaded ? 'border-bone text-charcoal bg-white hover:bg-cream' : 'border-brand-orange text-brand-orange bg-white hover:bg-brand-pale-orange/40',
         (uploading || disabled) && 'opacity-50 cursor-not-allowed pointer-events-none',
       )}>

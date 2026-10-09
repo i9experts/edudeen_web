@@ -28,7 +28,7 @@ function FollowerRow({ entry }: { entry: FollowerEntry }) {
           <p className="text-[12px] text-slate truncate">{entry.user.email}</p>
         )}
       </div>
-      <p className="text-[11px] text-slate shrink-0">{when}</p>
+      <p className="text-[12px] text-slate shrink-0">{when}</p>
     </div>
   );
 }
@@ -112,7 +112,7 @@ export function FollowersTab() {
             </div>
             <div>
               <p className="text-[22px] font-bold text-charcoal leading-none">{total.toLocaleString()}</p>
-              <p className="text-[11px] text-slate mt-[3px]">Total followers</p>
+              <p className="text-[12px] text-slate mt-[3px]">Total followers</p>
             </div>
           </div>
 
@@ -120,7 +120,7 @@ export function FollowersTab() {
           <div className="bg-white rounded-[10px] border border-bone overflow-hidden">
             <div className="px-5 py-3 border-b border-[#f3f2ec] flex items-center justify-between">
               <p className="text-[12px] font-semibold text-slate uppercase tracking-[0.06em]">Followers</p>
-              <p className="text-[11px] text-slate">{followers.length} shown</p>
+              <p className="text-[12px] text-slate">{followers.length} shown</p>
             </div>
             {followers.map(f => <FollowerRow key={f.user._id} entry={f} />)}
           </div>

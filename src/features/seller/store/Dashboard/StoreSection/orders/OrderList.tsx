@@ -23,7 +23,7 @@ import {
   type SellerOrderFilters,
 } from '@/api/services/product';
 import { usePageTitle } from '@/hooks/usePageTitle';
-import { currencySymbol } from '@/utils/currency';
+import { currencySymbol, formatMoney } from '@/utils/currency';
 import {
   OrderDetailModal, canMarkPaid, canComplete, canProcess, canShip, paymentLabel,
 } from './OrderDetailModal';
@@ -35,7 +35,7 @@ function CustomerCell({ name, email }: { name: string; email: string }) {
       <Avatar name={name} size={30} />
       <div>
         <p className="text-[13px] font-medium text-charcoal mb-[1px]">{name}</p>
-        <p className="text-[11px] text-slate">{email}</p>
+        <p className="text-[12px] text-slate">{email}</p>
       </div>
     </div>
   );
@@ -182,8 +182,8 @@ export function StoreOrderList() {
         <div className="flex flex-col gap-[2px]">
           <span className="text-[12px] text-slate capitalize">{paymentLabel(o.paymentType)}</span>
           {o.isPaid
-            ? <span className="text-[10px] font-semibold text-success">Paid</span>
-            : <span className="text-[10px] font-semibold text-[#b36200]">Unpaid</span>
+            ? <span className="text-[12px] font-semibold text-success">Paid</span>
+            : <span className="text-[12px] font-semibold text-[#b36200]">Unpaid</span>
           }
         </div>
       ),
@@ -257,7 +257,7 @@ export function StoreOrderList() {
           />
           <MetricCard
             label="Revenue"
-            value={stats ? `${currencySymbol(store?.baseCurrency)}${stats.revenue.toLocaleString()}` : 0}
+            value={stats ? `${formatMoney(stats.revenue, store?.baseCurrency)}` : 0}
             icon={<DollarSign size={16} />}
             loading={loading && !stats}
           />
@@ -269,7 +269,7 @@ export function StoreOrderList() {
           />
           <MetricCard
             label="Avg. Order"
-            value={stats ? `${currencySymbol(store?.baseCurrency)}${stats.avgOrder.toLocaleString()}` : 0}
+            value={stats ? `${formatMoney(stats.avgOrder, store?.baseCurrency)}` : 0}
             icon={<TrendingUp size={16} />}
             loading={loading && !stats}
           />
@@ -314,6 +314,7 @@ export function StoreOrderList() {
             </div>
 
             <Table
+              cardsBelow="lg"
               columns={columns}
               data={orders}
               keyExtractor={o => o.orderId}

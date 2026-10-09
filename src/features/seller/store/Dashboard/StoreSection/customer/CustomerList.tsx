@@ -100,10 +100,10 @@ export default function StoreCustomerList() {
       key: 'name', header: 'Customer',
       render: c => (
         <div className="flex items-center gap-2.5">
-          <div className="w-[30px] h-[30px] rounded-full text-[10px] font-bold flex items-center justify-center shrink-0 bg-[#f0eee6] text-[#5a5852]">{initialsOf(c.name)}</div>
+          <div className="w-[30px] h-[30px] rounded-full text-[12px] font-bold flex items-center justify-center shrink-0 bg-[#f0eee6] text-[#5a5852]">{initialsOf(c.name)}</div>
           <div className="min-w-0">
             <p className="text-[13px] font-semibold text-charcoal leading-[1.3] truncate">{c.name}</p>
-            <p className="text-[11px] text-slate truncate">{c.email}</p>
+            <p className="text-[12px] text-slate truncate">{c.email}</p>
           </div>
         </div>
       ),
@@ -213,7 +213,7 @@ export default function StoreCustomerList() {
                     <label className="text-xs font-medium text-graphite mb-[5px] block">Email</label>
                     <input value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
                       className="w-full px-3 py-2 text-[13px] border border-bone rounded-lg outline-none text-charcoal bg-white box-border" />
-                    <p className="text-[11px] text-slate mt-1">Changing email un-verifies the account until they confirm the new one.</p>
+                    <p className="text-[12px] text-slate mt-1">Changing email un-verifies the account until they confirm the new one.</p>
                   </div>
                 </div>
 

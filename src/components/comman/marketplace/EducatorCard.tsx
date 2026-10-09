@@ -23,7 +23,7 @@ export function EducatorCard({ profile, verified, name, compact = false }: {
       <div className="flex items-center gap-2 flex-wrap mb-1">
         <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-brand-royal">Meet the teacher</p>
         {verified && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-success-bg text-success text-[11px] font-semibold px-2 py-[2px]">
+          <span className="inline-flex items-center gap-1 rounded-full bg-success-bg text-success text-[12px] font-semibold px-2 py-[2px]">
             <BadgeCheck size={12} /> Verified Educator
           </span>
         )}
@@ -36,7 +36,7 @@ export function EducatorCard({ profile, verified, name, compact = false }: {
             <div key={f.label} className="flex items-start gap-2 min-w-0">
               <f.Icon size={14} className="text-brand-orange mt-[3px] shrink-0" aria-hidden />
               <div className="min-w-0">
-                <dt className="text-[11px] text-slate">{f.label}</dt>
+                <dt className="text-[12px] text-slate">{f.label}</dt>
                 <dd className="text-[13px] text-carbon break-words">{f.value}</dd>
               </div>
             </div>

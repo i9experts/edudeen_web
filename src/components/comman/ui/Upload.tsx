@@ -53,7 +53,7 @@ export function ImageUpload({
               : <Camera size={22} className="text-brand-orange" />}
           <input type="file" accept={accept} className="hidden" onChange={handleFile} disabled={uploading} />
         </label>
-        {error && <p className="text-[11px] text-error mt-1">{error}</p>}
+        {error && <p className="text-[12px] text-error mt-1">{error}</p>}
       </div>
     );
   }
@@ -64,7 +64,7 @@ export function ImageUpload({
       {value.map((url, i) => (
         <div key={i} className="relative w-16 h-16 rounded-lg overflow-hidden border border-bone group">
           <img loading="lazy" decoding="async" src={url} alt="" className="w-full h-full object-cover" />
-          <button
+          <button aria-label="Close"
             type="button"
             onClick={() => remove(i)}
             className="absolute top-0.5 end-0.5 w-5 h-5 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
@@ -85,7 +85,7 @@ export function ImageUpload({
           <input type="file" accept={accept} className="hidden" onChange={handleFile} disabled={uploading} />
         </label>
       )}
-      {error && <p className="text-[11px] text-error w-full">{error}</p>}
+      {error && <p className="text-[12px] text-error w-full">{error}</p>}
     </div>
   );
 }
@@ -120,9 +120,9 @@ export function FileDropSelect({
           <img loading="lazy" decoding="async" src={URL.createObjectURL(value)} alt="" className="w-10 h-10 rounded-md object-cover shrink-0 border border-bone" />
           <div className="flex-1 min-w-0">
             <p className="text-[13px] font-medium text-charcoal truncate">{value.name}</p>
-            <p className="text-[11px] text-slate mt-[1px]">{formatSize(value.size)}</p>
+            <p className="text-[12px] text-slate mt-[1px]">{formatSize(value.size)}</p>
           </div>
-          <button
+          <button aria-label="Close"
             type="button"
             onClick={() => onChange(null)}
             className="w-6 h-6 rounded-full bg-white border border-bone flex items-center justify-center text-slate hover:text-error hover:border-error transition-colors shrink-0"
@@ -181,9 +181,9 @@ export function FileUpload({
           <FileIcon size={18} className="text-success shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="text-[13px] font-medium text-charcoal truncate">{value.fileName}</p>
-            <p className="text-[11px] text-slate mt-[1px]">{formatSize(value.fileSize)} · {value.mimeType}</p>
+            <p className="text-[12px] text-slate mt-[1px]">{formatSize(value.fileSize)} · {value.mimeType}</p>
           </div>
-          <button
+          <button aria-label="Close"
             type="button"
             onClick={() => onChange(null)}
             className="w-6 h-6 rounded-full bg-white border border-bone flex items-center justify-center text-slate hover:text-error hover:border-error transition-colors shrink-0"
@@ -204,7 +204,7 @@ export function FileUpload({
           <input type="file" accept={accept} className="hidden" onChange={handleFile} disabled={uploading} />
         </label>
       )}
-      {error && <p className="text-[11px] text-error mt-1">{error}</p>}
+      {error && <p className="text-[12px] text-error mt-1">{error}</p>}
     </div>
   );
 }

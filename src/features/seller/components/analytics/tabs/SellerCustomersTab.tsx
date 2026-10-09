@@ -18,7 +18,7 @@ export function SellerCustomersTab({ params, currency }: { params: SellerAnalyti
   const d = customers.data;
 
   const ltvColumns: TableColumn<TopCustomerRow>[] = [
-    { key: 'name', header: 'Customer', render: r => <div><p className="font-medium">{r.name}</p><p className="text-[11px] text-slate">{r.email}</p></div> },
+    { key: 'name', header: 'Customer', render: r => <div><p className="font-medium">{r.name}</p><p className="text-[12px] text-slate">{r.email}</p></div> },
     { key: 'totalOrders', header: 'Total Orders', align: 'right' },
     { key: 'lifetimeValue', header: 'Lifetime Value', align: 'right', render: r => formatMoneyCompact(r.lifetimeValue, currency) },
   ];

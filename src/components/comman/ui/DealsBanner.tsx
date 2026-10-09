@@ -95,7 +95,7 @@ function CampaignImage({ src, fit = 'contain', rounded = true }: { src: string |
 // instead of being a static digit.
 function MiniCountdownUnit({ value }: { value: number }) {
   return (
-    <div className="countdown-tick flex h-[24px] w-[24px] items-center justify-center rounded-[7px] border border-bone bg-white text-[11px] font-bold tabular-nums leading-none text-carbon sm:h-[26px] sm:w-[26px]">
+    <div className="countdown-tick flex h-[24px] w-[24px] items-center justify-center rounded-[7px] border border-bone bg-white text-[12px] font-bold tabular-nums leading-none text-carbon sm:h-[26px] sm:w-[26px]">
       {String(value).padStart(2, '0')}
     </div>
   );
@@ -283,7 +283,7 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
                   <CampaignImage src={campaign.bannerImage} fit="cover" />
                 </div>
                 {hasPercentOff && (
-                  <span className="absolute end-1 top-1 sm:end-auto sm:start-1 z-[1] inline-flex items-center rounded-full bg-brand-deep-orange px-[8px] py-[3px] text-[9px] font-bold leading-none text-white">
+                  <span className="absolute end-1 top-1 sm:end-auto sm:start-1 z-[1] inline-flex items-center rounded-full bg-brand-deep-orange px-[8px] py-[3px] text-[12px] font-bold leading-none text-white">
                     -{campaign.discountValue}% OFF
                   </span>
                 )}
@@ -312,7 +312,7 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
                    section below it — the sm:flex column version further
                    down carries the same content for sm and up. */}
                 <div className="absolute inset-x-0 bottom-0 z-[1] flex flex-col gap-[3px] bg-gradient-to-t from-black/75 via-black/45 to-transparent px-3 pt-9 pb-[9px] sm:hidden">
-                  <span className="flex items-center gap-[5px] text-[11px] font-bold leading-none text-white truncate">
+                  <span className="flex items-center gap-[5px] text-[12px] font-bold leading-none text-white truncate">
                     <span className="inline-block h-[9px] w-[3px] shrink-0 rounded-full bg-brand-orange" />
                     {discountHeadline}
                   </span>
@@ -325,13 +325,13 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
                       <span className="text-[7.5px] font-bold uppercase tracking-[0.1em] text-white/70">Ends In</span>
                       <div className="flex items-center gap-[3px]">
                         <MiniCountdownUnit key={`h${countdown.hours}`} value={countdown.hours} />
-                        <span className="pb-[1px] text-[11px] font-bold leading-none text-white/50">:</span>
+                        <span className="pb-[1px] text-[12px] font-bold leading-none text-white/50">:</span>
                         <MiniCountdownUnit key={`m${countdown.minutes}`} value={countdown.minutes} />
-                        <span className="pb-[1px] text-[11px] font-bold leading-none text-white/50">:</span>
+                        <span className="pb-[1px] text-[12px] font-bold leading-none text-white/50">:</span>
                         <MiniCountdownUnit key={`s${countdown.seconds}`} value={countdown.seconds} />
                       </div>
                     </div>
-                    <span className="inline-flex shrink-0 items-center gap-[6px] whitespace-nowrap rounded-full bg-brand-orange px-4 py-[8px] text-[11px] font-bold text-white transition-all duration-200 ease-out group-hover:-translate-y-[1px] group-hover:bg-brand-deep-orange group-active:translate-y-0">
+                    <span className="inline-flex shrink-0 items-center gap-[6px] whitespace-nowrap rounded-full bg-brand-orange px-4 py-[8px] text-[12px] font-bold text-white transition-all duration-200 ease-out group-hover:-translate-y-[1px] group-hover:bg-brand-deep-orange group-active:translate-y-0">
                       Shop Now <ArrowRight size={11} className="transition-transform duration-200 ease-out group-hover:translate-x-[3px]" />
                     </span>
                   </div>
@@ -350,7 +350,7 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
                   {discountHeadline}
                 </span>
                 {metaText && (
-                  <span className="text-[10px] text-white/70 truncate">{metaText}</span>
+                  <span className="text-[12px] text-white/70 truncate">{metaText}</span>
                 )}
               </div>
 
@@ -363,13 +363,13 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
                   <span className="text-[7.5px] font-bold uppercase tracking-[0.1em] text-white/70">Ends In</span>
                   <div className="flex items-center gap-[3px]">
                     <MiniCountdownUnit key={`h${countdown.hours}`} value={countdown.hours} />
-                    <span className="pb-[1px] text-[11px] font-bold leading-none text-white/50">:</span>
+                    <span className="pb-[1px] text-[12px] font-bold leading-none text-white/50">:</span>
                     <MiniCountdownUnit key={`m${countdown.minutes}`} value={countdown.minutes} />
-                    <span className="pb-[1px] text-[11px] font-bold leading-none text-white/50">:</span>
+                    <span className="pb-[1px] text-[12px] font-bold leading-none text-white/50">:</span>
                     <MiniCountdownUnit key={`s${countdown.seconds}`} value={countdown.seconds} />
                   </div>
                 </div>
-                <span className="inline-flex shrink-0 items-center gap-[6px] whitespace-nowrap rounded-full bg-brand-orange px-4 py-[8px] text-[11px] font-bold text-white transition-all duration-200 ease-out group-hover:-translate-y-[1px] group-hover:bg-brand-deep-orange group-active:translate-y-0">
+                <span className="inline-flex shrink-0 items-center gap-[6px] whitespace-nowrap rounded-full bg-brand-orange px-4 py-[8px] text-[12px] font-bold text-white transition-all duration-200 ease-out group-hover:-translate-y-[1px] group-hover:bg-brand-deep-orange group-active:translate-y-0">
                   Shop Now <ArrowRight size={11} className="transition-transform duration-200 ease-out group-hover:translate-x-[3px]" />
                 </span>
               </div>
@@ -389,7 +389,7 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
             <CampaignImage src={campaign.bannerImage} fit="cover" />
             {hasPercentOff && (
               <span className="absolute top-2 start-2 -rotate-6 flex flex-col items-center justify-center size-[42px] rounded-full bg-error text-white border-2 border-white/40 z-[1]">
-                <span className="text-[11px] font-bold leading-none">-{campaign.discountValue}%</span>
+                <span className="text-[12px] font-bold leading-none">-{campaign.discountValue}%</span>
                 <span className="text-[5px] font-semibold uppercase tracking-wide leading-none mt-[1px]">off</span>
               </span>
             )}
@@ -414,7 +414,7 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
               <span className="min-w-0 truncate text-[14px] sm:text-[15px] font-bold">{campaign.name}</span>
               <p className="truncate text-[12px] text-white/85">{campaign.description || 'Limited time campaign'}</p>
               {metaText && (
-                <p className="truncate text-[10.5px] font-medium text-white/65">{metaText}</p>
+                <p className="truncate text-[12px] font-medium text-white/65">{metaText}</p>
               )}
               <span className="mt-[3px] inline-flex w-fit items-center gap-[6px] text-[13px] font-bold text-white underline-offset-4 group-hover:underline">
                 Shop Now <ArrowRight size={13} className="transition-transform duration-150 group-hover:translate-x-0.5" />
@@ -430,7 +430,7 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
 
                 {hasPercentOff && (
                   <span className="absolute -top-2 -start-2 -rotate-6 flex flex-col items-center justify-center size-[42px] rounded-full bg-error text-white border-2 border-white/40">
-                    <span className="text-[11px] font-bold leading-none">-{campaign.discountValue}%</span>
+                    <span className="text-[12px] font-bold leading-none">-{campaign.discountValue}%</span>
                     <span className="text-[5px] font-semibold uppercase tracking-wide leading-none mt-[1px]">off</span>
                   </span>
                 )}

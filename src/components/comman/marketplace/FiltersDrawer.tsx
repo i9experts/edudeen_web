@@ -39,7 +39,7 @@ export function FiltersButton({ count, onClick }: { count: number; onClick: () =
       <SlidersHorizontal size={17} strokeWidth={2.2} />
       Filters
       {count > 0 && (
-        <span className="min-w-[20px] h-[20px] rounded-full bg-brand-orange text-white text-[11px] font-bold flex items-center justify-center px-[5px] leading-none">
+        <span className="min-w-[20px] h-[20px] rounded-full bg-brand-orange text-white text-[12px] font-bold flex items-center justify-center px-[5px] leading-none">
           {count}
         </span>
       )}

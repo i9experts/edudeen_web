@@ -9,6 +9,8 @@ export type RiskLevel = 'high' | 'medium' | 'low';
 
 export interface ModerationStats {
   queueTotal: number;
+  /** Products waiting for an admin to approve them (status pending_review). */
+  pendingListings?: number;
   urgent: number;
   approvedToday: number;
   avgReviewMinutes: number;

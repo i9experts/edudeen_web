@@ -11,6 +11,7 @@ import {
   apiUpdateStore, apiUpdatePinnedProducts, apiUpdateAnnouncementBar, apiGetPublicStoreProducts,
   type PublicStoreProduct, type StoreAnnouncementType,
 } from '@/api/services/store';
+import { BannerUpload } from '@/components/comman/ui/BannerUpload';
 import { apiGetStoreTheme, apiUpdateStoreThemeColors, apiUpdateIdentityBanner, apiPublishStoreTheme } from '@/api/services/storeTheme';
 import { getStorePagePath, getStorefrontUrl } from '@/utils/storefrontUrl';
 import { STORE_ACCENT_SWATCHES, storeCoverGradient } from '@/features/storefront/StorefrontContext';
@@ -270,11 +271,11 @@ export function StorePageOverview() {
           {/* ── Settings ── */}
           <div className="flex flex-col gap-5 min-w-0">
             <Section icon={<ImageIcon size={15} />} title="Banner & logo" hint="A wide banner (about 1600 × 400) and a square logo work best.">
-              <div className="grid grid-cols-1 sm:grid-cols-[1fr_160px] gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 <div>
                   <p className="text-[12px] font-medium text-charcoal mb-1.5">Banner photo</p>
-                  <ImageUpload value={draft.coverImage ? [draft.coverImage] : []} onChange={urls => set('coverImage', urls[0] ?? '')} maxFiles={1} />
-                  <p className="text-[11px] text-slate mt-1">No photo? Your accent colour makes a gradient banner.</p>
+                  <BannerUpload value={draft.coverImage} onChange={url => set('coverImage', url)} />
+                  <p className="text-[12px] text-slate mt-1">No photo? Your accent colour makes a gradient banner.</p>
                 </div>
                 <div>
                   <p className="text-[12px] font-medium text-charcoal mb-1.5">Logo</p>
@@ -288,7 +289,7 @@ export function StorePageOverview() {
                 <Input label="Store name" value={draft.name} maxLength={60} onChange={e => set('name', e.target.value)} />
                 <Input label="Headline" placeholder="e.g. Joyful Quran & Arabic resources for young learners" value={draft.tagline} maxLength={90} onChange={e => set('tagline', e.target.value)} />
                 <Textarea label="About your store" rows={4} maxLength={600} placeholder="Your teaching background, what makes your resources special, who they're for…" value={draft.description} onChange={e => set('description', e.target.value)} />
-                <p className="text-[11px] text-slate -mt-2 text-right">{draft.description.length}/600</p>
+                <p className="text-[12px] text-slate -mt-2 text-right">{draft.description.length}/600</p>
               </div>
             </Section>
 
@@ -338,7 +339,7 @@ export function StorePageOverview() {
                   >
                     <span className={clsx('block rounded-md mb-2', value === 'standard' ? 'h-10' : 'h-5')} style={{ background: storeCoverGradient(draft.accent) }} />
                     <span className="block text-[13px] font-semibold text-charcoal">{label}</span>
-                    <span className="block text-[11.5px] text-slate">{sub}</span>
+                    <span className="block text-[12px] text-slate">{sub}</span>
                   </button>
                 ))}
               </div>
@@ -398,9 +399,9 @@ export function StorePageOverview() {
                             ? <img src={p.images[0]} alt="" className="w-full h-full object-cover" loading="lazy" />
                             : <ProductCoverFallback name={p.name} size="xs" className="w-full h-full" />}
                         </span>
-                        <span className="block px-2 py-1.5 text-[11.5px] font-medium text-charcoal line-clamp-2">{p.name}</span>
+                        <span className="block px-2 py-1.5 text-[12px] font-medium text-charcoal line-clamp-2">{p.name}</span>
                         {picked && (
-                          <span className="absolute top-1.5 right-1.5 size-6 rounded-full bg-brand-orange text-white text-[11px] font-bold flex items-center justify-center">{order + 1}</span>
+                          <span className="absolute top-1.5 right-1.5 size-6 rounded-full bg-brand-orange text-white text-[12px] font-bold flex items-center justify-center">{order + 1}</span>
                         )}
                       </button>
                     );
@@ -415,7 +416,7 @@ export function StorePageOverview() {
             <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-slate">Preview</p>
             <div className="rounded-2xl overflow-hidden border border-bone bg-white">
               {draft.announcementOn && draft.announcementMessage.trim() && (
-                <div className="px-3 py-1.5 text-center text-[11.5px] font-semibold text-white" style={{ background: draft.accent }}>
+                <div className="px-3 py-1.5 text-center text-[12px] font-semibold text-white" style={{ background: draft.accent }}>
                   {draft.announcementMessage}{draft.announcementCtaLabel ? ` · ${draft.announcementCtaLabel} →` : ''}
                 </div>
               )}
@@ -428,8 +429,8 @@ export function StorePageOverview() {
                   </span>
                   <span className="min-w-0">
                     <span className="block font-serif text-[18px] text-white leading-tight truncate">{draft.name || 'Your store'}</span>
-                    <span className="block text-[11px] text-white/85 truncate">{draft.tagline || draft.description || 'Add a headline'}</span>
-                    <span className="block text-[10.5px] text-white/75 mt-0.5">
+                    <span className="block text-[12px] text-white/85 truncate">{draft.tagline || draft.description || 'Add a headline'}</span>
+                    <span className="block text-[12px] text-white/75 mt-0.5">
                       {[draft.showFollowerCount && 'Followers', draft.showProductCount && `${listedCount} products`].filter(Boolean).join(' · ')}
                     </span>
                   </span>
@@ -451,7 +452,7 @@ export function StorePageOverview() {
               )}
               <div className="px-3 py-3 border-t border-bone">
                 <p className="text-[12px] font-bold text-carbon">All products</p>
-                <p className="text-[11px] text-slate">{listedCount} listed · Edudeen cart & checkout</p>
+                <p className="text-[12px] text-slate">{listedCount} listed · Edudeen cart & checkout</p>
               </div>
             </div>
 

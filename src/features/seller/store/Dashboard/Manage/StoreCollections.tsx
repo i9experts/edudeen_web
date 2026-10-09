@@ -10,7 +10,7 @@ import { CollectionFormModal } from './CollectionFormModal';
 
 function StatusBadge({ status }: { status: 'active' | 'draft' }) {
   return (
-    <span className={`text-[10px] font-semibold px-[7px] py-[2px] rounded-full ${status === 'active' ? 'bg-success-bg text-success' : 'bg-bone text-slate'}`}>
+    <span className={`text-[12px] font-semibold px-[7px] py-[2px] rounded-full ${status === 'active' ? 'bg-success-bg text-success' : 'bg-bone text-slate'}`}>
       {status === 'active' ? 'Active' : 'Draft'}
     </span>
   );
@@ -85,7 +85,7 @@ export default function StoreCollections() {
                       <p className="text-[13.5px] font-semibold text-charcoal truncate">{c.name}</p>
                       <StatusBadge status={c.status} />
                     </div>
-                    <p className="text-[11px] text-slate mt-0.5">
+                    <p className="text-[12px] text-slate mt-0.5">
                       {c.type === 'automatic' ? 'Automatic' : `${c.productIds.length} products`} · /{c.slug}
                     </p>
                   </div>

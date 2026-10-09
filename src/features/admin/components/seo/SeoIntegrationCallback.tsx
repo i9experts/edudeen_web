@@ -168,7 +168,7 @@ export function SeoIntegrationCallback({ side }: { side: SeoIntegrationSide }) {
                   value={siteIdentifier}
                   onChange={e => setSiteIdentifier(e.target.value)}
                 />
-                <p className="text-[11px] text-slate mt-1">{SITE_FIELD[provider].hint}</p>
+                <p className="text-[12px] text-slate mt-1">{SITE_FIELD[provider].hint}</p>
               </div>
             )}
             {error && (

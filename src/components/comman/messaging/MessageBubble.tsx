@@ -89,7 +89,7 @@ function VoiceNoteBubble({ url, own }: { url: string; own: boolean }) {
             style={{ width: `${pct}%`, background: own ? 'white' : '#174771' }}
           />
         </div>
-        <span className={clsx('text-[10px] tabular-nums', own ? 'text-white/70' : 'text-slate')}>
+        <span className={clsx('text-[12px] tabular-nums', own ? 'text-white/70' : 'text-slate')}>
           {playing || current > 0 ? fmt(current) : fmt(duration || 0)}
         </span>
       </div>
@@ -272,7 +272,7 @@ export const MessageBubble = memo(function MessageBubble({
                   )}
                 />
                 <div className={clsx('flex items-center justify-end gap-[6px] mt-[6px]', own ? 'text-white/70' : 'text-slate')}>
-                  <span className="text-[10px]">Enter to save</span>
+                  <span className="text-[12px]">Enter to save</span>
                   <button
                     onClick={onCancelEdit}
                     aria-label="Cancel edit"
@@ -326,7 +326,7 @@ export const MessageBubble = memo(function MessageBubble({
                 {message.type === 'text' && (
                   <p className={clsx('text-[14px] leading-[1.45] whitespace-pre-wrap break-words', own ? 'ps-[18px]' : 'pe-[18px]')}>
                     {message.text}
-                    {message.isEdited && <span className={clsx('text-[10px] ms-1', own ? 'text-white/60' : 'text-slate')}>(edited)</span>}
+                    {message.isEdited && <span className={clsx('text-[12px] ms-1', own ? 'text-white/60' : 'text-slate')}>(edited)</span>}
                   </p>
                 )}
 
@@ -386,7 +386,7 @@ export const MessageBubble = memo(function MessageBubble({
                         <div className="min-w-0">
                           <p className="text-[12.5px] font-medium truncate max-w-[180px]">{a.fileName ?? 'File'}</p>
                           {a.fileSize != null && (
-                            <p className={clsx('text-[10.5px]', own ? 'text-white/70' : 'text-slate')}>{formatFileSize(a.fileSize)}</p>
+                            <p className={clsx('text-[12px]', own ? 'text-white/70' : 'text-slate')}>{formatFileSize(a.fileSize)}</p>
                           )}
                         </div>
                       </a>
@@ -401,13 +401,13 @@ export const MessageBubble = memo(function MessageBubble({
               {message._failed ? (
                 <button
                   onClick={() => onRetry?.(message)}
-                  className="flex items-center gap-[3px] text-[10.5px] text-error bg-transparent border-none cursor-pointer p-0"
+                  className="flex items-center gap-[3px] text-[12px] text-error bg-transparent border-none cursor-pointer p-0"
                 >
                   <AlertCircle size={12} /> Tap to retry
                 </button>
               ) : (
                 <>
-                  <span className="text-[10.5px] text-slate">{time}</span>
+                  <span className="text-[12px] text-slate">{time}</span>
                   {own && (
                     message._pending
                       ? <Clock size={12} className="text-slate" />

@@ -253,7 +253,7 @@ export function StoreInventory() {
               <p className="text-[13px] font-bold text-charcoal">
                 {lowStock.count} product{lowStock.count !== 1 ? 's' : ''} running low
               </p>
-              <span className="text-[11px] text-slate ml-1">(≤ {lowStock.threshold} units left)</span>
+              <span className="text-[12px] text-slate ml-1">(≤ {lowStock.threshold} units left)</span>
             </div>
             <div className="px-5 py-3 flex flex-col divide-y divide-[#f3f2ec]">
               {(lowStock.items ?? []).slice(0, 5).map(item => (
@@ -267,7 +267,7 @@ export function StoreInventory() {
                 </button>
               ))}
               {(lowStock.items ?? []).length > 5 && (
-                <p className="text-[11px] text-slate pt-2">+ {(lowStock.items ?? []).length - 5} more</p>
+                <p className="text-[12px] text-slate pt-2">+ {(lowStock.items ?? []).length - 5} more</p>
               )}
             </div>
           </Card>
@@ -308,7 +308,7 @@ export function StoreInventory() {
                 />
                 <button
                   onClick={handleRetry}
-                  className="flex items-center gap-1 text-[11px] text-slate cursor-pointer border border-bone rounded-[6px] px-2 py-[6px] transition-colors duration-150 hover:bg-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/50 shrink-0"
+                  className="flex items-center gap-1 text-[12px] text-slate cursor-pointer border border-bone rounded-[6px] px-2 py-[6px] transition-colors duration-150 hover:bg-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/50 shrink-0"
                 >
                   <RefreshCw size={11} /> Refresh
                 </button>

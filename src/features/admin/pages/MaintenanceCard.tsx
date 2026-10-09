@@ -94,7 +94,7 @@ export function MaintenanceCard({ config, onSaved }: { config: PlatformConfig; o
               Say what is down and why. Only the areas you pick are blocked; admin tools and sign-in always keep working, and you can browse the site as an admin.
             </p>
           </div>
-          <span className={clsx('rounded-full px-3 py-1 text-[11.5px] font-bold', pill)}>
+          <span className={clsx('rounded-full px-3 py-1 text-[12px] font-bold', pill)}>
             {state === 'off' ? 'Off' : state === 'scheduled' ? 'Scheduled' : 'Live now'}
           </span>
         </div>
@@ -106,7 +106,7 @@ export function MaintenanceCard({ config, onSaved }: { config: PlatformConfig; o
             <button key={t} type="button" onClick={() => pickType(t)} aria-pressed={type === t}
               className={clsx('text-start rounded-lg border px-3 py-2 cursor-pointer bg-white', type === t ? 'border-brand-orange ring-2 ring-brand-pale-orange' : 'border-bone hover:border-[#c5c4bc]')}>
               <span className="block text-[13px] font-semibold text-carbon">{MAINTENANCE_TYPE_INFO[t].label}</span>
-              <span className="block text-[11.5px] text-slate">{MAINTENANCE_TYPE_INFO[t].blurb}</span>
+              <span className="block text-[12px] text-slate">{MAINTENANCE_TYPE_INFO[t].blurb}</span>
             </button>
           ))}
         </div>
@@ -119,7 +119,7 @@ export function MaintenanceCard({ config, onSaved }: { config: PlatformConfig; o
               <input type="checkbox" checked={scopes.includes(s)} onChange={() => toggleScope(s)} className="mt-[3px] accent-brand-orange" />
               <span>
                 <span className="block text-[13px] font-semibold text-carbon">{scopeLabel(s)}</span>
-                <span className="block text-[11.5px] text-slate">{MAINTENANCE_AREA_INFO[s].hint}</span>
+                <span className="block text-[12px] text-slate">{MAINTENANCE_AREA_INFO[s].hint}</span>
               </span>
             </label>
           ))}
@@ -127,7 +127,7 @@ export function MaintenanceCard({ config, onSaved }: { config: PlatformConfig; o
 
         {/* One feature / page only */}
         <p className="text-[12px] font-semibold text-charcoal mt-5 mb-1">…or just one feature or page</p>
-        <p className="text-[11.5px] text-slate mt-0 mb-2">The rest of the site keeps working. Visitors who open that page or section see your message there.</p>
+        <p className="text-[12px] text-slate mt-0 mb-2">The rest of the site keeps working. Visitors who open that page or section see your message there.</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
           {MAINTENANCE_FEATURES.map(f => {
             const sc = featureScope(f);
@@ -136,7 +136,7 @@ export function MaintenanceCard({ config, onSaved }: { config: PlatformConfig; o
                 <input type="checkbox" checked={scopes.includes(sc)} onChange={() => toggleScope(sc)} className="mt-[3px] accent-brand-orange" />
                 <span>
                   <span className="block text-[13px] font-semibold text-carbon">{MAINTENANCE_FEATURE_INFO[f].label}</span>
-                  <span className="block text-[11.5px] text-slate">{MAINTENANCE_FEATURE_INFO[f].hint}</span>
+                  <span className="block text-[12px] text-slate">{MAINTENANCE_FEATURE_INFO[f].hint}</span>
                 </span>
               </label>
             );
@@ -175,7 +175,7 @@ export function MaintenanceCard({ config, onSaved }: { config: PlatformConfig; o
           <p className="text-[11px] font-bold uppercase tracking-wider text-slate m-0 mb-1">Users will see</p>
           <p className="text-[14px] font-bold text-carbon m-0">{title.trim() || info.defaultTitle}</p>
           <p className="text-[12.5px] text-charcoal m-0 mt-1">{message.trim() || info.defaultMessage}</p>
-          <p className="text-[11.5px] text-slate m-0 mt-2">
+          <p className="text-[12px] text-slate m-0 mt-2">
             Affects: {scopes.includes('all') ? MAINTENANCE_AREA_INFO.all.label : scopes.map(s => scopeLabel(s)).join(', ')}
             {endsAt && ` · Back around ${new Date(endsAt).toLocaleString()}`}
           </p>
@@ -194,7 +194,7 @@ export function MaintenanceCard({ config, onSaved }: { config: PlatformConfig; o
               <Button variant="outline" loading={submitting} onClick={() => apply(false)}>{state === 'scheduled' ? 'Cancel schedule' : 'Turn off — back online'}</Button>
             </>
           )}
-          {state === 'live' && <span className="text-[11.5px] font-semibold text-error inline-flex items-center gap-1"><AlertTriangle size={12} /> Users are being blocked right now.</span>}
+          {state === 'live' && <span className="text-[12px] font-semibold text-error inline-flex items-center gap-1"><AlertTriangle size={12} /> Users are being blocked right now.</span>}
         </div>
       </div>
 

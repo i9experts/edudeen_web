@@ -18,7 +18,7 @@
   --color-carbon:   #152D43;
   --color-charcoal: #1F3A52;
   --color-graphite: #486071;
-  --color-slate:    #64727B;
+  --color-slate:    #5B6973;  /* AA (>=4.5:1) on white and cream */
   --color-bone:     #E1E7EA;
   --color-cream:    #F5F8FA;
 
@@ -38,15 +38,24 @@
   --color-accent-violet-bg: #F5F0FB;
 
   /* ── Semantic ── */
-  --color-success:    #2D8A4E;
+  --color-success:    #2A7F49;
   --color-success-bg: #EBF7EF;
-  --color-warning:    #C08B1E;
+  --color-warning:    #9A6B0A;
   --color-warning-bg: #FEF7E5;
   --color-error:      #C13030;
   --color-error-bg:   #FDEAEA;
   --color-error-border: #FECACA;
   --color-info:       #1A72C2;
   --color-info-bg:    #E6F1FB;
+  /* Phase 2: matching borders + text shades so every status family has surface/border/text. */
+  --color-success-border: #BFE3CC;
+  --color-warning-border: #F0DDA6;
+  --color-info-border:    #BBD8F2;
+  --color-warning-text:   #7A5600;
+  --color-success-text:   #1F6B3B;
+  --color-info-text:      #12568F;
+  --color-danger:         var(--color-error);
+  --color-danger-bg:      var(--color-error-bg);
 
   /* Muted grey used by the admin login screen. */
   --color-pos-muted:         #5C5A58;
@@ -118,6 +127,10 @@
   --shadow-card: 0 1px 3px rgba(20,15,10,0.06);
   --shadow-card-hover: 0 6px 20px -4px rgba(20,15,10,0.08);
   --shadow-raised: 0 10px 28px rgba(20,15,10,0.07);
+  /* Phase 2 elevation levels: 1 resting, 2 raised/dropdown, 3 modal/overlay. */
+  --shadow-level-1: 0 1px 2px rgba(21,45,67,0.06), 0 1px 3px rgba(21,45,67,0.05);
+  --shadow-level-2: 0 6px 18px -4px rgba(21,45,67,0.12);
+  --shadow-level-3: 0 18px 44px -8px rgba(21,45,67,0.22);
 
   /* ── Motion ── */
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
@@ -667,9 +680,10 @@
 .lang-ur [class*="tracking-"] { letter-spacing: 0; }
 /* Nastaliq needs more room between lines than Latin text; tight English
    leading would make wrapped Urdu lines overlap. */
-.lang-ur body { line-height: 1.8; }
-.lang-ur [class*="leading-"]:not(.leading-none) { line-height: 1.75; }
-.lang-ur h1, .lang-ur h2, .lang-ur h3 { line-height: 1.6; }
+.lang-ur body { line-height: 2; }
+.lang-ur [class*="leading-"]:not(.leading-none) { line-height: 1.95; }
+.lang-ur h1, .lang-ur h2, .lang-ur h3 { line-height: 2.05; }
+.lang-ur .num, .lang-ur [class*="text-price"] { line-height: 1.5; }
 /* Arrows and chevrons point the reading direction. */
 [dir='rtl'] .lucide-arrow-right,
 [dir='rtl'] .lucide-arrow-left,
@@ -687,3 +701,11 @@
 [dir='rtl'] input[type='password'] { direction: ltr; text-align: right; }
 /* A chevron that rotates to show 'open' already points the right way. */
 [dir='rtl'] [class*='lucide-chevron'][class*='rotate-'] { transform: none; }
+
+/* Georgia defaults to old-style digits; force lining everywhere serif is used (page titles, stats, prices). */
+.font-serif, h1, h2 { font-variant-numeric: lining-nums; }
+/* Phase 2: lining + tabular numerals for prices, stats and table figures (Georgia has old-style digits). */
+.num { font-variant-numeric: lining-nums tabular-nums; font-feature-settings: 'lnum' 1, 'tnum' 1; }
+.num-lining { font-variant-numeric: lining-nums; font-feature-settings: 'lnum' 1; }
+/* Minimum comfortable tap target on touch screens for controls that opt in. */
+@media (pointer: coarse) { .tap-40 { min-height: 40px; min-width: 40px; } }

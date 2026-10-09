@@ -102,7 +102,7 @@ export function FinanceReportsTab({ params }: { params: AdminFinanceParams }) {
               </div>
             </div>
           ))}
-          <p className="text-[11px] text-slate">{settlement.data.note}</p>
+          <p className="text-[12px] text-slate">{settlement.data.note}</p>
         </div>
       ) : null}
 
@@ -144,7 +144,7 @@ export function FinanceReportsTab({ params }: { params: AdminFinanceParams }) {
             ))}
             <MetricCard label="Total (USD-equivalent)" value={formatMoneyCompact(exposure.data.totalUSDEquivalent, 'USD')} sub={`Threshold ${formatMoneyCompact(exposure.data.threshold, 'USD')}`} />
           </div>
-          <p className="text-[11px] text-slate">Pending-settlement balances converted to USD at today's rate — a daily check alerts admins if this crosses the configured threshold. Visibility only, no automatic hedging. {IGNORES_FILTERS}</p>
+          <p className="text-[12px] text-slate">Pending-settlement balances converted to USD at today's rate — a daily check alerts admins if this crosses the configured threshold. Visibility only, no automatic hedging. {IGNORES_FILTERS}</p>
         </div>
       ) : null}
 
@@ -167,9 +167,9 @@ export function FinanceReportsTab({ params }: { params: AdminFinanceParams }) {
               <StatusBadge status={lastRun.hasAnyDiscrepancy ? 'Flagged' : 'Active'} />
             </div>
             {lastRun.byCurrency.length === 0 ? (
-              <p className="text-[11.5px] text-slate m-0">No orders or ledger entries in this window.</p>
+              <p className="text-[12px] text-slate m-0">No orders or ledger entries in this window.</p>
             ) : lastRun.byCurrency.map(c => (
-              <p key={c.currency} className="text-[11.5px] text-slate m-0">
+              <p key={c.currency} className="text-[12px] text-slate m-0">
                 <span className="font-semibold text-charcoal">{c.currency}</span>: collected {formatMoneyCompact(c.buyerCollected, c.currency)} ({c.orderCount} orders)
                 {' '}· ledger {formatMoneyCompact(c.expectedFromLedger, c.currency)} · drift{' '}
                 <span className={c.hasDiscrepancy ? 'text-error font-semibold' : ''}>{formatMoneyCompact(c.drift, c.currency)}</span>

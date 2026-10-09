@@ -159,7 +159,7 @@ function RatingSummaryCard({
                     style={{ width: `${pct}%` }}
                   />
                 </div>
-                <span className="text-[11px] text-slate w-7 text-end shrink-0">{count}</span>
+                <span className="text-[12px] text-slate w-7 text-end shrink-0">{count}</span>
               </button>
             );
           })}
@@ -222,7 +222,7 @@ function ReviewCard({ review: r, storeName, onToggleHelpful, onEdit, onDelete, o
       }`}>
       <div className="flex items-start justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full text-[11px] font-bold flex items-center justify-center shrink-0" style={{ background: av.bg, color: av.color }}>
+          <div className="w-9 h-9 rounded-full text-[12px] font-bold flex items-center justify-center shrink-0" style={{ background: av.bg, color: av.color }}>
             {initials}
           </div>
           <div>
@@ -237,7 +237,7 @@ function ReviewCard({ review: r, storeName, onToggleHelpful, onEdit, onDelete, o
             </div>
             <div className="flex items-center gap-2 mt-[3px]">
               {r.rating != null && <StarRating value={r.rating} size={12} />}
-              <span className="text-[11px] text-slate">{timeAgo(r.createdAt)}</span>
+              <span className="text-[12px] text-slate">{timeAgo(r.createdAt)}</span>
             </div>
           </div>
         </div>
@@ -272,7 +272,7 @@ function ReviewCard({ review: r, storeName, onToggleHelpful, onEdit, onDelete, o
             <div className="w-5 h-5 rounded-full bg-bone flex items-center justify-center shrink-0">
               <Store size={11} className="text-graphite" />
             </div>
-            <p className="text-[11px] font-semibold text-brand-orange">
+            <p className="text-[12px] font-semibold text-brand-orange">
               Response from {storeName || 'the Seller'}
             </p>
           </div>
@@ -283,7 +283,7 @@ function ReviewCard({ review: r, storeName, onToggleHelpful, onEdit, onDelete, o
       <div className="flex items-center justify-end mt-3 pt-3 border-t border-bone">
         <button
           onClick={onToggleHelpful}
-          className={`flex items-center gap-[6px] text-[11px] font-medium px-[10px] py-[5px] rounded-lg border cursor-pointer transition-colors ${r.helpfulByMe
+          className={`flex items-center gap-[6px] text-[12px] font-medium px-[10px] py-[5px] rounded-lg border cursor-pointer transition-colors ${r.helpfulByMe
               ? 'bg-brand-pale-orange text-brand-deep-orange border-transparent'
               : 'bg-transparent text-slate border-bone hover:bg-cream'
             }`}

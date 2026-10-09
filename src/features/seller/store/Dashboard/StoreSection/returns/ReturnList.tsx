@@ -7,7 +7,7 @@ import {
   apiGetSellerReturns, apiReturnAction,
   type SellerReturnItem, type ReturnStatus,
 } from '@/api/services/orders';
-import { currencySymbol } from '@/utils/currency';
+import { currencySymbol, formatMoney } from '@/utils/currency';
 import { useDebouncedValue } from '@/hooks/seller/useInventorySearch';
 import { SellerRefundRequests } from './SellerRefundRequests';
 
@@ -154,7 +154,7 @@ export function StoreReturnList() {
       render: r => {
         const st = statusStyle[r.returnStatus] ?? { bg: '#F0EEE6', color: '#5A5852' };
         return (
-          <span className="inline-block px-[10px] py-[3px] rounded-[5px] text-[11px] font-semibold whitespace-nowrap capitalize" style={{ background: st.bg, color: st.color }}>
+          <span className="inline-block px-[10px] py-[3px] rounded-[5px] text-[12px] font-semibold whitespace-nowrap capitalize" style={{ background: st.bg, color: st.color }}>
             {r.returnStatus.replace('_', ' ')}
           </span>
         );
@@ -189,7 +189,7 @@ export function StoreReturnList() {
           {[
             { label: 'Open Requests',  value: stats?.openRequests ?? 0 },
             { label: 'Return Rate',    value: stats?.returnRate ?? '—' },
-            { label: 'Total Refunded (30d)', value: stats ? `${currencySymbol(store?.baseCurrency)}${stats.totalRefunded.toLocaleString()}` : '—' },
+            { label: 'Total Refunded (30d)', value: stats ? `${formatMoney(stats.totalRefunded, store?.baseCurrency)}` : '—' },
           ].map(m => (
             <div key={m.label} className="bg-white border border-bone rounded-[10px] px-5 py-4">
               <p className="text-[11px] font-medium text-slate uppercase tracking-[0.06em] mb-1">{m.label}</p>
@@ -245,7 +245,7 @@ export function StoreReturnList() {
                 {STATUS_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
 
-              <button onClick={refetch} className="flex items-center gap-1 text-[11px] text-slate cursor-pointer border border-bone rounded-[6px] px-2 py-[7px] transition-colors duration-150 hover:bg-bone shrink-0 ml-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/50">
+              <button onClick={refetch} className="flex items-center gap-1 text-[12px] text-slate cursor-pointer border border-bone rounded-[6px] px-2 py-[7px] transition-colors duration-150 hover:bg-bone shrink-0 ml-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/50">
                 <RefreshCw size={11} /> Refresh
               </button>
             </div>

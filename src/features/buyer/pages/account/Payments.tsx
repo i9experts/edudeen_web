@@ -141,9 +141,9 @@ export function Payments() {
                   <span className="font-bold text-[14px] text-carbon">PKR {p.amountPKR.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
                   <StatusBadge status={STATUS_LABEL[p.status]} />
                 </div>
-                <p className="text-[11px] text-slate">Submitted {formatDate(p.createdAt)} · {p.orderIds.length} order{p.orderIds.length !== 1 ? 's' : ''}</p>
+                <p className="text-[12px] text-slate">Submitted {formatDate(p.createdAt)} · {p.orderIds.length} order{p.orderIds.length !== 1 ? 's' : ''}</p>
                 {p.status === 'rejected' && p.rejectionReason && (
-                  <p className={clsx('flex items-start gap-1 text-[11.5px] text-error mt-1.5')}>
+                  <p className={clsx('flex items-start gap-1 text-[12px] text-error mt-1.5')}>
                     <AlertCircle size={12} className="mt-[1px] flex-shrink-0" /> {p.rejectionReason}
                   </p>
                 )}

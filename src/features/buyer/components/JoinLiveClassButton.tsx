@@ -32,7 +32,7 @@ export function JoinLiveClassButton({ productId, startsAt }: { productId: string
         className="inline-flex items-center gap-1.5 rounded-lg bg-brand-royal text-white px-3 py-[7px] text-[12.5px] font-bold border-none cursor-pointer disabled:opacity-60">
         {busy ? <Loader2 size={13} className="animate-spin" /> : <Video size={13} />} Join live class
       </button>
-      {start && <span className="text-[11px] text-slate">{start.toLocaleString('en-PK', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}</span>}
+      {start && <span className="text-[12px] text-slate">{start.toLocaleString('en-PK', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}</span>}
     </div>
   );
 }

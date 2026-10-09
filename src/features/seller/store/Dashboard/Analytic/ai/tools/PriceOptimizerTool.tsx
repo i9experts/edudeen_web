@@ -3,7 +3,7 @@ import { TrendingUp, Sparkles, ShieldQuestion } from 'lucide-react';
 import { Field } from '@/components/comman/ui/Field';
 import { Input } from '@/components/comman/ui/Input';
 import { Button } from '@/components/comman/ui/Button';
-import { useGeneratePriceOptimization } from '@/hooks/seller/useAiStudio';
+import { useGeneratePriceOptimization, useAcceptAiGeneration } from '@/hooks/seller/useAiStudio';
 import { ProductPicker } from '../components/ProductPicker';
 import { costLabel } from '../components/costLabel';
 import { useStoreWorkspace } from '@/components/layouts/StoreLayout';
@@ -24,7 +24,16 @@ export function PriceOptimizerTool({ storeId, onCreditsChanged, creditCost }: Pr
 
   const { generate, generating, error, errorCode, result } = useGeneratePriceOptimization();
 
+  const { accept, submitting: applying, error: applyError } = useAcceptAiGeneration();
+  const [applied, setApplied] = useState(false);
+  // One click writes the suggested price to the product (single-variant products). The seller can still edit it afterwards.
+  const applyPrice = async () => {
+    if (!result) return;
+    if (await accept(storeId, result.generationId, { applyToProduct: true, productId })) setApplied(true);
+  };
+
   const handleGenerate = async (regenerateFromId?: string) => {
+    setApplied(false);
     await generate(storeId, { productId: productId || undefined, attributes: attributes || undefined, regenerateFromId });
     onCreditsChanged();
   };
@@ -123,6 +132,14 @@ export function PriceOptimizerTool({ storeId, onCreditsChanged, creditCost }: Pr
               </>
             )}
 
+            {result.suggestedPrice != null && (
+              <>
+                <Button variant="primary" size="md" loading={applying} disabled={applied || !productId} onClick={applyPrice}>
+                  {applied ? 'Price applied' : `Use this price (${sym}${result.suggestedPrice.toFixed(2)})`}
+                </Button>
+                {applyError && <p className="text-[11px] text-error">{applyError}</p>}
+              </>
+            )}
             <Button variant="outline" size="md" loading={generating} onClick={() => handleGenerate(result.generationId)}>Regenerate</Button>
           </div>
         )}

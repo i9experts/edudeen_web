@@ -6,6 +6,7 @@ import { Toggle } from '@/components/comman/ui/Toggle';
 import { Button } from '@/components/comman/ui/Button';
 import { useGenerateWorksheet } from '@/hooks/seller/useAiStudio';
 import { costLabel } from '../components/costLabel';
+import { apiWorksheetHtml } from '@/api/services/aiFeatures';
 
 const GRADE_LEVELS = ['Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8'];
 
@@ -37,6 +38,23 @@ export function WorksheetBuilderTool({ storeId, onCreditsChanged, creditCost }: 
       regenerateFromId,
     });
     onCreditsChanged();
+  };
+
+  const [printing, setPrinting] = useState(false);
+  const [printError, setPrintError] = useState('');
+  // Printable HTML is rendered by the API from the saved structured worksheet (no AI call, no credits).
+  const printWorksheet = async () => {
+    if (!result) return;
+    setPrinting(true); setPrintError('');
+    try {
+      const res = await apiWorksheetHtml(storeId, result.generationId, includeAnswerKey);
+      const w = window.open('', '_blank');
+      if (!w) { setPrintError('Allow pop-ups to open the printable worksheet.'); return; }
+      w.document.open(); w.document.write(res.data.html); w.document.close();
+      w.focus(); setTimeout(() => w.print(), 400);
+    } catch (err) {
+      setPrintError(err instanceof Error ? err.message : 'Could not open the printable worksheet.');
+    } finally { setPrinting(false); }
   };
 
   const downloadJson = () => {
@@ -125,13 +143,17 @@ export function WorksheetBuilderTool({ storeId, onCreditsChanged, creditCost }: 
               <div className="flex flex-col gap-2 max-h-[240px] overflow-y-auto">
                 {result.sections.map((section, i) => (
                   <div key={i} className="bg-cream border border-bone rounded-lg px-[14px] py-[10px]">
-                    <p className="text-[12px] font-semibold text-charcoal">{section.heading}</p>
-                    <p className="text-[11px] text-slate mt-[2px]">{section.items?.length ?? 0} item(s)</p>
+                    <p className="text-[12px] font-semibold text-charcoal">{section.instructions || `Section ${i + 1}`}</p>
+                    <ol className="list-decimal ps-4 mt-1 text-[11px] text-graphite flex flex-col gap-0.5">
+                      {(section.questions ?? []).map((q, j) => <li key={j}>{q.prompt}</li>)}
+                    </ol>
                   </div>
                 ))}
               </div>
             </div>
-            <Button variant="primary" size="md" onClick={downloadJson}>Download Worksheet (JSON)</Button>
+            <Button variant="primary" size="md" loading={printing} onClick={printWorksheet}>Print / Save as PDF</Button>
+            {printError && <p className="text-[11px] text-error">{printError}</p>}
+            <Button variant="outline" size="md" onClick={downloadJson}>Download Worksheet (JSON)</Button>
             <Button variant="outline" size="md" loading={generating} onClick={() => handleGenerate(result.generationId)}>Regenerate</Button>
           </div>
         )}

@@ -134,7 +134,7 @@ export function ClosingCtaBanner({ className }: { className?: string }) {
             {displayStatItems.map(({ value, label }) => (
               <div key={label}>
                 <p className="text-[19px] sm:text-[21px] font-bold text-white leading-none">{value}</p>
-                <p className="text-[10.5px] text-white/70 mt-1 whitespace-nowrap">{label}</p>
+                <p className="text-[12px] text-white/70 mt-1 whitespace-nowrap">{label}</p>
               </div>
             ))}
             <div className="flex items-center gap-3 ps-1 sm:ps-3">
@@ -147,7 +147,7 @@ export function ClosingCtaBanner({ className }: { className?: string }) {
                 <div className="flex items-center gap-[4px]">
                   <Star size={13} className="text-white fill-white" />
                   <span className="text-[13px] font-bold text-white">{(avgRating as number).toFixed(1)}/5</span>
-                  <span className="text-[11px] text-white/70 whitespace-nowrap">
+                  <span className="text-[12px] text-white/70 whitespace-nowrap">
                     From {compactNumber.format(ratingCount)} reviews
                   </span>
                 </div>

@@ -87,7 +87,7 @@ export function InvoicePage() {
               <tr key={it._id ?? i} className="border-b border-[#f1f1ee] align-top">
                 <td className="py-2 pe-3">
                   <p className="font-medium">{it.name}</p>
-                  <p className="text-[11.5px] text-slate">{it.store}{it.licenseType ? ` · ${LICENSE_LABEL[it.licenseType] ?? it.licenseType} license` : ''}{it.sku ? ` · ${it.sku}` : ''}</p>
+                  <p className="text-[12px] text-slate">{it.store}{it.licenseType ? ` · ${LICENSE_LABEL[it.licenseType] ?? it.licenseType} license` : ''}{it.sku ? ` · ${it.sku}` : ''}</p>
                 </td>
                 <td className="py-2 text-end tabular-nums">{it.quantity}</td>
                 <td className="py-2 text-end tabular-nums">{money(it.price, order.currency)}</td>
@@ -105,7 +105,7 @@ export function InvoicePage() {
           <div className="flex justify-between border-t border-carbon pt-2 mt-1 text-[15px] font-bold"><dt>Total</dt><dd>{money(order.totalAmount, order.currency)}</dd></div>
         </dl>
 
-        <footer className="mt-10 pt-4 border-t border-bone text-[11.5px] text-slate">
+        <footer className="mt-10 pt-4 border-t border-bone text-[12px] text-slate">
           Thank you for learning with Edudeen. Questions about this order? Email support@edudeen.com with the order number above.
         </footer>
       </article>

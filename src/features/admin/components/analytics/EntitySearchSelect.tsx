@@ -50,7 +50,7 @@ export function EntitySearchSelect({ label, placeholder, selectedId, onSelect, s
 
   return (
     <div ref={ref} className="relative w-[220px]">
-      <label className="block text-[11px] font-semibold text-slate mb-1">{label}</label>
+      <label className="block text-[12px] font-semibold text-slate mb-1">{label}</label>
       <div className="relative">
         <Search size={13} className="absolute left-[10px] top-1/2 -translate-y-1/2 text-slate pointer-events-none" />
         <input
@@ -91,7 +91,7 @@ export function EntitySearchSelect({ label, placeholder, selectedId, onSelect, s
                 className="w-full text-left px-3 py-[9px] text-[12.5px] bg-transparent border-0 cursor-pointer hover:bg-cream transition-colors"
               >
                 <div className="font-medium text-charcoal truncate">{r.label}</div>
-                {r.sub && <div className="text-[11px] text-slate truncate">{r.sub}</div>}
+                {r.sub && <div className="text-[12px] text-slate truncate">{r.sub}</div>}
               </button>
             ))
           )}

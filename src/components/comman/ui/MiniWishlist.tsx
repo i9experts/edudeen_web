@@ -82,7 +82,7 @@ export function MiniWishlist() {
           {wishlistCount > 99 ? '99+' : wishlistCount}
         </b>
         {wishlistCount > 0 && (
-          <span className="md:hidden absolute top-[-2px] end-[-4px] min-w-[16px] h-[16px] rounded-[8px] bg-brand-orange text-white text-[9px] font-bold leading-[16px] text-center px-1">
+          <span className="md:hidden absolute top-[-2px] end-[-4px] min-w-[16px] h-[16px] rounded-[8px] bg-brand-orange text-white text-[12px] font-bold leading-[16px] text-center px-1">
             {wishlistCount > 99 ? '99+' : wishlistCount}
           </span>
         )}
@@ -118,7 +118,7 @@ export function MiniWishlist() {
                 </div>
               </div>
               <p className="text-[13.5px] font-semibold text-charcoal">Your wishlist is empty</p>
-              <p className="text-[11.5px] text-slate mt-[3px] mb-5">Save books and courses you love to see them here.</p>
+              <p className="text-[12px] text-slate mt-[3px] mb-5">Save books and courses you love to see them here.</p>
               <Button variant="outline" size="sm" pill onClick={() => goTo('/account/wishlist')}>
                 Go to Wishlist
               </Button>
@@ -137,7 +137,7 @@ export function MiniWishlist() {
                       <WishlistThumb images={item.product.images} name={item.product.name} />
                       <div className="flex-1 min-w-0">
                         <p className="text-[12px] font-medium text-charcoal leading-tight line-clamp-1">{item.product.name}</p>
-                        {variant && <p className="text-[11px] text-slate mt-[3px]">${variant.price.toLocaleString()}</p>}
+                        {variant && <p className="text-[12px] text-slate mt-[3px]">${variant.price.toLocaleString()}</p>}
                       </div>
                     </div>
                   );
@@ -145,7 +145,7 @@ export function MiniWishlist() {
               </div>
 
               {hiddenCount > 0 && (
-                <p className="text-[10.5px] text-slate text-center py-2 border-t border-bone bg-cream/40">
+                <p className="text-[12px] text-slate text-center py-2 border-t border-bone bg-cream/40">
                   +{hiddenCount} more item{hiddenCount !== 1 ? 's' : ''} in your wishlist
                 </p>
               )}

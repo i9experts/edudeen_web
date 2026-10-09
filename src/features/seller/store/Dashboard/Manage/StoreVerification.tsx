@@ -191,7 +191,7 @@ export function StoreVerification() {
               <p className="text-[13px] font-semibold text-carbon">
                 {VERIFICATION_LEVEL_LABELS[level].label}
               </p>
-              <p className="text-[11.5px] text-slate">{editable ? 'Complete every required field and document, then submit for review.' : 'Your submission is locked while under review.'}</p>
+              <p className="text-[12px] text-slate">{editable ? 'Complete every required field and document, then submit for review.' : 'Your submission is locked while under review.'}</p>
             </div>
           </div>
           <StatusBadge status={data.verificationStatus} />
@@ -203,7 +203,7 @@ export function StoreVerification() {
             <div>
               <p className="text-[12.5px] font-semibold text-error mb-[2px]">Your last submission was rejected</p>
               <p className="text-[12.5px] text-error">{data.rejectionReason}</p>
-              <p className="text-[11.5px] text-error/80 mt-1">Correct the details below and submit again.</p>
+              <p className="text-[12px] text-error/80 mt-1">Correct the details below and submit again.</p>
             </div>
           </div>
         )}
@@ -214,7 +214,7 @@ export function StoreVerification() {
           {editable && (
             <div className="flex items-center gap-3 mt-4">
               <Button variant="outline" size="sm" onClick={handleSaveDraft} loading={saving}>Save Draft</Button>
-              {saved && <span className="text-[11.5px] text-success font-medium inline-flex items-center gap-1"><Check size={12} /> Saved</span>}
+              {saved && <span className="text-[12px] text-success font-medium inline-flex items-center gap-1"><Check size={12} /> Saved</span>}
             </div>
           )}
         </div>
@@ -223,7 +223,7 @@ export function StoreVerification() {
           <div className="flex items-center justify-between mb-4">
             <p className="text-[13px] font-bold text-carbon">Required Documents</p>
             {requiredCount > 0 && (
-              <span className="text-[11.5px] font-semibold text-slate">{completeCount} of {requiredCount} complete</span>
+              <span className="text-[12px] font-semibold text-slate">{completeCount} of {requiredCount} complete</span>
             )}
           </div>
           <div className="flex flex-col gap-3">
@@ -261,7 +261,7 @@ export function StoreVerification() {
                       <span className="font-semibold">{HISTORY_ACTION_LABEL[h.action] ?? h.action}</span>
                       {' — '}<span className="text-slate">{new Date(h.at).toLocaleString()}</span>
                     </p>
-                    {h.note && <p className="text-[11.5px] text-slate mt-[1px]">{h.note}</p>}
+                    {h.note && <p className="text-[12px] text-slate mt-[1px]">{h.note}</p>}
                   </div>
                 </div>
               ))}

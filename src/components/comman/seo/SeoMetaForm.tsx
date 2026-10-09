@@ -68,7 +68,7 @@ export function SeoMetaForm({ value, onChange, previewUrl, disabled, loading, cl
       <div>
         <div className="flex justify-between items-center mb-[5px]">
           <label className="text-xs font-medium text-graphite">Meta Title</label>
-          <span className={clsx('text-[11px] font-medium flex items-center gap-[3px]', counterTone(titleLen, 60, 70))}>
+          <span className={clsx('text-[12px] font-medium flex items-center gap-[3px]', counterTone(titleLen, 60, 70))}>
             {titleLen > 0 && titleLen <= 60 && <Check size={11} />}
             {titleLen}/60 chars
           </span>
@@ -84,7 +84,7 @@ export function SeoMetaForm({ value, onChange, previewUrl, disabled, loading, cl
       <div>
         <div className="flex justify-between items-center mb-[5px]">
           <label className="text-xs font-medium text-graphite">Meta Description</label>
-          <span className={clsx('text-[11px] font-medium flex items-center gap-[3px]', counterTone(descLen, 160, 180))}>
+          <span className={clsx('text-[12px] font-medium flex items-center gap-[3px]', counterTone(descLen, 160, 180))}>
             {descLen > 0 && descLen <= 160 && <Check size={11} />}
             {descLen}/160 chars
           </span>
@@ -185,7 +185,7 @@ export function SeoMetaForm({ value, onChange, previewUrl, disabled, loading, cl
       <div className="flex items-center justify-between pt-2 border-t border-bone">
         <div>
           <p className="text-[13px] font-medium text-carbon">No-index this page</p>
-          <p className="text-[11px] text-slate mt-[2px]">
+          <p className="text-[12px] text-slate mt-[2px]">
             {value.noindex ? 'This page will be excluded from search results.' : 'This page is discoverable by search engines.'}
           </p>
         </div>

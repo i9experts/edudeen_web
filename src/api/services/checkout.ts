@@ -132,7 +132,7 @@ export interface CreateCheckoutPayload {
   storeId?:        string;
   // Optional subset of the store's cart to check out (backend falls back to
   // the whole cart when omitted) — used for "check out physical items only".
-  items?:          { productId: string; variantId: string }[];
+  items?:          { productId: string; variantId: string; quantity?: number }[];
 }
 
 // Same key CurrencyPreferenceContext writes to — read directly here rather

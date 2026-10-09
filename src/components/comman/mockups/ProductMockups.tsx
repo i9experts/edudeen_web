@@ -21,7 +21,7 @@ function BrowserChrome({ label }: { label: string }) {
       <span className="size-[7px] rounded-full bg-[#e5675b]" />
       <span className="size-[7px] rounded-full bg-[#66AD36]" />
       <span className="size-[7px] rounded-full bg-[#59c26a]" />
-      <span className="ms-2 text-[10px] text-slate truncate">{label}</span>
+      <span className="ms-2 text-[12px] text-slate truncate">{label}</span>
     </div>
   );
 }
@@ -44,7 +44,7 @@ export function StorefrontPreview({ className }: { className?: string }) {
       <BrowserChrome label="yourstore.edudeen.com" />
       <div className="flex items-center justify-between px-4 py-3 border-b border-bone">
         <span className="text-[13px] font-bold text-carbon">Noor Learning</span>
-        <div className="hidden sm:flex items-center gap-4 text-[10.5px] text-slate">
+        <div className="hidden sm:flex items-center gap-4 text-[12px] text-slate">
           <span>Books</span><span>Courses</span><span>About</span>
         </div>
         <ShoppingCart size={14} className="text-carbon" />
@@ -52,7 +52,7 @@ export function StorefrontPreview({ className }: { className?: string }) {
       <div className="h-[80px] sm:h-[100px] bg-gradient-to-br from-brand-orange to-brand-deep-orange relative flex items-center px-5">
         <div>
           <p className="text-white font-bold text-[13px] sm:text-[15px] leading-tight">Back to School</p>
-          <p className="text-white/80 text-[9.5px] sm:text-[10.5px] mt-0.5">Up to 30% off books and course bundles</p>
+          <p className="text-white/80 text-[9.5px] sm:text-[12px] mt-0.5">Up to 30% off books and course bundles</p>
         </div>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-[10px] p-4">
@@ -125,7 +125,7 @@ export function SellerDashboardPreview({ className }: { className?: string }) {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <p className="text-[10.5px] font-bold text-carbon mb-2">Recent Orders</p>
+            <p className="text-[12px] font-bold text-carbon mb-2">Recent Orders</p>
             <div className="flex flex-col gap-[6px]">
               {RECENT_ORDERS.map(o => (
                 <div key={o.id} className="flex items-center justify-between text-[9.5px]">
@@ -139,7 +139,7 @@ export function SellerDashboardPreview({ className }: { className?: string }) {
             </div>
           </div>
           <div>
-            <p className="text-[10.5px] font-bold text-carbon mb-2">Top Products</p>
+            <p className="text-[12px] font-bold text-carbon mb-2">Top Products</p>
             <div className="flex flex-col gap-[6px]">
               {TOP_PRODUCTS.map(p => (
                 <div key={p.name} className="flex items-center gap-2">
@@ -165,7 +165,7 @@ export function AnalyticsPreview({ className }: { className?: string }) {
     <div className={clsx('w-full rounded-2xl bg-white overflow-hidden shadow-raised border border-bone p-5', className)}>
       <div className="flex items-center justify-between mb-4">
         <p className="text-[12.5px] font-bold text-carbon">Store Revenue</p>
-        <span className="flex items-center gap-1 text-[10px] font-semibold text-success"><TrendingUp size={11} /> 24% vs last month</span>
+        <span className="flex items-center gap-1 text-[12px] font-semibold text-success"><TrendingUp size={11} /> 24% vs last month</span>
       </div>
       <div className="flex items-end gap-[4px] h-[70px] mb-4">
         {[35, 55, 42, 70, 50, 85, 62, 78, 90, 66, 74, 96].map((h, i) => (
@@ -180,7 +180,7 @@ export function AnalyticsPreview({ className }: { className?: string }) {
         ].map(s => (
           <div key={s.label} className="rounded-lg bg-cream px-2.5 py-2 text-center">
             <p><Ph w="w-12" tone="bg-carbon/20" /></p>
-            <p className="text-[9px] text-slate">{s.label}</p>
+            <p className="text-[12px] text-slate">{s.label}</p>
           </div>
         ))}
       </div>
@@ -197,14 +197,14 @@ export function MobileStorePreview({ className }: { className?: string }) {
       <StatusBar />
       <div className="px-[10px] pt-[6px]">
         <div className="flex items-center justify-between mb-[10px]">
-          <span className="text-[10px] font-bold text-carbon">Noor Learning</span>
+          <span className="text-[12px] font-bold text-carbon">Noor Learning</span>
           <div className="flex items-center gap-[6px]">
             <Bell size={11} className="text-charcoal" />
             <ShoppingCart size={11} className="text-charcoal" />
           </div>
         </div>
         <div className="h-[46px] rounded-[8px] bg-gradient-to-br from-brand-orange to-brand-deep-orange mb-[8px] flex items-center px-[10px]">
-          <p className="text-white text-[9px] font-bold leading-tight">30% off<br />Course Bundles</p>
+          <p className="text-white text-[12px] font-bold leading-tight">30% off<br />Course Bundles</p>
         </div>
         <div className="grid grid-cols-2 gap-[6px]">
           {(['quran', 'bookStack', 'notebookPen', 'stationery'] as const).map(key => (
@@ -254,8 +254,8 @@ export function InventoryPreview({ className }: { className?: string }) {
                 <img src={unsplashUrl(item.img, 60)} alt="" className="w-8 h-8 rounded-md object-cover shrink-0" loading="lazy" />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-[10.5px] font-medium text-charcoal truncate">{item.name}</span>
-                    <span className={clsx('text-[10px] font-bold shrink-0', low ? 'text-error' : 'text-carbon')}>{low ? 'Low stock' : 'In stock'}</span>
+                    <span className="text-[12px] font-medium text-charcoal truncate">{item.name}</span>
+                    <span className={clsx('text-[12px] font-bold shrink-0', low ? 'text-error' : 'text-carbon')}>{low ? 'Low stock' : 'In stock'}</span>
                   </div>
                   <div className="h-[4px] rounded-full bg-bone overflow-hidden">
                     <div className={clsx('h-full rounded-full', low ? 'bg-error' : 'bg-brand-orange')} style={{ width: `${Math.min(100, item.pct)}%` }} />
@@ -269,7 +269,7 @@ export function InventoryPreview({ className }: { className?: string }) {
           <span className="w-6 h-6 rounded-md bg-white flex items-center justify-center shrink-0">
             <PackageCheck size={13} className="text-error" />
           </span>
-          <span className="text-[10.5px] text-error flex-1">"Seerah Reader — Paperback" is almost out of stock</span>
+          <span className="text-[12px] text-error flex-1">"Seerah Reader — Paperback" is almost out of stock</span>
           <button className="text-[9.5px] font-semibold text-white bg-error rounded-md px-2 py-1 shrink-0">Restock</button>
         </div>
       </div>
@@ -331,7 +331,7 @@ export function OrdersTimelinePreview({ className }: { className?: string }) {
         <p className="text-[10px] font-bold text-slate uppercase tracking-[0.06em] mb-2">Top customers</p>
         <div className="flex flex-col gap-[6px]">
           {CUSTOMER_ORDERS.map(c => (
-            <div key={c.customer} className="flex items-center justify-between text-[10px]">
+            <div key={c.customer} className="flex items-center justify-between text-[12px]">
               <Ph w="w-16" />
               <Ph w="w-10" />
               <Ph w="w-10" tone="bg-carbon/20" />

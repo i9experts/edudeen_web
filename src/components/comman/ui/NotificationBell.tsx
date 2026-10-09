@@ -61,7 +61,7 @@ export function NotificationToast() {
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-[12.5px] font-bold leading-tight">{toast.title}</p>
-        <p className="text-[11.5px] text-slate mt-1 leading-normal">{toast.body}</p>
+        <p className="text-[12px] text-slate mt-1 leading-normal">{toast.body}</p>
       </div>
       <button
         onClick={clearToast}
@@ -85,7 +85,7 @@ export function NotificationsMenuSection({ onNavigate }: { onNavigate: (path: st
         <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.06em] text-slate">
           <Bell size={12} /> Notifications
           {unreadCount > 0 && (
-            <span className="px-1.5 py-[1px] rounded-full text-[9px] font-bold bg-[#c0392b] text-white normal-case tracking-normal">
+            <span className="px-1.5 py-[1px] rounded-full text-[12px] font-bold bg-[#c0392b] text-white normal-case tracking-normal">
               {unreadCount > 99 ? '99+' : unreadCount} new
             </span>
           )}
@@ -93,7 +93,7 @@ export function NotificationsMenuSection({ onNavigate }: { onNavigate: (path: st
         {unreadCount > 0 && (
           <button
             onClick={markAllAsRead}
-            className="text-[11px] font-semibold text-brand-orange hover:text-brand-deep-orange border-none bg-transparent cursor-pointer flex items-center gap-1 p-0"
+            className="text-[12px] font-semibold text-brand-orange hover:text-brand-deep-orange border-none bg-transparent cursor-pointer flex items-center gap-1 p-0"
           >
             <Check size={11} /> Mark all read
           </button>
@@ -118,8 +118,8 @@ export function NotificationsMenuSection({ onNavigate }: { onNavigate: (path: st
               <span className="size-7 rounded-lg bg-bone flex items-center justify-center shrink-0">{getNotificationIcon(n.type)}</span>
               <span className="flex-1 min-w-0">
                 <span className={clsx('block text-[12px] text-charcoal leading-tight truncate', n.isRead ? 'font-medium' : 'font-bold')}>{n.title}</span>
-                <span className="block text-[11px] text-slate leading-snug line-clamp-1 mt-[2px]">{n.body}</span>
-                <span className="flex items-center gap-1 text-[10px] text-slate mt-[3px]"><Clock size={9} /> {formatRelativeTime(n.createdAt)}</span>
+                <span className="block text-[12px] text-slate leading-snug line-clamp-1 mt-[2px]">{n.body}</span>
+                <span className="flex items-center gap-1 text-[12px] text-slate mt-[3px]"><Clock size={9} /> {formatRelativeTime(n.createdAt)}</span>
               </span>
             </button>
           ))}
@@ -216,7 +216,7 @@ export function NotificationBell() {
             <div className="flex items-center gap-1.5">
               <span className="text-[13px] font-bold text-carbon">Notifications</span>
               {unreadCount > 0 && (
-                <span className="px-1.5 py-[2px] rounded-full text-[9px] font-bold bg-brand-pale-orange text-brand-orange">
+                <span className="px-1.5 py-[2px] rounded-full text-[12px] font-bold bg-brand-pale-orange text-brand-orange">
                   {unreadCount} new
                 </span>
               )}
@@ -224,7 +224,7 @@ export function NotificationBell() {
             {unreadCount > 0 && (
               <button
                 onClick={markAllAsRead}
-                className="text-[11px] font-semibold text-brand-orange hover:text-brand-deep-orange border-none bg-transparent cursor-pointer flex items-center gap-1"
+                className="text-[12px] font-semibold text-brand-orange hover:text-brand-deep-orange border-none bg-transparent cursor-pointer flex items-center gap-1"
               >
                 <Check size={12} /> Mark all read
               </button>
@@ -257,10 +257,10 @@ export function NotificationBell() {
                     <p className={clsx('text-[12px] text-charcoal leading-tight', !notif.isRead ? 'font-bold' : 'font-medium')}>
                       {notif.title}
                     </p>
-                    <p className="text-[11px] text-slate mt-1 leading-normal break-words">
+                    <p className="text-[12px] text-slate mt-1 leading-normal break-words">
                       {notif.body}
                     </p>
-                    <div className="flex items-center gap-1 text-[10px] text-slate mt-1.5">
+                    <div className="flex items-center gap-1 text-[12px] text-slate mt-1.5">
                       <Clock size={9} />
                       <span>{formatRelativeTime(notif.createdAt)}</span>
                     </div>
@@ -302,7 +302,7 @@ export function NotificationBell() {
               <div className="py-8 px-4 text-center">
                 <Bell size={24} className="text-slate/40 mx-auto mb-2" />
                 <p className="text-[12px] font-medium text-slate">All caught up!</p>
-                <p className="text-[10px] text-slate/75 mt-0.5">No new notifications.</p>
+                <p className="text-[12px] text-slate/75 mt-0.5">No new notifications.</p>
               </div>
             )}
           </div>

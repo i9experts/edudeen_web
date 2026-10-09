@@ -77,7 +77,7 @@ function PaymentForm({ amount, currency, onConfirmed }: Omit<StripeCardPaymentPr
         Pay {currencySymbol(currency)}{amount.toLocaleString()}
       </Button>
 
-      <p className="flex items-center justify-center gap-[6px] text-[11px] text-slate">
+      <p className="flex items-center justify-center gap-[6px] text-[12px] text-slate">
         <ShieldCheck size={12} className="text-success shrink-0" /> Payments are encrypted and secured by Stripe
       </p>
     </form>

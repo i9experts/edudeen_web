@@ -7,7 +7,7 @@ import { apiGetCategoryTree } from '@/api/services/categories';
 import { apiListCollections } from '@/api/services/collections';
 import { StoreWorkspaceCtx } from '@/components/layouts/StoreWorkspaceContext';
 import { useInventorySearch } from '@/hooks/seller/useInventorySearch';
-import { currencySymbol } from '@/utils/currency';
+import { formatMoney } from '@/utils/currency';
 
 export type EntityPickerMode = 'products' | 'categories' | 'collections';
 
@@ -69,7 +69,7 @@ export function EntityPickerModal({
   const { setQuery: setInventoryQuery } = inventory;
   useEffect(() => { if (isProducts) setInventoryQuery(query); }, [isProducts, query, setInventoryQuery]);
   const productRows = useMemo<PickerRow[]>(
-    () => inventory.products.map(p => ({ id: p.productId, label: p.name, sub: `${currencySymbol(storeCurrency)}${p.price.toLocaleString()}`, image: p.image })),
+    () => inventory.products.map(p => ({ id: p.productId, label: p.name, sub: `${formatMoney(p.price, storeCurrency)}`, image: p.image })),
     [inventory.products, storeCurrency],
   );
 
@@ -171,7 +171,7 @@ export function EntityPickerModal({
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-[13px] font-semibold text-charcoal truncate">{row.label}</p>
-                    {row.sub && <p className="text-[11px] text-slate truncate">{row.sub}</p>}
+                    {row.sub && <p className="text-[12px] text-slate truncate">{row.sub}</p>}
                   </div>
                   {isSelected && <Check size={16} className="text-brand-orange shrink-0" />}
                 </button>

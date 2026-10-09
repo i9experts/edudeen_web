@@ -112,7 +112,7 @@ export function AdminOverview() {
     { key: 'item', header: 'Resource', render: r => (
       <span className="inline-flex flex-col items-end sm:items-start">
         <span className="text-carbon">{r.itemLabel}</span>
-        <span className="text-[11.5px] text-slate">{TARGET_LABEL[r.targetType]} · {r.reason}</span>
+        <span className="text-[12px] text-slate">{TARGET_LABEL[r.targetType]} · {r.reason}</span>
       </span>
     ) },
     { key: 'creator', header: 'Creator', render: r => r.sellerName ?? '—' },
@@ -154,7 +154,7 @@ export function AdminOverview() {
           Array.from({ length: 3 }).map((_, i) => <MetricCard key={i} label="" value="" loading />)
         ) : modStats.data ? (
           <>
-            <MetricCard label="Awaiting review" value={formatNumber(modStats.data.queueTotal)} sub={modStats.data.avgReviewMinutes ? `~${formatNumber(modStats.data.avgReviewMinutes)} min average review` : undefined} />
+            <MetricCard label="Awaiting review" value={formatNumber(modStats.data.pendingListings ?? modStats.data.queueTotal)} sub={modStats.data.avgReviewMinutes ? `~${formatNumber(modStats.data.avgReviewMinutes)} min average review` : undefined} />
             <MetricCard label="Approved today" value={formatNumber(modStats.data.approvedToday)} />
             <MetricCard label="Urgent flags" value={formatNumber(modStats.data.urgent)} sub="High-risk reports" />
           </>

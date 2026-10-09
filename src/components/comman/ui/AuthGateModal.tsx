@@ -188,7 +188,7 @@ export function AuthGateModal() {
               </div>
 
               {submitError && (
-                <p className="text-[11.5px] text-error flex items-center gap-1"><AlertTriangle size={12} className="shrink-0" /> {submitError}</p>
+                <p className="text-[12px] text-error flex items-center gap-1"><AlertTriangle size={12} className="shrink-0" /> {submitError}</p>
               )}
 
               <Button type="submit" variant="primary" size="md" pill fullWidth loading={submitting} className="justify-center mt-1">
@@ -198,12 +198,12 @@ export function AuthGateModal() {
 
             <div className="flex items-center gap-2">
               <div className="flex-1 h-px bg-bone" />
-              <span className="text-[10px] text-slate whitespace-nowrap">or continue with</span>
+              <span className="text-[12px] text-slate whitespace-nowrap">or continue with</span>
               <div className="flex-1 h-px bg-bone" />
             </div>
             <SocialLoginRow mount={social.mount} onProvider={social.signIn} disabled={submitting} />
             {social.error && (
-              <p className="text-[11.5px] text-info flex items-start gap-1">
+              <p className="text-[12px] text-info flex items-start gap-1">
                 <Info size={12} className="shrink-0 mt-[1px]" /> {social.error}
               </p>
             )}
@@ -270,14 +270,14 @@ export function AuthGateModal() {
               />
 
               {register.error && (
-                <p className="text-[11.5px] text-error flex items-center gap-1"><AlertTriangle size={12} className="shrink-0" /> {register.error}</p>
+                <p className="text-[12px] text-error flex items-center gap-1"><AlertTriangle size={12} className="shrink-0" /> {register.error}</p>
               )}
 
               <Button type="submit" variant="primary" size="md" pill fullWidth loading={register.loading} className="justify-center mt-1">
                 Create Account
               </Button>
 
-              <p className="text-[11px] text-slate text-center leading-[1.5]">
+              <p className="text-[12px] text-slate text-center leading-[1.5]">
                 By creating an account you agree to our{' '}
                 <a href="/terms-of-service" target="_blank" rel="noopener noreferrer" className="text-brand-orange hover:text-brand-deep-orange">Terms</a>{' '}and{' '}
                 <a href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="text-brand-orange hover:text-brand-deep-orange">Privacy Policy</a>.
@@ -312,7 +312,7 @@ export function AuthGateModal() {
                 autoFocus
               />
               {forgot.error && (
-                <p className="text-[11.5px] text-error flex items-center gap-1"><AlertTriangle size={12} className="shrink-0" /> {forgot.error}</p>
+                <p className="text-[12px] text-error flex items-center gap-1"><AlertTriangle size={12} className="shrink-0" /> {forgot.error}</p>
               )}
               <Button type="submit" variant="primary" size="md" pill fullWidth loading={forgot.loading} className="justify-center mt-1">
                 Send Reset Code

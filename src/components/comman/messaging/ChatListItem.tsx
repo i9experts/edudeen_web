@@ -57,7 +57,7 @@ export function ChatListItem({
             <span className="truncate">{name}</span>
             {archived && <Archive size={11} className="text-slate shrink-0" />}
           </span>
-          <span className={clsx('text-[11px] shrink-0', hasUnread ? 'text-brand-orange font-semibold' : 'text-slate')}>{time}</span>
+          <span className={clsx('text-[12px] shrink-0', hasUnread ? 'text-brand-orange font-semibold' : 'text-slate')}>{time}</span>
         </div>
         <div className="flex items-center justify-between gap-2 mt-[2px]">
           <span className={clsx('flex items-center gap-[4px] text-[12.5px] truncate flex-1', hasUnread ? 'text-charcoal font-medium' : 'text-slate')}>
@@ -70,7 +70,7 @@ export function ChatListItem({
             <span className="truncate">{preview}</span>
           </span>
           {hasUnread && (
-            <span className="shrink-0 min-w-[19px] h-[19px] px-1 rounded-full bg-brand-orange text-white text-[10.5px] font-bold flex items-center justify-center">
+            <span className="shrink-0 min-w-[19px] h-[19px] px-1 rounded-full bg-brand-orange text-white text-[12px] font-bold flex items-center justify-center">
               {unread > 99 ? '99+' : unread}
             </span>
           )}

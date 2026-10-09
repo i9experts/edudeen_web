@@ -61,7 +61,7 @@ export function SeoIssueList({ issues, loading, className }: SeoIssueListProps) 
             <Icon size={14} className={clsx('shrink-0 mt-[1px]', color)} />
             <div className="min-w-0">
               <p className="text-[13px] text-carbon leading-[1.5]">{issue.message}</p>
-              <p className="text-[11px] text-slate mt-[2px]">{issue.code}{issue.entityType ? ` · ${issue.entityType}` : ''}</p>
+              <p className="text-[12px] text-slate mt-[2px]">{issue.code}{issue.entityType ? ` · ${issue.entityType}` : ''}</p>
             </div>
           </div>
         );

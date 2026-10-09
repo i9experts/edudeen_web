@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "i18n:check": "node scripts/check-i18n.mjs",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",

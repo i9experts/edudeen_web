@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Printer } from 'lucide-react';
 import { EdudeenLogo } from '@/components/comman/ui/EdudeenLogo';
-import { apiGetQuote, INSTITUTION_TYPES, QUOTE_STATUS_LABEL, type QuoteRequest } from '@/api/services/classroom';
+import { apiGetQuote, INSTITUTION_TYPES, NET_TERMS_LABEL, QUOTE_STATUS_LABEL, type QuoteRequest } from '@/api/services/classroom';
 import { money } from './orderFormat';
 
 const date = (iso?: string | null) => (iso ? new Date(iso).toLocaleDateString('en-PK', { day: 'numeric', month: 'long', year: 'numeric' }) : '—');
@@ -84,13 +84,26 @@ export function QuotationPage() {
             <span>Total</span><span>{money(q.offer.totalPrice, q.offer.currency)}</span>
           </div>
         )}
+        {q.offer && (
+          <section className="mt-6">
+            <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate mb-1">Payment terms</p>
+            <p className="text-graphite">{NET_TERMS_LABEL[q.offer.netTerms ?? 'none']}</p>
+          </section>
+        )}
+        {(q.purchaseOrderNumber || q.purchaseOrderUrl) && (
+          <section className="mt-6">
+            <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate mb-1">Purchase order</p>
+            {q.purchaseOrderNumber && <p className="text-graphite">PO number: <span className="font-mono">{q.purchaseOrderNumber}</span></p>}
+            {q.purchaseOrderUrl && <p className="text-graphite print:hidden"><a href={q.purchaseOrderUrl} target="_blank" rel="noopener noreferrer" className="text-brand-orange underline">View purchase order file</a></p>}
+          </section>
+        )}
         {q.offer?.note && (
           <section className="mt-6">
             <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate mb-1">Terms from the seller</p>
             <p className="whitespace-pre-line text-graphite">{q.offer.note}</p>
           </section>
         )}
-        <footer className="mt-10 pt-4 border-t border-bone text-[11.5px] text-slate">
+        <footer className="mt-10 pt-4 border-t border-bone text-[12px] text-slate">
           This quotation is between the institute and the seller named above, arranged through Edudeen. Quote {q.number} when you pay or contact the seller.
         </footer>
       </article>

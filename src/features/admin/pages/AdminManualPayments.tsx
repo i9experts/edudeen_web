@@ -80,7 +80,7 @@ function ReviewModal({ proof, onClose, onDone }: { proof: AdminManualPaymentProo
         </div>
 
         {proof.reuploadCount > 0 && (
-          <p className="text-[11px] text-warning bg-warning-bg rounded-md px-2 py-1">Re-uploaded {proof.reuploadCount} time{proof.reuploadCount !== 1 ? 's' : ''} after a prior rejection.</p>
+          <p className="text-[12px] text-warning bg-warning-bg rounded-md px-2 py-1">Re-uploaded {proof.reuploadCount} time{proof.reuploadCount !== 1 ? 's' : ''} after a prior rejection.</p>
         )}
 
         {proof.proofImageUrl && (
@@ -131,7 +131,7 @@ export function AdminManualPayments() {
       render: p => (
         <div className="max-w-[180px]">
           <p className="font-semibold truncate">{p.buyerName}</p>
-          <p className="text-[11px] text-slate truncate">{p.buyerEmail}</p>
+          <p className="text-[12px] text-slate truncate">{p.buyerEmail}</p>
         </div>
       ),
     },

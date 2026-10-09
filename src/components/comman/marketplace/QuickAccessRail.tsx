@@ -71,7 +71,7 @@ function DealsPanel({ close }: { close: () => void }) {
           <Flame size={18} className="shrink-0" />
           <span className="flex-1 min-w-0">
             <span className="block text-[13px] font-bold truncate">{c.name}</span>
-            <span className="block text-[11px] opacity-85">Ends in <span className="tabular-nums">{timeLeft(c.endDate)}</span></span>
+            <span className="block text-[12px] opacity-85">Ends in <span className="tabular-nums">{timeLeft(c.endDate)}</span></span>
           </span>
           {c.discountType === 'percentage' && c.discountValue ? <span className="text-[12px] font-bold bg-white/20 rounded-full px-2 py-0.5">{`${c.discountValue}% off`}</span> : null}
         </Link>
@@ -93,7 +93,7 @@ function DealsPanel({ close }: { close: () => void }) {
                       </span>
                     )}
                   </span>
-                  <span className="text-[11px] font-bold text-error bg-error-bg rounded-full px-2 py-0.5 shrink-0">-{pct}%</span>
+                  <span className="text-[12px] font-bold text-error bg-error-bg rounded-full px-2 py-0.5 shrink-0">-{pct}%</span>
                 </Link>
               </li>
             );
@@ -112,7 +112,7 @@ function CategoriesPanel({ close }: { close: () => void }) {
         <GraduationCap size={18} className="text-brand-royal shrink-0" />
         <span className="flex-1">
           <span className="block text-[13px] font-bold text-carbon">Learn by grade</span>
-          <span className="block text-[11.5px] text-slate">Preschool to university, by subject</span>
+          <span className="block text-[12px] text-slate">Preschool to university, by subject</span>
         </span>
         <ArrowRight size={14} className="text-brand-royal" />
       </Link>
@@ -124,7 +124,7 @@ function CategoriesPanel({ close }: { close: () => void }) {
             {(c.children?.length ?? 0) > 0 && (
               <div className="flex flex-wrap gap-1.5 mt-1.5">
                 {c.children!.slice(0, 6).map(s => (
-                  <Link key={s._id} to={categoryPath(s)} onClick={close} className="text-[11.5px] text-graphite no-underline rounded-full border border-bone px-2.5 py-[3px] hover:border-brand-orange hover:text-brand-orange">{s.name}</Link>
+                  <Link key={s._id} to={categoryPath(s)} onClick={close} className="text-[12px] text-graphite no-underline rounded-full border border-bone px-2.5 py-[3px] hover:border-brand-orange hover:text-brand-orange">{s.name}</Link>
                 ))}
               </div>
             )}
@@ -170,7 +170,7 @@ function AccountPanel({ close }: { close: () => void }) {
   const links: { to: string; label: string; Icon: LucideIcon }[] = [
     { to: '/account/orders', label: 'My Orders', Icon: Package },
     { to: '/account/downloads', label: 'My Library', Icon: LibraryBig },
-    { to: '/account/wishlist', label: 'Wishlist', Icon: Heart },
+    { to: '/account/wishlist', label: 'Saved', Icon: Heart },
     { to: '/account/messages', label: 'Messages', Icon: MessageSquare },
     { to: '/account/quotes', label: 'School Quotes', Icon: FileSpreadsheet },
     { to: '/faq', label: 'Help Center', Icon: HelpCircle },
@@ -306,7 +306,7 @@ export function QuickAccessRail() {
               <b.Icon size={20} />
               {b.badge}
               {open !== b.id && (
-                <span className="pointer-events-none absolute end-full me-3 whitespace-nowrap rounded-md bg-carbon text-white text-[11.5px] font-semibold px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <span className="pointer-events-none absolute end-full me-3 whitespace-nowrap rounded-md bg-carbon text-white text-[12px] font-semibold px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   {b.label}
                 </span>
               )}

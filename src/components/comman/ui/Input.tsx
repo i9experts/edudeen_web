@@ -56,7 +56,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             </span>
           )}
         </div>
-        {error && <p role="alert" className="mt-1 text-[11px] text-error">{error}</p>}
+        {error && <p role="alert" className="mt-1 text-[12px] text-error">{error}</p>}
       </div>
     );
   },
@@ -82,7 +82,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           className={clsx(BASE, 'resize-vertical', error && 'border-error! focus:ring-error/10!', className)}
           {...props}
         />
-        {error && <p role="alert" className="mt-1 text-[11px] text-error">{error}</p>}
+        {error && <p role="alert" className="mt-1 text-[12px] text-error">{error}</p>}
       </div>
     );
   },
@@ -117,7 +117,7 @@ export const Select = forwardRef<
           className="absolute end-3 top-1/2 -translate-y-1/2 text-slate pointer-events-none"
         />
       </div>
-      {error && <p role="alert" className="mt-1 text-[11px] text-error">{error}</p>}
+      {error && <p role="alert" className="mt-1 text-[12px] text-error">{error}</p>}
     </div>
   );
 });

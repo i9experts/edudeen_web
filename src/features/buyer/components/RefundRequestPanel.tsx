@@ -203,18 +203,18 @@ export function RefundRequestPanel({ order, onRequested, className }: RefundRequ
                     <p className="text-[12.5px] font-semibold text-charcoal flex-1 min-w-0 truncate">{names}</p>
                     <Badge color={badge.color} size="sm">{badge.label}</Badge>
                   </div>
-                  <p className="text-[11.5px] text-slate mt-1 break-words">{r.reason}</p>
-                  <p className="text-[11px] text-slate mt-1">
+                  <p className="text-[12px] text-slate mt-1 break-words">{r.reason}</p>
+                  <p className="text-[12px] text-slate mt-1">
                     Requested {fmtDate(r.createdAt)}
                     {r.reviewedAt ? ` · Reviewed ${fmtDate(r.reviewedAt)}` : ''}
                   </p>
                   {r.status === 'approved' && r.buyerRefundAmount != null && (
-                    <p className="text-[11.5px] text-success font-medium mt-1">
+                    <p className="text-[12px] text-success font-medium mt-1">
                       Refunded {formatMoney(r.buyerRefundAmount, r.buyerRefundCurrency ?? order.currency)}
                     </p>
                   )}
                   {r.status === 'rejected' && r.resolutionNotes && (
-                    <p className="text-[11.5px] text-error mt-1 break-words">Reason: {r.resolutionNotes}</p>
+                    <p className="text-[12px] text-error mt-1 break-words">Reason: {r.resolutionNotes}</p>
                   )}
                 </li>
               );
@@ -258,7 +258,7 @@ export function RefundRequestPanel({ order, onRequested, className }: RefundRequ
               maxLength={400}
               placeholder="Add any details that will help the seller review your request."
             />
-            <p className="text-[11px] text-slate leading-relaxed">
+            <p className="text-[12px] text-slate leading-relaxed">
               Each request is reviewed before any refund is issued. You'll see the outcome — and the refunded amount, if approved — on this order.
             </p>
             {submitError && <p className="text-[12px] text-error">{submitError}</p>}

@@ -79,7 +79,7 @@ export function ListPage() {
                     <ResourceCard product={product} index={i} onClick={s => navigate(`/product/${s}`)} />
                     {note && <p className="flex items-start gap-1 text-[12px] text-graphite bg-cream rounded-md px-2 py-1"><StickyNote size={12} className="shrink-0 mt-[2px]" /> {note}</p>}
                     {list.isOwner && (
-                      <div className="flex gap-3 text-[11.5px]">
+                      <div className="flex gap-3 text-[12px]">
                         <button type="button" onClick={() => editNote(product._id, note)} className="bg-transparent border-none p-0 text-slate hover:text-brand-orange cursor-pointer">{note ? 'Edit note' : 'Add note'}</button>
                         <button type="button" onClick={() => remove(product._id)} className="inline-flex items-center gap-1 bg-transparent border-none p-0 text-slate hover:text-error cursor-pointer"><Trash2 size={11} /> Remove</button>
                       </div>

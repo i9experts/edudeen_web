@@ -105,16 +105,16 @@ export function AttributeManagerModal({ categoryId, categoryName, onClose }: Pro
             {definitions.map(def => (
               <div key={def._id} className="flex items-center gap-2 px-3 py-2 border-b border-bone last:border-b-0">
                 <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-semibold text-charcoal truncate">{def.label} <span className="text-[11px] text-slate font-normal">({def.key})</span></p>
-                  <p className="text-[11px] text-slate">
+                  <p className="text-[13px] font-semibold text-charcoal truncate">{def.label} <span className="text-[12px] text-slate font-normal">({def.key})</span></p>
+                  <p className="text-[12px] text-slate">
                     {TYPE_LABELS[def.type]}{def.options.length > 0 ? ` · ${def.options.join(', ')}` : ''}
                   </p>
                 </div>
                 <button type="button" onClick={() => toggleRequired(def)}
-                  className={`text-[11px] font-semibold px-2 py-1 rounded-full border ${def.required ? 'text-brand-orange border-brand-orange bg-brand-pale-orange' : 'text-slate border-bone bg-white'}`}>
+                  className={`text-[12px] font-semibold px-2 py-1 rounded-full border ${def.required ? 'text-brand-orange border-brand-orange bg-brand-pale-orange' : 'text-slate border-bone bg-white'}`}>
                   {def.required ? 'Required' : 'Optional'}
                 </button>
-                <button type="button" onClick={() => remove(def)} className="text-slate hover:text-error p-1">
+                <button aria-label="Delete" type="button" onClick={() => remove(def)} className="text-slate hover:text-error p-1">
                   <Trash2 size={14} />
                 </button>
               </div>

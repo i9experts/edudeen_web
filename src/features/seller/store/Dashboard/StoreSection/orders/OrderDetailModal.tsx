@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react';
+import { addressLines } from '@/utils/address';
 import { Truck, CheckCheck, RefreshCw } from 'lucide-react';
 import { Modal, Button, Badge, StatusBadge, Input, SkeletonBox } from '@/components/comman/ui';
 import { apiMarkOrderPaid, apiUpdateOrderStatus } from '@/api/services/orders';
 import { apiGetSellerOrderDetail, type SellerOrder, type SellerOrderDetail } from '@/api/services/product';
 import { currencySymbol } from '@/utils/currency';
+import { CodRiskBadge } from '@/components/ai/CodRiskBadge';
+import { CourierBooking } from './CourierBooking';
 
 export type SellerOrderStatus = 'processing' | 'shipped' | 'delivered' | 'completed';
 
@@ -119,6 +122,14 @@ export function OrderDetailModal({ order, storeId, onClose, onUpdated }: Props) 
           <Row label="Your subtotal"><span className="font-bold">{sym}{order.amount.toLocaleString()}</span></Row>
         </section>
 
+        {(detail?.giftWrap || detail?.giftMessage) && (
+          <section>
+            <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate mb-1">Gift</p>
+            {detail?.giftWrap && <Row label="Gift wrap">Requested</Row>}
+            {detail?.giftMessage && <Row label="Message"><span className="whitespace-pre-line">{detail.giftMessage}</span></Row>}
+          </section>
+        )}
+
         <section>
           <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate mb-1">Payment</p>
           <Row label="Method"><span className="capitalize">{paymentLabel(order.paymentType)}</span></Row>
@@ -127,6 +138,7 @@ export function OrderDetailModal({ order, storeId, onClose, onUpdated }: Props) 
               ? <span className="font-semibold text-success">Paid</span>
               : <span className="font-semibold text-[#b36200]">Unpaid</span>}
           </Row>
+          {order.paymentType === 'cash_on_delivery' && <CodRiskBadge storeId={storeId} orderId={order.orderId} />}
           {!order.isPaid && order.paymentType !== 'cash_on_delivery' && (
             <p className="text-[12px] text-slate mt-2">
               {order.paymentType === 'stripe'
@@ -162,11 +174,11 @@ export function OrderDetailModal({ order, storeId, onClose, onUpdated }: Props) 
                   <li key={`${it.productId}-${it.variantId ?? i}`} className="flex items-start justify-between gap-4 py-2 border-b border-bone last:border-b-0">
                     <div className="min-w-0">
                       <p className="text-[13px] text-carbon font-medium break-words">{it.name}</p>
-                      {extras.length > 0 && <p className="text-[11.5px] text-slate">{extras.join(' · ')}</p>}
+                      {extras.length > 0 && <p className="text-[12px] text-slate">{extras.join(' · ')}</p>}
                     </div>
                     <div className="text-right shrink-0">
                       <p className="text-[13px] font-semibold text-carbon">{sym}{it.totalPrice.toLocaleString()}</p>
-                      <p className="text-[11.5px] text-slate">{it.quantity} × {sym}{it.price.toLocaleString()}</p>
+                      <p className="text-[12px] text-slate">{it.quantity} × {sym}{it.price.toLocaleString()}</p>
                     </div>
                   </li>
                 );
@@ -181,9 +193,8 @@ export function OrderDetailModal({ order, storeId, onClose, onUpdated }: Props) 
             {detail?.shippingAddress ? (
               <div className="text-[13px] text-carbon leading-[1.5] py-1">
                 <p className="font-semibold">{detail.shippingAddress.recipientName}</p>
-                <p>{detail.shippingAddress.addressLine1}</p>
-                {detail.shippingAddress.addressLine2 && <p>{detail.shippingAddress.addressLine2}</p>}
-                <p>{[detail.shippingAddress.city, detail.shippingAddress.state, detail.shippingAddress.zipCode].filter(Boolean).join(', ')}</p>
+                <p>{addressLines(detail.shippingAddress).street}</p>
+                {addressLines(detail.shippingAddress).region && <p>{addressLines(detail.shippingAddress).region}</p>}
                 <p className="text-slate">{detail.shippingAddress.phoneNumber}</p>
               </div>
             ) : (
@@ -204,6 +215,12 @@ export function OrderDetailModal({ order, storeId, onClose, onUpdated }: Props) 
           <section>
             <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate mb-2">Ship this order</p>
             <div className="flex flex-col gap-2.5">
+              <CourierBooking
+                orderId={order.orderId}
+                storeId={storeId}
+                existing={detail?.shipment}
+                onBooked={s => { setTrackingNumber(s.trackingNumber); setCarrier(s.carrier); setTrackingUrl(s.trackingUrl ?? ''); }}
+              />
               <Input label="Tracking number *" value={trackingNumber} onChange={e => setTrackingNumber(e.target.value)} placeholder="e.g. LE123456789PK" />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 <Input label="Carrier" value={carrier} onChange={e => setCarrier(e.target.value)} placeholder="e.g. TCS, Leopards" />
@@ -213,6 +230,20 @@ export function OrderDetailModal({ order, storeId, onClose, onUpdated }: Props) 
                 Mark as shipped
               </Button>
             </div>
+          </section>
+        )}
+
+        {(detail?.trackingEvents?.length ?? 0) > 0 && (
+          <section>
+            <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate mb-1">Courier updates</p>
+            <ul className="flex flex-col">
+              {[...(detail?.trackingEvents ?? [])].reverse().map((ev, i) => (
+                <li key={i} className="flex items-start justify-between gap-3 py-1.5 border-b border-bone last:border-b-0 text-[12.5px]">
+                  <span className="text-carbon">{ev.description || ev.status}{ev.location ? ` · ${ev.location}` : ''}</span>
+                  <span className="text-slate shrink-0">{ev.at ? new Date(ev.at).toLocaleString('en-PK', { dateStyle: 'medium', timeStyle: 'short' }) : ''}</span>
+                </li>
+              ))}
+            </ul>
           </section>
         )}
 

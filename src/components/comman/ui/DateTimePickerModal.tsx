@@ -101,7 +101,7 @@ export function DateTimePickerModal({ value, onChange, onClose }: DateTimePicker
             </div>
             <div>
               <p id={titleId} className="text-[14px] font-bold text-charcoal leading-tight">Schedule Go-Live</p>
-              <p className="text-[11px] text-slate mt-[1px]">Choose date &amp; time</p>
+              <p className="text-[12px] text-slate mt-[1px]">Choose date &amp; time</p>
             </div>
           </div>
           <button
@@ -207,7 +207,7 @@ export function DateTimePickerModal({ value, onChange, onClose }: DateTimePicker
                     key={p}
                     type="button"
                     onClick={() => setAmpm(p)}
-                    className="w-[40px] h-[22px] rounded-[6px] text-[11px] font-bold border-none cursor-pointer transition-all duration-150 flex items-center justify-center"
+                    className="w-[40px] h-[22px] rounded-[6px] text-[12px] font-bold border-none cursor-pointer transition-all duration-150 flex items-center justify-center"
                     style={{ background: ampm === p ? '#174771' : '#E8E6DC', color: ampm === p ? '#fff' : '#8C8A82' }}
                   >
                     {p}
@@ -296,7 +296,7 @@ export function DateTimePickerModal({ value, onChange, onClose }: DateTimePicker
               </svg>
             </div>
 
-            <p className="text-center text-[11px] text-slate mt-1.5">
+            <p className="text-center text-[12px] text-slate mt-1.5">
               {mode === 'hour' ? 'Tap an hour · then set minutes' : 'Tap a minute to set time'}
             </p>
           </div>

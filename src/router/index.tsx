@@ -26,12 +26,10 @@ import { RegisterPage } from '@/features/auth/pages/RegisterPage';
 import { MarketplaceRedirect } from '@/features/buyer/pages/MarketplaceRedirect';
 import { NotForBuyers } from '@/router/NotForBuyers';
 import { StorePathTabs } from '@/router/StorePathTabs';
-import { OnboardingPage } from '@/features/auth/pages/onboard/OnboardingPage';
 
 // Remaining auth pages — eagerly imported too (no lazy/Suspense split), same
 // reasoning as LoginPage/RegisterPage/OnboardingPage above: auth is always on
 // the critical path, never worth a route-level Suspense flash.
-import { AdminLoginPage }     from '@/features/auth/pages/admin/AdminLoginPage';
 import { ForgotPasswordPage } from '@/features/auth/pages/ForgotPasswordPage';
 import { VerifyOTPPage }      from '@/features/auth/pages/VerifyOTPPage';
 import { NewPasswordPage }    from '@/features/auth/pages/NewPasswordPage';
@@ -47,6 +45,7 @@ import { DeleteAccountPage }    from '@/features/buyer/pages/DeleteAccountPage';
 import { TermsOfServicePage }   from '@/features/buyer/pages/TermsOfServicePage';
 import { CookiePolicyPage }     from '@/features/buyer/pages/CookiePolicyPage';
 import { ContactUsPage }        from '@/features/buyer/pages/ContactUsPage';
+import { NotFoundPage }         from '@/features/buyer/pages/NotFoundPage';
 import { AboutPage }            from '@/features/buyer/pages/AboutPage';
 import { ProductsOverviewPage } from '@/features/buyer/pages/products/ProductsOverviewPage';
 import { PlatformProductPage }  from '@/features/buyer/pages/products/PlatformProductPage';
@@ -54,6 +53,9 @@ import { SolutionsOverviewPage } from '@/features/buyer/pages/solutions/Solution
 import { SolutionPage }         from '@/features/buyer/pages/solutions/SolutionPage';
 
 // ── Lazy helpers ──────────────────────────────────────────────────────────────
+// Seller-only / admin-only entry pages (heavy: Stripe wizard) stay out of the main bundle.
+const OnboardingPage = lazy(() => import('@/features/auth/pages/onboard/OnboardingPage').then(m => ({ default: m.OnboardingPage })));
+const AdminLoginPage = lazy(() => import('@/features/auth/pages/admin/AdminLoginPage').then(m => ({ default: m.AdminLoginPage })));
 const named = <T extends Record<string, unknown>>(
   p: Promise<T>,
   key: keyof T,
@@ -61,6 +63,7 @@ const named = <T extends Record<string, unknown>>(
   p.then(m => ({ default: m[key] }));
 
 // ── Public / Buyer ────────────────────────────────────────────────────────────
+const PkPaymentReturnPage = lazy(() => named(import('@/features/buyer/pages/PkPaymentReturnPage'), 'PkPaymentReturnPage'));
 const OrderSuccessPage     = lazy(() => named(import('@/features/buyer/pages/OrderSuccessPage'),                'OrderSuccessPage'));
 const SellerStorefront     = lazy(() => named(import('@/features/buyer/pages/SellerStorefront'),                'SellerStorefront'));
 const StorefrontLayout     = lazy(() => named(import('@/features/storefront/StorefrontLayout'),                  'StorefrontLayout'));
@@ -281,9 +284,13 @@ const mainRouter = createBrowserRouter([
           // The homepage is the shop — the old separate marketplace pages
           // (/marketplace) forward there so old links keep working.
           { path: 'marketplace/:slugOrId?', element: <MarketplaceRedirect /> },
+          // Old bookmarks: these pages were merged into the homepage.
+          { path: 'education/*',            element: <Navigate to="/" replace /> },
+          { path: 'EducationMarketplace',   element: <Navigate to="/" replace /> },
           { path: 'cart',            element: <FeatureMaintenance feature="cart" variant="page"><CartPage /></FeatureMaintenance> },
           { path: 'checkout',        element: <CheckoutPage /> },
           { path: 'order-success',   element: <OrderSuccessPage /> },
+          { path: 'payment/pk-return', element: <PkPaymentReturnPage /> },
           { path: 'product/:slug',   element: <FeatureMaintenance feature="product_page" variant="page"><ProductDetail /></FeatureMaintenance> },
           { path: 'search',          element: <FeatureMaintenance feature="search" variant="page"><MarketplaceSearchPage /></FeatureMaintenance> },
           { path: 'c/:slug',         element: <FeatureMaintenance feature="categories" variant="page"><MarketplaceCategoryPage /></FeatureMaintenance> },
@@ -292,7 +299,7 @@ const mainRouter = createBrowserRouter([
           { path: 'learn/:level/:subject?', element: <FeatureMaintenance feature="learn" variant="page"><LearnLevelPage /></FeatureMaintenance> },
           { path: 'lists/:slug', element: <PublicListPage /> },
           { path: 'bundles/:slug', element: <BundlePage /> },
-          { path: 'picks/:slug', element: <ShelfPage /> },
+          { path: 'picks/:slug', element: <ShelfPage /> }, { path: 'seasonal/:slug', element: <ShelfPage /> },
         ],
       },
 
@@ -440,7 +447,7 @@ const mainRouter = createBrowserRouter([
       },
 
       // ── 404 ───────────────────────────────────────────────────────────
-      { path: '*', element: <Navigate to="/" replace /> },
+      { path: '*', element: <NotFoundPage /> },
     ],
   },
 ]);

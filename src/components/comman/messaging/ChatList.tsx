@@ -164,7 +164,7 @@ export function ChatList({
                   <button
                     onMouseDown={e => e.preventDefault()}
                     onClick={onClearRecentSearches}
-                    className="text-[11px] text-brand-orange font-medium bg-transparent border-none cursor-pointer"
+                    className="text-[12px] text-brand-orange font-medium bg-transparent border-none cursor-pointer"
                   >
                     Clear
                   </button>
@@ -202,7 +202,7 @@ export function ChatList({
                 >
                   {f.label}
                   {!!f.count && (
-                    <span className={clsx('text-[10px] px-[5px] py-[1px] rounded-full font-bold', active ? 'bg-white/25 text-white' : 'bg-bone text-charcoal')}>
+                    <span className={clsx('text-[12px] px-[5px] py-[1px] rounded-full font-bold', active ? 'bg-white/25 text-white' : 'bg-bone text-charcoal')}>
                       {f.count > 99 ? '99+' : f.count}
                     </span>
                   )}

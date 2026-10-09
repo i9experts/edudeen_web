@@ -80,3 +80,8 @@ export function apiAdminUpdateShippingZone(id: string, payload: Partial<Shipping
 export function apiAdminDeleteShippingZone(id: string) {
   return client.delete<never, { success: boolean }>(`${ADMIN_ZONES}/${id}`);
 }
+
+/** POST /api/checkout/admin/shipping-zones/seed-defaults: adds the starter Pakistan zones that do not exist yet (idempotent). */
+export function apiAdminSeedDefaultShippingZones() {
+  return client.post<never, { success: boolean; message: string; data: { added: number; skipped: number } }>('/api/checkout/admin/shipping-zones/seed-defaults', {});
+}

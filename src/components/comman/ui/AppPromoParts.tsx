@@ -10,6 +10,11 @@ import QRCode from 'qrcode';
 export const GOOGLE_PLAY_URL = 'https://play.google.com/apps/internaltest/4699462862361720775';
 
 /** The Play Store link — admin-editable (Admin → Platform Config → Homepage content); falls back to the built-in link. */
+export function useAppStoreUrl(): string {
+  const { config } = usePublicPlatformConfig();
+  return config?.homeContent?.appStoreUrl || '';
+}
+
 export function useGooglePlayUrl(): string {
   const { config } = usePublicPlatformConfig();
   return config?.homeContent?.googlePlayUrl || GOOGLE_PLAY_URL;
@@ -84,7 +89,8 @@ export function GooglePlayGlyph({ size = 15, className }: { size?: number; class
 /** onLight renders the classic solid-dark store badge for light backgrounds; the default glass chip is for dark surfaces. */
 export function StoreBadgeChip({ platform, compact = false, onLight = false }: { platform: 'ios' | 'android'; compact?: boolean; onLight?: boolean }) {
   const isIos = platform === 'ios';
-  return (
+  const appStoreUrl = useAppStoreUrl();
+  const chip = (
     <div
       role="img"
       aria-label={isIos ? 'Download on the App Store' : 'Get it on Google Play'}
@@ -98,7 +104,7 @@ export function StoreBadgeChip({ platform, compact = false, onLight = false }: {
         ? <AppleGlyph size={compact ? 13 : 17} />
         : <GooglePlayGlyph size={compact ? 13 : 16} />}
       {compact ? (
-        <p className="text-[10.5px] font-semibold text-white leading-none">{isIos ? 'App Store' : 'Google Play'}</p>
+        <p className="text-[12px] font-semibold text-white leading-none">{isIos ? 'App Store' : 'Google Play'}</p>
       ) : (
         <div className="text-start leading-none">
           <p className="text-[7.5px] text-white/60 mb-[2px]">{isIos ? 'Download on the' : 'GET IT ON'}</p>
@@ -107,6 +113,8 @@ export function StoreBadgeChip({ platform, compact = false, onLight = false }: {
       )}
     </div>
   );
+  // Becomes a real link once the admin adds an App Store URL.
+  return isIos && appStoreUrl ? <a href={appStoreUrl} target="_blank" rel="noreferrer" className="no-underline">{chip}</a> : chip;
 }
 
 // No published rating/download count to show yet (Android is internal-test
@@ -117,7 +125,7 @@ export function RatingRow({ label = 'Available now on Android — iOS coming soo
   return (
     <div className="flex items-center gap-1.5">
       <Sparkles size={12} className="text-brand-orange" />
-      <span className="text-[10.5px] text-white/60">{label}</span>
+      <span className="text-[12px] text-white/60">{label}</span>
     </div>
   );
 }

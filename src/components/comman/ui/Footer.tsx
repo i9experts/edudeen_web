@@ -2,13 +2,12 @@ import { useT } from '@/contexts/languageCtx';
 import { useState, type ReactElement } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
-import { Send, Check, ChevronDown, ArrowUp, Mail } from 'lucide-react';
+import { Send, Check, ChevronDown, Mail } from 'lucide-react';
 import { EdudeenLogo } from './EdudeenLogo';
-import { AppleGlyph, GooglePlayGlyph, useGooglePlayUrl } from './AppPromoParts';
+import { AppleGlyph, GooglePlayGlyph, useGooglePlayUrl, useAppStoreUrl } from './AppPromoParts';
 import { usePublicPlatformConfig } from '@/hooks/usePublicPlatformConfig';
 import type { SocialNetwork } from '@/api/services/publicPlatformConfig';
 import { apiSubscribeNewsletter } from '../../../api/services/newsletter';
-import { scrollRootToTop } from '@/utils/scrollRoot';
 import { useSellEntry } from '@/hooks/auth/useSellEntry';
 import { isBuyerSession } from '@/hooks/auth/useIsBuyer';
 
@@ -25,7 +24,7 @@ const FOOTER_COLUMNS: { heading: string; links: FooterLink[] }[] = [
     heading: 'Shop',
     links: [
       { label: 'My Orders',   path: '/account/orders' },
-      { label: 'Wishlist',    path: '/account/wishlist' },
+      { label: 'Saved',       path: '/account/wishlist' },
     ],
   },
   {
@@ -67,7 +66,6 @@ const FOOTER_COLUMNS: { heading: string; links: FooterLink[] }[] = [
       { label: 'Privacy Policy',   path: '/privacy-policy' },
       { label: 'Terms of Service', path: '/terms-of-service' },
       { label: 'Cookie Policy',    path: '/cookie-policy' },
-      { label: 'Delete Account',   path: '/delete-account' },
     ],
   },
 ];
@@ -121,16 +119,25 @@ const SOCIALS: { key: SocialNetwork; label: string; Glyph: () => ReactElement }[
 // that badge says so instead of pretending to be a link.
 function AppBadge({ platform }: { platform: 'ios' | 'android' }) {
   const GOOGLE_PLAY_URL = useGooglePlayUrl();
+  const appStoreUrl = useAppStoreUrl();
   const isIos = platform === 'ios';
   const inner = (
     <>
       {isIos ? <AppleGlyph size={18} /> : <GooglePlayGlyph size={16} />}
       <span className="leading-none">
-        <span className="block text-[8px] text-white/70 tracking-[0.04em]">{isIos ? 'Coming soon on the' : 'GET IT ON'}</span>
+        <span className="block text-[8px] text-white/70 tracking-[0.04em]">{isIos ? (appStoreUrl ? 'Download on the' : 'Coming soon on the') : 'GET IT ON'}</span>
         <span className="block text-[12.5px] font-bold mt-[2px]">{isIos ? 'App Store' : 'Google Play'}</span>
       </span>
     </>
   );
+  if (isIos && appStoreUrl) {
+    return (
+      <a href={appStoreUrl} target="_blank" rel="noreferrer" aria-label="Download on the App Store"
+        className="flex items-center gap-2.5 h-11 px-3.5 rounded-[9px] bg-carbon text-white no-underline w-fit hover:bg-black transition-colors">
+        {inner}
+      </a>
+    );
+  }
   if (isIos) {
     return (
       <div role="img" aria-label="iOS app coming soon" className="flex items-center gap-2.5 h-11 px-3.5 rounded-[9px] bg-carbon/60 text-white select-none w-fit">
@@ -198,7 +205,7 @@ function Newsletter() {
           <Send size={13} /> <span className="hidden sm:inline">{loading ? 'Subscribing…' : 'Subscribe'}</span>
         </button>
       </form>
-      {error && <p className="mt-2 ps-3 text-[11.5px] text-error">{error}</p>}
+      {error && <p className="mt-2 ps-3 text-[12px] text-error">{error}</p>}
     </div>
   );
 }
@@ -330,13 +337,7 @@ export function Footer({ showNewsletter = true }: { showNewsletter?: boolean }) 
       <div className="border-t border-bone">
         <div className="max-w-[1480px] mx-auto px-[5%] md:px-[4%] py-4 flex flex-col-reverse sm:flex-row items-center justify-between gap-3 text-[12px]">
           <p className="m-0">© {new Date().getFullYear()} Edudeen LLC. All rights reserved.</p>
-          <button
-            type="button"
-            onClick={() => scrollRootToTop('smooth')}
-            className="group flex items-center gap-1.5 bg-transparent border-none p-0 cursor-pointer text-slate hover:text-brand-orange"
-          >
-            Back to top <ArrowUp size={13} className="transition-transform duration-200 group-hover:-translate-y-0.5" />
-          </button>
+
         </div>
       </div>
     </footer>

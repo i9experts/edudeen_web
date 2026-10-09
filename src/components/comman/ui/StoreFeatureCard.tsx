@@ -72,7 +72,7 @@ export function StoreFeatureCard({ store, onClick, className }: {
             onClick={handleFollow}
             disabled={followBusy}
             className={clsx(
-              'inline-flex items-center gap-[5px] px-[11px] py-[6px] rounded-full text-[11px] font-semibold border cursor-pointer transition-all duration-150 mb-[2px]',
+              'inline-flex items-center gap-[5px] px-[11px] py-[6px] rounded-full text-[12px] font-semibold border cursor-pointer transition-all duration-150 mb-[2px]',
               following
                 ? 'bg-carbon/5 border-bone text-charcoal'
                 : 'bg-brand-orange border-brand-orange text-white hover:bg-brand-deep-orange',
@@ -89,20 +89,20 @@ export function StoreFeatureCard({ store, onClick, className }: {
           {isVerified && <BadgeCheck size={14} className="text-info fill-info/15 shrink-0" />}
         </div>
         {/* Always reserve the line so cards without a description stay the same height. */}
-        <p className="text-[10.5px] text-slate leading-snug line-clamp-1 mb-[10px] min-h-[1.375em]">{store.description || ' '}</p>
+        <p className="text-[12px] text-slate leading-snug line-clamp-1 mb-[10px] min-h-[1.375em]">{store.description || ' '}</p>
 
         <div className="flex items-center gap-3 pt-[10px] border-t border-bone">
-          <span className="flex items-center gap-[4px] text-[11px] text-charcoal font-medium">
+          <span className="flex items-center gap-[4px] text-[12px] text-charcoal font-medium">
             <Star size={11} className="text-brand-orange fill-brand-orange" />
             {store.averageRating > 0 ? store.averageRating.toFixed(1) : 'New'}
           </span>
           <span className="w-px h-3 bg-bone" />
-          <span className="flex items-center gap-[4px] text-[11px] text-slate">
+          <span className="flex items-center gap-[4px] text-[12px] text-slate">
             <Users size={11} />
             {store.followersCount.toLocaleString()}
           </span>
           <span className="w-px h-3 bg-bone" />
-          <span className="flex items-center gap-[4px] text-[11px] text-slate">
+          <span className="flex items-center gap-[4px] text-[12px] text-slate">
             <PackageCheck size={11} />
             {store.productCount != null ? `${store.productCount} items` : 'Shop'}
           </span>

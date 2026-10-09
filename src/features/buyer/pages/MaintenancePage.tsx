@@ -68,7 +68,7 @@ export function MaintenancePage() {
         className="px-5 py-2.5 bg-brand-orange text-white border-none rounded-lg text-[13px] font-semibold cursor-pointer hover:bg-brand-deep-orange transition-colors duration-150">
         Try again
       </button>
-      <p className="text-[11.5px] text-slate mt-4 m-0">This page refreshes by itself — you'll be taken back as soon as we're done.</p>
+      <p className="text-[12px] text-slate mt-4 m-0">This page refreshes by itself — you'll be taken back as soon as we're done.</p>
     </div>
   );
 }

@@ -127,7 +127,7 @@ function SidebarStoreSwitcher() {
         </div>
         <div className="flex-1 min-w-0 text-left">
           <p className="text-[13px] font-bold text-carbon leading-[1.3] truncate">{displayName}</p>
-          {displaySub && <p className="text-[11px] text-slate leading-[1.3]">{displaySub}</p>}
+          {displaySub && <p className="text-[12px] text-slate leading-[1.3]">{displaySub}</p>}
         </div>
         <ChevronDown size={13} className={clsx('text-slate shrink-0 transition-transform duration-200', open && 'rotate-180')} />
       </button>
@@ -176,12 +176,12 @@ function SidebarStoreItem({ label, sub, logo, onClick }: {
       onClick={onClick}
       className="flex items-center gap-[9px] w-full py-[7px] px-[10px] rounded-lg bg-transparent border-0 cursor-pointer text-left transition-colors duration-[120ms] hover:bg-cream"
     >
-      <div className="size-[28px] rounded-[7px] shrink-0 bg-brand-pale-orange overflow-hidden flex items-center justify-center text-[10px] font-bold text-brand-orange">
+      <div className="size-[28px] rounded-[7px] shrink-0 bg-brand-pale-orange overflow-hidden flex items-center justify-center text-[12px] font-bold text-brand-orange">
         {logo ? <img loading="lazy" decoding="async" src={logo} alt={label} className="w-full h-full object-cover" /> : initials}
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-[13px] font-medium text-carbon truncate">{label}</p>
-        <p className="text-[11px] text-slate truncate">{sub}</p>
+        <p className="text-[12px] text-slate truncate">{sub}</p>
       </div>
     </button>
   );
@@ -237,7 +237,7 @@ function SellerSidebar({ open, onToggle }: SellerSidebarProps) {
       title="Search (Ctrl+K)"
       className={clsx(
         'flex items-center gap-1 rounded-md border border-bone text-slate hover:text-carbon hover:bg-cream transition-colors cursor-pointer shrink-0',
-        open ? 'px-[7px] py-[3px] text-[10.5px] font-semibold' : 'size-8 justify-center text-[10px] font-semibold',
+        open ? 'px-[7px] py-[3px] text-[12px] font-semibold' : 'size-8 justify-center text-[12px] font-semibold',
       )}
     >
       {open ? '⌘K' : 'K'}
@@ -405,7 +405,7 @@ function SellerSidebar({ open, onToggle }: SellerSidebarProps) {
                   <>
                     <p className="text-[13px] font-bold text-carbon leading-[1.3] truncate">{profile?.name ?? '—'}</p>
                     <div className="flex items-center gap-1 min-w-0">
-                      <p className="text-[11px] text-slate leading-[1.3] truncate">{profile?.email ?? '—'}</p>
+                      <p className="text-[12px] text-slate leading-[1.3] truncate">{profile?.email ?? '—'}</p>
                       {profile?.email && (
                         <CopyIconButton value={profile.email} title="Copy email" size={11} className="text-slate hover:text-carbon" />
                       )}

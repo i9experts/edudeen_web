@@ -37,6 +37,7 @@ export interface StoreCart {
   items:      CartItem[];
   totalItems: number;
   totalPrice: number;
+  campaignDiscount?: Cart['campaignDiscount'];
   store:      CartStoreInfo;
 }
 
@@ -48,6 +49,8 @@ export interface Cart {
   totalItems: number;
   totalPrice: number;
   status?:    string;
+  /** The store's running sale, applied at checkout — shown in the cart so the price doesn't change at the last step. */
+  campaignDiscount?:  { name: string; discountType: 'percentage' | 'fixed' | null; discountValue: number | null; currency: string | null } | null;
   /** Main-site only: the per-store carts this merged view was built from.
    *  Checkout is always one store at a time. */
   stores?:    StoreCart[];

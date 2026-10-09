@@ -110,7 +110,7 @@ export function Addresses() {
       key: 'recipientName', header: 'Recipient',
       render: a => (
         <div className="flex items-center gap-2">
-          <div className="w-[26px] h-[26px] rounded-full bg-[#eaf3fb] text-[11px] font-bold flex items-center justify-center shrink-0 text-[#2156a8]">
+          <div className="w-[26px] h-[26px] rounded-full bg-[#eaf3fb] text-[12px] font-bold flex items-center justify-center shrink-0 text-[#2156a8]">
             {(a.recipientName ?? '').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
           </div>
           <span className="text-charcoal">{a.recipientName}</span>

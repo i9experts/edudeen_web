@@ -10,7 +10,7 @@ export function ScoreBadge({ score, className }: ScoreBadgeProps) {
   return (
     <span
       className={clsx(
-        'inline-flex items-center text-[11px] font-semibold px-2 py-[2px] rounded-[5px] shrink-0 whitespace-nowrap',
+        'inline-flex items-center text-[12px] font-semibold px-2 py-[2px] rounded-[5px] shrink-0 whitespace-nowrap',
         tone === 'success' && 'bg-success-bg text-success',
         tone === 'warning' && 'bg-warning-bg text-warning',
         tone === 'error'   && 'bg-error-bg text-error',

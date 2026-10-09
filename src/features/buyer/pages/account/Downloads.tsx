@@ -137,15 +137,15 @@ export function Downloads() {
                         <ItemImg src={item.image} name={item.name} />
                         <div className="min-w-0">
                           <Link to={`/product/${item.slug ?? item.productId}`} className="block text-[13px] font-semibold text-charcoal hover:text-brand-orange truncate">{item.name}</Link>
-                          <p className="text-[11.5px] text-slate mt-[2px]">
+                          <p className="text-[12px] text-slate mt-[2px]">
                             {[item.storeName, gradeOf(item), item.licenseType ? LICENSE_LABEL[item.licenseType] : null, ...item.curricula.slice(0, 2).map(c => CURRICULUM_LABEL[c] ?? c)].filter(Boolean).join(' · ')}
                           </p>
-                          <p className="text-[11px] text-slate mt-[2px]">
+                          <p className="text-[12px] text-slate mt-[2px]">
                             Bought {new Date(item.purchasedAt).toLocaleDateString('en-PK', { day: 'numeric', month: 'short', year: 'numeric' })} ·{' '}
                             <Link to={`/account/orders/${item.orderId}`} className="text-slate hover:text-brand-orange underline">Order {item.orderNumber}</Link>
                           </p>
                           {item.reviewable && (
-                            <Link to={`/product/${item.slug ?? item.productId}#write-review`} className="inline-flex items-center gap-[5px] mt-1.5 text-[11px] font-semibold text-brand-orange hover:underline">
+                            <Link to={`/product/${item.slug ?? item.productId}#write-review`} className="inline-flex items-center gap-[5px] mt-1.5 text-[12px] font-semibold text-brand-orange hover:underline">
                               <Star size={11} /> Write a review
                             </Link>
                           )}
@@ -163,7 +163,7 @@ export function Downloads() {
                             {(item.deliveryFormat === 'download' || !item.deliveryFormat || item.fileCount > 0) && <DigitalFileDownloads orderId={item.orderId} productId={item.productId} />}
                           </div>
                         ) : (
-                          <span className="inline-flex items-center gap-[5px] px-2.5 py-[5px] rounded-[7px] text-[11px] font-semibold bg-[#fff4dc] text-[#b36200]">
+                          <span className="inline-flex items-center gap-[5px] px-2.5 py-[5px] rounded-[7px] text-[12px] font-semibold bg-[#fff4dc] text-[#b36200]">
                             <Clock size={11} /> Available once payment is confirmed
                           </span>
                         )}
@@ -177,7 +177,7 @@ export function Downloads() {
         )}
       </Card>
       {!loading && items.length > 0 && (
-        <p className="text-[11.5px] text-slate mt-3 inline-flex items-center gap-1.5"><Download size={12} /> Files stay here for good — download them again whenever you need.</p>
+        <p className="text-[12px] text-slate mt-3 inline-flex items-center gap-1.5"><Download size={12} /> Files stay here for good — download them again whenever you need.</p>
       )}
     </div>
   );

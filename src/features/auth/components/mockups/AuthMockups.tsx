@@ -45,9 +45,9 @@ export function MarketplaceMockup() {
             <div className="size-7 rounded-lg bg-brand-orange/20 border border-brand-orange/30 flex items-center justify-center">
               <ShoppingBag size={13} className="text-brand-orange" />
             </div>
-            <span className="text-[11.5px] font-semibold text-white">Marketplace</span>
+            <span className="text-[12px] font-semibold text-white">Marketplace</span>
           </div>
-          <span className="text-[10px] text-white/50">Live</span>
+          <span className="text-[12px] text-white/50">Live</span>
         </div>
         <div className="grid grid-cols-2 gap-[clamp(4px,1vh,10px)]">
           {[
@@ -71,7 +71,7 @@ export function MarketplaceMockup() {
         <span className="w-6 h-6 rounded-full bg-success/25 flex items-center justify-center shrink-0">
           <CheckCircle2 size={12} className="text-[#4ade80]" />
         </span>
-        <span className="text-[10.5px] font-medium text-white/85">Order confirmed</span>
+        <span className="text-[12px] font-medium text-white/85">Order confirmed</span>
       </FloatingChip>
 
       <FloatingChip className="-end-2 top-2 hidden sm:flex">
@@ -91,8 +91,8 @@ export function DashboardMockup() {
       <GlowOrb className="w-40 h-40 bg-info/25 -top-4 -start-6" />
       <GlassPanel className="relative p-4 auth-float">
         <div className="flex items-center justify-between mb-3">
-          <span className="text-[11.5px] font-semibold text-white">Store revenue</span>
-          <span className="flex items-center gap-1 text-[10px] font-semibold text-[#4ade80]">
+          <span className="text-[12px] font-semibold text-white">Store revenue</span>
+          <span className="flex items-center gap-1 text-[12px] font-semibold text-[#4ade80]">
             <ArrowUpRight size={11} />
           </span>
         </div>
@@ -108,7 +108,7 @@ export function DashboardMockup() {
         <span className="w-6 h-6 rounded-full bg-brand-orange/25 flex items-center justify-center shrink-0">
           <TrendingUp size={12} className="text-brand-orange" />
         </span>
-        <span className="text-[10.5px] font-medium text-white/85">Sales trending up</span>
+        <span className="text-[12px] font-medium text-white/85">Sales trending up</span>
       </FloatingChip>
     </div>
   );
@@ -126,7 +126,7 @@ export function SecurityMockup() {
       </div>
       <FloatingChip className="end-2 bottom-4 hidden sm:flex">
         <Mail size={12} className="text-white/70" />
-        <span className="text-[10.5px] font-medium text-white/85">Reset code sent</span>
+        <span className="text-[12px] font-medium text-white/85">Reset code sent</span>
       </FloatingChip>
     </div>
   );
@@ -142,7 +142,7 @@ export function PasswordSecurityMockup() {
           <div className="size-8 rounded-lg bg-white/10 border border-white/15 flex items-center justify-center">
             <KeyRound size={15} className="text-brand-orange" />
           </div>
-          <span className="text-[11.5px] font-semibold text-white">Choose a strong password</span>
+          <span className="text-[12px] font-semibold text-white">Choose a strong password</span>
         </div>
         <div className="flex flex-col gap-2">
           {[
@@ -155,7 +155,7 @@ export function PasswordSecurityMockup() {
               <span className={clsx('size-4 rounded-full flex items-center justify-center shrink-0', on ? 'bg-[#4ade80]/25' : 'bg-white/10')}>
                 {on && <CheckCircle2 size={10} className="text-[#4ade80]" />}
               </span>
-              <span className={clsx('text-[11px]', on ? 'text-white/85' : 'text-white/40')}>{label}</span>
+              <span className={clsx('text-[12px]', on ? 'text-white/85' : 'text-white/40')}>{label}</span>
             </div>
           ))}
         </div>
@@ -175,18 +175,18 @@ export function InboxMockup() {
             <Mail size={15} className="text-brand-orange" />
           </div>
           <div className="min-w-0">
-            <p className="text-[11.5px] font-semibold text-white leading-tight">New message</p>
-            <p className="text-[10px] text-white/50 leading-tight">Edudeen Security</p>
+            <p className="text-[12px] font-semibold text-white leading-tight">New message</p>
+            <p className="text-[12px] text-white/50 leading-tight">Edudeen Security</p>
           </div>
         </div>
         <div className="rounded-lg bg-white/[0.06] border border-white/10 p-3">
-          <p className="text-[10px] text-white/50 mb-1.5">Your verification code</p>
+          <p className="text-[12px] text-white/50 mb-1.5">Your verification code</p>
           <p className="text-[20px] font-bold tracking-[0.3em] text-white">8 4 2 1 9 6</p>
         </div>
       </GlassPanel>
       <FloatingChip className="-end-2 -bottom-3 hidden sm:flex">
         <CheckCircle2 size={12} className="text-[#4ade80]" />
-        <span className="text-[10.5px] font-medium text-white/85">Delivered instantly</span>
+        <span className="text-[12px] font-medium text-white/85">Delivered instantly</span>
       </FloatingChip>
     </div>
   );
@@ -203,7 +203,7 @@ export function IdentityMockup() {
       </div>
       <FloatingChip className="start-1 top-3 hidden sm:flex">
         <ShieldCheck size={12} className="text-[#4ade80]" />
-        <span className="text-[10.5px] font-medium text-white/85">Confirm it's you</span>
+        <span className="text-[12px] font-medium text-white/85">Confirm it's you</span>
       </FloatingChip>
     </div>
   );
@@ -221,7 +221,7 @@ export function SellerDashboardMockup() {
             <div className="size-7 rounded-lg bg-brand-orange/20 border border-brand-orange/30 flex items-center justify-center">
               <Store size={13} className="text-brand-orange" />
             </div>
-            <span className="text-[11.5px] font-semibold text-white">Your store dashboard</span>
+            <span className="text-[12px] font-semibold text-white">Your store dashboard</span>
           </div>
         </div>
         <div className="flex items-end gap-[5px] h-12 mb-3">
@@ -238,7 +238,7 @@ export function SellerDashboardMockup() {
             <div key={label} className="rounded-[10px] bg-white/[0.06] border border-white/10 px-2 py-[8px]">
               <Icon size={12} className="text-white/60 mb-1" />
               {value ?? <div className="h-[9px] w-8 rounded-full bg-white/30 mb-[3px]" aria-hidden />}
-              <p className="text-[9px] text-white/50 leading-tight">{label}</p>
+              <p className="text-[12px] text-white/50 leading-tight">{label}</p>
             </div>
           ))}
         </div>
@@ -246,7 +246,7 @@ export function SellerDashboardMockup() {
 
       <FloatingChip className="-end-3 -bottom-3 auth-float-slow hidden sm:flex">
         <Sparkle />
-        <span className="text-[10.5px] font-medium text-white/85">Tools activated</span>
+        <span className="text-[12px] font-medium text-white/85">Tools activated</span>
       </FloatingChip>
     </div>
   );
@@ -266,9 +266,9 @@ export function AdminControlMockup() {
             <div className="size-7 rounded-lg bg-error/20 border border-error/30 flex items-center justify-center">
               <ShieldCheck size={13} className="text-error" />
             </div>
-            <span className="text-[11.5px] font-semibold text-white">Platform status</span>
+            <span className="text-[12px] font-semibold text-white">Platform status</span>
           </div>
-          <span className="flex items-center gap-1 text-[10px] font-semibold text-[#4ade80]">
+          <span className="flex items-center gap-1 text-[12px] font-semibold text-[#4ade80]">
             <span className="size-1.5 rounded-full bg-[#4ade80]" /> Live
           </span>
         </div>
@@ -280,7 +280,7 @@ export function AdminControlMockup() {
           ].map(({ label, value }) => (
             <div key={label} className="rounded-[10px] bg-white/[0.06] border border-white/10 px-2 py-[8px]">
               <p className="text-[12px] font-bold text-white leading-tight">{value}</p>
-              <p className="text-[9px] text-white/50 leading-tight">{label}</p>
+              <p className="text-[12px] text-white/50 leading-tight">{label}</p>
             </div>
           ))}
         </div>
@@ -288,7 +288,7 @@ export function AdminControlMockup() {
 
       <FloatingChip className="-start-2 -bottom-4 auth-float-slow hidden sm:flex">
         <Fingerprint size={12} className="text-white/70" />
-        <span className="text-[10.5px] font-medium text-white/85">Restricted access</span>
+        <span className="text-[12px] font-medium text-white/85">Restricted access</span>
       </FloatingChip>
     </div>
   );

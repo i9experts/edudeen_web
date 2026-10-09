@@ -120,7 +120,7 @@ export function MessageThread({
             <button
               onClick={onLoadMore}
               disabled={loadingMore}
-              className="flex items-center gap-[6px] px-3 py-[6px] rounded-full border border-bone bg-white text-[11.5px] text-slate cursor-pointer hover:bg-cream disabled:opacity-60"
+              className="flex items-center gap-[6px] px-3 py-[6px] rounded-full border border-bone bg-white text-[12px] text-slate cursor-pointer hover:bg-cream disabled:opacity-60"
             >
               {loadingMore && <Loader2 size={11} className="animate-spin" />}
               {loadingMore ? 'Loading…' : 'Load older messages'}

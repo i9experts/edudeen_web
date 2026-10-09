@@ -4,7 +4,7 @@ import { clsx } from 'clsx';
 import { Zap, Tag, ChevronRight } from 'lucide-react';
 import { useTopBarDeals, timeLeft } from '@/hooks/useTopBarDeals';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
-import { currencySymbol } from '@/utils/currency';
+import { formatMoney } from '@/utils/currency';
 
 interface TickerItem {
   key: string;
@@ -41,7 +41,7 @@ export function TopBarDealsTicker({ className }: { className?: string }) {
       const off = c.discountType === 'percentage' && c.discountValue != null
         ? `Up to ${c.discountValue}% off`
         : c.discountType === 'fixed' && c.discountValue != null
-          ? `${currencySymbol(currency)}${Math.round(convert(c.discountValue, c.currency ?? 'USD')).toLocaleString()} off`
+          ? `${formatMoney(Math.round(convert(c.discountValue, c.currency ?? 'USD')), currency)} off`
           : null;
       return {
         key: `c-${c._id}`,

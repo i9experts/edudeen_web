@@ -113,7 +113,7 @@ export function AdminFaqs() {
       render: f => (
         <div className="max-w-[360px]">
           <p className="font-semibold truncate">{f.question}</p>
-          <p className="text-[11px] text-slate truncate">{f.answer}</p>
+          <p className="text-[12px] text-slate truncate">{f.answer}</p>
         </div>
       ),
     },
@@ -122,7 +122,7 @@ export function AdminFaqs() {
     {
       key: 'status', header: 'Status',
       render: f => (
-        <button onClick={() => handleToggle(f)} className="px-[10px] py-[3px] rounded-[5px] text-[11px] font-semibold border-none cursor-pointer outline-none transition-[filter] duration-150 hover:brightness-95 focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-brand-orange/50"
+        <button onClick={() => handleToggle(f)} className="px-[10px] py-[3px] rounded-[5px] text-[12px] font-semibold border-none cursor-pointer outline-none transition-[filter] duration-150 hover:brightness-95 focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-brand-orange/50"
           style={{ background: f.isActive ? '#EAF7EF' : '#EDF2F4', color: f.isActive ? '#1E7A3C' : '#486071' }}>
           {f.isActive ? 'Active' : 'Inactive'}
         </button>

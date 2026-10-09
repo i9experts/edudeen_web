@@ -122,7 +122,7 @@ export function StorefrontCartPage() {
                 </p>
               </div>
               {!loading && cartCount > 0 && (
-                <span className="text-[11px] font-semibold px-3 py-[5px] rounded-full bg-brand-pale-orange text-brand-orange">
+                <span className="text-[12px] font-semibold px-3 py-[5px] rounded-full bg-brand-pale-orange text-brand-orange">
                   {cartCount} {cartCount === 1 ? 'item' : 'items'}
                 </span>
               )}
@@ -170,7 +170,7 @@ export function StorefrontCartPage() {
                     <div className="flex items-start gap-2 mb-[3px] flex-wrap">
                       <p className="font-semibold text-[14px] text-carbon leading-[1.35]">{item.name}</p>
                       {item.type === 'digital' && (
-                        <span className="shrink-0 flex items-center gap-[3px] px-2 py-[2px] rounded-full text-[10px] font-semibold bg-[#eef0ff] text-[#3851d1]">
+                        <span className="shrink-0 flex items-center gap-[3px] px-2 py-[2px] rounded-full text-[12px] font-semibold bg-[#eef0ff] text-[#3851d1]">
                           <Download size={9} /> Digital
                         </span>
                       )}

@@ -20,7 +20,7 @@ export function Tag({ children, onRemove, className }: TagProps) {
   return (
     <span className={clsx(
       'inline-flex items-center gap-1 px-2 py-0.5 rounded-md',
-      'bg-brand-pale-orange text-brand-deep-orange text-[11px] font-medium border border-bone',
+      'bg-brand-pale-orange text-brand-deep-orange text-[12px] font-medium border border-bone',
       className,
     )}>
       {children}

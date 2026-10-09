@@ -44,7 +44,7 @@ function QuestionCard({ q, storeId, onChange }: { q: SellerQuestion; storeId: st
           {q.productSlug
             ? <Link to={`/product/${q.productSlug}#questions`} target="_blank" className="text-[13px] font-semibold text-carbon no-underline hover:text-brand-orange truncate block">{q.productName}</Link>
             : <span className="text-[13px] font-semibold text-carbon">{q.productName}</span>}
-          <p className="text-[11.5px] text-slate">{q.askerName || 'A buyer'} · {new Date(q.createdAt).toLocaleDateString()}</p>
+          <p className="text-[12px] text-slate">{q.askerName || 'A buyer'} · {new Date(q.createdAt).toLocaleDateString()}</p>
         </div>
         <Button variant="ghost" size="xs" onClick={toggleHidden}>{q.hidden ? <><Eye size={12} /> Show</> : <><EyeOff size={12} /> Hide</>}</Button>
       </div>

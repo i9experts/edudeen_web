@@ -1,7 +1,7 @@
 import { type ReactNode } from 'react';
 import { clsx } from 'clsx';
 import type { BadgeColor } from '@/types';
-import { STATUS_COLORS } from '@/constants/tokens';
+import { statusColor, statusLabel } from '@/constants/statusLabels';
 
 interface BadgeProps {
   children:   ReactNode;
@@ -35,7 +35,7 @@ export function Badge({ children, color = 'gray', size = 'md', dot, className }:
     <span
       className={clsx(
         'inline-flex items-center gap-[5px] rounded-full whitespace-nowrap font-medium',
-        size === 'md' ? 'text-[12px] py-[5px] px-[10px]' : 'text-[10.5px] py-[3px] px-[8px]',
+        size === 'md' ? 'text-[12px] py-[5px] px-[10px]' : 'text-[12px] py-[2px] px-[8px]',
         colorClasses[color],
         className,
       )}
@@ -46,10 +46,7 @@ export function Badge({ children, color = 'gray', size = 'md', dot, className }:
   );
 }
 
-export function StatusBadge({ status, size }: { status: string; size?: 'sm' | 'md' }) {
-  const color  = STATUS_COLORS[status] ?? STATUS_COLORS[status?.toLowerCase()] ?? 'gray';
-  // Handles snake_case values (e.g. 'under_review' -> 'Under Review') the
-  // same way as any single-word status ('active' -> 'Active').
-  const label = status.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-  return <Badge color={color} size={size}>{label}</Badge>;
+export function StatusBadge({ status, size, className }: { status: string; size?: 'sm' | 'md'; className?: string }) {
+  // Colour + wording come from one map (src/constants/statusLabels.ts).
+  return <Badge color={statusColor(status)} size={size} className={className}>{statusLabel(status)}</Badge>;
 }

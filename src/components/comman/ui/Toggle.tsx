@@ -5,14 +5,17 @@ interface ToggleProps {
   onChange:  (v: boolean) => void;
   disabled?: boolean;
   size?:     'sm' | 'md';
+  /** Accessible name — say what the switch controls. */
+  label?:    string;
 }
 
-export function Toggle({ checked, onChange, disabled = false, size = 'md' }: ToggleProps) {
+export function Toggle({ checked, onChange, disabled = false, size = 'md', label }: ToggleProps) {
   return (
     <button
       type="button"
       role="switch"
       aria-checked={checked}
+      aria-label={label ?? 'Toggle setting'}
       disabled={disabled}
       onClick={() => !disabled && onChange(!checked)}
       className={clsx(

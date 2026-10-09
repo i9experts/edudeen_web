@@ -46,6 +46,15 @@ export const TokenStorage = {
     return u ? (JSON.parse(u) as T) : null;
   },
   isLoggedIn()   { return !!getAuthCookie('accessToken'); },
+  /** Role of the saved session user, or null when unknown. */
+  getRole(): string | null {
+    try { return (TokenStorage.getUser<{ role?: string }>()?.role as string | undefined) ?? null; } catch { return null; }
+  },
+  /** True for seller/admin sessions: they have no buyer cart/wishlist, so buyer-only endpoints are skipped. */
+  isStaffSession(): boolean {
+    const r = TokenStorage.getRole();
+    return r === 'seller' || r === 'admin';
+  },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────

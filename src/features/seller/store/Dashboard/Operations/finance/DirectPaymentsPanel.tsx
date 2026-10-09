@@ -91,11 +91,11 @@ export function DirectPaymentsPanel({ storeId }: { storeId: string }) {
             <li key={p._id} className="px-4 md:px-5 py-3 flex items-center gap-3 flex-wrap">
               <div className="flex-1 min-w-[200px]">
                 <p className="text-[13px] font-semibold text-carbon m-0">PKR {p.amountPKR.toLocaleString()} from {p.buyerName}</p>
-                <p className="text-[11.5px] text-slate m-0">
+                <p className="text-[12px] text-slate m-0">
                   {p.senderName ? `Sender: ${p.senderName} · ` : ''}{p.transactionReference ? `Ref: ${p.transactionReference} · ` : ''}{new Date(p.createdAt).toLocaleString()}
                 </p>
                 {p.receiptCheck && p.receiptCheck.status !== 'skipped' && (
-                  <p className={clsx('text-[11.5px] font-semibold m-0 mt-0.5', p.receiptCheck.status === 'match' ? 'text-success' : 'text-error')}>
+                  <p className={clsx('text-[12px] font-semibold m-0 mt-0.5', p.receiptCheck.status === 'match' ? 'text-success' : 'text-error')}>
                     {p.receiptCheck.status === 'match' ? '✓ ' : '⚠ '}{p.receiptCheck.note}
                   </p>
                 )}
@@ -121,7 +121,7 @@ export function DirectPaymentsPanel({ storeId }: { storeId: string }) {
             <Input label="JazzCash number" value={form.jazzcashNumber ?? ''} onChange={set('jazzcashNumber')} />
             <Input label="Easypaisa number" value={form.easypaisaNumber ?? ''} onChange={set('easypaisaNumber')} />
             <Textarea label="Note for buyers (optional)" rows={2} maxLength={500} value={form.instructions ?? ''} onChange={set('instructions')} />
-            <p className="text-[11.5px] text-slate m-0">Buyers see these details at checkout. Money goes directly to you — Edudeen never holds it.</p>
+            <p className="text-[12px] text-slate m-0">Buyers see these details at checkout. Money goes directly to you — Edudeen never holds it.</p>
           </div>
         </Modal>
       )}

@@ -71,11 +71,11 @@ function MobileAdminHero({
         <p className="relative text-[19px] font-bold text-white mt-3 leading-tight">{name ?? 'Admin'}</p>
         {email && <p className="relative text-[13px] text-white/75 mt-[2px]">{email}</p>}
         <div className="relative flex items-center gap-1.5 mt-3">
-          <span className="inline-flex px-4 py-[6px] rounded-full bg-white/15 text-[11px] font-semibold text-white">
+          <span className="inline-flex px-4 py-[6px] rounded-full bg-white/15 text-[12px] font-semibold text-white">
             Admin Account
           </span>
           {isVerified && (
-            <span className="inline-flex items-center gap-1 px-3 py-[6px] rounded-full bg-white/15 text-[11px] font-semibold text-white">
+            <span className="inline-flex items-center gap-1 px-3 py-[6px] rounded-full bg-white/15 text-[12px] font-semibold text-white">
               <Check size={10} /> Verified
             </span>
           )}
@@ -85,17 +85,17 @@ function MobileAdminHero({
       <div className="relative -mt-6 mx-4 rounded-t-[24px] bg-white px-2 pt-5 pb-4 flex items-center">
         <div className="flex-1 flex flex-col items-center gap-[2px]">
           <span className="text-[19px] font-bold text-brand-orange leading-none">{loading || !overview ? '—' : formatNumber(overview.totalSellers)}</span>
-          <span className="text-[11px] text-slate">Sellers</span>
+          <span className="text-[12px] text-slate">Sellers</span>
         </div>
         <div className="w-px h-9 bg-bone" />
         <div className="flex-1 flex flex-col items-center gap-[2px]">
           <span className="text-[19px] font-bold text-brand-orange leading-none">{loading || !overview ? '—' : formatCurrency(overview.totalGMV)}</span>
-          <span className="text-[11px] text-slate">GMV (30d)</span>
+          <span className="text-[12px] text-slate">GMV (30d)</span>
         </div>
         <div className="w-px h-9 bg-bone" />
         <div className="flex-1 flex flex-col items-center gap-[2px]">
           <span className="text-[19px] font-bold text-brand-orange leading-none">{loading || !overview ? '—' : formatNumber(overview.newUsers)}</span>
-          <span className="text-[11px] text-slate">New Users</span>
+          <span className="text-[12px] text-slate">New Users</span>
         </div>
       </div>
     </div>
@@ -324,7 +324,7 @@ export function AdminSettings() {
                         <input readOnly value={profile?.email ?? ''}
                           className="flex-1 min-w-0 px-3 py-[9px] text-[13px] border border-bone rounded-lg outline-none text-slate bg-cream box-border" />
                         {profile?.isVerified && (
-                          <span className="px-[10px] py-1 rounded-[5px] text-[11px] font-semibold bg-[#e3f4ea] text-[#1e7a3c] flex items-center gap-1 flex-shrink-0">
+                          <span className="px-[10px] py-1 rounded-[5px] text-[12px] font-semibold bg-[#e3f4ea] text-[#1e7a3c] flex items-center gap-1 flex-shrink-0">
                             <Check size={10} /> Verified
                           </span>
                         )}
@@ -369,8 +369,8 @@ export function AdminSettings() {
                         {saving && <Loader2 size={13} className="animate-spin" />}
                         {saving ? 'Saving…' : 'Save Changes'}
                       </button>
-                      {saved && <span className="text-[11px] text-success font-medium">Profile updated</span>}
-                      {saveError && <span className="text-[11px] text-error font-medium">{saveError}</span>}
+                      {saved && <span className="text-[12px] text-success font-medium">Profile updated</span>}
+                      {saveError && <span className="text-[12px] text-error font-medium">{saveError}</span>}
                     </div>
                   </>
                 )}
@@ -428,8 +428,8 @@ export function AdminSettings() {
                     {pwSaving && <Loader2 size={13} className="animate-spin" />}
                     {pwSaving ? 'Updating…' : 'Update Password'}
                   </button>
-                  {pwSuccess && <span className="text-[11px] text-success font-medium">Password changed successfully</span>}
-                  {pwError && <span className="text-[11px] text-error font-medium">{pwError}</span>}
+                  {pwSuccess && <span className="text-[12px] text-success font-medium">Password changed successfully</span>}
+                  {pwError && <span className="text-[12px] text-error font-medium">{pwError}</span>}
                 </div>
               </div>
             )}

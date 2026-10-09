@@ -146,7 +146,7 @@ export function CoursePlayerPage() {
                     {done.has(l._id) ? <CheckCircle2 size={15} className="text-success shrink-0" /> : <Circle size={15} className="text-bone shrink-0" />}
                     <Icon size={13} className="text-slate shrink-0" />
                     <span className="flex-1 min-w-0 truncate">{l.title}</span>
-                    {l.durationMinutes ? <span className="text-[11px] text-slate">{l.durationMinutes}m</span> : null}
+                    {l.durationMinutes ? <span className="text-[12px] text-slate">{l.durationMinutes}m</span> : null}
                   </button>
                 </li>
               );

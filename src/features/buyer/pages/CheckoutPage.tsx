@@ -37,6 +37,9 @@ import { apiGetCurrentRates } from '@/api/services/exchangeRate';
 import { Button } from '@/components/comman/ui/Button';
 import { SkeletonBox, BuyerNavbar, Breadcrumb, Input } from '@/components/comman/ui';
 import { StripeCardPayment, isStripeConfigured } from '@/features/buyer/components/StripeCardPayment';
+import { HostedPayButton } from '@/features/buyer/components/HostedPayButton';
+import { GiftOptions } from '@/features/buyer/components/GiftOptions';
+import { isHostedProvider } from '@/api/services/payment';
 import { AddressForm, EMPTY_ADDRESS_FORM, addressFromProfile, saveNewAddress } from '@/features/buyer/components/AddressForm';
 import { useGetProfile } from '@/hooks/auth/useGetProfile';
 import {
@@ -325,6 +328,8 @@ const PAYMENT_LABELS: Record<string, { label: string; desc: string; Icon: React.
   // amounts wherever this is rendered (see the payment-method list below).
   split:            { label: 'Card + Cash on Delivery', desc: 'Pay for digital items now, physical items on delivery', Icon: SplitSquareHorizontal },
   manual_bank_transfer: { label: 'Bank Transfer', desc: 'Transfer to our account and upload your receipt', Icon: Landmark },
+  jazzcash:         { label: 'JazzCash',             desc: 'Pay with your JazzCash wallet or card', Icon: Banknote },
+  easypaisa:        { label: 'Easypaisa',            desc: 'Pay with your Easypaisa wallet or card', Icon: Banknote },
 };
 
 // ── Shared payment-method radio list — used by both the digital single-step
@@ -440,9 +445,19 @@ export function CheckoutPage() {
   // (e.g. no online payment rail is available yet for the digital ones).
   // Digital items stay in the cart; the backend removes only what was bought.
   const physicalOnly = searchParams.get('only') === 'physical';
+  // `?buyNow=productId:variantId:qty` — a Buy Now purchase: only that line, at that quantity.
+  const [buyNowProduct, buyNowVariant, buyNowQtyRaw] = (searchParams.get('buyNow') ?? '').split(':');
+  const buyNow = buyNowProduct && buyNowVariant
+    ? { productId: buyNowProduct, variantId: buyNowVariant, quantity: Math.min(99, Math.max(1, Number.parseInt(buyNowQtyRaw ?? '1', 10) || 1)) }
+    : null;
   const cartItems  = (cart?.items ?? [])
     .filter(i => !checkoutStoreId || !i.storeId || i.storeId === checkoutStoreId)
-    .filter(i => !physicalOnly || i.type !== 'digital');
+    .filter(i => !physicalOnly || i.type !== 'digital')
+    .filter(i => !buyNow || (i.productId === buyNow.productId && i.productVariantId === buyNow.variantId))
+    .map(i => (buyNow ? { ...i, quantity: buyNow.quantity, itemTotal: (i.unitPrice ?? 0) * buyNow.quantity } : i));
+  const checkoutItemsPayload = buyNow
+    ? [{ productId: buyNow.productId, variantId: buyNow.variantId, quantity: buyNow.quantity }]
+    : physicalOnly ? cartItems.map(i => ({ productId: i.productId, variantId: i.productVariantId })) : undefined;
   const checkoutCount = cartItems.reduce((s, i) => s + i.quantity, 0);
   const hasDigital = cartItems.some(i => i.type === 'digital');
   // Fully-digital carts skip address/shipping entirely; a mixed cart still
@@ -604,7 +619,7 @@ export function CheckoutPage() {
     let cancelled = false;
     setCreatingCheckout(true);
     setCheckoutError('');
-    apiCreateCheckout({ storeId: checkoutStoreId })
+    apiCreateCheckout({ storeId: checkoutStoreId, ...(checkoutItemsPayload && { items: checkoutItemsPayload }) })
       .then(res => {
         if (cancelled) return;
         setCheckout(res.data.checkout);
@@ -614,7 +629,7 @@ export function CheckoutPage() {
         // enabled (the backend accepts it for digital items — it's a
         // Stripe-equivalent pay-up-front rail, see
         // PaymentService.manualBankTransferPayment). Never COD.
-        setAllowedMethods((res.data.allowedPaymentMethods ?? []).filter(m => m === 'stripe' || m === 'manual_bank_transfer'));
+        setAllowedMethods((res.data.allowedPaymentMethods ?? []).filter(m => m === 'stripe' || m === 'manual_bank_transfer' || isHostedProvider(m)));
         setStep(3);
       })
       .catch(err => {
@@ -874,9 +889,7 @@ export function CheckoutPage() {
         addressId: selectedAddr._id,
         ...(selectedZoneId !== STANDARD_DELIVERY._id && { shippingZoneId: selectedZoneId }),
         storeId: checkoutStoreId,
-        ...(physicalOnly && {
-          items: cartItems.map(i => ({ productId: i.productId, variantId: i.productVariantId })),
-        }),
+        ...(checkoutItemsPayload && { items: checkoutItemsPayload }),
       });
       setCheckout(res.data.checkout);
       setSummary(res.data.summary);
@@ -887,7 +900,7 @@ export function CheckoutPage() {
       // fallback that actually completes an order right now. Manual bank
       // transfer is offered whenever the backend lists it (admin-enabled);
       // split (card + COD) stays hidden for now.
-      setAllowedMethods((res.data.allowedPaymentMethods ?? []).filter(m => m === 'stripe' || m === 'cash_on_delivery' || m === 'manual_bank_transfer'));
+      setAllowedMethods((res.data.allowedPaymentMethods ?? []).filter(m => m === 'stripe' || m === 'cash_on_delivery' || m === 'manual_bank_transfer' || isHostedProvider(m)));
       setStep(3);
     } catch (err) {
       setCheckoutError(err instanceof Error ? err.message : 'Failed to create checkout. Please try again.');
@@ -1087,6 +1100,8 @@ export function CheckoutPage() {
                           onSubmitted={handleManualPaymentSubmitted}
                         />
                       )
+                    ) : isHostedProvider(selectedMethod) && checkout ? (
+                      <HostedPayButton provider={selectedMethod} checkoutId={checkout._id} label={PAYMENT_LABELS[selectedMethod].label} />
                     ) : digitalPaymentBlocked ? (
                       <DigitalPaymentNotice physicalCount={physicalItemCount} onPhysicalOnly={switchToPhysicalOnly} onBack={() => navigate('/cart')} />
                     ) : (
@@ -1240,7 +1255,7 @@ export function CheckoutPage() {
                                 )}
                               </div>
                               <p className="text-[12px] text-slate truncate">
-                                {selectedAddr.addressLine1}, {selectedAddr.city}, {selectedAddr.state} {selectedAddr.zipCode}
+                                {dedupeAddressParts([selectedAddr.addressLine1, selectedAddr.city, selectedAddr.state])} {selectedAddr.zipCode}
                               </p>
                             </div>
                           ) : (
@@ -1283,7 +1298,7 @@ export function CheckoutPage() {
                                   </div>
                                   <p className="text-[12px] text-slate">{addr.phoneNumber}</p>
                                   <p className="text-[12px] text-carbon mt-[1px]">
-                                    {addr.addressLine1}{addr.addressLine2 ? `, ${addr.addressLine2}` : ''}, {addr.city}, {addr.state} {addr.zipCode}
+                                    {dedupeAddressParts([addr.addressLine1, addr.addressLine2, addr.city, addr.state])} {addr.zipCode}
                                   </p>
                                 </div>
                               </button>
@@ -1320,7 +1335,7 @@ export function CheckoutPage() {
                 <div className="px-5 py-3 text-[13px] text-carbon">
                   <span className="font-medium">{selectedAddr.recipientName}</span>
                   {' — '}
-                  {selectedAddr.addressLine1}, {selectedAddr.city}, {selectedAddr.state}
+                  {dedupeAddressParts([selectedAddr.addressLine1, selectedAddr.city, selectedAddr.state])}
                 </div>
               )}
             </div>
@@ -1580,6 +1595,8 @@ export function CheckoutPage() {
                     </div>
                   </div>
 
+                  {checkout && !isDigital && <GiftOptions checkoutId={checkout._id} />}
+
                   <div className="flex items-center gap-1 text-[11px] text-slate mb-4">
                     <ShieldCheck size={12} className="text-success" />
                     Your payment info is secure and encrypted
@@ -1613,6 +1630,8 @@ export function CheckoutPage() {
                         onSubmitted={handleManualPaymentSubmitted}
                       />
                     )
+                  ) : isHostedProvider(selectedMethod) && checkout ? (
+                    <HostedPayButton provider={selectedMethod} checkoutId={checkout._id} label={PAYMENT_LABELS[selectedMethod].label} />
                   ) : (
                     <Button
                       variant="primary" size="lg"

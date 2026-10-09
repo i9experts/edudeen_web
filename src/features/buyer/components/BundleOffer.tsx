@@ -37,7 +37,7 @@ export function BundleOffer({ productId }: { productId: string }) {
                 {i > 0 && <Plus size={14} className="text-slate" />}
                 <Link to={`/product/${p.slug}`} className="w-[92px] no-underline">
                   <ProductImage images={p.images ?? []} name={p.name} className="h-[92px] rounded-lg border border-bone" />
-                  <p className="text-[11px] text-carbon mt-1 line-clamp-2">{p.name}</p>
+                  <p className="text-[12px] text-carbon mt-1 line-clamp-2">{p.name}</p>
                 </Link>
               </div>
             ))}
@@ -52,7 +52,7 @@ export function BundleOffer({ productId }: { productId: string }) {
               Add all {b.products.length} to cart
             </Button>
           </div>
-          <p className="text-[11.5px] text-slate mt-2 mb-0">The discount is applied at checkout when every item in the bundle is in your cart.</p>
+          <p className="text-[12px] text-slate mt-2 mb-0">The discount is applied at checkout when every item in the bundle is in your cart.</p>
         </div>
       ))}
     </section>

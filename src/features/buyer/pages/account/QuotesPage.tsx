@@ -4,13 +4,55 @@ import { FileSpreadsheet, FileText } from 'lucide-react';
 import { clsx } from 'clsx';
 import { Card, Button, SkeletonBox, EmptyState } from '@/components/comman/ui';
 import { useToast } from '@/contexts/ToastContext';
-import { apiGetMyQuotes, apiRespondToQuote, QUOTE_STATUS_LABEL, QUOTE_TONE, type QuoteRequest } from '@/api/services/classroom';
+import client from '@/api/client';
+import { apiAttachPurchaseOrder, apiGetMyQuotes, apiRespondToQuote, NET_TERMS_LABEL, QUOTE_STATUS_LABEL, QUOTE_TONE, type QuoteRequest } from '@/api/services/classroom';
 import { getStorePagePath } from '@/utils/storefrontUrl';
 import { money } from './orderFormat';
 
 const date = (iso?: string | null) => (iso ? new Date(iso).toLocaleDateString('en-PK', { day: 'numeric', month: 'short', year: 'numeric' }) : '');
 
-/** Account → School Quotes: bulk price requests and the sellers' replies. */
+/** Institution's purchase order: a PO number and/or an uploaded PDF/image. */
+function PurchaseOrderForm({ quote, onSaved }: { quote: QuoteRequest; onSaved: (q: QuoteRequest) => void }) {
+  const toast = useToast();
+  const [num, setNum] = useState(quote.purchaseOrderNumber ?? '');
+  const [url, setUrl] = useState<string | null>(quote.purchaseOrderUrl ?? null);
+  const [busy, setBusy] = useState(false);
+
+  const upload = async (file: File | undefined) => {
+    if (!file) return;
+    setBusy(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await client.post<never, { data: { url: string } }>('/api/upload/file', fd);
+      setUrl(res.data.url);
+    } catch (err) { toast.error(err instanceof Error ? err.message : 'Upload failed.'); }
+    finally { setBusy(false); }
+  };
+  const save = async () => {
+    setBusy(true);
+    try {
+      const res = await apiAttachPurchaseOrder(quote._id, { purchaseOrderNumber: num, purchaseOrderUrl: url });
+      onSaved(res.data);
+      toast.success('Purchase order saved');
+    } catch (err) { toast.error(err instanceof Error ? err.message : 'Could not save.'); }
+    finally { setBusy(false); }
+  };
+
+  return (
+    <div className="mt-3 rounded-lg border border-bone px-3 py-2 flex flex-col gap-2">
+      <p className="text-[12.5px] font-semibold text-carbon">Purchase order (optional)</p>
+      <div className="flex flex-wrap items-center gap-2">
+        <input aria-label="PO number" value={num} onChange={e => setNum(e.target.value)} maxLength={40} placeholder="PO number" className="w-[160px] py-[7px] px-2 text-[13px] border border-bone rounded-lg bg-white text-charcoal" />
+        <input aria-label="Upload purchase order" type="file" accept="application/pdf,image/*" onChange={e => void upload(e.target.files?.[0])} className="text-[12px]" />
+        {url && <a href={url} target="_blank" rel="noopener noreferrer" className="text-[12px] text-brand-orange underline">uploaded file</a>}
+        <Button variant="outline" size="sm" loading={busy} disabled={!num.trim() && !url} onClick={save}>Save</Button>
+      </div>
+    </div>
+  );
+}
+
+/** Account→ School Quotes: bulk price requests and the sellers' replies. */
 export function QuotesPage() {
   const toast = useToast();
   const [quotes, setQuotes] = useState<QuoteRequest[] | null>(null);
@@ -43,7 +85,7 @@ export function QuotesPage() {
         <Card key={q._id} padding="none">
           <div className="px-4 md:px-5 py-3 border-b border-bone flex items-center gap-2 flex-wrap">
             <span className="font-mono text-[13px] font-semibold text-carbon">{q.number}</span>
-            <span className={clsx('rounded-full px-2 py-[2px] text-[11px] font-semibold', QUOTE_TONE[q.status])}>{QUOTE_STATUS_LABEL[q.status]}</span>
+            <span className={clsx('rounded-full px-2 py-[2px] text-[12px] font-semibold', QUOTE_TONE[q.status])}>{QUOTE_STATUS_LABEL[q.status]}</span>
             <span className="ms-auto text-[12px] text-slate">Asked {date(q.createdAt)}</span>
           </div>
           <div className="px-4 md:px-5 py-4 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-4">
@@ -56,8 +98,12 @@ export function QuotesPage() {
                 <div className="mt-3 rounded-lg bg-cream px-3 py-2 text-[13px]">
                   <p><b className="text-carbon">{money(q.offer.totalPrice, q.offer.currency)}</b> <span className="text-slate">({money(q.offer.unitPrice, q.offer.currency)} each)</span></p>
                   {q.offer.validUntil && <p className="text-[12px] text-slate">Valid until {date(q.offer.validUntil)}</p>}
-                  {q.offer.note && <p className="text-[12.5px] text-graphite mt-1 whitespace-pre-line">{q.offer.note}</p>}
+                  <p className="text-[12px] text-slate">{NET_TERMS_LABEL[q.offer.netTerms ?? 'none']}</p>
+                  {q.offer.note &&<p className="text-[12.5px] text-graphite mt-1 whitespace-pre-line">{q.offer.note}</p>}
                 </div>
+              )}
+              {(q.status === 'quoted' || q.status === 'accepted') && (
+                <PurchaseOrderForm quote={q} onSaved={saved => setQuotes(prev => (prev ?? []).map(x => x._id === q._id ? { ...x, purchaseOrderNumber: saved.purchaseOrderNumber, purchaseOrderUrl: saved.purchaseOrderUrl } : x))} />
               )}
               {q.status === 'declined' && q.declineReason && <p className="mt-2 text-[12.5px] text-graphite">Seller: {q.declineReason}</p>}
               {q.status === 'accepted' && <p className="mt-2 text-[12.5px] text-success">The seller will contact {q.contactName} on {q.contactPhone} to arrange payment and delivery.</p>}

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { apiLogin, TokenStorage, getRoleRedirect, LastRolePreference, RememberedAccount, type LoginPayload, type AppRole } from '@/api/services/auth';
+import { apiLogin, apiResendOtp, AuthContext, TokenStorage, getRoleRedirect, LastRolePreference, RememberedAccount, type LoginPayload, type AppRole } from '@/api/services/auth';
 import { resolveSellerDestinationRemote } from '@/utils/sellerRouting';
 import { useToast } from '@/contexts/ToastContext';
 
@@ -37,7 +37,17 @@ export function useLogin() {
       const destination = serverRole === 'seller' ? await resolveSellerDestinationRemote() : getRoleRedirect(serverRole);
       navigate(destination, { replace: true });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Invalid credentials. Please try again.');
+      const message = err instanceof Error ? err.message : '';
+      // A registered-but-unverified account can't sign in until its email is confirmed:
+      // send a fresh code and continue on the verify page (which also has Resend).
+      if (/not verified/i.test(message)) {
+        AuthContext.set({ email: payload.email, role: payload.role, flow: 'register' });
+        try { await apiResendOtp({ email: payload.email, role: payload.role }); toast.success('We sent a new verification code to your email.'); }
+        catch { toast.error('Please verify your email — use Resend code on the next page if the code does not arrive.'); }
+        navigate('/verify-otp');
+        return;
+      }
+      setError(message || 'Invalid credentials. Please try again.');
     } finally {
       setLoading(false);
     }

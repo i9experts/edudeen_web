@@ -89,7 +89,7 @@ export function FeaturedProductsSection({ settings }: { settings: FeaturedProduc
                     ? <ProductImage images={p.images} name={p.name} className="w-full h-full object-cover" />
                     : <ProductCoverFallback name={p.name} size="sm" className="w-full h-full" />}
                 </ProductCardImage>
-                <span className={`absolute top-3 start-3 px-[6px] py-[1px] rounded-[4px] text-[9px] font-semibold border ${isDigital ? 'bg-accent-violet-bg text-accent-violet border-accent-violet/25' : 'bg-[#edf5e7] text-[#3b6720] border-[#c7e0b5]'}`}>
+                <span className={`absolute top-3 start-3 px-[6px] py-[1px] rounded-[4px] text-[12px] font-semibold border ${isDigital ? 'bg-accent-violet-bg text-accent-violet border-accent-violet/25' : 'bg-[#edf5e7] text-[#3b6720] border-[#c7e0b5]'}`}>
                   {isDigital ? (pType === 'educational' ? 'Educational' : 'Digital') : 'Physical'}
                 </span>
               </div>

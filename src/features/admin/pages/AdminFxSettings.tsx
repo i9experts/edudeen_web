@@ -30,7 +30,7 @@ function RateCard({ currency, rate, staleness }: {
             {currency === 'USD' ? '1.00' : rate.ratePerUSD.toLocaleString(undefined, { maximumFractionDigits: 2 })}
             <span className="text-[12px] font-medium text-slate ml-1">per USD</span>
           </p>
-          <p className="text-[11px] text-slate mt-1">
+          <p className="text-[12px] text-slate mt-1">
             Updated {formatDate(rate.effectiveFrom)} · {rate.source === 'admin' ? 'manual override' : 'auto-refreshed'}
           </p>
         </>
@@ -76,10 +76,10 @@ function OverrideForm({ onDone }: { onDone: () => void }) {
   return (
     <div className="bg-white border border-bone rounded-xl px-5 py-4">
       <p className="text-[13px] font-bold text-carbon mb-1">Set Manual Rate</p>
-      <p className="text-[11px] text-slate mb-3">Overrides the auto-refreshed rate immediately. Only applies to checkouts created after this change.</p>
+      <p className="text-[12px] text-slate mb-3">Overrides the auto-refreshed rate immediately. Only applies to checkouts created after this change.</p>
       <div className="flex items-end gap-3 flex-wrap">
         <div className="w-[110px]">
-          <label className="block text-[11px] font-medium text-charcoal mb-1">Currency</label>
+          <label className="block text-[12px] font-medium text-charcoal mb-1">Currency</label>
           <select value={currency} onChange={e => setCurrency(e.target.value)}
             className="w-full px-3 py-2 rounded-lg border border-bone text-[13px] bg-white outline-none cursor-pointer focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/10">
             <option value="PKR">PKR</option>
@@ -204,7 +204,7 @@ export function AdminFxSettings() {
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-[13px] font-bold text-carbon">Auto-refresh from provider</p>
-                <p className="text-[11px] text-slate mt-[2px]">Daily automatic rate refresh (sanity-band + abnormal-jump checked before ever becoming current).</p>
+                <p className="text-[12px] text-slate mt-[2px]">Daily automatic rate refresh (sanity-band + abnormal-jump checked before ever becoming current).</p>
               </div>
               <Toggle checked={fxConfig.autoRefreshEnabled} onChange={toggleAutoRefresh} disabled={savingConfig} />
             </div>

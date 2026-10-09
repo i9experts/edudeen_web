@@ -125,7 +125,7 @@ export function AdminTestimonials() {
       render: t => (
         <div className="max-w-[360px]">
           <p className="font-semibold truncate">{t.sellerName}{t.storeName ? ` · ${t.storeName}` : ''}</p>
-          <p className="text-[11px] text-slate truncate">{t.text}</p>
+          <p className="text-[12px] text-slate truncate">{t.text}</p>
         </div>
       ),
     },
@@ -134,7 +134,7 @@ export function AdminTestimonials() {
     {
       key: 'status', header: 'Status',
       render: t => (
-        <button onClick={() => handleToggle(t)} className="px-[10px] py-[3px] rounded-[5px] text-[11px] font-semibold border-none cursor-pointer outline-none transition-[filter] duration-150 hover:brightness-95 focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-brand-orange/50"
+        <button onClick={() => handleToggle(t)} className="px-[10px] py-[3px] rounded-[5px] text-[12px] font-semibold border-none cursor-pointer outline-none transition-[filter] duration-150 hover:brightness-95 focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-brand-orange/50"
           style={{ background: t.isActive ? '#EAF7EF' : '#EDF2F4', color: t.isActive ? '#1E7A3C' : '#486071' }}>
           {t.isActive ? 'Published' : 'Hidden'}
         </button>

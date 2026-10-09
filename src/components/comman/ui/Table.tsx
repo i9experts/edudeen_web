@@ -56,6 +56,13 @@ interface TableProps<T = Record<string, unknown>> {
    * Pass `false` to opt out and render a bare empty table instead.
    */
   emptyState?:       EmptyStateConfig | false;
+  /** Width below which rows turn into cards. Default sm (640px); lg = under 1024px (use for wide tables like Products/Orders/Users). */
+  cardsBelow?:       'sm' | 'lg';
+}
+
+/** Single-line cell text with ellipsis and a tooltip - use for IDs/names inside ender. */
+export function CellText({ children, max = 220, className }: { children: ReactNode; max?: number; className?: string }) {
+  return <span className={clsx('block truncate whitespace-nowrap', className)} style={{ maxWidth: max }} title={typeof children === 'string' || typeof children === 'number' ? String(children) : undefined}>{children}</span>;
 }
 
 const TH =
@@ -65,8 +72,9 @@ const TH =
 export function Table<T = Record<string, unknown>>({
   columns, data, keyExtractor, onRowClick, pagination, className,
   sort, onSortChange, selectable, selectedKeys, onSelectionChange, bulkActions,
-  loading = false, loadingRows = 5, emptyState,
+  loading = false, loadingRows = 5, emptyState, cardsBelow = 'sm',
 }: TableProps<T>) {
+  const wide = cardsBelow === 'lg';
   const perPage    = pagination?.perPage ?? 10;
   const start      = pagination ? (pagination.page - 1) * perPage + 1 : 1;
   const end        = pagination ? Math.min(pagination.page * perPage, pagination.total) : data.length;
@@ -124,7 +132,7 @@ export function Table<T = Record<string, unknown>>({
       ) : (
         <>
           {/* ── Desktop / tablet — full table ── */}
-          <div className="hidden sm:block overflow-x-auto">
+          <div className={clsx('hidden overflow-x-auto', wide ? 'lg:block' : 'sm:block')}>
             <table className="w-full border-collapse text-[13px]">
               <thead className="sticky top-0 z-[1]">
                 <tr className="border-b border-bone bg-[#f5f8fa]">
@@ -236,7 +244,7 @@ export function Table<T = Record<string, unknown>>({
           </div>
 
           {/* ── Mobile — one card per row, columns stacked as label/value ── */}
-          <div className="sm:hidden divide-y divide-[#f0eee6]">
+          <div className={clsx('divide-y divide-[#f0eee6]', wide ? 'lg:hidden' : 'sm:hidden')}>
             {loading ? (
               Array.from({ length: loadingRows }).map((_, i) => (
                 <div key={`skeleton-${i}`} className="px-4 py-3 flex flex-col gap-2">
@@ -253,7 +261,11 @@ export function Table<T = Record<string, unknown>>({
                     className={clsx('px-4 py-3 flex flex-col gap-1.5', onRowClick && 'cursor-pointer active:bg-cream')}
                     onClick={() => onRowClick?.(row)}
                   >
-                    {labeledColumns.map(col => (
+                    {labeledColumns.map((col, ci) => wide && ci === 0 ? (
+                      <div key={col.key} className="min-w-0 text-[14px] font-semibold text-carbon">
+                        {col.render ? col.render(row, i) : String((row as Record<string, unknown>)[col.key] ?? '')}
+                      </div>
+                    ) : (
                       <div key={col.key} className="flex items-start justify-between gap-3">
                         <span className="text-[10.5px] font-semibold text-slate uppercase tracking-[0.05em] shrink-0 pt-[1px]">{col.header}</span>
                         <span className="text-[13px] text-carbon text-end min-w-0">

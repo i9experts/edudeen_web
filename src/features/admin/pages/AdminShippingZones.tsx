@@ -5,7 +5,7 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { Button, Modal, EmptyState, SkeletonBox } from '@/components/comman/ui';
 import { AdminStudioHeader, ADMIN_GUTTER } from '@/features/admin/components/studio';
 import {
-  apiAdminListShippingZones, apiAdminCreateShippingZone, apiAdminUpdateShippingZone, apiAdminDeleteShippingZone,
+  apiAdminSeedDefaultShippingZones, apiAdminListShippingZones, apiAdminCreateShippingZone, apiAdminUpdateShippingZone, apiAdminDeleteShippingZone,
   shippingZoneLabel, type ShippingZone, type ShippingZonePayload,
 } from '@/api/services/shipping';
 
@@ -88,7 +88,7 @@ function ZoneModal({ zone, onClose, onSaved }: { zone: ShippingZone | null; onCl
           Offer this zone at checkout
         </label>
       </div>
-      <p className="text-[11.5px] text-slate mt-3">
+      <p className="text-[12px] text-slate mt-3">
         Buyers see the zone for their city first, then their province's, then a country-wide one — so one country-wide zone covers everywhere else.
       </p>
       {error && <p role="alert" className="text-[12px] text-error mt-2">{error}</p>}
@@ -103,6 +103,25 @@ export function AdminShippingZones() {
   const [editing, setEditing] = useState<ShippingZone | 'new' | null>(null);
   const [deleting, setDeleting] = useState<ShippingZone | null>(null);
   const [busy, setBusy] = useState(false);
+  const [seeding, setSeeding] = useState(false);
+  const [notice, setNotice] = useState('');
+
+  // Adds the starter Pakistan zones that don't exist yet (existing zones are never changed).
+  const seedDefaults = async () => {
+    if (!window.confirm('Add the default Pakistan delivery zones? Zones you already have are not changed.')) return;
+    setSeeding(true);
+    setError('');
+    setNotice('');
+    try {
+      const res = await apiAdminSeedDefaultShippingZones();
+      setNotice(res.message);
+      load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not add the default zones.');
+    } finally {
+      setSeeding(false);
+    }
+  };
 
   const load = useCallback(() => {
     setError('');
@@ -126,7 +145,12 @@ export function AdminShippingZones() {
         eyebrow="Edudeen team workspace · Commerce"
         title="Shipping Zones"
         subtitle="Where physical orders can be delivered, and what buyers pay for shipping. Prices are in PKR."
-        actions={<Button variant="primary" icon={<Plus size={15} />} onClick={() => setEditing('new')}>New zone</Button>}
+        actions={
+          <>
+            <Button variant="outline" onClick={seedDefaults} loading={seeding}>Add default PK zones</Button>
+            <Button variant="primary" icon={<Plus size={15} />} onClick={() => setEditing('new')}>New zone</Button>
+          </>
+        }
       />
 
       <div className={clsx(ADMIN_GUTTER, 'pt-6 pb-8 flex flex-col gap-4')}>
@@ -136,6 +160,7 @@ export function AdminShippingZones() {
           </div>
         )}
         {error && <p role="alert" className="text-[13px] text-error">{error}</p>}
+        {notice && <p role="status" className="text-[13px] text-success">{notice}</p>}
 
         <div className="bg-white border border-bone rounded-xl overflow-hidden">
           {zones === null ? (
@@ -161,12 +186,12 @@ export function AdminShippingZones() {
                     <tr key={z._id}>
                       <td className="px-5 py-3">
                         <p className="font-semibold text-carbon">{shippingZoneLabel(z)}</p>
-                        <p className="text-[11.5px] text-slate">{z.country}</p>
+                        <p className="text-[12px] text-slate">{z.country}</p>
                       </td>
                       <td className="px-5 py-3 font-semibold text-carbon">{z.shippingPrice > 0 ? `Rs ${z.shippingPrice.toLocaleString()}` : 'Free'}</td>
                       <td className="px-5 py-3 text-charcoal">{z.estimatedDeliveryTime || '—'}</td>
                       <td className="px-5 py-3">
-                        <span className={clsx('text-[11px] font-semibold px-2 py-[2px] rounded-full', z.status === 'inactive' ? 'bg-bone text-slate' : 'bg-success-bg text-success')}>
+                        <span className={clsx('text-[12px] font-semibold px-2 py-[2px] rounded-full', z.status === 'inactive' ? 'bg-bone text-slate' : 'bg-success-bg text-success')}>
                           {z.status === 'inactive' ? 'Off' : 'Active'}
                         </span>
                       </td>

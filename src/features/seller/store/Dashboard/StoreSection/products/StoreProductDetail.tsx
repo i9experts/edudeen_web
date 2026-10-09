@@ -138,7 +138,7 @@ export default function StoreProductDetail() {
             <h1 className="text-[17px] font-bold text-charcoal leading-tight">{p.name}</h1>
             <div className="flex items-center gap-2 mt-[3px]">
               <StatusBadge status={p.status} />
-              {p.slug && <span className="text-[11px] text-slate">/{p.slug}</span>}
+              {p.slug && <span className="text-[12px] text-slate">/{p.slug}</span>}
             </div>
           </div>
         </div>
@@ -161,7 +161,7 @@ export default function StoreProductDetail() {
               : (
                 <div className="flex flex-col items-center gap-2 p-6">
                   {isDigital ? <Download size={28} className="text-dark-text" /> : <Package size={28} className="text-dark-text" />}
-                  <span className="text-[11px] text-slate">No image</span>
+                  <span className="text-[12px] text-slate">No image</span>
                 </div>
               )}
           </div>
@@ -174,7 +174,7 @@ export default function StoreProductDetail() {
                   <p className="text-[18px] font-bold text-charcoal leading-tight">{p.name}</p>
                   <div className="flex items-center gap-2 mt-1.5">
                     <StatusBadge status={p.status} />
-                    <span className="text-[11px] text-slate flex items-center gap-1">
+                    <span className="text-[12px] text-slate flex items-center gap-1">
                       {isDigital ? <Download size={11} /> : <Package size={11} />}
                       {typeLabel} Product
                     </span>
@@ -186,7 +186,7 @@ export default function StoreProductDetail() {
                     <p className="text-[12px] text-slate line-through mt-0.5">{currencySymbol(store?.baseCurrency)}{v.compareAtPrice.toLocaleString()}</p>
                   )}
                   {discountPct !== null && (
-                    <span className="inline-block text-[11px] font-bold text-success bg-success-bg px-2 py-0.5 rounded-[5px] mt-1">{discountPct}% OFF</span>
+                    <span className="inline-block text-[12px] font-bold text-success bg-success-bg px-2 py-0.5 rounded-[5px] mt-1">{discountPct}% OFF</span>
                   )}
                 </div>
               </div>
@@ -239,7 +239,7 @@ export default function StoreProductDetail() {
               <InfoRow label="Sub-Category" value={p.subCategoryId || '—'} />
               {p.description && (
                 <div className="py-3">
-                  <p className="text-[11px] text-slate mb-1.5">Description</p>
+                  <p className="text-[12px] text-slate mb-1.5">Description</p>
                   <p className="text-[13px] text-charcoal leading-[1.7]">{p.description}</p>
                 </div>
               )}
@@ -265,7 +265,7 @@ export default function StoreProductDetail() {
             {/* Physical: Inventory */}
             {!isDigital && (
               <SectionCard title="Inventory & Shipping" icon={Package}>
-                <InfoRow label="SKU"             value={<code className="text-[11px] bg-bone px-[6px] py-[2px] rounded font-mono">{v.sku}</code>} />
+                <InfoRow label="SKU"             value={<code className="text-[12px] bg-bone px-[6px] py-[2px] rounded font-mono">{v.sku}</code>} />
                 <InfoRow label="Stock"           value={`${v.stock} units`} />
                 {(v.options ?? []).map(o => (
                   <InfoRow key={o.name} label={o.name} value={o.value} />
@@ -279,13 +279,13 @@ export default function StoreProductDetail() {
               <SectionCard title="Digital Delivery" icon={Download}>
                 {(p.digital.files ?? []).length > 0 ? (
                   <div className="py-3 border-b border-bone">
-                    <p className="text-[11px] text-slate mb-2">Attached File</p>
+                    <p className="text-[12px] text-slate mb-2">Attached File</p>
                     {(p.digital.files ?? []).map((f, i) => (
                       <div key={i} className="flex items-center gap-2.5 bg-[#f5f4ef] border border-bone rounded-lg px-3 py-2.5">
                         <Download size={14} className="text-brand-orange shrink-0" />
                         <div className="flex-1 min-w-0">
                           <p className="text-[12px] font-medium text-charcoal truncate">{f.name}</p>
-                          <p className="text-[11px] text-slate mt-0.5">{f.mimeType} · {f.size > 0 ? `${(f.size / 1024 / 1024).toFixed(2)} MB` : '—'}</p>
+                          <p className="text-[12px] text-slate mt-0.5">{f.mimeType} · {f.size > 0 ? `${(f.size / 1024 / 1024).toFixed(2)} MB` : '—'}</p>
                         </div>
                       </div>
                     ))}
@@ -303,7 +303,7 @@ export default function StoreProductDetail() {
                 } />
                 {p.digital.buyerDeliveryMessage && (
                   <div className="py-3">
-                    <p className="text-[11px] text-slate mb-1.5">Buyer Delivery Message</p>
+                    <p className="text-[12px] text-slate mb-1.5">Buyer Delivery Message</p>
                     <p className="text-[12px] text-charcoal leading-[1.6] italic bg-[#f5f4ef] px-3 py-2.5 rounded-lg border border-bone">
                       "{p.digital.buyerDeliveryMessage}"
                     </p>
@@ -352,7 +352,7 @@ export default function StoreProductDetail() {
                   ? <span className="flex items-center gap-1 text-success justify-end"><CheckCircle size={13} /> Listed</span>
                   : <span className="flex items-center gap-1 text-slate justify-end"><XCircle size={13} /> Not listed</span>
               } />
-              {!isDigital && <InfoRow label="SKU" value={<code className="text-[11px] bg-bone px-[6px] py-[2px] rounded font-mono">{v.sku}</code>} />}
+              {!isDigital && <InfoRow label="SKU" value={<code className="text-[12px] bg-bone px-[6px] py-[2px] rounded font-mono">{v.sku}</code>} />}
             </SectionCard>
 
             {/* Timeline */}
@@ -364,7 +364,7 @@ export default function StoreProductDetail() {
             {/* Product ID */}
             <SectionCard title="Product ID" icon={Hash}>
               <div className="py-3">
-                <p className="text-[11px] text-slate font-mono break-all leading-[1.6]">{p._id}</p>
+                <p className="text-[12px] text-slate font-mono break-all leading-[1.6]">{p._id}</p>
               </div>
             </SectionCard>
 

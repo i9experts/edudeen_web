@@ -43,7 +43,7 @@ function QuizEditor({ quiz, onChange }: { quiz: NonNullable<CourseLessonInput['q
       <div className="w-[160px]"><Input label="Pass mark (%)" type="number" min={0} max={100} value={String(quiz.passPercent)} onChange={e => onChange({ ...quiz, passPercent: Number(e.target.value) || 0 })} /></div>
       {quiz.questions.map((q, i) => (
         <fieldset key={i} className="border border-bone rounded-lg p-3 flex flex-col gap-2">
-          <legend className="text-[11.5px] font-semibold text-slate px-1">Question {i + 1}</legend>
+          <legend className="text-[12px] font-semibold text-slate px-1">Question {i + 1}</legend>
           <Input aria-label={`Question ${i + 1}`} value={q.question} maxLength={500} onChange={e => setQ(i, { question: e.target.value })} placeholder="Type the question" />
           {q.options.map((o, k) => (
             <div key={k} className="flex items-center gap-2">
@@ -63,7 +63,7 @@ function QuizEditor({ quiz, onChange }: { quiz: NonNullable<CourseLessonInput['q
       {quiz.questions.length < 30 && (
         <Button variant="outline" size="sm" onClick={() => onChange({ ...quiz, questions: [...quiz.questions, { question: '', options: ['', ''], answerIndex: 0 }] })}><Plus size={13} /> Add question</Button>
       )}
-      <p className="text-[11.5px] text-slate m-0">Select the radio button next to the correct answer.</p>
+      <p className="text-[12px] text-slate m-0">Select the radio button next to the correct answer.</p>
     </div>
   );
 }
@@ -77,7 +77,7 @@ function LessonEditor({ lesson, index, count, onChange, onMove, onRemove }: {
   return (
     <div className="rounded-xl border border-bone bg-white p-3 md:p-4 flex flex-col gap-3">
       <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-[11px] font-bold text-slate w-6">{index + 1}.</span>
+        <span className="text-[12px] font-bold text-slate w-6">{index + 1}.</span>
         <div className="flex-1 min-w-[180px]"><Input aria-label="Lesson title" value={lesson.title} maxLength={150} onChange={e => set('title', e.target.value)} placeholder="Lesson title" /></div>
         <div role="radiogroup" aria-label="Lesson type" className="flex gap-1">
           {TYPES.map(t => (

@@ -57,15 +57,15 @@ export function RailCard({ product, onClick, badge, rank, size = 'md', stockLabe
         />
         {badge && <div className="absolute top-[5px] start-[5px]">{badge}</div>}
         {rank != null && (
-          <span className="absolute bottom-[5px] start-[5px] w-[18px] h-[18px] rounded-full bg-carbon/85 backdrop-blur-sm text-white text-[10px] font-bold flex items-center justify-center">
+          <span className="absolute bottom-[5px] start-[5px] w-[18px] h-[18px] rounded-full bg-carbon/85 backdrop-blur-sm text-white text-[12px] font-bold flex items-center justify-center">
             {rank}
           </span>
         )}
       </div>
       <div className={isSm ? 'px-[7px] py-[6px]' : 'px-[9px] py-[8px]'}>
-        <p className={clsx('font-semibold text-carbon leading-tight line-clamp-2', isSm ? 'text-[10px] mb-[3px] min-h-[24px]' : 'text-[11px] mb-[5px] min-h-[28px]')}>{product.name}</p>
+        <p className={clsx('font-semibold text-carbon leading-tight line-clamp-2', isSm ? 'text-[12px] mb-[3px] min-h-[24px]' : 'text-[12px] mb-[5px] min-h-[28px]')}>{product.name}</p>
         <div className="flex items-baseline gap-[4px]">
-          <span className={clsx('font-bold text-carbon', isSm ? 'text-[11px]' : 'text-[12px]')}>{price != null ? `${priceSymbol}${price.toLocaleString()}` : '—'}</span>
+          <span className={clsx('font-bold text-carbon', isSm ? 'text-[12px]' : 'text-[12px]')}>{price != null ? `${priceSymbol}${price.toLocaleString()}` : '—'}</span>
           {compareAt != null && compareAt > (price ?? 0) && (
             <span className="text-[9.5px] text-slate line-through">{priceSymbol}{compareAt.toLocaleString()}</span>
           )}
@@ -75,7 +75,7 @@ export function RailCard({ product, onClick, badge, rank, size = 'md', stockLabe
           {product.averageRating > 0 ? product.averageRating.toFixed(1) : 'New'}
         </span>
         {stockLabel && (
-          <span className="block text-[9px] font-semibold text-amber-600 mt-[3px]">{stockLabel}</span>
+          <span className="block text-[12px] font-semibold text-amber-600 mt-[3px]">{stockLabel}</span>
         )}
       </div>
     </button>
@@ -211,7 +211,7 @@ export function CategoriesMegaContent({
                     ? <img loading="lazy" decoding="async" src={sub.image} alt="" className="w-full h-full object-cover" />
                     : <Tag size={18} className="text-brand-orange opacity-50" />}
                 </span>
-                <span className="text-[11px] font-medium text-charcoal leading-tight line-clamp-2 group-hover:text-brand-orange transition-colors">
+                <span className="text-[12px] font-medium text-charcoal leading-tight line-clamp-2 group-hover:text-brand-orange transition-colors">
                   {sub.name}
                 </span>
               </button>
@@ -252,7 +252,7 @@ export function FlashSaleMegaContent({ flashDeals, countdown, onProductClick }: 
 
         <div className="relative z-[1] min-w-0 flex-1 lg:flex-none lg:text-center">
           <p className="text-[13.5px] font-bold leading-tight lg:mb-[3px]">Flash Sale</p>
-          <p className="hidden lg:block text-[10.5px] text-white/80 mb-3 leading-snug">Deep discounts, while stock lasts.</p>
+          <p className="hidden lg:block text-[12px] text-white/80 mb-3 leading-snug">Deep discounts, while stock lasts.</p>
         </div>
 
         {countdown && <div className="relative z-[1] flex flex-col items-center shrink-0">
@@ -286,7 +286,7 @@ export function FlashSaleMegaContent({ flashDeals, countdown, onProductClick }: 
                   product={product}
                   onClick={onProductClick}
                   size="sm"
-                  badge={<span className="px-[6px] py-[2px] rounded-[5px] text-[9px] font-bold bg-[#e11d48] text-white shadow-[0_2px_6px_rgba(225,29,72,0.35)]">-{pct}%</span>}
+                  badge={<span className="px-[6px] py-[2px] rounded-[5px] text-[12px] font-bold bg-[#e11d48] text-white shadow-[0_2px_6px_rgba(225,29,72,0.35)]">-{pct}%</span>}
                   stockLabel={stock != null && stock > 0 && stock <= 5 ? `Only ${stock} left` : undefined}
                 />
               );
@@ -322,7 +322,7 @@ export function TopPicksMegaContent({ topPicks, bestRated = [], onProductClick }
                 onClick={onProductClick}
                 size="sm"
                 badge={product.purchaseCount > 0 ? (
-                  <span className="px-[6px] py-[2px] rounded-[5px] text-[9px] font-bold bg-carbon/80 text-white backdrop-blur-sm">
+                  <span className="px-[6px] py-[2px] rounded-[5px] text-[12px] font-bold bg-carbon/80 text-white backdrop-blur-sm">
                     {product.purchaseCount} sold
                   </span>
                 ) : undefined}
@@ -343,7 +343,7 @@ export function TopPicksMegaContent({ topPicks, bestRated = [], onProductClick }
                 onClick={onProductClick}
                 size="sm"
                 badge={product.averageRating > 0 ? (
-                  <span className="flex items-center gap-[2px] px-[6px] py-[2px] rounded-[5px] text-[9px] font-bold bg-carbon/80 text-white backdrop-blur-sm">
+                  <span className="flex items-center gap-[2px] px-[6px] py-[2px] rounded-[5px] text-[12px] font-bold bg-carbon/80 text-white backdrop-blur-sm">
                     <Star size={8} className="fill-white" /> {product.averageRating.toFixed(1)}
                   </span>
                 ) : undefined}
@@ -418,7 +418,7 @@ function AboutMegaContent({ onNavigate }: { onNavigate: (path: string) => void }
             />
           </div>
           <p className="text-[13px] font-bold text-carbon leading-snug mb-1 group-hover:text-brand-orange transition-colors">{title}</p>
-          <p className="text-[11px] text-slate leading-[1.5]">{description}</p>
+          <p className="text-[12px] text-slate leading-[1.5]">{description}</p>
         </button>
       ))}
 
@@ -427,7 +427,7 @@ function AboutMegaContent({ onNavigate }: { onNavigate: (path: string) => void }
 
       <div style={{ animationDelay: `${3 * 60}ms` }} className="dash-section-enter w-[220px] shrink-0">
         <p className="text-[13px] font-bold text-brand-orange leading-snug mb-1">Get the Edudeen app</p>
-        <p className="text-[11px] text-slate leading-[1.5] mb-3">Browse products, chat with sellers, and manage and pay for your orders with the Edudeen app — anytime, anywhere.</p>
+        <p className="text-[12px] text-slate leading-[1.5] mb-3">Browse products, chat with sellers, and manage and pay for your orders with the Edudeen app — anytime, anywhere.</p>
         <div className="flex items-center gap-3">
           <div className="shrink-0 rounded-md bg-white p-1 border border-bone">
             <RealAppQr size={64} />
@@ -440,11 +440,11 @@ function AboutMegaContent({ onNavigate }: { onNavigate: (path: string) => void }
               className="flex items-center gap-[6px] rounded-[6px] bg-carbon px-[10px] py-[6px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange"
             >
               <GooglePlayGlyph size={11} />
-              <span className="text-[10.5px] font-semibold text-white leading-none">Google Play</span>
+              <span className="text-[12px] font-semibold text-white leading-none">Google Play</span>
             </a>
             <span className="flex items-center gap-[6px] rounded-[6px] bg-carbon px-[10px] py-[6px]">
               <AppleGlyph size={12} />
-              <span className="text-[10.5px] font-semibold text-white leading-none">App Store</span>
+              <span className="text-[12px] font-semibold text-white leading-none">App Store</span>
             </span>
           </div>
         </div>
@@ -627,7 +627,7 @@ export function MegaMenuBar({
               // not several slightly-different ones.
               'shrink-0 rounded-full px-3 py-[7px]',
               active === 'categories' ? 'bg-brand-pale-orange' : 'bg-cream',
-              compact && 'md:rounded-none md:bg-transparent md:px-0 md:py-1 md:text-[11.5px]',
+              compact && 'md:rounded-none md:bg-transparent md:px-0 md:py-1 md:text-[12px]',
             ))}
           >
             {t(categoriesLabel)}
@@ -654,7 +654,7 @@ export function MegaMenuBar({
                 'group flex items-center whitespace-nowrap shrink-0 border-none cursor-pointer transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange',
                 'gap-[6px] py-[7px] px-[11px] rounded-full text-[12.5px] font-semibold',
                 active === item.key ? 'text-brand-deep-orange bg-brand-pale-orange' : 'text-charcoal hover:bg-cream',
-                compact && 'md:gap-1 md:py-1 md:px-0 md:rounded-none md:text-[11.5px] md:font-medium md:bg-transparent md:hover:bg-transparent',
+                compact && 'md:gap-1 md:py-1 md:px-0 md:rounded-none md:text-[12px] md:font-medium md:bg-transparent md:hover:bg-transparent',
                 compact && (active === item.key ? 'md:text-brand-orange' : 'md:text-slate md:hover:text-brand-orange'),
                 item.className,
               )}
@@ -676,7 +676,7 @@ export function MegaMenuBar({
             className={clsx(
               'group flex items-center whitespace-nowrap shrink-0 border-none cursor-pointer transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange',
               'gap-[6px] py-[7px] px-[11px] rounded-full text-[12.5px] font-semibold text-charcoal hover:bg-cream bg-transparent',
-              compact && 'md:gap-1 md:py-1 md:px-0 md:rounded-none md:text-[11.5px] md:font-medium md:hover:bg-transparent md:text-slate md:hover:text-brand-orange',
+              compact && 'md:gap-1 md:py-1 md:px-0 md:rounded-none md:text-[12px] md:font-medium md:hover:bg-transparent md:text-slate md:hover:text-brand-orange',
             )}
           >
             <GraduationCap size={13} className={clsx('shrink-0 text-slate group-hover:text-brand-orange', compact && 'md:hidden')} />
@@ -692,7 +692,7 @@ export function MegaMenuBar({
               group (outer row is `flex-wrap` — see above). */}
           <span className={clsx(
             'hidden md:flex items-center gap-x-4 gap-y-2 flex-wrap text-slate whitespace-nowrap ms-auto',
-            compact ? 'text-[11.5px]' : 'text-[12.5px]',
+            compact ? 'text-[12px]' : 'text-[12.5px]',
           )}>
             <span className="flex items-center gap-1 shrink-0">
               <BadgeCheck size={compact ? 11 : 13} className="text-success" /> {t('Verified Sellers')}

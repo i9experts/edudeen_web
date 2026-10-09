@@ -19,12 +19,12 @@ const HIGHLIGHTS = [
 
 const BRANDING_HEADER = (
   <div className="flex items-center gap-[10px]">
-    <div className="size-9 rounded-lg bg-error flex items-center justify-center shrink-0">
+    <div className="size-9 rounded-lg bg-brand-royal flex items-center justify-center shrink-0">
       <Shield size={18} className="text-white" />
     </div>
     <div>
       <p className="text-[15px] font-bold text-white leading-tight">Edudeen Admin</p>
-      <p className="text-[11px] text-pos-muted leading-tight">Super Admin Panel</p>
+      <p className="text-[12px] text-white/70 leading-tight">Super Admin Panel</p>
     </div>
   </div>
 );
@@ -53,12 +53,12 @@ export function AdminLoginPage() {
 
   return (
     <AuthSplitLayout
-      panelGradient="from-admin-bg via-[#1a1918] to-[#2a1414]"
+      panelGradient="from-carbon via-charcoal to-brand-deep-orange"
       brandingHeader={BRANDING_HEADER}
       heading={<>Platform control,<br />secured.</>}
       subtext="Sign in with your administrator credentials to access the Edudeen control panel."
       highlights={HIGHLIGHTS}
-      accentIconClass="text-error"
+      accentIconClass="text-[#9CCBF2]"
       visual={<AdminControlMockup />}
     >
       <h1 className="text-[22px] font-bold text-carbon mb-1.5 text-center lg:text-start">

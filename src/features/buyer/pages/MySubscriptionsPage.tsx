@@ -130,7 +130,7 @@ function ManageSubscriptionModal({ sub, onClose, onChanged }: {
         <div className="bg-cream rounded-lg px-4 py-3 flex items-center justify-between">
           <div>
             <p className="text-[13px] font-semibold text-charcoal">{sub.store?.name ?? 'Store'}</p>
-            <p className="text-[11px] text-slate">{sub.billingInterval} — ${sub.amountUSD.toFixed(2)}</p>
+            <p className="text-[12px] text-slate">{sub.billingInterval} — ${sub.amountUSD.toFixed(2)}</p>
           </div>
           <Badge color={STATUS_COLOR[sub.status] ?? 'gray'}>{sub.status}{sub.pendingCancellation ? ' (ending)' : ''}</Badge>
         </div>
@@ -204,7 +204,7 @@ function ManageSubscriptionModal({ sub, onClose, onChanged }: {
                 <Button size="sm" onClick={submitChangePlan} loading={busy} disabled={!selectedPlanId}>Confirm Change</Button>
               </>
             )}
-            <button onClick={() => setChangingPlan(false)} className="text-[11px] text-slate bg-transparent border-none cursor-pointer text-start">Back</button>
+            <button onClick={() => setChangingPlan(false)} className="text-[12px] text-slate bg-transparent border-none cursor-pointer text-start">Back</button>
           </div>
         )}
 
@@ -310,7 +310,7 @@ function CreditsPanel() {
           <div key={w._id} className="flex items-center justify-between text-[13px] bg-cream rounded-lg px-3.5 py-2.5">
             <div>
               <p className="font-semibold text-charcoal">{w.store?.name ?? 'Store'} — {w.creditType} credits</p>
-              <p className="text-[11px] text-slate">{w.balance} available of {w.totalGranted} granted</p>
+              <p className="text-[12px] text-slate">{w.balance} available of {w.totalGranted} granted</p>
             </div>
             <Button size="xs" variant="outline" disabled={w.balance <= 0} onClick={() => openSpend(w)}>
               Use Credit
@@ -475,7 +475,7 @@ export function SubscriptionsTab() {
           actions={
             <div className="flex flex-col items-end gap-1">
               <Button size="sm" variant="outline" loading={openingPortal} onClick={handleManageBilling}>Manage Billing</Button>
-              {billingError && <p className="text-[11px] text-error max-w-[220px] text-end">{billingError}</p>}
+              {billingError && <p className="text-[12px] text-error max-w-[220px] text-end">{billingError}</p>}
             </div>
           }
         />

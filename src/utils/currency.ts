@@ -20,21 +20,22 @@ export function currencySymbol(code?: string | null): string {
   return CURRENCY_SYMBOLS[code.toUpperCase()] ?? code;
 }
 
-/** Formats an amount with the correct symbol for a given currency code. */
-export function formatMoney(amount: number, code?: string | null): string {
-  return `${currencySymbol(code)} ${amount.toLocaleString()}`;
+/** Formats an amount with the correct symbol for a given currency code — the one money format
+ *  the app uses: symbol, a space, thousands separators, and no ".00" on whole amounts. */
+export function formatMoney(amount: number | null | undefined, code?: string | null): string {
+  if (amount == null || Number.isNaN(amount)) return '—';
+  const sign = amount < 0 ? '-' : '';
+  return `${sign}${currencySymbol(code)} ${Math.abs(amount).toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
 }
 
-/** Same abbreviation style as the admin analytics `formatCurrency` helper
- *  (K/M suffixes) but with the correct symbol for [code] instead of always
- *  hardcoding "$" — for admin finance figures that must stay currency-aware
- *  (a PKR total should never render with a $ prefix). */
+/** Same format, abbreviated (K/M) for tight spaces — "Rs 8K", "Rs 1.2M". The symbol always
+ *  follows the currency code, so a PKR total never renders with a $ prefix. */
 export function formatMoneyCompact(amount: number | null | undefined, code?: string | null): string {
   if (amount == null || Number.isNaN(amount)) return '—';
-  const symbol = currencySymbol(code);
   const abs = Math.abs(amount);
   const sign = amount < 0 ? '-' : '';
-  if (abs >= 1_000_000) return `${sign}${symbol}${(abs / 1_000_000).toFixed(2)}M`;
-  if (abs >= 1_000) return `${sign}${symbol}${(abs / 1_000).toFixed(1)}k`;
-  return `${sign}${symbol}${abs.toFixed(2)}`;
+  const short = (n: number) => String(Number(n.toFixed(1)));
+  if (abs >= 1_000_000) return `${sign}${currencySymbol(code)} ${short(abs / 1_000_000)}M`;
+  if (abs >= 1_000) return `${sign}${currencySymbol(code)} ${short(abs / 1_000)}K`;
+  return formatMoney(amount, code);
 }

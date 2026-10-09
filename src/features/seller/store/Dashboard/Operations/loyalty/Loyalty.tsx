@@ -188,7 +188,7 @@ function OverviewTab({ storeId }: { storeId: string }) {
                     <div className="h-2 rounded-[4px] bg-bone overflow-hidden">
                       <div className="h-full rounded-[4px]" style={{ width: `${tier.percent}%`, background: style.color }} />
                     </div>
-                    <p className="text-[11px] text-slate mt-[3px] text-right">{tier.percent}%</p>
+                    <p className="text-[12px] text-slate mt-[3px] text-right">{tier.percent}%</p>
                   </div>
                 );
               })}
@@ -257,7 +257,7 @@ function TiersTab({ storeId, program, onSaved }: { storeId: string; program: Loy
             <input value={tier.benefits.join(', ')} onChange={e => update(i, { benefits: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
               className={INPUT_CLS} />
           </div>
-          <button onClick={() => setTiers(prev => prev.filter((_, idx) => idx !== i))} className="w-8 h-8 flex items-center justify-center bg-white border border-bone rounded-lg text-error cursor-pointer transition-colors duration-150 hover:bg-error hover:text-white hover:border-error focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/50">
+          <button aria-label="Delete" onClick={() => setTiers(prev => prev.filter((_, idx) => idx !== i))} className="w-8 h-8 flex items-center justify-center bg-white border border-bone rounded-lg text-error cursor-pointer transition-colors duration-150 hover:bg-error hover:text-white hover:border-error focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/50">
             <Trash2 size={14} />
           </button>
         </div>
@@ -339,7 +339,7 @@ function RewardsTab({ storeId, showCreate, onCloseCreate }: { storeId: string; s
             <div key={r._id} className="bg-white border border-bone rounded-[10px] px-[22px] py-5 transition-transform duration-200 hover:-translate-y-[1px]">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-sm font-semibold text-carbon">{r.name}</p>
-                <span className="px-2.5 py-[3px] rounded-[5px] text-[11px] font-semibold" style={{ background: r.isActive ? '#E3F4EA' : '#F0EEE6', color: r.isActive ? '#1E7A3C' : '#5A5852' }}>
+                <span className="px-2.5 py-[3px] rounded-[5px] text-[12px] font-semibold" style={{ background: r.isActive ? '#E3F4EA' : '#F0EEE6', color: r.isActive ? '#1E7A3C' : '#5A5852' }}>
                   {r.isActive ? 'Active' : 'Inactive'}
                 </span>
               </div>
@@ -429,7 +429,7 @@ function MembersTab({ storeId, onAward }: { storeId: string; onAward: (m: Loyalt
       render: m => (
         <div>
           <p className="font-semibold text-charcoal">{m.user?.name ?? 'Unknown'}</p>
-          <p className="text-[11px] text-slate">{m.user?.email}</p>
+          <p className="text-[12px] text-slate">{m.user?.email}</p>
         </div>
       ),
     },
@@ -500,7 +500,7 @@ function EarningRulesTab({ storeId, program, onSaved }: { storeId: string; progr
           <label className="text-xs font-medium text-graphite mb-[5px] block">{f.label}</label>
           <input type="number" value={form[f.key]} onChange={e => setForm(prev => ({ ...prev, [f.key]: e.target.value }))}
             className={INPUT_CLS} />
-          <p className="text-[11px] text-slate mt-1">{f.hint}</p>
+          <p className="text-[12px] text-slate mt-1">{f.hint}</p>
         </div>
       ))}
       <button onClick={save} disabled={saving} className="px-6 py-2.5 bg-brand-orange border-none rounded-lg text-[13px] font-semibold text-white cursor-pointer self-start transition-colors duration-150 hover:bg-brand-deep-orange disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-brand-orange/50">
@@ -611,8 +611,8 @@ function AwardPointsModal({ storeId, member, onClose }: { storeId: string; membe
         ) : history.map(tx => (
           <div key={tx._id} className="flex justify-between items-center bg-cream rounded-lg px-3 py-2 transition-colors duration-150 hover:bg-bone">
             <div>
-              <p className="text-[11px] font-semibold text-carbon">{tx.description ?? tx.type}</p>
-              <p className="text-[11px] text-slate">{new Date(tx.createdAt).toLocaleDateString()}</p>
+              <p className="text-[12px] font-semibold text-carbon">{tx.description ?? tx.type}</p>
+              <p className="text-[12px] text-slate">{new Date(tx.createdAt).toLocaleDateString()}</p>
             </div>
             <span className="text-xs font-bold" style={{ color: tx.points > 0 ? '#2D8A4E' : '#C13030' }}>
               {tx.points > 0 ? '+' : ''}{tx.points}

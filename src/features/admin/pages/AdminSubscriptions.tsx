@@ -65,7 +65,7 @@ function WebhooksPanel() {
       key: 'status', header: 'Status',
       render: ev => {
         const st = WEBHOOK_STATUS_STYLE[ev.status] ?? { bg: '#EDF2F4', color: '#486071' };
-        return <span className="px-[10px] py-[3px] rounded-[5px] text-[11px] font-semibold" style={{ background: st.bg, color: st.color }}>{ev.status}</span>;
+        return <span className="px-[10px] py-[3px] rounded-[5px] text-[12px] font-semibold" style={{ background: st.bg, color: st.color }}>{ev.status}</span>;
       },
     },
     { key: 'processingAttempts', header: 'Attempts', render: ev => <span className="text-slate">{ev.processingAttempts}</span> },
@@ -74,10 +74,10 @@ function WebhooksPanel() {
       key: 'actions', header: '',
       render: ev => ev.status === 'failed' ? (
         <div className="flex flex-col items-start gap-1">
-          <button disabled={retryingId === ev._id} onClick={() => retry(ev._id)} className="px-2.5 py-1 bg-white border border-bone rounded-[6px] text-[11px] text-graphite cursor-pointer disabled:opacity-50">
+          <button disabled={retryingId === ev._id} onClick={() => retry(ev._id)} className="px-2.5 py-1 bg-white border border-bone rounded-[6px] text-[12px] text-graphite cursor-pointer disabled:opacity-50">
             {retryingId === ev._id ? 'Retrying…' : 'Retry'}
           </button>
-          {retryError?.id === ev._id && <span className="text-[11px] text-error max-w-[220px]">{retryError.message}</span>}
+          {retryError?.id === ev._id && <span className="text-[12px] text-error max-w-[220px]">{retryError.message}</span>}
         </div>
       ) : null,
     },
@@ -148,12 +148,12 @@ function InsightsPanel() {
           <div className="bg-cream rounded-[8px] px-4 py-3">
             <p className="text-[10px] text-slate uppercase tracking-wide mb-1">Avg. lifetime value (ended subscriptions)</p>
             <p className="text-[18px] font-bold text-carbon">${ltv.realizedLtvUSD.toFixed(2)}</p>
-            <p className="text-[11px] text-slate mt-0.5">{ltv.canceledSubscriptionsSampled} sampled</p>
+            <p className="text-[12px] text-slate mt-0.5">{ltv.canceledSubscriptionsSampled} sampled</p>
           </div>
           <div className="bg-cream rounded-[8px] px-4 py-3">
             <p className="text-[10px] text-slate uppercase tracking-wide mb-1">Avg. paid so far (active subscriptions)</p>
             <p className="text-[18px] font-bold text-carbon">${ltv.activeAvgRevenueToDateUSD.toFixed(2)}</p>
-            <p className="text-[11px] text-slate mt-0.5">{ltv.activeSubscriptionsSampled} sampled</p>
+            <p className="text-[12px] text-slate mt-0.5">{ltv.activeSubscriptionsSampled} sampled</p>
           </div>
         </div>
       )}
@@ -189,7 +189,7 @@ function InsightsPanel() {
             keyExtractor={r => r.storeId}
             emptyState={{ title: 'No revenue in range.' }}
           />
-          <p className="text-[11px] text-slate mt-2">{revenue.note}</p>
+          <p className="text-[12px] text-slate mt-2">{revenue.note}</p>
         </div>
       )}
     </div>
@@ -268,7 +268,7 @@ function StoreDetailModal({ storeId, onClose }: { storeId: string; onClose: () =
                 <div key={p._id} className="flex items-center justify-between bg-cream rounded-lg px-3 py-2.5">
                   <div>
                     <p className="text-[13px] font-semibold text-charcoal">{p.name}</p>
-                    <p className="text-[11px] text-slate">${p.monthlyPriceUSD}/mo · {p.subscriberCount} subscribers · status: {p.status}</p>
+                    <p className="text-[12px] text-slate">${p.monthlyPriceUSD}/mo · {p.subscriberCount} subscribers · status: {p.status}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     {confirmingSuspendId === p._id && (
@@ -377,7 +377,7 @@ function SubscriptionDetailModal({ subId, onClose }: { subId: string; onClose: (
                   <span className="text-slate">{inv.invoiceNumber} · {inv.status} · ${inv.amountUSD.toFixed(2)}</span>
                   {['paid', 'partially_refunded'].includes(inv.status) && (
                     <button onClick={() => { setConfirmingRefund(inv); setRefundError(''); }}
-                      className="px-2 py-[3px] bg-white border border-bone rounded-[5px] text-[11px] text-error cursor-pointer">
+                      className="px-2 py-[3px] bg-white border border-bone rounded-[5px] text-[12px] text-error cursor-pointer">
                       Refund
                     </button>
                   )}

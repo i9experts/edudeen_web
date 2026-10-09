@@ -102,7 +102,7 @@ function ReviewModal({ request, onClose, onDone }: { request: RefundRequestRow; 
           <div>
             <span className="text-slate">Requested by ({ROLE_LABEL[request.requestedByRole]})</span>
             {requester
-              ? <><p className="font-medium text-carbon">{requester.name}</p><p className="text-[11px] text-slate">{requester.email}</p></>
+              ? <><p className="font-medium text-carbon">{requester.name}</p><p className="text-[12px] text-slate">{requester.email}</p></>
               : <p className="font-medium text-carbon"><IdCell id={request.requestedBy} /></p>}
           </div>
           <div><span className="text-slate">Items</span><p className="font-medium text-carbon">{request.itemIds.length} item{request.itemIds.length !== 1 ? 's' : ''}</p></div>
@@ -140,7 +140,7 @@ function ReviewModal({ request, onClose, onDone }: { request: RefundRequestRow; 
           <div className="text-[12.5px] text-success bg-success-bg rounded-md px-3 py-2.5 flex flex-col gap-0.5">
             <p className="font-semibold flex items-center gap-1"><CheckCircle2 size={13} /> Refund approved</p>
             <p>Buyer refunded {result.buyerRefundAmount.toLocaleString()} {result.buyerRefundCurrency}; seller debited {result.sellerDebitAmount.toLocaleString()} {result.settlementCurrency}.</p>
-            {result.stripeRefundId && <p className="text-[11px]">Card refund reference: <span className="font-mono">{result.stripeRefundId}</span></p>}
+            {result.stripeRefundId && <p className="text-[12px]">Card refund reference: <span className="font-mono">{result.stripeRefundId}</span></p>}
           </div>
         )}
 
@@ -164,7 +164,7 @@ export function AdminRefunds() {
       render: r => (
         <div>
           <p className="font-medium">{ROLE_LABEL[r.requestedByRole]}</p>
-          <p className="text-[11px] text-slate font-mono" title={r.requestedBy}>{shortId(r.requestedBy)}</p>
+          <p className="text-[12px] text-slate font-mono" title={r.requestedBy}>{shortId(r.requestedBy)}</p>
         </div>
       ),
     },
@@ -194,7 +194,7 @@ export function AdminRefunds() {
             <p className="text-[13px] font-semibold text-carbon">
               Pending requests{data ? <span className="text-slate font-normal"> · {data.total}</span> : null}
             </p>
-            <p className="text-[11.5px] text-slate">Oldest first. The refund amount is worked out from the order when you approve.</p>
+            <p className="text-[12px] text-slate">Oldest first. The refund amount is worked out from the order when you approve.</p>
           </div>
 
           {error ? (

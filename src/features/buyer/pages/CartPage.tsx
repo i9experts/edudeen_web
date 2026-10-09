@@ -158,6 +158,11 @@ export function CartPage() {
     const lineTotal = i.itemTotal ?? unit * i.quantity;
     return s + convert(lineTotal, i.currency);
   }, 0);
+  // Same rule checkout uses: a percentage sale takes that % off the subtotal; a fixed sale takes its amount (capped at the subtotal).
+  const campaign = cart?.campaignDiscount ?? null;
+  const campaignAmount = !campaign || !campaign.discountType || campaign.discountValue == null ? 0
+    : Math.min(displayTotal, campaign.discountType === 'percentage' ? displayTotal * (campaign.discountValue / 100) : convert(campaign.discountValue, campaign.currency ?? 'PKR'));
+  const payableTotal = Math.max(0, displayTotal - campaignAmount);
 
   return (
     <div className="min-h-screen bg-cream">
@@ -221,9 +226,9 @@ export function CartPage() {
                           ? <img loading="lazy" decoding="async" src={item.image} alt="" className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.05]" />
                           : <ProductCoverFallback name={item.name} size="sm" className="w-full h-full" />}
                       </div>
-                      <span className="text-[11px] font-medium text-charcoal leading-tight line-clamp-2 group-hover:text-brand-orange transition-colors">{item.name}</span>
+                      <span className="text-[12px] font-medium text-charcoal leading-tight line-clamp-2 group-hover:text-brand-orange transition-colors">{item.name}</span>
                       {item.price != null && (
-                        <span className="text-[11px] font-bold text-carbon mt-[2px]">{displaySymbol}{convert(item.price, item.currency).toLocaleString()}</span>
+                        <span className="text-[12px] font-bold text-carbon mt-[2px]">{displaySymbol}{convert(item.price, item.currency).toLocaleString()}</span>
                       )}
                     </button>
                   ))}
@@ -233,7 +238,7 @@ export function CartPage() {
 
             {/* Trust reassurance — only claims backed by a real feature
                 (token downloads, platform checkout, buyer return requests). */}
-            <div className="flex items-center justify-center gap-5 sm:gap-8 flex-wrap text-[11.5px] text-slate">
+            <div className="flex items-center justify-center gap-5 sm:gap-8 flex-wrap text-[12px] text-slate">
               <button onClick={() => navigate('/faq')} className="flex items-center gap-[6px] bg-transparent border-none cursor-pointer p-0 hover:text-brand-orange transition-colors">
                 <ShieldCheck size={14} className="text-success" /> Instant Digital Downloads
               </button>
@@ -263,7 +268,7 @@ export function CartPage() {
                   </p>
                 </div>
                 {!loading && cartCount > 0 && (
-                  <span className="text-[11px] font-semibold px-3 py-[5px] rounded-full bg-brand-pale-orange text-brand-orange">
+                  <span className="text-[12px] font-semibold px-3 py-[5px] rounded-full bg-brand-pale-orange text-brand-orange">
                     {cartCount} {cartCount === 1 ? 'item' : 'items'}
                   </span>
                 )}
@@ -321,12 +326,12 @@ export function CartPage() {
                           {item.name}
                         </p>
                         {item.type === 'physical' && (
-                          <span className="shrink-0 px-2 py-[2px] rounded-full text-[10px] font-semibold bg-[#fff4dc] text-[#b36200]">
+                          <span className="shrink-0 px-2 py-[2px] rounded-full text-[12px] font-semibold bg-[#fff4dc] text-[#b36200]">
                             Physical
                           </span>
                         )}
                         {item.type === 'digital' && (
-                          <span className="shrink-0 flex items-center gap-[3px] px-2 py-[2px] rounded-full text-[10px] font-semibold bg-[#eef0ff] text-[#3851d1]">
+                          <span className="shrink-0 flex items-center gap-[3px] px-2 py-[2px] rounded-full text-[12px] font-semibold bg-[#eef0ff] text-[#3851d1]">
                             <Download size={9} /> Digital
                           </span>
                         )}
@@ -436,6 +441,12 @@ export function CartPage() {
                   <span className="text-slate">Subtotal ({cartCount} items)</span>
                   <span className="font-semibold text-carbon">{displaySymbol}{displayTotal.toLocaleString()}</span>
                 </div>
+                {campaignAmount > 0 && (
+                  <div className="flex justify-between text-[13px]">
+                    <span className="text-success font-medium">{campaign?.name ?? 'Sale'}</span>
+                    <span className="text-success font-semibold">-{displaySymbol}{Math.round(campaignAmount).toLocaleString()}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-[13px]">
                   <span className="text-slate">{hasPhysical ? 'Shipping' : 'Delivery'}</span>
                   <span className="text-charcoal font-medium text-[12px]">
@@ -448,7 +459,7 @@ export function CartPage() {
 
               <div className="flex justify-between text-[16px] font-bold">
                 <span className="text-carbon">Total</span>
-                <span className="text-carbon">{displaySymbol}{displayTotal.toLocaleString()}</span>
+                <span className="text-carbon">{displaySymbol}{Math.round(payableTotal).toLocaleString()}</span>
               </div>
 
               {/* ── Checkout ── One order for the whole cart, mixed physical +
@@ -456,13 +467,13 @@ export function CartPage() {
                   avoids the old two-button flow's double-checkout/billing bug. */}
               <div className="flex flex-col gap-2">
                 {typeKnown && hasPhysical && hasDigital && (
-                  <p className="text-[11px] text-slate text-center -mt-1 mb-1">
+                  <p className="text-[12px] text-slate text-center -mt-1 mb-1">
                     {physicalCount} physical · {digitalCount} digital — delivered together
                   </p>
                 )}
                 {isMultiStore ? (
                   <>
-                    <p className="text-[11px] text-slate text-center -mt-1 mb-1">
+                    <p className="text-[12px] text-slate text-center -mt-1 mb-1">
                       Items from {storeCarts.length} stores — each store checks out separately
                     </p>
                     {storeCarts.map(sc => (
@@ -547,8 +558,8 @@ export function CartPage() {
       {!isEmpty && items.length > 0 && (
         <div className="fixed bottom-[64px] inset-x-0 z-40 lg:hidden bg-white border-t border-bone px-4 py-3 flex items-center gap-3">
           <div className="min-w-0 flex-1">
-            <p className="text-[10px] text-slate leading-none mb-[3px]">Total</p>
-            <p className="text-[17px] font-extrabold text-carbon leading-none truncate">{displaySymbol}{displayTotal.toLocaleString()}</p>
+            <p className="text-[12px] text-slate leading-none mb-[3px]">Total</p>
+            <p className="text-[17px] font-extrabold text-carbon leading-none truncate">{displaySymbol}{Math.round(payableTotal).toLocaleString()}</p>
           </div>
           <Button
             variant="primary" size="md" className="justify-center flex-1 max-w-[220px]"

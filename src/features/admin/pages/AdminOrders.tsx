@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { ShoppingBag, RefreshCw, ExternalLink, Truck, CheckCircle2 } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { Table, StatusBadge, Button, Modal, SkeletonBox, SearchInput, FilterDropdown, CopyIconButton, type TableColumn } from '@/components/comman/ui';
+import { DateField } from '@/components/comman/ui/DateField';
 import { AdminStudioHeader, ADMIN_GUTTER } from '@/features/admin/components/studio';
 import {
   apiAdminListOrders, apiAdminGetOrder,
@@ -84,7 +85,7 @@ function OrderDetailModal({ id, onClose, onChanged }: { id: string; onClose: () 
             <StatusBadge status={order.orderStatus} size="sm" />
             <StatusBadge status={order.paymentStatus} size="sm" />
             <span className="text-slate">{PAYMENT_TYPE_LABEL[order.paymentType] ?? order.paymentType} · placed {when(order.createdAt)}{order.paidAt ? ` · paid ${when(order.paidAt)}` : ''}</span>
-            <span className="ml-auto inline-flex items-center gap-1 font-mono text-[11.5px] text-slate">{order.id.slice(-8)} <CopyIconButton value={order.id} title="Copy order id" size={12} /></span>
+            <span className="ml-auto inline-flex items-center gap-1 font-mono text-[12px] text-slate">{order.id.slice(-8)} <CopyIconButton value={order.id} title="Copy order id" size={12} /></span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -127,7 +128,7 @@ function OrderDetailModal({ id, onClose, onChanged }: { id: string; onClose: () 
                     {it.image ? <img src={it.image} alt="" className="w-10 h-10 rounded object-cover border border-bone shrink-0" /> : <span className="w-10 h-10 rounded bg-bone shrink-0" />}
                     <div className="flex-1 min-w-0">
                       <p className="text-carbon font-medium truncate">{it.name}</p>
-                      <p className="text-[11.5px] text-slate">
+                      <p className="text-[12px] text-slate">
                         {it.quantity} × {money(it.price, order.currency)} · {it.type}
                         {it.options?.length ? ` · ${it.options.map(o => `${o.name}: ${o.value}`).join(', ')}` : ''}
                         {it.returnStatus ? ` · return ${it.returnStatus}` : ''}
@@ -214,11 +215,11 @@ export function AdminOrders() {
   const columns: TableColumn<AdminOrderRow>[] = [
     { key: 'orderNumber', header: 'Order', render: r => <span className="text-[13px] font-semibold text-carbon whitespace-nowrap">{r.orderNumber}</span> },
     { key: 'createdAt', header: 'Placed', render: r => <span className="text-[12.5px] text-slate whitespace-nowrap">{when(r.createdAt)}</span> },
-    { key: 'buyer', header: 'Buyer', render: r => r.buyer ? <div className="min-w-0"><p className="text-[13px] text-carbon truncate max-w-[180px]">{r.buyer.name}</p><p className="text-[11.5px] text-slate truncate max-w-[180px]">{r.buyer.email}</p></div> : <span className="text-slate">—</span> },
+    { key: 'buyer', header: 'Buyer', render: r => r.buyer ? <div className="min-w-0"><p className="text-[13px] text-carbon truncate max-w-[180px]">{r.buyer.name}</p><p className="text-[12px] text-slate truncate max-w-[180px]">{r.buyer.email}</p></div> : <span className="text-slate">—</span> },
     { key: 'stores', header: 'Store', render: r => <span className="text-[13px] text-graphite truncate max-w-[160px] inline-block">{r.stores.map(s => s.name).join(', ')}</span> },
     { key: 'itemCount', header: 'Items', align: 'right', render: r => <span className="text-[13px] tabular-nums">{r.itemCount}</span> },
     { key: 'totalAmount', header: 'Total', align: 'right', render: r => <span className="text-[13px] font-semibold text-charcoal tabular-nums whitespace-nowrap">{money(r.totalAmount, r.currency)}</span> },
-    { key: 'payment', header: 'Payment', render: r => <div className="flex flex-col items-start gap-0.5"><StatusBadge status={r.paymentStatus} size="sm" /><span className="text-[11px] text-slate">{PAYMENT_TYPE_LABEL[r.paymentType] ?? r.paymentType}</span></div> },
+    { key: 'payment', header: 'Payment', render: r => <div className="flex flex-col items-start gap-0.5"><StatusBadge status={r.paymentStatus} size="sm" /><span className="text-[12px] text-slate">{PAYMENT_TYPE_LABEL[r.paymentType] ?? r.paymentType}</span></div> },
     { key: 'orderStatus', header: 'Status', render: r => <StatusBadge status={r.orderStatus} size="sm" /> },
   ];
 
@@ -235,16 +236,12 @@ export function AdminOrders() {
       <div className={`${ADMIN_GUTTER} pt-6 pb-8 flex flex-col gap-4`}>
         <div className="bg-white border border-bone rounded-xl overflow-hidden">
           <div className="flex items-center gap-[10px] px-5 py-[14px] border-b border-bone flex-wrap">
-            <SearchInput value={search} onChange={v => reset(() => setSearch(v))} placeholder="Order number, buyer name, email or phone…" className="flex-1 min-w-[220px] max-w-[340px]" />
+            <SearchInput value={search} onChange={v => reset(() => setSearch(v))} placeholder="Order no., buyer, email or phone" className="flex-1 min-w-[260px] max-w-[420px]" />
             <FilterDropdown placeholder="Any status" options={ORDER_STATUS} value={status} onChange={v => reset(() => setStatus(v))} />
             <FilterDropdown placeholder="Any payment" options={PAYMENT_STATUS} value={paymentStatus} onChange={v => reset(() => setPaymentStatus(v))} />
             <FilterDropdown placeholder="Any method" options={PAYMENT_TYPE} value={paymentType} onChange={v => reset(() => setPaymentType(v))} />
-            <label className="inline-flex items-center gap-1.5 text-[12.5px] text-slate">
-              From <input id="orders-from" type="date" value={from} onChange={e => reset(() => setFrom(e.target.value))} className="rounded-lg border border-bone px-2 py-[6px] text-[12.5px] text-carbon bg-white" />
-            </label>
-            <label className="inline-flex items-center gap-1.5 text-[12.5px] text-slate">
-              To <input id="orders-to" type="date" value={to} onChange={e => reset(() => setTo(e.target.value))} className="rounded-lg border border-bone px-2 py-[6px] text-[12.5px] text-carbon bg-white" />
-            </label>
+            <DateField id="orders-from" label="From" value={from} onChange={v => reset(() => setFrom(v))} />
+            <DateField id="orders-to" label="To" value={to} onChange={v => reset(() => setTo(v))} />
             {anyFilter && (
               <button type="button" onClick={() => reset(() => { setSearch(''); setStatus(''); setPaymentStatus(''); setPaymentType(''); setFrom(''); setTo(''); })}
                 className="text-[12.5px] font-semibold text-carbon underline underline-offset-4 bg-transparent border-none cursor-pointer">Clear</button>
@@ -258,6 +255,7 @@ export function AdminOrders() {
             </div>
           ) : (
             <Table
+              cardsBelow="lg"
               columns={columns}
               data={rows}
               keyExtractor={r => r.id}

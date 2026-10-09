@@ -69,7 +69,7 @@ export function SettingsTab() {
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
             <p className="text-[13px] font-semibold text-carbon">AI SEO — Platform Kill Switch</p>
-            <p className="text-[11px] text-slate mt-[2px]">When disabled, sellers cannot generate AI SEO suggestions platform-wide.</p>
+            <p className="text-[12px] text-slate mt-[2px]">When disabled, sellers cannot generate AI SEO suggestions platform-wide.</p>
           </div>
           <Toggle checked={!!form.aiSeoEnabled} onChange={aiSeoEnabled => setForm(f => ({ ...f, aiSeoEnabled }))} />
         </div>

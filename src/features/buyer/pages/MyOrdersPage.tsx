@@ -50,7 +50,7 @@ function StatusBadge({ status }: { status: OrderStatus }) {
   const Icon = cfg.icon;
   return (
     <span
-      className="inline-flex items-center gap-[5px] px-2.5 py-[4px] rounded-full text-[10px] font-bold border"
+      className="inline-flex items-center gap-[5px] px-2.5 py-[4px] rounded-full text-[12px] font-bold border"
       style={{ background: cfg.bg, color: cfg.text, borderColor: cfg.border }}
     >
       <Icon size={9} />
@@ -155,18 +155,18 @@ function OrderItemRow({ item, orderId, orderStatus, currency }: { item: OrderLin
           <div className="flex items-center gap-1.5 flex-wrap mb-[2px]">
             <p className="text-[12px] font-semibold text-charcoal truncate">{item.name}</p>
             {isDigital && (
-              <span className="shrink-0 text-[9px] font-bold px-1.5 py-[1px] rounded-full bg-[#eef0ff] text-[#3851d1]">Digital</span>
+              <span className="shrink-0 text-[12px] font-bold px-1.5 py-[1px] rounded-full bg-[#eef0ff] text-[#3851d1]">Digital</span>
             )}
             {item.status === 'cancelled' && (
-              <span className="shrink-0 text-[9px] font-bold px-1.5 py-[1px] rounded-full bg-[#fff0f0] text-error">Cancelled</span>
+              <span className="shrink-0 text-[12px] font-bold px-1.5 py-[1px] rounded-full bg-[#fff0f0] text-error">Cancelled</span>
             )}
             {item.returnStatus && item.returnStatus !== 'none' && (
-              <span className="shrink-0 text-[9px] font-bold px-1.5 py-[1px] rounded-full bg-[#fff4dc] text-[#b36200] capitalize">
+              <span className="shrink-0 text-[12px] font-bold px-1.5 py-[1px] rounded-full bg-[#fff4dc] text-[#b36200] capitalize">
                 Return {item.returnStatus.replace('_', ' ')}
               </span>
             )}
           </div>
-          <p className="text-[11px] text-slate">SKU: {item.sku} · Qty: {item.quantity}</p>
+          <p className="text-[12px] text-slate">SKU: {item.sku} · Qty: {item.quantity}</p>
         </div>
       </div>
       <div className="flex flex-col items-end gap-1.5 shrink-0">
@@ -177,7 +177,7 @@ function OrderItemRow({ item, orderId, orderStatus, currency }: { item: OrderLin
         {canReview && (
           <Link
             to={`/product/${item.productId}#write-review`}
-            className="flex items-center gap-[5px] text-[11px] font-semibold text-brand-orange hover:underline"
+            className="flex items-center gap-[5px] text-[12px] font-semibold text-brand-orange hover:underline"
           >
             <Star size={11} /> Write a review
           </Link>
@@ -207,7 +207,7 @@ function FilterTabs({
             key={tab.key}
             onClick={() => onChange(tab.key)}
             className={clsx(
-              'flex items-center gap-1 px-3 py-[5px] rounded-[7px] text-[11px] font-semibold border cursor-pointer transition-all',
+              'flex items-center gap-1 px-3 py-[5px] rounded-[7px] text-[12px] font-semibold border cursor-pointer transition-all',
               isActive
                 ? 'bg-brand-orange text-white border-brand-orange'
                 : 'bg-white text-slate border-bone',
@@ -216,7 +216,7 @@ function FilterTabs({
             {tab.label}
             {count > 0 && (
               <span className={clsx(
-                'min-w-[16px] h-[16px] px-1 rounded-full text-[9px] font-bold flex items-center justify-center',
+                'min-w-[16px] h-[16px] px-1 rounded-full text-[12px] font-bold flex items-center justify-center',
                 isActive ? 'bg-white/25 text-white' : 'bg-bone text-charcoal',
               )}>
                 {count}
@@ -261,14 +261,14 @@ function OrderCard({ order, onChanged }: { order: OrderSummary; onChanged: () =>
             <span className="text-[13px] font-bold text-brand-deep-orange font-mono">{order.orderNumber}</span>
             <StatusBadge status={order.orderStatus} />
             {order.isPaid
-              ? <span className="px-2 py-[3px] rounded-full text-[9px] font-bold bg-[#e3f4ea] text-[#1a6b35] border border-[#a3d9b5]">Paid</span>
-              : <span className="px-2 py-[3px] rounded-full text-[9px] font-bold bg-[#fff0f0] text-error border border-[#f5bcbc]">Unpaid</span>
+              ? <span className="px-2 py-[3px] rounded-full text-[12px] font-bold bg-[#e3f4ea] text-[#1a6b35] border border-[#a3d9b5]">Paid</span>
+              : <span className="px-2 py-[3px] rounded-full text-[12px] font-bold bg-[#fff0f0] text-error border border-[#f5bcbc]">Unpaid</span>
             }
             {hasDigital && (
-              <span className="px-2 py-[3px] rounded-full text-[9px] font-bold bg-[#eef0ff] text-[#3851d1] border border-[#c7ceff]">Digital</span>
+              <span className="px-2 py-[3px] rounded-full text-[12px] font-bold bg-[#eef0ff] text-[#3851d1] border border-[#c7ceff]">Digital</span>
             )}
           </div>
-          <p className="text-[11px] text-slate">
+          <p className="text-[12px] text-slate">
             {new Date(order.createdAt).toLocaleDateString('en-PK', { day: 'numeric', month: 'short', year: 'numeric' })}
             {' · '}{items.length} item{items.length !== 1 ? 's' : ''}
             {' · '}{order.paymentType.replace(/_/g, ' ')}
@@ -277,7 +277,7 @@ function OrderCard({ order, onChanged }: { order: OrderSummary; onChanged: () =>
 
         <div className="flex items-center gap-3 shrink-0">
           <div className="text-end">
-            <p className="text-[10px] text-slate mb-[1px]">Total</p>
+            <p className="text-[12px] text-slate mb-[1px]">Total</p>
             <p className="text-[14px] font-bold text-carbon">{currencySymbol(order.currency)} {order.totalAmount.toLocaleString()}</p>
           </div>
           <div className={clsx(
@@ -313,11 +313,11 @@ function OrderCard({ order, onChanged }: { order: OrderSummary; onChanged: () =>
               </div>
               <div className="bg-cream rounded-[9px] px-3 md:px-4 py-3">
                 <p className="text-[12px] font-semibold text-charcoal">{addr.recipientName}</p>
-                <p className="text-[11px] text-slate mt-[2px]">{addr.phoneNumber}</p>
-                <p className="text-[11px] text-charcoal mt-[2px]">
+                <p className="text-[12px] text-slate mt-[2px]">{addr.phoneNumber}</p>
+                <p className="text-[12px] text-charcoal mt-[2px]">
                   {addr.addressLine1}{addr.addressLine2 ? `, ${addr.addressLine2}` : ''}
                 </p>
-                <p className="text-[11px] text-charcoal">
+                <p className="text-[12px] text-charcoal">
                   {addr.city}, {addr.state} {addr.zipCode}
                 </p>
               </div>
@@ -344,7 +344,7 @@ function OrderCard({ order, onChanged }: { order: OrderSummary; onChanged: () =>
                   <div key={s.storeId} className="bg-cream rounded-[9px] px-3 md:px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
                     <div className="min-w-0">
                       <p className="text-[12px] font-semibold text-charcoal">{s.tracking!.carrier || 'Courier'}</p>
-                      <p className="text-[11px] text-slate font-mono break-all">{s.tracking!.trackingNumber}</p>
+                      <p className="text-[12px] text-slate font-mono break-all">{s.tracking!.trackingNumber}</p>
                     </div>
                     {s.tracking!.trackingUrl && /^https?:\/\//i.test(s.tracking!.trackingUrl) && (
                       <a
@@ -364,12 +364,12 @@ function OrderCard({ order, onChanged }: { order: OrderSummary; onChanged: () =>
 
           {/* Price summary */}
           <div className="px-4 md:px-5 py-3 bg-cream border-t border-bone flex flex-col gap-[6px]">
-            <div className="flex justify-between text-[11px]">
+            <div className="flex justify-between text-[12px]">
               <span className="text-slate">Subtotal</span>
               <span className="font-medium text-charcoal">{currencySymbol(order.currency)} {order.subtotal.toLocaleString()}</span>
             </div>
             {!allDigital && (
-              <div className="flex justify-between text-[11px]">
+              <div className="flex justify-between text-[12px]">
                 <span className="text-slate">Shipping</span>
                 <span className="font-medium text-charcoal">
                   {order.shippingFee === 0 ? 'Free' : `${currencySymbol(order.currency)} ${order.shippingFee.toLocaleString()}`}

@@ -85,7 +85,7 @@ export function OverviewTab({ params, compareToPreviousPeriod }: { params: BaseA
       </div>
 
       {d?.note && (
-        <p className="text-[11px] text-slate bg-cream border border-bone rounded-lg px-3 py-2">{d.note}</p>
+        <p className="text-[12px] text-slate bg-cream border border-bone rounded-lg px-3 py-2">{d.note}</p>
       )}
 
       {compareToPreviousPeriod && d?.previousPeriod && (

@@ -100,3 +100,21 @@ export function apiInitiatePayment(payload: { checkoutId: string; paymentMode?: 
 export function apiGetPaymentStatus(checkoutId: string) {
   return client.get<never, PaymentStatusResponse>(`${ENDPOINTS.PAYMENT.STATUS}?checkoutId=${checkoutId}`);
 }
+
+export type HostedProvider = 'jazzcash' | 'easypaisa';
+export const HOSTED_PROVIDERS: HostedProvider[] = ['jazzcash', 'easypaisa'];
+export const isHostedProvider = (m: string | null | undefined): m is HostedProvider => !!m && (HOSTED_PROVIDERS as string[]).includes(m);
+
+export interface HostedRedirect {
+  method: 'GET' | 'POST';
+  url: string;
+  fields: Record<string, string>;
+  txnRef: string;
+  amount: number;
+  currency: string;
+}
+
+/** POST /api/payment/pk/:provider/initiate: the browser then submits `fields` to `url` (the gateway's hosted page). */
+export function apiStartPkPayment(provider: HostedProvider, checkoutId: string) {
+  return client.post<never, { success: boolean; data: HostedRedirect }>(`/api/payment/pk/${provider}/initiate`, { checkoutId });
+}

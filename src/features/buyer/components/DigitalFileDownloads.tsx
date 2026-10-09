@@ -84,7 +84,7 @@ export function DigitalFileDownloads({
         onClick={loadFiles}
         disabled={loading}
         className={clsx(
-          'flex items-center gap-[5px] px-3 min-h-8 rounded-[7px] text-[11px] font-semibold border-none transition-opacity',
+          'flex items-center gap-[5px] px-3 min-h-8 rounded-[7px] text-[12px] font-semibold border-none transition-opacity',
           loading ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer',
           'bg-[#eef0ff] text-[#3851d1]',
         )}
@@ -105,11 +105,11 @@ export function DigitalFileDownloads({
               <span className="flex items-center gap-1.5 min-w-0">
                 <FileText size={12} className="text-slate shrink-0" />
                 <span className="min-w-0">
-                  <span className="block text-[11px] font-medium text-charcoal truncate" title={file.fileName}>
+                  <span className="block text-[12px] font-medium text-charcoal truncate" title={file.fileName}>
                     {file.fileName || `File ${file.index + 1}`}
                   </span>
                   {formatSize(file.size) && (
-                    <span className="block text-[10px] text-slate">{formatSize(file.size)}</span>
+                    <span className="block text-[12px] text-slate">{formatSize(file.size)}</span>
                   )}
                 </span>
               </span>
@@ -119,7 +119,7 @@ export function DigitalFileDownloads({
                 disabled={busyIdx !== null}
                 aria-label={`Download ${file.fileName}`}
                 className={clsx(
-                  'shrink-0 flex items-center gap-1 px-2 py-[4px] rounded-[6px] text-[10.5px] font-semibold border-none bg-[#eef0ff] text-[#3851d1]',
+                  'shrink-0 flex items-center gap-1 px-2 py-[4px] rounded-[6px] text-[12px] font-semibold border-none bg-[#eef0ff] text-[#3851d1]',
                   busyIdx !== null ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer',
                 )}
               >
@@ -131,7 +131,7 @@ export function DigitalFileDownloads({
         </ul>
       )}
 
-      {error && <p className={clsx('text-[10px] text-error leading-tight max-w-[220px]', align === 'end' && 'text-end')}>{error}</p>}
+      {error && <p className={clsx('text-[12px] text-error leading-tight max-w-[220px]', align === 'end' && 'text-end')}>{error}</p>}
     </div>
   );
 }

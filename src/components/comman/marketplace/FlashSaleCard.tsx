@@ -127,14 +127,14 @@ export function FlashSaleCard({ product, onClick, onAddToCart, isAdding, addToCa
         {pctOff != null && pctOff > 0 && (
           <span className={clsx(
             'absolute rounded-full font-bold bg-error text-white',
-            compact ? 'top-[5px] end-[5px] px-[6px] py-[2px] text-[8px]' : 'top-[7px] end-[7px] px-[7px] py-[2.5px] text-[9px]',
+            compact ? 'top-[5px] end-[5px] px-[6px] py-[2px] text-[8px]' : 'top-[7px] end-[7px] px-[7px] py-[2.5px] text-[12px]',
           )}>
             -{pctOff}%
           </span>
         )}
 
         {/* Wishlist — floating action button, always reachable (no hover-only on touch devices) */}
-        <button
+        <button aria-label="Save"
           onClick={e => onToggleWishlist(e, product._id, vId)}
           disabled={isWishlisting}
           className={clsx(
@@ -166,7 +166,7 @@ export function FlashSaleCard({ product, onClick, onAddToCart, isAdding, addToCa
                   />
                 ))}
               </div>
-              <span className="text-[9px] font-semibold text-carbon">
+              <span className="text-[12px] font-semibold text-carbon">
                 {product.averageRating > 0 ? product.averageRating.toFixed(1) : 'New'}
               </span>
             </div>
@@ -177,7 +177,7 @@ export function FlashSaleCard({ product, onClick, onAddToCart, isAdding, addToCa
                     {displayPrice != null ? `${priceSymbol}${displayPrice.toLocaleString()}` : '—'}
                   </span>
                   {compareAt != null && compareAt > (displayPrice ?? 0) && (
-                    <span className="text-[9px] text-slate line-through">{priceSymbol}{compareAt.toLocaleString()}</span>
+                    <span className="text-[12px] text-slate line-through">{priceSymbol}{compareAt.toLocaleString()}</span>
                   )}
                 </div>
                 {savings != null && savings > 0 && (
@@ -230,7 +230,7 @@ export function FlashSaleCard({ product, onClick, onAddToCart, isAdding, addToCa
           </div>
 
           {/* Title — 2 lines max */}
-          <p className="text-[11.5px] font-semibold text-carbon leading-snug line-clamp-2 mb-2">
+          <p className="text-[12px] font-semibold text-carbon leading-snug line-clamp-2 mb-2">
             {product.name}
           </p>
 
@@ -242,11 +242,11 @@ export function FlashSaleCard({ product, onClick, onAddToCart, isAdding, addToCa
                   {displayPrice != null ? `${priceSymbol}${displayPrice.toLocaleString()}` : '—'}
                 </span>
                 {compareAt != null && compareAt > (displayPrice ?? 0) && (
-                  <span className="text-[10.5px] text-slate line-through">{priceSymbol}{compareAt.toLocaleString()}</span>
+                  <span className="text-[12px] text-slate line-through">{priceSymbol}{compareAt.toLocaleString()}</span>
                 )}
               </div>
               {savings != null && savings > 0 && (
-                <p className="text-[9px] font-semibold text-success mt-[2px]">Save {priceSymbol}{savings.toLocaleString()}</p>
+                <p className="text-[12px] font-semibold text-success mt-[2px]">Save {priceSymbol}{savings.toLocaleString()}</p>
               )}
             </div>
 

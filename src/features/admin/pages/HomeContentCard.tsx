@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/comman/ui/Button';
 import { Input, Textarea } from '@/components/comman/ui/Input';
-import { apiGetPublicPlatformConfig, type HomeContent } from '@/api/services/publicPlatformConfig';
+import { apiGetPublicPlatformConfig, type HomeContent, type AboutContent } from '@/api/services/publicPlatformConfig';
 import { apiUpdateHomeContent } from '@/api/services/config/adminConfig';
 import { apiUploadPublicFile } from '@/api/upload';
 
@@ -22,6 +22,10 @@ export function HomeContentCard() {
   }, []);
 
   const set = <K extends keyof HomeContent>(k: K, v: HomeContent[K]) => { setSaved(false); setC(p => ({ ...p, [k]: v })); };
+  const about: AboutContent = c.about ?? {};
+  const setAbout = (patch: Partial<AboutContent>) => { setSaved(false); setC(p => ({ ...p, about: { ...(p.about ?? {}), ...patch } })); };
+  const pillars = about.pillars ?? [];
+  const setPillar = (i: number, patch: { title?: string; desc?: string }) => { const t = [...pillars]; while (t.length <= i) t.push({ title: '', desc: '' }); t[i] = { ...t[i], ...patch }; setAbout({ pillars: t }); };
   const legal = c.legalPages ?? {};
   const setLegal = (key: string, patch: { text?: string; lastUpdated?: string }) => { setSaved(false); setC(p => ({ ...p, legalPages: { ...(p.legalPages ?? {}), [key]: { ...(p.legalPages?.[key] ?? {}), ...patch } } })); };
   const uploadHero = async (file?: File) => {
@@ -40,6 +44,7 @@ export function HomeContentCard() {
       await apiUpdateHomeContent({
         ...c,
         legalPages: c.legalPages,
+        about: c.about,
         promiseItems: promise.split('\n').map(s => s.trim()).filter(Boolean),
         trustItems: trust.filter(t => t.label.trim()),
       });
@@ -86,14 +91,44 @@ export function HomeContentCard() {
       <p className="text-[12px] font-semibold text-carbon mt-5 mb-2">Feature block and app link</p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-[14px]">
         <Input label="Category the buttons open (name)" value={c.featuredCategory ?? ''} disabled={!loaded} onChange={e => set('featuredCategory', e.target.value)} />
+        <Input label="App Store link (leave blank until the iOS app is live)" value={c.appStoreUrl ?? ''} disabled={!loaded} onChange={e => set('appStoreUrl', e.target.value)} />
         <Input label="Google Play link" value={c.googlePlayUrl ?? ''} disabled={!loaded} onChange={e => set('googlePlayUrl', e.target.value)} />
         <Input label="Block small heading" value={c.featureEyebrow ?? ''} disabled={!loaded} onChange={e => set('featureEyebrow', e.target.value)} />
         <Input label="Block heading" value={c.featureHeading ?? ''} disabled={!loaded} onChange={e => set('featureHeading', e.target.value)} />
         <Input label="Block link text" value={c.featureLinkLabel ?? ''} disabled={!loaded} onChange={e => set('featureLinkLabel', e.target.value)} />
       </div>
       <div className="mt-[14px]"><Textarea label="Block paragraph" rows={2} value={c.featureText ?? ''} disabled={!loaded} onChange={e => set('featureText', e.target.value)} /></div>
-      <p className="text-[12px] font-semibold text-carbon mt-5 mb-1">Legal pages</p>
-      <p className="text-[11.5px] text-slate mb-2">Leave blank to keep the built-in text. Start a section with a line like "## Section title", separate paragraphs with a blank line.</p>
+      <p className="text-[12px] font-semibold text-carbon mt-5 mb-1">About page</p>
+      <p className="text-[12px] text-slate mb-2">Leave a field blank to keep the built-in text.</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-[14px]">
+        <Input label="Small heading" value={about.eyebrow ?? ''} disabled={!loaded} onChange={e => setAbout({ eyebrow: e.target.value })} />
+        <Input label="Main heading" value={about.heading ?? ''} disabled={!loaded} onChange={e => setAbout({ heading: e.target.value })} />
+      </div>
+      <div className="mt-[14px]"><Textarea label="Intro paragraph" rows={3} value={about.intro ?? ''} disabled={!loaded} onChange={e => setAbout({ intro: e.target.value })} /></div>
+      <p className="text-[12px] font-medium text-charcoal mt-3 mb-2">Four highlight cards</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-[10px]">
+        {[0, 1, 2, 3].map(i => (
+          <div key={i} className="flex flex-col gap-2">
+            <Input label={`Card ${i + 1} title`} value={pillars[i]?.title ?? ''} disabled={!loaded} onChange={e => setPillar(i, { title: e.target.value })} />
+            <Textarea label="Text" rows={2} value={pillars[i]?.desc ?? ''} disabled={!loaded} onChange={e => setPillar(i, { desc: e.target.value })} />
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-[14px] mt-3">
+        <Input label="Section 2 small heading" value={about.approachEyebrow ?? ''} disabled={!loaded} onChange={e => setAbout({ approachEyebrow: e.target.value })} />
+        <Input label="Section 2 heading" value={about.approachHeading ?? ''} disabled={!loaded} onChange={e => setAbout({ approachHeading: e.target.value })} />
+      </div>
+      <div className="mt-[10px]"><Textarea label="Section 2 text" rows={3} value={about.approachText ?? ''} disabled={!loaded} onChange={e => setAbout({ approachText: e.target.value })} /></div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-[14px] mt-3">
+        <Input label="Section 3 small heading" value={about.headedEyebrow ?? ''} disabled={!loaded} onChange={e => setAbout({ headedEyebrow: e.target.value })} />
+        <Input label="Section 3 heading" value={about.headedHeading ?? ''} disabled={!loaded} onChange={e => setAbout({ headedHeading: e.target.value })} />
+      </div>
+      <div className="mt-[10px]"><Textarea label="Section 3 text" rows={3} value={about.headedText ?? ''} disabled={!loaded} onChange={e => setAbout({ headedText: e.target.value })} /></div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-[14px] mt-3">
+        <Input label="Bottom banner heading" value={about.ctaHeading ?? ''} disabled={!loaded} onChange={e => setAbout({ ctaHeading: e.target.value })} />
+        <Input label="Bottom banner button" value={about.ctaButton ?? ''} disabled={!loaded} onChange={e => setAbout({ ctaButton: e.target.value })} />
+      </div>      <p className="text-[12px] font-semibold text-carbon mt-5 mb-1">Legal pages</p>
+      <p className="text-[12px] text-slate mb-2">Leave blank to keep the built-in text. Start a section with a line like "## Section title", separate paragraphs with a blank line.</p>
       {([['privacy-policy', 'Privacy Policy'], ['terms-of-service', 'Terms of Service'], ['cookie-policy', 'Cookie Policy']] as const).map(([key, label]) => (
         <div key={key} className="mb-3">
           <div className="grid grid-cols-1 sm:grid-cols-[1fr_180px] gap-[10px] items-end">

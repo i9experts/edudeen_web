@@ -74,7 +74,7 @@ export function PlatformSalesCard({ storeId }: { storeId: string }) {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <p className="text-[14px] font-bold text-carbon">{c.name}</p>
-                  {off && <span className="text-[11px] font-bold px-2 py-[2px] rounded-full bg-brand-gold/15 text-[#8a7700]">{off}</span>}
+                  {off && <span className="text-[12px] font-bold px-2 py-[2px] rounded-full bg-brand-gold/15 text-[#8a7700]">{off}</span>}
                 </div>
                 <p className="flex items-center gap-1.5 text-[12px] text-slate mt-1">
                   <Clock size={11} /> {whenLabel(c)}

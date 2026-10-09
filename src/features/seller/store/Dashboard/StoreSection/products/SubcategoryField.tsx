@@ -37,7 +37,7 @@ export function SubcategoryField({ mainCategoryName, subcategories, loading, val
           <option value="">{loading ? 'Loading…' : 'No subcategory'}</option>
           {subcategories.map(s => <option key={s._id} value={s._id}>{s.name}</option>)}
         </select>
-        <p className="text-[11.5px] text-slate mt-1.5">
+        <p className="text-[12px] text-slate mt-1.5">
           Subcategories are shared across Edudeen. Missing one? Ask Edudeen support to add it.
         </p>
       </div>

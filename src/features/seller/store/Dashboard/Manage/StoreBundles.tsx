@@ -130,8 +130,8 @@ export default function StoreBundles() {
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <p className="text-[14.5px] font-bold text-carbon">{b.name}</p>
-                  <span className="rounded-full bg-brand-pale-orange text-brand-orange text-[11px] font-semibold px-2 py-[2px]">{b.discountPercent}% off</span>
-                  {!b.isActive && <span className="rounded-full bg-fog text-slate text-[11px] font-semibold px-2 py-[2px]">Paused</span>}
+                  <span className="rounded-full bg-brand-pale-orange text-brand-orange text-[12px] font-semibold px-2 py-[2px]">{b.discountPercent}% off</span>
+                  {!b.isActive && <span className="rounded-full bg-fog text-slate text-[12px] font-semibold px-2 py-[2px]">Paused</span>}
                 </div>
                 <p className="text-[12.5px] text-slate mt-0.5">{b.products.map(p => p.name).join(' + ')}</p>
                 {b.products.some(p => p.status !== 'active') && <p className="text-[12px] text-amber-700 mt-1">Some items aren't live, so buyers can't see this bundle until they are.</p>}

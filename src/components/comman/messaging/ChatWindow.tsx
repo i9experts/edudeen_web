@@ -175,7 +175,7 @@ export function ChatWindow({
               ) : results.map(m => (
                 <div key={m._id} className="text-[12.5px] text-graphite bg-cream rounded-lg px-3 py-2">
                   {m.text}
-                  <span className="block text-[10.5px] text-slate mt-0.5">{new Date(m.createdAt).toLocaleString()}</span>
+                  <span className="block text-[12px] text-slate mt-0.5">{new Date(m.createdAt).toLocaleString()}</span>
                 </div>
               ))}
             </div>

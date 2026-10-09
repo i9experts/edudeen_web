@@ -122,7 +122,7 @@ export function CollectionFormModal({ storeId, mainCategoryId, collection, onClo
             <label className="text-[12px] font-medium text-charcoal block mb-1.5">Name</label>
             <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. New Arrivals"
               className="w-full px-3 py-2 text-[13px] border border-bone rounded-lg outline-none text-charcoal bg-white focus:ring-2 focus:ring-brand-orange/40 focus:border-brand-orange/50" />
-            {name && <p className="text-[10.5px] text-slate mt-1">/{slugify(name)}</p>}
+            {name && <p className="text-[12px] text-slate mt-1">/{slugify(name)}</p>}
           </div>
 
           <div>
@@ -159,9 +159,9 @@ export function CollectionFormModal({ storeId, mainCategoryId, collection, onClo
               ) : (
                 <div className="flex flex-wrap gap-1.5">
                   {productIds.map(id => (
-                    <span key={id} className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11.5px] font-medium bg-cream border border-bone text-charcoal">
+                    <span key={id} className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[12px] font-medium bg-cream border border-bone text-charcoal">
                       {productLabels[id] ?? id}
-                      <button type="button" onClick={() => setProductIds(prev => prev.filter(p => p !== id))} className="bg-transparent border-none cursor-pointer text-slate hover:text-error p-0 flex items-center">
+                      <button aria-label="Close" type="button" onClick={() => setProductIds(prev => prev.filter(p => p !== id))} className="bg-transparent border-none cursor-pointer text-slate hover:text-error p-0 flex items-center">
                         <X size={12} />
                       </button>
                     </span>

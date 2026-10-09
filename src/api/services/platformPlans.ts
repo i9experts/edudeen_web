@@ -1,4 +1,5 @@
 import client from '../client';
+import { cachedRequest, invalidateCache } from './requestCache';
 
 const BASE = '/api/platform-plans';
 
@@ -146,12 +147,18 @@ export function apiSaveOnboardingDraft(draft: OnboardingDraft) {
   return client.patch<never, ApiResponse<never>>(`${BASE}/onboarding/draft`, draft);
 }
 
+// Shared + short-lived cache: the store layout, settings and analytics all ask for the same plan data.
+const PLAN_CACHE_MS = 15_000;
+const planCacheKey = (storeId: string) => `plan:${storeId}:`;
+
 export function apiGetStorePlatformPlan(storeId: string) {
-  return client.get<never, ApiResponse<StorePlatformSubscription | null>>(`${BASE}/${storeId}`);
+  return cachedRequest(`${planCacheKey(storeId)}sub`, PLAN_CACHE_MS, () =>
+    client.get<never, ApiResponse<StorePlatformSubscription | null>>(`${BASE}/${storeId}`));
 }
 
 export function apiGetStoreEntitlements(storeId: string) {
-  return client.get<never, ApiResponse<EntitlementsSummary>>(`${BASE}/${storeId}/entitlements`);
+  return cachedRequest(`${planCacheKey(storeId)}ent`, PLAN_CACHE_MS, () =>
+    client.get<never, ApiResponse<EntitlementsSummary>>(`${BASE}/${storeId}/entitlements`));
 }
 
 export function apiGetStoreInvoices(storeId: string, query: { page?: number; limit?: number } = {}) {
@@ -165,7 +172,8 @@ export function apiGetStoreInvoices(storeId: string, query: { page?: number; lim
 }
 
 export function apiChangePlatformPlan(storeId: string, newPlatformPlanId: string, newBillingInterval: 'monthly' | 'yearly') {
-  return client.patch<never, ApiResponse<StorePlatformSubscription>>(`${BASE}/${storeId}/change-plan`, { newPlatformPlanId, newBillingInterval });
+  return client.patch<never, ApiResponse<StorePlatformSubscription>>(`${BASE}/${storeId}/change-plan`, { newPlatformPlanId, newBillingInterval })
+    .finally(() => invalidateCache(planCacheKey(storeId)));
 }
 
 /** Exact proration math for a would-be plan change — no charge, no write. Call this before showing a confirm dialog. */
@@ -175,12 +183,12 @@ export function apiPreviewPlatformPlanChange(storeId: string, newPlatformPlanId:
 
 /** Schedules a downgrade to the free plan at the end of the current paid period — access continues until then. */
 export function apiCancelPlatformPlan(storeId: string, reason?: string) {
-  return client.post<never, ApiResponse<StorePlatformSubscription>>(`${BASE}/${storeId}/cancel`, { reason });
+  return client.post<never, ApiResponse<StorePlatformSubscription>>(`${BASE}/${storeId}/cancel`, { reason }).finally(() => invalidateCache(planCacheKey(storeId)));
 }
 
 /** Undoes a still-pending apiCancelPlatformPlan — the subscription keeps renewing normally. */
 export function apiReactivatePlatformPlan(storeId: string) {
-  return client.post<never, ApiResponse<StorePlatformSubscription>>(`${BASE}/${storeId}/reactivate`, {});
+  return client.post<never, ApiResponse<StorePlatformSubscription>>(`${BASE}/${storeId}/reactivate`, {}).finally(() => invalidateCache(planCacheKey(storeId)));
 }
 
 /** Stripe-hosted portal for updating the payment method / viewing past invoices on this store's platform-plan billing. */
@@ -189,7 +197,7 @@ export function apiCreatePlatformBillingPortalSession(storeId: string, returnUrl
 }
 
 export function apiPurchaseAddon(storeId: string, addonType: AddonType, quantity = 1) {
-  return client.post<never, ApiResponse<AddonPurchase>>(`${BASE}/${storeId}/addons`, { addonType, quantity });
+  return client.post<never, ApiResponse<AddonPurchase>>(`${BASE}/${storeId}/addons`, { addonType, quantity }).finally(() => invalidateCache(planCacheKey(storeId)));
 }
 
 export function apiListStoreAddons(storeId: string) {
@@ -197,7 +205,7 @@ export function apiListStoreAddons(storeId: string) {
 }
 
 export function apiCancelAddon(storeId: string, addonId: string) {
-  return client.delete<never, ApiResponse<never>>(`${BASE}/${storeId}/addons/${addonId}`);
+  return client.delete<never, ApiResponse<never>>(`${BASE}/${storeId}/addons/${addonId}`).finally(() => invalidateCache(planCacheKey(storeId)));
 }
 
 // ── Admin ─────────────────────────────────────────────────────────────────────

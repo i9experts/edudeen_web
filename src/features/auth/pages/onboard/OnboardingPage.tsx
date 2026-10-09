@@ -103,7 +103,7 @@ function OnboardingStepHeader({ step, maxReached, onStepClick }: { step: number;
     <div className="pb-4 mb-7 border-b border-bone">
       <div className="flex items-center justify-between mb-4">
         <p className="text-[13px] font-bold text-carbon">{STEPS[step - 1]}</p>
-        <span className="text-[11px] font-semibold px-3 py-1 rounded-full bg-brand-pale-orange text-brand-orange">
+        <span className="text-[12px] font-semibold px-3 py-1 rounded-full bg-brand-pale-orange text-brand-orange">
           Step {pos} of {visible.length}
         </span>
       </div>
@@ -124,7 +124,7 @@ function OnboardingStepHeader({ step, maxReached, onStepClick }: { step: number;
               onClick={() => clickable && onStepClick(n)}
             >
               <div className={clsx(
-                'w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-all duration-200',
+                'w-6 h-6 rounded-full flex items-center justify-center text-[12px] font-bold transition-all duration-200',
                 done ? 'bg-success text-white' :
                   active ? 'bg-brand-orange text-white ring-4 ring-brand-pale-orange' :
                     'bg-bone text-slate',
@@ -132,7 +132,7 @@ function OnboardingStepHeader({ step, maxReached, onStepClick }: { step: number;
                 {done ? <Check size={12} /> : idx + 1}
               </div>
               <span className={clsx(
-                'hidden sm:block text-[10px] font-semibold whitespace-nowrap',
+                'hidden sm:block text-[12px] font-semibold whitespace-nowrap',
                 active ? 'text-brand-orange' : done ? 'text-success' : 'text-slate',
               )}>
                 {label}
@@ -233,8 +233,8 @@ function Step1StoreInfo({ form, setForm, onNext, step, maxReached, onStepClick }
           <div>
             <p className="text-[13px] font-semibold text-carbon mb-1">Store Logo</p>
             <p className="text-[12px] text-slate">PNG, JPG or WebP. Click to upload.</p>
-            {logoUploading && <p className="text-[11px] text-brand-orange mt-1">Uploading…</p>}
-            {!logoUploading && form.logo && <p className="text-[11px] text-success mt-1">✓ Logo uploaded</p>}
+            {logoUploading && <p className="text-[12px] text-brand-orange mt-1">Uploading…</p>}
+            {!logoUploading && form.logo && <p className="text-[12px] text-success mt-1">✓ Logo uploaded</p>}
           </div>
         </div>
 
@@ -244,7 +244,7 @@ function Step1StoreInfo({ form, setForm, onNext, step, maxReached, onStepClick }
             value={form.storeName} onChange={e => setForm({ ...form, storeName: e.target.value })}
             className="w-full px-3 py-[10px] rounded-lg border border-bone text-[13px] text-charcoal outline-none bg-white transition-[border-color,box-shadow] duration-150 focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/10" />
           {form.storeName && (
-            <p className="text-[11px] text-slate mt-[5px]">
+            <p className="text-[12px] text-slate mt-[5px]">
               Your store URL will look like: <span className="text-brand-orange">
                 {getStorefrontUrl(form.storeName.toLowerCase().replace(/\s+/g, '-')).replace(/^https?:\/\//, '')}
               </span>
@@ -399,13 +399,13 @@ function Step2Payment({ form, setForm, onNext, onBack, step, maxReached, onStepC
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="text-[14px] font-bold text-carbon">{p.name}</p>
-                        {p.badge && <span className="text-[10px] font-semibold px-2 py-[2px] rounded-full bg-brand-gold/15 text-[#8a7700]">{p.badge}</span>}
+                        {p.badge && <span className="text-[12px] font-semibold px-2 py-[2px] rounded-full bg-brand-gold/15 text-[#8a7700]">{p.badge}</span>}
                       </div>
                       {p.description && <p className="text-[12px] text-slate mt-[2px]">{p.description}</p>}
                       {p.featureBullets.length > 0 && (
                         <ul className="mt-2 flex flex-col gap-[3px]">
                           {p.featureBullets.slice(0, 4).map(b => (
-                            <li key={b} className="flex items-start gap-[6px] text-[11.5px] text-charcoal">
+                            <li key={b} className="flex items-start gap-[6px] text-[12px] text-charcoal">
                               <Check size={11} className="text-success mt-[2px] shrink-0" /> {b}
                             </li>
                           ))}
@@ -414,7 +414,7 @@ function Step2Payment({ form, setForm, onNext, onBack, step, maxReached, onStepC
                     </div>
                     <div className="text-end shrink-0">
                       <p className="text-[18px] font-bold text-brand-orange leading-none">{p.isFree ? 'Free' : ('$' + (p.monthlyPriceUSD ?? 0).toLocaleString())}</p>
-                      <p className="text-[10.5px] text-slate mt-1">{p.isFree ? `for ${p.trialDays} days` : 'per month'}</p>
+                      <p className="text-[12px] text-slate mt-1">{p.isFree ? `for ${p.trialDays} days` : 'per month'}</p>
                     </div>
                   </div>
                 </button>
@@ -474,7 +474,7 @@ function Step2Payment({ form, setForm, onNext, onBack, step, maxReached, onStepC
                   </div>
                 )}
                 {confirming && (
-                  <p className="text-[11.5px] text-slate text-center mt-2">Saving your card…</p>
+                  <p className="text-[12px] text-slate text-center mt-2">Saving your card…</p>
                 )}
               </>
             )}
@@ -530,7 +530,7 @@ function Step3SellerType({ form, setForm, onNext, onBack, step, maxReached, onSt
                 </div>
               </div>
               <p className="text-[14px] font-bold text-carbon mb-1">{t.title}</p>
-              <p className="text-[11px] text-slate leading-[1.5]">{t.desc}</p>
+              <p className="text-[12px] text-slate leading-[1.5]">{t.desc}</p>
             </div>
           );
         })}
@@ -580,7 +580,7 @@ function Step4WhatYouSell({ form, setForm, onNext, onBack, step, maxReached, onS
               )}
               <t.Icon size={30} className="block mb-[10px]" />
               <p className="text-[13px] font-bold text-carbon mb-1">{t.title}</p>
-              <p className="text-[11px] text-slate">{t.desc}</p>
+              <p className="text-[12px] text-slate">{t.desc}</p>
             </div>
           );
         })}
@@ -592,11 +592,11 @@ function Step4WhatYouSell({ form, setForm, onNext, onBack, step, maxReached, onS
           <div>
             <p className="text-[13px] font-semibold text-brand-deep-orange mb-[6px]">We'll activate these tools for you:</p>
             <div className="flex gap-[6px] flex-wrap">
-              {form.productTypes.includes('physical_products') && <span className="bg-success-bg text-success text-[11px] font-semibold px-[9px] py-[3px] rounded-[20px]">Inventory Manager</span>}
-              {form.productTypes.includes('digital_downloads')     && <span className="bg-success-bg text-success text-[11px] font-semibold px-[9px] py-[3px] rounded-[20px]">Digital Delivery</span>}
-              {form.productTypes.includes('educational_resources') && <span className="bg-success-bg text-success text-[11px] font-semibold px-[9px] py-[3px] rounded-[20px]">AI Worksheet Builder</span>}
-              <span className="bg-success-bg text-success text-[11px] font-semibold px-[9px] py-[3px] rounded-[20px]">AI Studio</span>
-              <span className="bg-success-bg text-success text-[11px] font-semibold px-[9px] py-[3px] rounded-[20px]">Marketplace</span>
+              {form.productTypes.includes('physical_products') && <span className="bg-success-bg text-success text-[12px] font-semibold px-[9px] py-[3px] rounded-[20px]">Inventory Manager</span>}
+              {form.productTypes.includes('digital_downloads')     && <span className="bg-success-bg text-success text-[12px] font-semibold px-[9px] py-[3px] rounded-[20px]">Digital Delivery</span>}
+              {form.productTypes.includes('educational_resources') && <span className="bg-success-bg text-success text-[12px] font-semibold px-[9px] py-[3px] rounded-[20px]">AI Worksheet Builder</span>}
+              <span className="bg-success-bg text-success text-[12px] font-semibold px-[9px] py-[3px] rounded-[20px]">AI Studio</span>
+              <span className="bg-success-bg text-success text-[12px] font-semibold px-[9px] py-[3px] rounded-[20px]">Marketplace</span>
             </div>
           </div>
         </div>
@@ -641,10 +641,10 @@ function Step5Review({ form, submitting, submitError, onSubmit, onBack, step, ma
         <div className="mb-6">
           <p className="text-[12px] font-bold text-carbon uppercase tracking-[0.05em] pb-2 mb-3 border-b border-bone">Store</p>
           <div className="grid grid-cols-2 gap-x-4 gap-y-[10px]">
-            <div><p className="text-[10px] text-slate">Store name</p><p className="text-[12.5px] font-semibold text-carbon">{form.storeName || '—'}</p></div>
-            <div><p className="text-[10px] text-slate">Category</p><p className="text-[12.5px] font-semibold text-carbon">{form.categoryName || '—'}</p></div>
-            <div><p className="text-[10px] text-slate">Seller type</p><p className="text-[12.5px] font-semibold text-carbon">{sellerLabel}</p></div>
-            <div><p className="text-[10px] text-slate">Sells</p><p className="text-[12.5px] font-semibold text-carbon">{productLabels || '—'}</p></div>
+            <div><p className="text-[12px] text-slate">Store name</p><p className="text-[12.5px] font-semibold text-carbon">{form.storeName || '—'}</p></div>
+            <div><p className="text-[12px] text-slate">Category</p><p className="text-[12.5px] font-semibold text-carbon">{form.categoryName || '—'}</p></div>
+            <div><p className="text-[12px] text-slate">Seller type</p><p className="text-[12.5px] font-semibold text-carbon">{sellerLabel}</p></div>
+            <div><p className="text-[12px] text-slate">Sells</p><p className="text-[12.5px] font-semibold text-carbon">{productLabels || '—'}</p></div>
           </div>
         </div>
 

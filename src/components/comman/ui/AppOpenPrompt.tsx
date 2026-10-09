@@ -61,7 +61,7 @@ export function AppOpenPrompt() {
           <EdudeenIcon size={40} />
           <div className="min-w-0">
             <p className="text-[14px] font-bold text-carbon leading-tight">Continue in the Edudeen App</p>
-            <p className="text-[11.5px] text-slate mt-[2px] leading-snug">A faster, smoother way to shop</p>
+            <p className="text-[12px] text-slate mt-[2px] leading-snug">A faster, smoother way to shop</p>
           </div>
         </div>
 

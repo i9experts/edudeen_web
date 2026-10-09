@@ -109,7 +109,7 @@ export function AdminActivityLog() {
       render: r => (
         <div className="max-w-[220px]">
           <p className="font-medium text-charcoal truncate m-0">{actionTitle(r.action)}</p>
-          {r.description && <p className="text-[11px] text-slate truncate m-0">{r.description}</p>}
+          {r.description && <p className="text-[12px] text-slate truncate m-0">{r.description}</p>}
         </div>
       ),
     },
@@ -118,7 +118,7 @@ export function AdminActivityLog() {
       render: r => (
         <div className="max-w-[160px]">
           <p className="text-graphite truncate m-0">{r.actorName ?? '—'}</p>
-          {r.actorRole && <p className="text-[11px] text-slate m-0">{r.actorRole}</p>}
+          {r.actorRole && <p className="text-[12px] text-slate m-0">{r.actorRole}</p>}
         </div>
       ),
     },

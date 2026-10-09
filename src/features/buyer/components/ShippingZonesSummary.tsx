@@ -42,7 +42,7 @@ export function ShippingZonesSummary({ sellerName }: { sellerName?: string | nul
       </div>
       <div className="min-w-0 flex-1">
         <div className="font-semibold text-[12px] text-charcoal mb-[2px]">Shipping</div>
-        <div className="text-[11px] text-slate break-words leading-[1.55]">{body}</div>
+        <div className="text-[12px] text-slate break-words leading-[1.55]">{body}</div>
       </div>
     </div>
   );

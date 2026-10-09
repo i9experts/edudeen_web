@@ -1,5 +1,6 @@
 import { ArrowRight, Store, BookOpen, Sparkles, BarChart3 } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { usePublicPlatformConfig } from '@/hooks/usePublicPlatformConfig';
 import { useSellEntry } from '@/hooks/auth/useSellEntry';
 import { isBuyerSession } from '@/hooks/auth/useIsBuyer';
 import { Button, Footer } from '@/components/comman/ui';
@@ -22,27 +23,31 @@ const PILLARS = [
 export function AboutPage() {
   usePageTitle('About');
   const sellEntry = useSellEntry();
+  // Admin-editable copy (Admin -> Platform Config -> Homepage content -> About page); blank = the text below.
+  const { config } = usePublicPlatformConfig();
+  const ab = config?.homeContent?.about ?? {};
+  const pillars = PILLARS.map((d, i) => { const o = ab.pillars?.[i]; return o?.title ? { ...d, title: o.title, desc: o.desc || d.desc } : d; });
 
   return (
     <div className="bg-white min-h-full">
       <div className="px-4 md:px-8 lg:px-12 pt-14 md:pt-20 pb-12 max-w-[760px] mx-auto text-center">
         <Reveal delay={0}>
-          <p className="text-[11px] font-semibold text-brand-orange uppercase tracking-[0.12em] mb-3">About Edudeen</p>
+          <p className="text-[11px] font-semibold text-brand-orange uppercase tracking-[0.12em] mb-3">{ab.eyebrow || 'About Edudeen'}</p>
         </Reveal>
         <Reveal delay={0.08}>
           <h1 className="text-[28px] sm:text-[40px] font-bold text-carbon leading-[1.15] mb-5" style={{ fontFamily: SERIF }}>
-            Sharing knowledge shouldn't need five different logins.
+            {ab.heading || "Sharing knowledge shouldn't need five different logins."}
           </h1>
         </Reveal>
         <Reveal delay={0.16}>
           <p className="text-[14px] sm:text-[16px] text-slate leading-[1.7]">
-            Edudeen exists because teachers, scholars, academies and publishers who sell learning materials online usually end up juggling a store builder, a file-delivery service, an inventory tracker and an analytics tool that don't talk to each other. We built one education marketplace where they all share the same real data instead.
+            {ab.intro || "Edudeen exists because teachers, scholars, academies and publishers who sell learning materials online usually end up juggling a store builder, a file-delivery service, an inventory tracker and an analytics tool that don't talk to each other. We built one education marketplace where they all share the same real data instead."}
           </p>
         </Reveal>
       </div>
 
       <RevealStagger className="px-4 md:px-8 lg:px-12 pb-14 max-w-[1100px] mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" step={0.06} y={16}>
-        {PILLARS.map(p => (
+        {pillars.map(p => (
           <PremiumCard key={p.title} className="p-6">
             <p.Icon size={26} className="text-brand-orange mb-3" />
             <p className="text-[13.5px] font-bold text-carbon mb-1.5">{p.title}</p>
@@ -57,12 +62,12 @@ export function AboutPage() {
             <img src={aboutImg1} alt="" className="rounded-2xl w-full object-cover aspect-[4/3]" loading="lazy" />
           </Reveal>
           <Reveal delay={0.1}>
-            <p className="text-[11px] font-semibold text-brand-orange uppercase tracking-[0.1em] mb-3">Our approach</p>
+            <p className="text-[11px] font-semibold text-brand-orange uppercase tracking-[0.1em] mb-3">{ab.approachEyebrow || 'Our approach'}</p>
             <h2 className="text-[22px] sm:text-[26px] font-bold text-carbon leading-[1.3] mb-4" style={{ fontFamily: SERIF }}>
-              Easy to start, verified to trust.
+              {ab.approachHeading || 'Easy to start, verified to trust.'}
             </h2>
             <p className="text-[14px] text-slate leading-[1.75]">
-              Educators can set up a store and start listing quickly. Sellers who complete Edudeen's verification earn a verified badge, so learners and parents can see at a glance which stores have been checked — and buyers always pay through Edudeen's own checkout.
+              {ab.approachText || "Educators can set up a store and start listing quickly. Sellers who complete Edudeen's verification earn a verified badge, so learners and parents can see at a glance which stores have been checked — and buyers always pay through Edudeen's own checkout."}
             </p>
           </Reveal>
         </div>
@@ -74,12 +79,12 @@ export function AboutPage() {
             <img src={aboutImg2} alt="" className="rounded-2xl w-full object-cover aspect-[4/3]" loading="lazy" />
           </Reveal>
           <Reveal delay={0.1} className="lg:order-1">
-            <p className="text-[11px] font-semibold text-brand-orange uppercase tracking-[0.1em] mb-3">Where we're headed</p>
+            <p className="text-[11px] font-semibold text-brand-orange uppercase tracking-[0.1em] mb-3">{ab.headedEyebrow || "Where we're headed"}</p>
             <h2 className="text-[22px] sm:text-[26px] font-bold text-carbon leading-[1.3] mb-4" style={{ fontFamily: SERIF }}>
-              More independence for every seller.
+              {ab.headedHeading || 'More independence for every seller.'}
             </h2>
             <p className="text-[14px] text-slate leading-[1.75]">
-              Sellers' own payment gateways and custom domains per store are real items on our roadmap — the direction is always toward an educator owning more of their own teaching business, not less.
+              {ab.headedText || "Sellers' own payment gateways and custom domains per store are real items on our roadmap — the direction is always toward an educator owning more of their own teaching business, not less."}
             </p>
           </Reveal>
         </div>
@@ -88,11 +93,11 @@ export function AboutPage() {
       {/* Seller CTA — not shown to a signed-in buyer. */}
       {!isBuyerSession() && (
         <div className="bg-carbon px-4 md:px-8 lg:px-12 py-14 text-center">
-          <SectionHeading title="Share what you teach on Edudeen." tone="dark" align="center" size="lg" className="mb-8" />
+          <SectionHeading title={ab.ctaHeading || 'Share what you teach on Edudeen.'} tone="dark" align="center" size="lg" className="mb-8" />
           <Reveal>
             <MagneticButton>
               <Button size="lg" onClick={sellEntry.go} loading={sellEntry.loading}>
-                Start Selling Free <ArrowRight size={14} className="inline align-middle ms-1" />
+                {ab.ctaButton || 'Start Selling Free'} <ArrowRight size={14} className="inline align-middle ms-1" />
               </Button>
             </MagneticButton>
           </Reveal>

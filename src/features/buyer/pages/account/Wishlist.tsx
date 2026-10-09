@@ -46,7 +46,7 @@ export function Wishlist() {
       await clearWishlist();
       setConfirmingClear(false);
     } catch (err) {
-      setClearError(err instanceof Error ? err.message : 'Failed to clear wishlist.');
+      setClearError(err instanceof Error ? err.message : 'Failed to clear saved items.');
     }
   };
 
@@ -54,7 +54,7 @@ export function Wishlist() {
     return (
       <Card padding="none">
         <div className="hidden lg:block px-5 pt-5 pb-4 border-b border-bone">
-          <PageHeader eyebrow="Account" title="Wishlist" />
+          <PageHeader eyebrow="Account" title="Saved" />
         </div>
         <div className="divide-y divide-[#f5f4ef]">
           {[1, 2, 3].map(i => (
@@ -80,11 +80,11 @@ export function Wishlist() {
     return (
       <Card padding="none">
         <div className="hidden lg:block px-5 pt-5 pb-4 border-b border-bone">
-          <PageHeader eyebrow="Account" title="Wishlist" />
+          <PageHeader eyebrow="Account" title="Saved" />
         </div>
         <EmptyState
           icon={<Heart size={28} className="text-brand-orange opacity-55" />}
-          title="Wishlist is empty"
+          title="Nothing saved yet"
           description="Save products you love and find them here anytime."
           action={{ label: 'Browse resources', onClick: () => navigate('/') }}
           className="py-12"
@@ -99,7 +99,7 @@ export function Wishlist() {
       <div className="px-5 pt-5 pb-4 border-b border-bone">
         <PageHeader
           eyebrow="Account"
-          title="Wishlist"
+          title="Saved"
           description={`${wishlistCount} item${wishlistCount !== 1 ? 's' : ''} saved`}
           actions={
             <Button variant="ghost" size="sm" onClick={() => { setConfirmingClear(true); setClearError(''); }} disabled={clearing} className="text-error!">
@@ -149,14 +149,14 @@ export function Wishlist() {
                     )} />
                   ))}
                   {p.averageRating > 0 && (
-                    <span className="text-[11px] text-slate ms-[2px]">({p.averageRating.toFixed(1)})</span>
+                    <span className="text-[12px] text-slate ms-[2px]">({p.averageRating.toFixed(1)})</span>
                   )}
                 </div>
 
                 {variant && variant.options?.length > 0 && (
                   <div className="flex items-center gap-[5px] flex-wrap">
                     {variant.options.map(o => (
-                      <span key={o.name} className="text-[11px] px-[8px] py-[2px] rounded-[6px] bg-[#f2f0ea] text-slate font-medium">{o.value}</span>
+                      <span key={o.name} className="text-[12px] px-[8px] py-[2px] rounded-[6px] bg-[#f2f0ea] text-slate font-medium">{o.value}</span>
                     ))}
                   </div>
                 )}
@@ -168,7 +168,7 @@ export function Wishlist() {
                       <span className="text-[12px] line-through text-[#b0aeaa]">{displaySymbol}{convert(variant.compareAtPrice, variant.currency).toLocaleString()}</span>
                     )}
                     {discount && (
-                      <span className="text-[10px] font-bold px-[7px] py-[2px] rounded-[5px] bg-[#dcfce7] text-[#15803d]">Save {discount}%</span>
+                      <span className="text-[12px] font-bold px-[7px] py-[2px] rounded-[5px] bg-[#dcfce7] text-[#15803d]">Save {discount}%</span>
                     )}
                   </div>
                 )}
@@ -192,7 +192,7 @@ export function Wishlist() {
                   onClick={() => variant && handleRemove(p._id, variant._id)}
                   disabled={isRemoving}
                   className={clsx(
-                    'flex items-center justify-center gap-[5px] px-3 py-[6px] rounded-[8px] text-[11px] font-medium border border-bone bg-white text-slate whitespace-nowrap transition-colors',
+                    'flex items-center justify-center gap-[5px] px-3 py-[6px] rounded-[8px] text-[12px] font-medium border border-bone bg-white text-slate whitespace-nowrap transition-colors',
                     isRemoving ? 'cursor-not-allowed opacity-60' : 'cursor-pointer hover:border-[#fecdd3] hover:text-[#e11d48] hover:bg-[#fff5f7]',
                   )}
                 >
@@ -207,14 +207,14 @@ export function Wishlist() {
     </Card>
 
     {confirmingClear && (
-      <Modal title="Clear your wishlist?" onClose={() => setConfirmingClear(false)} footer={
+      <Modal title="Clear your saved items?" onClose={() => setConfirmingClear(false)} footer={
         <>
           <Button variant="ghost" onClick={() => setConfirmingClear(false)}>Cancel</Button>
           <Button variant="danger" onClick={handleClearAll} loading={clearing}>Remove All</Button>
         </>
       }>
         <p className="text-[13px] text-slate">
-          This removes all {wishlistCount} item{wishlistCount !== 1 ? 's' : ''} from your wishlist. This cannot be undone.
+          This removes all {wishlistCount} item{wishlistCount !== 1 ? 's' : ''} from your saved items. This cannot be undone.
         </p>
         {clearError && <p className="text-[12px] text-error mt-2">{clearError}</p>}
       </Modal>

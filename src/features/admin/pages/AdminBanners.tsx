@@ -97,13 +97,13 @@ function BannerFormModal({
         <div>
           <label className="block text-[12px] font-medium text-charcoal mb-1.5">Banner Image</label>
           <ImageUpload value={images} onChange={setImages} maxFiles={1} />
-          <p className="mt-1.5 text-[11px] text-slate/70">
+          <p className="mt-1.5 text-[12px] text-slate/70">
             Recommended: 2560×720px (minimum 1280px wide) — this banner renders full-width on desktop, so anything narrower will look blurry.
           </p>
         </div>
         <div>
           <label className="block text-[12px] font-medium text-charcoal mb-1.5">Placement</label>
-          <p className="text-[11px] text-slate/70 mb-1.5">Pick one or more — this banner will rotate on every placement checked.</p>
+          <p className="text-[12px] text-slate/70 mb-1.5">Pick one or more — this banner will rotate on every placement checked.</p>
           <div className="flex flex-col gap-1.5">
             {ADMIN_BANNER_PLACEMENTS.map(p => (
               <label key={p} className="flex items-center gap-2 text-[13px] text-charcoal cursor-pointer select-none">
@@ -203,7 +203,7 @@ export function AdminBanners() {
                   <strong>{PLACEMENT_LABEL[c.placement] ?? c.placement}</strong> has {c.current} active banners but only shows {c.visibleLimit} at a time — the ones with the highest Display Order won't be seen.
                 </p>
               ))}
-              <p className="m-0 mt-1 text-[11.5px] text-slate">Pause some, or raise the limit in Platform Config.</p>
+              <p className="m-0 mt-1 text-[12px] text-slate">Pause some, or raise the limit in Platform Config.</p>
             </div>
           </div>
         )}
@@ -241,37 +241,37 @@ export function AdminBanners() {
                   </div>
                   <div className="p-3 flex flex-col gap-2 flex-1">
                     <div className="flex items-center justify-between">
-                      <span className="px-[8px] py-[2px] rounded-[5px] text-[11px] font-semibold"
+                      <span className="px-[8px] py-[2px] rounded-[5px] text-[12px] font-semibold"
                         style={{ background: statusStyle.bg, color: statusStyle.color }}>
                         {statusStyle.label}
                       </span>
-                      <span className="text-[11px] text-slate">Order {b.order}</span>
+                      <span className="text-[12px] text-slate">Order {b.order}</span>
                     </div>
                     <div className="flex flex-wrap gap-1">
                       {bannerPlacements(b).map(p => (
-                        <span key={p} className="text-[10px] text-slate bg-cream border border-bone rounded-full px-[7px] py-[1px]">
+                        <span key={p} className="text-[12px] text-slate bg-cream border border-bone rounded-full px-[7px] py-[1px]">
                           {PLACEMENT_LABEL[p] ?? p}
                         </span>
                       ))}
                     </div>
                     {b.urlOnTap && (
-                      <a href={b.urlOnTap} target="_blank" rel="noreferrer" className="text-[11px] text-brand-orange truncate flex items-center gap-1">
+                      <a href={b.urlOnTap} target="_blank" rel="noreferrer" className="text-[12px] text-brand-orange truncate flex items-center gap-1">
                         <ExternalLink size={10} /> {b.urlOnTap}
                       </a>
                     )}
                     <div className="flex items-center gap-2 mt-auto pt-2">
-                      <button onClick={() => setEditing(b)} className="flex-1 px-[10px] py-[6px] rounded-[6px] text-[11px] font-medium text-charcoal bg-cream border border-bone cursor-pointer flex items-center justify-center gap-1 outline-none transition-colors duration-150 hover:bg-bone focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-brand-orange/50">
+                      <button onClick={() => setEditing(b)} className="flex-1 px-[10px] py-[6px] rounded-[6px] text-[12px] font-medium text-charcoal bg-cream border border-bone cursor-pointer flex items-center justify-center gap-1 outline-none transition-colors duration-150 hover:bg-bone focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-brand-orange/50">
                         <Pencil size={11} /> Edit
                       </button>
-                      <button onClick={() => togglePause(b)} disabled={toggleBusyId === b._id} className="px-[10px] py-[6px] rounded-[6px] text-[11px] font-medium text-charcoal bg-cream border border-bone cursor-pointer flex items-center justify-center gap-1 outline-none transition-colors duration-150 hover:bg-bone disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-brand-orange/50">
+                      <button onClick={() => togglePause(b)} disabled={toggleBusyId === b._id} className="px-[10px] py-[6px] rounded-[6px] text-[12px] font-medium text-charcoal bg-cream border border-bone cursor-pointer flex items-center justify-center gap-1 outline-none transition-colors duration-150 hover:bg-bone disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-brand-orange/50">
                         {b.status === 'paused' ? <Play size={11} /> : <Pause size={11} />}
                       </button>
-                      <button onClick={() => { setDeleting(b); setDeleteError(''); }} className="px-[10px] py-[6px] rounded-[6px] text-[11px] font-medium text-error bg-error-bg border border-error-border cursor-pointer flex items-center justify-center gap-1 outline-none transition-colors duration-150 hover:bg-error hover:text-white focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-brand-orange/50">
+                      <button aria-label="Delete" onClick={() => { setDeleting(b); setDeleteError(''); }} className="px-[10px] py-[6px] rounded-[6px] text-[12px] font-medium text-error bg-error-bg border border-error-border cursor-pointer flex items-center justify-center gap-1 outline-none transition-colors duration-150 hover:bg-error hover:text-white focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-brand-orange/50">
                         <Trash2 size={11} />
                       </button>
                     </div>
                     {toggleErrorId === b._id && (
-                      <p className="text-[11px] text-error leading-snug">{toggleError}</p>
+                      <p className="text-[12px] text-error leading-snug">{toggleError}</p>
                     )}
                   </div>
                 </div>

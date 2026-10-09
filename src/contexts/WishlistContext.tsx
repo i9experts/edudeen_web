@@ -59,7 +59,7 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const fetchWishlist = useCallback(() => {
-    if (!TokenStorage.isLoggedIn()) { resetWishlist(); return; }
+    if (!TokenStorage.isLoggedIn() || TokenStorage.isStaffSession()) { resetWishlist(); return; }
     const seq = ++fetchSeq.current;
     setLoading(true);
     apiGetWishlist()

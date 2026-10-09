@@ -7,6 +7,7 @@ import { ToastContainer } from '@/components/comman/ui/ToastContainer';
 import { MaintenanceNotice } from '@/components/comman/ui/MaintenanceNotice';
 import { GoogleOneTapPrompt } from '@/components/comman/ui/GoogleOneTapPrompt';
 import { LanguageRouteSync } from '@/contexts/LanguageContext';
+import { AiAssistantWidget } from '@/components/ai/AiAssistantWidget';
 import { useGlobalEdgeHoverScroll } from '@/hooks/useGlobalEdgeHoverScroll';
 
 function PageSpinner() {
@@ -53,6 +54,7 @@ export function RootLayout() {
       <ToastContainer />
       <GoogleOneTapPrompt />
       <LanguageRouteSync />
+      <AiAssistantWidget />
       {/* `fixed inset-0` (not paddingTop + height:100vh) so this wrapper IS the
           scroll container — the previous approach had no overflow container of
           its own, so tall pages fell back to scrolling the whole document.

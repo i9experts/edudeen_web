@@ -82,7 +82,7 @@ function ResendTimer({ email, role, isIdentity }: { email: string; role: AppRole
         <Button variant="link" size="sm" onClick={handleResend} loading={sending} disabled={sending}>
           Resend code
         </Button>
-        {error && <p className="text-[11px] text-error">{error}</p>}
+        {error && <p className="text-[12px] text-error">{error}</p>}
       </div>
     );
   }

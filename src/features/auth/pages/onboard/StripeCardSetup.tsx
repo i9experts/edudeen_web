@@ -84,7 +84,7 @@ function SetupForm({ onConfirmed, note }: Omit<StripeCardSetupProps, 'clientSecr
         Save Card &amp; Continue
       </Button>
 
-      <p className="flex items-center justify-center gap-[6px] text-[11px] text-slate">
+      <p className="flex items-center justify-center gap-[6px] text-[12px] text-slate">
         <ShieldCheck size={12} className="text-success shrink-0" /> {note ?? "Your card is encrypted and secured by Stripe — you won't be charged today"}
       </p>
     </form>

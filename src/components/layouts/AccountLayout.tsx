@@ -45,7 +45,7 @@ export function useNavGroups(): NavGroup[] {
       items: [
         { id: 'orders',   label: t('Orders'),   Icon: ShoppingBag, path: 'orders' },
         { id: 'downloads', label: t('My Library'), Icon: Download,  path: 'downloads' },
-        { id: 'wishlist', label: t('Wishlist'), Icon: Heart,       path: 'wishlist', badge: wishlistCount },
+        { id: 'wishlist', label: t('Saved'), Icon: Heart,       path: 'wishlist', badge: wishlistCount },
         { id: 'lists',    label: t('My Lists'), Icon: ListChecks,  path: 'lists' },
         { id: 'quotes',   label: t('School Quotes'), Icon: FileSpreadsheet, path: 'quotes' },
         { id: 'reviews',  label: t('Reviews'),  Icon: Star,        path: 'reviews' },
@@ -179,7 +179,7 @@ function AccountSidebar({ open, onToggle }: SidebarProps) {
                         </span>
                         {!!item.badge && item.badge > 0 && (
                           <span className={clsx(
-                            'text-[9px] font-bold px-[6px] py-[1px] rounded-full leading-[14px] shrink-0',
+                            'text-[12px] font-bold px-[6px] py-[1px] rounded-full leading-[14px] shrink-0',
                             active ? 'bg-white text-brand-orange' : 'bg-brand-orange text-white',
                           )}>
                             {item.badge > 99 ? '99+' : item.badge}

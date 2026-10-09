@@ -11,6 +11,8 @@ import {
   apiGetStoreReviews, apiReplyToReview, apiEditReply, apiFlagReview, apiUnflagReview, apiModerateDeleteReview,
   type StoreReviewEntry, type StoreReviewStats,
 } from '@/api/services/rating';
+import { useAiFeatures } from '@/hooks/useAiFeatures';
+import { aiErrorInfo, apiReviewReplyDraft } from '@/api/services/aiFeatures';
 
 const AVATAR_PALETTE = ['#FDECEA:#C0392B', '#EAF3FB:#2156A8', '#EAF7EF:#1E7A3C', '#FFF4E5:#B36200', '#E5F4FB:#1A6A8A'];
 function avatarStyle(name: string) {
@@ -24,6 +26,7 @@ const PER_PAGE = 10;
 export function StoreReviews() {
   usePageTitle('Reviews');
   const { storeId } = useStoreWorkspace();
+  const { enabled: aiEnabled } = useAiFeatures(storeId);
 
   const [reviews, setReviews] = useState<StoreReviewEntry[]>([]);
   const [stats, setStats]     = useState<StoreReviewStats | null>(null);
@@ -105,12 +108,12 @@ export function StoreReviews() {
         const initials = r.customer.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
         return (
           <div className="flex items-center gap-[10px]">
-            <div className="w-8 h-8 rounded-full text-[10px] font-bold flex items-center justify-center shrink-0" style={{ background: av.bg, color: av.color }}>
+            <div className="w-8 h-8 rounded-full text-[12px] font-bold flex items-center justify-center shrink-0" style={{ background: av.bg, color: av.color }}>
               {initials}
             </div>
             <div className="min-w-0">
               <p className="text-[13px] font-semibold text-charcoal truncate">{r.customer.name}</p>
-              {r.isVerifiedPurchase && <p className="text-[10px] text-success font-medium">Verified Purchase</p>}
+              {r.isVerifiedPurchase && <p className="text-[12px] text-success font-medium">Verified Purchase</p>}
             </div>
           </div>
         );
@@ -130,7 +133,7 @@ export function StoreReviews() {
             <span className="text-[12px] text-slate italic">No comment</span>
           )}
           {(r.media ?? []).length > 0 && (
-            <span className="inline-flex items-center gap-1 text-[11px] text-slate mt-1">
+            <span className="inline-flex items-center gap-1 text-[12px] text-slate mt-1">
               <ImageIcon size={11} /> {r.media.length} photo{r.media.length > 1 ? 's' : ''}
             </span>
           )}
@@ -185,7 +188,7 @@ export function StoreReviews() {
         {actionError && (
           <div className="flex items-center justify-between gap-3 text-[13px] text-error bg-error-bg border border-error-border rounded-lg px-3 py-2">
             <span>{actionError}</span>
-            <button onClick={() => setActionError('')} className="text-[11px] font-semibold text-error bg-transparent border-none cursor-pointer shrink-0">Dismiss</button>
+            <button onClick={() => setActionError('')} className="text-[12px] font-semibold text-error bg-transparent border-none cursor-pointer shrink-0">Dismiss</button>
           </div>
         )}
 
@@ -213,7 +216,7 @@ export function StoreReviews() {
                       <div className="flex-1 h-1.5 rounded-[3px] bg-bone overflow-hidden">
                         <div className="h-full rounded-[3px] bg-brand-orange" style={{ width: stats?.ratingBreakdown[star] ?? '0%' }} />
                       </div>
-                      <span className="text-[11px] text-slate w-7 text-right shrink-0">{stats?.ratingBreakdown[star] ?? '0%'}</span>
+                      <span className="text-[12px] text-slate w-7 text-right shrink-0">{stats?.ratingBreakdown[star] ?? '0%'}</span>
                     </div>
                   ))}
                 </div>
@@ -241,7 +244,7 @@ export function StoreReviews() {
                   <div key={item.label} className="bg-cream rounded-[10px] px-4 py-[14px]">
                     <p className="text-[22px] font-bold leading-[1.15]" style={{ color: item.color }}>{item.value}</p>
                     <p className="text-xs font-medium text-graphite mt-1">{item.label}</p>
-                    {item.sub && <p className="text-[11px] text-slate mt-0.5">{item.sub}</p>}
+                    {item.sub && <p className="text-[12px] text-slate mt-0.5">{item.sub}</p>}
                   </div>
                 ))}
               </div>
@@ -300,6 +303,7 @@ export function StoreReviews() {
         <ReplyModal
           title="Reply to Review"
           initialText=""
+          onDraft={aiEnabled('review_reply') ? async () => (await apiReviewReplyDraft(storeId, replyingTo.reviewId)).data.draft : undefined}
           onClose={() => setReplyingTo(null)}
           onSubmit={async text => { await apiReplyToReview(replyingTo.reviewId, text); setReplyingTo(null); reload(); }}
         />
@@ -332,16 +336,27 @@ export function StoreReviews() {
 }
 
 function ReplyModal({
-  title, initialText, onClose, onSubmit,
+  title, initialText, onClose, onSubmit, onDraft,
 }: {
   title: string;
   initialText: string;
+  /** Optional AI draft (edit before sending). */
+  onDraft?: () => Promise<string>;
   onClose: () => void;
   onSubmit: (text: string) => Promise<void>;
 }) {
   const [text, setText] = useState(initialText);
   const [saving, setSaving] = useState(false);
   const [error, setError]   = useState('');
+  const [drafting, setDrafting] = useState(false);
+
+  async function draft() {
+    if (!onDraft) return;
+    setDrafting(true); setError('');
+    try { setText(await onDraft()); }
+    catch (err) { setError(aiErrorInfo(err).message); }
+    finally { setDrafting(false); }
+  }
 
   async function submit() {
     if (!text.trim()) { setError('Reply cannot be empty.'); return; }
@@ -369,6 +384,11 @@ function ReplyModal({
             placeholder="Write your reply…"
             className="w-full border border-bone rounded-lg px-3 py-2 text-[13px] text-charcoal outline-none box-border resize-vertical mb-3"
           />
+          {onDraft && (
+            <button type="button" onClick={draft} disabled={drafting} className="mb-3 text-[12px] text-brand-royal underline disabled:opacity-50">
+              {drafting ? 'Drafting…' : 'Draft with AI — uses AI credits, you can edit it'}
+            </button>
+          )}
           {error && <p className="text-[12px] text-error mb-3">{error}</p>}
           <div className="flex gap-2">
             <button onClick={onClose} className="flex-1 py-[9px] bg-white border border-bone rounded-lg text-[13px] text-graphite cursor-pointer">

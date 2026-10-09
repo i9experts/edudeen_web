@@ -63,7 +63,7 @@ export function TrustServiceStrip({ variant = 'light', items = DEFAULT_ITEMS }: 
               </span>
               <span className="min-w-0">
                 <p className={clsx('text-[12.5px] font-semibold leading-tight whitespace-nowrap', dark ? 'text-white' : 'text-charcoal')}>{label}</p>
-                {sub && <p className={clsx('text-[10.5px] leading-tight mt-[1px]', dark ? 'text-white/50' : 'text-slate')}>{sub}</p>}
+                {sub && <p className={clsx('text-[12px] leading-tight mt-[1px]', dark ? 'text-white/50' : 'text-slate')}>{sub}</p>}
               </span>
             </div>
           ))}

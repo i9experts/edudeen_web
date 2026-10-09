@@ -42,8 +42,8 @@ function StrengthBar({ password }: { password: string }) {
   return (
     <div className="mt-2">
       <div className="flex justify-between mb-1">
-        <span className="text-[11px] text-slate">Password strength</span>
-        <span className={clsx('text-[11px] font-semibold', colorClass)}>{label}</span>
+        <span className="text-[12px] text-slate">Password strength</span>
+        <span className={clsx('text-[12px] font-semibold', colorClass)}>{label}</span>
       </div>
       <div className="h-1 bg-bone rounded-sm overflow-hidden">
         <div className={clsx('h-full rounded-sm transition-[width] duration-300', bgClass)} style={{ width: widthPct }} />
@@ -59,7 +59,7 @@ function StrengthBar({ password }: { password: string }) {
             <span className={clsx('flex', met ? 'text-success' : 'text-slate')}>
               {met ? <Check size={12} /> : <Circle size={12} />}
             </span>
-            <span className={clsx('text-[11px]', met ? 'text-success' : 'text-slate')}>{req}</span>
+            <span className={clsx('text-[12px]', met ? 'text-success' : 'text-slate')}>{req}</span>
           </div>
         ))}
       </div>
@@ -91,7 +91,7 @@ function PasswordInput({ label, placeholder, value, onChange, onBlur, error }: {
           {show ? <EyeOff size={16} /> : <Eye size={16} />}
         </button>
       </div>
-      {error && <p className="text-[11px] text-error mt-[5px]">{error}</p>}
+      {error && <p className="text-[12px] text-error mt-[5px]">{error}</p>}
     </div>
   );
 }
@@ -165,7 +165,7 @@ export function NewPasswordPage() {
           value={values.confirmPassword} onChange={v => setValue('confirmPassword', v)}
           onBlur={blur('confirmPassword')} error={errors.confirmPassword} />
         {values.confirmPassword && (
-          <motion.p className={clsx('text-[11px] mt-[5px]', passwordsMatch ? 'text-success' : 'text-error')} {...fadeSlide}>
+          <motion.p className={clsx('text-[12px] mt-[5px]', passwordsMatch ? 'text-success' : 'text-error')} {...fadeSlide}>
             {passwordsMatch
               ? <><Check size={11} className="inline align-middle me-[3px]" />Passwords match</>
               : <>✗ Passwords do not match</>}

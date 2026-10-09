@@ -31,14 +31,14 @@ export function SellersTab({ params }: { params: BaseAnalyticsParams }) {
   const performance = useAdminAnalyticsSellerPerformance({ ...params, page, limit: 10, sort, order });
 
   const topColumns: TableColumn<TopSellerRow>[] = [
-    { key: 'name', header: 'Seller', render: r => <div><p className="font-medium">{r.name}</p><p className="text-[11px] text-slate">{r.email}</p></div> },
+    { key: 'name', header: 'Seller', render: r => <div><p className="font-medium">{r.name}</p><p className="text-[12px] text-slate">{r.email}</p></div> },
     { key: 'orderCount', header: 'Orders', align: 'right' },
     { key: 'unitsSold', header: 'Units Sold', align: 'right' },
     { key: 'revenue', header: 'Revenue', align: 'right', render: r => formatCurrency(r.revenue) },
   ];
 
   const performanceColumns: TableColumn<SellerPerformanceRow>[] = [
-    { key: 'name', header: 'Seller', render: r => <div><p className="font-medium">{r.name}</p><p className="text-[11px] text-slate">{r.email}</p></div> },
+    { key: 'name', header: 'Seller', render: r => <div><p className="font-medium">{r.name}</p><p className="text-[12px] text-slate">{r.email}</p></div> },
     { key: 'storeCount', header: 'Stores', align: 'right', render: r => `${r.activeStoreCount}/${r.storeCount} active` },
     { key: 'orderCount', header: 'Orders', align: 'right' },
     { key: 'unitsSold', header: 'Units', align: 'right' },

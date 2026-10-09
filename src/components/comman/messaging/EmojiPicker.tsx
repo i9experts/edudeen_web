@@ -25,7 +25,7 @@ export function EmojiPicker({ onSelect, className }: EmojiPickerProps) {
 
   return (
     <div ref={rootRef} className={clsx('relative', className)}>
-      <button
+      <button aria-label="Emoji"
         type="button"
         onClick={() => setOpen(o => !o)}
         className={clsx(

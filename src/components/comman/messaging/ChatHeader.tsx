@@ -59,7 +59,7 @@ export function ChatHeader({
       <div className="flex-1 min-w-0">
         <p className="text-[14.5px] font-bold text-charcoal leading-[1.25] truncate">{name}</p>
         {subtitle && (
-          <p className={clsx('text-[11.5px] truncate flex items-center gap-[5px]', typing ? 'text-brand-orange font-medium' : 'text-slate')}>
+          <p className={clsx('text-[12px] truncate flex items-center gap-[5px]', typing ? 'text-brand-orange font-medium' : 'text-slate')}>
             {typing ? (<>Typing <TypingDots /></>) : subtitle}
           </p>
         )}

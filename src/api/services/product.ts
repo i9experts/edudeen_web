@@ -128,6 +128,8 @@ export interface StoreProduct {
   curricula?:        string[];
   ageMin?:           number | null;
   ageMax?:           number | null;
+  /** Admin-assigned trust badges (listing review). */
+  trust?:            { scholarReviewed: boolean; ageAppropriateMin: number | null; ageAppropriateMax: number | null } | null;
   deliveryFormat?:   DeliveryFormat;
   liveSession?:      LiveSessionInput | null;
   digital:           DigitalMeta | null;
@@ -471,6 +473,11 @@ export interface SellerOrderDetail {
   type:            'physical' | 'digital' | 'mixed';
   subtotal:        number;
   tracking:        { carrier: string | null; trackingNumber: string | null; trackingUrl: string | null } | null;
+  /** Set when the shipment was booked through a courier integration. */
+  shipment?:       { courier: string | null; trackingNumber: string | null; labelUrl: string | null; bookedAt: string | null } | null;
+  giftMessage?:    string | null;
+  giftWrap?:       boolean;
+  trackingEvents?: Array<{ status: string | null; description: string | null; location: string | null; at: string | null; source: string }>;
   shippedAt:       string | null;
   deliveredAt:     string | null;
   items:           SellerOrderDetailItem[];

@@ -15,6 +15,7 @@ import { Toggle, Input, Textarea, Select, Button, SkeletonBox } from '@/componen
 import { AdminStudioHeader } from '@/features/admin/components/studio';
 import { AnalyticsErrorState } from '@/components/comman/analytics/AnalyticsErrorState';
 import { CheckCircle2 } from 'lucide-react';
+import { AiFeatureSwitches } from '@/features/admin/components/AiFeatureSwitches';
 
 const AI_MODELS = ['claude-sonnet-5', 'claude-haiku-4-5', 'claude-opus-4-8'];
 const EMAIL_PROVIDERS = ['SendGrid', 'Mailgun', 'AWS SES', 'Postmark'];
@@ -83,6 +84,7 @@ function AiConfigCard({ config, onSaved }: { config: PlatformConfig; onSaved: (c
           <Button onClick={save} loading={submitting} size="sm" className="self-start">Save AI Config</Button>
           <SavedHint show={saved} />
         </div>
+        <AiFeatureSwitches />
       </div>
     </div>
   );
@@ -178,7 +180,7 @@ function ManualPaymentConfigCard({ config, onSaved }: { config: PlatformConfig; 
       <div className="flex items-center justify-between gap-3 mb-4">
         <div>
           <p className="font-serif font-normal text-[19px] sm:text-[21px] text-carbon leading-[1.25]">Manual Bank Transfer</p>
-          <p className="text-[11px] text-slate">Pakistan track — buyers transfer into your account and upload proof, reviewed here before an order is marked paid.</p>
+          <p className="text-[12px] text-slate">Legacy platform-account transfer (only used to review old proofs). Bank transfer at checkout is now offered per store: it appears as soon as that store's seller saves their own bank/wallet details in Finance → Direct payments, and the seller confirms the payment — this toggle does not add it to checkout.</p>
         </div>
         <Toggle checked={form.enabled} onChange={(next) => setField('enabled', next)} />
       </div>

@@ -46,7 +46,7 @@ export function FinancePayoutMethodsTab() {
         <span className="font-mono">
           {methodDetail(m)}
           {m.accountTitleMismatchFlagged && (
-            <span className="ml-2 inline-flex items-center gap-1 text-[10px] font-semibold text-warning bg-warning-bg rounded-full px-2 py-[1px]">
+            <span className="ml-2 inline-flex items-center gap-1 text-[12px] font-semibold text-warning bg-warning-bg rounded-full px-2 py-[1px]">
               <AlertTriangle size={9} /> Name mismatch
             </span>
           )}

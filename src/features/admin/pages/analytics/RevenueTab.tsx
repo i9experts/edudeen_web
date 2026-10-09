@@ -81,7 +81,7 @@ export function RevenueTab({ params, compareToPreviousPeriod }: { params: BaseAn
       ) : null}
 
       {breakdown.data?.note && (
-        <p className="text-[11px] text-slate bg-cream border border-bone rounded-lg px-3 py-2">{breakdown.data.note}</p>
+        <p className="text-[12px] text-slate bg-cream border border-bone rounded-lg px-3 py-2">{breakdown.data.note}</p>
       )}
 
       {compareToPreviousPeriod && b?.previousPeriod && (

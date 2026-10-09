@@ -54,7 +54,7 @@ export function FinanceOverviewTab({ params }: { params: AdminFinanceParams }) {
       )}
 
       {d && (
-        <p className="text-[11px] text-slate">{formatNumber(d.sellersWithBalance)} sellers with a balance on file.</p>
+        <p className="text-[12px] text-slate">{formatNumber(d.sellersWithBalance)} sellers with a balance on file.</p>
       )}
 
       {d && (
@@ -73,7 +73,7 @@ export function FinanceOverviewTab({ params }: { params: AdminFinanceParams }) {
       )}
 
       {d?.note && (
-        <p className="text-[11px] text-slate bg-cream border border-bone rounded-lg px-3 py-2">{d.note}</p>
+        <p className="text-[12px] text-slate bg-cream border border-bone rounded-lg px-3 py-2">{d.note}</p>
       )}
 
       {revenue.loading ? (

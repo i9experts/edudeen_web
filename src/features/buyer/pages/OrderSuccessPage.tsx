@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from 'react';
+import { addressLines } from '@/utils/address';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import {
@@ -10,7 +11,7 @@ import { DigitalFileDownloads } from '@/features/buyer/components/DigitalFileDow
 import { clsx } from 'clsx';
 import { Button } from '@/components/comman/ui/Button';
 import { BuyerNavbar, Footer } from '@/components/comman/ui';
-import { currencySymbol } from '@/utils/currency';
+import { currencySymbol, formatMoney } from '@/utils/currency';
 import { buildOrderProgress, OrderProgressTrack } from './account/orderProgress';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -39,7 +40,7 @@ function OrderItemRow({ item, orderId, currency, canReview }: { item: OrderItem;
               </span>
             )}
           </div>
-          <p className="text-[11px] text-slate">
+          <p className="text-[12px] text-slate">
             SKU: {item.sku} · Qty: {item.quantity}
           </p>
         </div>
@@ -52,7 +53,7 @@ function OrderItemRow({ item, orderId, currency, canReview }: { item: OrderItem;
         {isDigital && canReview && item.productId && (
           <Link
             to={`/product/${item.productId}#write-review`}
-            className="flex items-center gap-[5px] text-[11px] font-semibold text-brand-orange hover:underline"
+            className="flex items-center gap-[5px] text-[12px] font-semibold text-brand-orange hover:underline"
           >
             <Star size={11} /> Write a review
           </Link>
@@ -87,6 +88,7 @@ function OrderItemsSection({ items, orderId, currency, canReview }: { items: Ord
 // AddressSection
 // ─────────────────────────────────────────────────────────────────────────────
 function AddressSection({ addr }: { addr: OrderDeliveryAddress }) {
+  const { street, region } = addressLines(addr);
   return (
     <section className="pt-4 mt-1 border-t border-bone">
       <div className="flex items-center gap-2 mb-3">
@@ -97,9 +99,9 @@ function AddressSection({ addr }: { addr: OrderDeliveryAddress }) {
         <p className="text-[13px] font-semibold text-charcoal">{addr.recipientName}</p>
         <p className="text-[12px] text-slate">{addr.phoneNumber}</p>
         <p className="text-[12px] text-charcoal">
-          {addr.addressLine1}{addr.addressLine2 ? `, ${addr.addressLine2}` : ''}
+          {street}
         </p>
-        <p className="text-[12px] text-charcoal">{addr.city}, {addr.state} {addr.zipCode}</p>
+        {region && <p className="text-[12px] text-charcoal">{region}</p>}
       </div>
     </section>
   );
@@ -160,11 +162,11 @@ function OrderCard({ order }: { order: PlacedOrder }) {
           )}>
             {order.orderStatus}
           </span>
-          <span className="px-3 py-1 rounded-full text-[10px] font-semibold bg-bone text-slate capitalize">
+          <span className="px-3 py-1 rounded-full text-[12px] font-semibold bg-bone text-slate capitalize">
             {order.paymentMethod.replace(/_/g, ' ')}
           </span>
           {order.isPaid && (
-            <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-[#e3f4ea] text-[#1a6b35]">
+            <span className="px-3 py-1 rounded-full text-[12px] font-bold bg-[#e3f4ea] text-[#1a6b35]">
               Paid
             </span>
           )}
@@ -197,7 +199,7 @@ function OrderCard({ order }: { order: PlacedOrder }) {
             <div className="flex justify-between text-[12px]">
               <span className="text-slate">Shipping</span>
               <span className="font-medium text-charcoal">
-                {order.summary.shipping === 0 ? 'Free' : `${currencySymbol(order.currency)}${order.summary.shipping.toLocaleString()}`}
+                {order.summary.shipping === 0 ? 'Free' : `${formatMoney(order.summary.shipping, order.currency)}`}
               </span>
             </div>
           )}
@@ -230,7 +232,7 @@ function SuccessHero({ orders }: { orders: PlacedOrder[] }) {
           <CheckCircle2 size={38} className="text-success" />
         </div>
         <div className="absolute -top-1 -end-1 w-6 h-6 rounded-full bg-brand-orange flex items-center justify-center">
-          <span className="text-white text-[10px] font-bold">{orders.length}</span>
+          <span className="text-white text-[12px] font-bold">{orders.length}</span>
         </div>
       </div>
 
@@ -251,8 +253,8 @@ function SuccessHero({ orders }: { orders: PlacedOrder[] }) {
       <div className="flex items-center gap-2 flex-wrap justify-center">
         {firstDate && (
           <div className="flex items-center gap-1.5 px-4 py-[7px] bg-cream rounded-[8px] border border-bone">
-            <span className="text-[11px] text-slate">Placed</span>
-            <span className="text-[11px] font-semibold text-charcoal">
+            <span className="text-[12px] text-slate">Placed</span>
+            <span className="text-[12px] font-semibold text-charcoal">
               {new Date(firstDate).toLocaleDateString('en-PK', {
                 weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
               })}
@@ -261,14 +263,14 @@ function SuccessHero({ orders }: { orders: PlacedOrder[] }) {
         )}
         <div className="flex items-center gap-1.5 px-4 py-[7px] bg-cream rounded-[8px] border border-bone">
           <Package size={11} className="text-slate" />
-          <span className="text-[11px] font-semibold text-charcoal">
+          <span className="text-[12px] font-semibold text-charcoal">
             {totalItems} item{totalItems !== 1 ? 's' : ''}
           </span>
         </div>
         {hasDigital && (
           <div className="flex items-center gap-1.5 px-4 py-[7px] bg-[#eef0ff] rounded-[8px] border border-[#c7ceff]">
             <Download size={11} className="text-[#3851d1]" />
-            <span className="text-[11px] font-semibold text-[#3851d1]">Ready to download</span>
+            <span className="text-[12px] font-semibold text-[#3851d1]">Ready to download</span>
           </div>
         )}
       </div>
@@ -288,15 +290,15 @@ function SummaryPanel({ orders, navigate }: { orders: PlacedOrder[]; navigate: (
 
       <div className="px-5 py-4 border-b border-bone">
         <p className="text-[13px] font-bold text-charcoal">Order Summary</p>
-        <p className="text-[11px] text-slate mt-[2px]">{orders.length} order{orders.length !== 1 ? 's' : ''} placed</p>
+        <p className="text-[12px] text-slate mt-[2px]">{orders.length} order{orders.length !== 1 ? 's' : ''} placed</p>
       </div>
 
       <div className="px-5 py-4 flex flex-col gap-3 border-b border-bone">
         {orders.map(order => (
           <div key={order.orderId} className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <p className="text-[11px] font-bold text-brand-deep-orange font-mono leading-tight">{order.orderNumber}</p>
-              <p className="text-[10px] text-slate mt-[1px]">{order.items.length} item{order.items.length !== 1 ? 's' : ''}</p>
+              <p className="text-[12px] font-bold text-brand-deep-orange font-mono leading-tight">{order.orderNumber}</p>
+              <p className="text-[12px] text-slate mt-[1px]">{order.items.length} item{order.items.length !== 1 ? 's' : ''}</p>
             </div>
             <p className="text-[12px] font-semibold text-charcoal shrink-0">{currencySymbol(order.currency)}{order.summary.total.toLocaleString()}</p>
           </div>

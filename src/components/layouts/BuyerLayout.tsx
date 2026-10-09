@@ -6,6 +6,7 @@ import { clsx } from 'clsx';
 import { Home, Heart, ShoppingCart, User } from 'lucide-react';
 import { TokenStorage } from '@/api/services/auth';
 import { useCartContext } from '@/contexts/CartContext';
+import { useWishlistContext } from '@/contexts/WishlistContext';
 import { AnnouncementBanner, AppOpenPrompt, AppOpenFab } from '@/components/comman/ui';
 
 // ── Mobile bottom nav — Home / Marketplace / Cart / Account. Reinstated now
@@ -18,12 +19,14 @@ function BuyerBottomNav() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const { cartCount } = useCartContext();
+  // Same wishlist count the header heart and the account menu show — one source (WishlistContext).
+  const { wishlistCount } = useWishlistContext();
   const isActive = (path: string) => path === '/' ? pathname === '/' : pathname.startsWith(path);
   const t = useT();
 
   const tabs = [
     { id: 'home',        Icon: Home,         label: 'Home',        path: '/' },
-    { id: 'saved',       Icon: Heart,        label: 'Saved',       path: '/account/wishlist' },
+    { id: 'saved',       Icon: Heart,        label: 'Saved',       path: '/account/wishlist', badge: wishlistCount },
     { id: 'cart',        Icon: ShoppingCart, label: 'Cart',        path: '/cart', badge: cartCount },
     { id: 'account',     Icon: User,         label: 'Account',     path: TokenStorage.isLoggedIn() ? '/account/dashboard' : '/login' },
   ] as const;
@@ -48,12 +51,12 @@ function BuyerBottomNav() {
                   className={clsx('transition-colors duration-150', active ? 'text-brand-orange' : 'text-slate')}
                 />
                 {'badge' in tab && tab.badge > 0 && (
-                  <span className="absolute -top-1.5 -end-2 min-w-[15px] h-[15px] px-[3px] rounded-full bg-brand-orange text-white text-[9px] font-bold flex items-center justify-center">
+                  <span className="absolute -top-1.5 -end-2 min-w-[15px] h-[15px] px-[3px] rounded-full bg-brand-orange text-white text-[12px] font-bold flex items-center justify-center">
                     {tab.badge > 9 ? '9+' : tab.badge}
                   </span>
                 )}
               </span>
-              <span className={clsx('text-[10px] font-medium transition-colors duration-150', active ? 'text-brand-orange' : 'text-slate')}>{t(tab.label)}</span>
+              <span className={clsx('text-[12px] font-medium transition-colors duration-150', active ? 'text-brand-orange' : 'text-slate')}>{t(tab.label)}</span>
             </button>
           );
         })}

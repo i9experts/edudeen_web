@@ -9,6 +9,7 @@ import { GenerationsTab } from './ai-studio/GenerationsTab';
 import { WalletsTab } from './ai-studio/WalletsTab';
 import { TransactionsTab } from './ai-studio/TransactionsTab';
 import { PlatformGenerateTab } from './ai-studio/PlatformGenerateTab';
+import { AskDataTab } from './ai-studio/AskDataTab';
 
 const TABS: Tab[] = [
   { id: 'overview',     label: 'Overview',           icon: <LayoutDashboard size={14} /> },
@@ -16,6 +17,7 @@ const TABS: Tab[] = [
   { id: 'wallets',      label: 'Wallets',            icon: <Wallet size={14} /> },
   { id: 'transactions', label: 'Transactions',       icon: <Receipt size={14} /> },
   { id: 'generate',     label: 'Generate for Edudeen', icon: <Sparkles size={14} /> },
+  { id: 'ask',          label: 'Ask your data',      icon: <Sparkles size={14} /> },
 ];
 
 export function AdminAiStudio() {
@@ -34,6 +36,7 @@ export function AdminAiStudio() {
       {activeTab === 'wallets'      && <WalletsTab />}
       {activeTab === 'transactions' && <TransactionsTab />}
       {activeTab === 'generate'     && <PlatformGenerateTab />}
+      {activeTab === 'ask'          && <AskDataTab />}
       </div>
     </div>
   );

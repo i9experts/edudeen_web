@@ -316,7 +316,7 @@ export function EarningsStatement({ storeId, currencies, defaultCurrency }: Prop
                     <td className="whitespace-nowrap text-slate">{fmtDate(t.createdAt)}</td>
                     <td>
                       <span className="block">{t.description || '—'}</span>
-                      {t.referenceId && <span className="block text-[11.5px] text-slate mt-0.5 font-mono truncate max-w-[260px]">Ref {t.referenceId}</span>}
+                      {t.referenceId && <span className="block text-[12px] text-slate mt-0.5 font-mono truncate max-w-[260px]">Ref {t.referenceId}</span>}
                     </td>
                     <td><StudioPill tone={TX_TONE[t.type] ?? 'gray'}>{titleCase(t.type)}</StudioPill></td>
                     <td className="hidden sm:table-cell text-slate">{titleCase(t.status)}</td>

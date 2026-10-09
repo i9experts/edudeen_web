@@ -32,10 +32,10 @@ export function Field({ label, required, hint, error, className, children }: Fie
       </label>
       {control}
       {hint && !error && (
-        <p id={descId} className="mt-1 text-[11px] text-slate">{hint}</p>
+        <p id={descId} className="mt-1 text-[12px] text-slate">{hint}</p>
       )}
       {error && (
-        <p id={descId} className="mt-1 text-[11px] text-error">{error}</p>
+        <p id={descId} className="mt-1 text-[12px] text-error">{error}</p>
       )}
     </div>
   );

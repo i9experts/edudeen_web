@@ -38,6 +38,18 @@ export interface MarketplaceListingRow {
   createdAt?: string;
 }
 
+/** Admin-assigned trust badges on a listing. */
+export interface TrustBadges {
+  scholarReviewed: boolean;
+  ageAppropriateMin: number | null;
+  ageAppropriateMax: number | null;
+}
+
+/** PATCH /api/admin/marketplace/listings/:id/trust: omitted fields are kept, null clears an age. */
+export function apiSetListingTrustBadges(id: string, input: Partial<TrustBadges>) {
+  return client.patch<never, { success: boolean; message: string; data: TrustBadges }>(`/api/admin/marketplace/listings/${id}/trust`, input);
+}
+
 /** Everything the listing-review screen shows. */
 export interface ListingReview {
   id: string;
@@ -53,6 +65,9 @@ export interface ListingReview {
   status: string;
   scheduledAt: string | null;
   reviewNote: string | null;
+  ageMin?: number | null;
+  ageMax?: number | null;
+  trust?: TrustBadges | null;
   createdAt: string;
   updatedAt: string;
   category: string | null;

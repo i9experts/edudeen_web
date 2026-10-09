@@ -214,9 +214,9 @@ function RecommendedProductRow({ product, categoryName, query, onClick }: { prod
           <HighlightMatch text={product.name} query={query} />
         </p>
         <div className="flex items-center gap-[6px] mt-[3px] min-w-0">
-          <span className="text-[10.5px] text-slate truncate">{categoryName}</span>
+          <span className="text-[12px] text-slate truncate">{categoryName}</span>
           <span className="text-bone shrink-0">•</span>
-          <span className="flex items-center gap-[3px] text-[10.5px] text-slate shrink-0">
+          <span className="flex items-center gap-[3px] text-[12px] text-slate shrink-0">
             <Star size={9} className={product.averageRating > 0 ? 'text-brand-orange fill-brand-orange' : 'text-bone fill-bone'} />
             {product.averageRating > 0 ? product.averageRating.toFixed(1) : 'New'}
           </span>
@@ -225,7 +225,7 @@ function RecommendedProductRow({ product, categoryName, query, onClick }: { prod
       <div className="flex flex-col items-end gap-[2px] shrink-0">
         <span className="text-[13px] font-bold text-carbon">{price != null ? `${priceSymbol}${price.toLocaleString()}` : '—'}</span>
         {compareAt != null && price != null && compareAt > price && (
-          <span className="text-[10px] text-slate line-through">{priceSymbol}{compareAt.toLocaleString()}</span>
+          <span className="text-[12px] text-slate line-through">{priceSymbol}{compareAt.toLocaleString()}</span>
         )}
       </div>
     </button>
@@ -251,7 +251,7 @@ function StoreMatchRow({ store, query, onClick }: { store: PublicStoreListItem; 
         <p className="text-[12.5px] font-semibold text-carbon leading-snug line-clamp-1 group-hover:text-brand-deep-orange transition-colors">
           <HighlightMatch text={store.name} query={query} />
         </p>
-        <p className="text-[10.5px] text-slate truncate mt-[3px]">
+        <p className="text-[12px] text-slate truncate mt-[3px]">
           {store.followersCount > 0 ? `${store.followersCount.toLocaleString()} followers` : 'Store'}
         </p>
       </div>
@@ -648,7 +648,7 @@ export function SearchBox({
                       <button
                         data-search-item
                         onClick={clearHistory}
-                        className="flex items-center gap-1 text-[10.5px] font-semibold text-slate hover:text-brand-orange transition-colors cursor-pointer bg-transparent border-none p-1 -m-1"
+                        className="flex items-center gap-1 text-[12px] font-semibold text-slate hover:text-brand-orange transition-colors cursor-pointer bg-transparent border-none p-1 -m-1"
                       >
                         <Trash2 size={11} /> Clear History
                       </button>
@@ -683,7 +683,7 @@ export function SearchBox({
                               ? <img loading="lazy" decoding="async" src={item.image} alt="" className="w-full h-full object-cover" />
                               : <span className="w-full h-full flex items-center justify-center"><Sparkles size={16} className="text-brand-orange opacity-40" /></span>}
                           </span>
-                          <span className="block text-[10.5px] text-charcoal leading-snug line-clamp-2 mt-[5px] group-hover:text-brand-deep-orange transition-colors">
+                          <span className="block text-[12px] text-charcoal leading-snug line-clamp-2 mt-[5px] group-hover:text-brand-deep-orange transition-colors">
                             {item.name}
                           </span>
                         </button>
@@ -704,7 +704,7 @@ export function SearchBox({
                             if (onCategorySelect) { onCategorySelect(cat.id); setOpen(false); onClose?.(); }
                             else pick(cat.name);
                           }}
-                          className="flex items-center gap-[6px] max-w-[170px] px-[12px] py-[7px] rounded-full text-[11.5px] font-medium bg-white text-charcoal border border-bone hover:border-brand-orange hover:bg-brand-pale-orange hover:text-brand-deep-orange focus-visible:outline-none focus-visible:border-brand-orange focus-visible:bg-brand-pale-orange transition-colors duration-150 cursor-pointer"
+                          className="flex items-center gap-[6px] max-w-[170px] px-[12px] py-[7px] rounded-full text-[12px] font-medium bg-white text-charcoal border border-bone hover:border-brand-orange hover:bg-brand-pale-orange hover:text-brand-deep-orange focus-visible:outline-none focus-visible:border-brand-orange focus-visible:bg-brand-pale-orange transition-colors duration-150 cursor-pointer"
                           title={cat.name}
                         >
                           <Tag size={11} className="shrink-0 text-brand-orange" />
@@ -724,7 +724,7 @@ export function SearchBox({
                           key={s.storeId}
                           data-search-item
                           onClick={() => goToStore(s.slug)}
-                          className="flex items-center gap-[7px] max-w-[180px] ps-[5px] pe-[12px] py-[5px] rounded-full text-[11.5px] font-medium bg-white text-charcoal border border-bone hover:border-brand-orange hover:bg-brand-pale-orange hover:text-brand-deep-orange focus-visible:outline-none focus-visible:border-brand-orange focus-visible:bg-brand-pale-orange transition-colors duration-150 cursor-pointer"
+                          className="flex items-center gap-[7px] max-w-[180px] ps-[5px] pe-[12px] py-[5px] rounded-full text-[12px] font-medium bg-white text-charcoal border border-bone hover:border-brand-orange hover:bg-brand-pale-orange hover:text-brand-deep-orange focus-visible:outline-none focus-visible:border-brand-orange focus-visible:bg-brand-pale-orange transition-colors duration-150 cursor-pointer"
                           title={s.name}
                         >
                           <span className="w-6 h-6 rounded-full overflow-hidden shrink-0 bg-brand-pale-orange flex items-center justify-center">
@@ -752,7 +752,7 @@ export function SearchBox({
 
                 <div className="px-3 py-3">
                   <div className="px-1"><SearchSectionLabel icon={<Lightbulb size={10} />}>Search Tips</SearchSectionLabel></div>
-                  <ul className="flex flex-col gap-[7px] px-1 text-[11.5px] text-slate leading-snug">
+                  <ul className="flex flex-col gap-[7px] px-1 text-[12px] text-slate leading-snug">
                     <li>Search a store's name to jump straight to its page.</li>
                     <li>Try a category name (e.g. "Digital Planner") to browse fast.</li>
                     <li>Keep it short — one or two words find more matches.</li>
@@ -1086,6 +1086,20 @@ export function BuyerNavbar({ variant = 'full', contextLabel, search, accentColo
   const { pathname } = useLocation();
   const uncontrolled = useUncontrolledSearch();
   const { scrolled, hidden } = useCompactOnScroll();
+  // Once scrolled, the top utility bar slides out of view by giving the sticky nav a negative 	op equal to
+  // its height - no layout reflow (shrinking the nav would shift the page and jitter), so the sticky header
+  // collapses to the single main row.
+  const topBarRef = useRef<HTMLDivElement>(null);
+  const [topBarH, setTopBarH] = useState(0);
+  useEffect(() => {
+    const el = topBarRef.current;
+    if (!el) { setTopBarH(0); return; }
+    const measure = () => setTopBarH(el.offsetHeight);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [variant]);
   const searchValue    = search?.value    ?? uncontrolled.value;
   const searchOnChange = search?.onChange ?? uncontrolled.onChange;
   // Below sm (~640px) there isn't room for logo + a real search input + wishlist/cart/
@@ -1117,12 +1131,12 @@ export function BuyerNavbar({ variant = 'full', contextLabel, search, accentColo
   }, [search, searchValue, uncontrolled]);
 
   return (
-    <nav className={clsx(
+    <nav style={scrolled && topBarH ? { top: -topBarH } : undefined} className={clsx(
       'sticky top-0 z-50 backdrop-blur-md transition-[background-color,border-color,transform] duration-200 border-b',
       scrolled ? 'bg-white border-bone' : 'bg-white/90 border-transparent',
       hidden ? '-translate-y-full md:translate-y-0' : 'translate-y-0',
     )}>
-      {variant === 'full' && <PlatformTopBar />}
+      {variant === 'full' && <div ref={topBarRef}><PlatformTopBar /></div>}
       {/* Fixed height — shrinking it on scroll shifted the page under the
          sticky header and made it jitter near the top. */}
       <div className="flex items-center gap-3 md:gap-6 px-[5%] md:px-[4%] h-[64px] md:h-[80px]">

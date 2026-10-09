@@ -94,6 +94,15 @@ export const INSTITUTION_TYPES = [
 
 export type QuoteStatus = 'pending' | 'quoted' | 'accepted' | 'declined' | 'cancelled';
 
+/** Payment terms a seller can offer on a school quote. */
+export type NetTerms = 'none' | 'net_15' | 'net_30' | 'net_45';
+export const NET_TERMS_LABEL: Record<NetTerms, string> = {
+  none: 'Payment on acceptance',
+  net_15: 'Net 15 (pay within 15 days)',
+  net_30: 'Net 30 (pay within 30 days)',
+  net_45: 'Net 45 (pay within 45 days)',
+};
+
 export interface QuoteRequest {
   _id: string;
   number: string;
@@ -114,7 +123,10 @@ export interface QuoteRequest {
   quantity: number;
   message: string;
   status: QuoteStatus;
-  offer: { unitPrice: number; totalPrice: number; currency: string; validUntil: string | null; note: string } | null;
+  offer: { unitPrice: number; totalPrice: number; currency: string; validUntil: string | null; note: string; netTerms?: NetTerms } | null;
+  /** Institution's purchase order, added by the buyer. */
+  purchaseOrderNumber?: string;
+  purchaseOrderUrl?: string | null;
   declineReason: string;
   quotedAt: string | null;
   respondedAt: string | null;
@@ -140,7 +152,10 @@ export const apiRespondToQuote = (id: string, action: 'accept' | 'decline' | 'ca
   client.patch<never, Ok<QuoteRequest>>(`/api/quotes/mine/${id}/${action}`, {});
 export const apiGetSellerQuotes = (storeId: string, status?: string) =>
   client.get<never, Ok<{ pending: number; quotes: QuoteRequest[] }>>(`/api/quotes/seller/${storeId}${status ? `?status=${status}` : ''}`);
-export const apiSendQuoteOffer = (storeId: string, id: string, body: { unitPrice: number; validUntil?: string | null; note?: string }) =>
+/** Buyer adds the institution's purchase order (number and/or an uploaded file's URL). */
+export const apiAttachPurchaseOrder = (id: string, body: { purchaseOrderNumber?: string; purchaseOrderUrl?: string | null }) =>
+  client.patch<never, Ok<QuoteRequest>>(`/api/quotes/mine/${id}/purchase-order`, body);
+export const apiSendQuoteOffer = (storeId: string, id: string, body: { unitPrice: number; validUntil?: string | null; note?: string; netTerms?: NetTerms }) =>
   client.patch<never, Ok<QuoteRequest>>(`/api/quotes/seller/${storeId}/${id}/offer`, body);
 export const apiDeclineQuote = (storeId: string, id: string, reason: string) =>
   client.patch<never, Ok<unknown>>(`/api/quotes/seller/${storeId}/${id}/decline`, { reason });

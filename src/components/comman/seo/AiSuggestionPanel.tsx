@@ -50,22 +50,22 @@ export function AiSuggestionPanel({ suggestion, generating, onGenerate, onAccept
         <div className="flex flex-col gap-3">
           {suggestion.metaTitle && (
             <div>
-              <p className="text-[11px] font-medium text-graphite mb-1">Suggested Title</p>
+              <p className="text-[12px] font-medium text-graphite mb-1">Suggested Title</p>
               <p className="text-[13px] text-carbon leading-[1.5]">{suggestion.metaTitle}</p>
             </div>
           )}
           {suggestion.metaDescription && (
             <div>
-              <p className="text-[11px] font-medium text-graphite mb-1">Suggested Description</p>
+              <p className="text-[12px] font-medium text-graphite mb-1">Suggested Description</p>
               <p className="text-[13px] text-carbon leading-[1.5]">{suggestion.metaDescription}</p>
             </div>
           )}
           {suggestion.keywords && suggestion.keywords.length > 0 && (
             <div>
-              <p className="text-[11px] font-medium text-graphite mb-1">Suggested Keywords</p>
+              <p className="text-[12px] font-medium text-graphite mb-1">Suggested Keywords</p>
               <div className="flex flex-wrap gap-1.5">
                 {suggestion.keywords.map(k => (
-                  <span key={k} className="px-[9px] py-[2px] bg-cream border border-bone rounded-[5px] text-[11px] text-graphite">
+                  <span key={k} className="px-[9px] py-[2px] bg-cream border border-bone rounded-[5px] text-[12px] text-graphite">
                     {k}
                   </span>
                 ))}

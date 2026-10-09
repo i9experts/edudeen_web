@@ -85,7 +85,7 @@ function FormSection({ title, hint, children }: { title: string; hint?: string; 
     <section className="rounded-xl border border-bone p-4 flex flex-col gap-3">
       <div>
         <p className="text-[13px] font-bold text-carbon">{title}</p>
-        {hint && <p className="text-[11.5px] text-slate mt-[2px]">{hint}</p>}
+        {hint && <p className="text-[12px] text-slate mt-[2px]">{hint}</p>}
       </div>
       {children}
     </section>
@@ -156,7 +156,7 @@ function PlanFormModal({ plan, onClose, onSaved }: { plan: PlatformPlan | 'new';
                 <button key={t.label} type="button" onClick={() => applyTemplate(t)}
                   className="rounded-lg border border-bone bg-white px-3 py-2 text-start cursor-pointer hover:border-brand-orange/50 transition-colors">
                   <p className="text-[12.5px] font-bold text-carbon">{t.label}</p>
-                  <p className="text-[10.5px] text-slate">{t.hint}</p>
+                  <p className="text-[12px] text-slate">{t.hint}</p>
                 </button>
               ))}
             </div>
@@ -177,7 +177,7 @@ function PlanFormModal({ plan, onClose, onSaved }: { plan: PlatformPlan | 'new';
               <button key={label} type="button" onClick={() => setIsFree(val)}
                 className={`rounded-lg border-2 px-3 py-2 text-start cursor-pointer ${isFree === val ? 'border-brand-orange bg-brand-pale-orange/40' : 'border-bone bg-white'}`}>
                 <p className="text-[12.5px] font-bold text-carbon">{label}</p>
-                <p className="text-[10.5px] text-slate">{hint}</p>
+                <p className="text-[12px] text-slate">{hint}</p>
               </button>
             ))}
           </div>
@@ -200,13 +200,13 @@ function PlanFormModal({ plan, onClose, onSaved }: { plan: PlatformPlan | 'new';
             <Input label="Promotions (-1 = unlimited)" type="number" value={limits.maxActivePromotions ?? ''} onChange={e => setLimit('maxActivePromotions', Number(e.target.value))} />
           </div>
           <div>
-            <p className="text-[11.5px] text-slate mb-2">Tap to switch tools on or off for this plan:</p>
+            <p className="text-[12px] text-slate mb-2">Tap to switch tools on or off for this plan:</p>
             <div className="flex flex-wrap gap-2">
               {BOOL_FLAGS.map(f => {
                 const active = !!limits[f.key];
                 return (
                   <button key={f.key} type="button" onClick={() => setLimit(f.key, !active)}
-                    className="px-2.5 py-1 rounded-full text-[11px] font-medium border cursor-pointer"
+                    className="px-2.5 py-1 rounded-full text-[12px] font-medium border cursor-pointer"
                     style={{ background: active ? '#174771' : '#fff', color: active ? '#fff' : '#486071', borderColor: active ? '#174771' : '#E1E7EA' }}>
                     {f.label}
                   </button>
@@ -280,9 +280,9 @@ function SubscribersModal({ plan, onClose }: { plan: PlatformPlan; onClose: () =
             <div key={s._id} className="flex items-center justify-between text-[12.5px] bg-cream rounded-lg px-3 py-2.5">
               <div>
                 <p className="font-semibold text-charcoal">Store {s.storeId.slice(-6).toUpperCase()}</p>
-                <p className="text-[11px] text-slate">{s.billingInterval} — ${s.amountUSD.toFixed(2)} — {s.status}</p>
+                <p className="text-[12px] text-slate">{s.billingInterval} — ${s.amountUSD.toFixed(2)} — {s.status}</p>
               </div>
-              <button onClick={openRefund} className="px-2.5 py-1 bg-white border border-bone rounded-[6px] text-[11px] text-error cursor-pointer">Refund…</button>
+              <button onClick={openRefund} className="px-2.5 py-1 bg-white border border-bone rounded-[6px] text-[12px] text-error cursor-pointer">Refund…</button>
             </div>
           ))}
         </div>
@@ -308,7 +308,7 @@ function SubscribersModal({ plan, onClose }: { plan: PlatformPlan; onClose: () =
               <Input label="Invoice ID" value={invoiceId} onChange={e => setInvoiceId(e.target.value)} placeholder="Paste the invoice ID to refund" />
               {/* Admins can't list a store's plan invoices yet (that endpoint is
                   seller-only), so the ID can't be prefilled here. */}
-              <p className="text-[11.5px] text-slate -mt-1">Invoice IDs aren't listed here yet. Ask the seller for it (from their Billing page) or copy it from the Stripe dashboard.</p>
+              <p className="text-[12px] text-slate -mt-1">Invoice IDs aren't listed here yet. Ask the seller for it (from their Billing page) or copy it from the Stripe dashboard.</p>
               <Input label="Amount (USD)" type="number" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} placeholder="Leave blank for full remaining amount" />
               {refundError && <p className="text-[12px] text-error">{refundError}</p>}
             </div>
@@ -451,8 +451,8 @@ export function AdminPlatformPlans() {
                 <div className="flex items-start justify-between mb-1">
                   <p className="text-[15px] font-bold text-carbon">{plan.name}</p>
                   <div className="flex items-center gap-1.5">
-                    {plan.isPubliclyVisible === false && <span className="text-[10px] font-bold px-2 py-[2px] rounded-full bg-bone text-slate">Hidden</span>}
-                    {plan.badge && <span className="text-[10px] font-bold px-2 py-[2px] rounded-full bg-brand-pale-orange text-brand-deep-orange">{plan.badge}</span>}
+                    {plan.isPubliclyVisible === false && <span className="text-[12px] font-bold px-2 py-[2px] rounded-full bg-bone text-slate">Hidden</span>}
+                    {plan.badge && <span className="text-[12px] font-bold px-2 py-[2px] rounded-full bg-brand-pale-orange text-brand-deep-orange">{plan.badge}</span>}
                   </div>
                 </div>
                 <p className="text-[18px] font-bold text-brand-orange mb-2">
@@ -461,7 +461,7 @@ export function AdminPlatformPlans() {
                 <ul className="flex flex-col gap-1 mb-3 p-0 list-none">
                   {(plan.featureBullets ?? []).slice(0, 4).map(f => <li key={f} className="text-[12px] text-graphite">• {f}</li>)}
                 </ul>
-                <div className="flex items-center justify-between py-2 border-t border-bone mb-3 mt-auto text-[11px] text-slate">
+                <div className="flex items-center justify-between py-2 border-t border-bone mb-3 mt-auto text-[12px] text-slate">
                   <span>{plan.subscriberCount ?? 0} sellers</span>
                   <span className="font-semibold text-success">${(plan.mrrUSD ?? 0).toFixed(2)}/mo</span>
                   <span className="capitalize">{plan.status}</span>

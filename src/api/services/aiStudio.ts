@@ -107,6 +107,8 @@ export function apiGetAiGeneration(storeId: string, generationId: string) {
 export interface AcceptGenerationPayload {
   applyToProduct?: boolean;
   productId?: string;
+  /** The seller's edits of the AI draft (listing_writer / seo_booster). */
+  edits?: Record<string, unknown>;
 }
 
 export function apiAcceptAiGeneration(storeId: string, generationId: string, payload: AcceptGenerationPayload = {}) {
@@ -203,9 +205,16 @@ export interface GenerateWorksheetPayload {
   regenerateFromId?: string;
 }
 
+export interface WorksheetQuestion {
+  prompt: string;
+  type?: 'multiple_choice' | 'short_answer' | 'fill_in_blank' | 'true_false' | 'open_ended';
+  choices?: string[];
+  answer?: string;
+}
+
 export interface WorksheetSection {
-  heading: string;
-  items: unknown[];
+  instructions: string;
+  questions: WorksheetQuestion[];
 }
 
 export interface WorksheetResult {

@@ -81,12 +81,12 @@ export function NotificationsPanel() {
             <p className="text-[12px] text-slate mt-0.5">Control how and when you want to receive alerts.</p>
           </div>
           {prefSuccess && (
-            <span className="text-[11px] font-medium text-success bg-success-bg px-2.5 py-1 rounded-md animate-fade-in">
+            <span className="text-[12px] font-medium text-success bg-success-bg px-2.5 py-1 rounded-md animate-fade-in">
               Preferences updated
             </span>
           )}
           {prefError && (
-            <span className="text-[11px] font-medium text-error bg-error-bg px-2.5 py-1 rounded-md">
+            <span className="text-[12px] font-medium text-error bg-error-bg px-2.5 py-1 rounded-md">
               {prefError}
             </span>
           )}
@@ -118,7 +118,7 @@ export function NotificationsPanel() {
                     </div>
                     <div>
                       <p className="text-[13px] font-semibold text-charcoal leading-none">Push Notifications</p>
-                      <p className="text-[11.5px] text-slate mt-1 leading-normal">
+                      <p className="text-[12px] text-slate mt-1 leading-normal">
                         Receive instant alerts directly in your browser or application workspace.
                       </p>
                     </div>
@@ -136,7 +136,7 @@ export function NotificationsPanel() {
                     </div>
                     <div>
                       <p className="text-[13px] font-semibold text-charcoal leading-none">Email Notifications</p>
-                      <p className="text-[11.5px] text-slate mt-1 leading-normal">
+                      <p className="text-[12px] text-slate mt-1 leading-normal">
                         Receive summaries, digests, and transactional email updates in your inbox.
                       </p>
                     </div>
@@ -144,6 +144,41 @@ export function NotificationsPanel() {
                   <Toggle
                     checked={preferences?.emailEnabled ?? true}
                     onChange={(v) => handleTogglePref('emailEnabled', v)}
+                  />
+                </div>
+
+                {/* Opt-in order messages on WhatsApp / SMS (only sent when the store admin has enabled the channel). */}
+                <div className="flex justify-between items-start gap-4 pt-2">
+                  <div className="flex gap-3">
+                    <div className="size-8 rounded-lg bg-bone flex items-center justify-center shrink-0">
+                      <MessageSquare size={15} className="text-slate" />
+                    </div>
+                    <div>
+                      <p className="text-[13px] font-semibold text-charcoal leading-none">WhatsApp order updates</p>
+                      <p className="text-[12px] text-slate mt-1 leading-normal">
+                        Order confirmation, shipping and delivery messages on WhatsApp. Uses the phone number on your profile.
+                      </p>
+                    </div>
+                  </div>
+                  <Toggle
+                    checked={preferences?.whatsappEnabled ?? false}
+                    onChange={(v) => handleTogglePref('whatsappEnabled', v)}
+                  />
+                </div>
+
+                <div className="flex justify-between items-start gap-4 pt-2">
+                  <div className="flex gap-3">
+                    <div className="size-8 rounded-lg bg-bone flex items-center justify-center shrink-0">
+                      <Smartphone size={15} className="text-slate" />
+                    </div>
+                    <div>
+                      <p className="text-[13px] font-semibold text-charcoal leading-none">SMS order updates</p>
+                      <p className="text-[12px] text-slate mt-1 leading-normal">Text messages for order updates (used when WhatsApp is off).</p>
+                    </div>
+                  </div>
+                  <Toggle
+                    checked={preferences?.smsEnabled ?? false}
+                    onChange={(v) => handleTogglePref('smsEnabled', v)}
                   />
                 </div>
               </div>
@@ -159,7 +194,7 @@ export function NotificationsPanel() {
                     </div>
                     <div>
                       <p className="text-[12.5px] font-medium text-charcoal">Orders & Deliveries</p>
-                      <p className="text-[10.5px] text-slate leading-normal">Updates on purchases, order progress, and deliveries.</p>
+                      <p className="text-[12px] text-slate leading-normal">Updates on purchases, order progress, and deliveries.</p>
                     </div>
                   </div>
                   <Toggle
@@ -176,7 +211,7 @@ export function NotificationsPanel() {
                     </div>
                     <div>
                       <p className="text-[12.5px] font-medium text-charcoal">Direct Messages</p>
-                      <p className="text-[10.5px] text-slate leading-normal">Alerts when a client or admin sends a new message.</p>
+                      <p className="text-[12px] text-slate leading-normal">Alerts when a client or admin sends a new message.</p>
                     </div>
                   </div>
                   <Toggle
@@ -193,7 +228,7 @@ export function NotificationsPanel() {
                     </div>
                     <div>
                       <p className="text-[12.5px] font-medium text-charcoal">Loyalty & Reward Points</p>
-                      <p className="text-[10.5px] text-slate leading-normal">Updates on loyalty milestones, points earned, or tier upgrades.</p>
+                      <p className="text-[12px] text-slate leading-normal">Updates on loyalty milestones, points earned, or tier upgrades.</p>
                     </div>
                   </div>
                   <Toggle
@@ -210,7 +245,7 @@ export function NotificationsPanel() {
                     </div>
                     <div>
                       <p className="text-[12.5px] font-medium text-charcoal">Subscriptions & Plans</p>
-                      <p className="text-[10.5px] text-slate leading-normal">Billing notices, renewal reminders, or payment issues.</p>
+                      <p className="text-[12px] text-slate leading-normal">Billing notices, renewal reminders, or payment issues.</p>
                     </div>
                   </div>
                   <Toggle
@@ -297,13 +332,13 @@ export function NotificationsPanel() {
                   <p className="text-[12px] text-slate mt-1 leading-relaxed break-words">
                     {notif.body}
                   </p>
-                  <div className="flex items-center gap-1.5 text-[10.5px] text-slate mt-2">
+                  <div className="flex items-center gap-1.5 text-[12px] text-slate mt-2">
                     <Clock size={10} />
                     <span>{formatFullTime(notif.createdAt)}</span>
                     {notificationLink(notif.data) && (
                       <button
                         onClick={() => { if (!notif.isRead) markAsRead(notif._id); navigate(notificationLink(notif.data)!); }}
-                        className="ms-2 text-[11px] font-semibold text-brand-orange hover:text-brand-deep-orange bg-transparent border-0 p-0 cursor-pointer"
+                        className="ms-2 text-[12px] font-semibold text-brand-orange hover:text-brand-deep-orange bg-transparent border-0 p-0 cursor-pointer"
                       >
                         Open →
                       </button>

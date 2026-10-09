@@ -19,7 +19,7 @@ function StoreCell({ lead }: { lead: LeadRow }) {
       </div>
       <div className="min-w-0">
         <p className="text-[13px] font-semibold text-graphite truncate max-w-[180px]">{lead.storeName}</p>
-        {lead.categoryName && <p className="text-[11px] text-slate truncate max-w-[180px]">{lead.categoryName}</p>}
+        {lead.categoryName && <p className="text-[12px] text-slate truncate max-w-[180px]">{lead.categoryName}</p>}
       </div>
     </div>
   );
@@ -99,7 +99,7 @@ function LeadDetailModal({ leadId, onClose, onApprove, onReject, onMarkUnderRevi
               </div>
               <div>
                 <p className="text-[15px] font-bold text-carbon">{data.storeName}</p>
-                <p className="text-[11.5px] text-slate">{data.categoryName ?? 'No category'}</p>
+                <p className="text-[12px] text-slate">{data.categoryName ?? 'No category'}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -152,11 +152,11 @@ function LeadDetailModal({ leadId, onClose, onApprove, onReject, onMarkUnderRevi
                   <div className="min-w-0 flex items-center gap-2">
                     <p className="text-[12.5px] font-semibold text-carbon capitalize">{doc.type.replace(/_/g, ' ')}</p>
                     <Badge color={doc.required ? 'orange' : 'gray'}>{doc.required ? 'Required' : 'Optional'}</Badge>
-                    {doc.state !== 'uploaded' && <span className="text-[11px] text-slate">— not uploaded</span>}
-                    {doc.fileName && <p className="text-[11px] text-slate truncate">{doc.fileName}</p>}
+                    {doc.state !== 'uploaded' && <span className="text-[12px] text-slate">— not uploaded</span>}
+                    {doc.fileName && <p className="text-[12px] text-slate truncate">{doc.fileName}</p>}
                   </div>
                   {doc.viewUrl && (
-                    <a href={doc.viewUrl} target="_blank" rel="noopener noreferrer" className="shrink-0 inline-flex items-center gap-1 text-[11.5px] font-semibold text-brand-orange hover:underline">
+                    <a href={doc.viewUrl} target="_blank" rel="noopener noreferrer" className="shrink-0 inline-flex items-center gap-1 text-[12px] font-semibold text-brand-orange hover:underline">
                       View <ExternalLink size={11} />
                     </a>
                   )}
@@ -167,7 +167,7 @@ function LeadDetailModal({ leadId, onClose, onApprove, onReject, onMarkUnderRevi
 
           {data.rejectionReason && (
             <div className="bg-error-bg border border-error-border rounded-lg px-4 py-2.5">
-              <p className="text-[11px] font-semibold text-error mb-[2px]">Last rejection reason</p>
+              <p className="text-[12px] font-semibold text-error mb-[2px]">Last rejection reason</p>
               <p className="text-[12.5px] text-error">{data.rejectionReason}</p>
             </div>
           )}
@@ -184,7 +184,7 @@ function LeadDetailModal({ leadId, onClose, onApprove, onReject, onMarkUnderRevi
                         <span className="font-semibold">{HISTORY_ACTION_LABEL[h.action] ?? h.action}</span>
                         {' — '}<span className="text-slate">{formatDate(h.at)} by {h.actorRole}</span>
                       </p>
-                      {h.note && <p className="text-[11.5px] text-slate mt-[1px]">{h.note}</p>}
+                      {h.note && <p className="text-[12px] text-slate mt-[1px]">{h.note}</p>}
                     </div>
                   </div>
                 ))}
@@ -264,7 +264,7 @@ export function AdminLeads() {
       render: lead => (
         <div className="min-w-0">
           <p className="text-[13px] text-graphite truncate max-w-[200px]">{lead.seller.name}</p>
-          <p className="text-[11px] text-slate truncate max-w-[200px]">{lead.seller.email}</p>
+          <p className="text-[12px] text-slate truncate max-w-[200px]">{lead.seller.email}</p>
         </div>
       ),
     },
@@ -402,7 +402,7 @@ export function AdminLeads() {
             placeholder="e.g. Business registration document is illegible — please re-upload a clearer scan"
             className="w-full px-3 py-[10px] rounded-lg border border-bone text-[13px] text-charcoal outline-none bg-white resize-y transition-[border-color,box-shadow] duration-150 focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/10"
           />
-          {reasonTooShort && <p className="text-[11px] text-error mt-1">Please provide a bit more detail (at least 10 characters).</p>}
+          {reasonTooShort && <p className="text-[12px] text-error mt-1">Please provide a bit more detail (at least 10 characters).</p>}
         </Modal>
       )}
       </div>

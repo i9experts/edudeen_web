@@ -122,7 +122,7 @@ export function OrderProgressTrack({ steps }: { steps: ProgressStep[] }) {
               <Icon size={13} />
             </div>
             <span className={clsx(
-              'text-[10px] font-semibold whitespace-nowrap',
+              'text-[12px] font-semibold whitespace-nowrap',
               state === 'done' ? 'text-success' : state === 'active' ? 'text-brand-orange' : 'text-slate',
             )}>{label}</span>
             {(when || hint) && (

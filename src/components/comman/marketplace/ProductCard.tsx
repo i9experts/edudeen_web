@@ -98,11 +98,11 @@ export function StarRating({ rating, count }: { rating: number; count?: number }
           />
         ))}
       </div>
-      <span className="text-[10px] font-semibold text-carbon">
+      <span className="text-[12px] font-semibold text-carbon">
         {rating > 0 ? rating.toFixed(1) : 'New'}
       </span>
       {!!count && (
-        <span className="text-[10px] text-slate hidden sm:inline">({count})</span>
+        <span className="text-[12px] text-slate hidden sm:inline">({count})</span>
       )}
     </div>
   );
@@ -213,6 +213,12 @@ export const ProductCard = memo(function ProductCard({ product, onClick, onAddTo
   const compareAt = nativeCompareAt != null ? convert(nativeCompareAt, nativeCurrency) : null;
   const subscriberPrice = nativeSubscriberPrice != null ? convert(nativeSubscriberPrice, nativeCurrency) : undefined;
   const priceSymbol = currencySymbol(displayCurrency);
+  // A running percentage sale is part of the price shown (checkout applies the same percentage), so the
+  // card, product page, cart and checkout agree. Fixed-amount sales are order-level: badge only.
+  const salePct = product.activeCampaign?.discountType === 'percentage' && product.activeCampaign.discountValue ? product.activeCampaign.discountValue : null;
+  const baseShown = subscriberPrice ?? lowestPrice;
+  const shownPrice = baseShown != null && salePct ? Math.round(baseShown * (1 - salePct / 100)) : baseShown;
+  const struckPrice = salePct ? lowestPrice : subscriberPrice != null ? lowestPrice : (compareAt != null && compareAt > (lowestPrice ?? 0) ? compareAt : null);
   const pctOff = compareAt != null && lowestPrice != null && compareAt > lowestPrice
     ? Math.round((1 - lowestPrice / compareAt) * 100)
     : null;
@@ -285,7 +291,7 @@ export const ProductCard = memo(function ProductCard({ product, onClick, onAddTo
                 </button>
               ))}
               {variantSwatchImages.length > 2 && (
-                <span className="w-7 h-7 rounded bg-brand-pale-orange text-brand-deep-orange text-[9px] font-bold flex items-center justify-center">
+                <span className="w-7 h-7 rounded bg-brand-pale-orange text-brand-deep-orange text-[12px] font-bold flex items-center justify-center">
                   +{variantSwatchImages.length - 2}
                 </span>
               )}
@@ -297,7 +303,7 @@ export const ProductCard = memo(function ProductCard({ product, onClick, onAddTo
             plain markdown in red, live sale campaign in orange with a flame. */}
         <div className="absolute top-2 start-2 flex flex-col items-start gap-1">
           <span className={clsx(
-            'px-[6px] py-[2px] rounded-md text-[9px] font-bold tracking-[0.01em] border',
+            'px-[6px] py-[2px] rounded-md text-[12px] font-bold tracking-[0.01em] border',
             isEducational
               ? 'bg-info-bg text-info border-info/25'
               : isDigital
@@ -307,14 +313,14 @@ export const ProductCard = memo(function ProductCard({ product, onClick, onAddTo
             {typeLabel}
           </span>
           {pctOff != null && pctOff > 0 && (
-            <span className="px-[6px] py-[2px] rounded-md text-[9px] font-bold bg-error text-white">
+            <span className="px-[6px] py-[2px] rounded-md text-[12px] font-bold bg-error text-white">
               -{pctOff}%
             </span>
           )}
           {campaignAmount && (
             <span
               title={campaign ? `${campaign.name} — ends ${new Date(campaign.endDate).toLocaleDateString()}` : undefined}
-              className="flex items-center gap-[3px] px-[6px] py-[2px] rounded-md text-[9px] font-bold bg-brand-orange text-white"
+              className="flex items-center gap-[3px] px-[6px] py-[2px] rounded-md text-[12px] font-bold bg-brand-orange text-white"
             >
               <Flame size={10} className="fill-white shrink-0" />
               -{campaignAmount}
@@ -364,7 +370,7 @@ export const ProductCard = memo(function ProductCard({ product, onClick, onAddTo
         'flex-1 flex min-w-0',
         isList ? 'flex-col justify-center gap-[3px] p-3 sm:p-4' : clsx('flex-col pt-2', compact ? 'px-[9px] pb-2' : 'px-[9px] pb-2 sm:px-[10px] sm:pb-[10px]'),
       )}>
-        <p className={clsx('font-semibold text-carbon leading-[1.3] tracking-[-0.01em]', isList ? 'text-[13px] sm:text-[14px] line-clamp-1' : clsx('mb-[2px] line-clamp-2', compact ? 'text-[11.5px]' : 'text-[12px]'))}>
+        <p className={clsx('font-semibold text-carbon leading-[1.3] tracking-[-0.01em]', isList ? 'text-[13px] sm:text-[14px] line-clamp-1' : clsx('mb-[2px] line-clamp-2', compact ? 'text-[12px]' : 'text-[12px]'))}>
           <HighlightedText text={product.name} query={highlightQuery} />
         </p>
 
@@ -375,7 +381,7 @@ export const ProductCard = memo(function ProductCard({ product, onClick, onAddTo
         )}
 
         {!compact && product.sellerName && (
-          <p className={clsx('flex items-center gap-[4px] text-[10px] text-slate truncate', isList ? '' : 'mb-1')}>
+          <p className={clsx('flex items-center gap-[4px] text-[12px] text-slate truncate', isList ? '' : 'mb-1')}>
             <Store size={9} className="text-slate/60 shrink-0" />
             {product.sellerName}
             {product.sellerVerified && (
@@ -395,7 +401,7 @@ export const ProductCard = memo(function ProductCard({ product, onClick, onAddTo
               paragraph line, so real inventory signal doesn't cost extra height. */}
           {!compact && (
             <span className={clsx(
-              'shrink-0 text-[9px] font-bold px-[6px] py-[1.5px] rounded-full whitespace-nowrap',
+              'shrink-0 text-[12px] font-bold px-[6px] py-[1.5px] rounded-full whitespace-nowrap',
               stock <= 0 ? 'bg-error-bg text-error' : stock <= 5 ? 'bg-warning-bg text-warning' : 'bg-success-bg text-success',
             )}>
               {stock <= 0 ? 'Out of stock' : stock <= 5 ? `${stock} left` : Number.isFinite(stock) ? `In Stock (${stock})` : 'In Stock'}
@@ -404,18 +410,16 @@ export const ProductCard = memo(function ProductCard({ product, onClick, onAddTo
         </div>
 
         {subscriberPrice != null && (
-          <p className="text-[9px] font-semibold text-brand-orange mt-[3px]">Members save {discountPercent}%</p>
+          <p className="text-[12px] font-semibold text-brand-orange mt-[3px]">Members save {discountPercent}%</p>
         )}
 
         <div className={clsx('flex items-center gap-3 min-w-0', isList ? 'justify-between flex-wrap mt-2 pt-2 border-t border-bone/70' : 'justify-start mt-auto pt-2')}>
           <div className="flex items-baseline gap-[5px] min-w-0">
-            <span className={clsx('font-bold whitespace-nowrap tracking-tight', compact ? 'text-[14px]' : 'text-[14px] sm:text-[16px]', subscriberPrice != null ? 'text-brand-orange' : 'text-carbon')}>
-              {subscriberPrice != null ? `${priceSymbol} ${subscriberPrice.toLocaleString()}` : lowestPrice != null ? `${priceSymbol} ${lowestPrice.toLocaleString()}` : '—'}
+            <span className={clsx('font-bold whitespace-nowrap tracking-tight', compact ? 'text-[14px]' : 'text-[14px] sm:text-[16px]', subscriberPrice != null || salePct ? 'text-brand-orange' : 'text-carbon')}>
+              {shownPrice != null ? `${priceSymbol} ${shownPrice.toLocaleString()}` : '—'}
             </span>
-            {subscriberPrice != null && lowestPrice != null ? (
-              <span className="text-[10px] text-slate/70 line-through shrink-0">{priceSymbol} {lowestPrice.toLocaleString()}</span>
-            ) : compareAt != null && compareAt > (lowestPrice ?? 0) && (
-              <span className="text-[10px] text-slate/70 line-through shrink-0">{priceSymbol}{compareAt.toLocaleString()}</span>
+            {struckPrice != null && (
+              <span className="text-[12px] text-slate/70 line-through shrink-0">{priceSymbol} {struckPrice.toLocaleString()}</span>
             )}
           </div>
 
@@ -451,7 +455,7 @@ export const ProductCard = memo(function ProductCard({ product, onClick, onAddTo
               disabled={stock <= 0}
               aria-label={stock <= 0 ? 'Out of stock' : 'Add to cart'}
               className={clsx(
-                'flex items-center justify-center gap-[6px] rounded-lg border transition-[background-color,border-color,color,transform] duration-150 font-semibold text-[11.5px] active:scale-[0.96]',
+                'flex items-center justify-center gap-[6px] rounded-lg border transition-[background-color,border-color,color,transform] duration-150 font-semibold text-[12px] active:scale-[0.96]',
                 compact ? 'w-7 h-7' : 'flex-1 h-8',
                 stock <= 0
                   ? 'bg-bone text-slate border-bone cursor-not-allowed'

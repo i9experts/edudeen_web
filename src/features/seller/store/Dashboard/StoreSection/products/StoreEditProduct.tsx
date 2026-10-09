@@ -2,6 +2,7 @@ import { useState, useEffect, type ReactNode } from 'react';
 import { Link, useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Package, Download, GraduationCap, Loader2, CalendarClock, Plus, X } from 'lucide-react';
 import { useStoreWorkspace } from '@/components/layouts/StoreLayout';
+import { UrduCopyCard } from '@/components/ai/UrduCopyCard';
 import {
   apiGetMyProductById, apiEditPhysicalProduct, apiEditDigitalProduct, apiUpdateVariant,
   EDUCATION_LEVELS, type EducationLevel, type StoreProduct, type ProductVariant, type VariantOption,
@@ -133,7 +134,7 @@ function VariantOptionsField({ options, onChange }: { options: VariantOption[]; 
           </button>
         </div>
       )}
-      <p className="text-[11px] text-slate">Optional — leave empty for a single plain variant, or add up to 3 like Color, Size, Material.</p>
+      <p className="text-[12px] text-slate">Optional — leave empty for a single plain variant, or add up to 3 like Color, Size, Material.</p>
     </div>
   );
 }
@@ -469,6 +470,8 @@ export default function StoreEditProduct() {
             </div>
           </Card>
 
+          <UrduCopyCard storeId={storeId} productId={productId} />
+
           {/* Category */}
           <Card title="Category">
             <SubcategoryField
@@ -602,14 +605,14 @@ export default function StoreEditProduct() {
                 <div className="flex items-center justify-between py-0.5">
                   <div>
                     <p className="text-[13px] font-semibold text-charcoal">PDF Stamping</p>
-                    <p className="text-[11px] text-slate mt-0.5">Watermark PDFs with the buyer's name</p>
+                    <p className="text-[12px] text-slate mt-0.5">Watermark PDFs with the buyer's name</p>
                   </div>
                   <Toggle checked={dig.pdfStampingEnabled} onChange={v => sd('pdfStampingEnabled', v)} />
                 </div>
                 <div className="flex items-center justify-between py-0.5">
                   <div>
                     <p className="text-[13px] font-semibold text-charcoal">Buyer Preview</p>
-                    <p className="text-[11px] text-slate mt-0.5">Let buyers see a watermarked/trimmed preview before purchase</p>
+                    <p className="text-[12px] text-slate mt-0.5">Let buyers see a watermarked/trimmed preview before purchase</p>
                   </div>
                   <Toggle checked={dig.previewEnabled} onChange={v => sd('previewEnabled', v)} />
                 </div>
@@ -628,7 +631,7 @@ export default function StoreEditProduct() {
                 ? sp('tags', phys.tags.filter((_, idx) => idx !== i))
                 : sd('tags', dig.tags.filter((_, idx) => idx !== i))}
             />
-            <p className="text-[11px] text-slate mt-2">Press Enter or comma to add a tag</p>
+            <p className="text-[12px] text-slate mt-2">Press Enter or comma to add a tag</p>
           </Card>
         </div>
 
@@ -651,7 +654,7 @@ export default function StoreEditProduct() {
               {discountPct !== null && (
                 <div className="flex items-center gap-1.5 px-3 py-2 bg-[#e3f4ea] border border-[#b7e2c7] rounded-[7px]">
                   <span className="text-[12px] font-bold text-[#1e7a3c]">{discountPct}% OFF</span>
-                  <span className="text-[11px] text-success">shown to buyers</span>
+                  <span className="text-[12px] text-success">shown to buyers</span>
                 </div>
               )}
             </div>

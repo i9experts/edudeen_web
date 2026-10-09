@@ -86,7 +86,7 @@ export function SaveToListDialog({ productId, productName, onClose }: { productI
                     </span>
                     <span className="flex-1 min-w-0">
                       <span className="block text-[13px] font-semibold text-carbon truncate">{l.name}</span>
-                      <span className="block text-[11.5px] text-slate">{l.itemCount} {l.itemCount === 1 ? 'resource' : 'resources'}</span>
+                      <span className="block text-[12px] text-slate">{l.itemCount} {l.itemCount === 1 ? 'resource' : 'resources'}</span>
                     </span>
                     {l.isPublic ? <Globe size={13} className="text-slate shrink-0" aria-label="Shared" /> : <Lock size={13} className="text-slate shrink-0" aria-label="Private" />}
                   </button>

@@ -9,7 +9,13 @@ import { CurrencyPreferenceProvider } from '@/contexts/CurrencyPreferenceContext
 import { AuthGateProvider } from '@/contexts/AuthGateContext';
 import { ToastProvider } from '@/contexts/ToastContext';
 import { LanguageProvider } from '@/contexts/LanguageContext';
+import { InstallAppPrompt } from '@/components/InstallAppPrompt';
 import './index.css';
+
+// Minimal offline shell (public/sw.js): caches only /offline.html, never API or page data.
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
+  window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js').catch(() => { /* optional */ }); });
+}
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -21,6 +27,7 @@ createRoot(document.getElementById('root')!).render(
             <WishlistProvider>
               <NotificationProvider>
                 <RouterProvider router={router} />
+                <InstallAppPrompt />
               </NotificationProvider>
             </WishlistProvider>
           </CartProvider>

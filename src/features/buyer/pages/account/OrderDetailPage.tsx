@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { ProductCoverFallback } from '@/components/comman/marketplace/ProductCoverFallback';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, FileText, Truck, Package, Download, MapPin, CreditCard, CheckCircle2, Circle } from 'lucide-react';
 import { clsx } from 'clsx';
@@ -42,7 +43,7 @@ function Timeline({ placedAt, paidAt, so }: { placedAt: string; paidAt?: string 
           </div>
           <div className="min-w-0">
             <p className={clsx('text-[12.5px] font-semibold', s.done ? 'text-carbon' : 'text-slate')}>{s.label}</p>
-            {s.done && s.at && <p className="text-[11px] text-slate">{fmt(s.at)}</p>}
+            {s.done && s.at && <p className="text-[12px] text-slate">{fmt(s.at)}</p>}
           </div>
         </li>
       ))}
@@ -107,14 +108,27 @@ export function OrderDetailPage() {
           </div>
           <div className="px-4 md:px-5 py-4 border-b border-bone">
             <Timeline placedAt={order.createdAt} paidAt={order.paidAt} so={so} />
+            {Array.isArray((so as any).trackingEvents) && (so as any).trackingEvents.length > 0 && (
+              <div className="mt-4 pt-3 border-t border-bone">
+                <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate mb-1.5">Courier updates</p>
+                <ul className="flex flex-col gap-1 list-none p-0 m-0">
+                  {[...(so as any).trackingEvents].reverse().map((ev: any, i: number) => (
+                    <li key={i} className="flex flex-wrap justify-between gap-x-3 text-[12.5px]">
+                      <span className="text-carbon">{ev.description || ev.status}{ev.location ? ` · ${ev.location}` : ''}</span>
+                      <span className="text-slate">{ev.at ? fmt(ev.at) : ''}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
           <ul className="divide-y divide-[#f5f4ef] list-none p-0 m-0">
             {so.items.map((it: any, i: number) => (
               <li key={it._id ?? i} className="flex flex-wrap items-center gap-3 px-4 md:px-5 py-3">
-                {it.image ? <img src={it.image} alt="" className="w-12 h-12 rounded-lg object-cover border border-bone shrink-0" /> : <span className="w-12 h-12 rounded-lg bg-bone shrink-0" />}
+                {it.image ? <img src={it.image} alt="" className="w-12 h-12 rounded-lg object-cover border border-bone shrink-0" /> : <ProductCoverFallback name={it.name} size="xs" className="w-12 h-12 rounded-lg shrink-0" />}
                 <div className="flex-1 min-w-0">
                   <Link to={`/product/${it.productId}`} className="text-[13px] font-semibold text-carbon no-underline hover:text-brand-orange truncate block">{it.name}</Link>
-                  <p className="text-[11.5px] text-slate">
+                  <p className="text-[12px] text-slate">
                     {it.quantity} × {money(it.price, order.currency)}
                     {it.licenseType ? ` · ${LICENSE_LABEL[it.licenseType] ?? it.licenseType}` : ''}
                     {(it.options ?? []).filter((o: any) => o.name !== 'License').map((o: any) => ` · ${o.name}: ${o.value}`).join('')}

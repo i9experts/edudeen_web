@@ -33,7 +33,7 @@ function RecentOrderRow({ order }: { order: OrderSummary }) {
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-[12.5px] font-semibold text-charcoal truncate">{order.orderNumber}</p>
-        <p className="text-[11px] text-slate mt-[1px]">
+        <p className="text-[12px] text-slate mt-[1px]">
           {new Date(order.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })} · {itemCount} item{itemCount !== 1 ? 's' : ''}
         </p>
       </div>
@@ -109,10 +109,10 @@ function WelcomeHero({ name, image, memberSince }: { name?: string; image?: stri
 // white sheet pulled up over the gradient) — the native-app "profile tab"
 // pattern, distinct from desktop's left-aligned WelcomeHero further down.
 function MobileProfileHero({
-  name, email, image, totalOrders, wishlistCount, addressCount, isLoggedIn, onSignIn,
+  name, email, image, totalOrders, wishlistCount, wishlistLoading, addressCount, isLoggedIn, onSignIn,
 }: {
   name?: string; email?: string; image?: string | null;
-  totalOrders: number | null; wishlistCount: number; addressCount: number | null;
+  totalOrders: number | null; wishlistCount: number; wishlistLoading: boolean; addressCount: number | null;
   isLoggedIn: boolean; onSignIn: () => void;
 }) {
   return (
@@ -154,7 +154,7 @@ function MobileProfileHero({
             )}
             <p className="relative text-[19px] font-bold text-white mt-3 leading-tight">{name ?? 'Welcome'}</p>
             {email && <p className="relative text-[13px] text-white/75 mt-[2px]">{email}</p>}
-            <span className="relative inline-flex mt-3 px-4 py-[6px] rounded-full bg-white/20 text-[11px] font-semibold text-white">
+            <span className="relative inline-flex mt-3 px-4 py-[6px] rounded-full bg-white/20 text-[12px] font-semibold text-white">
               Buyer Account
             </span>
           </>
@@ -163,18 +163,18 @@ function MobileProfileHero({
 
       <div className="relative -mt-6 mx-4 rounded-t-[24px] bg-white px-2 pt-5 pb-4 flex items-center">
         <div className="flex-1 flex flex-col items-center gap-[2px]">
-          <span className="text-[19px] font-bold text-brand-orange leading-none">{totalOrders ?? 0}</span>
-          <span className="text-[11px] text-slate">Orders</span>
+          <span className="text-[19px] font-bold text-brand-orange leading-none">{totalOrders ?? (isLoggedIn ? '—' : 0)}</span>
+          <span className="text-[12px] text-slate">Orders</span>
         </div>
         <div className="w-px h-9 bg-bone" />
         <div className="flex-1 flex flex-col items-center gap-[2px]">
-          <span className="text-[19px] font-bold text-brand-orange leading-none">{wishlistCount}</span>
-          <span className="text-[11px] text-slate">Wishlist</span>
+          <span className="text-[19px] font-bold text-brand-orange leading-none">{wishlistLoading && wishlistCount === 0 ? '—' : wishlistCount}</span>
+          <span className="text-[12px] text-slate">Saved</span>
         </div>
         <div className="w-px h-9 bg-bone" />
         <div className="flex-1 flex flex-col items-center gap-[2px]">
-          <span className="text-[19px] font-bold text-brand-orange leading-none">{addressCount ?? 0}</span>
-          <span className="text-[11px] text-slate">Addresses</span>
+          <span className="text-[19px] font-bold text-brand-orange leading-none">{addressCount ?? (isLoggedIn ? '—' : 0)}</span>
+          <span className="text-[12px] text-slate">Addresses</span>
         </div>
       </div>
     </div>
@@ -218,7 +218,7 @@ function MobileAccountMenu({ isLoggedIn }: { isLoggedIn: boolean }) {
                 </div>
                 <span className="flex-1 text-[13px] font-medium text-charcoal">{item.label}</span>
                 {!!item.badge && item.badge > 0 && (
-                  <span className="text-[10px] font-bold px-[7px] py-[2px] rounded-full bg-brand-orange text-white shrink-0">
+                  <span className="text-[12px] font-bold px-[7px] py-[2px] rounded-full bg-brand-orange text-white shrink-0">
                     {item.badge > 99 ? '99+' : item.badge}
                   </span>
                 )}
@@ -285,6 +285,7 @@ export function AccountDashboard() {
         image={profile?.profileImage}
         totalOrders={totalOrders}
         wishlistCount={wishlistCount}
+        wishlistLoading={wishlistLoading}
         addressCount={addressCount}
         isLoggedIn={isLoggedIn}
         onSignIn={() => navigate('/login')}
@@ -397,7 +398,7 @@ export function AccountDashboard() {
                     <div className="overflow-hidden rounded-[10px]">
                       <WishlistPreviewImg src={item.product.images?.[0]} name={item.product.name} />
                     </div>
-                    <p className="text-[11px] text-charcoal font-medium line-clamp-2 leading-tight group-hover:text-brand-orange transition-colors">{item.product.name}</p>
+                    <p className="text-[12px] text-charcoal font-medium line-clamp-2 leading-tight group-hover:text-brand-orange transition-colors">{item.product.name}</p>
                   </button>
                 ))}
               </div>
@@ -412,7 +413,7 @@ export function AccountDashboard() {
               <UserCog size={13} className="text-brand-orange" /> Account Completion
             </p>
             <ProgressBar value={completionPct} showValue color={completionPct === 100 ? 'green' : 'orange'} />
-            <p className="text-[11px] text-slate mt-3 leading-relaxed">
+            <p className="text-[12px] text-slate mt-3 leading-relaxed">
               {completionPct === 100
                 ? 'Your profile is fully set up.'
                 : 'Complete your profile for a smoother checkout experience.'}

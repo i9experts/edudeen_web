@@ -25,7 +25,7 @@ const FEATURES = [
 export function StatusBar({ dark = false }: { dark?: boolean }) {
   const tone = dark ? 'text-white' : 'text-carbon';
   return (
-    <div className={clsx('h-8 flex items-center justify-between px-[16px] pt-[4px] text-[9px] font-semibold', tone)}>
+    <div className={clsx('h-8 flex items-center justify-between px-[16px] pt-[4px] text-[12px] font-semibold', tone)}>
       <span>9:41</span>
       <div className="flex items-center gap-[4px]">
         <Signal size={10} className={tone} />
@@ -138,7 +138,7 @@ export function HomeScreenMockup() {
       <StatusBar />
       <div className="h-9 flex items-center justify-between px-[13px]">
         <p className="text-[13px] font-bold text-carbon flex items-center gap-[3px]">
-          <span className="w-4 h-4 rounded-[5px] bg-brand-orange text-white flex items-center justify-center text-[9px] font-black">S</span>
+          <span className="w-4 h-4 rounded-[5px] bg-brand-orange text-white flex items-center justify-center text-[12px] font-black">S</span>
           edudeen
         </p>
         <Bell size={13} className="text-brand-orange" />
@@ -341,17 +341,17 @@ function NewsletterMini() {
           placeholder="Your email address"
           aria-label="Email address"
           disabled={loading}
-          className="flex-1 min-w-0 h-9 px-3 rounded-lg border border-carbon/15 bg-white text-[11.5px] text-carbon placeholder:text-slate outline-none transition-colors duration-200 focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/15 disabled:opacity-60"
+          className="flex-1 min-w-0 h-9 px-3 rounded-lg border border-carbon/15 bg-white text-[12px] text-carbon placeholder:text-slate outline-none transition-colors duration-200 focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/15 disabled:opacity-60"
         />
         <button
           type="submit"
           disabled={loading}
-          className="flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-lg bg-brand-orange text-white text-[11.5px] font-semibold border-none cursor-pointer hover:bg-brand-deep-orange transition-colors duration-200 shrink-0 disabled:opacity-70 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange"
+          className="flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-lg bg-brand-orange text-white text-[12px] font-semibold border-none cursor-pointer hover:bg-brand-deep-orange transition-colors duration-200 shrink-0 disabled:opacity-70 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange"
         >
           <Send size={12} /> {loading ? 'Subscribing…' : 'Subscribe'}
         </button>
       </form>
-      {error && <p className="mt-1.5 text-[10.5px] text-error">{error}</p>}
+      {error && <p className="mt-1.5 text-[12px] text-error">{error}</p>}
     </div>
   );
 }
@@ -466,14 +466,14 @@ function CompactAppDownloadBanner({ className }: { className?: string }) {
                 ? <img src={qrDataUrl} alt="" width={68} height={68} className="block" />
                 : <div className="w-[68px] h-[68px]" />}
             </a>
-            <p className="text-[10px] font-medium text-carbon leading-tight whitespace-nowrap">Scan to download</p>
+            <p className="text-[12px] font-medium text-carbon leading-tight whitespace-nowrap">Scan to download</p>
           </div>
         </div>
       </div>
 
       <div className="md:min-h-[236px] rounded-2xl border border-bone bg-white px-6 py-4 flex flex-col justify-center gap-2">
         <p className="text-[14px] font-bold text-carbon leading-tight">Get deals before anyone else</p>
-        <p className="text-[10.5px] text-charcoal/70 leading-snug">Sign up for exclusive offers, new arrivals and price-drop alerts.</p>
+        <p className="text-[12px] text-charcoal/70 leading-snug">Sign up for exclusive offers, new arrivals and price-drop alerts.</p>
         <NewsletterMini />
         <div className="flex items-center justify-between gap-2 mt-1">
           {[
@@ -484,8 +484,8 @@ function CompactAppDownloadBanner({ className }: { className?: string }) {
             <div key={label} className="flex items-center gap-[6px] min-w-0">
               <Icon size={13} className="text-brand-orange shrink-0" />
               <span className="min-w-0">
-                <p className="text-[10px] font-semibold text-carbon leading-tight truncate">{label}</p>
-                <p className="text-[9px] text-charcoal/60 leading-tight truncate">{sub}</p>
+                <p className="text-[12px] font-semibold text-carbon leading-tight truncate">{label}</p>
+                <p className="text-[12px] text-charcoal/60 leading-tight truncate">{sub}</p>
               </span>
             </div>
           ))}
@@ -542,7 +542,7 @@ export function AppDownloadBanner({ className, variant = 'full' }: { className?:
         <div className="text-center lg:text-start min-w-0">
           <div className="inline-flex items-center gap-2 rounded-full px-3 py-1 mb-3 bg-white border border-bone">
             <ShoppingBag size={12} className="text-brand-orange shrink-0" />
-            <span className="text-[11px] font-medium text-brand-orange">Edudeen Mobile</span>
+            <span className="text-[12px] font-medium text-brand-orange">Edudeen Mobile</span>
           </div>
           <h3 className="font-serif font-normal text-[24px] sm:text-[28px] lg:text-[32px] text-carbon mb-2 leading-[1.15]">
             Shop <span className="text-brand-royal">smarter.</span> Anywhere, anytime.
@@ -552,7 +552,7 @@ export function AppDownloadBanner({ className, variant = 'full' }: { className?:
           </p>
 
           <div className="flex items-center justify-center lg:justify-start gap-2 mb-4">
-            <p className="flex items-center gap-1.5 text-[11.5px] text-slate m-0"><Sparkles size={12} className="text-brand-royal" /> Available now on Android — iOS coming soon</p>
+            <p className="flex items-center gap-1.5 text-[12px] text-slate m-0"><Sparkles size={12} className="text-brand-royal" /> Available now on Android — iOS coming soon</p>
           </div>
 
           {/* Feature cards */}
@@ -567,7 +567,7 @@ export function AppDownloadBanner({ className, variant = 'full' }: { className?:
                 </span>
                 <span className="min-w-0">
                   <p className="text-[12.5px] font-semibold text-carbon leading-tight">{title}</p>
-                  <p className="text-[10.5px] text-slate leading-tight mt-[1px]">{sub}</p>
+                  <p className="text-[12px] text-slate leading-tight mt-[1px]">{sub}</p>
                 </span>
               </li>
             ))}
@@ -598,7 +598,7 @@ export function AppDownloadBanner({ className, variant = 'full' }: { className?:
           <p className="text-[12px] font-medium text-carbon leading-tight">Scan to download</p>
           <div className="flex items-center gap-[6px]">
             <Sparkles size={13} className="text-brand-royal" />
-            <p className="text-[10.5px] text-slate whitespace-nowrap">Android only — iOS coming soon</p>
+            <p className="text-[12px] text-slate whitespace-nowrap">Android only — iOS coming soon</p>
           </div>
         </div>
 
@@ -634,7 +634,7 @@ export function AppDownloadBanner({ className, variant = 'full' }: { className?:
                 </span>
                 <span>
                   <p className="text-[13px] font-bold text-carbon leading-none">{value}</p>
-                  <p className="text-[10px] text-slate mt-[2px] whitespace-nowrap">{label}</p>
+                  <p className="text-[12px] text-slate mt-[2px] whitespace-nowrap">{label}</p>
                 </span>
               </div>
             ))}

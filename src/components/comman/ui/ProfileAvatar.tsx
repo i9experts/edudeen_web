@@ -25,7 +25,7 @@ function RoleChip({ role }: { role: keyof typeof ROLE_CHIP_CONFIG }) {
   const cfg = ROLE_CHIP_CONFIG[role];
   return (
     <span
-      className="inline-flex items-center gap-[5px] px-[8px] py-[3px] rounded-full text-[10px] font-bold"
+      className="inline-flex items-center gap-[5px] px-[8px] py-[3px] rounded-full text-[12px] font-bold"
       style={{ background: cfg.bg, color: cfg.text }}
     >
       <span className="w-[5px] h-[5px] rounded-full shrink-0" style={{ background: cfg.dot }} />
@@ -40,7 +40,7 @@ function RoleChip({ role }: { role: keyof typeof ROLE_CHIP_CONFIG }) {
 function AvatarImage({
   profileImage, name, initials, size,
 }: { profileImage?: string | null; name?: string; initials: string; size: 'sm' | 'md' }) {
-  const dim = size === 'sm' ? 'w-9 h-9 text-[11px]' : 'w-11 h-11 text-[15px]';
+  const dim = size === 'sm' ? 'w-9 h-9 text-[12px]' : 'w-11 h-11 text-[15px]';
   return (
     <div className={clsx(
       dim,
@@ -92,7 +92,7 @@ function AvatarTrigger({
           ? <div className="w-full h-full bg-bone animate-pulse rounded-full" />
           : profileImage
           ? <img loading="lazy" decoding="async" src={profileImage} alt={name} className="w-full h-full object-cover" />
-          : <span className="text-[11px] font-bold text-brand-deep-orange">{initials}</span>
+          : <span className="text-[12px] font-bold text-brand-deep-orange">{initials}</span>
         }
       </span>
     </button>
@@ -116,7 +116,7 @@ function DropdownHeader({
         <div className="flex-1 min-w-0">
           <p className="text-[14px] font-bold text-carbon leading-tight truncate">{name ?? '—'}</p>
           <div className="flex items-center gap-1 mt-[2px] mb-[7px]">
-            <p className="text-[11px] text-slate truncate min-w-0">{email ?? '—'}</p>
+            <p className="text-[12px] text-slate truncate min-w-0">{email ?? '—'}</p>
             {email && <CopyIconButton value={email} title="Copy email" size={11} className="text-slate hover:text-charcoal" />}
           </div>
           <div className="flex items-center gap-[5px] flex-wrap">
@@ -157,7 +157,7 @@ function MenuItem({
         <p className={clsx('text-[13px] font-medium leading-tight', danger ? 'text-[#c0392b]' : 'text-charcoal')}>
           {label}
         </p>
-        {sublabel && <p className="text-[10px] text-slate mt-[1px]">{sublabel}</p>}
+        {sublabel && <p className="text-[12px] text-slate mt-[1px]">{sublabel}</p>}
       </div>
       {!danger && <ChevronRight size={12} className="text-bone shrink-0 group-hover:text-slate transition-colors" />}
     </button>

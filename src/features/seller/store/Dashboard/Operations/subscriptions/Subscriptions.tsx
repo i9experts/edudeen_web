@@ -86,7 +86,7 @@ function BenefitEditor({ benefit, onChange, onRemove, categories }: {
           <menuEntry.Icon size={14} className="text-brand-orange" />
           <span className="text-[12.5px] font-semibold text-charcoal">{menuEntry.label}</span>
         </div>
-        <button onClick={onRemove} className="text-slate hover:text-error bg-transparent border-none cursor-pointer transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/50 rounded-sm"><Trash2 size={13} /></button>
+        <button aria-label="Delete" onClick={onRemove} className="text-slate hover:text-error bg-transparent border-none cursor-pointer transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/50 rounded-sm"><Trash2 size={13} /></button>
       </div>
 
       {benefit.type === 'discount' && (
@@ -101,20 +101,20 @@ function BenefitEditor({ benefit, onChange, onRemove, categories }: {
           </div>
           {benefit.scope === 'category' && (
             <div>
-              <label className="text-[11px] font-medium text-graphite block mb-1">Categories</label>
+              <label className="text-[12px] font-medium text-graphite block mb-1">Categories</label>
               <div className="flex flex-wrap gap-1.5">
                 {categories.map(c => {
                   const active = (benefit.categoryIds ?? []).includes(c._id);
                   return (
                     <button key={c._id} type="button"
                       onClick={() => set('categoryIds', active ? (benefit.categoryIds ?? []).filter(id => id !== c._id) : [...(benefit.categoryIds ?? []), c._id])}
-                      className="px-2.5 py-1 rounded-full text-[11px] font-medium border cursor-pointer"
+                      className="px-2.5 py-1 rounded-full text-[12px] font-medium border cursor-pointer"
                       style={{ background: active ? '#174771' : '#fff', color: active ? '#fff' : '#5A5852', borderColor: active ? '#174771' : '#E8E6DC' }}>
                       {c.name}
                     </button>
                   );
                 })}
-                {categories.length === 0 && <p className="text-[11px] text-slate">No subcategories yet — add some under Categories first.</p>}
+                {categories.length === 0 && <p className="text-[12px] text-slate">No subcategories yet — add some under Categories first.</p>}
               </div>
             </div>
           )}
@@ -337,7 +337,7 @@ function SubscriberDetailModal({ storeId, subId, onClose }: { storeId: string; s
                   <span className="text-slate">{inv.invoiceNumber} · {inv.status} · ${inv.amountUSD.toFixed(2)}</span>
                   {['paid', 'partially_refunded'].includes(inv.status) && (
                     <button disabled={refundingId === inv._id} onClick={() => { setConfirmingRefund(inv); setRefundError(''); }}
-                      className="px-2 py-[3px] bg-white border border-bone rounded-[5px] text-[11px] text-error cursor-pointer disabled:opacity-50">
+                      className="px-2 py-[3px] bg-white border border-bone rounded-[5px] text-[12px] text-error cursor-pointer disabled:opacity-50">
                       {refundingId === inv._id ? 'Refunding…' : 'Refund'}
                     </button>
                   )}
@@ -496,12 +496,12 @@ export function StoreSubscriptions() {
       key: 'customer', header: 'Customer',
       render: sub => (
         <div className="flex items-center gap-[10px]">
-          <div className="w-[30px] h-[30px] rounded-full bg-[#f0eee6] text-[10px] font-bold flex items-center justify-center shrink-0 text-[#5a5852]">
+          <div className="w-[30px] h-[30px] rounded-full bg-[#f0eee6] text-[12px] font-bold flex items-center justify-center shrink-0 text-[#5a5852]">
             {sub.customer.name.slice(0, 2).toUpperCase()}
           </div>
           <div>
             <p className="text-[13px] font-medium text-carbon whitespace-nowrap">{sub.customer.name}</p>
-            <p className="text-[11px] text-slate">{sub.customer.email}</p>
+            <p className="text-[12px] text-slate">{sub.customer.email}</p>
           </div>
         </div>
       ),
@@ -513,7 +513,7 @@ export function StoreSubscriptions() {
       render: sub => {
         const style = STATUS_STYLE[sub.status] ?? { bg: '#F0EEE6', color: '#5A5852' };
         return (
-          <span className="px-[10px] py-[3px] rounded-[5px] text-[11px] font-semibold" style={{ background: style.bg, color: style.color }}>
+          <span className="px-[10px] py-[3px] rounded-[5px] text-[12px] font-semibold" style={{ background: style.bg, color: style.color }}>
             {sub.status}{sub.pendingCancellation ? ' (ending)' : ''}
           </span>
         );
@@ -526,15 +526,15 @@ export function StoreSubscriptions() {
       key: 'actions', header: '',
       render: sub => (
         <div className="flex items-center gap-1.5">
-          <button onClick={() => setViewingSubId(sub._id)} className="px-2.5 py-1 bg-white border border-bone rounded-[6px] text-[11px] text-graphite cursor-pointer transition-colors duration-150 hover:bg-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/50">View</button>
+          <button onClick={() => setViewingSubId(sub._id)} className="px-2.5 py-1 bg-white border border-bone rounded-[6px] text-[12px] text-graphite cursor-pointer transition-colors duration-150 hover:bg-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/50">View</button>
           {sub.status === 'active' && (
-            <button disabled={busyId === sub._id} onClick={() => handleAction(sub, 'pause')} className="px-2.5 py-1 bg-white border border-bone rounded-[6px] text-[11px] text-graphite cursor-pointer transition-colors duration-150 hover:bg-cream disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/50">Pause</button>
+            <button disabled={busyId === sub._id} onClick={() => handleAction(sub, 'pause')} className="px-2.5 py-1 bg-white border border-bone rounded-[6px] text-[12px] text-graphite cursor-pointer transition-colors duration-150 hover:bg-cream disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/50">Pause</button>
           )}
           {sub.status === 'paused' && (
-            <button disabled={busyId === sub._id} onClick={() => handleAction(sub, 'resume')} className="px-2.5 py-1 bg-white border border-bone rounded-[6px] text-[11px] text-graphite cursor-pointer transition-colors duration-150 hover:bg-cream disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/50">Resume</button>
+            <button disabled={busyId === sub._id} onClick={() => handleAction(sub, 'resume')} className="px-2.5 py-1 bg-white border border-bone rounded-[6px] text-[12px] text-graphite cursor-pointer transition-colors duration-150 hover:bg-cream disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/50">Resume</button>
           )}
           {(sub.status === 'active' || sub.status === 'paused' || sub.status === 'past_due') && (
-            <button disabled={busyId === sub._id} onClick={() => setCancelReasonFor(sub)} className="px-2.5 py-1 bg-white border border-bone rounded-[6px] text-[11px] text-error cursor-pointer transition-colors duration-150 hover:bg-error hover:text-white hover:border-error disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/50">Cancel</button>
+            <button disabled={busyId === sub._id} onClick={() => setCancelReasonFor(sub)} className="px-2.5 py-1 bg-white border border-bone rounded-[6px] text-[12px] text-error cursor-pointer transition-colors duration-150 hover:bg-error hover:text-white hover:border-error disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/50">Cancel</button>
           )}
         </div>
       ),
@@ -561,7 +561,7 @@ export function StoreSubscriptions() {
         {actionError && (
           <div className="flex items-center justify-between gap-3 text-[13px] text-error bg-error-bg border border-error-border rounded-lg px-3 py-2">
             <span>{actionError}</span>
-            <button onClick={() => setActionError('')} className="text-[11px] font-semibold text-error bg-transparent border-none cursor-pointer shrink-0">Dismiss</button>
+            <button onClick={() => setActionError('')} className="text-[12px] font-semibold text-error bg-transparent border-none cursor-pointer shrink-0">Dismiss</button>
           </div>
         )}
 
@@ -593,7 +593,7 @@ export function StoreSubscriptions() {
               <div>
                 <p className="text-[10px] text-slate uppercase tracking-wide mb-1">Orders/Subscriber</p>
                 <p className="text-[18px] font-bold text-carbon">{dashboard.subscriberEconomics.avgOrdersPerSubscriber}</p>
-                <p className="text-[10px] text-slate">vs {dashboard.subscriberEconomics.avgOrdersPerRegularCustomer} regular</p>
+                <p className="text-[12px] text-slate">vs {dashboard.subscriberEconomics.avgOrdersPerRegularCustomer} regular</p>
               </div>
               <div>
                 <p className="text-[10px] text-slate uppercase tracking-wide mb-1">Member Savings Given</p>
@@ -611,8 +611,8 @@ export function StoreSubscriptions() {
               <div key={plan._id} className="bg-white border border-bone rounded-[10px] px-[22px] py-5 flex flex-col transition-transform duration-200 hover:-translate-y-[1px]">
                 <div className="flex items-start justify-between mb-1 gap-2">
                   <p className="text-[15px] font-bold text-carbon">{plan.name}</p>
-                  {plan.status === 'suspended' && <span className="text-[10px] font-bold px-[8px] py-[2px] rounded-full bg-[#fdecea] text-[#c0392b] shrink-0">Suspended by admin</span>}
-                  {plan.status === 'archived' && <span className="text-[10px] font-bold px-[8px] py-[2px] rounded-full bg-[#f0eee6] text-[#5a5852] shrink-0">Archived</span>}
+                  {plan.status === 'suspended' && <span className="text-[12px] font-bold px-[8px] py-[2px] rounded-full bg-[#fdecea] text-[#c0392b] shrink-0">Suspended by admin</span>}
+                  {plan.status === 'archived' && <span className="text-[12px] font-bold px-[8px] py-[2px] rounded-full bg-[#f0eee6] text-[#5a5852] shrink-0">Archived</span>}
                 </div>
                 <div className="flex items-baseline gap-2 mb-[10px]">
                   <span className="text-[18px] font-bold text-brand-orange">${plan.monthlyPriceUSD.toFixed(2)}/mo</span>
@@ -627,7 +627,7 @@ export function StoreSubscriptions() {
                 {hs && (
                   <div className="flex items-center gap-1.5 px-2.5 py-[6px] rounded-md mb-3" style={{ background: hs.bg }}>
                     <hs.Icon size={12} style={{ color: hs.color }} />
-                    <span className="text-[11px] font-medium capitalize" style={{ color: hs.color }}>{plan.healthEstimate!.health}</span>
+                    <span className="text-[12px] font-medium capitalize" style={{ color: hs.color }}>{plan.healthEstimate!.health}</span>
                   </div>
                 )}
                 <div className="flex items-center justify-between py-3 border-t border-[#f0eee6] mb-[14px] mt-auto">

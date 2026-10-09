@@ -28,7 +28,7 @@ export function Pagination({ page, total, perPage = 10, onChange, className }: P
 
   return (
     <div className={clsx('flex items-center gap-1', className)}>
-      <button
+      <button aria-label="Previous"
         onClick={() => onChange(page - 1)}
         disabled={page === 1}
         className={clsx(btnBase, 'bg-white border-bone text-slate hover:bg-cream disabled:opacity-40 disabled:cursor-not-allowed')}
@@ -55,7 +55,7 @@ export function Pagination({ page, total, perPage = 10, onChange, className }: P
         ),
       )}
 
-      <button
+      <button aria-label="Next"
         onClick={() => onChange(page + 1)}
         disabled={page === totalPages}
         className={clsx(btnBase, 'bg-white border-bone text-slate hover:bg-cream disabled:opacity-40 disabled:cursor-not-allowed')}
