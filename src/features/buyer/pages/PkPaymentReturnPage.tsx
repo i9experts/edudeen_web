@@ -28,7 +28,7 @@ export function PkPaymentReturnPage() {
         if (stopped) return;
         if (res.data.status === 'completed') {
           await refetchCart();
-          navigate('/order-success', { state: { orders: res.data.orders }, replace: true });
+          navigate(`/order-success?checkout=${checkoutId}`, { state: { orders: res.data.orders }, replace: true });
           return;
         }
         if (res.data.status === 'failed') { setState('failed'); return; }

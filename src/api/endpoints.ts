@@ -530,6 +530,7 @@ export const ENDPOINTS = {
     DOWNLOAD_URL:  '/api/orders/download-url',
 
     MY_ORDERS:       '/api/orders/my-orders',
+    BY_CHECKOUT:     (checkoutId: string) => `/api/orders/by-checkout/${checkoutId}`,
     GET_BY_ID:       (orderId: string) => `/api/orders/${orderId}`,
     CANCEL:          (orderId: string) => `/api/orders/cancel/${orderId}`,
     RETURN_REQUEST:  (orderId: string) => `/api/orders/return-request/${orderId}`,

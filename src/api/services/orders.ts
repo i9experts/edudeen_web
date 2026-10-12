@@ -223,6 +223,11 @@ export function apiGetMyOrders(params?: MyOrdersParams) {
   return client.get<never, MyOrdersResponse>(ENDPOINTS.ORDERS.MY_ORDERS, { params });
 }
 
+/** GET /api/orders/by-checkout/:checkoutId — every order one checkout produced (same shape as my-orders). */
+export function apiGetOrdersByCheckout(checkoutId: string) {
+  return client.get<never, MyOrdersResponse>(ENDPOINTS.ORDERS.BY_CHECKOUT(checkoutId));
+}
+
 /** GET /api/orders/:orderId — single order detail (buyer, must own the order) */
 export function apiGetOrderById(orderId: string) {
   return client.get<never, OrderDetailResponse>(ENDPOINTS.ORDERS.GET_BY_ID(orderId));

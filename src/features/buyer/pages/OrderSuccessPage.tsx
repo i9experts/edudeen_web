@@ -1,6 +1,7 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { addressLines } from '@/utils/address';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { apiGetOrdersByCheckout, type OrderSummary as MyOrderSummary } from '@/api/services/orders';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import {
   CheckCircle2, MapPin, Package, ShoppingBag, Download,
@@ -356,23 +357,56 @@ function storeOrders(orders: PlacedOrder[]) {
   try { sessionStorage.setItem(LAST_ORDER_KEY, JSON.stringify(orders)); } catch { /* storage unavailable — refresh just won't restore */ }
 }
 
+/** my-orders shape -> the confirmation page's shape (used when state/session copy is gone). */
+function toPlacedOrder(o: MyOrderSummary): PlacedOrder {
+  const a = (o.shippingAddress ?? {}) as Record<string, string | null | undefined>;
+  return {
+    orderId: o.orderId, orderNumber: o.orderNumber, orderDate: o.createdAt, paymentDate: o.paidAt ?? null,
+    paymentMethod: o.paymentType, isPaid: o.isPaid, orderStatus: o.orderStatus, currency: o.currency,
+    deliveryAddress: {
+      recipientName: a.recipientName ?? '', phoneNumber: a.phoneNumber ?? '', addressLine1: a.addressLine1 ?? '',
+      addressLine2: a.addressLine2 ?? null, city: a.city ?? '', state: a.state ?? '', zipCode: a.zipCode ?? '',
+    },
+    items: o.stores.flatMap(s => s.items.map(i => ({
+      name: i.name, image: i.image, sku: i.sku, productId: i.productId, quantity: i.quantity,
+      price: i.price, totalPrice: i.totalPrice, type: i.type,
+    }))),
+    summary: { subtotal: o.subtotal, shipping: o.shippingFee, total: o.totalAmount },
+  };
+}
+
 export function OrderSuccessPage() {
   usePageTitle('Order Confirmed');
   const navigate = useNavigate();
   const location = useLocation();
   const stateOrders = (location.state as { orders?: PlacedOrder[] } | null)?.orders;
+  const checkoutId = useSearchParams()[0].get('checkout');
+  const [fetched, setFetched] = useState<PlacedOrder[]>([]);
+  const [fetching, setFetching] = useState(() => !!checkoutId && !(stateOrders && stateOrders.length > 0) && readStoredOrders().length === 0);
   const orders = useMemo<PlacedOrder[]>(
-    () => (stateOrders && stateOrders.length > 0 ? stateOrders : readStoredOrders()),
-    [stateOrders],
+    () => (stateOrders && stateOrders.length > 0 ? stateOrders : (() => { const s = readStoredOrders(); return s.length > 0 ? s : fetched; })()),
+    [stateOrders, fetched],
   );
+
+  // Opened in a new tab / from a saved link: nothing in router state or this tab's session, so ask the server.
+  useEffect(() => {
+    if (!checkoutId || (stateOrders && stateOrders.length > 0) || readStoredOrders().length > 0) return;
+    let cancelled = false;
+    setFetching(true);
+    apiGetOrdersByCheckout(checkoutId)
+      .then(res => { if (!cancelled) setFetched((res.data.orders ?? []).map(toPlacedOrder)); })
+      .catch(() => { /* not the buyer's checkout / gone — fall through to the home redirect */ })
+      .finally(() => { if (!cancelled) setFetching(false); });
+    return () => { cancelled = true; };
+  }, [checkoutId, stateOrders]);
 
   useEffect(() => {
     if (stateOrders && stateOrders.length > 0) storeOrders(stateOrders);
   }, [stateOrders]);
 
   useEffect(() => {
-    if (orders.length === 0) navigate('/', { replace: true });
-  }, [orders.length, navigate]);
+    if (orders.length === 0 && !fetching) navigate('/', { replace: true });
+  }, [orders.length, fetching, navigate]);
 
   if (orders.length === 0) {
     return null;

@@ -724,7 +724,7 @@ export function CheckoutPage() {
         if (res.data.status === 'completed') {
           setPollingStatus(false);
           await finishCheckoutCart();
-          navigate('/order-success', { state: { orders: res.data.orders } });
+          navigate(`/order-success?checkout=${checkout._id}`, { state: { orders: res.data.orders } });
           return;
         }
         if (res.data.status === 'failed') {
@@ -929,7 +929,7 @@ export function CheckoutPage() {
         ? await apiPlaceFreeOrder({ checkoutId: checkout._id })
         : await apiPlaceCodOrder({ checkoutId: checkout._id });
       await finishCheckoutCart();
-      navigate('/order-success', { state: { orders: res.data.orders } });
+      navigate(`/order-success?checkout=${checkout._id}`, { state: { orders: res.data.orders } });
     } catch (err) {
       setPlaceError(err instanceof Error ? err.message : 'Failed to place order. Please try again.');
     } finally {
