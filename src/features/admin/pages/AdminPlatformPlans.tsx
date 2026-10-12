@@ -105,7 +105,7 @@ function PlanFormModal({ plan, onClose, onSaved }: { plan: PlatformPlan | 'new';
   const [sortOrder, setSortOrder] = useState(p ? String(p.sortOrder ?? 0) : '0');
   const [isPubliclyVisible, setIsPubliclyVisible] = useState(p?.isPubliclyVisible ?? true);
   const [featuresText, setFeaturesText] = useState(p?.featureBullets?.join('\n') ?? '');
-  // Edudeen sales are commission-free, so a new plan's fee starts at 0.
+  // The per-sale platform fee is set in Platform Config > Platform fees, so a new plan's own fee starts at 0.
   const [limits, setLimits] = useState<PlatformPlanLimits>(p?.limits ?? DEFAULT_LIMITS);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -220,7 +220,7 @@ function PlanFormModal({ plan, onClose, onSaved }: { plan: PlatformPlan | 'new';
           <summary className="text-[12.5px] font-semibold text-carbon cursor-pointer">Advanced</summary>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
             <Input label="Display order (lower shows first)" type="number" value={sortOrder} onChange={e => setSortOrder(e.target.value)} />
-            <Input label="Commission on sales (0 = none)" type="number" step="0.01" min={0} max={1} value={limits.transactionFeeRate ?? ''} onChange={e => setLimit('transactionFeeRate', Number(e.target.value))} />
+            <Input label="Legacy per-plan fee on sales (0 = none; use Platform Config > Platform fees)" type="number" step="0.01" min={0} max={1} value={limits.transactionFeeRate ?? ''} onChange={e => setLimit('transactionFeeRate', Number(e.target.value))} />
           </div>
           <label className="flex items-center gap-2 text-[12.5px] text-charcoal mt-3">
             <input type="checkbox" checked={isPubliclyVisible} onChange={e => setIsPubliclyVisible(e.target.checked)} /> Show this plan to sellers

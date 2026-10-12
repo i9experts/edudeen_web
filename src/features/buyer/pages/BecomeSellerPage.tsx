@@ -12,6 +12,7 @@ import { apiBrowsePlatformPlans, apiFreeTrialEligibility, type PlatformPlan } fr
 import { apiGetPlatformStats, type PlatformStats } from '@/api/services/store';
 import { invalidateProfileCache } from '@/hooks/auth/useGetProfile';
 import { resolveSellerDestinationRemote } from '@/utils/sellerRouting';
+import { planPriceFor, planYearlySavePct, type PlanInterval } from '@/utils/planPricing';
 
 const SERIF = "Georgia, 'Times New Roman', serif";
 const NAVY = '#174771';
@@ -28,6 +29,7 @@ export function BecomeSellerPage() {
   const [plans, setPlans] = useState<PlatformPlan[] | null>(null);
   const [error, setError] = useState('');
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [interval, setInterval] = useState<PlanInterval>('monthly');
   const [stats, setStats] = useState<PlatformStats | null>(null);
   // A buyer who already has a seller account should go to their store, not through plans again.
   const hasSellerAccount = useHasSellerAccount();
@@ -54,7 +56,7 @@ export function BecomeSellerPage() {
   }, [hash, plans]);
 
   async function choose(plan: PlatformPlan) {
-    try { sessionStorage.setItem('sellPlanId', plan._id); } catch { /* storage blocked */ }
+    try { sessionStorage.setItem('sellPlanId', plan._id); sessionStorage.setItem('sellPlanInterval', interval); } catch { /* storage blocked */ }
     const role = TokenStorage.getUser<{ role?: AppRole }>()?.role;
     // Not signed in → create a normal account first, then come back here.
     if (!TokenStorage.isLoggedIn()) {
@@ -92,10 +94,10 @@ export function BecomeSellerPage() {
   const faqs = [
     { q: 'How do I become an Edudeen seller?', a: 'Sign up for a free Edudeen account, choose a seller plan, then add your store details and payment to open your store. You can set your own prices, upload digital or printed resources, and promote your store.' },
     { q: 'What kinds of resources can I sell?', a: 'Educational resources such as worksheets, lesson plans, printables, eBooks, courses, and Islamic and educational books and supplies. Please follow the content guidelines.' },
-    { q: 'How much can I earn?', a: 'Edudeen takes no commission on your sales, so you keep what buyers pay (card processing fees may apply). Earnings depend on your resources, pricing and how well you promote them.' },
+    { q: 'How much can I earn?', a: 'Buyers pay Edudeen and each sale is credited to your wallet after a small platform fee set by Edudeen, then paid out via payout requests. Earnings depend on your resources, pricing and how well you promote them.' },
     { q: 'Are there any fees?', a: minPrice != null
-        ? `You pay a monthly plan fee starting at $${minPrice.toLocaleString()}. There is no commission on sales. Bank-transfer sales go straight to your own account.`
-        : 'You pay a monthly plan fee. There is no commission on sales. Bank-transfer sales go straight to your own account.' },
+        ? `You pay a monthly or yearly plan fee starting at $${minPrice.toLocaleString()} a month, plus a small platform fee per sale set by Edudeen. Buyers pay Edudeen and your earnings are credited to your wallet after that fee.`
+        : 'You pay a monthly or yearly plan fee, plus a small platform fee per sale set by Edudeen. Buyers pay Edudeen and your earnings are credited to your wallet after that fee.' },
     { q: 'How do I get paid?', a: 'Buyers can pay by bank transfer directly to the account you add in Finance. Card payments are paid out to you from your Finance page.' },
     { q: 'Can I change or cancel my plan?', a: 'Yes. You can change your plan any time from Plan & Billing in your store dashboard.' },
   ];
@@ -160,6 +162,16 @@ export function BecomeSellerPage() {
           Choose the seller plan <span className="text-brand-orange">for you</span>
         </h2>
         <div className="max-w-[820px] mx-auto">
+          {plans && plans.some(p => !p.isFree) && (
+            <div role="group" aria-label="Billing interval" className="flex w-fit mx-auto rounded-full border border-bone p-[3px] mb-6">
+              {(['monthly', 'yearly'] as const).map(iv => (
+                <button key={iv} type="button" aria-pressed={interval === iv} onClick={() => setInterval(iv)}
+                  className={'px-5 py-1.5 rounded-full text-[13px] font-semibold cursor-pointer border-none transition-colors ' + (interval === iv ? 'bg-brand-orange text-white' : 'bg-transparent text-slate hover:text-carbon')}>
+                  {iv === 'monthly' ? 'Monthly' : 'Yearly'}
+                </button>
+              ))}
+            </div>
+          )}
           {plans === null ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">{[1, 2].map(i => <SkeletonBox key={i} className="w-full h-[320px]" rounded="16px" />)}</div>
           ) : plans.length === 0 ? (
@@ -173,8 +185,9 @@ export function BecomeSellerPage() {
                     {p.badge && <span className="text-[12px] font-bold bg-brand-pale-orange text-brand-deep-orange px-2 py-[2px] rounded">{p.badge}</span>}
                   </div>
                   <p className="mb-1">
-                    <span className="text-[34px] font-extrabold text-carbon" style={{ fontFamily: SERIF }}>{p.isFree ? 'Free' : `$${(p.monthlyPriceUSD ?? 0).toLocaleString()}`}</span>
-                    <span className="text-[13px] text-slate"> {p.isFree ? `for ${p.trialDays} days · no card needed` : 'monthly'}</span>
+                    <span className="text-[34px] font-extrabold text-carbon" style={{ fontFamily: SERIF }}>{p.isFree ? 'Free' : `$${planPriceFor(p, interval).toLocaleString()}`}</span>
+                    <span className="text-[13px] text-slate"> {p.isFree ? `for ${p.trialDays} days · no card needed` : interval === 'yearly' ? 'yearly' : 'monthly'}</span>
+                    {!p.isFree && interval === 'yearly' && planYearlySavePct(p) > 0 && <span className="ms-2 text-[12px] font-bold text-success">Save {planYearlySavePct(p)}%</span>}
                   </p>
                   {p.description && <p className="text-[12px] text-slate leading-[1.6] mb-4">{p.description}</p>}
                   <ul className="flex flex-col gap-2.5 my-4 flex-1">

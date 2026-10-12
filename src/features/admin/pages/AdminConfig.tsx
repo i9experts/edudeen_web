@@ -2,7 +2,7 @@ import { SocialLinksCard } from './SocialLinksCard';
 import { HomeContentCard } from './HomeContentCard';
 import { MaintenanceCard } from './MaintenanceCard';
 import { ReferralSettingsCard } from './ReferralSettingsCard';
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import {
@@ -11,11 +11,12 @@ import {
   useUpdateEmailConfig,
   useUpdateManualPaymentConfig,
 } from '@/hooks/admin/useAdminConfig';
-import type { PlatformConfig, AiConfig, EmailConfig, ManualPaymentConfig } from '@/api/services/config/adminConfig';
+import type { PlatformConfig, AiConfig, EmailConfig, ManualPaymentConfig, PlatformFees, PlatformFeeRule, PlatformFeeMode } from '@/api/services/config/adminConfig';
+import { apiGetPlatformFees, apiUpdatePlatformFees } from '@/api/services/config/adminConfig';
 import { Toggle, Input, Textarea, Select, Button, SkeletonBox, Accordion } from '@/components/comman/ui';
 import { AdminStudioHeader } from '@/features/admin/components/studio';
 import { AnalyticsErrorState } from '@/components/comman/analytics/AnalyticsErrorState';
-import { CheckCircle2, Wrench, Sparkles, Mail, Landmark, Home, Gift, Share2 } from 'lucide-react';
+import { CheckCircle2, Wrench, Sparkles, Mail, Landmark, Percent, Home, Gift, Share2 } from 'lucide-react';
 import { AiFeatureSwitches } from '@/features/admin/components/AiFeatureSwitches';
 
 const AI_MODELS = ['claude-sonnet-5', 'claude-haiku-4-5', 'claude-opus-4-8'];
@@ -142,7 +143,108 @@ function EmailConfigCard({ config, onSaved }: { config: PlatformConfig; onSaved:
   );
 }
 
-// ── Manual Bank Transfer (Pakistan track) card ────────────────────────────────
+// ── Platform fees card ────────────────────────────────────────────────────────
+type FeeForm = { mode: PlatformFeeMode; value: string };
+const toFeeForm = (r: PlatformFeeRule | null | undefined): FeeForm => ({ mode: r?.mode ?? 'percentage', value: r ? String(r.value) : '' });
+
+function PlatformFeesCard() {
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [current, setCurrent] = useState<PlatformFees | null>(null);
+  const [digital, setDigital] = useState<FeeForm>(toFeeForm(null));
+  const [physical, setPhysical] = useState<FeeForm>(toFeeForm(null));
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const { saved, flash } = useSavedFlash();
+
+  const load = useCallback(() => {
+    setLoading(true); setLoadError('');
+    apiGetPlatformFees()
+      .then((res) => {
+        const f = res.data.platformFees;
+        setCurrent(f); setDigital(toFeeForm(f.digital)); setPhysical(toFeeForm(f.physical));
+      })
+      .catch((e: unknown) => setLoadError(e instanceof Error ? e.message : 'Could not load platform fees.'))
+      .finally(() => setLoading(false));
+  }, []);
+  useEffect(() => { load(); }, [load]);
+
+  function validate(label: string, f: FeeForm): string {
+    if (f.value.trim() === '') return '';
+    const n = Number(f.value);
+    if (!Number.isFinite(n) || n < 0) return `${label}: enter a number that is 0 or more.`;
+    if (f.mode === 'percentage' && n > 100) return `${label}: a percentage can't be more than 100.`;
+    return '';
+  }
+  const describe = (r: PlatformFeeRule | null | undefined) =>
+    !r ? 'Not set (no fee)' : r.mode === 'percentage' ? `${r.value}% of item price` : `USD ${r.value} per item sold`;
+
+  async function save() {
+    const msg = validate('Digital', digital) || validate('Physical', physical);
+    if (msg) { setError(msg); return; }
+    const toRule = (f: FeeForm): PlatformFeeRule | undefined => (f.value.trim() === '' ? undefined : { mode: f.mode, value: Number(f.value) });
+    const payload: Partial<PlatformFees> = {};
+    const d = toRule(digital); const p = toRule(physical);
+    if (d) payload.digital = d;
+    if (p) payload.physical = p;
+    if (!d && !p) { setError('Enter a value for at least one product type.'); return; }
+    setSubmitting(true); setError('');
+    try {
+      await apiUpdatePlatformFees(payload);
+      flash(); load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not save platform fees.');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  if (loading && !current) return <SkeletonBox height={200} rounded="10px" />;
+  if (loadError && !current) return <AnalyticsErrorState message={loadError} onRetry={load} />;
+
+  const block = (title: string, form: FeeForm, set: (f: FeeForm) => void, cur: PlatformFeeRule | null | undefined) => (
+    <div className="border border-bone rounded-lg p-3 flex flex-col gap-3">
+      <div>
+        <p className="text-[13px] font-semibold text-carbon">{title} products</p>
+        <p className="text-[11.5px] text-slate">Current: {describe(cur)}</p>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <Select label="Fee type" value={form.mode} onChange={(e) => set({ ...form, mode: e.target.value as PlatformFeeMode })}>
+          <option value="percentage">Percentage</option>
+          <option value="fixed">Fixed</option>
+        </Select>
+        <Input
+          label={form.mode === 'percentage' ? 'Value (%)' : 'Value (USD)'}
+          type="number" min={0} max={form.mode === 'percentage' ? 100 : undefined} step="0.01"
+          value={form.value} onChange={(e) => set({ ...form, value: e.target.value })}
+          placeholder={form.mode === 'percentage' ? 'e.g. 10' : 'e.g. 0.50'}
+        />
+      </div>
+      <p className="text-[11.5px] text-slate">{form.mode === 'fixed' ? 'Fixed = USD per item sold.' : 'Percentage of the item price (0-100).'}</p>
+    </div>
+  );
+
+  return (
+    <div className="bg-white border border-bone rounded-xl px-[22px] py-5">
+      <p className="font-serif font-normal text-[19px] sm:text-[21px] text-carbon leading-[1.25] mb-1">Platform fees</p>
+      <p className="text-[12px] text-slate mb-4">
+        Edudeen keeps this fee on every sale; the seller's wallet is credited with the sale minus the fee. The fee is
+        calculated on the item price only. Shipping is not included. Leave a field empty to keep its current value.
+      </p>
+      <div className="flex flex-col gap-[14px]">
+        {block('Digital', digital, setDigital, current?.digital)}
+        {block('Physical', physical, setPhysical, current?.physical)}
+        {error && <p className="text-[12px] text-error">{error}</p>}
+        <div className="flex items-center gap-3">
+          <Button onClick={save} loading={submitting} size="sm" className="self-start">Save platform fees</Button>
+          <SavedHint show={saved} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Platform payment account card (where buyers pay) ──────────────────────────
 function ManualPaymentConfigCard({ config, onSaved }: { config: PlatformConfig; onSaved: (c: PlatformConfig) => void }) {
   const { update, submitting, error } = useUpdateManualPaymentConfig();
   const { saved, flash } = useSavedFlash();
@@ -180,10 +282,10 @@ function ManualPaymentConfigCard({ config, onSaved }: { config: PlatformConfig; 
     <div className="bg-white border border-bone rounded-xl px-[22px] py-5">
       <div className="flex items-center justify-between gap-3 mb-4">
         <div>
-          <p className="font-serif font-normal text-[19px] sm:text-[21px] text-carbon leading-[1.25]">Manual Bank Transfer</p>
-          <p className="text-[12px] text-slate">Legacy platform-account transfer (only used to review old proofs). Bank transfer at checkout is now offered per store: it appears as soon as that store's seller saves their own bank/wallet details in Finance → Direct payments, and the seller confirms the payment — this toggle does not add it to checkout.</p>
+          <p className="font-serif font-normal text-[19px] sm:text-[21px] text-carbon leading-[1.25]">Platform payment account</p>
+          <p className="text-[12px] text-slate">The bank, JazzCash or Easypaisa account buyers pay into for bank-transfer orders. Every bank-transfer payment goes here; you review each proof under Payment proofs, and the seller is credited after the platform fee.</p>
         </div>
-        <Toggle label="Manual bank transfer enabled" checked={form.enabled} onChange={(next) => setField('enabled', next)} />
+        <Toggle label="Bank transfer enabled" checked={form.enabled} onChange={(next) => setField('enabled', next)} />
       </div>
       <div className="flex flex-col gap-[14px]">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-[14px]">
@@ -263,12 +365,14 @@ export function AdminConfig() {
             { id: 'maintenance', title: 'Maintenance', description: 'Take parts of the site offline with a message for visitors', icon: <Wrench size={16} />,
               status: config.maintenance?.enabled ? <span className="px-2 py-0.5 rounded-full bg-error-bg text-error font-semibold">On</span> : <span className="px-2 py-0.5 rounded-full bg-bone text-slate">Off</span>,
               content: <MaintenanceCard config={config} onSaved={setConfig} /> },
+            { id: 'platform-fees', title: 'Platform fees', description: 'Fee Edudeen keeps on each sale, per product type', icon: <Percent size={16} />,
+              content: <PlatformFeesCard /> },
+            { id: 'manual-payment', title: 'Platform payment account', description: 'Bank / JazzCash / Easypaisa account buyers pay into', icon: <Landmark size={16} />,
+              content: <ManualPaymentConfigCard config={config} onSaved={setConfig} /> },
             { id: 'ai', title: 'AI settings', description: 'Model, monthly credits and which AI features are on', icon: <Sparkles size={16} />,
               content: <AiConfigCard config={config} onSaved={setConfig} /> },
             { id: 'email', title: 'Email', description: 'Sender name, from / reply-to address and provider', icon: <Mail size={16} />,
               content: <EmailConfigCard config={config} onSaved={setConfig} /> },
-            { id: 'manual-payment', title: 'Manual bank transfer (legacy)', description: 'Platform bank details used for old bank-transfer proofs', icon: <Landmark size={16} />,
-              content: <ManualPaymentConfigCard config={config} onSaved={setConfig} /> },
             { id: 'homepage', title: 'Homepage, About & legal text', description: 'Hero, trust strip, About page, privacy / terms / cookie text', icon: <Home size={16} />,
               content: <HomeContentCard /> },
             { id: 'referral', title: 'Referral programme', description: 'Rewards when buyers invite friends', icon: <Gift size={16} />,

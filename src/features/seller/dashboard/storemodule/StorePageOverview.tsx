@@ -466,7 +466,7 @@ export function StorePageOverview() {
               </div>
               <div className="mt-3 flex flex-col gap-1.5 text-[12px] text-slate">
                 <span className="flex items-center gap-1.5"><ShoppingCart size={13} className="text-brand-orange" /> Buyers check out through Edudeen</span>
-                <span className="flex items-center gap-1.5"><ShieldCheck size={13} className="text-brand-orange" /> {commissionPct === 0 ? 'No commission — earnings paid monthly' : commissionPct ? `${formatPct(commissionPct)} commission — earnings paid monthly` : 'Earnings paid monthly'}</span>
+                <span className="flex items-center gap-1.5"><ShieldCheck size={13} className="text-brand-orange" /> {commissionPct ? `${formatPct(commissionPct)} platform fee — earnings credited to your wallet` : 'Earnings credited to your wallet after the platform fee'}</span>
               </div>
             </div>
           </aside>

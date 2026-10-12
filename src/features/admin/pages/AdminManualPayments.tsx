@@ -120,7 +120,7 @@ function ReviewModal({ proof, onClose, onDone }: { proof: AdminManualPaymentProo
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export function AdminManualPayments() {
-  usePageTitle('Manual Payments');
+  usePageTitle('Payment proofs');
   const [statusFilter, setStatusFilter] = useState<ManualPaymentProofStatus | ''>('pending');
   const { proofs, loading, error, refetch } = useAdminManualPayments(statusFilter || undefined);
   const [viewing, setViewing] = useState<AdminManualPaymentProof | null>(null);
@@ -168,7 +168,7 @@ export function AdminManualPayments() {
     <div>
       <AdminStudioHeader
         eyebrow="Edudeen team workspace · Finance"
-        title="Manual payments"
+        title="Payment proofs"
         subtitle="Bank-transfer payments (Pakistan track) awaiting proof verification."
       />
 

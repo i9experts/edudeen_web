@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from 'react';
-import { DirectPaymentsPanel } from './DirectPaymentsPanel';
 import { clsx } from 'clsx';
 import { Download, Plus, X, Star, AlertTriangle, CalendarCheck } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -321,11 +320,10 @@ export function StoreFinance() {
           </Button>
         }
       />
-      <DirectPaymentsPanel storeId={storeId} />
       <div className="px-4 md:px-8 pt-4 flex flex-col gap-3">
         <div className="flex items-center gap-2 text-[12.5px] text-carbon bg-info-bg border border-[#bfdcf3] rounded-lg px-3 py-2">
           <CalendarCheck size={14} className="shrink-0 text-brand-royal" />
-          <span>{PAYOUT_NOTE} Keep a payout method on file so we know where to send it.</span>
+          <span>Buyer payments go to Edudeen; your earnings are credited after the platform fee and paid out via payout requests. Keep a payout method on file so we know where to send it.</span>
         </div>
         <TabBar
           tabs={[
@@ -465,7 +463,7 @@ export function StoreFinance() {
             trend={`${activeWallet.summary.revenueGrowthPercent >= 0 ? '+' : ''}${activeWallet.summary.revenueGrowthPercent}% vs last month`}
             trendUp={activeWallet.summary.revenueGrowthPercent >= 0}
           />
-          <MetricCard label="Commission" value={fmt(activeWallet.summary.platformFees, activeWallet.currency)} sub="This month" />
+          <MetricCard label="Platform fee" value={fmt(activeWallet.summary.platformFees, activeWallet.currency)} sub="This month" />
           <MetricCard label="Total Paid Out" value={fmt(activeWallet.summary.totalPaidOut, activeWallet.currency)} sub="All time" />
         </div>
 
@@ -546,7 +544,7 @@ export function StoreFinance() {
               <p className="font-serif text-[18px] text-carbon mb-3">Fees</p>
               <div className="flex flex-col gap-2.5">
                 {[
-                  ['Edudeen commission', dashboard.feeBreakdown.transactionFee],
+                  ['Edudeen platform fee', dashboard.feeBreakdown.transactionFee],
                   ['Card processing', dashboard.feeBreakdown.paymentProcessing],
                 ].map(([label, val]) => (
                   <div key={label} className="flex justify-between items-start gap-3">

@@ -21,7 +21,6 @@ export function formatPct(pct: number): string {
 
 /** One-line payout explanation. `pct` null = rate not loaded/unknown. */
 export function payoutNote(pct: number | null): string {
-  if (pct === null) return 'Edudeen pays your earnings monthly, minus any commission and card processing fees.';
-  if (pct === 0) return 'No commission — Edudeen pays your full earnings monthly, minus card processing fees.';
-  return `Edudeen pays your earnings monthly, minus a ${formatPct(pct)} commission and card processing fees.`;
+  void pct;
+  return 'Buyers pay Edudeen. Your earnings are credited after the platform fee and paid out via payout requests.';
 }

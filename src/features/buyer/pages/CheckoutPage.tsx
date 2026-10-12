@@ -162,8 +162,8 @@ function DigitalPaymentNotice({
   );
 }
 
-// ── Manual Bank Transfer slot — Pakistan track. Fetches the admin-configured
-// bank details, shows the PKR amount to transfer, and submits the buyer's
+// ── Manual Bank Transfer slot — Pakistan track. Fetches the platform (admin-configured)
+// payment account, shows the PKR amount to transfer, and submits the buyer's
 // proof (order is created + proof recorded in one call, `paymentStatus:
 // 'pending_verification'` until an admin reviews it). ───────────────────────
 function ManualBankTransferSlot({
@@ -252,8 +252,9 @@ function ManualBankTransferSlot({
     );
   }
 
-  const rows: [string, string | null][] = [
-    ['Bank', bankDetails.bankName],
+  const rows: [string, string | null | undefined][] = [
+    ['Pay to', bankDetails.payeeName],
+    ['Bank',bankDetails.bankName],
     ['Account Title', bankDetails.accountTitle],
     ['Account Number', bankDetails.accountNumber],
     ['IBAN', bankDetails.iban],

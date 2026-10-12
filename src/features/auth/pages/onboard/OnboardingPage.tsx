@@ -20,6 +20,7 @@ import {
   apiBrowsePlatformPlans, apiChangePlatformPlan, apiFreeTrialEligibility, type PlatformPlan,
 } from '@/api/services/platformPlans';
 import { apiGetMyStores } from '@/api/services/store';
+import { planPriceFor, planYearlyPrice, planYearlySavePct, type PlanInterval } from '@/utils/planPricing';
 import { resolveSellerDestination } from '@/utils/sellerRouting';
 import { AuthSplitLayout } from '@/features/auth/components/AuthSplitLayout';
 import { SellerDashboardMockup } from '@/features/auth/components/mockups/AuthMockups';
@@ -82,6 +83,10 @@ interface StoreForm {
   planId:       string;
   planName:     string;
   planPriceUSD: number;
+  /** Full yearly price of the picked plan (12x monthly when the plan has none). */
+  planYearlyUSD?: number;
+  /** Billing interval for the plan (default monthly). */
+  billingInterval?: PlanInterval;
 }
 
 // Edudeen is Pakistan-origin, so every store defaults to PKR pricing
@@ -89,6 +94,10 @@ interface StoreForm {
 // default can replace this constant later without touching anything else,
 // since the rest of the app only ever reads `store.baseCurrency`.
 const DEFAULT_CURRENCY: SupportedCurrency = 'PKR';
+
+function readSavedInterval(): PlanInterval {
+  try { return sessionStorage.getItem('sellPlanInterval') === 'yearly' ? 'yearly' : 'monthly'; } catch { return 'monthly'; }
+}
 
 // ── Step Progress header — lives inside each step's card, same badge +
 // progress-line + circle treatment as CheckoutPage's step header, instead of
@@ -278,10 +287,10 @@ function Step1StoreInfo({ form, setForm, onNext, step, maxReached, onStepClick }
 }
 
 // ── Step 2 — Plan & Payment ───────────────────────────────────────────────────
-// A store needs a paid monthly plan. The seller picks one here and saves a
+// A store needs a paid plan (monthly or yearly). The seller picks one here and saves a
 // card; the first month is charged when the store is created at the last
-// step. Sales themselves are commission-free — the seller keeps the full
-// amount, less the card processing fee — and Edudeen pays out monthly.
+// step. Buyers pay Edudeen; the seller is credited with each sale minus the
+// platform fee and paid out via payout requests.
 function Step2Payment({ form, setForm, onNext, onBack, step, maxReached, onStepClick, alreadyConfirmed, onCardSaved }: {
   form: StoreForm; setForm: (f: StoreForm) => void;
   onNext: () => void; onBack: () => void;
@@ -326,6 +335,7 @@ function Step2Payment({ form, setForm, onNext, onBack, step, maxReached, onStepC
 
   // A plan picked in an earlier session that's no longer offered is dropped.
   const selected = plans?.find(p => p._id === form.planId) ?? null;
+  const interval: PlanInterval = form.billingInterval ?? 'monthly';
 
   // The plan picked on /become-a-seller is applied once the plans have loaded.
   useEffect(() => {
@@ -333,12 +343,12 @@ function Step2Payment({ form, setForm, onNext, onBack, step, maxReached, onStepC
     let wanted: string | null = null;
     try { wanted = sessionStorage.getItem('sellPlanId'); } catch { /* storage blocked */ }
     const p = wanted ? plans.find(x => x._id === wanted) : null;
-    if (p) setForm({ ...form, planId: p._id, planName: p.name, planPriceUSD: p.monthlyPriceUSD ?? 0 });
+    if (p) setForm({ ...form, planId: p._id, planName: p.name, planPriceUSD: p.monthlyPriceUSD ?? 0, planYearlyUSD: planYearlyPrice(p) });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [plans]);
 
   const choose = (p: PlatformPlan) =>
-    setForm({ ...form, planId: p._id, planName: p.name, planPriceUSD: p.monthlyPriceUSD ?? 0 });
+    setForm({ ...form, planId: p._id, planName: p.name, planPriceUSD: p.monthlyPriceUSD ?? 0, planYearlyUSD: planYearlyPrice(p) });
 
   const handleConfirmed = useCallback(async (setupIntentId: string) => {
     setConfirming(true);
@@ -359,7 +369,7 @@ function Step2Payment({ form, setForm, onNext, onBack, step, maxReached, onStepC
       <OnboardingStepHeader step={step} maxReached={maxReached} onStepClick={onStepClick} />
       <div className={clsx(NARROW_CONTENT, 'text-center mb-7')}>
         <h1 className="text-[28px] font-bold text-carbon mb-2">Choose your plan</h1>
-        <p className="text-[14px] text-slate">One simple monthly fee for your store. No commission on your sales — you keep the full amount, only the card processing fee is taken off. Edudeen pays your earnings out every month.</p>
+        <p className="text-[14px] text-slate">Pick a monthly or yearly plan for your store. Buyers pay Edudeen, and each sale is credited to your wallet after a small platform fee set by Edudeen.</p>
       </div>
 
       <div className={NARROW_CONTENT}>
@@ -374,6 +384,15 @@ function Step2Payment({ form, setForm, onNext, onBack, step, maxReached, onStepC
             <span>{plansError || 'Store plans are not available yet. Please contact support@edudeen.com to open your store.'}</span>
           </div>
         ) : (
+          <>
+          <div role="group" aria-label="Billing interval" className="flex w-fit mx-auto rounded-full border border-bone p-[3px] mb-4">
+            {(['monthly', 'yearly'] as const).map(iv => (
+              <button key={iv} type="button" aria-pressed={interval === iv} onClick={() => setForm({ ...form, billingInterval: iv })}
+                className={clsx('px-4 py-1.5 rounded-full text-[12.5px] font-semibold transition-colors', interval === iv ? 'bg-brand-orange text-white' : 'text-slate hover:text-carbon')}>
+                {iv === 'monthly' ? 'Monthly' : 'Yearly'}
+              </button>
+            ))}
+          </div>
           <div role="radiogroup" aria-label="Store plan" className="flex flex-col gap-3 mb-6">
             {plans.map(p => {
               const on = p._id === selected?._id;
@@ -413,14 +432,16 @@ function Step2Payment({ form, setForm, onNext, onBack, step, maxReached, onStepC
                       )}
                     </div>
                     <div className="text-end shrink-0">
-                      <p className="text-[18px] font-bold text-brand-orange leading-none">{p.isFree ? 'Free' : ('$' + (p.monthlyPriceUSD ?? 0).toLocaleString())}</p>
-                      <p className="text-[12px] text-slate mt-1">{p.isFree ? `for ${p.trialDays} days` : 'per month'}</p>
+                      <p className="text-[18px] font-bold text-brand-orange leading-none">{p.isFree ? 'Free' : ('$' + planPriceFor(p, interval).toLocaleString())}</p>
+                      <p className="text-[12px] text-slate mt-1">{p.isFree ? `for ${p.trialDays} days` : interval === 'yearly' ? 'per year' : 'per month'}</p>
+                      {!p.isFree && interval === 'yearly' && planYearlySavePct(p) > 0 && <p className="text-[12px] font-semibold text-success mt-[2px]">Save {planYearlySavePct(p)}%</p>}
                     </div>
                   </div>
                 </button>
               );
             })}
           </div>
+          </>
         )}
 
         {/* Card */}
@@ -465,7 +486,7 @@ function Step2Payment({ form, setForm, onNext, onBack, step, maxReached, onStepC
                 <StripeCardSetup
                   clientSecret={clientSecret}
                   onConfirmed={handleConfirmed}
-                  note={`Secured by Stripe — $${(selected.monthlyPriceUSD ?? 0).toLocaleString()} is charged each month once your store launches.`}
+                  note={`Secured by Stripe — $${planPriceFor(selected, interval).toLocaleString()} is charged each ${interval === 'yearly' ? 'year' : 'month'} once your store launches.`}
                 />
                 {confirmError && (
                   <div className="flex items-center gap-2 rounded-lg bg-error-bg px-[14px] py-[10px] mt-3 text-[13px] text-error">
@@ -652,14 +673,14 @@ function Step5Review({ form, submitting, submitError, onSubmit, onBack, step, ma
           <p className="text-[12px] font-bold text-carbon uppercase tracking-[0.05em] pb-2 mb-3 border-b border-bone">Plan</p>
           <div className="flex items-center justify-between gap-3">
             <p className="text-[12.5px] font-semibold text-carbon">{form.planName || '—'}</p>
-            <p className="text-[12.5px] font-semibold text-brand-orange">{form.planPriceUSD === 0 ? 'Free trial' : `$${form.planPriceUSD.toLocaleString()} / month`}</p>
+            <p className="text-[12.5px] font-semibold text-brand-orange">{form.planPriceUSD === 0 ? 'Free trial' : `$${(form.billingInterval === 'yearly' ? (form.planYearlyUSD ?? form.planPriceUSD * 12) : form.planPriceUSD).toLocaleString()} / ${form.billingInterval === 'yearly' ? 'year' : 'month'}`}</p>
           </div>
         </div>
 
         <div className="flex items-start gap-2 text-start mb-6 bg-success-bg rounded-xl px-[14px] py-[12px]">
           <ShieldCheck size={16} className="text-success shrink-0 mt-[1px]" />
           <p className="text-[12.5px] text-success leading-[1.6]">
-            {form.planPriceUSD === 0 ? 'Your free trial starts when your store opens — no payment now. Every sale is yours in full.' : `Launching charges your saved card $${form.planPriceUSD.toLocaleString()} for the first month, then monthly. Every sale is yours in full (minus the card processing fee), paid out by Edudeen monthly.`}
+            {form.planPriceUSD === 0 ? 'Your free trial starts when your store opens — no payment now. Sales are credited to your wallet after the platform fee.' : `Launching charges your saved card $${(form.billingInterval === 'yearly' ? (form.planYearlyUSD ?? form.planPriceUSD * 12) : form.planPriceUSD).toLocaleString()} for the first ${form.billingInterval === 'yearly' ? 'year' : 'month'}, then renews. Buyers pay Edudeen; each sale is credited to your wallet after the platform fee and paid out via payout requests.`}
           </p>
         </div>
 
@@ -753,6 +774,7 @@ export function OnboardingPage() {
     storeName: '', categoryId: '', categoryName: '', description: '', logo: '',
     sellerType: '', sellerKey: '', productTypes: [], baseCurrency: DEFAULT_CURRENCY,
     planId: '', planName: '', planPriceUSD: 0,
+    billingInterval: readSavedInterval(),
   });
   // Resumability — a reload/lost connection/different device shouldn't send
   // the seller back to step 1 with everything they've typed gone. Loaded
@@ -809,7 +831,7 @@ export function OnboardingPage() {
     apiBrowsePlatformPlans()
       .then(res => {
         const p = (res.data ?? []).find(x => x._id === wanted);
-        if (!cancelled && p) setForm(prev => ({ ...prev, planId: p._id, planName: p.name, planPriceUSD: p.isFree ? 0 : (p.monthlyPriceUSD ?? 0) }));
+        if (!cancelled && p) setForm(prev => ({ ...prev, planId: p._id, planName: p.name, planPriceUSD: p.isFree ? 0 : (p.monthlyPriceUSD ?? 0), planYearlyUSD: planYearlyPrice(p) }));
       })
       .catch(() => {});
     return () => { cancelled = true; };
@@ -887,7 +909,7 @@ export function OnboardingPage() {
     // The free trial needs no payment — the store already starts on it.
     if (form.planPriceUSD === 0) return null;
     try {
-      const res = await apiChangePlatformPlan(storeId, form.planId, 'monthly');
+      const res = await apiChangePlatformPlan(storeId, form.planId, form.billingInterval ?? 'monthly');
       const data = res.data as unknown as { requiresAction?: boolean; clientSecret?: string | null };
       if (data?.requiresAction && data.clientSecret) return await confirmSubscriptionPayment(data.clientSecret);
       return null;

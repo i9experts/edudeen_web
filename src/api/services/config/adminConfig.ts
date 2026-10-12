@@ -147,6 +147,18 @@ export function apiUpdateManualPaymentConfig(payload: Partial<ManualPaymentConfi
   return client.put<never, ApiResponse<PlatformConfig>>(ENDPOINTS.PLATFORM_CONFIG.UPDATE_MANUAL_PAYMENT, payload);
 }
 
+export type PlatformFeeMode = 'percentage' | 'fixed';
+export interface PlatformFeeRule { mode: PlatformFeeMode; value: number }
+export interface PlatformFees { digital: PlatformFeeRule | null; physical: PlatformFeeRule | null }
+
+export function apiGetPlatformFees() {
+  return client.get<never, ApiResponse<{ platformFees: PlatformFees }>>(ENDPOINTS.PLATFORM_CONFIG.PLATFORM_FEES);
+}
+
+export function apiUpdatePlatformFees(payload: Partial<PlatformFees>) {
+  return client.put<never, ApiResponse<unknown>>(ENDPOINTS.PLATFORM_CONFIG.PLATFORM_FEES, payload);
+}
+
 export function apiUpdatePayoutConfig(payload: Partial<PayoutConfig>) {
   return client.put<never, ApiResponse<PlatformConfig>>(ENDPOINTS.PLATFORM_CONFIG.UPDATE_PAYOUT, payload);
 }

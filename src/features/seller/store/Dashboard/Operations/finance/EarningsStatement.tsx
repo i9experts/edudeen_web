@@ -9,7 +9,6 @@ import {
 import {
   StudioPanel, StudioWorkflow, StudioPill, StudioTable, StudioEyebrow,
 } from '@/features/seller/components/studio/Studio';
-import { formatPct } from './commissionCopy';
 
 // ── Month helpers (YYYY-MM, local time) ──────────────────────────────────────
 function monthKey(d: Date) {
@@ -49,11 +48,8 @@ const PAYOUT_TONE: Record<string, 'green' | 'amber' | 'gray' | 'blue' | 'red'> =
 
 /** Fees step reflects the statement's real commission rate (pct null = unknown). */
 function howYouGetPaid(pct: number | null) {
-  const fees = pct === 0
-    ? { title: 'Only card fees come off', body: 'Edudeen takes no commission — only the card processing fee and any refunds are taken out of each sale.' }
-    : pct === null
-      ? { title: 'Commission and card fees', body: 'Edudeen’s commission (if any), the card processing fee and any refunds are taken out of each sale.' }
-      : { title: 'Commission and card fees', body: `Edudeen takes a ${formatPct(pct)} commission; that, the card processing fee and any refunds are taken out of each sale.` };
+  void pct;
+  const fees = { title: 'Platform fee', body: 'Edudeen’s platform fee (set per product type) and any refunds are taken out of each sale; the rest is credited to your wallet.' };
   return [
     { tag: 'Checkout', title: 'Buyers pay Edudeen',       body: 'Card and online payments are collected securely by Edudeen on your behalf when a buyer checks out.' },
     { tag: 'Fees',     ...fees },

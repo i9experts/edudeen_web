@@ -16,6 +16,7 @@ import {
   type PlatformPlanInvoice, type PlanChangePreview,
 } from '@/api/services/platformPlans';
 import { apiGetAiStudioCredits } from '@/api/services/aiStudio';
+import { planPriceFor, planYearlySavePct } from '@/utils/planPricing';
 
 const INVOICE_STATUS_STYLE: Record<string, string> = {
   paid: 'bg-[#e3f4ea] text-[#1e7a3c]',
@@ -372,7 +373,8 @@ export default function StorePlanBilling() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {plans.map(plan => {
             const isCurrent = current?.platformPlanId === plan._id;
-            const price = interval === 'yearly' && plan.yearlyPriceUSD != null ? plan.yearlyPriceUSD : plan.monthlyPriceUSD;
+            const price = planPriceFor(plan, interval);
+            const savePct = interval === 'yearly' ? planYearlySavePct(plan) : 0;
             return (
               <div key={plan._id} className="bg-white border rounded-[10px] px-5 py-4 flex flex-col" style={{ borderColor: isCurrent ? '#174771' : '#E8E6DC', borderWidth: isCurrent ? 2 : 1 }}>
                 <div className="flex items-start justify-between mb-1">
@@ -383,6 +385,7 @@ export default function StorePlanBilling() {
                 </div>
                 <p className="text-[20px] font-bold text-brand-orange mb-2">
                   {plan.isFree ? `Free${plan.trialDays > 0 ? ` · ${plan.trialDays} days` : ''}` : plan.isCustomPricing ? 'Custom' : `$${price}/${interval === 'yearly' ? 'yr' : 'mo'}`}
+                  {!plan.isFree && !plan.isCustomPricing && savePct > 0 && <span className="ms-2 text-[12px] font-semibold text-success">Save {savePct}%</span>}
                 </p>
                 {isCurrent && planEndsAt && <p className="text-[12px] font-semibold text-[#1e7a3c] mb-2">{daysLeftText} · {current?.status === 'trialing' ? 'ends' : 'renews'} {new Date(planEndsAt).toLocaleDateString()}</p>}
                 <ul className="flex flex-col gap-1.5 mb-4 p-0 list-none flex-1">

@@ -32,6 +32,7 @@ export const ENDPOINTS = {
     UPDATE_PAYOUT: '/api/admin/platform-config/payout',
     UPDATE_MANUAL_PAYMENT: '/api/admin/platform-config/manual-payment',
     UPDATE_FX: '/api/admin/platform-config/fx',
+    PLATFORM_FEES: '/api/admin/platform-config/platform-fees',
   },
 
   // ── EXCHANGE RATE ───────────────────────────────────────────────────────────

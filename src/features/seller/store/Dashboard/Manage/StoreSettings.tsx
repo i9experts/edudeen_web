@@ -254,7 +254,7 @@ function PaymentGatewayCard() {
       ) : (
         <>
           <p className="text-[12.5px] text-slate mb-3">
-            Connect your own Stripe account to receive buyer payments directly — Edudeen's commission is deducted automatically, and the rest lands straight in your bank account via Stripe's own payout schedule, instead of waiting on a manual payout request.
+            Connect your own Stripe account to receive buyer payments directly — Edudeen's platform fee is deducted automatically, and the rest lands straight in your bank account via Stripe's own payout schedule, instead of waiting on a manual payout request.
           </p>
 
           {info && (
