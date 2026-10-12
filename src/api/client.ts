@@ -177,6 +177,9 @@ client.interceptors.response.use(
     return Promise.reject(Object.assign(new Error(msg), {
       isNetworkError: !err.response,
       status: err.response?.status,
+      // Machine-readable extras some endpoints send (e.g. OTP_INVALID / OTP_EXPIRED / OTP_LOCKED + attemptsLeft).
+      code: (err.response?.data as { code?: string } | undefined)?.code,
+      attemptsLeft: (err.response?.data as { attemptsLeft?: number } | undefined)?.attemptsLeft,
     }));
   },
 );

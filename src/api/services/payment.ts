@@ -86,6 +86,11 @@ export function apiPlaceCodOrder(payload: CodPaymentPayload) {
   return client.post<never, CodPaymentResponse>(ENDPOINTS.PAYMENT.COD, payload);
 }
 
+/** POST /api/payment/free-checkout — confirms an order whose grand total is exactly 0 (no payment). */
+export function apiPlaceFreeOrder(payload: CodPaymentPayload) {
+  return client.post<never, CodPaymentResponse>(ENDPOINTS.PAYMENT.FREE_CHECKOUT, payload);
+}
+
 /** POST /api/payment/initiate-payment — creates (or reuses) a Stripe PaymentIntent
  *  for a checkout. Returns a clientSecret for Stripe Elements/PaymentElement.
  *  `paymentMode: 'split'` (mixed carts only) charges just the digital-items

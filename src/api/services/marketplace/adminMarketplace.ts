@@ -28,6 +28,8 @@ export interface MarketplaceListingRow {
   sellerName: string;
   storeId: string;
   storeBadges: string[];
+  /** Who ships this store's physical orders: the seller (default) or Edudeen (admin-granted). */
+  storeFulfillmentMode?: 'seller' | 'platform';
   categoryId: string;
   price: number | null;
   /** Currency of `price` (the store's own currency). */
@@ -233,6 +235,13 @@ export function apiRejectListing(id: string, reason: string) {
 export function apiSetStoreBadge(storeId: string, badge: GrantableStoreBadge, grant: boolean) {
   return client.patch<never, ApiResponse<{ badges: string[] }>>(
     ENDPOINTS.MARKETPLACE.ADMIN.SET_STORE_BADGE(storeId), { badge, grant },
+  );
+}
+
+/** PATCH /api/admin/marketplace/stores/:id/fulfillment-mode — new orders only. */
+export function apiSetStoreFulfillmentMode(storeId: string, fulfillmentMode: 'seller' | 'platform') {
+  return client.patch<never, ApiResponse<{ fulfillmentMode: string }>>(
+    ENDPOINTS.MARKETPLACE.ADMIN.SET_STORE_FULFILLMENT(storeId), { fulfillmentMode },
   );
 }
 

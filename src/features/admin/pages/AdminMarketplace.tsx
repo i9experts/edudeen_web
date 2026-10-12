@@ -12,7 +12,7 @@ import { AdminStudioHeader } from '@/features/admin/components/studio';
 import type { TableColumn } from '@/components/comman/ui';
 import { AnalyticsErrorState } from '@/components/comman/analytics/AnalyticsErrorState';
 import { formatCurrency, formatNumber } from '@/components/comman/analytics/format';
-import { Star, StoreIcon, RefreshCw, GraduationCap, Trash2, ClipboardCheck, ShieldCheck } from 'lucide-react';
+import { Star, StoreIcon, RefreshCw, GraduationCap, Trash2, ClipboardCheck, ShieldCheck, Truck } from 'lucide-react';
 
 const STATUS_OPTIONS = [
   { value: 'pending_review', label: 'Waiting for review' },
@@ -67,7 +67,7 @@ export function AdminMarketplace() {
   );
 
   const { data, loading, error, refetch } = useMarketplaceListings(query);
-  const { setFeatured, removeListing, setStoreBadge, processingId, error: actionError } = useMarketplaceListingActions();
+  const { setFeatured, removeListing, setStoreBadge, setFulfillmentMode, processingId, error: actionError } = useMarketplaceListingActions();
   const [removing, setRemoving] = useState<MarketplaceListingRow | null>(null);
 
   function refreshAll() { refetchStats(); refetch(); loadPending(); }
@@ -80,6 +80,11 @@ export function AdminMarketplace() {
   async function toggleEducatorBadge(row: MarketplaceListingRow) {
     const hasBadge = (row.storeBadges ?? []).includes('verified_educator');
     const ok = await setStoreBadge(row.storeId, 'verified_educator', !hasBadge);
+    if (ok) refetch();
+  }
+
+  async function toggleFulfillment(row: MarketplaceListingRow) {
+    const ok = await setFulfillmentMode(row.storeId, row.storeFulfillmentMode === 'platform' ? 'seller' : 'platform');
     if (ok) refetch();
   }
 
@@ -130,6 +135,12 @@ export function AdminMarketplace() {
                   icon: <GraduationCap size={13} />,
                   disabled: processingId === r.storeId,
                   onClick: () => toggleEducatorBadge(r),
+                },
+                {
+                  label: r.storeFulfillmentMode === 'platform' ? 'Seller ships orders (stop Edudeen shipping)' : 'Edudeen ships this store’s orders',
+                  icon: <Truck size={13} />,
+                  disabled: processingId === r.storeId,
+                  onClick: () => toggleFulfillment(r),
                 },
                 // Active listings are not in the review queue, so the trust-badge editor (inside the review modal) is reached from here.
                 ...(r.status === 'pending_review' || r.status === 'rejected' ? [] : [{ label: 'Edit badges', icon: <ShieldCheck size={13} />, onClick: () => setReviewing(r.id) }]),

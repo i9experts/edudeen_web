@@ -1069,7 +1069,7 @@ export function ProductDetail() {
           {/* ── Reviews ────────────────────────────────────────────────────────── */}
           <div id="reviews" className="bg-white rounded-2xl border border-bone p-6 mb-6 scroll-mt-24">
             <AiReviewSummary productId={product._id} />
-            <ProductReviewsSection productId={product._id} storeName={product.sellerName} />
+            <ProductReviewsSection productId={product._id} storeName={product.sellerName} canReview={product.canReview} />
           </div>
 
           {/* ── Bought together ──────────────────────────────────────────────── */}

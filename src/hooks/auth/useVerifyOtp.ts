@@ -42,7 +42,13 @@ export function useVerifyOtp() {
       const destination = role === 'seller' ? await resolveSellerDestinationRemote() : (afterAuth?.startsWith('/') && !afterAuth.startsWith('//') ? afterAuth : getRoleRedirect(role));
       navigate(destination, { replace: true });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Invalid or expired code. Please try again.');
+      const e = err as Error & { code?: string; attemptsLeft?: number };
+      setError(
+        e.code === 'OTP_EXPIRED' ? 'This code has expired. Please request a new one.'
+        : e.code === 'OTP_LOCKED' ? 'Too many wrong attempts. Please request a new code.'
+        : e.code === 'OTP_INVALID' && typeof e.attemptsLeft === 'number' ? `Wrong code — ${e.attemptsLeft} attempt${e.attemptsLeft === 1 ? '' : 's'} left.`
+        : err instanceof Error ? err.message : 'Invalid or expired code. Please try again.',
+      );
     } finally {
       setLoading(false);
     }

@@ -299,9 +299,11 @@ function ReviewCard({ review: r, storeName, onToggleHelpful, onEdit, onDelete, o
 interface ProductReviewsSectionProps {
   productId: string;
   storeName?: string | null;
+  /** Server verdict (verified purchase). Omitted = unknown, keep the button. */
+  canReview?: boolean;
 }
 
-export function ProductReviewsSection({ productId, storeName }: ProductReviewsSectionProps) {
+export function ProductReviewsSection({ productId, storeName, canReview }: ProductReviewsSectionProps) {
   const toast = useToast();
   const [allReviews, setAllReviews] = useState<ProductReviewEntry[]>([]);
   const [stats, setStats] = useState<ProductReviewStats | null>(null);
@@ -443,7 +445,7 @@ export function ProductReviewsSection({ productId, storeName }: ProductReviewsSe
               {stats!.totalReviews} Verified Reviews
             </Badge>
           )}
-          {isLoggedIn && !hasOwnReview && (
+          {isLoggedIn && !hasOwnReview && canReview !== false && (
             <Button variant="outline" size="sm" icon={<Pencil size={13} />} onClick={() => setShowWrite(true)}>
               Write a Review
             </Button>

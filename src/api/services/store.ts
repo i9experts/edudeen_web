@@ -65,6 +65,8 @@ export interface StoreData {
    *  by checkout (a multi-vendor cart's COD eligibility isn't scoped per
    *  seller there yet); this only persists the seller's preference so far. */
   codEnabled:   boolean;
+  /** Who ships physical orders — 'platform' is granted by Edudeen admin only. */
+  fulfillmentMode?: 'seller' | 'platform';
   enabledTools: string[];
   plan:         string;
   aiCredits:    number;

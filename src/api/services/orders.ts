@@ -35,6 +35,8 @@ export interface OrderLineItem {
   price:      number;
   totalPrice: number;
   status:     string;
+  /** Server's verified-purchase answer (same rule addReview enforces). */
+  canReview?: boolean;
   returnStatus?: ReturnStatus;
 }
 

@@ -140,8 +140,8 @@ function OrderItemRow({ item, orderId, orderStatus, currency }: { item: OrderLin
   const isDigital = item.type === 'digital';
   // Backend only accepts a verified review once the item is delivered/completed
   // (RatingService.checkVerifiedPurchase).
-  const canReview = !!item.productId && item.status !== 'cancelled'
-    && (REVIEWABLE_STATUSES.includes(item.status) || REVIEWABLE_STATUSES.includes(orderStatus));
+  const canReview = item.canReview ?? (!!item.productId && item.status !== 'cancelled'
+    && (REVIEWABLE_STATUSES.includes(item.status) || REVIEWABLE_STATUSES.includes(orderStatus)));
   return (
     <div className="flex items-center justify-between gap-3 py-3 border-b border-bone last:border-0">
       <div className="flex items-center gap-3 min-w-0">

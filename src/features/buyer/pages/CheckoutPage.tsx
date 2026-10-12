@@ -28,7 +28,7 @@ const dedupeAddressParts = (parts: (string | null | undefined)[]) => {
 const zonePrice = (z: ShippingZone) => (z.shippingPrice > 0 ? `Rs ${z.shippingPrice.toLocaleString()}` : 'Free');
 import { apiGetMyAddresses, type Address, type AddressPayload } from '@/api/services/address';
 import { apiCreateCheckout, apiApplyCoupon, apiRemoveCoupon, apiApplyGiftCard, apiRemoveGiftCard, type Checkout, type CheckoutSummary, type SubscriptionSavingsHint } from '@/api/services/checkout';
-import { apiPlaceCodOrder, apiInitiatePayment, apiGetPaymentStatus } from '@/api/services/payment';
+import { apiPlaceCodOrder, apiPlaceFreeOrder, apiInitiatePayment, apiGetPaymentStatus } from '@/api/services/payment';
 import {
   apiGetManualPaymentBankDetails, apiSubmitManualPayment,
   type ManualPaymentBankDetails, type ManualPaymentOrderSummary,
@@ -324,6 +324,7 @@ function ManualBankTransferSlot({
 
 // ── Payment method labels ─────────────────────────────────────────────────────
 const PAYMENT_LABELS: Record<string, { label: string; desc: string; Icon: React.ElementType }> = {
+  free:             { label: 'Free order',           desc: 'Nothing to pay — just confirm',   Icon: PackageCheck },
   stripe:           { label: 'Credit / Debit Card',  desc: 'Secure payment via Stripe',       Icon: CreditCard },
   cash_on_delivery: { label: 'Cash on Delivery',     desc: 'Pay when your order arrives',     Icon: Banknote   },
   // Mixed carts only — desc is overridden with the real digital/physical
@@ -634,7 +635,7 @@ export function CheckoutPage() {
         // enabled (the backend accepts it for digital items — it's a
         // Stripe-equivalent pay-up-front rail, see
         // PaymentService.manualBankTransferPayment). Never COD.
-        setAllowedMethods((res.data.allowedPaymentMethods ?? []).filter(m => m === 'stripe' || m === 'manual_bank_transfer' || isHostedProvider(m)));
+        setAllowedMethods((res.data.allowedPaymentMethods ?? []).filter(m => m === 'free' || m === 'stripe' || m === 'manual_bank_transfer' || isHostedProvider(m)));
         setStep(3);
       })
       .catch(err => {
@@ -908,7 +909,7 @@ export function CheckoutPage() {
       // fallback that actually completes an order right now. Manual bank
       // transfer is offered whenever the backend lists it (admin-enabled);
       // split (card + COD) stays hidden for now.
-      setAllowedMethods((res.data.allowedPaymentMethods ?? []).filter(m => m === 'stripe' || m === 'cash_on_delivery' || m === 'manual_bank_transfer' || isHostedProvider(m)));
+      setAllowedMethods((res.data.allowedPaymentMethods ?? []).filter(m => m === 'free' || m === 'stripe' || m === 'cash_on_delivery' || m === 'manual_bank_transfer' || isHostedProvider(m)));
       setStep(3);
     } catch (err) {
       setCheckoutError(err instanceof Error ? err.message : 'Failed to create checkout. Please try again.');
@@ -920,11 +921,13 @@ export function CheckoutPage() {
   // Cash on Delivery only — card payment is handled by StripeCardPayment +
   // handleStripeConfirmed instead, since it has its own form/submit button.
   const handlePlaceOrder = async () => {
-    if (!checkout || selectedMethod !== 'cash_on_delivery') return;
+    if (!checkout || (selectedMethod !== 'cash_on_delivery' && selectedMethod !== 'free')) return;
     setPlacing(true);
     setPlaceError('');
     try {
-      const res = await apiPlaceCodOrder({ checkoutId: checkout._id });
+      const res = selectedMethod === 'free'
+        ? await apiPlaceFreeOrder({ checkoutId: checkout._id })
+        : await apiPlaceCodOrder({ checkoutId: checkout._id });
       await finishCheckoutCart();
       navigate('/order-success', { state: { orders: res.data.orders } });
     } catch (err) {
@@ -1110,6 +1113,10 @@ export function CheckoutPage() {
                       )
                     ) : isHostedProvider(selectedMethod) && checkout ? (
                       <HostedPayButton provider={selectedMethod} checkoutId={checkout._id} label={PAYMENT_LABELS[selectedMethod].label} />
+                    ) : selectedMethod === 'free' ? (
+                      <Button variant="primary" size="lg" loading={placing} icon={!placing && <PackageCheck size={16} />} onClick={handlePlaceOrder} className="gap-2 w-full justify-center">
+                        {placing ? 'Placing Order…' : 'Place free order'}
+                      </Button>
                     ) : digitalPaymentBlocked ? (
                       <DigitalPaymentNotice physicalCount={physicalItemCount} onPhysicalOnly={switchToPhysicalOnly} onBack={() => navigate('/cart')} />
                     ) : (
@@ -1649,7 +1656,7 @@ export function CheckoutPage() {
                       onClick={handlePlaceOrder}
                       className="gap-2 w-full justify-center"
                     >
-                      {placing ? 'Placing Order…' : 'Confirm & Pay'}
+                      {placing ? 'Placing Order…' : selectedMethod === 'free' ? 'Place free order' : 'Confirm & Pay'}
                     </Button>
                   )}
                 </div>

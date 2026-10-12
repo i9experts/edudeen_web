@@ -437,6 +437,7 @@ export const ENDPOINTS = {
       FEATURE:  (id: string) => `/api/admin/marketplace/listings/${id}/feature`,
       REMOVE:   (id: string) => `/api/admin/marketplace/listings/${id}/remove`,
       SET_STORE_BADGE: (storeId: string) => `/api/admin/marketplace/stores/${storeId}/badge`,
+      SET_STORE_FULFILLMENT: (storeId: string) => `/api/admin/marketplace/stores/${storeId}/fulfillment-mode`,
       LEADS:            '/api/admin/marketplace/leads',
       LEAD_DETAIL:      (id: string) => `/api/admin/marketplace/leads/${id}`,
       LEAD_UNDER_REVIEW: (id: string) => `/api/admin/marketplace/leads/${id}/under-review`,
@@ -518,6 +519,7 @@ export const ENDPOINTS = {
 
   PAYMENT: {
     COD:              '/api/payment/cod-payment',
+    FREE_CHECKOUT:    '/api/payment/free-checkout',
     INITIATE_PAYMENT: '/api/payment/initiate-payment',
     STATUS:           '/api/payment/status',
   },

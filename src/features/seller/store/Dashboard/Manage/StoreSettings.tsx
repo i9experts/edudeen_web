@@ -764,6 +764,14 @@ export default function StoreSettings() {
                   </div>
                   <Toggle label="Cash on delivery" checked={codEnabled} onChange={setCodEnabled} />
                 </div>
+                <div className="mt-3 px-[14px] py-3 rounded-[9px] border border-bone bg-cream">
+                  <p className="text-[13px] font-medium text-charcoal">Who ships physical orders</p>
+                  <p className="text-[12px] text-slate">
+                    {store?.fulfillmentMode === 'platform'
+                      ? 'Edudeen ships your physical orders and collects cash on delivery. Shipping is not credited to you. Applies to new orders.'
+                      : 'You ship your own physical orders. Ask the Edudeen team if you want Edudeen to handle shipping.'}
+                  </p>
+                </div>
               </div>
 
               {/* Read-only info */}

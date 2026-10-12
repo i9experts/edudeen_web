@@ -6,6 +6,7 @@ import {
   apiSetListingFeatured,
   apiRemoveListing,
   apiSetStoreBadge,
+  apiSetStoreFulfillmentMode,
   apiGetLeads,
   apiGetLeadDetail,
   apiMarkLeadUnderReview,
@@ -71,7 +72,21 @@ export function useMarketplaceListingActions() {
     }
   }, []);
 
-  return { setFeatured, removeListing, setStoreBadge, processingId, error };
+  const setFulfillmentMode = useCallback(async (storeId: string, mode: 'seller' | 'platform') => {
+    setProcessingId(storeId);
+    setError('');
+    try {
+      await apiSetStoreFulfillmentMode(storeId, mode);
+      return true;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update fulfillment mode.');
+      return false;
+    } finally {
+      setProcessingId(null);
+    }
+  }, []);
+
+  return { setFeatured, removeListing, setStoreBadge, setFulfillmentMode, processingId, error };
 }
 
 export function useLeads(query: LeadsQuery) {

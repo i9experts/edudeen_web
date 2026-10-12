@@ -105,6 +105,9 @@ export interface MarketplaceProduct {
   wishlistCount:     number;
   purchaseCount:     number;
   averageRating:     number;
+  /** Only present for a signed-in buyer: may they review this product / already did. */
+  canReview?:        boolean;
+  hasReviewed?:      boolean;
   ratingSum?:        number;
   totalRatings?:     number;
   lastWishlistedAt:  string | null;
