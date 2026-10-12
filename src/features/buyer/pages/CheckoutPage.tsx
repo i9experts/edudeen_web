@@ -1,9 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { getStorePagePath } from '@/utils/storefrontUrl';
 import { useCartContext } from '@/contexts/CartContext';
-import { useAuthGate } from '@/contexts/AuthGateContext';
 import { TokenStorage } from '@/api/services/auth';
 import { useShippingZones } from '@/hooks/shipping/useShippingZones';
 import { shippingZoneLabel, zonesForAddress, type ShippingZone } from '@/api/services/shipping';
@@ -403,7 +402,6 @@ function PaymentMethodOptions({
 export function CheckoutPage() {
   usePageTitle('Checkout');
   const navigate  = useNavigate();
-  const authGate  = useAuthGate();
 
   // The one point in the buyer flow that actually requires login — browsing
   // and Add to Cart both work as a guest (see CartContext's guest cart). A
@@ -419,10 +417,6 @@ export function CheckoutPage() {
     return () => window.removeEventListener('edudeen:auth-login', onLogin);
   }, []);
   const loggedIn = TokenStorage.isLoggedIn();
-  useEffect(() => {
-    if (!loggedIn) authGate.requireAuth(() => {}, 'Sign in to complete your purchase.');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loggedIn]);
 
   // Every hook below still runs regardless of login state (CartContext
   // already supports a guest cart) — the actual "not signed in" branch is
@@ -944,20 +938,11 @@ export function CheckoutPage() {
   };
 
   if (!loggedIn) {
-    return (
-      <div className="min-h-screen bg-cream flex flex-col">
-        <BuyerNavbar variant="minimal" contextLabel="Checkout" hideCommerce />
-        <div className="flex-1 flex flex-col items-center justify-center gap-4 px-4 py-16 text-center">
-          <p className="text-[14px] text-slate max-w-[320px]">Sign in to complete your purchase — your cart will be right here waiting.</p>
-          <Button onClick={() => authGate.requireAuth(() => {}, 'Sign in to complete your purchase.')}>Sign In</Button>
-          <button onClick={() => navigate('/cart')} className="text-[12.5px] text-slate hover:text-charcoal transition-colors bg-transparent border-none cursor-pointer">
-            Back to Cart
-          </button>
-        </div>
-      </div>
-    );
+    // Checkout needs an account: go straight to the login page and come back here afterwards.
+    const back = `${window.location.pathname}${window.location.search}`;
+    try { sessionStorage.setItem('afterAuthPath', back); } catch { /* storage blocked */ }
+    return <Navigate to={`/login?redirect=${encodeURIComponent(back)}`} replace />;
   }
-
   if (needsStorePick && cart?.stores) {
     return (
       <div className="min-h-screen bg-cream flex flex-col">

@@ -150,7 +150,11 @@ export function useSocialLogin(role: AppRole = 'seller') {
       TokenStorage.saveUser(user);
       LastRolePreference.set(serverRole);
       RememberedAccount.set({ name: user.name, email: user.email, role: serverRole, image: user.image ?? null, authMethod: payload.authProvider });
-      const destination = serverRole === 'seller' ? await resolveSellerDestinationRemote() : getRoleRedirect(serverRole);
+      let afterAuth: string | null = null;
+      try { afterAuth = sessionStorage.getItem('afterAuthPath'); sessionStorage.removeItem('afterAuthPath'); } catch { /* storage blocked */ }
+      const destination = serverRole === 'seller'
+        ? await resolveSellerDestinationRemote()
+        : (afterAuth?.startsWith('/') && !afterAuth.startsWith('//') ? afterAuth : getRoleRedirect(serverRole));
       navigate(destination, { replace: true });
       window.location.reload();
     } catch (err) {
