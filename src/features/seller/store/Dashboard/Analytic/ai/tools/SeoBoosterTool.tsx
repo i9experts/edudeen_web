@@ -3,6 +3,7 @@ import { Search, Sparkles, Bot, ShieldCheck, ShieldQuestion } from 'lucide-react
 import { Field } from '@/components/comman/ui/Field';
 import { Input, Textarea } from '@/components/comman/ui/Input';
 import { Button } from '@/components/comman/ui/Button';
+import { PlanLockedCard, isPlanLockedError } from '@/components/comman/ui/PlanLockedCard';
 import { useGenerateSeoBooster, useAcceptAiGeneration } from '@/hooks/seller/useAiStudio';
 import { ProductPicker } from '../components/ProductPicker';
 import { GenerationActions } from '../components/GenerationActions';
@@ -68,7 +69,8 @@ export function SeoBoosterTool({ storeId, onCreditsChanged, creditCost }: SeoBoo
           )}
         </div>
 
-        {error && (
+        {error && isPlanLockedError(error) && <PlanLockedCard storeId={storeId} feature="SEO tools" className="mt-3" />}
+        {error && !isPlanLockedError(error) && (
           <p className="text-[12px] text-error mt-3 bg-error-bg rounded-md px-3 py-2">
             {error}{errorCode === 'INSUFFICIENT_AI_CREDITS' ? ' — buy more credits above to continue.' : ''}
           </p>

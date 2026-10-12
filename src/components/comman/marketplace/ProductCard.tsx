@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef, memo } from 'react';
 import { clsx } from 'clsx';
+import { Link } from 'react-router-dom';
+import { isPlainLeftClick, blockLinkForButtons } from '@/utils/productLink';
 import { Modal } from '@/components/comman/ui/Modal';
 import { ShoppingCart, Star, Heart, Loader2, Eye, Flame, BadgeCheck, Store, Check, AlertCircle } from 'lucide-react';
 import { ProductCoverFallback } from './ProductCoverFallback';
 import type { MarketplaceProduct } from '@/api/services/marketplace';
 import { useProductPreview } from '@/hooks/marketplace/useProductPreview';
-import { currencySymbol } from '@/utils/currency';
+import { currencySymbol, formatMoney } from '@/utils/currency';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 
 // Wraps the substring of `text` matching `query` in <mark> — same idea as
@@ -244,9 +246,13 @@ export const ProductCard = memo(function ProductCard({ product, onClick, onAddTo
 
   return (
     <>
-    <div
-      onClick={() => onClick(product.slug)}
+    <Link
+      to={`/product/${product.slug}`}
+      draggable={false}
+      onClickCapture={blockLinkForButtons}
+      onClick={e => { if (!e.defaultPrevented && isPlainLeftClick(e)) { e.preventDefault(); onClick(product.slug); } }}
       className={clsx(
+        'block no-underline text-inherit',
         // No shadow, no hover border-color change, no hover lift — the card
         // stays put; the accent bar sweeping in + a warm background tint are
         // the only hover signal.
@@ -416,10 +422,10 @@ export const ProductCard = memo(function ProductCard({ product, onClick, onAddTo
         <div className={clsx('flex items-center gap-3 min-w-0', isList ? 'justify-between flex-wrap mt-2 pt-2 border-t border-bone/70' : 'justify-start mt-auto pt-2')}>
           <div className="flex items-baseline gap-[5px] min-w-0">
             <span className={clsx('font-bold whitespace-nowrap tracking-tight', compact ? 'text-[14px]' : 'text-[14px] sm:text-[16px]', subscriberPrice != null || salePct ? 'text-brand-orange' : 'text-carbon')}>
-              {shownPrice != null ? `${priceSymbol} ${shownPrice.toLocaleString()}` : '—'}
+              {shownPrice != null ? formatMoney(shownPrice, displayCurrency) : '—'}
             </span>
             {struckPrice != null && (
-              <span className="text-[12px] text-slate/70 line-through shrink-0">{priceSymbol} {struckPrice.toLocaleString()}</span>
+              <span className="text-[12px] text-slate/70 line-through shrink-0">{formatMoney(struckPrice, displayCurrency)}</span>
             )}
           </div>
 
@@ -476,7 +482,7 @@ export const ProductCard = memo(function ProductCard({ product, onClick, onAddTo
           </div>
         )}
       </div>
-    </div>
+    </Link>
 
     {previewOpen && (
       <Modal title="Preview" onClose={closePreview} width={560} mobileSheet>

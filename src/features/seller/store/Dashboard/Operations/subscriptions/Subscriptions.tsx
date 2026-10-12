@@ -7,6 +7,7 @@ import {
 import { StorePageHeader, useStoreWorkspace } from '@/components/layouts/StoreLayout';
 import { Modal } from '@/components/comman/ui/Modal';
 import { Button } from '@/components/comman/ui/Button';
+import { PlanLockedCard, isPlanLockedError } from '@/components/comman/ui/PlanLockedCard';
 import { Input, Textarea, Select } from '@/components/comman/ui/Input';
 import { SkeletonBox, Table, type TableColumn } from '@/components/comman/ui';
 import { useStoreSubcategories } from '@/hooks/store/useStoreSubcategories';
@@ -557,7 +558,8 @@ export function StoreSubscriptions() {
       />
 
       <div className="px-4 lg:px-7 pb-8 pt-5 flex flex-col gap-5">
-        {error && <p className="text-[13px] text-error">{error}</p>}
+        {error && isPlanLockedError(error) && <PlanLockedCard storeId={storeId} feature="Customer subscriptions" />}
+        {error && !isPlanLockedError(error) && <p className="text-[13px] text-error">{error}</p>}
         {actionError && (
           <div className="flex items-center justify-between gap-3 text-[13px] text-error bg-error-bg border border-error-border rounded-lg px-3 py-2">
             <span>{actionError}</span>

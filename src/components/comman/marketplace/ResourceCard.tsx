@@ -7,6 +7,7 @@ import type { MarketplaceProduct } from '@/api/services/marketplace';
 import { EDUCATION_LEVELS } from '@/api/services/product';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 import { currencySymbol } from '@/utils/currency';
+import { isPlainLeftClick } from '@/utils/productLink';
 import { getStorePagePath } from '@/utils/storefrontUrl';
 import { coverPaletteFor } from './ProductCoverFallback';
 import { ageLabel } from '@/constants/learning';
@@ -121,6 +122,8 @@ export const ResourceCard = memo(function ResourceCard({
     : null;
   const fmt = (n: number) => `${currencySymbol(displayCurrency)} ${n.toLocaleString(undefined, { maximumFractionDigits: displayCurrency === 'PKR' ? 0 : 2 })}`;
   const kind = product.productType ?? product.type ?? 'physical';
+  const href = `/product/${product.slug}`;
+  const go = (e: React.MouseEvent) => { if (isPlainLeftClick(e)) { e.preventDefault(); onClick(product.slug); } };
   // Show the STORE (links to the store page), falling back to the person's name only when the API sent no store name.
   const shopName = product.storeName ?? product.sellerName;
 
@@ -154,19 +157,20 @@ export const ResourceCard = memo(function ResourceCard({
   if (layout === 'list') {
     return (
       <article className="flex gap-4 sm:gap-6 py-5 border-b border-bone min-w-0">
-        <button onClick={() => onClick(product.slug)} aria-label={`View ${product.name}`} className="p-0 bg-transparent border-none cursor-pointer shrink-0">
+        <Link to={href} onClick={go} aria-label={`View ${product.name}`} className="block p-0 shrink-0">
           <ListCover product={product} />
-        </button>
+        </Link>
         <div className="flex-1 min-w-0 flex flex-col">
           <div className="flex items-start gap-3">
             <div className="flex-1 min-w-0">
               <p className="text-[12px] text-slate mb-1 truncate">{meta}</p>
-              <button
-                onClick={() => onClick(product.slug)}
-                className="block p-0 bg-transparent border-none text-start text-carbon font-bold text-[15px] sm:text-[17px] leading-[1.4] cursor-pointer hover:underline line-clamp-2"
+              <Link
+                to={href}
+                onClick={go}
+                className="block p-0 text-start text-carbon no-underline font-bold text-[15px] sm:text-[17px] leading-[1.4] cursor-pointer hover:underline line-clamp-2"
               >
                 {product.name}
-              </button>
+              </Link>
             </div>
             {wishlistButton}
           </div>
@@ -196,13 +200,14 @@ export const ResourceCard = memo(function ResourceCard({
 
   return (
     <article className="group relative min-w-0">
-      <button
-        onClick={() => onClick(product.slug)}
+      <Link
+        to={href}
+        onClick={go}
         aria-label={`View ${product.name}`}
-        className="block w-full p-0 bg-transparent border-none cursor-pointer text-start"
+        className="block w-full p-0 cursor-pointer text-start"
       >
         <Cover product={product} tilt={index % 2 === 0 ? -4 : 4} />
-      </button>
+      </Link>
 
       {(campaignOff || percentOff > 0) && (
         <span className="absolute start-[7px] top-[7px] sm:start-3 sm:top-3 max-w-[70%] truncate text-[12px] sm:text-[12px] font-bold px-2 py-[3px] rounded-full bg-error text-white shadow-sm">
@@ -227,12 +232,13 @@ export const ResourceCard = memo(function ResourceCard({
       )}
 
       <p className="text-[12px] text-slate mt-[13px] mb-[5px] truncate">{meta}</p>
-      <button
-        onClick={() => onClick(product.slug)}
-        className="block p-0 bg-transparent border-none text-start text-carbon font-bold text-[14px] sm:text-[16px] leading-[1.4] cursor-pointer hover:underline line-clamp-2"
+      <Link
+        to={href}
+        onClick={go}
+        className="block p-0 text-start text-carbon no-underline font-bold text-[14px] sm:text-[16px] leading-[1.4] cursor-pointer hover:underline line-clamp-2"
       >
         {product.name}
-      </button>
+      </Link>
       {shopName && (
         product.storeSlug ? (
           <Link

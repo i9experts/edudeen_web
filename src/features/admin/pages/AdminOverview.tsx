@@ -20,6 +20,7 @@ import { MetricCard } from '@/components/comman/ui/MetricCard';
 import { EmptyState } from '@/components/comman/ui/EmptyState';
 import { Badge, StatusBadge } from '@/components/comman/ui/Badge';
 import { Button } from '@/components/comman/ui/Button';
+import { Accordion, type AccordionItem } from '@/components/comman/ui/CollapsibleSection';
 import { Table, type TableColumn } from '@/components/comman/ui/Table';
 import { AdminStudioHeader, ADMIN_GUTTER, StudioPanel, StudioInfoGrid, textLinkClass } from '../components/studio';
 
@@ -133,8 +134,91 @@ export function AdminOverview() {
     ) },
   ];
 
-  const tableFrame = '-mx-5 sm:mx-0 border-y sm:border border-bone sm:rounded-lg overflow-hidden';
+  const tableFrame = 'border border-bone rounded-lg overflow-hidden bg-white';
 
+  const reviewSections: AccordionItem[] = [
+    {
+      id: 'queue', title: 'Content review queue',
+      description: 'The newest reports waiting on the team.',
+      status: modQueue.data ? <Badge color={(modQueue.data.items?.length ?? 0) > 0 ? 'yellow' : 'gray'} size="sm">{formatNumber(modQueue.data.items?.length ?? 0)} waiting</Badge> : undefined,
+      content: (
+        <div className="flex flex-col gap-3">
+          <div className="flex justify-end"><button type="button" onClick={() => navigate('/admin/moderation')} className={textLinkClass}>Open full queue <ArrowRight size={13} /></button></div>
+          {modQueue.error ? (
+            <InlineSectionError message={modQueue.error} onRetry={modQueue.refetch} />
+          ) : (
+            <div className={tableFrame}>
+              <Table
+                columns={queueColumns}
+                data={modQueue.data?.items ?? []}
+                keyExtractor={r => r._id}
+                loading={modQueue.loading}
+                loadingRows={3}
+                emptyState={{ icon: <ShieldCheck size={28} className="text-slate/50" />, title: 'Nothing waiting for review', description: 'New reports on listings, sellers and reviews will appear here.' }}
+              />
+            </div>
+          )}
+        </div>
+      ),
+    },
+    {
+      id: 'criteria', title: 'What a review should establish',
+      description: 'Checklist for approving a listing.',
+      status: <Badge color="gray" size="sm">{REVIEW_CRITERIA.length} checks</Badge>,
+      content: <StudioInfoGrid items={REVIEW_CRITERIA} />,
+    },
+    {
+      id: 'leads', title: 'Seller applications',
+      description: 'New stores waiting for verification before they can publish.',
+      status: leads.data ? <Badge color={(leads.data.items?.length ?? 0) > 0 ? 'yellow' : 'gray'} size="sm">{formatNumber(leads.data.items?.length ?? 0)} waiting</Badge> : undefined,
+      content: (
+        <div className="flex flex-col gap-3">
+          <div className="flex justify-end"><button type="button" onClick={() => navigate('/admin/leads')} className={textLinkClass}>All applications <ArrowRight size={13} /></button></div>
+          {leads.error ? (
+            <InlineSectionError message={leads.error} onRetry={leads.refetch} />
+          ) : (
+            <div className={tableFrame}>
+              <Table
+                columns={leadColumns}
+                data={leads.data?.items ?? []}
+                keyExtractor={l => l.id}
+                loading={leads.loading}
+                loadingRows={3}
+                emptyState={{ icon: <UserPlus size={28} className="text-slate/50" />, title: 'No applications waiting', description: 'Stores submitted for verification will appear here.' }}
+              />
+            </div>
+          )}
+        </div>
+      ),
+    },
+    {
+      id: 'categories', title: 'Top categories by revenue',
+      description: 'Last 30 days.',
+      status: !loading ? <Badge color="gray" size="sm">{categories.length} categories</Badge> : undefined,
+      content: loading ? (
+        <div className="flex flex-col gap-3">{Array.from({ length: 4 }).map((_, i) => <SkeletonBox key={i} className="h-6 w-full" />)}</div>
+      ) : categories.length === 0 ? (
+        <EmptyState icon={<Tag size={24} className="text-slate/50" />} title="No category revenue yet" description="Once orders start coming in across the marketplace, the top-earning categories will show up here." className="py-10" />
+      ) : (
+        <ul className="flex flex-col gap-[16px]">
+          {categories.map((cat) => {
+            const pct = Math.round((cat.revenue / maxCategoryRevenue) * 100);
+            return (
+              <li key={cat.categoryId}>
+                <div className="flex justify-between items-center mb-[6px] gap-3">
+                  <span className="text-[13px] text-carbon truncate">{cat.name}</span>
+                  <span className="text-[13px] font-semibold text-carbon shrink-0">{formatCurrency(cat.revenue)}</span>
+                </div>
+                <div className="h-2 rounded-full bg-cream overflow-hidden" role="presentation">
+                  <div className="h-full rounded-full bg-brand-orange transition-[width] duration-500 ease-out" style={{ width: `${pct}%` }} />
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      ),
+    },
+  ];
   return (
     <>
       <AdminStudioHeader
@@ -165,55 +249,8 @@ export function AdminOverview() {
         )}
       </div>
 
-      {/* ── Content review queue ── */}
-      <StudioPanel
-        id="overview-review-queue"
-        title="Content review queue"
-        description="The newest reports waiting on the team. Open one to approve it or remove the flagged item."
-        actions={<button type="button" onClick={() => navigate('/admin/moderation')} className={textLinkClass}>Open full queue <ArrowRight size={13} /></button>}
-        bodyClassName={modQueue.error ? undefined : tableFrame}
-      >
-        {modQueue.error ? (
-          <InlineSectionError message={modQueue.error} onRetry={modQueue.refetch} />
-        ) : (
-          <Table
-            columns={queueColumns}
-            data={modQueue.data?.items ?? []}
-            keyExtractor={r => r._id}
-            loading={modQueue.loading}
-            loadingRows={3}
-            emptyState={{ icon: <ShieldCheck size={28} className="text-slate/50" />, title: 'Nothing waiting for review', description: 'New reports on listings, sellers and reviews will appear here.' }}
-          />
-        )}
-      </StudioPanel>
-
-      {/* ── What a review should establish ── */}
-      <StudioPanel id="overview-review-criteria" title="What a review should establish">
-        <StudioInfoGrid items={REVIEW_CRITERIA} />
-      </StudioPanel>
-
-      {/* ── Seller applications (leads) ── */}
-      <StudioPanel
-        id="overview-leads"
-        title="Seller applications"
-        description="New stores waiting for verification before they can publish on Edudeen."
-        actions={<button type="button" onClick={() => navigate('/admin/leads')} className={textLinkClass}>All applications <ArrowRight size={13} /></button>}
-        bodyClassName={leads.error ? undefined : tableFrame}
-      >
-        {leads.error ? (
-          <InlineSectionError message={leads.error} onRetry={leads.refetch} />
-        ) : (
-          <Table
-            columns={leadColumns}
-            data={leads.data?.items ?? []}
-            keyExtractor={l => l.id}
-            loading={leads.loading}
-            loadingRows={3}
-            emptyState={{ icon: <UserPlus size={28} className="text-slate/50" />, title: 'No applications waiting', description: 'Stores submitted for verification will appear here.' }}
-          />
-        )}
-      </StudioPanel>
-
+      {/* ── Review details (collapsed by default) ── */}
+      <Accordion items={reviewSections} />
       {/* ── Marketplace metrics (30 days) ── */}
       <section aria-labelledby="overview-metrics-title" className="flex flex-col gap-4">
         <div>
@@ -242,43 +279,7 @@ export function AdminOverview() {
         </div>
       </section>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-5 sm:gap-6">
-
-        {/* ── Top Categories ── */}
-        <StudioPanel id="overview-categories" title="Top categories by revenue" description="Last 30 days.">
-          {loading ? (
-            <div className="flex flex-col gap-3">
-              {Array.from({ length: 4 }).map((_, i) => <SkeletonBox key={i} className="h-6 w-full" />)}
-            </div>
-          ) : categories.length === 0 ? (
-            <EmptyState
-              icon={<Tag size={24} className="text-slate/50" />}
-              title="No category revenue yet"
-              description="Once orders start coming in across the marketplace, the top-earning categories will show up here."
-              className="py-10"
-            />
-          ) : (
-            <ul className="flex flex-col gap-[16px]">
-              {categories.map((cat) => {
-                const pct = Math.round((cat.revenue / maxCategoryRevenue) * 100);
-                return (
-                  <li key={cat.categoryId}>
-                    <div className="flex justify-between items-center mb-[6px] gap-3">
-                      <span className="text-[13px] text-carbon truncate">{cat.name}</span>
-                      <span className="text-[13px] font-semibold text-carbon shrink-0">{formatCurrency(cat.revenue)}</span>
-                    </div>
-                    <div className="h-2 rounded-full bg-cream overflow-hidden" role="presentation">
-                      <div
-                        className="h-full rounded-full bg-brand-orange transition-[width] duration-500 ease-out"
-                        style={{ width: `${pct}%` }}
-                      />
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </StudioPanel>
+      <div className="grid grid-cols-1 gap-5 sm:gap-6">
 
         {/* ── Quick access — shortcuts to moderation/marketplace/users/announcements ── */}
         <StudioPanel id="overview-quick" title="Quick access">

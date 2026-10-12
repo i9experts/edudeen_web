@@ -102,6 +102,8 @@ export function CartProvider({ storeId, children }: { storeId?: string; children
   const [loading, setLoading] = useState(false);
   const [adding,  setAdding]  = useState<string | null>(null);
   const [error,   setError]   = useState<string | null>(null);
+  // false until the first cart load finishes: keeps the last known badge count (no 0 flash).
+  const [settled, setSettled] = useState(false);
   const clearError = useCallback(() => setError(null), []);
 
   // Guest-only: caches each product's fetched detail (name/image/variants)
@@ -115,7 +117,7 @@ export function CartProvider({ storeId, children }: { storeId?: string; children
   // source it came from.
   const refreshGuestCartDisplay = useCallback(async () => {
     const guestItems = getGuestCartItems();
-    if (guestItems.length === 0) { setCart(null); return; }
+    if (guestItems.length === 0) { setCart(null); setSettled(true); return; }
 
     setLoading(true);
     const uniqueProductIds = Array.from(new Set(guestItems.map(i => i.productId)));
@@ -153,6 +155,7 @@ export function CartProvider({ storeId, children }: { storeId?: string; children
     const totalItems = items.reduce((s, i) => s + i.quantity, 0);
     const totalPrice = items.reduce((s, i) => s + (i.itemTotal ?? 0), 0);
     setCart({ userId: 'guest', items, totalItems, totalPrice });
+    setSettled(true);
     setLoading(false);
   }, []);
 
@@ -168,18 +171,18 @@ export function CartProvider({ storeId, children }: { storeId?: string; children
   const fetchCart = useCallback(() => {
     if (!TokenStorage.isLoggedIn()) { refreshGuestCartDisplay(); return; }
     // Sellers/admins have no buyer cart: don't call buyer-only endpoints for them.
-    if (TokenStorage.isStaffSession()) { setCart(null); setLoading(false); return; }
+    if (TokenStorage.isStaffSession()) { setCart(null); setLoading(false); setSettled(true); return; }
     // No `storeId` = the main marketplace site: show every store's cart.
     if (!storeId) {
       setLoading(true);
-      fetchMyCarts().finally(() => setLoading(false));
+      fetchMyCarts().finally(() => { setSettled(true); setLoading(false); });
       return;
     }
     setLoading(true);
     apiGetCart(storeId)
       .then(res => setCart(mergeTypes(res.data)))
       .catch(() => {})
-      .finally(() => setLoading(false));
+      .finally(() => { setSettled(true); setLoading(false); });
   }, [refreshGuestCartDisplay, fetchMyCarts, storeId]);
 
   // Which store's cart an item lives in (main site only).
@@ -231,7 +234,15 @@ export function CartProvider({ storeId, children }: { storeId?: string; children
     };
   }, [fetchCart, storeId]);
 
-  const cartCount = cart?.items?.reduce((s, i) => s + i.quantity, 0) ?? 0;
+  const liveCount = cart?.items?.reduce((s, i) => s + i.quantity, 0) ?? 0;
+  const countKey = 'edudeen_cart_count' + (storeId ?? '');
+  useEffect(() => {
+    if (!settled) return;
+    try { sessionStorage.setItem(countKey, String(liveCount)); } catch { /* ignore */ }
+  }, [liveCount, settled, countKey]);
+  const cartCount = settled ? liveCount : (() => {
+    try { return Number(sessionStorage.getItem(countKey)) || 0; } catch { return 0; }
+  })();
 
   const addToCart = useCallback(async (
     productId: string,

@@ -1,4 +1,5 @@
 import { PlacementBanner } from '@/components/comman/marketplace/PlacementBanner';
+import { formatMoney } from '@/utils/currency';
 import type { PromotionPlacement } from '@/api/services/banner';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -155,7 +156,7 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
     ...(state.type ? [{ key: 'type', label: PARAM_TO_TYPE[state.type] ?? state.type, clear: () => update({ type: undefined }) }] : []),
     ...(state.free ? [{ key: 'free', label: 'Free only', clear: () => update({ free: undefined }) }] : []),
     ...(!state.free && (state.min != null || state.max != null)
-      ? [{ key: 'price', label: `Rs ${(state.min ?? 0).toLocaleString()} – ${state.max != null ? `Rs ${state.max.toLocaleString()}` : 'any'}`, clear: () => update({ min: undefined, max: undefined }) }]
+      ? [{ key: 'price', label: `${formatMoney(state.min ?? 0, 'PKR')} – ${state.max != null ? formatMoney(state.max, 'PKR') : 'any'}`, clear: () => update({ min: undefined, max: undefined }) }]
       : []),
     ...(state.rating ? [{ key: 'rating', label: `${state.rating}★ & up`, clear: () => update({ rating: undefined }) }] : []),
   ];

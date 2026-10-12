@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { scrollRootRef } from '@/utils/scrollRoot';
 import { clsx } from 'clsx';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { isPlainLeftClick, blockLinkForButtons } from '@/utils/productLink';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useEdgeSwipeBack } from '@/hooks/useEdgeSwipeBack';
 import { useProductById } from '@/hooks/marketplace/useProductById';
@@ -45,7 +46,7 @@ import { CourseOrLiveInfo } from '@/features/buyer/components/CourseOrLiveInfo';
 import { PlacementBanner } from '@/components/comman/marketplace/PlacementBanner';
 import { ShippingZonesSummary } from '@/features/buyer/components/ShippingZonesSummary';
 import { syncRecentlyViewed } from '@/utils/recentlyViewedSync';
-import { currencySymbol } from '@/utils/currency';
+import { currencySymbol, formatMoney } from '@/utils/currency';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 
 // ── Skeleton ──────────────────────────────────────────────────────────────────
@@ -280,16 +281,18 @@ interface RelatedCardProps {
 function RelatedCard({ id, name, image, price: nativePrice, compareAtPrice: nativeCompareAt, currency: nativeCurrency, rating, reviewCount, sold, isNew, isBestseller, onClick, wishlist }: RelatedCardProps) {
   const [errored, setErrored] = useState(false);
   const { currency: displayCurrency, convert } = useCurrencyPreference();
-  const symbol = currencySymbol(displayCurrency);
   const price = nativePrice != null ? convert(nativePrice, nativeCurrency) : null;
   const compareAtPrice = nativeCompareAt != null ? convert(nativeCompareAt, nativeCurrency) : null;
   const pctOff = compareAtPrice != null && price != null && compareAtPrice > price
     ? Math.round((1 - price / compareAtPrice) * 100)
     : null;
   return (
-    <div
-      onClick={() => onClick(id)}
-      className="relative shrink-0 w-[150px] text-start bg-white rounded-[14px] border border-bone overflow-hidden cursor-pointer group transition-all duration-200 hover:-translate-y-[3px] hover:border-brand-orange/25"
+    <Link
+      to={`/product/${id}`}
+      draggable={false}
+      onClickCapture={blockLinkForButtons}
+      onClick={e => { if (!e.defaultPrevented && isPlainLeftClick(e)) { e.preventDefault(); onClick(id); } }}
+      className="block no-underline relative shrink-0 w-[150px] text-start bg-white rounded-[14px] border border-bone overflow-hidden cursor-pointer group transition-all duration-200 hover:-translate-y-[3px] hover:border-brand-orange/25"
     >
       <div className="relative h-[110px] bg-brand-pale-orange flex items-center justify-center overflow-hidden">
         {image && !errored
@@ -326,9 +329,9 @@ function RelatedCard({ id, name, image, price: nativePrice, compareAtPrice: nati
         <p className="text-[12px] font-semibold text-carbon leading-tight line-clamp-2 mb-1 min-h-[28px]">{name}</p>
         <div className="flex items-center justify-between gap-1">
           <span className="flex items-baseline gap-1">
-            <span className="text-[12.5px] font-bold text-carbon">{price != null ? `${symbol}${price.toLocaleString()}` : '—'}</span>
+            <span className="text-[12.5px] font-bold text-carbon">{price != null ? formatMoney(price, displayCurrency) : '—'}</span>
             {compareAtPrice != null && price != null && compareAtPrice > price && (
-              <span className="text-[12px] text-slate line-through">{symbol}{compareAtPrice.toLocaleString()}</span>
+              <span className="text-[12px] text-slate line-through">{formatMoney(compareAtPrice, displayCurrency)}</span>
             )}
           </span>
           {!!rating && rating > 0 && (
@@ -346,7 +349,7 @@ function RelatedCard({ id, name, image, price: nativePrice, compareAtPrice: nati
           </p>
         ) : null}
       </div>
-    </div>
+    </Link>
   );
 }
 

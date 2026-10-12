@@ -1,4 +1,5 @@
 import { Truck } from 'lucide-react';
+import { formatMoney } from '@/utils/currency';
 import { useShippingZones } from '@/hooks/shipping/useShippingZones';
 import { shippingZoneLabel } from '@/api/services/shipping';
 
@@ -25,7 +26,7 @@ export function ShippingZonesSummary({ sellerName }: { sellerName?: string | nul
             <li key={z._id} className="flex justify-between gap-3">
               <span className="truncate">{shippingZoneLabel(z)}</span>
               <span className="shrink-0 tabular-nums text-charcoal">
-                {z.shippingPrice > 0 ? `Rs ${z.shippingPrice.toLocaleString()}` : 'Free'}{z.estimatedDeliveryTime ? ` · ${z.estimatedDeliveryTime}` : ''}
+                {z.shippingPrice > 0 ? formatMoney(z.shippingPrice, 'PKR') : 'Free'}{z.estimatedDeliveryTime ? ` · ${z.estimatedDeliveryTime}` : ''}
               </span>
             </li>
           ))}

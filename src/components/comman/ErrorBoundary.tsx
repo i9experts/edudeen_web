@@ -23,6 +23,8 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     console.error('[ErrorBoundary] Uncaught error:', error, info.componentStack);
+    const sentry = (window as unknown as { __sentry?: { captureException?: (e: unknown, c?: unknown) => void } }).__sentry;
+    sentry?.captureException?.(error, { extra: { componentStack: info.componentStack } });
   }
 
   componentDidUpdate(prev: ErrorBoundaryProps) {
