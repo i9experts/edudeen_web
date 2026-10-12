@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
-  apiGetBanners, apiGetBannerCount, SELECTABLE_PROMOTION_PLACEMENTS, type Banner, type BannerCountData,
+  apiGetAdminBanners, apiGetBannerCount, SELECTABLE_PROMOTION_PLACEMENTS, type Banner, type BannerCountData,
 } from '@/api/services/banner';
 
 export function useAdminBanners() {
@@ -10,7 +10,7 @@ export function useAdminBanners() {
 
   const refetch = useCallback(() => {
     setLoading(true);
-    return apiGetBanners()
+    return apiGetAdminBanners()
       .then(res => setBanners(res.data ?? []))
       .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Failed to load banners.'))
       .finally(() => setLoading(false));

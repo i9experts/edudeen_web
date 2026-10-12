@@ -669,6 +669,7 @@ export const ENDPOINTS = {
     // whose URL contains "banners".
     LIST:   '/api/spotlight',
     COUNT:  '/api/banners/count',
+    ADMIN_LIST: '/api/banners/admin/all',
     CREATE: '/api/banners',
     UPLOAD: '/api/banners/upload',
     UPDATE: (id: string) => `/api/banners/${id}`,

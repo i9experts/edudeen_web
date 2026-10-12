@@ -30,6 +30,8 @@ export interface Banner {
   placements:  PromotionPlacement[];
   startAt:     string | null;
   endAt:       string | null;
+  /** Admin list only: true when visitors can see this banner right now. */
+  live?:       boolean;
   order:       number;
   createdAt:   string;
   updatedAt:   string;
@@ -54,16 +56,20 @@ export interface CreateBannerPayload {
   startAt?:     string;
   endAt?:       string;
   order?:       number;
+  /** Save without publishing — never shown until published. */
+  saveAsDraft?: boolean;
 }
 
 export interface UpdateBannerPayload {
   bannerImage?: string;
   urlOnTap?:    string;
   placements?:  PromotionPlacement[];
-  startAt?:     string;
-  endAt?:       string;
+  /** `null` clears the schedule. */
+  startAt?:     string | null;
+  endAt?:       string | null;
   order?:       number;
   isActive?:    boolean;
+  saveAsDraft?: boolean;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -78,6 +84,11 @@ export function apiGetBanners(placement?: PromotionPlacement) {
 // ─────────────────────────────────────────────────────────────────────────────
 // ADMIN
 // ─────────────────────────────────────────────────────────────────────────────
+/** GET /api/banners/admin/all — every banner in every state (draft / scheduled / live / paused / expired). */
+export function apiGetAdminBanners() {
+  return client.get<never, { success: boolean; count: number; data: Banner[] }>(ENDPOINTS.BANNER.ADMIN_LIST);
+}
+
 export function apiGetBannerCount(placement?: PromotionPlacement) {
   return client.get<never, { success: boolean; data: BannerCountData }>(
     ENDPOINTS.BANNER.COUNT, { params: placement ? { placement } : undefined },
