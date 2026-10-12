@@ -12,10 +12,10 @@ import {
   useUpdateManualPaymentConfig,
 } from '@/hooks/admin/useAdminConfig';
 import type { PlatformConfig, AiConfig, EmailConfig, ManualPaymentConfig } from '@/api/services/config/adminConfig';
-import { Toggle, Input, Textarea, Select, Button, SkeletonBox } from '@/components/comman/ui';
+import { Toggle, Input, Textarea, Select, Button, SkeletonBox, Accordion } from '@/components/comman/ui';
 import { AdminStudioHeader } from '@/features/admin/components/studio';
 import { AnalyticsErrorState } from '@/components/comman/analytics/AnalyticsErrorState';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, Wrench, Sparkles, Mail, Landmark, Home, Gift, Share2 } from 'lucide-react';
 import { AiFeatureSwitches } from '@/features/admin/components/AiFeatureSwitches';
 
 const AI_MODELS = ['claude-sonnet-5', 'claude-haiku-4-5', 'claude-opus-4-8'];
@@ -258,15 +258,24 @@ export function AdminConfig() {
         <AnalyticsErrorState message={error} onRetry={refetch} />
       ) : config ? (
         <>
-          <MaintenanceCard config={config} onSaved={setConfig} />
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <AiConfigCard config={config} onSaved={setConfig} />
-            <EmailConfigCard config={config} onSaved={setConfig} />
-          </div>
-          <ManualPaymentConfigCard config={config} onSaved={setConfig} />
-          <HomeContentCard />
-          <ReferralSettingsCard />
-          <SocialLinksCard />
+          <p className="text-[12px] text-slate -mb-2">Pick a topic to open its settings.</p>
+          <Accordion items={[
+            { id: 'maintenance', title: 'Maintenance', description: 'Take parts of the site offline with a message for visitors', icon: <Wrench size={16} />,
+              status: config.maintenance?.enabled ? <span className="px-2 py-0.5 rounded-full bg-error-bg text-error font-semibold">On</span> : <span className="px-2 py-0.5 rounded-full bg-bone text-slate">Off</span>,
+              content: <MaintenanceCard config={config} onSaved={setConfig} /> },
+            { id: 'ai', title: 'AI settings', description: 'Model, monthly credits and which AI features are on', icon: <Sparkles size={16} />,
+              content: <AiConfigCard config={config} onSaved={setConfig} /> },
+            { id: 'email', title: 'Email', description: 'Sender name, from / reply-to address and provider', icon: <Mail size={16} />,
+              content: <EmailConfigCard config={config} onSaved={setConfig} /> },
+            { id: 'manual-payment', title: 'Manual bank transfer (legacy)', description: 'Platform bank details used for old bank-transfer proofs', icon: <Landmark size={16} />,
+              content: <ManualPaymentConfigCard config={config} onSaved={setConfig} /> },
+            { id: 'homepage', title: 'Homepage, About & legal text', description: 'Hero, trust strip, About page, privacy / terms / cookie text', icon: <Home size={16} />,
+              content: <HomeContentCard /> },
+            { id: 'referral', title: 'Referral programme', description: 'Rewards when buyers invite friends', icon: <Gift size={16} />,
+              content: <ReferralSettingsCard /> },
+            { id: 'social', title: 'Social links', description: 'Icons shown in the website footer', icon: <Share2 size={16} />,
+              content: <SocialLinksCard /> },
+          ]} />
         </>
       ) : null}
       </div>

@@ -12,6 +12,8 @@ export { Input, Textarea, Select }           from './Input';
 export { Avatar }                            from './Avatar';
 
 export { MetricCard }                        from './MetricCard';
+export { Accordion }                          from './CollapsibleSection';
+export type { AccordionItem }                 from './CollapsibleSection';
 
 export { AdminPageHeader }                   from './AdminPageHeader';
 
