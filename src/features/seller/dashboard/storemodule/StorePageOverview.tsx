@@ -161,7 +161,7 @@ export function StorePageOverview() {
     if (!storeId) return;
     let cancelled = false;
     apiGetFinanceDashboard(storeId)
-      .then(d => { if (!cancelled) setCommissionPct(commissionPctFromFee(d?.feeBreakdown?.transactionFee)); })
+      .then(d => { if (!cancelled) setCommissionPct(commissionPctFromFee(d?.platformFeeBreakdown?.platformFee ?? d?.feeBreakdown?.transactionFee)); })
       .catch(() => { /* line falls back to neutral copy */ });
     return () => { cancelled = true; };
   }, [storeId]);

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { LayoutDashboard, DollarSign, Store, Send, Receipt, FileText, Landmark, CalendarCheck } from 'lucide-react';
+import { LayoutDashboard, DollarSign, Store, Send, Receipt, FileText, Landmark, CalendarCheck, AlertTriangle } from 'lucide-react';
 import { AdminStudioHeader, ADMIN_GUTTER } from '../components/studio';
 import { FinanceMonthlySettlementTab } from './finance/FinanceMonthlySettlementTab';
 import { Button, TabBar, type Tab } from '@/components/comman/ui';
@@ -24,6 +24,7 @@ import { FinancePayoutsTab } from './finance/FinancePayoutsTab';
 import { FinancePayoutMethodsTab } from './finance/FinancePayoutMethodsTab';
 import { FinanceTransactionsTab } from './finance/FinanceTransactionsTab';
 import { FinanceReportsTab } from './finance/FinanceReportsTab';
+import { FinanceCreditJobsTab } from './finance/FinanceCreditJobsTab';
 
 // Same name-search drill-down as AdminAnalytics — no raw ObjectIds to paste.
 async function searchStoresByName(query: string): Promise<EntityOption[]> {
@@ -45,10 +46,11 @@ const TABS: Tab[] = [
   { id: 'payout-methods', label: 'Payout Methods', icon: <Landmark size={14} /> },
   { id: 'transactions', label: 'Transactions', icon: <Receipt size={14} /> },
   { id: 'reports', label: 'Reports', icon: <FileText size={14} /> },
+  { id: 'failed-credits', label: 'Failed credits', icon: <AlertTriangle size={14} /> },
 ];
 
 /** Tabs whose endpoints take no date/store/seller params. */
-const UNFILTERED_TABS = new Set(['sellers', 'payouts', 'payout-methods']);
+const UNFILTERED_TABS = new Set(['sellers', 'payouts', 'payout-methods', 'failed-credits']);
 
 export function AdminFinance() {
   usePageTitle('Finance');
@@ -139,6 +141,7 @@ export function AdminFinance() {
       {activeTab === 'payouts' && <FinancePayoutsTab />}
       {activeTab === 'payout-methods' && <FinancePayoutMethodsTab />}
       {activeTab === 'transactions' && <FinanceTransactionsTab params={params} />}
+      {activeTab === 'failed-credits' && <FinanceCreditJobsTab />}
       {activeTab === 'reports' && <FinanceReportsTab params={params} />}
       {activeTab === 'monthly-payouts' && <FinanceMonthlySettlementTab onOpenPayouts={() => setActiveTab('payouts')} />}
     </div>

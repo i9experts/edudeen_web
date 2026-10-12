@@ -43,6 +43,16 @@ export interface FinanceDashboard {
     digitalDelivery:       string;
     aiCredits:              string;
   };
+  /** Same numbers under the platform-fee names (feeBreakdown above is the old alias). */
+  platformFeeRate: number;
+  platformFeeBreakdown: {
+    marketplaceListingFee: string;
+    platformFee:           string;
+    platformFeeSource?:    string;
+    paymentProcessing:     string;
+    digitalDelivery:       string;
+    aiCredits:             string;
+  };
 }
 
 export type TransactionType   = 'sale' | 'payout' | 'fee' | 'refund' | 'adjustment';
@@ -269,14 +279,20 @@ export interface MonthlyStatement {
   month:             string;
   currency:          string;
   /** Platform commission rate, as a percentage (e.g. 10 = 10%) or a fraction (0.1) — see formatCommissionRate. */
-  commissionRate:    number;
+  commissionRate?:   number;
+  /** Platform fee rate (0-1 fraction) — new name for commissionRate. */
+  platformFeeRate:   number;
   orderCount:        number;
   grossSales:        number;
-  commission:        number;
+  commission?:       number;
+  /** Platform fee taken on the month's sales — new name for commission. */
+  platformFee:       number;
   processingFees:    number;
   refunds:           number;
   /** Commission owed on cash-on-delivery orders (seller kept the cash) — deducted from the next payout. */
-  codCommissionOwed: number;
+  codCommissionOwed?: number;
+  /** Platform fee owed on cash-on-delivery orders — new name for codCommissionOwed. */
+  codPlatformFeeOwed: number;
   netEarnings:       number;
   /** Can be negative when COD commission owed exceeds cleared earnings. */
   availableBalance:  number;

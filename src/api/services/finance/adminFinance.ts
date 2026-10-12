@@ -556,3 +556,21 @@ export async function apiAdminFinanceExport(params: AdminFinanceExportParams) {
   a.click();
   URL.revokeObjectURL(objUrl);
 }
+
+// ── Seller credit outbox (failed / pending sale credits) ────────────────────────
+export type CreditJobStatus = 'pending' | 'done' | 'failed_final';
+export interface CreditJobRow {
+  _id: string; orderId: string; storeId: string; sellerId: string;
+  status: CreditJobStatus; attempts: number; lastError: string | null;
+  nextAttemptAt: string; createdAt: string; updatedAt: string; doneAt: string | null;
+  payload?: { saleAmount?: number; currency?: string };
+}
+export interface CreditJobsPage { items: CreditJobRow[]; total: number; page: number; limit: number; pages: number }
+
+export function apiAdminListCreditJobs(params: { status?: CreditJobStatus | ''; page?: number; limit?: number }) {
+  return client.get<never, { success: boolean; data: CreditJobsPage }>(ENDPOINTS.FINANCE.ADMIN.CREDIT_JOBS, { params: { ...params, status: params.status || undefined } });
+}
+
+export function apiAdminRetryCreditJob(id: string) {
+  return client.post<never, { success: boolean; data: { creditStatus: 'credited' | 'pending'; job: CreditJobRow | null } }>(ENDPOINTS.FINANCE.ADMIN.RETRY_CREDIT_JOB(id), {});
+}

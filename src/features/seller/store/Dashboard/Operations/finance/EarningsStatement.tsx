@@ -211,8 +211,8 @@ export function EarningsStatement({ storeId, currencies, defaultCurrency }: Prop
               sub={`${statement.orderCount} order${statement.orderCount === 1 ? '' : 's'} in ${monthLabel(statement.month || month)}`}
             />
             <MetricCard
-              label={`Platform commission (${formatCommissionRate(statement.commissionRate)})`}
-              value={money(statement.commission)}
+              label={`Platform commission (${formatCommissionRate(statement.platformFeeRate)})`}
+              value={money(statement.platformFee)}
               sub="Deducted from your sales"
             />
             <MetricCard
@@ -233,10 +233,10 @@ export function EarningsStatement({ storeId, currencies, defaultCurrency }: Prop
               <dl className="flex flex-col">
                 {([
                   ['Gross sales', statement.grossSales, 'plus'],
-                  [`Platform commission (${formatCommissionRate(statement.commissionRate)})`, statement.commission, 'minus'],
+                  [`Platform commission (${formatCommissionRate(statement.platformFeeRate)})`, statement.platformFee, 'minus'],
                   ['Payment processing fees', statement.processingFees, 'minus'],
                   ['Refunds', statement.refunds, 'minus'],
-                  ['Commission owed on cash-on-delivery orders', statement.codCommissionOwed, 'minus'],
+                  ['Commission owed on cash-on-delivery orders', statement.codPlatformFeeOwed, 'minus'],
                 ] as const).map(([label, value, sign]) => (
                   <div key={label} className="flex items-center justify-between gap-4 py-[12px] border-b border-bone">
                     <dt className="text-[13.5px] text-graphite">{label}</dt>
@@ -330,10 +330,10 @@ export function EarningsStatement({ storeId, currencies, defaultCurrency }: Prop
       {/* How you get paid — always visible, even before the statement loads */}
       <StudioPanel title="How you get paid">
         <StudioWorkflow steps={howYouGetPaid(
-          statement?.commissionRate == null || Number.isNaN(statement.commissionRate)
+          statement?.platformFeeRate == null || Number.isNaN(statement.platformFeeRate)
             ? null
             // Same either-unit handling as formatCommissionRate: 0.1 or 10 → 10.
-            : statement.commissionRate > 0 && statement.commissionRate <= 1 ? statement.commissionRate * 100 : statement.commissionRate,
+            : statement.platformFeeRate > 0 && statement.platformFeeRate <= 1 ? statement.platformFeeRate * 100 : statement.platformFeeRate,
         )} />
         <div className="mt-6 flex gap-3 rounded-lg bg-[#faf0d4]/60 border border-[#f0e2b0] px-4 py-3">
           <Info size={17} className="text-[#755600] shrink-0 mt-[2px]" />

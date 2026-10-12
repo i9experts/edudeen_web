@@ -156,6 +156,12 @@ export function apiGetStorePlatformPlan(storeId: string) {
     client.get<never, ApiResponse<StorePlatformSubscription | null>>(`${BASE}/${storeId}`));
 }
 
+/** Bypasses the short-lived cache — used while waiting for a webhook to apply a paid plan. */
+export function apiRefreshStorePlatformPlan(storeId: string) {
+  invalidateCache(planCacheKey(storeId));
+  return apiGetStorePlatformPlan(storeId);
+}
+
 export function apiGetStoreEntitlements(storeId: string) {
   return cachedRequest(`${planCacheKey(storeId)}ent`, PLAN_CACHE_MS, () =>
     client.get<never, ApiResponse<EntitlementsSummary>>(`${BASE}/${storeId}/entitlements`));
@@ -172,7 +178,7 @@ export function apiGetStoreInvoices(storeId: string, query: { page?: number; lim
 }
 
 export function apiChangePlatformPlan(storeId: string, newPlatformPlanId: string, newBillingInterval: 'monthly' | 'yearly') {
-  return client.patch<never, ApiResponse<StorePlatformSubscription>>(`${BASE}/${storeId}/change-plan`, { newPlatformPlanId, newBillingInterval })
+  return client.patch<never, ApiResponse<StorePlatformSubscription & { subscription?: StorePlatformSubscription; requiresAction?: boolean; clientSecret?: string | null }>>(`${BASE}/${storeId}/change-plan`, { newPlatformPlanId, newBillingInterval })
     .finally(() => invalidateCache(planCacheKey(storeId)));
 }
 

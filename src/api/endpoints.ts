@@ -819,6 +819,8 @@ export const ENDPOINTS = {
       PROCESS_CLEARING:      '/api/admin/finance/process-clearing',
       PROCESS_SCHEDULED_PAYOUTS: '/api/admin/finance/process-scheduled-payouts',
       PENDING_VERIFICATION_METHODS: '/api/admin/finance/payout-methods/pending-verification',
+      CREDIT_JOBS:           '/api/admin/finance/credit-jobs',
+      RETRY_CREDIT_JOB:      (id: string) => `/api/admin/finance/credit-jobs/${id}/retry`,
       VERIFY_PAYOUT_METHOD:  (storeId: string, methodId: string) => `/api/admin/finance/sellers/${storeId}/payout-methods/${methodId}/verify`,
       REFUND_REPORT:         '/api/admin/finance/reports/refunds',
       TAX_REPORTS:           '/api/admin/finance/reports/tax',

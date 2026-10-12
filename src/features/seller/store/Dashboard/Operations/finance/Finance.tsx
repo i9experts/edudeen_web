@@ -306,7 +306,7 @@ export function StoreFinance() {
   }
 
   const activeWallet = dashboard?.wallets?.find(w => w.currency === activeCurrency) ?? dashboard?.wallets?.[0] ?? null;
-  const PAYOUT_NOTE = payoutNote(commissionPctFromFee(dashboard?.feeBreakdown?.transactionFee));
+  const PAYOUT_NOTE = payoutNote(commissionPctFromFee(dashboard?.platformFeeBreakdown?.platformFee ?? dashboard?.feeBreakdown?.transactionFee));
 
   const header = (
     <>
@@ -544,8 +544,8 @@ export function StoreFinance() {
               <p className="font-serif text-[18px] text-carbon mb-3">Fees</p>
               <div className="flex flex-col gap-2.5">
                 {[
-                  ['Edudeen platform fee', dashboard.feeBreakdown.transactionFee],
-                  ['Card processing', dashboard.feeBreakdown.paymentProcessing],
+                  ['Edudeen platform fee', dashboard.platformFeeBreakdown?.platformFee ?? dashboard.feeBreakdown.transactionFee],
+                  ['Card processing', (dashboard.platformFeeBreakdown ?? dashboard.feeBreakdown).paymentProcessing],
                 ].map(([label, val]) => (
                   <div key={label} className="flex justify-between items-start gap-3">
                     <span className="text-xs text-slate shrink-0">{label}</span>

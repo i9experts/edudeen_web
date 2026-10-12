@@ -9,7 +9,7 @@ import { Modal } from '@/components/comman/ui/Modal';
 import { Textarea } from '@/components/comman/ui/Input';
 import { SkeletonBox } from '@/components/comman/ui';
 import {
-  apiBrowsePlatformPlans, apiGetStorePlatformPlan, apiGetStoreEntitlements, apiChangePlatformPlan,
+  apiBrowsePlatformPlans, apiGetStorePlatformPlan, apiRefreshStorePlatformPlan, apiGetStoreEntitlements, apiChangePlatformPlan,
   apiPreviewPlatformPlanChange, apiCancelPlatformPlan, apiReactivatePlatformPlan, apiCreatePlatformBillingPortalSession,
   apiPurchaseAddon, apiListStoreAddons, apiCancelAddon, apiGetStoreInvoices,
   type PlatformPlan, type StorePlatformSubscription, type EntitlementsSummary, type AddonPurchase, type AddonType,
@@ -17,6 +17,7 @@ import {
 } from '@/api/services/platformPlans';
 import { apiGetAiStudioCredits } from '@/api/services/aiStudio';
 import { planPriceFor, planYearlySavePct } from '@/utils/planPricing';
+import { confirmSubscriptionPayment } from '@/features/auth/pages/onboard/StripeCardSetup';
 
 const INVOICE_STATUS_STYLE: Record<string, string> = {
   paid: 'bg-[#e3f4ea] text-[#1e7a3c]',
@@ -134,7 +135,20 @@ export default function StorePlanBilling() {
     setChangingId(confirmingPlan._id);
     setActionError('');
     try {
-      await apiChangePlatformPlan(storeId, confirmingPlan._id, interval);
+      const res = await apiChangePlatformPlan(storeId, confirmingPlan._id, interval);
+      // First paid purchase / upgrade whose card needs 3-D Secure: the plan is NOT applied yet — finish
+      // the payment with Stripe, then wait for the invoice-paid webhook to switch the plan (monthly + yearly alike).
+      const data = res.data as { requiresAction?: boolean; clientSecret?: string | null } | undefined;
+      if (data?.requiresAction && data.clientSecret) {
+        const payError = await confirmSubscriptionPayment(data.clientSecret);
+        if (payError) { setActionError(payError); return; }
+        const targetId = confirmingPlan._id;
+        for (let i = 0; i < 8; i++) {
+          const cur = await apiRefreshStorePlatformPlan(storeId).catch(() => null);
+          if (cur?.data?.platformPlanId === targetId) break;
+          await new Promise(r => setTimeout(r, 1500));
+        }
+      }
       setConfirmingPlan(null);
       load();
     } catch (err) {
