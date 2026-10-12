@@ -40,7 +40,7 @@ export function PlatformTab({ params }: { params: BaseAnalyticsParams }) {
       ) : null}
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <MetricCard label="New Users in Period" value={c ? c.newUsersInPeriod.toLocaleString() : ''} loading={platform.loading} />
+        <MetricCard to="/admin/users?role=buyer" label="New Users in Period" value={c ? c.newUsersInPeriod.toLocaleString() : ''} loading={platform.loading} />
         <MetricCard label="New Users Who Ordered" value={c ? c.newUsersWhoOrdered.toLocaleString() : ''} loading={platform.loading} />
         <MetricCard label="Signup → Order Conversion" value={c ? formatPercent(c.signupToOrderConversionPercent) : ''} loading={platform.loading} />
       </div>

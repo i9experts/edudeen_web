@@ -24,9 +24,9 @@ export function PaymentsTab({ params }: { params: BaseAnalyticsParams }) {
   return (
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <MetricCard label="Successful Payments" value={d ? d.successfulPayments.count.toLocaleString() : ''} loading={payments.loading} sub={d ? formatCurrency(d.successfulPayments.amount) : undefined} />
-        <MetricCard label="Failed Payments" value={d ? d.failedPayments.count.toLocaleString() : ''} loading={payments.loading} sub={d ? formatCurrency(d.failedPayments.amount) : undefined} />
-        <MetricCard label="Pending Payments" value={d ? d.pendingPayments.count.toLocaleString() : ''} loading={payments.loading} sub={d ? formatCurrency(d.pendingPayments.amount) : undefined} />
+        <MetricCard to="/admin/orders?payment=paid" label="Successful Payments" value={d ? d.successfulPayments.count.toLocaleString() : ''} loading={payments.loading} sub={d ? formatCurrency(d.successfulPayments.amount) : undefined} />
+        <MetricCard to="/admin/orders?payment=failed" label="Failed Payments" value={d ? d.failedPayments.count.toLocaleString() : ''} loading={payments.loading} sub={d ? formatCurrency(d.failedPayments.amount) : undefined} />
+        <MetricCard to="/admin/orders?payment=pending_verification" label="Pending Payments" value={d ? d.pendingPayments.count.toLocaleString() : ''} loading={payments.loading} sub={d ? formatCurrency(d.pendingPayments.amount) : undefined} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

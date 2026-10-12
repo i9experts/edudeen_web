@@ -74,8 +74,8 @@ export function RevenueTab({ params, compareToPreviousPeriod }: { params: BaseAn
 
           <div className="grid grid-cols-1 gap-3">
             <MetricCard label="One-Time Order Revenue" value={formatCurrency(breakdown.data.oneTimeOrderRevenue)} sub="Belongs to sellers, not the platform" />
-            <MetricCard label="Total Platform Revenue" value={formatCurrency(breakdown.data.totalPlatformRevenue)} sub="Commission + subscriptions" />
-            <MetricCard label="Total Marketplace Revenue" value={formatCurrency(breakdown.data.totalMarketplaceRevenue)} sub="Order revenue + subscriptions" />
+            <MetricCard to="/admin/finance?tab=revenue" label="Total Platform Revenue" value={formatCurrency(breakdown.data.totalPlatformRevenue)} sub="Commission + subscriptions" />
+            <MetricCard to="/admin/orders" label="Total Marketplace Revenue" value={formatCurrency(breakdown.data.totalMarketplaceRevenue)} sub="Order revenue + subscriptions" />
           </div>
         </div>
       ) : null}

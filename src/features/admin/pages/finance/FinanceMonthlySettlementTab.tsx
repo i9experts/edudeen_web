@@ -217,7 +217,7 @@ export function FinanceMonthlySettlementTab({ onOpenPayouts }: { onOpenPayouts: 
               <>
                 <MetricCard label="Gross sales" value={money(data.totals.grossSales)} sub={monthLabel(data.month || month)} />
                 <MetricCard label="Edudeen commission" value={money(data.totals.commission)} />
-                <MetricCard label="Owed to sellers" value={money(data.totals.netOwedToSellers)} />
+                <MetricCard to="/admin/finance?tab=payouts" label="Owed to sellers" value={money(data.totals.netOwedToSellers)} />
                 <MetricCard
                   label="Sellers"
                   value={formatNumber(data.totals.sellers)}

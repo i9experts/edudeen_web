@@ -1,4 +1,5 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useAdminUsersStats, useAdminUsersList, useAdminUserActions, useAdminUserDetail } from '@/hooks/admin/useAdminUsers';
 import { useToast } from '@/contexts/ToastContext';
@@ -112,9 +113,12 @@ export function AdminUsers() {
   const { data: stats, loading: statsLoading, error: statsError, refetch: refetchStats } = useAdminUsersStats();
 
   const [search, setSearch] = useState('');
-  const [roleFilter, setRoleFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  const [urlParams] = useSearchParams();
+  const [roleFilter, setRoleFilter] = useState(urlParams.get('role') ?? '');
+  const [statusFilter, setStatusFilter] = useState(urlParams.get('status') ?? '');
   const [page, setPage] = useState(1);
+  // Stat cards (here and on the overview) link with ?role=&status= — follow the URL when it changes.
+  useEffect(() => { setRoleFilter(urlParams.get('role') ?? ''); setStatusFilter(urlParams.get('status') ?? ''); setPage(1); }, [urlParams]);
 
   const query = useMemo(
     () => ({
@@ -224,9 +228,9 @@ export function AdminUsers() {
             Array.from({ length: 3 }).map((_, i) => <SkeletonBox key={i} height={92} rounded="10px" />)
           ) : stats ? (
             <>
-              <MetricCard label="Total Buyer Accounts" value={formatNumber(stats.totalBuyers)} />
-              <MetricCard label="Active Seller Accounts" value={formatNumber(stats.activeSellerAccounts)} />
-              <MetricCard label="Suspended" value={formatNumber(stats.suspended)} sub="Buyers + sellers blocked from signing in" />
+              <MetricCard to="/admin/users?role=buyer" label="Total Buyer Accounts" value={formatNumber(stats.totalBuyers)} />
+              <MetricCard to="/admin/users?role=seller&status=active" label="Active Seller Accounts" value={formatNumber(stats.activeSellerAccounts)} />
+              <MetricCard to="/admin/users?status=suspended" label="Suspended" value={formatNumber(stats.suspended)} sub="Buyers + sellers blocked from signing in" />
             </>
           ) : null}
         </div>

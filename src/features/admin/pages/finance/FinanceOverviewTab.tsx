@@ -37,17 +37,17 @@ export function FinanceOverviewTab({ params }: { params: AdminFinanceParams }) {
                 to check first (total volume, platform's own take). Everything
                 else is supporting context, not a competing headline. */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <MetricCard label="GMV" value={formatMoneyCompact(c.gmv, c.currency)} icon={<DollarSign size={18} />} />
-              <MetricCard label="Platform Earnings" value={formatMoneyCompact(c.platformEarnings, c.currency)} icon={<Percent size={18} />} sub={c.platformCommission > 0 ? `Commission ${formatMoneyCompact(c.platformCommission, c.currency)} + Subs ${formatMoneyCompact(c.subscriptionRevenue, c.currency)}` : `Seller plan fees ${formatMoneyCompact(c.subscriptionRevenue, c.currency)}`} />
+              <MetricCard to="/admin/orders" label="GMV" value={formatMoneyCompact(c.gmv, c.currency)} icon={<DollarSign size={18} />} />
+              <MetricCard to="/admin/finance?tab=revenue" label="Platform Earnings" value={formatMoneyCompact(c.platformEarnings, c.currency)} icon={<Percent size={18} />} sub={c.platformCommission > 0 ? `Commission ${formatMoneyCompact(c.platformCommission, c.currency)} + Subs ${formatMoneyCompact(c.subscriptionRevenue, c.currency)}` : `Seller plan fees ${formatMoneyCompact(c.subscriptionRevenue, c.currency)}`} />
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-              <MetricCard label="Net Revenue" value={formatMoneyCompact(c.netRevenue, c.currency)} icon={<DollarSign size={16} />} />
-              <MetricCard label="Refunds" value={formatMoneyCompact(c.refunds, c.currency)} icon={<RotateCcw size={16} />} />
-              <MetricCard label="Available (owed)" value={formatMoneyCompact(c.sellerBalances.totalAvailable, c.currency)} icon={<Wallet size={16} />} />
-              <MetricCard label="Pending (owed)" value={formatMoneyCompact(c.sellerBalances.totalPending, c.currency)} icon={<Clock size={16} />} sub="In clearing window" />
-              <MetricCard label="Total Orders" value={formatNumber(c.totalOrders)} icon={<ShoppingCart size={16} />} />
-              <MetricCard label="Processing Fees" value={formatMoneyCompact(c.paymentProcessingFees, c.currency)} icon={<DollarSign size={16} />} />
+              <MetricCard to="/admin/finance?tab=revenue" label="Net Revenue" value={formatMoneyCompact(c.netRevenue, c.currency)} icon={<DollarSign size={16} />} />
+              <MetricCard to="/admin/refunds" label="Refunds" value={formatMoneyCompact(c.refunds, c.currency)} icon={<RotateCcw size={16} />} />
+              <MetricCard to="/admin/finance?tab=sellers" label="Available (owed)" value={formatMoneyCompact(c.sellerBalances.totalAvailable, c.currency)} icon={<Wallet size={16} />} />
+              <MetricCard to="/admin/finance?tab=sellers" label="Pending (owed)" value={formatMoneyCompact(c.sellerBalances.totalPending, c.currency)} icon={<Clock size={16} />} sub="In clearing window" />
+              <MetricCard to="/admin/orders" label="Total Orders" value={formatNumber(c.totalOrders)} icon={<ShoppingCart size={16} />} />
+              <MetricCard to="/admin/finance?tab=transactions" label="Processing Fees" value={formatMoneyCompact(c.paymentProcessingFees, c.currency)} icon={<DollarSign size={16} />} />
             </div>
           </div>
         ))

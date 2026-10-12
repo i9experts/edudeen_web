@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useLeads, useLeadDetail, useLeadActions } from '@/hooks/admin/useAdminMarketplace';
 import type { LeadRow, LeadVerificationStatus } from '@/api/services/marketplace/adminMarketplace';
@@ -216,8 +217,10 @@ export function AdminLeads() {
   usePageTitle('Seller Applications');
 
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  const [urlParams] = useSearchParams();
+  const [statusFilter, setStatusFilter] = useState(urlParams.get('status') ?? '');
   const [page, setPage] = useState(1);
+  useEffect(() => { setStatusFilter(urlParams.get('status') ?? ''); setPage(1); }, [urlParams]);
   const query = useMemo(
     () => ({
       search: search || undefined,

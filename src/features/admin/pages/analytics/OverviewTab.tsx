@@ -35,30 +35,30 @@ export function OverviewTab({ params, compareToPreviousPeriod }: { params: BaseA
   const ordersSparkline = orders.data?.series.map(p => p.orderCount);
 
   const metrics = d && [
-    { label: 'Total GMV', value: formatCurrency(d.totalGMV), icon: <DollarSign size={16} /> },
+    { to: '/admin/orders', label: 'Total GMV', value: formatCurrency(d.totalGMV), icon: <DollarSign size={16} /> },
     {
-      label: 'Total Revenue (net)', value: formatCurrency(d.totalRevenue), icon: <DollarSign size={16} />,
+      to: '/admin/orders?payment=paid', label: 'Total Revenue (net)', value: formatCurrency(d.totalRevenue), icon: <DollarSign size={16} />,
       trend: d.totalRevenueChangePercent != null ? formatPercent(d.totalRevenueChangePercent, { signed: true }) : undefined,
       trendUp: (d.totalRevenueChangePercent ?? 0) >= 0,
       sparkline: revenueSparkline,
     },
-    { label: 'Platform Earnings', value: formatCurrency(d.platformEarnings), icon: <DollarSign size={16} />, sub: d.platformCommission > 0 ? `Commission ${formatCurrency(d.platformCommission)} + Subs ${formatCurrency(d.subscriptionRevenue)}` : `Seller plan fees ${formatCurrency(d.subscriptionRevenue)}` },
+    { to: '/admin/finance', label: 'Platform Earnings', value: formatCurrency(d.platformEarnings), icon: <DollarSign size={16} />, sub: d.platformCommission > 0 ? `Commission ${formatCurrency(d.platformCommission)} + Subs ${formatCurrency(d.subscriptionRevenue)}` : `Seller plan fees ${formatCurrency(d.subscriptionRevenue)}` },
     {
-      label: 'Total Orders', value: formatNumber(d.totalOrders), icon: <ShoppingCart size={16} />,
+      to: '/admin/orders', label: 'Total Orders', value: formatNumber(d.totalOrders), icon: <ShoppingCart size={16} />,
       trend: `${d.totalOrdersChange >= 0 ? '+' : ''}${d.totalOrdersChange} vs prev.`, trendUp: d.totalOrdersChange >= 0,
       sparkline: ordersSparkline,
     },
-    { label: 'Seller Accounts', value: formatNumber(d.totalSellers), icon: <Users size={16} /> },
+    { to: '/admin/users?role=seller', label: 'Seller Accounts', value: formatNumber(d.totalSellers), icon: <Users size={16} /> },
     {
-      label: 'Sellers Active This Month', value: formatNumber(d.sellersActiveThisMonth), icon: <Users size={16} />,
+      to: '/admin/users?role=seller&status=active', label: 'Sellers Active This Month', value: formatNumber(d.sellersActiveThisMonth), icon: <Users size={16} />,
       trend: `${d.sellersActiveThisMonthChange >= 0 ? '+' : ''}${d.sellersActiveThisMonthChange} vs prev.`, trendUp: d.sellersActiveThisMonthChange >= 0,
     },
-    { label: 'Total Stores', value: formatNumber(d.totalStores), icon: <Store size={16} /> },
-    { label: 'Active Stores', value: formatNumber(d.activeStores), icon: <Store size={16} /> },
-    { label: 'Total Customers', value: formatNumber(d.totalCustomers), icon: <Users size={16} /> },
-    { label: 'New Users', value: formatNumber(d.newUsers), icon: <UserPlus size={16} /> },
-    { label: 'Refunds', value: formatCurrency(d.totalRefunds), icon: <RotateCcw size={16} />, sub: `${formatPercent(d.refundRatePercent)} of GMV` },
-    { label: 'Cancelled Orders', value: formatNumber(d.cancelledOrders), icon: <ShoppingCart size={16} /> },
+    { to: '/admin/leads', label: 'Total Stores', value: formatNumber(d.totalStores), icon: <Store size={16} /> },
+    { to: '/admin/leads?status=verified', label: 'Active Stores', value: formatNumber(d.activeStores), icon: <Store size={16} /> },
+    { to: '/admin/users?role=buyer', label: 'Total Customers', value: formatNumber(d.totalCustomers), icon: <Users size={16} /> },
+    { to: '/admin/users?role=buyer', label: 'New Users', value: formatNumber(d.newUsers), icon: <UserPlus size={16} /> },
+    { to: '/admin/refunds', label: 'Refunds', value: formatCurrency(d.totalRefunds), icon: <RotateCcw size={16} />, sub: `${formatPercent(d.refundRatePercent)} of GMV` },
+    { to: '/admin/orders?status=cancelled', label: 'Cancelled Orders', value: formatNumber(d.cancelledOrders), icon: <ShoppingCart size={16} /> },
   ];
 
   const comparisonColumns: TableColumn<ComparisonRow>[] = [

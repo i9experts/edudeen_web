@@ -42,6 +42,8 @@ export function AdminMarketplace() {
   // ?status=pending_review (sidebar badge) opens straight on the review queue.
   const [searchParams] = useSearchParams();
   const [statusFilter, setStatusFilter] = useState(searchParams.get('status') ?? '');
+  // Cards on this page link with ?status= — follow the URL when it changes.
+  useEffect(() => { setStatusFilter(searchParams.get('status') ?? ''); }, [searchParams]);
   const [reviewing, setReviewing] = useState<string | null>(null);
   const [pendingCount, setPendingCount] = useState(0);
   const loadPending = () => { apiGetListingReviewCount().then(r => setPendingCount(r.data?.pending ?? 0)).catch(() => {}); };
@@ -164,11 +166,11 @@ export function AdminMarketplace() {
             Array.from({ length: 5 }).map((_, i) => <SkeletonBox key={i} height={92} rounded="10px" />)
           ) : stats ? (
             <>
-              <MetricCard label="Total Listings" value={formatNumber(stats.totalListings)} />
-              <MetricCard label="Active" value={formatNumber(stats.active)} sub="Live on marketplace" />
-              <MetricCard label="Waiting for Review" value={formatNumber(pendingCount)} sub="New listings not live yet" />
-              <MetricCard label="Flagged" value={formatNumber(stats.flagged)} sub="Open reports on listings" />
-              <MetricCard label="GMV This Month" value={formatCurrency(stats.gmvThisMonth)} />
+              <MetricCard to="/admin/marketplace" label="Total Listings" value={formatNumber(stats.totalListings)} />
+              <MetricCard to="/admin/marketplace?status=active" label="Active" value={formatNumber(stats.active)} sub="Live on marketplace" />
+              <MetricCard to="/admin/marketplace?status=pending_review" label="Waiting for Review" value={formatNumber(pendingCount)} sub="New listings not live yet" />
+              <MetricCard to="/admin/moderation" label="Flagged" value={formatNumber(stats.flagged)} sub="Open reports on listings" />
+              <MetricCard to="/admin/orders" label="GMV This Month" value={formatCurrency(stats.gmvThisMonth)} />
             </>
           ) : null}
         </div>

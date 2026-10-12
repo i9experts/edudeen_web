@@ -97,13 +97,13 @@ export function AdminOverview() {
 
   // OVERVIEW_METRIC_COUNT (skeleton count) must match the entries below.
   const metrics = overview ? [
-    { label: 'GMV (30 days)',             value: formatCurrency(overview.totalGMV),                trend: overview.totalRevenueChangePercent != null ? formatPercent(overview.totalRevenueChangePercent, { signed: true }) : undefined, trendUp: (overview.totalRevenueChangePercent ?? 0) >= 0, sub: undefined, icon: <DollarSign size={16} /> },
-    { label: 'Edudeen commission (30 days)', value: formatCurrency(overview.platformCommission),   trend: undefined, trendUp: true, sub: `${formatCurrency(overview.platformEarnings)} total platform earnings`, icon: <Percent size={16} /> },
-    { label: 'Seller accounts',           value: formatNumber(overview.totalSellers),             trend: undefined, trendUp: true, sub: undefined, icon: <Users size={16} /> },
-    { label: 'Sellers active this month', value: formatNumber(overview.sellersActiveThisMonth),   trend: overview.sellersActiveThisMonthChange ? formatPercent(overview.sellersActiveThisMonthChange, { signed: true }) : undefined, trendUp: (overview.sellersActiveThisMonthChange ?? 0) >= 0, sub: undefined, icon: <UserCheck size={16} /> },
-    { label: 'Total stores',              value: formatNumber(overview.totalStores),              trend: undefined, trendUp: true, sub: undefined, icon: <Store size={16} /> },
-    { label: 'Active stores',             value: formatNumber(overview.activeStores),             trend: undefined, trendUp: true, sub: undefined, icon: <Store size={16} /> },
-    { label: 'New users',                 value: formatNumber(overview.newUsers),                 trend: undefined, trendUp: true, sub: `${formatNumber(overview.totalCustomers)} total customers`, icon: <UserPlus size={16} /> },
+    { to: '/admin/orders', label: 'GMV (30 days)',             value: formatCurrency(overview.totalGMV),                trend: overview.totalRevenueChangePercent != null ? formatPercent(overview.totalRevenueChangePercent, { signed: true }) : undefined, trendUp: (overview.totalRevenueChangePercent ?? 0) >= 0, sub: undefined, icon: <DollarSign size={16} /> },
+    { to: '/admin/finance', label: 'Edudeen commission (30 days)', value: formatCurrency(overview.platformCommission),   trend: undefined, trendUp: true, sub: `${formatCurrency(overview.platformEarnings)} total platform earnings`, icon: <Percent size={16} /> },
+    { to: '/admin/users?role=seller', label: 'Seller accounts',           value: formatNumber(overview.totalSellers),             trend: undefined, trendUp: true, sub: undefined, icon: <Users size={16} /> },
+    { to: '/admin/users?role=seller&status=active', label: 'Sellers active this month', value: formatNumber(overview.sellersActiveThisMonth),   trend: overview.sellersActiveThisMonthChange ? formatPercent(overview.sellersActiveThisMonthChange, { signed: true }) : undefined, trendUp: (overview.sellersActiveThisMonthChange ?? 0) >= 0, sub: undefined, icon: <UserCheck size={16} /> },
+    { to: '/admin/leads', label: 'Total stores',              value: formatNumber(overview.totalStores),              trend: undefined, trendUp: true, sub: undefined, icon: <Store size={16} /> },
+    { to: '/admin/leads?status=verified', label: 'Active stores',             value: formatNumber(overview.activeStores),             trend: undefined, trendUp: true, sub: undefined, icon: <Store size={16} /> },
+    { to: '/admin/users?role=buyer', label: 'New users',                 value: formatNumber(overview.newUsers),                 trend: undefined, trendUp: true, sub: `${formatNumber(overview.totalCustomers)} total customers`, icon: <UserPlus size={16} /> },
   ] : [];
 
   const maxCategoryRevenue = Math.max(1, ...categories.map(c => c.revenue));
@@ -154,9 +154,9 @@ export function AdminOverview() {
           Array.from({ length: 3 }).map((_, i) => <MetricCard key={i} label="" value="" loading />)
         ) : modStats.data ? (
           <>
-            <MetricCard label="Awaiting review" value={formatNumber(modStats.data.pendingListings ?? modStats.data.queueTotal)} sub={modStats.data.avgReviewMinutes ? `~${formatNumber(modStats.data.avgReviewMinutes)} min average review` : undefined} />
-            <MetricCard label="Approved today" value={formatNumber(modStats.data.approvedToday)} />
-            <MetricCard label="Urgent flags" value={formatNumber(modStats.data.urgent)} sub="High-risk reports" />
+            <MetricCard to="/admin/moderation" label="Awaiting review" value={formatNumber(modStats.data.pendingListings ?? modStats.data.queueTotal)} sub={modStats.data.avgReviewMinutes ? `~${formatNumber(modStats.data.avgReviewMinutes)} min average review` : undefined} />
+            <MetricCard to="/admin/moderation" label="Approved today" value={formatNumber(modStats.data.approvedToday)} />
+            <MetricCard to="/admin/moderation" label="Urgent flags" value={formatNumber(modStats.data.urgent)} sub="High-risk reports" />
           </>
         ) : (
           <div className="sm:col-span-3">

@@ -31,7 +31,7 @@ export function CustomersTab({ params }: { params: BaseAnalyticsParams }) {
   return (
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <MetricCard label="Active Customers" value={d ? d.activeCustomers.toLocaleString() : ''} loading={customers.loading} />
+        <MetricCard to="/admin/users?role=buyer" label="Active Customers" value={d ? d.activeCustomers.toLocaleString() : ''} loading={customers.loading} />
         <MetricCard label="Repeat Customers" value={d ? formatPercent(d.repeatCustomerPercent) : ''} loading={customers.loading} sub="Ordered 2+ times in period" />
         <MetricCard label="Avg. Lifetime Value" value={d ? formatCurrency(d.averageLifetimeValue) : ''} loading={customers.loading} sub="All-time, per customer" />
       </div>

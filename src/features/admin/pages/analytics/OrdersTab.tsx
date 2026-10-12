@@ -15,10 +15,10 @@ export function OrdersTab({ params }: { params: BaseAnalyticsParams }) {
   return (
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        <MetricCard label="Total Orders" value={s ? formatNumber(s.totalOrders) : ''} loading={statusBreakdown.loading} />
+        <MetricCard to="/admin/orders" label="Total Orders" value={s ? formatNumber(s.totalOrders) : ''} loading={statusBreakdown.loading} />
         <MetricCard label="Avg. Order Value" value={s ? formatCurrency(s.avgOrderValue) : ''} loading={statusBreakdown.loading} />
-        <MetricCard label="Cancellation Rate" value={s ? formatPercent(s.cancellationRatePercent) : ''} loading={statusBreakdown.loading} sub={s ? `${s.cancelledOrders.toLocaleString()} cancelled orders` : undefined} />
-        <MetricCard label="Refund Rate" value={s ? formatPercent(s.refundRatePercent) : ''} loading={statusBreakdown.loading} sub={s ? `${s.refundedOrders.toLocaleString()} refunded orders` : undefined} />
+        <MetricCard to="/admin/orders?status=cancelled" label="Cancellation Rate" value={s ? formatPercent(s.cancellationRatePercent) : ''} loading={statusBreakdown.loading} sub={s ? `${s.cancelledOrders.toLocaleString()} cancelled orders` : undefined} />
+        <MetricCard to="/admin/refunds" label="Refund Rate" value={s ? formatPercent(s.refundRatePercent) : ''} loading={statusBreakdown.loading} sub={s ? `${s.refundedOrders.toLocaleString()} refunded orders` : undefined} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

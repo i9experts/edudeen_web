@@ -1,5 +1,6 @@
 import { type ReactNode } from 'react';
-import { TrendingUp, TrendingDown } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { TrendingUp, TrendingDown, ArrowUpRight } from 'lucide-react';
 import { Card } from './Card';
 import { SkeletonBox } from './SkeletonBox';
 import { SparkLine } from '@/components/comman/charts';
@@ -18,9 +19,11 @@ interface MetricCardProps {
   sparkline?: number[];
   /** Compact horizontal strip layout (icon + label/value on one row, sans numerals) for dense dashboards. */
   compact?: boolean;
+  /** Makes the whole card a link to the page/list this number comes from. */
+  to?: string;
 }
 
-export function MetricCard({ label, value, trend, trendUp, sub, icon, loading, color, sparkline, compact }: MetricCardProps) {
+export function MetricCard({ label, value, trend, trendUp, sub, icon, loading, color, sparkline, compact, to }: MetricCardProps) {
   if (loading) {
     return (
       <Card className="flex-1 min-w-[140px]">
@@ -33,10 +36,13 @@ export function MetricCard({ label, value, trend, trendUp, sub, icon, loading, c
   }
 
   const accent = color ?? '#174771';
+  const wrap = (card: ReactNode) => to ? (
+    <Link to={to} aria-label={`${label}: open details`} className="flex flex-1 min-w-0 no-underline rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange [&>*]:w-full">{card}</Link>
+  ) : card;
 
   if (compact) {
-    return (
-      <Card className="flex-1 min-w-[150px]" padding="none">
+    return wrap(
+      <Card className={`flex-1 min-w-[150px] ${to ? 'cursor-pointer' : ''}`} padding="none" hover={!!to}>
         <div className="px-4 py-3 flex items-center gap-3">
           {icon && (
             <div
@@ -56,9 +62,10 @@ export function MetricCard({ label, value, trend, trendUp, sub, icon, loading, c
     );
   }
 
-  return (
-    <Card className="metric-card-enter flex-1 min-w-[140px] group" padding="none" hover>
+  return wrap(
+    <Card className={`metric-card-enter flex-1 min-w-[140px] group ${to ? 'cursor-pointer' : ''}`} padding="none" hover>
       <div className="px-5 py-5 relative overflow-hidden">
+        {to && <ArrowUpRight size={14} className="absolute top-3 end-3 text-slate opacity-0 group-hover:opacity-100 transition-opacity" aria-hidden />}
         <div className="flex items-start justify-between gap-3 mb-3">
           {icon && (
             <div
@@ -92,7 +99,7 @@ export function MetricCard({ label, value, trend, trendUp, sub, icon, loading, c
           <p className="text-[12px] text-slate mt-[7px]">{sub}</p>
         )}
       </div>
-    </Card>
+    </Card>,
   );
 }
 
