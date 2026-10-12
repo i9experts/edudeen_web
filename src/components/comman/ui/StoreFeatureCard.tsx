@@ -1,10 +1,27 @@
 import { useState } from 'react';
 import { clsx } from 'clsx';
-import { Star, Users, Store, TrendingUp, BadgeCheck, PackageCheck, UserPlus, UserCheck } from 'lucide-react';
+import { Star, Users, TrendingUp, BadgeCheck, PackageCheck, UserPlus, UserCheck } from 'lucide-react';
 import { apiFollowStore, type PublicStoreListItem } from '@/api/services/store';
 import { useAuthGate } from '@/contexts/AuthGateContext';
 import { CoverImage } from './CoverImage';
-import { EDUDEEN_DEFAULT_COVER_GRADIENT } from '@/features/storefront/StorefrontContext';
+
+// Calm, brand-tinted palettes for stores without their own cover/logo — picked per store name so a row of
+// new stores doesn't look like the same loud gradient repeated.
+const STORE_TONES = [
+  { cover: 'linear-gradient(135deg,#174771 0%,#2b6a8f 100%)', tile: '#e6eef5', ink: '#174771' },
+  { cover: 'linear-gradient(135deg,#1f5d4a 0%,#3a8a6c 100%)', tile: '#e5f2ec', ink: '#1f5d4a' },
+  { cover: 'linear-gradient(135deg,#5a3d7a 0%,#8460a6 100%)', tile: '#efe9f6', ink: '#5a3d7a' },
+  { cover: 'linear-gradient(135deg,#8a5a14 0%,#c28a2e 100%)', tile: '#f7efdf', ink: '#8a5a14' },
+  { cover: 'linear-gradient(135deg,#7a2f3f 0%,#a95468 100%)', tile: '#f6e8eb', ink: '#7a2f3f' },
+];
+function toneFor(name: string) {
+  let h = 0;
+  for (const ch of name) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return STORE_TONES[h % STORE_TONES.length];
+}
+function initialsOf(name: string) {
+  return name.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() || 'S';
+}
 
 // ── Featured seller card — cover, avatar, badges, rating/followers/products, follow ──
 export function StoreFeatureCard({ store, onClick, className }: {
@@ -17,6 +34,7 @@ export function StoreFeatureCard({ store, onClick, className }: {
   const { requireAuth } = useAuthGate();
   const isVerified = store.badges?.includes('verified');
   const isTopSeller = store.badges?.includes('top_seller');
+  const tone = toneFor(store.name || store.slug || '');
 
   const handleFollow = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -38,7 +56,7 @@ export function StoreFeatureCard({ store, onClick, className }: {
       tabIndex={0}
       onKeyDown={e => { if (e.key === 'Enter') onClick(store.slug); }}
       className={clsx(
-        'relative shrink-0 w-[240px] sm:w-[264px] text-start bg-white rounded-2xl border border-bone overflow-hidden cursor-pointer group transition-all duration-300 hover:-translate-y-[4px] hover:border-brand-orange/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange',
+        'relative shrink-0 w-[240px] sm:w-[264px] text-start bg-white rounded-2xl border border-bone overflow-hidden cursor-pointer group shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-all duration-300 hover:-translate-y-[3px] hover:shadow-[0_10px_24px_-8px_rgba(16,24,40,0.18)] hover:border-carbon/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange',
         className,
       )}
     >
@@ -46,10 +64,10 @@ export function StoreFeatureCard({ store, onClick, className }: {
       <CoverImage
         src={store.coverImage}
         imgClassName="transition-transform duration-500 group-hover:scale-105"
-        className="h-[88px]"
-        // No cover photo → the same Edudeen default gradient the store page uses.
+        className="h-[76px]"
+        // No cover photo → a calm single-hue gradient (per store), not the loud default one.
         fallbackClassName=""
-        fallbackStyle={{ background: EDUDEEN_DEFAULT_COVER_GRADIENT }}
+        fallbackStyle={{ background: tone.cover }}
       >
         {isTopSeller && (
           <span className="absolute top-[8px] end-[8px] inline-flex items-center gap-[3px] px-[7px] py-[3px] rounded-full bg-carbon/80 backdrop-blur-sm text-white text-[12px] font-bold">
@@ -59,23 +77,23 @@ export function StoreFeatureCard({ store, onClick, className }: {
       </CoverImage>
 
       {/* Body */}
-      <div className="relative px-4 pb-4 -mt-7">
+      <div className="relative px-4 pb-4 -mt-6">
         <div className="flex items-end justify-between mb-2">
-          <div className="w-14 h-14 rounded-2xl bg-white border border-bone p-[3px]">
-            <div className="w-full h-full rounded-[13px] bg-brand-pale-orange flex items-center justify-center overflow-hidden">
+          <div className="w-12 h-12 rounded-xl bg-white border border-bone p-[2px] shadow-sm">
+            <div className="w-full h-full rounded-[10px] flex items-center justify-center overflow-hidden" style={store.logo ? undefined : { background: tone.tile }}>
               {store.logo
                 ? <img loading="lazy" decoding="async" src={store.logo} alt="" className="w-full h-full object-cover" />
-                : <Store size={22} className="text-brand-orange" />}
+                : <span className="text-[15px] font-bold tracking-wide" style={{ color: tone.ink }}>{initialsOf(store.name)}</span>}
             </div>
           </div>
           <button
             onClick={handleFollow}
             disabled={followBusy}
             className={clsx(
-              'inline-flex items-center gap-[5px] px-[11px] py-[6px] rounded-full text-[12px] font-semibold border cursor-pointer transition-all duration-150 mb-[2px]',
+              'inline-flex items-center gap-[5px] px-[11px] py-[5px] rounded-full text-[12px] font-semibold border cursor-pointer transition-all duration-150 mb-[2px] mt-[26px]',
               following
                 ? 'bg-carbon/5 border-bone text-charcoal'
-                : 'bg-brand-orange border-brand-orange text-white hover:bg-brand-deep-orange',
+                : 'bg-white border-carbon/20 text-carbon hover:bg-carbon hover:text-white hover:border-carbon',
               followBusy && 'opacity-60 cursor-wait',
             )}
           >
@@ -85,7 +103,7 @@ export function StoreFeatureCard({ store, onClick, className }: {
         </div>
 
         <div className="flex items-center gap-[5px] mb-[3px]">
-          <p className="text-[13.5px] font-bold text-carbon leading-tight truncate">{store.name}</p>
+          <p className="text-[14px] font-semibold text-carbon leading-tight truncate">{store.name}</p>
           {isVerified && <BadgeCheck size={14} className="text-info fill-info/15 shrink-0" />}
         </div>
         {/* Always reserve the line so cards without a description stay the same height. */}
@@ -93,8 +111,9 @@ export function StoreFeatureCard({ store, onClick, className }: {
 
         <div className="flex items-center gap-3 pt-[10px] border-t border-bone">
           <span className="flex items-center gap-[4px] text-[12px] text-charcoal font-medium">
-            <Star size={11} className="text-brand-orange fill-brand-orange" />
-            {store.averageRating > 0 ? store.averageRating.toFixed(1) : 'New'}
+            {store.averageRating > 0
+              ? <><Star size={11} className="text-brand-orange fill-brand-orange" />{store.averageRating.toFixed(1)}</>
+              : <span className="px-[6px] py-[1px] rounded-full bg-success-bg text-success text-[12px] font-semibold">New</span>}
           </span>
           <span className="w-px h-3 bg-bone" />
           <span className="flex items-center gap-[4px] text-[12px] text-slate">
