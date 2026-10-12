@@ -3,6 +3,7 @@ import { Camera, Plus, Upload, Loader2, X, File as FileIcon } from 'lucide-react
 import { clsx } from 'clsx';
 import { useUpload } from '@/hooks/upload/useUpload';
 import type { PrivateUploadData } from '@/api/upload';
+import { upscaleToMinWidth } from '@/utils/imageUpscale';
 
 export type { PrivateUploadData };
 
@@ -14,10 +15,12 @@ interface ImageUploadProps {
   maxFiles?:  number;
   accept?:    string;
   className?: string;
+  /** Pictures narrower than this are enlarged automatically before upload (banners). */
+  autoUpscaleBelow?: number;
 }
 
 export function ImageUpload({
-  value, onChange, maxFiles = 1, accept = 'image/png,image/jpeg,image/webp', className,
+  value, onChange, maxFiles = 1, accept = 'image/png,image/jpeg,image/webp', className, autoUpscaleBelow,
 }: ImageUploadProps) {
   const { upload, uploading, error } = useUpload('public');
 
@@ -25,7 +28,8 @@ export function ImageUpload({
     const file = e.target.files?.[0];
     if (!file) return;
     e.target.value = '';
-    upload(file)
+    (autoUpscaleBelow ? upscaleToMinWidth(file, autoUpscaleBelow) : Promise.resolve(file))
+      .then(f => upload(f))
       .then(data => {
         if (maxFiles === 1) onChange([data.url]);
         else onChange([...value, data.url].slice(0, maxFiles));

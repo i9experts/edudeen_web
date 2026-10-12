@@ -6,6 +6,7 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { Tag as TagIcon, Mail, ShoppingCart, Handshake, Gift, Megaphone, Building2, User, Image as ImageIcon, Pause, Play, Trash2, Plus, Star, Bell, ArrowUp, ArrowDown, Rocket, X, Percent, type LucideIcon } from 'lucide-react';
 import { StorePageHeader, useStoreWorkspace } from '@/components/layouts/StoreLayout';
 import { EmptyState, SkeletonBox, Modal, Button, Input, FileDropSelect } from '@/components/comman/ui';
+import { upscaleToMinWidth } from '@/utils/imageUpscale';
 import { StripeCardPayment, isStripeConfigured } from '@/features/buyer/components/StripeCardPayment';
 import { currencySymbol } from '@/utils/currency';
 import {
@@ -141,9 +142,9 @@ function StoreBannerFormModal({ storeId, onClose, onSaved }: { storeId: string; 
       <div className="flex flex-col gap-4">
         <div>
           <label className="block text-[12px] font-medium text-charcoal mb-1.5">Desktop Image</label>
-          <FileDropSelect value={file} onChange={setFile} label="Click to upload desktop banner" />
+          <FileDropSelect value={file} onChange={f => { if (f) void upscaleToMinWidth(f).then(setFile); else setFile(null); }} label="Click to upload desktop banner" />
           <p className="mt-1.5 text-[12px] text-slate/70">
-            Recommended: 2560×720px (minimum 1280px wide) — renders full-width on desktop, so anything narrower will look blurry.
+            Recommended: 2560×720px. Smaller pictures are enlarged automatically (they may look a little soft).
           </p>
         </div>
         <div>

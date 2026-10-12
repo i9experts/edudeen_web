@@ -2,6 +2,7 @@
 import { ImagePlus, Loader2, Trash2 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useUpload } from '@/hooks/upload/useUpload';
+import { upscaleToMinWidth } from '@/utils/imageUpscale';
 
 /** Wide (4:1) drag-and-drop image zone with a live preview - used for store banners. */
 export function BannerUpload({ value, onChange, accept = 'image/png,image/jpeg,image/webp', hint = 'Drop an image here or click to browse - 1600 x 400 (4:1) works best' }: {
@@ -13,7 +14,7 @@ export function BannerUpload({ value, onChange, accept = 'image/png,image/jpeg,i
 
   const send = (file?: File | null) => {
     if (!file || !file.type.startsWith('image/')) return;
-    upload(file).then(d => onChange(d.url)).catch(() => {});
+    upscaleToMinWidth(file).then(f => upload(f)).then(d => onChange(d.url)).catch(() => {});
   };
   const onPick = (e: ChangeEvent<HTMLInputElement>) => { const f = e.target.files?.[0]; e.target.value = ''; send(f); };
   const onDrop = (e: DragEvent) => { e.preventDefault(); setOver(false); send(e.dataTransfer.files?.[0]); };

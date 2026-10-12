@@ -96,9 +96,9 @@ function BannerFormModal({
       <div className="flex flex-col gap-4">
         <div>
           <label className="block text-[12px] font-medium text-charcoal mb-1.5">Banner Image</label>
-          <ImageUpload value={images} onChange={setImages} maxFiles={1} />
+          <ImageUpload value={images} onChange={setImages} maxFiles={1} autoUpscaleBelow={1280} />
           <p className="mt-1.5 text-[12px] text-slate/70">
-            Recommended: 2560×720px (minimum 1280px wide) — this banner renders full-width on desktop, so anything narrower will look blurry.
+            Recommended: 2560×720px. Smaller pictures are enlarged automatically (they may look a little soft), so use the biggest image you have.
           </p>
         </div>
         <div>
