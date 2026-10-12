@@ -86,6 +86,13 @@ function DetailSkeleton() {
 function ZoomViewer({ pages, alt, start = 0 }: { pages: string[]; alt: string; start?: number }) {
   const [i, setI] = useState(start);
   const [zoom, setZoom] = useState(1);
+  // When zoomed, the picture follows the cursor (hover-pan) instead of needing scrollbars.
+  const pan = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    const r = el.getBoundingClientRect();
+    el.scrollLeft = ((e.clientX - r.left) / r.width) * (el.scrollWidth - el.clientWidth);
+    el.scrollTop = ((e.clientY - r.top) / r.height) * (el.scrollHeight - el.clientHeight);
+  };
   const go = (n: number) => { setI((n + pages.length) % pages.length); setZoom(1); };
   const btn = 'w-9 h-9 rounded-full border border-bone bg-white flex items-center justify-center text-carbon hover:bg-bone disabled:opacity-40 cursor-pointer';
   return (
@@ -97,7 +104,7 @@ function ZoomViewer({ pages, alt, start = 0 }: { pages: string[]; alt: string; s
         <button type="button" aria-label="Zoom in" className={btn} disabled={zoom >= 4} onClick={() => setZoom(z => Math.min(4, +(z + 0.5).toFixed(1)))}><ZoomIn size={16} /></button>
         {pages.length > 1 && <button type="button" aria-label="Next" className={btn} onClick={() => go(i + 1)}><ChevronRight size={16} /></button>}
       </div>
-      <div className="overflow-auto max-h-[70vh] rounded-lg border border-bone bg-white">
+      <div onMouseMove={zoom > 1 ? pan : undefined} className={clsx('overflow-auto max-h-[70vh] rounded-lg border border-bone bg-white', zoom > 1 && 'cursor-move')}>
         <img src={pages[i]} alt={`${alt} ${i + 1}`} style={{ width: `${zoom * 100}%`, maxWidth: 'none' }} className="block mx-auto" />
       </div>
     </div>
