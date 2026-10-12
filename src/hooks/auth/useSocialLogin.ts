@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiSocialLogin, TokenStorage, getRoleRedirect, LastRolePreference, RememberedAccount, type SocialLoginPayload, type AppRole } from '@/api/services/auth';
 import { resolveSellerDestinationRemote } from '@/utils/sellerRouting';
@@ -85,6 +85,13 @@ function loadScript(src: string, ready: () => boolean): Promise<void> {
   }
   return p;
 }
+// Google Identity Services must be initialised ONCE per page. Several components use this hook (the site-wide
+// One Tap nudge, the login/register button, the auth modal), and each calling initialize() + prompt() made
+// the browser reject with "Only one navigator.credentials.get request may be outstanding". So initialisation
+// and the One Tap prompt are module-level singletons; the callback always goes to the most recent consumer.
+let googleCredentialHandler: ((r: { credential: string }) => void) | null = null;
+let googleInitialized = false;
+let oneTapRequested = false;
 const loadGoogleScript = () => loadScript('https://accounts.google.com/gsi/client', () => !!window.google);
 
 let facebookReady: Promise<void> | null = null;
@@ -137,7 +144,6 @@ export function useSocialLogin(role: AppRole = 'seller') {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState('');
-  const initializedRef = useRef(false);
 
   async function execute(payload: SocialLoginPayload) {
     setError('');
@@ -189,14 +195,15 @@ export function useSocialLogin(role: AppRole = 'seller') {
   // `promptOneTap` (the passive site-wide nudge) below, so both ever only
   // set up GIS a single time even if a page uses both.
   const ensureInitialized = useCallback(() => {
+    googleCredentialHandler = handleCredential;
     return loadGoogleScript().then(() => {
-      if (!initializedRef.current) {
+      if (!googleInitialized) {
         window.google!.accounts.id.initialize({
           client_id: GOOGLE_CLIENT_ID,
-          callback: handleCredential,
+          callback: (r: { credential: string }) => googleCredentialHandler?.(r),
           use_fedcm_for_prompt: true,
         });
-        initializedRef.current = true;
+        googleInitialized = true;
       }
     });
   }, [handleCredential]);
@@ -217,6 +224,8 @@ export function useSocialLogin(role: AppRole = 'seller') {
     if (!GOOGLE_CLIENT_ID) return; // SocialLoginRow shows its own "not set up" button instead
     ensureInitialized()
       .then(() => {
+        // A real button is on screen: drop any pending One Tap so only one credentials request exists.
+        try { window.google!.accounts.id.cancel(); } catch { /* nothing to cancel */ }
         // Fills as much of the real form width as GIS's own [200,400]px
         // button-width cap allows, instead of a fixed guess.
         const width = Math.min(400, Math.max(200, availableWidth));
@@ -295,7 +304,8 @@ export function useSocialLogin(role: AppRole = 'seller') {
   // restrictions, a recent dismissal cooldown, no active Google session,
   // etc.) is just... nothing happens, not a failure to report.
   const promptOneTap = useCallback(() => {
-    if (!GOOGLE_CLIENT_ID) return;
+    if (!GOOGLE_CLIENT_ID || oneTapRequested) return;
+    oneTapRequested = true; // once per page load
     ensureInitialized()
       .then(() => window.google!.accounts.id.prompt())
       .catch(() => {});
