@@ -43,7 +43,7 @@ function BannerFormModal({
   const [images, setImages] = useState<string[]>(banner?.bannerImage ? [banner.bannerImage] : []);
   const [urlOnTap, setUrlOnTap] = useState(banner?.urlOnTap ?? '');
   const [placements, setPlacements] = useState<PromotionPlacement[]>(
-    banner ? bannerPlacements(banner) : ['marketplaceHero'],
+    banner ? bannerPlacements(banner) : ['homepageHero'],
   );
   const [order, setOrder] = useState(String(banner?.order ?? currentCount));
   const [startAt, setStartAt] = useState(banner?.startAt ? banner.startAt.slice(0, 16) : '');

@@ -31,7 +31,14 @@ export function HomeContentCard() {
   const uploadHero = async (file?: File) => {
     if (!file) return;
     setError(''); setUploading(true);
-    try { const res = await apiUploadPublicFile(file); set('heroImageUrl', res.data.url); }
+    try {
+      const res = await apiUploadPublicFile(file);
+      set('heroImageUrl', res.data.url);
+      // Publish the picture right away (the PUT only touches the keys it is given) so it does not depend on
+      // remembering to press 'Save homepage content' further down.
+      await apiUpdateHomeContent({ heroImageUrl: res.data.url });
+      setSaved(true);
+    }
     catch (err) { setError(err instanceof Error ? err.message : 'Could not upload the image.'); }
     finally { setUploading(false); }
   };

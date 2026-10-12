@@ -4,7 +4,7 @@ import { BannerCarousel, type BannerCarouselItem } from '@/components/comman/mar
 import { apiGetBanners, type PromotionPlacement } from '@/api/services/banner';
 
 // Banners change rarely; one fetch per placement per few minutes is plenty.
-const TTL_MS = 3 * 60 * 1000;
+const TTL_MS = 60 * 1000;
 const cache = new Map<PromotionPlacement, { at: number; items: BannerCarouselItem[] }>();
 const inflight = new Map<PromotionPlacement, Promise<BannerCarouselItem[]>>();
 
