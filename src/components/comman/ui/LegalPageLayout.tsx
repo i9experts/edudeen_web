@@ -8,6 +8,7 @@ import { Reveal } from '@/components/comman/motion/Reveal';
 import { MagneticButton } from '@/components/comman/motion/MagneticButton';
 import { PremiumCard } from '@/components/comman/motion/PremiumCard';
 import { usePublicPlatformConfig } from '@/hooks/usePublicPlatformConfig';
+import { EditableHomeSection } from '@/components/admin-edit/EditableHomeSection';
 
 const SERIF = "Georgia, 'Times New Roman', serif";
 const WORDS_PER_MINUTE = 200;
@@ -40,6 +41,11 @@ interface LegalPageLayoutProps {
   relatedPages?: RelatedLegalPage[];
   /** Route key (e.g. 'privacy-policy'): text the admin wrote for this page replaces the built-in sections. */
   pageKey?: string;
+}
+
+/** Inverse of parseLegalText - the built-in sections as editable text (inline admin editor starting point). */
+function serializeLegal(sections: LegalSection[]): string {
+  return sections.map(s => `## ${s.title}\n\n${s.body.join('\n\n')}`).join('\n\n');
 }
 
 /** Admin text format: a line starting with ##  begins a section; blank lines separate paragraphs. */
@@ -167,6 +173,18 @@ export function LegalPageLayout({ title, subtitle, lastUpdated: lastUpdatedProp,
   const wordCount = sections.reduce((sum, s) => sum + s.body.join(' ').split(/\s+/).length, 0);
   const readingMinutes = Math.max(1, Math.round(wordCount / WORDS_PER_MINUTE));
 
+  const sectionEls = sections.map((s, i) => (
+    <SectionBlock
+      key={s.id}
+      index={i}
+      section={s}
+      isLast={i === sections.length - 1}
+      setRef={el => { sectionRefs.current[s.id] = el; }}
+      revealed={revealed}
+      setRevealed={setRevealed}
+    />
+  ));
+
   return (
     <div className="bg-white min-h-full scroll-smooth">
       {/* ── Reading progress bar ── */}
@@ -236,17 +254,12 @@ export function LegalPageLayout({ title, subtitle, lastUpdated: lastUpdatedProp,
 
         {/* Reading column — no card chrome, plain flow with dividers */}
         <div className="max-w-[760px] min-w-0">
-          {sections.map((s, i) => (
-            <SectionBlock
-              key={s.id}
-              index={i}
-              section={s}
-              isLast={i === sections.length - 1}
-              setRef={el => { sectionRefs.current[s.id] = el; }}
-              revealed={revealed}
-              setRevealed={setRevealed}
-            />
-          ))}
+          {pageKey ? (
+            <EditableHomeSection section="legal" legalKey={pageKey} legalInitialText={serializeLegal(sections)} label="this page's text">
+              {sectionEls}
+            </EditableHomeSection>
+          ) : sectionEls}
+
 
           {/* ── Contact support outro ── */}
           <Reveal className="print:hidden mt-4">

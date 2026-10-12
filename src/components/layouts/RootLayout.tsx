@@ -10,6 +10,9 @@ import { LanguageRouteSync } from '@/contexts/LanguageContext';
 import { AiAssistantWidget } from '@/components/ai/AiAssistantWidget';
 import { useGlobalEdgeHoverScroll } from '@/hooks/useGlobalEdgeHoverScroll';
 import { useReferralCapture } from '@/hooks/useReferralCapture';
+import { AdminEditProvider } from '@/contexts/AdminEditContext';
+import { ReauthProvider } from '@/contexts/ReauthProvider';
+import { AdminEditToolbar } from '@/components/admin-edit/AdminEditToolbar';
 
 function PageSpinner() {
   return (
@@ -49,7 +52,8 @@ export function RootLayout() {
   }, [pathname]);
 
   return (
-    <>
+    <AdminEditProvider>
+    <ReauthProvider>
       <TopProgressBar />
       <MaintenanceNotice />
       <AuthGateModal />
@@ -75,6 +79,8 @@ export function RootLayout() {
           </Suspense>
         </ErrorBoundary>
       </div>
-    </>
+      <AdminEditToolbar />
+    </ReauthProvider>
+    </AdminEditProvider>
   );
 }

@@ -8,6 +8,7 @@ const resource = createSharedResource<PublicPlatformConfig | null>(() =>
 );
 
 export function usePublicPlatformConfig() {
-  const { data, loading } = resource.useSharedResource();
-  return { config: data, loading };
+  const { data, loading, refetch } = resource.useSharedResource();
+  /** Re-fetches the shared config so every consumer updates without a reload (used after an inline admin edit). */
+  return { config: data, loading, refresh: refetch };
 }

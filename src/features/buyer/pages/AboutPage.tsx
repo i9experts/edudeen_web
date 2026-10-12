@@ -1,6 +1,7 @@
 import { ArrowRight, Store, BookOpen, Sparkles, BarChart3 } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { usePublicPlatformConfig } from '@/hooks/usePublicPlatformConfig';
+import { EditableHomeSection } from '@/components/admin-edit/EditableHomeSection';
 import { useSellEntry } from '@/hooks/auth/useSellEntry';
 import { isBuyerSession } from '@/hooks/auth/useIsBuyer';
 import { Button, Footer } from '@/components/comman/ui';
@@ -30,6 +31,7 @@ export function AboutPage() {
 
   return (
     <div className="bg-white min-h-full">
+      <EditableHomeSection section="about" label="About page text">
       <div className="px-4 md:px-8 lg:px-12 pt-14 md:pt-20 pb-12 max-w-[760px] mx-auto text-center">
         <Reveal delay={0}>
           <p className="text-[12px] font-semibold text-brand-orange uppercase tracking-[0.12em] mb-3">{ab.eyebrow || 'About Edudeen'}</p>
@@ -90,6 +92,7 @@ export function AboutPage() {
         </div>
       </div>
 
+      </EditableHomeSection>
       {/* Seller CTA — not shown to a signed-in buyer. */}
       {!isBuyerSession() && (
         <div className="bg-carbon px-4 md:px-8 lg:px-12 py-14 text-center">

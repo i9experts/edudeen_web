@@ -173,6 +173,6 @@ export function apiUpdateSocialLinks(links: Partial<Record<'facebook' | 'instagr
 }
 
 /** PUT /api/admin/platform-config/home-content — homepage hero/promise/trust copy (blank = default). */
-export function apiUpdateHomeContent(content: import('../publicPlatformConfig').HomeContent) {
-  return client.put<never, { success: boolean; message?: string }>('/api/admin/platform-config/home-content', content);
+export function apiUpdateHomeContent(content: import('../publicPlatformConfig').HomeContent, config?: import('axios').AxiosRequestConfig) {
+  return client.put<never, { success: boolean; message?: string }>('/api/admin/platform-config/home-content', content, config);
 }

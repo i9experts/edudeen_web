@@ -1,3 +1,4 @@
+import type { AxiosRequestConfig } from 'axios';
 import client from '../client';
 import { ENDPOINTS } from '../endpoints';
 
@@ -95,9 +96,9 @@ export function apiGetBannerCount(placement?: PromotionPlacement) {
   );
 }
 
-export function apiCreateBannerFromUrl(payload: CreateBannerPayload) {
+export function apiCreateBannerFromUrl(payload: CreateBannerPayload, config?: AxiosRequestConfig) {
   return client.post<never, { success: boolean; message: string; data: Banner }>(
-    ENDPOINTS.BANNER.CREATE, payload,
+    ENDPOINTS.BANNER.CREATE, payload, config,
   );
 }
 
@@ -109,22 +110,22 @@ export function apiUploadBanner(file: File, urlOnTap?: string, placement?: Promo
   );
 }
 
-export function apiUpdateBanner(id: string, payload: UpdateBannerPayload) {
+export function apiUpdateBanner(id: string, payload: UpdateBannerPayload, config?: AxiosRequestConfig) {
   return client.patch<never, { success: boolean; message: string; data: Banner }>(
-    ENDPOINTS.BANNER.UPDATE(id), payload,
+    ENDPOINTS.BANNER.UPDATE(id), payload, config,
   );
 }
 
-export function apiPauseBanner(id: string) {
-  return client.patch<never, { success: boolean; message: string; data: Banner }>(ENDPOINTS.BANNER.PAUSE(id));
+export function apiPauseBanner(id: string, config?: AxiosRequestConfig) {
+  return client.patch<never, { success: boolean; message: string; data: Banner }>(ENDPOINTS.BANNER.PAUSE(id), undefined, config);
 }
 
-export function apiResumeBanner(id: string) {
-  return client.patch<never, { success: boolean; message: string; data: Banner }>(ENDPOINTS.BANNER.RESUME(id));
+export function apiResumeBanner(id: string, config?: AxiosRequestConfig) {
+  return client.patch<never, { success: boolean; message: string; data: Banner }>(ENDPOINTS.BANNER.RESUME(id), undefined, config);
 }
 
-export function apiDeleteBanner(id: string) {
+export function apiDeleteBanner(id: string, config?: AxiosRequestConfig) {
   return client.delete<never, { success: boolean; message: string }>(
-    ENDPOINTS.BANNER.DELETE(id),
+    ENDPOINTS.BANNER.DELETE(id), config,
   );
 }

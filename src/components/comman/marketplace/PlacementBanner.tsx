@@ -1,46 +1,65 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { clsx } from 'clsx';
-import { BannerCarousel, type BannerCarouselItem } from '@/components/comman/marketplace/BannerCarousel';
-import { apiGetBanners, type PromotionPlacement } from '@/api/services/banner';
+import { Plus } from 'lucide-react';
+import { BannerCarousel } from '@/components/comman/marketplace/BannerCarousel';
+import { type PromotionPlacement } from '@/api/services/banner';
+import { BANNERS_CHANGED_EVENT, cachedBanners, loadPlacementBanners } from '@/components/comman/marketplace/placementBannerCache';
+import { useAdminEdit } from '@/contexts/adminEditCtx';
+import { EditableRegion } from '@/components/admin-edit/EditableRegion';
 
-// Banners change rarely; one fetch per placement per few minutes is plenty.
-const TTL_MS = 60 * 1000;
-const cache = new Map<PromotionPlacement, { at: number; items: BannerCarouselItem[] }>();
-const inflight = new Map<PromotionPlacement, Promise<BannerCarouselItem[]>>();
-
-function load(placement: PromotionPlacement): Promise<BannerCarouselItem[]> {
-  const hit = cache.get(placement);
-  if (hit && Date.now() - hit.at < TTL_MS) return Promise.resolve(hit.items);
-  const running = inflight.get(placement);
-  if (running) return running;
-  const p = apiGetBanners(placement)
-    .then(res => (res.data ?? []).map(b => ({ _id: b._id, order: b.order, imageUrl: b.bannerImage, linkUrl: b.urlOnTap })))
-    .catch(() => [] as BannerCarouselItem[])
-    .then(items => { cache.set(placement, { at: Date.now(), items }); inflight.delete(placement); return items; });
-  inflight.set(placement, p);
-  return p;
-}
+// Admin-only editor: its own chunk, never downloaded for normal visitors.
+const PlacementEditorModal = lazy(() => import('@/components/admin-edit/PlacementEditorModal'));
 
 /**
- * The live banners for one placement — Edudeen's own (Admin → Banners) and
+ * The live banners for one placement - Edudeen's own (Admin -> Banners) and
  * sellers' approved paid promotions, which run as banners in the same slot.
  * Renders nothing when the placement has no active banner, so pages look
  * exactly as before until the admin publishes one. Views and clicks are
  * tracked (and credited to the seller's promotion) by BannerCarousel.
+ * When an admin has inline Edit mode on, it also offers Edit / "Add banner here".
  */
 export function PlacementBanner({ placement, className }: { placement: PromotionPlacement; className?: string }) {
-  const [items, setItems] = useState<BannerCarouselItem[]>(() => cache.get(placement)?.items ?? []);
+  const [items, setItems] = useState(() => cachedBanners(placement));
+  const [editorOpen, setEditorOpen] = useState(false);
+  const { editing } = useAdminEdit();
 
   useEffect(() => {
     let alive = true;
-    load(placement).then(list => { if (alive) setItems(list); });
-    return () => { alive = false; };
+    const run = () => loadPlacementBanners(placement).then(list => { if (alive) setItems(list); });
+    run();
+    window.addEventListener(BANNERS_CHANGED_EVENT, run);
+    return () => { alive = false; window.removeEventListener(BANNERS_CHANGED_EVENT, run); };
   }, [placement]);
 
-  if (!items.length) return null;
+  const editor = editorOpen && (
+    <Suspense fallback={null}>
+      <PlacementEditorModal placement={placement} onClose={() => setEditorOpen(false)} />
+    </Suspense>
+  );
+
+  if (!items.length) {
+    if (!editing) return null;
+    return (
+      <>
+        <button
+          type="button"
+          onClick={() => setEditorOpen(true)}
+          className={clsx('w-full flex items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-brand-orange/70 bg-cream/60 text-brand-orange text-[13px] font-semibold py-8 cursor-pointer', className)}
+        >
+          <Plus size={16} /> Add banner here
+        </button>
+        {editor}
+      </>
+    );
+  }
   return (
-    <section aria-label="Featured promotions" className={clsx('relative w-full overflow-hidden rounded-2xl bg-cream aspect-[2/1] sm:aspect-[3/1] lg:aspect-[4/1]', className)}>
-      <BannerCarousel entityType="banner" banners={items} />
-    </section>
+    <>
+      <EditableRegion label="banner" onEdit={() => setEditorOpen(true)}>
+        <section aria-label="Featured promotions" className={clsx('relative w-full overflow-hidden rounded-2xl bg-cream aspect-[2/1] sm:aspect-[3/1] lg:aspect-[4/1]', className)}>
+          <BannerCarousel entityType="banner" banners={items} />
+        </section>
+      </EditableRegion>
+      {editor}
+    </>
   );
 }

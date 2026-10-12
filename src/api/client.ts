@@ -20,6 +20,8 @@ const AUTH_ATTEMPT_PATHS = [
   '/api/auth/forgot-password',
   '/api/auth/reset-password',
   '/api/auth/resend-otp',
+  // Wrong admin password on the inline-edit confirmation: show it in the modal, never log the admin out.
+  '/api/admin/reauth/verify-password',
 ];
 
 // ── Axios instance ────────────────────────────────────────────────────────────

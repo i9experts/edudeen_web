@@ -1,5 +1,6 @@
 import { PlacementBanner } from '@/components/comman/marketplace/PlacementBanner';
 import { usePublicPlatformConfig } from '@/hooks/usePublicPlatformConfig';
+import { EditableHomeSection } from '@/components/admin-edit/EditableHomeSection';
 import { DealsBanner } from '@/components/comman/ui/DealsBanner';
 import { FeatureMaintenance } from '@/components/comman/ui/FeatureMaintenance';
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
@@ -501,6 +502,7 @@ export function Homepage() {
         <PlacementBanner placement="homepageHero" className="mb-[25px]" />
 
         {/* ── Hero ── */}
+        <EditableHomeSection section="hero" label="hero">
         <section className="grid grid-cols-1 md:grid-cols-[1.2fr_1fr] md:min-h-[280px] rounded-[18px] overflow-hidden bg-[#eaf2f8] mb-[25px]">
           <div className="p-[25px] md:p-[30px] lg:py-[35px] lg:px-[40px]">
             <p className="text-[12px] font-bold tracking-[0.15em] uppercase text-brand-royal mb-[13px]">
@@ -539,13 +541,16 @@ export function Homepage() {
             </div>
           </div>
         </section>
+        </EditableHomeSection>
 
         {/* ── Promise strip ── */}
+        <EditableHomeSection section="promise" label="tick strip">
         <div className="flex flex-wrap justify-between md:justify-center gap-x-[15px] gap-y-2 md:gap-x-10 pt-2 pb-[27px] text-[12px] md:text-[14px] text-carbon border-b border-bone mb-[30px]">
           {(hc.promiseItems?.length ? hc.promiseItems : ['For home & classroom', 'Preview before you choose', 'Created by educators', 'Verified sellers']).map(t => (
             <span key={t}><span className="text-brand-green">✓</span> {t}</span>
           ))}
         </div>
+        </EditableHomeSection>
 
         {/* While an admin has the flash sale / deals under maintenance, their message replaces this block. */}
         <FeatureMaintenance feature="flash_sale">
@@ -771,6 +776,7 @@ export function Homepage() {
 
         {/* ── Collections ── */}
         <section className={clsx('mb-12 grid grid-cols-1 gap-[22px]', !isBuyer && 'md:grid-cols-2')}>
+          <EditableHomeSection section="feature" label="feature block">
           <div className="rounded-[14px] p-7 bg-[#edf5e7]">
             <p className="text-[12px] font-bold tracking-[0.15em] uppercase text-brand-royal mb-[13px]">{hc.featureEyebrow || (featuredTab ? ('The ' + featuredTab.label + ' collection') : 'Featured collection')}</p>
             <h2 className="font-serif font-normal text-[27px] leading-[1.2] text-carbon mb-[10px]">{hc.featureHeading || 'Small habits. Strong character.'}</h2>
@@ -781,6 +787,7 @@ export function Homepage() {
               {hc.featureLinkLabel || 'Explore character-building resources →'}
             </button>
           </div>
+          </EditableHomeSection>
           {!isBuyer && (
             <div className="rounded-[14px] p-7 bg-[#f7f3d9]">
               <p className="text-[12px] font-bold tracking-[0.15em] uppercase text-brand-royal mb-[13px]">Made by you. Shared with the world.</p>
@@ -811,7 +818,7 @@ export function Homepage() {
         {/* ── Trust ── */}
         <section className="mb-12">
           <SectionHead eyebrow="Shop with confidence" title="Why buyers choose Edudeen" />
-          <TrustServiceStrip variant="card" items={trustItems} />
+          <EditableHomeSection section="trust" label="trust items"><TrustServiceStrip variant="card" items={trustItems} /></EditableHomeSection>
         </section>
 
         {/* ── Platform stats — self-hides until there's real data ── */}
