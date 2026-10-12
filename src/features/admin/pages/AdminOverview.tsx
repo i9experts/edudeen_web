@@ -237,7 +237,7 @@ export function AdminOverview() {
           {loading ? (
             Array.from({ length: OVERVIEW_METRIC_COUNT }).map((_, i) => <MetricCard key={i} label="" value="" loading />)
           ) : metrics.map((m) => (
-            <MetricCard key={m.label} label={m.label} value={m.value} trend={m.trend} trendUp={m.trendUp} sub={m.sub} icon={m.icon} />
+            <MetricCard key={m.label} to={m.to} label={m.label} value={m.value} trend={m.trend} trendUp={m.trendUp} sub={m.sub} icon={m.icon} />
           ))}
         </div>
       </section>
