@@ -30,6 +30,8 @@ export interface MarketplaceListingRow {
   storeBadges: string[];
   categoryId: string;
   price: number | null;
+  /** Currency of `price` (the store's own currency). */
+  currency?: string;
   purchaseCount: number;
   status: string;
   isFeatured: boolean;

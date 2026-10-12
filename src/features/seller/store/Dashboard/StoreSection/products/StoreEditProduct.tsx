@@ -23,6 +23,7 @@ import {
 } from '@/features/seller/components/products/LearningFields';
 import { DeliveryFormatField, EMPTY_DELIVERY, deliveryPayload, deliveryError, deliveryFromProduct } from '@/features/seller/components/products/DeliveryFormatField';
 import { currencySymbol as symbolForCurrency } from '@/utils/currency';
+import { CampaignPicker } from './CampaignPicker';
 
 type ProductStatus = 'draft' | 'active' | 'scheduled';
 type LicenseType   = 'personal' | 'single_classroom' | 'school' | 'commercial';
@@ -224,6 +225,8 @@ export default function StoreEditProduct() {
   const [review, setReview] = useState<{ status: string; note: string | null } | null>(null);
   const [learning, setLearning] = useState<LearningValue>(EMPTY_LEARNING);
   const [delivery, setDelivery] = useState(EMPTY_DELIVERY);
+  // null until the product's own list arrives, so a save never wipes a selection that was not loaded yet.
+  const [campaignIds, setCampaignIds] = useState<string[] | null>(null);
 
   const sp = <K extends keyof PhysForm>(k: K, v: PhysForm[K]) => setPhys(f => ({ ...f, [k]: v }));
   const sd = <K extends keyof DigForm> (k: K, v: DigForm[K])  => setDig(f  => ({ ...f, [k]: v }));
@@ -239,12 +242,14 @@ export default function StoreEditProduct() {
 
   useEffect(() => {
     const stateEntry = state?.entry;
-    if (stateEntry) { init(stateEntry.product, stateEntry.variant); setFetching(false); return; }
+    // A cached/router entry without its variant would show price 0 (or crash) - then read the product fresh instead.
+    if (stateEntry?.variant) { init(stateEntry.product, stateEntry.variant); setFetching(false); return; }
     const cached = getCachedProducts(storeId).find(e => e.product._id === productId);
-    if (cached) { init(cached.product, cached.variant); setFetching(false); return; }
+    if (cached?.variant) { init(cached.product, cached.variant); setFetching(false); return; }
     apiGetMyProductById(productId)
       .then(res => {
-        const fallback: ProductVariant = { _id: '', productId, sku: '', price: 0, compareAtPrice: null, options: [], stock: 0, unlimitedStock: false, shippingWeight: null, images: [], isDefault: true, status: 'active', isDelete: false, createdAt: '', updatedAt: '' };
+        // No variant found: leave the price blank (never a made-up 0 that a save would write over the real price).
+        const fallback = { _id: '', productId, sku: '', price: '', compareAtPrice: null, options: [], stock: 0, unlimitedStock: false, shippingWeight: null, images: [], isDefault: true, status: 'active', isDelete: false, createdAt: '', updatedAt: '' } as unknown as ProductVariant;
         const variant = res.data.defaultVariant ?? res.data.variants?.[0] ?? fallback;
         init(res.data.product, variant);
       })
@@ -257,6 +262,7 @@ export default function StoreEditProduct() {
       .then(res => {
         const p = res.data.product;
         const variants = res.data.variants ?? [];
+        setCampaignIds([...(p.campaignIds ?? [])]);
         setLearning({ curricula: [...(p.curricula ?? [])], ageMin: p.ageMin != null ? String(p.ageMin) : '', ageMax: p.ageMax != null ? String(p.ageMax) : '' });
         if (p.type === 'digital') {
           setDelivery(deliveryFromProduct(p));
@@ -302,6 +308,7 @@ export default function StoreEditProduct() {
 
   const handleSubmit = async (statusOverride?: ProductStatus) => {
     setError('');
+    if (String(cur.price).trim() === '') { setError('Enter the price before saving.'); return; }
     if (pType === 'educational' && !dig.educationLevel) { setError('Education level is required for educational resources.'); return; }
     if (pType === 'educational' && dig.educationLevel === 'other' && !dig.customLevel.trim()) { setError('Please describe the custom education level.'); return; }
     const learnErr = learningError(learning) ?? (pType !== 'physical' ? tiersError(dig.tiers) ?? deliveryError(delivery) : null);
@@ -316,6 +323,7 @@ export default function StoreEditProduct() {
           productId, name: phys.name, description: phys.description,
           subCategoryId: phys.subCategoryId || null, images: phys.images, tags: phys.tags,
           isListedOnEdudeen: phys.isListedOnEdudeen, status: finalStatus,
+          ...(campaignIds ? { campaignIds } : {}),
           scheduledAt: finalStatus === 'scheduled' ? phys.scheduledAt || null : null,
           ...learningPayload(learning),
         });
@@ -338,6 +346,7 @@ export default function StoreEditProduct() {
           educationLevel: pType === 'educational' ? (dig.educationLevel || null) : undefined,
           customLevel: pType === 'educational' && dig.educationLevel === 'other' ? dig.customLevel : undefined,
           status: finalStatus,
+          ...(campaignIds ? { campaignIds } : {}),
           scheduledAt: finalStatus === 'scheduled' ? dig.scheduledAt || null : null,
           price: Number(dig.price),
           compareAtPrice: dig.compareAtPrice ? Number(dig.compareAtPrice) : null,
@@ -659,6 +668,11 @@ export default function StoreEditProduct() {
                 </div>
               )}
             </div>
+          </Card>
+
+          {/* Join a running sale (admin campaigns) */}
+          <Card title="Join a running sale">
+            <CampaignPicker storeId={storeId} value={campaignIds} onChange={setCampaignIds} />
           </Card>
 
           {/* Inventory & Shipping (physical only) */}

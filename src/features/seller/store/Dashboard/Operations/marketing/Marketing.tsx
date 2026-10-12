@@ -1317,6 +1317,13 @@ export function StoreMarketing() {
                         <> · {c.discountType === 'percentage' ? `${c.discountValue}% off` : `${currencySymbol(c.currency ?? 'USD')}${c.discountValue} off`}</>
                       )}
                     </p>
+                    {c.isJoined && (
+                      <p className="text-[12px] text-graphite mb-2">
+                        {(c.selectedProductCount ?? 0) > 0
+                          ? `${c.selectedProductCount} of your products ${c.selectedProductCount === 1 ? 'is' : 'are'} in this sale. Tick or untick it on a product's page to change that.`
+                          : 'All your products are in this sale. Open a product and tick this sale to choose only some.'}
+                      </p>
+                    )}
                     {c.sponsorType === 'platform' ? (
                       <div className="flex items-start gap-1.5 mb-3 px-2.5 py-2 rounded-[7px] bg-success-bg">
                         <Building2 size={13} className="text-success shrink-0 mt-[1px]" />

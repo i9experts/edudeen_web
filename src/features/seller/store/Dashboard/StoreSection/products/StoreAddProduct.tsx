@@ -19,6 +19,7 @@ import {
 } from '@/features/seller/components/products/LearningFields';
 import { DeliveryFormatField, EMPTY_DELIVERY, deliveryPayload, deliveryError } from '@/features/seller/components/products/DeliveryFormatField';
 import { currencySymbol as symbolForCurrency } from '@/utils/currency';
+import { CampaignPicker } from './CampaignPicker';
 
 type ProductType   = 'physical' | 'digital' | 'educational';
 type ProductStatus = 'draft' | 'active' | 'scheduled';
@@ -215,6 +216,7 @@ export default function StoreAddProduct() {
   const [attributeValues,   setAttributeValues]   = useState<AttributeValuesState>({});
   const [learning,          setLearning]          = useState(EMPTY_LEARNING);
   const [delivery,          setDelivery]          = useState(EMPTY_DELIVERY);
+  const [campaignIds,       setCampaignIds]       = useState<string[]>([]);
 
   // Once the store loads, never leave the form on a type this store can't sell.
   useEffect(() => {
@@ -268,7 +270,7 @@ export default function StoreAddProduct() {
         const res = await apiCreatePhysicalProduct({
           storeId, name: phys.name, description: phys.description,
           subCategoryId: phys.subCategoryId || null, images: phys.images, tags: phys.tags,
-          isListedOnEdudeen: phys.isListedOnEdudeen, status: finalStatus,
+          isListedOnEdudeen: phys.isListedOnEdudeen, status: finalStatus, campaignIds,
           scheduledAt: finalStatus === 'scheduled' ? phys.scheduledAt || null : null,
           ...learningPayload(learning),
           variants: [{
@@ -279,7 +281,8 @@ export default function StoreAddProduct() {
             shippingWeight: phys.shippingWeight,
           }],
         });
-        addCachedProduct(storeId, { product: res.data.product, variant: res.data.defaultVariant });
+        const created = res.data.defaultVariant ?? res.data.variants?.find(v => v.isDefault) ?? res.data.variants?.[0];
+        if (created) addCachedProduct(storeId, { product: res.data.product, variant: created });
         productId = res.data.product._id;
       } else {
         const toFile = (f: PrivateUploadData) => ({ url: f.publicId, name: f.fileName, size: f.fileSize, mimeType: f.mimeType });
@@ -290,7 +293,7 @@ export default function StoreAddProduct() {
           subCategoryId: dig.subCategoryId || null, images: dig.images, tags: dig.tags,
           educationLevel: pType === 'educational' ? (dig.educationLevel || null) : null,
           customLevel: pType === 'educational' && dig.educationLevel === 'other' ? dig.customLevel : null,
-          isListedOnEdudeen: dig.isListedOnEdudeen, status: finalStatus,
+          isListedOnEdudeen: dig.isListedOnEdudeen, status: finalStatus, campaignIds,
           scheduledAt: finalStatus === 'scheduled' ? dig.scheduledAt || null : null,
           price: Number(dig.price), compareAtPrice: dig.compareAtPrice ? Number(dig.compareAtPrice) : null,
           ...learningPayload(learning),
@@ -298,7 +301,7 @@ export default function StoreAddProduct() {
           licenseTiers: tiersPayload(dig.tiers.filter(t => t.license !== dig.licenseType)),
           digital: { files, downloadLimit: dig.downloadLimit, linkExpiryDays: dig.linkExpiryDays ? Number(dig.linkExpiryDays) : null, pdfStampingEnabled: dig.pdfStampingEnabled, licenseType: dig.licenseType, buyerDeliveryMessage: dig.buyerDeliveryMessage, preview: { enabled: dig.previewEnabled, sourceFileIndex: 0 }, sampleFile: dig.sampleFile ? toFile(dig.sampleFile) : null },
         });
-        addCachedProduct(storeId, { product: res.data.product, variant: res.data.defaultVariant });
+        if (res.data.defaultVariant) addCachedProduct(storeId, { product: res.data.product, variant: res.data.defaultVariant });
         productId = res.data.product._id;
       }
 
@@ -484,6 +487,11 @@ export default function StoreAddProduct() {
                 <span className="text-[12px] text-success">shown to buyers</span>
               </div>
             )}
+          </Card>
+
+          {/* Step: Join a running sale (admin campaigns) */}
+          <Card step={nextStep()} title="Join a running sale" need="optional" hint="Edudeen sales you can put this product in.">
+            <CampaignPicker storeId={storeId} value={campaignIds} onChange={setCampaignIds} />
           </Card>
 
           {/* Step: Images */}

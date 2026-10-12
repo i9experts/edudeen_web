@@ -138,6 +138,8 @@ export interface StoreProduct {
   /** Reviewer's note when an admin sent the listing back. */
   reviewNote?:       string | null;
   isListedOnEdudeen: boolean;
+  /** Admin sales (campaigns) this product joined - only on the seller's own product responses. */
+  campaignIds?:      string[];
   isDelete:          boolean;
   createdAt:         string;
   updatedAt:         string;
@@ -159,6 +161,8 @@ export interface CreatePhysicalPayload extends LearningMetaInput {
   isListedOnEdudeen: boolean;
   status:            'draft' | 'active' | 'scheduled';
   scheduledAt?:      string | null;
+  /** Admin sales this product joins. Omit to leave unchanged on edit. */
+  campaignIds?:      string[];
   // At least one variant is required — every variant must share the same
   // set of attribute names (e.g. all "Color"+"Size", not a mix).
   variants:          VariantInput[];
@@ -177,6 +181,8 @@ export interface CreateDigitalPayload extends LearningMetaInput {
   isListedOnEdudeen: boolean;
   status:            'draft' | 'active' | 'scheduled';
   scheduledAt?:      string | null;
+  /** Admin sales this product joins. Omit to leave unchanged on edit. */
+  campaignIds?:      string[];
   price:             number;
   compareAtPrice:    number | null;
   digital:           DigitalMeta;
@@ -196,6 +202,8 @@ export interface EditPhysicalPayload extends LearningMetaInput {
   isListedOnEdudeen: boolean;
   status:            'draft' | 'active' | 'scheduled';
   scheduledAt?:      string | null;
+  /** Admin sales this product joins. Omit to leave unchanged on edit. */
+  campaignIds?:      string[];
 }
 
 export interface EditDigitalPayload extends LearningMetaInput {
@@ -208,6 +216,8 @@ export interface EditDigitalPayload extends LearningMetaInput {
   customLevel?:   string | null;
   status:         'draft' | 'active' | 'scheduled';
   scheduledAt?:   string | null;
+  /** Admin sales this product joins. Omit to leave unchanged. */
+  campaignIds?:   string[];
   price:          number;
   compareAtPrice: number | null;
   digital:        DigitalMeta;
@@ -225,7 +235,9 @@ interface ApiResponse<T> {
 
 export interface CreateProductData {
   product:        StoreProduct;
-  defaultVariant: ProductVariant;
+  defaultVariant?: ProductVariant;
+  /** Physical products come back with every variant created. */
+  variants?:       ProductVariant[];
 }
 
 export interface EditProductData {

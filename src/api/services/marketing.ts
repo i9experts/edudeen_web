@@ -72,6 +72,8 @@ export interface JoinableCampaign {
   // 'platform': Edudeen reimburses it — joining costs this store nothing.
   sponsorType:   'seller' | 'platform';
   isJoined:      boolean;
+  /** Products of this store that ticked this sale. 0 = none chosen yet, so (once joined) every product is in. */
+  selectedProductCount?: number;
 }
 
 /** GET /api/marketing/:storeId/campaigns */

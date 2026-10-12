@@ -17,14 +17,18 @@ export interface CartTotals {
  * currency, USD unless stated) converted to the display currency, capped at the subtotal.
  */
 export function computeCartTotals(items: CartItem[], campaign: Cart['campaignDiscount'] | null | undefined, convert: Convert): CartTotals {
-  const subtotal = items.reduce((s, i) => {
+  const lineOf = (i: CartItem) => {
     const unit = i.unitPrice ?? i.price ?? 0;
-    const lineTotal = i.itemTotal ?? unit * i.quantity;
-    return s + convert(lineTotal, i.currency);
-  }, 0);
+    return convert(i.itemTotal ?? unit * i.quantity, i.currency);
+  };
+  const subtotal = items.reduce((s, i) => s + lineOf(i), 0);
+  // Per-product participation: the sale covers only lines the API flagged `onCampaign` (an older API that does not
+  // send the flag at all means the whole cart, as before).
+  const flagged = items.some((i) => i.onCampaign !== undefined);
+  const eligibleSubtotal = flagged ? items.reduce((s, i) => (i.onCampaign ? s + lineOf(i) : s), 0) : subtotal;
   const campaignAmount = !campaign || !campaign.discountType || campaign.discountValue == null ? 0
-    : Math.min(subtotal, campaign.discountType === 'percentage'
-      ? subtotal * (campaign.discountValue / 100)
+    : Math.min(eligibleSubtotal, campaign.discountType === 'percentage'
+      ? eligibleSubtotal * (campaign.discountValue / 100)
       : convert(campaign.discountValue, campaign.valueCurrency ?? 'USD'));
   return { subtotal, campaignAmount, payable: Math.max(0, subtotal - campaignAmount) };
 }

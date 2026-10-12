@@ -16,7 +16,9 @@ export interface CartItem {
   currency?:        string | null;
   quantity:         number;
   itemTotal?:       number;
-  type?:            'physical' | 'digital';
+  /** True when this line is in the store's running sale (the seller ticked the campaign on this product). */
+  onCampaign?:      boolean;
+  type?:           'physical' | 'digital';
   /** Set on the main marketplace site, where one view spans several stores' carts. */
   storeId?:         string;
   storeName?:       string;
