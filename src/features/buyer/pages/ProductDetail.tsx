@@ -33,7 +33,7 @@ import { ProductCoverFallback } from '@/components/comman/marketplace/ProductCov
 import {
   ArrowRight, Package, Download, ClipboardList, CheckCircle, Minus, Plus,
   ShoppingCart, Star, Link2, Share2, Heart, ShieldCheck, Truck,
-  UserPlus, UserCheck, Tag, ZoomIn, Users, Calendar, Award, Sparkles, Flame,
+  UserPlus, UserCheck, Tag, ZoomIn, ZoomOut, ChevronLeft, ChevronRight, Users, Calendar, Award, Sparkles, Flame,
   FileText, Store as StoreIcon, Eye, Loader2, Zap, MessageCircle, ListPlus, School, MessageCircleQuestion,
 } from 'lucide-react';
 import { ProductReviewsSection } from './ProductReviews';
@@ -82,28 +82,39 @@ function DetailSkeleton() {
   );
 }
 
-// ── Image gallery — vertical thumbnail rail (desktop) + hover zoom ────────────
+// ── Zoom viewer — zoom in/out buttons + previous/next for several images/pages ───
+function ZoomViewer({ pages, alt, start = 0 }: { pages: string[]; alt: string; start?: number }) {
+  const [i, setI] = useState(start);
+  const [zoom, setZoom] = useState(1);
+  const go = (n: number) => { setI((n + pages.length) % pages.length); setZoom(1); };
+  const btn = 'w-9 h-9 rounded-full border border-bone bg-white flex items-center justify-center text-carbon hover:bg-bone disabled:opacity-40 cursor-pointer';
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center justify-center gap-2">
+        {pages.length > 1 && <button type="button" aria-label="Previous" className={btn} onClick={() => go(i - 1)}><ChevronLeft size={16} /></button>}
+        <button type="button" aria-label="Zoom out" className={btn} disabled={zoom <= 1} onClick={() => setZoom(z => Math.max(1, +(z - 0.5).toFixed(1)))}><ZoomOut size={16} /></button>
+        <span className="text-[12px] text-slate w-24 text-center">{pages.length > 1 ? `${i + 1} / ${pages.length} · ` : ''}{Math.round(zoom * 100)}%</span>
+        <button type="button" aria-label="Zoom in" className={btn} disabled={zoom >= 4} onClick={() => setZoom(z => Math.min(4, +(z + 0.5).toFixed(1)))}><ZoomIn size={16} /></button>
+        {pages.length > 1 && <button type="button" aria-label="Next" className={btn} onClick={() => go(i + 1)}><ChevronRight size={16} /></button>}
+      </div>
+      <div className="overflow-auto max-h-[70vh] rounded-lg border border-bone bg-white">
+        <img src={pages[i]} alt={`${alt} ${i + 1}`} style={{ width: `${zoom * 100}%`, maxWidth: 'none' }} className="block mx-auto" />
+      </div>
+    </div>
+  );
+}
+
+// ── Image gallery — vertical thumbnail rail (desktop); click opens the zoom viewer ──
 function ImageGallery({ images, name }: { images: string[]; name: string }) {
   const [selected, setSelected] = useState(0);
   const [errored, setErrored] = useState<Record<number, boolean>>({});
-  const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 });
-  const [zooming, setZooming] = useState(false);
+  const [viewer, setViewer] = useState(false);
   const src = images[selected];
-
-  const onMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    setZoomPos({ x: ((e.clientX - rect.left) / rect.width) * 100, y: ((e.clientY - rect.top) / rect.height) * 100 });
-  };
 
   return (
     <div className="flex flex-col lg:flex-row-reverse gap-3 min-w-0">
-      {/* Main image */}
-      <div
-        className="relative flex-1 min-w-0 h-[300px] md:h-[400px] lg:h-[460px] max-h-[55vh] lg:max-h-none rounded-2xl overflow-hidden border border-bone bg-white group cursor-zoom-in"
-        onMouseEnter={() => setZooming(true)}
-        onMouseLeave={() => setZooming(false)}
-        onMouseMove={onMouseMove}
-      >
+      {/* Main image — shown whole (no crop, no hover zoom) */}
+      <div className="relative flex-1 min-w-0 h-[300px] md:h-[400px] lg:h-[460px] max-h-[55vh] lg:max-h-none rounded-2xl overflow-hidden border border-bone bg-white">
         {!src || errored[selected] ? (
           <ProductCoverFallback name={name} size="lg" className="w-full h-full" />
         ) : (
@@ -111,24 +122,22 @@ function ImageGallery({ images, name }: { images: string[]; name: string }) {
             <img
               loading="lazy" decoding="async" src={src} alt={name}
               onError={() => setErrored(e => ({ ...e, [selected]: true }))}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
             />
-            {zooming && (
-              <div
-                className="absolute inset-0 bg-no-repeat pointer-events-none transition-opacity duration-100"
-                style={{
-                  backgroundImage: `url(${src})`,
-                  backgroundSize: '200%',
-                  backgroundPosition: `${zoomPos.x}% ${zoomPos.y}%`,
-                }}
-              />
-            )}
-            <span className="absolute top-3 end-3 flex items-center gap-1 px-[9px] py-[5px] rounded-full bg-black/55 text-white text-[12px] font-medium opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm">
-              <ZoomIn size={12} /> Hover to zoom
-            </span>
+            <button
+              type="button" onClick={() => setViewer(true)} aria-label="Enlarge image"
+              className="absolute top-3 end-3 flex items-center gap-1 px-[9px] py-[5px] rounded-full bg-black/55 text-white text-[12px] font-medium backdrop-blur-sm cursor-pointer"
+            >
+              <ZoomIn size={12} /> Enlarge
+            </button>
           </>
         )}
       </div>
+      {viewer && (
+        <Modal title={name} onClose={() => setViewer(false)} width={760} mobileSheet>
+          <ZoomViewer pages={images.filter(Boolean)} alt={name} start={selected} />
+        </Modal>
+      )}
 
       {/* Thumbnails — vertical rail on desktop, horizontal scroll on mobile */}
       {images.length > 1 && (
@@ -516,6 +525,9 @@ export function ProductDetail() {
 
   // What other teachers bought alongside this one.
   const [alsoBought, setAlsoBought] = useState<{ basis: 'bought_together' | 'similar'; products: MarketplaceProduct[] }>({ basis: 'similar', products: [] });
+  // A product shows in only one rail: level/bought-together first, then this seller, then related.
+  const sellerRail = sellerProducts.filter(p => !alsoBought.products.some(x => x._id === p._id));
+  const relatedRail = relatedProducts.filter(p => !alsoBought.products.some(x => x._id === p._id) && !sellerProducts.some(x => x._id === p._id));
   useEffect(() => {
     if (!product?._id) return;
     let cancelled = false;
@@ -691,7 +703,7 @@ export function ProductDetail() {
                         from the type badge — mirrors ProductCard.tsx's grid
                         card corner layout instead of bunching everything together. */}
                     <div className="flex items-center gap-2 flex-wrap">
-                      {pctOffShown != null && pctOffShown > 0 && <Badge color="red">-{pctOffShown}% OFF</Badge>}
+                      {pctOffShown != null && pctOffShown > 0 && !product.activeCampaign && <Badge color="red">-{pctOffShown}% OFF</Badge>}
                       {product.activeCampaign && (
                         <span
                           title={`${product.activeCampaign.name} — ends ${new Date(product.activeCampaign.endDate).toLocaleDateString()}`}
@@ -1071,9 +1083,9 @@ export function ProductDetail() {
           )}
 
           {/* ── More from this Seller ────────────────────────────────────────── */}
-          {sellerProducts.length > 0 && (
+          {sellerRail.length > 0 && (
             <ProductRail title={t('More from this Seller')}>
-              {sellerProducts.map(p => (
+              {sellerRail.map(p => (
                 <RelatedCard
                   key={p._id} id={p.slug} name={p.name} image={p.images?.[0] ?? null}
                   price={p.subscriberPrice ?? p.defaultVariantPrice}
@@ -1091,12 +1103,12 @@ export function ProductDetail() {
           )}
 
           {/* ── Related Products ─────────────────────────────────────────────── */}
-          {relatedProducts.length > 0 && (() => {
-            const topSeller = relatedProducts.reduce((max, p) => p.purchaseCount > max ? p.purchaseCount : max, 0);
+          {relatedRail.length > 0 && (() => {
+            const topSeller = relatedRail.reduce((max, p) => p.purchaseCount > max ? p.purchaseCount : max, 0);
             const fourteenDaysAgo = Date.now() - 14 * 24 * 60 * 60 * 1000;
             return (
               <ProductRail title={t('Related Products')}>
-                {relatedProducts.map(p => {
+                {relatedRail.map(p => {
                   const dv = (p.variants ?? []).find(v => v.isDefault) ?? p.variants?.[0];
                   const wishlisted = dv ? isWishlisted(p._id, dv._id) : false;
                   return (
@@ -1146,7 +1158,7 @@ export function ProductDetail() {
       {quoteOpen && product && <QuoteRequestDialog productId={product._id} productName={product.name} onClose={() => setQuoteOpen(false)} />}
 
       {previewOpen && (
-        <Modal title="Preview" onClose={() => { setPreviewOpen(false); resetPreview(); }} width={560} mobileSheet>
+        <Modal title="Preview" onClose={() => { setPreviewOpen(false); resetPreview(); }} width={760} mobileSheet>
           {previewLoading && (
             <div className="flex items-center justify-center gap-2 py-10 text-[13px] text-slate">
               <Loader2 size={16} className="animate-spin" /> Loading preview…
@@ -1156,14 +1168,10 @@ export function ProductDetail() {
             <p className="text-[13px] text-error text-center py-10">{previewError}</p>
           )}
           {!previewLoading && !previewError && previewData?.type === 'pdf' && (
-            <div className="flex flex-col gap-3">
-              {previewData.pages.map((url, i) => (
-                <img key={i} src={url} alt={`Preview page ${i + 1}`} className="w-full rounded-lg border border-bone" />
-              ))}
-            </div>
+            <ZoomViewer pages={previewData.pages} alt="Preview page" />
           )}
           {!previewLoading && !previewError && previewData?.type === 'image' && (
-            <img src={previewData.url} alt="Preview" className="w-full rounded-lg border border-bone" />
+            <ZoomViewer pages={[previewData.url]} alt="Preview" />
           )}
           {!previewLoading && !previewError && previewData?.type === 'video' && (
             <video src={previewData.url} controls className="w-full rounded-lg" />
