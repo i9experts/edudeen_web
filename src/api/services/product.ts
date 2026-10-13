@@ -155,6 +155,8 @@ export interface CreatePhysicalPayload extends LearningMetaInput {
   storeId:           string;
   name:              string;
   description:       string;
+  /** Any active main category; omit to keep the store's category (create) / leave unchanged (edit). */
+  categoryId?:       string;
   subCategoryId:     string | null;
   images:            string[];
   tags:              string[];
@@ -173,6 +175,7 @@ export interface CreateDigitalPayload extends LearningMetaInput {
   name:              string;
   description:       string;
   productType:       'digital' | 'educational';
+  categoryId?:       string;
   subCategoryId:     string | null;
   educationLevel?:   EducationLevel | null;
   customLevel?:      string | null;
@@ -196,6 +199,8 @@ export interface EditPhysicalPayload extends LearningMetaInput {
   productId:         string;
   name:              string;
   description:       string;
+  /** Any active main category; omit to keep the store's category (create) / leave unchanged (edit). */
+  categoryId?:       string;
   subCategoryId:     string | null;
   images:            string[];
   tags:              string[];
@@ -211,6 +216,7 @@ export interface EditDigitalPayload extends LearningMetaInput {
   variantId:      string | null;
   name:           string;
   description:    string;
+  categoryId?:    string;
   subCategoryId:  string | null;
   educationLevel?: EducationLevel | null;
   customLevel?:   string | null;

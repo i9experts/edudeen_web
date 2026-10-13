@@ -13,7 +13,7 @@ import { CustomLevelInput } from './CustomLevelInput';
 import { DynamicAttributeFields } from './DynamicAttributeFields';
 import { toAttributeInputs, findMissingRequiredAttribute, type AttributeValuesState } from './attributeFormUtils';
 import { apiGetProductAttributes, apiSetProductAttributes } from '@/api/services/attributes';
-import { useStoreSubcategories } from '@/hooks/store/useStoreSubcategories';
+import { useSellerCategories } from '@/hooks/store/useSellerCategories';
 import { useCategoryAttributes } from '@/hooks/marketplace/useCategoryAttributes';
 import { ImageUpload, type PrivateUploadData, DateTimePickerModal, SkeletonBox } from '@/components/comman/ui';
 import {
@@ -210,8 +210,12 @@ export default function StoreEditProduct() {
   // (supports every SupportedCurrency, not just a PKR/USD ternary that
   // mislabeled any other currency as "Rs").
   const currencySymbol = symbolForCurrency(store?.baseCurrency);
-  const { mainCategory, subcategories, loading: catLoading, refetch: refetchCats } = useStoreSubcategories(store?.categoryId);
-
+  const { categories, loading: catLoading, error: catError, refetch: refetchCats } = useSellerCategories();
+  // Main category chosen for THIS product; defaults to the store's own category.
+  const [categoryChoice, setCategoryChoice] = useState<string | null>(null);
+  const categoryId   = categoryChoice ?? store?.categoryId ?? '';
+  const rootCategory = categories.find(c => c._id === categoryId);
+  const subcategories = rootCategory?.children ?? [];
   const [fetching,          setFetching]          = useState(true);
   const [saving,            setSaving]            = useState(false);
   const [error,             setError]             = useState('');
@@ -233,6 +237,7 @@ export default function StoreEditProduct() {
 
   function init(p: StoreProduct, v: ProductVariant) {
     setPType(p.productType);
+    if (p.categoryId) setCategoryChoice(p.categoryId);
     setReview(p.status === 'pending_review' || p.status === 'rejected' ? { status: p.status, note: p.reviewNote ?? null } : null);
     setVariantId(v._id || null);
     setLearning({ curricula: [...(p.curricula ?? [])], ageMin: p.ageMin != null ? String(p.ageMin) : '', ageMax: p.ageMax != null ? String(p.ageMax) : '' });
@@ -293,7 +298,15 @@ export default function StoreEditProduct() {
 
   const cur = pType === 'physical' ? phys : dig;
 
-  const effectiveCategoryId = cur.subCategoryId || store?.categoryId || null;
+  const changeCategory = (id: string) => {
+    if (id === categoryId) return;
+    setCategoryChoice(id);
+    sp('subCategoryId', '');
+    sd('subCategoryId', '');
+    setAttributeValues({});
+  };
+
+  const effectiveCategoryId = cur.subCategoryId || categoryId || null;
   const { definitions: attrDefs, loading: attrLoading } = useCategoryAttributes(effectiveCategoryId);
 
   const addTag = () => {
@@ -321,7 +334,7 @@ export default function StoreEditProduct() {
       if (pType === 'physical') {
         const res = await apiEditPhysicalProduct(productId, {
           productId, name: phys.name, description: phys.description,
-          subCategoryId: phys.subCategoryId || null, images: phys.images, tags: phys.tags,
+          categoryId: categoryId || undefined, subCategoryId: phys.subCategoryId || null, images: phys.images, tags: phys.tags,
           isListedOnEdudeen: phys.isListedOnEdudeen, status: finalStatus,
           ...(campaignIds ? { campaignIds } : {}),
           scheduledAt: finalStatus === 'scheduled' ? phys.scheduledAt || null : null,
@@ -342,7 +355,7 @@ export default function StoreEditProduct() {
         const res = await apiEditDigitalProduct(productId, {
           productId, variantId,
           name: dig.name, description: dig.description,
-          subCategoryId: dig.subCategoryId || null,
+          categoryId: categoryId || undefined, subCategoryId: dig.subCategoryId || null,
           educationLevel: pType === 'educational' ? (dig.educationLevel || null) : undefined,
           customLevel: pType === 'educational' && dig.educationLevel === 'other' ? dig.customLevel : undefined,
           status: finalStatus,
@@ -485,15 +498,17 @@ export default function StoreEditProduct() {
           {/* Category */}
           <Card title="Category">
             <SubcategoryField
-              mainCategoryName={mainCategory?.name ?? ''}
-              mainCategoryId={store?.categoryId ?? ''}
+              mainCategoryName={rootCategory?.name ?? ''}
+              mainCategoryId={categoryId}
+              categories={categories}
+              categoryId={categoryId}
+              onCategoryChange={changeCategory}
+              categoriesError={catError}
               subcategories={subcategories}
               loading={catLoading}
               value={cur.subCategoryId}
               onChange={id => pType === 'physical' ? sp('subCategoryId', id) : sd('subCategoryId', id)}
-              onCreated={id => pType === 'physical' ? sp('subCategoryId', id) : sd('subCategoryId', id)}
-              refetch={refetchCats}
-            />
+              refetch={refetchCats}            />
           </Card>
 
           {/* Category-specific classification (subject, format, etc) */}

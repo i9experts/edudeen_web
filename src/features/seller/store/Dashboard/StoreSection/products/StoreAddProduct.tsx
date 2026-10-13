@@ -9,7 +9,7 @@ import { SubcategoryField } from './SubcategoryField';
 import { CustomLevelInput } from './CustomLevelInput';
 import { DynamicAttributeFields } from './DynamicAttributeFields';
 import { toAttributeInputs, findMissingRequiredAttribute, type AttributeValuesState } from './attributeFormUtils';
-import { useStoreSubcategories } from '@/hooks/store/useStoreSubcategories';
+import { useSellerCategories } from '@/hooks/store/useSellerCategories';
 import { useCategoryAttributes } from '@/hooks/marketplace/useCategoryAttributes';
 import { ImageUpload, type PrivateUploadData, DateTimePickerModal } from '@/components/comman/ui';
 import {
@@ -205,8 +205,12 @@ export default function StoreAddProduct() {
   const supportsDigital     = !store || (store.productTypes ?? []).includes('digital_downloads');
   const supportsEducational = !store || (store.productTypes ?? []).includes('educational_resources');
 
-  const { mainCategory, subcategories, loading: catLoading, refetch: refetchCats } = useStoreSubcategories(store?.categoryId);
-
+  const { categories, loading: catLoading, error: catError, refetch: refetchCats } = useSellerCategories();
+  // Main category chosen for THIS product; defaults to the store's own category.
+  const [categoryChoice, setCategoryChoice] = useState<string | null>(null);
+  const categoryId   = categoryChoice ?? store?.categoryId ?? '';
+  const rootCategory = categories.find(c => c._id === categoryId);
+  const subcategories = rootCategory?.children ?? [];
   const [pType,             setPType]             = useState<ProductType>('physical');
   const [saving,            setSaving]            = useState(false);
   const [error,             setError]             = useState('');
@@ -233,9 +237,17 @@ export default function StoreAddProduct() {
 
   const cur = pType === 'physical' ? phys : dig;
 
+  const changeCategory = (id: string) => {
+    if (id === categoryId) return;
+    setCategoryChoice(id);
+    sp('subCategoryId', '');
+    sd('subCategoryId', '');
+    setAttributeValues({});
+  };
+
   // Attributes are scoped to whichever category the product actually sits
   // under — the chosen subcategory, else the store's main category.
-  const effectiveCategoryId = cur.subCategoryId || store?.categoryId || null;
+  const effectiveCategoryId = cur.subCategoryId || categoryId || null;
   const { definitions: attrDefs, loading: attrLoading } = useCategoryAttributes(effectiveCategoryId);
 
   const addPhysTag = () => { const v = phys.tagInput.replace(',', '').trim(); if (v && !phys.tags.includes(v)) sp('tags', [...phys.tags, v]); sp('tagInput', ''); };
@@ -269,7 +281,7 @@ export default function StoreAddProduct() {
       if (pType === 'physical') {
         const res = await apiCreatePhysicalProduct({
           storeId, name: phys.name, description: phys.description,
-          subCategoryId: phys.subCategoryId || null, images: phys.images, tags: phys.tags,
+          categoryId: categoryId || undefined, subCategoryId: phys.subCategoryId || null, images: phys.images, tags: phys.tags,
           isListedOnEdudeen: phys.isListedOnEdudeen, status: finalStatus, campaignIds,
           scheduledAt: finalStatus === 'scheduled' ? phys.scheduledAt || null : null,
           ...learningPayload(learning),
@@ -290,7 +302,7 @@ export default function StoreAddProduct() {
         const res = await apiCreateDigitalProduct({
           storeId, name: dig.name, description: dig.description,
           productType: pType === 'educational' ? 'educational' : 'digital',
-          subCategoryId: dig.subCategoryId || null, images: dig.images, tags: dig.tags,
+          categoryId: categoryId || undefined, subCategoryId: dig.subCategoryId || null, images: dig.images, tags: dig.tags,
           educationLevel: pType === 'educational' ? (dig.educationLevel || null) : null,
           customLevel: pType === 'educational' && dig.educationLevel === 'other' ? dig.customLevel : null,
           isListedOnEdudeen: dig.isListedOnEdudeen, status: finalStatus, campaignIds,
@@ -626,17 +638,19 @@ export default function StoreAddProduct() {
           )}
 
           {/* Category */}
-          <Card step={nextStep()} title="Category" need="optional" hint={`Your product is listed under ${mainCategory?.name ?? 'your store category'}. Pick a subcategory to help buyers browse.`}>
+          <Card step={nextStep()} title="Category" need="optional" hint="Choose the category your product belongs to, then a subcategory to help buyers browse.">
             <SubcategoryField
-              mainCategoryName={mainCategory?.name ?? ''}
-              mainCategoryId={store?.categoryId ?? ''}
+              mainCategoryName={rootCategory?.name ?? ''}
+              mainCategoryId={categoryId}
+              categories={categories}
+              categoryId={categoryId}
+              onCategoryChange={changeCategory}
+              categoriesError={catError}
               subcategories={subcategories}
               loading={catLoading}
               value={cur.subCategoryId}
               onChange={id => pType === 'physical' ? sp('subCategoryId', id) : sd('subCategoryId', id)}
-              onCreated={id => pType === 'physical' ? sp('subCategoryId', id) : sd('subCategoryId', id)}
-              refetch={refetchCats}
-            />
+              refetch={refetchCats}            />
           </Card>
 
           {/* Category-specific classification (subject, format, etc) */}
