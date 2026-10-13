@@ -19,7 +19,7 @@ import aboutImg1 from '@/assets/about/about-1.jfif';
 import aboutImg2 from '@/assets/about/about-2.jfif';
 import aboutImg3 from '@/assets/about/about-3.jfif';
 
-// ── Compact rail card — dense Flash Sale / Top Picks strip card ────────────────
+// ── Compact rail card — Flash Sale / Top Picks strip card ───────────────────────
 export function RailCard({ product, onClick, badge, rank, size = 'md', stockLabel }: {
   product: MarketplaceProduct;
   onClick: (id: string) => void;
@@ -36,47 +36,43 @@ export function RailCard({ product, onClick, badge, rank, size = 'md', stockLabe
   const price     = nativePrice != null ? convert(nativePrice, dv?.currency) : null;
   const compareAt = nativeCompareAt != null ? convert(nativeCompareAt, dv?.currency) : null;
   const isSm      = size === 'sm';
+  const rankTone  = rank === 1 ? 'bg-[#F4DC4C] text-[#152D43]' : rank === 2 ? 'bg-[#dfe6ec] text-[#152D43]' : rank === 3 ? 'bg-[#f0d9bd] text-[#152D43]' : 'bg-carbon/85 text-white';
   return (
     <button
       onClick={() => onClick(product.slug)}
       className={clsx(
-        'relative shrink-0 text-start bg-white rounded-[14px] border border-bone overflow-hidden cursor-pointer group transition-all duration-200 hover:-translate-y-[3px] hover:border-brand-orange/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange',
-        isSm ? 'w-[92px] sm:w-[104px]' : 'w-[112px] sm:w-[126px]',
+        'relative shrink-0 text-start bg-white rounded-2xl border border-bone overflow-hidden cursor-pointer group transition-all duration-200 hover:-translate-y-[3px] hover:border-brand-orange/30 hover:shadow-[0_14px_28px_-14px_rgba(19,57,86,0.35)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange',
+        isSm ? 'w-[132px] sm:w-auto' : 'w-[146px] sm:w-auto',
       )}
     >
-      {/* Hover accent — same sweep-in top line used on TopStoreCard/Feature cards,
-         so this rail card finally reads as the same design system, not a
-         separate/older component. */}
-      <div className="absolute top-0 start-0 end-0 h-[3px] z-[1] bg-gradient-to-r from-brand-orange to-[#66AD36] scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300" />
-
-      <div className="relative">
+      <div className="relative bg-cream">
         <ProductImage
           images={product.images ?? []}
           name={product.name}
-          className={clsx('transition-transform duration-500 ease-out group-hover:scale-[1.06]', isSm ? 'h-[74px] sm:h-[80px]' : 'h-[92px] sm:h-[100px]')}
+          className={clsx('transition-transform duration-500 ease-out group-hover:scale-[1.05]', isSm ? 'h-[104px] sm:h-[112px]' : 'h-[118px] sm:h-[128px]')}
         />
-        {badge && <div className="absolute top-[5px] start-[5px]">{badge}</div>}
+        {badge && <div className="absolute top-[7px] start-[7px]">{badge}</div>}
         {rank != null && (
-          <span className="absolute bottom-[5px] start-[5px] w-[18px] h-[18px] rounded-full bg-carbon/85 backdrop-blur-sm text-white text-[12px] font-bold flex items-center justify-center">
+          <span className={clsx('absolute bottom-[7px] start-[7px] w-[22px] h-[22px] rounded-full text-[12px] font-bold flex items-center justify-center shadow-sm', rankTone)}>
             {rank}
           </span>
         )}
       </div>
-      <div className={isSm ? 'px-[7px] py-[6px]' : 'px-[9px] py-[8px]'}>
-        <p className={clsx('font-semibold text-carbon leading-tight line-clamp-2', isSm ? 'text-[12px] mb-[3px] min-h-[24px]' : 'text-[12px] mb-[5px] min-h-[28px]')}>{product.name}</p>
-        <div className="flex items-baseline gap-[4px]">
-          <span className={clsx('font-bold text-carbon', isSm ? 'text-[12px]' : 'text-[12px]')}>{price != null ? `${priceSymbol}${price.toLocaleString()}` : '—'}</span>
+      <div className="px-[11px] pt-[9px] pb-[11px]">
+        <p className="font-semibold text-carbon leading-snug line-clamp-2 text-[12.5px] min-h-[34px] mb-[6px]">{product.name}</p>
+        <div className="flex items-baseline gap-[6px] flex-wrap">
+          <span className="font-bold text-brand-deep-orange text-[14px]">{price != null ? `${priceSymbol}${price.toLocaleString()}` : '—'}</span>
           {compareAt != null && compareAt > (price ?? 0) && (
             <span className="text-[12px] text-slate line-through">{priceSymbol}{compareAt.toLocaleString()}</span>
           )}
         </div>
-        <span className="flex items-center gap-[2px] text-[12px] text-slate mt-[3px]">
-          <Star size={8} className={product.averageRating > 0 ? 'text-brand-orange fill-brand-orange' : 'text-bone fill-bone'} />
-          {product.averageRating > 0 ? product.averageRating.toFixed(1) : 'New'}
-        </span>
-        {stockLabel && (
-          <span className="block text-[12px] font-semibold text-amber-600 mt-[3px]">{stockLabel}</span>
-        )}
+        <div className="flex items-center justify-between gap-2 mt-[6px]">
+          <span className="flex items-center gap-[3px] text-[12px] text-slate">
+            <Star size={10} className={product.averageRating > 0 ? 'text-[#E0A800] fill-[#E0A800]' : 'text-bone fill-bone'} />
+            {product.averageRating > 0 ? product.averageRating.toFixed(1) : 'New'}
+          </span>
+          {stockLabel && <span className="text-[12px] font-semibold text-[#9a5b00] bg-[#fff4d6] rounded-full px-[7px] py-[1px]">{stockLabel}</span>}
+        </div>
       </div>
     </button>
   );
@@ -107,7 +103,7 @@ export function CategoryBarIcon({ category }: { category: CategoryNode }) {
 // native app "deals rail" pattern — instead of forcing 3-4 cramped grid
 // columns into the width. `sm:` and up switches to the wrapped grid, since
 // there's real room there for a fixed single-row layout.
-const RAIL_GRID_CLS = 'flex gap-2.5 overflow-x-auto scrollbar-hide -mx-4 px-4 pb-1 sm:mx-0 sm:px-0 sm:pb-0 sm:grid sm:grid-cols-5 sm:overflow-visible xl:grid-cols-7';
+const RAIL_GRID_CLS = 'flex gap-3 overflow-x-auto scrollbar-hide -mx-4 px-4 pb-2 sm:mx-0 sm:px-0 sm:pb-0 sm:grid sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 sm:overflow-visible';
 
 // ── Full-width mega-menu content panes ───────────────────────────────────────
 // Each of the 5 nav items below renders into the SAME shared full-width panel
@@ -116,11 +112,19 @@ const RAIL_GRID_CLS = 'flex gap-2.5 overflow-x-auto scrollbar-hide -mx-4 px-4 pb
 // One label component for every section header inside any of the 5 panes —
 // guarantees the "one consistent design language" requirement structurally
 // (a shared component can't drift the way 8 copy-pasted <p> tags eventually do).
-export function MegaSectionLabel({ children }: { children: ReactNode }) {
+export function MegaSectionLabel({ children, action }: { children: ReactNode; action?: { label: string; onClick: () => void } }) {
   return (
-    <p className="text-[12px] font-bold text-slate uppercase tracking-[0.07em] mb-3">
-      {children}
-    </p>
+    <div className="flex items-center justify-between gap-3 mb-3">
+      <p className="flex items-center gap-2 text-[12px] font-bold text-slate uppercase tracking-[0.07em] m-0">
+        <span className="h-[13px] w-[3px] rounded-full bg-brand-orange" aria-hidden />
+        {children}
+      </p>
+      {action && (
+        <button type="button" onClick={action.onClick} className="inline-flex items-center gap-[3px] bg-transparent border-none p-0 cursor-pointer text-[12.5px] font-semibold text-brand-orange hover:underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange">
+          {action.label} <ChevronRight size={13} />
+        </button>
+      )}
+    </div>
   );
 }
 
@@ -226,59 +230,63 @@ export function CategoriesMegaContent({
   );
 }
 
-export function FlashSaleMegaContent({ flashDeals, countdown, onProductClick }: {
+export function FlashSaleMegaContent({ flashDeals, countdown, onProductClick, onViewAll }: {
   flashDeals: { product: MarketplaceProduct; pct: number }[];
   /** Time left in the live sale campaign; null when no sale is running (no timer shown). */
   countdown:  { h: string; m: string; s: string } | null;
   onProductClick: (id: string) => void;
+  onViewAll?: () => void;
 }) {
   return (
-    <div className="flex flex-col lg:flex-row gap-3 lg:gap-5">
-      {/* Countdown banner — a slim horizontal strip on mobile (icon + title +
-         timer in one row, description hidden), placed ABOVE the deals rail
-         via `order-first` — the native app pattern (Daraz/Temu: a compact
-         sale banner pinned above a swipeable card row), instead of a tall
-         vertical card squeezed below a cramped grid. At `lg:` it reverts to
-         the original vertical card, sitting to the right of the rail
-         (`order-none` restores normal DOM order — products first). */}
-      <div className="relative order-first lg:order-none w-full lg:w-[190px] shrink-0 overflow-hidden rounded-2xl border border-black/10 flex flex-row lg:flex-col items-center gap-3 lg:gap-0 p-3 lg:p-4 text-white">
-        <div className="gradient-drift absolute inset-0 bg-gradient-to-br from-[#e11d48] via-[#d9375b] to-brand-deep-orange" />
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(255,255,255,0.2),transparent_55%)]" />
-        <div className="pointer-events-none absolute -bottom-8 -end-6 size-24 rounded-full bg-white/10 blur-2xl" />
+    <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
+      {/* Promo card in the site's own navy/royal-blue palette with the brand yellow accent
+          (same family as the hero and the deals banner) - a slim strip on mobile, a vertical card at lg. */}
+      <div className="relative order-first lg:order-none w-full lg:w-[210px] shrink-0 overflow-hidden rounded-2xl flex flex-row lg:flex-col items-center lg:items-start gap-3 lg:gap-0 p-3.5 lg:p-5 text-white">
+        <div className="absolute inset-0 bg-gradient-to-br from-[#152D43] via-[#174771] to-[#2b6a8f]" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(244,220,76,0.22),transparent_55%)]" />
+        <div className="pointer-events-none absolute -bottom-10 -end-8 size-28 rounded-full bg-white/10 blur-2xl" />
 
-        <span className="relative z-[1] flex size-9 items-center justify-center rounded-full bg-white/15 shrink-0 lg:mb-2">
-          <Flame size={17} className="text-white" />
-        </span>
-
-        <div className="relative z-[1] min-w-0 flex-1 lg:flex-none lg:text-center">
-          <p className="text-[13.5px] font-bold leading-tight lg:mb-[3px]">Flash Sale</p>
-          <p className="hidden lg:block text-[12px] text-white/80 mb-3 leading-snug">Deep discounts, while stock lasts.</p>
+        <div className="relative z-[1] flex items-center gap-2 lg:mb-3 shrink-0">
+          <span className="inline-flex items-center gap-1 rounded-full bg-[#F4DC4C] text-[#152D43] px-2.5 py-[3px] text-[12px] font-bold uppercase tracking-[0.07em]">
+            <Flame size={12} className="fill-current" /> Flash
+          </span>
         </div>
 
-        {countdown && <div className="relative z-[1] flex flex-col items-center shrink-0">
-          <span className="text-[12px] font-bold uppercase tracking-[0.1em] text-white/70 mb-[3px] lg:mb-[6px]">Ends In</span>
-          <div className="flex items-center gap-[5px]">
-            <CountdownUnit value={Number(countdown.h)} label="Hrs" size="sm" />
-            <span className="pb-[10px] text-[13px] font-bold leading-none text-white/50">:</span>
-            <CountdownUnit value={Number(countdown.m)} label="Min" size="sm" />
-            <span className="pb-[10px] text-[13px] font-bold leading-none text-white/50">:</span>
-            <CountdownUnit value={Number(countdown.s)} label="Sec" size="sm" />
+        <div className="relative z-[1] min-w-0 flex-1 lg:flex-none">
+          <p className="font-serif text-[18px] lg:text-[24px] leading-[1.1] m-0 mb-1">Flash Sale</p>
+          <p className="hidden lg:block text-[12.5px] text-white/75 leading-snug mb-4">Deep discounts on learning resources, while stock lasts.</p>
+        </div>
+
+        {countdown && (
+          <div className="relative z-[1] flex flex-col items-center lg:items-start shrink-0 lg:mb-4">
+            <span className="text-[12px] font-bold uppercase tracking-[0.1em] text-white/65 mb-[5px]">Ends in</span>
+            <div className="flex items-center gap-[5px]">
+              <CountdownUnit value={Number(countdown.h)} label="Hrs" size="sm" />
+              <span className="pb-[10px] text-[13px] font-bold leading-none text-white/50">:</span>
+              <CountdownUnit value={Number(countdown.m)} label="Min" size="sm" />
+              <span className="pb-[10px] text-[13px] font-bold leading-none text-white/50">:</span>
+              <CountdownUnit value={Number(countdown.s)} label="Sec" size="sm" />
+            </div>
           </div>
-        </div>}
+        )}
+
+        {onViewAll && (
+          <button type="button" onClick={onViewAll} className="relative z-[1] hidden lg:inline-flex items-center gap-1 rounded-full bg-white text-[#152D43] px-3.5 py-[7px] text-[12.5px] font-bold border-none cursor-pointer hover:bg-[#F4DC4C] transition-colors">
+            Shop all deals <ChevronRight size={13} />
+          </button>
+        )}
       </div>
 
       <div className="w-full lg:flex-1 lg:min-w-0">
-        <MegaSectionLabel>Today's Flash Deals</MegaSectionLabel>
+        <MegaSectionLabel action={onViewAll ? { label: 'View all', onClick: onViewAll } : undefined}>Today's Flash Deals</MegaSectionLabel>
         {flashDeals.length === 0 ? (
-          <p className="text-[12px] text-slate">No flash deals right now.</p>
+          <p className="text-[12.5px] text-slate bg-cream rounded-xl px-4 py-6 text-center m-0">No flash deals right now - check back soon.</p>
         ) : (
           <div className={RAIL_GRID_CLS}>
-            {flashDeals.slice(0, 7).map(({ product, pct }) => {
+            {flashDeals.slice(0, 6).map(({ product, pct }) => {
               const dv = (product.variants ?? []).find(v => v.isDefault) ?? product.variants?.[0];
               const isPhysical = (product.productType ?? product.type ?? 'physical') === 'physical';
-              // Real stock only — no fabricated "sold" percentage, since there's
-              // no original-stock figure to compute one against honestly. A
-              // variant marked unlimitedStock is never "low stock" either.
+              // Real stock only - no fabricated "sold" percentage. A variant marked unlimitedStock is never "low stock".
               const stock = isPhysical && !dv?.unlimitedStock ? (dv?.stock ?? 0) : null;
               return (
                 <RailCard
@@ -286,7 +294,7 @@ export function FlashSaleMegaContent({ flashDeals, countdown, onProductClick }: 
                   product={product}
                   onClick={onProductClick}
                   size="sm"
-                  badge={<span className="px-[6px] py-[2px] rounded-[5px] text-[12px] font-bold bg-[#e11d48] text-white shadow-[0_2px_6px_rgba(225,29,72,0.35)]">-{pct}%</span>}
+                  badge={<span className="px-[7px] py-[2px] rounded-full text-[12px] font-bold bg-[#F4DC4C] text-[#152D43] shadow-sm">-{pct}%</span>}
                   stockLabel={stock != null && stock > 0 && stock <= 5 ? `Only ${stock} left` : undefined}
                 />
               );
@@ -298,31 +306,31 @@ export function FlashSaleMegaContent({ flashDeals, countdown, onProductClick }: 
   );
 }
 
-export function TopPicksMegaContent({ topPicks, bestRated = [], onProductClick }: {
+export function TopPicksMegaContent({ topPicks, bestRated = [], onProductClick, onViewAll }: {
   topPicks: MarketplaceProduct[];
-  /** A distinct, purely-rating-sorted slice — real signal, separate from
-   *  topPicks' purchase+rating blend, so the panel isn't one section twice
-   *  under two names. Optional/defaults to empty so callers that don't
-   *  compute it (Education) just don't get a second section. */
+  /** A distinct, purely-rating-sorted slice - real signal, separate from topPicks' purchase+rating blend,
+   *  so the panel isn't one section twice under two names. Optional: callers that don't compute it get no second section. */
   bestRated?: MarketplaceProduct[];
   onProductClick: (id: string) => void;
+  onViewAll?: () => void;
 }) {
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-6">
       <div>
-        <MegaSectionLabel>Trending With Buyers</MegaSectionLabel>
+        <MegaSectionLabel action={onViewAll ? { label: 'View all', onClick: onViewAll } : undefined}>Trending With Buyers</MegaSectionLabel>
         {topPicks.length === 0 ? (
-          <p className="text-[12px] text-slate">No top picks yet.</p>
+          <p className="text-[12.5px] text-slate bg-cream rounded-xl px-4 py-6 text-center m-0">No top picks yet.</p>
         ) : (
           <div className={RAIL_GRID_CLS}>
-            {topPicks.slice(0, 7).map(product => (
+            {topPicks.slice(0, 6).map((product, i) => (
               <RailCard
                 key={product._id}
                 product={product}
                 onClick={onProductClick}
                 size="sm"
+                rank={i + 1}
                 badge={product.purchaseCount > 0 ? (
-                  <span className="px-[6px] py-[2px] rounded-[5px] text-[12px] font-bold bg-carbon/80 text-white backdrop-blur-sm">
+                  <span className="px-[7px] py-[2px] rounded-full text-[12px] font-semibold bg-white/95 text-carbon shadow-sm">
                     {product.purchaseCount} sold
                   </span>
                 ) : undefined}
@@ -333,18 +341,18 @@ export function TopPicksMegaContent({ topPicks, bestRated = [], onProductClick }
       </div>
 
       {bestRated.length > 0 && (
-        <div className="pt-4 border-t border-bone">
+        <div className="pt-5 border-t border-bone">
           <MegaSectionLabel>Best Rated</MegaSectionLabel>
           <div className={RAIL_GRID_CLS}>
-            {bestRated.slice(0, 7).map(product => (
+            {bestRated.slice(0, 6).map(product => (
               <RailCard
                 key={product._id}
                 product={product}
                 onClick={onProductClick}
                 size="sm"
                 badge={product.averageRating > 0 ? (
-                  <span className="flex items-center gap-[2px] px-[6px] py-[2px] rounded-[5px] text-[12px] font-bold bg-carbon/80 text-white backdrop-blur-sm">
-                    <Star size={8} className="fill-white" /> {product.averageRating.toFixed(1)}
+                  <span className="flex items-center gap-[3px] px-[7px] py-[2px] rounded-full text-[12px] font-bold bg-[#F4DC4C] text-[#152D43] shadow-sm">
+                    <Star size={9} className="fill-current" /> {product.averageRating.toFixed(1)}
                   </span>
                 ) : undefined}
               />
@@ -715,7 +723,7 @@ export function MegaMenuBar({
       <div
         onMouseEnter={clearCloseTimer}
         className={clsx(
-          'absolute start-0 end-0 top-full z-50 bg-white border-b border-bone transition-all duration-200 origin-top',
+          'absolute start-0 end-0 top-full z-50 bg-white border-b border-bone shadow-[0_22px_44px_-24px_rgba(19,57,86,0.35)] transition-all duration-200 origin-top',
           active ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 -translate-y-2 pointer-events-none',
         )}
       >
@@ -731,10 +739,10 @@ export function MegaMenuBar({
             )
           )}
           {active === 'flash-sale' && (
-            <FlashSaleMegaContent flashDeals={flashDeals} countdown={countdown} onProductClick={onProductClick} />
+            <FlashSaleMegaContent flashDeals={flashDeals} countdown={countdown} onProductClick={onProductClick} onViewAll={() => { setActive(null); onNavigate('/#deals'); }} />
           )}
           {active === 'top-picks' && (
-            <TopPicksMegaContent topPicks={topPicks} bestRated={bestRated} onProductClick={onProductClick} />
+            <TopPicksMegaContent topPicks={topPicks} bestRated={bestRated} onProductClick={onProductClick} onViewAll={() => { setActive(null); onNavigate('/search?sort=popular'); }} />
           )}
           {active === 'featured-sellers' && (
             <FeaturedSellersMegaContent topStores={topStores} onStoreClick={onStoreClick} />

@@ -10,6 +10,9 @@
  * آرڈر، ڈاؤن لوڈ). Brand: ایجوڈین.
  */
 export const UR: Record<string, string> = {
+  'Shop all deals': 'تمام ڈیلز دیکھیں',
+  'Deep discounts on learning resources, while stock lasts.': 'تعلیمی وسائل پر بھاری رعایت، جب تک اسٹاک ہے۔',
+  'No flash deals right now - check back soon.': 'اس وقت کوئی فلیش ڈیل نہیں، جلد دوبارہ دیکھیں۔',
   'About page text': 'ہمارے بارے میں صفحے کا متن',
   'tick strip': 'ٹک پٹی',
   'feature block': 'نمایاں حصہ',
