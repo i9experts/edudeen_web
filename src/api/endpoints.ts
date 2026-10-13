@@ -539,6 +539,7 @@ export const ENDPOINTS = {
     RETURN_ACTION:   (orderId: string) => `/api/orders/return-action/${orderId}`,
     GET_DOWNLOAD_LINK: '/api/orders/get-download-link',
     STREAM_PDF:        '/api/orders/stream-pdf',
+    DOWNLOAD_ZIP_LINK: (orderId: string, productId: string) => `/api/orders/download-zip-link/${orderId}/${productId}`,
   },
 
   // ── MESSAGING ─────────────────────────────────────────────────────────────

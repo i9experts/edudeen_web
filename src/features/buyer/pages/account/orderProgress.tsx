@@ -23,6 +23,8 @@ export interface ProgressInput {
   createdAt?:     string | null;
   paidAt?:        string | null;
   stores?:        ProgressStoreInput[];
+  /** Admin's zone text at checkout (e.g. '2-3 days'); an estimate counted from order placement. */
+  shippingEstimate?: string | null;
 }
 
 export interface ProgressStep {
@@ -111,10 +113,13 @@ export function describeNextStep(o: ProgressInput): string | null {
   else if (live.length > 0) rank = Math.min(...live.map(s => FULFILMENT_RANK[s.status] ?? 0));
   else rank = FULFILMENT_RANK[o.orderStatus] ?? 0;
   if (rank >= 3) return 'Delivered. We hope you enjoy it. You can leave a review any time.';
-  if (rank === 2) return 'Your order is on its way to you.';
-  return rank === 1 || o.orderStatus === 'processing'
+  const estimate = o.shippingEstimate?.trim()
+    ? ` Estimated delivery: ${o.shippingEstimate.trim()} from the day you placed the order.`
+    : '';
+  if (rank === 2) return `Your order is on its way to you.${estimate}`;
+  return (rank === 1 || o.orderStatus === 'processing'
     ? 'The seller is preparing your order.'
-    : 'The seller has your order and will start preparing it soon.';
+    : 'The seller has your order and will start preparing it soon.') + estimate;
 }
 
 /** "What happens next" line shown under the progress track. */

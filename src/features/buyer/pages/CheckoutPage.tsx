@@ -1488,7 +1488,7 @@ export function CheckoutPage() {
                 <div className="px-5 py-3 text-[13px] text-carbon">
                   <span className="font-medium">{zoneTitle(selectedZone)}</span>
                   {' — '}
-                  {zonePrice(selectedZone)}{selectedZone.estimatedDeliveryTime ? `· ${selectedZone.estimatedDeliveryTime}` : ''}
+                  {zonePrice(selectedZone)}{selectedZone.estimatedDeliveryTime ? ` · Estimated delivery: ${selectedZone.estimatedDeliveryTime}` : ''}
                 </div>
               )}
             </div>

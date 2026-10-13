@@ -49,6 +49,8 @@ export interface LearningMetaInput {
   curricula?: string[];
   ageMin?:    number | null;
   ageMax?:    number | null;
+  classFrom?: string | null;
+  classTo?:   string | null;
   /** Digital only: files, an online course, or a scheduled live class. */
   deliveryFormat?: DeliveryFormat;
   liveSession?:    LiveSessionInput | null;
@@ -128,6 +130,8 @@ export interface StoreProduct {
   curricula?:        string[];
   ageMin?:           number | null;
   ageMax?:           number | null;
+  classFrom?:        string | null;
+  classTo?:          string | null;
   /** Admin-assigned trust badges (listing review). */
   trust?:            { scholarReviewed: boolean; ageAppropriateMin: number | null; ageAppropriateMax: number | null } | null;
   deliveryFormat?:   DeliveryFormat;

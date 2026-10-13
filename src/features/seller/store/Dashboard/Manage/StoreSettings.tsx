@@ -13,6 +13,7 @@ import { ImageUpload, Toggle } from '@/components/comman/ui';
 import { Button } from '@/components/comman/ui/Button';
 import { TabBar, type Tab } from '@/components/comman/ui/TabBar';
 import { ActivityLogTab } from './tabs/ActivityLogTab';
+import { ReturnPolicyCard } from './ReturnPolicyCard';
 
 const TABS: Tab[] = [
   { id: 'general',  label: 'General' },
@@ -804,6 +805,8 @@ export default function StoreSettings() {
                 add or change where you get paid under <a href={`/store/${storeId}/finance?tab=earnings`} className="text-brand-orange font-semibold">Earnings</a>.
               </p>
             </div>
+
+            {storeId && <ReturnPolicyCard storeId={storeId} policy={store?.returnPolicy} refetch={refetch} />}
           </div>
         </div>
       )}

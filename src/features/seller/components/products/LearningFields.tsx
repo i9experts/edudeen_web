@@ -2,6 +2,7 @@ import { clsx } from 'clsx';
 import { Plus, Trash2 } from 'lucide-react';
 import { FileUpload, type PrivateUploadData } from '@/components/comman/ui';
 import { CURRICULA, LICENSE_LABEL } from '@/constants/learning';
+import { CLASS_LEVELS, classIndex } from '@/constants/classLevels';
 
 // Seller product-form fields that make a listing findable by teachers and
 // parents: exam board, age range, a free sample, extra files and
@@ -10,14 +11,17 @@ import { CURRICULA, LICENSE_LABEL } from '@/constants/learning';
 const inp = 'w-full px-3 py-[9px] text-[13px] border border-bone rounded-lg outline-none text-charcoal bg-white focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/10';
 const lbl = 'block text-[12.5px] font-semibold text-charcoal mb-1.5';
 
-export interface LearningValue { curricula: string[]; ageMin: string; ageMax: string }
-export const EMPTY_LEARNING: LearningValue = { curricula: [], ageMin: '', ageMax: '' };
+export interface LearningValue { curricula: string[]; ageMin: string; ageMax: string; classFrom: string; classTo: string }
+export const EMPTY_LEARNING: LearningValue = { curricula: [], ageMin: '', ageMax: '', classFrom: '', classTo: '' };
 
 export function learningPayload(v: LearningValue) {
   return {
     curricula: v.curricula,
     ageMin: v.ageMin === '' ? null : Number(v.ageMin),
     ageMax: v.ageMax === '' ? null : Number(v.ageMax),
+    // One side only = that single class (the server does the same).
+    classFrom: v.classFrom || v.classTo || null,
+    classTo: v.classTo || v.classFrom || null,
   };
 }
 
@@ -29,6 +33,7 @@ export function learningError(v: LearningValue): string | null {
     return 'Ages must be whole numbers from 0 to 99.';
   }
   if (min != null && max != null && min > max) return 'The youngest age can’t be more than the oldest.';
+  if (v.classFrom && v.classTo && classIndex(v.classFrom) > classIndex(v.classTo)) return '"From class" can’t come after "To class".';
   return null;
 }
 
@@ -53,6 +58,21 @@ export function LearningFields({ value, onChange }: { value: LearningValue; onCh
             );
           })}
         </div>
+      </div>
+      <div>
+        <span className={lbl}>Suitable classes</span>
+        <div className="flex items-center gap-2 max-w-[420px]">
+          <select id="lf-class-from" aria-label="From class" value={value.classFrom} onChange={e => onChange({ ...value, classFrom: e.target.value })} className={inp}>
+            <option value="">From class</option>
+            {CLASS_LEVELS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+          </select>
+          <span className="text-slate text-[13px]">to</span>
+          <select id="lf-class-to" aria-label="To class" value={value.classTo} onChange={e => onChange({ ...value, classTo: e.target.value })} className={inp}>
+            <option value="">To class</option>
+            {CLASS_LEVELS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+          </select>
+        </div>
+        <p className="text-[12px] text-slate mt-1.5">Optional. Parents filter by exact class, e.g. Class 2 to Class 4. Pick one side for a single class.</p>
       </div>
       <div>
         <span className={lbl}>Suitable ages</span>

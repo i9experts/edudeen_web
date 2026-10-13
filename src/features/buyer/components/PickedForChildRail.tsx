@@ -4,6 +4,7 @@ import { SectionHead } from '@/components/comman/marketplace/SectionHead';
 import { ResourceCardSkeleton } from '@/components/comman/marketplace/ResourceCard';
 import { apiBrowseProducts, type MarketplaceProduct } from '@/api/services/marketplace';
 import { useChildren, childLevelLabel } from '@/hooks/useChildren';
+import { canonicalClass } from '@/constants/classLevels';
 import { useT } from '@/contexts/languageCtx';
 
 /** Subject-interest matches first (name/tags/description), the rest keep API order. */
@@ -32,6 +33,8 @@ export function PickedForChildRail({ renderCard }: { renderCard: (p: Marketplace
   const id = selected?._id;
   const level = selected?.educationLevel;
   const age = selected?.age ?? undefined;
+  // Exact class beats the coarse level when the child has one.
+  const classValue = canonicalClass(selected?.gradeLabel) ?? undefined;
   const subjectsKey = (selected?.subjects ?? []).join('|');
 
   useEffect(() => {
@@ -39,19 +42,19 @@ export function PickedForChildRail({ renderCard }: { renderCard: (p: Marketplace
     let cancelled = false;
     setLoading(true);
     const subjects = subjectsKey ? subjectsKey.split('|') : [];
-    apiBrowseProducts({ educationLevel: level, age, limit: 20 })
-      .then(res => (res.data?.products?.length || age == null ? res : apiBrowseProducts({ educationLevel: level, limit: 20 })))
+    (classValue ? apiBrowseProducts({ classValue, limit: 20 }) : apiBrowseProducts({ educationLevel: level, age, limit: 20 }))
+      .then(res => (res.data?.products?.length || classValue ? res : age == null ? res : apiBrowseProducts({ educationLevel: level, limit: 20 })))
       .then(res => { if (!cancelled) setProducts(rankBySubjects(res.data?.products ?? [], subjects).slice(0, 5)); })
       .catch(() => { if (!cancelled) setProducts([]); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [id, level, age, subjectsKey]);
+  }, [id, level, age, classValue, subjectsKey]);
 
   if (!selected) return null;
   if (!loading && products.length === 0) return null;
 
-  const params = new URLSearchParams({ grade: selected.educationLevel });
-  if (selected.age != null) params.set('age', String(selected.age));
+  const params = classValue ? new URLSearchParams({ class: classValue }) : new URLSearchParams({ grade: selected.educationLevel });
+  if (!classValue && selected.age != null) params.set('age', String(selected.age));
 
   return (
     <section className="mb-12">

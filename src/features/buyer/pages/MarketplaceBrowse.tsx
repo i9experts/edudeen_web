@@ -13,6 +13,7 @@ import { apiGetTrendingSearches } from '@/api/services/search';
 import { useT } from '@/contexts/languageCtx';
 import { EDUCATION_LEVELS } from '@/api/services/product';
 import { CURRICULA, CURRICULUM_LABEL } from '@/constants/learning';
+import { CLASS_LEVELS, canonicalClass, classLabel, isClassValue } from '@/constants/classLevels';
 import { ShoppingForBar } from '@/features/buyer/components/ShoppingForBar';
 import { useChildren, childLevelLabel } from '@/hooks/useChildren';
 import type { CategoryNode } from '@/api/services/categories';
@@ -50,6 +51,7 @@ function useBrowseState() {
     q: (params.get('q') ?? '').trim(),
     cat: params.get('cat') ?? '',
     grade: params.get('grade') ?? '',
+    cls: isClassValue(params.get('class')) ? (params.get('class') as string) : '',
     type: params.get('type') ?? '',
     min: num(params.get('min')),
     max: num(params.get('max')),
@@ -112,8 +114,10 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
   useEffect(() => {
     if (!activeChild || fixedGrade || appliedChild.current === activeChild._id) return;
     appliedChild.current = activeChild._id;
-    if (!state.grade && state.age == null) update({ grade: activeChild.educationLevel }, false, true);
-  }, [activeChild, fixedGrade, state.grade, state.age, update]);
+    // Exact class when the child has one, else their level.
+    const childClass = canonicalClass(activeChild.gradeLabel);
+    if (!state.grade && !state.cls && state.age == null) update(childClass ? { class: childClass } : { grade: activeChild.educationLevel }, false, true);
+  }, [activeChild, fixedGrade, state.grade, state.cls, state.age, update]);
 
   const effectiveCategory = categoryId ?? (state.cat || undefined);
   const maxPrice = state.free ? 0 : state.max;
@@ -133,6 +137,7 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
       sortBy: state.sort || undefined,
       curriculum: state.board || undefined,
       age: state.age,
+      classValue: state.cls || undefined,
       exact: state.exact,
       page: state.page,
       limit: PAGE_SIZE,
@@ -146,7 +151,7 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
       .catch(err => { if (!cancelled) setError(err instanceof Error ? err.message : 'Could not load resources.'); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [state.q, effectiveCategory, state.type, state.grade, state.min, maxPrice, state.free, state.rating, state.sort, state.board, state.age, state.exact, state.page, reload, fixedGrade]);
+  }, [state.q, effectiveCategory, state.type, state.grade, state.min, maxPrice, state.free, state.rating, state.sort, state.board, state.age, state.cls, state.exact, state.page, reload, fixedGrade]);
 
   // Back to the top of the results when the page number changes.
   useEffect(() => { window.document.getElementById('browse-top')?.scrollIntoView({ block: 'start' }); }, [state.page]);
@@ -164,13 +169,14 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
     type: f.type[0] ? TYPE_TO_PARAM[f.type[0]] : undefined,
     rating: f.minRating ?? undefined,
   });
-  const clearAll = () => update({ board: undefined, age: undefined, cat: undefined, grade: undefined, type: undefined, min: undefined, max: undefined, rating: undefined, free: undefined, sort: undefined });
+  const clearAll = () => update({ board: undefined, age: undefined, class: undefined, cat: undefined, grade: undefined, type: undefined, min: undefined, max: undefined, rating: undefined, free: undefined, sort: undefined });
 
   const catName = state.cat ? tree.flatMap(c => [c, ...(c.children ?? [])]).find(c => c._id === state.cat)?.name : null;
   const chips: { key: string; label: string; clear: () => void }[] = [
     ...(showCategoryFilter && state.cat ? [{ key: 'cat', label: catName ?? 'Category', clear: () => update({ cat: undefined }) }] : []),
     ...(state.board ? [{ key: 'board', label: CURRICULUM_LABEL[state.board] ?? state.board, clear: () => update({ board: undefined }) }] : []),
     ...(state.age != null ? [{ key: 'age', label: `For age ${state.age}`, clear: () => update({ age: undefined }) }] : []),
+    ...(state.cls ? [{ key: 'class', label: activeChild && state.cls === canonicalClass(activeChild.gradeLabel) ? `${t('For')} ${activeChild.name} (${classLabel(state.cls)})` : classLabel(state.cls), clear: () => update({ class: undefined }) }] : []),
     ...(state.grade && !fixedGrade ? [{ key: 'grade', label: activeChild && state.grade === activeChild.educationLevel ? `${t('For')} ${activeChild.name} (${childLevelLabel(activeChild)})` : GRADE_LABEL.get(state.grade) ?? state.grade, clear: () => update({ grade: undefined }) }] : []),
     ...(state.type ? [{ key: 'type', label: PARAM_TO_TYPE[state.type] ?? state.type, clear: () => update({ type: undefined }) }] : []),
     ...(state.free ? [{ key: 'free', label: 'Free only', clear: () => update({ free: undefined }) }] : []),
@@ -352,7 +358,7 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
         categories={showCategoryFilter ? tree : []}
         selectedCategory={showCategoryFilter ? state.cat : ''}
         onCategoryChange={id => update({ cat: id || undefined })}
-        extraActiveCount={(state.grade ? 1 : 0) + (state.free ? 1 : 0) + (state.board ? 1 : 0) + (state.age != null ? 1 : 0)}
+        extraActiveCount={(state.grade ? 1 : 0) + (state.cls ? 1 : 0) + (state.free ? 1 : 0) + (state.board ? 1 : 0) + (state.age != null ? 1 : 0)}
       >
         <Section title="Sort by">
           {SORTS.map(s => (
@@ -364,6 +370,18 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
           {CURRICULA.map(c => (
             <RadioRow key={c.value} name="f-board" label={c.label} checked={state.board === c.value} onChange={() => update({ board: c.value })} />
           ))}
+        </Section>
+        <Section title="Class" hint="Resources that suit your child's exact class">
+          <select
+            id="f-class"
+            aria-label="Class"
+            value={state.cls}
+            onChange={e => update({ class: e.target.value || undefined })}
+            className="rounded-lg border border-[#8a959d] px-4 py-3 text-[16px] text-carbon bg-white"
+          >
+            <option value="">Any class</option>
+            {CLASS_LEVELS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+          </select>
         </Section>
         <Section title="Child's age">
           <select

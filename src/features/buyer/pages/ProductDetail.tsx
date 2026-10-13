@@ -22,6 +22,7 @@ import { apiGetProductAttributes, type ProductAttributeValue } from '@/api/servi
 import { EDUCATION_LEVELS } from '@/api/services/product';
 import { useCategoryTree, categoryPath } from '@/hooks/marketplace/useCategoryTree';
 import { ageLabel, CURRICULUM_LABEL } from '@/constants/learning';
+import { classRangeLabel } from '@/constants/classLevels';
 import { EducatorCard, hasEducatorProfile } from '@/components/comman/marketplace/EducatorCard';
 import { Button } from '@/components/comman/ui/Button';
 import { Badge } from '@/components/comman/ui/Badge';
@@ -35,8 +36,9 @@ import {
   ArrowRight, Package, Download, ClipboardList, CheckCircle, Minus, Plus,
   ShoppingCart, Star, Link2, Share2, Heart, ShieldCheck, Truck,
   UserPlus, UserCheck, Tag, ZoomIn, ZoomOut, ChevronLeft, ChevronRight, Users, Calendar, Award, Sparkles, Flame,
-  FileText, Store as StoreIcon, Eye, Loader2, Zap, MessageCircle, ListPlus, School, MessageCircleQuestion,
+  FileText, Store as StoreIcon, Eye, Loader2, Zap, MessageCircle, ListPlus, School, MessageCircleQuestion, Clock, RotateCcw,
 } from 'lucide-react';
+import { responseTimeLabel, returnSummary } from '@/utils/sellerTrust';
 import { ProductReviewsSection } from './ProductReviews';
 import { SaveToListDialog } from '@/features/buyer/components/SaveToListDialog';
 import { QuoteRequestDialog } from '@/features/buyer/components/QuoteRequestDialog';
@@ -457,6 +459,8 @@ export function ProductDetail() {
   const pType = product?.productType ?? product?.type ?? 'physical';
   const isPhysical = pType === 'physical';
   const isDigital  = !isPhysical;
+  const [showPolicy, setShowPolicy] = useState(false);
+  const policySummary = returnSummary(storeData?.returnPolicy, isDigital);
   const typeLabel  = isPhysical ? 'Physical' : pType === 'educational' ? 'Educational' : 'Digital';
   // A physical variant marked unlimitedStock (seller disabled inventory
   // tracking for it) is always available — previously this fell through to
@@ -651,7 +655,8 @@ export function ProductDetail() {
   // What a teacher or parent checks first: who it's for, what subject, what format.
   const learningDetails: { label: string; value: string }[] = product ? [
     ...(gradeLabel ? [{ label: 'Grade / level', value: gradeLabel }] : []),
-    ...(ageLabel(product.ageMin, product.ageMax) ? [{ label: 'Suitable for', value: ageLabel(product.ageMin, product.ageMax)! }] : []),
+    ...(classRangeLabel(product.classFrom, product.classTo) || ageLabel(product.ageMin, product.ageMax)
+      ? [{ label: 'Suitable for', value: [classRangeLabel(product.classFrom, product.classTo), ageLabel(product.ageMin, product.ageMax)].filter(Boolean).join(' · ') }] : []),
     ...(product.trust?.scholarReviewed ? [{ label: 'Content review', value: 'Scholar reviewed by Edudeen' }] : []),
     ...(ageLabel(product.trust?.ageAppropriateMin, product.trust?.ageAppropriateMax) ? [{ label: 'Age checked', value: ageLabel(product.trust?.ageAppropriateMin, product.trust?.ageAppropriateMax)! }] : []),
     ...(product.curricula?.length ? [{ label: 'Exam board', value: product.curricula.map(c => CURRICULUM_LABEL[c] ?? c).join(', ') }] : []),
@@ -833,6 +838,7 @@ export function ProductDetail() {
                               <span>
                                 {formats.length > 0 && <span className="font-semibold">{formats.join(' · ')}</span>}
                                 {fileCount > 0 && <span className="text-slate">{formats.length > 0 ? ' · ' : ''}{fileCount} {fileCount > 1 ? t('files') : t('file')}</span>}
+                                {!!product.digital?.pageCount && <span className="text-slate"> · {product.digital.pageCount} {product.digital.pageCount > 1 ? t('pages') : t('page')}</span>}
                               </span>
                             </li>
                           )}
@@ -1098,6 +1104,22 @@ export function ProductDetail() {
                           {storeData?.createdAt ? new Date(storeData.createdAt).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }) : '—'}
                         </p>
                         <p className="text-[12px] text-slate mt-[3px]">Joined</p>
+                      </div>
+                    </div>
+                    <div className="mt-4 flex flex-col gap-2 text-[12.5px] text-charcoal">
+                      {responseTimeLabel(storeData?.responseStats) && (
+                        <p className="flex items-center gap-2"><Clock size={14} className="text-brand-orange shrink-0" />{responseTimeLabel(storeData?.responseStats)}</p>
+                      )}
+                      <div>
+                        <p className="flex items-center gap-2"><RotateCcw size={14} className="text-brand-orange shrink-0" />{policySummary.line}</p>
+                        <button type="button" onClick={() => setShowPolicy(v => !v)} aria-expanded={showPolicy} className="text-[12px] text-brand-orange font-semibold mt-1 ms-6">
+                          Policy {showPolicy ? '▲' : '▼'}
+                        </button>
+                        {showPolicy && (
+                          <ul className="mt-1 ms-6 list-disc ps-4 text-[12px] text-slate leading-[1.6]">
+                            {policySummary.detail.map(d => <li key={d}>{d}</li>)}
+                          </ul>
+                        )}
                       </div>
                     </div>
                   </div>

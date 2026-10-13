@@ -3,6 +3,7 @@ import { Baby, Pencil, Plus, Trash2 } from 'lucide-react';
 import { Card, Button, Input, Modal, SkeletonBox, EmptyState } from '@/components/comman/ui';
 import { useToast } from '@/contexts/ToastContext';
 import { EDUCATION_LEVELS } from '@/api/services/product';
+import { CLASS_LEVELS, canonicalClass, levelForClass } from '@/constants/classLevels';
 import {
   apiCreateChild, apiDeleteChild, apiUpdateChild, MAX_CHILDREN, type ChildInput, type ChildProfile,
 } from '@/api/services/children';
@@ -15,7 +16,11 @@ function ChildForm({ initial, onSave, onClose }: {
 }) {
   const [name, setName] = useState(initial?.name ?? '');
   const [level, setLevel] = useState(initial?.educationLevel ?? 'primary_school');
-  const [gradeLabel, setGradeLabel] = useState(initial?.gradeLabel ?? '');
+  // Class is a real class value; old free text that isn't a known class is kept (LEGACY) until changed.
+  const LEGACY = '__legacy';
+  const legacyText = initial?.gradeLabel && !canonicalClass(initial.gradeLabel) ? initial.gradeLabel : '';
+  const [classSel, setClassSel] = useState(canonicalClass(initial?.gradeLabel) ?? (legacyText ? LEGACY : ''));
+  const changeClass = (v: string) => { setClassSel(v); const l = levelForClass(v); if (l) setLevel(l); };
   const [age, setAge] = useState(initial?.age != null ? String(initial.age) : '');
   const [subjects, setSubjects] = useState((initial?.subjects ?? []).join(', '));
   const [busy, setBusy] = useState(false);
@@ -23,7 +28,7 @@ function ChildForm({ initial, onSave, onClose }: {
   const ageBad = ageNum !== null && (!Number.isInteger(ageNum) || ageNum < 2 || ageNum > 25);
   const save = async () => {
     setBusy(true);
-    try { await onSave({ name: name.trim(), educationLevel: level, gradeLabel: gradeLabel.trim(), age: ageNum, subjects: parseSubjects(subjects) }); }
+    try { await onSave({ name: name.trim(), educationLevel: level, gradeLabel: classSel === LEGACY ? legacyText : classSel, age: ageNum, subjects: parseSubjects(subjects) }); }
     finally { setBusy(false); }
   };
   return (
@@ -36,12 +41,19 @@ function ChildForm({ initial, onSave, onClose }: {
       <div className="px-5 py-4 flex flex-col gap-3">
         <Input label="Child's name" value={name} maxLength={60} onChange={e => setName(e.target.value)} placeholder="e.g. Ayesha" />
         <label className="flex flex-col gap-1 text-[13px] font-medium text-charcoal">
+          Class (optional)
+          <select value={classSel} onChange={e => changeClass(e.target.value)} className="rounded-lg border border-bone px-3 py-[10px] text-[14px] bg-white font-normal">
+            <option value="">Not set</option>
+            {legacyText && <option value={LEGACY}>{legacyText}</option>}
+            {CLASS_LEVELS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+          </select>
+        </label>
+        <label className="flex flex-col gap-1 text-[13px] font-medium text-charcoal">
           Level
-          <select value={level} onChange={e => setLevel(e.target.value)} className="rounded-lg border border-bone px-3 py-[10px] text-[14px] bg-white font-normal">
+          <select value={level} onChange={e => setLevel(e.target.value)} disabled={!!levelForClass(classSel)} className="rounded-lg border border-bone px-3 py-[10px] text-[14px] bg-white font-normal">
             {EDUCATION_LEVELS.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
           </select>
         </label>
-        <Input label="Class (optional)" value={gradeLabel} maxLength={30} onChange={e => setGradeLabel(e.target.value)} placeholder="e.g. Class 3" />
         <Input label="Age (optional)" type="number" min={2} max={25} value={age} onChange={e => setAge(e.target.value)} error={ageBad ? 'Enter an age between 2 and 25' : undefined} />
         <Input label="Subjects of interest (optional)" value={subjects} onChange={e => setSubjects(e.target.value)} placeholder="Maths, Urdu, Science" />
       </div>

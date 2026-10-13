@@ -65,6 +65,7 @@ export interface OrderSummary {
   totalAmount:      number;
   currency:         string;
   shippingAddress:  Record<string, unknown>;
+  shippingEstimate?: string | null;
   stores:           OrderStoreGroup[];
   createdAt:        string;
   paidAt?:          string | null;
@@ -94,7 +95,8 @@ export interface OrderDetail {
   totalAmount:     number;
   currency:        string;
   shippingAddress: Record<string, unknown>;
-  sellerOrders:    (OrderStoreGroup & { _id?: string; storeName?: string | null; storeSlug?: string | null; storeContactEmail?: string | null; storeContactPhone?: string | null; sellerName?: string | null })[];
+  shippingEstimate?: string | null;
+  sellerOrders:   (OrderStoreGroup & { _id?: string; storeName?: string | null; storeSlug?: string | null; storeContactEmail?: string | null; storeContactPhone?: string | null; sellerName?: string | null })[];
   couponCode?:     string | null;
   couponDiscountTotal?: number;
   giftCardDiscountTotal?: number;
@@ -258,6 +260,11 @@ export function apiGetDownloadLink(orderId: string, productId: string, fileIndex
   return client.get<never, DownloadLinkResponse>(ENDPOINTS.ORDERS.GET_DOWNLOAD_LINK, {
     params: { orderId, productId, fileIndex },
   });
+}
+
+/** GET /api/orders/download-zip-link/:orderId/:productId — 10-minute token for ONE streamed zip of every file (counts one download) */
+export function apiGetZipLink(orderId: string, productId: string) {
+  return client.get<never, DownloadLinkResponse>(ENDPOINTS.ORDERS.DOWNLOAD_ZIP_LINK(orderId, productId));
 }
 
 /** GET /api/orders/stream-pdf — downloads the (optionally watermark-stamped) PDF as a blob */

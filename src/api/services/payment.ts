@@ -47,6 +47,8 @@ export interface PlacedOrder {
    *  never re-derived from the buyer's current display preference. */
   currency:        string;
   deliveryAddress: OrderDeliveryAddress;
+  /** Zone delivery estimate text snapshotted at checkout (e.g. '2-3 days'); absent for digital orders. */
+  shippingEstimate?: string | null;
   items:           OrderItem[];
   summary:         OrderSummary;
 }

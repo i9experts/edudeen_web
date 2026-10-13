@@ -94,7 +94,9 @@ export function ComparePage() {
       if (kindOf(p) === 'physical') return t('Printed / physical');
       const n = p.digital?.fileCount ?? p.digital?.files?.length;
       const fmt = DELIVERY_FORMAT[p.deliveryFormat ?? 'download'];
-      return n ? `${t(fmt)} · ${n} ${n === 1 ? t('file') : t('files')}` : t(fmt);
+      const pg = p.digital?.pageCount;
+      const pages = pg ? ` · ${pg} ${pg === 1 ? t('page') : t('pages')}` : '';
+      return n ? `${t(fmt)} · ${n} ${n === 1 ? t('file') : t('files')}${pages}` : `${t(fmt)}${pages}`;
     } },
     { label: 'License', cell: p => (p.digital?.licenseType ? p.digital.licenseType.replace(/_/g, ' ') : '—') },
     { label: 'Delivery', cell: p => kindOf(p) === 'physical' ? t('Ships to you') : p.deliveryFormat === 'course' ? t('Online course') : p.deliveryFormat === 'live_class' ? t('Live class') : t('Instant download') },

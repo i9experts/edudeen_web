@@ -328,6 +328,26 @@ export const UR: Record<string, string> = {
   'Madrasa / Wifaq': 'مدرسہ / وفاق',
   "Child's age": 'بچے کی عمر',
   'Any age': 'کوئی بھی عمر',
+  'Class': 'جماعت',
+  'Any class': 'کوئی بھی جماعت',
+  "Resources that suit your child's exact class": 'آپ کے بچے کی جماعت کے مطابق وسائل',
+  'Nursery': 'نرسری',
+  'Prep': 'پریپ',
+  'KG': 'کے جی',
+  'Class 1': 'جماعت 1',
+  'Class 2': 'جماعت 2',
+  'Class 3': 'جماعت 3',
+  'Class 4': 'جماعت 4',
+  'Class 5': 'جماعت 5',
+  'Class 6': 'جماعت 6',
+  'Class 7': 'جماعت 7',
+  'Class 8': 'جماعت 8',
+  'Class 9': 'جماعت 9',
+  'Class 10': 'جماعت 10',
+  'Class 11': 'جماعت 11',
+  'Class 12': 'جماعت 12',
+  'O Level': 'او لیول',
+  'A Level': 'اے لیول',
   'Category': 'زمرہ',
   'Mathematics': 'ریاضی',
   'Science': 'سائنس',
@@ -1583,6 +1603,10 @@ export const UR: Record<string, string> = {
   'Sent to your email': 'آپ کے ای میل پر بھیج دیا گیا',
   'Could not send the email. Please try again.': 'ای میل نہیں بھیجی جا سکی۔ دوبارہ کوشش کریں۔',
   'Download all files': 'تمام فائلیں ڈاؤن لوڈ کریں',
+  'Download all files (zip)': 'تمام فائلیں ڈاؤن لوڈ کریں (زپ)',
+  'Preparing zip…': 'زپ تیار ہو رہی ہے…',
+  'page': 'صفحہ',
+  'pages': 'صفحات',
   'Starting downloads…': 'ڈاؤن لوڈ شروع ہو رہے ہیں…',
   'Buy again / Next up': 'دوبارہ خریدیں / اگلا قدم',
   'Next up for you': 'آپ کے لیے اگلا',
@@ -1604,6 +1628,15 @@ export const UR: Record<string, string> = {
   'We notify you about saved items by email and in the app.': 'ہم محفوظ کردہ اشیا کے بارے میں ای میل اور ایپ میں اطلاع دیتے ہیں۔',
   'Could not load your alert setting.': 'آپ کی الرٹ سیٹنگ لوڈ نہیں ہو سکی۔',
   'Could not save. Please try again.': 'محفوظ نہیں ہو سکا۔ دوبارہ کوشش کریں۔',
+  'Policy': 'پالیسی',
+  'Usually replies within 1 hour': 'عموماً 1 گھنٹے کے اندر جواب دیتے ہیں',
+  'Usually replies within a few hours': 'عموماً چند گھنٹوں میں جواب دیتے ہیں',
+  'Usually replies within 1 day': 'عموماً 1 دن کے اندر جواب دیتے ہیں',
+  'Usually replies within 2 days': 'عموماً 2 دن کے اندر جواب دیتے ہیں',
+  'Usually replies in 2+ days': 'عموماً 2 سے زیادہ دن میں جواب دیتے ہیں',
+  'No returns on digital downloads': 'ڈیجیٹل ڈاؤنلوڈز واپس نہیں ہوتے',
+  'Returns reviewed by the seller': 'واپسی کا جائزہ سیلر لیتا ہے',
+  'No returns accepted by this seller': 'یہ سیلر واپسی قبول نہیں کرتا',
 };
 
 const MONTHS: Record<string, string> = {
@@ -1618,6 +1651,12 @@ const urOr = (s: string) => UR[s] ?? s;
 
 /** Strings with numbers or names in them — `m` is the RegExp match. */
 export const UR_PATTERNS: [RegExp, (m: RegExpMatchArray) => string][] = [
+  // Class ranges on the product page ("Class 2-4", optionally followed by the ages).
+  [/^Class (\d{1,2})-(\d{1,2})( · (.+))?$/, m => `جماعت ${m[1]} سے ${m[2]}${m[4] ? ` · ${urOr(m[4])}` : ''}`],
+  [/^(Nursery|Prep|KG|O Level|A Level|University) - (Nursery|Prep|KG|O Level|A Level|University)$/, m => `${urOr(m[1])} سے ${urOr(m[2])}`],
+  // Order next-step sentence + delivery estimate (orderProgress.tsx).
+  [/^(.+\.) Estimated delivery: (.+) from the day you placed the order\.$/, m => `${urOr(m[1])} متوقع ڈیلیوری: آرڈر دینے کے دن سے ${m[2]}۔`],
+  [/^Estimated delivery: (.+)$/, m => `متوقع ڈیلیوری: ${m[1]}`],
   // Dates in the en-PK formats the app uses.
   [new RegExp(`^(\\d{1,2}) ${M} (\\d{4}), (\\d{1,2}:\\d{2}) (am|pm)$`, 'i'), m => `${m[1]} ${MONTHS[m[2]]} ${m[3]}، ${ampm(m[5])} ${m[4]}`],
   [new RegExp(`^(\\d{1,2}) ${M} (\\d{4})$`, 'i'), m => `${m[1]} ${MONTHS[m[2]]} ${m[3]}`],

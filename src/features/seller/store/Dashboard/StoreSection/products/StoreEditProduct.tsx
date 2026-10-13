@@ -240,7 +240,7 @@ export default function StoreEditProduct() {
     if (p.categoryId) setCategoryChoice(p.categoryId);
     setReview(p.status === 'pending_review' || p.status === 'rejected' ? { status: p.status, note: p.reviewNote ?? null } : null);
     setVariantId(v._id || null);
-    setLearning({ curricula: [...(p.curricula ?? [])], ageMin: p.ageMin != null ? String(p.ageMin) : '', ageMax: p.ageMax != null ? String(p.ageMax) : '' });
+    setLearning({ curricula: [...(p.curricula ?? [])], ageMin: p.ageMin != null ? String(p.ageMin) : '', ageMax: p.ageMax != null ? String(p.ageMax) : '', classFrom: p.classFrom ?? '', classTo: p.classTo ?? '' });
     if (p.productType === 'physical') setPhys(physFromEntry(p, v));
     else                              setDig(digFromEntry(p, v));
   }
@@ -268,7 +268,7 @@ export default function StoreEditProduct() {
         const p = res.data.product;
         const variants = res.data.variants ?? [];
         setCampaignIds([...(p.campaignIds ?? [])]);
-        setLearning({ curricula: [...(p.curricula ?? [])], ageMin: p.ageMin != null ? String(p.ageMin) : '', ageMax: p.ageMax != null ? String(p.ageMax) : '' });
+        setLearning({ curricula: [...(p.curricula ?? [])], ageMin: p.ageMin != null ? String(p.ageMin) : '', ageMax: p.ageMax != null ? String(p.ageMax) : '', classFrom: p.classFrom ?? '', classTo: p.classTo ?? '' });
         if (p.type === 'digital') {
           setDelivery(deliveryFromProduct(p));
           const priceFor = (label: string) => variants.find(v => !v.isDefault && v.options?.some(o => o.name === 'License' && o.value === label));

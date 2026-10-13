@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Download, Loader2, FileText, ChevronUp } from 'lucide-react';
 import { clsx } from 'clsx';
 import {
-  apiGetDownloadFiles, apiGetDownloadLink, buildDownloadHref,
+  apiGetDownloadFiles, apiGetDownloadLink, apiGetZipLink, buildDownloadHref,
   type DigitalDownloadFile,
 } from '@/api/services/orders';
 
@@ -32,6 +32,7 @@ const extOf = (name?: string) => (name?.includes('.') ? name.split('.').pop()!.t
 // ─────────────────────────────────────────────────────────────────────────────
 // DigitalFileDownloads — every file of a purchased digital product.
 //
+// 'Download all files (zip)' uses GET /orders/download-zip-link then /orders/download-zip-file.
 // Real flow (see OrdersService.getDownloadUrls / getDownloadLink):
 //   1. GET /orders/download-url lists all files (+ checks expiry/limit) with a
 //      short-lived token each.
@@ -89,24 +90,20 @@ export function DigitalFileDownloads({
     }
   };
 
-  // No zip helper exists on the API, so "all files" starts each download in turn (fresh tokens, short gap
-  // so browsers do not drop them). Each file counts as one download, same as clicking it.
+  // One streamed zip of every file (counts as ONE download). Access is checked when the link is issued.
   const downloadAll = async () => {
     setAllBusy(true);
     setError('');
     try {
-      const res = await apiGetDownloadFiles(orderId, productId);
-      for (const f of res.data.files ?? []) {
-        clickDownload(f.endpoint, f.token);
-        await new Promise(r => setTimeout(r, 900));
-      }
+      const res = await apiGetZipLink(orderId, productId);
+      clickDownload(res.data.endpoint, res.data.token);
+      await new Promise(r => setTimeout(r, 1500));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch download link.');
     } finally {
       setAllBusy(false);
     }
   };
-
   const multi = !!files && files.length > 1;
 
   return (
@@ -133,7 +130,7 @@ export function DigitalFileDownloads({
           className={clsx('flex items-center gap-1.5 px-3 min-h-8 rounded-[7px] text-[12px] font-semibold border-none bg-[#3851d1] text-white', allBusy ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer')}
         >
           {allBusy ? <Loader2 size={11} className="animate-spin" /> : <Download size={11} />}
-          {allBusy ? 'Starting downloads…' : 'Download all files'}
+          {allBusy ? 'Preparing zip…' : 'Download all files (zip)'}
         </button>
       )}
 

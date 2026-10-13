@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useSyncExternalStore } from 'react';
 import { apiGetChildren, type ChildProfile } from '@/api/services/children';
 import { EDUCATION_LEVELS } from '@/api/services/product';
+import { childClassLabel } from '@/constants/classLevels';
 import { isBuyerSession } from '@/hooks/auth/useIsBuyer';
 import { TokenStorage } from '@/api/services/auth';
 
@@ -54,9 +55,9 @@ const getState = () => state;
 const getSel = () => selectedId;
 
 const LEVEL_LABEL = new Map<string, string>(EDUCATION_LEVELS.map(l => [l.value, l.label]));
-/** "Class 3" if the parent typed one, else the level name ("Primary School"). */
+/** "Class 3" (a known class value, or old free text kept as typed), else the level name ("Primary School"). */
 export const childLevelLabel = (c: Pick<ChildProfile, 'gradeLabel' | 'educationLevel'>) =>
-  c.gradeLabel || LEVEL_LABEL.get(c.educationLevel) || c.educationLevel;
+  childClassLabel(c.gradeLabel) || LEVEL_LABEL.get(c.educationLevel) || c.educationLevel;
 
 /** Children of the signed-in buyer (empty for guests/sellers) + the active "Shopping for" child. */
 export function useChildren() {

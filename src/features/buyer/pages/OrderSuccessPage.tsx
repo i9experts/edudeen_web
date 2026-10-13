@@ -122,6 +122,7 @@ function OrderTimeline({ order }: { order: PlacedOrder }) {
     paymentType: order.paymentMethod,
     createdAt:   order.orderDate,
     paidAt:      order.paymentDate,
+    shippingEstimate: order.shippingEstimate ?? null,
   };
   const steps = buildOrderProgress(input);
   if (!steps) {
@@ -366,6 +367,7 @@ function toPlacedOrder(o: MyOrderSummary): PlacedOrder {
   return {
     orderId: o.orderId, orderNumber: o.orderNumber, orderDate: o.createdAt, paymentDate: o.paidAt ?? null,
     paymentMethod: o.paymentType, isPaid: o.isPaid, orderStatus: o.orderStatus, currency: o.currency,
+    shippingEstimate: o.shippingEstimate ?? null,
     deliveryAddress: {
       recipientName: a.recipientName ?? '', phoneNumber: a.phoneNumber ?? '', addressLine1: a.addressLine1 ?? '',
       addressLine2: a.addressLine2 ?? null, city: a.city ?? '', state: a.state ?? '', zipCode: a.zipCode ?? '',

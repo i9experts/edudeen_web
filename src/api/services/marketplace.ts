@@ -46,6 +46,8 @@ export interface DigitalProduct {
   fileCount?:            number;
   /** Upper-case file extensions of the deliverable (PDF, DOCX, MP4...) — public views only. */
   fileFormats?:          string[];
+  /** Total PDF pages across the files, when known. */
+  pageCount?:            number | null;
   /** A free sample exists — fetch it with apiGetProductSample. */
   sampleAvailable?:      boolean;
   sampleName?:           string | null;
@@ -99,6 +101,9 @@ export interface MarketplaceProduct {
   trust?:            { scholarReviewed: boolean; ageAppropriateMin: number | null; ageAppropriateMax: number | null } | null;
   ageMin?:           number | null;
   ageMax?:           number | null;
+  /** Optional class range (constants/classLevels.ts values). */
+  classFrom?:        string | null;
+  classTo?:          string | null;
   deliveryFormat?:   'download' | 'course' | 'live_class';
   /** Live classes only — the meeting link is never public. */
   liveSession?:      { startsAt: string; durationMinutes: number; platform: string; capacity: number | null; notes: string } | null;
@@ -193,6 +198,8 @@ export interface BrowseParams {
   curriculum?:    string;
   /** Suitable for a child of this age. */
   age?:           number;
+  /** Exact class (constants/classLevels.ts value), e.g. "class-3". */
+  classValue?:    string;
   /** Only listings an admin has featured. */
   featured?:      boolean;
   page?:          number;
@@ -218,6 +225,7 @@ export function apiBrowseProducts(p: BrowseParams) {
   if (p.sortBy) params.set('sortBy', p.sortBy);
   if (p.curriculum) params.set('curriculum', p.curriculum);
   if (p.age != null) params.set('age', String(p.age));
+  if (p.classValue) params.set('class', p.classValue);
   if (p.featured) params.set('featured', '1');
   if (p.exact) params.set('exact', '1');
   return client.get<never, ProductsByCategoryResponse>(

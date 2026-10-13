@@ -126,6 +126,7 @@ function OrderTimeline({ order }: { order: OrderSummary }) {
     createdAt:     order.createdAt,
     paidAt:        order.paidAt ?? null,
     stores:        order.stores,
+    shippingEstimate: order.shippingEstimate ?? null,
   };
   const steps = buildOrderProgress(input);
   if (!steps) return null;

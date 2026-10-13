@@ -1,6 +1,7 @@
 import client from '../client';
 import { ENDPOINTS } from '../endpoints';
 import type { ActiveCampaignBadge } from './marketplace';
+import type { StoreReturnPolicy, StoreResponseStats } from '@/utils/sellerTrust';
 
 export type SellerType  = 'creator' | 'educator' | 'retailer' | 'brand_business' | 'freelancer' | 'mix';
 export type ProductType = 'physical_products' | 'digital_downloads' | 'educational_resources' | 'services_bookings' | 'subscriptions' | 'in_person_pos';
@@ -38,6 +39,7 @@ export interface UpdateStorePayload {
   description?: string;
   tagline?:      string;
   educatorProfile?: EducatorProfile | null;
+  returnPolicy?: StoreReturnPolicy | null;
   contactEmail?: string;
   contactPhone?: string;
   productTypes?: ProductType[];
@@ -56,6 +58,7 @@ export interface StoreData {
   /** Short marketing line — distinct from `description`, shown alongside the store name. */
   tagline:      string | null;
   educatorProfile?: EducatorProfile | null;
+  returnPolicy?: StoreReturnPolicy | null;
   contactEmail: string | null;
   contactPhone: string | null;
   sellerType:   SellerType;
@@ -225,6 +228,8 @@ export interface PublicStoreData {
   description:    string | null;
   tagline:        string | null;
   educatorProfile?: EducatorProfile | null;
+  returnPolicy?:  StoreReturnPolicy | null;
+  responseStats?: StoreResponseStats | null;
   contactEmail:   string | null;
   contactPhone:   string | null;
   /** The store's single fixed root category — needed to resolve its own
