@@ -80,9 +80,9 @@ export function PremiumPage() {
     return cards;
   }, [top]);
 
-  const priceOf = (p: PremiumPlan) => {
-    const usd = interval === 'yearly' ? p.yearlyPriceUSD : p.monthlyPriceUSD;
-    const pkr = interval === 'yearly' ? p.yearlyPricePKR : p.monthlyPricePKR;
+  const priceOf = (p: PremiumPlan, iv: PremiumInterval = interval) => {
+    const usd = iv === 'yearly' ? p.yearlyPriceUSD : p.monthlyPriceUSD;
+    const pkr = iv === 'yearly' ? p.yearlyPricePKR : p.monthlyPricePKR;
     const main = currency === 'PKR' && pkr != null ? `PKR ${pkr.toLocaleString()}` : `$${usd.toLocaleString()}`;
     const alt = currency === 'PKR' && pkr != null ? `$${usd.toLocaleString()} USD` : pkr != null ? `PKR ${pkr.toLocaleString()}` : null;
     return { main, alt };
@@ -199,19 +199,6 @@ export function PremiumPage() {
           Choose your <span className="text-brand-orange">plan</span>
         </h2>
         <div className="max-w-[820px] mx-auto">
-          {plans && plans.length > 0 && (
-            <div role="group" aria-label="Billing interval" className="flex w-fit mx-auto rounded-full border border-bone p-[3px] mb-6">
-              {(['monthly', 'yearly'] as const).map(iv => {
-                const save = Math.max(0, ...(plans ?? []).map(p => p.yearlySavingsPercent));
-                return (
-                  <button key={iv} type="button" aria-pressed={interval === iv} onClick={() => setInterval(iv)}
-                    className={'px-5 py-1.5 rounded-full text-[13px] font-semibold cursor-pointer border-none transition-colors ' + (interval === iv ? 'bg-brand-orange text-white' : 'bg-transparent text-slate hover:text-carbon')}>
-                    {iv === 'monthly' ? 'Monthly' : 'Yearly'}{iv === 'yearly' && save > 0 ? ` · save ${save}%` : ''}
-                  </button>
-                );
-              })}
-            </div>
-          )}
           {plans === null ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">{[1, 2].map(i => <SkeletonBox key={i} className="w-full h-[300px]" rounded="16px" />)}</div>
           ) : plans.length === 0 ? (
@@ -219,25 +206,40 @@ export function PremiumPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-5">
               {plans.map(p => {
-                const { main, alt } = priceOf(p);
                 return (
                   <div key={p._id} className="relative rounded-2xl bg-white border border-[#f1d98a] p-7 flex flex-col shadow-sm">
                     <div className="flex items-center justify-between gap-2 mb-4">
                       <p className="text-[12px] font-bold tracking-[0.08em] uppercase text-slate flex items-center gap-1.5"><Crown size={13} className="text-[#8a6100]" aria-hidden /> {p.name}</p>
                       {interval === 'yearly' && p.yearlySavingsPercent > 0 && <span className="text-[12px] font-bold bg-success-bg text-success px-2 py-[2px] rounded">{`Save ${p.yearlySavingsPercent}%`}</span>}
                     </div>
-                    <p className="mb-1">
-                      <span className="text-[34px] font-extrabold text-carbon" style={{ fontFamily: SERIF }}>{main}</span>
-                      <span className="text-[13px] text-slate">{interval === 'yearly' ? ' / year' : ' / month'}</span>
-                    </p>
-                    {alt && <p className="text-[12px] text-slate">{`≈ ${alt}`}</p>}
+                    {/* Both billing options are shown side by side; the chosen one is what the button buys. */}
+                    <div role="radiogroup" aria-label={`${p.name} billing`} className="grid grid-cols-2 gap-3">
+                      {(['monthly', 'yearly'] as const).map(iv => {
+                        const { main: m, alt: a2 } = priceOf(p, iv);
+                        const selected = interval === iv;
+                        const perMonth = iv === 'yearly' && (currency === 'PKR' && p.yearlyPricePKR != null ? `PKR ${Math.round(p.yearlyPricePKR / 12).toLocaleString()}` : `$${(p.yearlyPriceUSD / 12).toFixed(2)}`);
+                        return (
+                          <button key={iv} type="button" role="radio" aria-checked={selected} onClick={() => setInterval(iv)}
+                            className={'relative text-start rounded-xl border-2 px-3.5 py-3 cursor-pointer transition-colors bg-white ' + (selected ? 'border-brand-orange shadow-[0_6px_16px_-10px_rgba(23,71,113,0.6)]' : 'border-bone hover:border-brand-orange/40')}>
+                            {iv === 'yearly' && p.yearlySavingsPercent > 0 && (
+                              <span className="absolute -top-2.5 end-2 text-[12px] font-bold bg-[#F4DC4C] text-[#152D43] px-2 py-[1px] rounded-full">{`Save ${p.yearlySavingsPercent}%`}</span>
+                            )}
+                            <span className="block text-[12px] font-bold uppercase tracking-[0.06em] text-slate mb-1">{iv === 'monthly' ? 'Monthly' : 'Yearly'}</span>
+                            <span className="block text-[22px] font-extrabold text-carbon leading-tight" style={{ fontFamily: SERIF }}>{m}</span>
+                            <span className="block text-[12px] text-slate">{iv === 'monthly' ? 'per month' : 'per year'}</span>
+                            {iv === 'yearly' && perMonth && <span className="block text-[12px] text-success font-semibold mt-0.5">{`≈ ${perMonth} / month`}</span>}
+                            {a2 && <span className="block text-[12px] text-slate/80 mt-0.5">{`≈ ${a2}`}</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
                     {p.description && <p className="text-[12.5px] text-slate leading-[1.6] mt-3">{p.description}</p>}
                     <ul className="flex flex-col gap-2.5 my-5 flex-1">
                       {planBenefitLines(p.benefits).map(b => (
                         <li key={b} className="flex items-start gap-2 text-[12.5px] text-charcoal"><Check size={14} className="text-success mt-[2px] shrink-0" />{b}</li>
                       ))}
                     </ul>
-                    <Button variant="primary" size="md" fullWidth disabled={isStaff || underReview} onClick={() => choose(p)}>{ctaLabel}</Button>
+                    <Button variant="primary" size="md" fullWidth disabled={isStaff || underReview} onClick={() => choose(p)}>{`${ctaLabel} · ${interval === 'yearly' ? 'Yearly' : 'Monthly'}`}</Button>
                     {!loggedIn && <p className="text-[12px] text-slate text-center mt-2">You will be asked to log in first.</p>}
                     {isStaff && <p className="text-[12px] text-slate text-center mt-2">Switch to your buyer account to join.</p>}
                   </div>
