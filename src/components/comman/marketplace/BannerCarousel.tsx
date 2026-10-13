@@ -32,6 +32,8 @@ interface BannerCarouselProps {
    *  a fixed-size showcase slot where any uploaded image, small or large,
    *  needs to display in full (e.g. Marketplace's WelcomeStrip hero cell). */
   fit?: 'cover' | 'contain';
+  /** Called with the id of the slide currently visible (admin inline editor uses it to focus that banner). */
+  onActiveChange?: (id: string) => void;
 }
 
 const ROTATE_MS = 5000;
@@ -50,7 +52,7 @@ function isExternalLink(url: string) {
  *  *shortest signed distance* from the active index (wrapping around the
  *  list), so going from the last slide back to the first (or vice versa)
  *  slides one step over instead of sweeping across every slide in between. */
-export function BannerCarousel({ banners, entityType, fit = 'cover' }: BannerCarouselProps) {
+export function BannerCarousel({ banners, entityType, fit = 'cover', onActiveChange }: BannerCarouselProps) {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const [loadedIds, setLoadedIds] = useState<Set<string>>(() => new Set());
@@ -85,6 +87,9 @@ export function BannerCarousel({ banners, entityType, fit = 'cover' }: BannerCar
     apiTrackPromotionClick(entityType, active._id);
     setPromotionAttribution(entityType, active._id);
   }
+
+  const activeId = active?._id;
+  useEffect(() => { if (activeId) onActiveChange?.(activeId); }, [activeId, onActiveChange]);
 
   const activeLoaded = active ? loadedIds.has(active._id) : false;
 

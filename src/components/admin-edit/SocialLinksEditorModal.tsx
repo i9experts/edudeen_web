@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Modal } from '@/components/comman/ui/Modal';
 import { Button } from '@/components/comman/ui/Button';
 import { Input } from '@/components/comman/ui/Input';
+import { SkeletonBox } from '@/components/comman/ui/SkeletonBox';
 import type { SocialNetwork } from '@/api/services/publicPlatformConfig';
 import { apiUpdateSocialLinks } from '@/api/services/config/adminConfig';
 import { FIELDS, validateSocialLinks } from '@/features/admin/pages/SocialLinksCard';
@@ -11,9 +12,22 @@ import { inlineEditConfig } from '@/api/services/reauth';
 
 /** Inline editor for the footer social icons. Update asks for the admin password; wrong password changes nothing. */
 export default function SocialLinksEditorModal({ onClose }: { onClose: () => void }) {
-  const { config, refresh } = usePublicPlatformConfig();
+  const { config, loading } = usePublicPlatformConfig();
+  // Load the current links first: an empty form must never be savable over real data.
+  if (config) return <SocialLinksForm initial={config.socialLinks ?? {}} onClose={onClose} />;
+  return (
+    <Modal mobileSheet width={560} title="Edit social links" onClose={onClose} footer={<Button variant="ghost" onClick={onClose}>Close</Button>}>
+      {loading
+        ? <div className="flex flex-col gap-3"><SkeletonBox className="h-[44px] w-full" /><SkeletonBox className="h-[44px] w-full" /><SkeletonBox className="h-[44px] w-full" /></div>
+        : <p className="text-[13px] text-error" role="alert">Could not load the current links, so editing is disabled to avoid overwriting them. Close this and try again.</p>}
+    </Modal>
+  );
+}
+
+function SocialLinksForm({ initial, onClose }: { initial: Partial<Record<SocialNetwork, string>>; onClose: () => void }) {
+  const { refresh } = usePublicPlatformConfig();
   const { confirm } = useReauth();
-  const [links, setLinks] = useState<Partial<Record<SocialNetwork, string>>>(() => ({ ...(config?.socialLinks ?? {}) }));
+  const [links, setLinks] = useState<Partial<Record<SocialNetwork, string>>>(() => ({ ...initial }));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowDown, ArrowUp, ImageIcon, Pause, Pencil, Play, Plus, Trash2 } from 'lucide-react';
 import type { AxiosRequestConfig } from 'axios';
 import { Modal } from '@/components/comman/ui/Modal';
@@ -14,7 +14,7 @@ import { useReauth } from '@/contexts/reauthCtx';
 import { inlineEditConfig } from '@/api/services/reauth';
 
 /** Inline editor for one banner placement. Every write asks for the admin password first. */
-export default function PlacementEditorModal({ placement, onClose }: { placement: PromotionPlacement; onClose: () => void }) {
+export default function PlacementEditorModal({ placement, focusId, onClose }: { placement: PromotionPlacement; /** The slide that was visible when the pencil was clicked. */ focusId?: string; onClose: () => void }) {
   const { confirm } = useReauth();
   const [all, setAll] = useState<Banner[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,6 +30,8 @@ export default function PlacementEditorModal({ placement, onClose }: { placement
     finally { setLoading(false); }
   }, []);
   useEffect(() => { void load(); }, [load]);
+  const focusRef = useRef<HTMLLIElement | null>(null);
+  useEffect(() => { if (!loading) focusRef.current?.scrollIntoView({ block: 'nearest' }); }, [loading]);
 
   const banners = useMemo(
     () => all.filter(b => bannerPlacements(b).includes(placement)).sort((a, b) => a.order - b.order),
@@ -79,12 +81,13 @@ export default function PlacementEditorModal({ placement, onClose }: { placement
               const st = effectiveState(b);
               const busy = busyId === b._id;
               return (
-                <li key={b._id} className="flex items-center gap-3 rounded-xl border border-bone p-2">
+                <li key={b._id} ref={b._id === focusId ? focusRef : undefined} className={"flex items-center gap-3 rounded-xl border p-2 " + (b._id === focusId ? 'border-brand-orange bg-cream/50' : 'border-bone')}>
                   <div className="w-[96px] h-[54px] rounded-md bg-cream overflow-hidden shrink-0 flex items-center justify-center">
                     {b.bannerImage ? <img src={b.bannerImage} alt="" className="w-full h-full object-cover" /> : <ImageIcon size={18} className="text-slate" />}
                   </div>
                   <div className="min-w-0 flex-1">
                     <span className="inline-block rounded-full px-2 py-0.5 text-[12px] font-semibold" style={{ background: st.style.bg, color: st.style.color }}>{st.style.label}</span>
+                    {b._id === focusId && <span className="ms-2 text-[12px] font-semibold text-brand-orange">Showing on the page now</span>}
                     {(b.startAt || b.endAt) && (
                       <p className="text-[12px] text-slate mt-0.5 truncate">{b.startAt ? `From ${fmtWhen(b.startAt)}` : ''}{b.startAt && b.endAt ? ' · ' : ''}{b.endAt ? `Until ${fmtWhen(b.endAt)}` : ''}</p>
                     )}

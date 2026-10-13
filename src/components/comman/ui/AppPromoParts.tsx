@@ -3,11 +3,12 @@ import { usePublicPlatformConfig } from '@/hooks/usePublicPlatformConfig';
 import { Sparkles } from 'lucide-react';
 import { clsx } from 'clsx';
 import QRCode from 'qrcode';
+import { GOOGLE_PLAY_DEFAULT } from '@/components/admin-edit/homeDefaults';
 
 // Real Android build — internal testing track. No iOS build published yet,
 // so every App Store badge across the app stays the decorative/non-clickable
 // chip while every Google Play badge/QR links here for real.
-export const GOOGLE_PLAY_URL = 'https://play.google.com/apps/internaltest/4699462862361720775';
+export const GOOGLE_PLAY_URL = GOOGLE_PLAY_DEFAULT;
 
 /** The Play Store link — admin-editable (Admin → Platform Config → Homepage content); falls back to the built-in link. */
 export function useAppStoreUrl(): string {

@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { clsx } from 'clsx';
 import { Plus } from 'lucide-react';
 import { BannerCarousel } from '@/components/comman/marketplace/BannerCarousel';
@@ -22,6 +22,10 @@ export function PlacementBanner({ placement, className }: { placement: Promotion
   const [items, setItems] = useState(() => cachedBanners(placement));
   const [editorOpen, setEditorOpen] = useState(false);
   const { editing } = useAdminEdit();
+  // The slide visible right now, so the editor can open focused on it (a ref: no re-render on every rotation).
+  const visibleId = useRef<string | undefined>(undefined);
+  const trackVisible = useRef((id: string) => { visibleId.current = id; }).current;
+  const [focusId, setFocusId] = useState<string | undefined>();
 
   useEffect(() => {
     let alive = true;
@@ -33,7 +37,7 @@ export function PlacementBanner({ placement, className }: { placement: Promotion
 
   const editor = editorOpen && (
     <Suspense fallback={null}>
-      <PlacementEditorModal placement={placement} onClose={() => setEditorOpen(false)} />
+      <PlacementEditorModal placement={placement} focusId={focusId} onClose={() => setEditorOpen(false)} />
     </Suspense>
   );
 
@@ -54,9 +58,9 @@ export function PlacementBanner({ placement, className }: { placement: Promotion
   }
   return (
     <>
-      <EditableRegion label="banner" onEdit={() => setEditorOpen(true)}>
+      <EditableRegion label="banner" onEdit={() => { setFocusId(visibleId.current); setEditorOpen(true); }}>
         <section aria-label="Featured promotions" className={clsx('relative w-full overflow-hidden rounded-2xl bg-cream aspect-[2/1] sm:aspect-[3/1] lg:aspect-[4/1]', className)}>
-          <BannerCarousel entityType="banner" banners={items} />
+          <BannerCarousel entityType="banner" banners={items} onActiveChange={trackVisible} />
         </section>
       </EditableRegion>
       {editor}

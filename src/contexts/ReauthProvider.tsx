@@ -41,7 +41,7 @@ export function ReauthProvider({ children }: { children: ReactNode }) {
       setPassword('');
       const status = (err as { status?: number }).status;
       if (status === 429) setError('Too many wrong attempts - nothing was changed. Try again in 10 minutes.');
-      else if (status === 401) setError('Wrong password - nothing was changed.');
+      else if (status === 401) setError('Wrong password. Nothing was changed - try again.');
       else setError(err instanceof Error && err.message ? `${err.message} - nothing was changed.` : 'Could not confirm - nothing was changed.');
     } finally { setBusy(false); }
   };
@@ -50,9 +50,9 @@ export function ReauthProvider({ children }: { children: ReactNode }) {
     <ReauthCtx.Provider value={{ confirm }}>
       {children}
       {open && (
-        <Modal title="Confirm your password" onClose={() => finish(null)}>
+        <Modal title="Enter your admin password" onClose={() => finish(null)}>
           <form onSubmit={submit} className="flex flex-col gap-3" autoComplete="off">
-            <p className="text-[13px] text-slate">Enter your admin password to publish this change. It goes live immediately.</p>
+            <p className="text-[13px] text-slate">Enter your admin password to publish this change.</p>
             <Input label="Admin password" type="password" autoFocus autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} />
             {error && <p className="text-[12px] text-error" role="alert">{error}</p>}
             <div className="flex justify-end gap-2 pt-1">
