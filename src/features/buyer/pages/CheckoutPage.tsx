@@ -141,11 +141,11 @@ function DigitalPaymentNotice({
       <div className="flex items-start gap-2">
         <Download size={14} className="mt-[1px] flex-shrink-0 text-[#3851d1]" />
         <div>
-          <p className="font-semibold text-carbon mb-[2px]">Digital downloads need online payment</p>
+          <p className="font-semibold text-carbon mb-[2px]">No payment method is available right now</p>
           <p className="text-slate leading-[1.6]">
-            Because digital resources are delivered instantly, they can only be paid for online by card
-            {' '}— they can't be paid with cash on delivery. Online card payment isn't available on Edudeen just yet,
-            so these items will stay safely in your cart until it is.
+            Digital resources are delivered instantly, so they are paid for online (card or bank transfer) — not with cash on delivery.
+            {' '}Edudeen has not turned on an online payment method for this order yet. Your items stay safely in your cart,
+            and you can check back soon or contact support.
           </p>
         </div>
       </div>
