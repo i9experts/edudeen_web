@@ -4,7 +4,7 @@ import { clsx } from 'clsx';
 import { TokenStorage } from '@/api/services/auth';
 import { ProductImage } from '@/components/comman/marketplace/ProductCard';
 import {
-  Star, ChevronRight, ShieldCheck, BadgeCheck, ChevronDown, Tag, Store, Sparkles, Flame, GraduationCap,
+  Star, ChevronRight, ShieldCheck, BadgeCheck, ChevronDown, Store, Sparkles, Flame, GraduationCap,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { MarketplaceProduct } from '@/api/services/marketplace';
@@ -12,6 +12,7 @@ import { type CategoryNode } from '@/api/services/categories';
 import { isBuyerSession } from '@/hooks/auth/useIsBuyer';
 import { type PublicStoreListItem } from '@/api/services/store';
 import { RealAppQr, AppleGlyph, GooglePlayGlyph, useGooglePlayUrl, useAppStoreUrl } from '@/components/comman/ui/AppPromoParts';
+import { CategoryArt } from '@/components/comman/art/CategoryArt';
 import { StoreFeatureCard, useCompactOnScroll, CountdownUnit, ActionMenu } from '@/components/comman/ui';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 import { currencySymbol } from '@/utils/currency';
@@ -49,6 +50,8 @@ export function RailCard({ product, onClick, badge, rank, size = 'md', stockLabe
         <ProductImage
           images={product.images ?? []}
           name={product.name}
+          tags={product.tags}
+          productType={product.productType ?? product.type}
           className={clsx('transition-transform duration-500 ease-out group-hover:scale-[1.05]', isSm ? 'h-[104px] sm:h-[112px]' : 'h-[118px] sm:h-[128px]')}
         />
         {badge && <div className="absolute top-[7px] start-[7px]">{badge}</div>}
@@ -79,7 +82,7 @@ export function RailCard({ product, onClick, badge, rank, size = 'md', stockLabe
 }
 
 // ── Category bar icon — reuses each category's real uploaded image, falls back to a tag glyph ──
-export function CategoryBarIcon({ category }: { category: CategoryNode }) {
+export function CategoryBarIcon({ category, parentName }: { category: CategoryNode; parentName?: string | null }) {
   if (category.image) {
     return (
       <span className="w-[24px] h-[24px] rounded-lg overflow-hidden shrink-0 bg-cream border border-bone">
@@ -88,8 +91,8 @@ export function CategoryBarIcon({ category }: { category: CategoryNode }) {
     );
   }
   return (
-    <span className="w-[24px] h-[24px] rounded-lg bg-brand-pale-orange flex items-center justify-center shrink-0">
-      <Tag size={13} className="text-brand-orange" />
+    <span className="w-[24px] h-[24px] rounded-lg overflow-hidden flex items-center justify-center shrink-0">
+      <CategoryArt name={category.name || category.slug} parentName={parentName} />
     </span>
   );
 }
@@ -213,7 +216,7 @@ export function CategoriesMegaContent({
                 <span className="w-14 h-14 rounded-full overflow-hidden bg-cream border border-bone flex items-center justify-center shrink-0 transition-transform duration-150 group-hover:-translate-y-[2px] group-hover:border-brand-orange/40">
                   {sub.image
                     ? <img loading="lazy" decoding="async" src={sub.image} alt="" className="w-full h-full object-cover" />
-                    : <Tag size={18} className="text-brand-orange opacity-50" />}
+                    : <CategoryArt name={sub.name || sub.slug} parentName={active.name} />}
                 </span>
                 <span className="text-[12px] font-medium text-charcoal leading-tight line-clamp-2 group-hover:text-brand-orange transition-colors">
                   {sub.name}

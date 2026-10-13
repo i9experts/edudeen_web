@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { clsx } from 'clsx';
 import { ArrowLeft, ArrowRight, Search, Clock, LayoutGrid, X, TrendingUp, Tag, Star, Sparkles, ChevronDown, Check, Store as StoreIcon, Lightbulb, Trash2, Eye, Loader2 } from 'lucide-react';
+import { CategoryArt } from '@/components/comman/art/CategoryArt';
 import { TokenStorage } from '@/api/services/auth';
 import { apiGetRecentSearches, apiSearchStores, apiSearchProducts, apiGetTrendingSearches } from '@/api/services/search';
 import type { MarketplaceProduct } from '@/api/services/marketplace';
@@ -709,7 +710,7 @@ export function SearchBox({
                           className="flex items-center gap-[6px] max-w-[170px] px-[12px] py-[7px] rounded-full text-[12px] font-medium bg-white text-charcoal border border-bone hover:border-brand-orange hover:bg-brand-pale-orange hover:text-brand-deep-orange focus-visible:outline-none focus-visible:border-brand-orange focus-visible:bg-brand-pale-orange transition-colors duration-150 cursor-pointer"
                           title={cat.name}
                         >
-                          <Tag size={11} className="shrink-0 text-brand-orange" />
+                          <span className="size-[18px] rounded-full overflow-hidden shrink-0"><CategoryArt name={cat.name} /></span>
                           <span className="truncate">{cat.name}</span>
                         </button>
                       ))}

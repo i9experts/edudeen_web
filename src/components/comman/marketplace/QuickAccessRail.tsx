@@ -13,6 +13,7 @@ import { useCategoryTree, categoryPath } from '@/hooks/marketplace/useCategoryTr
 import { getRecentlyViewed, clearRecentlyViewed, type RecentlyViewedItem } from '@/components/comman/ui/BuyerNavbar';
 import { fetchRecentlyViewed } from '@/utils/recentlyViewedSync';
 import { ProductCoverFallback } from '@/components/comman/marketplace/ProductCoverFallback';
+import { CategoryArt } from '@/components/comman/art/CategoryArt';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 import { currencySymbol } from '@/utils/currency';
 
@@ -120,7 +121,7 @@ function CategoriesPanel({ close }: { close: () => void }) {
       <ul className="list-none p-0 m-0 py-2">
         {tree.map(c => (
           <li key={c._id} className="px-4 py-2">
-            <Link to={categoryPath(c)} onClick={close} className="text-[13px] font-semibold text-carbon no-underline hover:text-brand-orange">{c.name}</Link>
+            <Link to={categoryPath(c)} onClick={close} className="flex items-center gap-2 text-[13px] font-semibold text-carbon no-underline hover:text-brand-orange"><span className="size-6 rounded-lg overflow-hidden shrink-0">{c.image ? <img src={c.image} alt="" loading="lazy" className="w-full h-full object-cover" /> : <CategoryArt name={c.name || c.slug} />}</span>{c.name}</Link>
             {(c.children?.length ?? 0) > 0 && (
               <div className="flex flex-wrap gap-1.5 mt-1.5">
                 {c.children!.slice(0, 6).map(s => (

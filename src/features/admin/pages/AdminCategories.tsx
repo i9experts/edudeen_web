@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Plus, ChevronRight, FolderTree, Tag, ImagePlus, Loader2, ListFilter, Pencil, Trash2, ArrowUp, ArrowDown, Search } from 'lucide-react';
+import { Plus, ChevronRight, FolderTree, ImagePlus, Loader2, ListFilter, Pencil, Trash2, ArrowUp, ArrowDown, Search } from 'lucide-react';
 import { clsx } from 'clsx';
+import { CategoryArt } from '@/components/comman/art/CategoryArt';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import {
   apiAddCategory, apiAdminGetCategoryTree, apiAdminUpdateCategory, apiAdminDeleteCategory, apiAdminReorderCategories,
@@ -443,8 +444,8 @@ function CategoryRow({ node, depth, siblings, index, actions }: {
             <span className="w-[13px] shrink-0" />
           )}
           {depth === 0
-            ? <FolderTree size={14} className="text-brand-orange shrink-0" />
-            : <Tag size={12} className="text-slate shrink-0" />}
+            ? <span className="size-6 rounded-md overflow-hidden shrink-0">{node.image ? <img src={node.image} alt="" className="w-full h-full object-cover" /> : <CategoryArt name={node.name || node.slug} />}</span>
+            : <span className="size-5 rounded overflow-hidden shrink-0">{node.image ? <img src={node.image} alt="" className="w-full h-full object-cover" /> : <CategoryArt name={node.name || node.slug} />}</span>}
           <span className={clsx(depth === 0 ? 'text-[13px] font-semibold text-charcoal' : 'text-[13px] text-graphite', inactive && 'opacity-60')}>{node.name}</span>
           {inactive && (
             <span className="text-[12px] font-semibold px-1.5 py-[1px] rounded bg-cream border border-bone text-slate ml-1">Inactive</span>

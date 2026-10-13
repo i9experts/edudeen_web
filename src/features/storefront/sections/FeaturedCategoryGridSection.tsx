@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { CategoryArt } from '@/components/comman/art/CategoryArt';
 import { apiGetCategoryTree, type CategoryNode } from '@/api/services/categories';
 import { useStorefront, useStorefrontPaths } from '../StorefrontContext';
 
@@ -60,6 +61,7 @@ export function FeaturedCategoryGridSection({ settings }: { settings: FeaturedCa
                   className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                 />
               )}
+              {!cat.image && <span className="absolute top-3 end-3 size-[44%] max-w-[88px] rounded-2xl overflow-hidden"><CategoryArt name={cat.name || cat.slug} /></span>}
               <div className="absolute inset-0" style={{ background: cat.image ? 'linear-gradient(to top, rgba(0,0,0,0.55), rgba(0,0,0,0))' : undefined }} />
               <span
                 className="relative z-[1] px-3.5 py-3 text-[13px] font-semibold"

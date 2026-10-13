@@ -1,4 +1,6 @@
 import { clsx } from 'clsx';
+import { CategoryArt } from '@/components/comman/art/CategoryArt';
+import { resolveProductArt } from '@/components/comman/art/categoryArtMap';
 
 // Soft paper-on-pastel palettes used wherever a product has no photo —
 // picked by a stable hash of the product name, so the same product always
@@ -35,13 +37,18 @@ const TEXT: Record<CoverSize, string> = {
  * storefront ResourceCard cover, so an image-less product reads as designed
  * rather than broken. Fills its container; size it via `className`.
  */
-export function ProductCoverFallback({ name, size = 'sm', className }: {
+export function ProductCoverFallback({ name, size = 'sm', className, categoryName, tags, productType }: {
   name: string;
+  /** Optional hints so the illustration matches the product's subject. */
+  categoryName?: string | null;
+  tags?: string[] | null;
+  productType?: string | null;
   size?: CoverSize;
   className?: string;
 }) {
   const { bg, accent } = coverPaletteFor(name || 'Edudeen');
   const tiny = size === 'xs';
+  const art = resolveProductArt({ name, categoryName, tags, productType });
   return (
     <div
       role="img"
@@ -56,10 +63,11 @@ export function ProductCoverFallback({ name, size = 'sm', className }: {
         )}
         style={{ borderTopColor: accent, color: accent }}
       >
-        {size === 'lg' && (
-          <span className="text-[12px] tracking-[1px] uppercase mb-3">Learn with purpose</span>
-        )}
-        <span className={clsx('font-serif break-words', TEXT[size])}>{name}</span>
+        <span className={clsx('min-h-0 flex items-center justify-center', tiny ? 'w-full h-full' : 'flex-1 w-full py-[6%]')}>
+          <CategoryArt art={art} className={clsx('h-full w-auto aspect-square max-w-full rounded-[18%]', size === 'lg' && 'max-h-[160px]')} />
+        </span>
+        {!tiny && <span className={clsx('font-serif break-words shrink-0', TEXT[size], size !== 'lg' && '!line-clamp-2')}>{name}</span>}
+        {size === 'lg' && <span className="text-[12px] tracking-[1px] uppercase mt-2 mb-3 shrink-0">Learn with purpose</span>}
       </div>
     </div>
   );

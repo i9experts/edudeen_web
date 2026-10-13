@@ -111,6 +111,8 @@ export function FlashSaleCard({ product, onClick, onAddToCart, isAdding, addToCa
         <ProductImage
           images={product.images ?? []}
           name={product.name}
+          tags={product.tags}
+          productType={product.productType ?? product.type}
           className={clsx('w-full h-full object-cover transition-transform duration-500 ease-out', !compact && 'group-hover:scale-[1.06]')}
         />
 

@@ -68,12 +68,12 @@ export function ProductCardSkeleton({ layout = 'grid' }: { layout?: 'grid' | 'li
 // ── Product Image ─────────────────────────────────────────────────────────────
 // Exported as-is — reused by MegaMenuBar and FlashSaleCard for their own
 // (differently-proportioned) product tiles.
-export function ProductImage({ images, name, className }: { images: string[]; name: string; className?: string }) {
+export function ProductImage({ images, name, className, categoryName, tags, productType }: { images: string[]; name: string; className?: string; categoryName?: string | null; tags?: string[] | null; productType?: string | null }) {
   const [errored, setErrored] = useState(false);
   const src = images[0];
 
   if (!src || errored) {
-    return <ProductCoverFallback name={name} size="md" className={clsx('w-full', className)} />;
+    return <ProductCoverFallback name={name} size="md" categoryName={categoryName} tags={tags} productType={productType} className={clsx('w-full', className)} />;
   }
 
   return (
@@ -277,6 +277,8 @@ export const ProductCard = memo(function ProductCard({ product, onClick, onAddTo
           <ProductImage
             images={activeImageSrc ? [activeImageSrc] : []}
             name={product.name}
+            tags={product.tags}
+            productType={product.productType ?? product.type}
             className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-110"
           />
 
