@@ -11,7 +11,7 @@ import type { MarketplaceProduct } from '@/api/services/marketplace';
 import { type CategoryNode } from '@/api/services/categories';
 import { isBuyerSession } from '@/hooks/auth/useIsBuyer';
 import { type PublicStoreListItem } from '@/api/services/store';
-import { RealAppQr, AppleGlyph, GooglePlayGlyph, useGooglePlayUrl } from '@/components/comman/ui/AppPromoParts';
+import { RealAppQr, AppleGlyph, GooglePlayGlyph, useGooglePlayUrl, useAppStoreUrl } from '@/components/comman/ui/AppPromoParts';
 import { StoreFeatureCard, useCompactOnScroll, CountdownUnit, ActionMenu } from '@/components/comman/ui';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 import { currencySymbol } from '@/utils/currency';
@@ -405,55 +405,80 @@ const ABOUT_CARDS: { image: string; title: string; description: string; path: st
 
 function AboutMegaContent({ onNavigate }: { onNavigate: (path: string) => void }) {
   const GOOGLE_PLAY_URL = useGooglePlayUrl();
+  const APP_STORE_URL = useAppStoreUrl();
   // No "Sell on Edudeen" card for a signed-in buyer.
   const cards = isBuyerSession() ? ABOUT_CARDS.filter(c => c.path !== '/sellers') : ABOUT_CARDS;
   return (
-    <div className="flex items-start gap-4 md:gap-6 overflow-x-auto scrollbar-hide pb-1">
-      {cards.map(({ image, title, description, path }, i) => (
-        <button
-          key={title}
-          onClick={() => onNavigate(path)}
-          style={{ animationDelay: `${i * 60}ms` }}
-          className="dash-section-enter group flex-1 min-w-[150px] shrink-0 text-start bg-transparent border-none p-0 cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange"
-        >
-          <div className="relative h-[92px] overflow-hidden rounded-lg mb-3">
-            <img
-              src={image}
-              alt=""
-              loading="lazy"
-              decoding="async"
-              className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.08]"
-            />
-          </div>
-          <p className="text-[13px] font-bold text-carbon leading-snug mb-1 group-hover:text-brand-orange transition-colors">{title}</p>
-          <p className="text-[12px] text-slate leading-[1.5]">{description}</p>
-        </button>
-      ))}
-
-      {/* Thin divider before the app column — same as Alibaba's reference. */}
-      <div className="w-px self-stretch bg-bone shrink-0" />
-
-      <div style={{ animationDelay: `${3 * 60}ms` }} className="dash-section-enter w-[220px] shrink-0">
-        <p className="text-[13px] font-bold text-brand-orange leading-snug mb-1">Get the Edudeen app</p>
-        <p className="text-[12px] text-slate leading-[1.5] mb-3">Browse products, chat with sellers, and manage and pay for your orders with the Edudeen app — anytime, anywhere.</p>
-        <div className="flex items-center gap-3">
-          <div className="shrink-0 rounded-md bg-white p-1 border border-bone">
-            <RealAppQr size={64} />
-          </div>
-          <div className="flex flex-col gap-[6px]">
-            <a
-              href={GOOGLE_PLAY_URL}
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center gap-[6px] rounded-[6px] bg-carbon px-[10px] py-[6px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange"
+    <div>
+      <MegaSectionLabel action={{ label: 'Read our story', onClick: () => onNavigate('/about') }}>About Edudeen</MegaSectionLabel>
+      <div className="flex flex-col lg:flex-row items-stretch gap-4 lg:gap-5">
+        <div className="flex gap-3 sm:gap-4 overflow-x-auto scrollbar-hide -mx-4 px-4 pb-2 lg:mx-0 lg:px-0 lg:pb-0 lg:flex-1 lg:min-w-0">
+          {cards.map(({ image, title, description, path }, i) => (
+            <button
+              key={title}
+              onClick={() => onNavigate(path)}
+              style={{ animationDelay: `${i * 60}ms` }}
+              className="dash-section-enter group flex-1 min-w-[190px] shrink-0 text-start bg-white border border-bone rounded-2xl overflow-hidden p-0 cursor-pointer transition-all duration-200 hover:-translate-y-[3px] hover:border-brand-orange/30 hover:shadow-[0_14px_28px_-14px_rgba(19,57,86,0.35)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange"
             >
-              <GooglePlayGlyph size={11} />
-              <span className="text-[12px] font-semibold text-white leading-none">Google Play</span>
-            </a>
-            <span className="flex items-center gap-[6px] rounded-[6px] bg-carbon px-[10px] py-[6px]">
-              <AppleGlyph size={12} />
-              <span className="text-[12px] font-semibold text-white leading-none">App Store</span>
-            </span>
+              <div className="relative h-[104px] overflow-hidden bg-cream">
+                <img
+                  src={image}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.06]"
+                />
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#152D43]/45 via-transparent to-transparent" />
+              </div>
+              <div className="px-4 pt-3 pb-4">
+                <p className="font-serif text-[16px] text-carbon leading-snug m-0 mb-1 group-hover:text-brand-orange transition-colors">{title}</p>
+                <p className="text-[12.5px] text-slate leading-[1.5] m-0 mb-2">{description}</p>
+                <span className="inline-flex items-center gap-[3px] text-[12.5px] font-semibold text-brand-orange">
+                  Learn more <ChevronRight size={13} className="transition-transform group-hover:translate-x-[2px]" />
+                </span>
+              </div>
+            </button>
+          ))}
+        </div>
+
+        {/* App card - same navy/yellow family as the Flash Sale promo card */}
+        <div
+          style={{ animationDelay: `${cards.length * 60}ms` }}
+          className="dash-section-enter relative overflow-hidden rounded-2xl lg:w-[300px] shrink-0 p-4 sm:p-5 text-white"
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-[#152D43] via-[#174771] to-[#2b6a8f]" />
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(244,220,76,0.2),transparent_55%)]" />
+          <div className="relative z-[1]">
+            <span className="inline-flex items-center rounded-full bg-[#F4DC4C] text-[#152D43] px-2.5 py-[3px] text-[12px] font-bold uppercase tracking-[0.07em] mb-2">Mobile app</span>
+            <p className="font-serif text-[18px] leading-[1.15] m-0 mb-1">Get the Edudeen app</p>
+            <p className="text-[12.5px] text-white/75 leading-[1.5] m-0 mb-3">Browse resources, chat with sellers and track your orders - anytime, anywhere.</p>
+            <div className="flex items-center gap-3">
+              <div className="shrink-0 rounded-lg bg-white p-1.5">
+                <RealAppQr size={64} />
+              </div>
+              <div className="flex flex-col gap-[7px]">
+                <a
+                  href={GOOGLE_PLAY_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-[7px] rounded-lg bg-white px-[11px] py-[7px] no-underline hover:bg-[#F4DC4C] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                >
+                  <GooglePlayGlyph size={12} />
+                  <span className="text-[12px] font-semibold text-[#152D43] leading-none">Google Play</span>
+                </a>
+                {APP_STORE_URL ? (
+                  <a href={APP_STORE_URL} target="_blank" rel="noreferrer" className="flex items-center gap-[7px] rounded-lg bg-white px-[11px] py-[7px] no-underline hover:bg-[#F4DC4C] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
+                    <AppleGlyph size={12} />
+                    <span className="text-[12px] font-semibold text-[#152D43] leading-none">App Store</span>
+                  </a>
+                ) : (
+                  <span className="flex items-center gap-[7px] rounded-lg bg-white/15 px-[11px] py-[7px]">
+                    <AppleGlyph size={12} />
+                    <span className="text-[12px] font-semibold text-white leading-none">App Store <span className="text-white/60 font-normal">· soon</span></span>
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
