@@ -16,6 +16,15 @@ function loadTree(): Promise<CategoryNode[]> {
   return inflight;
 }
 
+const listeners = new Set<(t: CategoryNode[]) => void>();
+
+/** Drop the shared tree and refetch it; every mounted useCategoryTree (header menus, quick-access rail, category pages) updates. */
+export function refreshCategoryTree(): Promise<void> {
+  cached = null;
+  inflight = null;
+  return loadTree().then(t => { listeners.forEach(l => l(t)); }).catch(() => {});
+}
+
 export interface CategoryEntry {
   node: CategoryNode;
   /** The category directly above this one — null for a main category. */
@@ -28,6 +37,12 @@ export interface CategoryEntry {
 export function useCategoryTree() {
   const [tree, setTree] = useState<CategoryNode[]>(cached ?? []);
   const [loading, setLoading] = useState(!cached);
+
+  useEffect(() => {
+    const onRefresh = (t: CategoryNode[]) => { setTree(t); setLoading(false); };
+    listeners.add(onRefresh);
+    return () => { listeners.delete(onRefresh); };
+  }, []);
 
   useEffect(() => {
     if (cached) return;
