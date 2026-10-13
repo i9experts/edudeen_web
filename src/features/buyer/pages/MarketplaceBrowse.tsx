@@ -485,7 +485,7 @@ export function CategoryPage() {
     if (!entry) return [{ label: 'Home', path: '/' }];
     return [
       { label: 'Home', path: '/' },
-      ...(entry.parent ? [{ label: entry.parent.name, path: categoryPath(entry.parent) }] : []),
+      ...entry.ancestors.map(a => ({ label: a.name, path: categoryPath(a) })),
       { label: entry.node.name },
     ];
   }, [entry]);
@@ -505,8 +505,9 @@ export function CategoryPage() {
     );
   }
 
-  // A main category lists its subcategories; a subcategory lists its siblings.
-  const subs = entry.parent ? entry.parent.children ?? [] : entry.node.children ?? [];
+  // A category lists its subcategories; a leaf subcategory lists its siblings.
+  const ownChildren = entry.node.children ?? [];
+  const subs = ownChildren.length || !entry.parent ? ownChildren : entry.parent.children ?? [];
   return (
     <BrowseResults
       key={entry.node._id}

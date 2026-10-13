@@ -49,7 +49,7 @@ export function apiGetCategoryTree(id?: string) {
   const url = id ? `${ENDPOINTS.CATEGORIES.TREE}?id=${id}` : ENDPOINTS.CATEGORIES.TREE;
   // Shared 30s cache: several components/pages ask for the same tree on one screen.
   return cachedRequest(`categories:tree:${id ?? 'all'}`, 30_000, () =>
-    client.get<never, CategoryTreeListResponse | CategoryTreeNodeResponse>(url));
+    client.get<never, CategoryTreeListResponse | CategoryTreeNodeResponse>(url, { timeout: 30_000 }));
 }
 
 export function apiGetCategoryById(id: string) {
@@ -81,7 +81,7 @@ export interface UpdateCategoryPayload {
 
 interface CategoryDeleteResponse {
   success: boolean; message: string;
-  data: { reassigned: { products: number; stores: number } | null };
+  data: { reassigned: { products: number; stores: number } | null; deletedChildren?: number };
 }
 
 // Set once the server answers 404 (an API deploy older than the admin tree
@@ -106,11 +106,11 @@ export function apiAdminUpdateCategory(id: string, payload: UpdateCategoryPayloa
   return client.patch<never, CategoryCreateResponse>(ADMIN_CATEGORY_ENDPOINTS.UPDATE(id), payload, config).finally(() => invalidateCache('categories:'));
 }
 
-/** Soft delete. `reassignTo` (a same-level category) receives the products/stores still using it. */
-export function apiAdminDeleteCategory(id: string, reassignTo?: string, config?: import('axios').AxiosRequestConfig) {
+/** Soft delete. `reassignTo` receives the products/stores still using it; `deleteChildren` also deletes every subcategory below it. */
+export function apiAdminDeleteCategory(id: string, reassignTo?: string, config?: import('axios').AxiosRequestConfig, deleteChildren = false) {
   return client.delete<never, CategoryDeleteResponse>(ADMIN_CATEGORY_ENDPOINTS.DELETE(id), {
     ...config,
-    params: reassignTo ? { reassignTo } : undefined,
+    params: { ...(reassignTo ? { reassignTo } : {}), ...(deleteChildren ? { deleteChildren: 'true' } : {}) },
   }).finally(() => invalidateCache('categories:'));
 }
 

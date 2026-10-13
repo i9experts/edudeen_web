@@ -18,11 +18,13 @@ function loadTree(): Promise<CategoryNode[]> {
 
 export interface CategoryEntry {
   node: CategoryNode;
-  /** The main category this one sits under — null for a main category. */
+  /** The category directly above this one — null for a main category. */
   parent: CategoryNode | null;
+  /** Every category above this one, main category first (empty for a main category). */
+  ancestors: CategoryNode[];
 }
 
-/** Main categories (with children) plus id/slug lookups across both levels. */
+/** Main categories (with nested children) plus id/slug lookups across every level. */
 export function useCategoryTree() {
   const [tree, setTree] = useState<CategoryNode[]>(cached ?? []);
   const [loading, setLoading] = useState(!cached);
@@ -41,13 +43,13 @@ export function useCategoryTree() {
     const byId = new Map<string, CategoryEntry>();
     const bySlug = new Map<string, CategoryEntry>();
     for (const root of tree) {
-      const add = (node: CategoryNode, parent: CategoryNode | null) => {
-        const entry = { node, parent };
+      const add = (node: CategoryNode, ancestors: CategoryNode[]) => {
+        const entry: CategoryEntry = { node, parent: ancestors[ancestors.length - 1] ?? null, ancestors };
         byId.set(node._id, entry);
         if (node.slug) bySlug.set(node.slug.toLowerCase(), entry);
+        for (const child of node.children ?? []) add(child, [...ancestors, node]);
       };
-      add(root, null);
-      for (const child of root.children ?? []) add(child, root);
+      add(root, []);
     }
     return { byId, bySlug };
   }, [tree]);

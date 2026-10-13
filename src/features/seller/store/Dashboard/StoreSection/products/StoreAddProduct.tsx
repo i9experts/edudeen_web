@@ -638,7 +638,7 @@ export default function StoreAddProduct() {
           )}
 
           {/* Category */}
-          <Card step={nextStep()} title="Category" need="optional" hint="Choose the category your product belongs to, then a subcategory to help buyers browse.">
+          <Card step={nextStep()} title="Category" hint="Choose the category your product belongs to, then (optionally) narrower subcategories to help buyers browse.">
             <SubcategoryField
               mainCategoryName={rootCategory?.name ?? ''}
               mainCategoryId={categoryId}

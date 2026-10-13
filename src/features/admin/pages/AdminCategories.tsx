@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Plus, ChevronRight, FolderTree, Tag, ImagePlus, Loader2, ListFilter, Pencil, Trash2, ArrowUp, ArrowDown } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Plus, ChevronRight, FolderTree, Tag, ImagePlus, Loader2, ListFilter, Pencil, Trash2, ArrowUp, ArrowDown, Search } from 'lucide-react';
 import { clsx } from 'clsx';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import {
@@ -38,8 +38,8 @@ function missingSuggestions(mainCategories: CategoryNode[]) {
 }
 
 // ── Add Category modal ───────────────────────────────────────────────────────
-// Admins can create either a main category (no parent) or a subcategory under
-// an existing main category — never deeper than one level (server-enforced).
+// Admins can create a main category (no parent) or a subcategory under any
+// category, up to 4 levels deep (server-enforced).
 function AddCategoryModal({ mainCategories, initial, onClose, onSaved }: {
   mainCategories: CategoryNode[]; initial?: CategorySuggestion | null; onClose: () => void; onSaved: () => void;
 }) {
@@ -123,7 +123,9 @@ function AddCategoryModal({ mainCategories, initial, onClose, onSaved }: {
         )}
         <Select label="Parent Category" value={parentId} onChange={e => setParentId(e.target.value)}>
           <option value="">None — create as a main category</option>
-          {mainCategories.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
+          {flattenTree(mainCategories).filter(f => f.depth + 1 < MAX_LEVELS).map(({ node, depth }) => (
+            <option key={node._id} value={node._id}>{'\u2003'.repeat(depth)}{node.name}</option>
+          ))}
         </Select>
         <Input label="Name" placeholder="e.g. Islamic Books" value={name} onChange={e => setName(e.target.value)} />
         <Textarea label="Description (optional)" rows={3} placeholder="Describe this category…" value={description} onChange={e => setDescription(e.target.value)} />
@@ -247,29 +249,62 @@ function EditCategoryModal({ category, onClose, onSaved }: {
   );
 }
 
+// ── Tree helpers ─────────────────────────────────────────────────────────────
+const MAX_LEVELS = 4; // main > sub > sub-sub > sub-sub-sub (server-enforced)
+const LEVEL_NAMES = ['Main category', 'Subcategory', 'Sub-subcategory', 'Level 4 subcategory'];
+
+function flattenTree(nodes: CategoryNode[], depth = 0, out: { node: CategoryNode; depth: number }[] = []) {
+  for (const n of nodes) { out.push({ node: n, depth }); flattenTree(n.children ?? [], depth + 1, out); }
+  return out;
+}
+function subtreeIds(node: CategoryNode): string[] {
+  return [node._id, ...(node.children ?? []).flatMap(subtreeIds)];
+}
+function countDescendants(node: CategoryNode): number {
+  return (node.children ?? []).reduce((a, c) => a + 1 + countDescendants(c), 0);
+}
+function rootOf(roots: CategoryNode[], id: string): CategoryNode | null {
+  return roots.find(r => subtreeIds(r).includes(id)) ?? null;
+}
+
 // ── Delete Category modal ────────────────────────────────────────────────────
-// The server refuses to delete a category that still has subcategories, and
-// refuses one still used by products/stores unless they're moved to another
-// category at the same level (another main category, or a sibling
-// subcategory under the same main category).
-function DeleteCategoryModal({ category, siblings, onClose, onDeleted }: {
-  category: CategoryNode; siblings: CategoryNode[]; onClose: () => void; onDeleted: (msg: string) => void;
+// Works at any depth. The server refuses to delete a category that still has
+// subcategories unless the admin confirms deleting them together, and refuses one
+// still used by products/stores unless they're moved: a main category's products go
+// to another main category; a subcategory's go to any other category inside the
+// same main category (or to the main category itself = "no subcategory").
+function DeleteCategoryModal({ category, roots, onClose, onDeleted }: {
+  category: CategoryNode; roots: CategoryNode[]; onClose: () => void; onDeleted: (msg: string) => void;
 }) {
-  const targets = siblings.filter(s => s._id !== category._id && s.status !== 'inactive');
+  const isMain = !category.parentId;
+  const descendants = countDescendants(category);
+  const [deleteChildren, setDeleteChildren] = useState(false);
   const [reassignTo, setReassignTo] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const isMain = !category.parentId;
+
+  const targets = useMemo(() => {
+    if (isMain) return roots.filter(r => r._id !== category._id && r.status !== 'inactive').map(r => ({ id: r._id, label: r.name }));
+    const root = rootOf(roots, category._id);
+    if (!root) return [];
+    const banned = new Set(subtreeIds(category));
+    return flattenTree([root]).filter(({ node }) => !banned.has(node._id) && node.status !== 'inactive')
+      .map(({ node, depth }) => ({
+        id: node._id,
+        label: `${' '.repeat(depth)}${node.name}${depth === 0 ? ' (main category — no subcategory)' : ''}`,
+      }));
+  }, [category, roots, isMain]);
 
   async function submit() {
     setError('');
     setBusy(true);
     try {
-      const res = await apiAdminDeleteCategory(category._id, reassignTo || undefined);
+      const res = await apiAdminDeleteCategory(category._id, reassignTo || undefined, undefined, deleteChildren);
       const moved = res.data?.reassigned;
-      onDeleted(moved
-        ? `Deleted "${category.name}" — moved ${moved.products} product(s)${isMain ? ` and ${moved.stores} store(s)` : ''}.`
-        : `Deleted "${category.name}".`);
+      const kids = res.data?.deletedChildren ?? 0;
+      onDeleted(`Deleted "${category.name}"${kids ? ` and ${kids} subcategor${kids === 1 ? 'y' : 'ies'}` : ''}${moved
+        ? ` — moved ${moved.products} product(s)${isMain ? ` and ${moved.stores} store(s)` : ''}`
+        : ''}.`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete category.');
     } finally {
@@ -280,40 +315,116 @@ function DeleteCategoryModal({ category, siblings, onClose, onDeleted }: {
   return (
     <Modal mobileSheet
       title="Delete Category"
-      width={480}
+      width={500}
       onClose={onClose}
       footer={
         <>
           <Button variant="ghost" onClick={onClose} disabled={busy}>Cancel</Button>
-          <Button variant="danger" onClick={submit} loading={busy} disabled={category.children.length > 0}>Delete Category</Button>
+          <Button variant="danger" onClick={submit} loading={busy} disabled={descendants > 0 && !deleteChildren}>Delete Category</Button>
         </>
       }
     >
       <div className="flex flex-col gap-3">
         <p className="text-[13px] text-charcoal leading-[1.6]">
           Delete <strong>{category.name}</strong>? It will disappear from the marketplace.
+          {typeof category.productCount === 'number' && category.productCount > 0 && (
+            <> {category.productCount} active product{category.productCount === 1 ? '' : 's'} currently use it{descendants > 0 ? ' or its subcategories' : ''}.</>
+          )}
         </p>
-        {category.children.length > 0 ? (
-          <p className="text-[12px] text-error bg-error-bg border border-error-border rounded-lg px-3 py-2">
-            This category still has {category.children.length} subcategor{category.children.length === 1 ? 'y' : 'ies'}. Delete those first.
-          </p>
-        ) : (
-          <>
-            <Select label="Move its products to" value={reassignTo} onChange={e => setReassignTo(e.target.value)}>
-              <option value="">Don't move — only delete if nothing uses it</option>
-              {targets.map(t => <option key={t._id} value={t._id}>{t.name}</option>)}
-            </Select>
-            <p className="text-[12px] text-slate leading-[1.5]">
-              {isMain
-                ? 'Products and stores in this main category will be moved to the one you pick.'
-                : 'Products in this subcategory will be moved to the sibling subcategory you pick.'}
-              {' '}If it's still in use and you don't pick one, the delete is refused.
-            </p>
-          </>
+        {descendants > 0 && (
+          <label className="flex items-start gap-2 text-[12px] text-error bg-error-bg border border-error-border rounded-lg px-3 py-2 cursor-pointer">
+            <input type="checkbox" className="mt-[2px]" checked={deleteChildren} onChange={e => setDeleteChildren(e.target.checked)} />
+            <span>
+              This category has {descendants} subcategor{descendants === 1 ? 'y' : 'ies'} below it (including nested ones).
+              Tick to delete them all together with it — otherwise delete or move them first.
+            </span>
+          </label>
         )}
+        <Select label="Move products to" value={reassignTo} onChange={e => setReassignTo(e.target.value)}>
+          <option value="">Don't move — only delete if nothing uses it</option>
+          {targets.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
+        </Select>
+        <p className="text-[12px] text-slate leading-[1.5]">
+          {isMain
+            ? 'Products and stores in this main category move to the main category you pick.'
+            : 'Products filed under this category (or anything below it) move to the category you pick inside the same main category.'}
+          {' '}If something still uses it and you don't pick one, the delete is refused.
+        </p>
         {error && <p className="text-[12px] text-error">{error}</p>}
       </div>
     </Modal>
+  );
+}
+
+// ── Inline "add subcategory" form ────────────────────────────────────────────
+function InlineAddForm({ parent, depth, onCancel, onSaved }: {
+  parent: CategoryNode; depth: number; onCancel: () => void; onSaved: () => void;
+}) {
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [image, setImage] = useState('');
+  const [preview, setPreview] = useState('');
+  const [active, setActive] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const { upload: uploadImage, uploading } = useUpload('public');
+
+  const pickImage = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPreview(URL.createObjectURL(file));
+    uploadImage(file).then(d => setImage(d.url)).catch(() => setPreview(''));
+  };
+
+  async function submit() {
+    if (!name.trim()) { setError('Enter a name.'); return; }
+    setError('');
+    setSaving(true);
+    try {
+      const res = await apiAddCategory({
+        name: name.trim(),
+        parentId: parent._id,
+        description: description.trim() || undefined,
+        image: image || undefined,
+        sortOrder: parent.children.length,
+      });
+      if (!active && res.data?._id) await apiAdminUpdateCategory(res.data._id, { isActive: false });
+      onSaved();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create subcategory.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="border-b border-bone bg-cream/60 px-4 py-3" style={{ paddingLeft: 16 + (depth + 1) * 24 }}>
+      <p className="text-[12px] font-semibold text-charcoal mb-2">New {LEVEL_NAMES[depth + 1]?.toLowerCase() ?? 'subcategory'} under “{parent.name}”</p>
+      <div className="flex flex-col gap-3 max-w-[520px]">
+        <Input aria-label="Subcategory name" placeholder="Name, e.g. Quran Stories" value={name} maxLength={50} autoFocus
+          onChange={e => setName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') void submit(); if (e.key === 'Escape') onCancel(); }} />
+        <Textarea aria-label="Description (optional)" rows={2} maxLength={500} placeholder="Description (optional)" value={description} onChange={e => setDescription(e.target.value)} />
+        <div className="flex flex-wrap items-center gap-4">
+          <label className={clsx('flex items-center gap-2 text-[12px] text-slate', uploading ? 'cursor-wait' : 'cursor-pointer hover:text-brand-orange')}>
+            <span className="size-[40px] rounded-lg bg-white border-2 border-dashed border-bone flex items-center justify-center overflow-hidden">
+              {uploading ? <Loader2 size={16} className="animate-spin text-brand-orange" />
+                : preview || image ? <img src={preview || image} alt="" className="w-full h-full object-cover" /> : <ImagePlus size={16} />}
+            </span>
+            Image (optional)
+            <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={pickImage} disabled={uploading} />
+          </label>
+          <div className="flex items-center gap-2">
+            <Toggle label="Active" checked={active} onChange={setActive} size="sm" />
+            <span className="text-[12px] text-slate">{active ? 'Active' : 'Inactive (hidden)'}</span>
+          </div>
+        </div>
+        {error && <p className="text-[12px] text-error" role="alert">{error}</p>}
+        <div className="flex gap-2">
+          <Button size="sm" onClick={submit} loading={saving} disabled={uploading}>Add</Button>
+          <Button size="sm" variant="ghost" onClick={onCancel} disabled={saving}>Cancel</Button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -321,29 +432,40 @@ function DeleteCategoryModal({ category, siblings, onClose, onDeleted }: {
 interface RowActions {
   onManageAttributes: (node: CategoryNode) => void;
   onEdit: (node: CategoryNode) => void;
-  onDelete: (node: CategoryNode, siblings: CategoryNode[]) => void;
+  onDelete: (node: CategoryNode) => void;
   onMove: (siblings: CategoryNode[], index: number, dir: -1 | 1) => void;
+  onToggleExpand: (id: string) => void;
+  onStartAdd: (id: string) => void;
+  onAdded: (parentId: string) => void;
   reordering: boolean;
+  expanded: Set<string>;
+  addingTo: string | null;
+  /** null = no search; otherwise only these ids are rendered. */
+  visible: Set<string> | null;
 }
 
 function CategoryRow({ node, depth, siblings, index, actions }: {
   node: CategoryNode; depth: number; siblings: CategoryNode[]; index: number; actions: RowActions;
 }) {
-  const { onManageAttributes, onEdit, onDelete, onMove, reordering } = actions;
-  const [expanded, setExpanded] = useState(depth === 0);
+  const { onManageAttributes, onEdit, onDelete, onMove, onToggleExpand, onStartAdd, onAdded, reordering, expanded, addingTo, visible } = actions;
+  if (visible && !visible.has(node._id)) return null;
   const hasChildren = node.children.length > 0;
+  const isOpen = expanded.has(node._id);
   const inactive = node.status === 'inactive';
+  const canAddChild = depth + 1 < MAX_LEVELS;
   const arrowCls = 'p-1 rounded-md text-slate hover:text-brand-orange disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer bg-transparent border-none';
+  const btnCls = 'flex items-center gap-1 text-[12px] font-semibold text-slate px-2 py-1 rounded-md shrink-0 cursor-pointer bg-transparent border-none';
 
   return (
     <div>
       <div
-        className="flex items-center gap-2 px-4 py-[10px] border-b border-bone hover:bg-cream transition-colors duration-150"
+        className="flex flex-wrap items-center gap-x-2 gap-y-1 px-4 py-[10px] border-b border-bone hover:bg-cream transition-colors duration-150"
         style={{ paddingLeft: 16 + depth * 24 }}
       >
-        <div className="flex items-center gap-2 flex-1 min-w-0 cursor-pointer" onClick={() => hasChildren && setExpanded(e => !e)}>
+        <button type="button" className="flex items-center gap-2 flex-1 min-w-[160px] text-start bg-transparent border-none p-0 cursor-pointer"
+          aria-expanded={hasChildren ? isOpen : undefined} onClick={() => hasChildren && onToggleExpand(node._id)}>
           {hasChildren ? (
-            <ChevronRight size={13} className="text-slate shrink-0 transition-transform duration-150" style={{ transform: expanded ? 'rotate(90deg)' : 'none' }} />
+            <ChevronRight size={13} className="text-slate shrink-0 transition-transform duration-150 rtl:rotate-180" style={{ transform: isOpen ? 'rotate(90deg)' : 'none' }} />
           ) : (
             <span className="w-[13px] shrink-0" />
           )}
@@ -354,14 +476,12 @@ function CategoryRow({ node, depth, siblings, index, actions }: {
           {inactive && (
             <span className="text-[12px] font-semibold px-1.5 py-[1px] rounded bg-cream border border-bone text-slate ml-1">Inactive</span>
           )}
-          {node.createdByRole && (
-            <span className="text-[12px] text-slate capitalize ml-1">· added by {node.createdByRole}</span>
+          {hasChildren && <span className="text-[12px] text-slate ml-1">· {node.children.length} sub</span>}
+          {typeof node.productCount === 'number' && node.productCount > 0 && (
+            <span className="text-[12px] text-slate ml-1">· {node.productCount} product{node.productCount === 1 ? '' : 's'}</span>
           )}
-          {!hasChildren && depth === 0 && (
-            <span className="text-[12px] text-slate ml-1">· no subcategories</span>
-          )}
-        </div>
-        <div className="flex items-center shrink-0">
+        </button>
+        <div className="flex flex-wrap items-center shrink-0">
           <button type="button" aria-label={`Move ${node.name} up`} title="Move up" className={arrowCls}
             disabled={reordering || index === 0} onClick={() => onMove(siblings, index, -1)}>
             <ArrowUp size={13} />
@@ -370,30 +490,27 @@ function CategoryRow({ node, depth, siblings, index, actions }: {
             disabled={reordering || index === siblings.length - 1} onClick={() => onMove(siblings, index, 1)}>
             <ArrowDown size={13} />
           </button>
+          {canAddChild ? (
+            <button type="button" onClick={() => onStartAdd(node._id)} aria-label={`Add subcategory under ${node.name}`} title="Add subcategory"
+              className={clsx(btnCls, 'hover:text-brand-orange')}>
+              <Plus size={12} /> <span className="hidden sm:inline">Add sub</span>
+            </button>
+          ) : null}
+          <button type="button" onClick={() => onManageAttributes(node)} aria-label={`Attributes of ${node.name}`} title="Attributes" className={clsx(btnCls, 'hover:text-brand-orange')}>
+            <ListFilter size={12} /> <span className="hidden sm:inline">Attributes</span>
+          </button>
+          <button type="button" onClick={() => onEdit(node)} aria-label={`Edit ${node.name}`} title="Edit" className={clsx(btnCls, 'hover:text-brand-orange')}>
+            <Pencil size={12} /> <span className="hidden sm:inline">Edit</span>
+          </button>
+          <button type="button" onClick={() => onDelete(node)} aria-label={`Delete ${node.name}`} title="Delete" className={clsx(btnCls, 'hover:text-error')}>
+            <Trash2 size={12} /> <span className="hidden sm:inline">Delete</span>
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={() => onManageAttributes(node)}
-          className="flex items-center gap-1 text-[12px] font-semibold text-slate hover:text-brand-orange px-2 py-1 rounded-md shrink-0"
-        >
-          <ListFilter size={12} /> <span className="hidden sm:inline">Attributes</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => onEdit(node)}
-          className="flex items-center gap-1 text-[12px] font-semibold text-slate hover:text-brand-orange px-2 py-1 rounded-md shrink-0"
-        >
-          <Pencil size={12} /> <span className="hidden sm:inline">Edit</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => onDelete(node, siblings)}
-          className="flex items-center gap-1 text-[12px] font-semibold text-slate hover:text-error px-2 py-1 rounded-md shrink-0"
-        >
-          <Trash2 size={12} /> <span className="hidden sm:inline">Delete</span>
-        </button>
       </div>
-      {expanded && node.children.map((child, i) => (
+      {addingTo === node._id && (
+        <InlineAddForm parent={node} depth={depth} onCancel={() => onStartAdd('')} onSaved={() => onAdded(node._id)} />
+      )}
+      {isOpen && node.children.map((child, i) => (
         <CategoryRow key={child._id} node={child} depth={depth + 1} siblings={node.children} index={i} actions={actions} />
       ))}
     </div>
@@ -410,8 +527,11 @@ export function AdminCategories() {
   const [prefill, setPrefill] = useState<CategorySuggestion | null>(null);
   const [managingAttrsFor, setManagingAttrsFor] = useState<CategoryNode | null>(null);
   const [editing, setEditing] = useState<CategoryNode | null>(null);
-  const [deleting, setDeleting] = useState<{ node: CategoryNode; siblings: CategoryNode[] } | null>(null);
+  const [deleting, setDeleting] = useState<CategoryNode | null>(null);
   const [reordering, setReordering] = useState(false);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [addingTo, setAddingTo] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
   const toast = useToast();
 
   // `quiet` refreshes without swapping the tree for skeletons (keeps expanded rows).
@@ -445,26 +565,60 @@ export function AdminCategories() {
     }
   }
 
+  const flat = useMemo(() => flattenTree(tree), [tree]);
+
+  // Search: keep a matching node, every ancestor of it (so the path shows) and everything below it.
+  const { visible, autoExpanded } = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return { visible: null as Set<string> | null, autoExpanded: new Set<string>() };
+    const vis = new Set<string>();
+    const open = new Set<string>();
+    const walk = (n: CategoryNode, ancestors: string[], inMatch: boolean): boolean => {
+      const self = n.name.toLowerCase().includes(q);
+      const keep = self || inMatch;
+      let any = keep;
+      for (const c of n.children) if (walk(c, [...ancestors, n._id], keep)) any = true;
+      if (any) { vis.add(n._id); if (!keep) open.add(n._id); if (self) ancestors.forEach(a => open.add(a)); }
+      return any;
+    };
+    tree.forEach(r => walk(r, [], false));
+    return { visible: vis, autoExpanded: open };
+  }, [tree, query]);
+
+  const effectiveExpanded = useMemo(() => (visible ? new Set([...expanded, ...autoExpanded]) : expanded), [expanded, autoExpanded, visible]);
+
   const rowActions: RowActions = {
     onManageAttributes: setManagingAttrsFor,
     onEdit: setEditing,
-    onDelete: (node, siblings) => setDeleting({ node, siblings }),
+    onDelete: setDeleting,
     onMove: handleMove,
+    onToggleExpand: id => setExpanded(() => {
+      const next = new Set(effectiveExpanded);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    }),
+    onStartAdd: id => {
+      setAddingTo(id || null);
+      if (id) setExpanded(prev => new Set(prev).add(id));
+    },
+    onAdded: parentId => { setAddingTo(null); setExpanded(prev => new Set(prev).add(parentId)); toast.success('Subcategory created'); load(true); },
     reordering,
+    expanded: effectiveExpanded,
+    addingTo,
+    visible,
   };
 
-  const countAll = (nodes: CategoryNode[]): number =>
-    nodes.reduce((acc, n) => acc + 1 + countAll(n.children), 0);
-
   const totalMain = tree.length;
-  const totalSubs = countAll(tree) - totalMain;
+  const totalSubs = flat.length - totalMain;
+  const expandable = flat.filter(f => f.node.children.length > 0).map(f => f.node._id);
+  const noMatches = !!visible && visible.size === 0;
 
   return (
     <div>
       <AdminStudioHeader eyebrow="Edudeen team workspace · Commerce"
         title="Categories"
-        subtitle={`${totalMain} main categories · ${totalSubs} subcategories`}
-        actions={<Button icon={<Plus size={14} />} onClick={() => { setPrefill(null); setAdding(true); }}>Add Category</Button>}
+        subtitle={`${totalMain} main categories · ${totalSubs} subcategories (up to ${MAX_LEVELS} levels)`}
+        actions={<Button icon={<Plus size={14} />} onClick={() => { setPrefill(null); setAdding(true); }}>Add main category</Button>}
       />
 
       <div className="px-4 sm:px-7 pt-5 pb-8">
@@ -484,19 +638,38 @@ export function AdminCategories() {
             <p className="basis-full text-[12px] text-slate">The homepage's subject tabs work best when a main category with the same name exists. Nothing is created until you confirm.</p>
           </div>
         )}
+
+        <div className="flex flex-wrap items-center gap-2 mb-3">
+          <div className="relative flex-1 min-w-[200px] max-w-[360px]">
+            <Search size={14} className="absolute start-3 top-1/2 -translate-y-1/2 text-slate pointer-events-none" />
+            <input
+              type="search" value={query} onChange={e => setQuery(e.target.value)} aria-label="Search categories" placeholder="Search categories…"
+              className="w-full ps-9 pe-3 py-[9px] rounded-md border border-bone bg-white text-[13px] text-charcoal outline-none placeholder:text-slate focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/10"
+            />
+          </div>
+          <Button size="sm" variant="outline" onClick={() => setExpanded(new Set(expandable))} disabled={!expandable.length}>Expand all</Button>
+          <Button size="sm" variant="outline" onClick={() => setExpanded(new Set())} disabled={!expanded.size}>Collapse all</Button>
+        </div>
+
         <div className="bg-white border border-bone rounded-xl overflow-hidden">
           {loading ? (
             <div className="px-4 py-4 flex flex-col gap-3">
               {Array.from({ length: 4 }).map((_, i) => <SkeletonBox key={i} className="h-6 w-full" />)}
             </div>
           ) : error ? (
-            <p className="px-4 py-6 text-center text-[13px] text-error">{error}</p>
+            <div className="px-4 py-6 text-center">
+              <p className="text-[13px] text-error mb-3">{error}</p>
+              <Button size="sm" variant="outline" onClick={() => load()}>Try again</Button>
+            </div>
           ) : tree.length === 0 ? (
             <EmptyState
               icon={<FolderTree size={28} className="text-slate" />}
               title="No categories yet"
               description="Create the first main category to get started."
+              action={{ label: 'Add main category', icon: <Plus size={14} />, onClick: () => { setPrefill(null); setAdding(true); } }}
             />
+          ) : noMatches ? (
+            <p className="px-4 py-8 text-center text-[13px] text-slate">No category matches “{query.trim()}”.</p>
           ) : (
             tree.map((cat, i) => (
               <CategoryRow key={cat._id} node={cat} depth={0} siblings={tree} index={i} actions={rowActions} />
@@ -505,13 +678,14 @@ export function AdminCategories() {
         </div>
 
         <p className="text-[12px] text-slate mt-4 leading-[1.6] max-w-[640px]">
-          Main categories are the curated top-level taxonomy sellers choose from when creating a store.
-          Subcategories can be nested one level under a main category — sellers may also add their own
-          subcategories from their dashboard.
+          Main categories are the curated top-level taxonomy sellers choose from. Every row has <strong>Add sub</strong> to nest
+          a subcategory under it — up to {MAX_LEVELS} levels (main &gt; sub &gt; sub-sub &gt; sub-sub-sub). Sellers pick
+          the deepest level that fits their product.
         </p>
         <p className="text-[12px] text-slate mt-2 leading-[1.6] max-w-[640px] bg-cream border border-bone rounded-lg px-3 py-2">
-          Good to know: renaming keeps the category's URL. Use the arrows to change the order buyers see.
-          Deleting asks where to move the category's products; inactive categories stay listed here so you can re-enable them.
+          Good to know: renaming keeps the category's URL. Use the arrows to change the order buyers see among siblings.
+          Deleting asks where to move the products; a category with subcategories needs your confirmation to delete them together.
+          Inactive categories stay listed here so you can re-enable them.
         </p>
       </div>
 
@@ -534,8 +708,8 @@ export function AdminCategories() {
 
       {deleting && (
         <DeleteCategoryModal
-          category={deleting.node}
-          siblings={deleting.siblings}
+          category={deleting}
+          roots={tree}
           onClose={() => setDeleting(null)}
           onDeleted={msg => { setDeleting(null); toast.success(msg); load(true); }}
         />
