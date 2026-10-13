@@ -130,7 +130,9 @@ const linkButtonClass = sectionLinkClass;
  */
 export function Homepage() {
   // Admin-editable copy (Admin → Platform Config → Homepage content); blank = built-in default below.
-  const { config: publicConfig } = usePublicPlatformConfig();
+  const { config: publicConfig, loading: configLoading } = usePublicPlatformConfig();
+  // Until the admin-edited content has arrived, don't paint the built-in default hero (it flashed for a few seconds, then swapped to the real one).
+  const heroReady = !!publicConfig || !configLoading;
   const hc = publicConfig?.homeContent ?? {};
   const trustItems = TRUST_ITEMS.map((d, i) => ({ ...d, ...effectiveHomeContent(hc).trustItems[i] }));
   const navigate = useNavigate();
@@ -505,7 +507,7 @@ export function Homepage() {
         {/* ── Hero ── */}
         <EditableHomeSection section="hero" defaults={eff} label="hero">
         <section className="grid grid-cols-1 md:grid-cols-[1.2fr_1fr] md:min-h-[280px] rounded-[18px] overflow-hidden bg-[#eaf2f8] mb-[25px]">
-          <div className="p-[25px] md:p-[30px] lg:py-[35px] lg:px-[40px]">
+          <div className={`p-[25px] md:p-[30px] lg:py-[35px] lg:px-[40px] transition-opacity duration-200 ${heroReady ? 'opacity-100' : 'opacity-0'}`}>
             <p className="text-[12px] font-bold tracking-[0.15em] uppercase text-brand-royal mb-[13px]">
               {eff.heroEyebrow}
             </p>
@@ -532,11 +534,13 @@ export function Homepage() {
             </div>
           </div>
           <div className="relative h-[170px] md:h-auto bg-[#ddeaf2] overflow-hidden">
-            <img
-              src={eff.heroImageUrl || heroImage}
-              alt="Learning workbooks and colourful stationery arranged on a desk"
-              className="absolute inset-0 w-full h-full object-cover"
-            />
+            {heroReady && (
+              <img
+                src={eff.heroImageUrl || heroImage}
+                alt="Learning workbooks and colourful stationery arranged on a desk"
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            )}
             <div className="absolute bottom-[22px] end-[22px] hidden sm:block bg-white px-[19px] py-3 rounded-[10px] text-[14px] text-carbon shadow-[0_8px_30px_rgba(19,57,86,0.09)]">
               {eff.heroBadge}
             </div>
