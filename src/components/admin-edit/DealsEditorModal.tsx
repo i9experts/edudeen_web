@@ -6,7 +6,7 @@ import { Input, Select } from '@/components/comman/ui/Input';
 import { Toggle } from '@/components/comman/ui/Toggle';
 import { SkeletonBox } from '@/components/comman/ui/SkeletonBox';
 import {
-  apiListCampaigns, apiSetCampaignStatus, apiUpdateCampaign, type Campaign, type DiscountType,
+  apiListCampaigns, apiUpdateCampaign, type Campaign, type DiscountType,
 } from '@/api/services/marketing/adminMarketing';
 import { useReauth } from '@/contexts/reauthCtx';
 import { inlineEditConfig } from '@/api/services/reauth';
@@ -104,9 +104,9 @@ function CampaignForm({ campaign, onClose, onSaved }: { campaign: Campaign; onCl
         startDate: new Date(startDate).toISOString(),
         endDate: new Date(endDate).toISOString(),
         ...(discountType ? { discountType, discountValue: value } : {}),
+        // Same request as the other fields: the server applies everything or nothing.
+        ...(active !== (campaign.status === 'active') ? { status: active ? 'active' as const : 'draft' as const } : {}),
       }, cfg);
-      const wasActive = campaign.status === 'active';
-      if (active !== wasActive && (active || wasActive)) await apiSetCampaignStatus(campaign._id, active ? 'active' : 'draft', cfg);
       onSaved();
     } catch (err) { setError(err instanceof Error ? err.message : 'Could not save the campaign.'); }
     finally { setBusy(false); }

@@ -56,7 +56,10 @@ export function useTopBarDeals(): TopBarDeals | null {
   useEffect(() => {
     let cancelled = false;
     load().then(d => { if (!cancelled) setData(d); });
-    return () => { cancelled = true; };
+    // An admin edited a campaign inline: drop the cache and refetch so the top strip updates at once.
+    const onChanged = () => { cache = null; load().then(d => { if (!cancelled) setData(d); }); };
+    window.addEventListener('edudeen:campaigns-changed', onChanged);
+    return () => { cancelled = true; window.removeEventListener('edudeen:campaigns-changed', onChanged); };
   }, []);
   return data;
 }
