@@ -14,6 +14,7 @@ import { Button } from '@/components/comman/ui/Button';
 import { TabBar, type Tab } from '@/components/comman/ui/TabBar';
 import { ActivityLogTab } from './tabs/ActivityLogTab';
 import { ReturnPolicyCard } from './ReturnPolicyCard';
+import { PremiumDiscountCard } from './PremiumDiscountCard';
 
 const TABS: Tab[] = [
   { id: 'general',  label: 'General' },
@@ -807,6 +808,8 @@ export default function StoreSettings() {
             </div>
 
             {storeId && <ReturnPolicyCard storeId={storeId} policy={store?.returnPolicy} refetch={refetch} />}
+
+            {storeId && <PremiumDiscountCard storeId={storeId} discount={store?.premiumDiscount} refetch={refetch} />}
           </div>
         </div>
       )}

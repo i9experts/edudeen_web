@@ -28,6 +28,7 @@ const FOOTER_COLUMNS: { heading: string; links: FooterLink[] }[] = [
     links: [
       { label: 'My Orders',   path: '/account/orders' },
       { label: 'Saved',       path: '/account/wishlist' },
+      { label: 'Edudeen Premium', path: '/premium' },
     ],
   },
   {

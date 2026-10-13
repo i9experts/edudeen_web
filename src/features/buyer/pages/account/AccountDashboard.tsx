@@ -1,3 +1,5 @@
+import { usePremium } from '@/hooks/usePremium';
+import { PremiumMemberBadge } from '@/components/comman/marketplace/PremiumBits';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -64,6 +66,7 @@ function WishlistPreviewImg({ src, name }: { src?: string; name: string }) {
 // button), so the account area reads as part of the same site. ──
 function WelcomeHero({ name, image, memberSince }: { name?: string; image?: string | null; memberSince: string }) {
   const navigate = useNavigate();
+  const { isPremium } = usePremium();
   const firstName = name?.split(' ')[0];
   const displayName = firstName ? firstName.charAt(0).toUpperCase() + firstName.slice(1) : '';
   return (
@@ -81,7 +84,7 @@ function WelcomeHero({ name, image, memberSince }: { name?: string; image?: stri
           </div>
         )}
         <div className="min-w-0">
-          <p className="text-[12px] sm:text-[12px] font-bold tracking-[0.15em] uppercase text-brand-royal mb-1.5">Your Edudeen account</p>
+          <p className="text-[12px] sm:text-[12px] font-bold tracking-[0.15em] uppercase text-brand-royal mb-1.5 flex items-center gap-2 flex-wrap">Your Edudeen account{isPremium && <PremiumMemberBadge className="normal-case tracking-normal" />}</p>
           <p className="font-serif font-normal text-[24px] sm:text-[30px] text-carbon leading-[1.15] tracking-[-0.5px] truncate">
             Welcome back{displayName ? `, ${displayName}` : ''}.
           </p>

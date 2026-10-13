@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Baby, Pencil, Plus, Trash2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Baby, Crown, Pencil, Plus, Trash2 } from 'lucide-react';
 import { Card, Button, Input, Modal, SkeletonBox, EmptyState } from '@/components/comman/ui';
 import { useToast } from '@/contexts/ToastContext';
 import { EDUCATION_LEVELS } from '@/api/services/product';
@@ -8,6 +9,7 @@ import {
   apiCreateChild, apiDeleteChild, apiUpdateChild, MAX_CHILDREN, type ChildInput, type ChildProfile,
 } from '@/api/services/children';
 import { useChildren, childLevelLabel, refreshChildren, selectChild } from '@/hooks/useChildren';
+import { usePremium } from '@/hooks/usePremium';
 
 const parseSubjects = (s: string) => [...new Set(s.split(',').map(x => x.trim()).filter(Boolean))].slice(0, 10);
 
@@ -66,7 +68,10 @@ export function MyChildren() {
   const toast = useToast();
   const { children, loading, error, reload } = useChildren();
   const [editing, setEditing] = useState<ChildProfile | 'new' | null>(null);
-  const full = children.length >= MAX_CHILDREN;
+  // The limit comes from Edudeen Premium (the server enforces it): members get the plan's limit, everyone else the default.
+  const { isPremium, entitlements } = usePremium();
+  const limit = entitlements?.childrenLimit ?? MAX_CHILDREN;
+  const full = children.length >= limit;
 
   const save = async (v: ChildInput) => {
     try {
@@ -97,7 +102,15 @@ export function MyChildren() {
           <Plus size={14} /> Add a child
         </Button>
       </div>
-      {full && <p className="text-[12.5px] text-slate">You can save up to {MAX_CHILDREN} children.</p>}
+      {!!children.length && <p className="text-[12.5px] text-slate">{` of ${limit} children`}</p>}
+      {full && !isPremium && (
+        <div className="flex items-center gap-2 flex-wrap rounded-lg border border-[#f1d98a] bg-[#fff6d6] px-3 py-2.5 text-[12.5px] text-[#8a6100]">
+          <Crown size={14} className="shrink-0" aria-hidden />
+          <span>{`You have reached the limit of ${limit} children.`}</span>
+          <Link to="/premium" className="font-bold text-[#8a6100] underline">Upgrade to Premium for more</Link>
+        </div>
+      )}
+      {full && isPremium && <p className="text-[12.5px] text-slate">{`You have reached your limit of ${limit} children.`}</p>}
 
       {loading && children.length === 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3"><SkeletonBox height={110} rounded="12px" /><SkeletonBox height={110} rounded="12px" /></div>

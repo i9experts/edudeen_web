@@ -8,6 +8,9 @@ export interface PublicCampaign {
   description: string | null;
   bannerImage: string | null;
   endDate: string;
+  /** Edudeen Premium members only: the sale is not public yet; startDate is when it opens to everyone. */
+  earlyAccess?: boolean;
+  startDate?: string | null;
   discountType: 'percentage' | 'fixed' | null;
   discountValue: number | null;
   /** Only meaningful when discountType === 'fixed' — always 'USD' (the platform pivot). */

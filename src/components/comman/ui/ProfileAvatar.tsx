@@ -5,13 +5,15 @@ import { useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
 import {
   User, LayoutDashboard, LogOut, ShoppingBag,
-  ChevronRight, Shield, Store, Package, Wallet, CreditCard, type LucideIcon,
+  ChevronRight, Shield, Store, Package, Wallet, CreditCard, Crown, type LucideIcon,
 } from 'lucide-react';
 import { useGetProfile } from '@/hooks/auth/useGetProfile';
 import { TokenStorage, apiLogout } from '@/api/services/auth';
 import { useNotification } from '@/contexts/NotificationContext';
 import { CopyIconButton } from './CopyIconButton';
 import { NotificationsMenuSection, NotificationToast } from './NotificationBell';
+import { usePremium } from '@/hooks/usePremium';
+import { PremiumMemberBadge } from '@/components/comman/marketplace/PremiumBits';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // RoleChip
@@ -105,17 +107,20 @@ function AvatarTrigger({
 // ─────────────────────────────────────────────────────────────────────────────
 function DropdownHeader({
   profileImage, name, email, initials,
-  hasBuyer, hasSeller, hasAdmin,
+  hasBuyer, hasSeller, hasAdmin, isPremium = false,
 }: {
   profileImage?: string | null; name?: string; email?: string; initials: string;
-  hasBuyer: boolean; hasSeller: boolean; hasAdmin: boolean;
+  hasBuyer: boolean; hasSeller: boolean; hasAdmin: boolean; isPremium?: boolean;
 }) {
   return (
     <div className="px-4 pt-4 pb-3 border-b border-bone">
       <div className="flex items-start gap-3">
         <AvatarImage profileImage={profileImage} name={name} initials={initials} size="md" />
         <div className="flex-1 min-w-0">
-          <p className="text-[14px] font-bold text-carbon leading-tight truncate">{name ?? '—'}</p>
+          <div className="flex items-center gap-1.5 min-w-0">
+            <p className="text-[14px] font-bold text-carbon leading-tight truncate">{name ?? '—'}</p>
+            {isPremium && <PremiumMemberBadge className="shrink-0" />}
+          </div>
           <div className="flex items-center gap-1 mt-[2px] mb-[7px]">
             <p className="text-[12px] text-slate truncate min-w-0">{email ?? '—'}</p>
             {email && <CopyIconButton value={email} title="Copy email" size={11} className="text-slate hover:text-charcoal" />}
@@ -169,9 +174,9 @@ function MenuItem({
 // DropdownMenu
 // ─────────────────────────────────────────────────────────────────────────────
 function DropdownMenu({
-  hasBuyer, hasDash, isAdmin, canSell, hasSellerAccount, onSwitchStore, onNavigate, onLogout,
+  hasBuyer, hasDash, isAdmin, canSell, hasSellerAccount, isPremium, onSwitchStore, onNavigate, onLogout,
 }: {
-  hasBuyer: boolean; hasDash: boolean; isAdmin: boolean; canSell: boolean; hasSellerAccount: boolean; onSwitchStore: () => void;
+  hasBuyer: boolean; hasDash: boolean; isAdmin: boolean; canSell: boolean; hasSellerAccount: boolean; isPremium: boolean; onSwitchStore: () => void;
   onNavigate: (path: string) => void; onLogout: () => void;
 }) {
   return (
@@ -193,6 +198,9 @@ function DropdownMenu({
             onClick={() => onNavigate('/account/orders')}
           />
         )}
+        {hasBuyer && (isPremium
+          ? <MenuItem icon={Crown} label="My Premium" sublabel="Membership & perks" onClick={() => onNavigate('/account/premium')} />
+          : <MenuItem icon={Crown} label="Go Premium" sublabel="Member prices & early access" onClick={() => onNavigate('/premium')} />)}
         {canSell && (hasSellerAccount
           ? <MenuItem icon={Store} label="Switch to your store" sublabel="Open your seller account" onClick={onSwitchStore} />
           : <MenuItem icon={Store} label="Sell on Edudeen" sublabel="Open your own store" onClick={() => onNavigate('/become-a-seller')} />)}
@@ -262,6 +270,7 @@ function ProfileDropdown({
   const hasSeller = isSeller;
   const hasAdmin  = isAdmin;
   const hasDash   = isSeller || isAdmin;
+  const { isPremium } = usePremium();
 
   return (
     <div className="relative w-full">
@@ -277,6 +286,7 @@ function ProfileDropdown({
         hasBuyer={hasBuyer}
         hasSeller={hasSeller}
         hasAdmin={hasAdmin}
+        isPremium={isPremium}
       />
       {withNotifications && (
         <>
@@ -288,6 +298,7 @@ function ProfileDropdown({
         hasBuyer={hasBuyer}
         canSell={isBuyer}
         hasSellerAccount={hasSellerAccount === true}
+        isPremium={isPremium}
         onSwitchStore={onSwitchStore}
         hasDash={hasDash}
         isAdmin={isAdmin}

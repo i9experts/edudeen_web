@@ -55,11 +55,20 @@ export function useTopBarDeals(): TopBarDeals | null {
   const [data, setData] = useState<TopBarDeals | null>(cache?.data ?? null);
   useEffect(() => {
     let cancelled = false;
+    // Premium members also get early-access sales, so a login/logout changes what the API returns.
+    const onAuth = () => { cache = null; load().then(d => { if (!cancelled) setData(d); }); };
+    window.addEventListener('edudeen:auth-login', onAuth);
+    window.addEventListener('edudeen:auth-logout', onAuth);
     load().then(d => { if (!cancelled) setData(d); });
     // An admin edited a campaign inline: drop the cache and refetch so the top strip updates at once.
     const onChanged = () => { cache = null; load().then(d => { if (!cancelled) setData(d); }); };
     window.addEventListener('edudeen:campaigns-changed', onChanged);
-    return () => { cancelled = true; window.removeEventListener('edudeen:campaigns-changed', onChanged); };
+    return () => {
+      cancelled = true;
+      window.removeEventListener('edudeen:campaigns-changed', onChanged);
+      window.removeEventListener('edudeen:auth-login', onAuth);
+      window.removeEventListener('edudeen:auth-logout', onAuth);
+    };
   }, []);
   return data;
 }

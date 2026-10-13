@@ -30,6 +30,8 @@ export interface EducatorProfile {
   institutions:    string[];
   teachingLevels:  string[];
 }
+export interface StorePremiumDiscount { enabled: boolean; percent: number }
+
 export interface UpdateStorePayload {
   storeId:      string;
   name?:        string;
@@ -40,6 +42,8 @@ export interface UpdateStorePayload {
   tagline?:      string;
   educatorProfile?: EducatorProfile | null;
   returnPolicy?: StoreReturnPolicy | null;
+  /** Seller-funded Edudeen Premium member discount; null clears it. */
+  premiumDiscount?: StorePremiumDiscount | null;
   contactEmail?: string;
   contactPhone?: string;
   productTypes?: ProductType[];
@@ -59,6 +63,7 @@ export interface StoreData {
   tagline:      string | null;
   educatorProfile?: EducatorProfile | null;
   returnPolicy?: StoreReturnPolicy | null;
+  premiumDiscount?: StorePremiumDiscount | null;
   contactEmail: string | null;
   contactPhone: string | null;
   sellerType:   SellerType;

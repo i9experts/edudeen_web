@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Users, Shield, Store, DollarSign, Bell, Settings, UserCog,
   PanelLeftClose, PanelLeftOpen, MessageSquare, Image as ImageIcon, HelpCircle, FolderTree, RefreshCw,
   BarChart3, Layers, Search, Sparkles, Tag, LogOut, MessageCircle, Coins, UserPlus, Activity,
-  ChevronDown, TrendingUp, ChevronRight, Quote, CalendarCheck, Undo2, Truck, ShoppingBag, BookMarked, Smartphone, Landmark,
+  ChevronDown, TrendingUp, ChevronRight, Quote, CalendarCheck, Undo2, Truck, ShoppingBag, BookMarked, Smartphone, Landmark, Crown,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useGetProfile } from '@/hooks/auth/useGetProfile';
@@ -20,6 +20,7 @@ import { MoreSheet } from '@/components/comman/ui/MoreSheet';
 import { MoreHorizontal } from 'lucide-react';
 import { useLockPageScroll } from '@/hooks/useLockPageScroll';
 import { apiGetListingReviewCount } from '@/api/services/marketplace/adminMarketplace';
+import { apiAdminPremiumStats } from '@/api/services/adminPremium';
 
 interface AdminNavItem {
   id:    string;
@@ -45,6 +46,7 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { id: 'subscriptions', Icon: RefreshCw,       label: 'Subscriptions',   path: '/admin/subscriptions' },
   { id: 'marketing',     Icon: Tag,             label: 'Marketing',       path: '/admin/marketing'     },
   { id: 'picks',         Icon: BookMarked,      label: 'Edudeen Picks',   path: '/admin/picks'         },
+  { id: 'premium',       Icon: Crown,           label: 'Premium',         path: '/admin/premium'       },
   { id: 'platform-plans',Icon: Layers,          label: 'Platform Plans',  path: '/admin/platform-plans' },
   { id: 'finance',       Icon: DollarSign,      label: 'Finance',         path: '/admin/finance'       },
   { id: 'monthly-payouts', Icon: CalendarCheck, label: 'Monthly Payouts', path: '/admin/finance?tab=monthly-payouts' },
@@ -79,7 +81,7 @@ interface AdminModule {
 // nothing to expand for a "section" that's really just one page.
 export const ADMIN_MODULES: AdminModule[] = [
   { id: 'overview',  label: 'Overview',             Icon: LayoutDashboard, ids: ['overview'] },
-  { id: 'commerce',  label: 'Commerce',             Icon: Store,           ids: ['orders', 'marketplace', 'categories', 'refunds', 'shipping-zones', 'subscriptions', 'platform-plans'] },
+  { id: 'commerce',  label: 'Commerce',             Icon: Store,           ids: ['orders', 'marketplace', 'categories', 'refunds', 'shipping-zones', 'subscriptions', 'platform-plans', 'premium'] },
   { id: 'people',    label: 'Users & Communication', Icon: Users,          ids: ['users', 'leads', 'moderation', 'messages', 'contact'] },
   { id: 'growth',    label: 'Growth',                Icon: TrendingUp,     ids: ['marketing', 'picks', 'seo', 'ai-studio'] },
   { id: 'finance',   label: 'Finance',               Icon: DollarSign,     ids: ['finance', 'monthly-payouts', 'manual-payments', 'fx-settings'] },
@@ -264,7 +266,14 @@ function AdminSidebar({ open, onToggle }: AdminSidebarProps) {
     apiGetListingReviewCount().then(r => { if (alive) setPendingListings(r.data?.pending ?? 0); }).catch(() => {});
     return () => { alive = false; };
   }, [pathname]);
-  const badgeFor = (id: string) => (id === 'marketplace' ? pendingListings : 0);
+  // Premium bank-transfer payments waiting for review.
+  const [pendingPremium, setPendingPremium] = useState(0);
+  useEffect(() => {
+    let alive = true;
+    apiAdminPremiumStats().then(r => { if (alive) setPendingPremium(r.data?.pendingPayments ?? 0); }).catch(() => {});
+    return () => { alive = false; };
+  }, [pathname]);
+  const badgeFor = (id: string) => (id === 'marketplace' ? pendingListings : id === 'premium' ? pendingPremium : 0);
   useEffect(() => { setExpandedModuleId(moduleForPath(pathname, search)); }, [pathname, search]);
 
   const handleLogout = async () => {
@@ -450,7 +459,7 @@ function AdminSidebar({ open, onToggle }: AdminSidebarProps) {
                         <button
                           key={item.id}
                           type="button"
-                          onClick={() => goTo(badge ? `${item.path}?status=pending_review` : item.path)}
+                          onClick={() => goTo(item.id === 'premium' && badge ? `${item.path}?tab=payments&status=pending` : badge ? `${item.path}?status=pending_review` : item.path)}
                           aria-current={active ? 'page' : undefined}
                           className={clsx(
                             'w-full flex items-center gap-[8px] py-[8px] px-[9px] rounded-lg border-none text-left',

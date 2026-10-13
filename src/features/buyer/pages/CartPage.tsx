@@ -1,3 +1,4 @@
+import { PremiumChip, PremiumTeaser, usePremiumView } from '@/components/comman/marketplace/PremiumBits';
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -156,7 +157,12 @@ export function CartPage() {
   const displaySymbol = currencySymbol(displayCurrency);
   // Same maths as the checkout sidebar before the checkout exists (utils/cartTotals): one rule, so they cannot differ.
   const campaign = cart?.campaignDiscount ?? null;
-  const { subtotal: displayTotal, campaignAmount, payable: payableTotal } = computeCartTotals(items, campaign, convert);
+  const { subtotal: displayTotal, campaignAmount, payable: payablePreMember } = computeCartTotals(items, campaign, convert);
+  // Edudeen Premium (display only - checkout applies the real member prices): members see their price per line.
+  const { isPremium, showTeaser } = usePremiumView();
+  const memberLine = (it: (typeof items)[number]) => (isPremium && it.premiumUnitPrice != null && it.premiumItemTotal != null ? { unit: convert(it.premiumUnitPrice, it.currency), total: convert(it.premiumItemTotal, it.currency) } : null);
+  const premiumSavings = items.reduce((s, it) => { const m = memberLine(it); return m ? s + Math.max(0, convert(it.itemTotal ?? (it.unitPrice ?? it.price ?? 0) * it.quantity, it.currency) - m.total) : s; }, 0);
+  const payableTotal = payablePreMember - premiumSavings;
 
   return (
     <div className="min-h-screen bg-cream">
@@ -293,6 +299,7 @@ export function CartPage() {
                 const nativeLineTotal = item.itemTotal ?? nativePrice * item.quantity;
                 const price      = convert(nativePrice, item.currency);
                 const lineTotal  = convert(nativeLineTotal, item.currency);
+                const member     = memberLine(item);
                 const isRemoving = removingId === key;
                 const isUpdating = updatingId === key;
                 const isLast     = idx === (items.length - 1);
@@ -330,8 +337,19 @@ export function CartPage() {
                           </span>
                         )}
                       </div>
-                      <p className="text-[12px] text-slate mb-3">
-                        {displaySymbol}{price.toLocaleString()} each
+                      <p className="text-[12px] text-slate mb-3 flex items-center gap-1.5 flex-wrap">
+                        {member ? (
+                          <>
+                            <span className="text-[#8a6100] font-semibold">{displaySymbol}{member.unit.toLocaleString()} each</span>
+                            <s>{displaySymbol}{price.toLocaleString()}</s>
+                            <PremiumChip />
+                          </>
+                        ) : (
+                          <>
+                            {displaySymbol}{price.toLocaleString()} each
+                            {showTeaser && !item.onCampaign && <PremiumTeaser percent={item.premiumPercent} link />}
+                          </>
+                        )}
                       </p>
 
                       {/* Qty controls — 40x40px min hit area for touch */}
@@ -381,8 +399,13 @@ export function CartPage() {
                     </div>
 
                     {/* Line total */}
-                    <p className="font-bold text-[15px] text-carbon shrink-0">
-                      {displaySymbol}{lineTotal.toLocaleString()}
+                    <p className="font-bold text-[15px] text-carbon shrink-0 text-end">
+                      {member ? (
+                        <>
+                          <span className="block text-[12px] font-normal text-slate line-through">{displaySymbol}{lineTotal.toLocaleString()}</span>
+                          <span className="text-[#8a6100]">{displaySymbol}{member.total.toLocaleString()}</span>
+                        </>
+                      ) : <>{displaySymbol}{lineTotal.toLocaleString()}</>}
                     </p>
                   </div>
                   </div>
@@ -414,7 +437,7 @@ export function CartPage() {
                   {items.map(item => {
                     const nativePrice = item.unitPrice ?? item.price ?? 0;
                     const nativeTtl   = item.itemTotal ?? nativePrice * item.quantity;
-                    const ttl = convert(nativeTtl, item.currency);
+                    const ttl = memberLine(item)?.total ?? convert(nativeTtl, item.currency);
                     return (
                       <div key={item.productVariantId} className="flex justify-between text-[12px] gap-2">
                         <span className="text-carbon truncate">
@@ -439,6 +462,12 @@ export function CartPage() {
                   <div className="flex justify-between text-[13px]">
                     <span className="text-success font-medium">{campaign?.name ?? 'Sale'}</span>
                     <span className="text-success font-semibold">-{displaySymbol}{Math.round(campaignAmount).toLocaleString()}</span>
+                  </div>
+                )}
+                {premiumSavings > 0 && (
+                  <div className="flex justify-between text-[13px]">
+                    <span className="text-[#8a6100] font-medium">Premium savings</span>
+                    <span className="text-[#8a6100] font-semibold">-{displaySymbol}{Math.round(premiumSavings).toLocaleString()}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-[13px]">

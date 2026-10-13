@@ -13,6 +13,7 @@ import { coverPaletteFor } from './ProductCoverFallback';
 import { ageLabel } from '@/constants/learning';
 import { TrustBadges } from './TrustBadges';
 import { CompareToggle } from './CompareToggle';
+import { PremiumChip, PremiumTeaser, memberPriceOf, usePremiumView } from './PremiumBits';
 
 // Same name-keyed palette as ProductCoverFallback, so a product keeps its
 // colours between the grid card and cart/wishlist/detail thumbnails.
@@ -118,6 +119,9 @@ export const ResourceCard = memo(function ResourceCard({
   const rawWas = variant?.compareAtPrice && variant.compareAtPrice > rawPrice ? variant.compareAtPrice : (salePct && rawPrice > 0 ? rawPrice : null);
   const was = rawWas ? convert(rawWas, variant?.currency) : null;
   const percentOff = rawWas ? Math.round((1 - effectiveRaw / rawWas) * 100) : 0;
+  // Edudeen Premium: members see the member price (server-computed); everyone else a quiet teaser.
+  const { isPremium } = usePremiumView();
+  const member = isPremium && !salePct ? memberPriceOf(variant, convert, price) : null;
   const campaignOff = campaign?.discountValue
     ? campaign.discountType === 'percentage' ? `${campaign.discountValue}% off` : `${currencySymbol(campaign.currency ?? 'USD')} ${campaign.discountValue} off`
     : null;
@@ -187,10 +191,12 @@ export const ResourceCard = memo(function ResourceCard({
           <RatingLine rating={product.averageRating} count={product.totalRatings} className="mt-1" />
           <TrustBadges trust={product.trust} className="mt-1.5" />
           <div className="flex items-center gap-2 flex-wrap mt-auto pt-3">
-            <strong className={clsx('num text-[16px] sm:text-[18px]', was ? 'text-error' : 'text-carbon')}>
-              {rawPrice === 0 ? 'Free' : fmt(price)}
+            <strong className={clsx('num text-[16px] sm:text-[18px]', member ? 'text-[#8a6100]' : was ? 'text-error' : 'text-carbon')}>
+              {rawPrice === 0 ? 'Free' : fmt(member ? member.price : price)}
             </strong>
-            {was && rawPrice > 0 && <s className="text-[12.5px] text-slate" aria-label={`Was ${fmt(was)}`}>{fmt(was)}</s>}
+            {member && <s className="text-[12.5px] text-slate">{fmt(price)}</s>}
+            {!member && was && rawPrice > 0 && <s className="text-[12.5px] text-slate" aria-label={`Was ${fmt(was)}`}>{fmt(was)}</s>}
+            {member ? <PremiumChip /> : <PremiumTeaser percent={product.premiumPercent} />}
             {badge && <SaleBadge label={badge} />}
             <span className="ms-auto text-[12px] border border-[#dde5e8] px-[7px] py-[3px] rounded text-[#566773] shrink-0">{TYPE_LABEL[kind] ?? kind}</span>
           </div>
@@ -258,10 +264,11 @@ export const ResourceCard = memo(function ResourceCard({
       <TrustBadges trust={product.trust} className="mt-1" />
       <div className="flex items-center justify-between gap-2 mt-2">
         <span className="flex items-baseline gap-1.5 min-w-0 flex-wrap">
-          <strong className={clsx('num text-[14px] sm:text-[16px]', was ? 'text-error' : 'text-carbon')}>
-            {rawPrice === 0 ? 'Free' : fmt(price)}
+          <strong className={clsx('num text-[14px] sm:text-[16px]', member ? 'text-[#8a6100]' : was ? 'text-error' : 'text-carbon')}>
+            {rawPrice === 0 ? 'Free' : fmt(member ? member.price : price)}
           </strong>
-          {was && rawPrice > 0 && (
+          {member && <s className="text-[12px] text-slate">{fmt(price)}</s>}
+          {!member && was && rawPrice > 0 && (
             <s className="text-[12px] text-slate" aria-label={`Was ${fmt(was)}`}>{fmt(was)}</s>
           )}
         </span>
@@ -269,6 +276,7 @@ export const ResourceCard = memo(function ResourceCard({
           {TYPE_LABEL[kind] ?? kind}
         </span>
       </div>
+      {member ? <PremiumChip className="mt-1" /> : <PremiumTeaser percent={product.premiumPercent} className="mt-1" />}
     </article>
   );
 });

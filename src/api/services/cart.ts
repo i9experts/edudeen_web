@@ -18,6 +18,11 @@ export interface CartItem {
   itemTotal?:       number;
   /** True when this line is in the store's running sale (the seller ticked the campaign on this product). */
   onCampaign?:      boolean;
+  /** Edudeen Premium: teaser percent (everyone); the member fields below are display-only and members only (checkout is the source of truth). */
+  premiumPercent?:         number;
+  premiumDiscountPercent?: number;
+  premiumUnitPrice?:       number;
+  premiumItemTotal?:       number;
   type?:           'physical' | 'digital';
   /** Set on the main marketplace site, where one view spans several stores' carts. */
   storeId?:         string;
@@ -54,6 +59,8 @@ export interface Cart {
   /** The store's running sale, applied at checkout — shown in the cart so the price doesn't change at the last step. */
   /** `amount` is in `currency` (the cart's own currency). `discountValue` is a percent, or - for a fixed sale - an amount in `valueCurrency` (USD unless stated). */
   campaignDiscount?:  { name: string; discountType: 'percentage' | 'fixed' | null; discountValue: number | null; currency: string | null; valueCurrency?: string | null; amount?: number } | null;
+  isPremium?:      boolean;
+  premiumSavings?: number;
   /** The currency the cart's own amounts are in (single-store carts). */
   currency?:  string | null;
   /** Main-site only: the per-store carts this merged view was built from.

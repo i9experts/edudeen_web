@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, LifeBuoy, Clock, Send, Check, ArrowRight } from 'lucide-react';
+import { Mail, LifeBuoy, Clock, Send, Check, ArrowRight, Crown } from 'lucide-react';
+import { usePremium } from '@/hooks/usePremium';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { Button, Input, Textarea, Select } from '@/components/comman/ui';
 import { apiSubmitContact } from '@/api/services/contact';
@@ -21,6 +22,7 @@ const CONTACT_CARDS: { Icon: typeof Mail; label: string; value: string; href?: s
 export function ContactUsPage() {
   usePageTitle('Contact Us');
   const navigate = useNavigate();
+  const { isPremium, entitlements } = usePremium();
 
   const [name, setName]       = useState('');
   const [email, setEmail]     = useState('');
@@ -98,6 +100,12 @@ export function ContactUsPage() {
             </div>
           ) : (
             <>
+              {isPremium && entitlements?.prioritySupport && (
+                <div className="flex items-start gap-2 rounded-lg border border-[#f1d98a] bg-[#fff6d6] px-3 py-2.5 mb-4 text-[12.5px] text-[#8a6100]">
+                  <Crown size={14} className="mt-[2px] shrink-0" aria-hidden />
+                  <span><b>Priority support for Premium members.</b> Your message goes to the front of the queue.</span>
+                </div>
+              )}
               <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Input label="Your name" placeholder="Jane Cooper" value={name} onChange={e => setName(e.target.value)} />

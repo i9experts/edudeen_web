@@ -5,7 +5,7 @@ import { clsx } from 'clsx';
 import {
   LayoutDashboard, ShoppingBag, Heart, Star, Baby,
   MessageSquare, Landmark, Download, ListChecks, FileSpreadsheet,
-  User, Shield, MapPin, Bell, RefreshCw,
+  User, Shield, MapPin, Bell, RefreshCw, Crown,
   ChevronLeft, PanelLeftClose, PanelLeftOpen, type LucideIcon,
 } from 'lucide-react';
 import { useWishlistContext } from '@/contexts/WishlistContext';
@@ -48,6 +48,7 @@ export function useNavGroups(): NavGroup[] {
         { id: 'wishlist', label: t('Saved'), Icon: Heart,       path: 'wishlist', badge: wishlistCount },
         { id: 'lists',    label: t('My Lists'), Icon: ListChecks,  path: 'lists' },
         { id: 'children', label: t('My children'), Icon: Baby,     path: 'children' },
+        { id: 'premium',  label: t('Premium'), Icon: Crown,        path: 'premium' },
         { id: 'quotes',   label: t('School Quotes'), Icon: FileSpreadsheet, path: 'quotes' },
         { id: 'reviews',  label: t('Reviews'),  Icon: Star,        path: 'reviews' },
         { id: 'payments', label: t('Bank Transfers'), Icon: Landmark, path: 'payments' },

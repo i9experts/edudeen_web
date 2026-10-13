@@ -6,6 +6,7 @@ import { apiGetPublicActiveCampaigns, type PublicCampaign } from '@/api/services
 import { cloudinaryUrl, cloudinarySrcSet } from '@/utils/cloudinaryImage';
 import { currencySymbol } from '@/utils/currency';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
+import { EarlyAccessChip } from './EarlyAccessChip';
 
 // Exported so other one-off campaign banners can share the exact same
 // countdown behavior/markup instead of drifting into their own reimplementation.
@@ -357,7 +358,7 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
                   <span className="inline-block h-[10px] w-[3px] shrink-0 rounded-full bg-brand-orange" />
                   {discountHeadline}
                 </span>
-                {metaText && (
+                {campaign.earlyAccess ? <EarlyAccessChip startDate={campaign.startDate} onDark /> : metaText && (
                   <span className="text-[12px] text-white/70 truncate">{metaText}</span>
                 )}
               </div>
@@ -422,7 +423,7 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
                 <span className="font-semibold">{campaign.name}</span>
                 {campaign.description ? <span className="text-white/75"> · {campaign.description}</span> : null}
               </p>
-              {metaText && <p className="hidden sm:block truncate text-[12px] text-white/65">{metaText}</p>}
+              {campaign.earlyAccess ? <EarlyAccessChip startDate={campaign.startDate} onDark className="w-fit" /> : metaText && <p className="hidden sm:block truncate text-[12px] text-white/65">{metaText}</p>}
             </div>
 
             {/* MIDDLE — small product thumbnail, only when the campaign has an image (no empty glass panel). */}

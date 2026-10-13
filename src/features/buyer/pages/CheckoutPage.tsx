@@ -34,7 +34,7 @@ import {
 } from '@/api/services/manualPayment';
 import { apiGetCurrentRates } from '@/api/services/exchangeRate';
 import { Button } from '@/components/comman/ui/Button';
-import { SkeletonBox, BuyerNavbar, Breadcrumb, Input } from '@/components/comman/ui';
+import { SkeletonBox, BuyerNavbar, Breadcrumb } from '@/components/comman/ui';
 import { StripeCardPayment, isStripeConfigured } from '@/features/buyer/components/StripeCardPayment';
 import { HostedPayButton } from '@/features/buyer/components/HostedPayButton';
 import { GiftOptions } from '@/features/buyer/components/GiftOptions';
@@ -45,8 +45,11 @@ import {
   MapPin, Truck, CreditCard, CheckCircle2,
   ChevronRight, AlertCircle, PackageCheck,
   Banknote, ShieldCheck, ArrowDownCircle, Download, Clock, Loader2,
-  SplitSquareHorizontal, Landmark, UploadCloud,
+  SplitSquareHorizontal, Landmark,
 } from 'lucide-react';
+import { PremiumChip } from '@/components/comman/marketplace/PremiumBits';
+import { usePremium } from '@/hooks/usePremium';
+import { BankDetailsCard, ProofFields } from '@/features/buyer/components/BankDetailsCard';
 import { clsx } from 'clsx';
 import { currencySymbol } from '@/utils/currency';
 import { computeCartTotals } from '@/utils/cartTotals';
@@ -251,56 +254,27 @@ function ManualBankTransferSlot({
     );
   }
 
-  const rows: [string, string | null | undefined][] = [
-    ['Pay to', bankDetails.payeeName],
-    ['Bank',bankDetails.bankName],
-    ['Account Title', bankDetails.accountTitle],
-    ['Account Number', bankDetails.accountNumber],
-    ['IBAN', bankDetails.iban],
-    ['JazzCash', bankDetails.jazzcashNumber],
-    ['Easypaisa', bankDetails.easypaisaNumber],
-  ];
-
   return (
     <div className="flex flex-col gap-4">
-      <div className="rounded-[10px] border border-bone bg-cream px-4 py-3 flex flex-col gap-2">
-        <div className="flex justify-between items-baseline">
-          <span className="text-[12px] text-slate">Amount to transfer</span>
-          <span className="text-[18px] font-bold text-brand-deep-orange">
-            {amountPKR != null
-              ? `PKR ${amountPKR.toLocaleString(undefined, { maximumFractionDigits: 0 })}`
-              : `${currencySymbol(currency)}${amount.toFixed(2)}`}
-          </span>
-        </div>
-        {currency !== 'PKR' && (
+      <BankDetailsCard
+        bankDetails={bankDetails}
+        amountText={amountPKR != null
+          ? `PKR ${amountPKR.toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+          : `${amount.toFixed(2)}`}
+        note={currency !== 'PKR' && (
           <p className="text-[10.5px] text-slate">
             {amountPKR != null && usdToPkr
               ? <>≈ {currencySymbol(currency)}{amount.toFixed(2)} at PKR {usdToPkr.toLocaleString(undefined, { maximumFractionDigits: 2 })}/USD</>
               : 'The exact PKR amount is confirmed when you submit your proof.'}
           </p>
         )}
-        <div className="h-px bg-bone my-1" />
-        {rows.filter(([, v]) => v).map(([label, value]) => (
-          <div key={label} className="flex justify-between gap-3 text-[12px]">
-            <span className="text-slate flex-shrink-0">{label}</span>
-            <span className="font-medium text-carbon text-end font-mono">{value}</span>
-          </div>
-        ))}
-        {bankDetails.instructions && <p className="text-[11px] text-slate mt-1">{bankDetails.instructions}</p>}
-      </div>
+      />
 
-      <div className="flex flex-col gap-3">
-        <div>
-          <label className="block text-[12px] font-medium text-charcoal mb-1.5">Payment proof (screenshot or receipt photo)</label>
-          <label className="flex items-center gap-2 border border-dashed border-bone rounded-[8px] px-3 py-3 cursor-pointer hover:border-brand-orange/50 transition-colors">
-            <UploadCloud size={16} className="text-slate flex-shrink-0" />
-            <span className="text-[12px] text-slate truncate">{file ? file.name : 'Choose an image…'}</span>
-            <input type="file" accept="image/*" className="hidden" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
-          </label>
-        </div>
-        <Input label="Transaction reference (optional)" value={transactionReference} onChange={(e) => setTransactionReference(e.target.value)} placeholder="TXN123456789" />
-        <Input label="Sender name (optional, if different from your account)" value={senderName} onChange={(e) => setSenderName(e.target.value)} />
-      </div>
+      <ProofFields
+        file={file} onFile={setFile}
+        transactionReference={transactionReference} onTransactionReference={setTransactionReference}
+        senderName={senderName} onSenderName={setSenderName}
+      />
 
       {error && (
         <div className="flex items-start gap-2 text-[12px] text-error bg-error-bg border border-error-border rounded-[8px] px-3 py-2">
@@ -551,6 +525,7 @@ export function CheckoutPage() {
 
   // Coupon
   const [couponInput,   setCouponInput]   = useState('');
+  const { coupon: premiumCoupon } = usePremium();
   const [couponBusy,    setCouponBusy]    = useState(false);
   const [couponError,   setCouponError]   = useState('');
   // Explicit "it worked, here's how much" confirmation — shown once right
@@ -774,7 +749,9 @@ export function CheckoutPage() {
   const tax      = checkout?.taxAmount ?? summary?.taxAmount ?? 0;
   const couponDiscount = checkout?.couponDiscountUSD ?? 0;
   const giftCardDiscount = checkout?.giftCardDiscountUSD ?? 0;
-  const bakedInDiscounts = (summary?.subscriberSavingsUSD ?? 0) + (summary?.campaignDiscountUSD ?? 0) + (summary?.autoDiscountUSD ?? 0);
+  // Edudeen Premium member price: already inside every item price (like the other baked-in discounts), shown as its own row.
+  const premiumSavings = checkout?.premiumDiscountTotalUSD ?? summary?.premiumDiscountUSD ?? 0;
+  const bakedInDiscounts = (summary?.subscriberSavingsUSD ?? 0) + (summary?.campaignDiscountUSD ?? 0) + (summary?.autoDiscountUSD ?? 0) + premiumSavings;
   // The running sale only applies to the whole store cart, not to a Buy Now line or a physical-only subset.
   const estimate = computeCartTotals(cartItems, buyNow || physicalOnly ? null : cart?.campaignDiscount, convertToDisplay);
   const estimateSymbol = ratesLoaded ? currencySymbol(displayCurrency) : '';
@@ -1660,12 +1637,16 @@ export function CheckoutPage() {
             <div className="flex flex-col gap-2 mb-5">
               {(() => { const cur = summarySymbol; return checkout
                 ? checkout.items.map(item => (
-                  <div key={item.variantId} className="flex justify-between text-[12px]">
+                  <div key={item.variantId} className="flex justify-between text-[12px] gap-2">
                     <span className="text-carbon truncate max-w-[150px]">
                       {item.name}
                       <span className="text-slate ms-1">×{item.quantity}</span>
+                      {!!item.premiumDiscountPercent && item.premiumDiscountPercent > 0 && <PremiumChip className="ms-1" />}
                     </span>
-                    <span className="font-medium text-carbon flex-shrink-0">
+                    <span className="font-medium text-carbon flex-shrink-0 text-end">
+                      {!!item.premiumDiscountPercent && item.premiumDiscountPercent > 0 && item.originalPrice != null && (
+                        <s className="block text-[12px] font-normal text-slate">{cur} {(item.originalPrice * item.quantity).toLocaleString()}</s>
+                      )}
                       {cur} {item.totalPrice.toLocaleString()}
                     </span>
                   </div>
@@ -1731,6 +1712,12 @@ export function CheckoutPage() {
                   "checkout's own display currency" comment for the coupon
                   case, and the parallel per-item-native-currency math for
                   the campaign case below. */}
+              {premiumSavings > 0 && (
+                <div className="flex justify-between text-[13px]">
+                  <span className="text-[#8a6100]">Premium savings</span>
+                  <span className="font-semibold text-[#8a6100]">-{checkoutSymbol}{premiumSavings.toFixed(2)}</span>
+                </div>
+              )}
               {!!summary?.campaignDiscountUSD && summary.campaignDiscountUSD > 0 && (
                 <div className="flex justify-between text-[13px]">
                   <span className="text-success">Sale discount</span>
@@ -1794,6 +1781,11 @@ export function CheckoutPage() {
                       {couponBusy ? 'Applying…' : 'Apply'}
                     </button>
                   </div>
+                )}
+                {!checkout.couponCode && premiumCoupon && !premiumCoupon.used && !premiumCoupon.expired && couponInput !== premiumCoupon.code && (
+                  <button type="button" onClick={() => setCouponInput(premiumCoupon.code)} className="mt-1.5 p-0 bg-transparent border-none cursor-pointer text-[12px] font-semibold text-[#8a6100] hover:underline text-start">
+                    {`Use my Premium coupon (${premiumCoupon.code})`}
+                  </button>
                 )}
                 {couponError && <p className="text-[11px] text-error mt-1.5">{couponError}</p>}
                 {couponSuccessMsg && (

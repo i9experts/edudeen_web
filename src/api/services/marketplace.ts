@@ -32,6 +32,9 @@ export interface ProductVariant {
   discountPercent?:    number;
   subscriberPlanName?: string;
   minOrderValueUSD?:   number | null;
+  /** Edudeen Premium members only: the member price (in this variant's currency) and the seller's percent. */
+  premiumPrice?:           number;
+  premiumDiscountPercent?: number;
 }
 
 export interface DigitalProduct {
@@ -71,6 +74,9 @@ export interface ActiveCampaignBadge {
   /** Only meaningful when discountType === 'fixed' — always 'USD' (the platform pivot). */
   currency:      string | null;
   endDate:       string;
+  /** Edudeen Premium members only: the sale has not started for the public yet. */
+  earlyAccess?:  boolean;
+  startDate?:    string | null;
 }
 
 export interface MarketplaceProduct {
@@ -129,6 +135,8 @@ export interface MarketplaceProduct {
   storeName?:        string | null;
   sellerVerified?:   boolean;
   activeCampaign?:   ActiveCampaignBadge | null;
+  /** Edudeen Premium teaser: percent the seller gives members (0/absent = none). */
+  premiumPercent?:   number;
 }
 
 export interface ProductsByCategoryResponse {

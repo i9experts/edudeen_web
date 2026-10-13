@@ -1,3 +1,4 @@
+import { EarlyAccessChip } from '@/components/comman/ui/EarlyAccessChip';
 import { PlacementBanner } from '@/components/comman/marketplace/PlacementBanner';
 import { usePublicPlatformConfig } from '@/hooks/usePublicPlatformConfig';
 import { EditableHomeSection } from '@/components/admin-edit/EditableHomeSection';
@@ -228,7 +229,9 @@ export function Homepage() {
 
   // The flash-sale timer counts down to the soonest-ending live sale campaign;
   // with no campaign running there's no timer (discounted items still show).
-  const saleEnd = (topBarDeals?.campaigns ?? []).map(c => c.endDate).sort()[0] ?? null;
+  const saleEnd = (topBarDeals?.campaigns ?? []).filter(c => !c.earlyAccess).map(c => c.endDate).sort()[0] ?? null;
+  // Premium members: a sale that is not public yet (the API only sends these to members).
+  const earlyCampaign = (topBarDeals?.campaigns ?? []).find(c => c.earlyAccess) ?? null;
   const countdown = useCountdownTo(saleEnd);
 
   // ── Catalogue section filters ──
@@ -577,7 +580,7 @@ export function Homepage() {
                   <span className="hidden sm:inline">Ends in</span>
                   <span className="tabular-nums text-error font-bold">{Number(countdown.h) >= 24 ? `${Math.floor(Number(countdown.h) / 24)}d ${Number(countdown.h) % 24}h` : `${countdown.h}:${countdown.m}:${countdown.s}`}</span>
                 </span>
-              ) : undefined}
+              ) : earlyCampaign ? <EarlyAccessChip startDate={earlyCampaign.startDate} /> : undefined}
             />
             <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1 snap-x snap-mandatory">
               {flashDeals.map(({ product: p }) => {

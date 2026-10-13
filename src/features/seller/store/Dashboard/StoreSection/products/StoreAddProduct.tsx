@@ -20,6 +20,7 @@ import {
 import { DeliveryFormatField, EMPTY_DELIVERY, deliveryPayload, deliveryError } from '@/features/seller/components/products/DeliveryFormatField';
 import { currencySymbol as symbolForCurrency } from '@/utils/currency';
 import { CampaignPicker } from './CampaignPicker';
+import { PremiumPriceField, premiumPercentError, premiumPercentPayload } from './PremiumPriceField';
 
 type ProductType   = 'physical' | 'digital' | 'educational';
 type ProductStatus = 'draft' | 'active' | 'scheduled';
@@ -221,6 +222,7 @@ export default function StoreAddProduct() {
   const [learning,          setLearning]          = useState(EMPTY_LEARNING);
   const [delivery,          setDelivery]          = useState(EMPTY_DELIVERY);
   const [campaignIds,       setCampaignIds]       = useState<string[]>([]);
+  const [premiumPct,        setPremiumPct]        = useState('');
 
   // Once the store loads, never leave the form on a type this store can't sell.
   useEffect(() => {
@@ -266,6 +268,8 @@ export default function StoreAddProduct() {
     if (pType === 'educational' && dig.educationLevel === 'other' && !dig.customLevel.trim()) { setError('Please describe the custom education level.'); return; }
     const learnErr = learningError(learning) ?? (pType !== 'physical' ? tiersError(dig.tiers) ?? deliveryError(delivery) : null);
     if (learnErr) { setError(learnErr); return; }
+    const premiumErr = premiumPercentError(premiumPct);
+    if (premiumErr) { setError(premiumErr); return; }
     const missingAttr = findMissingRequiredAttribute(attrDefs, attributeValues);
     if (missingAttr) { setError(`${missingAttr.label} is required.`); return; }
     // A course is saved as a draft first; the course builder opens next and it's published from there.
@@ -282,7 +286,7 @@ export default function StoreAddProduct() {
         const res = await apiCreatePhysicalProduct({
           storeId, name: phys.name, description: phys.description,
           categoryId: categoryId || undefined, subCategoryId: phys.subCategoryId || null, images: phys.images, tags: phys.tags,
-          isListedOnEdudeen: phys.isListedOnEdudeen, status: finalStatus, campaignIds,
+          isListedOnEdudeen: phys.isListedOnEdudeen, status: finalStatus, campaignIds, premiumDiscountPercent: premiumPercentPayload(premiumPct),
           scheduledAt: finalStatus === 'scheduled' ? phys.scheduledAt || null : null,
           ...learningPayload(learning),
           variants: [{
@@ -305,7 +309,7 @@ export default function StoreAddProduct() {
           categoryId: categoryId || undefined, subCategoryId: dig.subCategoryId || null, images: dig.images, tags: dig.tags,
           educationLevel: pType === 'educational' ? (dig.educationLevel || null) : null,
           customLevel: pType === 'educational' && dig.educationLevel === 'other' ? dig.customLevel : null,
-          isListedOnEdudeen: dig.isListedOnEdudeen, status: finalStatus, campaignIds,
+          isListedOnEdudeen: dig.isListedOnEdudeen, status: finalStatus, campaignIds, premiumDiscountPercent: premiumPercentPayload(premiumPct),
           scheduledAt: finalStatus === 'scheduled' ? dig.scheduledAt || null : null,
           price: Number(dig.price), compareAtPrice: dig.compareAtPrice ? Number(dig.compareAtPrice) : null,
           ...learningPayload(learning),
@@ -499,6 +503,7 @@ export default function StoreAddProduct() {
                 <span className="text-[12px] text-success">shown to buyers</span>
               </div>
             )}
+            <div className="mt-4 max-w-[320px]"><PremiumPriceField value={premiumPct} onChange={setPremiumPct} /></div>
           </Card>
 
           {/* Step: Join a running sale (admin campaigns) */}

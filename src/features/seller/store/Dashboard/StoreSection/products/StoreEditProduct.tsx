@@ -24,6 +24,7 @@ import {
 import { DeliveryFormatField, EMPTY_DELIVERY, deliveryPayload, deliveryError, deliveryFromProduct } from '@/features/seller/components/products/DeliveryFormatField';
 import { currencySymbol as symbolForCurrency } from '@/utils/currency';
 import { CampaignPicker } from './CampaignPicker';
+import { PremiumPriceField, premiumPercentError, premiumPercentPayload } from './PremiumPriceField';
 
 type ProductStatus = 'draft' | 'active' | 'scheduled';
 type LicenseType   = 'personal' | 'single_classroom' | 'school' | 'commercial';
@@ -231,6 +232,8 @@ export default function StoreEditProduct() {
   const [delivery, setDelivery] = useState(EMPTY_DELIVERY);
   // null until the product's own list arrives, so a save never wipes a selection that was not loaded yet.
   const [campaignIds, setCampaignIds] = useState<string[] | null>(null);
+  // null until the product is read fresh, so saving never clears a Premium price that has not loaded.
+  const [premiumPct, setPremiumPct] = useState<string | null>(null);
 
   const sp = <K extends keyof PhysForm>(k: K, v: PhysForm[K]) => setPhys(f => ({ ...f, [k]: v }));
   const sd = <K extends keyof DigForm> (k: K, v: DigForm[K])  => setDig(f  => ({ ...f, [k]: v }));
@@ -268,6 +271,7 @@ export default function StoreEditProduct() {
         const p = res.data.product;
         const variants = res.data.variants ?? [];
         setCampaignIds([...(p.campaignIds ?? [])]);
+        setPremiumPct(p.premiumDiscountPercent != null ? String(p.premiumDiscountPercent) : '');
         setLearning({ curricula: [...(p.curricula ?? [])], ageMin: p.ageMin != null ? String(p.ageMin) : '', ageMax: p.ageMax != null ? String(p.ageMax) : '', classFrom: p.classFrom ?? '', classTo: p.classTo ?? '' });
         if (p.type === 'digital') {
           setDelivery(deliveryFromProduct(p));
@@ -326,6 +330,8 @@ export default function StoreEditProduct() {
     if (pType === 'educational' && dig.educationLevel === 'other' && !dig.customLevel.trim()) { setError('Please describe the custom education level.'); return; }
     const learnErr = learningError(learning) ?? (pType !== 'physical' ? tiersError(dig.tiers) ?? deliveryError(delivery) : null);
     if (learnErr) { setError(learnErr); return; }
+    const premiumErr = premiumPercentError(premiumPct ?? '');
+    if (premiumErr) { setError(premiumErr); return; }
     const missingAttr = findMissingRequiredAttribute(attrDefs, attributeValues);
     if (missingAttr) { setError(`${missingAttr.label} is required.`); return; }
     setSaving(true);
@@ -337,6 +343,7 @@ export default function StoreEditProduct() {
           categoryId: categoryId || undefined, subCategoryId: phys.subCategoryId || null, images: phys.images, tags: phys.tags,
           isListedOnEdudeen: phys.isListedOnEdudeen, status: finalStatus,
           ...(campaignIds ? { campaignIds } : {}),
+          ...(premiumPct !== null ? { premiumDiscountPercent: premiumPercentPayload(premiumPct) } : {}),
           scheduledAt: finalStatus === 'scheduled' ? phys.scheduledAt || null : null,
           ...learningPayload(learning),
         });
@@ -360,6 +367,7 @@ export default function StoreEditProduct() {
           customLevel: pType === 'educational' && dig.educationLevel === 'other' ? dig.customLevel : undefined,
           status: finalStatus,
           ...(campaignIds ? { campaignIds } : {}),
+          ...(premiumPct !== null ? { premiumDiscountPercent: premiumPercentPayload(premiumPct) } : {}),
           scheduledAt: finalStatus === 'scheduled' ? dig.scheduledAt || null : null,
           price: Number(dig.price),
           compareAtPrice: dig.compareAtPrice ? Number(dig.compareAtPrice) : null,
@@ -682,6 +690,7 @@ export default function StoreEditProduct() {
                   <span className="text-[12px] text-success">shown to buyers</span>
                 </div>
               )}
+              <PremiumPriceField value={premiumPct ?? ''} onChange={setPremiumPct} disabled={premiumPct === null} />
             </div>
           </Card>
 

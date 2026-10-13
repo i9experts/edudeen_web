@@ -27,6 +27,12 @@ export interface StoreDashboardSummary {
   activeProducts: number;
   shelf: Array<Pick<InventoryProduct, 'productId' | 'name' | 'type' | 'productType' | 'status' | 'image' | 'price'>>;
   checklist: OnboardingChecklist;
+  /** Edudeen Premium member orders in the last `windowDays` days. */
+  premium?: {
+    premiumOrders: number;
+    byCurrency: { currency: string; orders: number; premiumDiscountGiven: number; revenue: number }[];
+    windowDays: number;
+  };
 }
 
 /** One call for the whole seller dashboard (replaces five). */

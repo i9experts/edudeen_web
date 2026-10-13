@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
-import { MessageCircle, Eye, Trash2 } from 'lucide-react';
+import { MessageCircle, Eye, Trash2, Crown } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useAdminContact } from '@/hooks/admin/useAdminContact';
 import { apiUpdateContactStatus, apiDeleteContactSubmission, type ContactSubmission, type ContactSubmissionStatus } from '@/api/services/contact';
-import { Button, Modal, StatusBadge, ActionMenu, Table, type TableColumn } from '@/components/comman/ui';
+import { Badge, Button, Modal, StatusBadge, ActionMenu, Table, type TableColumn } from '@/components/comman/ui';
 import { AdminStudioHeader } from '@/features/admin/components/studio';
 
 const STATUS_LABEL: Record<ContactSubmissionStatus, string> = {
@@ -14,6 +14,10 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 }
 
+function PremiumBadge({ className }: { className?: string }) {
+  return <Badge color="orange" size="sm" className={className}><Crown size={11} />Premium</Badge>;
+}
+
 // ── Detail modal ─────────────────────────────────────────────────────────────
 function DetailModal({ submission, onClose }: { submission: ContactSubmission; onClose: () => void }) {
   return (
@@ -21,7 +25,7 @@ function DetailModal({ submission, onClose }: { submission: ContactSubmission; o
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-[13px] font-semibold text-charcoal">{submission.name}</p>
+            <p className="text-[13px] font-semibold text-charcoal">{submission.name}{submission.priority && <PremiumBadge className="ms-2" />}</p>
             <p className="text-[12px] text-slate">{submission.email}</p>
           </div>
           <StatusBadge status={STATUS_LABEL[submission.status]} />
@@ -36,7 +40,8 @@ function DetailModal({ submission, onClose }: { submission: ContactSubmission; o
 // ── Main page ─────────────────────────────────────────────────────────────────
 export function AdminContactMessages() {
   usePageTitle('Contact Messages');
-  const { submissions, stats, loading, error, refetch } = useAdminContact();
+  const [premiumOnly, setPremiumOnly] = useState(false);
+  const { submissions, stats, loading, error, refetch } = useAdminContact(premiumOnly);
   const [statusFilter, setStatusFilter] = useState('');
   const [viewing, setViewing] = useState<ContactSubmission | null>(null);
   const [deleting, setDeleting] = useState<ContactSubmission | null>(null);
@@ -83,7 +88,7 @@ export function AdminContactMessages() {
       key: 'name', header: 'From',
       render: s => (
         <div className="max-w-[180px]">
-          <p className="font-semibold truncate">{s.name}</p>
+          <p className="font-semibold truncate">{s.name}{s.priority && <PremiumBadge className="ms-2" />}</p>
           <p className="text-[12px] text-slate truncate">{s.email}</p>
         </div>
       ),
@@ -129,6 +134,10 @@ export function AdminContactMessages() {
               <option value="">All Statuses</option>
               {(['new', 'read', 'resolved'] as const).map(s => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
             </select>
+            <label className="inline-flex items-center gap-2 text-[13px] text-charcoal cursor-pointer">
+              <input type="checkbox" checked={premiumOnly} onChange={e => setPremiumOnly(e.target.checked)} className="accent-brand-orange" />
+              Premium only
+            </label>
           </div>
 
           {error ? (

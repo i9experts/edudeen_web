@@ -5,10 +5,12 @@ import { Zap, Tag, ChevronRight } from 'lucide-react';
 import { useTopBarDeals, timeLeft } from '@/hooks/useTopBarDeals';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 import { formatMoney } from '@/utils/currency';
+import { untilStart } from './EarlyAccessChip';
 
 interface TickerItem {
   key: string;
   kind: 'sale' | 'flash';
+  early?: boolean;
   label: string;
   detail?: string;
   path: string;
@@ -47,7 +49,8 @@ export function TopBarDealsTicker({ className }: { className?: string }) {
         key: `c-${c._id}`,
         kind: 'sale',
         label: c.name,
-        detail: [off, `ends in ${timeLeft(c.endDate, now)}`].filter(Boolean).join(' · '),
+        early: !!c.earlyAccess,
+        detail: [off, c.earlyAccess && c.startDate ? `Premium early access · public sale starts in ${untilStart(c.startDate, now)}` : `ends in ${timeLeft(c.endDate, now)}`].filter(Boolean).join(' · '),
         path: `/?campaign=${encodeURIComponent(c._id)}`,
       };
     });
@@ -83,7 +86,7 @@ export function TopBarDealsTicker({ className }: { className?: string }) {
         item.kind === 'sale' ? 'bg-[#F4DC4C] text-[#152D43]' : 'bg-white/15 text-white',
       )}>
         <Icon size={11} className={item.kind === 'flash' ? 'fill-current' : undefined} />
-        <span className="hidden sm:inline">{item.kind === 'sale' ? 'Sale' : 'Flash'}</span>
+        <span className="hidden sm:inline">{item.early ? 'Early access' : item.kind === 'sale' ? 'Sale' : 'Flash'}</span>
       </span>
       <button
         key={item.key}

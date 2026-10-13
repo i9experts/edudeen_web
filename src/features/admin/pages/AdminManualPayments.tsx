@@ -4,6 +4,7 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { useAdminManualPayments, useApproveManualPayment, useRejectManualPayment } from '@/hooks/admin/useAdminManualPayments';
 import type { AdminManualPaymentProof, ManualPaymentProofStatus } from '@/api/services/manualPayment';
 import { Button, Modal, StatusBadge, Textarea, Table, type TableColumn } from '@/components/comman/ui';
+import { Link } from 'react-router-dom';
 import { AdminStudioHeader } from '@/features/admin/components/studio';
 
 const STATUS_LABEL: Record<ManualPaymentProofStatus, string> = {
@@ -170,6 +171,7 @@ export function AdminManualPayments() {
         eyebrow="Edudeen team workspace · Finance"
         title="Payment proofs"
         subtitle="Bank-transfer payments (Pakistan track) awaiting proof verification."
+        actions={<Link to="/admin/premium?tab=payments" className="text-[13px] font-semibold text-brand-orange no-underline">Premium payments &rarr;</Link>}
       />
 
       <div className="px-4 sm:px-7 pt-6 pb-8 flex flex-col gap-4">

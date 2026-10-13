@@ -13,7 +13,7 @@ import { AreaChart } from '@/components/comman/charts';
 import { MetricCard, SkeletonBox, Button, PageHeader } from '@/components/comman/ui';
 import type { SellerOverviewData, RevenuePoint, SellerTodaySummaryData } from '@/api/services/analytics/analytics';
 import type { InventoryProduct } from '@/api/services/product';
-import { apiStoreDashboardSummary, type OnboardingChecklist } from '@/api/services/storeDashboard';
+import { apiStoreDashboardSummary, type OnboardingChecklist, type StoreDashboardSummary } from '@/api/services/storeDashboard';
 import { OnboardingChecklistCard } from './OnboardingChecklistCard';
 import { WeeklyDigestCard } from './Analytic/ai/components/WeeklyDigestCard';
 import { getStorefrontUrl } from '@/utils/storefrontUrl';
@@ -32,6 +32,7 @@ interface StoreMetrics {
   shelf:         InventoryProduct[];
   today:         SellerTodaySummaryData;
   checklist:     OnboardingChecklist;
+  premium?:      StoreDashboardSummary['premium'];
 }
 
 function useStoreDashboardMetrics(storeId: string) {
@@ -60,6 +61,7 @@ function useStoreDashboardMetrics(storeId: string) {
           shelf: d.shelf as InventoryProduct[],
           today: d.today,
           checklist: d.checklist,
+          premium: d.premium,
         });
       })
       .catch(err => { if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load store metrics.'); })
@@ -477,6 +479,17 @@ export default function StoreDashboard() {
               sub={totalCustomers ? `${formatNumber(metrics?.overview.newCustomersCount ?? 0)} new` : 'No customers yet'}
             />
           </div>
+
+          {(metrics?.premium?.premiumOrders ?? 0) > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              <MetricCard
+                label={`Premium buyers (${metrics!.premium!.windowDays} days)`}
+                value={`${formatNumber(metrics!.premium!.premiumOrders)} order${metrics!.premium!.premiumOrders === 1 ? '' : 's'}`}
+                sub={metrics!.premium!.byCurrency.map(c => `${formatMoneyCompact(c.premiumDiscountGiven, c.currency)} discount given`).join(' · ') || undefined}
+                to={`/store/${storeId}/settings`}
+              />
+            </div>
+          )}
 
           {metrics?.today && <TodaySnapshot today={metrics.today} currency={store?.baseCurrency} />}
 

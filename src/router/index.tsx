@@ -88,6 +88,8 @@ const OrderInvoice         = lazy(() => named(import('@/features/buyer/pages/acc
 const LearnHubPage         = lazy(() => named(import('@/features/buyer/pages/LearnPages'),                     'LearnHubPage'));
 const LearnLevelPage       = lazy(() => named(import('@/features/buyer/pages/LearnPages'),                     'LearnLevelPage'));
 const AccountLists         = lazy(() => named(import('@/features/buyer/pages/account/ListsPage'),              'ListsPage'));
+const AccountPremium       = lazy(() => named(import('@/features/buyer/pages/account/PremiumAccount'),          'PremiumAccount'));
+const PremiumLanding        = lazy(() => named(import('@/features/buyer/pages/PremiumPage'),                     'PremiumPage'));
 const AccountChildren      = lazy(() => named(import('@/features/buyer/pages/account/MyChildren'),             'MyChildren'));
 const AccountQuotes        = lazy(() => named(import('@/features/buyer/pages/account/QuotesPage'),             'QuotesPage'));
 const QuotationPrint       = lazy(() => named(import('@/features/buyer/pages/account/QuotationPage'),          'QuotationPage'));
@@ -172,6 +174,7 @@ const AdminBanners       = lazy(() => named(import('@/features/admin/pages/Admin
 const AdminFaqs          = lazy(() => named(import('@/features/admin/pages/AdminFaqs'),                          'AdminFaqs'));
 const AdminContactMessages = lazy(() => named(import('@/features/admin/pages/AdminContactMessages'),             'AdminContactMessages'));
 const AdminTestimonials  = lazy(() => named(import('@/features/admin/pages/AdminTestimonials'),                  'AdminTestimonials'));
+const AdminPremium = lazy(() => named(import('@/features/admin/pages/AdminPremium'), 'AdminPremium'));
 const AdminManualPayments = lazy(() => named(import('@/features/admin/pages/AdminManualPayments'),               'AdminManualPayments'));
 const AdminCommissionRules = lazy(() => named(import('@/features/admin/pages/AdminCommissionRules'),             'AdminCommissionRules'));
 const AdminConfig        = lazy(() => named(import('@/features/admin/pages/AdminConfig'),                       'AdminConfig'));
@@ -245,6 +248,7 @@ const mainRouter = createBrowserRouter([
               { path: 'pricing',         element: <NotForBuyers><PricingPage /></NotForBuyers> },
               { path: 'sellers',         element: <Navigate to="/become-a-seller" replace /> },
               { path: 'become-a-seller', element: <BecomeSellerPage /> },
+              { path: 'premium',         element: <PremiumLanding /> },
               { path: 'faq',             element: <FaqPage /> },
               { path: 'help',            element: <Navigate to="/faq" replace /> },
               { path: 'privacy-policy',  element: <PrivacyPolicyPage /> },
@@ -272,6 +276,7 @@ const mainRouter = createBrowserRouter([
               { path: 'downloads',     element: <AccountDownloads /> },
               { path: 'lists',         element: <AccountLists /> },
               { path: 'children',      element: <AccountChildren /> },
+              { path: 'premium',       element: <AccountPremium /> },
               { path: 'quotes',        element: <AccountQuotes /> },
               { path: 'wishlist',      element: <FeatureMaintenance feature="cart"><AccountWishlist /></FeatureMaintenance> },
               { path: 'reviews',       element: <FeatureMaintenance feature="reviews"><AccountReviews /></FeatureMaintenance> },
@@ -441,6 +446,7 @@ const mainRouter = createBrowserRouter([
           { path: 'subscriptions',element: <AdminSubscriptions /> },
           { path: 'platform-plans',element: <AdminPlatformPlans /> },
           { path: 'finance',      element: <RequireRole role="admin"><AdminFinance /></RequireRole> },
+          { path: 'premium', element: <RequireRole role="admin"><AdminPremium /></RequireRole> },
           { path: 'manual-payments', element: <RequireRole role="admin"><AdminManualPayments /></RequireRole> },
           { path: 'fx-settings', element: <RequireRole role="admin"><AdminFxSettings /></RequireRole> },
           { path: 'commission-rules', element: <RequireRole role="admin"><AdminCommissionRules /></RequireRole> },

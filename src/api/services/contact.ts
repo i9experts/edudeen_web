@@ -13,6 +13,8 @@ export interface ContactSubmission {
   topic:     string;
   message:   string;
   status:    ContactSubmissionStatus;
+  /** Sender is an active Edudeen Premium member (priority support). */
+  priority?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -36,9 +38,9 @@ export function apiSubmitContact(payload: SubmitContactPayload) {
 // ─────────────────────────────────────────────────────────────────────────────
 // ADMIN
 // ─────────────────────────────────────────────────────────────────────────────
-export function apiGetAllContactSubmissions() {
+export function apiGetAllContactSubmissions(priorityOnly = false) {
   return client.get<never, { success: boolean; count: number; stats: ContactStats; data: ContactSubmission[] }>(
-    ENDPOINTS.CONTACT.ADMIN_ALL,
+    ENDPOINTS.CONTACT.ADMIN_ALL, priorityOnly ? { params: { priority: true } } : undefined,
   );
 }
 

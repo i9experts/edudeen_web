@@ -144,6 +144,7 @@ export interface StoreProduct {
   isListedOnEdudeen: boolean;
   /** Admin sales (campaigns) this product joined - only on the seller's own product responses. */
   campaignIds?:      string[];
+  premiumDiscountPercent?: number | null;
   isDelete:          boolean;
   createdAt:         string;
   updatedAt:         string;
@@ -168,6 +169,8 @@ export interface CreatePhysicalPayload extends LearningMetaInput {
   status:            'draft' | 'active' | 'scheduled';
   scheduledAt?:      string | null;
   /** Admin sales this product joins. Omit to leave unchanged on edit. */
+  /** Seller-funded Premium member discount, 1-50 %; null clears it (store setting applies). Omit to leave unchanged. */
+  premiumDiscountPercent?: number | null;
   campaignIds?:      string[];
   // At least one variant is required — every variant must share the same
   // set of attribute names (e.g. all "Color"+"Size", not a mix).
@@ -189,6 +192,8 @@ export interface CreateDigitalPayload extends LearningMetaInput {
   status:            'draft' | 'active' | 'scheduled';
   scheduledAt?:      string | null;
   /** Admin sales this product joins. Omit to leave unchanged on edit. */
+  /** Seller-funded Premium member discount, 1-50 %; null clears it (store setting applies). Omit to leave unchanged. */
+  premiumDiscountPercent?: number | null;
   campaignIds?:      string[];
   price:             number;
   compareAtPrice:    number | null;
@@ -212,6 +217,8 @@ export interface EditPhysicalPayload extends LearningMetaInput {
   status:            'draft' | 'active' | 'scheduled';
   scheduledAt?:      string | null;
   /** Admin sales this product joins. Omit to leave unchanged on edit. */
+  /** Seller-funded Premium member discount, 1-50 %; null clears it (store setting applies). Omit to leave unchanged. */
+  premiumDiscountPercent?: number | null;
   campaignIds?:      string[];
 }
 
@@ -227,6 +234,8 @@ export interface EditDigitalPayload extends LearningMetaInput {
   status:         'draft' | 'active' | 'scheduled';
   scheduledAt?:   string | null;
   /** Admin sales this product joins. Omit to leave unchanged. */
+  /** Seller-funded Premium member discount, 1-50 %; null clears it (store setting applies). Omit to leave unchanged. */
+  premiumDiscountPercent?: number | null;
   campaignIds?:   string[];
   price:          number;
   compareAtPrice: number | null;

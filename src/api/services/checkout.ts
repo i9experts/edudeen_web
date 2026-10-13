@@ -26,6 +26,8 @@ export interface CheckoutItem {
   couponDiscountUSD?:      number;
   campaignId?:             string | null;
   campaignDiscountUSD?:    number;
+  /** Edudeen Premium member price percent already applied to price (members only). */
+  premiumDiscountPercent?: number;
 }
 
 export interface Checkout {
@@ -46,6 +48,9 @@ export interface Checkout {
   giftCardCode?:       string | null;
   giftCardDiscountUSD?: number;
   campaignDiscountTotalUSD?: number;
+  /** Edudeen Premium: member checkout; the discount is already inside every item price (in the checkout currency). */
+  isPremiumBuyer?:   boolean;
+  premiumDiscountTotalUSD?: number;
   totalAmount:       number;
   /** FX rates frozen onto this checkout at creation (units per 1 USD) — the
    *  same snapshot the backend charges with. */
@@ -65,6 +70,7 @@ export interface CheckoutSummary {
   subscriberSavingsUSD?: number;
   campaignDiscountUSD?: number;
   autoDiscountUSD?: number;
+  premiumDiscountUSD?: number;
   /** Only meaningful for a mixed physical+digital cart — see `allowedPaymentMethods`'s 'split' option. */
   digitalSubtotal?:  number;
   physicalSubtotal?: number;
