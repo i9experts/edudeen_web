@@ -10,6 +10,9 @@
  * آرڈر، ڈاؤن لوڈ). Brand: ایجوڈین.
  */
 export const UR: Record<string, string> = {
+  'No payment method is available right now': 'اس وقت ادائیگی کا کوئی طریقہ دستیاب نہیں',
+  'Digital resources are delivered instantly, so they are paid for online (card or bank transfer) — not with cash on delivery.': 'ڈیجیٹل وسائل فوراً ملتے ہیں، اس لیے ان کی ادائیگی آن لائن (کارڈ یا بینک ٹرانسفر) سے ہوتی ہے، کیش آن ڈیلیوری سے نہیں۔',
+  'Edudeen has not turned on an online payment method for this order yet. Your items stay safely in your cart, and you can check back soon or contact support.': 'ایڈوڈین نے اس آرڈر کے لیے ابھی آن لائن ادائیگی کا طریقہ فعال نہیں کیا۔ آپ کی اشیاء کارٹ میں محفوظ رہیں گی، آپ جلد دوبارہ دیکھیں یا سپورٹ سے رابطہ کریں۔',
   'Shop all deals': 'تمام ڈیلز دیکھیں',
   'Deep discounts on learning resources, while stock lasts.': 'تعلیمی وسائل پر بھاری رعایت، جب تک اسٹاک ہے۔',
   'No flash deals right now - check back soon.': 'اس وقت کوئی فلیش ڈیل نہیں، جلد دوبارہ دیکھیں۔',
