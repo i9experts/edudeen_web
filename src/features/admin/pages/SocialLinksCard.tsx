@@ -4,7 +4,7 @@ import { Input } from '@/components/comman/ui/Input';
 import { apiGetPublicPlatformConfig, type SocialNetwork } from '@/api/services/publicPlatformConfig';
 import { apiUpdateSocialLinks } from '@/api/services/config/adminConfig';
 
-const FIELDS: { key: SocialNetwork; label: string; placeholder: string }[] = [
+export const FIELDS: { key: SocialNetwork; label: string; placeholder: string }[] = [
   { key: 'facebook', label: 'Facebook', placeholder: 'https://facebook.com/edudeen' },
   { key: 'instagram', label: 'Instagram', placeholder: 'https://instagram.com/edudeen' },
   { key: 'x', label: 'X (Twitter)', placeholder: 'https://x.com/edudeen' },
@@ -12,6 +12,12 @@ const FIELDS: { key: SocialNetwork; label: string; placeholder: string }[] = [
   { key: 'youtube', label: 'YouTube', placeholder: 'https://youtube.com/@edudeen' },
   { key: 'tiktok', label: 'TikTok', placeholder: 'https://tiktok.com/@edudeen' },
 ];
+
+/** Returns an error message for the first malformed link, else ''. */
+export function validateSocialLinks(links: Partial<Record<SocialNetwork, string>>): string {
+  const bad = FIELDS.find(f => links[f.key] && !/^https?:\/\/\S+$/i.test(links[f.key]!.trim()));
+  return bad ? `${bad.label}: enter a full link starting with https://` : '';
+}
 
 /** Edudeen's social accounts — shown as icons in the site footer. Leave a field empty to hide that icon. */
 export function SocialLinksCard() {
@@ -30,8 +36,8 @@ export function SocialLinksCard() {
 
   const save = async () => {
     setError(''); setSaved(false);
-    const bad = FIELDS.find(f => links[f.key] && !/^https?:\/\/\S+$/i.test(links[f.key]!.trim()));
-    if (bad) { setError(`${bad.label}: enter a full link starting with https://`); return; }
+    const invalid = validateSocialLinks(links);
+    if (invalid) { setError(invalid); return; }
     setBusy(true);
     try {
       await apiUpdateSocialLinks(Object.fromEntries(FIELDS.map(f => [f.key, (links[f.key] ?? '').trim()])));

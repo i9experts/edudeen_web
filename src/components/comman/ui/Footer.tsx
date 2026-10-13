@@ -10,6 +10,9 @@ import type { SocialNetwork } from '@/api/services/publicPlatformConfig';
 import { apiSubscribeNewsletter } from '../../../api/services/newsletter';
 import { useSellEntry } from '@/hooks/auth/useSellEntry';
 import { isBuyerSession } from '@/hooks/auth/useIsBuyer';
+import { EditableHomeSection } from '@/components/admin-edit/EditableHomeSection';
+import { EditableSocialLinks } from '@/components/admin-edit/EditableInline';
+import { useAdminEdit } from '@/contexts/adminEditCtx';
 
 interface FooterLink {
   label: string;
@@ -254,6 +257,7 @@ export function Footer({ showNewsletter = true }: { showNewsletter?: boolean }) 
   const { config } = usePublicPlatformConfig();
   const socialLinks = config?.socialLinks ?? {};
   const socials = SOCIALS.filter(s => !!socialLinks[s.key]);
+  const { editing } = useAdminEdit();
   const navigate = useNavigate();
   const sellEntry = useSellEntry();
   // "Start Selling" is the only footer link that means seller intent — route
@@ -301,7 +305,8 @@ export function Footer({ showNewsletter = true }: { showNewsletter?: boolean }) 
               {CONTACT_EMAIL}
             </a>
 
-            {socials.length > 0 && (
+            {(socials.length > 0 || editing) && (
+              <EditableSocialLinks className="mt-5 min-h-[40px] w-fit pe-16">
               <div className="flex items-center gap-2.5 mt-5">
                 {socials.map(({ key, label, Glyph }) => (
                   <a
@@ -316,6 +321,7 @@ export function Footer({ showNewsletter = true }: { showNewsletter?: boolean }) 
                   </a>
                 ))}
               </div>
+              </EditableSocialLinks>
             )}
           </div>
 
@@ -325,10 +331,12 @@ export function Footer({ showNewsletter = true }: { showNewsletter?: boolean }) 
 
           <div className="pb-2 sm:pb-0">
             <p className="text-[12px] font-bold text-carbon uppercase tracking-[0.12em] mb-4">Get the App</p>
+            <EditableHomeSection section="apps" label="app links">
             <div className="flex flex-col gap-2.5">
               <AppBadge platform="ios" />
               <AppBadge platform="android" />
             </div>
+            </EditableHomeSection>
           </div>
         </div>
       </div>

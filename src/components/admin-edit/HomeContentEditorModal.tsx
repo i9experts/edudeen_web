@@ -9,10 +9,10 @@ import { usePublicPlatformConfig } from '@/hooks/usePublicPlatformConfig';
 import { useReauth } from '@/contexts/reauthCtx';
 import { inlineEditConfig } from '@/api/services/reauth';
 
-export type HomeSection = 'hero' | 'promise' | 'trust' | 'feature' | 'about' | 'legal';
+export type HomeSection = 'hero' | 'promise' | 'trust' | 'feature' | 'about' | 'legal' | 'apps' | 'creator';
 
 const TITLES: Record<HomeSection, string> = {
-  hero: 'Edit hero', promise: 'Edit tick strip', trust: 'Edit trust items', feature: 'Edit feature block', about: 'Edit About page', legal: 'Edit legal page',
+  hero: 'Edit hero', promise: 'Edit tick strip', trust: 'Edit trust items', feature: 'Edit feature block', about: 'Edit About page', legal: 'Edit legal page', apps: 'Edit app download links', creator: 'Edit seller invitation block',
 };
 
 type Pillar = { title: string; desc: string };
@@ -52,7 +52,9 @@ export default function HomeContentEditorModal({ section, legalKey, legalInitial
       case 'hero': return { heroEyebrow: c.heroEyebrow ?? '', heroTitle: c.heroTitle ?? '', heroHighlight: c.heroHighlight ?? '', heroText: c.heroText ?? '', heroPrimaryLabel: c.heroPrimaryLabel ?? '', heroSecondaryLabel: c.heroSecondaryLabel ?? '', heroBadge: c.heroBadge ?? '', heroImageUrl: c.heroImageUrl ?? '' };
       case 'promise': return { promiseItems: promise.split('\n').map(s => s.trim()).filter(Boolean) };
       case 'trust': return { trustItems: trust.filter(t => t.label.trim()) };
-      case 'feature': return { featureEyebrow: c.featureEyebrow ?? '', featureHeading: c.featureHeading ?? '', featureText: c.featureText ?? '', featureLinkLabel: c.featureLinkLabel ?? '' };
+      case 'feature': return { featureEyebrow: c.featureEyebrow ?? '', featureHeading: c.featureHeading ?? '', featureText: c.featureText ?? '', featureLinkLabel: c.featureLinkLabel ?? '', featuredCategory: c.featuredCategory ?? '' };
+      case 'apps': return { googlePlayUrl: (c.googlePlayUrl ?? '').trim(), appStoreUrl: (c.appStoreUrl ?? '').trim() };
+      case 'creator': return { creatorEyebrow: c.creatorEyebrow ?? '', creatorHeading: c.creatorHeading ?? '', creatorText: c.creatorText ?? '', creatorLinkLabel: c.creatorLinkLabel ?? '' };
       case 'about': return { about: { ...about, pillars: pillars.slice(0, 4) } };
       case 'legal': return { legalPages: { [legalKey ?? '']: { text: legalText, lastUpdated: legalDate } } };
     }
@@ -68,6 +70,10 @@ export default function HomeContentEditorModal({ section, legalKey, legalInitial
 
   const update = async () => {
     setError('');
+    if (section === 'apps') {
+      const bad = (['googlePlayUrl', 'appStoreUrl'] as const).find(k => payload[k] && !/^https?:\/\/\S+$/i.test(payload[k]!));
+      if (bad) { setError(`Enter a full link starting with https:// (${bad === 'googlePlayUrl' ? 'Google Play' : 'App Store'})`); return; }
+    }
     const token = await confirm();
     if (!token) return; // not confirmed: nothing is changed
     setBusy(true);
@@ -116,6 +122,17 @@ export default function HomeContentEditorModal({ section, legalKey, legalInitial
           <Input label="Heading" value={H('featureHeading')} onChange={h('featureHeading')} maxLength={300} />
           <Textarea label="Paragraph" rows={3} value={H('featureText')} onChange={h('featureText')} maxLength={300} />
           <Input label="Link text" value={H('featureLinkLabel')} onChange={h('featureLinkLabel')} maxLength={300} />
+          <Input label="Category this block and the hero's second button open (name)" value={H('featuredCategory')} onChange={h('featuredCategory')} maxLength={300} />
+        </>)}
+        {section === 'apps' && (<>
+          <Input label="Google Play link (https://...)" value={H('googlePlayUrl')} onChange={h('googlePlayUrl')} maxLength={500} />
+          <Input label="App Store link (leave blank until the iOS app is live)" value={H('appStoreUrl')} onChange={h('appStoreUrl')} maxLength={500} />
+        </>)}
+        {section === 'creator' && (<>
+          <Input label="Small heading" value={H('creatorEyebrow')} onChange={h('creatorEyebrow')} maxLength={300} />
+          <Input label="Heading" value={H('creatorHeading')} onChange={h('creatorHeading')} maxLength={300} />
+          <Textarea label="Paragraph" rows={3} value={H('creatorText')} onChange={h('creatorText')} maxLength={300} />
+          <Input label="Link text" value={H('creatorLinkLabel')} onChange={h('creatorLinkLabel')} maxLength={300} />
         </>)}
         {section === 'about' && (<>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

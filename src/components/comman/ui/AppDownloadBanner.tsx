@@ -5,6 +5,7 @@ import {
   Check, Send, Percent,
 } from 'lucide-react';
 import { clsx } from 'clsx';
+import { EditableHomeSection } from '@/components/admin-edit/EditableHomeSection';
 import { StoreBadgeChip, RealAppQr, useAppQrDataUrl, useGooglePlayUrl } from './AppPromoParts';
 import { apiGetPlatformStats, type PlatformStats } from '@/api/services/store';
 import { apiSubscribeNewsletter } from '@/api/services/newsletter';
@@ -495,7 +496,12 @@ function CompactAppDownloadBanner({ className }: { className?: string }) {
   );
 }
 
-export function AppDownloadBanner({ className, variant = 'full' }: { className?: string; variant?: 'full' | 'compact' }) {
+/** Admin in Edit mode can change the store links this banner points to. */
+export function AppDownloadBanner(props: { className?: string; variant?: 'full' | 'compact' }) {
+  return <EditableHomeSection section="apps" label="app download links"><AppDownloadBannerInner {...props} /></EditableHomeSection>;
+}
+
+function AppDownloadBannerInner({ className, variant = 'full' }: { className?: string; variant?: 'full' | 'compact' }) {
   const GOOGLE_PLAY_URL = useGooglePlayUrl();
   // Self-fetches — this banner is reused across several pages that don't already
   // load platform stats, so it can't rely on a prop from the caller. Hooks run

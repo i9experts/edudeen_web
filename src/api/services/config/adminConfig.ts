@@ -168,8 +168,8 @@ export function apiUpdateFxConfig(payload: Partial<FxConfig>) {
 }
 
 /** PUT /api/admin/platform-config/social-links — footer social links (empty string clears one). */
-export function apiUpdateSocialLinks(links: Partial<Record<'facebook' | 'instagram' | 'linkedin' | 'youtube' | 'tiktok' | 'x', string>>) {
-  return client.put<never, { success: boolean; message?: string }>('/api/admin/platform-config/social-links', links);
+export function apiUpdateSocialLinks(links: Partial<Record<'facebook' | 'instagram' | 'linkedin' | 'youtube' | 'tiktok' | 'x', string>>, config?: import('axios').AxiosRequestConfig) {
+  return client.put<never, { success: boolean; message?: string }>('/api/admin/platform-config/social-links', links, config);
 }
 
 /** PUT /api/admin/platform-config/home-content — homepage hero/promise/trust copy (blank = default). */

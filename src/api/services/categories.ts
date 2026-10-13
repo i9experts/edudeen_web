@@ -57,8 +57,8 @@ export function apiGetCategoryById(id: string) {
 }
 
 // Main categories (no parentId) are admin-only server-side; sellers may only add subcategories.
-export function apiAddCategory(payload: CategoryPayload) {
-  return client.post<never, CategoryCreateResponse>(ENDPOINTS.CATEGORIES.ADD, payload).finally(() => invalidateCache('categories:'));
+export function apiAddCategory(payload: CategoryPayload, config?: import('axios').AxiosRequestConfig) {
+  return client.post<never, CategoryCreateResponse>(ENDPOINTS.CATEGORIES.ADD, payload, config).finally(() => invalidateCache('categories:'));
 }
 
 // ── Admin taxonomy management ─────────────────────────────────────────────────
@@ -102,19 +102,20 @@ export async function apiAdminGetCategoryTree(): Promise<CategoryTreeListRespons
   return apiGetCategoryTree();
 }
 
-export function apiAdminUpdateCategory(id: string, payload: UpdateCategoryPayload) {
-  return client.patch<never, CategoryCreateResponse>(ADMIN_CATEGORY_ENDPOINTS.UPDATE(id), payload).finally(() => invalidateCache('categories:'));
+export function apiAdminUpdateCategory(id: string, payload: UpdateCategoryPayload, config?: import('axios').AxiosRequestConfig) {
+  return client.patch<never, CategoryCreateResponse>(ADMIN_CATEGORY_ENDPOINTS.UPDATE(id), payload, config).finally(() => invalidateCache('categories:'));
 }
 
 /** Soft delete. `reassignTo` (a same-level category) receives the products/stores still using it. */
-export function apiAdminDeleteCategory(id: string, reassignTo?: string) {
+export function apiAdminDeleteCategory(id: string, reassignTo?: string, config?: import('axios').AxiosRequestConfig) {
   return client.delete<never, CategoryDeleteResponse>(ADMIN_CATEGORY_ENDPOINTS.DELETE(id), {
+    ...config,
     params: reassignTo ? { reassignTo } : undefined,
   }).finally(() => invalidateCache('categories:'));
 }
 
-export function apiAdminReorderCategories(items: { id: string; sortOrder: number }[]) {
+export function apiAdminReorderCategories(items: { id: string; sortOrder: number }[], config?: import('axios').AxiosRequestConfig) {
   return client.patch<never, { success: boolean; message: string; data: { updated: number } }>(
-    ADMIN_CATEGORY_ENDPOINTS.REORDER, { items },
+    ADMIN_CATEGORY_ENDPOINTS.REORDER, { items }, config,
   ).finally(() => invalidateCache('categories:'));
 }

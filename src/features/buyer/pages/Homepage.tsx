@@ -1,6 +1,7 @@
 import { PlacementBanner } from '@/components/comman/marketplace/PlacementBanner';
 import { usePublicPlatformConfig } from '@/hooks/usePublicPlatformConfig';
 import { EditableHomeSection } from '@/components/admin-edit/EditableHomeSection';
+import { EditableCategories, EditableDeals } from '@/components/admin-edit/EditableInline';
 import { DealsBanner } from '@/components/comman/ui/DealsBanner';
 import { FeatureMaintenance } from '@/components/comman/ui/FeatureMaintenance';
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
@@ -151,6 +152,7 @@ export function Homepage() {
   const [categories, setCategories] = useState<CategoryNode[]>([]);
   const [topStores, setTopStores] = useState<PublicStoreListItem[]>([]);
 
+  const reloadCategories = useCallback(() => { apiGetCategoryTree().then(res => setCategories(res.data ?? [])).catch(() => {}); }, []);
   useEffect(() => {
     let cancelled = false;
     apiGetCategoryTree().then(res => { if (!cancelled) setCategories(res.data ?? []); }).catch(() => {});
@@ -555,7 +557,7 @@ export function Homepage() {
         {/* While an admin has the flash sale / deals under maintenance, their message replaces this block. */}
         <FeatureMaintenance feature="flash_sale">
         {/* ── Live sale campaign (Admin → Marketing → Campaigns), with its banner image ── */}
-        <DealsBanner className="!px-0 !pt-0 mb-12" />
+        <EditableDeals className="min-h-[56px] mb-12"><DealsBanner className="!px-0 !pt-0 mb-12" /></EditableDeals>
 
         {/* ── Flash sale ── */}
         {flashDeals.length > 0 && (
@@ -629,12 +631,14 @@ export function Homepage() {
             sub="Thoughtful ideas for learning, growing and becoming."
           />
 
+          <EditableCategories onChanged={reloadCategories} className="mb-5">
           <CategoryTabs
             tabs={shopTabs}
             activeId={subjectTab && !shopTabs.some(t => t.id === subjectTab.id) ? null : subject}
             onSelect={selectSubject}
             className="!px-0 mb-5"
           />
+          </EditableCategories>
 
           <div className="flex gap-[10px] flex-wrap mb-6 items-center">
             <FiltersButton count={pageFilterCount + drawerFilterCount} onClick={() => setFiltersOpen(true)} />
@@ -789,16 +793,18 @@ export function Homepage() {
           </div>
           </EditableHomeSection>
           {!isBuyer && (
+            <EditableHomeSection section="creator" label="seller invitation block">
             <div className="rounded-[14px] p-7 bg-[#f7f3d9]">
-              <p className="text-[12px] font-bold tracking-[0.15em] uppercase text-brand-royal mb-[13px]">Made by you. Shared with the world.</p>
-              <h2 className="font-serif font-normal text-[27px] leading-[1.2] text-carbon mb-[10px]">Your knowledge can go further.</h2>
+              <p className="text-[12px] font-bold tracking-[0.15em] uppercase text-brand-royal mb-[13px]">{hc.creatorEyebrow || 'Made by you. Shared with the world.'}</p>
+              <h2 className="font-serif font-normal text-[27px] leading-[1.2] text-carbon mb-[10px]">{hc.creatorHeading || 'Your knowledge can go further.'}</h2>
               <p className="text-[14px] text-carbon max-w-[390px] mb-4">
-                Give your teaching ideas a home in the Edudeen Creator Network.
+                {hc.creatorText || 'Give your teaching ideas a home in the Edudeen Creator Network.'}
               </p>
               <button onClick={() => navigate('/sellers')} className={linkButtonClass}>
-                Start selling on Edudeen →
+                {hc.creatorLinkLabel || 'Start selling on Edudeen →'}
               </button>
             </div>
+            </EditableHomeSection>
           )}
         </section>
 

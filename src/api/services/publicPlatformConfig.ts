@@ -23,6 +23,8 @@ export interface HomeContent {
   featureEyebrow?: string; featureHeading?: string; featureText?: string; featureLinkLabel?: string;
   /** Name (or part of it) of the category the hero's second button and the feature block open. */
   featuredCategory?: string;
+  /** 'Made by you' seller invitation block (shown to non-buyers). */
+  creatorEyebrow?: string; creatorHeading?: string; creatorText?: string; creatorLinkLabel?: string;
   googlePlayUrl?: string;
   /** Set once an iOS app is live; until then the App Store badge says 'coming soon'. */
   appStoreUrl?: string;

@@ -94,12 +94,12 @@ export function apiListCampaigns(status?: CampaignStatus) {
   });
 }
 
-export function apiUpdateCampaign(id: string, payload: UpdateCampaignPayload) {
-  return client.put<never, ApiResponse<Campaign>>(ENDPOINTS.MARKETING.ADMIN.CAMPAIGNS.UPDATE(id), payload);
+export function apiUpdateCampaign(id: string, payload: UpdateCampaignPayload, config?: import('axios').AxiosRequestConfig) {
+  return client.put<never, ApiResponse<Campaign>>(ENDPOINTS.MARKETING.ADMIN.CAMPAIGNS.UPDATE(id), payload, config);
 }
 
-export function apiSetCampaignStatus(id: string, status: CampaignStatus) {
-  return client.patch<never, ApiResponse<null>>(ENDPOINTS.MARKETING.ADMIN.CAMPAIGNS.SET_STATUS(id), { status });
+export function apiSetCampaignStatus(id: string, status: CampaignStatus, config?: import('axios').AxiosRequestConfig) {
+  return client.patch<never, ApiResponse<null>>(ENDPOINTS.MARKETING.ADMIN.CAMPAIGNS.SET_STATUS(id), { status }, config);
 }
 
 export function apiDeleteCampaign(id: string) {

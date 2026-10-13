@@ -142,6 +142,14 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
   const [activeIndex, setActiveIndex] = useState(0);
   const [paused, setPaused] = useState(false);
 
+  const [reloadTick, setReloadTick] = useState(0);
+  // An admin saving a campaign from the inline editor refreshes the banner without a page reload.
+  useEffect(() => {
+    const onChanged = () => setReloadTick(t => t + 1);
+    window.addEventListener('edudeen:campaigns-changed', onChanged);
+    return () => window.removeEventListener('edudeen:campaigns-changed', onChanged);
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     // Rotation order comes straight from the backend (admin-set Campaign.order,
@@ -154,7 +162,7 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
       })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, [storeType]);
+  }, [storeType, reloadTick]);
 
   // Auto-rotate through every active campaign, one at a time — pauses while
   // the cursor is over the banner so it never changes mid-read or mid-click.
