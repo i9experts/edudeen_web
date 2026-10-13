@@ -3,7 +3,7 @@ import { useState, Suspense } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
 import {
-  LayoutDashboard, ShoppingBag, Heart, Star,
+  LayoutDashboard, ShoppingBag, Heart, Star, Baby,
   MessageSquare, Landmark, Download, ListChecks, FileSpreadsheet,
   User, Shield, MapPin, Bell, RefreshCw,
   ChevronLeft, PanelLeftClose, PanelLeftOpen, type LucideIcon,
@@ -47,6 +47,7 @@ export function useNavGroups(): NavGroup[] {
         { id: 'downloads', label: t('My Library'), Icon: Download,  path: 'downloads' },
         { id: 'wishlist', label: t('Saved'), Icon: Heart,       path: 'wishlist', badge: wishlistCount },
         { id: 'lists',    label: t('My Lists'), Icon: ListChecks,  path: 'lists' },
+        { id: 'children', label: t('My children'), Icon: Baby,     path: 'children' },
         { id: 'quotes',   label: t('School Quotes'), Icon: FileSpreadsheet, path: 'quotes' },
         { id: 'reviews',  label: t('Reviews'),  Icon: Star,        path: 'reviews' },
         { id: 'payments', label: t('Bank Transfers'), Icon: Landmark, path: 'payments' },

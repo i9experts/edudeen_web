@@ -56,6 +56,14 @@ const LICENSE_LABEL: Record<string, string> = {
   school: 'Whole school',
   commercial: 'Commercial',
 };
+// One plain-language line per license, shown in the "What you get" box.
+const LICENSE_MEANING: Record<string, string> = {
+  personal: 'For you or your own children only',
+  single_classroom: 'You may use it with one class',
+  school: 'Any teacher in one school may use it',
+  commercial: 'You may use it in work you sell',
+};
+const PRINTABLE_FORMATS = ['PDF', 'DOCX', 'DOC'];
 
 function DetailSkeleton() {
   return (
@@ -649,16 +657,25 @@ export function ProductDetail() {
     ...(product.curricula?.length ? [{ label: 'Exam board', value: product.curricula.map(c => CURRICULUM_LABEL[c] ?? c).join(', ') }] : []),
     ...(subCategory ? [{ label: 'Subject area', value: subCategory.name }] : category ? [{ label: 'Subject area', value: category.name }] : []),
     ...attributes.filter(a => a.values.length).map(a => ({ label: a.label, value: a.values.join(', ') })),
-    ...(isDigital && product.digital?.fileCount ? [{ label: 'Files', value: `${product.digital.fileCount} file${product.digital.fileCount > 1 ? 's' : ''}` }] : []),
-    // The license the buyer has picked, if the seller offers several.
-    ...(product.digital?.licenseType ? [{ label: 'License', value: activeVariant?.options?.find(o => o.name === 'License')?.value ?? LICENSE_LABEL[product.digital.licenseType] ?? product.digital.licenseType }] : []),
+    // Digital delivery facts (files / license / downloads) live in the "What you get" box above the fold;
+    // they are not repeated in this chip list, only in the Details tab (via `fileDetails`).
+    ...(!isDigital ? [{ label: 'Delivery', value: 'Shipped by the seller' }] : []),
+  ] : [];
+
+  // The license the buyer has picked, if the seller offers several.
+  const licenseValue = product?.digital?.licenseType
+    ? (activeVariant?.options?.find(o => o.name === 'License')?.value ?? LICENSE_LABEL[product.digital.licenseType] ?? product.digital.licenseType)
+    : null;
+  const fileDetails: { label: string; value: string }[] = product && isDigital ? [
+    ...(product.digital?.fileCount ? [{ label: 'Files', value: `${product.digital.fileCount} file${product.digital.fileCount > 1 ? 's' : ''}` }] : []),
+    ...(licenseValue ? [{ label: 'License', value: licenseValue }] : []),
     ...(product.digital?.downloadLimit ? [{ label: 'Downloads', value: product.digital.downloadLimit === 'unlimited' ? 'Unlimited' : `${product.digital.downloadLimit} times` }] : []),
-    { label: 'Delivery', value: isDigital ? 'Instant download' : 'Shipped by the seller' },
   ] : [];
 
   const specs: { label: string; value: string }[] = product ? [
     { label: 'Product Type', value: typeLabel },
     ...learningDetails.filter(d => d.label !== 'Delivery'),
+    ...fileDetails,
     ...(activeVariant?.sku ? [{ label: 'SKU', value: activeVariant.sku }] : []),
     ...(activeVariant?.options ?? []).map(o => ({ label: o.name, value: o.value })),
     ...(activeVariant?.shippingWeight ? [{ label: 'Weight', value: activeVariant.shippingWeight }] : []),
@@ -799,6 +816,48 @@ export function ProductDetail() {
                       )}
                     </div>
                   )}
+
+                  {/* What you get — the one place digital files / format / license / download facts are shown above the fold. */}
+                  {isDigital && (fileDetails.length > 0 || (product.digital?.fileFormats?.length ?? 0) > 0) && (() => {
+                    const formats = product.digital?.fileFormats ?? [];
+                    const printable = formats.some(f => PRINTABLE_FORMATS.includes(f));
+                    const fileCount = product.digital?.fileCount ?? 0;
+                    const dlLimit = product.digital?.downloadLimit;
+                    return (
+                      <div className="rounded-xl border border-bone bg-cream/60 px-4 py-3 mb-3">
+                        <p className="text-[12px] font-bold uppercase tracking-[0.06em] text-slate mb-2">{t('What you get')}</p>
+                        <ul className="flex flex-col gap-[6px] text-[12.5px] text-charcoal">
+                          {(formats.length > 0 || fileCount > 0) && (
+                            <li className="flex items-start gap-2">
+                              <FileText size={13} className="text-brand-orange mt-[2px] shrink-0" />
+                              <span>
+                                {formats.length > 0 && <span className="font-semibold">{formats.join(' · ')}</span>}
+                                {fileCount > 0 && <span className="text-slate">{formats.length > 0 ? ' · ' : ''}{fileCount} {fileCount > 1 ? t('files') : t('file')}</span>}
+                              </span>
+                            </li>
+                          )}
+                          {printable && (
+                            <li className="flex items-start gap-2">
+                              <CheckCircle size={13} className="text-success mt-[2px] shrink-0" /> <span>{t('Printable')}</span>
+                            </li>
+                          )}
+                          {licenseValue && (
+                            <li className="flex items-start gap-2">
+                              <ShieldCheck size={13} className="text-brand-orange mt-[2px] shrink-0" />
+                              <span>
+                                <span className="font-semibold">{licenseValue}</span>
+                                {LICENSE_MEANING[product.digital!.licenseType] && <span className="text-slate"> — {t(LICENSE_MEANING[product.digital!.licenseType])}</span>}
+                              </span>
+                            </li>
+                          )}
+                          <li className="flex items-start gap-2">
+                            <Download size={13} className="text-brand-orange mt-[2px] shrink-0" />
+                            <span>{t('Instant download')}{dlLimit ? <span className="text-slate"> · {dlLimit === 'unlimited' ? t('Unlimited downloads') : `${dlLimit} ${t('downloads')}`}</span> : null}</span>
+                          </li>
+                        </ul>
+                      </div>
+                    );
+                  })()}
 
                   <VariantSelector variants={variants} selected={activeVariant} onSelect={setSelectedVariant} />
 

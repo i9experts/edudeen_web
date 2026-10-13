@@ -44,6 +44,8 @@ export interface DigitalProduct {
   previewAvailable?:     boolean;
   /** Public views strip `files` and send only how many there are. */
   fileCount?:            number;
+  /** Upper-case file extensions of the deliverable (PDF, DOCX, MP4...) — public views only. */
+  fileFormats?:          string[];
   /** A free sample exists — fetch it with apiGetProductSample. */
   sampleAvailable?:      boolean;
   sampleName?:           string | null;
@@ -127,6 +129,11 @@ export interface MarketplaceProduct {
 export interface ProductsByCategoryResponse {
   message: string;
   success: boolean;
+  /** Typo tolerance: the search found nothing for `originalQuery`, so these are results for `correctedQuery`. */
+  correctedQuery?: string;
+  originalQuery?: string;
+  /** Few/no results: a likely spelling the buyer may have meant. */
+  didYouMean?: string;
   data: {
     total:    number;
     page:     number | string;
@@ -171,6 +178,8 @@ export function apiGetAllProducts(
 
 /** Everything the marketplace browse endpoint can filter on, as named fields. */
 export interface BrowseParams {
+  /** Skip typo correction ("Search instead for …"). */
+  exact?:         boolean;
   q?:             string;
   categoryId?:    string;
   productType?:   'physical' | 'digital' | 'educational';
@@ -210,8 +219,16 @@ export function apiBrowseProducts(p: BrowseParams) {
   if (p.curriculum) params.set('curriculum', p.curriculum);
   if (p.age != null) params.set('age', String(p.age));
   if (p.featured) params.set('featured', '1');
+  if (p.exact) params.set('exact', '1');
   return client.get<never, ProductsByCategoryResponse>(
     `${ENDPOINTS.MARKETPLACE.PRODUCTS_BY_CATEGORY}?${params.toString()}`,
+  );
+}
+
+/** GET /api/products/compare?ids=a,b,c — public, max 4, same sanitised shape as listings. */
+export function apiCompareProducts(ids: string[]) {
+  return client.get<never, { success: boolean; message?: string; data: { products: MarketplaceProduct[] } }>(
+    `/api/products/compare?ids=${ids.slice(0, 4).map(encodeURIComponent).join(',')}`,
   );
 }
 

@@ -1,20 +1,55 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Download, Clock, Star, Search, LibraryBig, PlayCircle } from 'lucide-react';
+import { Download, Clock, Star, Search, LibraryBig, PlayCircle, Mail, Loader2, Ban, CalendarX2 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { ProductCoverFallback } from '@/components/comman/marketplace/ProductCoverFallback';
 import { Card, EmptyState, SkeletonBox, PageHeader, Button } from '@/components/comman/ui';
-import { apiGetMyLibrary, type LibraryItem } from '@/api/services/orders';
+import { apiGetMyLibrary, apiResendDownloadLink, type LibraryItem } from '@/api/services/orders';
 import { EDUCATION_LEVELS } from '@/api/services/product';
 import { CURRICULUM_LABEL, LICENSE_LABEL } from '@/constants/learning';
 import { DigitalFileDownloads } from '@/features/buyer/components/DigitalFileDownloads';
 import { JoinLiveClassButton } from '@/features/buyer/components/JoinLiveClassButton';
+import { NextUpRail } from '@/features/buyer/components/NextUpRail';
 
 // "My Library" — every digital resource the buyer owns, findable by subject,
 // grade or name, instead of a flat list buried in order history.
 
 const GRADE_LABEL = new Map<string, string>(EDUCATION_LEVELS.map(l => [l.value, l.label]));
 type GroupBy = 'subject' | 'grade' | 'none';
+type Sort = 'recent' | 'name';
+const RECENT_DAYS = 30;
+
+const typesOf = (i: LibraryItem): string[] => {
+  if (i.deliveryFormat === 'course') return ['Course'];
+  if (i.deliveryFormat === 'live_class') return ['Live class'];
+  return (i.fileTypes ?? []).map(e => e.toUpperCase());
+};
+function formatSize(bytes?: number) {
+  if (!bytes || bytes <= 0) return '';
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+// "Lost my link?" - emails a My Library link for this purchase to the account email.
+function ResendLink({ orderId, productId }: { orderId: string; productId: string }) {
+  const [state, setState] = useState<'idle' | 'busy' | 'sent'>('idle');
+  const [error, setError] = useState('');
+  const send = async () => {
+    setState('busy'); setError('');
+    try { await apiResendDownloadLink(orderId, productId); setState('sent'); }
+    catch (err) { setState('idle'); setError(err instanceof Error ? err.message : 'Could not send the email. Please try again.'); }
+  };
+  return (
+    <div className="flex flex-col items-start gap-1">
+      <button type="button" onClick={send} disabled={state !== 'idle'}
+        className={clsx('inline-flex items-center gap-1.5 text-[12px] font-semibold bg-transparent border-none p-0', state === 'idle' ? 'text-brand-orange cursor-pointer hover:underline' : 'text-slate cursor-default')}>
+        {state === 'busy' ? <Loader2 size={11} className="animate-spin" /> : <Mail size={11} />}
+        {state === 'sent' ? 'Sent to your email' : 'Re-send download link to my email'}
+      </button>
+      {error && <p className="text-[12px] text-error leading-tight">{error}</p>}
+    </div>
+  );
+}
 
 function ItemImg({ src, name }: { src: string | null; name: string }) {
   const [err, setErr] = useState(false);
@@ -35,6 +70,9 @@ export function Downloads() {
   const [subject, setSubject] = useState('');
   const [grade, setGrade] = useState('');
   const [groupBy, setGroupBy] = useState<GroupBy>('subject');
+  const [type, setType] = useState('');
+  const [sort, setSort] = useState<Sort>('recent');
+  const [recentOnly, setRecentOnly] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -49,13 +87,21 @@ export function Downloads() {
   const subjects = useMemo(() => [...new Set(items.map(subjectOf))].sort(), [items]);
   const grades = useMemo(() => [...new Set(items.map(gradeOf))].sort(), [items]);
 
+  const types = useMemo(() => [...new Set(items.flatMap(typesOf))].sort(), [items]);
+
   const filtered = useMemo(() => {
     const term = q.trim().toLowerCase();
-    return items.filter(i =>
+    const since = Date.now() - RECENT_DAYS * 86_400_000;
+    const list = items.filter(i =>
       (!term || i.name.toLowerCase().includes(term) || (i.storeName ?? '').toLowerCase().includes(term))
       && (!subject || subjectOf(i) === subject)
-      && (!grade || gradeOf(i) === grade));
-  }, [items, q, subject, grade]);
+      && (!grade || gradeOf(i) === grade)
+      && (!type || typesOf(i).includes(type))
+      && (!recentOnly || new Date(i.purchasedAt).getTime() >= since));
+    return sort === 'name'
+      ? [...list].sort((a, b) => a.name.localeCompare(b.name))
+      : [...list].sort((a, b) => new Date(b.purchasedAt).getTime() - new Date(a.purchasedAt).getTime());
+  }, [items, q, subject, grade, type, recentOnly, sort]);
 
   const groups = useMemo(() => {
     if (groupBy === 'none') return [['All resources', filtered] as const];
@@ -65,7 +111,7 @@ export function Downloads() {
     return [...map.entries()].sort(([a], [b]) => a.localeCompare(b));
   }, [filtered, groupBy]);
 
-  const ready = items.filter(i => i.isPaid).length;
+  const ready = items.filter(i => i.isPaid && !i.unavailable).length;
 
   return (
     <div>
@@ -95,6 +141,20 @@ export function Downloads() {
               <option value="">All grades</option>
               {grades.map(g => <option key={g} value={g}>{g}</option>)}
             </select>
+            {types.length > 1 && (
+              <select id="library-type" aria-label="Type" value={type} onChange={e => setType(e.target.value)} className="rounded-lg border border-bone px-3 py-[8px] text-[13px] bg-white">
+                <option value="">All types</option>
+                {types.map(x => <option key={x} value={x}>{x}</option>)}
+              </select>
+            )}
+            <select id="library-sort" aria-label="Sort by" value={sort} onChange={e => setSort(e.target.value as Sort)} className="rounded-lg border border-bone px-3 py-[8px] text-[13px] bg-white">
+              <option value="recent">Newest first</option>
+              <option value="name">Name A-Z</option>
+            </select>
+            <button type="button" aria-pressed={recentOnly} onClick={() => setRecentOnly(v => !v)}
+              className={clsx('rounded-lg border px-3 py-[7px] text-[12.5px] cursor-pointer', recentOnly ? 'border-carbon bg-carbon text-white' : 'border-bone bg-white text-graphite hover:bg-cream')}>
+              Last 30 days
+            </button>
             <div role="group" aria-label="Group by" className="ms-auto inline-flex rounded-lg border border-bone overflow-hidden">
               {(['subject', 'grade', 'none'] as GroupBy[]).map(g => (
                 <button key={g} type="button" aria-pressed={groupBy === g} onClick={() => setGroupBy(g)}
@@ -140,6 +200,13 @@ export function Downloads() {
                           <p className="text-[12px] text-slate mt-[2px]">
                             {[item.storeName, gradeOf(item), item.licenseType ? LICENSE_LABEL[item.licenseType] : null, ...item.curricula.slice(0, 2).map(c => CURRICULUM_LABEL[c] ?? c)].filter(Boolean).join(' · ')}
                           </p>
+                          {(typesOf(item).length > 0 || item.totalSize) ? (
+                            <p className="mt-1 flex flex-wrap items-center gap-1.5">
+                              {typesOf(item).map(x => <span key={x} className="rounded bg-[#eef0ff] px-1.5 py-[1px] text-[12px] font-bold text-[#3851d1]">{x}</span>)}
+                              {item.fileCount > 1 && <span className="text-[12px] text-slate">{item.fileCount} files</span>}
+                              {formatSize(item.totalSize) && <span className="text-[12px] text-slate">{formatSize(item.totalSize)}</span>}
+                            </p>
+                          ) : null}
                           <p className="text-[12px] text-slate mt-[2px]">
                             Bought {new Date(item.purchasedAt).toLocaleDateString('en-PK', { day: 'numeric', month: 'short', year: 'numeric' })} ·{' '}
                             <Link to={`/account/orders/${item.orderId}`} className="text-slate hover:text-brand-orange underline">Order {item.orderNumber}</Link>
@@ -152,7 +219,17 @@ export function Downloads() {
                         </div>
                       </div>
                       <div className="shrink-0 ps-[76px] sm:ps-0">
-                        {item.isPaid ? (
+                        {item.unavailable === 'removed' ? (
+                          <div className="max-w-[240px] rounded-[9px] bg-[#fff0f0] px-3 py-2 text-[12px] text-error">
+                            <p className="flex items-center gap-1.5 font-semibold"><Ban size={12} /> No longer available</p>
+                            <p className="mt-1 text-graphite">Edudeen removed this resource, so it cannot be downloaded. Contact support if you think this is a mistake.</p>
+                          </div>
+                        ) : item.unavailable === 'expired' ? (
+                          <div className="max-w-[240px] rounded-[9px] bg-[#fff4dc] px-3 py-2 text-[12px] text-[#b36200]">
+                            <p className="flex items-center gap-1.5 font-semibold"><CalendarX2 size={12} /> Download time ended</p>
+                            <p className="mt-1 text-graphite">The download period set by the seller has ended. Message the seller to ask for access again.</p>
+                          </div>
+                        ) : item.isPaid ? (
                           <div className="flex flex-col items-start gap-2">
                             {item.deliveryFormat === 'course' && (
                               <Link to={`/course/${item.slug ?? item.productId}`} className="inline-flex items-center gap-1.5 rounded-lg bg-brand-royal text-white px-3 py-[7px] text-[12.5px] font-bold no-underline">
@@ -161,6 +238,7 @@ export function Downloads() {
                             )}
                             {item.deliveryFormat === 'live_class' && <JoinLiveClassButton productId={item.productId} startsAt={item.liveStartsAt} />}
                             {(item.deliveryFormat === 'download' || !item.deliveryFormat || item.fileCount > 0) && <DigitalFileDownloads orderId={item.orderId} productId={item.productId} />}
+                            <ResendLink orderId={item.orderId} productId={item.productId} />
                           </div>
                         ) : (
                           <span className="inline-flex items-center gap-[5px] px-2.5 py-[5px] rounded-[7px] text-[12px] font-semibold bg-[#fff4dc] text-[#b36200]">
@@ -176,6 +254,14 @@ export function Downloads() {
           </div>
         )}
       </Card>
+      {!loading && items.length > 0 && (
+        <div className="mt-4">
+          <NextUpRail
+            seedProductId={[...items].sort((a, b) => new Date(b.purchasedAt).getTime() - new Date(a.purchasedAt).getTime())[0]?.productId}
+            ownedProductIds={items.map(i => i.productId)}
+          />
+        </div>
+      )}
       {!loading && items.length > 0 && (
         <p className="text-[12px] text-slate mt-3 inline-flex items-center gap-1.5"><Download size={12} /> Files stay here for good — download them again whenever you need.</p>
       )}

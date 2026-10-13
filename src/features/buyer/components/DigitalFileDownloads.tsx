@@ -16,6 +16,19 @@ function openDownload(endpoint: string, token: string) {
   window.open(buildDownloadHref(endpoint, token), '_blank');
 }
 
+/** Starts one file download without opening a tab (the response is an attachment), so several can run in a row. */
+function clickDownload(endpoint: string, token: string) {
+  const a = document.createElement('a');
+  a.href = buildDownloadHref(endpoint, token);
+  a.rel = 'noopener';
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+const extOf = (name?: string) => (name?.includes('.') ? name.split('.').pop()!.toUpperCase().slice(0, 5) : '');
+
 // ─────────────────────────────────────────────────────────────────────────────
 // DigitalFileDownloads — every file of a purchased digital product.
 //
@@ -39,6 +52,7 @@ export function DigitalFileDownloads({
   const [open, setOpen]       = useState(false);
   const [loading, setLoading] = useState(false);
   const [busyIdx, setBusyIdx] = useState<number | null>(null);
+  const [allBusy, setAllBusy] = useState(false);
   const [error, setError]     = useState('');
 
   const loadFiles = async () => {
@@ -75,6 +89,24 @@ export function DigitalFileDownloads({
     }
   };
 
+  // No zip helper exists on the API, so "all files" starts each download in turn (fresh tokens, short gap
+  // so browsers do not drop them). Each file counts as one download, same as clicking it.
+  const downloadAll = async () => {
+    setAllBusy(true);
+    setError('');
+    try {
+      const res = await apiGetDownloadFiles(orderId, productId);
+      for (const f of res.data.files ?? []) {
+        clickDownload(f.endpoint, f.token);
+        await new Promise(r => setTimeout(r, 900));
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch download link.');
+    } finally {
+      setAllBusy(false);
+    }
+  };
+
   const multi = !!files && files.length > 1;
 
   return (
@@ -96,6 +128,16 @@ export function DigitalFileDownloads({
       </button>
 
       {multi && open && (
+        <button
+          type="button" onClick={downloadAll} disabled={allBusy || busyIdx !== null}
+          className={clsx('flex items-center gap-1.5 px-3 min-h-8 rounded-[7px] text-[12px] font-semibold border-none bg-[#3851d1] text-white', allBusy ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer')}
+        >
+          {allBusy ? <Loader2 size={11} className="animate-spin" /> : <Download size={11} />}
+          {allBusy ? 'Starting downloads…' : 'Download all files'}
+        </button>
+      )}
+
+      {multi && open && (
         <ul className="flex flex-col gap-1 w-full min-w-[220px] max-w-[320px] list-none p-0 m-0">
           {files!.map(file => (
             <li
@@ -104,6 +146,7 @@ export function DigitalFileDownloads({
             >
               <span className="flex items-center gap-1.5 min-w-0">
                 <FileText size={12} className="text-slate shrink-0" />
+                {extOf(file.fileName) && <span className="shrink-0 rounded bg-[#f2f0ea] px-1 text-[12px] font-bold text-slate">{extOf(file.fileName)}</span>}
                 <span className="min-w-0">
                   <span className="block text-[12px] font-medium text-charcoal truncate" title={file.fileName}>
                     {file.fileName || `File ${file.index + 1}`}

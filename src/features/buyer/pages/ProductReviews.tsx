@@ -5,9 +5,10 @@ import {
 import { StarRating, Button, Badge, EmptyState, SkeletonBox, Pagination, FilterDropdown, Modal } from '@/components/comman/ui';
 import { useFocusTrap } from '@/components/comman/ui/useFocusTrap';
 import { TokenStorage } from '@/api/services/auth';
-import { apiGetProductReviews, apiDeleteReview, apiToggleReviewHelpful, type ProductReviewEntry, type ProductReviewStats } from '@/api/services/rating';
+import { apiGetProductReviews, apiDeleteReview, apiToggleReviewHelpful, type ProductReviewEntry, type ProductReviewStats, type ReviewUsedFor } from '@/api/services/rating';
 import { ReviewFormModal } from '../components/ReviewFormModal';
 import { useToast } from '@/contexts/ToastContext';
+import { REVIEW_USED_FOR, REVIEW_USED_FOR_LABEL } from '../utils/reviewUsedFor';
 
 const AVATAR_PALETTE = [
   ['#FDECEA', '#C0392B'], ['#EAF3FB', '#2156A8'], ['#EAF7EF', '#1E7A3C'],
@@ -121,12 +122,15 @@ interface RatingSummaryCardProps {
   withPhotosOnly: boolean;
   hasPhotoReviews: boolean;
   filtersActive: boolean;
+  usedForOptions: ReviewUsedFor[];
+  usedForFilter: ReviewUsedFor | null;
+  onSelectUsedFor: (v: ReviewUsedFor) => void;
   onSelectRating: (star: number) => void;
   onToggleWithPhotos: () => void;
   onClearFilters: () => void;
 }
 function RatingSummaryCard({
-  stats, ratingFilter, withPhotosOnly, hasPhotoReviews, filtersActive, onSelectRating, onToggleWithPhotos, onClearFilters,
+  stats, ratingFilter, withPhotosOnly, hasPhotoReviews, filtersActive, usedForOptions, usedForFilter, onSelectUsedFor, onSelectRating, onToggleWithPhotos, onClearFilters,
 }: RatingSummaryCardProps) {
   return (
     <div className="rounded-2xl bg-white border border-bone p-5 sm:p-6 mb-6">
@@ -173,6 +177,20 @@ function RatingSummaryCard({
             >
               <ImageIcon size={12} /> With Photos
             </button>
+          )}
+          {usedForOptions.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-1">
+              {REVIEW_USED_FOR.filter(o => usedForOptions.includes(o.value)).map(o => (
+                <button
+                  key={o.value}
+                  onClick={() => onSelectUsedFor(o.value)}
+                  aria-pressed={usedForFilter === o.value}
+                  className={`text-[12px] font-semibold rounded-lg px-[10px] py-[5px] border cursor-pointer transition-colors ${usedForFilter === o.value ? 'bg-brand-pale-orange text-brand-deep-orange border-transparent' : 'bg-white text-slate border-bone hover:bg-cream'}`}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
           )}
           {filtersActive && (
             <button
@@ -238,6 +256,7 @@ function ReviewCard({ review: r, storeName, onToggleHelpful, onEdit, onDelete, o
             <div className="flex items-center gap-2 mt-[3px]">
               {r.rating != null && <StarRating value={r.rating} size={12} />}
               <span className="text-[12px] text-slate">{timeAgo(r.createdAt)}</span>
+              {r.usedFor && <span className="text-[12px] font-semibold text-graphite bg-cream border border-bone rounded-full px-2 py-[1px]">Used: {REVIEW_USED_FOR_LABEL[r.usedFor]}</span>}
             </div>
           </div>
         </div>
@@ -311,6 +330,7 @@ export function ProductReviewsSection({ productId, storeName, canReview }: Produ
   const [ratingFilter, setRatingFilter] = useState<number | null>(null);
   const [sortBy, setSortBy] = useState<SortOption>('recent');
   const [withPhotosOnly, setWithPhotosOnly] = useState(false);
+  const [usedForFilter, setUsedForFilter] = useState<ReviewUsedFor | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
@@ -357,15 +377,25 @@ export function ProductReviewsSection({ productId, storeName, canReview }: Produ
     let list = allReviews;
     if (ratingFilter) list = list.filter(r => r.rating === ratingFilter);
     if (withPhotosOnly) list = list.filter(r => r.media?.length > 0);
+    if (usedForFilter) list = list.filter(r => r.usedFor === usedForFilter);
     return [...list].sort((a, b) => {
       if (sortBy === 'highest') return (b.rating ?? 0) - (a.rating ?? 0);
       if (sortBy === 'lowest') return (a.rating ?? 0) - (b.rating ?? 0);
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
-  }, [allReviews, ratingFilter, withPhotosOnly, sortBy]);
+  }, [allReviews, ratingFilter, withPhotosOnly, usedForFilter, sortBy]);
 
+  const usedForOptions = useMemo(
+    () => Array.from(new Set(allReviews.map(r => r.usedFor).filter((v): v is ReviewUsedFor => !!v))),
+    [allReviews],
+  );
   const pageItems = filteredSorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-  const filtersActive = ratingFilter !== null || withPhotosOnly;
+  const filtersActive = ratingFilter !== null || withPhotosOnly || usedForFilter !== null;
+
+  function selectUsedFor(v: ReviewUsedFor) {
+    setUsedForFilter(prev => (prev === v ? null : v));
+    setPage(1);
+  }
 
   function selectRating(star: number) {
     setRatingFilter(prev => (prev === star ? null : star));
@@ -385,6 +415,7 @@ export function ProductReviewsSection({ productId, storeName, canReview }: Produ
   function clearFilters() {
     setRatingFilter(null);
     setWithPhotosOnly(false);
+    setUsedForFilter(null);
     setPage(1);
   }
 
@@ -460,6 +491,9 @@ export function ProductReviewsSection({ productId, storeName, canReview }: Produ
           withPhotosOnly={withPhotosOnly}
           hasPhotoReviews={hasPhotoReviews}
           filtersActive={filtersActive}
+          usedForOptions={usedForOptions}
+          usedForFilter={usedForFilter}
+          onSelectUsedFor={selectUsedFor}
           onSelectRating={selectRating}
           onToggleWithPhotos={toggleWithPhotos}
           onClearFilters={clearFilters}
@@ -531,6 +565,7 @@ export function ProductReviewsSection({ productId, storeName, canReview }: Produ
           initialRating={editingReview.rating ?? 0}
           initialComment={editingReview.comments?.[0]?.text ?? ''}
           initialMedia={editingReview.media}
+          initialUsedFor={editingReview.usedFor ?? null}
           onClose={() => setEditingReview(null)}
           onSaved={() => { setEditingReview(null); setRefreshKey(k => k + 1); }}
         />

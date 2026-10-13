@@ -9,8 +9,12 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { useWishlistContext } from '@/contexts/WishlistContext';
 import { useCategoryTree, categoryPath } from '@/hooks/marketplace/useCategoryTree';
 import { apiBrowseProducts, type MarketplaceProduct, type MarketplaceSortBy } from '@/api/services/marketplace';
+import { apiGetTrendingSearches } from '@/api/services/search';
+import { useT } from '@/contexts/languageCtx';
 import { EDUCATION_LEVELS } from '@/api/services/product';
 import { CURRICULA, CURRICULUM_LABEL } from '@/constants/learning';
+import { ShoppingForBar } from '@/features/buyer/components/ShoppingForBar';
+import { useChildren, childLevelLabel } from '@/hooks/useChildren';
 import type { CategoryNode } from '@/api/services/categories';
 import { BuyerNavbar, Breadcrumb, Footer, EmptyState } from '@/components/comman/ui';
 import { ResourceCard, ResourceCardSkeleton } from '@/components/comman/marketplace/ResourceCard';
@@ -51,12 +55,13 @@ function useBrowseState() {
     max: num(params.get('max')),
     rating: num(params.get('rating')),
     free: params.get('free') === '1',
+    exact: params.get('exact') === '1',
     board: params.get('board') ?? '',
     age: num(params.get('age')),
     sort: (params.get('sort') ?? '') as MarketplaceSortBy | '',
     page: Math.max(1, num(params.get('page')) ?? 1),
   };
-  const update = useCallback((patch: Record<string, string | number | boolean | undefined | null>, keepPage = false) => {
+  const update = useCallback((patch: Record<string, string | number | boolean | undefined | null>, keepPage = false, replace = false) => {
     setParams(prev => {
       const next = new URLSearchParams(prev);
       for (const [k, v] of Object.entries(patch)) {
@@ -65,7 +70,7 @@ function useBrowseState() {
       }
       if (!keepPage) next.delete('page');
       return next;
-    });
+    }, replace ? { replace: true } : undefined);
   }, [setParams]);
   return { state, update, params };
 }
@@ -87,6 +92,7 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
   bannerPlacement?: PromotionPlacement;
 }) {
   const navigate = useNavigate();
+  const t = useT();
   const { state, update } = useBrowseState();
   const { tree } = useCategoryTree();
   const { isWishlisted, wishlisting, toggleWishlist } = useWishlistContext();
@@ -97,6 +103,17 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
   const [error, setError] = useState('');
   const [reload, setReload] = useState(0);
   const [view, setView] = useBrowseView();
+  /** Typo tolerance info from the API: results are for `corrected` (typed `original`), or `didYouMean` is a hint. */
+  const [fix, setFix] = useState<{ corrected?: string; original?: string; didYouMean?: string }>({});
+
+  // "Shopping for" a child: pre-apply their level once per selected child (as a normal, removable grade filter).
+  const { selected: activeChild } = useChildren();
+  const appliedChild = useRef('');
+  useEffect(() => {
+    if (!activeChild || fixedGrade || appliedChild.current === activeChild._id) return;
+    appliedChild.current = activeChild._id;
+    if (!state.grade && state.age == null) update({ grade: activeChild.educationLevel }, false, true);
+  }, [activeChild, fixedGrade, state.grade, state.age, update]);
 
   const effectiveCategory = categoryId ?? (state.cat || undefined);
   const maxPrice = state.free ? 0 : state.max;
@@ -116,6 +133,7 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
       sortBy: state.sort || undefined,
       curriculum: state.board || undefined,
       age: state.age,
+      exact: state.exact,
       page: state.page,
       limit: PAGE_SIZE,
     })
@@ -123,11 +141,12 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
         if (cancelled) return;
         setProducts(res.data?.products ?? []);
         setTotal(res.data?.total ?? 0);
+        setFix({ corrected: res.correctedQuery, original: res.originalQuery, didYouMean: res.didYouMean });
       })
       .catch(err => { if (!cancelled) setError(err instanceof Error ? err.message : 'Could not load resources.'); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [state.q, effectiveCategory, state.type, state.grade, state.min, maxPrice, state.free, state.rating, state.sort, state.board, state.age, state.page, reload, fixedGrade]);
+  }, [state.q, effectiveCategory, state.type, state.grade, state.min, maxPrice, state.free, state.rating, state.sort, state.board, state.age, state.exact, state.page, reload, fixedGrade]);
 
   // Back to the top of the results when the page number changes.
   useEffect(() => { window.document.getElementById('browse-top')?.scrollIntoView({ block: 'start' }); }, [state.page]);
@@ -152,7 +171,7 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
     ...(showCategoryFilter && state.cat ? [{ key: 'cat', label: catName ?? 'Category', clear: () => update({ cat: undefined }) }] : []),
     ...(state.board ? [{ key: 'board', label: CURRICULUM_LABEL[state.board] ?? state.board, clear: () => update({ board: undefined }) }] : []),
     ...(state.age != null ? [{ key: 'age', label: `For age ${state.age}`, clear: () => update({ age: undefined }) }] : []),
-    ...(state.grade && !fixedGrade ? [{ key: 'grade', label: GRADE_LABEL.get(state.grade) ?? state.grade, clear: () => update({ grade: undefined }) }] : []),
+    ...(state.grade && !fixedGrade ? [{ key: 'grade', label: activeChild && state.grade === activeChild.educationLevel ? `${t('For')} ${activeChild.name} (${childLevelLabel(activeChild)})` : GRADE_LABEL.get(state.grade) ?? state.grade, clear: () => update({ grade: undefined }) }] : []),
     ...(state.type ? [{ key: 'type', label: PARAM_TO_TYPE[state.type] ?? state.type, clear: () => update({ type: undefined }) }] : []),
     ...(state.free ? [{ key: 'free', label: 'Free only', clear: () => update({ free: undefined }) }] : []),
     ...(!state.free && (state.min != null || state.max != null)
@@ -170,6 +189,7 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
       <div className="sticky top-[var(--navbar-top,0px)] z-50"><BuyerNavbar /></div>
 
       <main id="browse-top" className="max-w-[1480px] mx-auto px-[5%] md:px-[4%] pt-4 md:pt-6 pb-12 scroll-mt-28">
+        <ShoppingForBar className="mb-3" />
         <Breadcrumb className="mb-1" items={breadcrumb} />
 
         {bannerPlacement && <PlacementBanner placement={bannerPlacement} className="mb-5" />}
@@ -191,6 +211,20 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
               </Link>
             ))}
           </nav>
+        )}
+
+        {state.q && fix.corrected && !loading && (
+          <p className="mb-3 text-[14.5px] text-graphite" role="status">
+            {t('Showing results for')} <b className="text-carbon">{fix.corrected}</b>.{' '}
+            {t('Search instead for')}{' '}
+            <button type="button" onClick={() => update({ exact: true })} className="p-0 bg-transparent border-none cursor-pointer text-brand-royal font-semibold underline underline-offset-2">{fix.original ?? state.q}</button>
+          </p>
+        )}
+        {state.q && !fix.corrected && fix.didYouMean && !loading && (
+          <p className="mb-3 text-[14.5px] text-graphite" role="status">
+            {t('Did you mean')}{' '}
+            <Link to={`/search?q=${encodeURIComponent(fix.didYouMean)}`} className="text-brand-royal font-semibold underline underline-offset-2">{fix.didYouMean}</Link>?
+          </p>
         )}
 
         {/* Toolbar */}
@@ -247,12 +281,15 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
             </div>
           )
         ) : products.length === 0 ? (
-          <EmptyState
-            icon={<SearchX size={28} className="text-slate" />}
-            title={state.q ? `Nothing found for “${state.q}”` : 'No resources here yet'}
-            description={chips.length ? 'Try removing a filter.' : emptyHint}
-            action={chips.length ? { label: 'Clear filters', onClick: clearAll } : { label: 'Browse all resources', onClick: () => navigate('/') }}
-          />
+          <>
+            <EmptyState
+              icon={<SearchX size={28} className="text-slate" />}
+              title={state.q ? `Nothing found for “${state.q}”` : 'No resources here yet'}
+              description={chips.length ? 'Try removing a filter.' : emptyHint}
+              action={chips.length ? { label: 'Clear filters', onClick: clearAll } : { label: 'Browse all resources', onClick: () => navigate('/') }}
+            />
+            {state.q && <SearchEmptyHelp didYouMean={fix.didYouMean} categories={tree} />}
+          </>
         ) : (
           <div className={view === 'list' ? 'border-t border-bone' : 'grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-4 md:gap-x-6 gap-y-8'}>
             {products.map((p, i) => {
@@ -441,6 +478,38 @@ function ViewToggle({ value, onChange }: { value: BrowseView; onChange: (v: Brow
     <div role="group" aria-label="View" className="inline-flex items-center gap-1 p-[3px] rounded-full border border-bone bg-white">
       {opt('list', List, 'List view')}
       {opt('grid', LayoutGrid, 'Grid view')}
+    </div>
+  );
+}
+
+/** No results: a "did you mean" hint, trending searches and popular categories (reuses the trending endpoint). */
+function SearchEmptyHelp({ didYouMean, categories }: { didYouMean?: string; categories: CategoryNode[] }) {
+  const t = useT();
+  const [trending, setTrending] = useState<string[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    apiGetTrendingSearches(8).then(r => { if (!cancelled) setTrending((r.data ?? []).map(x => x.query)); }).catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+  const cats = categories.filter(c => c.slug || c._id).slice(0, 8);
+  const pill = 'rounded-full border border-bone bg-white px-4 py-[7px] text-[13.5px] font-medium text-carbon no-underline hover:border-brand-orange hover:text-brand-orange transition-colors';
+  return (
+    <div className="max-w-[720px] mx-auto mt-2 mb-6 text-center space-y-6">
+      {didYouMean && (
+        <p className="text-[15px] text-graphite">{t('Did you mean')} <Link to={`/search?q=${encodeURIComponent(didYouMean)}`} className="text-brand-royal font-semibold underline underline-offset-2">{didYouMean}</Link>?</p>
+      )}
+      {trending.length > 0 && (
+        <div>
+          <h2 className="text-[12px] font-bold tracking-[0.15em] uppercase text-slate mb-2">{t('Trending searches')}</h2>
+          <div className="flex flex-wrap justify-center gap-2">{trending.map(q => <Link key={q} to={`/search?q=${encodeURIComponent(q)}`} className={pill}>{q}</Link>)}</div>
+        </div>
+      )}
+      {cats.length > 0 && (
+        <div>
+          <h2 className="text-[12px] font-bold tracking-[0.15em] uppercase text-slate mb-2">{t('Popular categories')}</h2>
+          <div className="flex flex-wrap justify-center gap-2">{cats.map(c => <Link key={c._id} to={categoryPath(c)} className={pill}>{c.name}</Link>)}</div>
+        </div>
+      )}
     </div>
   );
 }

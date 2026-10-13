@@ -71,6 +71,7 @@ const StorefrontCustomPage = lazy(() => named(import('@/features/buyer/pages/Sto
 const CategoryBrowsePage   = lazy(() => named(import('@/features/storefront/pages/CategoryBrowsePage'),           'CategoryBrowsePage'));
 const CollectionDetailPage = lazy(() => named(import('@/features/storefront/pages/CollectionDetailPage'),         'CollectionDetailPage'));
 const SearchResultsPage    = lazy(() => named(import('@/features/storefront/pages/SearchResultsPage'),            'SearchResultsPage'));
+const ComparePage              = lazy(() => named(import('@/features/buyer/pages/ComparePage'),                       'ComparePage'));
 const MarketplaceSearchPage   = lazy(() => named(import('@/features/buyer/pages/MarketplaceBrowse'),          'SearchResultsPage'));
 const MarketplaceCategoryPage = lazy(() => named(import('@/features/buyer/pages/MarketplaceBrowse'),          'CategoryPage'));
 const StorefrontBlogIndex  = lazy(() => named(import('@/features/buyer/pages/StorefrontBlogIndex'),              'StorefrontBlogIndex'));
@@ -87,6 +88,7 @@ const OrderInvoice         = lazy(() => named(import('@/features/buyer/pages/acc
 const LearnHubPage         = lazy(() => named(import('@/features/buyer/pages/LearnPages'),                     'LearnHubPage'));
 const LearnLevelPage       = lazy(() => named(import('@/features/buyer/pages/LearnPages'),                     'LearnLevelPage'));
 const AccountLists         = lazy(() => named(import('@/features/buyer/pages/account/ListsPage'),              'ListsPage'));
+const AccountChildren      = lazy(() => named(import('@/features/buyer/pages/account/MyChildren'),             'MyChildren'));
 const AccountQuotes        = lazy(() => named(import('@/features/buyer/pages/account/QuotesPage'),             'QuotesPage'));
 const QuotationPrint       = lazy(() => named(import('@/features/buyer/pages/account/QuotationPage'),          'QuotationPage'));
 const PublicListPage       = lazy(() => named(import('@/features/buyer/pages/ListPage'),                       'ListPage'));
@@ -269,6 +271,7 @@ const mainRouter = createBrowserRouter([
               { path: 'orders/:orderId', element: <FeatureMaintenance feature="orders"><AccountOrderDetail /></FeatureMaintenance> },
               { path: 'downloads',     element: <AccountDownloads /> },
               { path: 'lists',         element: <AccountLists /> },
+              { path: 'children',      element: <AccountChildren /> },
               { path: 'quotes',        element: <AccountQuotes /> },
               { path: 'wishlist',      element: <FeatureMaintenance feature="cart"><AccountWishlist /></FeatureMaintenance> },
               { path: 'reviews',       element: <FeatureMaintenance feature="reviews"><AccountReviews /></FeatureMaintenance> },
@@ -297,6 +300,7 @@ const mainRouter = createBrowserRouter([
           { path: 'payment/pk-return', element: <PkPaymentReturnPage /> },
           { path: 'product/:slug',   element: <FeatureMaintenance feature="product_page" variant="page"><ProductDetail /></FeatureMaintenance> },
           { path: 'search',          element: <FeatureMaintenance feature="search" variant="page"><MarketplaceSearchPage /></FeatureMaintenance> },
+          { path: 'compare',         element: <FeatureMaintenance feature="product_page" variant="page"><ComparePage /></FeatureMaintenance> },
           { path: 'c/:slug',         element: <FeatureMaintenance feature="categories" variant="page"><MarketplaceCategoryPage /></FeatureMaintenance> },
           // Grade and subject landing pages (/learn/primary-school/mathematics).
           { path: 'learn',           element: <FeatureMaintenance feature="learn" variant="page"><LearnHubPage /></FeatureMaintenance> },

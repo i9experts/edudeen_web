@@ -14,7 +14,7 @@ import {
 import { DigitalFileDownloads } from '@/features/buyer/components/DigitalFileDownloads';
 import { currencySymbol } from '@/utils/currency';
 import { useToast } from '@/contexts/ToastContext';
-import { buildOrderProgress, OrderProgressTrack } from './account/orderProgress';
+import { buildOrderProgress, OrderProgressTrack, OrderNextStep } from './account/orderProgress';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Status config
@@ -118,7 +118,7 @@ function ReasonModal({
 // "Confirmed"), and shipped/delivered come from the seller orders with their
 // real shippedAt/deliveredAt timestamps — see account/orderProgress.tsx.
 function OrderTimeline({ order }: { order: OrderSummary }) {
-  const steps = buildOrderProgress({
+  const input = {
     orderStatus:   order.orderStatus,
     isPaid:        order.isPaid,
     paymentType:   order.paymentType,
@@ -126,9 +126,10 @@ function OrderTimeline({ order }: { order: OrderSummary }) {
     createdAt:     order.createdAt,
     paidAt:        order.paidAt ?? null,
     stores:        order.stores,
-  });
+  };
+  const steps = buildOrderProgress(input);
   if (!steps) return null;
-  return <OrderProgressTrack steps={steps} />;
+  return <><OrderProgressTrack steps={steps} /><OrderNextStep input={input} /></>;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

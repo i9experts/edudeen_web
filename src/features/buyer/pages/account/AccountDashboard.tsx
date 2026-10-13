@@ -15,6 +15,8 @@ import { Card, MetricCard, PageHeader, Badge, ProgressBar, Button, SkeletonBox, 
 import { currencySymbol } from '@/utils/currency';
 import { useNavGroups } from '@/components/layouts/AccountLayout';
 import { ReferralCard } from './ReferralCard';
+import { PickUpWhereYouLeftOff } from '@/features/buyer/components/PickUpWhereYouLeftOff';
+import { ChildrenDashboardSection } from './ChildrenDashboardSection';
 
 const STATUS_COLOR: Record<OrderStatus, 'orange' | 'blue' | 'green' | 'red'> = {
   pending: 'orange', processing: 'blue', shipped: 'blue',
@@ -297,6 +299,10 @@ export function AccountDashboard() {
       </div>
 
       <MobileAccountMenu isLoggedIn={isLoggedIn} />
+
+      {isLoggedIn && <ChildrenDashboardSection />}
+
+      {isLoggedIn && <PickUpWhereYouLeftOff />}
 
       {isLoggedIn && <ReferralCard />}
 

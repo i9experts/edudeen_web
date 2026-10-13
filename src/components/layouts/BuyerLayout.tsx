@@ -1,4 +1,6 @@
 import { QuickAccessRail } from '@/components/comman/marketplace/QuickAccessRail';
+import { CompareTray } from '@/components/comman/marketplace/CompareTray';
+import { CompareAvailableCtx } from '@/utils/compareStore';
 import { useT } from '@/contexts/languageCtx';
 import { Suspense } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
@@ -85,12 +87,13 @@ export function BuyerLayout() {
          first-visit-this-session page under this branch doesn't blank the
          whole screen via RootLayout's outer big-spinner Suspense — no
          fallback markup, TopProgressBar already covers the "loading" signal. */}
-      <Suspense fallback={null}><Outlet /></Suspense>
+      <CompareAvailableCtx.Provider value={true}><Suspense fallback={null}><Outlet /></Suspense></CompareAvailableCtx.Provider>
       <div className="lg:hidden h-16" aria-hidden="true" />
       <BuyerBottomNav />
       <AppOpenPrompt />
       <AppOpenFab />
       <QuickAccessRail />
+      <CompareTray />
     </>
   );
 }

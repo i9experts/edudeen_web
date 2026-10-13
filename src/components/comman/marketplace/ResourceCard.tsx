@@ -12,6 +12,7 @@ import { getStorePagePath } from '@/utils/storefrontUrl';
 import { coverPaletteFor } from './ProductCoverFallback';
 import { ageLabel } from '@/constants/learning';
 import { TrustBadges } from './TrustBadges';
+import { CompareToggle } from './CompareToggle';
 
 // Same name-keyed palette as ProductCoverFallback, so a product keeps its
 // colours between the grid card and cart/wishlist/detail thumbnails.
@@ -172,7 +173,7 @@ export const ResourceCard = memo(function ResourceCard({
                 {product.name}
               </Link>
             </div>
-            {wishlistButton}
+            <div className="flex items-center gap-2 shrink-0"><CompareToggle product={product} />{wishlistButton}</div>
           </div>
           {shopName && (
             product.storeSlug ? (
@@ -230,6 +231,8 @@ export const ResourceCard = memo(function ResourceCard({
           <Heart size={15} className={isWishlisted ? 'fill-white' : ''} />
         </button>
       )}
+
+      <CompareToggle product={product} className="absolute end-[7px] top-[43px] sm:end-3 sm:top-[54px]" />
 
       <p className="text-[12px] text-slate mt-[13px] mb-[5px] truncate">{meta}</p>
       <Link

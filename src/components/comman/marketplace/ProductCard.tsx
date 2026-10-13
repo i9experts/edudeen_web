@@ -7,6 +7,7 @@ import { ShoppingCart, Star, Heart, Loader2, Eye, Flame, BadgeCheck, Store, Chec
 import { ProductCoverFallback } from './ProductCoverFallback';
 import type { MarketplaceProduct } from '@/api/services/marketplace';
 import { useProductPreview } from '@/hooks/marketplace/useProductPreview';
+import { CompareToggle } from './CompareToggle';
 import { currencySymbol, formatMoney } from '@/utils/currency';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 
@@ -351,6 +352,8 @@ export const ProductCard = memo(function ProductCard({ product, onClick, onAddTo
             className={clsx('heart-pop transition-colors duration-150', isWishlisted ? 'text-[#e11d48] fill-[#e11d48]' : 'text-slate')}
           />
         </button>
+
+        <CompareToggle product={product} className="absolute top-[44px] end-2 !rounded-lg" />
 
         {/* Preview — digital/educational only, same size/position language as wishlist */}
         {isDigital && product.digital?.previewAvailable && (

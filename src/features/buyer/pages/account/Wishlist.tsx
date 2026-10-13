@@ -9,6 +9,7 @@ import { Card, EmptyState, SkeletonBox, PageHeader, Modal, Button } from '@/comp
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 import { currencySymbol } from '@/utils/currency';
 import { ShareSavedControl } from './ShareSavedControl';
+import { WishlistAlertsToggle } from './WishlistAlertsToggle';
 
 function WishlistImg({ images, name }: { images?: string[]; name: string }) {
   const [err, setErr] = useState(false);
@@ -112,6 +113,7 @@ export function Wishlist() {
           }
         />
       </div>
+      <WishlistAlertsToggle />
       <div className="divide-y divide-[#f5f4ef]">
         {wishlistItems.map(item => {
           const p = item.product;

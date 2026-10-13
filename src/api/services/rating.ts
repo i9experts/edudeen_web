@@ -40,12 +40,16 @@ export interface AddReviewPayload {
   comment?:          string;
   isAnonymous?:      boolean;
   media?:            string[];
+  usedFor?:          ReviewUsedFor;
 }
+
+export type ReviewUsedFor = 'home' | 'classroom' | 'school';
 
 export interface EditReviewPayload {
   rating?:  number;
   comment?: string;
   media?:   string[];
+  usedFor?: ReviewUsedFor;
 }
 
 export interface Pagination {
@@ -74,6 +78,7 @@ export interface ProductReviewEntry {
   comments:           ReviewComment[];
   media:              string[];
   isVerifiedPurchase: boolean;
+  usedFor?:           ReviewUsedFor | null;
   sellerReply:        SellerReply | null;
   helpfulCount:       number;
   helpfulByMe:        boolean;

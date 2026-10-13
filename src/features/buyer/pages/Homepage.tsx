@@ -44,6 +44,8 @@ import { apiBrowseProducts } from '@/api/services/marketplace';
 import { RevealStagger } from '@/components/comman/motion/Reveal';
 import { AnimatedCounter } from '@/components/comman/motion/AnimatedCounter';
 import heroImage from '@/assets/learning-hero.jpg';
+import { PickedForChildRail } from '@/features/buyer/components/PickedForChildRail';
+import { ShoppingForBar } from '@/features/buyer/components/ShoppingForBar';
 
 const compactNumber   = new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 });
 const compactCurrency = new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1, style: 'currency', currency: 'USD' });
@@ -500,6 +502,7 @@ export function Homepage() {
       </div>
 
       <main className="max-w-[1480px] mx-auto px-[5%] md:px-[4%] pt-5 md:pt-[30px] pb-10 md:pb-[65px]">
+        <ShoppingForBar className="mb-4" />
 
         {/* ── Admin banners / paid promotions (Admin → Banners, homepage slot) ── */}
         <PlacementBanner placement="homepageHero" className="mb-[25px]" />
@@ -602,6 +605,9 @@ export function Homepage() {
         </FeatureMaintenance>
 
         {/* ── Edudeen picks (curated shelves) ── */}
+        {/* ── Picked for the active child (My children) ── */}
+        <PickedForChildRail renderCard={renderResourceCard} />
+
         {/* ── Featured by Edudeen (admin-featured listings) ── */}
         {featured.length > 0 && (
           <section className="mb-12">

@@ -293,6 +293,17 @@ export interface LibraryItem {
   fileCount:      number;
   deliveryFormat?: 'download' | 'course' | 'live_class';
   liveStartsAt?:  string | null;
+  /** File extensions (lowercase) and combined size in bytes of the product's files. */
+  fileTypes?:     string[];
+  totalSize?:     number;
+  /** Set when the buyer can no longer download: removed by an admin, or the seller's access window ended. */
+  unavailable?:   'removed' | 'expired' | null;
+  expiresAt?:     string | null;
+}
+
+/** POST /api/orders/resend-download-link - emails the buyer a link to My Library for one purchased item (5 per 10 min). */
+export function apiResendDownloadLink(orderId: string, productId: string) {
+  return client.post<never, { success: boolean; message: string }>('/api/orders/resend-download-link', { orderId, productId });
 }
 
 export function apiGetMyLibrary() {

@@ -93,6 +93,41 @@ export function buildOrderProgress(o: ProgressInput): ProgressStep[] | null {
   return steps;
 }
 
+/** One plain-words sentence for "what happens next", from the same real fields the track uses. No invented times. */
+export function describeNextStep(o: ProgressInput): string | null {
+  if (o.orderStatus === 'cancelled') return null;
+  const isCod = o.paymentType === 'cash_on_delivery';
+  const stores = o.stores ?? [];
+  const digitalOnly = stores.length > 0 && stores.every(s => !isPhysicalStore(s) || s.status === 'cancelled');
+  if (!o.isPaid && !isCod) {
+    return o.paymentStatus === 'pending_verification'
+      ? 'Payment is being checked by Edudeen. We will let you know as soon as it is confirmed.'
+      : 'Waiting for your payment. Your order starts as soon as we receive it.';
+  }
+  if (digitalOnly) return 'Your files are ready. Open My Library to download them.';
+  const live = stores.filter(s => s.status !== 'cancelled' && isPhysicalStore(s));
+  let rank: number;
+  if (o.orderStatus === 'completed') rank = 3;
+  else if (live.length > 0) rank = Math.min(...live.map(s => FULFILMENT_RANK[s.status] ?? 0));
+  else rank = FULFILMENT_RANK[o.orderStatus] ?? 0;
+  if (rank >= 3) return 'Delivered. We hope you enjoy it. You can leave a review any time.';
+  if (rank === 2) return 'Your order is on its way to you.';
+  return rank === 1 || o.orderStatus === 'processing'
+    ? 'The seller is preparing your order.'
+    : 'The seller has your order and will start preparing it soon.';
+}
+
+/** "What happens next" line shown under the progress track. */
+export function OrderNextStep({ input }: { input: ProgressInput }) {
+  const text = describeNextStep(input);
+  if (!text) return null;
+  return (
+    <p className="mt-4 rounded-[10px] bg-cream px-3 py-2.5 text-[12.5px] text-graphite leading-snug">
+      <span className="font-bold text-carbon">What happens next: </span>{text}
+    </p>
+  );
+}
+
 function fmt(d: string | null) {
   if (!d) return null;
   const date = new Date(d);

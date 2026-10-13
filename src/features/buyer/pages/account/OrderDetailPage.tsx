@@ -10,6 +10,7 @@ import { money, discountLines } from './orderFormat';
 import { LICENSE_LABEL } from '@/constants/learning';
 import { DigitalFileDownloads } from '@/features/buyer/components/DigitalFileDownloads';
 import { RefundRequestPanel } from '@/features/buyer/components/RefundRequestPanel';
+import { OrderNextStep } from './orderProgress';
 
 const PAYMENT_LABEL: Record<string, string> = {
   stripe: 'Card', cash_on_delivery: 'Cash on delivery', manual_bank_transfer: 'Bank transfer',
@@ -108,6 +109,7 @@ export function OrderDetailPage() {
           </div>
           <div className="px-4 md:px-5 py-4 border-b border-bone">
             <Timeline placedAt={order.createdAt} paidAt={order.paidAt} so={so} />
+            <OrderNextStep input={{ orderStatus: so.status === 'cancelled' ? 'cancelled' : order.orderStatus, isPaid: order.isPaid, paymentType: order.paymentType, paymentStatus: order.paymentStatus, stores: [so] }} />
             {Array.isArray((so as any).trackingEvents) && (so as any).trackingEvents.length > 0 && (
               <div className="mt-4 pt-3 border-t border-bone">
                 <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-slate mb-1.5">Courier updates</p>

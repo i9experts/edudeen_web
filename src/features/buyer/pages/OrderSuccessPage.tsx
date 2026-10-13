@@ -9,11 +9,12 @@ import {
 } from 'lucide-react';
 import type { PlacedOrder, OrderItem, OrderDeliveryAddress } from '@/api/services/payment';
 import { DigitalFileDownloads } from '@/features/buyer/components/DigitalFileDownloads';
+import { NextUpRail } from '@/features/buyer/components/NextUpRail';
 import { clsx } from 'clsx';
 import { Button } from '@/components/comman/ui/Button';
 import { BuyerNavbar, Footer } from '@/components/comman/ui';
 import { currencySymbol, formatMoney } from '@/utils/currency';
-import { buildOrderProgress, OrderProgressTrack } from './account/orderProgress';
+import { buildOrderProgress, OrderProgressTrack, OrderNextStep } from './account/orderProgress';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // OrderItemRow
@@ -115,13 +116,14 @@ function AddressSection({ addr }: { addr: OrderDeliveryAddress }) {
 // shows "Confirmed · Pay on delivery", and delivered/completed both reach the
 // final step (see account/orderProgress.tsx).
 function OrderTimeline({ order }: { order: PlacedOrder }) {
-  const steps = buildOrderProgress({
+  const input = {
     orderStatus: order.orderStatus,
     isPaid:      order.isPaid,
     paymentType: order.paymentMethod,
     createdAt:   order.orderDate,
     paidAt:      order.paymentDate,
-  });
+  };
+  const steps = buildOrderProgress(input);
   if (!steps) {
     return (
       <section className="pt-4 mt-1 border-t border-bone">
@@ -133,6 +135,7 @@ function OrderTimeline({ order }: { order: PlacedOrder }) {
     <section className="pt-4 mt-1 border-t border-bone">
       <h3 className="text-[12px] font-bold text-slate uppercase tracking-[0.07em] mb-4">Order Progress</h3>
       <OrderProgressTrack steps={steps} />
+      <OrderNextStep input={input} />
     </section>
   );
 }
@@ -427,6 +430,11 @@ export function OrderSuccessPage() {
             {orders.map(order => (
               <OrderCard key={order.orderId} order={order} />
             ))}
+            <NextUpRail
+              seedProductId={orders.flatMap(o => o.items).find(i => i.productId)?.productId}
+              ownedProductIds={orders.flatMap(o => o.items.map(i => i.productId ?? '')).filter(Boolean)}
+              title="Buy again / Next up"
+            />
           </div>
 
           {/* Right — sticky summary */}

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { StarRating, Button, ImageUpload, Modal } from '@/components/comman/ui';
-import { apiAddReview, apiEditReview } from '@/api/services/rating';
+import { apiAddReview, apiEditReview, type ReviewUsedFor } from '@/api/services/rating';
+import { REVIEW_USED_FOR } from '../utils/reviewUsedFor';
 import { useToast } from '@/contexts/ToastContext';
 
 interface ReviewFormModalProps {
@@ -10,15 +11,17 @@ interface ReviewFormModalProps {
   initialRating?:  number;
   initialComment?: string;
   initialMedia?:   string[];
-  onClose:         () => void;
+  initialUsedFor?: ReviewUsedFor | null;
+  onClose:        () => void;
   onSaved:         () => void;
 }
 
 export function ReviewFormModal({
   mode, productId, reviewId,
-  initialRating = 0, initialComment = '', initialMedia = [],
+  initialRating = 0, initialComment = '', initialMedia = [], initialUsedFor = null,
   onClose, onSaved,
 }: ReviewFormModalProps) {
+  const [usedFor, setUsedFor]   = useState<ReviewUsedFor | null>(initialUsedFor);
   const [rating, setRating]     = useState(initialRating);
   const [comment, setComment]   = useState(initialComment);
   const [media, setMedia]       = useState<string[]>(initialMedia);
@@ -33,9 +36,9 @@ export function ReviewFormModal({
     setSaving(true);
     try {
       if (mode === 'create' && productId) {
-        await apiAddReview({ productId, rating, comment: comment || undefined, media, isAnonymous });
+        await apiAddReview({ productId, rating, comment: comment || undefined, media, isAnonymous, usedFor: usedFor ?? undefined });
       } else if (mode === 'edit' && reviewId) {
-        await apiEditReview(reviewId, { rating, comment, media });
+        await apiEditReview(reviewId, { rating, comment, media, usedFor: usedFor ?? undefined });
       }
       toast.success(mode === 'create' ? 'Review submitted' : 'Review updated');
       onSaved();
@@ -72,6 +75,18 @@ export function ReviewFormModal({
         rows={4}
         className="w-full border border-bone rounded-lg px-3 py-2 text-[13px] text-charcoal outline-none box-border resize-vertical mb-4 focus:border-brand-orange"
       />
+
+      <p className="text-[12px] font-semibold text-charcoal mb-2">Where did you use it? <span className="font-normal text-slate">(optional)</span></p>
+      <div className="flex gap-2 flex-wrap mb-4">
+        {REVIEW_USED_FOR.map(o => (
+          <button
+            key={o.value} type="button"
+            onClick={() => setUsedFor(usedFor === o.value ? null : o.value)}
+            aria-pressed={usedFor === o.value}
+            className={`text-[12px] font-semibold rounded-full px-3 py-[5px] border cursor-pointer transition-colors ${usedFor === o.value ? 'bg-brand-pale-orange text-brand-deep-orange border-brand-orange/40' : 'bg-white text-slate border-bone hover:bg-cream'}`}
+          >{o.label}</button>
+        ))}
+      </div>
 
       <p className="text-[12px] font-semibold text-charcoal mb-2">Add photos <span className="font-normal text-slate">(optional)</span></p>
       <ImageUpload value={media} onChange={setMedia} maxFiles={4} className="mb-4" />
