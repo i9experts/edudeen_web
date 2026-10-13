@@ -21,6 +21,7 @@ import { DeliveryFormatField, EMPTY_DELIVERY, deliveryPayload, deliveryError } f
 import { currencySymbol as symbolForCurrency } from '@/utils/currency';
 import { CampaignPicker } from './CampaignPicker';
 import { PremiumPriceField, premiumPercentError, premiumPercentPayload } from './PremiumPriceField';
+import { PremiumEarningsCalculator, effectiveSellerPercent, premiumGapMessage, usePremiumTerms } from './PremiumEarningsCalculator';
 
 type ProductType   = 'physical' | 'digital' | 'educational';
 type ProductStatus = 'draft' | 'active' | 'scheduled';
@@ -223,6 +224,8 @@ export default function StoreAddProduct() {
   const [delivery,          setDelivery]          = useState(EMPTY_DELIVERY);
   const [campaignIds,       setCampaignIds]       = useState<string[]>([]);
   const [premiumPct,        setPremiumPct]        = useState('');
+  const storePremiumPct = store?.premiumDiscount?.enabled ? store.premiumDiscount.percent : 0;
+  const { terms: premiumTerms } = usePremiumTerms(pType, store?.baseCurrency);
 
   // Once the store loads, never leave the form on a type this store can't sell.
   useEffect(() => {
@@ -270,6 +273,9 @@ export default function StoreAddProduct() {
     if (learnErr) { setError(learnErr); return; }
     const premiumErr = premiumPercentError(premiumPct);
     if (premiumErr) { setError(premiumErr); return; }
+    // Owner rule: the normal sale must stay at least the admin's gap below the Premium discount (the API enforces it too).
+    const gapErr = premiumTerms ? premiumGapMessage(Number(cur.price), Number(cur.compareAtPrice), effectiveSellerPercent(premiumPct, storePremiumPct), premiumTerms.minGapPercent) : null;
+    if (gapErr) { setError(gapErr); return; }
     const missingAttr = findMissingRequiredAttribute(attrDefs, attributeValues);
     if (missingAttr) { setError(`${missingAttr.label} is required.`); return; }
     // A course is saved as a draft first; the course builder opens next and it's published from there.
@@ -504,6 +510,7 @@ export default function StoreAddProduct() {
               </div>
             )}
             <div className="mt-4 max-w-[320px]"><PremiumPriceField value={premiumPct} onChange={setPremiumPct} /></div>
+            <PremiumEarningsCalculator price={cur.price} compareAtPrice={cur.compareAtPrice} premiumValue={premiumPct} storePercent={storePremiumPct} productType={pType} currency={store?.baseCurrency} />
           </Card>
 
           {/* Step: Join a running sale (admin campaigns) */}

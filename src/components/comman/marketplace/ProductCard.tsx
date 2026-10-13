@@ -225,7 +225,8 @@ export const ProductCard = memo(function ProductCard({ product, onClick, onAddTo
   // Edudeen Premium: members see the server-computed member price; everyone else a quiet teaser.
   const { isPremium } = usePremiumView();
   const lowestVariant = variants.length ? variants.reduce((a, b) => (b.price < a.price ? b : a)) : undefined;
-  const member = isPremium && !salePct && subscriberPrice == null ? memberPriceOf(lowestVariant, convert, shownPrice) : null;
+  // The server already drops the sale badge / subscriber price from a member's variants when a premium price applies.
+  const member = isPremium ? memberPriceOf(lowestVariant, convert, shownPrice) : null;
   const struckPrice = salePct ? lowestPrice : subscriberPrice != null ? lowestPrice : (compareAt != null && compareAt > (lowestPrice ?? 0) ? compareAt : null);
   const pctOff = compareAt != null && lowestPrice != null && compareAt > lowestPrice
     ? Math.round((1 - lowestPrice / compareAt) * 100)
@@ -428,15 +429,15 @@ export const ProductCard = memo(function ProductCard({ product, onClick, onAddTo
         {subscriberPrice != null && (
           <p className="text-[12px] font-semibold text-brand-orange mt-[3px]">Members save {discountPercent}%</p>
         )}
-        {member ? <PremiumChip className="mt-[3px] self-start" /> : !compact && <PremiumTeaser percent={product.premiumPercent} className="mt-[3px]" />}
+        {member ? <PremiumChip percent={member.percent} seller={member.seller} platform={member.platform} className="mt-[3px] self-start" /> : !compact && <PremiumTeaser percent={product.premiumPercent} seller={product.premiumSellerPercent} platform={product.premiumPlatformPercent} className="mt-[3px]" />}
 
         <div className={clsx('flex items-center gap-3 min-w-0', isList ? 'justify-between flex-wrap mt-2 pt-2 border-t border-bone/70' : 'justify-start mt-auto pt-2')}>
           <div className="flex items-baseline gap-[5px] min-w-0">
             <span className={clsx('font-bold whitespace-nowrap tracking-tight', compact ? 'text-[14px]' : 'text-[14px] sm:text-[16px]', member ? 'text-[#8a6100]' : subscriberPrice != null || salePct ? 'text-brand-orange' : 'text-carbon')}>
               {member ? formatMoney(member.price, displayCurrency) : shownPrice != null ? formatMoney(shownPrice, displayCurrency) : '—'}
             </span>
-            {member && shownPrice != null && (
-              <span className="text-[12px] text-slate/70 line-through shrink-0">{formatMoney(shownPrice, displayCurrency)}</span>
+            {member && (member.list ?? shownPrice) != null && (
+              <span className="text-[12px] text-slate/70 line-through shrink-0">{formatMoney((member.list ?? shownPrice) as number, displayCurrency)}</span>
             )}
             {!member && struckPrice != null && (
               <span className="text-[12px] text-slate/70 line-through shrink-0">{formatMoney(struckPrice, displayCurrency)}</span>

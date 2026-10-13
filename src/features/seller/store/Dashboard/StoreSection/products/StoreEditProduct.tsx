@@ -25,6 +25,7 @@ import { DeliveryFormatField, EMPTY_DELIVERY, deliveryPayload, deliveryError, de
 import { currencySymbol as symbolForCurrency } from '@/utils/currency';
 import { CampaignPicker } from './CampaignPicker';
 import { PremiumPriceField, premiumPercentError, premiumPercentPayload } from './PremiumPriceField';
+import { PremiumEarningsCalculator, effectiveSellerPercent, premiumGapMessage, usePremiumTerms } from './PremiumEarningsCalculator';
 
 type ProductStatus = 'draft' | 'active' | 'scheduled';
 type LicenseType   = 'personal' | 'single_classroom' | 'school' | 'commercial';
@@ -234,6 +235,8 @@ export default function StoreEditProduct() {
   const [campaignIds, setCampaignIds] = useState<string[] | null>(null);
   // null until the product is read fresh, so saving never clears a Premium price that has not loaded.
   const [premiumPct, setPremiumPct] = useState<string | null>(null);
+  const storePremiumPct = store?.premiumDiscount?.enabled ? store.premiumDiscount.percent : 0;
+  const { terms: premiumTerms } = usePremiumTerms(pType, store?.baseCurrency);
 
   const sp = <K extends keyof PhysForm>(k: K, v: PhysForm[K]) => setPhys(f => ({ ...f, [k]: v }));
   const sd = <K extends keyof DigForm> (k: K, v: DigForm[K])  => setDig(f  => ({ ...f, [k]: v }));
@@ -332,6 +335,9 @@ export default function StoreEditProduct() {
     if (learnErr) { setError(learnErr); return; }
     const premiumErr = premiumPercentError(premiumPct ?? '');
     if (premiumErr) { setError(premiumErr); return; }
+    // Owner rule: the normal sale must stay at least the admin's gap below the Premium discount (the API enforces it too).
+    const gapErr = premiumTerms ? premiumGapMessage(Number(cur.price), Number(cur.compareAtPrice), effectiveSellerPercent(premiumPct ?? '', storePremiumPct), premiumTerms.minGapPercent) : null;
+    if (gapErr) { setError(gapErr); return; }
     const missingAttr = findMissingRequiredAttribute(attrDefs, attributeValues);
     if (missingAttr) { setError(`${missingAttr.label} is required.`); return; }
     setSaving(true);
@@ -691,6 +697,7 @@ export default function StoreEditProduct() {
                 </div>
               )}
               <PremiumPriceField value={premiumPct ?? ''} onChange={setPremiumPct} disabled={premiumPct === null} />
+              <PremiumEarningsCalculator price={cur.price} compareAtPrice={cur.compareAtPrice} premiumValue={premiumPct ?? ''} storePercent={storePremiumPct} productType={pType} currency={store?.baseCurrency} />
             </div>
           </Card>
 

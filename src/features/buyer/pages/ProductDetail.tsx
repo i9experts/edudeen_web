@@ -1,5 +1,5 @@
 import { EarlyAccessChip } from '@/components/comman/ui/EarlyAccessChip';
-import { PremiumChip, PremiumTeaser, usePremiumView } from '@/components/comman/marketplace/PremiumBits';
+import { PremiumChip, PremiumTeaser, premiumBreakdownText, usePremiumView } from '@/components/comman/marketplace/PremiumBits';
 import { useEffect, useState } from 'react';
 import { scrollRootRef } from '@/utils/scrollRoot';
 import { clsx } from 'clsx';
@@ -288,11 +288,12 @@ interface RelatedCardProps {
   currency?: string | null;
   /** Edudeen Premium: member price (members only) and the teaser percent (everyone). */
   premiumPrice?: number | null; premiumPercent?: number;
+  premiumList?: number | null; memberPercent?: number; premiumSeller?: number; premiumPlatform?: number;
   rating?: number; reviewCount?: number; sold?: number; isNew?: boolean; isBestseller?: boolean;
   onClick: (id: string) => void;
   wishlist?: { active: boolean; onToggle: () => void };
 }
-function RelatedCard({ id, name, image, price: nativePrice, compareAtPrice: nativeCompareAt, currency: nativeCurrency, premiumPrice: nativePremium, premiumPercent, rating, reviewCount, sold, isNew, isBestseller, onClick, wishlist }: RelatedCardProps) {
+function RelatedCard({ id, name, image, price: nativePrice, compareAtPrice: nativeCompareAt, currency: nativeCurrency, premiumPrice: nativePremium, premiumPercent, premiumList: nativeList, memberPercent, premiumSeller, premiumPlatform, rating, reviewCount, sold, isNew, isBestseller, onClick, wishlist }: RelatedCardProps) {
   const [errored, setErrored] = useState(false);
   const { currency: displayCurrency, convert } = useCurrencyPreference();
   const price = nativePrice != null ? convert(nativePrice, nativeCurrency) : null;
@@ -318,7 +319,7 @@ function RelatedCard({ id, name, image, price: nativePrice, compareAtPrice: nati
 
         {/* Badges */}
         <div className="absolute top-[6px] start-[6px] flex flex-col gap-1 items-start">
-          {pctOff != null && pctOff > 0 && (
+          {member == null && pctOff != null && pctOff > 0 && (
             <span className="text-[12px] font-bold text-white bg-error px-[6px] py-[2px] rounded-md">-{pctOff}%</span>
           )}
           {isBestseller && (
@@ -347,7 +348,7 @@ function RelatedCard({ id, name, image, price: nativePrice, compareAtPrice: nati
         <div className="flex items-center justify-between gap-1">
           <span className="flex items-baseline gap-1">
             <span className={clsx('text-[12.5px] font-bold', member != null ? 'text-[#8a6100]' : 'text-carbon')}>{member != null ? formatMoney(member, displayCurrency) : price != null ? formatMoney(price, displayCurrency) : '—'}</span>
-            {member != null && price != null && <span className="text-[12px] text-slate line-through">{formatMoney(price, displayCurrency)}</span>}
+            {member != null && price != null && <span className="text-[12px] text-slate line-through">{formatMoney(nativeList != null ? convert(nativeList, nativeCurrency) : price, displayCurrency)}</span>}
             {member == null && compareAtPrice != null && price != null && compareAtPrice > price && (
               <span className="text-[12px] text-slate line-through">{formatMoney(compareAtPrice, displayCurrency)}</span>
             )}
@@ -359,7 +360,7 @@ function RelatedCard({ id, name, image, price: nativePrice, compareAtPrice: nati
             </span>
           )}
         </div>
-        {member != null ? <PremiumChip className="mt-[3px]" /> : <PremiumTeaser percent={premiumPercent} className="mt-[3px]" />}
+        {member != null ? <PremiumChip percent={memberPercent} seller={premiumSeller} platform={premiumPlatform} className="mt-[3px]" /> : <PremiumTeaser percent={premiumPercent} seller={premiumSeller} platform={premiumPlatform} className="mt-[3px]" />}
         {(sold != null && sold > 0) || (reviewCount != null && reviewCount > 0) ? (
           <p className="text-[12px] text-slate mt-[2px]">
             {sold != null && sold > 0 ? `${sold} sold` : ''}
@@ -498,6 +499,8 @@ export function ProductDetail() {
   const { isPremium: isPremiumMember } = usePremiumView();
   const memberNative = isPremiumMember && activeVariant?.premiumPrice != null ? convert(activeVariant.premiumPrice, activeVariant.currency) : null;
   const memberShown = memberNative != null && displayPrice != null && memberNative < displayPrice ? memberNative : null;
+  // A member's struck-through price is the ORIGINAL list price, never the seller's normal sale price.
+  const memberList = memberShown != null && activeVariant?.listPrice != null ? convert(activeVariant.listPrice, activeVariant.currency) : null;
 
   useEffect(() => { setQty(1); }, [activeVariant?._id]);
 
@@ -749,7 +752,7 @@ export function ProductDetail() {
                         from the type badge — mirrors ProductCard.tsx's grid
                         card corner layout instead of bunching everything together. */}
                     <div className="flex items-center gap-2 flex-wrap">
-                      {pctOffShown != null && pctOffShown > 0 && !product.activeCampaign && <Badge color="red">-{pctOffShown}% OFF</Badge>}
+                      {memberShown == null && pctOffShown != null && pctOffShown > 0 && !product.activeCampaign && <Badge color="red">-{pctOffShown}% OFF</Badge>}
                       {product.activeCampaign && (
                         <span
                           title={`${product.activeCampaign.name} — ends ${new Date(product.activeCampaign.endDate).toLocaleDateString()}`}
@@ -790,22 +793,34 @@ export function ProductDetail() {
                   </p>
 
                   {/* Price */}
-                  <div className="flex items-baseline gap-[10px] mb-1">
-                    <span className="text-[30px] font-extrabold text-carbon tracking-[-0.5px]">
-                      {displayPrice != null ? `${displaySymbol}${displayPrice.toLocaleString()}` : '—'}
-                    </span>
-                    {displayCompareAt != null && displayPrice != null && displayCompareAt > displayPrice && (
-                      <span className="text-[14px] text-slate line-through">{displaySymbol}{displayCompareAt.toLocaleString()}</span>
-                    )}
-                  </div>
                   {memberShown != null && displayPrice != null ? (
-                    <div className="flex items-center gap-2 flex-wrap mb-2">
-                      <PremiumChip />
-                      <span className="text-[18px] font-extrabold text-[#8a6100]">{displaySymbol}{memberShown.toLocaleString()}</span>
-                      <span className="text-[12px] text-slate">{`You save ${displaySymbol}${(displayPrice - memberShown).toLocaleString()}${activeVariant?.premiumDiscountPercent ? ` (${activeVariant.premiumDiscountPercent}%)` : ''}`}</span>
-                    </div>
+                    <>
+                      <div className="flex items-baseline gap-[10px] mb-1">
+                        <span className="text-[30px] font-extrabold text-[#8a6100] tracking-[-0.5px]">{displaySymbol}{memberShown.toLocaleString()}</span>
+                        {(memberList ?? displayPrice) > memberShown && (
+                          <span className="text-[14px] text-slate line-through">{displaySymbol}{(memberList ?? displayPrice).toLocaleString()}</span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 flex-wrap mb-2">
+                        <PremiumChip percent={activeVariant?.premiumDiscountPercent} seller={activeVariant?.premiumSellerPercent} platform={activeVariant?.premiumPlatformPercent} />
+                        {premiumBreakdownText(activeVariant?.premiumSellerPercent, activeVariant?.premiumPlatformPercent) && (
+                          <span className="text-[12px] text-slate">{premiumBreakdownText(activeVariant?.premiumSellerPercent, activeVariant?.premiumPlatformPercent)}</span>
+                        )}
+                        <span className="text-[12px] text-slate">{`You save ${displaySymbol}${((memberList ?? displayPrice) - memberShown).toLocaleString()}`}</span>
+                      </div>
+                    </>
                   ) : (
-                    <PremiumTeaser percent={product.premiumPercent} link className="mb-2" />
+                    <>
+                      <div className="flex items-baseline gap-[10px] mb-1">
+                        <span className="text-[30px] font-extrabold text-carbon tracking-[-0.5px]">
+                          {displayPrice != null ? `${displaySymbol}${displayPrice.toLocaleString()}` : '—'}
+                        </span>
+                        {displayCompareAt != null && displayPrice != null && displayCompareAt > displayPrice && (
+                          <span className="text-[14px] text-slate line-through">{displaySymbol}{displayCompareAt.toLocaleString()}</span>
+                        )}
+                      </div>
+                      <PremiumTeaser percent={product.premiumPercent} seller={product.premiumSellerPercent} platform={product.premiumPlatformPercent} link className="mb-2" />
+                    </>
                   )}
                   {activeVariant?.subscriberPrice != null && (
                     <p className="text-[12px] font-semibold text-brand-orange mb-2">
@@ -1189,7 +1204,7 @@ export function ProductDetail() {
                   <RelatedCard
                     key={p._id} id={p.slug} name={p.name} image={p.images?.[0] ?? null}
                     price={dv?.price ?? null} compareAtPrice={dv?.compareAtPrice ?? null} currency={dv?.currency}
-                    premiumPrice={dv?.premiumPrice ?? null} premiumPercent={p.premiumPercent}
+                    premiumPrice={dv?.premiumPrice ?? null} premiumPercent={p.premiumPercent} premiumList={dv?.listPrice ?? null} memberPercent={dv?.premiumDiscountPercent} premiumSeller={p.premiumSellerPercent} premiumPlatform={p.premiumPlatformPercent}
                     rating={p.averageRating} reviewCount={p.totalRatings} sold={p.purchaseCount}
                     onClick={slug => navigate(`/product/${slug}`)}
                   />
@@ -1231,7 +1246,7 @@ export function ProductDetail() {
                     <RelatedCard
                       key={p._id} id={p.slug} name={p.name} image={p.images?.[0] ?? null}
                       price={dv?.price ?? null} compareAtPrice={dv?.compareAtPrice ?? null} currency={dv?.currency}
-                      premiumPrice={dv?.premiumPrice ?? null} premiumPercent={p.premiumPercent}
+                      premiumPrice={dv?.premiumPrice ?? null} premiumPercent={p.premiumPercent} premiumList={dv?.listPrice ?? null} memberPercent={dv?.premiumDiscountPercent} premiumSeller={p.premiumSellerPercent} premiumPlatform={p.premiumPlatformPercent}
                       rating={p.averageRating} reviewCount={p.totalRatings} sold={p.purchaseCount}
                       isNew={new Date(p.createdAt).getTime() >= fourteenDaysAgo}
                       isBestseller={topSeller > 0 && p.purchaseCount === topSeller}

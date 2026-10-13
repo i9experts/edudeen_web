@@ -160,7 +160,7 @@ export function CartPage() {
   const { subtotal: displayTotal, campaignAmount, payable: payablePreMember } = computeCartTotals(items, campaign, convert);
   // Edudeen Premium (display only - checkout applies the real member prices): members see their price per line.
   const { isPremium, showTeaser } = usePremiumView();
-  const memberLine = (it: (typeof items)[number]) => (isPremium && it.premiumUnitPrice != null && it.premiumItemTotal != null ? { unit: convert(it.premiumUnitPrice, it.currency), total: convert(it.premiumItemTotal, it.currency) } : null);
+  const memberLine = (it: (typeof items)[number]) => (isPremium && it.premiumUnitPrice != null && it.premiumItemTotal != null ? { unit: convert(it.premiumUnitPrice, it.currency), total: convert(it.premiumItemTotal, it.currency), list: it.listPrice != null ? convert(it.listPrice, it.currency) : null } : null);
   const premiumSavings = items.reduce((s, it) => { const m = memberLine(it); return m ? s + Math.max(0, convert(it.itemTotal ?? (it.unitPrice ?? it.price ?? 0) * it.quantity, it.currency) - m.total) : s; }, 0);
   const payableTotal = payablePreMember - premiumSavings;
 
@@ -341,13 +341,13 @@ export function CartPage() {
                         {member ? (
                           <>
                             <span className="text-[#8a6100] font-semibold">{displaySymbol}{member.unit.toLocaleString()} each</span>
-                            <s>{displaySymbol}{price.toLocaleString()}</s>
-                            <PremiumChip />
+                            <s>{displaySymbol}{(member.list ?? price).toLocaleString()}</s>
+                            <PremiumChip percent={item.premiumDiscountPercent} seller={item.premiumSellerPercent} platform={item.premiumPlatformPercent} />
                           </>
                         ) : (
                           <>
                             {displaySymbol}{price.toLocaleString()} each
-                            {showTeaser && !item.onCampaign && <PremiumTeaser percent={item.premiumPercent} link />}
+                            {showTeaser && !item.onCampaign && <PremiumTeaser percent={item.premiumPercent} seller={item.premiumSellerPercent} platform={item.premiumPlatformPercent} link />}
                           </>
                         )}
                       </p>

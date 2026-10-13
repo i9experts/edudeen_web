@@ -89,7 +89,7 @@ export interface PremiumStats {
   approvedPayments: number;
   revenueLast30DaysUSD: number;
   activeByInterval: { monthly: number; yearly: number };
-  premiumOrders: { currency: string; orders: number; premiumDiscount: number; orderTotal?: number }[];
+  premiumOrders: { currency: string; orders: number; premiumDiscount: number; platformFundedPremiumDiscount?: number; orderTotal?: number }[];
 }
 
 export const apiAdminPremiumStats = () =>
@@ -119,3 +119,13 @@ export const apiAdminApprovePremiumPayment = (id: string) =>
   client.patch<never, { success: boolean }>(`${BASE}/payments/${id}/approve`);
 export const apiAdminRejectPremiumPayment = (id: string, reason: string) =>
   client.patch<never, { success: boolean }>(`${BASE}/payments/${id}/reject`, { reason });
+
+export interface PremiumSettings {
+  platformDiscount: { enabled: boolean; percent: number };
+  premiumSellerFeePercent: number;
+  minGapPercent: number;
+}
+export const apiAdminGetPremiumSettings = () =>
+  client.get<never, { success: boolean; data: PremiumSettings & { effective: { platformPercent: number } } }>(`${BASE}/settings`);
+export const apiAdminUpdatePremiumSettings = (body: Partial<{ platformDiscount: { enabled?: boolean; percent?: number }; premiumSellerFeePercent: number; minGapPercent: number }>) =>
+  client.put<never, { success: boolean; message?: string; data: PremiumSettings }>(`${BASE}/settings`, body);

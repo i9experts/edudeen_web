@@ -809,7 +809,7 @@ export default function StoreSettings() {
 
             {storeId && <ReturnPolicyCard storeId={storeId} policy={store?.returnPolicy} refetch={refetch} />}
 
-            {storeId && <PremiumDiscountCard storeId={storeId} discount={store?.premiumDiscount} refetch={refetch} />}
+            {storeId && <PremiumDiscountCard storeId={storeId} discount={store?.premiumDiscount} currency={store?.baseCurrency} refetch={refetch} />}
           </div>
         </div>
       )}

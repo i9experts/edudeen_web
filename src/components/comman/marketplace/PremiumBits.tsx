@@ -4,15 +4,25 @@ import { Crown } from 'lucide-react';
 import { usePremium } from '@/hooks/usePremium';
 import { TokenStorage } from '@/api/services/auth';
 
-/** Small "Premium price" chip shown next to a member price. */
-export function PremiumChip({ label = 'Premium price', className }: { label?: string; className?: string }) {
+/** "15% from the seller + 5% from Edudeen" - the plain-language breakdown of a combined Premium percent. */
+export function premiumBreakdownText(seller?: number | null, platform?: number | null): string {
+  const s = seller ?? 0;
+  const p = platform ?? 0;
+  if (s > 0 && p > 0) return `${s}% from the seller + ${p}% from Edudeen`;
+  if (s > 0) return `${s}% from the seller`;
+  return '';
+}
+
+/** Small "Premium price: 20% off" chip shown next to a member price (hover: "15% from the seller + 5% from Edudeen"). */
+export function PremiumChip({ percent, seller, platform, label, className }: { percent?: number | null; seller?: number | null; platform?: number | null; label?: string; className?: string }) {
+  const text = label ?? (percent && percent > 0 ? `Premium price: ${percent}% off` : 'Premium price');
+  const tip = premiumBreakdownText(seller, platform);
   return (
-    <span className={clsx('inline-flex items-center gap-[3px] px-[6px] py-[1px] rounded-full text-[12px] font-bold bg-[#fff6d6] text-[#8a6100] border border-[#f1d98a] whitespace-nowrap', className)}>
-      <Crown size={10} className="shrink-0" aria-hidden /> {label}
+    <span title={tip || undefined} className={clsx('inline-flex items-center gap-[3px] px-[6px] py-[1px] rounded-full text-[12px] font-bold bg-[#fff6d6] text-[#8a6100] border border-[#f1d98a] whitespace-nowrap', className)}>
+      <Crown size={10} className="shrink-0" aria-hidden /> {text}
     </span>
   );
 }
-
 /** Small gold "Premium" member badge (next to a buyer's name). */
 export function PremiumMemberBadge({ className }: { className?: string }) {
   return (
@@ -32,26 +42,34 @@ export function usePremiumView() {
   return { isPremium, showTeaser: !isPremium && (guest || (isBuyer && !loading)) };
 }
 
-/** The member price of a variant converted for display, or null when it does not beat `shownPrice`. */
+/**
+ * The member price of a variant converted for display (null when the member gets nothing better than `shownPrice`).
+ * `list` is the ORIGINAL price to strike through (never the seller's normal sale price); seller / platform are the parts of `percent`.
+ */
 export function memberPriceOf(
-  variant: { premiumPrice?: number; premiumDiscountPercent?: number; currency?: string | null } | undefined | null,
+  variant: { premiumPrice?: number; premiumDiscountPercent?: number; premiumSellerPercent?: number; premiumPlatformPercent?: number; listPrice?: number; currency?: string | null } | undefined | null,
   convert: (n: number, c?: string | null) => number,
   shownPrice: number | null,
-): { price: number; percent: number } | null {
+): { price: number; percent: number; list: number | null; seller: number; platform: number } | null {
   if (!variant || variant.premiumPrice == null || !(variant.premiumPrice >= 0)) return null;
   const price = convert(variant.premiumPrice, variant.currency);
   if (shownPrice != null && price >= shownPrice) return null;
-  return { price, percent: variant.premiumDiscountPercent ?? 0 };
+  return {
+    price, percent: variant.premiumDiscountPercent ?? 0,
+    list: variant.listPrice != null ? convert(variant.listPrice, variant.currency) : null,
+    seller: variant.premiumSellerPercent ?? 0, platform: variant.premiumPlatformPercent ?? 0,
+  };
 }
 
-/** Understated teaser: "Premium members save 10%". A link on its own page, plain text inside a card link. */
-export function PremiumTeaser({ percent, link = false, className }: { percent?: number | null; link?: boolean; className?: string }) {
+/** Understated teaser: "Premium members save up to 20%" (seller% + Edudeen%; hover shows the breakdown). A link on its own page, plain text inside a card link. */
+export function PremiumTeaser({ percent, seller, platform, link = false, className }: { percent?: number | null; seller?: number | null; platform?: number | null; link?: boolean; className?: string }) {
   const { showTeaser } = usePremiumView();
   if (!showTeaser || !percent || percent <= 0) return null;
-  const text = `Premium members save ${percent}%`;
+  const text = `Premium members save up to ${percent}%`;
   const cls = clsx('inline-flex items-center gap-1 text-[12px] font-semibold text-[#8a6100]', className);
+  const tip = premiumBreakdownText(seller, platform) || undefined;
   const inner = <><Crown size={11} className="shrink-0" aria-hidden /> {text}</>;
   return link
-    ? <Link to="/premium" className={clsx(cls, 'no-underline hover:underline')}>{inner}</Link>
-    : <span className={cls}>{inner}</span>;
+    ? <Link to="/premium" title={tip} className={clsx(cls, 'no-underline hover:underline')}>{inner}</Link>
+    : <span title={tip} className={cls}>{inner}</span>;
 }

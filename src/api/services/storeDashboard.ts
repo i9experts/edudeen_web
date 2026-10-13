@@ -1,4 +1,4 @@
-﻿import client from '../client';
+import client from '../client';
 import type { SellerOverviewData, RevenuePoint, SellerTodaySummaryData } from './analytics/analytics';
 import type { InventoryProduct } from './product';
 
@@ -30,7 +30,7 @@ export interface StoreDashboardSummary {
   /** Edudeen Premium member orders in the last `windowDays` days. */
   premium?: {
     premiumOrders: number;
-    byCurrency: { currency: string; orders: number; premiumDiscountGiven: number; revenue: number }[];
+    byCurrency: { currency: string; orders: number; premiumDiscountGiven: number; platformFundedDiscount?: number; revenue: number }[];
     windowDays: number;
   };
 }

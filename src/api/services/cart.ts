@@ -21,8 +21,12 @@ export interface CartItem {
   /** Edudeen Premium: teaser percent (everyone); the member fields below are display-only and members only (checkout is the source of truth). */
   premiumPercent?:         number;
   premiumDiscountPercent?: number;
+  premiumSellerPercent?:   number;
+  premiumPlatformPercent?: number;
   premiumUnitPrice?:       number;
   premiumItemTotal?:       number;
+  /** Original list price a member sees struck through (never the seller's normal sale price). */
+  listPrice?:              number;
   type?:           'physical' | 'digital';
   /** Set on the main marketplace site, where one view spans several stores' carts. */
   storeId?:         string;
@@ -61,6 +65,8 @@ export interface Cart {
   campaignDiscount?:  { name: string; discountType: 'percentage' | 'fixed' | null; discountValue: number | null; currency: string | null; valueCurrency?: string | null; amount?: number } | null;
   isPremium?:      boolean;
   premiumSavings?: number;
+  /** Part of the member's price paid by Edudeen (platform-funded), in the cart currency. */
+  premiumPlatformFunded?: number;
   /** The currency the cart's own amounts are in (single-store carts). */
   currency?:  string | null;
   /** Main-site only: the per-store carts this merged view was built from.

@@ -750,7 +750,9 @@ export function CheckoutPage() {
   const couponDiscount = checkout?.couponDiscountUSD ?? 0;
   const giftCardDiscount = checkout?.giftCardDiscountUSD ?? 0;
   // Edudeen Premium member price: already inside every item price (like the other baked-in discounts), shown as its own row.
-  const premiumSavings = checkout?.premiumDiscountTotalUSD ?? summary?.premiumDiscountUSD ?? 0;
+  const premiumSellerSavings = checkout?.premiumDiscountTotalUSD ?? summary?.premiumDiscountUSD ?? 0;
+  const premiumPlatformSavings = checkout?.premiumPlatformDiscountTotalUSD ?? summary?.premiumPlatformDiscountUSD ?? 0;
+  const premiumSavings = premiumSellerSavings + premiumPlatformSavings;
   const bakedInDiscounts = (summary?.subscriberSavingsUSD ?? 0) + (summary?.campaignDiscountUSD ?? 0) + (summary?.autoDiscountUSD ?? 0) + premiumSavings;
   // The running sale only applies to the whole store cart, not to a Buy Now line or a physical-only subset.
   const estimate = computeCartTotals(cartItems, buyNow || physicalOnly ? null : cart?.campaignDiscount, convertToDisplay);
@@ -1641,7 +1643,7 @@ export function CheckoutPage() {
                     <span className="text-carbon truncate max-w-[150px]">
                       {item.name}
                       <span className="text-slate ms-1">×{item.quantity}</span>
-                      {!!item.premiumDiscountPercent && item.premiumDiscountPercent > 0 && <PremiumChip className="ms-1" />}
+                      {!!item.premiumDiscountPercent && item.premiumDiscountPercent > 0 && <PremiumChip percent={item.premiumDiscountPercent} seller={item.premiumSellerPercent} platform={item.premiumPlatformPercent} className="ms-1" />}
                     </span>
                     <span className="font-medium text-carbon flex-shrink-0 text-end">
                       {!!item.premiumDiscountPercent && item.premiumDiscountPercent > 0 && item.originalPrice != null && (
@@ -1717,6 +1719,9 @@ export function CheckoutPage() {
                   <span className="text-[#8a6100]">Premium savings</span>
                   <span className="font-semibold text-[#8a6100]">-{checkoutSymbol}{premiumSavings.toFixed(2)}</span>
                 </div>
+              )}
+              {premiumSellerSavings > 0 && premiumPlatformSavings > 0 && (
+                <p className="text-[12px] text-slate -mt-1">{`${checkoutSymbol}${premiumSellerSavings.toFixed(2)} from the seller + ${checkoutSymbol}${premiumPlatformSavings.toFixed(2)} from Edudeen`}</p>
               )}
               {!!summary?.campaignDiscountUSD && summary.campaignDiscountUSD > 0 && (
                 <div className="flex justify-between text-[13px]">

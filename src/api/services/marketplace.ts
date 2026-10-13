@@ -34,7 +34,12 @@ export interface ProductVariant {
   minOrderValueUSD?:   number | null;
   /** Edudeen Premium members only: the member price (in this variant's currency) and the seller's percent. */
   premiumPrice?:           number;
+  /** Combined Premium percent (seller + Edudeen); the parts are below. */
   premiumDiscountPercent?: number;
+  premiumSellerPercent?:   number;
+  premiumPlatformPercent?: number;
+  /** The original (list) price to strike through for a member: compare-at when the seller runs a normal sale, else the price. */
+  listPrice?:              number;
 }
 
 export interface DigitalProduct {
@@ -137,6 +142,9 @@ export interface MarketplaceProduct {
   activeCampaign?:   ActiveCampaignBadge | null;
   /** Edudeen Premium teaser: percent the seller gives members (0/absent = none). */
   premiumPercent?:   number;
+  /** Breakdown of premiumPercent: the seller's part and the Edudeen-funded part. */
+  premiumSellerPercent?:   number;
+  premiumPlatformPercent?: number;
 }
 
 export interface ProductsByCategoryResponse {

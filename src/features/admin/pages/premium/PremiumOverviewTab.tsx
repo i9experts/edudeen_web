@@ -39,7 +39,7 @@ export function PremiumOverviewTab({ goTo }: { goTo: (tab: string, extra?: strin
           <Percent size={15} className="text-brand-orange" />
           <div>
             <p className="text-[13.5px] font-semibold text-charcoal">Premium orders and member discounts</p>
-            <p className="text-[12px] text-slate">Discounts are funded by sellers; Edudeen does not pay them. Shown per order currency.</p>
+            <p className="text-[12px] text-slate">Seller-funded discount plus the part Edudeen funds (Platform offer tab). Shown per order currency.</p>
           </div>
         </div>
         {loading ? (
@@ -52,7 +52,7 @@ export function PremiumOverviewTab({ goTo }: { goTo: (tab: string, extra?: strin
               <div key={o.currency} className="px-5 py-3 flex items-center justify-between gap-3 text-[13px]">
                 <span className="font-semibold text-charcoal">{o.currency}</span>
                 <span className="text-slate">{o.orders} order{o.orders === 1 ? '' : 's'}</span>
-                <span className="font-semibold text-carbon">{money(o.premiumDiscount, o.currency)} discounted</span>
+                <span className="font-semibold text-carbon">{money(o.premiumDiscount, o.currency)} seller-funded{(o.platformFundedPremiumDiscount ?? 0) > 0 ? ` + ${money(o.platformFundedPremiumDiscount ?? 0, o.currency)} platform-funded` : ''}</span>
               </div>
             ))}
           </div>

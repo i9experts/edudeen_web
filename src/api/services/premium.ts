@@ -99,3 +99,19 @@ export function apiSubmitPremiumProof(paymentId: string, file: File, fields: { t
 }
 export const apiCancelPremium = () => client.post<never, Ok<{ currentPeriodEnd: string; cancelAtPeriodEnd: boolean }>>('/api/premium/cancel');
 export const apiResumePremium = () => client.post<never, Ok<{ currentPeriodEnd: string; cancelAtPeriodEnd: boolean }>>('/api/premium/resume');
+
+/** Public terms: what Edudeen adds for members, the fee on premium sales, the min gap rule and the normal platform fee of a product type. */
+export interface PremiumTerms {
+  platformDiscount: { enabled: boolean; percent: number };
+  /** Effective platform percent (0 when the offer is off). */
+  platformPercent: number;
+  premiumSellerFeePercent: number;
+  minGapPercent: number;
+  normalFee: { type: 'digital' | 'physical'; mode: 'percentage' | 'fixed'; value: number; fixedAmountInCurrency: number | null; currency: string | null } | null;
+}
+export const apiGetPremiumTerms = (params?: { type?: string; currency?: string }) =>
+  client.get<never, Ok<PremiumTerms>>('/api/premium/terms', { params });
+
+export interface PremiumConflict { productId: string; name: string; premiumPercent: number; salePercent: number; message: string }
+export const apiGetPremiumConflicts = (storeId: string) =>
+  client.get<never, Ok<{ minGapPercent: number; conflicts: PremiumConflict[] }>>('/api/premium/seller/conflicts', { params: { storeId } });

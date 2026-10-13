@@ -6,11 +6,12 @@ import { AdminStudioHeader } from '@/features/admin/components/studio';
 import { apiAdminPremiumStats } from '@/api/services/adminPremium';
 import { PremiumOverviewTab } from './premium/PremiumOverviewTab';
 import { PremiumPlansTab } from './premium/PremiumPlansTab';
+import { PremiumOfferTab } from './premium/PremiumOfferTab';
 import { PremiumMembersTab } from './premium/PremiumMembersTab';
 import { PremiumPaymentsTab } from './premium/PremiumPaymentsTab';
 import { useLoad } from './premium/useLoad';
 
-const TAB_IDS = ['overview', 'plans', 'members', 'payments'] as const;
+const TAB_IDS = ['overview', 'plans', 'offer', 'members', 'payments'] as const;
 type TabId = (typeof TAB_IDS)[number];
 
 export function AdminPremium() {
@@ -25,6 +26,7 @@ export function AdminPremium() {
   const tabs = [
     { id: 'overview', label: 'Overview' },
     { id: 'plans', label: 'Plans' },
+    { id: 'offer', label: 'Platform offer' },
     { id: 'members', label: 'Members' },
     { id: 'payments', label: 'Payments', count: stats?.pendingPayments || undefined },
   ];
@@ -41,6 +43,7 @@ export function AdminPremium() {
         <TabBar tabs={tabs} active={tab} onChange={id => setParams({ tab: id })} />
         {tab === 'overview' && <PremiumOverviewTab goTo={goTo} />}
         {tab === 'plans' && <PremiumPlansTab />}
+        {tab === 'offer' && <PremiumOfferTab />}
         {tab === 'members' && <PremiumMembersTab key={`m-${status}`} initialStatus={status} />}
         {tab === 'payments' && <PremiumPaymentsTab key={`p-${status}`} initialStatus={status} />}
       </div>

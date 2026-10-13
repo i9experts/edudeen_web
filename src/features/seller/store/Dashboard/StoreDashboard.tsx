@@ -485,7 +485,7 @@ export default function StoreDashboard() {
               <MetricCard
                 label={`Premium buyers (${metrics!.premium!.windowDays} days)`}
                 value={`${formatNumber(metrics!.premium!.premiumOrders)} order${metrics!.premium!.premiumOrders === 1 ? '' : 's'}`}
-                sub={metrics!.premium!.byCurrency.map(c => `${formatMoneyCompact(c.premiumDiscountGiven, c.currency)} discount given`).join(' · ') || undefined}
+                sub={metrics!.premium!.byCurrency.map(c => `${formatMoneyCompact(c.premiumDiscountGiven, c.currency)} discount given${(c.platformFundedDiscount ?? 0) > 0 ? ` + ${formatMoneyCompact(c.platformFundedDiscount ?? 0, c.currency)} paid by Edudeen` : ''}`).join(' · ') || undefined}
                 to={`/store/${storeId}/settings`}
               />
             </div>
