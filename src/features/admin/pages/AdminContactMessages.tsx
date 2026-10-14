@@ -38,7 +38,7 @@ function DetailModal({ submission, onClose }: { submission: ContactSubmission; o
 }
 
 // ── Main page ─────────────────────────────────────────────────────────────────
-export function AdminContactMessages() {
+export function AdminContactMessages({ embedded = false }: { embedded?: boolean } = {}) {
   usePageTitle('Contact Messages');
   const [premiumOnly, setPremiumOnly] = useState(false);
   const { submissions, stats, loading, error, refetch } = useAdminContact(premiumOnly);
@@ -116,10 +116,12 @@ export function AdminContactMessages() {
 
   return (
     <div>
-      <AdminStudioHeader eyebrow="Edudeen team workspace · People"
-        title="Contact Messages"
-        subtitle={`${stats.new} new · ${stats.read} read · ${stats.resolved} resolved`}
-      />
+      {embedded
+        ? <p className="px-4 sm:px-7 pt-4 -mb-2 text-[12.5px] text-slate">{`${stats.new} new · ${stats.read} read · ${stats.resolved} resolved`}</p>
+        : <AdminStudioHeader eyebrow="Edudeen team workspace · People"
+          title="Contact Messages"
+          subtitle={`${stats.new} new · ${stats.read} read · ${stats.resolved} resolved`}
+        />}
 
       <div className="px-4 sm:px-7 pt-5 pb-8 flex flex-col gap-4">
         {actionError && (

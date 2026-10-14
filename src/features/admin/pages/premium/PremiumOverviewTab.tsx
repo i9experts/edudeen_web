@@ -61,7 +61,7 @@ export function PremiumOverviewTab({ goTo }: { goTo: (tab: string, extra?: strin
 
       <p className="text-[12px] text-slate">
         Buyers pay by bank transfer into the platform account; approve their proofs under Payments. Premium senders on the{' '}
-        <Link to="/admin/contact" className="text-brand-orange font-semibold">Contact messages</Link> page are shown first.
+        <Link to="/admin/messages?tab=contact" className="text-brand-orange font-semibold">Contact messages</Link> page are shown first.
       </p>
     </div>
   );

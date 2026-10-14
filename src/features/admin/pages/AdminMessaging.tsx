@@ -355,13 +355,13 @@ function ReportsPanel() {
 }
 
 // ── Main ──────────────────────────────────────────────────────────────────────
-export function AdminMessaging() {
+export function AdminMessaging({ embedded = false }: { embedded?: boolean } = {}) {
   usePageTitle('Messaging');
   const [tab, setTab] = useState<MainTab>('conversations');
 
   return (
     <div>
-      <AdminStudioHeader eyebrow="Edudeen team workspace · People" title="Messaging" subtitle="Oversee buyer–seller conversations and moderation reports." />
+      {!embedded && <AdminStudioHeader eyebrow="Edudeen team workspace · People" title="Messaging" subtitle="Oversee buyer–seller conversations and moderation reports." />}
 
       <div className="px-4 sm:px-7 pt-5 pb-8 flex flex-col gap-5">
         <div className="flex gap-2">

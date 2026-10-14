@@ -55,7 +55,7 @@ const ADMIN_LINKS: { label: string; to: string; hint: string }[] = [
   { label: 'Testimonials', to: '/admin/testimonials', hint: 'Not editable inline' },
   { label: 'Announcements', to: '/admin/announcements', hint: 'Site announcement bars' },
   { label: 'Onboarding slides', to: '/admin/app-slides', hint: 'Mobile app intro' },
-  { label: 'Contact messages', to: '/admin/contact', hint: 'Messages sent from the Contact page' },
+  { label: 'Contact messages', to: '/admin/messages?tab=contact', hint: 'Messages sent from the Contact page' },
   { label: 'Banners (full manager)', to: '/admin/banners', hint: 'Stats, schedule and placement limits' },
   { label: 'Categories (attributes, images)', to: '/admin/categories', hint: 'Images and attributes' },
   { label: 'Campaigns / flash sale', to: '/admin/marketing', hint: 'All campaign settings' },

@@ -39,9 +39,13 @@ function Thread({ id, onChanged, onBack }: { id: string; onChanged: () => void; 
   const [busy, setBusy] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
 
+  // onChanged is a new inline function on every parent render: keep it in a ref so it can never re-trigger loading
+  // (it used to: load -> onChanged -> parent re-render -> new onChanged -> load again, forever).
+  const onChangedRef = useRef(onChanged);
+  onChangedRef.current = onChanged;
   const load = useCallback(async () => {
-    try { const r = await apiAdminChatGet(id); setT(r.data); setError(''); onChanged(); } catch (e) { setError(errMsg(e, 'Could not load this conversation.')); }
-  }, [id, onChanged]);
+    try { const r = await apiAdminChatGet(id); setT(r.data); setError(''); onChangedRef.current(); } catch (e) { setError(errMsg(e, 'Could not load this conversation.')); }
+  }, [id]);
   useEffect(() => { setT(null); void load(); }, [load]);
   useEffect(() => { // new user messages while the thread is open
     const h = window.setInterval(() => { if (!document.hidden) void load(); }, 15000);
@@ -105,7 +109,7 @@ function Thread({ id, onChanged, onBack }: { id: string; onChanged: () => void; 
   );
 }
 
-export function AdminChatInbox() {
+export function AdminChatInbox({ embedded = false }: { embedded?: boolean } = {}) {
   usePageTitle('Chat inbox');
   const [params, setParams] = useSearchParams();
   const filter = params.get('filter') ?? '';
@@ -141,8 +145,10 @@ export function AdminChatInbox() {
 
   return (
     <div>
-      <AdminStudioHeader eyebrow="Edudeen team workspace · People" title="Chat inbox"
-        subtitle={`${stats.unread} unread · ${stats.open} open · ${stats.answered} answered · ${stats.closed} closed`} />
+      {embedded
+        ? <p className="px-4 sm:px-7 pt-4 -mb-2 text-[12.5px] text-slate">{`${stats.unread} unread · ${stats.open} open · ${stats.answered} answered · ${stats.closed} closed`}</p>
+        : <AdminStudioHeader eyebrow="Edudeen team workspace · People" title="Chat inbox"
+          subtitle={`${stats.unread} unread · ${stats.open} open · ${stats.answered} answered · ${stats.closed} closed`} />}
       <div className="px-4 sm:px-7 pt-5 pb-8">
         {unavailable ? (
           <div role="alert" className="bg-white border border-bone rounded-xl p-6 text-center">

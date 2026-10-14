@@ -159,7 +159,7 @@ const AdminAnalytics     = lazy(() => named(import('@/features/admin/pages/Admin
 const AdminUsers         = lazy(() => named(import('@/features/admin/pages/AdminUsers'),                        'AdminUsers'));
 const AdminModeration    = lazy(() => named(import('@/features/admin/pages/AdminModeration'),                   'AdminModeration'));
 const AdminActivityLog   = lazy(() => named(import('@/features/admin/pages/AdminActivityLog'),                   'AdminActivityLog'));
-const AdminMessaging     = lazy(() => named(import('@/features/admin/pages/AdminMessaging'),                    'AdminMessaging'));
+const AdminMessagesHub    = lazy(() => named(import('@/features/admin/pages/AdminMessagesHub'),                  'AdminMessagesHub'));
 const AdminMarketplace   = lazy(() => named(import('@/features/admin/pages/AdminMarketplace'),                  'AdminMarketplace'));
 const AdminLeads         = lazy(() => named(import('@/features/admin/pages/AdminLeads'),                        'AdminLeads'));
 const AdminRefunds       = lazy(() => named(import('@/features/admin/pages/AdminRefunds'),                      'AdminRefunds'));
@@ -172,8 +172,6 @@ const AdminFinance       = lazy(() => named(import('@/features/admin/pages/Admin
 const AdminAnnouncements = lazy(() => named(import('@/features/admin/pages/AdminAnnouncements'),                'AdminAnnouncements'));
 const AdminBanners       = lazy(() => named(import('@/features/admin/pages/AdminBanners'),                       'AdminBanners'));
 const AdminFaqs          = lazy(() => named(import('@/features/admin/pages/AdminFaqs'),                          'AdminFaqs'));
-const AdminChatInbox = lazy(() => named(import('@/features/admin/pages/AdminChatInbox'), 'AdminChatInbox'));
-const AdminContactMessages = lazy(() => named(import('@/features/admin/pages/AdminContactMessages'),             'AdminContactMessages'));
 const AdminTestimonials  = lazy(() => named(import('@/features/admin/pages/AdminTestimonials'),                  'AdminTestimonials'));
 const AdminPremium = lazy(() => named(import('@/features/admin/pages/AdminPremium'), 'AdminPremium'));
 const AdminManualPayments = lazy(() => named(import('@/features/admin/pages/AdminManualPayments'),               'AdminManualPayments'));
@@ -435,7 +433,7 @@ const mainRouter = createBrowserRouter([
           { path: 'users',        element: <RequireRole role="admin"><AdminUsers /></RequireRole> },
           { path: 'moderation',   element: <RequireRole role="admin"><AdminModeration /></RequireRole> },
           { path: 'activity-log', element: <RequireRole role="admin"><AdminActivityLog /></RequireRole> },
-          { path: 'messages',     element: <AdminMessaging /> },
+          { path: 'messages',     element: <AdminMessagesHub /> },
           { path: 'leads',        element: <RequireRole role="admin"><AdminLeads /></RequireRole> },
           { path: 'refunds',      element: <RequireRole role="admin"><AdminRefunds /></RequireRole> },
           { path: 'shipping-zones', element: <RequireRole role="admin"><AdminShippingZones /></RequireRole> },
@@ -455,8 +453,8 @@ const mainRouter = createBrowserRouter([
           { path: 'announcements',element: <RequireRole role="admin"><AdminAnnouncements /></RequireRole> },
           { path: 'banners',      element: <AdminBanners /> },
           { path: 'faqs',         element: <AdminFaqs /> },
-          { path: 'contact',      element: <AdminContactMessages /> },
-          { path: 'chat',         element: <RequireRole role="admin"><AdminChatInbox /></RequireRole> },
+          { path: 'contact',      element: <Navigate to="/admin/messages?tab=contact" replace /> },
+          { path: 'chat',         element: <Navigate to="/admin/messages?tab=chat" replace /> },
           { path: 'testimonials', element: <AdminTestimonials /> },
           { path: 'config',       element: <RequireRole role="admin"><AdminConfig /></RequireRole> },
           { path: 'marketing',    element: <RequireRole role="admin"><AdminMarketing /></RequireRole> },

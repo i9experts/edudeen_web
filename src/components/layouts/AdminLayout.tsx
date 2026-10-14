@@ -4,7 +4,7 @@ import { clsx } from 'clsx';
 import {
   LayoutDashboard, Users, Shield, Store, DollarSign, Bell, Settings, UserCog,
   PanelLeftClose, PanelLeftOpen, MessageSquare, Image as ImageIcon, HelpCircle, FolderTree, RefreshCw,
-  BarChart3, Layers, Search, Sparkles, Tag, LogOut, MessageCircle, Coins, UserPlus, Activity,
+  BarChart3, Layers, Search, Sparkles, Tag, LogOut, Coins, UserPlus, Activity,
   ChevronDown, TrendingUp, ChevronRight, Quote, CalendarCheck, Undo2, Truck, ShoppingBag, BookMarked, Smartphone, Landmark, Crown,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -40,7 +40,7 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { id: 'users',         Icon: Users,           label: 'Users & Sellers', path: '/admin/users'         },
   { id: 'moderation',    Icon: Shield,          label: 'Moderation',      path: '/admin/moderation'    },
   { id: 'activity-log',  Icon: Activity,        label: 'Activity Log',    path: '/admin/activity-log'  },
-  { id: 'messages',      Icon: MessageSquare,   label: 'Messaging',       path: '/admin/messages'      },
+  { id: 'messages',      Icon: MessageSquare,   label: 'Messages',        path: '/admin/messages'      },
   { id: 'leads',         Icon: UserPlus,        label: 'Seller Applications', path: '/admin/leads'     },
   { id: 'orders',        Icon: ShoppingBag,     label: 'Orders',          path: '/admin/orders'        },
   { id: 'refunds',       Icon: Undo2,           label: 'Refunds',         path: '/admin/refunds'       },
@@ -60,8 +60,6 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { id: 'ai-studio',     Icon: Sparkles,        label: 'AI Studio',       path: '/admin/ai-studio'     },
   { id: 'banners',       Icon: ImageIcon,       label: 'Banners',         path: '/admin/banners'       },
   { id: 'faqs',          Icon: HelpCircle,      label: 'FAQs',            path: '/admin/faqs'          },
-  { id: 'contact',       Icon: MessageCircle,   label: 'Contact Messages',path: '/admin/contact'       },
-  { id: 'chat',          Icon: MessageSquare,   label: 'Chat inbox',      path: '/admin/chat'          },
   { id: 'testimonials',  Icon: Quote,           label: 'Testimonials',   path: '/admin/testimonials'  },
   { id: 'announcements', Icon: Bell,            label: 'Announcements',   path: '/admin/announcements' },
   { id: 'app-slides',    Icon: Smartphone,      label: 'App Intro Slides', path: '/admin/app-slides'  },
@@ -87,7 +85,7 @@ interface AdminModule {
 export const ADMIN_MODULES: AdminModule[] = [
   { id: 'overview',  label: 'Overview',             Icon: LayoutDashboard, ids: ['overview'] },
   { id: 'commerce',  label: 'Commerce',             Icon: Store,           ids: ['orders', 'marketplace', 'categories', 'refunds', 'shipping-zones', 'subscriptions', 'platform-plans', 'premium'] },
-  { id: 'people',    label: 'Users & Communication', Icon: Users,          ids: ['users', 'leads', 'moderation', 'messages', 'contact', 'chat'] },
+  { id: 'people',    label: 'Users & Communication', Icon: Users,          ids: ['users', 'leads', 'moderation', 'messages'] },
   { id: 'growth',    label: 'Growth',                Icon: TrendingUp,     ids: ['marketing', 'picks', 'seo', 'ai-studio'] },
   { id: 'finance',   label: 'Finance',               Icon: DollarSign,     ids: ['finance', 'monthly-payouts', 'manual-payments', 'fx-settings'] },
   { id: 'content',   label: 'Content',               Icon: ImageIcon,      ids: ['banners', 'faqs', 'testimonials', 'announcements', 'app-slides'] },
@@ -286,7 +284,7 @@ function AdminSidebar({ open, onToggle }: AdminSidebarProps) {
     apiAdminChatStats().then(r => { if (alive) setUnreadChats(r.data?.unread ?? 0); }).catch((e: { status?: number }) => { if (e?.status === 404) chatApiMissing = true; /* API not updated yet: stop asking */ });
     return () => { alive = false; };
   }, [pathname]);
-  const badgeFor = (id: string) => (id === 'marketplace' ? pendingListings : id === 'premium' ? pendingPremium : id === 'chat' ? unreadChats : 0);
+  const badgeFor = (id: string) => (id === 'marketplace' ? pendingListings : id === 'premium' ? pendingPremium : id === 'messages' ? unreadChats : 0);
   useEffect(() => { setExpandedModuleId(moduleForPath(pathname, search)); }, [pathname, search]);
 
   const handleLogout = async () => {
@@ -472,7 +470,7 @@ function AdminSidebar({ open, onToggle }: AdminSidebarProps) {
                         <button
                           key={item.id}
                           type="button"
-                          onClick={() => goTo(item.id === 'chat' && badge ? `${item.path}?filter=unread` : item.id === 'premium' && badge ? `${item.path}?tab=payments&status=pending` : badge ? `${item.path}?status=pending_review` : item.path)}
+                          onClick={() => goTo(item.id === 'messages' && badge ? `${item.path}?tab=chat&filter=unread` : item.id === 'premium' && badge ? `${item.path}?tab=payments&status=pending` : badge ? `${item.path}?status=pending_review` : item.path)}
                           aria-current={active ? 'page' : undefined}
                           className={clsx(
                             'w-full flex items-center gap-[8px] py-[8px] px-[9px] rounded-lg border-none text-left',
@@ -486,7 +484,7 @@ function AdminSidebar({ open, onToggle }: AdminSidebarProps) {
                             {item.label}
                           </span>
                           {badge > 0 && (
-                            <span aria-label={item.id === 'chat' ? `${badge} unread` : `${badge} waiting for review`} className={clsx('text-[12px] font-bold px-[6px] py-[1px] rounded-full leading-[14px] shrink-0', active ? 'bg-white text-brand-orange' : 'bg-info text-white')}>
+                            <span aria-label={item.id === 'messages' ? `${badge} unread` : `${badge} waiting for review`} className={clsx('text-[12px] font-bold px-[6px] py-[1px] rounded-full leading-[14px] shrink-0', active ? 'bg-white text-brand-orange' : 'bg-info text-white')}>
                               {badge > 99 ? '99+' : badge}
                             </span>
                           )}

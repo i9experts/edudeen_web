@@ -67,7 +67,7 @@ export function ChatbotCard() {
         <label className="flex items-center gap-3 text-[13px] text-carbon"><Toggle checked={cfg.useAiFallback} onChange={v => edit({ useAiFallback: v })} label="AI fallback" /> AI fallback (let AI answer unmatched questions)</label>
         <label className="flex items-center gap-3 text-[13px] text-carbon"><Toggle checked={cfg.aiEnabled} onChange={v => edit({ aiEnabled: v })} label="Use AI to translate answers into other languages" /> Use AI to translate answers into other languages</label>
       </div>
-      <p className="text-[12px] text-slate -mt-3 mb-5">By default a typed question that is not a greeting or one of the answers below is sent to the <a href="/admin/chat" className="underline text-brand-royal">Chat inbox</a> for your team to answer. Turn <strong>AI fallback</strong> on to let the AI answer those instead (it also needs the <strong>Help bot</strong> switch in AI settings).</p>
+      <p className="text-[12px] text-slate -mt-3 mb-5">By default a typed question that is not a greeting or one of the answers below is sent to the <a href="/admin/messages?tab=chat" className="underline text-brand-royal">Chat inbox</a> for your team to answer. Turn <strong>AI fallback</strong> on to let the AI answer those instead (it also needs the <strong>Help bot</strong> switch in AI settings).</p>
 
       <div role="tablist" aria-label="Chatbot audience" className="flex gap-2 mb-4">
         {([['buyerQuestions', 'Buyer questions'], ['sellerQuestions', 'Seller questions']] as [ListKey, string][]).map(([k, label]) => (
