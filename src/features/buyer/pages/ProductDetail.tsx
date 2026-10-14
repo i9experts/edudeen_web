@@ -804,6 +804,11 @@ export function ProductDetail() {
                         <PremiumChip percent={activeVariant?.premiumDiscountPercent} seller={activeVariant?.premiumSellerPercent} platform={activeVariant?.premiumPlatformPercent} />
 <span className="text-[12px] text-slate">{`You save ${displaySymbol}${((memberList ?? displayPrice) - memberShown).toLocaleString()}`}</span>
                       </div>
+                      {memberList != null && displayPrice < memberList && (
+                        <p className="text-[12px] text-slate/80 mb-2 mt-0" title="A seller's regular sale is not combined with the Premium price">
+                          {`Regular sale price ${displaySymbol}${displayPrice.toLocaleString()} - not for Premium members`}
+                        </p>
+                      )}
                     </>
                   ) : (
                     <>
