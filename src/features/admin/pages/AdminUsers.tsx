@@ -11,7 +11,9 @@ import { CellText } from '@/components/comman/ui/Table';
 import type { BadgeColor } from '@/types';
 import { AnalyticsErrorState } from '@/components/comman/analytics/AnalyticsErrorState';
 import { formatDate, formatNumber } from '@/components/comman/analytics/format';
-import { Users2, Eye, Ban, CheckCircle2 } from 'lucide-react';
+import { Users2, Eye, Ban, CheckCircle2, Crown } from 'lucide-react';
+import { apiAdminPremiumMembers, type AdminPremiumMember } from '@/api/services/adminPremium';
+import { GrantModal, RevokeModal } from './premium/PremiumMembersTab';
 
 const ROLE_COLOR: Record<AccountRole, BadgeColor> = { seller: 'orange', buyer: 'blue' };
 const ROLE_LABEL: Record<AccountRole, string> = { seller: 'Seller', buyer: 'Buyer' };
@@ -32,6 +34,39 @@ function initialsOf(name: string) {
 // ── Account detail modal ──────────────────────────────────────────────────────
 function DetailField({ label, children }: { label: string; children: ReactNode }) {
   return <div className="min-w-0"><p className="text-[12px] text-slate mb-0.5">{label}</p><div className="text-charcoal break-words">{children}</div></div>;
+}
+
+/** Buyer accounts: is this person an Edudeen Premium member? Give or remove it right here. */
+function PremiumSection({ account }: { account: AccountRow }) {
+  const [member, setMember] = useState<AdminPremiumMember | null | undefined>(undefined);
+  const [error, setError] = useState('');
+  const [granting, setGranting] = useState(false);
+  const [revoking, setRevoking] = useState(false);
+  const load = () => {
+    setError('');
+    apiAdminPremiumMembers({ q: account.email, status: 'active', limit: 5 })
+      .then(r => setMember(r.data.members.find(m => m.userId === account.id && m.isLive) ?? null))
+      .catch(err => { setMember(null); setError(err instanceof Error ? err.message : 'Could not check Premium.'); });
+  };
+  useEffect(load, [account.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  return (
+    <div className="col-span-2 rounded-xl border border-bone bg-cream/60 p-3">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <p className="text-[13px] font-semibold text-carbon flex items-center gap-1.5 m-0"><Crown size={14} className="text-[#C79A00]" aria-hidden /> Edudeen Premium</p>
+        {member === undefined ? <span className="text-[12px] text-slate">Checking…</span> : member ? (
+          <Button size="xs" variant="danger" onClick={() => setRevoking(true)}>Remove Premium</Button>
+        ) : (
+          <Button size="xs" variant="primary" onClick={() => setGranting(true)}>Give Premium</Button>
+        )}
+      </div>
+      <p className="text-[12px] text-slate mt-1.5 mb-0">
+        {member === undefined ? '' : member ? `Active until ${member.currentPeriodEnd ? new Date(member.currentPeriodEnd).toLocaleDateString() : '-'} (${member.source === 'admin_grant' ? 'gift from Edudeen' : 'paid'}).` : 'Not a Premium member.'}
+      </p>
+      {error && <p role="alert" className="text-[12px] text-error mt-1 mb-0">{error}</p>}
+      {granting && <GrantModal initialWho={account.email} onClose={() => setGranting(false)} onDone={() => { setGranting(false); setMember(undefined); load(); }} />}
+      {revoking && member && <RevokeModal member={member} onClose={() => setRevoking(false)} onDone={() => { setRevoking(false); setMember(undefined); load(); }} />}
+    </div>
+  );
 }
 
 function AccountDetailModal({ account, onClose, onChanged }: { account: AccountRow; onClose: () => void; onChanged: (msg: string) => void }) {
@@ -77,6 +112,7 @@ function AccountDetailModal({ account, onClose, onChanged }: { account: AccountR
           <DetailField label="Status"><StatusBadge status={status} size="sm" /></DetailField>
           <DetailField label="Plan"><span className="capitalize">{account.plan}</span></DetailField>
           <DetailField label="Joined">{formatDate(account.createdAt)}</DetailField>
+          {account.role === 'buyer' && <PremiumSection account={account} />}
           {detailLoading ? (
             Array.from({ length: 4 }).map((_, i) => <SkeletonBox key={i} height={34} rounded="6px" />)
           ) : detail ? (

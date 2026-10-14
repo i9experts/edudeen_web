@@ -25,9 +25,9 @@ function statusBadge(m: AdminPremiumMember) {
   return <Badge color="gray" dot>{m.status.charAt(0).toUpperCase() + m.status.slice(1)}</Badge>;
 }
 
-function GrantModal({ onClose, onDone }: { onClose: () => void; onDone: () => void }) {
+export function GrantModal({ onClose, onDone, initialWho = '' }: { onClose: () => void; onDone: () => void; initialWho?: string }) {
   const { data: plans, loading, error: plansError } = useLoad(() => apiAdminPremiumPlans().then(r => r.data.filter(p => p.isActive)), []);
-  const [who, setWho] = useState('');
+  const [who, setWho] = useState(initialWho);
   const [planId, setPlanId] = useState('');
   const [days, setDays] = useState('30');
   const [saving, setSaving] = useState(false);
@@ -65,8 +65,16 @@ function GrantModal({ onClose, onDone }: { onClose: () => void; onDone: () => vo
           {loading && <option value="">Loading plans…</option>}
           {(plans ?? []).map(p => <option key={p._id} value={p._id}>{p.name}</option>)}
         </Select>
-        <Input label="Duration (days)" type="number" min={1} max={3650} value={days} onChange={e => setDays(e.target.value)} error={touched ? errors.days : undefined} />
-        <p className="text-[12px] text-slate">Free of charge. If the buyer is already a member, the time is added on top.</p>
+        <div>
+          <p className="text-[12px] font-semibold text-charcoal mb-1.5">How long?</p>
+          <div className="flex flex-wrap gap-2 mb-2">
+            {[['1 month', '30'], ['3 months', '90'], ['6 months', '180'], ['1 year', '365']].map(([label, v]) => (
+              <button key={v} type="button" onClick={() => setDays(v)} className={'px-3 py-1.5 rounded-full text-[12.5px] font-medium border cursor-pointer transition-colors ' + (days === v ? 'bg-carbon text-white border-carbon' : 'bg-white text-charcoal border-bone hover:bg-cream')}>{label}</button>
+            ))}
+          </div>
+          <Input label="Or a custom number of days" type="number" min={1} max={3650} value={days} onChange={e => setDays(e.target.value)} error={touched ? errors.days : undefined} />
+        </div>
+        <p className="text-[12px] text-slate">A free gift from Edudeen - the buyer is notified. If they are already a member, the time is added on top.</p>
         {plansError && <p role="alert" className="text-[12px] text-error">{plansError}</p>}
         {!loading && plans && plans.length === 0 && <p className="text-[12px] text-error">Create an active plan first.</p>}
         {error && <p role="alert" className="text-[12px] text-error">{error}</p>}
@@ -75,7 +83,7 @@ function GrantModal({ onClose, onDone }: { onClose: () => void; onDone: () => vo
   );
 }
 
-function RevokeModal({ member, onClose, onDone }: { member: AdminPremiumMember; onClose: () => void; onDone: () => void }) {
+export function RevokeModal({ member, onClose, onDone }: { member: AdminPremiumMember; onClose: () => void; onDone: () => void }) {
   const [reason, setReason] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
