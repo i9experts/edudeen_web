@@ -4,7 +4,7 @@
  */
 export interface ChatQA { id: string; q: string; a: string; qUr?: string; aUr?: string; qRu?: string; aRu?: string }
 export interface ChatbotConfig {
-  enabled: boolean; aiEnabled: boolean;
+  enabled: boolean; aiEnabled: boolean; useAiFallback: boolean;
   buyerQuestions: ChatQA[]; sellerQuestions: ChatQA[];
   welcomeText: string; welcomeTextUr: string; fallbackText: string; fallbackTextUr: string;
 }
@@ -12,6 +12,7 @@ export const CHIP_COUNT = 5;
 export const DEFAULT_CHATBOT: ChatbotConfig = {
   "enabled": true,
   "aiEnabled": true,
+  "useAiFallback": false,
   "buyerQuestions": [
     {
       "id": "buyer-download",

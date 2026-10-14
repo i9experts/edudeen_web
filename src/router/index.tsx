@@ -172,6 +172,7 @@ const AdminFinance       = lazy(() => named(import('@/features/admin/pages/Admin
 const AdminAnnouncements = lazy(() => named(import('@/features/admin/pages/AdminAnnouncements'),                'AdminAnnouncements'));
 const AdminBanners       = lazy(() => named(import('@/features/admin/pages/AdminBanners'),                       'AdminBanners'));
 const AdminFaqs          = lazy(() => named(import('@/features/admin/pages/AdminFaqs'),                          'AdminFaqs'));
+const AdminChatInbox = lazy(() => named(import('@/features/admin/pages/AdminChatInbox'), 'AdminChatInbox'));
 const AdminContactMessages = lazy(() => named(import('@/features/admin/pages/AdminContactMessages'),             'AdminContactMessages'));
 const AdminTestimonials  = lazy(() => named(import('@/features/admin/pages/AdminTestimonials'),                  'AdminTestimonials'));
 const AdminPremium = lazy(() => named(import('@/features/admin/pages/AdminPremium'), 'AdminPremium'));
@@ -455,6 +456,7 @@ const mainRouter = createBrowserRouter([
           { path: 'banners',      element: <AdminBanners /> },
           { path: 'faqs',         element: <AdminFaqs /> },
           { path: 'contact',      element: <AdminContactMessages /> },
+          { path: 'chat',         element: <RequireRole role="admin"><AdminChatInbox /></RequireRole> },
           { path: 'testimonials', element: <AdminTestimonials /> },
           { path: 'config',       element: <RequireRole role="admin"><AdminConfig /></RequireRole> },
           { path: 'marketing',    element: <RequireRole role="admin"><AdminMarketing /></RequireRole> },

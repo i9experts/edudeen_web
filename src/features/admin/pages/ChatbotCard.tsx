@@ -51,7 +51,7 @@ export function ChatbotCard() {
       if (bad >= 0) { setError(`${key === 'buyerQuestions' ? 'Buyer' : 'Seller'} question #${bad + 1}: the question and the English answer are required.`); setTab(key); return; }
     }
     void save({
-      enabled: cfg.enabled, aiEnabled: cfg.aiEnabled, buyerQuestions: cfg.buyerQuestions, sellerQuestions: cfg.sellerQuestions,
+      enabled: cfg.enabled, aiEnabled: cfg.aiEnabled, useAiFallback: cfg.useAiFallback, buyerQuestions: cfg.buyerQuestions, sellerQuestions: cfg.sellerQuestions,
       welcomeText: cfg.welcomeText, welcomeTextUr: cfg.welcomeTextUr, fallbackText: cfg.fallbackText, fallbackTextUr: cfg.fallbackTextUr,
     });
   };
@@ -64,9 +64,10 @@ export function ChatbotCard() {
 
       <div className="flex flex-wrap gap-x-8 gap-y-3 mb-5">
         <label className="flex items-center gap-3 text-[13px] text-carbon"><Toggle checked={cfg.enabled} onChange={v => edit({ enabled: v })} label="Show the chat bubble" /> Show the chat bubble</label>
-        <label className="flex items-center gap-3 text-[13px] text-carbon"><Toggle checked={cfg.aiEnabled} onChange={v => edit({ aiEnabled: v })} label="Use AI for other questions and languages" /> Use AI for other questions and languages</label>
+        <label className="flex items-center gap-3 text-[13px] text-carbon"><Toggle checked={cfg.useAiFallback} onChange={v => edit({ useAiFallback: v })} label="AI fallback" /> AI fallback (let AI answer unmatched questions)</label>
+        <label className="flex items-center gap-3 text-[13px] text-carbon"><Toggle checked={cfg.aiEnabled} onChange={v => edit({ aiEnabled: v })} label="Use AI to translate answers into other languages" /> Use AI to translate answers into other languages</label>
       </div>
-      <p className="text-[12px] text-slate -mt-3 mb-5">AI also needs the <strong>Help bot</strong> switch in AI settings to be on. Without AI, only the answers below are used (English, Urdu and Roman Urdu).</p>
+      <p className="text-[12px] text-slate -mt-3 mb-5">By default a typed question that is not a greeting or one of the answers below is sent to the <a href="/admin/chat" className="underline text-brand-royal">Chat inbox</a> for your team to answer. Turn <strong>AI fallback</strong> on to let the AI answer those instead (it also needs the <strong>Help bot</strong> switch in AI settings).</p>
 
       <div role="tablist" aria-label="Chatbot audience" className="flex gap-2 mb-4">
         {([['buyerQuestions', 'Buyer questions'], ['sellerQuestions', 'Seller questions']] as [ListKey, string][]).map(([k, label]) => (

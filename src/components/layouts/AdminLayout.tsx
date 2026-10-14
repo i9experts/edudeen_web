@@ -21,6 +21,7 @@ import { MoreHorizontal } from 'lucide-react';
 import { useLockPageScroll } from '@/hooks/useLockPageScroll';
 import { apiGetListingReviewCount } from '@/api/services/marketplace/adminMarketplace';
 import { apiAdminPremiumStats } from '@/api/services/adminPremium';
+import { apiAdminChatStats } from '@/api/services/adminChat';
 
 interface AdminNavItem {
   id:    string;
@@ -57,6 +58,7 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { id: 'banners',       Icon: ImageIcon,       label: 'Banners',         path: '/admin/banners'       },
   { id: 'faqs',          Icon: HelpCircle,      label: 'FAQs',            path: '/admin/faqs'          },
   { id: 'contact',       Icon: MessageCircle,   label: 'Contact Messages',path: '/admin/contact'       },
+  { id: 'chat',          Icon: MessageSquare,   label: 'Chat inbox',      path: '/admin/chat'          },
   { id: 'testimonials',  Icon: Quote,           label: 'Testimonials',   path: '/admin/testimonials'  },
   { id: 'announcements', Icon: Bell,            label: 'Announcements',   path: '/admin/announcements' },
   { id: 'app-slides',    Icon: Smartphone,      label: 'App Intro Slides', path: '/admin/app-slides'  },
@@ -82,7 +84,7 @@ interface AdminModule {
 export const ADMIN_MODULES: AdminModule[] = [
   { id: 'overview',  label: 'Overview',             Icon: LayoutDashboard, ids: ['overview'] },
   { id: 'commerce',  label: 'Commerce',             Icon: Store,           ids: ['orders', 'marketplace', 'categories', 'refunds', 'shipping-zones', 'subscriptions', 'platform-plans', 'premium'] },
-  { id: 'people',    label: 'Users & Communication', Icon: Users,          ids: ['users', 'leads', 'moderation', 'messages', 'contact'] },
+  { id: 'people',    label: 'Users & Communication', Icon: Users,          ids: ['users', 'leads', 'moderation', 'messages', 'contact', 'chat'] },
   { id: 'growth',    label: 'Growth',                Icon: TrendingUp,     ids: ['marketing', 'picks', 'seo', 'ai-studio'] },
   { id: 'finance',   label: 'Finance',               Icon: DollarSign,     ids: ['finance', 'monthly-payouts', 'manual-payments', 'fx-settings'] },
   { id: 'content',   label: 'Content',               Icon: ImageIcon,      ids: ['banners', 'faqs', 'testimonials', 'announcements', 'app-slides'] },
@@ -273,7 +275,14 @@ function AdminSidebar({ open, onToggle }: AdminSidebarProps) {
     apiAdminPremiumStats().then(r => { if (alive) setPendingPremium(r.data?.pendingPayments ?? 0); }).catch(() => {});
     return () => { alive = false; };
   }, [pathname]);
-  const badgeFor = (id: string) => (id === 'marketplace' ? pendingListings : id === 'premium' ? pendingPremium : 0);
+  // Chat inbox: conversations with unread messages from users.
+  const [unreadChats, setUnreadChats] = useState(0);
+  useEffect(() => {
+    let alive = true;
+    apiAdminChatStats().then(r => { if (alive) setUnreadChats(r.data?.unread ?? 0); }).catch(() => {});
+    return () => { alive = false; };
+  }, [pathname]);
+  const badgeFor = (id: string) => (id === 'marketplace' ? pendingListings : id === 'premium' ? pendingPremium : id === 'chat' ? unreadChats : 0);
   useEffect(() => { setExpandedModuleId(moduleForPath(pathname, search)); }, [pathname, search]);
 
   const handleLogout = async () => {
@@ -459,7 +468,7 @@ function AdminSidebar({ open, onToggle }: AdminSidebarProps) {
                         <button
                           key={item.id}
                           type="button"
-                          onClick={() => goTo(item.id === 'premium' && badge ? `${item.path}?tab=payments&status=pending` : badge ? `${item.path}?status=pending_review` : item.path)}
+                          onClick={() => goTo(item.id === 'chat' && badge ? `${item.path}?filter=unread` : item.id === 'premium' && badge ? `${item.path}?tab=payments&status=pending` : badge ? `${item.path}?status=pending_review` : item.path)}
                           aria-current={active ? 'page' : undefined}
                           className={clsx(
                             'w-full flex items-center gap-[8px] py-[8px] px-[9px] rounded-lg border-none text-left',
@@ -473,7 +482,7 @@ function AdminSidebar({ open, onToggle }: AdminSidebarProps) {
                             {item.label}
                           </span>
                           {badge > 0 && (
-                            <span aria-label={`${badge} waiting for review`} className={clsx('text-[12px] font-bold px-[6px] py-[1px] rounded-full leading-[14px] shrink-0', active ? 'bg-white text-brand-orange' : 'bg-info text-white')}>
+                            <span aria-label={item.id === 'chat' ? `${badge} unread` : `${badge} waiting for review`} className={clsx('text-[12px] font-bold px-[6px] py-[1px] rounded-full leading-[14px] shrink-0', active ? 'bg-white text-brand-orange' : 'bg-info text-white')}>
                               {badge > 99 ? '99+' : badge}
                             </span>
                           )}
