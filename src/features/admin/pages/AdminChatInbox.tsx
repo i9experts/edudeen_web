@@ -37,7 +37,7 @@ function Thread({ id, onChanged, onBack }: { id: string; onChanged: () => void; 
   const [error, setError] = useState('');
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
-  const endRef = useRef<HTMLDivElement>(null);
+  const logRef = useRef<HTMLDivElement>(null);
 
   // onChanged is a new inline function on every parent render: keep it in a ref so it can never re-trigger loading
   // (it used to: load -> onChanged -> parent re-render -> new onChanged -> load again, forever).
@@ -51,7 +51,9 @@ function Thread({ id, onChanged, onBack }: { id: string; onChanged: () => void; 
     const h = window.setInterval(() => { if (!document.hidden) void load(); }, 15000);
     return () => window.clearInterval(h);
   }, [load]);
-  useEffect(() => { endRef.current?.scrollIntoView({ block: 'end' }); }, [t?.messages.length]);
+  // Scroll ONLY the message list to the newest message. scrollIntoView() also scrolled every ancestor, which shifted the
+  // whole inbox card sideways (the left column got cut off) whenever a conversation was opened.
+  useEffect(() => { const el = logRef.current; if (el) el.scrollTop = el.scrollHeight; }, [t?.messages.length]);
 
   async function send() {
     const v = text.trim(); if (!v || busy) return;
@@ -80,14 +82,13 @@ function Thread({ id, onChanged, onBack }: { id: string; onChanged: () => void; 
         </div>
         {!closed && <Button variant="outline" size="sm" onClick={close} disabled={busy} icon={<CheckCircle2 size={14} />}>Mark closed</Button>}
       </div>
-      <div className="flex-1 min-h-0 overflow-y-auto px-4 py-3 flex flex-col gap-2 bg-cream/40" role="log" aria-label="Conversation">
+      <div ref={logRef} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-4 py-3 flex flex-col gap-2 bg-cream/40" role="log" aria-label="Conversation">
         {t.messages.map(m => (
           <div key={m.id} className={clsx('max-w-[85%] rounded-2xl px-3 py-2 text-[13.5px] leading-relaxed whitespace-pre-wrap break-words', m.from === 'admin' ? 'self-end bg-brand-royal text-white' : 'self-start bg-white border border-bone text-carbon')}>
             {m.text}
             <span className={clsx('block text-[11px] mt-1', m.from === 'admin' ? 'text-white/70' : 'text-slate')}>{m.from === 'admin' ? 'Edudeen team' : t.senderName} · {when(m.at)}</span>
           </div>
         ))}
-        <div ref={endRef} />
       </div>
       {error && <p role="alert" className="px-4 py-1 text-[12.5px] text-error">{error}</p>}
       {closed ? (
@@ -156,7 +157,7 @@ export function AdminChatInbox({ embedded = false }: { embedded?: boolean } = {}
             <p className="text-[13px] text-slate m-0">The API this site is connected to does not have the chat routes (404). Deploy the latest API, then reload this page. Nothing is lost - questions asked in the meantime are kept once it is updated.</p>
           </div>
         ) : (
-        <div className="bg-white border border-bone rounded-xl overflow-hidden grid lg:grid-cols-[360px_1fr] h-[calc(100dvh-230px)] min-h-[480px]">
+        <div className="bg-white border border-bone rounded-xl overflow-hidden grid lg:grid-cols-[360px_minmax(0,1fr)] h-[calc(100dvh-230px)] min-h-[480px]">
           <div className={clsx('flex-col min-h-0 border-e border-bone', selected ? 'hidden lg:flex' : 'flex')}>
             <div className="p-3 border-b border-bone flex flex-col gap-2">
               <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search name, email, store or #code" aria-label="Search conversations"
