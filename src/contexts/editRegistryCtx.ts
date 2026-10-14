@@ -7,7 +7,13 @@ export interface EditableEntry {
   label: string;
   /** Heading it is listed under; regions inside the page <footer> are always grouped as "Footer". */
   group?: string;
-  /** Set for banner placements, so the sidebar can offer "Add banner here". */
+  /** One-line description shown under the name in the sidebar. */
+  hint?: string;
+  /** True when the region has nothing yet (empty banner slot) - the sidebar flags it "Empty - add one". */
+  empty?: boolean;
+  /** True for site-wide items (header/footer, social links, categories...) that appear on many pages. */
+  global?: boolean;
+  /** Set for banner placements. */
   placement?: PromotionPlacement;
   getEl: () => HTMLElement | null;
   /** Opens the region's own editor. */
@@ -31,17 +37,17 @@ export function useEditableRegistry() {
  * matches what the current page renders. EditableRegion / PlacementBanner call this - pages normally do not need to.
  */
 export function useRegisterEditable(
-  o: { id: string; label: string; group?: string; placement?: PromotionPlacement; open: () => void; elRef: RefObject<HTMLElement | null> },
+  o: { id: string; label: string; group?: string; hint?: string; empty?: boolean; global?: boolean; placement?: PromotionPlacement; open: () => void; elRef: RefObject<HTMLElement | null> },
   enabled: boolean,
 ) {
   const { register } = useEditableRegistry();
   const openRef = useRef(o.open);
   openRef.current = o.open;
-  const { id, label, group, placement, elRef } = o;
+  const { id, label, group, hint, empty, global, placement, elRef } = o;
   useEffect(() => {
     if (!enabled) return;
-    return register({ id, label, group, placement, getEl: () => elRef.current, open: () => openRef.current() });
-  }, [enabled, id, label, group, placement, elRef, register]);
+    return register({ id, label, group, hint, empty, global, placement, getEl: () => elRef.current, open: () => openRef.current() });
+  }, [enabled, id, label, group, hint, empty, global, placement, elRef, register]);
 }
 
 /** Scrolls an element to the middle of the screen and flashes an outline around it. */

@@ -6,7 +6,7 @@ import { type PromotionPlacement } from '@/api/services/banner';
 import { BANNERS_CHANGED_EVENT, cachedBanners, loadPlacementBanners } from '@/components/comman/marketplace/placementBannerCache';
 import { useAdminEdit } from '@/contexts/adminEditCtx';
 import { EditableRegion } from '@/components/admin-edit/EditableRegion';
-import { PLACEMENT_NAME } from '@/components/admin-edit/placementLabels';
+import { PLACEMENT_NAME, PLACEMENT_WHERE } from '@/components/admin-edit/placementLabels';
 import { useRegisterEditable } from '@/contexts/editRegistryCtx';
 
 // Admin-only editor: its own chunk, never downloaded for normal visitors.
@@ -31,7 +31,7 @@ export function PlacementBanner({ placement, className }: { placement: Promotion
   // An empty placement is not wrapped in EditableRegion, so it lists itself in the Edit-mode sidebar here.
   const addRef = useRef<HTMLButtonElement>(null);
   useRegisterEditable(
-    { id: `banner:${placement}`, label: `${PLACEMENT_NAME[placement]} banner`, group: 'Banners', placement, open: () => setEditorOpen(true), elRef: addRef },
+    { id: `banner:${placement}`, label: `${PLACEMENT_NAME[placement]} banner`, group: 'Banners', hint: PLACEMENT_WHERE[placement], empty: true, placement, open: () => setEditorOpen(true), elRef: addRef },
     editing && !items.length,
   );
 
@@ -67,7 +67,7 @@ export function PlacementBanner({ placement, className }: { placement: Promotion
   }
   return (
     <>
-      <EditableRegion label={`${PLACEMENT_NAME[placement]} banner`} id={`banner:${placement}`} group="Banners" placement={placement} onEdit={() => { setFocusId(visibleId.current); setEditorOpen(true); }}>
+      <EditableRegion label={`${PLACEMENT_NAME[placement]} banner`} id={`banner:${placement}`} group="Banners" hint={PLACEMENT_WHERE[placement]} placement={placement} onEdit={() => { setFocusId(visibleId.current); setEditorOpen(true); }}>
         <section aria-label="Featured promotions" className={clsx('relative w-full overflow-hidden rounded-2xl bg-cream aspect-[2/1] sm:aspect-[3/1] lg:aspect-[4/1]', className)}>
           <BannerCarousel entityType="banner" banners={items} onActiveChange={trackVisible} />
         </section>

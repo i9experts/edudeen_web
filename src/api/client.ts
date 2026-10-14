@@ -119,6 +119,12 @@ client.interceptors.response.use(
         status: res.status,
       });
     }
+    // Admin inline-edit writes: tell the Edit-mode toolbar so it can show "Saved".
+    try {
+      if (res.config?.headers?.get?.('X-Inline-Edit') && (res.config.method ?? 'get').toLowerCase() !== 'get') {
+        window.dispatchEvent(new Event('edudeen:inline-saved'));
+      }
+    } catch { /* ignore */ }
     return res.data;   // unwrap → caller gets { success, message, data } (or module-specific equivalent)
   },
   async err => {

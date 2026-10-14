@@ -1,7 +1,8 @@
-import { lazy, Suspense, useCallback, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PanelRightOpen, Pencil } from 'lucide-react';
 import { useAdminEdit } from '@/contexts/adminEditCtx';
+import { useToast } from '@/contexts/ToastContext';
 
 // Admin-only panel: its own chunk, never downloaded for visitors or for admins who have not turned Edit mode on.
 const AdminEditSidebar = lazy(() => import('./AdminEditSidebar'));
@@ -24,6 +25,15 @@ export function AdminEditToolbar() {
     try { localStorage.setItem(PANEL_KEY, v ? 'open' : 'closed'); } catch { /* storage blocked */ }
   }, []);
   const collapse = useCallback(() => setOpen(false), [setOpen]);
+  const toast = useToast();
+
+  // "Saved" feedback after any inline write (the API client fires this for admin inline-edit requests).
+  useEffect(() => {
+    if (!editing) return;
+    const on = () => toast.success('Saved - the change is live');
+    window.addEventListener('edudeen:inline-saved', on);
+    return () => window.removeEventListener('edudeen:inline-saved', on);
+  }, [editing, toast]);
 
   if (!isAdmin) return null;
   const panelShown = editing && open;
@@ -45,7 +55,7 @@ export function AdminEditToolbar() {
           </button>
           {editing && (
             <button type="button" onClick={() => setOpen(true)} className="inline-flex items-center gap-1 rounded-full bg-white/15 hover:bg-white/25 text-white border-0 cursor-pointer px-2.5 py-1 font-medium">
-              <PanelRightOpen size={13} /> Panel
+              <PanelRightOpen size={13} /> Open editor
             </button>
           )}
           <Link to="/admin" className="rounded-full bg-white/15 hover:bg-white/25 text-white no-underline px-2.5 py-1 font-medium">Back to admin</Link>

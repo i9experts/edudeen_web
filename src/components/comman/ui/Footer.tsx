@@ -332,7 +332,7 @@ export function Footer({ showNewsletter = true }: { showNewsletter?: boolean }) 
 
           <div className="pb-2 sm:pb-0">
             <p className="text-[12px] font-bold text-carbon uppercase tracking-[0.12em] mb-4">Get the App</p>
-            <EditableHomeSection section="apps" label="app links">
+            <EditableHomeSection section="apps" label="app links" global>
             <div className="flex flex-col gap-2.5">
               <AppBadge platform="ios" />
               <AppBadge platform="android" />

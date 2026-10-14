@@ -17,7 +17,7 @@ export function EditableSellerSection({ section, visible, children }: { section:
   if (!visible && !editing) return null;
   return (
     <>
-      <EditableRegion label={SELLER_PAGE_SECTIONS.find(s => s.key === section)?.label ?? 'section'} onEdit={() => setOpen(true)}>
+      <EditableRegion label={SELLER_PAGE_SECTIONS.find(s => s.key === section)?.label ?? 'section'} hint={visible ? 'Text and images of this section' : 'Hidden from visitors - open to show it'} onEdit={() => setOpen(true)}>
         <div className={visible ? undefined : 'opacity-40'}>
           {!visible && <p className="text-center text-[12px] font-semibold text-slate py-1">Hidden from visitors</p>}
           {children}

@@ -9,8 +9,12 @@ import type { PromotionPlacement } from '@/api/services/banner';
  * Wraps an admin-editable part of a public page. For everyone except an admin in Edit mode it renders just its children.
  * In Edit mode it also lists itself in the Edit-mode sidebar ("On this page"); `id`/`group`/`placement` are optional hints.
  */
-export function EditableRegion({ label, onEdit, children, className, id, group, placement }: {
+export function EditableRegion({ label, onEdit, children, className, id, group, placement, hint, global }: {
   label: string; onEdit: () => void; children: ReactNode; className?: string;
+  /** One-line description shown in the sidebar. */
+  hint?: string;
+  /** Site-wide item (shown on many pages) - the sidebar lists it under "On every page". */
+  global?: boolean;
   /** Stable id for the sidebar list (defaults to a generated one). */
   id?: string;
   /** Heading in the sidebar list (footer regions are grouped as "Footer" automatically). */
@@ -20,16 +24,16 @@ export function EditableRegion({ label, onEdit, children, className, id, group, 
   const { editing } = useAdminEdit();
   const autoId = useId();
   const ref = useRef<HTMLDivElement>(null);
-  useRegisterEditable({ id: id ?? autoId, label, group, placement, open: onEdit, elRef: ref }, editing);
+  useRegisterEditable({ id: id ?? autoId, label, group, hint, global, placement, open: onEdit, elRef: ref }, editing);
   if (!editing) return <>{children}</>;
   return (
-    <div ref={ref} className={clsx('relative outline-2 outline-dashed outline-brand-orange/70 outline-offset-2 rounded-md', className)} translate="no">
+    <div ref={ref} className={clsx('group/er relative outline-1 outline-dashed outline-brand-orange/35 hover:outline-2 hover:outline-brand-orange/80 focus-within:outline-2 focus-within:outline-brand-orange/80 outline-offset-2 rounded-md', className)} translate="no">
       {children}
       <button
         type="button"
         onClick={onEdit}
         aria-label={`Edit ${label}`}
-        className="absolute top-2 end-2 z-30 inline-flex items-center gap-1 rounded-full bg-brand-orange text-white text-[12px] font-semibold px-3 py-1.5 shadow-md cursor-pointer border-0 hover:opacity-90"
+        className="absolute top-2 end-2 z-30 opacity-0 group-hover/er:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity inline-flex items-center gap-1 rounded-full bg-brand-orange text-white text-[12px] font-semibold px-3 py-1.5 shadow-md cursor-pointer border-0 hover:opacity-90"
       >
         <Pencil size={12} /> Edit
       </button>

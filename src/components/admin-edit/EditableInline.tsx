@@ -12,7 +12,7 @@ export function EditableSocialLinks({ className, children }: { className?: strin
   const [open, setOpen] = useState(false);
   return (
     <>
-      <EditableRegion label="social links" onEdit={() => setOpen(true)} className={className}>{children}</EditableRegion>
+      <EditableRegion label="social links" hint="Social media icons in the footer" global onEdit={() => setOpen(true)} className={className}>{children}</EditableRegion>
       {open && <Suspense fallback={null}><SocialLinksEditorModal onClose={() => setOpen(false)} /></Suspense>}
     </>
   );
@@ -23,7 +23,7 @@ export function EditableCategories({ onChanged, className, children }: { onChang
   const [open, setOpen] = useState(false);
   return (
     <>
-      <EditableRegion label="categories" onEdit={() => setOpen(true)} className={className}>{children}</EditableRegion>
+      <EditableRegion label="categories" hint="Subject tabs - add, rename, reorder" onEdit={() => setOpen(true)} className={className}>{children}</EditableRegion>
       {open && <Suspense fallback={null}><CategoriesEditorModal onChanged={onChanged} onClose={() => setOpen(false)} /></Suspense>}
     </>
   );
@@ -34,7 +34,7 @@ export function EditableDeals({ className, children }: { className?: string; chi
   const [open, setOpen] = useState(false);
   return (
     <>
-      <EditableRegion label="deals banner" onEdit={() => setOpen(true)} className={className}>{children}</EditableRegion>
+      <EditableRegion label="deals banner" hint="Running sales and campaign countdown" onEdit={() => setOpen(true)} className={className}>{children}</EditableRegion>
       {open && <Suspense fallback={null}><DealsEditorModal onClose={() => setOpen(false)} /></Suspense>}
     </>
   );
@@ -45,7 +45,7 @@ export function EditableFaqs({ onChanged, className, children }: { onChanged: ()
   const [open, setOpen] = useState(false);
   return (
     <>
-      <EditableRegion label="FAQ list" onEdit={() => setOpen(true)} className={className}>{children}</EditableRegion>
+      <EditableRegion label="FAQ list" hint="Add, edit, hide or delete questions" onEdit={() => setOpen(true)} className={className}>{children}</EditableRegion>
       {open && <Suspense fallback={null}><FaqEditorModal onChanged={onChanged} onClose={() => setOpen(false)} /></Suspense>}
     </>
   );
