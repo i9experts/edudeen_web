@@ -65,5 +65,8 @@ export function createSharedResource<T>(fetcher: () => Promise<T>) {
     return { ...state, refetch };
   }
 
-  return { useSharedResource, invalidate };
+  /** Force a reload and push the result to every mounted subscriber. */
+  function refresh() { load(true).catch(() => {}); }
+
+  return { useSharedResource, invalidate, refresh };
 }

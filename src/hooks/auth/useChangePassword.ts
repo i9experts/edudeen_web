@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { apiChangePassword, type ChangePasswordPayload } from '@/api/services/users';
+import { apiChangePassword, validateNewPassword, type ChangePasswordPayload } from '@/api/services/users';
 
 export function useChangePassword() {
   const [loading, setLoading] = useState(false);
@@ -9,6 +9,8 @@ export function useChangePassword() {
   async function execute(payload: ChangePasswordPayload): Promise<boolean> {
     setError('');
     setSuccess(false);
+    const invalid = validateNewPassword(payload.currentPassword, payload.newPassword);
+    if (invalid) { setError(invalid); return false; }
     setLoading(true);
     try {
       await apiChangePassword(payload);
@@ -22,5 +24,7 @@ export function useChangePassword() {
     }
   }
 
-  return { execute, loading, error, success };
+  function reset() { setError(''); setSuccess(false); }
+
+  return { execute, loading, error, success, reset };
 }

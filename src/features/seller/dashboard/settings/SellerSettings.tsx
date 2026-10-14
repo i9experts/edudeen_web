@@ -5,6 +5,7 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { useGetProfile, invalidateProfileCache } from '@/hooks/auth/useGetProfile';
 import { useEditProfile } from '@/hooks/auth/useEditProfile';
 import { useChangePassword } from '@/hooks/auth/useChangePassword';
+import { PASSWORD_RULES_TEXT } from '@/api/services/users';
 import { useUpload } from '@/hooks/upload/useUpload';
 import { useMyStores } from '@/hooks/store/useMyStores';
 import { apiDeleteAccount } from '@/api/services/users';
@@ -173,6 +174,7 @@ export function SellerSettings() {
   const [phone,     setPhone]     = useState('');
   const [address,   setAddress]   = useState('');
   const [profileImage, setProfileImage] = useState('');
+  const [photoError, setPhotoError] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
@@ -185,7 +187,7 @@ export function SellerSettings() {
   const [newPassword,     setNewPassword]     = useState('');
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword,     setShowNewPassword]     = useState(false);
-  const { execute: changePassword, loading: pwSaving, error: pwError, success: pwSuccess } = useChangePassword();
+  const { execute: changePassword, loading: pwSaving, error: pwError, success: pwSuccess, reset: resetPw } = useChangePassword();
 
   const handleChangePassword = async () => {
     const ok = await changePassword({ currentPassword, newPassword });
@@ -225,7 +227,15 @@ export function SellerSettings() {
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    uploadPhoto(file).then(data => setProfileImage(data.url)).catch(() => {});
+    e.target.value = '';
+    setPhotoError('');
+    uploadPhoto(file)
+      .then(async data => {
+        // Persist right away (like the buyer profile) so the photo is never 'chosen but not saved'.
+        const saved = await editProfile({ profileImage: data.url });
+        if (saved) setProfileImage(data.url);
+      })
+      .catch(err => setPhotoError(err instanceof Error ? err.message : 'Photo upload failed.'));
   };
 
   const allItems = SETTINGS_NAV.flatMap(g => g.items);
@@ -411,6 +421,7 @@ export function SellerSettings() {
                       </button>
                       {saved && <span className="text-[12px] text-success font-medium">Profile updated</span>}
                       {saveError && <span className="text-[12px] text-error font-medium">{saveError}</span>}
+                      {photoError && <span className="text-[12px] text-error font-medium">{photoError}</span>}
                     </div>
                     </div>
                   </>
@@ -437,7 +448,7 @@ export function SellerSettings() {
                   <div>
                     <label className="text-[12px] font-medium text-slate mb-[5px] block">Current Password</label>
                     <div className="relative">
-                      <input type={showCurrentPassword ? 'text' : 'password'} value={currentPassword} onChange={e => setCurrentPassword(e.target.value)}
+                      <input type={showCurrentPassword ? 'text' : 'password'} value={currentPassword} onChange={e => { setCurrentPassword(e.target.value); resetPw(); }}
                         className="w-full px-3 pr-[42px] py-[9px] text-[13px] border border-bone rounded-lg outline-none text-charcoal bg-white box-border" />
                       <button type="button" onClick={() => setShowCurrentPassword(s => !s)}
                         aria-label={showCurrentPassword ? 'Hide password' : 'Show password'}
@@ -449,7 +460,7 @@ export function SellerSettings() {
                   <div>
                     <label className="text-[12px] font-medium text-slate mb-[5px] block">New Password</label>
                     <div className="relative">
-                      <input type={showNewPassword ? 'text' : 'password'} value={newPassword} onChange={e => setNewPassword(e.target.value)}
+                      <input type={showNewPassword ? 'text' : 'password'} value={newPassword} onChange={e => { setNewPassword(e.target.value); resetPw(); }}
                         className="w-full px-3 pr-[42px] py-[9px] text-[13px] border border-bone rounded-lg outline-none text-charcoal bg-white box-border" />
                       <button type="button" onClick={() => setShowNewPassword(s => !s)}
                         aria-label={showNewPassword ? 'Hide password' : 'Show password'}
@@ -459,6 +470,8 @@ export function SellerSettings() {
                     </div>
                   </div>
                 </div>
+
+                <p className="text-[12px] text-slate mb-4 -mt-2">{PASSWORD_RULES_TEXT}</p>
 
                 <div className="flex items-center gap-3">
                   <button

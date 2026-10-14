@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { refreshProfile } from '@/hooks/auth/useGetProfile';
 import { apiEditProfile, type EditProfilePayload, type ProfileData } from '@/api/services/auth';
 
 export function useEditProfile() {
@@ -11,7 +12,12 @@ export function useEditProfile() {
     setSuccess(false);
     setLoading(true);
     try {
+      if (payload.name !== undefined && !payload.name.trim()) {
+        setError('Name cannot be empty.');
+        return null;
+      }
       const res = await apiEditProfile(payload);
+      refreshProfile(); // re-read from the server so the form/header show what was really saved
       setSuccess(true);
       return res.data;
     } catch (err) {

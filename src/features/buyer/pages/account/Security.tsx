@@ -4,7 +4,7 @@ import { clsx } from 'clsx';
 import { AuthContext, apiResendOtp, type AppRole } from '@/api/services/auth';
 import { Shield, Mail, Check, Loader2, KeyRound, Eye, EyeOff } from 'lucide-react';
 import { useGetProfile } from '@/hooks/auth/useGetProfile';
-import { apiChangePassword } from '@/api/services/users';
+import { apiChangePassword, validateNewPassword, PASSWORD_RULES_TEXT } from '@/api/services/users';
 import { Card, PageHeader, Badge, SkeletonBox } from '@/components/comman/ui';
 import { DeleteAccountSection } from './DeleteAccountSection';
 
@@ -79,7 +79,8 @@ export function Security() {
 
   const handleChangePassword = async () => {
     setPwError(''); setPwSuccess(false);
-    if (!currentPassword || !newPassword) { setPwError('Please fill in both password fields.'); return; }
+    const invalid = validateNewPassword(currentPassword, newPassword);
+    if (invalid) { setPwError(invalid); return; }
     setPwSaving(true);
     try {
       await apiChangePassword({ currentPassword, newPassword });
@@ -162,6 +163,7 @@ export function Security() {
             <PasswordField label="Current Password" value={currentPassword} onChange={setCurrentPassword} />
             <PasswordField label="New Password" value={newPassword} onChange={setNewPassword} />
           </div>
+          <p className="text-[12px] text-slate mb-3">{PASSWORD_RULES_TEXT}</p>
 
           <div className="flex items-center gap-3 flex-wrap pt-2 border-t border-[#f0ede5]">
             <button

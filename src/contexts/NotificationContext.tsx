@@ -136,6 +136,11 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
       if (dto.pushEnabled !== undefined) next.pushEnabled = dto.pushEnabled;
       if (dto.emailEnabled !== undefined) next.emailEnabled = dto.emailEnabled;
+      const nx = next as unknown as Record<string, unknown>;
+      for (const k of ['whatsappEnabled', 'smsEnabled', 'retentionChannelsEnabled'] as const) {
+        const v = (dto as Record<string, unknown>)[k];
+        if (v !== undefined) nx[k] = v;
+      }
 
       (['orders', 'messages', 'promotions', 'loyalty', 'subscriptions'] as const).forEach(key => {
         if (dto[key] !== undefined) next.prefs[key] = dto[key]!;

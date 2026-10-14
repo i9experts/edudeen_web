@@ -9,6 +9,8 @@ const profileResource = createSharedResource<ProfileData | null>(() =>
 );
 
 export const invalidateProfileCache = profileResource.invalidate;
+/** Re-fetch the profile and update every mounted consumer (header, settings, ...). */
+export const refreshProfile = profileResource.refresh;
 
 export function useGetProfile() {
   const { data, loading, error, refetch } = profileResource.useSharedResource();

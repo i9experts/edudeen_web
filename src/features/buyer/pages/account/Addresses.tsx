@@ -26,12 +26,13 @@ export function Addresses() {
   const [view, setView] = useState<AddrView>('list');
   const [editTarget, setEditTarget] = useState<Address | null>(null);
   const { profile } = useGetProfile();
+  const [actionError, setActionError] = useState('');
 
   useEffect(() => {
     let cancelled = false;
     apiGetMyAddresses()
       .then(res => { if (!cancelled) setAddresses(res.data ?? []); })
-      .catch(() => {})
+      .catch(err => { if (!cancelled) setActionError(err instanceof Error ? err.message : 'Could not load your addresses.'); })
       .finally(() => { if (!cancelled) setAddrLoading(false); });
     return () => { cancelled = true; };
   }, []);
@@ -60,7 +61,6 @@ export function Addresses() {
   };
 
   const [settingDefaultId, setSettingDefaultId] = useState<string | null>(null);
-  const [actionError, setActionError] = useState('');
   const handleSetDefault = async (addressId: string) => {
     setSettingDefaultId(addressId);
     setActionError('');

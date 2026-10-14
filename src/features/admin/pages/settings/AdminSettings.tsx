@@ -6,6 +6,7 @@ import {
 import { useGetProfile } from '@/hooks/auth/useGetProfile';
 import { useEditProfile } from '@/hooks/auth/useEditProfile';
 import { useChangePassword } from '@/hooks/auth/useChangePassword';
+import { PASSWORD_RULES_TEXT } from '@/api/services/users';
 import { useUpload } from '@/hooks/upload/useUpload';
 import { NotificationsPanel } from '@/components/comman/ui';
 import { AdminStudioHeader } from '@/features/admin/components/studio';
@@ -183,7 +184,7 @@ export function AdminSettings() {
   const [newPassword,     setNewPassword]     = useState('');
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword,     setShowNewPassword]     = useState(false);
-  const { execute: changePassword, loading: pwSaving, error: pwError, success: pwSuccess } = useChangePassword();
+  const { execute: changePassword, loading: pwSaving, error: pwError, success: pwSuccess, reset: resetPw } = useChangePassword();
 
   useEffect(() => {
     if (!profile) return;
@@ -396,7 +397,7 @@ export function AdminSettings() {
                   <div>
                     <label className="text-[12px] font-medium text-graphite mb-[5px] block">Current Password</label>
                     <div className="relative">
-                      <input type={showCurrentPassword ? 'text' : 'password'} value={currentPassword} onChange={e => setCurrentPassword(e.target.value)}
+                      <input type={showCurrentPassword ? 'text' : 'password'} value={currentPassword} onChange={e => { setCurrentPassword(e.target.value); resetPw(); }}
                         className="w-full px-3 pr-[42px] py-[9px] text-[13px] border border-bone rounded-lg outline-none text-charcoal bg-white box-border" />
                       <button type="button" onClick={() => setShowCurrentPassword(s => !s)}
                         aria-label={showCurrentPassword ? 'Hide password' : 'Show password'}
@@ -408,7 +409,7 @@ export function AdminSettings() {
                   <div>
                     <label className="text-[12px] font-medium text-graphite mb-[5px] block">New Password</label>
                     <div className="relative">
-                      <input type={showNewPassword ? 'text' : 'password'} value={newPassword} onChange={e => setNewPassword(e.target.value)}
+                      <input type={showNewPassword ? 'text' : 'password'} value={newPassword} onChange={e => { setNewPassword(e.target.value); resetPw(); }}
                         className="w-full px-3 pr-[42px] py-[9px] text-[13px] border border-bone rounded-lg outline-none text-charcoal bg-white box-border" />
                       <button type="button" onClick={() => setShowNewPassword(s => !s)}
                         aria-label={showNewPassword ? 'Hide password' : 'Show password'}
@@ -418,6 +419,8 @@ export function AdminSettings() {
                     </div>
                   </div>
                 </div>
+
+                <p className="text-[12px] text-slate mb-4 -mt-2">{PASSWORD_RULES_TEXT}</p>
 
                 <div className="flex items-center gap-3">
                   <button
