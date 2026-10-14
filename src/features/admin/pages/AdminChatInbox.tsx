@@ -116,16 +116,22 @@ export function AdminChatInbox() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [stats, setStats] = useState({ open: 0, answered: 0, closed: 0, unread: 0 });
+  const [unavailable, setUnavailable] = useState(false);
 
   const refresh = useCallback(async () => {
+    if (unavailable) { setLoading(false); return; }
     try {
       const [l, s] = await Promise.all([apiAdminChatList({ status: filter || undefined, q: q.trim() || undefined }), apiAdminChatStats()]);
       setRows(l.data.items); setTotal(l.data.total); setStats(s.data); setError('');
-    } catch (e) { setError(errMsg(e, 'Could not load the chat inbox.')); }
+    } catch (e) {
+      // 404 = the server is running an older API without the chat routes: say so once and stop polling.
+      if ((e as { status?: number })?.status === 404) setUnavailable(true);
+      setError(errMsg(e, 'Could not load the chat inbox.'));
+    }
     finally { setLoading(false); }
-  }, [filter, q]);
+  }, [filter, q, unavailable]);
   useEffect(() => { setLoading(true); const h = window.setTimeout(() => void refresh(), q ? 300 : 0); return () => window.clearTimeout(h); }, [refresh, q]);
-  useEffect(() => { const h = window.setInterval(() => { if (!document.hidden) void refresh(); }, 20000); return () => window.clearInterval(h); }, [refresh]);
+  useEffect(() => { if (unavailable) return; const h = window.setInterval(() => { if (!document.hidden) void refresh(); }, 20000); return () => window.clearInterval(h); }, [refresh, unavailable]);
 
   const set = (patch: Record<string, string | null>) => {
     const n = new URLSearchParams(params);
@@ -138,6 +144,12 @@ export function AdminChatInbox() {
       <AdminStudioHeader eyebrow="Edudeen team workspace · People" title="Chat inbox"
         subtitle={`${stats.unread} unread · ${stats.open} open · ${stats.answered} answered · ${stats.closed} closed`} />
       <div className="px-4 sm:px-7 pt-5 pb-8">
+        {unavailable ? (
+          <div role="alert" className="bg-white border border-bone rounded-xl p-6 text-center">
+            <p className="text-[14px] font-semibold text-carbon m-0 mb-1">The chat inbox is not available on this server yet</p>
+            <p className="text-[13px] text-slate m-0">The API this site is connected to does not have the chat routes (404). Deploy the latest API, then reload this page. Nothing is lost - questions asked in the meantime are kept once it is updated.</p>
+          </div>
+        ) : (
         <div className="bg-white border border-bone rounded-xl overflow-hidden grid lg:grid-cols-[360px_1fr] h-[calc(100dvh-230px)] min-h-[480px]">
           <div className={clsx('flex-col min-h-0 border-e border-bone', selected ? 'hidden lg:flex' : 'flex')}>
             <div className="p-3 border-b border-bone flex flex-col gap-2">
@@ -178,6 +190,7 @@ export function AdminChatInbox() {
               : <div className="m-auto p-8 text-center text-slate text-[13px]"><MessageCircle size={32} className="mx-auto mb-2" />Select a conversation to read and reply.</div>}
           </div>
         </div>
+        )}
       </div>
     </div>
   );

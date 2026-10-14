@@ -23,6 +23,9 @@ import { apiGetListingReviewCount } from '@/api/services/marketplace/adminMarket
 import { apiAdminPremiumStats } from '@/api/services/adminPremium';
 import { apiAdminChatStats } from '@/api/services/adminChat';
 
+// Set once the server answers 404 for the chat routes (older API deployed): no more requests until reload.
+let chatApiMissing = false;
+
 interface AdminNavItem {
   id:    string;
   Icon:  LucideIcon;
@@ -279,7 +282,8 @@ function AdminSidebar({ open, onToggle }: AdminSidebarProps) {
   const [unreadChats, setUnreadChats] = useState(0);
   useEffect(() => {
     let alive = true;
-    apiAdminChatStats().then(r => { if (alive) setUnreadChats(r.data?.unread ?? 0); }).catch(() => {});
+    if (chatApiMissing) return;
+    apiAdminChatStats().then(r => { if (alive) setUnreadChats(r.data?.unread ?? 0); }).catch((e: { status?: number }) => { if (e?.status === 404) chatApiMissing = true; /* API not updated yet: stop asking */ });
     return () => { alive = false; };
   }, [pathname]);
   const badgeFor = (id: string) => (id === 'marketplace' ? pendingListings : id === 'premium' ? pendingPremium : id === 'chat' ? unreadChats : 0);
