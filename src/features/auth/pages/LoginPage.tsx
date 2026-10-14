@@ -173,10 +173,6 @@ export function LoginPage() {
           </button>
         ))}
       </div>
-      <p className="text-[12px] text-slate mt-1.5 text-center lg:text-start">
-        Store team?{' '}
-        <button type="button" onClick={() => navigate('/admin/login')} className="text-brand-orange font-semibold cursor-pointer bg-transparent border-none p-0">Admin sign in</button>
-      </p>
     </div>
   ) : null;
   // Signed in (the redirect effect above is already moving them on). Must stay
