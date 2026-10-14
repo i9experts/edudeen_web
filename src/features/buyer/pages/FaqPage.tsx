@@ -9,6 +9,7 @@ import type { Faq } from '@/api/services/faq';
 import { Reveal } from '@/components/comman/motion/Reveal';
 import { SectionHeading } from '@/components/comman/motion/SectionHeading';
 import { PremiumCard } from '@/components/comman/motion/PremiumCard';
+import { EditableFaqs } from '@/components/admin-edit/EditableInline';
 
 function FaqAccordionItem({ question, answer }: { question: string; answer: string }) {
   const [open, setOpen] = useState(false);
@@ -134,6 +135,7 @@ export function FaqPage() {
       )}
 
       {/* ── FAQ list ── */}
+      <EditableFaqs onChanged={refetch}>
       <div className="bg-white px-4 md:px-8 lg:px-12 py-10 border-t border-bone">
         <div className="max-w-[720px] mx-auto">
           {loading ? (
@@ -170,6 +172,7 @@ export function FaqPage() {
           )}
         </div>
       </div>
+      </EditableFaqs>
 
       {/* ── Still need help? ── */}
       <div className="px-4 md:px-8 lg:px-12 py-12 max-w-[720px] mx-auto">

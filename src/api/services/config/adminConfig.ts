@@ -172,7 +172,12 @@ export function apiUpdateSocialLinks(links: Partial<Record<'facebook' | 'instagr
   return client.put<never, { success: boolean; message?: string }>('/api/admin/platform-config/social-links', links, config);
 }
 
-/** PUT /api/admin/platform-config/home-content — homepage hero/promise/trust copy (blank = default). */
+/** PUT /api/admin/platform-config/seller-page — /become-a-seller content. A section sent replaces the stored one, `null` resets it to the built-in default, omitted sections are kept. */
+export function apiUpdateSellerPage(content: Partial<Record<keyof import('../publicPlatformConfig').SellerPageContent, unknown>>, config?: import('axios').AxiosRequestConfig) {
+  return client.put<never, { success: boolean; message?: string }>('/api/admin/platform-config/seller-page', content, config);
+}
+
+/** PUT /api/admin/platform-config/home-content— homepage hero/promise/trust copy (blank = default). */
 export function apiUpdateHomeContent(content: import('../publicPlatformConfig').HomeContent, config?: import('axios').AxiosRequestConfig) {
   return client.put<never, { success: boolean; message?: string }>('/api/admin/platform-config/home-content', content, config);
 }

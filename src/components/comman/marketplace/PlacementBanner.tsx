@@ -6,6 +6,8 @@ import { type PromotionPlacement } from '@/api/services/banner';
 import { BANNERS_CHANGED_EVENT, cachedBanners, loadPlacementBanners } from '@/components/comman/marketplace/placementBannerCache';
 import { useAdminEdit } from '@/contexts/adminEditCtx';
 import { EditableRegion } from '@/components/admin-edit/EditableRegion';
+import { PLACEMENT_NAME } from '@/components/admin-edit/placementLabels';
+import { useRegisterEditable } from '@/contexts/editRegistryCtx';
 
 // Admin-only editor: its own chunk, never downloaded for normal visitors.
 const PlacementEditorModal = lazy(() => import('@/components/admin-edit/PlacementEditorModal'));
@@ -26,6 +28,12 @@ export function PlacementBanner({ placement, className }: { placement: Promotion
   const visibleId = useRef<string | undefined>(undefined);
   const trackVisible = useRef((id: string) => { visibleId.current = id; }).current;
   const [focusId, setFocusId] = useState<string | undefined>();
+  // An empty placement is not wrapped in EditableRegion, so it lists itself in the Edit-mode sidebar here.
+  const addRef = useRef<HTMLButtonElement>(null);
+  useRegisterEditable(
+    { id: `banner:${placement}`, label: `${PLACEMENT_NAME[placement]} banner`, group: 'Banners', placement, open: () => setEditorOpen(true), elRef: addRef },
+    editing && !items.length,
+  );
 
   useEffect(() => {
     let alive = true;
@@ -46,6 +54,7 @@ export function PlacementBanner({ placement, className }: { placement: Promotion
     return (
       <>
         <button
+          ref={addRef}
           type="button"
           onClick={() => setEditorOpen(true)}
           className={clsx('w-full flex items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-brand-orange/70 bg-cream/60 text-brand-orange text-[13px] font-semibold py-8 cursor-pointer', className)}
@@ -58,7 +67,7 @@ export function PlacementBanner({ placement, className }: { placement: Promotion
   }
   return (
     <>
-      <EditableRegion label="banner" onEdit={() => { setFocusId(visibleId.current); setEditorOpen(true); }}>
+      <EditableRegion label={`${PLACEMENT_NAME[placement]} banner`} id={`banner:${placement}`} group="Banners" placement={placement} onEdit={() => { setFocusId(visibleId.current); setEditorOpen(true); }}>
         <section aria-label="Featured promotions" className={clsx('relative w-full overflow-hidden rounded-2xl bg-cream aspect-[2/1] sm:aspect-[3/1] lg:aspect-[4/1]', className)}>
           <BannerCarousel entityType="banner" banners={items} onActiveChange={trackVisible} />
         </section>

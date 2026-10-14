@@ -1,3 +1,4 @@
+import type { AxiosRequestConfig } from 'axios';
 import client from '../client';
 import { ENDPOINTS } from '../endpoints';
 
@@ -55,18 +56,18 @@ export function apiGetAllFaqs() {
   );
 }
 
-export function apiCreateFaq(payload: CreateFaqPayload) {
-  return client.post<never, { success: boolean; message: string; data: Faq }>(ENDPOINTS.FAQ.CREATE, payload);
+export function apiCreateFaq(payload: CreateFaqPayload, cfg?: AxiosRequestConfig) {
+  return client.post<never, { success: boolean; message: string; data: Faq }>(ENDPOINTS.FAQ.CREATE, payload, cfg);
 }
 
-export function apiUpdateFaq(id: string, payload: UpdateFaqPayload) {
-  return client.put<never, { success: boolean; message: string; data: Faq }>(ENDPOINTS.FAQ.UPDATE(id), payload);
+export function apiUpdateFaq(id: string, payload: UpdateFaqPayload, cfg?: AxiosRequestConfig) {
+  return client.put<never, { success: boolean; message: string; data: Faq }>(ENDPOINTS.FAQ.UPDATE(id), payload, cfg);
 }
 
-export function apiToggleFaq(id: string) {
-  return client.put<never, { success: boolean; message: string; data: Faq }>(ENDPOINTS.FAQ.TOGGLE(id), null);
+export function apiToggleFaq(id: string, cfg?: AxiosRequestConfig) {
+  return client.put<never, { success: boolean; message: string; data: Faq }>(ENDPOINTS.FAQ.TOGGLE(id), null, cfg);
 }
 
-export function apiDeleteFaq(id: string) {
-  return client.delete<never, { success: boolean; message: string }>(ENDPOINTS.FAQ.DELETE(id));
+export function apiDeleteFaq(id: string, cfg?: AxiosRequestConfig) {
+  return client.delete<never, { success: boolean; message: string }>(ENDPOINTS.FAQ.DELETE(id), cfg);
 }

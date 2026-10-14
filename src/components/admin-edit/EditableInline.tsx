@@ -5,6 +5,7 @@ import { EditableRegion } from './EditableRegion';
 const SocialLinksEditorModal = lazy(() => import('./SocialLinksEditorModal'));
 const CategoriesEditorModal = lazy(() => import('./CategoriesEditorModal'));
 const DealsEditorModal = lazy(() => import('./DealsEditorModal'));
+const FaqEditorModal = lazy(() => import('./FaqEditorModal'));
 
 /** Footer social icons, editable by an admin in Edit mode. */
 export function EditableSocialLinks({ className, children }: { className?: string; children: ReactNode }) {
@@ -35,6 +36,17 @@ export function EditableDeals({ className, children }: { className?: string; chi
     <>
       <EditableRegion label="deals banner" onEdit={() => setOpen(true)} className={className}>{children}</EditableRegion>
       {open && <Suspense fallback={null}><DealsEditorModal onClose={() => setOpen(false)} /></Suspense>}
+    </>
+  );
+}
+
+/** The public FAQ list, editable by an admin in Edit mode (add / edit / show-hide / delete). `onChanged` refetches the list. */
+export function EditableFaqs({ onChanged, className, children }: { onChanged: () => void; className?: string; children: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <EditableRegion label="FAQ list" onEdit={() => setOpen(true)} className={className}>{children}</EditableRegion>
+      {open && <Suspense fallback={null}><FaqEditorModal onChanged={onChanged} onClose={() => setOpen(false)} /></Suspense>}
     </>
   );
 }

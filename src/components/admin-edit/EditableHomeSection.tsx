@@ -7,15 +7,17 @@ import type { effectiveHomeContent } from './homeDefaults';
 const HomeContentEditorModal = lazy(() => import('./HomeContentEditorModal'));
 
 /** An admin-editable block of platform home content (hero, tick strip, trust items, feature block, About, legal). */
-export function EditableHomeSection({ section, label, legalKey, legalInitialText, defaults, className, children }: {
+export function EditableHomeSection({ section, label, legalKey, legalInitialText, defaults, className, id, group, children }: {
   section: HomeSection; label: string; legalKey?: string; legalInitialText?: string; className?: string; children: ReactNode;
+  /** Optional sidebar hints (see EditableRegion). */
+  id?: string; group?: string;
   /** What the page shows now (stored value, else built-in text); the editor opens pre-filled with it. */
   defaults?: ReturnType<typeof effectiveHomeContent>;
 }) {
   const [open, setOpen] = useState(false);
   return (
     <>
-      <EditableRegion label={label} onEdit={() => setOpen(true)} className={className}>{children}</EditableRegion>
+      <EditableRegion label={label} id={id} group={group} onEdit={() => setOpen(true)} className={className}>{children}</EditableRegion>
       {open && (
         <Suspense fallback={null}>
           <HomeContentEditorModal section={section} legalKey={legalKey} legalInitialText={legalInitialText} defaults={defaults} onClose={() => setOpen(false)} />
