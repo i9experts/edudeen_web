@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ShieldCheck, Pencil, Trash2, Star, ThumbsUp, ImageIcon, ChevronLeft, ChevronRight, X, Store, AlertTriangle,
 } from 'lucide-react';
-import { StarRating, Button, Badge, EmptyState, SkeletonBox, Pagination, FilterDropdown, Modal } from '@/components/comman/ui';
+import { StarRating, Button, Badge, SkeletonBox, Pagination, FilterDropdown, Modal } from '@/components/comman/ui';
 import { useFocusTrap } from '@/components/comman/ui/useFocusTrap';
 import { TokenStorage } from '@/api/services/auth';
 import { apiGetProductReviews, apiDeleteReview, apiToggleReviewHelpful, type ProductReviewEntry, type ProductReviewStats, type ReviewUsedFor } from '@/api/services/rating';
@@ -513,11 +513,14 @@ export function ProductReviewsSection({ productId, storeName, canReview }: Produ
       ) : error ? (
         <p className="text-[13px] text-error">{error}</p>
       ) : !hasReviews ? (
-        <EmptyState
-          icon={<Star size={26} className="text-brand-orange opacity-55" />}
-          title="Be the first to review this product"
-          description="Your feedback helps other customers make better decisions."
-        />
+        // Compact strip: the big centred empty state took a whole screen of white space for nothing.
+        <div className="flex items-center gap-3 rounded-xl border border-dashed border-bone bg-cream/50 px-4 py-3">
+          <span className="w-9 h-9 rounded-full bg-white border border-bone flex items-center justify-center shrink-0"><Star size={16} className="text-brand-orange opacity-70" aria-hidden /></span>
+          <div className="min-w-0">
+            <p className="text-[13.5px] font-semibold text-carbon m-0">Be the first to review this product</p>
+            <p className="text-[12.5px] text-slate m-0">Your feedback helps other customers make better decisions.</p>
+          </div>
+        </div>
       ) : filteredSorted.length === 0 ? (
         <div className="flex flex-col items-center gap-2 py-4">
           <p className="text-[13px] text-slate">No reviews match your filters.</p>
