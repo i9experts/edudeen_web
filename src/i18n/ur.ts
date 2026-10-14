@@ -1761,6 +1761,16 @@ export const UR: Record<string, string> = {
   "I've made the transfer": "میں نے ٹرانسفر کر دیا ہے",
   "Submitting…": "جمع ہو رہا ہے…",
   "Flash": "فلیش",
+  "Edudeen Help": "ایڈودین ہیلپ",
+  "Online - replies instantly": "آن لائن - فوراً جواب",
+  "Open Edudeen Help chat": "ایڈودین ہیلپ چیٹ کھولیں",
+  "Close chat": "چیٹ بند کریں",
+  "Start over": "نئے سرے سے شروع کریں",
+  "Chat messages": "چیٹ پیغامات",
+  "Type your question...": "اپنا سوال لکھیں...",
+  "Your message": "آپ کا پیغام",
+  "Send": "بھیجیں",
+  "Need help? Tap to ask Edudeen Help.": "مدد چاہیے؟ ایڈودین ہیلپ سے پوچھنے کے لیے دبائیں۔",
 };
 
 const MONTHS: Record<string, string> = {

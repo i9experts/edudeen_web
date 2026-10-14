@@ -1,6 +1,7 @@
 import { SocialLinksCard } from './SocialLinksCard';
 import { HomeContentCard } from './HomeContentCard';
 import { SellerPageCard } from './SellerPageCard';
+import { ChatbotCard } from './ChatbotCard';
 import { MaintenanceCard } from './MaintenanceCard';
 import { ReferralSettingsCard } from './ReferralSettingsCard';
 import { useState, useEffect, useCallback } from 'react';
@@ -17,7 +18,7 @@ import { apiGetPlatformFees, apiUpdatePlatformFees } from '@/api/services/config
 import { Toggle, Input, Textarea, Select, Button, SkeletonBox, Accordion } from '@/components/comman/ui';
 import { AdminStudioHeader } from '@/features/admin/components/studio';
 import { AnalyticsErrorState } from '@/components/comman/analytics/AnalyticsErrorState';
-import { CheckCircle2, Wrench, Sparkles, Mail, Landmark, Percent, Home, Gift, Share2, Store } from 'lucide-react';
+import { CheckCircle2, Wrench, Sparkles, Mail, Landmark, Percent, Home, Gift, Share2, Store, MessageCircle } from 'lucide-react';
 import { AiFeatureSwitches } from '@/features/admin/components/AiFeatureSwitches';
 
 const AI_MODELS = ['claude-sonnet-5', 'claude-haiku-4-5', 'claude-opus-4-8'];
@@ -378,6 +379,8 @@ export function AdminConfig() {
               content: <HomeContentCard /> },
             { id: 'seller-page', title: 'Become-a-seller page', description: 'Hero, steps, feature rows, FAQs and more on /become-a-seller', icon: <Store size={16} />,
               content: <SellerPageCard /> },
+            { id: 'chatbot', title: 'Chatbot', description: 'Edudeen Help chat bubble: suggested questions and answers for buyers and sellers', icon: <MessageCircle size={16} />,
+              content: <ChatbotCard /> },
             { id: 'referral', title: 'Referral programme', description: 'Rewards when buyers invite friends', icon: <Gift size={16} />,
               content: <ReferralSettingsCard /> },
             { id: 'social', title: 'Social links', description: 'Icons shown in the website footer', icon: <Share2 size={16} />,

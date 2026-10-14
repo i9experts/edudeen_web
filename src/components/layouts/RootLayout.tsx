@@ -8,6 +8,7 @@ import { MaintenanceNotice } from '@/components/comman/ui/MaintenanceNotice';
 import { GoogleOneTapPrompt } from '@/components/comman/ui/GoogleOneTapPrompt';
 import { LanguageRouteSync } from '@/contexts/LanguageContext';
 import { AiAssistantWidget } from '@/components/ai/AiAssistantWidget';
+import { ChatWidgetGate } from '@/components/chat/ChatWidgetGate';
 import { useGlobalEdgeHoverScroll } from '@/hooks/useGlobalEdgeHoverScroll';
 import { useReferralCapture } from '@/hooks/useReferralCapture';
 import { AdminEditProvider } from '@/contexts/AdminEditContext';
@@ -61,6 +62,7 @@ export function RootLayout() {
       <GoogleOneTapPrompt />
       <LanguageRouteSync />
       <AiAssistantWidget />
+      <ChatWidgetGate />
       {/* `fixed inset-0` (not paddingTop + height:100vh) so this wrapper IS the
           scroll container — the previous approach had no overflow container of
           its own, so tall pages fell back to scrolling the whole document.

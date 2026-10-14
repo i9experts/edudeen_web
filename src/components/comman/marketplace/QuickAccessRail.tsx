@@ -322,7 +322,7 @@ export function QuickAccessRail() {
         onClick={toTop}
         aria-label="Back to top"
         className={clsx(
-          'lg:hidden fixed end-4 bottom-[84px] z-40 size-11 rounded-full bg-white border border-bone shadow-lg flex items-center justify-center text-brand-royal cursor-pointer transition-all duration-200 print:hidden',
+          'lg:hidden fixed end-4 bottom-[140px] z-40 size-11 rounded-full bg-white border border-bone shadow-lg flex items-center justify-center text-brand-royal cursor-pointer transition-all duration-200 print:hidden',
           scrolled ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3 pointer-events-none',
         )}
         tabIndex={scrolled ? 0 : -1}

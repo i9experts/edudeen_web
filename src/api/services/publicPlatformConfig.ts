@@ -59,6 +59,8 @@ export interface PublicPlatformConfig {
   socialLinks: Partial<Record<SocialNetwork, string>>;
   homeContent?: HomeContent;
   sellerPage?: SellerPageContent;
+  /** Edudeen Help chat widget content (effective: admin overrides merged over built-in defaults). */
+  chatbot?: import('@/components/chat/chatbotDefaults').ChatbotConfig;
   payout: {
     /** 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'manual' */
     frequency: string;

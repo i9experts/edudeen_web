@@ -376,6 +376,7 @@ const mainRouter = createBrowserRouter([
           { path: 'orders',        element: <SellerStoreRedirect to="orders" /> },
           { path: 'finance',       element: <SellerStoreRedirect to="finance" /> },
           { path: 'plan-billing',  element: <SellerStoreRedirect to="plan-billing" /> },
+          { path: 'marketing',     element: <SellerStoreRedirect to="marketing" /> },
           { path: '*',             element: <SellerStoreRedirect /> },
         ],
       },
