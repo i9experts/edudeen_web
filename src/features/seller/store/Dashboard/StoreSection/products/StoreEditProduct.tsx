@@ -1,155 +1,41 @@
-import { useState, useEffect, type ReactNode } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate, useParams, useLocation } from 'react-router-dom';
-import { Package, Download, GraduationCap, Loader2, CalendarClock, Plus, X } from 'lucide-react';
-import { useStoreWorkspace } from '@/components/layouts/StoreLayout';
+import { AlertCircle } from 'lucide-react';
+import { useStoreWorkspace, StorePageHeader } from '@/components/layouts/StoreLayout';
 import { UrduCopyCard } from '@/components/ai/UrduCopyCard';
 import {
   apiGetMyProductById, apiEditPhysicalProduct, apiEditDigitalProduct, apiUpdateVariant,
-  EDUCATION_LEVELS, type EducationLevel, type StoreProduct, type ProductVariant, type VariantOption,
+  type EducationLevel, type StoreProduct, type ProductVariant,
 } from '@/api/services/product';
 import { getCachedProducts, updateCachedProduct, type ProductEntry } from './_cache';
-import { SubcategoryField } from './SubcategoryField';
-import { CustomLevelInput } from './CustomLevelInput';
-import { DynamicAttributeFields } from './DynamicAttributeFields';
 import { toAttributeInputs, findMissingRequiredAttribute, type AttributeValuesState } from './attributeFormUtils';
 import { apiGetProductAttributes, apiSetProductAttributes } from '@/api/services/attributes';
 import { useSellerCategories } from '@/hooks/store/useSellerCategories';
 import { useCategoryAttributes } from '@/hooks/marketplace/useCategoryAttributes';
-import { ImageUpload, type PrivateUploadData, DateTimePickerModal, SkeletonBox } from '@/components/comman/ui';
+import { type PrivateUploadData, DateTimePickerModal, SkeletonBox } from '@/components/comman/ui';
 import {
-  LearningFields, EMPTY_LEARNING, learningPayload, learningError, type LearningValue,
-  LicenseTiersField, EMPTY_TIERS, tiersPayload, tiersError, type LicenseTierValue,
-  DeliverableFilesField, SampleFileField,
+  EMPTY_LEARNING, learningPayload, learningError, type LearningValue,
+  EMPTY_TIERS, tiersPayload, tiersError, type LicenseTierValue,
 } from '@/features/seller/components/products/LearningFields';
-import { DeliveryFormatField, EMPTY_DELIVERY, deliveryPayload, deliveryError, deliveryFromProduct } from '@/features/seller/components/products/DeliveryFormatField';
+import { EMPTY_DELIVERY, deliveryPayload, deliveryError, deliveryFromProduct } from '@/features/seller/components/products/DeliveryFormatField';
 import { currencySymbol as symbolForCurrency } from '@/utils/currency';
-import { ProductOffersCard, offersPayload } from './ProductOffersCard';
+import { offersPayload } from './ProductOffersCard';
 import { premiumPercentError } from './PremiumPriceField';
 import { effectiveSellerPercent, premiumGapMessage, usePremiumTerms } from './PremiumEarningsCalculator';
-
-type ProductStatus = 'draft' | 'active' | 'scheduled';
-type LicenseType   = 'personal' | 'single_classroom' | 'school' | 'commercial';
-
-const inp = 'w-full px-3 py-2 text-[13px] border border-bone rounded-lg text-charcoal bg-white placeholder:text-[#b5b3ac] outline-none';
-const ta  = `${inp} resize-y min-h-[100px]`;
-
-function L({ children, req }: { children: ReactNode; req?: boolean }) {
-  return (
-    <label className="text-[12px] font-semibold text-graphite block mb-1.5">
-      {children}{req && <span className="text-red-500 ml-0.5">*</span>}
-    </label>
-  );
-}
-function F({ label, req, children }: { label: string; req?: boolean; children: ReactNode }) {
-  return <div><L req={req}>{label}</L>{children}</div>;
-}
-function Card({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <div className="bg-white border border-bone rounded-[10px] overflow-hidden">
-      <div className="px-5 py-3.5 border-b border-bone">
-        <p className="text-[13px] font-bold text-charcoal">{title}</p>
-      </div>
-      <div className="px-5 py-4">{children}</div>
-    </div>
-  );
-}
-function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
-  return (
-    <button type="button" onClick={() => onChange(!checked)}
-      role="switch" aria-checked={checked} aria-label={label}
-      className="w-10 h-[22px] rounded-[11px] border-none cursor-pointer p-0 relative shrink-0 transition-colors duration-[180ms]"
-      style={{ background: checked ? '#174771' : '#D1D5DB' }}>
-      <span className="absolute top-[3px] w-4 h-4 rounded-full bg-white border border-charcoal/10 transition-[left] duration-[180ms]"
-        style={{ left: checked ? 21 : 3 }} />
-    </button>
-  );
-}
-function TagInput({ tags, input, onInput, onAdd, onRemove }: {
-  tags: string[]; input: string;
-  onInput: (v: string) => void; onAdd: () => void; onRemove: (i: number) => void;
-}) {
-  return (
-    <div className="border border-bone rounded-lg px-[10px] py-[7px] flex flex-wrap gap-[6px] bg-white min-h-[42px]">
-      {tags.map((t, i) => (
-        <span key={i} className="bg-brand-pale-orange text-brand-orange border border-brand-orange/20 rounded-[6px] px-2 py-[2px] text-[12px] font-medium flex items-center gap-1">
-          {t}
-          <button type="button" onClick={() => onRemove(i)} className="bg-transparent border-none cursor-pointer p-0 text-brand-orange/50 text-[14px] leading-none hover:text-brand-orange">×</button>
-        </span>
-      ))}
-      <input value={input} onChange={e => onInput(e.target.value)}
-        onKeyDown={e => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); onAdd(); } }}
-        placeholder={tags.length === 0 ? 'Type a tag and press Enter…' : ''}
-        className="border-none outline-none text-[12px] flex-[1_1_80px] min-w-[80px] bg-transparent text-charcoal placeholder:text-[#b5b3ac]" />
-    </div>
-  );
-}
-
-const MAX_VARIANT_OPTIONS = 3;
-
-// ── Variant attributes builder — replaces the old fixed Size/Color inputs with
-// any combination of seller-defined attributes (Color, Size, Material…), up to
-// 3, matching what the variant-CRUD backend now accepts. ─────────────────────
-function VariantOptionsField({ options, onChange }: { options: VariantOption[]; onChange: (next: VariantOption[]) => void }) {
-  const [name, setName] = useState('');
-  const [value, setValue] = useState('');
-
-  function add() {
-    if (!name.trim() || !value.trim() || options.length >= MAX_VARIANT_OPTIONS) return;
-    onChange([...options, { name: name.trim(), value: value.trim() }]);
-    setName(''); setValue('');
-  }
-
-  const canAdd = !!name.trim() && !!value.trim();
-
-  return (
-    <div className="flex flex-col gap-2">
-      {options.length > 0 && (
-        <div className="flex flex-col gap-[6px]">
-          {options.map((o, i) => (
-            <div key={i} className="flex items-center gap-2 bg-brand-pale-orange border border-brand-orange/20 rounded-lg pl-3 pr-2 py-[7px]">
-              <span className="flex-1 min-w-0 text-[12px] text-charcoal truncate">
-                <span className="font-semibold text-brand-deep-orange">{o.name}</span>
-                <span className="text-brand-orange/40 mx-[6px]">/</span>
-                {o.value}
-              </span>
-              <button type="button" onClick={() => onChange(options.filter((_, idx) => idx !== i))}
-                aria-label={`Remove ${o.name} ${o.value}`}
-                className="bg-transparent border-none cursor-pointer p-1 rounded-md text-brand-orange/50 shrink-0 flex items-center hover:text-brand-orange hover:bg-white/70 transition-colors">
-                <X size={12} />
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-      {options.length < MAX_VARIANT_OPTIONS && (
-        <div className="flex flex-col gap-[7px] p-2.5 rounded-lg border border-dashed border-[#d9d6cc] bg-cream/50">
-          <div className="grid grid-cols-2 gap-[7px]">
-            <input value={name} onChange={e => setName(e.target.value)} placeholder="Attribute"
-              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); add(); } }}
-              className={`${inp} px-2.5 py-[7px] text-[12px] bg-white`} />
-            <input value={value} onChange={e => setValue(e.target.value)} placeholder="Value"
-              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); add(); } }}
-              className={`${inp} px-2.5 py-[7px] text-[12px] bg-white`} />
-          </div>
-          <button type="button" onClick={add} disabled={!canAdd}
-            className="flex items-center justify-center gap-1.5 py-[7px] rounded-md border-none text-[12px] font-semibold transition-colors"
-            style={{ background: canAdd ? '#174771' : '#E8E6DC', color: canAdd ? '#fff' : '#A8A6A0', cursor: canAdd ? 'pointer' : 'not-allowed' }}>
-            <Plus size={13} /> Add Attribute
-          </button>
-        </div>
-      )}
-      <p className="text-[12px] text-slate">Optional — leave empty for a single plain variant, or add up to 3 like Color, Size, Material.</p>
-    </div>
-  );
-}
-
-const blankPhys = {
+import type { VariantOption } from '@/api/services/product';
+import { findCategoryName, type DigForm, type LicenseType, type PhysForm, type ProductStatus } from './ProductFormKit';
+import {
+  ActionBar, ProductPreview, StepRail, WizardNav, WIZARD_STEPS, dirtyCapture,
+  useLeaveGuard, useWizard, type WizardIssue,
+} from './ProductWizard';
+import { ProductFormSteps } from './ProductFormSteps';
+const blankPhys: PhysForm = {
   name: '', description: '', price: '', compareAtPrice: '',
   stock: '', options: [] as VariantOption[], shippingWeight: '', subCategoryId: '',
   status: 'draft' as ProductStatus, isListedOnEdudeen: false,
   scheduledAt: '', tagInput: '', tags: [] as string[], images: [] as string[],
 };
-const blankDig = {
+const blankDig: DigForm = {
   name: '', description: '', price: '', compareAtPrice: '', subCategoryId: '',
   status: 'draft' as ProductStatus, isListedOnEdudeen: false,
   scheduledAt: '', tagInput: '', tags: [] as string[], images: [] as string[],
@@ -161,8 +47,6 @@ const blankDig = {
   buyerDeliveryMessage: '', educationLevel: '' as EducationLevel | '', customLevel: '',
   previewEnabled: false,
 };
-type PhysForm = typeof blankPhys;
-type DigForm  = typeof blankDig;
 
 // A listing waiting for review (or sent back) shows as "Active": saving it
 // asks to publish again, and the server puts it back in the review queue.
@@ -220,6 +104,7 @@ export default function StoreEditProduct() {
   const subcategories = rootCategory?.children ?? [];
   const [fetching,          setFetching]          = useState(true);
   const [saving,            setSaving]            = useState(false);
+  const [touched,           setTouched]           = useState(false);
   const [error,             setError]             = useState('');
   const [pType,             setPType]             = useState<'physical' | 'digital' | 'educational'>('physical');
   const [variantId,         setVariantId]         = useState<string | null>(null);
@@ -323,28 +208,46 @@ export default function StoreEditProduct() {
     else                      { const v = dig.tagInput.replace(',', '').trim();  if (v && !dig.tags.includes(v))  sd('tags', [...dig.tags, v]);  sd('tagInput', ''); }
   };
 
-  const discountPct = (() => {
-    const p = Number(cur.price), c = Number(cur.compareAtPrice);
-    return p > 0 && c > p ? Math.round((1 - p / c) * 100) : null;
-  })();
+
+  const isDigitalFamily = pType === 'digital' || pType === 'educational';
+  const finalStatusOf = (s?: ProductStatus) => s ?? (pType === 'physical' ? phys.status : dig.status);
+
+  // Every rule the form enforces, grouped by the step it belongs to.
+  const issues = useMemo<WizardIssue[]>(() => {
+    const out: WizardIssue[] = [];
+    if (!cur.name) out.push({ step: 0, message: 'Add a product title', fieldId: 'ap-name' });
+    if (isDigitalFamily) { const dErr = deliveryError(delivery); if (dErr) out.push({ step: 1, message: dErr, fieldId: 'fld-delivery' }); }
+    if (String(cur.price).trim() === '') out.push({ step: 2, message: 'Enter the price before saving', fieldId: 'ap-price' });
+    if (isDigitalFamily) { const tErr = tiersError(dig.tiers); if (tErr) out.push({ step: 2, message: tErr, fieldId: 'fld-tiers' }); }
+    if (pType === 'educational' && !dig.educationLevel) out.push({ step: 3, message: 'Choose an education level', fieldId: 'fld-level' });
+    else if (pType === 'educational' && dig.educationLevel === 'other' && !dig.customLevel.trim()) out.push({ step: 3, message: 'Describe the custom education level', fieldId: 'fld-level' });
+    const lErr = learningError(learning);
+    if (lErr) out.push({ step: 3, message: lErr, fieldId: 'fld-learning' });
+    const missingAttr = findMissingRequiredAttribute(attrDefs, attributeValues);
+    if (missingAttr) out.push({ step: 3, message: `${missingAttr.label} is required`, fieldId: 'fld-attrs' });
+    const pErr = premiumPercentError(premiumPct ?? '');
+    if (pErr) out.push({ step: 4, message: pErr, fieldId: 'fld-offers' });
+    // Owner rule: the normal sale must stay at least the admin's gap below the Premium discount (the API enforces it too).
+    const gapErr = premiumTerms ? premiumGapMessage(Number(cur.price), Number(cur.compareAtPrice), effectiveSellerPercent(premiumPct ?? '', storePremiumPct, !!premiumOptOut || (campaignIds?.length ?? 0) > 0), premiumTerms.minGapPercent) : null;
+    if (gapErr) out.push({ step: 4, message: gapErr, fieldId: 'fld-offers' });
+    return out;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cur, pType, dig.tiers, dig.educationLevel, dig.customLevel, delivery, learning, attrDefs, attributeValues, premiumPct, premiumOptOut, campaignIds, premiumTerms, storePremiumPct]);
+
+  const wiz = useWizard(issues, 'Edit', [0, 1, 2, 3, 4, 5]);
+  const guard = useLeaveGuard(touched && !saving);
 
   const handleSubmit = async (statusOverride?: ProductStatus) => {
     setError('');
-    if (String(cur.price).trim() === '') { setError('Enter the price before saving.'); return; }
-    if (pType === 'educational' && !dig.educationLevel) { setError('Education level is required for educational resources.'); return; }
-    if (pType === 'educational' && dig.educationLevel === 'other' && !dig.customLevel.trim()) { setError('Please describe the custom education level.'); return; }
-    const learnErr = learningError(learning) ?? (pType !== 'physical' ? tiersError(dig.tiers) ?? deliveryError(delivery) : null);
-    if (learnErr) { setError(learnErr); return; }
-    const premiumErr = premiumPercentError(premiumPct ?? '');
-    if (premiumErr) { setError(premiumErr); return; }
-    // Owner rule: the normal sale must stay at least the admin's gap below the Premium discount (the API enforces it too).
-    const gapErr = premiumTerms ? premiumGapMessage(Number(cur.price), Number(cur.compareAtPrice), effectiveSellerPercent(premiumPct ?? '', storePremiumPct, !!premiumOptOut || (campaignIds?.length ?? 0) > 0), premiumTerms.minGapPercent) : null;
-    if (gapErr) { setError(gapErr); return; }
-    const missingAttr = findMissingRequiredAttribute(attrDefs, attributeValues);
-    if (missingAttr) { setError(`${missingAttr.label} is required.`); return; }
+    if (issues.length) {
+      wiz.setAttempted(true);
+      setError(issues[0].message);
+      wiz.go(issues[0].step, issues[0].fieldId);
+      return;
+    }
     setSaving(true);
     try {
-      const finalStatus = statusOverride ?? (pType === 'physical' ? phys.status : dig.status);
+      const finalStatus = finalStatusOf(statusOverride);
       if (pType === 'physical') {
         const res = await apiEditPhysicalProduct(productId, {
           productId, name: phys.name, description: phys.description,
@@ -388,6 +291,7 @@ export default function StoreEditProduct() {
       const attrInputs = toAttributeInputs(attributeValues);
       await apiSetProductAttributes(productId, attrInputs); // replace-all — also clears any removed values
 
+      guard.allow.current = true;
       navigate(`/store/${storeId}/products`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong.');
@@ -399,46 +303,25 @@ export default function StoreEditProduct() {
   if (fetching) {
     return (
       <div className="bg-cream min-h-screen">
-        {/* ── Header skeleton ── */}
         <div className="px-7 py-5 bg-white border-b border-bone flex items-center justify-between">
           <div className="flex flex-col gap-2">
             <SkeletonBox width={160} height={18} rounded="6px" />
             <SkeletonBox width={120} height={12} rounded="4px" />
           </div>
-          <div className="flex items-center gap-3">
-            <SkeletonBox width={80} height={36} rounded="9px" />
-            <SkeletonBox width={110} height={36} rounded="9px" />
-          </div>
+          <SkeletonBox width={110} height={36} rounded="9px" />
         </div>
-
-        {/* ── 2-column body skeleton ── */}
-        <div className="px-4 sm:px-7 py-6 grid grid-cols-1 lg:grid-cols-[1fr_296px] gap-5 items-start">
-          {/* Left column */}
+        <div className="px-4 sm:px-7 py-6 grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-5 items-start">
+          <div className="hidden lg:flex flex-col gap-3">
+            {WIZARD_STEPS.map(s => <SkeletonBox key={s.key} height={40} rounded="8px" />)}
+          </div>
           <div className="flex flex-col gap-5">
             <div className="bg-white border border-bone rounded-[10px] p-5 flex flex-col gap-4">
               <SkeletonBox width="30%" height={14} rounded="4px" />
               <SkeletonBox height={38} rounded="8px" />
               <SkeletonBox height={100} rounded="8px" />
             </div>
-            <div className="bg-white border border-bone rounded-[10px] p-5 flex flex-col gap-4">
-              <SkeletonBox width="20%" height={14} rounded="4px" />
-              <SkeletonBox height={38} rounded="8px" />
-            </div>
             <div className="bg-white border border-bone rounded-[10px] p-5">
               <SkeletonBox height={120} rounded="8px" />
-            </div>
-          </div>
-
-          {/* Right sidebar */}
-          <div className="flex flex-col gap-4">
-            <div className="bg-white border border-bone rounded-[10px] p-5 flex flex-col gap-3">
-              <SkeletonBox width="40%" height={14} rounded="4px" />
-              <SkeletonBox height={38} rounded="8px" />
-              <SkeletonBox height={38} rounded="8px" />
-            </div>
-            <div className="bg-white border border-bone rounded-[10px] p-5 flex flex-col gap-3">
-              <SkeletonBox width="50%" height={14} rounded="4px" />
-              <SkeletonBox height={38} rounded="8px" />
             </div>
           </div>
         </div>
@@ -446,352 +329,90 @@ export default function StoreEditProduct() {
     );
   }
 
-  return (
-    <div className="bg-cream min-h-screen">
+  const subName = findCategoryName(categories, cur.subCategoryId);
+  const summaryRows = [
+    { label: 'Type', value: pType === 'physical' ? 'Physical product' : pType === 'educational' ? 'Educational resource' : 'Digital download', step: 0 },
+    { label: 'Title', value: cur.name || 'Missing', step: 0, ok: !!cur.name },
+    { label: 'Description', value: cur.description ? `${cur.description.length} characters` : 'None yet (recommended)', step: 0 },
+    { label: 'Photos', value: cur.images.length ? `${cur.images.length} added` : 'None yet (recommended)', step: 1 },
+    ...(isDigitalFamily ? [{ label: 'Files', value: dig.files.length ? `${dig.files.length} uploaded` : 'None', step: 1 }] : []),
+    { label: 'Price', value: String(cur.price).trim() === '' ? 'Missing' : `${currencySymbol} ${cur.price}${cur.compareAtPrice ? ` (was ${currencySymbol} ${cur.compareAtPrice})` : ''}`, step: 2, ok: String(cur.price).trim() !== '' },
+    ...(pType === 'physical' ? [{ label: 'Stock', value: phys.stock === '' ? 'Not set' : phys.stock, step: 2 }] : []),
+    { label: 'Category', value: [rootCategory?.name, subName].filter(Boolean).join(' › ') || 'Not chosen', step: 3 },
+    ...(pType === 'educational' ? [{ label: 'Education level', value: dig.educationLevel || 'Missing', step: 3, ok: !!dig.educationLevel }] : []),
+    { label: 'Offers', value: (campaignIds?.length ?? 0) > 0 ? 'In a platform sale' : effectiveSellerPercent(premiumPct ?? '', storePremiumPct, !!premiumOptOut) > 0 ? `Premium discount ${effectiveSellerPercent(premiumPct ?? '', storePremiumPct, !!premiumOptOut)}%` : 'None', step: 4 },
+    { label: 'Status', value: cur.status === 'active' ? 'Active' : cur.status === 'scheduled' ? 'Scheduled' : 'Draft', step: 5 },
+  ];
 
-      {/* ── Header ── */}
-      <div className="px-7 py-5 bg-white border-b border-bone flex items-center justify-between">
-        <div>
-          <h1 className="text-[18px] font-bold text-charcoal leading-tight">Edit Product</h1>
-          <div className="flex items-center gap-1.5 mt-0.5">
-            {pType === 'digital'
-              ? <><Download size={11} className="text-slate" /><span className="text-[12px] text-slate">Digital Download</span></>
-              : pType === 'educational'
-              ? <><GraduationCap size={11} className="text-slate" /><span className="text-[12px] text-slate">Educational Resource</span></>
-              : <><Package  size={11} className="text-slate" /><span className="text-[12px] text-slate">Physical Product</span></>}
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          {error && <p className="text-[12px] text-red-500 font-medium">{error}</p>}
-          <button onClick={() => navigate(-1)}
-            className="px-4 py-[9px] rounded-[9px] text-[13px] font-semibold text-slate bg-white border border-bone cursor-pointer hover:bg-cream transition-colors">
-            Cancel
-          </button>
-          <button onClick={() => handleSubmit()} disabled={saving}
-            className="flex items-center gap-1.5 border-none rounded-[9px] px-5 py-[9px] text-[13px] font-semibold"
-            style={{ background: saving ? '#E8E6DC' : '#174771', color: saving ? '#8C8A82' : '#fff', cursor: saving ? 'not-allowed' : 'pointer' }}>
-            {saving ? <><Loader2 size={13} className="animate-spin" />Saving…</> : 'Save Changes'}
-          </button>
-        </div>
-      </div>
+  const previewData = {
+    name: cur.name, images: cur.images, price: String(cur.price), compareAtPrice: cur.compareAtPrice, currency: store?.baseCurrency,
+    productType: pType, deliveryFormat: delivery.format, educationLevel: dig.educationLevel, customLevel: dig.customLevel,
+    premiumPercent: (campaignIds?.length ?? 0) > 0 ? 0 : effectiveSellerPercent(premiumPct ?? '', storePremiumPct, !!premiumOptOut),
+    ageMin: learning.ageMin, ageMax: learning.ageMax, storeName: store?.name,
+  };
 
-      {review && (
-        <div role="status" className={`mx-4 sm:mx-7 mt-5 rounded-xl border px-4 py-3 text-[13px] ${review.status === 'rejected' ? 'border-error/30 bg-error-bg text-error' : 'border-info/30 bg-info-bg text-carbon'}`}>
-          {review.status === 'rejected' ? (
-            <><b>Edudeen asked for changes:</b> {review.note ?? 'See the note from the review team.'} Fix this and press Save Changes with status Active to send it for review again.</>
-          ) : (
-            <><b>In review.</b> The Edudeen team checks new listings before they go live — usually within a day. You can still edit it.</>
-          )}
-        </div>
+  const reviewBanner = review ? (
+    <div role="status" className={`rounded-xl border px-4 py-3 text-[13px] ${review.status === 'rejected' ? 'border-error/30 bg-error-bg text-error' : 'border-info/30 bg-info-bg text-carbon'}`}>
+      {review.status === 'rejected' ? (
+        <><b>Edudeen asked for changes:</b> {review.note ?? 'See the note from the review team.'} Fix this and press Save changes with status Active to send it for review again.</>
+      ) : (
+        <><b>In review.</b> The Edudeen team checks new listings before they go live — usually within a day. You can still edit it.</>
       )}
+    </div>
+  ) : null;
 
-      {/* ── 2-column body ── */}
-      <div className="px-4 sm:px-7 py-6 grid grid-cols-1 lg:grid-cols-[1fr_296px] gap-5 items-start">
+  return (
+    <div className="min-h-full" {...dirtyCapture(() => setTouched(true))}>
+      <StorePageHeader
+        title="Edit product"
+        subtitle={`Step ${wiz.step + 1} of ${WIZARD_STEPS.length} — ${WIZARD_STEPS[wiz.step].title}`}
+      />
 
-        {/* Left column */}
-        <div className="flex flex-col gap-5">
+      <div ref={wiz.topRef} className="px-4 md:px-8 py-5 max-lg:pb-24">
+        <div className="mx-auto max-w-[1700px] grid grid-cols-1 gap-4 lg:gap-6 lg:grid-cols-[220px_minmax(0,1fr)] 2xl:grid-cols-[220px_minmax(0,1100px)_300px] items-start">
+          <StepRail step={wiz.step} statusOf={wiz.statusOf} onGo={i => wiz.go(i)} />
 
-          {/* Basic Information */}
-          <Card title="Basic Information">
-            <div className="flex flex-col gap-4">
-              <F label="Product Title" req>
-                <input value={cur.name}
-                  onChange={e => pType === 'physical' ? sp('name', e.target.value) : sd('name', e.target.value)}
-                  placeholder="Product name" className={inp} />
-              </F>
-              <F label="Description">
-                <textarea value={cur.description}
-                  onChange={e => pType === 'physical' ? sp('description', e.target.value) : sd('description', e.target.value)}
-                  placeholder="Describe your product…" className={ta} />
-              </F>
-            </div>
-          </Card>
+          <div className="flex flex-col gap-5 min-w-0">
+            {review && wiz.step !== 5 && reviewBanner}
+            {error && (
+              <p role="alert" className="m-0 flex items-start gap-2 text-[13px] text-error font-medium bg-error-bg border border-error-border rounded-lg px-4 py-3">
+                <AlertCircle size={16} className="mt-px shrink-0" /> {error}
+              </p>
+            )}
+            <ProductPreview variant="inline" data={previewData} />
 
-          <UrduCopyCard storeId={storeId} productId={productId} />
-
-          {/* Category */}
-          <Card title="Category">
-            <SubcategoryField
-              mainCategoryName={rootCategory?.name ?? ''}
-              mainCategoryId={categoryId}
-              categories={categories}
-              categoryId={categoryId}
-              onCategoryChange={changeCategory}
-              categoriesError={catError}
-              subcategories={subcategories}
-              loading={catLoading}
-              value={cur.subCategoryId}
-              onChange={id => pType === 'physical' ? sp('subCategoryId', id) : sd('subCategoryId', id)}
-              refetch={refetchCats}            />
-          </Card>
-
-          {/* Category-specific classification (subject, format, etc) */}
-          {(attrLoading || attrDefs.length > 0) && (
-            <Card title="Additional Details">
-              <DynamicAttributeFields
-                definitions={attrDefs}
-                loading={attrLoading}
-                value={attributeValues}
-                onChange={setAttributeValues}
-              />
-            </Card>
-          )}
-
-          {/* Product Images */}
-          <Card title="Product Images">
-            <p className="text-[12px] text-slate mb-3">Upload up to 5 images. First image is the cover shown to buyers.</p>
-            <ImageUpload
-              value={cur.images}
-              onChange={urls => pType === 'physical' ? sp('images', urls) : sd('images', urls)}
-              maxFiles={5}
-            />
-          </Card>
-
-          {(pType === 'digital' || pType === 'educational') && (
-            <Card title="How buyers get it">
-              <DeliveryFormatField value={delivery} onChange={setDelivery} />
-              {delivery.format === 'course' && (
+            <ProductFormSteps
+              mode="edit" step={wiz.step} go={wiz.go} blockedStep={wiz.blockedStep} stepIssues={wiz.stepIssues} issues={issues}
+              storeId={storeId} store={store} currencySymbol={currencySymbol}
+              pType={pType} setPType={setPType} supports={{ physical: true, digital: true, educational: true }}
+              phys={phys} dig={dig} sp={sp} sd={sd}
+              delivery={delivery} setDelivery={setDelivery} learning={learning} setLearning={setLearning}
+              offers={{ storePremiumPct, premiumPct, setPremiumPct, premiumOptOut, setPremiumOptOut, campaignIds, setCampaignIds: v => setCampaignIds(v) }}
+              category={{ categories, loading: catLoading, error: catError, refetch: refetchCats, categoryId, rootName: rootCategory?.name ?? '', subcategories, change: changeCategory }}
+              attrs={{ defs: attrDefs, loading: attrLoading, value: attributeValues, onChange: setAttributeValues }}
+              addTag={addTag}
+              setStatus={val => { if (pType === 'physical') sp('status', val); else sd('status', val); if (val === 'scheduled') setShowScheduleModal(true); }}
+              openSchedule={() => setShowScheduleModal(true)} summaryRows={summaryRows}
+              basicsExtra={<UrduCopyCard storeId={storeId} productId={productId} />}
+              deliveryExtra={delivery.format === 'course' ? (
                 <Link to={`/store/${storeId}/products/${productId}/course`} className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-brand-royal text-white px-4 py-2 text-[13px] font-bold no-underline">
                   Open the course builder
                 </Link>
-              )}
-            </Card>
-          )}
-
-          {/* Digital/Educational: File Upload */}
-          {(pType === 'digital' || pType === 'educational') && (
-            <Card title={delivery.format === 'download' ? (pType === 'educational' ? 'Resource File' : 'Digital File') : 'Extra files (optional)'}>
-              <p className="text-[12px] text-slate mb-3">{delivery.format === 'download' ? 'The files buyers receive instantly after purchase.' : 'Worksheets, slides or notes buyers can download too.'}</p>
-              <DeliverableFilesField files={dig.files} onChange={v => sd('files', v)} />
-            </Card>
-          )}
-
-          {pType !== 'physical' && (
-            <Card title="Free sample">
-              <SampleFileField value={dig.sampleFile} onChange={v => sd('sampleFile', v)} />
-            </Card>
-          )}
-
-          <Card title="Who it's for">
-            <LearningFields value={learning} onChange={setLearning} />
-          </Card>
-
-          {/* Educational: Education Level (controlled Tier-1 + optional Tier-2 custom label) */}
-          {pType === 'educational' && (
-            <Card title="Education Level">
-              <div className="flex flex-col gap-4">
-                <F label="Education Level" req>
-                  <div className="flex gap-2 flex-wrap">
-                    {EDUCATION_LEVELS.map(l => {
-                      const sel = dig.educationLevel === l.value;
-                      return (
-                        <button key={l.value} type="button" onClick={() => sd('educationLevel', l.value)}
-                          className="px-3 py-[7px] rounded-full cursor-pointer text-[12px] font-medium transition-all duration-150"
-                          style={{ border: `1.5px solid ${sel ? '#174771' : '#E8E6DC'}`, background: sel ? '#EAF2F8' : '#fff', color: sel ? '#174771' : '#8C8A82' }}>
-                          {l.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </F>
-                {dig.educationLevel === 'other' && (
-                  <F label="Custom Education Level" req>
-                    <CustomLevelInput value={dig.customLevel} onChange={v => sd('customLevel', v)} />
-                  </F>
-                )}
-              </div>
-            </Card>
-          )}
-
-          {/* Digital/Educational: Delivery Settings */}
-          {(pType === 'digital' || pType === 'educational') && (
-            <Card title="Delivery Settings">
-              <div className="flex flex-col gap-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <F label="Download Limit">
-                    <input value={dig.downloadLimit} onChange={e => sd('downloadLimit', e.target.value)} placeholder="unlimited" className={inp} />
-                  </F>
-                  <F label="Link Expiry (days)">
-                    <input type="number" min="0" value={dig.linkExpiryDays} onChange={e => sd('linkExpiryDays', e.target.value)} placeholder="No expiry" className={inp} />
-                  </F>
-                </div>
-                <F label="License Type">
-                  <div className="flex gap-2 mt-0.5 flex-wrap">
-                    {(pType === 'educational'
-                      ? (['personal', 'single_classroom', 'school', 'commercial'] as const)
-                      : (['personal', 'commercial'] as const)
-                    ).map(l => {
-                      const sel = dig.licenseType === l;
-                      return (
-                        <button key={l} type="button" onClick={() => sd('licenseType', l)}
-                          className="flex-1 py-2 rounded-lg cursor-pointer text-[12px] font-semibold capitalize transition-all duration-150"
-                          style={{ border: `1.5px solid ${sel ? '#174771' : '#E8E6DC'}`, background: sel ? '#EAF2F8' : '#fff', color: sel ? '#174771' : '#8C8A82' }}>
-                          {l.replace('_', ' ')}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </F>
-                {pType === 'educational' && dig.licenseType !== 'commercial' && (
-                  <F label="Classroom & school licenses">
-                    <LicenseTiersField baseLicense={dig.licenseType} tiers={dig.tiers} onChange={v => sd('tiers', v)} currencySymbol={currencySymbol} />
-                  </F>
-                )}
-                <F label="Buyer Delivery Message">
-                  <textarea value={dig.buyerDeliveryMessage} onChange={e => sd('buyerDeliveryMessage', e.target.value)}
-                    placeholder="Thank you for your purchase!" className={ta} />
-                </F>
-                <div className="flex items-center justify-between py-0.5">
-                  <div>
-                    <p className="text-[13px] font-semibold text-charcoal">PDF Stamping</p>
-                    <p className="text-[12px] text-slate mt-0.5">Watermark PDFs with the buyer's name</p>
-                  </div>
-                  <Toggle label="PDF stamping" checked={dig.pdfStampingEnabled} onChange={v => sd('pdfStampingEnabled', v)} />
-                </div>
-                <div className="flex items-center justify-between py-0.5">
-                  <div>
-                    <p className="text-[13px] font-semibold text-charcoal">Buyer Preview</p>
-                    <p className="text-[12px] text-slate mt-0.5">Let buyers see a watermarked/trimmed preview before purchase</p>
-                  </div>
-                  <Toggle label="Buyer preview" checked={dig.previewEnabled} onChange={v => sd('previewEnabled', v)} />
-                </div>
-              </div>
-            </Card>
-          )}
-
-          {/* Tags */}
-          <Card title="Tags & SEO">
-            <p className="text-[12px] text-slate mb-3">Help buyers discover your product through search and filters.</p>
-            <TagInput
-              tags={cur.tags} input={cur.tagInput}
-              onInput={v => pType === 'physical' ? sp('tagInput', v) : sd('tagInput', v)}
-              onAdd={addTag}
-              onRemove={i => pType === 'physical'
-                ? sp('tags', phys.tags.filter((_, idx) => idx !== i))
-                : sd('tags', dig.tags.filter((_, idx) => idx !== i))}
+              ) : undefined}
+              reviewBanner={reviewBanner}
             />
-            <p className="text-[12px] text-slate mt-2">Press Enter or comma to add a tag</p>
-          </Card>
-        </div>
 
-        {/* ── Right sidebar ── */}
-        <div className="flex flex-col gap-4">
-
-          {/* Pricing */}
-          <Card title="Pricing">
-            <div className="flex flex-col gap-3">
-              <F label={`Price (${currencySymbol})`} req>
-                <input type="number" min="0" value={cur.price}
-                  onChange={e => pType === 'physical' ? sp('price', e.target.value) : sd('price', e.target.value)}
-                  placeholder="0.00" className={inp} />
-              </F>
-              <F label={`Compare-at Price (${currencySymbol})`}>
-                <input type="number" min="0" value={cur.compareAtPrice}
-                  onChange={e => pType === 'physical' ? sp('compareAtPrice', e.target.value) : sd('compareAtPrice', e.target.value)}
-                  placeholder="0.00" className={inp} />
-              </F>
-              {discountPct !== null && (
-                <div className="flex items-center gap-1.5 px-3 py-2 bg-[#e3f4ea] border border-[#b7e2c7] rounded-[7px]">
-                  <span className="text-[12px] font-bold text-[#1e7a3c]">{discountPct}% OFF</span>
-                  <span className="text-[12px] text-success">shown to buyers</span>
-                </div>
-              )}
-            </div>
-          </Card>
-
-          {/* Offers: Premium member discount OR Edudeen platform sale (exclusive) + earnings */}
-          <Card title="Offers">
-            <ProductOffersCard
-              storeId={storeId} currency={store?.baseCurrency} productType={pType} price={cur.price} compareAtPrice={cur.compareAtPrice}
-              storePremiumPct={storePremiumPct} premiumPct={premiumPct} setPremiumPct={setPremiumPct}
-              premiumOptOut={premiumOptOut} setPremiumOptOut={setPremiumOptOut} campaignIds={campaignIds} setCampaignIds={setCampaignIds}
-            />
-          </Card>
-
-          {/* Inventory & Shipping (physical only) */}
-          {pType === 'physical' && (
-            <Card title="Inventory & Shipping">
-              <div className="flex flex-col gap-3">
-                <F label="Stock Quantity" req>
-                  <input type="number" min="0" value={phys.stock} onChange={e => sp('stock', e.target.value)} placeholder="0" className={inp} />
-                </F>
-                <F label="Variant Attributes">
-                  <VariantOptionsField options={phys.options} onChange={v => sp('options', v)} />
-                </F>
-                <F label="Shipping Weight">
-                  <input value={phys.shippingWeight} onChange={e => sp('shippingWeight', e.target.value)} placeholder="e.g. 0.5 kg" className={inp} />
-                </F>
-              </div>
-            </Card>
-          )}
-
-          {/* Listing Status */}
-          <Card title="Listing Status">
-            <div className="flex flex-col gap-4">
-              <div>
-                <L>Status</L>
-                <div className="flex flex-col gap-1.5">
-                  {([
-                    { val: 'draft'     as const, label: 'Draft',     dotCls: 'bg-[#b5b3ac]',   selCls: 'bg-[#f5f4ef] border-[#b5b3ac]',   chkCls: 'bg-[#b5b3ac]'    },
-                    { val: 'active'    as const, label: 'Active',    dotCls: 'bg-[#22c55e]',   selCls: 'bg-[#edfbf3] border-[#22c55e]',   chkCls: 'bg-[#22c55e]'    },
-                    { val: 'scheduled' as const, label: 'Scheduled', dotCls: 'bg-brand-orange', selCls: 'bg-brand-pale-orange border-brand-orange', chkCls: 'bg-brand-orange' },
-                  ]).map(({ val, label, dotCls, selCls, chkCls }) => {
-                    const sel = cur.status === val;
-                    return (
-                      <button key={val} type="button"
-                        onClick={() => {
-                          if (pType === 'physical') sp('status', val); else sd('status', val);
-                          if (val === 'scheduled') setShowScheduleModal(true);
-                        }}
-                        className={`flex items-center gap-3 px-3 py-2.5 rounded-[9px] border-[1.5px] cursor-pointer text-left transition-all duration-150 w-full ${sel ? selCls : 'bg-cream border-bone hover:border-[#c5c3bb]'}`}>
-                        <span className={`w-[7px] h-[7px] rounded-full shrink-0 ${dotCls}`} />
-                        <span className={`flex-1 text-[12px] font-semibold ${sel ? 'text-charcoal' : 'text-slate'}`}>{label}</span>
-                        <span className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${sel ? `${chkCls} border-transparent` : 'border-[#d1d5db] bg-white'}`}>
-                          {sel && <svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3L3 5L7 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-              {cur.status === 'scheduled' && (
-                <button type="button" onClick={() => setShowScheduleModal(true)}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg border border-bone bg-cream text-[12px] text-charcoal cursor-pointer hover:border-brand-orange/40 transition-colors w-full text-left">
-                  <CalendarClock size={13} className="text-brand-orange shrink-0" />
-                  <span className="truncate">
-                    {cur.scheduledAt
-                      ? new Date(cur.scheduledAt).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })
-                      : 'Set schedule date & time'}
-                  </span>
-                </button>
-              )}
-              <div className="flex items-center justify-between">
-                <span className="text-[12px] text-charcoal">Also list in Edudeen Marketplace</span>
-                <Toggle
-                  label="Also list in Edudeen Marketplace"
-                  checked={cur.isListedOnEdudeen}
-                  onChange={v => pType === 'physical' ? sp('isListedOnEdudeen', v) : sd('isListedOnEdudeen', v)}
-                />
-              </div>
-            </div>
-          </Card>
-
-          {/* Action buttons */}
-          <div className="flex flex-col gap-2">
-            <button onClick={() => handleSubmit()} disabled={saving}
-              className="w-full py-[11px] rounded-[10px] text-[13px] font-bold border-none transition-all duration-150"
-              style={{ background: saving ? '#E8E6DC' : '#174771', color: saving ? '#8C8A82' : '#fff', cursor: saving ? 'not-allowed' : 'pointer' }}>
-              {saving ? 'Saving…' : 'Save Changes'}
-            </button>
-            <button onClick={() => navigate(-1)} disabled={saving}
-              className="w-full py-[9px] rounded-[10px] text-[13px] font-semibold text-slate border-none bg-transparent cursor-pointer hover:text-charcoal transition-colors">
-              Cancel
-            </button>
+            <WizardNav step={wiz.step} onBack={wiz.back} onNext={wiz.next} />
           </div>
 
-          {error && <p className="text-[12px] text-red-500 font-medium text-center">{error}</p>}
+          <ProductPreview variant="column" data={previewData} />
         </div>
       </div>
+
+      <ActionBar
+        saving={saving} primaryLabel="Save changes" onPrimary={() => handleSubmit()} onCancel={() => navigate(-1)}
+        saveNote={saving ? 'Saving…' : touched ? 'Unsaved changes' : 'No changes yet'} missing={issues.length} onShowMissing={() => { wiz.setAttempted(true); wiz.go(5); }}
+      />
 
       {showScheduleModal && (
         <DateTimePickerModal
@@ -803,6 +424,7 @@ export default function StoreEditProduct() {
           onClose={() => setShowScheduleModal(false)}
         />
       )}
+      {guard.dialog}
     </div>
   );
 }
