@@ -103,9 +103,11 @@ function Row({ k, v, strong }: { k: string; v: string; strong?: boolean }) {
  * picked) a sale buyer pay, the platform fee on each, what lands in the seller's wallet, and the sale-vs-Premium rule alert.
  * Premium and a platform sale are exclusive per product, so only one of the two extra columns shows.
  */
-export function PremiumEarningsCalculator({ price, compareAtPrice, premiumValue, storePercent, productType, currency, storeId, premiumOptOut = false, campaign = null }: {
+export function PremiumEarningsCalculator({ price, compareAtPrice, premiumValue, storePercent, productType, currency, storeId, premiumOptOut = false, campaign = null, availableCampaigns = [], onJoinCampaign }: {
   price: string; compareAtPrice: string; premiumValue: string; storePercent: number; productType: string; currency?: string | null;
   storeId?: string | null; premiumOptOut?: boolean; campaign?: JoinableCampaign | null;
+  /** Running / upcoming platform sales the seller could join instead of Premium: each one's result is worked out here. */
+  availableCampaigns?: JoinableCampaign[]; onJoinCampaign?: (id: string) => void;
 }) {
   const { terms, error } = usePremiumTerms(productType, currency, storeId);
   const priceN = Number(price);
@@ -190,6 +192,31 @@ export function PremiumEarningsCalculator({ price, compareAtPrice, premiumValue,
           </div>
         )}
       </div>
+      {!campaignOn && availableCampaigns.length > 0 && (
+        <div className="mt-3 rounded-lg border border-brand-orange/30 bg-brand-pale-orange/40 p-3">
+          <p className="text-[12px] font-bold text-brand-deep-orange m-0 mb-2 flex items-center gap-1"><Flame size={12} aria-hidden /> If you join a platform sale instead of Premium</p>
+          <div className="flex flex-col gap-2">
+            {availableCampaigns.map(c => {
+              const r = priceN > 0 ? campaignCalc(priceN, compareN > 0 ? compareN : 0, c) : null;
+              const label = `${c.name}${c.discountType === 'percentage' && c.discountValue != null ? ` ${c.discountValue}%` : ''}`;
+              const fee = r && r.applies ? feeOn(r.settle, terms) : null;
+              return (
+                <div key={c._id} className="rounded-md bg-white border border-bone px-3 py-2 flex flex-wrap items-center justify-between gap-2">
+                  <div className="min-w-0 text-[12.5px]">
+                    <p className="m-0 font-semibold text-carbon">{label} <span className="font-normal text-slate">{c.sponsorType === 'platform' ? '(Edudeen pays the discount)' : '(you pay the discount)'}</span></p>
+                    {!r ? <p className="m-0 text-slate">No price discount - buyers pay {money(priceN)}.</p>
+                      : !r.applies ? <p className="m-0 text-slate">From the list price {money(r.list)} this would be {money(r.unit)}, not lower than your {money(priceN)}, so it would not apply.</p>
+                      : <p className="m-0 text-charcoal">Buyers pay <strong>{money(r.unit)}</strong>{r.platform ? <> · Edudeen adds {money(r.covered)}</> : null} · {fee == null ? 'platform fee not set yet' : <>platform {calc.normalFeeLabel} (- {money(fee)})</>} · <strong>you receive {money(fee == null ? r.settle : r2(r.settle - fee))}</strong></p>}
+                  </div>
+                  {onJoinCampaign && r && r.applies && (
+                    <button type="button" onClick={() => onJoinCampaign(c._id)} className="shrink-0 px-3 py-1.5 rounded-lg bg-white border border-brand-royal text-brand-royal text-[12px] font-semibold cursor-pointer">Join this sale</button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
       <p className="text-[12px] text-slate mt-2 mb-0">
         {campaignOn
           ? 'A platform sale is worked out from your list price (the compare-at price when you set one) and only applies when it is lower than the price buyers already pay. A product is in a platform sale or has a Premium offer, not both.'

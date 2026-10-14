@@ -155,6 +155,8 @@ export function ProductOffersCard({
       <PremiumEarningsCalculator
         price={price} compareAtPrice={compareAtPrice} premiumValue={pct} storePercent={storePremiumPct}
         productType={productType} currency={currency} storeId={storeId} premiumOptOut={optOut} campaign={pickedCampaign}
+        availableCampaigns={pickedCampaign ? [] : campaigns}
+        onJoinCampaign={id => { setPremiumPct(''); setPremiumOptOut(true); setCampaignIds([id]); }}
       />
     </div>
   );
