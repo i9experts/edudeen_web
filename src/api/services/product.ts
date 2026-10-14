@@ -145,6 +145,8 @@ export interface StoreProduct {
   /** Admin sales (campaigns) this product joined - only on the seller's own product responses. */
   campaignIds?:      string[];
   premiumDiscountPercent?: number | null;
+  /** The seller turned Premium OFF for this product (also beats a store-wide default). A product has a Premium offer OR a platform sale, never both. */
+  premiumOptOut?: boolean;
   isDelete:          boolean;
   createdAt:         string;
   updatedAt:         string;
@@ -171,6 +173,8 @@ export interface CreatePhysicalPayload extends LearningMetaInput {
   /** Admin sales this product joins. Omit to leave unchanged on edit. */
   /** Seller-funded Premium member discount, 1-50 %; null clears it (store setting applies). Omit to leave unchanged. */
   premiumDiscountPercent?: number | null;
+  /** The seller turned Premium OFF for this product (also beats a store-wide default). A product has a Premium offer OR a platform sale, never both. */
+  premiumOptOut?: boolean;
   campaignIds?:      string[];
   // At least one variant is required — every variant must share the same
   // set of attribute names (e.g. all "Color"+"Size", not a mix).
@@ -194,6 +198,8 @@ export interface CreateDigitalPayload extends LearningMetaInput {
   /** Admin sales this product joins. Omit to leave unchanged on edit. */
   /** Seller-funded Premium member discount, 1-50 %; null clears it (store setting applies). Omit to leave unchanged. */
   premiumDiscountPercent?: number | null;
+  /** The seller turned Premium OFF for this product (also beats a store-wide default). A product has a Premium offer OR a platform sale, never both. */
+  premiumOptOut?: boolean;
   campaignIds?:      string[];
   price:             number;
   compareAtPrice:    number | null;
@@ -219,6 +225,8 @@ export interface EditPhysicalPayload extends LearningMetaInput {
   /** Admin sales this product joins. Omit to leave unchanged on edit. */
   /** Seller-funded Premium member discount, 1-50 %; null clears it (store setting applies). Omit to leave unchanged. */
   premiumDiscountPercent?: number | null;
+  /** The seller turned Premium OFF for this product (also beats a store-wide default). A product has a Premium offer OR a platform sale, never both. */
+  premiumOptOut?: boolean;
   campaignIds?:      string[];
 }
 
@@ -236,6 +244,8 @@ export interface EditDigitalPayload extends LearningMetaInput {
   /** Admin sales this product joins. Omit to leave unchanged. */
   /** Seller-funded Premium member discount, 1-50 %; null clears it (store setting applies). Omit to leave unchanged. */
   premiumDiscountPercent?: number | null;
+  /** The seller turned Premium OFF for this product (also beats a store-wide default). A product has a Premium offer OR a platform sale, never both. */
+  premiumOptOut?: boolean;
   campaignIds?:   string[];
   price:          number;
   compareAtPrice: number | null;
@@ -288,8 +298,18 @@ export interface InventoryProduct {
   /** Set for products whose stock can be edited inline (single variant). */
   defaultVariantId?: string | null;
   variantCount?:     number;
+  /** Offers: admin sales this product is in, its own Premium % (null = store default) and the explicit Premium opt-out. */
+  campaignIds?:      string[];
+  premiumDiscountPercent?: number | null;
+  premiumOptOut?:    boolean;
 }
 
+export type BulkOfferAction = 'premium_on' | 'premium_off' | 'campaign_add' | 'campaign_remove';
+export interface BulkOffersResult { updated: string[]; skipped: { id: string; reason: string }[] }
+/** PATCH /api/products/bulk-offers - seller only (max 200 products). Skipped products come back with a reason. */
+export function apiBulkOffers(body: { storeId: string; productIds: string[]; action: BulkOfferAction; percent?: number; campaignId?: string }) {
+  return client.patch<never, ApiResponse<BulkOffersResult>>('/api/products/bulk-offers', body);
+}
 /** PATCH /api/products/stock/bulk — seller only; sets absolute stock per variant. */
 export function apiBulkUpdateStock(storeId: string, updates: { variantId: string; stock: number }[]) {
   return client.patch<never, ApiResponse<{ updated: number; skipped: { variantId: string; reason: string }[] }>>(

@@ -289,6 +289,7 @@ export interface PublicStoreProduct {
   discountPercent?:    number;
   subscriberPlanName?: string;
   activeCampaign?:     ActiveCampaignBadge | null;
+  campaignPrice?:      number;
 }
 
 export interface PublicStoreProductsData {

@@ -485,14 +485,13 @@ export function ProductDetail() {
   const { currency: displayCurrency, convert } = useCurrencyPreference();
   const displaySymbol = currencySymbol(displayCurrency);
   const listPrice = activeVariant ? convert(activeVariant.price, activeVariant.currency) : null;
-  // A running percentage sale (admin campaign) is part of the price shown here — checkout applies the same
-  // percentage — so the product page, cart and checkout all agree. Fixed-amount sales are order-level and
-  // show only as a badge until the cart/checkout.
-  const campaignPct = product?.activeCampaign?.discountType === 'percentage' && product.activeCampaign.discountValue ? product.activeCampaign.discountValue : null;
-  const displayPrice = listPrice != null && campaignPct ? Math.round(listPrice * (1 - campaignPct / 100)) : listPrice;
+  // A running platform sale is part of the price shown here: the SERVER computes it per variant (campaignPrice, from the
+  // list price, only when cheaper than the seller's price) - checkout charges the same number.
+  const campaignNative = activeVariant && typeof activeVariant.campaignPrice === 'number' ? convert(activeVariant.campaignPrice, activeVariant.currency) : null;
+  const displayPrice = campaignNative ?? listPrice;
   const markdownWas = activeVariant?.compareAtPrice != null ? convert(activeVariant.compareAtPrice, activeVariant.currency) : null;
-  // Struck-through = the highest 'was' price (seller markdown, else the list price a sale starts from).
-  const displayCompareAt = campaignPct ? Math.max(listPrice ?? 0, markdownWas ?? 0) || null : markdownWas;
+  // Struck-through = what the buyer would pay without the sale (the seller's price), else the seller's own markdown.
+  const displayCompareAt = campaignNative != null ? listPrice : markdownWas;
   const pctOffShown = displayCompareAt != null && displayPrice != null && displayCompareAt > displayPrice ? Math.round((1 - displayPrice / displayCompareAt) * 100) : null;
 
   // Edudeen Premium: members see the member price under the regular one; everyone else a link teaser.

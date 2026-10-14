@@ -23,9 +23,9 @@ import {
 } from '@/features/seller/components/products/LearningFields';
 import { DeliveryFormatField, EMPTY_DELIVERY, deliveryPayload, deliveryError, deliveryFromProduct } from '@/features/seller/components/products/DeliveryFormatField';
 import { currencySymbol as symbolForCurrency } from '@/utils/currency';
-import { CampaignPicker } from './CampaignPicker';
-import { PremiumPriceField, premiumPercentError, premiumPercentPayload } from './PremiumPriceField';
-import { PremiumEarningsCalculator, effectiveSellerPercent, premiumGapMessage, usePremiumTerms } from './PremiumEarningsCalculator';
+import { ProductOffersCard, offersPayload } from './ProductOffersCard';
+import { premiumPercentError } from './PremiumPriceField';
+import { effectiveSellerPercent, premiumGapMessage, usePremiumTerms } from './PremiumEarningsCalculator';
 
 type ProductStatus = 'draft' | 'active' | 'scheduled';
 type LicenseType   = 'personal' | 'single_classroom' | 'school' | 'commercial';
@@ -235,8 +235,9 @@ export default function StoreEditProduct() {
   const [campaignIds, setCampaignIds] = useState<string[] | null>(null);
   // null until the product is read fresh, so saving never clears a Premium price that has not loaded.
   const [premiumPct, setPremiumPct] = useState<string | null>(null);
+  const [premiumOptOut, setPremiumOptOut] = useState<boolean | null>(null);
   const storePremiumPct = store?.premiumDiscount?.enabled ? store.premiumDiscount.percent : 0;
-  const { terms: premiumTerms } = usePremiumTerms(pType, store?.baseCurrency);
+  const { terms: premiumTerms } = usePremiumTerms(pType, store?.baseCurrency, storeId);
 
   const sp = <K extends keyof PhysForm>(k: K, v: PhysForm[K]) => setPhys(f => ({ ...f, [k]: v }));
   const sd = <K extends keyof DigForm> (k: K, v: DigForm[K])  => setDig(f  => ({ ...f, [k]: v }));
@@ -275,6 +276,7 @@ export default function StoreEditProduct() {
         const variants = res.data.variants ?? [];
         setCampaignIds([...(p.campaignIds ?? [])]);
         setPremiumPct(p.premiumDiscountPercent != null ? String(p.premiumDiscountPercent) : '');
+        setPremiumOptOut(!!p.premiumOptOut);
         setLearning({ curricula: [...(p.curricula ?? [])], ageMin: p.ageMin != null ? String(p.ageMin) : '', ageMax: p.ageMax != null ? String(p.ageMax) : '', classFrom: p.classFrom ?? '', classTo: p.classTo ?? '' });
         if (p.type === 'digital') {
           setDelivery(deliveryFromProduct(p));
@@ -336,7 +338,7 @@ export default function StoreEditProduct() {
     const premiumErr = premiumPercentError(premiumPct ?? '');
     if (premiumErr) { setError(premiumErr); return; }
     // Owner rule: the normal sale must stay at least the admin's gap below the Premium discount (the API enforces it too).
-    const gapErr = premiumTerms ? premiumGapMessage(Number(cur.price), Number(cur.compareAtPrice), effectiveSellerPercent(premiumPct ?? '', storePremiumPct), premiumTerms.minGapPercent) : null;
+    const gapErr = premiumTerms ? premiumGapMessage(Number(cur.price), Number(cur.compareAtPrice), effectiveSellerPercent(premiumPct ?? '', storePremiumPct, !!premiumOptOut || (campaignIds?.length ?? 0) > 0), premiumTerms.minGapPercent) : null;
     if (gapErr) { setError(gapErr); return; }
     const missingAttr = findMissingRequiredAttribute(attrDefs, attributeValues);
     if (missingAttr) { setError(`${missingAttr.label} is required.`); return; }
@@ -348,8 +350,7 @@ export default function StoreEditProduct() {
           productId, name: phys.name, description: phys.description,
           categoryId: categoryId || undefined, subCategoryId: phys.subCategoryId || null, images: phys.images, tags: phys.tags,
           isListedOnEdudeen: phys.isListedOnEdudeen, status: finalStatus,
-          ...(campaignIds ? { campaignIds } : {}),
-          ...(premiumPct !== null ? { premiumDiscountPercent: premiumPercentPayload(premiumPct) } : {}),
+          ...offersPayload({ premiumPct, premiumOptOut, campaignIds }),
           scheduledAt: finalStatus === 'scheduled' ? phys.scheduledAt || null : null,
           ...learningPayload(learning),
         });
@@ -372,8 +373,7 @@ export default function StoreEditProduct() {
           educationLevel: pType === 'educational' ? (dig.educationLevel || null) : undefined,
           customLevel: pType === 'educational' && dig.educationLevel === 'other' ? dig.customLevel : undefined,
           status: finalStatus,
-          ...(campaignIds ? { campaignIds } : {}),
-          ...(premiumPct !== null ? { premiumDiscountPercent: premiumPercentPayload(premiumPct) } : {}),
+          ...offersPayload({ premiumPct, premiumOptOut, campaignIds }),
           scheduledAt: finalStatus === 'scheduled' ? dig.scheduledAt || null : null,
           price: Number(dig.price),
           compareAtPrice: dig.compareAtPrice ? Number(dig.compareAtPrice) : null,
@@ -696,14 +696,16 @@ export default function StoreEditProduct() {
                   <span className="text-[12px] text-success">shown to buyers</span>
                 </div>
               )}
-              <PremiumPriceField value={premiumPct ?? ''} onChange={setPremiumPct} disabled={premiumPct === null} />
-              <PremiumEarningsCalculator price={cur.price} compareAtPrice={cur.compareAtPrice} premiumValue={premiumPct ?? ''} storePercent={storePremiumPct} productType={pType} currency={store?.baseCurrency} />
             </div>
           </Card>
 
-          {/* Join a running sale (admin campaigns) */}
-          <Card title="Join a running sale">
-            <CampaignPicker storeId={storeId} value={campaignIds} onChange={setCampaignIds} />
+          {/* Offers: Premium member discount OR Edudeen platform sale (exclusive) + earnings */}
+          <Card title="Offers">
+            <ProductOffersCard
+              storeId={storeId} currency={store?.baseCurrency} productType={pType} price={cur.price} compareAtPrice={cur.compareAtPrice}
+              storePremiumPct={storePremiumPct} premiumPct={premiumPct} setPremiumPct={setPremiumPct}
+              premiumOptOut={premiumOptOut} setPremiumOptOut={setPremiumOptOut} campaignIds={campaignIds} setCampaignIds={setCampaignIds}
+            />
           </Card>
 
           {/* Inventory & Shipping (physical only) */}

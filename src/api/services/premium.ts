@@ -107,11 +107,11 @@ export interface PremiumTerms {
   platformPercent: number;
   premiumSellerFeePercent: number;
   minGapPercent: number;
-  normalFee: { type: 'digital' | 'physical'; mode: 'percentage' | 'fixed'; value: number; fixedAmountInCurrency: number | null; currency: string | null } | null;
+  normalFee: { type: 'digital' | 'physical'; mode: 'percentage' | 'fixed'; value: number; fixedAmountInCurrency: number | null; currency: string | null; source?: 'platform_fees' | 'commission_rules' } | null;
 }
-export const apiGetPremiumTerms = (params?: { type?: string; currency?: string }) =>
+export const apiGetPremiumTerms = (params?: { type?: string; currency?: string; storeId?: string }) =>
   client.get<never, Ok<PremiumTerms>>('/api/premium/terms', { params });
 
 export interface PremiumConflict { productId: string; name: string; premiumPercent: number; salePercent: number; message: string }
 export const apiGetPremiumConflicts = (storeId: string) =>
-  client.get<never, Ok<{ minGapPercent: number; conflicts: PremiumConflict[] }>>('/api/premium/seller/conflicts', { params: { storeId } });
+  client.get<never, Ok<{ minGapPercent: number; conflicts: PremiumConflict[]; bothOffers?: { productId: string; name: string; premiumPercent: number }[] }>>('/api/premium/seller/conflicts', { params: { storeId } });

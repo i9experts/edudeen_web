@@ -110,18 +110,18 @@ export const ResourceCard = memo(function ResourceCard({
   const variantId = variant?._id ?? '';
   const rawPrice = variant?.price ?? 0;
   const campaign = product.activeCampaign;
-  // A running percentage sale is part of the price shown (checkout applies the same percentage), so cards,
-  // product page, cart and checkout agree. Fixed-amount sales are order-level: badge only.
-  const salePct = campaign?.discountType === 'percentage' && campaign.discountValue ? campaign.discountValue : null;
-  const effectiveRaw = salePct ? Math.round(rawPrice * (1 - salePct / 100)) : rawPrice;
+  // A running platform sale is part of the price shown: the SERVER computes it per variant (campaignPrice, taken from the
+  // list price and only when cheaper than the seller's price), so cards, product page, cart and checkout agree.
+  const campaignRaw = typeof variant?.campaignPrice === 'number' ? variant.campaignPrice : null;
+  const effectiveRaw = campaignRaw ?? rawPrice;
   const price = convert(effectiveRaw, variant?.currency);
   // The "was" price: the seller's compare-at price when higher, otherwise the list price the sale is taken from.
-  const rawWas = variant?.compareAtPrice && variant.compareAtPrice > rawPrice ? variant.compareAtPrice : (salePct && rawPrice > 0 ? rawPrice : null);
+  const rawWas = campaignRaw != null && rawPrice > 0 ? rawPrice : (variant?.compareAtPrice && variant.compareAtPrice > rawPrice ? variant.compareAtPrice : null);
   const was = rawWas ? convert(rawWas, variant?.currency) : null;
   const percentOff = rawWas ? Math.round((1 - effectiveRaw / rawWas) * 100) : 0;
   // Edudeen Premium: members see the member price (server-computed); everyone else a quiet teaser.
   const { isPremium } = usePremiumView();
-  const member = isPremium && !salePct ? memberPriceOf(variant, convert, price) : null;
+  const member = isPremium && campaignRaw == null ? memberPriceOf(variant, convert, price) : null;
   const campaignOff = campaign?.discountValue
     ? campaign.discountType === 'percentage' ? `${campaign.discountValue}% off` : `${currencySymbol(campaign.currency ?? 'USD')} ${campaign.discountValue} off`
     : null;

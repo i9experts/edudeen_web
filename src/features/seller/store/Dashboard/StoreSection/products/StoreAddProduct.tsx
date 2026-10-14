@@ -19,9 +19,9 @@ import {
 } from '@/features/seller/components/products/LearningFields';
 import { DeliveryFormatField, EMPTY_DELIVERY, deliveryPayload, deliveryError } from '@/features/seller/components/products/DeliveryFormatField';
 import { currencySymbol as symbolForCurrency } from '@/utils/currency';
-import { CampaignPicker } from './CampaignPicker';
-import { PremiumPriceField, premiumPercentError, premiumPercentPayload } from './PremiumPriceField';
-import { PremiumEarningsCalculator, effectiveSellerPercent, premiumGapMessage, usePremiumTerms } from './PremiumEarningsCalculator';
+import { ProductOffersCard, offersPayload } from './ProductOffersCard';
+import { premiumPercentError } from './PremiumPriceField';
+import { effectiveSellerPercent, premiumGapMessage, usePremiumTerms } from './PremiumEarningsCalculator';
 
 type ProductType   = 'physical' | 'digital' | 'educational';
 type ProductStatus = 'draft' | 'active' | 'scheduled';
@@ -224,8 +224,9 @@ export default function StoreAddProduct() {
   const [delivery,          setDelivery]          = useState(EMPTY_DELIVERY);
   const [campaignIds,       setCampaignIds]       = useState<string[]>([]);
   const [premiumPct,        setPremiumPct]        = useState('');
+  const [premiumOptOut,    setPremiumOptOut]     = useState(false);
   const storePremiumPct = store?.premiumDiscount?.enabled ? store.premiumDiscount.percent : 0;
-  const { terms: premiumTerms } = usePremiumTerms(pType, store?.baseCurrency);
+  const { terms: premiumTerms } = usePremiumTerms(pType, store?.baseCurrency, storeId);
 
   // Once the store loads, never leave the form on a type this store can't sell.
   useEffect(() => {
@@ -274,7 +275,7 @@ export default function StoreAddProduct() {
     const premiumErr = premiumPercentError(premiumPct);
     if (premiumErr) { setError(premiumErr); return; }
     // Owner rule: the normal sale must stay at least the admin's gap below the Premium discount (the API enforces it too).
-    const gapErr = premiumTerms ? premiumGapMessage(Number(cur.price), Number(cur.compareAtPrice), effectiveSellerPercent(premiumPct, storePremiumPct), premiumTerms.minGapPercent) : null;
+    const gapErr = premiumTerms ? premiumGapMessage(Number(cur.price), Number(cur.compareAtPrice), effectiveSellerPercent(premiumPct, storePremiumPct, premiumOptOut || campaignIds.length > 0), premiumTerms.minGapPercent) : null;
     if (gapErr) { setError(gapErr); return; }
     const missingAttr = findMissingRequiredAttribute(attrDefs, attributeValues);
     if (missingAttr) { setError(`${missingAttr.label} is required.`); return; }
@@ -292,7 +293,7 @@ export default function StoreAddProduct() {
         const res = await apiCreatePhysicalProduct({
           storeId, name: phys.name, description: phys.description,
           categoryId: categoryId || undefined, subCategoryId: phys.subCategoryId || null, images: phys.images, tags: phys.tags,
-          isListedOnEdudeen: phys.isListedOnEdudeen, status: finalStatus, campaignIds, premiumDiscountPercent: premiumPercentPayload(premiumPct),
+          isListedOnEdudeen: phys.isListedOnEdudeen, status: finalStatus, ...offersPayload({ premiumPct, premiumOptOut, campaignIds }),
           scheduledAt: finalStatus === 'scheduled' ? phys.scheduledAt || null : null,
           ...learningPayload(learning),
           variants: [{
@@ -315,7 +316,7 @@ export default function StoreAddProduct() {
           categoryId: categoryId || undefined, subCategoryId: dig.subCategoryId || null, images: dig.images, tags: dig.tags,
           educationLevel: pType === 'educational' ? (dig.educationLevel || null) : null,
           customLevel: pType === 'educational' && dig.educationLevel === 'other' ? dig.customLevel : null,
-          isListedOnEdudeen: dig.isListedOnEdudeen, status: finalStatus, campaignIds, premiumDiscountPercent: premiumPercentPayload(premiumPct),
+          isListedOnEdudeen: dig.isListedOnEdudeen, status: finalStatus, ...offersPayload({ premiumPct, premiumOptOut, campaignIds }),
           scheduledAt: finalStatus === 'scheduled' ? dig.scheduledAt || null : null,
           price: Number(dig.price), compareAtPrice: dig.compareAtPrice ? Number(dig.compareAtPrice) : null,
           ...learningPayload(learning),
@@ -509,13 +510,15 @@ export default function StoreAddProduct() {
                 <span className="text-[12px] text-success">shown to buyers</span>
               </div>
             )}
-            <div className="mt-4 max-w-[320px]"><PremiumPriceField value={premiumPct} onChange={setPremiumPct} /></div>
-            <PremiumEarningsCalculator price={cur.price} compareAtPrice={cur.compareAtPrice} premiumValue={premiumPct} storePercent={storePremiumPct} productType={pType} currency={store?.baseCurrency} />
           </Card>
 
-          {/* Step: Join a running sale (admin campaigns) */}
-          <Card step={nextStep()} title="Join a running sale" need="optional" hint="Edudeen sales you can put this product in.">
-            <CampaignPicker storeId={storeId} value={campaignIds} onChange={setCampaignIds} />
+          {/* Step: Offers - Premium member discount OR Edudeen platform sale (exclusive) + earnings */}
+          <Card step={nextStep()} title="Offers" need="optional" hint="A Premium member discount, or one of Edudeen's platform sales - a product is in one or the other.">
+            <ProductOffersCard
+              storeId={storeId} currency={store?.baseCurrency} productType={pType} price={cur.price} compareAtPrice={cur.compareAtPrice}
+              storePremiumPct={storePremiumPct} premiumPct={premiumPct} setPremiumPct={setPremiumPct}
+              premiumOptOut={premiumOptOut} setPremiumOptOut={setPremiumOptOut} campaignIds={campaignIds} setCampaignIds={setCampaignIds}
+            />
           </Card>
 
           {/* Step: Images */}

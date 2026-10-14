@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   ShoppingBag, Plus,
   RefreshCw, TrendingUp,
-  Eye, Pencil, Trash2, ArrowRight,
+  Eye, Pencil, Trash2, ArrowRight, Crown, Flame,
 } from 'lucide-react';
 import { useStoreWorkspace, StorePageHeader } from '@/components/layouts/StoreLayout';
 import {
@@ -19,10 +19,21 @@ import {
 import {
   apiGetStoreInventory,
   apiDeleteProduct,
+  apiBulkOffers,
+  type BulkOfferAction,
+  type BulkOffersResult,
   type InventoryProduct,
 } from '@/api/services/product';
+import { useStoreCampaigns } from '@/hooks/store/useStoreCampaigns';
 import { currencySymbol } from '@/utils/currency';
 import { ProductCell } from '../../components/ProductListShared';
+
+const OFFER_TITLES: Record<BulkOfferAction, string> = {
+  premium_on: 'Add to Premium offer',
+  premium_off: 'Remove from Premium offer',
+  campaign_add: 'Add to a platform sale',
+  campaign_remove: 'Remove from a platform sale',
+};
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function StoreProductList() {
@@ -113,6 +124,51 @@ export default function StoreProductList() {
     }
   };
 
+  // ── Offers (Premium member discount / Edudeen platform sale) ──
+  const { campaigns } = useStoreCampaigns(storeId);
+  const storePremiumPct = store?.premiumDiscount?.enabled ? store.premiumDiscount.percent : 0;
+  const [offerDialog,   setOfferDialog]   = useState<{ action: BulkOfferAction; ids: string[] } | null>(null);
+  const [offerPercent,  setOfferPercent]  = useState('10');
+  const [offerCampaign, setOfferCampaign] = useState('');
+  const [offerBusy,     setOfferBusy]     = useState(false);
+  const [offerError,    setOfferError]    = useState('');
+  const [offerResult,   setOfferResult]   = useState<BulkOffersResult | null>(null);
+  const nameById = new Map(products.map(p => [p.productId, p.name]));
+  const campaignNameById = new Map(campaigns.map(c => [c._id, c.name]));
+  const openOffer = (action: BulkOfferAction, ids: string[]) => { setOfferError(''); setOfferCampaign(''); setOfferDialog({ action, ids }); };
+  // Sales to pick from: the running/upcoming ones; when removing, also the ones the chosen products are in (even if ended).
+  const campaignOptions = (() => {
+    const out = campaigns.map(c => ({ id: c._id, label: c.name }));
+    if (offerDialog?.action === 'campaign_remove') {
+      for (const p of products) if (offerDialog.ids.includes(p.productId)) for (const id of p.campaignIds ?? []) {
+        if (!out.some(o => o.id === id)) out.push({ id, label: 'Ended sale' });
+      }
+    }
+    return out;
+  })();
+  const submitOffer = async () => {
+    if (!offerDialog) return;
+    const { action, ids } = offerDialog;
+    const percent = Number(offerPercent);
+    if (action === 'premium_on' && !(Number.isFinite(percent) && percent >= 1 && percent <= 50)) { setOfferError('Enter a percent from 1 to 50.'); return; }
+    if ((action === 'campaign_add' || action === 'campaign_remove') && !offerCampaign) { setOfferError('Choose a sale.'); return; }
+    setOfferBusy(true); setOfferError('');
+    try {
+      const res = await apiBulkOffers({
+        storeId, productIds: ids, action,
+        ...(action === 'premium_on' ? { percent } : {}),
+        ...(action === 'campaign_add' || action === 'campaign_remove' ? { campaignId: offerCampaign } : {}),
+      });
+      setOfferDialog(null);
+      setOfferResult(res.data);
+      setSelectedKeys(new Set());
+      setRefreshKey(k => k + 1);
+    } catch (err: unknown) {
+      setOfferError(err instanceof Error ? err.message : 'Could not update the offers.');
+    } finally {
+      setOfferBusy(false);
+    }
+  };
   const handleBulkDeleteConfirm = async () => {
     setBulkDeleting(true);
     setDeleteError('');
@@ -172,6 +228,18 @@ export default function StoreProductList() {
       ),
     },
     {
+      key: 'offer', header: 'Offer',
+      render: p => {
+        const ids = p.campaignIds ?? [];
+        if (ids.length > 0) {
+          const names = ids.map(id => campaignNameById.get(id) ?? 'Ended sale');
+          return <Badge color="orange">Sale: {names[0]}{names.length > 1 ? ` +${names.length - 1}` : ''}</Badge>;
+        }
+        const pct = p.premiumOptOut ? 0 : (p.premiumDiscountPercent ?? storePremiumPct);
+        return pct > 0 ? <Badge color="blue">Premium {pct}%</Badge> : <span className="text-slate">-</span>;
+      },
+    },
+    {
       key: 'stock', header: 'Stock', align: 'right', sortable: true,
       render: p => (
         <span className="text-[13px] text-carbon">
@@ -210,6 +278,10 @@ export default function StoreProductList() {
             align="right"
             items={[
               { label: 'View Detail',    onClick: () => goDetail(p),                icon: <Eye    size={13} /> },
+              { label: 'Add to Premium offer…',        onClick: () => openOffer('premium_on', [p.productId]),        icon: <Crown size={13} /> },
+              { label: 'Remove from Premium offer',    onClick: () => openOffer('premium_off', [p.productId]),       icon: <Crown size={13} /> },
+              { label: 'Add to platform sale…',        onClick: () => openOffer('campaign_add', [p.productId]),      icon: <Flame size={13} /> },
+              { label: 'Remove from platform sale…',   onClick: () => openOffer('campaign_remove', [p.productId]),   icon: <Flame size={13} /> },
               { label: 'Delete Product', onClick: () => { setDeleteError(''); setDeleteTarget(p); }, icon: <Trash2 size={13} />, danger: true },
             ]}
           />
@@ -267,11 +339,6 @@ export default function StoreProductList() {
               selectable
               selectedKeys={selectedKeys}
               onSelectionChange={setSelectedKeys}
-              bulkActions={keys => (
-                <Button variant="danger" size="xs" onClick={() => setConfirmBulkDelete(true)} icon={<Trash2 size={12} />}>
-                  Delete {keys.size} product{keys.size !== 1 ? 's' : ''}
-                </Button>
-              )}
               emptyState={{
                 icon: <ShoppingBag size={30} className="text-brand-orange opacity-55" />,
                 title: search ? 'No products match your search' : 'No products yet',
@@ -289,8 +356,75 @@ export default function StoreProductList() {
           </Card>
         )}
 
+        {/* Sticky bulk bar: Premium offer / platform sale for the selected products (current page / filter) */}
+        {selectedKeys.size > 0 && (
+          <div role="region" aria-label="Bulk actions" className="sticky bottom-3 z-20 rounded-xl border border-bone bg-white shadow-[0_6px_24px_rgba(0,0,0,0.12)] px-4 py-3 flex items-center gap-2 flex-wrap">
+            <span className="text-[13px] font-semibold text-carbon me-1">{selectedKeys.size} selected</span>
+            <Button variant="outline" size="xs" icon={<Crown size={12} />} onClick={() => openOffer('premium_on', Array.from(selectedKeys).map(String))}>Add to Premium offer (%)</Button>
+            <Button variant="outline" size="xs" onClick={() => openOffer('premium_off', Array.from(selectedKeys).map(String))}>Remove from Premium offer</Button>
+            <Button variant="outline" size="xs" icon={<Flame size={12} />} onClick={() => openOffer('campaign_add', Array.from(selectedKeys).map(String))}>Add to platform sale…</Button>
+            <Button variant="outline" size="xs" onClick={() => openOffer('campaign_remove', Array.from(selectedKeys).map(String))}>Remove from platform sale…</Button>
+            <Button variant="ghost" size="xs" onClick={() => setSelectedKeys(new Set())}>Clear selection</Button>
+            <Button variant="danger" size="xs" className="ms-auto" onClick={() => setConfirmBulkDelete(true)} icon={<Trash2 size={12} />}>Delete</Button>
+          </div>
+        )}
       </div>
 
+      {offerDialog && (
+        <Modal
+          title={OFFER_TITLES[offerDialog.action]}
+          onClose={() => { if (!offerBusy) setOfferDialog(null); }}
+          footer={
+            <>
+              <Button variant="ghost" onClick={() => setOfferDialog(null)} disabled={offerBusy}>Cancel</Button>
+              <Button onClick={submitOffer} loading={offerBusy}>Apply to {offerDialog.ids.length} product{offerDialog.ids.length !== 1 ? 's' : ''}</Button>
+            </>
+          }
+        >
+          {offerDialog.action === 'premium_on' && (
+            <div className="flex flex-col gap-2">
+              <p className="text-[13px] text-slate m-0">Premium members get this % off. These products leave any platform sale they are in (a product has one offer or the other). Products whose normal sale is too close to this % are skipped.</p>
+              <label htmlFor="bulk-premium-pct" className="text-[12px] font-semibold text-charcoal">Discount for Premium members (%)</label>
+              <input id="bulk-premium-pct" type="number" min={1} max={50} step="any" inputMode="decimal" value={offerPercent} onChange={e => setOfferPercent(e.target.value)} placeholder="e.g. 10" className="w-[160px] px-3 py-[9px] rounded-lg text-[13px] border border-bone bg-bone text-charcoal outline-none" />
+            </div>
+          )}
+          {offerDialog.action === 'premium_off' && (
+            <p className="text-[13px] text-slate m-0">These products stop offering the Premium member discount{storePremiumPct > 0 ? ` (your store default of ${storePremiumPct}% will not apply to them either)` : ''}.</p>
+          )}
+          {(offerDialog.action === 'campaign_add' || offerDialog.action === 'campaign_remove') && (
+            <div className="flex flex-col gap-2">
+              <p className="text-[13px] text-slate m-0">
+                {offerDialog.action === 'campaign_add'
+                  ? 'These products join the sale and leave the Premium offer (a product has one offer or the other). Your own sale prices on them are hidden while it runs.'
+                  : 'These products leave the sale.'}
+              </p>
+              <label htmlFor="bulk-campaign" className="text-[12px] font-semibold text-charcoal">Platform sale</label>
+              <select id="bulk-campaign" value={offerCampaign} onChange={e => setOfferCampaign(e.target.value)} className="w-full px-3 py-[9px] rounded-lg text-[13px] border border-bone bg-white text-charcoal">
+                <option value="">Choose a sale…</option>
+                {campaignOptions.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+              </select>
+              {campaignOptions.length === 0 && <p className="text-[12px] text-slate m-0">No sale is running or about to start.</p>}
+            </div>
+          )}
+          {offerError && <p className="text-[12px] text-error mt-3">{offerError}</p>}
+        </Modal>
+      )}
+
+      {offerResult && (
+        <Modal title="Offers updated" onClose={() => setOfferResult(null)} footer={<Button onClick={() => setOfferResult(null)}>Done</Button>}>
+          <p className="text-[13px] text-charcoal m-0">{offerResult.updated.length} product{offerResult.updated.length !== 1 ? 's' : ''} updated{offerResult.skipped.length ? `, ${offerResult.skipped.length} skipped` : ''}.</p>
+          {offerResult.skipped.length > 0 && (
+            <ul className="list-none p-0 mt-3 mb-0 flex flex-col gap-2 max-h-[260px] overflow-auto">
+              {offerResult.skipped.map(s => (
+                <li key={s.id} className="text-[12.5px] rounded-lg border border-bone bg-cream/60 px-3 py-2">
+                  <span className="font-semibold text-charcoal">{nameById.get(s.id) ?? s.id}</span>
+                  <span className="block text-slate">{s.reason}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Modal>
+      )}
       {deleteTarget && (
         <Modal title="Delete this product?" onClose={() => setDeleteTarget(null)} footer={
           <>

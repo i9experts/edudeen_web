@@ -208,10 +208,10 @@ export function Homepage() {
       const dv = (p.variants ?? []).find(v => v.isDefault) ?? p.variants?.[0];
       const price = dv?.price ?? 0;
       const compareAt = dv?.compareAtPrice != null && dv.compareAtPrice > price ? dv.compareAtPrice : null;
-      // A running percentage sale lowers the price further (cards and checkout apply the same percentage).
-      const salePct = p.activeCampaign?.discountType === 'percentage' && p.activeCampaign.discountValue ? p.activeCampaign.discountValue : 0;
-      const effective = salePct ? price * (1 - salePct / 100) : price;
-      const was = compareAt ?? (salePct ? price : null);
+      // A running platform sale lowers the price further: the server computes it per variant (campaignPrice).
+      const salePrice = typeof dv?.campaignPrice === 'number' ? dv.campaignPrice : null;
+      const effective = salePrice ?? price;
+      const was = salePrice != null ? price : compareAt;
       const pct = was != null && was > effective ? Math.round((1 - effective / was) * 100) : 0;
       return { product: p, pct };
     })

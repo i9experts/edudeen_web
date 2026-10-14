@@ -40,6 +40,10 @@ export interface ProductVariant {
   premiumPlatformPercent?: number;
   /** The original (list) price to strike through for a member: compare-at when the seller runs a normal sale, else the price. */
   listPrice?:              number;
+  /** A running platform sale on THIS variant (server-computed from the list price, only when cheaper than the price): what the buyer pays. */
+  campaignPrice?:          number;
+  campaignListPrice?:      number;
+  campaignId?:             string;
 }
 
 export interface DigitalProduct {
@@ -140,6 +144,8 @@ export interface MarketplaceProduct {
   storeName?:        string | null;
   sellerVerified?:   boolean;
   activeCampaign?:   ActiveCampaignBadge | null;
+  /** Lowest sale price across variants when a platform sale really discounts this product. */
+  campaignPrice?:    number;
   /** Edudeen Premium teaser: percent the seller gives members (0/absent = none). */
   premiumPercent?:   number;
   /** Breakdown of premiumPercent: the seller's part and the Edudeen-funded part. */

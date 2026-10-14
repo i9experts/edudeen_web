@@ -217,11 +217,13 @@ export const ProductCard = memo(function ProductCard({ product, onClick, onAddTo
   const compareAt = nativeCompareAt != null ? convert(nativeCompareAt, nativeCurrency) : null;
   const subscriberPrice = nativeSubscriberPrice != null ? convert(nativeSubscriberPrice, nativeCurrency) : undefined;
   const priceSymbol = currencySymbol(displayCurrency);
-  // A running percentage sale is part of the price shown (checkout applies the same percentage), so the
-  // card, product page, cart and checkout agree. Fixed-amount sales are order-level: badge only.
-  const salePct = product.activeCampaign?.discountType === 'percentage' && product.activeCampaign.discountValue ? product.activeCampaign.discountValue : null;
+  // A running platform sale is part of the price shown: the SERVER computes it per variant (campaignPrice, from the list
+  // price, only when cheaper than the seller's price), so the card, product page, cart and checkout agree.
+  const nativeCampaignLowest = variants.reduce<number | null>((m, v) => (typeof v.campaignPrice === 'number' && (m == null || v.campaignPrice < m) ? v.campaignPrice : m), null);
+  const campaignShown = nativeCampaignLowest != null ? convert(nativeCampaignLowest, nativeCurrency) : null;
+  const salePct = campaignShown != null ? 1 : null; // truthy marker: a sale price is in play
   const baseShown = subscriberPrice ?? lowestPrice;
-  const shownPrice = baseShown != null && salePct ? Math.round(baseShown * (1 - salePct / 100)) : baseShown;
+  const shownPrice = campaignShown != null ? Math.min(campaignShown, subscriberPrice ?? Infinity) : baseShown;
   // Edudeen Premium: members see the server-computed member price; everyone else a quiet teaser.
   const { isPremium } = usePremiumView();
   const lowestVariant = variants.length ? variants.reduce((a, b) => (b.price < a.price ? b : a)) : undefined;

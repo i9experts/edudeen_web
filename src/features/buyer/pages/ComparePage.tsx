@@ -80,8 +80,7 @@ export function ComparePage() {
     { label: 'Price', cell: p => {
       const v = defaultVariant(p);
       const raw = v?.price ?? 0;
-      const pct = p.activeCampaign?.discountType === 'percentage' && p.activeCampaign.discountValue ? p.activeCampaign.discountValue : 0;
-      const eff = pct ? Math.round(raw * (1 - pct / 100)) : raw;
+      const eff = typeof v?.campaignPrice === 'number' ? v.campaignPrice : raw; // server-computed platform-sale price
       return <strong className="text-[15px] text-carbon">{raw === 0 ? t('Free') : formatMoney(convert(eff, v?.currency), currency)}</strong>;
     } },
     { label: 'Rating', cell: p => p.totalRatings ? <RatingLine rating={p.averageRating} count={p.totalRatings} /> : <span className="text-slate">{t('No reviews yet')}</span> },
