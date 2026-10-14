@@ -1,5 +1,5 @@
 import { EarlyAccessChip } from '@/components/comman/ui/EarlyAccessChip';
-import { PremiumChip, PremiumTeaser, premiumBreakdownText, usePremiumView } from '@/components/comman/marketplace/PremiumBits';
+import { PremiumChip, PremiumTeaser, usePremiumView } from '@/components/comman/marketplace/PremiumBits';
 import { useEffect, useState } from 'react';
 import { scrollRootRef } from '@/utils/scrollRoot';
 import { clsx } from 'clsx';
@@ -802,10 +802,7 @@ export function ProductDetail() {
                       </div>
                       <div className="flex items-center gap-2 flex-wrap mb-2">
                         <PremiumChip percent={activeVariant?.premiumDiscountPercent} seller={activeVariant?.premiumSellerPercent} platform={activeVariant?.premiumPlatformPercent} />
-                        {premiumBreakdownText(activeVariant?.premiumSellerPercent, activeVariant?.premiumPlatformPercent) && (
-                          <span className="text-[12px] text-slate">{premiumBreakdownText(activeVariant?.premiumSellerPercent, activeVariant?.premiumPlatformPercent)}</span>
-                        )}
-                        <span className="text-[12px] text-slate">{`You save ${displaySymbol}${((memberList ?? displayPrice) - memberShown).toLocaleString()}`}</span>
+<span className="text-[12px] text-slate">{`You save ${displaySymbol}${((memberList ?? displayPrice) - memberShown).toLocaleString()}`}</span>
                       </div>
                     </>
                   ) : (
@@ -919,7 +916,7 @@ export function ProductDetail() {
                       disabled={stock <= 0} loading={adding === activeVariant?._id}
                       onClick={() => handleAddToCart(true)}
                     >
-                      {stock <= 0 ? t('Out of Stock') : <>{t('Buy Now')} <ArrowRight size={14} className="inline align-middle ms-[6px]" />{displayPrice != null ? ` ${displaySymbol}${(displayPrice * qty).toLocaleString()}` : ''}</>}
+                      {stock <= 0 ? t('Out of Stock') : <>{t('Buy Now')} <ArrowRight size={14} className="inline align-middle ms-[6px]" />{(memberShown ?? displayPrice) != null ? ` ${displaySymbol}${((memberShown ?? displayPrice)! * qty).toLocaleString()}` : ''}</>}
                     </Button>
                     <div className="flex gap-2">
                       <Button

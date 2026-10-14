@@ -4,7 +4,7 @@ import { clsx } from 'clsx';
 import { TokenStorage } from '@/api/services/auth';
 import { ProductImage } from '@/components/comman/marketplace/ProductCard';
 import {
-  Star, ChevronRight, ShieldCheck, BadgeCheck, ChevronDown, Store, Sparkles, Flame, GraduationCap,
+  Star, ChevronRight, ShieldCheck, BadgeCheck, ChevronDown, Store, Sparkles, Flame, GraduationCap, Crown,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { MarketplaceProduct } from '@/api/services/marketplace';
@@ -16,6 +16,8 @@ import { CategoryArt } from '@/components/comman/art/CategoryArt';
 import { StoreFeatureCard, useCompactOnScroll, CountdownUnit, ActionMenu } from '@/components/comman/ui';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 import { currencySymbol } from '@/utils/currency';
+import { memberPriceOf, usePremiumView } from '@/components/comman/marketplace/PremiumBits';
+import { usePremiumDeals } from '@/hooks/usePremiumDeals';
 import aboutImg1 from '@/assets/about/about-1.jfif';
 import aboutImg2 from '@/assets/about/about-2.jfif';
 import aboutImg3 from '@/assets/about/about-3.jfif';
@@ -35,7 +37,10 @@ export function RailCard({ product, onClick, badge, rank, size = 'md', stockLabe
   const { currency: displayCurrency, convert } = useCurrencyPreference();
   const priceSymbol = currencySymbol(displayCurrency);
   const price     = nativePrice != null ? convert(nativePrice, dv?.currency) : null;
-  const compareAt = nativeCompareAt != null ? convert(nativeCompareAt, dv?.currency) : null;
+  // Premium member: only the list price struck through + the member price (no seller sale price).
+  const { isPremium } = usePremiumView();
+  const member = isPremium ? memberPriceOf(dv, convert, price) : null;
+  const compareAt = member ? (member.list ?? null) : (nativeCompareAt != null ? convert(nativeCompareAt, dv?.currency) : null);
   const isSm      = size === 'sm';
   const rankTone  = rank === 1 ? 'bg-[#F4DC4C] text-[#152D43]' : rank === 2 ? 'bg-[#dfe6ec] text-[#152D43]' : rank === 3 ? 'bg-[#f0d9bd] text-[#152D43]' : 'bg-carbon/85 text-white';
   return (
@@ -64,8 +69,8 @@ export function RailCard({ product, onClick, badge, rank, size = 'md', stockLabe
       <div className="px-[11px] pt-[9px] pb-[11px]">
         <p className="font-semibold text-carbon leading-snug line-clamp-2 text-[12.5px] min-h-[34px] mb-[6px]">{product.name}</p>
         <div className="flex items-baseline gap-[6px] flex-wrap">
-          <span className="font-bold text-brand-deep-orange text-[14px]">{price != null ? `${priceSymbol}${price.toLocaleString()}` : '—'}</span>
-          {compareAt != null && compareAt > (price ?? 0) && (
+          <span className={clsx('font-bold text-[14px]', member ? 'text-[#8a6100]' : 'text-brand-deep-orange')}>{member ? `${priceSymbol}${member.price.toLocaleString()}` : price != null ? `${priceSymbol}${price.toLocaleString()}` : '—'}</span>
+          {compareAt != null && compareAt > (member ? member.price : (price ?? 0)) && (
             <span className="text-[12px] text-slate line-through">{priceSymbol}{compareAt.toLocaleString()}</span>
           )}
         </div>
@@ -233,7 +238,9 @@ export function CategoriesMegaContent({
   );
 }
 
-export function FlashSaleMegaContent({ flashDeals, countdown, onProductClick, onViewAll }: {
+export function FlashSaleMegaContent({ flashDeals, countdown, onProductClick, onViewAll, premium = false }: {
+  /** Premium member view: 'Premium Deals' (biggest member discounts) instead of the flash sale. */
+  premium?: boolean;
   flashDeals: { product: MarketplaceProduct; pct: number }[];
   /** Time left in the live sale campaign; null when no sale is running (no timer shown). */
   countdown:  { h: string; m: string; s: string } | null;
@@ -251,16 +258,16 @@ export function FlashSaleMegaContent({ flashDeals, countdown, onProductClick, on
 
         <div className="relative z-[1] flex items-center gap-2 lg:mb-3 shrink-0">
           <span className="inline-flex items-center gap-1 rounded-full bg-[#F4DC4C] text-[#152D43] px-2.5 py-[3px] text-[12px] font-bold uppercase tracking-[0.07em]">
-            <Flame size={12} className="fill-current" /> Flash
+            {premium ? <Crown size={12} /> : <Flame size={12} className="fill-current" />} {premium ? 'Premium' : 'Flash'}
           </span>
         </div>
 
         <div className="relative z-[1] min-w-0 flex-1 lg:flex-none">
-          <p className="font-serif text-[18px] lg:text-[24px] leading-[1.1] m-0 mb-1">Flash Sale</p>
-          <p className="hidden lg:block text-[12.5px] text-white/75 leading-snug mb-4">Deep discounts on learning resources, while stock lasts.</p>
+          <p className="font-serif text-[18px] lg:text-[24px] leading-[1.1] m-0 mb-1">{premium ? 'Premium Deals' : 'Flash Sale'}</p>
+          <p className="hidden lg:block text-[12.5px] text-white/75 leading-snug mb-4">{premium ? 'Your member savings' : 'Deep discounts on learning resources, while stock lasts.'}</p>
         </div>
 
-        {countdown && (
+        {countdown && !premium && (
           <div className="relative z-[1] flex flex-col items-center lg:items-start shrink-0 lg:mb-4">
             <span className="text-[12px] font-bold uppercase tracking-[0.1em] text-white/65 mb-[5px]">Ends in</span>
             <div className="flex items-center gap-[5px]">
@@ -281,7 +288,7 @@ export function FlashSaleMegaContent({ flashDeals, countdown, onProductClick, on
       </div>
 
       <div className="w-full lg:flex-1 lg:min-w-0">
-        <MegaSectionLabel action={onViewAll ? { label: 'View all', onClick: onViewAll } : undefined}>Today's Flash Deals</MegaSectionLabel>
+        <MegaSectionLabel action={onViewAll ? { label: 'View all', onClick: onViewAll } : undefined}>{premium ? 'Your member savings' : "Today's Flash Deals"}</MegaSectionLabel>
         {flashDeals.length === 0 ? (
           <p className="text-[12.5px] text-slate bg-cream rounded-xl px-4 py-6 text-center m-0">No flash deals right now - check back soon.</p>
         ) : (
@@ -297,7 +304,7 @@ export function FlashSaleMegaContent({ flashDeals, countdown, onProductClick, on
                   product={product}
                   onClick={onProductClick}
                   size="sm"
-                  badge={<span className="px-[7px] py-[2px] rounded-full text-[12px] font-bold bg-[#F4DC4C] text-[#152D43] shadow-sm">-{pct}%</span>}
+                  badge={<span className="px-[7px] py-[2px] rounded-full text-[12px] font-bold bg-[#F4DC4C] text-[#152D43] shadow-sm">{premium ? `${pct}% off` : `-${pct}%`}</span>}
                   stockLabel={stock != null && stock > 0 && stock <= 5 ? `Only ${stock} left` : undefined}
                 />
               );
@@ -552,6 +559,8 @@ export function MegaMenuBar({
   compact?: boolean;
 }) {
   const t = useT();
+  // Premium members see the biggest member discounts in the Flash Sale slot (their own pool; everyone else unchanged).
+  const { deals: premiumDeals } = usePremiumDeals();
   const [active, setActive] = useState<MegaMenuKey | null>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Switching straight from one open panel to another swapped content
@@ -679,7 +688,9 @@ export function MegaMenuBar({
              bar's own `md:hidden`) when `compact`: overridden down to plain
              small text (no icon, no pill) — a thin Alibaba-style utility
              link, matching the Verified Sellers/Track Order group on the right. */}
-          {extraTriggers.map(item => (
+          {extraTriggers.map(rawItem => {
+            const item = premiumDeals && rawItem.key === 'flash-sale' ? { ...rawItem, label: 'Premium Deals', icon: Crown } : rawItem;
+            return (
             <button
               key={item.key}
               aria-haspopup="true"
@@ -706,7 +717,8 @@ export function MegaMenuBar({
               {t(item.label)}
               {item.chevron && <ChevronDown size={compact ? 11 : 12} className={clsx('transition-transform duration-200', active === item.key && 'rotate-180')} />}
             </button>
-          ))}
+            );
+          })}
           <button
             onClick={() => onNavigate('/learn')}
             className={clsx(
@@ -767,7 +779,7 @@ export function MegaMenuBar({
             )
           )}
           {active === 'flash-sale' && (
-            <FlashSaleMegaContent flashDeals={flashDeals} countdown={countdown} onProductClick={onProductClick} onViewAll={() => { setActive(null); onNavigate('/#deals'); }} />
+            <FlashSaleMegaContent flashDeals={premiumDeals ?? flashDeals} premium={!!premiumDeals} countdown={premiumDeals ? null : countdown} onProductClick={onProductClick} onViewAll={() => { setActive(null); onNavigate('/#deals'); }} />
           )}
           {active === 'top-picks' && (
             <TopPicksMegaContent topPicks={topPicks} bestRated={bestRated} onProductClick={onProductClick} onViewAll={() => { setActive(null); onNavigate('/search?sort=popular'); }} />

@@ -142,7 +142,7 @@ export const ResourceCard = memo(function ResourceCard({
       : 'Instant download';
   const meta = [ageLabel(product.ageMin, product.ageMax) ?? level ?? 'All ages', delivery].join(' · ');
 
-  const badge = (campaignOff || percentOff > 0) ? (campaign && campaignOff ? `${campaign.name} · ${campaignOff}` : `-${percentOff}%`) : null;
+  const badge = member ? null : (campaignOff || percentOff > 0) ? (campaign && campaignOff ? `${campaign.name} · ${campaignOff}` : `-${percentOff}%`) : null;
   const wishlistButton = onToggleWishlist && variantId ? (
     <button
       onClick={e => onToggleWishlist(e, product._id, variantId)}
@@ -194,9 +194,9 @@ export const ResourceCard = memo(function ResourceCard({
             <strong className={clsx('num text-[16px] sm:text-[18px]', member ? 'text-[#8a6100]' : was ? 'text-error' : 'text-carbon')}>
               {rawPrice === 0 ? 'Free' : fmt(member ? member.price : price)}
             </strong>
-            {member && <s className="text-[12.5px] text-slate">{fmt(price)}</s>}
+            {member && <s className="text-[12.5px] text-slate">{fmt(member.list ?? price)}</s>}
             {!member && was && rawPrice > 0 && <s className="text-[12.5px] text-slate" aria-label={`Was ${fmt(was)}`}>{fmt(was)}</s>}
-            {member ? <PremiumChip /> : <PremiumTeaser percent={product.premiumPercent} />}
+            {member ? <PremiumChip percent={member.percent} /> : <PremiumTeaser percent={product.premiumPercent} />}
             {badge && <SaleBadge label={badge} />}
             <span className="ms-auto text-[12px] border border-[#dde5e8] px-[7px] py-[3px] rounded text-[#566773] shrink-0">{TYPE_LABEL[kind] ?? kind}</span>
           </div>
@@ -267,7 +267,7 @@ export const ResourceCard = memo(function ResourceCard({
           <strong className={clsx('num text-[14px] sm:text-[16px]', member ? 'text-[#8a6100]' : was ? 'text-error' : 'text-carbon')}>
             {rawPrice === 0 ? 'Free' : fmt(member ? member.price : price)}
           </strong>
-          {member && <s className="text-[12px] text-slate">{fmt(price)}</s>}
+          {member && <s className="text-[12px] text-slate">{fmt(member.list ?? price)}</s>}
           {!member && was && rawPrice > 0 && (
             <s className="text-[12px] text-slate" aria-label={`Was ${fmt(was)}`}>{fmt(was)}</s>
           )}
@@ -276,7 +276,7 @@ export const ResourceCard = memo(function ResourceCard({
           {TYPE_LABEL[kind] ?? kind}
         </span>
       </div>
-      {member ? <PremiumChip className="mt-1" /> : <PremiumTeaser percent={product.premiumPercent} className="mt-1" />}
+      {member ? <PremiumChip percent={member.percent} className="mt-1" /> : <PremiumTeaser percent={product.premiumPercent} className="mt-1" />}
     </article>
   );
 });

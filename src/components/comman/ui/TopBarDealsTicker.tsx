@@ -1,15 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
-import { Zap, Tag, ChevronRight } from 'lucide-react';
+import { Zap, Tag, Crown, ChevronRight } from 'lucide-react';
 import { useTopBarDeals, timeLeft } from '@/hooks/useTopBarDeals';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 import { formatMoney } from '@/utils/currency';
 import { untilStart } from './EarlyAccessChip';
+import { usePremiumDeals } from '@/hooks/usePremiumDeals';
 
 interface TickerItem {
   key: string;
-  kind: 'sale' | 'flash';
+  kind: 'sale' | 'flash' | 'premium';
   early?: boolean;
   label: string;
   detail?: string;
@@ -26,6 +27,8 @@ const ROTATE_MS = 4500;
 export function TopBarDealsTicker({ className }: { className?: string }) {
   const navigate = useNavigate();
   const deals = useTopBarDeals();
+  // Premium members: the biggest member discounts replace the normal flash deals.
+  const { deals: premiumDeals } = usePremiumDeals();
   const { currency, convert } = useCurrencyPreference();
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -54,7 +57,13 @@ export function TopBarDealsTicker({ className }: { className?: string }) {
         path: `/?campaign=${encodeURIComponent(c._id)}`,
       };
     });
-    const flash = deals.flashDeals.map<TickerItem>(d => ({
+    const flash = premiumDeals ? premiumDeals.slice(0, 5).map<TickerItem>(d => ({
+      key: `p-${d.product._id}`,
+      kind: 'premium',
+      label: d.product.name,
+      detail: `${d.pct}% off`,
+      path: `/product/${d.product.slug}`,
+    })) : deals.flashDeals.map<TickerItem>(d => ({
       key: `f-${d.product._id}`,
       kind: 'flash',
       label: d.product.name,
@@ -62,7 +71,7 @@ export function TopBarDealsTicker({ className }: { className?: string }) {
       path: `/product/${d.product.slug}`,
     }));
     return [...sales, ...flash];
-  }, [deals, currency, convert, now]);
+  }, [deals, premiumDeals, currency, convert, now]);
 
   useEffect(() => {
     if (paused || items.length < 2) return;
@@ -72,7 +81,7 @@ export function TopBarDealsTicker({ className }: { className?: string }) {
 
   if (items.length === 0) return <div className={clsx('flex-1 min-w-0', className)} />;
   const item = items[index % items.length];
-  const Icon = item.kind === 'sale' ? Tag : Zap;
+  const Icon = item.kind === 'sale' ? Tag : item.kind === 'premium' ? Crown : Zap;
 
   return (
     <div
@@ -86,7 +95,7 @@ export function TopBarDealsTicker({ className }: { className?: string }) {
         item.kind === 'sale' ? 'bg-[#F4DC4C] text-[#152D43]' : 'bg-white/15 text-white',
       )}>
         <Icon size={11} className={item.kind === 'flash' ? 'fill-current' : undefined} />
-        <span className="hidden sm:inline">{item.early ? 'Early access' : item.kind === 'sale' ? 'Sale' : 'Flash'}</span>
+        <span className="hidden sm:inline">{item.early ? 'Early access' : item.kind === 'sale' ? 'Sale' : item.kind === 'premium' ? 'Premium' : 'Flash'}</span>
       </span>
       <button
         key={item.key}

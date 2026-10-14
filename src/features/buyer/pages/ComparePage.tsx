@@ -11,6 +11,7 @@ import { useCategoryTree } from '@/hooks/marketplace/useCategoryTree';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 import { useCartContext } from '@/contexts/CartContext';
 import { formatMoney } from '@/utils/currency';
+import { PremiumChip, memberPriceOf, usePremiumView } from '@/components/comman/marketplace/PremiumBits';
 import { MAX_COMPARE, useCompare } from '@/utils/compareStore';
 import { getStorePagePath } from '@/utils/storefrontUrl';
 import { useT } from '@/contexts/languageCtx';
@@ -29,6 +30,7 @@ export function ComparePage() {
   const { items, remove, clear } = useCompare();
   const { byId } = useCategoryTree();
   const { currency, convert } = useCurrencyPreference();
+  const { isPremium } = usePremiumView();
   const { addToCart } = useCartContext();
 
   // A shared link (?ids=) wins; otherwise the locally picked products.
@@ -81,6 +83,8 @@ export function ComparePage() {
       const v = defaultVariant(p);
       const raw = v?.price ?? 0;
       const eff = typeof v?.campaignPrice === 'number' ? v.campaignPrice : raw; // server-computed platform-sale price
+      const m = isPremium ? memberPriceOf(v, convert, convert(eff, v?.currency)) : null;
+      if (m && raw !== 0) return <span><strong className="text-[15px] text-[#8a6100]">{formatMoney(m.price, currency)}</strong>{m.list != null && <s className="ms-1 text-[12px] text-slate">{formatMoney(m.list, currency)}</s>}<span className="block"><PremiumChip percent={m.percent} /></span></span>;
       return <strong className="text-[15px] text-carbon">{raw === 0 ? t('Free') : formatMoney(convert(eff, v?.currency), currency)}</strong>;
     } },
     { label: 'Rating', cell: p => p.totalRatings ? <RatingLine rating={p.averageRating} count={p.totalRatings} /> : <span className="text-slate">{t('No reviews yet')}</span> },

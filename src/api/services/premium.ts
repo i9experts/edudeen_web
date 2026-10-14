@@ -115,3 +115,7 @@ export const apiGetPremiumTerms = (params?: { type?: string; currency?: string; 
 export interface PremiumConflict { productId: string; name: string; premiumPercent: number; salePercent: number; message: string }
 export const apiGetPremiumConflicts = (storeId: string) =>
   client.get<never, Ok<{ minGapPercent: number; conflicts: PremiumConflict[]; bothOffers?: { productId: string; name: string; premiumPercent: number }[] }>>('/api/premium/seller/conflicts', { params: { storeId } });
+
+/** Members-only: products with the biggest Premium discount (empty for non-members). */
+export const apiGetPremiumDeals = (limit = 12) =>
+  client.get<never, Ok<{ isPremium: boolean; products: import('./marketplace').MarketplaceProduct[] }>>(`/api/products/premium-deals?limit=${limit}`);

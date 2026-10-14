@@ -5,6 +5,7 @@ import { ProductImage } from './ProductCard';
 import type { MarketplaceProduct } from '@/api/services/marketplace';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 import { currencySymbol } from '@/utils/currency';
+import { memberPriceOf, usePremiumView } from './PremiumBits';
 
 // ── Skeleton ──────────────────────────────────────────────────────────────────
 export function FlashSaleCardSkeleton() {
@@ -66,10 +67,14 @@ export function FlashSaleCard({ product, onClick, onAddToCart, isAdding, addToCa
   const nativeCurrency = defaultVariant?.currency;
   const priceSymbol = currencySymbol(displayCurrency);
   const lowestPrice = nativeLowestPrice != null ? convert(nativeLowestPrice, nativeCurrency) : null;
-  const compareAt = nativeCompareAt != null ? convert(nativeCompareAt, nativeCurrency) : null;
-  const subscriberPrice = nativeSubscriberPrice != null ? convert(nativeSubscriberPrice, nativeCurrency) : undefined;
-  const displayPrice    = subscriberPrice ?? lowestPrice;
-  const pctOff = compareAt != null && displayPrice != null && compareAt > displayPrice
+  const subscriberPriceRaw = nativeSubscriberPrice != null ? convert(nativeSubscriberPrice, nativeCurrency) : undefined;
+  // Premium member: only the list price struck through + the member price (no seller sale / subscriber price / campaign).
+  const { isPremium } = usePremiumView();
+  const member = isPremium ? memberPriceOf(defaultVariant, convert, subscriberPriceRaw ?? lowestPrice) : null;
+  const subscriberPrice = member ? undefined : subscriberPriceRaw;
+  const displayPrice    = member ? member.price : (subscriberPrice ?? lowestPrice);
+  const compareAt = member ? (member.list ?? lowestPrice) : (nativeCompareAt != null ? convert(nativeCompareAt, nativeCurrency) : null);
+  const pctOff = member && member.percent > 0 ? Math.round(member.percent) : compareAt != null && displayPrice != null && compareAt > displayPrice
     ? Math.round((1 - displayPrice / compareAt) * 100)
     : null;
   const savings = compareAt != null && displayPrice != null && compareAt > displayPrice
@@ -175,7 +180,7 @@ export function FlashSaleCard({ product, onClick, onAddToCart, isAdding, addToCa
             <div className="flex items-end justify-between gap-1">
               <div className="min-w-0">
                 <div className="flex items-baseline gap-[4px] flex-wrap">
-                  <span className={clsx('text-[13px] font-bold tracking-tight', subscriberPrice != null ? 'text-brand-orange' : 'text-carbon')}>
+                  <span className={clsx('text-[13px] font-bold tracking-tight', member ? 'text-[#8a6100]' : subscriberPrice != null ? 'text-brand-orange' : 'text-carbon')}>
                     {displayPrice != null ? `${priceSymbol}${displayPrice.toLocaleString()}` : '—'}
                   </span>
                   {compareAt != null && compareAt > (displayPrice ?? 0) && (
@@ -240,7 +245,7 @@ export function FlashSaleCard({ product, onClick, onAddToCart, isAdding, addToCa
           <div className="mt-auto flex items-end justify-between gap-2">
             <div className="min-w-0">
               <div className="flex items-baseline gap-[5px] flex-wrap">
-                <span className={clsx('text-[14.5px] font-bold tracking-tight', subscriberPrice != null ? 'text-brand-orange' : 'text-carbon')}>
+                <span className={clsx('text-[14.5px] font-bold tracking-tight', member ? 'text-[#8a6100]' : subscriberPrice != null ? 'text-brand-orange' : 'text-carbon')}>
                   {displayPrice != null ? `${priceSymbol}${displayPrice.toLocaleString()}` : '—'}
                 </span>
                 {compareAt != null && compareAt > (displayPrice ?? 0) && (

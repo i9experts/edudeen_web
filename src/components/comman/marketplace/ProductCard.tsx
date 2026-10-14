@@ -329,12 +329,12 @@ export const ProductCard = memo(function ProductCard({ product, onClick, onAddTo
           )}>
             {typeLabel}
           </span>
-          {pctOff != null && pctOff > 0 && (
+          {!member && pctOff != null && pctOff > 0 && (
             <span className="px-[6px] py-[2px] rounded-md text-[12px] font-bold bg-error text-white">
               -{pctOff}%
             </span>
           )}
-          {campaignAmount && (
+          {!member && campaignAmount && (
             <span
               title={campaign ? `${campaign.name} — ends ${new Date(campaign.endDate).toLocaleDateString()}` : undefined}
               className="flex items-center gap-[3px] px-[6px] py-[2px] rounded-md text-[12px] font-bold bg-brand-orange text-white"

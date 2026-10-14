@@ -13,6 +13,7 @@ import { clsx } from 'clsx';
 import { useIsBuyer } from '@/hooks/auth/useIsBuyer';
 import { useEdgeHoverScroll } from '@/hooks/useEdgeHoverScroll';
 import { useTopBarDeals } from '@/hooks/useTopBarDeals';
+import { usePremiumDeals } from '@/hooks/usePremiumDeals';
 import { apiSearchProducts } from '@/api/services/search';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { getStorePagePath } from '@/utils/storefrontUrl';
@@ -34,7 +35,7 @@ import {
   EMPTY_FILTERS, PRICE_NO_MAX, type MarketplaceFilters,
 } from '@/components/comman/marketplace/FiltersDrawer';
 import { SectionHead, sectionLinkClass } from '@/components/comman/marketplace/SectionHead';
-import { Star, Quote, BadgeCheck, Zap, Shield, CreditCard, Headset, RefreshCcw } from 'lucide-react';
+import { Star, Quote, BadgeCheck, Zap, Crown, Shield, CreditCard, Headset, RefreshCcw } from 'lucide-react';
 import { apiGetTestimonials, type Testimonial } from '@/api/services/testimonials';
 import { apiGetPlatformStats, apiGetTopStores, type PlatformStats, type PublicStoreListItem } from '@/api/services/store';
 import { apiGetCategoryTree, type CategoryNode } from '@/api/services/categories';
@@ -203,7 +204,7 @@ export function Homepage() {
     return () => { cancelled = true; };
   }, []);
 
-  const flashDeals = (dealsPool.length > 0 ? dealsPool : featuredPool)
+  const normalFlashDeals = (dealsPool.length > 0 ? dealsPool : featuredPool)
     .map(p => {
       const dv = (p.variants ?? []).find(v => v.isDefault) ?? p.variants?.[0];
       const price = dv?.price ?? 0;
@@ -218,6 +219,9 @@ export function Homepage() {
     .filter(x => x.pct > 0)
     .sort((a, b) => b.pct - a.pct)
     .slice(0, 10);
+  // Premium members: the same slot shows the biggest member discounts (Premium Deals) instead of the seller / platform flash sale.
+  const { deals: premiumDeals } = usePremiumDeals();
+  const flashDeals = premiumDeals ?? normalFlashDeals;
   const topPicks = [...featuredPool]
     .sort((a, b) => (b.purchaseCount + b.averageRating * 10) - (a.purchaseCount + a.averageRating * 10))
     .slice(0, 10);
@@ -232,7 +236,8 @@ export function Homepage() {
   const saleEnd = (topBarDeals?.campaigns ?? []).filter(c => !c.earlyAccess).map(c => c.endDate).sort()[0] ?? null;
   // Premium members: a sale that is not public yet (the API only sends these to members).
   const earlyCampaign = (topBarDeals?.campaigns ?? []).find(c => c.earlyAccess) ?? null;
-  const countdown = useCountdownTo(saleEnd);
+  const saleCountdown = useCountdownTo(saleEnd);
+  const countdown = premiumDeals ? null : saleCountdown;
 
   // ── Catalogue section filters ──
   const [subject, setSubject]   = useState<string | null>(null);
@@ -572,15 +577,17 @@ export function Homepage() {
         {flashDeals.length > 0 && (
           <section id="deals" className="mb-12 scroll-mt-[150px]">
             <SectionHead
-              eyebrow="Limited-time savings"
-              title="Flash Sale"
-              icon={<span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-error-bg text-error"><Zap size={14} className="fill-error" /></span>}
+              eyebrow={premiumDeals ? "Your member savings" : "Limited-time savings"}
+              title={premiumDeals ? "Premium Deals" : "Flash Sale"}
+              icon={premiumDeals
+                ? <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#fff6d6] text-[#8a6100]"><Crown size={14} /></span>
+                : <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-error-bg text-error"><Zap size={14} className="fill-error" /></span>}
               action={countdown ? (
                 <span className="shrink-0 flex items-center gap-[6px] text-[12px] sm:text-[13px] font-semibold text-slate">
                   <span className="hidden sm:inline">Ends in</span>
                   <span className="tabular-nums text-error font-bold">{Number(countdown.h) >= 24 ? `${Math.floor(Number(countdown.h) / 24)}d ${Number(countdown.h) % 24}h` : `${countdown.h}:${countdown.m}:${countdown.s}`}</span>
                 </span>
-              ) : earlyCampaign ? <EarlyAccessChip startDate={earlyCampaign.startDate} /> : undefined}
+              ) : earlyCampaign && !premiumDeals ? <EarlyAccessChip startDate={earlyCampaign.startDate} /> : undefined}
             />
             <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1 snap-x snap-mandatory">
               {flashDeals.map(({ product: p }) => {

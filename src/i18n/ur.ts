@@ -1645,10 +1645,12 @@ export const UR: Record<string, string> = {
   'No returns accepted by this seller': 'یہ سیلر واپسی قبول نہیں کرتا',
   // Edudeen Premium (buyer)
   "Edudeen Premium": "ایڈودین پریمیم",
-  "Premium": "پریمیم",
   "Premium price": "پریمیم قیمت",
   "Premium savings": "پریمیم بچت",
   "Premium early access": "پریمیم ممبرز کے لیے پہلے رسائی",
+  "Premium Deals": "پریمیم ڈیلز",
+  "Your member savings": "آپ کی ممبر بچت",
+  "Premium": "پریمیم",
   "Early access": "پہلے رسائی",
   "Go Premium": "پریمیم لیں",
   "My Premium": "میرا پریمیم",

@@ -429,7 +429,7 @@ export function CheckoutPage() {
     .filter(i => !checkoutStoreId || !i.storeId || i.storeId === checkoutStoreId)
     .filter(i => !physicalOnly || i.type !== 'digital')
     .filter(i => !buyNow || (i.productId === buyNow.productId && i.productVariantId === buyNow.variantId))
-    .map(i => (buyNow ? { ...i, quantity: buyNow.quantity, itemTotal: (i.unitPrice ?? 0) * buyNow.quantity } : i));
+    .map(i => (buyNow ? { ...i, quantity: buyNow.quantity, itemTotal: (i.unitPrice ?? 0) * buyNow.quantity, ...(i.premiumUnitPrice != null ? { premiumItemTotal: Math.round(i.premiumUnitPrice * buyNow.quantity * 100) / 100 } : {}) } : i));
   const checkoutItemsPayload = buyNow
     ? [{ productId: buyNow.productId, variantId: buyNow.variantId, quantity: buyNow.quantity }]
     : physicalOnly ? cartItems.map(i => ({ productId: i.productId, variantId: i.productVariantId })) : undefined;
@@ -757,11 +757,13 @@ export function CheckoutPage() {
   // The running sale only applies to the whole store cart, not to a Buy Now line or a physical-only subset.
   const estimate = computeCartTotals(cartItems, buyNow || physicalOnly ? null : cart?.campaignDiscount, convertToDisplay);
   const estimateSymbol = ratesLoaded ? currencySymbol(displayCurrency) : '';
-  const total = checkout ? checkout.totalAmount : estimate.payable;
+  // Before the checkout exists a member's estimate already uses their member price (cart lines carry it for members only).
+  const memberEstimateSavings = cartItems.reduce((sum, i) => (i.premiumItemTotal != null ? sum + Math.max(0, convertToDisplay(i.itemTotal ?? (i.unitPrice ?? i.price ?? 0) * i.quantity, i.currency) - convertToDisplay(i.premiumItemTotal, i.currency)) : sum), 0);
+  const total = checkout ? checkout.totalAmount : Math.max(0, estimate.payable - memberEstimateSavings);
   // Subtotal before discounts, so the summary adds up: subtotal − discounts + shipping + tax = total.
   const orderSubtotal = checkout
     ? Math.max(0, total - (isDigital ? 0 : shipping) - tax + bakedInDiscounts + couponDiscount + giftCardDiscount)
-    : estimate.subtotal;
+    : Math.max(0, estimate.subtotal - memberEstimateSavings);
   // Symbol for every sidebar amount: the checkout's own currency once it exists, else the display currency.
   const summarySymbol = checkout ? checkoutSymbol : estimateSymbol;
 
@@ -1655,7 +1657,7 @@ export function CheckoutPage() {
                 ))
                 : !cartLoading && cartItems.map(item => {
                   const price = item.unitPrice ?? item.price ?? 0;
-                  const ttl   = convertToDisplay(item.itemTotal ?? price * item.quantity, item.currency);
+                  const ttl   = item.premiumItemTotal != null ? convertToDisplay(item.premiumItemTotal, item.currency) : convertToDisplay(item.itemTotal ?? price * item.quantity, item.currency);
                   return (
                     <div key={item.productVariantId} className="flex justify-between text-[12px]">
                       <span className="text-carbon truncate max-w-[150px]">
@@ -1719,9 +1721,6 @@ export function CheckoutPage() {
                   <span className="text-[#8a6100]">Premium savings</span>
                   <span className="font-semibold text-[#8a6100]">-{checkoutSymbol}{premiumSavings.toFixed(2)}</span>
                 </div>
-              )}
-              {premiumSellerSavings > 0 && premiumPlatformSavings > 0 && (
-                <p className="text-[12px] text-slate -mt-1">{`${checkoutSymbol}${premiumSellerSavings.toFixed(2)} from the seller + ${checkoutSymbol}${premiumPlatformSavings.toFixed(2)} from Edudeen`}</p>
               )}
               {!!summary?.campaignDiscountUSD && summary.campaignDiscountUSD > 0 && (
                 <div className="flex justify-between text-[13px]">
