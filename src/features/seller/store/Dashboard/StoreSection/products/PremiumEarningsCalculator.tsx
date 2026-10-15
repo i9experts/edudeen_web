@@ -41,16 +41,28 @@ export function effectiveSellerPercent(productValue: string, storePercent: numbe
   return storePercent > 0 ? storePercent : 0;
 }
 
-/** Same rule and wording as the API (premiumGapViolation): normal sale must be at least `gap` points below Premium. null = fine. */
-export function premiumGapMessage(price: number, compareAt: number, sellerPct: number, gap: number): string | null {
-  if (!(sellerPct > 0) || !(compareAt > price) || !(price >= 0)) return null;
-  const sale = (1 - price / compareAt) * 100;
-  const maxSale = Math.max(0, sellerPct - gap);
-  if (sale <= maxSale + 1e-9) return null;
-  const raiseTo = Math.ceil((sale + gap) * 10) / 10;
-  return `Your normal sale is ${fmtPct(sale)}% but your Premium discount is ${fmtPct(sellerPct)}%. Premium must be at least ${fmtPct(gap)} points better - lower the sale to ${fmtPct(maxSale)}% or raise Premium to ${fmtPct(raiseTo)}%.`;
+/** The seller's own sale in % of the list (compare-at) price; 0 when there is no sale. */
+export function ownSalePercent(price: number, compareAt: number): number {
+  if (!(compareAt > price) || !(price >= 0)) return 0;
+  return (1 - price / compareAt) * 100;
 }
 
+/** Lowest Premium % allowed next to the seller's own sale: sale + gap (rounded up to 0.1). null = no sale, any Premium % is fine. */
+export function premiumMinPercent(price: number, compareAt: number, gap: number): number | null {
+  const sale = ownSalePercent(price, compareAt);
+  if (!(sale > 0)) return null;
+  return Math.ceil((sale + gap) * 10 - 1e-9) / 10;
+}
+
+/** Same rule as the API (premiumGapViolation): normal sale must be at least `gap` points below Premium. null = fine. */
+export function premiumGapMessage(price: number, compareAt: number, sellerPct: number, gap: number): string | null {
+  if (!(sellerPct > 0)) return null;
+  const sale = ownSalePercent(price, compareAt);
+  if (!(sale > 0)) return null;
+  if (sale <= Math.max(0, sellerPct - gap) + 1e-9) return null;
+  const min = premiumMinPercent(price, compareAt, gap) ?? 0;
+  return `Premium discount must be at least ${fmtPct(min)}% (your sale ${fmtPct(sale)}% + ${fmtPct(gap)}% gap). Raise Premium to ${fmtPct(min)}% or more, or lower your sale.`;
+}
 /** Fee on an amount. null = the platform fee is not set yet (never shown as 0). */
 function feeOn(amount: number, terms: PremiumTerms): number | null {
   const f = terms.normalFee;
@@ -118,6 +130,7 @@ export function PremiumEarningsCalculator({ price, compareAtPrice, premiumValue,
   const calc = useMemo(() => (terms && priceN > 0 ? calculate(priceN, compareN > 0 ? compareN : 0, sellerPct, terms) : null), [terms, priceN, compareN, sellerPct]);
   const camp = useMemo(() => (campaign && priceN > 0 ? campaignCalc(priceN, compareN > 0 ? compareN : 0, campaign) : null), [campaign, priceN, compareN]);
   const gapMsg = terms ? premiumGapMessage(priceN, compareN, sellerPct, terms.minGapPercent) : null;
+  const minPremium = terms ? premiumMinPercent(priceN, compareN, terms.minGapPercent) : null;
 
   if (error) return <p className="text-[12px] text-slate mt-3">Earnings preview is unavailable right now.</p>;
   if (!terms) return <p className="text-[12px] text-slate mt-3">Loading your earnings preview...</p>;
@@ -174,6 +187,7 @@ export function PremiumEarningsCalculator({ price, compareAtPrice, premiumValue,
         ) : (
           <div className="rounded-lg border border-[#f1d98a] bg-[#fffaf0] p-3 flex flex-col gap-1">
             <p className="text-[12px] font-bold text-[#8a6100] m-0">Premium member</p>
+            {minPremium != null && <p className="text-[12px] text-slate m-0">Your sale is {fmtPct(ownSalePercent(priceN, compareN))}%, so Premium must be at least {fmtPct(minPremium)}%.</p>}
             {sellerPct > 0 ? (
               calc.premiumApplies ? (
                 <>

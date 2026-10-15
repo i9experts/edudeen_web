@@ -4,7 +4,8 @@ import { Toggle } from '@/components/comman/ui';
 import { useStoreCampaigns } from '@/hooks/store/useStoreCampaigns';
 import { CampaignPicker } from './CampaignPicker';
 import { premiumPercentError } from './PremiumPriceField';
-import { PremiumEarningsCalculator, effectiveSellerPercent } from './PremiumEarningsCalculator';
+import { PremiumEarningsCalculator, campaignCalc, effectiveSellerPercent, ownSalePercent, premiumGapMessage, premiumMinPercent, usePremiumTerms } from './PremiumEarningsCalculator';
+import { AlertTriangle } from 'lucide-react';
 
 const inputCls = 'w-full px-3 py-[9px] rounded-lg text-[13px] border border-bone bg-bone text-charcoal outline-none box-border';
 
@@ -33,12 +34,14 @@ export function offersPayload(s: { premiumPct: string | null; premiumOptOut: boo
  * plus the live "Your earnings" calculator.
  */
 export function ProductOffersCard({
-  storeId, currency, productType, price, compareAtPrice, storePremiumPct,
+  storeId, currency, productType, price, compareAtPrice, storePremiumPct, onEditPrice,
   premiumPct, setPremiumPct, premiumOptOut, setPremiumOptOut, campaignIds, setCampaignIds,
 }: {
   storeId: string; currency?: string | null; productType: string; price: string; compareAtPrice: string;
   /** the store-wide Premium percent (0 = none) */
   storePremiumPct: number;
+  /** jumps to the price fields (Price step) so the seller can change their own sale */
+  onEditPrice?: () => void;
   premiumPct: string | null; setPremiumPct: (v: string) => void;
   premiumOptOut: boolean | null; setPremiumOptOut: (v: boolean) => void;
   campaignIds: string[] | null; setCampaignIds: (v: string[]) => void;
@@ -49,16 +52,32 @@ export function ProductOffersCard({
   const pct = premiumPct ?? '';
   const optOut = premiumOptOut ?? false;
   const picked = campaignIds ?? [];
-  const premiumOn = effectiveSellerPercent(pct, storePremiumPct, optOut) > 0;
-  const custom = !optOut && pct.trim() !== '';
-  const error = premiumPercentError(pct);
+  // editing / customMode keep the Premium section and the Custom input on screen while the seller clears or types a
+  // value that is not (yet) valid - they must not be derived from the typed value, or the input unmounts mid-typing.
+  const [editing, setEditing] = useState(false);
+  const [customMode, setCustomMode] = useState(false);
+  const { terms } = usePremiumTerms(productType, currency, storeId);
+  const gap = terms?.minGapPercent ?? 5;
+  const priceN = Number(price);
+  const compareN = Number(compareAtPrice);
+  const premiumOn = !optOut && (editing || effectiveSellerPercent(pct, storePremiumPct, optOut) > 0);
+  const custom = !optOut && (customMode || pct.trim() !== '');
+  const minReq = premiumMinPercent(priceN, compareN, gap);
+  const sellerPct = effectiveSellerPercent(pct, storePremiumPct, optOut);
+  const rangeError = premiumPercentError(pct);
+  const minError = !rangeError && premiumOn ? premiumGapMessage(priceN, compareN, sellerPct, gap) : null;
+  const error = rangeError ?? minError;
   const pickedCampaign = campaigns.find(c => picked.includes(c._id)) ?? null;
-
+  const combined = pickedCampaign ? combinedSaleInfo(priceN, compareN, pickedCampaign) : null;
   // Turning Premium off: store default present -> explicit opt-out (otherwise the store default would still apply).
-  const turnPremiumOff = () => { setPremiumPct(''); setPremiumOptOut(storePremiumPct > 0); };
+  const turnPremiumOff = () => { setEditing(false); setCustomMode(false); setPremiumPct(''); setPremiumOptOut(storePremiumPct > 0); };
+  // Default = the store default (or 10), raised to what the seller's own sale requires (sale + gap).
   const turnPremiumOn = () => {
+    setEditing(true);
     setPremiumOptOut(false);
-    if (storePremiumPct <= 0 && !pct.trim()) setPremiumPct('10');
+    const base = storePremiumPct > 0 ? storePremiumPct : 10;
+    const def = Math.max(base, minReq ?? 0);
+    if (!pct.trim() && (storePremiumPct <= 0 || def > storePremiumPct)) { setCustomMode(true); setPremiumPct(String(def)); }
   };
 
   return (
@@ -99,21 +118,23 @@ export function ProductOffersCard({
           <div className="mt-3 flex flex-col gap-2">
             {storePremiumPct > 0 && (
               <div role="radiogroup" aria-label="Premium discount for this product" className="flex flex-wrap gap-2">
-                <button type="button" role="radio" aria-checked={!custom} onClick={() => setPremiumPct('')} className={`px-3 py-1.5 rounded-lg text-[12px] font-semibold border cursor-pointer ${!custom ? 'border-brand-royal bg-brand-royal/10 text-brand-royal' : 'border-bone bg-white text-charcoal'}`}>Store default ({storePremiumPct}%)</button>
-                <button type="button" role="radio" aria-checked={custom} onClick={() => setPremiumPct(pct.trim() ? pct : String(storePremiumPct))} className={`px-3 py-1.5 rounded-lg text-[12px] font-semibold border cursor-pointer ${custom ? 'border-brand-royal bg-brand-royal/10 text-brand-royal' : 'border-bone bg-white text-charcoal'}`}>Custom %</button>
+                <button type="button" role="radio" aria-checked={!custom} onClick={() => { setCustomMode(false); setPremiumPct(''); }} className={`px-3 py-1.5 rounded-lg text-[12px] font-semibold border cursor-pointer ${!custom ? 'border-brand-royal bg-brand-royal/10 text-brand-royal' : 'border-bone bg-white text-charcoal'}`}>Store default ({storePremiumPct}%)</button>
+                <button type="button" role="radio" aria-checked={custom} onClick={() => { setCustomMode(true); setPremiumPct(pct.trim() ? pct : String(Math.max(storePremiumPct, minReq ?? 0))); }} className={`px-3 py-1.5 rounded-lg text-[12px] font-semibold border cursor-pointer ${custom ? 'border-brand-royal bg-brand-royal/10 text-brand-royal' : 'border-bone bg-white text-charcoal'}`}>Custom %</button>
                 <button type="button" role="radio" aria-checked={false} onClick={() => { turnPremiumOff(); }} className="px-3 py-1.5 rounded-lg text-[12px] font-semibold border border-bone bg-white text-charcoal cursor-pointer">Off for this product</button>
               </div>
             )}
             {(custom || storePremiumPct <= 0) && (
-              <div className="max-w-[200px]">
+              <div className="max-w-[260px]">
                 <label htmlFor="premium-price-pct" className="text-[12px] font-semibold text-charcoal block mb-1.5">Discount for Premium members (%)</label>
                 <input
                   id="premium-price-pct" type="number" min={1} max={50} step="any" inputMode="decimal"
                   value={pct} onChange={e => setPremiumPct(e.target.value)} placeholder="e.g. 10" className={inputCls}
                 />
-                {error && <p className="text-[12px] text-red-600 mt-1">{error}</p>}
+                {error && <p role="alert" className="text-[12px] text-red-600 mt-1">{error}</p>}
               </div>
             )}
+            {!custom && storePremiumPct > 0 && minError && <p role="alert" className="text-[12px] text-red-600 m-0">{minError}</p>}
+            {minReq != null && !error && <p className="text-[12px] text-slate m-0">Minimum {String(Math.round(minReq * 10) / 10)}% (your sale {String(Math.round(ownSalePercent(priceN, compareN) * 10) / 10)}% + {String(gap)}% gap). You can set it higher.</p>}
           </div>
         )}
         {!premiumOn && optOut && storePremiumPct > 0 && (
@@ -140,6 +161,7 @@ export function ProductOffersCard({
             )}
           </div>
         ) : (
+          <>
           <CampaignPicker
             storeId={storeId}
             value={campaignIds}
@@ -149,6 +171,16 @@ export function ProductOffersCard({
               setCampaignIds(next);
             }}
           />
+          {pickedCampaign && combined && (
+            <div role="alert" className="mt-3 rounded-lg border border-[#f1d98a] bg-[#fffaf0] px-3 py-2.5 text-[12.5px] text-charcoal">
+              <p className="m-0 flex items-start gap-2"><AlertTriangle size={14} className="shrink-0 mt-[2px] text-[#8a6100]" aria-hidden /> <span>{combined.text}</span></p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {onEditPrice && <button type="button" onClick={onEditPrice} className="px-3 py-1.5 rounded-lg bg-white border border-bone text-[12px] font-semibold cursor-pointer">Change my sale price</button>}
+                <button type="button" onClick={() => { setCampaignIds(picked.filter(id => id !== pickedCampaign._id)); }} className="px-3 py-1.5 rounded-lg bg-white border border-brand-royal text-brand-royal text-[12px] font-semibold cursor-pointer">Unselect platform sale</button>
+              </div>
+            </div>
+          )}
+          </>
         )}
       </div>
 
@@ -160,4 +192,22 @@ export function ProductOffersCard({
       />
     </div>
   );
+}
+
+const pc = (n: number) => String(Math.round(n * 10) / 10);
+
+/**
+ * Own sale (compare-at > price) AND a platform sale picked: the platform sale is worked out from the LIST price and only
+ * applies when cheaper than the buyer's normal price (same rule as the API), so the two are NOT added together.
+ */
+export function combinedSaleInfo(price: number, compareAt: number, c: Parameters<typeof campaignCalc>[2] & { name?: string }): { text: string } | null {
+  const own = ownSalePercent(price, compareAt);
+  if (!(own > 0) || !(price > 0)) return null;
+  const r = campaignCalc(price, compareAt, c);
+  if (!r) return null;
+  const platformPct = r.list > 0 ? (1 - r.unit / r.list) * 100 : 0;
+  if (!r.applies) {
+    return { text: `Your own sale (${pc(own)}%) is already lower than the platform sale (${pc(platformPct)}% off the list price), so buyers keep your sale price - the platform sale does not apply to this product.` };
+  }
+  return { text: `Your own sale (${pc(own)}%) and the platform sale (${pc(platformPct)}%) together give buyers about ${pc(platformPct)}% off the list price. The platform sale replaces your own sale price while it runs - the two are not added together.` };
 }

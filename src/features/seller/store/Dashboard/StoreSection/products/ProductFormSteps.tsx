@@ -4,7 +4,7 @@ import { EDUCATION_LEVELS } from '@/api/services/product';
 import type { CategoryNode } from '@/api/services/categories';
 import type { StoreData } from '@/api/services/store';
 import type { AttributeDefinition } from '@/api/services/attributes';
-import { ImageUpload } from '@/components/comman/ui';
+import { ProductPhotosUploader } from './ProductPhotosUploader';
 import {
   LearningFields, LicenseTiersField, DeliverableFilesField, SampleFileField,
   type LearningValue,
@@ -176,8 +176,8 @@ export function ProductFormSteps(p: ProductFormStepsProps) {
       {/* ── 2. Photos & files ────────────────────────────────────────── */}
       <StepPanel active={step === 1}>
         {banner(1)}
-        <Block title="Photos" need="recommended" hint="Up to 5 images. The first image is the cover buyers see in search and on your shelf.">
-          <ImageUpload value={cur.images} onChange={urls => set('images', urls)} maxFiles={5} />
+        <Block title="Photos" need="recommended" hint="Up to 20 images - select several at once. The first image is the cover buyers see in search and on your shelf.">
+          <ProductPhotosUploader value={cur.images} onChange={urls => set('images', urls)} />
         </Block>
 
         {isDigitalFamily && (
@@ -375,7 +375,7 @@ export function ProductFormSteps(p: ProductFormStepsProps) {
         <Block id="fld-offers" title="Offers" need="optional" hint="A Premium member discount, or one of Edudeen's platform sales - a product is in one or the other. The calculator shows what you earn.">
           <ProductOffersCard
             storeId={p.storeId} currency={p.store?.baseCurrency} productType={pType} price={cur.price} compareAtPrice={cur.compareAtPrice}
-            storePremiumPct={p.offers.storePremiumPct} premiumPct={p.offers.premiumPct} setPremiumPct={p.offers.setPremiumPct}
+            storePremiumPct={p.offers.storePremiumPct} onEditPrice={() => go(2, 'ap-compare')} premiumPct={p.offers.premiumPct} setPremiumPct={p.offers.setPremiumPct}
             premiumOptOut={p.offers.premiumOptOut} setPremiumOptOut={p.offers.setPremiumOptOut}
             campaignIds={p.offers.campaignIds} setCampaignIds={p.offers.setCampaignIds}
           />
