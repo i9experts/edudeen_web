@@ -79,7 +79,7 @@ function AvatarTrigger({
       onClick={onClick}
       aria-label={badge > 0 ? `Account menu, ${badge} unread notifications` : 'Account menu'}
       className={clsx(
-        'relative rounded-full shrink-0 p-[2px]',
+        'relative rounded-full shrink-0 p-[2px] before:absolute before:-inset-[7px] before:rounded-full',
         compact ? 'size-7 ring-1 ring-white/60' : 'size-9',
         'bg-gradient-to-br from-brand-orange to-brand-deep-orange cursor-pointer transition-all duration-150',
         open ? 'scale-[0.96] shadow-[0_0_0_3px_rgba(23,71,113,0.18)]' : 'hover:scale-105',

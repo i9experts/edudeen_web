@@ -552,7 +552,7 @@ export default function StoreSettings() {
           <MobileStoreMenu active={activeTab} onSelect={id => { setActiveTab(id); setMobileDrilledIn(true); }} />
 
           {/* Every other store section — Sales/Catalog/Customers/Growth/
-             Finance, plus Integrations/Business Verification from the
+             Finance, plus Integrations from the
              Settings group ('settings' itself is excluded since the local
              General tab above already covers it). This is the one place
              the full store workspace list lives on mobile — not the

@@ -9,7 +9,6 @@ import {
   apiSetStoreFulfillmentMode,
   apiGetLeads,
   apiGetLeadDetail,
-  apiMarkLeadUnderReview,
   apiApproveLead,
   apiRejectLead,
   type MarketplaceListingQuery,
@@ -118,20 +117,6 @@ export function useLeadActions() {
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [error, setError] = useState('');
 
-  const markUnderReview = useCallback(async (id: string) => {
-    setProcessingId(id);
-    setError('');
-    try {
-      await apiMarkLeadUnderReview(id);
-      return true;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update lead status.');
-      return false;
-    } finally {
-      setProcessingId(null);
-    }
-  }, []);
-
   const approve = useCallback(async (id: string) => {
     setProcessingId(id);
     setError('');
@@ -160,5 +145,5 @@ export function useLeadActions() {
     }
   }, []);
 
-  return { markUnderReview, approve, reject, processingId, error };
+  return { approve, reject, processingId, error };
 }

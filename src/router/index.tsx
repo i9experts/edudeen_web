@@ -24,6 +24,7 @@ import { CheckoutPage } from '@/features/buyer/pages/CheckoutPage';
 import { LoginPage }    from '@/features/auth/pages/LoginPage';
 import { RegisterPage } from '@/features/auth/pages/RegisterPage';
 import { MarketplaceRedirect } from '@/features/buyer/pages/MarketplaceRedirect';
+import { CategoryRedirect, SearchRedirect } from '@/features/buyer/pages/BrowseRedirects';
 import { NotForBuyers } from '@/router/NotForBuyers';
 import { StorePathTabs } from '@/router/StorePathTabs';
 
@@ -72,8 +73,6 @@ const CategoryBrowsePage   = lazy(() => named(import('@/features/storefront/page
 const CollectionDetailPage = lazy(() => named(import('@/features/storefront/pages/CollectionDetailPage'),         'CollectionDetailPage'));
 const SearchResultsPage    = lazy(() => named(import('@/features/storefront/pages/SearchResultsPage'),            'SearchResultsPage'));
 const ComparePage              = lazy(() => named(import('@/features/buyer/pages/ComparePage'),                       'ComparePage'));
-const MarketplaceSearchPage   = lazy(() => named(import('@/features/buyer/pages/MarketplaceBrowse'),          'SearchResultsPage'));
-const MarketplaceCategoryPage = lazy(() => named(import('@/features/buyer/pages/MarketplaceBrowse'),          'CategoryPage'));
 const StorefrontBlogIndex  = lazy(() => named(import('@/features/buyer/pages/StorefrontBlogIndex'),              'StorefrontBlogIndex'));
 const StorefrontBlogPost   = lazy(() => named(import('@/features/buyer/pages/StorefrontBlogPost'),               'StorefrontBlogPost'));
 const StorefrontCartPage   = lazy(() => named(import('@/features/storefront/StorefrontCartPage'),                'StorefrontCartPage'));
@@ -141,7 +140,6 @@ const SharedWishlistPage = lazy(() => named(import('@/features/buyer/pages/Share
 const LearningPathsIndexPage = lazy(() => named(import('@/features/buyer/pages/LearningPathPages'), 'LearningPathsIndexPage'));
 const LearningPathPage   = lazy(() => named(import('@/features/buyer/pages/LearningPathPages'), 'LearningPathPage'));
 const StorePlanBilling   = lazy(() => import('@/features/seller/store/Dashboard/Manage/StorePlanBilling'));
-const StoreVerification  = lazy(() => named(import('@/features/seller/store/Dashboard/Manage/StoreVerification'), 'StoreVerification'));
 const StoreOrderList     = lazy(() => named(import('@/features/seller/store/Dashboard/StoreSection/orders/OrderList'),        'StoreOrderList'));
 const StoreReturnList    = lazy(() => named(import('@/features/seller/store/Dashboard/StoreSection/returns/ReturnList'),      'StoreReturnList'));
 const StoreAnalytics     = lazy(() => named(import('@/features/seller/store/Dashboard/Analytic/analytics/Analytics'),        'StoreAnalytics'));
@@ -304,9 +302,9 @@ const mainRouter = createBrowserRouter([
           { path: 'order-success',   element: <OrderSuccessPage /> },
           { path: 'payment/pk-return', element: <PkPaymentReturnPage /> },
           { path: 'product/:slug',   element: <FeatureMaintenance feature="product_page" variant="page"><ProductDetail /></FeatureMaintenance> },
-          { path: 'search',          element: <FeatureMaintenance feature="search" variant="page"><MarketplaceSearchPage /></FeatureMaintenance> },
+          { path: 'search',          element: <SearchRedirect /> },
           { path: 'compare',         element: <FeatureMaintenance feature="product_page" variant="page"><ComparePage /></FeatureMaintenance> },
-          { path: 'c/:slug',         element: <FeatureMaintenance feature="categories" variant="page"><MarketplaceCategoryPage /></FeatureMaintenance> },
+          { path: 'c/:slug',         element: <CategoryRedirect /> },
           // Grade and subject landing pages (/learn/primary-school/mathematics).
           { path: 'learn',           element: <FeatureMaintenance feature="learn" variant="page"><LearnHubPage /></FeatureMaintenance> },
           { path: 'learn/:level/:subject?', element: <FeatureMaintenance feature="learn" variant="page"><LearnLevelPage /></FeatureMaintenance> },
@@ -403,7 +401,7 @@ const mainRouter = createBrowserRouter([
           { path: 'collections',                      element: <StorePathTabs tabs={CATALOG_TABS} /> },
           { path: 'bundles',                          element: <StorePathTabs tabs={CATALOG_TABS} /> },
           { path: 'plan-billing',                     element: <StorePlanBilling /> },
-          { path: 'verification',                     element: <StoreVerification /> },
+          { path: 'verification',                     element: <Navigate to="../dashboard" replace /> }, // old links (business verification was removed)
           { path: 'storebuilder',                     element: <StorePageOverview /> },
           { path: 'returns',                          element: <StoreReturnList /> },
           { path: 'seo',                              element: <StoreSEO /> },

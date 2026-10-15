@@ -27,7 +27,7 @@ export const DEFAULT_ABOUT: Required<Omit<AboutContent, 'pillars'>> = {
   intro: "Edudeen exists because teachers, scholars, academies and publishers who sell learning materials online usually end up juggling a store builder, a file-delivery service, an inventory tracker and an analytics tool that don't talk to each other. We built one education marketplace where they all share the same real data instead.",
   approachEyebrow: 'Our approach',
   approachHeading: 'Easy to start, verified to trust.',
-  approachText: "Educators can set up a store and start listing quickly. Sellers who complete Edudeen's verification earn a verified badge, so learners and parents can see at a glance which stores have been checked — and buyers always pay through Edudeen's own checkout.",
+  approachText: "Educators can set up a store and start listing quickly. Every store is reviewed by our team, and buyers always pay through Edudeen's own checkout.",
   headedEyebrow: "Where we're headed",
   headedHeading: 'More independence for every seller.',
   headedText: "Sellers' own payment gateways and custom domains per store are real items on our roadmap — the direction is always toward an educator owning more of their own teaching business, not less.",

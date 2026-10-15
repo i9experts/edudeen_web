@@ -180,7 +180,7 @@ function StoreBottomNav() {
   const moreActive = !STORE_TABS.some(t => isActive(t.path)) && pathname.startsWith(`/store/${storeId}/`);
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-bone">
+    <nav data-chat-avoid className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-bone">
       <div className="flex items-stretch">
         {STORE_TABS.map(tab => {
           const active = isActive(tab.path);
@@ -598,48 +598,29 @@ function StoreWorkspaceProvider({ children }: { children: ReactNode }) {
   );
 }
 
-// ── Seller business-verification status — workspace-wide so a not-yet-
-// verified store's owner sees it on every page, not just their store list.
-// Reads `verificationStatus` (never `store.status`, which is the separate
-// marketplace-listing lifecycle field — see store.schema.ts). A verified
-// store never renders anything here. ──
+
+// ── Store approval banner — only for legacy stores an admin has not approved yet (new stores go live at once). ──
 function StoreVerificationBanner() {
-  const navigate = useNavigate();
-  const { store, storeId } = useStoreWorkspace();
-  // A store that's already marketplace-active (including a pre-verification-
-  // tracking legacy approval) never shows a verification nag, even if
-  // `verificationStatus` is stale/missing — `status` is the authoritative
-  // "already approved" signal (see the `verified` comment in StoreSidebar).
+  const { store } = useStoreWorkspace();
   if (!store || store.status === 'active') return null;
 
-  const goToVerification = () => navigate(`/store/${storeId}/verification`);
-
-  switch (store.verificationStatus) {
-    case 'rejected':
-      return (
-        <button onClick={goToVerification} className="flex w-full items-center justify-center gap-2 px-4 py-2 text-[12.5px] font-medium text-error bg-error-bg border-b border-error-border cursor-pointer text-center">
-          <XCircle size={14} className="shrink-0" />
-          Your business verification was rejected{store.rejectionReason ? `: ${store.rejectionReason}` : '.'}
-          <span className="underline font-semibold shrink-0">Fix &amp; resubmit</span>
-        </button>
-      );
-    case 'under_review':
-      return (
-        <div className="flex w-full items-center justify-center gap-2 px-4 py-2 text-[12.5px] font-medium text-[#1a5a8a] bg-info-bg border-b border-[#bfdcf3]">
-          <Clock size={14} className="shrink-0" />
-          Your store is under review by our team — you'll be notified as soon as a decision is made.
-        </div>
-      );
-    case 'pending':
-      return (
-        <div className="flex w-full items-center justify-center gap-2 px-4 py-2 text-[12.5px] font-medium text-[#1a5a8a] bg-info-bg border-b border-[#bfdcf3]">
-          <Clock size={14} className="shrink-0" />
-          Your verification application has been submitted and is waiting to be reviewed.
-        </div>
-      );
-    default:
-      return null;
+  if (store.status === 'rejected') {
+    return (
+      <div className="flex w-full items-center justify-center gap-2 px-4 py-2 text-[12.5px] font-medium text-error bg-error-bg border-b border-error-border text-center">
+        <XCircle size={14} className="shrink-0" />
+        Your store application was rejected{store.rejectionReason ? `: ${store.rejectionReason}` : '.'}
+      </div>
+    );
   }
+  if (store.status === 'pending') {
+    return (
+      <div className="flex w-full items-center justify-center gap-2 px-4 py-2 text-[12.5px] font-medium text-[#1a5a8a] bg-info-bg border-b border-[#bfdcf3]">
+        <Clock size={14} className="shrink-0" />
+        Your store is waiting for approval from our team.
+      </div>
+    );
+  }
+  return null;
 }
 
 // ── Platform-plan billing banner — past-due / scheduled-cancellation / trial-ending,
@@ -784,7 +765,7 @@ export function StoreLayout() {
           <AnnouncementBanner audience="sellers" />
           <StoreVerificationBanner />
           <PlatformBillingBanner />
-          <div className="flex-1 overflow-y-auto overscroll-contain pb-[64px] lg:pb-0">
+          <div className="flex-1 overflow-y-auto overscroll-contain pb-[64px] lg:pb-0 tap-safe">
             {/* Content column capped at a readable studio width; the builder
                and messages views keep the full canvas they need. */}
             <div className={isFullBleedRoute(currentPath) ? 'min-h-full' : 'w-full max-w-[1440px] mx-auto min-h-full'}>

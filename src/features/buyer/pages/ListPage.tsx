@@ -53,7 +53,7 @@ export function ListPage() {
       <main className="max-w-[1480px] mx-auto px-[5%] md:px-[4%] pt-4 md:pt-6 pb-12">
         <Breadcrumb className="mb-1" items={[{ label: 'Home', path: '/' }, ...(list?.isOwner ? [{ label: 'My Lists', path: '/account/lists' }] : []), { label: list?.name ?? 'List' }]} />
         {error ? (
-          <EmptyState icon={<ListChecks size={22} />} title="This list isn't available" description="It may be private or deleted. Ask the teacher who shared it for a new link." action={{ label: 'Browse resources', onClick: () => navigate('/search') }} />
+          <EmptyState icon={<ListChecks size={22} />} title="This list isn't available" description="It may be private or deleted. Ask the teacher who shared it for a new link." action={{ label: 'Browse resources', onClick: () => navigate('/') }} />
         ) : (
           <>
             <header className="mb-6 flex items-end gap-4 flex-wrap">

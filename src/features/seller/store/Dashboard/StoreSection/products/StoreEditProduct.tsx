@@ -378,7 +378,7 @@ export default function StoreEditProduct() {
   ) : null;
 
   return (
-    <div className="min-h-full" {...dirtyCapture(() => setTouched(true))}>
+    <div className="min-h-full flex flex-col tap-safe" {...dirtyCapture(() => setTouched(true))}>
       <StorePageHeader
         title="Edit product"
         subtitle={`Step ${wiz.step + 1} of ${WIZARD_STEPS.length} — ${WIZARD_STEPS[wiz.step].title}`}

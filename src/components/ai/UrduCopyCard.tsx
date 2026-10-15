@@ -64,7 +64,7 @@ export function UrduCopyCard({ storeId, productId }: { storeId: string; productI
           <button type="button" onClick={save} disabled={busy !== null || (!nameUr.trim() && !descUr.trim())} className="rounded-lg bg-brand-royal text-white px-4 py-2 text-[12px] font-semibold disabled:opacity-50">
             {busy === 'save' ? 'Saving…' : 'Save Urdu copy'}
           </button>
-          <p className="text-[11px] text-slate">Shown to buyers browsing in Urdu. AI text can contain mistakes: please review.</p>
+          <p className="text-[12px] text-slate">Shown to buyers browsing in Urdu. AI text can contain mistakes: please review.</p>
         </div>
       </div>
     </div>

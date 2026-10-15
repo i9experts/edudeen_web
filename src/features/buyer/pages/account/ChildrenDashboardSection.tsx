@@ -82,7 +82,7 @@ export function ChildrenDashboardSection() {
                   {next === undefined ? (
                     <span className="text-[12.5px] text-slate">…</span>
                   ) : next.length === 0 ? (
-                    <Link to={`/search?grade=${encodeURIComponent(c.educationLevel)}`} className="text-[13px] font-semibold text-brand-orange no-underline inline-flex items-center gap-1">{t('Browse resources for this level')} <ArrowRight size={13} /></Link>
+                    <Link to={`/?grade=${encodeURIComponent(c.educationLevel)}`} className="text-[13px] font-semibold text-brand-orange no-underline inline-flex items-center gap-1">{t('Browse resources for this level')} <ArrowRight size={13} /></Link>
                   ) : next.slice(0, 3).map(p => (
                     <Link key={p._id} to={`/learning-paths/${p.slug}`} className="text-[13px] font-semibold text-brand-orange no-underline inline-flex items-center gap-1">{p.title} <ArrowRight size={13} /></Link>
                   ))}

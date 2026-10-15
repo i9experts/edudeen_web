@@ -282,7 +282,7 @@ export default function StoreAddProduct() {
   const saveNote = saving ? 'Saving…' : draft.savedAt ? `Draft autosaved on this device ${timeAgo(draft.savedAt, now)}` : touched ? 'Unsaved changes' : 'Nothing saved yet';
 
   return (
-    <div className="min-h-full" {...dirtyCapture(() => setTouched(true))}>
+    <div className="min-h-full flex flex-col tap-safe" {...dirtyCapture(() => setTouched(true))}>
       <StorePageHeader
         title="Add a new product"
         subtitle={`Step ${wiz.step + 1} of ${WIZARD_STEPS.length} — ${WIZARD_STEPS[wiz.step].title}. Items marked Required must be filled.`}

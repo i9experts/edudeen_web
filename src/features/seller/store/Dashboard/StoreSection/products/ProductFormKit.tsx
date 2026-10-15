@@ -99,7 +99,7 @@ export function Toggle({ checked, onChange, label }: { checked: boolean; onChang
   return (
     <button type="button" onClick={() => onChange(!checked)}
       role="switch" aria-checked={checked} aria-label={label}
-      className="w-10 h-[22px] rounded-[11px] border-none cursor-pointer p-0 relative shrink-0 transition-colors duration-[180ms]"
+      className="w-10 h-[22px] rounded-[11px] border-none cursor-pointer p-0 relative shrink-0 transition-colors duration-[180ms] before:content-[''] before:absolute before:-inset-y-[10px] before:-inset-x-1"
       style={{ background: checked ? '#174771' : '#C5D2DB' }}>
       <span className="absolute top-[3px] w-4 h-4 rounded-full bg-white border border-charcoal/10 transition-[left] duration-[180ms]"
         style={{ left: checked ? 21 : 3 }} />
@@ -116,7 +116,7 @@ export function TagInput({ tags, input, onInput, onAdd, onRemove }: {
       {tags.map((t, i) => (
         <span key={i} className="bg-brand-pale-orange text-brand-orange border border-brand-orange/20 rounded-[6px] px-2 py-[2px] text-[12px] font-medium flex items-center gap-1">
           {t}
-          <button type="button" onClick={() => onRemove(i)} aria-label={`Remove tag ${t}`} className="bg-transparent border-none cursor-pointer p-0 text-brand-orange/50 text-[14px] leading-none hover:text-brand-orange">×</button>
+          <button type="button" onClick={() => onRemove(i)} aria-label={`Remove tag ${t}`} data-compact className="bg-transparent border-none cursor-pointer px-1.5 py-1 -my-1 -me-1 text-brand-orange/50 text-[14px] leading-none hover:text-brand-orange">×</button>
         </span>
       ))}
       <input value={input} onChange={e => onInput(e.target.value)} aria-label="Add a tag"
@@ -167,13 +167,13 @@ export function VariantOptionsField({ options, onChange }: { options: VariantOpt
           <div className="grid grid-cols-2 gap-[7px]">
             <input value={name} onChange={e => setName(e.target.value)} placeholder="Attribute (e.g. Edition)" aria-label="Variant attribute name"
               onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); add(); } }}
-              className={`${inp} px-2.5 py-[7px] text-[12px] bg-white`} />
+              className={`${inp} px-2.5 py-[7px] min-h-[40px] text-[12px] bg-white`} />
             <input value={value} onChange={e => setValue(e.target.value)} placeholder="Value (e.g. Hardcover)" aria-label="Variant attribute value"
               onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); add(); } }}
-              className={`${inp} px-2.5 py-[7px] text-[12px] bg-white`} />
+              className={`${inp} px-2.5 py-[7px] min-h-[40px] text-[12px] bg-white`} />
           </div>
           <button type="button" onClick={add} disabled={!canAdd}
-            className="flex items-center justify-center gap-1.5 py-[7px] rounded-md border-none text-[12px] font-semibold transition-colors"
+            className="flex items-center justify-center gap-1.5 py-[7px] min-h-[40px] rounded-md border-none text-[12px] font-semibold transition-colors"
             style={{ background: canAdd ? '#174771' : '#E8E6DC', color: canAdd ? '#fff' : '#A8A6A0', cursor: canAdd ? 'pointer' : 'not-allowed' }}>
             <Plus size={13} /> Add Attribute
           </button>

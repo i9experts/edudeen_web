@@ -1,11 +1,10 @@
 import { PlacementBanner } from '@/components/comman/marketplace/PlacementBanner';
 import { formatMoney } from '@/utils/currency';
 import type { PromotionPlacement } from '@/api/services/banner';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { clsx } from 'clsx';
 import { SearchX, X, ChevronLeft, ChevronRight, ChevronDown, Check, List, LayoutGrid } from 'lucide-react';
-import { usePageTitle } from '@/hooks/usePageTitle';
 import { useWishlistContext } from '@/contexts/WishlistContext';
 import { useCategoryTree, categoryPath } from '@/hooks/marketplace/useCategoryTree';
 import { apiBrowseProducts, type MarketplaceProduct, type MarketplaceSortBy } from '@/api/services/marketplace';
@@ -23,7 +22,7 @@ import {
   FiltersButton, FiltersDrawer, Section, RadioRow, PRICE_NO_MAX, type MarketplaceFilters,
 } from '@/components/comman/marketplace/FiltersDrawer';
 
-// Search results (`/search?q=`) and category pages (`/c/:slug`) — one layout.
+// The shop's browse layout — the homepage in browse mode (`/?category=…` / `/?search=…`, see HomeBrowse) and the Learn pages.
 // Every filter lives in the URL and is applied on the server, so results page
 // past the first screen and a filtered view can be shared or bookmarked.
 
@@ -48,7 +47,7 @@ const num = (v: string | null) => (v != null && v !== '' && Number.isFinite(Numb
 function useBrowseState() {
   const [params, setParams] = useSearchParams();
   const state = {
-    q: (params.get('q') ?? '').trim(),
+    q: (params.get('search') ?? params.get('q') ?? '').trim(),
     cat: params.get('cat') ?? '',
     grade: params.get('grade') ?? '',
     cls: isClassValue(params.get('class')) ? (params.get('class') as string) : '',
@@ -229,7 +228,7 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
         {state.q && !fix.corrected && fix.didYouMean && !loading && (
           <p className="mb-3 text-[14.5px] text-graphite" role="status">
             {t('Did you mean')}{' '}
-            <Link to={`/search?q=${encodeURIComponent(fix.didYouMean)}`} className="text-brand-royal font-semibold underline underline-offset-2">{fix.didYouMean}</Link>?
+            <Link to={`/?search=${encodeURIComponent(fix.didYouMean)}`} className="text-brand-royal font-semibold underline underline-offset-2">{fix.didYouMean}</Link>?
           </p>
         )}
 
@@ -514,12 +513,12 @@ function SearchEmptyHelp({ didYouMean, categories }: { didYouMean?: string; cate
   return (
     <div className="max-w-[720px] mx-auto mt-2 mb-6 text-center space-y-6">
       {didYouMean && (
-        <p className="text-[15px] text-graphite">{t('Did you mean')} <Link to={`/search?q=${encodeURIComponent(didYouMean)}`} className="text-brand-royal font-semibold underline underline-offset-2">{didYouMean}</Link>?</p>
+        <p className="text-[15px] text-graphite">{t('Did you mean')} <Link to={`/?search=${encodeURIComponent(didYouMean)}`} className="text-brand-royal font-semibold underline underline-offset-2">{didYouMean}</Link>?</p>
       )}
       {trending.length > 0 && (
         <div>
           <h2 className="text-[12px] font-bold tracking-[0.15em] uppercase text-slate mb-2">{t('Trending searches')}</h2>
-          <div className="flex flex-wrap justify-center gap-2">{trending.map(q => <Link key={q} to={`/search?q=${encodeURIComponent(q)}`} className={pill}>{q}</Link>)}</div>
+          <div className="flex flex-wrap justify-center gap-2">{trending.map(q => <Link key={q} to={`/?search=${encodeURIComponent(q)}`} className={pill}>{q}</Link>)}</div>
         </div>
       )}
       {cats.length > 0 && (
@@ -543,70 +542,4 @@ function pageList(current: number, total: number): (number | '…')[] {
   if (hi < total - 1) out.push('…');
   out.push(total);
   return out;
-}
-
-/** `/search?q=…` */
-export function SearchResultsPage() {
-  const { state } = useBrowseState();
-  usePageTitle(state.q ? `“${state.q}” — Search` : 'Search');
-  return (
-    <BrowseResults
-      title={state.q ? `Results for “${state.q}”` : 'All resources'}
-      eyebrow={state.q ? 'Search' : undefined}
-      breadcrumb={[{ label: 'Home', path: '/' }, { label: state.q ? `Search: ${state.q}` : 'All resources' }]}
-      showCategoryFilter
-      bannerPlacement="marketplaceHero"
-      emptyHint="Check the spelling, or try a broader word like “maths” or “Quran”."
-    />
-  );
-}
-
-/** `/c/:slug` — a main category or a subcategory. */
-export function CategoryPage() {
-  const { slug = '' } = useParams();
-  const { bySlug, byId, loading } = useCategoryTree();
-  const entry = bySlug.get(slug.toLowerCase()) ?? byId.get(slug) ?? null;
-  usePageTitle(entry?.node.name ?? 'Category');
-
-  const crumbs = useMemo(() => {
-    if (!entry) return [{ label: 'Home', path: '/' }];
-    return [
-      { label: 'Home', path: '/' },
-      ...entry.ancestors.map(a => ({ label: a.name, path: categoryPath(a) })),
-      { label: entry.node.name },
-    ];
-  }, [entry]);
-
-  if (!loading && !entry) return <Navigate to={`/search?q=${encodeURIComponent(slug.replace(/-/g, ' '))}`} replace />;
-  if (!entry) {
-    return (
-      <div className="bg-white min-h-full">
-        <div className="sticky top-[var(--navbar-top,0px)] z-50"><BuyerNavbar /></div>
-        <main className="max-w-[1480px] mx-auto px-[5%] md:px-[4%] pt-6 pb-12">
-          <div className="h-8 w-64 bg-bone rounded animate-pulse mb-6" />
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-8">
-            {Array.from({ length: 8 }, (_, i) => <ResourceCardSkeleton key={i} />)}
-          </div>
-        </main>
-      </div>
-    );
-  }
-
-  // A category lists its subcategories; a leaf subcategory lists its siblings.
-  const ownChildren = entry.node.children ?? [];
-  const subs = ownChildren.length || !entry.parent ? ownChildren : entry.parent.children ?? [];
-  return (
-    <BrowseResults
-      key={entry.node._id}
-      title={entry.node.name}
-      eyebrow={entry.parent?.name ?? 'Category'}
-      intro={entry.node.description}
-      breadcrumb={crumbs}
-      categoryId={entry.node._id}
-      subcategories={subs.filter(s => s._id !== entry.node._id)}
-      showCategoryFilter={false}
-      bannerPlacement="categoryHero"
-      emptyHint="Sellers haven't listed anything in this category yet."
-    />
-  );
 }

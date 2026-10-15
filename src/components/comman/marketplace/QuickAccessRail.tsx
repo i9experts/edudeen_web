@@ -108,7 +108,7 @@ function DealsPanel({ close }: { close: () => void }) {
 function CategoriesPanel({ close }: { close: () => void }) {
   const { tree, loading } = useCategoryTree();
   return (
-    <PanelShell title="Categories" action={<Link to="/search" onClick={close} className="text-[12px] font-semibold text-brand-orange no-underline">Browse all</Link>}>
+    <PanelShell title="Categories" action={<Link to="/?browse=all" onClick={close} className="text-[12px] font-semibold text-brand-orange no-underline">Browse all</Link>}>
       <Link to="/learn" onClick={close} className="flex items-center gap-3 mx-3 mt-3 rounded-xl border border-brand-royal/20 bg-brand-pale-orange/40 px-3 py-2.5 no-underline">
         <GraduationCap size={18} className="text-brand-royal shrink-0" />
         <span className="flex-1">

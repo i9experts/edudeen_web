@@ -36,11 +36,13 @@ export function RailCard({ product, onClick, badge, rank, size = 'md', stockLabe
   const nativeCompareAt = dv?.compareAtPrice ?? null;
   const { currency: displayCurrency, convert } = useCurrencyPreference();
   const priceSymbol = currencySymbol(displayCurrency);
-  const price     = nativePrice != null ? convert(nativePrice, dv?.currency) : null;
+  // A running platform sale: the server computes campaignPrice per variant (from the list price). Show it, strike the old price.
+  const campaignRaw = typeof dv?.campaignPrice === 'number' && nativePrice != null && dv.campaignPrice < nativePrice ? dv.campaignPrice : null;
+  const price     = nativePrice != null ? convert(campaignRaw ?? nativePrice, dv?.currency) : null;
   // Premium member: only the list price struck through + the member price (no seller sale price).
   const { isPremium } = usePremiumView();
   const member = isPremium ? memberPriceOf(dv, convert, price) : null;
-  const compareAt = member ? (member.list ?? null) : (nativeCompareAt != null ? convert(nativeCompareAt, dv?.currency) : null);
+  const compareAt = member ? (member.list ?? null) : (campaignRaw != null && nativePrice != null ? convert(Math.max(nativeCompareAt ?? 0, nativePrice), dv?.currency) : nativeCompareAt != null ? convert(nativeCompareAt, dv?.currency) : null);
   const isSm      = size === 'sm';
   const rankTone  = rank === 1 ? 'bg-[#F4DC4C] text-[#152D43]' : rank === 2 ? 'bg-[#dfe6ec] text-[#152D43]' : rank === 3 ? 'bg-[#f0d9bd] text-[#152D43]' : 'bg-carbon/85 text-white';
   return (
@@ -782,7 +784,7 @@ export function MegaMenuBar({
             <FlashSaleMegaContent flashDeals={premiumDeals ?? flashDeals} premium={!!premiumDeals} countdown={premiumDeals ? null : countdown} onProductClick={onProductClick} onViewAll={() => { setActive(null); onNavigate('/#deals'); }} />
           )}
           {active === 'top-picks' && (
-            <TopPicksMegaContent topPicks={topPicks} bestRated={bestRated} onProductClick={onProductClick} onViewAll={() => { setActive(null); onNavigate('/search?sort=popular'); }} />
+            <TopPicksMegaContent topPicks={topPicks} bestRated={bestRated} onProductClick={onProductClick} onViewAll={() => { setActive(null); onNavigate('/?sort=popularity'); }} />
           )}
           {active === 'featured-sellers' && (
             <FeaturedSellersMegaContent topStores={topStores} onStoreClick={onStoreClick} />

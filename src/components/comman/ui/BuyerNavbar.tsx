@@ -122,7 +122,7 @@ function useUncontrolledSearch() {
   const [value, setValue] = useState('');
   const submit = (term?: string) => {
     const q = (term ?? value).trim();
-    if (q) navigate(`/search?q=${encodeURIComponent(q)}`);
+    if (q) navigate(`/?search=${encodeURIComponent(q)}`);
   };
   return { value, onChange: setValue, submit };
 }
@@ -908,7 +908,7 @@ export function CurrencySelector({ tone = 'light' }: { tone?: 'light' | 'dark' }
         </>
       }
       triggerClassName={dark
-        ? 'flex items-center gap-1.5 text-[12px] font-semibold text-white border border-white/30 rounded-md ps-2 pe-[7px] py-[3px] bg-white/10 hover:bg-white/20 transition-colors cursor-pointer shrink-0'
+        ? 'flex items-center gap-1.5 text-[12px] font-semibold text-white border border-white/30 rounded-md ps-2 pe-[7px] py-[3px] min-h-10 md:min-h-0 bg-white/10 hover:bg-white/20 transition-colors cursor-pointer shrink-0'
         : 'flex items-center gap-1.5 text-[12px] font-semibold text-charcoal border border-bone rounded-md ps-2 pe-2 md:pe-[7px] py-1 bg-white hover:bg-cream transition-colors cursor-pointer shrink-0'}
       items={CURRENCY_OPTIONS.map(c => ({
         label: (
@@ -970,7 +970,7 @@ function AccountActions({ simple = false }: { simple?: boolean }) {
       <SignInPreview />
       <button
         onClick={() => navigate('/login')}
-        className="md:hidden text-[13px] font-medium text-white border-none rounded-md px-[10px] py-[6px] bg-brand-orange cursor-pointer hover:bg-brand-deep-orange transition-colors"
+        className="md:hidden min-h-10 text-[13px] font-medium text-white border-none rounded-md px-[14px] py-[6px] bg-brand-orange cursor-pointer hover:bg-brand-deep-orange transition-colors"
       >
         {t('Sign In')}
       </button>
@@ -1246,7 +1246,7 @@ export function BuyerNavbar({ variant = 'full', contextLabel, search, accentColo
               <button
                 onClick={() => setMobileSearchOpen(true)}
                 aria-label="Search"
-                className="md:hidden ms-auto shrink-0 w-9 h-9 flex items-center justify-center rounded-full text-charcoal cursor-pointer hover:bg-cream transition-colors"
+                className="md:hidden ms-auto shrink-0 w-10 h-10 flex items-center justify-center rounded-full text-charcoal cursor-pointer hover:bg-cream transition-colors"
               >
                 <Search size={16} />
               </button>

@@ -125,7 +125,7 @@ export function ComparePage() {
         icon={<Scale size={28} className="text-slate" />}
         title={t('Nothing to compare yet')}
         description={t('Tap the compare icon on 2 to 4 products, then come back here.')}
-        action={{ label: t('Browse resources'), onClick: () => { window.location.assign('/search'); } }}
+        action={{ label: t('Browse resources'), onClick: () => { window.location.assign('/'); } }}
       />
     );
     return (

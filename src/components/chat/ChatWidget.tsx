@@ -114,6 +114,8 @@ export default function ChatWidget() {
   const [busy, setBusy] = useState(false);
   const [nudge, setNudge] = useState(false);
   const [lift, setLift] = useState(0);
+  const [avoid, setAvoid] = useState(0); // px of fixed/sticky bottom bar the bubble has to clear
+  const [modalOpen, setModalOpen] = useState(false); // another dialog is open: the bubble steps out of its way
   const [panelOpenTick, setPanelOpenTick] = useState(0);
   const [conv, setConv] = useState<ConvState | null>(null);
   const [authTick, setAuthTick] = useState(0);
@@ -242,15 +244,43 @@ export default function ChatWidget() {
   }, [nudge]);
   function dismissNudge() { setNudge(false); try { localStorage.setItem(NUDGE_KEY, '1'); } catch { /* ignore */ } }
 
+  // hide the bubble (and nudge) while a page modal/bottom sheet is open so it never covers the sheet
+  useEffect(() => {
+    let raf = 0;
+    const check = () => { raf = 0; setModalOpen(Array.from(document.querySelectorAll('[aria-modal="true"]')).some(el => !el.closest('[data-chat-root]'))); };
+    const mo = new MutationObserver(() => { if (!raf) raf = requestAnimationFrame(check); });
+    mo.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['aria-modal'] });
+    check();
+    return () => { mo.disconnect(); if (raf) cancelAnimationFrame(raf); };
+  }, []);
+
   // things the bubble must not sit on: PWA install prompt, admin edit toolbar
   useEffect(() => {
-    const id = window.setInterval(() => {
+    // Any bottom bar that marks itself `data-chat-avoid` (sticky Save/Publish bars, bulk-action bars, the seller bottom nav)
+    // pushes the bubble up so it never covers a button.
+    const measureAvoid = () => {
+      let need = 0;
+      document.querySelectorAll<HTMLElement>('[data-chat-avoid]').forEach(el => {
+        const r = el.getBoundingClientRect();
+        const cs = getComputedStyle(el);
+        if (r.height < 8 || cs.display === 'none' || cs.visibility === 'hidden') return;
+        if (r.top >= window.innerHeight || r.bottom < window.innerHeight - 320) return; // not sitting at the bottom edge
+        need = Math.max(need, window.innerHeight - r.top + 12);
+      });
+      setAvoid(prev => (Math.abs(prev - need) < 2 ? prev : Math.round(need)));
+    };
+    const tick = () => {
       const install = !!document.querySelector('[aria-label="Install Edudeen"]');
       setLift(install ? 96 : 0);
+      measureAvoid();
       if (editing) setPanelOpenTick(n => n + 1);
-    }, 1200);
-    return () => window.clearInterval(id);
-  }, [editing]);
+    };
+    const id = window.setInterval(tick, 500);
+    const soon = window.setTimeout(tick, 250);
+    window.addEventListener('resize', measureAvoid);
+    window.addEventListener('scroll', measureAvoid, { passive: true, capture: true });
+    return () => { window.clearInterval(id); window.clearTimeout(soon); window.removeEventListener('resize', measureAvoid); window.removeEventListener('scroll', measureAvoid, true); };
+  }, [editing, pathname]);
   void panelOpenTick;
   const adminPanelOpen = (() => { if (!editing) return false; try { return localStorage.getItem('adminEditPanel') !== 'closed'; } catch { return true; } })();
 
@@ -355,7 +385,7 @@ export default function ChatWidget() {
   const navH = isMobile ? 76 : 24; // phones: above the 64px bottom nav
   const needsLift = isMobile && (LIFT_PATH.test(pathname) || compareItems.length > 0);
   const adminOffset = !isMobile && editing && adminPanelOpen ? 360 : 0;
-  const bottomPx = navH + (needsLift ? 84 : 0) + lift;
+  const bottomPx = Math.max(navH + (needsLift ? 84 : 0) + lift, avoid ? avoid + lift : 0);
   // an admin on the public site has the Edit-mode pill in this corner - sit above it
   const adminLift = isAdmin && !(editing && adminPanelOpen) ? 52 : 0;
   const bubbleBottom = bottomPx + adminLift;
@@ -379,7 +409,7 @@ export default function ChatWidget() {
   const closeNav = () => { if (isMobile) closeChat(); };
 
   return (
-    <div translate="no" className="print:hidden">
+    <div translate="no" data-chat-root className="print:hidden" style={modalOpen && !open ? { display: 'none' } : undefined}>
       {!open && nudge && (
         <div role="status" style={{ ...bubbleStyle, bottom: `calc(${bubbleBottom + 64}px + env(safe-area-inset-bottom, 0px))` }}
           className="fixed z-[45] max-w-[240px] rounded-2xl bg-white border border-bone shadow-lg ps-3.5 pe-2 py-2.5 text-[13px] text-carbon flex items-start gap-2">

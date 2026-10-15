@@ -33,7 +33,7 @@ export function useLogin() {
       }
       // An existing seller's own real store state (not a hardcoded guess)
       // decides where they land — onboarding if they never finished setup,
-      // verification if a store is pending/rejected, dashboard once active.
+      // their store dashboard once a store exists.
       const destination = serverRole === 'seller' ? await resolveSellerDestinationRemote() : getRoleRedirect(serverRole);
       navigate(destination, { replace: true });
     } catch (err) {

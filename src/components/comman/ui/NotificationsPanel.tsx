@@ -377,7 +377,7 @@ export function NotificationsPanel() {
                     <button
                       title="Mark as read"
                       onClick={() => markAsRead(notif._id)}
-                      className="size-7 rounded-lg bg-white border border-bone flex items-center justify-center cursor-pointer text-success hover:bg-success-bg transition-colors"
+                      className="size-7 max-lg:size-10 shrink-0 rounded-lg bg-white border border-bone flex items-center justify-center cursor-pointer text-success hover:bg-success-bg transition-colors"
                     >
                       <Check size={13} />
                     </button>
@@ -385,7 +385,7 @@ export function NotificationsPanel() {
                   <button
                     title="Delete notification"
                     onClick={() => deleteNotification(notif._id)}
-                    className="size-7 rounded-lg bg-white border border-bone flex items-center justify-center cursor-pointer text-error hover:bg-error-bg transition-colors"
+                    className="size-7 max-lg:size-10 shrink-0 rounded-lg bg-white border border-bone flex items-center justify-center cursor-pointer text-error hover:bg-error-bg transition-colors"
                   >
                     <Trash2 size={13} />
                   </button>

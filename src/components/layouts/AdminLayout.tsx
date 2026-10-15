@@ -41,7 +41,7 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { id: 'moderation',    Icon: Shield,          label: 'Moderation',      path: '/admin/moderation'    },
   { id: 'activity-log',  Icon: Activity,        label: 'Activity Log',    path: '/admin/activity-log'  },
   { id: 'messages',      Icon: MessageSquare,   label: 'Messages',        path: '/admin/messages'      },
-  { id: 'leads',         Icon: UserPlus,        label: 'Seller Applications', path: '/admin/leads'     },
+  { id: 'leads',         Icon: UserPlus,        label: 'Store approvals', path: '/admin/leads'     },
   { id: 'orders',        Icon: ShoppingBag,     label: 'Orders',          path: '/admin/orders'        },
   { id: 'refunds',       Icon: Undo2,           label: 'Refunds',         path: '/admin/refunds'       },
   { id: 'shipping-zones',Icon: Truck,           label: 'Shipping Zones',  path: '/admin/shipping-zones' },

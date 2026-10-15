@@ -81,16 +81,9 @@ export interface StoreData {
   customDomain: string | null;
   customDomainStatus: 'unverified' | 'verified';
   whiteLabelEnabled: boolean;
-  /** Marketplace listing lifecycle — independent of `verificationStatus`
-   *  below (see store.schema.ts). Only `'active'` unlocks product creation
+  /** Marketplace listing lifecycle — (see store.schema.ts). Only `'active'` unlocks product creation
    *  and public storefront/marketplace visibility. */
   status:       'pending' | 'active' | 'rejected' | 'suspended';
-  /** KYC/business-verification review state — see store.schema.ts's
-   *  VERIFICATION_TRANSITIONS. Drives seller-workspace nav gating. */
-  verificationStatus: 'not_started' | 'pending' | 'under_review' | 'verified' | 'rejected';
-  /** Server-computed only (determineVerificationLevel) — never trust a
-   *  client-side guess of this value. */
-  verificationLevel: 'basic' | 'business' | 'enhanced' | null;
   country:      string;
   businessType: 'individual' | 'company' | 'partnership' | null;
   /** Set by an admin when rejecting a pending lead — see AdminMarketplaceService.rejectLead. */

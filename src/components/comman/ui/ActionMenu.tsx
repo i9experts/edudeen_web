@@ -187,7 +187,7 @@ export function ActionMenu({ items, align = 'right', className, trigger, trigger
         aria-label={ariaLabel ?? 'Open actions menu'}
         onClick={e => { e.stopPropagation(); setOpen(o => !o); }}
         className={triggerClassName ?? clsx(
-          'w-8 h-8 rounded-[7px] border flex items-center justify-center transition-colors cursor-pointer',
+          'w-8 h-8 max-lg:w-10 max-lg:h-10 rounded-[7px] border flex items-center justify-center transition-colors cursor-pointer',
           open
             ? 'bg-brand-pale-orange border-brand-orange text-brand-orange'
             : 'bg-white border-bone text-slate hover:bg-cream hover:border-[#c5c4bc]',

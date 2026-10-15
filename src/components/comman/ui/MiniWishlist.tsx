@@ -74,7 +74,7 @@ export function MiniWishlist() {
         aria-label={`Wishlist${wishlistCount > 0 ? ` (${wishlistCount} items)` : ''}`}
         aria-haspopup="true"
         aria-expanded={open}
-        className="relative h-9 min-w-9 px-0 md:px-1 flex items-center justify-center gap-[5px] bg-transparent border-none cursor-pointer shrink-0 whitespace-nowrap text-[15px] text-carbon hover:text-brand-orange transition-colors outline-none rounded-md focus-visible:ring-2 focus-visible:ring-brand-orange/40"
+        className="relative h-10 min-w-10 md:h-9 md:min-w-9 px-0 md:px-1 flex items-center justify-center gap-[5px] bg-transparent border-none cursor-pointer shrink-0 whitespace-nowrap text-[15px] text-carbon hover:text-brand-orange transition-colors outline-none rounded-md focus-visible:ring-2 focus-visible:ring-brand-orange/40"
       >
         <Heart size={15} className={wishlistCount > 0 ? 'text-brand-orange fill-brand-orange' : 'fill-none'} />
         <span className="hidden md:inline">{t('Saved')}</span>

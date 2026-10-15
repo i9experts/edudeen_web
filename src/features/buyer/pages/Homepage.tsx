@@ -1,3 +1,4 @@
+import { HomeBrowse, isBrowseMode } from './HomeBrowse';
 import { EarlyAccessChip } from '@/components/comman/ui/EarlyAccessChip';
 import { PlacementBanner } from '@/components/comman/marketplace/PlacementBanner';
 import { usePublicPlatformConfig } from '@/hooks/usePublicPlatformConfig';
@@ -7,7 +8,7 @@ import { EditableCategories, EditableDeals } from '@/components/admin-edit/Edita
 import { DealsBanner } from '@/components/comman/ui/DealsBanner';
 import { FeatureMaintenance } from '@/components/comman/ui/FeatureMaintenance';
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { X } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useIsBuyer } from '@/hooks/auth/useIsBuyer';
@@ -132,7 +133,7 @@ const linkButtonClass = sectionLinkClass;
  * platform stats and real reviews. Every product, store, count and review is
  * real API data; each section self-hides until it has something to show.
  */
-export function Homepage() {
+function HomeLanding() {
   // Admin-editable copy (Admin → Platform Config → Homepage content); blank = built-in default below.
   const { config: publicConfig, loading: configLoading } = usePublicPlatformConfig();
   // Until the admin-edited content has arrived, don't paint the built-in default hero (it flashed for a few seconds, then swapped to the real one).
@@ -182,7 +183,7 @@ export function Homepage() {
 
   const submitSearch = (term: string) => {
     const q = term.trim();
-    navigate(q ? `/search?q=${encodeURIComponent(q)}` : '/');
+    navigate(q ? `/?search=${encodeURIComponent(q)}` : '/');
   };
   const clearSearch = () => setSearchParams(prev => {
     const next = new URLSearchParams(prev);
@@ -271,19 +272,6 @@ export function Homepage() {
     const node = allCategories.find(c => catTabId(c._id) === subject);
     return node ? { id: subject, label: node.name, categoryId: node._id, node } : null;
   }, [subject, shopTabs, allCategories]);
-
-  // `/?category=<slug>` (old /marketplace/<slug> links) opens that category.
-  useEffect(() => {
-    const slug = searchParams.get('category');
-    if (!slug || allCategories.length === 0) return;
-    const node = allCategories.find(c => c.slug === slug);
-    if (node) {
-      const tab = shopTabs.find(t => t.categoryId === node._id);
-      setSubject(tab ? tab.id : catTabId(node._id));
-    }
-    setSearchParams(prev => { const n = new URLSearchParams(prev); n.delete('category'); return n; }, { replace: true });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allCategories.length]);
 
   const languageDef = LANGUAGES.find(l => l.value === language) ?? null;
   const itemType = filters.type[0]?.toLowerCase() as TypeFilter | undefined;
@@ -483,9 +471,6 @@ export function Homepage() {
     { value: stats.ratingCount > 0 ? stats.avgRating : null, format: (n: number) => `${n.toFixed(1)} ★`, label: 'Average Rating' },
   ] : [];
 
-
-  // Old `/?search=` links now open the real search results page.
-  if (searchQ) return <Navigate to={`/search?q=${encodeURIComponent(searchQ)}`} replace />;
 
   return (
     <div className="bg-white min-h-full">
@@ -917,4 +902,10 @@ export function Homepage() {
       <Footer />
     </div>
   );
+}
+
+/** The homepage is the shop: with a category / search / filter in the URL it shows the browse view, otherwise the landing page. */
+export function Homepage() {
+  const [params] = useSearchParams();
+  return isBrowseMode(params) ? <HomeBrowse /> : <HomeLanding />;
 }

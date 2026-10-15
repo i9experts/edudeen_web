@@ -105,13 +105,13 @@ export function AppOpenFab() {
       aria-label="Open the Edudeen app"
       className={clsx(
         'drawer-enter-right md:hidden fixed end-0 top-[34%] -translate-y-1/2 z-40',
-        'flex items-center gap-[4px] rounded-s-xl border border-e-0 border-bone py-[7px] px-[8px]',
+        'flex items-center gap-[4px] rounded-s-xl border border-e-0 border-bone min-h-10 py-[7px] px-[8px]',
         'bg-white text-brand-orange cursor-pointer',
         'transition-all duration-500 ease-out hover:px-[10px]',
       )}
     >
       <EdudeenIcon size={15} />
-      <span className="text-[12px] font-bold uppercase tracking-[0.04em]">
+      <span className="hidden min-[480px]:inline text-[12px] font-bold uppercase tracking-[0.04em]">
         Open
       </span>
     </button>

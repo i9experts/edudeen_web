@@ -514,7 +514,7 @@ export default function StoreBulkUpload() {
   const detailRow = detail ? rows.find(r => r.id === detail.rowId) : undefined;
 
   return (
-    <div className="min-h-full">
+    <div className="min-h-full tap-safe">
       <StorePageHeader
         title="Bulk upload"
         subtitle="Add many products at once - digital, educational or physical."
@@ -667,7 +667,7 @@ export default function StoreBulkUpload() {
             <div className="rounded-xl border border-bone bg-white">
               <div className="flex flex-wrap items-center gap-3 px-4 py-3">
                 <label className="inline-flex items-center gap-2 text-[13px] font-bold text-carbon cursor-pointer">
-                  <input type="checkbox" checked={allSelected} onChange={() => setSelected(allSelected ? new Set() : new Set(editable.map(r => r.id)))} className="size-4 accent-brand-royal" aria-label="Select all products" />
+                  <label className="inline-flex items-center justify-center size-8 max-lg:size-10 -ms-2 cursor-pointer"><input type="checkbox" checked={allSelected} onChange={() => setSelected(allSelected ? new Set() : new Set(editable.map(r => r.id)))} className="size-4 accent-brand-royal" aria-label="Select all products" /></label>
                   Select all
                 </label>
                 <span className="text-[13px] text-slate" data-testid="bulk-selected-count">{selectedRows.length} selected</span>
@@ -695,7 +695,7 @@ export default function StoreBulkUpload() {
                       <div>
                         <label htmlFor="ap-stock" className={lab}>Stock quantity</label>
                         <input id="ap-stock" type="number" min={0} max={100000} inputMode="numeric" className={inp} value={ap.stock} disabled={ap.unlimited} onChange={e => setAp(a => ({ ...a, stock: e.target.value }))} />
-                        <label className="mt-1.5 inline-flex items-center gap-1.5 text-[12.5px] text-graphite cursor-pointer"><input type="checkbox" className="size-3.5 accent-brand-royal" checked={ap.unlimited} data-testid="ap-unlimited" onChange={e => setAp(a => { const n = toggleRemember({ value: a.stock, saved: a.savedStock }, e.target.checked); return { ...a, unlimited: e.target.checked, stock: n.value, savedStock: n.saved }; })} />Unlimited stock</label>
+                        <label className="mt-1.5 inline-flex items-center gap-1.5 text-[12.5px] text-graphite cursor-pointer max-lg:py-2.5 max-lg:-my-1"><input type="checkbox" className="size-3.5 accent-brand-royal" checked={ap.unlimited} data-testid="ap-unlimited" onChange={e => setAp(a => { const n = toggleRemember({ value: a.stock, saved: a.savedStock }, e.target.checked); return { ...a, unlimited: e.target.checked, stock: n.value, savedStock: n.saved }; })} />Unlimited stock</label>
                       </div>
                     )}
                     {type === 'physical' && (
@@ -773,8 +773,8 @@ export default function StoreBulkUpload() {
 
       {/* Create bar */}
       {rows.length > 0 && (
-        <div className="sticky bottom-[56px] lg:bottom-0 z-10 bg-white/95 backdrop-blur-md border-t border-bone px-4 md:px-8 py-2.5">
-          <div className="mx-auto max-w-[1400px] flex flex-wrap items-center gap-2 sm:gap-3 pe-16 md:pe-20">
+        <div data-chat-avoid className="sticky bottom-[56px] lg:bottom-0 z-10 bg-white/95 backdrop-blur-md border-t border-bone px-4 md:px-8 py-2.5">
+          <div className="mx-auto max-w-[1400px] flex flex-wrap items-center gap-2 sm:gap-3">
             <div className="min-w-0 basis-full sm:basis-0 sm:flex-1 text-[12.5px] text-slate leading-snug" role="status" data-testid="bulk-progress">
               {creating ? <span className="inline-flex items-center gap-1.5 font-bold text-carbon"><Loader2 size={14} className="animate-spin" /> Creating {progress.done}/{progress.total}…</span>
                 : <span className="hidden sm:inline">{draft.savedAt ? `Saved on this device ${timeAgo(draft.savedAt, now)}` : 'Your table is saved on this device as you go.'}</span>}
@@ -789,20 +789,26 @@ export default function StoreBulkUpload() {
             )}
             <button type="button" onClick={() => runCreate('draft')} disabled={creating || uploadingCount > 0 || readyRows.length === 0} data-testid="bulk-save-drafts"
               className="max-sm:flex-1 px-3 sm:px-4 py-[10px] rounded-lg text-[14px] font-bold text-brand-orange bg-white border border-bone cursor-pointer hover:bg-cream disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">
-              Save all as drafts
+              <span className="sm:hidden">Save drafts</span><span className="hidden sm:inline">Save all as drafts</span>
             </button>
             <button type="button" onClick={() => runCreate('publish')} disabled={creating || uploadingCount > 0 || readyRows.length === 0} data-testid="bulk-publish"
               className="max-sm:flex-1 px-3 sm:px-5 py-[10px] rounded-lg text-[14px] font-bold bg-brand-orange text-white border-none cursor-pointer hover:bg-brand-deep-orange disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">
               Publish ready ({readyRows.length})
             </button>
           </div>
+          {undo && (
+            <div role="status" data-chat-avoid data-testid="bulk-undo" className="absolute bottom-full inset-x-4 mb-2 mx-auto max-w-[360px] rounded-xl bg-carbon text-white ps-4 pe-2 py-1 flex items-center gap-3 shadow-lg text-[13px]">
+              <span className="flex-1">Product removed.</span>
+              <button type="button" onClick={undoRemove} className="font-bold underline bg-transparent border-none text-white cursor-pointer px-2 min-h-[40px]">Undo</button>
+            </div>
+          )}
         </div>
       )}
 
-      {undo && (
+      {undo && rows.length === 0 && (
         <div role="status" data-testid="bulk-undo" className="fixed z-30 bottom-[140px] lg:bottom-20 inset-x-4 mx-auto max-w-[360px] rounded-xl bg-carbon text-white px-4 py-2.5 flex items-center gap-3 shadow-lg text-[13px]">
           <span className="flex-1">Product removed.</span>
-          <button type="button" onClick={undoRemove} className="font-bold underline bg-transparent border-none text-white cursor-pointer p-0">Undo</button>
+          <button type="button" onClick={undoRemove} className="font-bold underline bg-transparent border-none text-white cursor-pointer px-2 py-2.5 -my-2 min-h-[40px]">Undo</button>
         </div>
       )}
 
@@ -994,7 +1000,7 @@ function RowCard({ row: r, index, issue, conflict, currencyCode, dupOf, currency
   return (
     <div className={`rounded-xl border bg-white p-3 sm:p-4 ${created ? 'border-success/30 opacity-90' : issue || r.createState === 'failed' ? 'border-error-border' : 'border-bone'}`} data-testid="bulk-row" data-row-title={r.title}>
       <div className="flex flex-wrap items-center gap-2">
-        {!created && <input type="checkbox" checked={selected} onChange={onSelect} aria-label={`Select ${name}`} className="size-4 accent-brand-royal" />}
+        {!created && <label className="inline-flex items-center justify-center size-8 max-lg:size-10 -ms-2 shrink-0 cursor-pointer"><input type="checkbox" checked={selected} onChange={onSelect} aria-label={`Select ${name}`} className="size-4 accent-brand-royal" /></label>}
         <span className="text-[12px] text-slate">#{index + 1}</span>
         {needsFile && r.fileName && <span className="inline-flex items-center gap-1.5 text-[12px] text-graphite min-w-0 max-w-full"><FileText size={13} className="shrink-0" /><span className="truncate" title={r.fileName}>{r.fileName}</span></span>}
         {needsFile && !created && (r.uploadState === 'none' || r.uploadState === 'done' || (r.uploadState === 'failed' && !r.fileName)) && (
@@ -1023,8 +1029,8 @@ function RowCard({ row: r, index, issue, conflict, currencyCode, dupOf, currency
           <span data-testid="bulk-row-status" className={`px-2.5 py-1 rounded-full text-[12px] font-bold border ${tone}`}>{statusLabel}</span>
           {created && r.productId && <Link to={`/store/${storeId}/products/edit/${r.productId}`} className="inline-flex items-center gap-1 text-[12px] font-bold text-brand-royal no-underline hover:underline">Edit</Link>}
           {!created && <DetailsMenu row={r} type={type} onOpen={onOpenDetail} disabled={busy} />}
-          {!created && <button type="button" onClick={onDuplicate} disabled={busy || r.uploadState === 'queued' || r.uploadState === 'uploading'} aria-label={`Duplicate ${name}`} title="Duplicate" className="size-8 rounded-lg flex items-center justify-center text-slate hover:bg-cream border-none bg-transparent cursor-pointer disabled:opacity-40"><Copy size={15} /></button>}
-          {!created && <button type="button" onClick={onRemove} disabled={busy} aria-label={`Remove ${name}`} title="Remove" className="size-8 rounded-lg flex items-center justify-center text-slate hover:text-error hover:bg-error-bg border-none bg-transparent cursor-pointer disabled:opacity-40"><Trash2 size={15} /></button>}
+          {!created && <button type="button" onClick={onDuplicate} disabled={busy || r.uploadState === 'queued' || r.uploadState === 'uploading'} aria-label={`Duplicate ${name}`} title="Duplicate" className="size-8 shrink-0 max-lg:size-10 rounded-lg flex items-center justify-center text-slate hover:bg-cream border-none bg-transparent cursor-pointer disabled:opacity-40"><Copy size={15} /></button>}
+          {!created && <button type="button" onClick={onRemove} disabled={busy} aria-label={`Remove ${name}`} title="Remove" className="size-8 shrink-0 max-lg:size-10 rounded-lg flex items-center justify-center text-slate hover:text-error hover:bg-error-bg border-none bg-transparent cursor-pointer disabled:opacity-40"><Trash2 size={15} /></button>}
         </span>
       </div>
       {chips.length > 0 && !created && (
@@ -1068,7 +1074,7 @@ function RowCard({ row: r, index, issue, conflict, currencyCode, dupOf, currency
           <div className={`col-span-6 ${type === 'digital' ? 'lg:col-span-3' : 'lg:col-span-2'}`}>
             <div className="flex items-center justify-between gap-2">
               <label htmlFor={`p-${r.id}`} className={lab}>Price ({currency})</label>
-              {type !== 'physical' && <label className="mb-1 inline-flex items-center gap-1 text-[12px] text-graphite cursor-pointer"><input type="checkbox" className="size-3.5 accent-brand-royal" disabled={lock} checked={r.free} data-testid="free-toggle" onChange={e => { const n = toggleRemember({ value: r.price, saved: r.savedPrice }, e.target.checked); onChange({ free: e.target.checked, price: n.value, savedPrice: n.saved }); }} />Free</label>}
+              {type !== 'physical' && <label className="mb-1 inline-flex items-center gap-1 text-[12px] text-graphite cursor-pointer max-lg:py-2.5 max-lg:-my-2.5"><input type="checkbox" className="size-3.5 accent-brand-royal" disabled={lock} checked={r.free} data-testid="free-toggle" onChange={e => { const n = toggleRemember({ value: r.price, saved: r.savedPrice }, e.target.checked); onChange({ free: e.target.checked, price: n.value, savedPrice: n.saved }); }} />Free</label>}
             </div>
             <input id={`p-${r.id}`} className={inp} type="number" min={0} step={moneyStep} inputMode="decimal" disabled={lock || r.free} value={r.free ? '' : r.price} placeholder={r.free ? 'Free' : ''} onChange={e => onChange({ price: e.target.value })} aria-invalid={!r.free && r.price.trim() !== '' && !!priceErr.price} />
           </div>
@@ -1076,7 +1082,7 @@ function RowCard({ row: r, index, issue, conflict, currencyCode, dupOf, currency
             <div className="col-span-6 lg:col-span-2">
               <div className="flex items-center justify-between gap-2">
                 <label htmlFor={`s-${r.id}`} className={lab}>Stock quantity</label>
-                <label className="mb-1 inline-flex items-center gap-1 text-[12px] text-graphite cursor-pointer"><input type="checkbox" className="size-3.5 accent-brand-royal" disabled={lock} checked={r.unlimitedStock} data-testid="unlimited-toggle" onChange={e => { const n = toggleRemember({ value: r.stock, saved: r.savedStock }, e.target.checked); onChange({ unlimitedStock: e.target.checked, stock: n.value, savedStock: n.saved, zeroStockOk: false }); }} />Unlimited</label>
+                <label className="mb-1 inline-flex items-center gap-1 text-[12px] text-graphite cursor-pointer max-lg:py-2.5 max-lg:-my-2.5"><input type="checkbox" className="size-3.5 accent-brand-royal" disabled={lock} checked={r.unlimitedStock} data-testid="unlimited-toggle" onChange={e => { const n = toggleRemember({ value: r.stock, saved: r.savedStock }, e.target.checked); onChange({ unlimitedStock: e.target.checked, stock: n.value, savedStock: n.saved, zeroStockOk: false }); }} />Unlimited</label>
               </div>
               <input id={`s-${r.id}`} className={inp} type="number" min={0} max={100000} step={1} inputMode="numeric" disabled={lock || r.unlimitedStock} value={r.unlimitedStock ? '' : r.stock} placeholder={r.unlimitedStock ? 'Unlimited' : '0'} onChange={e => onChange({ stock: e.target.value, zeroStockOk: false })} />
               {!r.unlimitedStock && r.stock.trim() !== '' && Number(r.stock) === 0 && (

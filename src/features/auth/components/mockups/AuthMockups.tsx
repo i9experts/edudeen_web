@@ -45,7 +45,7 @@ export function MarketplaceMockup() {
             <div className="size-7 rounded-lg bg-brand-orange/20 border border-brand-orange/30 flex items-center justify-center">
               <ShoppingBag size={13} className="text-brand-orange" />
             </div>
-            <span className="text-[12px] font-semibold text-white">Marketplace</span>
+            <span className="text-[12px] font-semibold text-white">Shop</span>
           </div>
           <span className="text-[12px] text-white/50">Live</span>
         </div>

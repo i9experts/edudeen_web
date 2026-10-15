@@ -103,7 +103,7 @@ export function AdminOverview() {
     { to: '/admin/users?role=seller', label: 'Seller accounts',           value: formatNumber(overview.totalSellers),             trend: undefined, trendUp: true, sub: undefined, icon: <Users size={16} /> },
     { to: '/admin/users?role=seller&status=active', label: 'Sellers active this month', value: formatNumber(overview.sellersActiveThisMonth),   trend: overview.sellersActiveThisMonthChange ? formatPercent(overview.sellersActiveThisMonthChange, { signed: true }) : undefined, trendUp: (overview.sellersActiveThisMonthChange ?? 0) >= 0, sub: undefined, icon: <UserCheck size={16} /> },
     { to: '/admin/leads', label: 'Total stores',              value: formatNumber(overview.totalStores),              trend: undefined, trendUp: true, sub: undefined, icon: <Store size={16} /> },
-    { to: '/admin/leads?status=verified', label: 'Active stores',             value: formatNumber(overview.activeStores),             trend: undefined, trendUp: true, sub: undefined, icon: <Store size={16} /> },
+    { to: '/admin/leads?status=active', label: 'Active stores',             value: formatNumber(overview.activeStores),             trend: undefined, trendUp: true, sub: undefined, icon: <Store size={16} /> },
     { to: '/admin/users?role=buyer', label: 'New users',                 value: formatNumber(overview.newUsers),                 trend: undefined, trendUp: true, sub: `${formatNumber(overview.totalCustomers)} total customers`, icon: <UserPlus size={16} /> },
   ] : [];
 
@@ -128,9 +128,9 @@ export function AdminOverview() {
     { key: 'store', header: 'Store', render: l => <span className="text-carbon">{l.storeName}</span> },
     { key: 'category', header: 'Category', render: l => l.categoryName ?? '—' },
     { key: 'submitted', header: 'Submitted', render: l => formatDate(l.submittedAt) },
-    { key: 'status', header: 'Status', render: l => <StatusBadge status={l.verificationStatus} size="sm" /> },
+    { key: 'status', header: 'Status', render: l => <StatusBadge status={l.storeStatus} size="sm" /> },
     { key: 'action', header: 'Action', render: () => (
-      <button type="button" onClick={() => navigate('/admin/leads')} className={textLinkClass}>Review application</button>
+      <button type="button" onClick={() => navigate('/admin/leads')} className={textLinkClass}>Review store</button>
     ) },
   ];
 
@@ -168,12 +168,12 @@ export function AdminOverview() {
       content: <StudioInfoGrid items={REVIEW_CRITERIA} />,
     },
     {
-      id: 'leads', title: 'Seller applications',
-      description: 'New stores waiting for verification before they can publish.',
+      id: 'leads', title: 'Store approvals',
+      description: 'Older stores still waiting for an admin to approve them.',
       status: leads.data ? <Badge color={(leads.data.items?.length ?? 0) > 0 ? 'yellow' : 'gray'} size="sm">{formatNumber(leads.data.items?.length ?? 0)} waiting</Badge> : undefined,
       content: (
         <div className="flex flex-col gap-3">
-          <div className="flex justify-end"><button type="button" onClick={() => navigate('/admin/leads')} className={textLinkClass}>All applications <ArrowRight size={13} /></button></div>
+          <div className="flex justify-end"><button type="button" onClick={() => navigate('/admin/leads')} className={textLinkClass}>All stores <ArrowRight size={13} /></button></div>
           {leads.error ? (
             <InlineSectionError message={leads.error} onRetry={leads.refetch} />
           ) : (
@@ -184,7 +184,7 @@ export function AdminOverview() {
                 keyExtractor={l => l.id}
                 loading={leads.loading}
                 loadingRows={3}
-                emptyState={{ icon: <UserPlus size={28} className="text-slate/50" />, title: 'No applications waiting', description: 'Stores submitted for verification will appear here.' }}
+                emptyState={{ icon: <UserPlus size={28} className="text-slate/50" />, title: 'No stores waiting', description: 'New stores go live automatically.' }}
               />
             </div>
           )}

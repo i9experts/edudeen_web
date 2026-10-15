@@ -30,9 +30,12 @@ export function ProductPhotosUploader({ value, onChange, max = MAX_PRODUCT_PHOTO
   const alive = useRef(true);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => () => {
+  useEffect(() => {
+    alive.current = true; // StrictMode (dev) runs the cleanup once and re-runs the effect
+    return () => {
     alive.current = false;
     itemsRef.current.forEach(i => URL.revokeObjectURL(i.preview));
+    };
   }, []);
 
   const total = value.length + items.filter(i => i.status !== 'error').length;

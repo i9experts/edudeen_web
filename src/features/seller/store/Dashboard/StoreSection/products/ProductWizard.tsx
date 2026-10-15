@@ -86,7 +86,7 @@ export function useWizard(issues: WizardIssue[], verb: 'Add' | 'Edit', initialVi
 // ── Step rail ────────────────────────────────────────────────────────────────
 export function StepRail({ step, statusOf, onGo }: { step: number; statusOf: (i: number) => StepState; onGo: (i: number) => void }) {
   return (
-    <nav aria-label="Product steps" className="lg:sticky lg:top-[152px] max-lg:sticky max-lg:top-[57px] max-lg:z-[9] max-lg:bg-cream max-lg:-mx-4 max-lg:px-4 max-lg:py-2 max-lg:border-b max-lg:border-bone">
+    <nav aria-label="Product steps" className="lg:sticky lg:top-[152px] max-lg:sticky max-lg:top-[76px] sm:max-lg:top-[100px] max-lg:z-[9] max-lg:bg-cream max-lg:-mx-4 max-lg:px-4 max-lg:py-2 max-lg:border-b max-lg:border-bone">
       <ol className="flex lg:flex-col gap-2 lg:gap-1 overflow-x-auto lg:overflow-visible list-none p-0 m-0 pb-1 lg:pb-0" data-no-edge-scroll>
         {WIZARD_STEPS.map((s, i) => {
           const state = statusOf(i);
@@ -181,12 +181,12 @@ export function ActionBar({ saving, primaryLabel, onPrimary, onDraft, onCancel, 
   saveNote: string; missing: number; onShowMissing: () => void;
 }) {
   return (
-    <div className="sticky bottom-[56px] lg:bottom-0 z-10 bg-white/95 backdrop-blur-md border-t border-bone px-4 md:px-8 py-2.5">
+    <div data-chat-avoid className="mt-auto sticky bottom-[56px] lg:bottom-0 z-10 bg-white/95 backdrop-blur-md border-t border-bone px-4 md:px-8 py-2.5">
       <div className="mx-auto max-w-[1700px] flex items-center gap-2 sm:gap-3">
         <div className="min-w-0 flex-1 text-[12px] text-slate leading-snug">
-          <span className="block truncate" role="status">{saveNote}</span>
+          <span className="block sm:truncate" role="status">{saveNote}</span>
           {missing > 0 && (
-            <button type="button" onClick={onShowMissing} className="bg-transparent border-none p-0 cursor-pointer text-error font-bold underline underline-offset-2 text-[12px]">
+            <button type="button" onClick={onShowMissing} className="bg-transparent border-none px-0 py-3 -my-3 cursor-pointer text-error font-bold underline underline-offset-2 text-[12px]">
               {missing} required {missing === 1 ? 'thing' : 'things'} missing
             </button>
           )}
@@ -330,14 +330,21 @@ export function useLeaveGuard(dirty: boolean) {
     window.addEventListener('beforeunload', h);
     return () => window.removeEventListener('beforeunload', h);
   }, [dirty]);
-  const dialog = blocker.state === 'blocked' ? (
+  const isBlocked = blocker.state === 'blocked';
+  useEffect(() => {
+    if (!isBlocked) return;
+    const h = (e: KeyboardEvent) => { if (e.key === 'Escape') blocker.reset?.(); };
+    window.addEventListener('keydown', h);
+    return () => window.removeEventListener('keydown', h);
+  }, [isBlocked, blocker]);
+  const dialog = isBlocked ? (
     <div className="fixed inset-0 z-[60] bg-black/40 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Unsaved changes">
       <div className="bg-white rounded-xl p-5 max-w-[380px] w-full shadow-xl">
         <h2 className="font-serif font-normal text-[20px] text-carbon m-0 mb-1.5">Leave without saving?</h2>
         <p className="text-[13px] text-slate m-0 mb-4">You have changes that are not saved to your store yet.</p>
         <div className="flex justify-end gap-2">
-          <button type="button" onClick={() => blocker.reset()} className="px-4 py-2 rounded-lg text-[14px] font-bold bg-brand-royal text-white border-none cursor-pointer">Keep editing</button>
-          <button type="button" onClick={() => blocker.proceed()} className="px-4 py-2 rounded-lg text-[14px] font-bold text-graphite bg-white border border-bone cursor-pointer">Leave</button>
+          <button type="button" autoFocus onClick={() => blocker.reset()} className="px-4 py-2 min-h-[40px] rounded-lg text-[14px] font-bold bg-brand-royal text-white border-none cursor-pointer">Keep editing</button>
+          <button type="button" onClick={() => blocker.proceed()} className="px-4 py-2 min-h-[40px] rounded-lg text-[14px] font-bold text-graphite bg-white border border-bone cursor-pointer">Leave</button>
         </div>
       </div>
     </div>

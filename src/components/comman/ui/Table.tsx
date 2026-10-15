@@ -261,6 +261,12 @@ export function Table<T = Record<string, unknown>>({
                     className={clsx('px-4 py-3 flex flex-col gap-1.5', onRowClick && 'cursor-pointer active:bg-cream')}
                     onClick={() => onRowClick?.(row)}
                   >
+                    {selectable && (
+                      <label className="inline-flex items-center gap-2 self-start min-h-[40px] -my-1.5 text-[13px] text-slate cursor-pointer" onClick={e => e.stopPropagation()}>
+                        <input type="checkbox" className="accent-brand-orange size-4" checked={keys.has(rowKey)} onChange={() => toggleRow(rowKey)} aria-label="Select row" />
+                        Select
+                      </label>
+                    )}
                     {labeledColumns.map((col, ci) => wide && ci === 0 ? (
                       <div key={col.key} className="min-w-0 text-[14px] font-semibold text-carbon">
                         {col.render ? col.render(row, i) : String((row as Record<string, unknown>)[col.key] ?? '')}

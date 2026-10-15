@@ -35,7 +35,7 @@ export function BundlePage() {
       <main className="max-w-[1480px] mx-auto px-[5%] md:px-[4%] pt-4 md:pt-6 pb-12">
         <Breadcrumb className="mb-1" items={[{ label: 'Home', path: '/' }, { label: bundle?.name ?? 'Bundle' }]} />
         {error ? (
-          <EmptyState icon={<Package2 size={22} />} title="This bundle isn't available" description="The seller may have ended it. The individual resources might still be on sale." action={{ label: 'Browse resources', onClick: () => navigate('/search') }} />
+          <EmptyState icon={<Package2 size={22} />} title="This bundle isn't available" description="The seller may have ended it. The individual resources might still be on sale." action={{ label: 'Browse resources', onClick: () => navigate('/') }} />
         ) : (
           <>
             <header className="mb-6 rounded-2xl bg-brand-pale-orange/30 border border-brand-orange/20 p-5 md:p-7 flex flex-col md:flex-row md:items-end gap-4">

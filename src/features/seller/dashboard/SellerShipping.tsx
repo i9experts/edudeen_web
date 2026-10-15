@@ -1,5 +1,5 @@
 import { usePageTitle } from '@/hooks/usePageTitle';
-import { SellerPageHeader } from '@/components/layouts/SellerLayout';
+import { StorePageHeader } from '@/components/layouts/StoreLayout';
 import { MapPin, Info } from 'lucide-react';
 import { useShippingZones } from '@/hooks/shipping/useShippingZones';
 import { shippingZoneLabel } from '@/api/services/shipping';
@@ -15,7 +15,7 @@ export function SellerShipping() {
 
   return (
     <>
-      <SellerPageHeader
+      <StorePageHeader
         title="Shipping"
         subtitle="Delivery zones and rates buyers see at checkout."
       />

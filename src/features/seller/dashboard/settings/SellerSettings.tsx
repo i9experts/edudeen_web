@@ -279,7 +279,7 @@ export function SellerSettings() {
             <button
               onClick={() => setMobileDrilledIn(false)}
               aria-label="Back to account menu"
-              className="size-8 -ml-1 flex items-center justify-center rounded-full bg-transparent border-none cursor-pointer text-charcoal hover:bg-cream transition-colors"
+              className="size-10 -ml-2 shrink-0 flex items-center justify-center rounded-full bg-transparent border-none cursor-pointer text-charcoal hover:bg-cream transition-colors"
             >
               <ChevronLeft size={19} />
             </button>
@@ -452,7 +452,7 @@ export function SellerSettings() {
                         className="w-full px-3 pr-[42px] py-[9px] text-[13px] border border-bone rounded-lg outline-none text-charcoal bg-white box-border" />
                       <button type="button" onClick={() => setShowCurrentPassword(s => !s)}
                         aria-label={showCurrentPassword ? 'Hide password' : 'Show password'}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer text-slate p-0 flex hover:text-charcoal transition-colors">
+                        className="absolute right-0 top-1/2 -translate-y-1/2 min-w-[40px] justify-center bg-transparent border-none cursor-pointer text-slate p-0 flex hover:text-charcoal transition-colors">
                         {showCurrentPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                       </button>
                     </div>
@@ -464,7 +464,7 @@ export function SellerSettings() {
                         className="w-full px-3 pr-[42px] py-[9px] text-[13px] border border-bone rounded-lg outline-none text-charcoal bg-white box-border" />
                       <button type="button" onClick={() => setShowNewPassword(s => !s)}
                         aria-label={showNewPassword ? 'Hide password' : 'Show password'}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer text-slate p-0 flex hover:text-charcoal transition-colors">
+                        className="absolute right-0 top-1/2 -translate-y-1/2 min-w-[40px] justify-center bg-transparent border-none cursor-pointer text-slate p-0 flex hover:text-charcoal transition-colors">
                         {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                       </button>
                     </div>

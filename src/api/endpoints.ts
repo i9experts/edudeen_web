@@ -163,12 +163,7 @@ export const ENDPOINTS = {
     WHITE_LABEL:   (storeId: string) => `/api/store/${storeId}/white-label`,
     PINNED_PRODUCTS: (storeId: string) => `/api/store/${storeId}/pinned-products`,
     ANNOUNCEMENT:    (storeId: string) => `/api/store/${storeId}/announcement`,
-    VERIFICATION:              (storeId: string) => `/api/store/${storeId}/verification`,
-    VERIFICATION_REQUIREMENTS: (storeId: string) => `/api/store/${storeId}/verification/requirements`,
-    VERIFICATION_DOCUMENTS:    (storeId: string) => `/api/store/${storeId}/verification/documents`,
-    VERIFICATION_SUBMIT:       (storeId: string) => `/api/store/${storeId}/verification/submit`,
     /** Store-independent — used by onboarding before a store exists. */
-    VERIFICATION_REQUIREMENTS_PREVIEW: '/api/store/verification/requirements-preview',
 
     // Builder
     SAVE_BUILDER_CONFIG: '/api/store/save-builder-config',
@@ -441,7 +436,6 @@ export const ENDPOINTS = {
       SET_STORE_FULFILLMENT: (storeId: string) => `/api/admin/marketplace/stores/${storeId}/fulfillment-mode`,
       LEADS:            '/api/admin/marketplace/leads',
       LEAD_DETAIL:      (id: string) => `/api/admin/marketplace/leads/${id}`,
-      LEAD_UNDER_REVIEW: (id: string) => `/api/admin/marketplace/leads/${id}/under-review`,
       APPROVE_LEAD:     (id: string) => `/api/admin/marketplace/leads/${id}/approve`,
       REJECT_LEAD:      (id: string) => `/api/admin/marketplace/leads/${id}/reject`,
     },

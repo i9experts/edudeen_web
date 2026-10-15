@@ -72,7 +72,12 @@ export function useCategoryTree() {
   return { tree, loading, byId, bySlug };
 }
 
-/** URL for a category page. */
+/** URL that shows a category: the homepage is the shop (`/?category=<slug>`). */
+export function categoryUrl(slug: string): string {
+  return `/?category=${encodeURIComponent(slug)}`;
+}
+
+/** Same, from a category node. */
 export function categoryPath(node: { slug?: string | null; _id: string }): string {
-  return `/c/${node.slug || node._id}`;
+  return categoryUrl(node.slug || node._id);
 }

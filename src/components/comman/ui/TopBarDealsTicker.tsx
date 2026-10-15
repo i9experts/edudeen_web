@@ -100,7 +100,7 @@ export function TopBarDealsTicker({ className }: { className?: string }) {
       <button
         key={item.key}
         onClick={() => navigate(item.path)}
-        className="topbar-ticker-in min-w-0 flex items-center gap-1.5 bg-transparent border-none p-0 text-white cursor-pointer text-[12.5px] hover:underline underline-offset-4"
+        className="topbar-ticker-in min-w-0 min-h-10 md:min-h-0 flex items-center gap-1.5 bg-transparent border-none p-0 text-white cursor-pointer text-[12.5px] hover:underline underline-offset-4"
         title={`${item.label}${item.detail ? ` — ${item.detail}` : ''}`}
       >
         <span className="font-bold truncate">{item.label}</span>

@@ -12,7 +12,6 @@ const PANEL_WIDTH = 340;
 
 const PAGES: { label: string; to: string }[] = [
   { label: 'Home page', to: '/' },
-  { label: 'Marketplace / Search', to: '/search' },
   { label: 'Learn hub', to: '/learn' },
   { label: 'Learning paths', to: '/learning-paths' },
   { label: 'Premium', to: '/premium' },
@@ -31,10 +30,8 @@ function pageName(pathname: string): string {
   const p = pathname.replace(/\/+$/, '') || '/';
   const hit = PAGES.find(x => x.to === p);
   if (hit) return hit.to === '/' ? 'Home page' : `${hit.label}${/page|hub|paths/i.test(hit.label) ? '' : ' page'}`;
-  if (p.startsWith('/c/')) return 'Category page';
   if (p.startsWith('/product/')) return 'Product page';
   if (p.startsWith('/learn')) return 'Learn page';
-  if (p.startsWith('/search')) return 'Marketplace page';
   return 'This page';
 }
 
@@ -45,7 +42,7 @@ function adminFor(pathname: string): { label: string; to: string } {
   if (pathname.startsWith('/premium')) return { label: 'Premium', to: '/admin/premium' };
   if (pathname.startsWith('/pricing')) return { label: 'Platform plans', to: '/admin/platform-plans' };
   if (pathname.startsWith('/learning-paths')) return { label: 'Learning paths', to: '/admin/learning-paths' };
-  if (pathname.startsWith('/product') || pathname.startsWith('/c/') || pathname.startsWith('/search')) return { label: 'Banners', to: '/admin/banners' };
+  if (pathname.startsWith('/product')) return { label: 'Banners', to: '/admin/banners' };
   return { label: 'the admin dashboard', to: '/admin' };
 }
 
@@ -265,7 +262,8 @@ function MoreMenu({ pathname }: { pathname: string }) {
   const firstCat = tree.find(c => c.slug || c._id);
   const catTo = firstCat ? categoryPath(firstCat) : null;
   const prodTo = productSlug ? `/product/${productSlug}` : null;
-  const current = pathname.startsWith('/c/') ? catTo ?? '' : pathname.startsWith('/product/') ? prodTo ?? '' : (PAGES.find(p => (p.to === '/' ? pathname === '/' : pathname === p.to))?.to ?? '');
+  const onCategory = pathname === '/' && /[?&]category=/.test(window.location.search);
+  const current = onCategory ? catTo ?? '' : pathname.startsWith('/product/') ? prodTo ?? '' : (PAGES.find(p => (p.to === '/' ? pathname === '/' : pathname === p.to))?.to ?? '');
 
   return (
     <div className="flex flex-col gap-3">

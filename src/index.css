@@ -709,3 +709,6 @@
 .num-lining { font-variant-numeric: lining-nums; font-feature-settings: 'lnum' 1; }
 /* Minimum comfortable tap target on touch screens for controls that opt in. */
 @media (pointer: coarse) { .tap-40 { min-height: 40px; min-width: 40px; } }
+/* Seller product forms on phones: every button/select reaches a 40px tap target (switches get theirs from a pseudo hit area; [data-compact] opts out). */
+@media (max-width: 1023px) { .tap-safe :is(button, select, input:not([type='checkbox'], [type='radio'], [type='range'], [type='file'], [type='hidden'])):not([role='switch'], [data-compact]) { min-height: 40px; } }
+@media (max-width: 1023px) { :is(.tap-safe, [role='dialog']) label:has(> input:is([type='checkbox'], [type='radio'])) { min-height: 40px; display: inline-flex; align-items: center; } }

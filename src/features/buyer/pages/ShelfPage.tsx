@@ -28,7 +28,7 @@ export function ShelfPage() {
       <main className="max-w-[1480px] mx-auto px-[5%] md:px-[4%] pt-4 md:pt-6 pb-12">
         <Breadcrumb className="mb-1" items={[{ label: 'Home', path: '/' }, { label: shelf?.title ?? 'Edudeen picks' }]} />
         {error ? (
-          <EmptyState icon={<Sparkles size={22} />} title="This collection has ended" description="Seasonal picks come and go — have a look at what's new." action={{ label: 'Browse resources', onClick: () => navigate('/search') }} />
+          <EmptyState icon={<Sparkles size={22} />} title="This collection has ended" description="Seasonal picks come and go — have a look at what's new." action={{ label: 'Browse resources', onClick: () => navigate('/') }} />
         ) : (
           <>
             <header className="mb-6 rounded-2xl overflow-hidden border border-bone relative">

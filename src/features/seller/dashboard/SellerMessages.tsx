@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Pin, PinOff, Bell, BellOff, Archive, ArchiveRestore, Ban, Flag, Trash2, Package } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
-import { SellerPageHeader } from '@/components/layouts/SellerLayout';
+import { StorePageHeader } from '@/components/layouts/StoreLayout';
 import { useGetProfile } from '@/hooks/auth/useGetProfile';
 import { useConversations, useSearchConversations } from '@/hooks/messaging/useConversations';
 import { useConversation } from '@/hooks/messaging/useConversation';
@@ -193,7 +193,7 @@ export function SellerMessages() {
 
   return (
     <>
-      <SellerPageHeader
+      <StorePageHeader
         title="Messages"
         subtitle="Respond to buyer questions and support requests."
         actions={

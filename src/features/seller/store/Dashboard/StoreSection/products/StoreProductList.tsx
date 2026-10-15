@@ -295,7 +295,7 @@ export default function StoreProductList() {
       <StorePageHeader
         title="Products"
         subtitle={loading ? 'Loading…' : `${totalProducts} product${totalProducts !== 1 ? 's' : ''}`}
-        actions={<div className="flex items-center gap-2"><Button variant="outline" onClick={() => navigate(`/store/${storeId}/products/bulk`)} icon={<UploadCloud size={15} />}>Bulk upload</Button><Button onClick={goAdd} icon={<Plus size={15} />}>Add one product</Button></div>}
+        actions={<div className="flex items-center gap-2"><Button variant="outline" onClick={() => navigate(`/store/${storeId}/products/bulk`)} icon={<UploadCloud size={15} />} aria-label="Bulk upload"><span className="max-sm:sr-only">Bulk upload</span></Button><Button onClick={goAdd} icon={<Plus size={15} />}>Add<span className="max-sm:hidden"> one product</span><span className="sm:hidden"> product</span></Button></div>}
       />
 
       <div className="px-4 md:px-8 py-6 flex flex-col gap-5">
@@ -358,7 +358,7 @@ export default function StoreProductList() {
 
         {/* Sticky bulk bar: Premium offer / platform sale for the selected products (current page / filter) */}
         {selectedKeys.size > 0 && (
-          <div role="region" aria-label="Bulk actions" className="sticky bottom-3 z-20 rounded-xl border border-bone bg-white shadow-[0_6px_24px_rgba(0,0,0,0.12)] px-4 py-3 flex items-center gap-2 flex-wrap">
+          <div role="region" data-chat-avoid aria-label="Bulk actions" className="sticky bottom-3 z-20 rounded-xl border border-bone bg-white shadow-[0_6px_24px_rgba(0,0,0,0.12)] px-4 py-3 flex items-center gap-2 sm:flex-wrap max-sm:overflow-x-auto [&>*]:shrink-0 [&>*]:whitespace-nowrap">
             <span className="text-[13px] font-semibold text-carbon me-1">{selectedKeys.size} selected</span>
             <Button variant="outline" size="xs" icon={<Crown size={12} />} onClick={() => openOffer('premium_on', Array.from(selectedKeys).map(String))}>Add to Premium offer (%)</Button>
             <Button variant="outline" size="xs" onClick={() => openOffer('premium_off', Array.from(selectedKeys).map(String))}>Remove from Premium offer</Button>

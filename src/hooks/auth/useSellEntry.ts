@@ -13,8 +13,7 @@ import { resolveSellerDestinationRemote } from '@/utils/sellerRouting';
  *    accounts are already independent per-email documents) without ever
  *    touching the buyer session/account that's currently active.
  *  - Logged in as seller     → resolve their REAL store state from the
- *    backend and land exactly where they belong (onboarding / verification
- *    / dashboard) instead of assuming.
+ *    backend and land exactly where they belong (onboarding / dashboard) instead of assuming.
  *  - Logged in as admin (edge case) → same as buyer, falls through to
  *    seller registration; there's no legitimate "admin becomes seller"
  *    product flow to special-case here. */

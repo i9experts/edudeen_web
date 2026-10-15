@@ -117,7 +117,7 @@ export function LicenseTiersField({ baseLicense, tiers, onChange, currencySymbol
       </p>
       {visible.map(t => (
         <div key={t.license} className="flex items-center gap-3 flex-wrap">
-          <label className="flex items-center gap-2 min-w-[180px] cursor-pointer">
+          <label className="flex items-center gap-2 min-w-[180px] min-h-[40px] cursor-pointer">
             <input
               type="checkbox" id={`lt-on-${t.license}`} checked={t.enabled}
               onChange={e => set(t.license, { enabled: e.target.checked })}

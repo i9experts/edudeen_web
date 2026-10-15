@@ -2,13 +2,13 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useLeads, useLeadDetail, useLeadActions } from '@/hooks/admin/useAdminMarketplace';
-import type { LeadRow, LeadVerificationStatus } from '@/api/services/marketplace/adminMarketplace';
-import { Table, Button, Modal, SearchInput, FilterDropdown, Badge, StatusBadge, SkeletonBox } from '@/components/comman/ui';
+import type { LeadRow, LeadsQuery } from '@/api/services/marketplace/adminMarketplace';
+import { Table, Button, Modal, SearchInput, FilterDropdown, StatusBadge, SkeletonBox } from '@/components/comman/ui';
 import { AdminStudioHeader } from '@/features/admin/components/studio';
 import type { TableColumn } from '@/components/comman/ui';
 import { AnalyticsErrorState } from '@/components/comman/analytics/AnalyticsErrorState';
 import { formatDate } from '@/components/comman/analytics/format';
-import { Store, RefreshCw, Check, X, Eye, ExternalLink, Clock, AlertCircle } from 'lucide-react';
+import { Store, RefreshCw, Check, X, Eye } from 'lucide-react';
 
 function StoreCell({ lead }: { lead: LeadRow }) {
   return (
@@ -35,57 +35,31 @@ function DetailRow({ label, value }: { label: string; value: string | null | und
   );
 }
 
-const HISTORY_ACTION_LABEL: Record<string, string> = {
-  submitted: 'Submitted for review',
-  resubmitted: 'Resubmitted after rejection',
-  under_review: 'Marked under review',
-  approved: 'Approved',
-  rejected: 'Rejected',
-};
-
-const VERIFICATION_LEVEL_LABEL: Record<string, string> = {
-  basic: 'Basic',
-  business: 'Business',
-  enhanced: 'Enhanced',
-};
-
-// The default queue (no filter selected) is pending/under_review only, same
-// as the backend's default — "All Statuses" is an explicit admin choice to
-// look outside the actionable queue, e.g. to review already-verified or
-// rejected leads.
-const VERIFICATION_STATUS_OPTIONS = [
-  { value: 'all', label: 'All Statuses' },
-  { value: 'not_started', label: 'Not Started' },
-  { value: 'pending', label: 'Pending' },
-  { value: 'under_review', label: 'Under Review' },
-  { value: 'verified', label: 'Verified' },
+const STATUS_OPTIONS = [
+  { value: 'all', label: 'All stores' },
+  { value: 'pending', label: 'Waiting for approval' },
   { value: 'rejected', label: 'Rejected' },
+  { value: 'suspended', label: 'Suspended' },
+  { value: 'active', label: 'Live' },
 ];
 
-// ── Lead detail — business info (country/business-type/level-aware), the
-// same requirement checklist the seller sees (so admin never has to guess
-// "why is this document required"), fresh signed document URLs, and the
-// full submit/review history trail. Fetched lazily only when opened. ──
-function LeadDetailModal({ leadId, onClose, onApprove, onReject, onMarkUnderReview, processingId }: {
+// Lead detail — contact + store info only; fetched lazily when opened.
+function LeadDetailModal({ leadId, onClose, onApprove, onReject, processingId }: {
   leadId: string;
   onClose: () => void;
   onApprove: (lead: { id: string; storeName: string }) => void;
   onReject: (lead: { id: string; storeName: string }) => void;
-  onMarkUnderReview: (id: string) => void;
   processingId: string | null;
 }) {
   const { data, loading, error, refetch } = useLeadDetail(leadId);
   useEffect(() => { refetch(); }, [refetch]);
 
-  const reviewable = data?.verificationStatus === 'pending' || data?.verificationStatus === 'under_review';
-
   return (
-    <Modal mobileSheet title="Review Application" onClose={onClose} width={640}>
+    <Modal mobileSheet title="Review store" onClose={onClose} width={640}>
       {loading && (
         <div className="flex flex-col gap-3">
           <SkeletonBox height={20} width="60%" />
           <SkeletonBox height={80} />
-          <SkeletonBox height={120} />
         </div>
       )}
       {error && <AnalyticsErrorState message={error} onRetry={refetch} />}
@@ -103,20 +77,8 @@ function LeadDetailModal({ leadId, onClose, onApprove, onReject, onMarkUnderRevi
                 <p className="text-[12px] text-slate">{data.categoryName ?? 'No category'}</p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <StatusBadge status={data.verificationStatus} />
-              <Badge color="gray">{VERIFICATION_LEVEL_LABEL[data.verificationLevel] ?? data.verificationLevel} verification</Badge>
-            </div>
+            <StatusBadge status={data.storeStatus} />
           </div>
-
-          {!data.canApprove && (
-            <div className="bg-warning-bg border border-warning/30 rounded-lg px-4 py-2.5 flex items-center gap-2">
-              <AlertCircle size={14} className="text-warning shrink-0" />
-              <span className="text-[12.5px] text-warning">
-                Incomplete — {data.missingFields.length} field(s) and {data.missingDocuments.length} document(s) still missing. Cannot be approved until complete.
-              </span>
-            </div>
-          )}
 
           <div>
             <p className="text-[12px] font-bold text-carbon mb-2">Seller Contact</p>
@@ -125,44 +87,8 @@ function LeadDetailModal({ leadId, onClose, onApprove, onReject, onMarkUnderRevi
               <DetailRow label="Email" value={data.seller.email} />
               <DetailRow label="Phone" value={data.seller.phone} />
               <DetailRow label="Address" value={data.seller.address} />
-            </div>
-          </div>
-
-          <div>
-            <p className="text-[12px] font-bold text-carbon mb-2">Business Information</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-cream rounded-lg p-3">
               <DetailRow label="Country" value={data.country} />
-              <DetailRow label="Business Type" value={data.businessType} />
-              <DetailRow label="Legal Business Name" value={data.legalBusinessName} />
-              <DetailRow label="Registration Number" value={data.registrationNumber} />
-              <DetailRow label="Tax ID / NTN" value={data.taxId} />
-              <DetailRow label="ID Document Type" value={data.idDocumentType} />
-              <DetailRow label="Business Address" value={data.businessAddress} />
-              <DetailRow label="Authorized Contact" value={data.authorizedContact?.name} />
-              <DetailRow label="Contact Email / Phone" value={[data.authorizedContact?.email, data.authorizedContact?.phone].filter(Boolean).join(' · ')} />
-            </div>
-          </div>
-
-          <div>
-            <p className="text-[12px] font-bold text-carbon mb-2">
-              Documents — {VERIFICATION_LEVEL_LABEL[data.verificationLevel] ?? data.verificationLevel} verification requires {data.documents.filter(d => d.required).length}
-            </p>
-            <div className="flex flex-col gap-2">
-              {data.documents.map(doc => (
-                <div key={doc.type} className="flex items-center justify-between gap-3 bg-cream rounded-lg px-3 py-2.5">
-                  <div className="min-w-0 flex items-center gap-2">
-                    <p className="text-[12.5px] font-semibold text-carbon capitalize">{doc.type.replace(/_/g, ' ')}</p>
-                    <Badge color={doc.required ? 'orange' : 'gray'}>{doc.required ? 'Required' : 'Optional'}</Badge>
-                    {doc.state !== 'uploaded' && <span className="text-[12px] text-slate">— not uploaded</span>}
-                    {doc.fileName && <p className="text-[12px] text-slate truncate">{doc.fileName}</p>}
-                  </div>
-                  {doc.viewUrl && (
-                    <a href={doc.viewUrl} target="_blank" rel="noopener noreferrer" className="shrink-0 inline-flex items-center gap-1 text-[12px] font-semibold text-brand-orange hover:underline">
-                      View <ExternalLink size={11} />
-                    </a>
-                  )}
-                </div>
-              ))}
+              <DetailRow label="Description" value={data.description} />
             </div>
           </div>
 
@@ -173,37 +99,12 @@ function LeadDetailModal({ leadId, onClose, onApprove, onReject, onMarkUnderRevi
             </div>
           )}
 
-          {data.history.length > 0 && (
-            <div>
-              <p className="text-[12px] font-bold text-carbon mb-2">History</p>
-              <div className="flex flex-col gap-2">
-                {data.history.slice().reverse().map((h, i) => (
-                  <div key={i} className="flex items-start gap-2">
-                    <Clock size={12} className="text-slate mt-[3px] shrink-0" />
-                    <div className="min-w-0">
-                      <p className="text-[12px] text-charcoal">
-                        <span className="font-semibold">{HISTORY_ACTION_LABEL[h.action] ?? h.action}</span>
-                        {' — '}<span className="text-slate">{formatDate(h.at)} by {h.actorRole}</span>
-                      </p>
-                      {h.note && <p className="text-[12px] text-slate mt-[1px]">{h.note}</p>}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
           <div className="flex items-center gap-2 pt-2 border-t border-bone">
-            {data.verificationStatus === 'pending' && (
-              <Button variant="ghost" size="sm" onClick={() => onMarkUnderReview(data.id)} loading={processingId === data.id}>
-                Mark Under Review
-              </Button>
-            )}
             <div className="flex-1" />
-            <Button variant="outline" size="sm" icon={<X size={13} />} onClick={() => onReject({ id: data.id, storeName: data.storeName })} disabled={!reviewable || processingId === data.id}>
+            <Button variant="outline" size="sm" icon={<X size={13} />} onClick={() => onReject({ id: data.id, storeName: data.storeName })} disabled={data.storeStatus !== 'pending' || processingId === data.id}>
               Reject
             </Button>
-            <Button variant="primary" size="sm" icon={<Check size={13} />} onClick={() => onApprove({ id: data.id, storeName: data.storeName })} disabled={!reviewable || !data.canApprove} loading={processingId === data.id}>
+            <Button variant="primary" size="sm" icon={<Check size={13} />} onClick={() => onApprove({ id: data.id, storeName: data.storeName })} disabled={!data.canApprove} loading={processingId === data.id}>
               Approve
             </Button>
           </div>
@@ -214,7 +115,7 @@ function LeadDetailModal({ leadId, onClose, onApprove, onReject, onMarkUnderRevi
 }
 
 export function AdminLeads() {
-  usePageTitle('Seller Applications');
+  usePageTitle('Store approvals');
 
   const [search, setSearch] = useState('');
   const [urlParams] = useSearchParams();
@@ -224,14 +125,14 @@ export function AdminLeads() {
   const query = useMemo(
     () => ({
       search: search || undefined,
-      verificationStatus: (statusFilter || undefined) as LeadVerificationStatus | 'all' | undefined,
+      status: (statusFilter || undefined) as LeadsQuery['status'],
       page, limit: 10,
     }),
     [search, statusFilter, page],
   );
 
   const { data, loading, error, refetch } = useLeads(query);
-  const { markUnderReview, approve, reject, processingId, error: actionError } = useLeadActions();
+  const { approve, reject, processingId, error: actionError } = useLeadActions();
 
   const [viewingId, setViewingId] = useState<string | null>(null);
   const [rejecting, setRejecting] = useState<{ id: string; storeName: string } | null>(null);
@@ -247,11 +148,6 @@ export function AdminLeads() {
     if (!approving) return;
     const ok = await approve(approving.id);
     if (ok) { setApproving(null); refetch(); }
-  }
-
-  async function handleMarkUnderReview(id: string) {
-    const ok = await markUnderReview(id);
-    if (ok) refetch();
   }
 
   async function handleReject() {
@@ -276,20 +172,8 @@ export function AdminLeads() {
       render: lead => <span className="text-[12px] text-charcoal font-medium">{lead.country}</span>,
     },
     {
-      key: 'businessType', header: 'Business Type',
-      render: lead => lead.businessType
-        ? <Badge color="orange" className="capitalize">{lead.businessType}</Badge>
-        : <span className="text-slate">—</span>,
-    },
-    {
-      key: 'verificationLevel', header: 'Level',
-      render: lead => lead.verificationLevel
-        ? <Badge color="gray">{VERIFICATION_LEVEL_LABEL[lead.verificationLevel] ?? lead.verificationLevel}</Badge>
-        : <span className="text-slate">—</span>,
-    },
-    {
-      key: 'verificationStatus', header: 'Verification',
-      render: lead => <StatusBadge status={lead.verificationStatus} size="sm" />,
+      key: 'storeStatus', header: 'Status',
+      render: lead => <StatusBadge status={lead.storeStatus} size="sm" />,
     },
     {
       key: 'submittedAt', header: 'Created',
@@ -326,8 +210,8 @@ export function AdminLeads() {
   return (
     <>
       <AdminStudioHeader eyebrow="Edudeen team workspace · Commerce"
-        title="Seller Applications"
-        subtitle="New stores submitted through onboarding — review business verification and approve or reject before they go live."
+        title="Store approvals"
+        subtitle="New stores go live automatically. This list only shows older stores that are still waiting for approval, or that were rejected."
         actions={<Button variant="outline" size="sm" icon={<RefreshCw size={13} />} onClick={refetch}>Refresh</Button>}
       />
       <div className="px-4 sm:px-7 pt-6 pb-8 flex flex-col gap-5">
@@ -338,7 +222,7 @@ export function AdminLeads() {
           <SearchInput value={search} onChange={v => { setSearch(v); setPage(1); }} placeholder="Search by store name…" className="flex-1 max-w-[300px]" />
           <FilterDropdown
             placeholder="Review Queue"
-            options={VERIFICATION_STATUS_OPTIONS}
+            options={STATUS_OPTIONS}
             value={statusFilter}
             onChange={v => { setStatusFilter(v); setPage(1); }}
           />
@@ -352,7 +236,7 @@ export function AdminLeads() {
             data={data?.items ?? []}
             keyExtractor={lead => lead.id}
             loading={loading}
-            emptyState={{ icon: <Store size={28} className="text-slate/50" />, title: 'No pending leads', description: 'Every submitted store has been reviewed.' }}
+            emptyState={{ icon: <Store size={28} className="text-slate/50" />, title: 'No stores waiting', description: 'Every store has been reviewed.' }}
             pagination={{ page, total: data?.total ?? 0, perPage: 10, onChange: setPage, label: 'leads' }}
           />
         )}
@@ -364,7 +248,6 @@ export function AdminLeads() {
           onClose={() => setViewingId(null)}
           onApprove={lead => { setViewingId(null); setApproving(lead); }}
           onReject={lead => { setViewingId(null); setRejecting(lead); }}
-          onMarkUnderReview={handleMarkUnderReview}
           processingId={processingId}
         />
       )}
@@ -394,7 +277,7 @@ export function AdminLeads() {
           </>}
         >
           <p className="text-[13px] text-charcoal leading-[1.6] mb-3">
-            Reject "<strong>{rejecting.storeName}</strong>"? The seller will be notified with your reason and can correct the details and resubmit.
+            Reject "<strong>{rejecting.storeName}</strong>"? The seller will be notified with your reason with your reason.
           </p>
           <label htmlFor="lead-reject-reason" className="block text-[12px] font-medium text-charcoal mb-[6px]">Reason <span className="text-brand-orange">*</span> <span className="text-slate font-normal">(shown to the seller, min. 10 characters)</span></label>
           <textarea
@@ -402,7 +285,7 @@ export function AdminLeads() {
             rows={3}
             value={reason}
             onChange={e => setReason(e.target.value)}
-            placeholder="e.g. Business registration document is illegible — please re-upload a clearer scan"
+            placeholder="e.g. This store does not sell educational resources"
             className="w-full px-3 py-[10px] rounded-lg border border-bone text-[13px] text-charcoal outline-none bg-white resize-y transition-[border-color,box-shadow] duration-150 focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/10"
           />
           {reasonTooShort && <p className="text-[12px] text-error mt-1">Please provide a bit more detail (at least 10 characters).</p>}

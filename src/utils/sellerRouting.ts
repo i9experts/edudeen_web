@@ -16,9 +16,6 @@ import { apiGetMyStores, type MyStoreItem } from '@/api/services/store';
  *  destination):
  *  - No stores yet                    → /onboard (create the first one)
  *  - Any store is `active`            → that store's own dashboard
- *  - Exactly one store, still
- *    `pending`/`rejected` (legacy —   → straight to that store's verification
- *    pre-dates self-serve activation)   page (resubmit / awaiting review)
  *  - Anything else                    → the first store's own dashboard
  */
 export function resolveSellerDestination(stores: MyStoreItem[]): string {
@@ -26,13 +23,6 @@ export function resolveSellerDestination(stores: MyStoreItem[]): string {
 
   const active = stores.find(s => s.status === 'active');
   if (active) return `/store/${active._id}/dashboard`;
-
-  if (stores.length === 1) {
-    const only = stores[0];
-    if (only.status === 'pending' || only.status === 'rejected') {
-      return `/store/${only._id}/verification`;
-    }
-  }
 
   return `/store/${stores[0]._id}/dashboard`;
 }

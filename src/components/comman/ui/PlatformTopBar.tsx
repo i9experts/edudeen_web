@@ -96,7 +96,7 @@ export function PlatformTopBar({ variant = 'shop', store, showAccount = false, c
 
   return (
     <div className={clsx('shrink-0 text-white', BAR_BG, className)}>
-      <div className="h-9 flex items-center gap-4 px-[5%] md:px-[4%]">
+      <div className="h-10 md:h-9 flex items-center gap-4 px-[5%] md:px-[4%]">
         {variant === 'shop' && (
           <>
             {/* Left: live admin sales + top marketplace flash deals. */}
@@ -119,7 +119,7 @@ export function PlatformTopBar({ variant = 'shop', store, showAccount = false, c
           <>
             <StoreIdentity store={store} />
             {store?.slug && (
-              <button onClick={() => window.open(getStorePagePath(store.slug!), '_blank', 'noopener')} className={LINK_CLS}>
+              <button onClick={() => window.open(getStorePagePath(store.slug!), '_blank', 'noopener')} className={clsx(LINK_CLS, 'relative before:absolute before:-inset-y-2 before:-inset-x-1')}>
                 View store page ↗
               </button>
             )}

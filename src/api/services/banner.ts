@@ -9,7 +9,7 @@ export const PROMOTION_PLACEMENTS = ['homepageHero', 'marketplaceHero', 'educati
 export type PromotionPlacement = (typeof PROMOTION_PLACEMENTS)[number];
 
 // Every placement now has a buyer surface: homepageHero (Homepage), marketplaceHero
-// (/search), educationHero (/learn), categoryHero (/c/:slug) — see PlacementBanner.
+// (home `?search=`), educationHero (/learn), categoryHero (home `?category=`) — see PlacementBanner.
 // productPage (the banner on every product page) is the platform's own slot: admins can put banners there, sellers cannot buy it.
 export const SELECTABLE_PROMOTION_PLACEMENTS = PROMOTION_PLACEMENTS.filter(p => p !== 'productPage');
 export const ADMIN_BANNER_PLACEMENTS = PROMOTION_PLACEMENTS;

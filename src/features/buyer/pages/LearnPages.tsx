@@ -10,7 +10,7 @@ import { EDUCATION_LEVELS } from '@/api/services/product';
 import { apiGetEducationFacets } from '@/api/services/marketplace';
 import type { CategoryNode } from '@/api/services/categories';
 import { BuyerNavbar, Breadcrumb, Footer } from '@/components/comman/ui';
-import { BrowseResults } from './MarketplaceBrowse';
+import { BrowseResults } from './BrowseResults';
 
 // Grade × subject landing pages: /learn, /learn/primary-school,
 // /learn/primary-school/mathematics — each a real, linkable, indexable page

@@ -26,7 +26,7 @@ export function SharedWishlistPage() {
       <main className="max-w-[1480px] mx-auto px-[5%] md:px-[4%] pt-4 md:pt-6 pb-12">
         <Breadcrumb className="mb-1" items={[{ label: 'Home', path: '/' }, { label: 'Saved resources' }]} />
         {error ? (
-          <EmptyState icon={<Heart size={22} />} title="This link isn't available" description="The owner may have turned sharing off. Ask them for a new link." action={{ label: 'Browse resources', onClick: () => navigate('/search') }} />
+          <EmptyState icon={<Heart size={22} />} title="This link isn't available" description="The owner may have turned sharing off. Ask them for a new link." action={{ label: 'Browse resources', onClick: () => navigate('/') }} />
         ) : (
           <>
             <header className="mb-6">
