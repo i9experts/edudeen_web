@@ -3,7 +3,7 @@ import { classIndex, levelForClass } from '@/constants/classLevels';
 
 /** Pure helpers + types for the seller bulk upload (kept UI-free so they are easy to test). */
 
-export const MAX_BULK_FILES = 50;
+export const MAX_BULK_FILES = 50; // products (rows) per batch
 export const MAX_BULK_PHOTOS = 100;
 export const MAX_DOC_BYTES = 500 * 1024 * 1024; // same cap as the digital product upload endpoint
 export const MAX_PHOTO_BYTES = 10 * 1024 * 1024; // same cap as the product photo uploader
@@ -14,9 +14,11 @@ export const DOC_EXTENSIONS = ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx
 // Same types the product photo uploader accepts.
 export const PHOTO_EXTENSIONS = ['png', 'jpg', 'jpeg', 'webp'];
 
-export type BulkType = 'digital' | 'educational';
-export type UploadState = 'queued' | 'uploading' | 'done' | 'failed';
+export type BulkType = 'digital' | 'educational' | 'physical';
+/** 'none' = a row without a file (manual row, or a physical product). */
+export type UploadState = 'none' | 'queued' | 'uploading' | 'done' | 'failed';
 export type CreateState = 'idle' | 'creating' | 'created' | 'failed';
+export type DetailGroup = 'price' | 'class' | 'photos' | 'tags' | 'inventory' | 'download';
 
 export interface BulkRow {
   id: string;
@@ -36,6 +38,16 @@ export interface BulkRow {
   classTo: string;
   educationLevel: string;
   images: string[];
+  // Physical
+  stock: string;
+  unlimitedStock: boolean;
+  sku: string;
+  weight: string;
+  // Digital / educational
+  downloadLimit: string;
+  linkExpiryDays: string;
+  buyerMessage: string;
+  tags: string[];
   createState: CreateState;
   createError: string;
   productId: string;
@@ -47,7 +59,7 @@ export interface TrayPhoto {
   id: string;
   name: string;
   url: string;
-  state: UploadState;
+  state: 'queued' | 'uploading' | 'done' | 'failed';
   pct: number;
   error: string;
 }
@@ -81,13 +93,22 @@ export function newId() {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-export function blankRow(file: { name: string; size: number }): BulkRow {
+/** A new row. With a file name the title is prefilled from it; without one it is a blank manual row. */
+export function blankRow(file?: { name: string; size: number }, hasFile = true): BulkRow {
   return {
-    id: newId(), fileName: file.name, fileSize: file.size, upload: null, uploadState: 'queued', uploadPct: 0, uploadError: '',
-    title: titleFromFileName(file.name), description: '', price: '', compareAt: '', categoryId: '', subCategoryId: '',
+    id: newId(), fileName: file?.name ?? '', fileSize: file?.size ?? 0, upload: null,
+    uploadState: file && hasFile ? 'queued' : 'none', uploadPct: 0, uploadError: '',
+    title: file ? titleFromFileName(file.name) : '', description: '', price: '', compareAt: '', categoryId: '', subCategoryId: '',
     classFrom: '', classTo: '', educationLevel: '', images: [],
+    stock: '', unlimitedStock: false, sku: '', weight: '',
+    downloadLimit: 'unlimited', linkExpiryDays: '', buyerMessage: '', tags: [],
     createState: 'idle', createError: '', productId: '', createdStatus: '',
   };
+}
+
+/** Old saved batches lack newer fields; fill them with defaults. */
+export function normalizeRow(r: Partial<BulkRow>): BulkRow {
+  return { ...blankRow(), ...r } as BulkRow;
 }
 
 /** Education level the API needs for educational products: the chosen one, else derived from the class. */
@@ -104,24 +125,58 @@ export interface RowContext {
   premiumGap?: (price: number, compareAt: number) => string | null;
 }
 
-/** First reason a row can't be published yet, or null when it is ready. Mirrors the API's create rules. */
+/** First reason a row can't be created yet, or null when it is ready. Mirrors the API's create rules. */
 export function rowIssue(row: BulkRow, ctx: RowContext): string | null {
-  if (row.uploadState === 'failed') return 'File upload failed';
-  if (row.uploadState !== 'done' || !row.upload) return 'File is still uploading';
+  if (ctx.type !== 'physical') {
+    if (row.uploadState === 'failed') return 'File upload failed';
+    if (row.uploadState === 'queued' || row.uploadState === 'uploading') return 'File is still uploading';
+    if (row.uploadState !== 'done' || !row.upload) return 'Add the file buyers will receive';
+  }
   if (!row.title.trim()) return 'Add a title';
   if (!row.description.trim()) return 'Add a description';
   if (row.price.trim() === '') return 'Add a price';
   const price = Number(row.price);
   if (!Number.isFinite(price) || price < 0) return 'Price must be a number';
+  if (ctx.type === 'physical' && !row.unlimitedStock) {
+    if (row.stock.trim() === '') return 'Add the stock quantity';
+    const n = Number(row.stock);
+    if (!Number.isInteger(n) || n < 0) return 'Stock must be a whole number';
+  }
   if (row.compareAt.trim() !== '' && (!Number.isFinite(Number(row.compareAt)) || Number(row.compareAt) < 0)) return 'Compare-at price must be a number';
   if (!row.categoryId && !ctx.hasDefaultCategory) return 'Pick a category';
   if (row.classFrom && row.classTo && classIndex(row.classFrom) > classIndex(row.classTo)) return '"From class" comes after "To class"';
   if (ctx.type === 'educational' && !effectiveLevel(row)) return 'Choose an education level';
+  if (row.linkExpiryDays.trim() !== '' && (!Number.isInteger(Number(row.linkExpiryDays)) || Number(row.linkExpiryDays) < 1)) return 'Link expiry must be a whole number of days';
   if (ctx.premiumGap && row.compareAt.trim() !== '') {
     const g = ctx.premiumGap(price, Number(row.compareAt));
     if (g) return 'Sale is too close to your Premium discount';
   }
   return null;
+}
+
+/** Which optional detail groups apply to a product type. */
+export function groupsFor(type: BulkType): { key: DetailGroup; label: string; hint: string }[] {
+  return [
+    { key: 'price', label: 'Compare-at price', hint: 'The old price, shown crossed out' },
+    { key: 'photos', label: 'Photos', hint: 'Cover and more photos' },
+    ...(type === 'physical'
+      ? [{ key: 'inventory' as const, label: 'SKU, weight & stock', hint: 'SKU, shipping weight, unlimited stock' }]
+      : [{ key: 'download' as const, label: 'Download settings', hint: 'Download limit, link expiry, thank-you message' }]),
+    { key: 'class', label: 'Suitable classes', hint: 'From class / to class' },
+    { key: 'tags', label: 'Tags', hint: 'Words buyers might search for' },
+  ];
+}
+
+/** Optional groups the seller has filled in on this row (shown as chips). */
+export function filledGroups(r: BulkRow, type: BulkType): DetailGroup[] {
+  const out: DetailGroup[] = [];
+  if (r.compareAt.trim()) out.push('price');
+  if (r.images.length) out.push('photos');
+  if (type === 'physical') { if (r.sku.trim() || r.weight.trim() || r.unlimitedStock) out.push('inventory'); }
+  else if (r.downloadLimit !== 'unlimited' || r.linkExpiryDays.trim() || r.buyerMessage.trim()) out.push('download');
+  if (r.classFrom || r.classTo) out.push('class');
+  if (r.tags.length) out.push('tags');
+  return out;
 }
 
 /** Row ids whose title repeats an earlier row's title (case-insensitive). */
@@ -139,10 +194,10 @@ export function duplicateTitles(rows: BulkRow[]): Map<string, number> {
 
 export interface PhotoMatch { photoId: string; rowId: string; url: string }
 
-/** Tray photos whose file name matches a document's (ignoring extension and case): they become that product's cover. */
+/** Tray photos whose file name matches a row's file name (ignoring extension and case): they become that product's cover. */
 export function findPhotoMatches(rows: BulkRow[], tray: TrayPhoto[]): PhotoMatch[] {
   const byBase = new Map<string, BulkRow>();
-  rows.forEach(r => { if (r.createState !== 'created') { const b = baseOf(r.fileName); if (!byBase.has(b)) byBase.set(b, r); } });
+  rows.forEach(r => { const b = baseOf(r.fileName); if (b && r.createState !== 'created' && !byBase.has(b)) byBase.set(b, r); });
   const added = new Map<string, number>();
   const out: PhotoMatch[] = [];
   for (const p of tray) {

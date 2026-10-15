@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
-  AlertCircle, CheckCircle2, ChevronDown, Copy, ExternalLink, FileText, ImagePlus, Loader2, RefreshCw, Trash2, UploadCloud, X,
+  AlertCircle, Check, CheckCircle2, ChevronDown, Copy, ExternalLink, FileText, ImagePlus, Loader2, Paperclip, Plus, RefreshCw, Trash2, UploadCloud, X,
 } from 'lucide-react';
 import { useStoreWorkspace, StorePageHeader } from '@/components/layouts/StoreLayout';
-import { apiCreateDigitalProduct, EDUCATION_LEVELS, type EducationLevel } from '@/api/services/product';
+import { Modal } from '@/components/comman/ui';
+import { apiCreateDigitalProduct, apiCreatePhysicalProduct, EDUCATION_LEVELS, type EducationLevel } from '@/api/services/product';
 import { apiUploadPrivateFile, apiUploadPublicFile } from '@/api/upload';
 import { useSellerCategories } from '@/hooks/store/useSellerCategories';
 import type { CategoryNode } from '@/api/services/categories';
@@ -17,9 +18,10 @@ import { effectiveSellerPercent, premiumGapMessage, usePremiumTerms } from './Pr
 import { timeAgo, useDraftAutosave, useLeaveGuard } from './ProductWizard';
 import { inp } from './ProductFormKit';
 import {
-  DOC_EXTENSIONS, MAX_BULK_FILES, MAX_BULK_PHOTOS, MAX_DOC_BYTES, MAX_PHOTO_BYTES, MAX_ROW_PHOTOS,
-  baseOf, blankRow, duplicateTitles, effectiveLevel, extOf, isDocName, isPhotoName, findPhotoMatches, newId, rowIssue,
-  type BulkRow, type BulkType, type TrayPhoto,
+  DOC_EXTENSIONS, MAX_BULK_FILES, MAX_BULK_PHOTOS, MAX_DOC_BYTES, MAX_PHOTO_BYTES, MAX_ROW_PHOTOS, PHOTO_EXTENSIONS,
+  baseOf, blankRow, duplicateTitles, effectiveLevel, extOf, filledGroups, findPhotoMatches, groupsFor, isDocName, isPhotoName, newId, normalizeRow, rowIssue,
+  titleFromFileName,
+  type BulkRow, type BulkType, type DetailGroup, type TrayPhoto,
 } from './bulkUtils';
 
 const CONCURRENCY = 3;
@@ -28,6 +30,8 @@ const lab = 'block text-[12px] font-semibold text-graphite mb-1';
 
 interface Saved { type: BulkType; rows: BulkRow[]; tray: TrayPhoto[] }
 interface RunSummary { created: number; published: number; inReview: number; drafts: number; failed: number; skipped: number }
+
+const TYPE_LABEL: Record<BulkType, string> = { digital: 'Digital downloads', educational: 'Educational resources', physical: 'Physical products' };
 
 // ── Compact category cascade (same data + rules as the Add Product form) ─────────────────────
 function pathTo(nodes: CategoryNode[], id: string): CategoryNode[] {
@@ -53,7 +57,7 @@ function CategoryCascade({ categories, loading, categoryId, subId, onChange, idP
     options = path[i]?.children ?? [];
   }
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
       <div>
         <label htmlFor={`${idPrefix}-cat`} className={lab}>Category</label>
         <select id={`${idPrefix}-cat`} className={sel} disabled={loading || disabled} value={categoryId} onChange={e => onChange(e.target.value, '')}>
@@ -111,31 +115,45 @@ export default function StoreBulkUpload() {
   const [notice, setNotice] = useState('');
   const [drag, setDrag] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [open, setOpen] = useState<Set<string>>(new Set());
   const [creating, setCreating] = useState(false);
   const [progress, setProgress] = useState({ done: 0, total: 0 });
   const [summary, setSummary] = useState<RunSummary | null>(null);
   const [lastMode, setLastMode] = useState<'draft' | 'publish'>('draft');
   const [now, setNow] = useState(() => Date.now());
   const [toast, setToast] = useState('');
+  const [detail, setDetail] = useState<{ rowId: string; group: DetailGroup } | null>(null);
+  const [undo, setUndo] = useState<{ row: BulkRow; index: number } | null>(null);
 
-  const supportsDigital = !store || (store.productTypes ?? []).includes('digital_downloads');
-  const supportsEducational = !store || (store.productTypes ?? []).includes('educational_resources');
+  const productTypes = store?.productTypes ?? [];
+  // Same availability rules as the single Add Product form.
+  const canType: Record<BulkType, boolean> = {
+    digital: !store || productTypes.includes('digital_downloads'),
+    educational: !store || productTypes.includes('educational_resources'),
+    physical: !store || productTypes.includes('physical_products'),
+  };
   const defaultCategoryId = store?.categoryId ?? '';
   const storePremiumPct = store?.premiumDiscount?.enabled ? store.premiumDiscount.percent : 0;
-  const { terms: premiumTerms } = usePremiumTerms('digital', store?.baseCurrency, storeId);
+  const { terms: premiumTerms } = usePremiumTerms(type === 'physical' ? 'physical' : 'digital', store?.baseCurrency, storeId);
 
   useEffect(() => { const t = window.setInterval(() => setNow(Date.now()), 30000); return () => window.clearInterval(t); }, []);
   useEffect(() => {
-    if (!store) return;
-    if (type === 'digital' && !supportsDigital && supportsEducational) setType('educational');
-    if (type === 'educational' && !supportsEducational && supportsDigital) setType('digital');
-  }, [store, type, supportsDigital, supportsEducational]);
+    if (!store || rows.length > 0) return;
+    if (!canType[type]) {
+      const first = (['digital', 'educational', 'physical'] as const).find(t => canType[t]);
+      if (first) setType(first);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [store, type, rows.length]);
   useEffect(() => {
     if (!toast) return;
     const t = window.setTimeout(() => setToast(''), 3500);
     return () => window.clearTimeout(t);
   }, [toast]);
+  useEffect(() => {
+    if (!undo) return;
+    const t = window.setTimeout(() => setUndo(null), 8000);
+    return () => window.clearTimeout(t);
+  }, [undo]);
 
   const rowsRef = useRef(rows); rowsRef.current = rows;
   const filesRef = useRef(new Map<string, File>());
@@ -154,7 +172,6 @@ export default function StoreBulkUpload() {
       const file = filesRef.current.get(job.id);
       if (!file) continue;
       active.current += 1;
-      const finish = () => { active.current -= 1; filesRef.current.delete(job.id); pump(); };
       if (job.kind === 'doc') {
         patchRow(job.id, { uploadState: 'uploading', uploadPct: 0, uploadError: '' });
         apiUploadPrivateFile(file, undefined, pct => patchRow(job.id, { uploadPct: pct }))
@@ -167,10 +184,11 @@ export default function StoreBulkUpload() {
           .then(res => { if (!res.data?.url) throw new Error('Upload failed'); patchPhoto(job.id, { url: res.data.url, state: 'done', pct: 100 }); filesRef.current.delete(job.id); })
           .catch((e: unknown) => { filesRef.current.set(job.id, file); patchPhoto(job.id, { state: 'failed', error: e instanceof Error && e.message ? e.message : 'Upload failed' }); })
           .finally(() => { active.current -= 1; pump(); });
-        void finish;
       }
     }
   }, [patchRow, patchPhoto]);
+
+  const summaryClear = () => setSummary(null);
 
   const addFiles = (list: FileList | File[]) => {
     const files = Array.from(list);
@@ -182,6 +200,8 @@ export default function StoreBulkUpload() {
       if (isPhotoName(f.name)) {
         if (f.size > MAX_PHOTO_BYTES) msgs.push(`${f.name}: photo is larger than 10 MB.`);
         else photos.push(f);
+      } else if (type === 'physical') {
+        msgs.push(`${f.name}: physical products take photos only (PNG, JPG or WebP).`);
       } else if (isDocName(f.name)) {
         if (f.size > MAX_DOC_BYTES) msgs.push(`${f.name}: file is larger than 500 MB.`);
         else if (f.size === 0) msgs.push(`${f.name}: the file is empty.`);
@@ -191,35 +211,74 @@ export default function StoreBulkUpload() {
       }
     }
     const current = rowsRef.current;
-    const fresh = docs.filter(f => !current.some(r => r.fileName === f.name && r.fileSize === f.size));
-    if (fresh.length < docs.length) msgs.push(`${docs.length - fresh.length} file${docs.length - fresh.length > 1 ? 's were' : ' was'} already added.`);
-    const room = Math.max(0, MAX_BULK_FILES - current.length);
-    const takeDocs = fresh.slice(0, room);
-    if (fresh.length > takeDocs.length) msgs.push(`You can add up to ${MAX_BULK_FILES} files in one batch - ${fresh.length - takeDocs.length} extra file${fresh.length - takeDocs.length > 1 ? 's were' : ' was'} not added. Upload them in a second batch.`);
-    const photoRoom = Math.max(0, MAX_BULK_PHOTOS - tray.length);
-    const takePhotos = photos.slice(0, photoRoom);
+    let room = Math.max(0, MAX_BULK_FILES - current.length);
+    const newRows: BulkRow[] = [];
+    if (type === 'physical') {
+      // One new product per distinct photo name (photos named alike end up on the same product).
+      const bases = new Set(current.map(r => baseOf(r.fileName)).filter(Boolean));
+      let skipped = 0;
+      for (const f of photos) {
+        const b = baseOf(f.name);
+        if (bases.has(b)) continue;
+        if (newRows.length >= room) { skipped += 1; continue; }
+        bases.add(b);
+        newRows.push(blankRow({ name: f.name, size: f.size }, false));
+      }
+      if (skipped) msgs.push(`You can add up to ${MAX_BULK_FILES} products in one batch - ${skipped} extra photo${skipped > 1 ? 's were' : ' was'} not added. Use a second batch.`);
+    } else {
+      const fresh = docs.filter(f => !current.some(r => r.fileName === f.name && r.fileSize === f.size));
+      if (fresh.length < docs.length) msgs.push(`${docs.length - fresh.length} file${docs.length - fresh.length > 1 ? 's were' : ' was'} already added.`);
+      const takeDocs = fresh.slice(0, room);
+      if (fresh.length > takeDocs.length) msgs.push(`You can add up to ${MAX_BULK_FILES} files in one batch - ${fresh.length - takeDocs.length} extra file${fresh.length - takeDocs.length > 1 ? 's were' : ' was'} not added. Upload them in a second batch.`);
+      takeDocs.forEach(f => { const r = blankRow(f); filesRef.current.set(r.id, f); newRows.push(r); });
+    }
+    room = Math.max(0, MAX_BULK_PHOTOS - tray.length);
+    const takePhotos = photos.slice(0, room);
     if (photos.length > takePhotos.length) msgs.push(`Up to ${MAX_BULK_PHOTOS} unassigned photos at a time - some were not added.`);
     setNotice(msgs.join(' '));
 
-    const newRows = takeDocs.map(f => { const r = blankRow(f); filesRef.current.set(r.id, f); return r; });
     const newPhotos: TrayPhoto[] = takePhotos.map(f => ({ id: newId(), name: f.name, url: '', state: 'queued', pct: 0, error: '' }));
     takePhotos.forEach((f, i) => filesRef.current.set(newPhotos[i].id, f));
     if (newRows.length) { rowsRef.current = [...rowsRef.current, ...newRows]; setRows(rowsRef.current); }
     if (newPhotos.length) setTray(prev => [...prev, ...newPhotos]);
-    queue.current.push(...newRows.map(r => ({ kind: 'doc' as const, id: r.id })), ...newPhotos.map(p => ({ kind: 'photo' as const, id: p.id })));
+    queue.current.push(...newRows.filter(r => r.uploadState === 'queued').map(r => ({ kind: 'doc' as const, id: r.id })), ...newPhotos.map(p => ({ kind: 'photo' as const, id: p.id })));
     summaryClear();
     pump();
   };
-  const summaryClear = () => setSummary(null);
 
   const retryUpload = (kind: 'doc' | 'photo', id: string) => {
-    if (!filesRef.current.has(id)) { setNotice('That file is no longer in memory (the page was reloaded). Remove this row and drop the file again.'); return; }
+    if (!filesRef.current.has(id)) { setNotice('That file is no longer in memory (the page was reloaded). Choose the file again.'); return; }
     queue.current.push({ kind, id });
     if (kind === 'doc') patchRow(id, { uploadState: 'queued', uploadError: '' }); else patchPhoto(id, { state: 'queued', error: '' });
     pump();
   };
 
-  // Photos whose file name matches a document (ignoring extension/case) become that product's cover.
+  /** Attach (or replace) the file of one row. */
+  const attachFile = (rowId: string, f: File) => {
+    if (!isDocName(f.name)) { setNotice(`${f.name}: ".${extOf(f.name) || '?'}" files are not supported.`); return; }
+    if (f.size > MAX_DOC_BYTES) { setNotice(`${f.name}: file is larger than 500 MB.`); return; }
+    if (f.size === 0) { setNotice(`${f.name}: the file is empty.`); return; }
+    setNotice('');
+    filesRef.current.set(rowId, f);
+    setRows(prev => prev.map(r => (r.id === rowId ? { ...r, fileName: f.name, fileSize: f.size, upload: null, uploadState: 'queued', uploadPct: 0, uploadError: '', title: r.title.trim() ? r.title : titleFromFileName(f.name) } : r)));
+    queue.current.push({ kind: 'doc', id: rowId });
+    pump();
+  };
+
+  const addRow = () => {
+    if (rowsRef.current.length >= MAX_BULK_FILES) { setNotice(`You can add up to ${MAX_BULK_FILES} products in one batch. Save these first, then start a new batch.`); return; }
+    const r = blankRow();
+    rowsRef.current = [...rowsRef.current, r];
+    setRows(rowsRef.current);
+    setSummary(null);
+    window.setTimeout(() => {
+      const el = document.getElementById(`t-${r.id}`);
+      el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      (el as HTMLInputElement | null)?.focus({ preventScroll: true });
+    }, 60);
+  };
+
+  // Photos whose file name matches a product's file name (ignoring extension/case) become that product's cover.
   useEffect(() => {
     const m = findPhotoMatches(rows, tray);
     if (!m.length) return;
@@ -237,9 +296,12 @@ export default function StoreBulkUpload() {
   const restore = () => {
     const d = draft.restorable?.data;
     if (!d) return;
-    const restored = (d.rows ?? []).map<BulkRow>(r => (r.uploadState === 'done' ? { ...r, createState: r.createState === 'creating' ? 'idle' : r.createState }
-      : { ...r, uploadState: 'failed', uploadError: 'This file was not finished uploading. Remove the row and drop the file again.', createState: r.createState === 'creating' ? 'idle' : r.createState }));
-    setType(d.type === 'educational' ? 'educational' : 'digital');
+    const restored = (d.rows ?? []).map(normalizeRow).map<BulkRow>(r => {
+      const base = r.createState === 'creating' ? { ...r, createState: 'idle' as const } : r;
+      return base.uploadState === 'done' || base.uploadState === 'none' ? base
+        : { ...base, uploadState: 'failed', uploadError: 'This file was not finished uploading. Choose the file again.' };
+    });
+    setType(d.type === 'educational' || d.type === 'physical' ? d.type : 'digital');
     setRows(restored);
     setTray((d.tray ?? []).filter(t => t.state === 'done'));
     draft.accept();
@@ -257,16 +319,27 @@ export default function StoreBulkUpload() {
   const uploadingCount = rows.filter(r => r.uploadState === 'queued' || r.uploadState === 'uploading').length + tray.filter(t => t.state === 'queued' || t.state === 'uploading').length;
 
   const toggleSel = (id: string) => setSelected(prev => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; });
-  const toggleOpen = (id: string) => setOpen(prev => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; });
   const allSelected = editable.length > 0 && editable.every(r => selected.has(r.id));
 
   const removeRow = (id: string) => {
+    const index = rowsRef.current.findIndex(r => r.id === id);
+    if (index < 0) return;
+    const row = rowsRef.current[index];
     queue.current = queue.current.filter(j => j.id !== id);
-    filesRef.current.delete(id);
     setRows(prev => prev.filter(r => r.id !== id));
     setSelected(prev => { const n = new Set(prev); n.delete(id); return n; });
+    setUndo({ row, index });
+  };
+  const undoRemove = () => {
+    if (!undo) return;
+    const { row, index } = undo;
+    const back: BulkRow = row.uploadState === 'queued' || row.uploadState === 'uploading'
+      ? { ...row, uploadState: 'failed', uploadError: 'Upload was cancelled. Retry to upload it again.' } : row;
+    setRows(prev => { const n = prev.slice(); n.splice(Math.min(index, n.length), 0, back); return n; });
+    setUndo(null);
   };
   const duplicateRow = (r: BulkRow) => {
+    if (rowsRef.current.length >= MAX_BULK_FILES) { setNotice(`You can add up to ${MAX_BULK_FILES} products in one batch.`); return; }
     const copy: BulkRow = { ...r, id: newId(), title: `${r.title} (copy)`, createState: 'idle', createError: '', productId: '', createdStatus: '' };
     setRows(prev => { const i = prev.findIndex(x => x.id === r.id); const n = prev.slice(); n.splice(i + 1, 0, copy); return n; });
   };
@@ -279,9 +352,9 @@ export default function StoreBulkUpload() {
   const dropPhoto = (id: string) => { queue.current = queue.current.filter(j => j.id !== id); filesRef.current.delete(id); setTray(prev => prev.filter(t => t.id !== id)); };
 
   // ── Apply to selected ────────────────────────────────────────────────────────────────────────
-  const [ap, setAp] = useState({ categoryId: '', subCategoryId: '', classFrom: '', classTo: '', level: '', price: '', compareAt: '', description: '', mode: 'replace' as 'replace' | 'append' });
+  const [ap, setAp] = useState({ categoryId: '', subCategoryId: '', classFrom: '', classTo: '', level: '', price: '', compareAt: '', stock: '', description: '', mode: 'replace' as 'replace' | 'append' });
   const [apOpen, setApOpen] = useState(true);
-  const apFilled = !!(ap.categoryId || ap.classFrom || ap.classTo || ap.level || ap.price.trim() || ap.compareAt.trim() || ap.description.trim());
+  const apFilled = !!(ap.categoryId || ap.classFrom || ap.classTo || ap.level || ap.price.trim() || ap.compareAt.trim() || ap.stock.trim() || ap.description.trim());
   const selectedRows = editable.filter(r => selected.has(r.id));
   const applyToSelected = () => {
     if (!selectedRows.length || !apFilled) return;
@@ -294,6 +367,7 @@ export default function StoreBulkUpload() {
       if (ap.level) n.educationLevel = ap.level;
       if (ap.price.trim()) n.price = ap.price.trim();
       if (ap.compareAt.trim()) n.compareAt = ap.compareAt.trim();
+      if (ap.stock.trim()) { n.stock = ap.stock.trim(); n.unlimitedStock = false; }
       if (ap.description.trim()) n.description = ap.mode === 'append' && n.description.trim() ? `${n.description.trim()}\n${ap.description.trim()}` : ap.description.trim();
       if (n.createState === 'failed') { n.createState = 'idle'; n.createError = ''; }
       return n;
@@ -305,24 +379,43 @@ export default function StoreBulkUpload() {
   const createOne = async (r: BulkRow, mode: 'draft' | 'publish') => {
     patchRow(r.id, { createState: 'creating', createError: '' });
     try {
-      const res = await apiCreateDigitalProduct({
+      const common = {
         storeId, name: r.title.trim(), description: r.description.trim(),
-        productType: type,
         categoryId: r.categoryId || undefined, subCategoryId: r.subCategoryId || null,
-        images: r.images, tags: [],
-        educationLevel: type === 'educational' ? (effectiveLevel(r) as EducationLevel) : null,
-        customLevel: null,
-        isListedOnEdudeen: true, status: mode === 'publish' ? 'active' : 'draft',
-        price: Number(r.price), compareAtPrice: r.compareAt.trim() ? Number(r.compareAt) : null,
+        images: r.images, tags: r.tags,
+        isListedOnEdudeen: true, status: (mode === 'publish' ? 'active' : 'draft') as 'active' | 'draft',
         ...learningPayload({ curricula: [], ageMin: '', ageMax: '', classFrom: r.classFrom, classTo: r.classTo }),
-        ...deliveryPayload(EMPTY_DELIVERY),
-        licenseTiers: [],
-        digital: {
-          files: [{ url: r.upload!.publicId, name: r.upload!.fileName, size: r.upload!.fileSize, mimeType: r.upload!.mimeType }],
-          downloadLimit: 'unlimited', linkExpiryDays: null, pdfStampingEnabled: false, licenseType: 'personal', buyerDeliveryMessage: '',
-          preview: { enabled: false, sourceFileIndex: 0 }, sampleFile: null,
-        },
-      });
+      };
+      let res;
+      if (type === 'physical') {
+        res = await apiCreatePhysicalProduct({
+          ...common,
+          variants: [{
+            price: Number(r.price),
+            compareAtPrice: r.compareAt.trim() ? Number(r.compareAt) : null,
+            options: [],
+            stock: r.unlimitedStock ? 0 : Number(r.stock),
+            ...(r.unlimitedStock ? { unlimitedStock: true } : {}),
+            shippingWeight: r.weight.trim(),
+            ...(r.sku.trim() ? { sku: r.sku.trim() } : {}),
+          }],
+        });
+      } else {
+        res = await apiCreateDigitalProduct({
+          ...common,
+          productType: type,
+          educationLevel: type === 'educational' ? (effectiveLevel(r) as EducationLevel) : null,
+          customLevel: null,
+          price: Number(r.price), compareAtPrice: r.compareAt.trim() ? Number(r.compareAt) : null,
+          ...deliveryPayload(EMPTY_DELIVERY),
+          licenseTiers: [],
+          digital: {
+            files: [{ url: r.upload!.publicId, name: r.upload!.fileName, size: r.upload!.fileSize, mimeType: r.upload!.mimeType }],
+            downloadLimit: r.downloadLimit || 'unlimited', linkExpiryDays: r.linkExpiryDays.trim() ? Number(r.linkExpiryDays) : null, pdfStampingEnabled: false, licenseType: 'personal', buyerDeliveryMessage: r.buyerMessage.trim(),
+            preview: { enabled: false, sourceFileIndex: 0 }, sampleFile: null,
+          },
+        });
+      }
       patchRow(r.id, { createState: 'created', createError: '', productId: res.data.product._id, createdStatus: String(res.data.product.status ?? '') });
       return true;
     } catch (e) {
@@ -338,12 +431,11 @@ export default function StoreBulkUpload() {
     const skipped = rowsRef.current.filter(r => r.createState !== 'created').length - targets.length;
     setNotice(''); setSummary(null); setLastMode(mode); setCreating(true);
     setProgress({ done: 0, total: targets.length });
-    let next = 0; let done = 0; const results: { ok: boolean; id: string }[] = [];
+    let next = 0; let done = 0;
     const worker = async () => {
       while (next < targets.length) {
         const r = targets[next++];
-        const ok = await createOne(r, mode);
-        results.push({ ok, id: r.id });
+        await createOne(r, mode);
         done += 1;
         if (alive.current) setProgress({ done, total: targets.length });
       }
@@ -371,7 +463,7 @@ export default function StoreBulkUpload() {
   const resetAll = () => {
     try { localStorage.removeItem(`edudeen:bulk-upload:${storeId}`); } catch { /* ignore */ }
     queue.current = []; filesRef.current.clear();
-    setRows([]); setTray([]); setSelected(new Set()); setOpen(new Set()); setSummary(null); setNotice('');
+    setRows([]); setTray([]); setSelected(new Set()); setSummary(null); setNotice('');
     window.location.reload();
   };
   const clearCreated = () => setRows(prev => prev.filter(r => r.createState !== 'created'));
@@ -380,20 +472,20 @@ export default function StoreBulkUpload() {
   // ── Drag & drop ──────────────────────────────────────────────────────────────────────────────
   const onDrop = (e: DragEvent) => { e.preventDefault(); setDrag(false); addFiles(e.dataTransfer.files); };
   const inputRef = useRef<HTMLInputElement>(null);
-  const dropAccept = [...DOC_EXTENSIONS, 'png', 'jpg', 'jpeg', 'webp'].map(x => `.${x}`).join(',');
+  const dropAccept = (type === 'physical' ? PHOTO_EXTENSIONS : [...DOC_EXTENSIONS, ...PHOTO_EXTENSIONS]).map(x => `.${x}`).join(',');
 
   const showEmpty = rows.length === 0 && tray.length === 0;
   const failedCount = rows.filter(r => r.createState === 'failed').length;
   const createdRows = rows.filter(r => r.createState === 'created');
   const pendingPhotos = tray.length;
-  const canType = { digital: supportsDigital || !store, educational: supportsEducational || !store };
-  const noTypes = !!store && !supportsDigital && !supportsEducational;
+  const noTypes = !!store && !canType.digital && !canType.educational && !canType.physical;
+  const detailRow = detail ? rows.find(r => r.id === detail.rowId) : undefined;
 
   return (
     <div className="min-h-full">
       <StorePageHeader
         title="Bulk upload"
-        subtitle="Add many digital or educational products at once."
+        subtitle="Add many products at once - digital, educational or physical."
         actions={<Link to={`/store/${storeId}/products/add`} className="text-[13px] font-bold text-brand-royal no-underline hover:underline">Add one product instead</Link>}
       />
       {guard.dialog}
@@ -402,7 +494,9 @@ export default function StoreBulkUpload() {
         <div className="mx-auto max-w-[1400px] flex flex-col gap-4">
           {/* How it works */}
           <ol className="m-0 p-0 list-none grid sm:grid-cols-3 gap-2 text-[13px] text-graphite" aria-label="How bulk upload works">
-            {['Drop all your files (and cover photos) here. A photo named like its file becomes the cover.', 'Check the table. Fill the red items, or select rows and use Apply to selected.', 'Save all as drafts, or publish the ready ones. Nothing is lost if a row fails.'].map((t, i) => (
+            {[type === 'physical' ? 'Drop product photos (one product per photo name) or press + Add product to type each one in.' : 'Drop your files and cover photos here, or press + Add product. A photo named like its file becomes the cover.',
+              'Fill the red items in each row. Extra details (compare-at price, tags, weight...) are under Add details. Or select rows and use Apply to selected.',
+              'Save all as drafts, or publish the ready ones. Nothing is lost if a row fails.'].map((t, i) => (
               <li key={i} className="flex gap-2 items-start rounded-xl bg-white border border-bone px-3 py-2.5">
                 <span className="size-5 shrink-0 rounded-full bg-brand-royal text-white text-[12px] font-bold flex items-center justify-center">{i + 1}</span>
                 <span>{t}</span>
@@ -440,33 +534,45 @@ export default function StoreBulkUpload() {
             </div>
           )}
 
-          {noTypes && <p role="alert" className="m-0 text-[13px] text-error bg-error-bg border border-error-border rounded-lg px-4 py-3">Your store sells physical products only. Bulk upload is for digital and educational products.</p>}
+          {noTypes && <p role="alert" className="m-0 text-[13px] text-error bg-error-bg border border-error-border rounded-lg px-4 py-3">Your store has no product type that bulk upload can create.</p>}
 
           {/* Type choice + drop zone */}
           <div className="rounded-xl border border-bone bg-white p-4 flex flex-col gap-3">
             <div className="flex flex-wrap items-center gap-3">
               <span className="text-[13px] font-bold text-carbon">These are:</span>
-              <div role="radiogroup" aria-label="Product type" className="inline-flex gap-2">
-                {(['digital', 'educational'] as const).map(t => (
-                  <button key={t} type="button" role="radio" aria-checked={type === t} disabled={!canType[t] || rows.some(r => r.createState === 'created')}
+              <div role="radiogroup" aria-label="Product type" className="inline-flex flex-wrap gap-2">
+                {(['digital', 'educational', 'physical'] as const).map(t => (
+                  <button key={t} type="button" role="radio" aria-checked={type === t} disabled={!canType[t] || (rows.length > 0 && type !== t)}
                     onClick={() => setType(t)}
                     className={`px-3 py-1.5 rounded-full text-[13px] font-bold border cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${type === t ? 'bg-brand-royal text-white border-brand-royal' : 'bg-white text-graphite border-bone hover:bg-cream'}`}>
-                    {t === 'digital' ? 'Digital downloads' : 'Educational resources'}
+                    {TYPE_LABEL[t]}
                   </button>
                 ))}
               </div>
-              <span className="text-[12px] text-slate">Physical products with stock and shipping are not part of bulk upload - add those one by one.</span>
+              {rows.length > 0 && <span className="text-[12px] text-slate">To switch type, remove all rows first.</span>}
             </div>
             <div
               onDragOver={e => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)} onDrop={onDrop}
-              className={`rounded-xl border-2 border-dashed text-center transition-colors ${drag ? 'border-brand-royal bg-info-bg' : 'border-bone bg-cream/50'} ${showEmpty ? 'py-12 px-4' : 'py-4 px-4'}`}
+              className={`rounded-xl border-2 border-dashed text-center transition-colors ${drag ? 'border-brand-royal bg-info-bg' : 'border-bone bg-cream/50'} ${showEmpty ? 'py-10 px-4' : 'py-4 px-4'}`}
               data-testid="bulk-dropzone"
             >
               <UploadCloud size={showEmpty ? 40 : 24} className="mx-auto text-brand-royal" />
-              <p className="m-0 mt-2 text-[15px] font-bold text-carbon">{showEmpty ? 'Drag and drop your files here' : 'Drop more files here'}</p>
-              <p className="m-0 mt-1 text-[12.5px] text-slate">PDF, Word, PowerPoint, Excel, ZIP and more (up to 500 MB each), plus cover photos (PNG, JPG, WebP, up to 10 MB). Up to {MAX_BULK_FILES} files per batch.</p>
-              <button type="button" onClick={() => inputRef.current?.click()} disabled={noTypes}
-                className="mt-3 px-4 py-2 rounded-lg text-[14px] font-bold bg-brand-royal text-white border-none cursor-pointer disabled:opacity-50">Select files</button>
+              <p className="m-0 mt-2 text-[15px] font-bold text-carbon">
+                {type === 'physical' ? (showEmpty ? 'Drag and drop product photos here' : 'Drop more photos here') : (showEmpty ? 'Drag and drop your files here' : 'Drop more files here')}
+              </p>
+              <p className="m-0 mt-1 text-[12.5px] text-slate">
+                {type === 'physical'
+                  ? `Each photo name becomes a product (PNG, JPG, WebP, up to 10 MB). Or add products by hand. Up to ${MAX_BULK_FILES} products per batch.`
+                  : `PDF, Word, PowerPoint, Excel, ZIP and more (up to 500 MB each), plus cover photos (PNG, JPG, WebP, up to 10 MB). Up to ${MAX_BULK_FILES} files per batch.`}
+              </p>
+              <div className="mt-3 flex flex-wrap justify-center gap-2">
+                <button type="button" onClick={() => inputRef.current?.click()} disabled={noTypes}
+                  className="px-4 py-2 rounded-lg text-[14px] font-bold bg-brand-royal text-white border-none cursor-pointer disabled:opacity-50">{type === 'physical' ? 'Select photos' : 'Select files'}</button>
+                {showEmpty && (
+                  <button type="button" onClick={addRow} disabled={noTypes} data-testid="bulk-add-row-empty"
+                    className="px-4 py-2 rounded-lg text-[14px] font-bold bg-white text-brand-royal border border-brand-royal cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5"><Plus size={15} /> Add product</button>
+                )}
+              </div>
               <input ref={inputRef} data-testid="bulk-input" type="file" multiple accept={dropAccept} className="hidden"
                 onChange={e => { if (e.target.files) addFiles(e.target.files); e.target.value = ''; }} />
             </div>
@@ -483,7 +589,7 @@ export default function StoreBulkUpload() {
           {pendingPhotos > 0 && (
             <div className="rounded-xl border border-bone bg-white p-4" data-testid="bulk-tray">
               <h2 className="m-0 text-[14px] font-bold text-carbon">Unmatched photos ({pendingPhotos})</h2>
-              <p className="m-0 mt-0.5 mb-3 text-[12.5px] text-slate">These photos did not match a file name. Pick the product each one belongs to, or leave them out.</p>
+              <p className="m-0 mt-0.5 mb-3 text-[12.5px] text-slate">These photos did not match a product name. Pick the product each one belongs to, or leave them out.</p>
               <div className="flex flex-wrap gap-3">
                 {tray.map(p => (
                   <div key={p.id} className="w-[150px] rounded-lg border border-bone p-2 flex flex-col gap-1.5">
@@ -495,7 +601,7 @@ export default function StoreBulkUpload() {
                     {p.state === 'done' ? (
                       <select aria-label={`Assign ${p.name} to a product`} className={sel} value="" onChange={e => { if (e.target.value) assignPhoto(e.target.value, p.id); }}>
                         <option value="">Use as cover for…</option>
-                        {editable.map(r => <option key={r.id} value={r.id}>{r.title || r.fileName}</option>)}
+                        {editable.map(r => <option key={r.id} value={r.id}>{r.title || r.fileName || 'Untitled product'}</option>)}
                       </select>
                     ) : p.state === 'failed' ? (
                       <p className="m-0 text-[12px] text-error">{p.error} <button type="button" onClick={() => retryUpload('photo', p.id)} className="underline bg-transparent border-none cursor-pointer text-error p-0">Retry</button></p>
@@ -536,6 +642,12 @@ export default function StoreBulkUpload() {
                       <label htmlFor="ap-compare" className={lab}>Compare-at price</label>
                       <input id="ap-compare" type="number" min={0} inputMode="decimal" className={inp} value={ap.compareAt} onChange={e => setAp(a => ({ ...a, compareAt: e.target.value }))} />
                     </div>
+                    {type === 'physical' && (
+                      <div>
+                        <label htmlFor="ap-stock" className={lab}>Stock quantity</label>
+                        <input id="ap-stock" type="number" min={0} inputMode="numeric" className={inp} value={ap.stock} onChange={e => setAp(a => ({ ...a, stock: e.target.value }))} />
+                      </div>
+                    )}
                     {type === 'educational' && (
                       <div>
                         <label htmlFor="ap-level" className={lab}>Education level</label>
@@ -567,7 +679,7 @@ export default function StoreBulkUpload() {
             </div>
           )}
 
-          {/* Review rows */}
+          {/* Rows */}
           {rows.length > 0 && (
             <div className="flex flex-col gap-3" data-testid="bulk-rows">
               <div className="flex flex-wrap items-center gap-2 text-[13px] text-graphite">
@@ -577,21 +689,22 @@ export default function StoreBulkUpload() {
                 {createdRows.length > 0 && <span className="text-success">· {createdRows.length} created</span>}
                 {uploadingCount > 0 && <span className="inline-flex items-center gap-1 text-slate"><Loader2 size={13} className="animate-spin" /> uploading {uploadingCount}…</span>}
               </div>
-              {rows.map((r, idx) => {
-                const issue = r.createState === 'created' ? null : issueOf(r);
-                return (
-                  <RowCard
-                    key={r.id} row={r} index={idx} issue={issue} dupOf={dups.get(r.id)} currency={currency} type={type}
-                    categories={categories} catLoading={catLoading} defaultCategoryId={defaultCategoryId}
-                    selected={selected.has(r.id)} expanded={open.has(r.id)} tray={tray.filter(t => t.state === 'done')}
-                    onSelect={() => toggleSel(r.id)} onToggle={() => toggleOpen(r.id)}
-                    onChange={p => patchRow(r.id, p.createState === undefined && r.createState === 'failed' ? { ...p, createState: 'idle', createError: '' } : p)}
-                    onRemove={() => removeRow(r.id)} onDuplicate={() => duplicateRow(r)}
-                    onRetryUpload={() => retryUpload('doc', r.id)} onAssign={pid => assignPhoto(r.id, pid)}
-                    storeId={storeId}
-                  />
-                );
-              })}
+              {rows.map((r, idx) => (
+                <RowCard
+                  key={r.id} row={r} index={idx} issue={r.createState === 'created' ? null : issueOf(r)} dupOf={dups.get(r.id)} currency={currency} type={type}
+                  categories={categories} catLoading={catLoading} defaultCategoryId={defaultCategoryId}
+                  selected={selected.has(r.id)}
+                  onSelect={() => toggleSel(r.id)} onOpenDetail={g => setDetail({ rowId: r.id, group: g })}
+                  onChange={p => patchRow(r.id, p.createState === undefined && r.createState === 'failed' ? { ...p, createState: 'idle', createError: '' } : p)}
+                  onRemove={() => removeRow(r.id)} onDuplicate={() => duplicateRow(r)}
+                  onRetryUpload={() => retryUpload('doc', r.id)} onAttach={f => attachFile(r.id, f)}
+                  storeId={storeId}
+                />
+              ))}
+              <button type="button" onClick={addRow} disabled={creating} data-testid="bulk-add-row"
+                className="w-full rounded-xl border-2 border-dashed border-brand-royal/40 bg-white py-3 text-[14px] font-bold text-brand-royal cursor-pointer hover:bg-info-bg inline-flex items-center justify-center gap-1.5 disabled:opacity-50">
+                <Plus size={16} /> Add product
+              </button>
             </div>
           )}
         </div>
@@ -606,6 +719,10 @@ export default function StoreBulkUpload() {
                 : <span className="hidden sm:inline">{draft.savedAt ? `Saved on this device ${timeAgo(draft.savedAt, now)}` : 'Your table is saved on this device as you go.'}</span>}
               {!creating && editable.length - readyRows.length > 0 && <span className="block text-error font-semibold">{editable.length - readyRows.length} product{editable.length - readyRows.length === 1 ? '' : 's'} need details<span className="hidden sm:inline"> and will be left out until fixed</span>.</span>}
             </div>
+            <button type="button" onClick={addRow} disabled={creating} aria-label="Add product" data-testid="bulk-add-row-bar"
+              className="max-sm:flex-none px-3 py-[10px] rounded-lg text-[14px] font-bold text-brand-royal bg-white border border-brand-royal cursor-pointer disabled:opacity-50 inline-flex items-center gap-1 whitespace-nowrap">
+              <Plus size={15} /> <span className="hidden sm:inline">Add product</span><span className="sm:hidden">Add</span>
+            </button>
             {failedCount > 0 && !creating && (
               <button type="button" onClick={() => runCreate(lastMode, true)} className="px-3 sm:px-4 py-[10px] rounded-lg text-[14px] font-bold text-error bg-white border border-error-border cursor-pointer inline-flex items-center gap-1.5"><RefreshCw size={14} /> Retry failed ({failedCount})</button>
             )}
@@ -620,20 +737,199 @@ export default function StoreBulkUpload() {
           </div>
         </div>
       )}
+
+      {undo && (
+        <div role="status" data-testid="bulk-undo" className="fixed z-30 bottom-[140px] lg:bottom-20 inset-x-4 mx-auto max-w-[360px] rounded-xl bg-carbon text-white px-4 py-2.5 flex items-center gap-3 shadow-lg text-[13px]">
+          <span className="flex-1">Product removed.</span>
+          <button type="button" onClick={undoRemove} className="font-bold underline bg-transparent border-none text-white cursor-pointer p-0">Undo</button>
+        </div>
+      )}
+
+      {detail && detailRow && (
+        <DetailModal
+          key={`${detail.rowId}-${detail.group}`} row={detailRow} group={detail.group} type={type} currency={currency} tray={tray.filter(t => t.state === 'done')}
+          onClose={() => setDetail(null)} onPatch={p => patchRow(detail.rowId, p)} onAssign={pid => assignPhoto(detail.rowId, pid)}
+        />
+      )}
     </div>
   );
 }
 
+// ── "Add details" dropdown + chips ────────────────────────────────────────────────────────────
+function DetailsMenu({ row, type, onOpen, disabled }: { row: BulkRow; type: BulkType; onOpen: (g: DetailGroup) => void; disabled?: boolean }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const h = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false); };
+    const k = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    document.addEventListener('mousedown', h); document.addEventListener('keydown', k);
+    return () => { document.removeEventListener('mousedown', h); document.removeEventListener('keydown', k); };
+  }, [open]);
+  const filled = filledGroups(row, type);
+  return (
+    <span ref={ref} className="relative inline-block">
+      <button type="button" disabled={disabled} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(o => !o)} data-testid="add-details"
+        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[12.5px] font-bold text-brand-royal bg-white border border-bone cursor-pointer hover:bg-cream disabled:opacity-50">
+        Add details <ChevronDown size={13} className={open ? 'rotate-180' : ''} />
+      </button>
+      {open && (
+        <div role="menu" className="absolute end-0 top-full mt-1 z-20 w-[250px] rounded-xl border border-bone bg-white shadow-lg py-1">
+          {groupsFor(type).map(g => (
+            <button key={g.key} type="button" role="menuitem" onClick={() => { setOpen(false); onOpen(g.key); }}
+              className="w-full text-start px-3 py-2 bg-transparent border-none cursor-pointer hover:bg-cream flex items-start gap-2">
+              <span className="mt-0.5 size-4 shrink-0 text-success">{filled.includes(g.key) && <Check size={14} />}</span>
+              <span className="min-w-0"><span className="block text-[13px] font-semibold text-carbon">{g.label}</span><span className="block text-[12px] text-slate">{g.hint}</span></span>
+            </button>
+          ))}
+        </div>
+      )}
+    </span>
+  );
+}
+
+const CHIP_LABEL = (g: DetailGroup, r: BulkRow) => ({
+  price: 'Compare-at', class: 'Classes', download: 'Download settings', inventory: 'SKU / weight',
+  photos: `${r.images.length} photo${r.images.length === 1 ? '' : 's'}`, tags: `${r.tags.length} tag${r.tags.length === 1 ? '' : 's'}`,
+}[g]);
+
+// ── Modal that edits one optional group ───────────────────────────────────────────────────────
+function DetailModal({ row, group, type, currency, tray, onClose, onPatch, onAssign }: {
+  row: BulkRow; group: DetailGroup; type: BulkType; currency: string; tray: TrayPhoto[];
+  onClose: () => void; onPatch: (p: Partial<BulkRow>) => void; onAssign: (photoId: string) => void;
+}) {
+  const [d, setD] = useState({
+    compareAt: row.compareAt, classFrom: row.classFrom, classTo: row.classTo, tags: row.tags, tagInput: '',
+    sku: row.sku, weight: row.weight, unlimitedStock: row.unlimitedStock,
+    downloadLimit: row.downloadLimit === 'unlimited' ? '' : row.downloadLimit, linkExpiryDays: row.linkExpiryDays, buyerMessage: row.buyerMessage,
+  });
+  const label = groupsFor(type).find(g => g.key === group)?.label ?? 'Details';
+  const err = (() => {
+    if (group === 'price' && d.compareAt.trim() && !(Number(d.compareAt) >= 0)) return 'Enter a valid price.';
+    if (group === 'class' && d.classFrom && d.classTo && CLASS_LEVELS.findIndex(c => c.value === d.classFrom) > CLASS_LEVELS.findIndex(c => c.value === d.classTo)) return '"From class" can’t come after "To class".';
+    if (group === 'download' && d.downloadLimit.trim() && !(Number.isInteger(Number(d.downloadLimit)) && Number(d.downloadLimit) >= 1)) return 'Download limit must be a whole number, or leave it empty for unlimited.';
+    if (group === 'download' && d.linkExpiryDays.trim() && !(Number.isInteger(Number(d.linkExpiryDays)) && Number(d.linkExpiryDays) >= 1)) return 'Link expiry must be a whole number of days.';
+    return '';
+  })();
+  const addTag = () => {
+    const parts = d.tagInput.split(',').map(s => s.trim()).filter(Boolean);
+    if (!parts.length) return;
+    setD(x => ({ ...x, tags: [...x.tags, ...parts.filter(p => !x.tags.includes(p))].slice(0, 30), tagInput: '' }));
+  };
+  const save = () => {
+    if (err) return;
+    if (group === 'price') onPatch({ compareAt: d.compareAt.trim() });
+    if (group === 'class') onPatch({ classFrom: d.classFrom, classTo: d.classTo });
+    if (group === 'tags') {
+      const extra = d.tagInput.split(',').map(s => s.trim()).filter(Boolean);
+      onPatch({ tags: [...d.tags, ...extra.filter(p => !d.tags.includes(p))].slice(0, 30) });
+    }
+    if (group === 'inventory') onPatch({ sku: d.sku.trim(), weight: d.weight.trim(), unlimitedStock: d.unlimitedStock });
+    if (group === 'download') onPatch({ downloadLimit: d.downloadLimit.trim() || 'unlimited', linkExpiryDays: d.linkExpiryDays.trim(), buyerMessage: d.buyerMessage.trim() });
+    onClose();
+  };
+  return (
+    <Modal
+      title={`${label} - ${row.title || 'Untitled product'}`} onClose={onClose} width={520} mobileSheet
+      footer={group === 'photos'
+        ? <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg text-[13px] font-bold bg-brand-royal text-white border-none cursor-pointer">Done</button>
+        : <>
+            <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg text-[13px] font-bold bg-white text-graphite border border-bone cursor-pointer">Cancel</button>
+            <button type="button" onClick={save} disabled={!!err} data-testid="detail-save" className="px-4 py-2 rounded-lg text-[13px] font-bold bg-brand-royal text-white border-none cursor-pointer disabled:opacity-50">Save</button>
+          </>}
+    >
+      <div className="flex flex-col gap-3">
+        {group === 'price' && (
+          <div>
+            <label htmlFor="dm-compare" className={lab}>Compare-at price ({currency})</label>
+            <input id="dm-compare" type="number" min={0} inputMode="decimal" className={inp} value={d.compareAt} onChange={e => setD(x => ({ ...x, compareAt: e.target.value }))} />
+            <p className="m-0 mt-1.5 text-[12px] text-slate">Shown crossed out next to your price. Leave empty for no sale price.</p>
+          </div>
+        )}
+        {group === 'class' && <ClassRange idPrefix="dm" from={d.classFrom} to={d.classTo} onChange={(f, t) => setD(x => ({ ...x, classFrom: f, classTo: t }))} />}
+        {group === 'photos' && (
+          <>
+            <p className="m-0 text-[12px] text-slate">The first photo is the cover (up to {MAX_ROW_PHOTOS}).</p>
+            <ProductPhotosUploader value={row.images} onChange={urls => onPatch({ images: urls })} />
+            {tray.length > 0 && (
+              <div>
+                <label htmlFor="dm-tray" className={lab}>Or use an unmatched photo</label>
+                <select id="dm-tray" className={sel} value="" onChange={e => { if (e.target.value) onAssign(e.target.value); }}>
+                  <option value="">Choose a photo…</option>
+                  {tray.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                </select>
+              </div>
+            )}
+            {baseOf(row.fileName) && <p className="m-0 text-[12px] text-slate">Tip: a photo named <b>{baseOf(row.fileName)}.jpg</b> dropped on the page attaches itself.</p>}
+          </>
+        )}
+        {group === 'tags' && (
+          <div>
+            <label htmlFor="dm-tag" className={lab}>Tags (press Enter or comma)</label>
+            <div className="flex gap-2">
+              <input id="dm-tag" className={inp} value={d.tagInput} placeholder="e.g. phonics, ramadan" onChange={e => setD(x => ({ ...x, tagInput: e.target.value }))}
+                onKeyDown={e => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addTag(); } }} />
+              <button type="button" onClick={addTag} className="px-3 rounded-lg text-[13px] font-bold bg-white text-brand-royal border border-bone cursor-pointer">Add</button>
+            </div>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {d.tags.map(t => (
+                <span key={t} className="inline-flex items-center gap-1 rounded-full bg-mist px-2.5 py-1 text-[12.5px] text-carbon">{t}
+                  <button type="button" aria-label={`Remove tag ${t}`} onClick={() => setD(x => ({ ...x, tags: x.tags.filter(y => y !== t) }))} className="bg-transparent border-none cursor-pointer p-0 text-slate"><X size={12} /></button>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+        {group === 'inventory' && (
+          <>
+            <div>
+              <label htmlFor="dm-sku" className={lab}>SKU <span className="font-normal text-slate">(optional, made for you if empty)</span></label>
+              <input id="dm-sku" className={inp} value={d.sku} maxLength={60} onChange={e => setD(x => ({ ...x, sku: e.target.value }))} />
+            </div>
+            <div>
+              <label htmlFor="dm-weight" className={lab}>Shipping weight</label>
+              <input id="dm-weight" className={inp} value={d.weight} placeholder="e.g. 0.5 kg" onChange={e => setD(x => ({ ...x, weight: e.target.value }))} />
+              <p className="m-0 mt-1.5 text-[12px] text-slate">Used to estimate delivery cost.</p>
+            </div>
+            <label className="inline-flex items-center gap-2 text-[13px] text-carbon cursor-pointer">
+              <input type="checkbox" className="size-4 accent-brand-royal" checked={d.unlimitedStock} onChange={e => setD(x => ({ ...x, unlimitedStock: e.target.checked }))} />
+              Unlimited stock (no quantity needed)
+            </label>
+          </>
+        )}
+        {group === 'download' && (
+          <>
+            <div>
+              <label htmlFor="dm-limit" className={lab}>Download limit per buyer</label>
+              <input id="dm-limit" type="number" min={1} inputMode="numeric" className={inp} value={d.downloadLimit} placeholder="Empty = unlimited" onChange={e => setD(x => ({ ...x, downloadLimit: e.target.value }))} />
+            </div>
+            <div>
+              <label htmlFor="dm-expiry" className={lab}>Download link expires after (days)</label>
+              <input id="dm-expiry" type="number" min={1} inputMode="numeric" className={inp} value={d.linkExpiryDays} placeholder="Empty = never" onChange={e => setD(x => ({ ...x, linkExpiryDays: e.target.value }))} />
+            </div>
+            <div>
+              <label htmlFor="dm-msg" className={lab}>Message shown to the buyer after purchase</label>
+              <textarea id="dm-msg" rows={3} className={`${inp} resize-y`} value={d.buyerMessage} onChange={e => setD(x => ({ ...x, buyerMessage: e.target.value }))} />
+            </div>
+          </>
+        )}
+        {err && <p role="alert" className="m-0 text-[13px] text-error">{err}</p>}
+      </div>
+    </Modal>
+  );
+}
+
 // ── One product row ───────────────────────────────────────────────────────────────────────────
-function RowCard({ row: r, index, issue, dupOf, currency, type, categories, catLoading, defaultCategoryId, selected, expanded, tray, storeId, onSelect, onToggle, onChange, onRemove, onDuplicate, onRetryUpload, onAssign }: {
+function RowCard({ row: r, index, issue, dupOf, currency, type, categories, catLoading, defaultCategoryId, selected, storeId, onSelect, onOpenDetail, onChange, onRemove, onDuplicate, onRetryUpload, onAttach }: {
   row: BulkRow; index: number; issue: string | null; dupOf?: number; currency: string; type: BulkType;
-  categories: CategoryNode[]; catLoading: boolean; defaultCategoryId: string; selected: boolean; expanded: boolean; tray: TrayPhoto[]; storeId: string;
-  onSelect: () => void; onToggle: () => void; onChange: (p: Partial<BulkRow>) => void; onRemove: () => void; onDuplicate: () => void; onRetryUpload: () => void; onAssign: (photoId: string) => void;
+  categories: CategoryNode[]; catLoading: boolean; defaultCategoryId: string; selected: boolean; storeId: string;
+  onSelect: () => void; onOpenDetail: (g: DetailGroup) => void; onChange: (p: Partial<BulkRow>) => void; onRemove: () => void; onDuplicate: () => void; onRetryUpload: () => void; onAttach: (f: File) => void;
 }) {
   const created = r.createState === 'created';
   const busy = r.createState === 'creating';
   const lock = created || busy;
   const catId = r.categoryId || defaultCategoryId;
+  const needsFile = type !== 'physical';
   const statusLabel = created
     ? (r.createdStatus === 'draft' ? 'Saved as draft' : r.createdStatus === 'pending_review' ? 'Sent for review' : 'Published')
     : r.createState === 'creating' ? 'Creating…' : r.createState === 'failed' ? 'Failed' : issue ? issue : 'Ready';
@@ -641,94 +937,100 @@ function RowCard({ row: r, index, issue, dupOf, currency, type, categories, catL
     : r.createState === 'failed' || issue ? 'bg-error-bg text-error border-error-border'
     : r.createState === 'creating' ? 'bg-info-bg text-brand-royal border-info/30' : 'bg-success-bg text-success border-success/30';
   const uploading = r.uploadState === 'queued' || r.uploadState === 'uploading';
+  const fileRef = useRef<HTMLInputElement>(null);
+  const chips = filledGroups(r, type);
+  const name = r.title || r.fileName || 'product';
 
   return (
     <div className={`rounded-xl border bg-white p-3 sm:p-4 ${created ? 'border-success/30 opacity-90' : issue || r.createState === 'failed' ? 'border-error-border' : 'border-bone'}`} data-testid="bulk-row" data-row-title={r.title}>
       <div className="flex flex-wrap items-center gap-2">
-        {!created && <input type="checkbox" checked={selected} onChange={onSelect} aria-label={`Select ${r.title || r.fileName}`} className="size-4 accent-brand-royal" />}
+        {!created && <input type="checkbox" checked={selected} onChange={onSelect} aria-label={`Select ${name}`} className="size-4 accent-brand-royal" />}
         <span className="text-[12px] text-slate">#{index + 1}</span>
-        <span className="inline-flex items-center gap-1.5 text-[12px] text-graphite min-w-0 max-w-full"><FileText size={13} className="shrink-0" /><span className="truncate" title={r.fileName}>{r.fileName}</span></span>
-        {uploading && (
+        {needsFile && r.fileName && <span className="inline-flex items-center gap-1.5 text-[12px] text-graphite min-w-0 max-w-full"><FileText size={13} className="shrink-0" /><span className="truncate" title={r.fileName}>{r.fileName}</span></span>}
+        {needsFile && !created && (r.uploadState === 'none' || r.uploadState === 'done' || (r.uploadState === 'failed' && !r.fileName)) && (
+          <>
+            <button type="button" onClick={() => fileRef.current?.click()} disabled={busy} data-testid="attach-file"
+              className="inline-flex items-center gap-1 text-[12px] font-bold text-brand-royal bg-transparent border-none cursor-pointer p-0 hover:underline">
+              <Paperclip size={12} /> {r.uploadState === 'done' ? 'Replace file' : 'Choose file'}
+            </button>
+            <input ref={fileRef} type="file" accept={DOC_EXTENSIONS.map(x => `.${x}`).join(',')} className="hidden" aria-label={`File for ${name}`}
+              onChange={e => { const f = e.target.files?.[0]; if (f) onAttach(f); e.target.value = ''; }} />
+          </>
+        )}
+        {needsFile && uploading && (
           <span className="inline-flex items-center gap-1.5 text-[12px] text-slate" role="status">
             <Loader2 size={12} className="animate-spin" /> {r.uploadState === 'uploading' ? `Uploading ${r.uploadPct}%` : 'Waiting to upload'}
             <span className="inline-block w-20 h-1.5 rounded bg-mist overflow-hidden"><span className="block h-full bg-brand-royal" style={{ width: `${r.uploadPct}%` }} /></span>
           </span>
         )}
-        {r.uploadState === 'failed' && (
-          <span className="text-[12px] text-error" role="alert">{r.uploadError} <button type="button" onClick={onRetryUpload} className="underline bg-transparent border-none cursor-pointer text-error p-0 font-semibold">Retry upload</button></span>
+        {needsFile && r.uploadState === 'failed' && (
+          <span className="text-[12px] text-error" role="alert">{r.uploadError} {r.fileName && <button type="button" onClick={onRetryUpload} className="underline bg-transparent border-none cursor-pointer text-error p-0 font-semibold">Retry upload</button>}</span>
         )}
         <span className="ms-auto inline-flex items-center gap-1.5">
           <span data-testid="bulk-row-status" className={`px-2.5 py-1 rounded-full text-[12px] font-bold border ${tone}`}>{statusLabel}</span>
           {created && r.productId && <Link to={`/store/${storeId}/products/edit/${r.productId}`} className="inline-flex items-center gap-1 text-[12px] font-bold text-brand-royal no-underline hover:underline">View <ExternalLink size={12} /></Link>}
-          {!created && <button type="button" onClick={onDuplicate} disabled={busy || r.uploadState !== 'done'} aria-label={`Duplicate ${r.title || r.fileName}`} title="Duplicate" className="size-8 rounded-lg flex items-center justify-center text-slate hover:bg-cream border-none bg-transparent cursor-pointer disabled:opacity-40"><Copy size={15} /></button>}
-          {!created && <button type="button" onClick={onRemove} disabled={busy} aria-label={`Remove ${r.title || r.fileName}`} title="Remove" className="size-8 rounded-lg flex items-center justify-center text-slate hover:text-error hover:bg-error-bg border-none bg-transparent cursor-pointer disabled:opacity-40"><Trash2 size={15} /></button>}
+          {!created && <DetailsMenu row={r} type={type} onOpen={onOpenDetail} disabled={busy} />}
+          {!created && <button type="button" onClick={onDuplicate} disabled={busy || r.uploadState === 'queued' || r.uploadState === 'uploading'} aria-label={`Duplicate ${name}`} title="Duplicate" className="size-8 rounded-lg flex items-center justify-center text-slate hover:bg-cream border-none bg-transparent cursor-pointer disabled:opacity-40"><Copy size={15} /></button>}
+          {!created && <button type="button" onClick={onRemove} disabled={busy} aria-label={`Remove ${name}`} title="Remove" className="size-8 rounded-lg flex items-center justify-center text-slate hover:text-error hover:bg-error-bg border-none bg-transparent cursor-pointer disabled:opacity-40"><Trash2 size={15} /></button>}
         </span>
       </div>
+      {chips.length > 0 && !created && (
+        <div className="mt-2 flex flex-wrap gap-1.5" aria-label="Details added">
+          {chips.map(g => (
+            <button key={g} type="button" onClick={() => onOpenDetail(g)} data-testid={`chip-${g}`} title="Edit"
+              className="inline-flex items-center gap-1 rounded-full bg-info-bg text-brand-royal border border-info/30 px-2.5 py-0.5 text-[12px] font-semibold cursor-pointer">
+              <span className="size-1.5 rounded-full bg-brand-royal" /> {CHIP_LABEL(g, r)}
+            </button>
+          ))}
+        </div>
+      )}
       {r.createState === 'failed' && r.createError && <p role="alert" className="m-0 mt-2 text-[13px] text-error bg-error-bg rounded-lg px-3 py-2">{r.createError}</p>}
       {dupOf !== undefined && !created && <p className="m-0 mt-2 text-[12.5px] text-[#8a5a00] bg-[#fff6e0] rounded-lg px-3 py-1.5">Same title as product #{dupOf}. Buyers may find it confusing - consider changing it.</p>}
 
-      {!created && <div className="mt-3 grid grid-cols-12 gap-3">
-        <div className="col-span-4 sm:col-span-2 lg:col-span-1">
-          <span className={lab}>Cover</span>
-          <button type="button" onClick={onToggle} aria-expanded={expanded} aria-label={`Cover photos for ${r.title || r.fileName}`}
-            className="relative size-[72px] rounded-lg border-2 border-dashed border-bone bg-cream flex items-center justify-center overflow-hidden cursor-pointer p-0">
-            {r.images[0] ? <img src={r.images[0]} alt="" className="w-full h-full object-cover" /> : <ImagePlus size={22} className="text-slate" />}
-            {r.images.length > 1 && <span className="absolute bottom-0.5 end-0.5 bg-black/70 text-white text-[12px] font-bold rounded px-1">{r.images.length}</span>}
-          </button>
-        </div>
-        <div className="col-span-8 sm:col-span-10 lg:col-span-4">
-          <label htmlFor={`t-${r.id}`} className={lab}>Title</label>
-          <input id={`t-${r.id}`} className={inp} disabled={lock} maxLength={200} value={r.title} onChange={e => onChange({ title: e.target.value })} />
-        </div>
-        <div className="col-span-6 lg:col-span-2">
-          <label htmlFor={`p-${r.id}`} className={lab}>Price ({currency})</label>
-          <input id={`p-${r.id}`} className={inp} type="number" min={0} inputMode="decimal" disabled={lock} value={r.price} onChange={e => onChange({ price: e.target.value })} />
-        </div>
-        <div className="col-span-6 lg:col-span-2">
-          <label htmlFor={`c-${r.id}`} className={lab}>Compare-at <span className="font-normal text-slate">(optional)</span></label>
-          <input id={`c-${r.id}`} className={inp} type="number" min={0} inputMode="decimal" disabled={lock} value={r.compareAt} onChange={e => onChange({ compareAt: e.target.value })} />
-        </div>
-        {type === 'educational' && (
-          <div className="col-span-12 lg:col-span-3">
-            <label htmlFor={`l-${r.id}`} className={lab}>Education level</label>
-            <select id={`l-${r.id}`} className={sel} disabled={lock} value={effectiveLevel(r)} onChange={e => onChange({ educationLevel: e.target.value })}>
-              <option value="">Choose…</option>
-              {LEVEL_OPTIONS.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
-            </select>
+      {!created && (
+        <div className="mt-3 grid grid-cols-12 gap-3">
+          <div className="col-span-4 sm:col-span-2 lg:col-span-1">
+            <span className={lab}>Cover</span>
+            <button type="button" onClick={() => onOpenDetail('photos')} aria-label={`Photos for ${name}`}
+              className="relative size-[72px] rounded-lg border-2 border-dashed border-bone bg-cream flex items-center justify-center overflow-hidden cursor-pointer p-0">
+              {r.images[0] ? <img src={r.images[0]} alt="" className="w-full h-full object-cover" /> : <ImagePlus size={22} className="text-slate" />}
+              {r.images.length > 1 && <span className="absolute bottom-0.5 end-0.5 bg-black/70 text-white text-[12px] font-bold rounded px-1">{r.images.length}</span>}
+            </button>
           </div>
-        )}
-        <div className="col-span-12 lg:col-span-7">
-          <CategoryCascade idPrefix={`r-${r.id}`} categories={categories} loading={catLoading} categoryId={catId} subId={r.subCategoryId} disabled={lock}
-            onChange={(c, s) => onChange({ categoryId: c, subCategoryId: s })} />
-        </div>
-        <div className="col-span-12 lg:col-span-5">
-          <ClassRange idPrefix={`r-${r.id}`} from={r.classFrom} to={r.classTo} disabled={lock} onChange={(f, t) => onChange({ classFrom: f, classTo: t })} />
-        </div>
-        <div className="col-span-12">
-          <label htmlFor={`d-${r.id}`} className={lab}>Description</label>
-          <textarea id={`d-${r.id}`} disabled={lock} rows={2} className={`${inp} resize-y min-h-[56px] focus:min-h-[130px]`} value={r.description} onChange={e => onChange({ description: e.target.value })} placeholder="Tell buyers what is inside (required)" />
-        </div>
-      </div>}
-      {created && <p className="m-0 mt-2 text-[14px] font-semibold text-carbon">{r.title}</p>}
-
-      {expanded && !created && (
-        <div className="mt-3 border-t border-bone pt-3 flex flex-col gap-3">
-          <div>
-            <span className={lab}>Photos (the first one is the cover; up to {MAX_ROW_PHOTOS})</span>
-            <ProductPhotosUploader value={r.images} onChange={urls => onChange({ images: urls })} />
+          <div className="col-span-8 sm:col-span-10 lg:col-span-5">
+            <label htmlFor={`t-${r.id}`} className={lab}>Title</label>
+            <input id={`t-${r.id}`} className={inp} disabled={lock} maxLength={200} value={r.title} onChange={e => onChange({ title: e.target.value })} placeholder="Product title" />
           </div>
-          {tray.length > 0 && (
-            <div>
-              <label htmlFor={`tp-${r.id}`} className={lab}>Or use an unmatched photo</label>
-              <select id={`tp-${r.id}`} className={`${sel} max-w-[320px]`} value="" onChange={e => { if (e.target.value) onAssign(e.target.value); }}>
-                <option value="">Choose a photo…</option>
-                {tray.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+          <div className={`col-span-6 ${type === 'digital' ? 'lg:col-span-3' : 'lg:col-span-2'}`}>
+            <label htmlFor={`p-${r.id}`} className={lab}>Price ({currency})</label>
+            <input id={`p-${r.id}`} className={inp} type="number" min={0} inputMode="decimal" disabled={lock} value={r.price} onChange={e => onChange({ price: e.target.value })} />
+          </div>
+          {type === 'physical' && (
+            <div className="col-span-6 lg:col-span-2">
+              <label htmlFor={`s-${r.id}`} className={lab}>Stock quantity</label>
+              <input id={`s-${r.id}`} className={inp} type="number" min={0} inputMode="numeric" disabled={lock || r.unlimitedStock} value={r.unlimitedStock ? '' : r.stock} placeholder={r.unlimitedStock ? 'Unlimited' : '0'} onChange={e => onChange({ stock: e.target.value })} />
+            </div>
+          )}
+          {type === 'educational' && (
+            <div className="col-span-6 lg:col-span-3">
+              <label htmlFor={`l-${r.id}`} className={lab}>Education level</label>
+              <select id={`l-${r.id}`} className={sel} disabled={lock} value={effectiveLevel(r)} onChange={e => onChange({ educationLevel: e.target.value })}>
+                <option value="">Choose…</option>
+                {LEVEL_OPTIONS.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
               </select>
             </div>
           )}
-          {baseOf(r.fileName) && <p className="m-0 text-[12px] text-slate">Tip: name a photo <b>{baseOf(r.fileName)}.jpg</b> and drop it in the box above - it attaches itself.</p>}
+          <div className="col-span-12">
+            <CategoryCascade idPrefix={`r-${r.id}`} categories={categories} loading={catLoading} categoryId={catId} subId={r.subCategoryId} disabled={lock}
+              onChange={(c, s) => onChange({ categoryId: c, subCategoryId: s })} />
+          </div>
+          <div className="col-span-12">
+            <label htmlFor={`d-${r.id}`} className={lab}>Description</label>
+            <textarea id={`d-${r.id}`} disabled={lock} rows={2} className={`${inp} resize-y min-h-[56px] focus:min-h-[130px]`} value={r.description} onChange={e => onChange({ description: e.target.value })} placeholder="Tell buyers what they get (required)" />
+          </div>
         </div>
       )}
+      {created && <p className="m-0 mt-2 text-[14px] font-semibold text-carbon">{r.title}</p>}
     </div>
   );
 }
