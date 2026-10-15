@@ -1,3 +1,4 @@
+import { WeightField } from './WeightField';
 import type { ReactNode } from 'react';
 import { Download, GraduationCap, CalendarClock, Check, Truck, FileDown } from 'lucide-react';
 import { EDUCATION_LEVELS } from '@/api/services/product';
@@ -229,8 +230,8 @@ export function ProductFormSteps(p: ProductFormStepsProps) {
               <F label="Stock quantity" req htmlFor="ap-stock">
                 <input id="ap-stock" type="number" min="0" inputMode="numeric" value={phys.stock} onChange={e => sp('stock', e.target.value)} placeholder="0" className={`${inp} sm:max-w-[240px]`} />
               </F>
-              <F label="Shipping weight" req htmlFor="ap-weight" hint="Required. Used to estimate delivery cost, e.g. 0.5 kg or 500 g.">
-                <input id="ap-weight" value={phys.shippingWeight} onChange={e => sp('shippingWeight', e.target.value)} placeholder="e.g. 0.5 kg or 500 g" className={`${inp} sm:max-w-[240px]`} />
+              <F label="Shipping weight" req htmlFor="ap-weight" hint="Required. Used to estimate delivery cost (minimum 1 g, maximum 50 kg).">
+                <WeightField id="ap-weight" value={phys.shippingWeight} onChange={v => sp('shippingWeight', v)} />
               </F>
               <F label="Variant attributes">
                 <VariantOptionsField options={phys.options} onChange={v => sp('options', v)} />

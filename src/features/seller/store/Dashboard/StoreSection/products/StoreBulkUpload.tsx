@@ -15,7 +15,7 @@ import { EMPTY_DELIVERY, deliveryPayload } from '@/features/seller/components/pr
 import { learningPayload } from '@/features/seller/components/products/LearningFields';
 import { ProductPhotosUploader } from './ProductPhotosUploader';
 import { usePremiumTerms } from './PremiumEarningsCalculator';
-import { effectiveSellerPercent, validatePrices, weightError, weightToStored, type PremiumConflict, type WeightUnit } from './priceRules';
+import { effectiveSellerPercent, validatePrices, toggleRemember, weightError, weightToStored, type PremiumConflict, type WeightUnit } from './priceRules';
 import { timeAgo, useDraftAutosave, useLeaveGuard } from './ProductWizard';
 import { inp } from './ProductFormKit';
 import {
@@ -134,7 +134,8 @@ export default function StoreBulkUpload() {
   const [summary, setSummary] = useState<RunSummary | null>(null);
   const [lastMode, setLastMode] = useState<'draft' | 'publish'>('draft');
   const [now, setNow] = useState(() => Date.now());
-  const [toast, setToast] = useState('');
+  const [applyUndo, setApplyUndo] = useState<{ prev: BulkRow[]; count: number } | null>(null);
+  const pendingType = useRef<BulkType | null>(null);
   const [detail, setDetail] = useState<{ rowId: string; group: DetailGroup } | null>(null);
   const [undo, setUndo] = useState<{ row: BulkRow; index: number } | null>(null);
   const [bannerConfirm, setBannerConfirm] = useState<null | 'continue' | 'fresh'>(null);
@@ -153,17 +154,15 @@ export default function StoreBulkUpload() {
   useEffect(() => { const t = window.setInterval(() => setNow(Date.now()), 30000); return () => window.clearInterval(t); }, []);
   useEffect(() => {
     if (!store || rows.length > 0) return;
+    // A type tab clicked before the store finished loading is applied now instead of being lost.
+    const want = pendingType.current; pendingType.current = null;
+    if (want && canType[want]) { if (want !== type) setType(want); return; }
     if (!canType[type]) {
       const first = (['digital', 'educational', 'physical'] as const).find(t => canType[t]);
       if (first) setType(first);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [store, type, rows.length]);
-  useEffect(() => {
-    if (!toast) return;
-    const t = window.setTimeout(() => setToast(''), 3500);
-    return () => window.clearTimeout(t);
-  }, [toast]);
   useEffect(() => {
     if (!undo) return;
     const t = window.setTimeout(() => setUndo(null), 8000);
@@ -337,7 +336,22 @@ export default function StoreBulkUpload() {
   const toggleSel = (id: string) => setSelected(prev => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; });
   const allSelected = editable.length > 0 && editable.every(r => selected.has(r.id));
 
+  const undoApply = () => {
+    if (!applyUndo) return;
+    const byId = new Map(applyUndo.prev.map(r => [r.id, r]));
+    setRows(prev => prev.map(r => byId.get(r.id) ?? r));
+    setApplyUndo(null);
+  };
+  /** Photos were dropped while a file-based type is selected: turn them into physical products (one per photo name). */
+  const switchToPhysical = () => {
+    const seen = new Set<string>();
+    const fresh: BulkRow[] = [];
+    for (const p of tray) { const b = baseOf(p.name); if (!b || seen.has(b) || fresh.length >= MAX_BULK_FILES) continue; seen.add(b); fresh.push(blankRow({ name: p.name, size: 0 }, false)); }
+    setType('physical');
+    rowsRef.current = fresh; setRows(fresh);
+  };
   const removeRow = (id: string) => {
+    setApplyUndo(null);
     const index = rowsRef.current.findIndex(r => r.id === id);
     if (index < 0) return;
     const row = rowsRef.current[index];
@@ -368,13 +382,14 @@ export default function StoreBulkUpload() {
   const dropPhoto = (id: string) => { queue.current = queue.current.filter(j => j.id !== id); filesRef.current.delete(id); setTray(prev => prev.filter(t => t.id !== id)); };
 
   // ── Apply to selected ────────────────────────────────────────────────────────────────────────
-  const [ap, setAp] = useState({ categoryId: '', subCategoryId: '', classFrom: '', classTo: '', level: '', price: '', compareAt: '', stock: '', weight: '', weightUnit: 'kg' as WeightUnit, unlimited: false, description: '', mode: 'replace' as 'replace' | 'append' });
+  const [ap, setAp] = useState({ categoryId: '', subCategoryId: '', classFrom: '', classTo: '', level: '', price: '', compareAt: '', stock: '', weight: '', weightUnit: 'kg' as WeightUnit, unlimited: false, savedStock: '', description: '', mode: 'replace' as 'replace' | 'append' });
   const [apOpen, setApOpen] = useState(true);
   const apFilled = !!(ap.categoryId || ap.classFrom || ap.classTo || ap.level || ap.price.trim() || ap.compareAt.trim() || ap.stock.trim() || ap.weight.trim() || ap.unlimited || ap.description.trim());
   const selectedRows = editable.filter(r => selected.has(r.id));
   const applyToSelected = () => {
     if (!selectedRows.length || !apFilled) return;
     const ids = new Set(selectedRows.map(r => r.id));
+    setApplyUndo({ prev: rowsRef.current.filter(r => ids.has(r.id)), count: selectedRows.length });
     setRows(prev => prev.map(r => {
       if (!ids.has(r.id)) return r;
       const n = { ...r };
@@ -384,13 +399,12 @@ export default function StoreBulkUpload() {
       if (ap.price.trim()) { n.price = ap.price.trim(); n.free = false; }
       if (ap.compareAt.trim()) n.compareAt = ap.compareAt.trim();
       if (ap.stock.trim()) { n.stock = ap.stock.trim(); n.unlimitedStock = false; n.zeroStockOk = false; }
-      if (ap.unlimited) { n.unlimitedStock = true; n.stock = ''; n.zeroStockOk = false; }
+      if (ap.unlimited) { n.savedStock = n.stock.trim() !== '' ? n.stock : n.savedStock; n.unlimitedStock = true; n.stock = ''; n.zeroStockOk = false; }
       if (ap.weight.trim()) { n.weight = ap.weight.trim(); n.weightUnit = ap.weightUnit; }
       if (ap.description.trim()) n.description = ap.mode === 'append' && n.description.trim() ? `${n.description.trim()}\n${ap.description.trim()}` : ap.description.trim();
       if (n.createState === 'failed') { n.createState = 'idle'; n.createError = ''; }
       return n;
     }));
-    setToast(`Applied to ${selectedRows.length} ${selectedRows.length === 1 ? 'product' : 'products'}.`);
   };
 
   // ── Create ───────────────────────────────────────────────────────────────────────────────────
@@ -409,7 +423,7 @@ export default function StoreBulkUpload() {
         res = await apiCreatePhysicalProduct({
           ...common,
           variants: [{
-            price: r.free ? 0 : Number(r.price),
+            price: Number(r.price),
             compareAtPrice: r.compareAt.trim() ? Number(r.compareAt) : null,
             options: [],
             stock: r.unlimitedStock ? 0 : Number(r.stock),
@@ -572,7 +586,7 @@ export default function StoreBulkUpload() {
               <div role="radiogroup" aria-label="Product type" className="inline-flex flex-wrap gap-2">
                 {(['digital', 'educational', 'physical'] as const).map(t => (
                   <button key={t} type="button" role="radio" aria-checked={type === t} disabled={!canType[t] || (rows.length > 0 && type !== t)}
-                    onClick={() => setType(t)}
+                    onClick={() => { if (!store) pendingType.current = t; setType(t); }}
                     className={`px-3 py-1.5 rounded-full text-[13px] font-bold border cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${type === t ? 'bg-brand-royal text-white border-brand-royal' : 'bg-white text-graphite border-bone hover:bg-cream'}`}>
                     {TYPE_LABEL[t]}
                   </button>
@@ -611,7 +625,13 @@ export default function StoreBulkUpload() {
                 <button type="button" aria-label="Dismiss message" onClick={() => setNotice('')} className="bg-transparent border-none cursor-pointer text-error p-0"><X size={14} /></button>
               </p>
             )}
-            {catError && <p role="alert" className="m-0 text-[13px] text-error">Could not load categories. <button type="button" onClick={refetchCats} className="underline bg-transparent border-none cursor-pointer text-error p-0">Try again</button></p>}
+            {type !== 'physical' && canType.physical && rows.length === 0 && tray.length > 0 && (
+              <p role="status" data-testid="photo-only-hint" className="m-0 flex flex-wrap items-center gap-2 text-[13px] text-[#8a5a00] bg-[#fff6e0] border border-[#e0b050]/50 rounded-lg px-3 py-2">
+                <span className="flex-1 min-w-[200px]">Only photos added - are these physical products?</span>
+                <button type="button" data-testid="switch-physical" onClick={switchToPhysical} className="px-3 py-1.5 rounded-lg text-[13px] font-bold bg-brand-royal text-white border-none cursor-pointer">Switch to Physical products</button>
+              </p>
+            )}
+            {catError &&<p role="alert" className="m-0 text-[13px] text-error">Could not load categories. <button type="button" onClick={refetchCats} className="underline bg-transparent border-none cursor-pointer text-error p-0">Try again</button></p>}
           </div>
 
           {/* Unmatched photos */}
@@ -658,9 +678,9 @@ export default function StoreBulkUpload() {
               {apOpen && (
                 <div className="border-t border-bone px-4 py-4 flex flex-col gap-3">
                   {selectedRows.length === 0 && <p className="m-0 text-[12.5px] text-slate">Tick the products you want to change, then fill only the fields to apply. Empty fields are left as they are.</p>}
-                  <div className="grid lg:grid-cols-2 gap-3">
+                  <div className="flex flex-col gap-3">
                     <CategoryCascade idPrefix="ap" categories={categories} loading={catLoading} categoryId={ap.categoryId} subId={ap.subCategoryId} onChange={(c, s) => setAp(a => ({ ...a, categoryId: c, subCategoryId: s }))} />
-                    <ClassRange idPrefix="ap" from={ap.classFrom} to={ap.classTo} onChange={(f, t) => setAp(a => ({ ...a, classFrom: f, classTo: t }))} />
+                    <div className="lg:max-w-md"><ClassRange idPrefix="ap" from={ap.classFrom} to={ap.classTo} onChange={(f, t) => setAp(a => ({ ...a, classFrom: f, classTo: t }))} /></div>
                   </div>
                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                     <div>
@@ -675,7 +695,7 @@ export default function StoreBulkUpload() {
                       <div>
                         <label htmlFor="ap-stock" className={lab}>Stock quantity</label>
                         <input id="ap-stock" type="number" min={0} max={100000} inputMode="numeric" className={inp} value={ap.stock} disabled={ap.unlimited} onChange={e => setAp(a => ({ ...a, stock: e.target.value }))} />
-                        <label className="mt-1.5 inline-flex items-center gap-1.5 text-[12.5px] text-graphite cursor-pointer"><input type="checkbox" className="size-3.5 accent-brand-royal" checked={ap.unlimited} data-testid="ap-unlimited" onChange={e => setAp(a => ({ ...a, unlimited: e.target.checked, stock: e.target.checked ? '' : a.stock }))} />Unlimited stock</label>
+                        <label className="mt-1.5 inline-flex items-center gap-1.5 text-[12.5px] text-graphite cursor-pointer"><input type="checkbox" className="size-3.5 accent-brand-royal" checked={ap.unlimited} data-testid="ap-unlimited" onChange={e => setAp(a => { const n = toggleRemember({ value: a.stock, saved: a.savedStock }, e.target.checked); return { ...a, unlimited: e.target.checked, stock: n.value, savedStock: n.saved }; })} />Unlimited stock</label>
                       </div>
                     )}
                     {type === 'physical' && (
@@ -711,7 +731,9 @@ export default function StoreBulkUpload() {
                       className="px-4 py-2 rounded-lg text-[13px] font-bold bg-brand-royal text-white border-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
                       Apply to {selectedRows.length || ''} selected
                     </button>
-                    {toast && <span role="status" className="text-[13px] text-success font-semibold">{toast}</span>}
+                    {applyUndo && (
+                      <span role="status" data-testid="apply-status" className="text-[13px] text-success font-semibold">Applied to {applyUndo.count} {applyUndo.count === 1 ? 'product' : 'products'}. <button type="button" data-testid="apply-undo" onClick={undoApply} className="ms-1 underline bg-transparent border-none cursor-pointer text-brand-royal font-bold p-0">Undo</button></span>
+                    )}
                   </div>
                 </div>
               )}
@@ -734,7 +756,7 @@ export default function StoreBulkUpload() {
                   categories={categories} catLoading={catLoading} defaultCategoryId={defaultCategoryId}
                   selected={selected.has(r.id)}
                   onSelect={() => toggleSel(r.id)} onOpenDetail={g => setDetail({ rowId: r.id, group: g })}
-                  onChange={p => patchRow(r.id, p.createState === undefined && r.createState === 'failed' ? { ...p, createState: 'idle', createError: '' } : p)}
+                  onChange={p => { setApplyUndo(null); patchRow(r.id, p.createState === undefined && r.createState === 'failed' ? { ...p, createState: 'idle', createError: '' } : p); }}
                   onRemove={() => removeRow(r.id)} onDuplicate={() => duplicateRow(r)}
                   onRetryUpload={() => retryUpload('doc', r.id)} onAttach={f => attachFile(r.id, f)}
                   storeId={storeId}
@@ -787,7 +809,7 @@ export default function StoreBulkUpload() {
       {detail && detailRow && (
         <DetailModal
           key={`${detail.rowId}-${detail.group}`} row={detailRow} group={detail.group} type={type} currency={currency} currencyCode={store?.baseCurrency} tray={tray.filter(t => t.state === 'done')}
-          onClose={() => setDetail(null)} onPatch={p => patchRow(detail.rowId, p)} onAssign={pid => assignPhoto(detail.rowId, pid)}
+          onClose={() => setDetail(null)} onPatch={p => { setApplyUndo(null); patchRow(detail.rowId, p); }} onAssign={pid => assignPhoto(detail.rowId, pid)}
         />
       )}
     </div>
@@ -1046,7 +1068,7 @@ function RowCard({ row: r, index, issue, conflict, currencyCode, dupOf, currency
           <div className={`col-span-6 ${type === 'digital' ? 'lg:col-span-3' : 'lg:col-span-2'}`}>
             <div className="flex items-center justify-between gap-2">
               <label htmlFor={`p-${r.id}`} className={lab}>Price ({currency})</label>
-              <label className="mb-1 inline-flex items-center gap-1 text-[12px] text-graphite cursor-pointer"><input type="checkbox" className="size-3.5 accent-brand-royal" disabled={lock} checked={r.free} data-testid="free-toggle" onChange={e => onChange({ free: e.target.checked, ...(e.target.checked ? { price: '' } : {}) })} />Free</label>
+              {type !== 'physical' && <label className="mb-1 inline-flex items-center gap-1 text-[12px] text-graphite cursor-pointer"><input type="checkbox" className="size-3.5 accent-brand-royal" disabled={lock} checked={r.free} data-testid="free-toggle" onChange={e => { const n = toggleRemember({ value: r.price, saved: r.savedPrice }, e.target.checked); onChange({ free: e.target.checked, price: n.value, savedPrice: n.saved }); }} />Free</label>}
             </div>
             <input id={`p-${r.id}`} className={inp} type="number" min={0} step={moneyStep} inputMode="decimal" disabled={lock || r.free} value={r.free ? '' : r.price} placeholder={r.free ? 'Free' : ''} onChange={e => onChange({ price: e.target.value })} aria-invalid={!r.free && r.price.trim() !== '' && !!priceErr.price} />
           </div>
@@ -1054,7 +1076,7 @@ function RowCard({ row: r, index, issue, conflict, currencyCode, dupOf, currency
             <div className="col-span-6 lg:col-span-2">
               <div className="flex items-center justify-between gap-2">
                 <label htmlFor={`s-${r.id}`} className={lab}>Stock quantity</label>
-                <label className="mb-1 inline-flex items-center gap-1 text-[12px] text-graphite cursor-pointer"><input type="checkbox" className="size-3.5 accent-brand-royal" disabled={lock} checked={r.unlimitedStock} data-testid="unlimited-toggle" onChange={e => onChange({ unlimitedStock: e.target.checked, ...(e.target.checked ? { stock: '', zeroStockOk: false } : {}) })} />Unlimited</label>
+                <label className="mb-1 inline-flex items-center gap-1 text-[12px] text-graphite cursor-pointer"><input type="checkbox" className="size-3.5 accent-brand-royal" disabled={lock} checked={r.unlimitedStock} data-testid="unlimited-toggle" onChange={e => { const n = toggleRemember({ value: r.stock, saved: r.savedStock }, e.target.checked); onChange({ unlimitedStock: e.target.checked, stock: n.value, savedStock: n.saved, zeroStockOk: false }); }} />Unlimited</label>
               </div>
               <input id={`s-${r.id}`} className={inp} type="number" min={0} max={100000} step={1} inputMode="numeric" disabled={lock || r.unlimitedStock} value={r.unlimitedStock ? '' : r.stock} placeholder={r.unlimitedStock ? 'Unlimited' : '0'} onChange={e => onChange({ stock: e.target.value, zeroStockOk: false })} />
               {!r.unlimitedStock && r.stock.trim() !== '' && Number(r.stock) === 0 && (

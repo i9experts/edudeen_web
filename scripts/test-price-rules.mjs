@@ -1,6 +1,6 @@
 // Run: npm run test:rules  (Node 22.6+/24 strips the TypeScript types itself; no test runner needed)
 import assert from 'node:assert/strict';
-import { weightError, weightToStored, weightFromStored, stockError, parseWeightKg, validatePrices, descriptionError, premiumConflict, maxCompareAtForPremium } from '../src/features/seller/store/Dashboard/StoreSection/products/priceRules.ts';
+import { weightError, toggleRemember, weightTextError, weightToStored, weightFromStored, stockError, parseWeightKg, validatePrices, descriptionError, premiumConflict, maxCompareAtForPremium } from '../src/features/seller/store/Dashboard/StoreSection/products/priceRules.ts';
 
 let n = 0;
 const t = (name, fn) => { fn(); n += 1; console.log('ok  ', name); };
@@ -61,7 +61,7 @@ t('description: empty / whitespace / short / ok', () => {
 t('shipping weight: missing, abc, 0, huge, valid', () => {
   assert.equal(weightError('', 'kg'), 'Add shipping weight');
   assert.equal(weightError('abc', 'kg'), 'Shipping weight must be a number');
-  assert.equal(weightError('0', 'kg'), 'Shipping weight must be more than 0');
+  assert.equal(weightError('0', 'kg'), 'Minimum weight is 1 g');
   assert.match(weightError('51', 'kg'), /more than 50 kg/);
   assert.match(weightError('60000', 'g'), /more than 50 kg/);
   assert.equal(weightError('0.6', 'kg'), null);
@@ -74,6 +74,30 @@ t('weight kg/g normalizes to kilograms', () => {
   assert.equal(parseWeightKg('abc'), null);
   assert.deepEqual(weightFromStored('0.25 kg'), { value: '250', unit: 'g' });
   assert.deepEqual(weightFromStored('2 kg'), { value: '2', unit: 'kg' });
+});
+t('weight: negative, 0.4 g, 1 g, 1 mg-ish, text form', () => {
+  assert.equal(weightError('-5', 'kg'), "Shipping weight can't be negative");
+  assert.equal(weightError('-0.1', 'g'), "Shipping weight can't be negative");
+  assert.equal(weightError('0.4', 'g'), 'Minimum weight is 1 g');
+  assert.equal(weightError('1', 'g'), null);
+  assert.equal(weightError('0.001', 'kg'), null);
+  assert.equal(weightError('0.0004', 'kg'), 'Minimum weight is 1 g');
+  assert.equal(weightToStored('1', 'g'), '0.001 kg');
+  assert.equal(weightToStored('1.5', 'g'), '0.0015 kg'); // never rounded to a different value
+  assert.equal(weightTextError('-5 kg'), "Shipping weight can't be negative");
+  assert.equal(weightTextError('0.4 g'), 'Minimum weight is 1 g');
+  assert.equal(weightTextError('500g'), null);
+  assert.equal(weightTextError('abc'), 'Shipping weight must be a number');
+  assert.deepEqual(weightFromStored('500g'), { value: '500', unit: 'g' });
+  assert.deepEqual(weightFromStored('0.4 kg'), { value: '400', unit: 'g' });
+  assert.deepEqual(weightFromStored(weightToStored('500', 'g')), { value: '500', unit: 'g' }); // save 500 g -> reload shows 500 g
+});
+t('toggle Free / Unlimited remembers the value', () => {
+  let s = { value: '450', saved: '' };
+  s = toggleRemember(s, true); assert.deepEqual(s, { value: '', saved: '450' });
+  s = toggleRemember(s, false); assert.deepEqual(s, { value: '450', saved: '' });
+  s = toggleRemember({ value: '', saved: '' }, true); s = toggleRemember(s, false); assert.deepEqual(s, { value: '', saved: '' });
+  s = toggleRemember({ value: '9', saved: '' }, true); s = toggleRemember(s, true); assert.equal(s.saved, '9'); // double on keeps it
 });
 t('stock: 0 ok (warned elsewhere), negative, 2.5, huge, empty, unlimited', () => {
   assert.equal(stockError('0', false), null);

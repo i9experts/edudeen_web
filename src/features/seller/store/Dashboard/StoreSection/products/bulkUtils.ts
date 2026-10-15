@@ -34,6 +34,9 @@ export interface BulkRow {
   price: string;
   /** Seller explicitly chose a free product (the only way a price of 0 is accepted). */
   free: boolean;
+  /** Last price / stock typed before Free / Unlimited was switched on, so switching it off brings it back. */
+  savedPrice: string;
+  savedStock: string;
   compareAt: string;
   categoryId: string;
   subCategoryId: string;
@@ -110,7 +113,7 @@ export function blankRow(file?: { name: string; size: number }, hasFile = true):
   return {
     id: newId(), fileName: file?.name ?? '', fileSize: file?.size ?? 0, upload: null,
     uploadState: file && hasFile ? 'queued' : 'none', uploadPct: 0, uploadError: '',
-    title: file ? titleFromFileName(file.name) : '', description: '', price: '', free: false, compareAt: '', categoryId: '', subCategoryId: '',
+    title: file ? titleFromFileName(file.name) : '', description: '', price: '', free: false, savedPrice: '', savedStock: '', compareAt: '', categoryId: '', subCategoryId: '',
     classFrom: '', classTo: '', educationLevel: '', images: [],
     stock: '', unlimitedStock: false, sku: '', weight: '', weightUnit: 'kg', zeroStockOk: false,
     downloadLimit: 'unlimited', linkExpiryDays: '', buyerMessage: '', tags: [],
@@ -159,7 +162,8 @@ export function rowIssue(row: BulkRow, ctx: RowContext): string | null {
   if (!row.title.trim()) return 'Add a title';
   const dErr = descriptionError(row.description);
   if (dErr) return dErr;
-  const pc = validatePrices({ price: row.free ? '0' : row.price, compareAt: row.compareAt, currency: ctx.currency, free: row.free });
+  const free = row.free && ctx.type !== 'physical'; // physical products have no Free option
+  const pc = validatePrices({ price: free ? '0' : row.price, compareAt: row.compareAt, currency: ctx.currency, free });
   if (pc.price) return pc.price;
   if (ctx.type === 'physical') {
     const sErr = stockError(row.stock, row.unlimitedStock);
