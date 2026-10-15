@@ -20,7 +20,7 @@ export function ShoppingForBar({ className = '' }: { className?: string }) {
         id="shopping-for"
         value={selected?._id ?? ''}
         onChange={e => select(e.target.value)}
-        className="rounded-full border border-bone bg-white ps-3 pe-8 py-[6px] text-[13.5px] text-carbon cursor-pointer max-w-[60vw]"
+        className="rounded-full border border-bone bg-white ps-3 pe-8 py-[6px] min-h-10 text-[13.5px] text-carbon cursor-pointer max-w-[60vw]"
       >
         <option value="">{t('Everyone')}</option>
         {children.map(c => <option key={c._id} value={c._id}>{c.name} ({childLevelLabel(c)})</option>)}

@@ -266,7 +266,7 @@ export function QuickAccessRail() {
   return (
     <>
       {/* Desktop rail */}
-      <div ref={rootRef} className="hidden lg:flex fixed end-3 top-[calc(50%+40px)] -translate-y-1/2 z-[60] items-center gap-2 print:hidden" onMouseLeave={scheduleClose}>
+      <div ref={rootRef} className="hidden lg:flex fixed end-1 min-[1500px]:end-3 top-[calc(50%+40px)] -translate-y-1/2 z-[60] items-center gap-2 print:hidden" onMouseLeave={scheduleClose}>
         {open && (
           <div className="order-first" onMouseEnter={() => show(open)} role="dialog" aria-label={buttons.find(b => b.id === open)?.label}>
             {open === 'deals' && <DealsPanel close={close} />}
@@ -275,14 +275,14 @@ export function QuickAccessRail() {
             {open === 'account' && <AccountPanel close={close} />}
           </div>
         )}
-        <nav aria-label="Quick access" className="flex flex-col items-center bg-white/95 backdrop-blur border border-bone rounded-full shadow-[0_10px_30px_-10px_rgba(23,71,113,0.35)] p-1.5 gap-1">
+        <nav aria-label="Quick access" className="flex flex-col items-center bg-white/95 backdrop-blur border border-bone rounded-full shadow-[0_10px_30px_-10px_rgba(23,71,113,0.35)] p-1 min-[1500px]:p-1.5 gap-1">
           <button
             type="button"
             onClick={toTop}
             aria-label="Back to top"
             title="Back to top"
             className={clsx(
-              'group relative size-11 rounded-full flex items-center justify-center border-none cursor-pointer bg-transparent text-slate hover:bg-cream hover:text-brand-royal transition-all duration-200',
+              'group relative size-9 min-[1500px]:size-11 rounded-full flex items-center justify-center border-none cursor-pointer bg-transparent text-slate hover:bg-cream hover:text-brand-royal transition-all duration-200',
               scrolled ? 'opacity-100' : 'opacity-0 pointer-events-none h-0 -my-0.5',
             )}
             tabIndex={scrolled ? 0 : -1}
@@ -299,7 +299,7 @@ export function QuickAccessRail() {
               onFocus={() => show(b.id)}
               onClick={() => (open === b.id ? setOpen(null) : show(b.id))}
               className={clsx(
-                'group relative size-11 rounded-full flex items-center justify-center border-none cursor-pointer transition-colors duration-150',
+                'group relative size-9 min-[1500px]:size-11 rounded-full flex items-center justify-center border-none cursor-pointer transition-colors duration-150',
                 open === b.id ? 'bg-brand-pale-orange text-brand-orange' : 'bg-transparent text-slate hover:bg-cream hover:text-brand-orange',
                 b.id === 'deals' && open !== b.id && 'text-[#e8590c]',
               )}
@@ -322,7 +322,7 @@ export function QuickAccessRail() {
         onClick={toTop}
         aria-label="Back to top"
         className={clsx(
-          'lg:hidden fixed end-4 bottom-[140px] z-40 size-11 rounded-full bg-white border border-bone shadow-lg flex items-center justify-center text-brand-royal cursor-pointer transition-all duration-200 print:hidden',
+          'lg:hidden fixed start-4 bottom-[140px] z-40 size-11 rounded-full bg-white border border-bone shadow-lg flex items-center justify-center text-brand-royal cursor-pointer transition-all duration-200 print:hidden',
           scrolled ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3 pointer-events-none',
         )}
         tabIndex={scrolled ? 0 : -1}

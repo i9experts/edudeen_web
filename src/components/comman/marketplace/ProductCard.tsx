@@ -351,7 +351,7 @@ export const ProductCard = memo(function ProductCard({ product, onClick, onAddTo
           disabled={isWishlisting}
           aria-label={isWishlisted ? 'Remove from wishlist' : 'Save to wishlist'}
           className={clsx(
-            'absolute top-2 end-2 w-8 h-8 rounded-lg bg-white border border-bone',
+            'absolute top-2 end-2 w-8 h-8 rounded-lg bg-white border border-bone after:absolute after:-inset-1',
             'flex items-center justify-center transition-[transform,background-color] duration-150 hover:bg-brand-pale-orange hover:scale-[1.08]',
             isWishlisting ? 'cursor-wait' : 'cursor-pointer',
           )}
@@ -372,7 +372,7 @@ export const ProductCard = memo(function ProductCard({ product, onClick, onAddTo
             disabled={previewLoading}
             aria-label="Preview"
             className={clsx(
-              'absolute bottom-2 start-2 w-8 h-8 rounded-lg bg-white border border-bone',
+              'absolute bottom-2 start-2 w-8 h-8 rounded-lg bg-white border border-bone after:absolute after:-inset-1',
               'flex items-center justify-center transition-[transform,background-color] duration-150 hover:bg-brand-pale-orange hover:scale-[1.08]',
               previewLoading ? 'cursor-wait' : 'cursor-pointer',
             )}
@@ -479,7 +479,7 @@ export const ProductCard = memo(function ProductCard({ product, onClick, onAddTo
               aria-label={stock <= 0 ? 'Out of stock' : 'Add to cart'}
               className={clsx(
                 'flex items-center justify-center gap-[6px] rounded-lg border transition-[background-color,border-color,color,transform] duration-150 font-semibold text-[12px] active:scale-[0.96]',
-                compact ? 'w-7 h-7' : 'flex-1 h-8',
+                compact ? 'relative w-7 h-7 after:absolute after:-inset-2' : 'relative flex-1 h-8 after:absolute after:-inset-y-1 after:inset-x-0',
                 stock <= 0
                   ? 'bg-bone text-slate border-bone cursor-not-allowed'
                   : addToCartFailed

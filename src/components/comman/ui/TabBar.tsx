@@ -61,7 +61,7 @@ export function TabBar({ tabs, active, onChange, className, dense = false }: Tab
               onClick={() => onChange(tab.id)}
               className={clsx(
                 'flex items-center font-medium shrink-0',
-                dense ? 'gap-[4px] px-[10px] py-2 text-[12px]' : 'gap-[6px] px-4 py-[10px] text-[13px]',
+                dense ? 'gap-[4px] px-[10px] py-2 min-h-10 text-[12px]' : 'gap-[6px] px-4 py-[10px] min-h-10 text-[13px]',
                 'border-b-2 -mb-px bg-transparent border-s-0 border-e-0 border-t-0',
                 'outline-none cursor-pointer transition-all duration-150 whitespace-nowrap',
                 isActive

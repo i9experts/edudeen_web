@@ -210,7 +210,7 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
               <Link
                 key={s._id}
                 to={subcategoryHref(s)}
-                className="shrink-0 rounded-full border border-bone bg-white px-4 py-[7px] text-[13.5px] font-medium text-carbon no-underline hover:border-brand-orange hover:text-brand-orange transition-colors"
+                className="shrink-0 rounded-full border border-bone bg-white px-4 py-[7px] min-h-10 inline-flex items-center text-[13.5px] font-medium text-carbon no-underline hover:border-brand-orange hover:text-brand-orange transition-colors"
               >
                 {s.name}{typeof s.productCount === 'number' && <span className="text-slate ms-1.5">{s.productCount}</span>}
               </Link>
@@ -509,7 +509,7 @@ function SearchEmptyHelp({ didYouMean, categories }: { didYouMean?: string; cate
     return () => { cancelled = true; };
   }, []);
   const cats = categories.filter(c => c.slug || c._id).slice(0, 8);
-  const pill = 'rounded-full border border-bone bg-white px-4 py-[7px] text-[13.5px] font-medium text-carbon no-underline hover:border-brand-orange hover:text-brand-orange transition-colors';
+  const pill = 'rounded-full border border-bone bg-white px-4 py-[7px] min-h-10 inline-flex items-center text-[13.5px] font-medium text-carbon no-underline hover:border-brand-orange hover:text-brand-orange transition-colors';
   return (
     <div className="max-w-[720px] mx-auto mt-2 mb-6 text-center space-y-6">
       {didYouMean && (

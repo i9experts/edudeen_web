@@ -230,7 +230,7 @@ export const ResourceCard = memo(function ResourceCard({
           aria-pressed={isWishlisted}
           aria-label={`${isWishlisted ? 'Unsave' : 'Save'} ${product.name}`}
           className={clsx(
-            'absolute end-[7px] top-[7px] sm:end-3 sm:top-3 w-8 h-8 sm:w-9 sm:h-9 rounded-full border flex items-center justify-center cursor-pointer transition-colors',
+            'absolute end-[7px] top-[7px] sm:end-3 sm:top-3 w-8 h-8 sm:w-9 sm:h-9 rounded-full border flex items-center justify-center cursor-pointer transition-colors after:absolute after:-inset-1',
             isWishlisted ? 'bg-brand-orange border-brand-orange text-white' : 'bg-white border-[#dfe5e6] text-brand-orange hover:bg-brand-pale-orange',
             isWishlisting && 'opacity-60',
           )}

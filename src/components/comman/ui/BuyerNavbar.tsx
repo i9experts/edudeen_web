@@ -195,7 +195,8 @@ function HighlightMatch({ text, query }: { text: string; query: string }) {
 // own base classes force `w-full`, so it must be wrapped in a sized box
 // rather than sized directly, or it stretches to its flex row's full width. ──
 function RecommendedProductRow({ product, categoryName, query, onClick }: { product: MarketplaceProduct; categoryName: string; query: string; onClick: () => void }) {
-  const dv              = (product.variants ?? []).find(v => v.isDefault) ?? product.variants?.[0];
+  const t               = useT();
+  const dv              =(product.variants ?? []).find(v => v.isDefault) ?? product.variants?.[0];
   const nativePrice     = dv?.price ?? null;
   const nativeCompareAt = dv?.compareAtPrice ?? null;
   const { currency: displayCurrency, convert } = useCurrencyPreference();
@@ -225,7 +226,7 @@ function RecommendedProductRow({ product, categoryName, query, onClick }: { prod
         </div>
       </div>
       <div className="flex flex-col items-end gap-[2px] shrink-0">
-        <span className="text-[13px] font-bold text-carbon">{price != null ? `${priceSymbol}${price.toLocaleString()}` : '—'}</span>
+        <span className="text-[13px] font-bold text-carbon">{price != null ? (price === 0 ? t('Free') : `${priceSymbol}${price.toLocaleString()}`) : '—'}</span>
         {compareAt != null && price != null && compareAt > price && (
           <span className="text-[12px] text-slate line-through">{priceSymbol}{compareAt.toLocaleString()}</span>
         )}

@@ -27,7 +27,7 @@ export function CompareToggle({ product, className }: { product: { _id: string; 
         if (!ok) window.setTimeout(() => setFull(false), 2500);
       }}
       className={clsx(
-        'size-8 rounded-full border flex items-center justify-center cursor-pointer transition-colors shrink-0',
+        'size-8 rounded-full border flex items-center justify-center cursor-pointer transition-colors shrink-0 transform-gpu after:absolute after:-inset-1',
         on ? 'bg-brand-royal border-brand-royal text-white' : 'bg-white border-[#dfe5e6] text-slate hover:text-brand-royal hover:border-brand-royal',
         full && 'border-error text-error',
         className,

@@ -107,7 +107,7 @@ function ZoomViewer({ pages, alt, start = 0 }: { pages: string[]; alt: string; s
     el.scrollTop = ((e.clientY - r.top) / r.height) * (el.scrollHeight - el.clientHeight);
   };
   const go = (n: number) => { setI((n + pages.length) % pages.length); setZoom(1); };
-  const btn = 'w-9 h-9 rounded-full border border-bone bg-white flex items-center justify-center text-carbon hover:bg-bone disabled:opacity-40 cursor-pointer';
+  const btn = 'w-10 h-10 rounded-full border border-bone bg-white flex items-center justify-center text-carbon hover:bg-bone disabled:opacity-40 cursor-pointer';
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-center gap-2">
@@ -247,7 +247,7 @@ function QuantityStepper({ qty, max, onChange }: { qty: number; max: number; onC
         onClick={() => onChange(Math.max(1, qty - 1))}
         disabled={qty <= 1}
         aria-label="Decrease quantity"
-        className="w-8 h-9 flex items-center justify-center bg-cream text-charcoal cursor-pointer border-none disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange"
+        className="w-10 h-10 flex items-center justify-center bg-cream text-charcoal cursor-pointer border-none disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange"
       >
         <Minus size={13} />
       </button>
@@ -256,7 +256,7 @@ function QuantityStepper({ qty, max, onChange }: { qty: number; max: number; onC
         onClick={() => onChange(Math.min(max, qty + 1))}
         disabled={qty >= max}
         aria-label="Increase quantity"
-        className="w-8 h-9 flex items-center justify-center bg-cream text-charcoal cursor-pointer border-none disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange"
+        className="w-10 h-10 flex items-center justify-center bg-cream text-charcoal cursor-pointer border-none disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange"
       >
         <Plus size={13} />
       </button>

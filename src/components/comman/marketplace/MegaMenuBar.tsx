@@ -672,9 +672,9 @@ export function MegaMenuBar({
               // hides at (`md:hidden`) — the whole page should flip from
               // mobile-app-style chrome to desktop chrome at one shared line,
               // not several slightly-different ones.
-              'shrink-0 rounded-full px-3 py-[7px]',
+              'shrink-0 rounded-full px-3 py-[7px] min-h-10',
               active === 'categories' ? 'bg-brand-pale-orange' : 'bg-cream',
-              compact && 'md:rounded-none md:bg-transparent md:px-0 md:py-1 md:text-[12px]',
+              compact && 'md:rounded-none md:bg-transparent md:px-0 md:py-1 md:min-h-0 md:text-[12px]',
             ))}
           >
             {t(categoriesLabel)}
@@ -701,9 +701,9 @@ export function MegaMenuBar({
               onClick={() => selectMenu(item.key)}
               className={clsx(
                 'group flex items-center whitespace-nowrap shrink-0 border-none cursor-pointer transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange',
-                'gap-[6px] py-[7px] px-[11px] rounded-full text-[12.5px] font-semibold',
+                'gap-[6px] py-[7px] px-[11px] min-h-10 rounded-full text-[12.5px] font-semibold',
                 active === item.key ? 'text-brand-deep-orange bg-brand-pale-orange' : 'text-charcoal hover:bg-cream',
-                compact && 'md:gap-1 md:py-1 md:px-0 md:rounded-none md:text-[12px] md:font-medium md:bg-transparent md:hover:bg-transparent',
+                compact && 'md:gap-1 md:py-1 md:px-0 md:min-h-0 md:rounded-none md:text-[12px] md:font-medium md:bg-transparent md:hover:bg-transparent',
                 compact && (active === item.key ? 'md:text-brand-orange' : 'md:text-slate md:hover:text-brand-orange'),
                 item.className,
               )}
@@ -725,8 +725,8 @@ export function MegaMenuBar({
             onClick={() => onNavigate('/learn')}
             className={clsx(
               'group flex items-center whitespace-nowrap shrink-0 border-none cursor-pointer transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange',
-              'gap-[6px] py-[7px] px-[11px] rounded-full text-[12.5px] font-semibold text-charcoal hover:bg-cream bg-transparent',
-              compact && 'md:gap-1 md:py-1 md:px-0 md:rounded-none md:text-[12px] md:font-medium md:hover:bg-transparent md:text-slate md:hover:text-brand-orange',
+              'gap-[6px] py-[7px] px-[11px] min-h-10 rounded-full text-[12.5px] font-semibold text-charcoal hover:bg-cream bg-transparent',
+              compact && 'md:gap-1 md:py-1 md:px-0 md:min-h-0 md:rounded-none md:text-[12px] md:font-medium md:hover:bg-transparent md:text-slate md:hover:text-brand-orange',
             )}
           >
             <GraduationCap size={13} className={clsx('shrink-0 text-slate group-hover:text-brand-orange', compact && 'md:hidden')} />

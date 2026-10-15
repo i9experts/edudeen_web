@@ -24,12 +24,12 @@ export function Breadcrumb({ items, className }: { items: BreadcrumbItem[]; clas
       {items.map((item, i) => {
         const isLast = i === items.length - 1;
         return (
-          <span key={`${item.label}-${i}`} className="flex items-center gap-1 shrink-0">
+          <span key={`${item.label}-${i}`} className="flex items-center gap-1 shrink-0 self-stretch">
             {i > 0 && <ChevronRight size={12} className="text-bone shrink-0" />}
             {item.path && !isLast ? (
               <button
                 onClick={() => navigate(item.path!)}
-                className="text-[12px] text-slate hover:text-brand-orange bg-transparent border-none cursor-pointer p-0 font-medium transition-colors rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/30"
+                className="text-[12px] text-slate hover:text-brand-orange bg-transparent border-none cursor-pointer p-0 h-full min-h-10 font-medium transition-colors rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/30"
               >
                 {t(item.label)}
               </button>

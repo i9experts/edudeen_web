@@ -76,7 +76,7 @@ export function LearnHubPage() {
                 <ul className="flex flex-wrap gap-1.5 list-none p-0 m-0">
                   {subjects.map(s => (
                     <li key={s._id}>
-                      <Link to={learnPath(l.value, s)} className="inline-block rounded-full border border-bone px-3 py-[5px] text-[12px] text-carbon no-underline hover:border-brand-orange hover:text-brand-orange">{s.name}</Link>
+                      <Link to={learnPath(l.value, s)} className="inline-flex items-center min-h-10 rounded-full border border-bone px-3 py-[5px] text-[12px] text-carbon no-underline hover:border-brand-orange hover:text-brand-orange">{s.name}</Link>
                     </li>
                   ))}
                 </ul>
