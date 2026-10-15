@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   ShoppingBag, Plus,
   RefreshCw, TrendingUp,
-  Eye, Pencil, Trash2, ArrowRight, Crown, Flame,
+  Eye, Pencil, Trash2, ArrowRight, Crown, Flame, UploadCloud,
 } from 'lucide-react';
 import { useStoreWorkspace, StorePageHeader } from '@/components/layouts/StoreLayout';
 import {
@@ -295,7 +295,7 @@ export default function StoreProductList() {
       <StorePageHeader
         title="Products"
         subtitle={loading ? 'Loading…' : `${totalProducts} product${totalProducts !== 1 ? 's' : ''}`}
-        actions={<Button onClick={goAdd} icon={<Plus size={15} />}>Add Product</Button>}
+        actions={<div className="flex items-center gap-2"><Button variant="outline" onClick={() => navigate(`/store/${storeId}/products/bulk`)} icon={<UploadCloud size={15} />}>Bulk upload</Button><Button onClick={goAdd} icon={<Plus size={15} />}>Add one product</Button></div>}
       />
 
       <div className="px-4 md:px-8 py-6 flex flex-col gap-5">

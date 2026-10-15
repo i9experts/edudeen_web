@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useStoreWorkspace, StorePageHeader } from '@/components/layouts/StoreLayout';
 import { apiCreatePhysicalProduct, apiCreateDigitalProduct, type VariantOption } from '@/api/services/product';
 import { apiSetProductAttributes } from '@/api/services/attributes';
@@ -277,6 +277,10 @@ export default function StoreAddProduct() {
         title="Add a new product"
         subtitle={`Step ${wiz.step + 1} of ${WIZARD_STEPS.length} — ${WIZARD_STEPS[wiz.step].title}. Items marked Required must be filled.`}
       />
+
+      <div className="px-4 md:px-8 pt-3">
+        <p className="mx-auto max-w-[1700px] m-0 text-[13px] text-slate">Adding many products? <Link to={`/store/${storeId}/products/bulk`} className="font-bold text-brand-royal no-underline hover:underline">Use bulk upload</Link></p>
+      </div>
 
       {draft.restorable && (
         <div className="px-4 md:px-8 pt-5">
