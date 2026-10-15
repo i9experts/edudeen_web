@@ -637,14 +637,6 @@ function StoreVerificationBanner() {
           Your verification application has been submitted and is waiting to be reviewed.
         </div>
       );
-    case 'not_started':
-      return (
-        <button onClick={goToVerification} className="flex w-full items-center justify-center gap-2 px-4 py-2 text-[12.5px] font-medium text-[#946200] bg-warning-bg border-b border-[#f5dfa6] cursor-pointer text-center">
-          <AlertTriangle size={14} className="shrink-0" />
-          Your store isn't visible on the marketplace yet — complete business verification to submit it for review.
-          <span className="underline font-semibold shrink-0">Complete verification</span>
-        </button>
-      );
     default:
       return null;
   }
