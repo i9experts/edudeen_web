@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Crown, Flame } from 'lucide-react';
 import { Toggle } from '@/components/comman/ui';
 import { useStoreCampaigns } from '@/hooks/store/useStoreCampaigns';
@@ -7,7 +7,11 @@ import { premiumPercentError } from './PremiumPriceField';
 import { PremiumEarningsCalculator, campaignCalc, effectiveSellerPercent, ownSalePercent, premiumGapMessage, premiumMinPercent, usePremiumTerms } from './PremiumEarningsCalculator';
 import { AlertTriangle } from 'lucide-react';
 
-const inputCls = 'w-full px-3 py-[9px] rounded-lg text-[13px] border border-bone bg-bone text-charcoal outline-none box-border';
+export interface OfferFlags { premiumBlank: boolean; conflict: boolean }
+export const PREMIUM_BLANK_MESSAGE = 'Enter a Premium discount %, or switch Premium off';
+export const OFFER_CONFLICT_MESSAGE = 'Premium and a platform sale cannot run together on one product. Choose one in the Offers step';
+
+const inputCls ='w-full px-3 py-[9px] rounded-lg text-[13px] border border-bone bg-bone text-charcoal outline-none box-border';
 
 /**
  * What the product form sends for the two offers. A product has a Premium offer OR a platform sale, never both: when it is
@@ -35,8 +39,10 @@ export function offersPayload(s: { premiumPct: string | null; premiumOptOut: boo
  */
 export function ProductOffersCard({
   storeId, currency, productType, price, compareAtPrice, storePremiumPct, onEditPrice,
-  premiumPct, setPremiumPct, premiumOptOut, setPremiumOptOut, campaignIds, setCampaignIds,
+  premiumPct, setPremiumPct, premiumOptOut, setPremiumOptOut, campaignIds, setCampaignIds, onFlags,
 }: {
+  /** reports the two blocking states to the form: Premium switched on without a usable %, and Premium + platform sale together */
+  onFlags?: (f: OfferFlags) => void;
   storeId: string; currency?: string | null; productType: string; price: string; compareAtPrice: string;
   /** the store-wide Premium percent (0 = none) */
   storePremiumPct: number;
@@ -47,7 +53,8 @@ export function ProductOffersCard({
   campaignIds: string[] | null; setCampaignIds: (v: string[]) => void;
 }) {
   const { campaigns } = useStoreCampaigns(storeId);
-  const [confirm, setConfirm] = useState<null | 'leave-premium' | 'leave-sales'>(null);
+  // A choice the seller has not made yet: nothing is applied until they pick a side; Cancel / Esc leaves everything as it was.
+  const [pending, setPending] = useState<null | { kind: 'pick'; next: string[] } | { kind: 'premium' }>(null);
   const loaded = premiumPct !== null && premiumOptOut !== null && campaignIds !== null;
   const pct = premiumPct ?? '';
   const optOut = premiumOptOut ?? false;
@@ -66,7 +73,35 @@ export function ProductOffersCard({
   const sellerPct = effectiveSellerPercent(pct, storePremiumPct, optOut);
   const rangeError = premiumPercentError(pct);
   const minError = !rangeError && premiumOn ? premiumGapMessage(priceN, compareN, sellerPct, gap) : null;
-  const error = rangeError ?? minError;
+  const premiumBlank = loaded && premiumOn && sellerPct <= 0;
+  const error = rangeError ?? minError ?? (premiumBlank ? PREMIUM_BLANK_MESSAGE : null);
+  const conflict = loaded && premiumOn && picked.length > 0;
+  useEffect(() => { onFlags?.({ premiumBlank, conflict }); }, [premiumBlank, conflict]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!pending) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setPending(null); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [pending]);
+  // Keep Premium: the platform sale is dropped. Keep the sale: Premium is switched off (an explicit opt-out beats a store default).
+  const keepPremium = () => { setCampaignIds([]); if (!premiumOn) turnPremiumOn(); setPending(null); };
+  const keepSale = () => { const next = pending?.kind === 'pick' ? pending.next : picked; turnPremiumOff(); setPremiumOptOut(true); setCampaignIds(next); setPending(null); };
+  // Picking a sale while Premium is on asks first; with Premium off it just applies (explicit opt-out beats a store default).
+  const pickCampaigns = (next: string[]) => {
+    if (next.length > 0 && premiumOn && next.some(id => !picked.includes(id))) { setPending({ kind: 'pick', next }); return; }
+    if (next.length > 0) { setPremiumPct(''); setPremiumOptOut(true); }
+    setCampaignIds(next);
+  };
+  const choice = (title: string) => (
+    <div role="alertdialog" aria-label={title} className="mt-3 rounded-lg border border-[#f1d98a] bg-[#fffaf0] px-3 py-2.5 text-[12.5px] text-charcoal">
+      <p className="m-0 flex items-start gap-2"><AlertTriangle size={14} className="shrink-0 mt-[2px] text-[#8a6100]" aria-hidden /> <span>Premium and a platform sale cannot run together on one product. Choose one:</span></p>
+      <div className="mt-2 flex flex-wrap gap-2">
+        <button type="button" onClick={keepPremium} className="px-3 py-1.5 rounded-lg bg-brand-royal text-white text-[12px] font-semibold border-none cursor-pointer">Keep Premium (remove platform sale)</button>
+        <button type="button" onClick={keepSale} className="px-3 py-1.5 rounded-lg bg-white border border-brand-royal text-brand-royal text-[12px] font-semibold cursor-pointer">Keep platform sale (turn Premium off)</button>
+        {pending && <button type="button" onClick={() => setPending(null)} className="px-3 py-1.5 rounded-lg bg-white border border-bone text-[12px] cursor-pointer">Cancel</button>}
+      </div>
+    </div>
+  );
   const pickedCampaign = campaigns.find(c => picked.includes(c._id)) ?? null;
   const combined = pickedCampaign ? combinedSaleInfo(priceN, compareN, pickedCampaign) : null;
   // Turning Premium off: store default present -> explicit opt-out (otherwise the store default would still apply).
@@ -99,20 +134,14 @@ export function ProductOffersCard({
             checked={premiumOn}
             disabled={!loaded}
             onChange={next => {
-              if (!next) { turnPremiumOff(); setConfirm(null); return; }
-              if (picked.length > 0) { setConfirm('leave-sales'); return; }
+              if (!next) { turnPremiumOff(); setPending(null); return; }
+              if (picked.length > 0) { setPending({ kind: 'premium' }); return; }
               turnPremiumOn();
             }}
           />
         </div>
 
-        {confirm === 'leave-sales' && (
-          <div role="alert" className="mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-[#f1d98a] bg-[#fffaf0] px-3 py-2 text-[12.5px] text-charcoal">
-            <span className="flex-1 min-w-[200px]">This product will leave its platform sale{picked.length > 1 ? 's' : ''} to offer Premium instead.</span>
-            <button type="button" className="px-3 py-1.5 rounded-lg bg-brand-royal text-white text-[12px] font-semibold border-none cursor-pointer" onClick={() => { setCampaignIds([]); turnPremiumOn(); setConfirm(null); }}>Turn on Premium</button>
-            <button type="button" className="px-3 py-1.5 rounded-lg bg-white border border-bone text-[12px] cursor-pointer" onClick={() => setConfirm(null)}>Cancel</button>
-          </div>
-        )}
+        {(pending?.kind === 'premium' || conflict) && choice('Premium or platform sale')}
 
         {premiumOn && (
           <div className="mt-3 flex flex-col gap-2">
@@ -147,48 +176,24 @@ export function ProductOffersCard({
         <p className="text-[13px] font-semibold text-carbon flex items-center gap-1.5 m-0 mb-1">
           <Flame size={14} className="text-brand-orange" aria-hidden /> Join Edudeen&apos;s platform sales
         </p>
-        {premiumOn ? (
-          <div className="flex flex-col gap-2">
-            <p className="text-[12.5px] text-slate m-0">This product has a Premium offer, so it cannot also join a platform sale. A product is in one or the other.</p>
-            {confirm === 'leave-premium' ? (
-              <div role="alert" className="flex flex-wrap items-center gap-2 rounded-lg border border-[#f1d98a] bg-[#fffaf0] px-3 py-2 text-[12.5px] text-charcoal">
-                <span className="flex-1 min-w-[200px]">This product will leave the Premium offer.</span>
-                <button type="button" className="px-3 py-1.5 rounded-lg bg-brand-royal text-white text-[12px] font-semibold border-none cursor-pointer" onClick={() => { turnPremiumOff(); setConfirm(null); }}>Turn off Premium</button>
-                <button type="button" className="px-3 py-1.5 rounded-lg bg-white border border-bone text-[12px] cursor-pointer" onClick={() => setConfirm(null)}>Cancel</button>
-              </div>
-            ) : (
-              <button type="button" disabled={!loaded} onClick={() => setConfirm('leave-premium')} className="self-start px-3 py-1.5 rounded-lg bg-white border border-brand-royal text-brand-royal text-[12.5px] font-semibold cursor-pointer disabled:opacity-50">Turn off Premium to join a platform sale</button>
-            )}
-          </div>
-        ) : (
-          <>
-          <CampaignPicker
-            storeId={storeId}
-            value={campaignIds}
-            onChange={next => {
-              // Picking a sale takes this product out of the Premium offer (an explicit opt-out beats a store-wide default).
-              if (next.length > 0) { setPremiumPct(''); setPremiumOptOut(true); }
-              setCampaignIds(next);
-            }}
-          />
-          {pickedCampaign && combined && (
-            <div role="alert" className="mt-3 rounded-lg border border-[#f1d98a] bg-[#fffaf0] px-3 py-2.5 text-[12.5px] text-charcoal">
-              <p className="m-0 flex items-start gap-2"><AlertTriangle size={14} className="shrink-0 mt-[2px] text-[#8a6100]" aria-hidden /> <span>{combined.text}</span></p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {onEditPrice && <button type="button" onClick={onEditPrice} className="px-3 py-1.5 rounded-lg bg-white border border-bone text-[12px] font-semibold cursor-pointer">Change my sale price</button>}
-                <button type="button" onClick={() => { setCampaignIds(picked.filter(id => id !== pickedCampaign._id)); }} className="px-3 py-1.5 rounded-lg bg-white border border-brand-royal text-brand-royal text-[12px] font-semibold cursor-pointer">Unselect platform sale</button>
-              </div>
+        {pending?.kind === 'pick' && choice('Premium or platform sale')}
+        <CampaignPicker storeId={storeId} value={campaignIds} onChange={pickCampaigns} />
+        {pickedCampaign && combined && !premiumOn && (
+          <div role="alert" className="mt-3 rounded-lg border border-[#f1d98a] bg-[#fffaf0] px-3 py-2.5 text-[12.5px] text-charcoal">
+            <p className="m-0 flex items-start gap-2"><AlertTriangle size={14} className="shrink-0 mt-[2px] text-[#8a6100]" aria-hidden /> <span>{combined.text}</span></p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {onEditPrice && <button type="button" onClick={onEditPrice} className="px-3 py-1.5 rounded-lg bg-white border border-bone text-[12px] font-semibold cursor-pointer">Change my sale price</button>}
+              <button type="button" onClick={() => { setCampaignIds(picked.filter(id => id !== pickedCampaign._id)); }} className="px-3 py-1.5 rounded-lg bg-white border border-brand-royal text-brand-royal text-[12px] font-semibold cursor-pointer">Unselect platform sale</button>
             </div>
-          )}
-          </>
+          </div>
         )}
       </div>
 
       <PremiumEarningsCalculator
         price={price} compareAtPrice={compareAtPrice} premiumValue={pct} storePercent={storePremiumPct}
-        productType={productType} currency={currency} storeId={storeId} premiumOptOut={optOut} campaign={pickedCampaign}
+        productType={productType} currency={currency} storeId={storeId} premiumOptOut={optOut} campaign={conflict ? null : pickedCampaign}
         availableCampaigns={pickedCampaign ? [] : campaigns}
-        onJoinCampaign={id => { setPremiumPct(''); setPremiumOptOut(true); setCampaignIds([id]); }}
+        onJoinCampaign={id => pickCampaigns([id])}
       />
     </div>
   );

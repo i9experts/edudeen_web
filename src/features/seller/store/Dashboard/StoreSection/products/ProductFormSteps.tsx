@@ -14,7 +14,7 @@ import { SubcategoryField } from './SubcategoryField';
 import { CustomLevelInput } from './CustomLevelInput';
 import { DynamicAttributeFields } from './DynamicAttributeFields';
 import type { AttributeValuesState } from './attributeFormUtils';
-import { ProductOffersCard } from './ProductOffersCard';
+import { ProductOffersCard, type OfferFlags } from './ProductOffersCard';
 import {
   Block, F, MoreOptions, Toggle, TagInput, VariantOptionsField, inp, ta, isDigitalFamilyType,
   type DigForm, type PhysForm, type ProductStatus, type ProductType,
@@ -47,6 +47,7 @@ export interface ProductFormStepsProps {
     premiumPct: string | null; setPremiumPct: (v: string) => void;
     premiumOptOut: boolean | null; setPremiumOptOut: (v: boolean) => void;
     campaignIds: string[] | null; setCampaignIds: (v: string[]) => void;
+    onFlags?: (f: OfferFlags) => void;
   };
   category: {
     categories: CategoryNode[]; loading: boolean; error: boolean; refetch: () => void;
@@ -377,7 +378,7 @@ export function ProductFormSteps(p: ProductFormStepsProps) {
             storeId={p.storeId} currency={p.store?.baseCurrency} productType={pType} price={cur.price} compareAtPrice={cur.compareAtPrice}
             storePremiumPct={p.offers.storePremiumPct} onEditPrice={() => go(2, 'ap-compare')} premiumPct={p.offers.premiumPct} setPremiumPct={p.offers.setPremiumPct}
             premiumOptOut={p.offers.premiumOptOut} setPremiumOptOut={p.offers.setPremiumOptOut}
-            campaignIds={p.offers.campaignIds} setCampaignIds={p.offers.setCampaignIds}
+            campaignIds={p.offers.campaignIds} setCampaignIds={p.offers.setCampaignIds} onFlags={p.offers.onFlags}
           />
         </Block>
       </StepPanel>

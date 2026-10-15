@@ -19,7 +19,7 @@ import {
 } from '@/features/seller/components/products/LearningFields';
 import { EMPTY_DELIVERY, deliveryPayload, deliveryError, deliveryFromProduct } from '@/features/seller/components/products/DeliveryFormatField';
 import { currencySymbol as symbolForCurrency } from '@/utils/currency';
-import { offersPayload } from './ProductOffersCard';
+import { offersPayload, PREMIUM_BLANK_MESSAGE, OFFER_CONFLICT_MESSAGE, type OfferFlags } from './ProductOffersCard';
 import { premiumPercentError } from './PremiumPriceField';
 import { effectiveSellerPercent, premiumGapMessage, usePremiumTerms } from './PremiumEarningsCalculator';
 import type { VariantOption } from '@/api/services/product';
@@ -121,6 +121,7 @@ export default function StoreEditProduct() {
   // null until the product is read fresh, so saving never clears a Premium price that has not loaded.
   const [premiumPct, setPremiumPct] = useState<string | null>(null);
   const [premiumOptOut, setPremiumOptOut] = useState<boolean | null>(null);
+  const [offerFlags, setOfferFlags] = useState<OfferFlags>({ premiumBlank: false, conflict: false });
   const storePremiumPct = store?.premiumDiscount?.enabled ? store.premiumDiscount.percent : 0;
   const { terms: premiumTerms } = usePremiumTerms(pType, store?.baseCurrency, storeId);
 
@@ -230,9 +231,11 @@ export default function StoreEditProduct() {
     // Owner rule: the normal sale must stay at least the admin's gap below the Premium discount (the API enforces it too).
     const gapErr = premiumTerms ? premiumGapMessage(Number(cur.price), Number(cur.compareAtPrice), effectiveSellerPercent(premiumPct ?? '', storePremiumPct, !!premiumOptOut || (campaignIds?.length ?? 0) > 0), premiumTerms.minGapPercent) : null;
     if (gapErr) out.push({ step: 4, message: gapErr, fieldId: 'fld-offers' });
+    if (offerFlags.premiumBlank) out.push({ step: 4, message: PREMIUM_BLANK_MESSAGE, fieldId: 'fld-offers' });
+    if (offerFlags.conflict) out.push({ step: 4, message: OFFER_CONFLICT_MESSAGE, fieldId: 'fld-offers' });
     return out;
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cur, pType, dig.tiers, dig.educationLevel, dig.customLevel, delivery, learning, attrDefs, attributeValues, premiumPct, premiumOptOut, campaignIds, premiumTerms, storePremiumPct]);
+  }, [cur, pType, dig.tiers, dig.educationLevel, dig.customLevel, delivery, learning, attrDefs, attributeValues, premiumPct, premiumOptOut, campaignIds, premiumTerms, storePremiumPct, offerFlags]);
 
   const wiz = useWizard(issues, 'Edit', [0, 1, 2, 3, 4, 5]);
   const guard = useLeaveGuard(touched && !saving);
@@ -387,7 +390,7 @@ export default function StoreEditProduct() {
               pType={pType} setPType={setPType} supports={{ physical: true, digital: true, educational: true }}
               phys={phys} dig={dig} sp={sp} sd={sd}
               delivery={delivery} setDelivery={setDelivery} learning={learning} setLearning={setLearning}
-              offers={{ storePremiumPct, premiumPct, setPremiumPct, premiumOptOut, setPremiumOptOut, campaignIds, setCampaignIds: v => setCampaignIds(v) }}
+              offers={{ storePremiumPct, premiumPct, setPremiumPct, premiumOptOut, setPremiumOptOut, campaignIds, setCampaignIds: v => setCampaignIds(v), onFlags: setOfferFlags }}
               category={{ categories, loading: catLoading, error: catError, refetch: refetchCats, categoryId, rootName: rootCategory?.name ?? '', subcategories, change: changeCategory }}
               attrs={{ defs: attrDefs, loading: attrLoading, value: attributeValues, onChange: setAttributeValues }}
               addTag={addTag}
