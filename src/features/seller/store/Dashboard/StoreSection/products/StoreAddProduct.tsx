@@ -16,6 +16,7 @@ import { currencySymbol as symbolForCurrency } from '@/utils/currency';
 import { offersPayload, PREMIUM_BLANK_MESSAGE, OFFER_CONFLICT_MESSAGE, type OfferFlags } from './ProductOffersCard';
 import { premiumPercentError } from './PremiumPriceField';
 import { effectiveSellerPercent, premiumGapMessage, usePremiumTerms } from './PremiumEarningsCalculator';
+import { descriptionError, validatePrices, weightTextError, parseWeightKg, stockError } from './priceRules';
 import {
   isDigitalFamilyType, findCategoryName,
   type DigForm, type PhysForm, type ProductStatus, type ProductType,
@@ -129,15 +130,24 @@ export default function StoreAddProduct() {
     const out: WizardIssue[] = [];
     const finalStatus = isCourse ? 'draft' : status;
     if (!cur.name) out.push({ step: 0, message: 'Add a product title', fieldId: 'ap-name' });
-    if (!cur.description.trim()) out.push({ step: 0, message: 'Add a description', fieldId: 'ap-desc' });
+    const descErr = descriptionError(cur.description);
+    if (descErr) out.push({ step: 0, message: descErr, fieldId: 'ap-desc' });
     if (isDigitalFamily) {
       const dErr = deliveryError(delivery);
       if (dErr) out.push({ step: 1, message: dErr, fieldId: 'fld-delivery' });
       if (delivery.format === 'download' && finalStatus !== 'draft' && dig.files.length === 0)
         out.push({ step: 1, message: 'Upload the file buyers will receive (or save as draft)', fieldId: 'fld-files', publishOnly: true });
     }
-    if (!cur.price) out.push({ step: 2, message: 'Add a price', fieldId: 'ap-price' });
-    if (pType === 'physical' && !phys.stock) out.push({ step: 2, message: 'Add the stock quantity', fieldId: 'ap-stock' });
+    // free: this form documents "Enter 0 for a free resource", so a typed 0 is the seller's explicit free choice here.
+    const priceCheck = validatePrices({ price: cur.price, compareAt: cur.compareAtPrice, currency: store?.baseCurrency, free: true });
+    if (priceCheck.price) out.push({ step: 2, message: priceCheck.price, fieldId: 'ap-price' });
+    if (priceCheck.compareAt) out.push({ step: 2, message: priceCheck.compareAt, fieldId: 'ap-compare' });
+    if (pType === 'physical') {
+      const sErr = stockError(phys.stock, false);
+      if (sErr) out.push({ step: 2, message: sErr, fieldId: 'ap-stock' });
+      const wErr = weightTextError(phys.shippingWeight);
+      if (wErr) out.push({ step: 2, message: wErr, fieldId: 'ap-weight' });
+    }
     if (isDigitalFamily) { const tErr = tiersError(dig.tiers); if (tErr) out.push({ step: 2, message: tErr, fieldId: 'fld-tiers' }); }
     if (pType === 'educational' && !dig.educationLevel) out.push({ step: 3, message: 'Choose an education level', fieldId: 'fld-level' });
     else if (pType === 'educational' && dig.educationLevel === 'other' && !dig.customLevel.trim()) out.push({ step: 3, message: 'Describe the custom education level', fieldId: 'fld-level' });
@@ -204,7 +214,7 @@ export default function StoreAddProduct() {
             compareAtPrice: phys.compareAtPrice ? Number(phys.compareAtPrice) : null,
             options: phys.options,
             stock: Number(phys.stock),
-            shippingWeight: phys.shippingWeight,
+            shippingWeight: `${parseWeightKg(phys.shippingWeight)} kg`,
           }],
         });
         const created = res.data.defaultVariant ?? res.data.variants?.find(v => v.isDefault) ?? res.data.variants?.[0];
@@ -348,7 +358,7 @@ export default function StoreAddProduct() {
       name: cur.name, images: cur.images, price: cur.price, compareAtPrice: cur.compareAtPrice, currency: store?.baseCurrency,
       productType: pType, deliveryFormat: delivery.format, educationLevel: dig.educationLevel, customLevel: dig.customLevel,
       premiumPercent: campaignIds.length ? 0 : effectiveSellerPercent(premiumPct, storePremiumPct, premiumOptOut),
-      ageMin: learning.ageMin, ageMax: learning.ageMax, storeName: store?.name,
+      ageMin: learning.ageMin, ageMax: learning.ageMax, classFrom: learning.classFrom, classTo: learning.classTo, storeName: store?.name,
     };
   }
 }

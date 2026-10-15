@@ -1,5 +1,6 @@
 import type { PrivateUploadData } from '@/api/upload';
 import { classIndex, levelForClass } from '@/constants/classLevels';
+import { descriptionError, premiumConflict, stockError, validatePrices, weightError, type PremiumConflict, type WeightUnit } from './priceRules';
 
 /** Pure helpers + types for the seller bulk upload (kept UI-free so they are easy to test). */
 
@@ -18,7 +19,7 @@ export type BulkType = 'digital' | 'educational' | 'physical';
 /** 'none' = a row without a file (manual row, or a physical product). */
 export type UploadState = 'none' | 'queued' | 'uploading' | 'done' | 'failed';
 export type CreateState = 'idle' | 'creating' | 'created' | 'failed';
-export type DetailGroup = 'price' | 'class' | 'photos' | 'tags' | 'inventory' | 'download';
+export type DetailGroup = 'price' | 'photos' | 'tags' | 'inventory' | 'download';
 
 export interface BulkRow {
   id: string;
@@ -31,6 +32,8 @@ export interface BulkRow {
   title: string;
   description: string;
   price: string;
+  /** Seller explicitly chose a free product (the only way a price of 0 is accepted). */
+  free: boolean;
   compareAt: string;
   categoryId: string;
   subCategoryId: string;
@@ -42,7 +45,11 @@ export interface BulkRow {
   stock: string;
   unlimitedStock: boolean;
   sku: string;
+  /** Shipping weight as typed (number) + its unit; stored on the product normalized to kg. */
   weight: string;
+  weightUnit: WeightUnit;
+  /** Seller confirmed a stock of 0 on purpose (the product will show as out of stock). */
+  zeroStockOk: boolean;
   // Digital / educational
   downloadLimit: string;
   linkExpiryDays: string;
@@ -75,7 +82,9 @@ export const baseOf = (name: string) => {
 export const isPhotoName = (name: string) => PHOTO_EXTENSIONS.includes(extOf(name));
 export const isDocName = (name: string) => DOC_EXTENSIONS.includes(extOf(name));
 
-/** "grade_5-maths_worksheet.pdf" -> "Grade 5 Maths Worksheet". */
+const SMALL_WORDS = new Set(['for', 'and', 'of', 'the', 'in', 'to', 'a', 'an']);
+
+/** "grade_5-maths_worksheet.pdf" -> "Grade 5 Maths Worksheet"; "Islamic-Manners-for-Kids.pdf" -> "Islamic Manners for Kids". */
 export function titleFromFileName(name: string): string {
   const i = name.lastIndexOf('.');
   const base = i <= 0 ? name : name.slice(0, i);
@@ -84,7 +93,10 @@ export function titleFromFileName(name: string): string {
     .replace(/\s+/g, ' ')
     .trim()
     .split(' ')
-    .map(w => (w ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : w))
+    .map((w, idx) => {
+      const lower = w.toLowerCase();
+      return idx > 0 && SMALL_WORDS.has(lower) ? lower : w ? w.charAt(0).toUpperCase() + lower.slice(1) : w;
+    })
     .join(' ')
     .slice(0, 200);
 }
@@ -98,9 +110,9 @@ export function blankRow(file?: { name: string; size: number }, hasFile = true):
   return {
     id: newId(), fileName: file?.name ?? '', fileSize: file?.size ?? 0, upload: null,
     uploadState: file && hasFile ? 'queued' : 'none', uploadPct: 0, uploadError: '',
-    title: file ? titleFromFileName(file.name) : '', description: '', price: '', compareAt: '', categoryId: '', subCategoryId: '',
+    title: file ? titleFromFileName(file.name) : '', description: '', price: '', free: false, compareAt: '', categoryId: '', subCategoryId: '',
     classFrom: '', classTo: '', educationLevel: '', images: [],
-    stock: '', unlimitedStock: false, sku: '', weight: '',
+    stock: '', unlimitedStock: false, sku: '', weight: '', weightUnit: 'kg', zeroStockOk: false,
     downloadLimit: 'unlimited', linkExpiryDays: '', buyerMessage: '', tags: [],
     createState: 'idle', createError: '', productId: '', createdStatus: '',
   };
@@ -122,10 +134,22 @@ export interface RowContext {
   type: BulkType;
   /** Category the API will use when the row has none (the store's own). */
   hasDefaultCategory: boolean;
-  premiumGap?: (price: number, compareAt: number) => string | null;
+  /** Store currency code ('PKR' = whole rupees) and its symbol. */
+  currency?: string | null;
+  symbol?: string;
+  /** Premium member discount that applies to bulk rows (the store-wide %) and the admin's minimum gap. null = not loaded / none. */
+  premium?: { sellerPct: number; gap: number } | null;
 }
 
-/** First reason a row can't be created yet, or null when it is ready. Mirrors the API's create rules. */
+/** The Premium conflict of a row (with the highest compare-at that works), or null. */
+export function rowPremiumConflict(row: Pick<BulkRow, 'price' | 'compareAt'>, ctx: RowContext): PremiumConflict | null {
+  if (!ctx.premium || row.compareAt.trim() === '') return null;
+  const price = Number(row.price), compareAt = Number(row.compareAt);
+  if (!Number.isFinite(price) || !Number.isFinite(compareAt)) return null;
+  return premiumConflict({ price, compareAt, sellerPct: ctx.premium.sellerPct, gap: ctx.premium.gap, currency: ctx.currency, symbol: ctx.symbol ?? '' });
+}
+
+export const ZERO_STOCK_MESSAGE = 'Stock is 0 - product will show as out of stock. Tick the box under Stock to publish it as out of stock.';
 export function rowIssue(row: BulkRow, ctx: RowContext): string | null {
   if (ctx.type !== 'physical') {
     if (row.uploadState === 'failed') return 'File upload failed';
@@ -133,24 +157,24 @@ export function rowIssue(row: BulkRow, ctx: RowContext): string | null {
     if (row.uploadState !== 'done' || !row.upload) return 'Add the file buyers will receive';
   }
   if (!row.title.trim()) return 'Add a title';
-  if (!row.description.trim()) return 'Add a description';
-  if (row.price.trim() === '') return 'Add a price';
-  const price = Number(row.price);
-  if (!Number.isFinite(price) || price < 0) return 'Price must be a number';
-  if (ctx.type === 'physical' && !row.unlimitedStock) {
-    if (row.stock.trim() === '') return 'Add the stock quantity';
-    const n = Number(row.stock);
-    if (!Number.isInteger(n) || n < 0) return 'Stock must be a whole number';
+  const dErr = descriptionError(row.description);
+  if (dErr) return dErr;
+  const pc = validatePrices({ price: row.free ? '0' : row.price, compareAt: row.compareAt, currency: ctx.currency, free: row.free });
+  if (pc.price) return pc.price;
+  if (ctx.type === 'physical') {
+    const sErr = stockError(row.stock, row.unlimitedStock);
+    if (sErr) return sErr;
+    if (!row.unlimitedStock && Number(row.stock) === 0 && !row.zeroStockOk) return ZERO_STOCK_MESSAGE;
+    const wErr = weightError(row.weight, row.weightUnit);
+    if (wErr) return wErr;
   }
-  if (row.compareAt.trim() !== '' && (!Number.isFinite(Number(row.compareAt)) || Number(row.compareAt) < 0)) return 'Compare-at price must be a number';
+  if (pc.compareAt) return pc.compareAt;
   if (!row.categoryId && !ctx.hasDefaultCategory) return 'Pick a category';
   if (row.classFrom && row.classTo && classIndex(row.classFrom) > classIndex(row.classTo)) return '"From class" comes after "To class"';
   if (ctx.type === 'educational' && !effectiveLevel(row)) return 'Choose an education level';
   if (row.linkExpiryDays.trim() !== '' && (!Number.isInteger(Number(row.linkExpiryDays)) || Number(row.linkExpiryDays) < 1)) return 'Link expiry must be a whole number of days';
-  if (ctx.premiumGap && row.compareAt.trim() !== '') {
-    const g = ctx.premiumGap(price, Number(row.compareAt));
-    if (g) return 'Sale is too close to your Premium discount';
-  }
+  const pr = rowPremiumConflict(row, ctx);
+  if (pr) return pr.short;
   return null;
 }
 
@@ -160,9 +184,8 @@ export function groupsFor(type: BulkType): { key: DetailGroup; label: string; hi
     { key: 'price', label: 'Compare-at price', hint: 'The old price, shown crossed out' },
     { key: 'photos', label: 'Photos', hint: 'Cover and more photos' },
     ...(type === 'physical'
-      ? [{ key: 'inventory' as const, label: 'SKU, weight & stock', hint: 'SKU, shipping weight, unlimited stock' }]
+      ? [{ key: 'inventory' as const, label: 'SKU', hint: 'Your own product code (made for you if empty)' }]
       : [{ key: 'download' as const, label: 'Download settings', hint: 'Download limit, link expiry, thank-you message' }]),
-    { key: 'class', label: 'Suitable classes', hint: 'From class / to class' },
     { key: 'tags', label: 'Tags', hint: 'Words buyers might search for' },
   ];
 }
@@ -172,9 +195,8 @@ export function filledGroups(r: BulkRow, type: BulkType): DetailGroup[] {
   const out: DetailGroup[] = [];
   if (r.compareAt.trim()) out.push('price');
   if (r.images.length) out.push('photos');
-  if (type === 'physical') { if (r.sku.trim() || r.weight.trim() || r.unlimitedStock) out.push('inventory'); }
+  if (type === 'physical') { if (r.sku.trim()) out.push('inventory'); }
   else if (r.downloadLimit !== 'unlimited' || r.linkExpiryDays.trim() || r.buyerMessage.trim()) out.push('download');
-  if (r.classFrom || r.classTo) out.push('class');
   if (r.tags.length) out.push('tags');
   return out;
 }

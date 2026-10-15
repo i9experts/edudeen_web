@@ -214,7 +214,7 @@ export interface PreviewData {
   name: string; images: string[]; price: string; compareAtPrice: string; currency?: string | null;
   productType: 'physical' | 'digital' | 'educational'; deliveryFormat?: 'download' | 'course' | 'live_class';
   premiumPercent: number; educationLevel?: string | null; customLevel?: string | null;
-  ageMin?: string; ageMax?: string; storeName?: string | null;
+  ageMin?: string; ageMax?: string; classFrom?: string; classTo?: string; storeName?: string | null;
 }
 
 function PreviewCard({ d }: { d: PreviewData }) {
@@ -227,6 +227,7 @@ function PreviewCard({ d }: { d: PreviewData }) {
       deliveryFormat: d.productType === 'physical' ? undefined : d.deliveryFormat,
       educationLevel: d.productType === 'educational' ? d.educationLevel || null : null, customLevel: d.customLevel ?? null,
       ageMin: d.ageMin ? Number(d.ageMin) : null, ageMax: d.ageMax ? Number(d.ageMax) : null,
+      classFrom: d.classFrom || d.classTo || null, classTo: d.classTo || d.classFrom || null,
       storeName: d.storeName ?? null, premiumPercent: d.premiumPercent > 0 ? d.premiumPercent : undefined,
       variants: [{ _id: 'preview', isDefault: true, price, compareAtPrice: cmp > price ? cmp : null, currency: d.currency ?? undefined }],
       averageRating: 0, totalRatings: 0, status: 'active', isDelete: false,

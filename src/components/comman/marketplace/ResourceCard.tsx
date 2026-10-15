@@ -11,6 +11,7 @@ import { isPlainLeftClick } from '@/utils/productLink';
 import { getStorePagePath } from '@/utils/storefrontUrl';
 import { coverPaletteFor } from './ProductCoverFallback';
 import { ageLabel } from '@/constants/learning';
+import { classRangeLabel } from '@/constants/classLevels';
 import { TrustBadges } from './TrustBadges';
 import { CompareToggle } from './CompareToggle';
 import { PremiumChip, PremiumTeaser, memberPriceOf, usePremiumView } from './PremiumBits';
@@ -140,7 +141,7 @@ export const ResourceCard = memo(function ResourceCard({
     : product.deliveryFormat === 'live_class' && product.liveSession
       ? `Live · ${new Date(product.liveSession.startsAt).toLocaleDateString('en-PK', { day: 'numeric', month: 'short' })}`
       : 'Instant download';
-  const meta = [ageLabel(product.ageMin, product.ageMax) ?? level ?? 'All ages', delivery].join(' · ');
+  const meta = [classRangeLabel(product.classFrom, product.classTo) ?? ageLabel(product.ageMin, product.ageMax) ?? level ?? 'All ages', delivery].join(' · ');
 
   const badge = member ? null : (campaignOff || percentOff > 0) ? (campaign && campaignOff ? `${campaign.name} · ${campaignOff}` : `-${percentOff}%`) : null;
   const wishlistButton = onToggleWishlist && variantId ? (

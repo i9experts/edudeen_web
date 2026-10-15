@@ -3,6 +3,7 @@ import { AlertTriangle, Crown, Flame } from 'lucide-react';
 import { apiGetPremiumTerms, type PremiumTerms } from '@/api/services/premium';
 import type { JoinableCampaign } from '@/api/services/marketing';
 import { formatMoney } from '@/utils/currency';
+import { effectiveSellerPercent, ownSalePercent, premiumMinPercent, premiumGapMessage } from './priceRules';
 
 // One shared cache per (type, currency, store): the terms rarely change and every product form asks for them.
 const cache = new Map<string, PremiumTerms>();
@@ -33,36 +34,7 @@ export function usePremiumTerms(productType: string, currency?: string | null, s
 const r2 = (n: number) => Math.round(n * 100) / 100;
 const fmtPct = (n: number) => String(Math.round(n * 10) / 10);
 
-/** The seller's Premium percent that applies to this product: opted out = 0; else the product's own value, else the store setting. */
-export function effectiveSellerPercent(productValue: string, storePercent: number, optOut = false): number {
-  if (optOut) return 0;
-  const own = Number(productValue);
-  if (productValue.trim() && Number.isFinite(own) && own >= 1 && own <= 50) return own;
-  return storePercent > 0 ? storePercent : 0;
-}
-
-/** The seller's own sale in % of the list (compare-at) price; 0 when there is no sale. */
-export function ownSalePercent(price: number, compareAt: number): number {
-  if (!(compareAt > price) || !(price >= 0)) return 0;
-  return (1 - price / compareAt) * 100;
-}
-
-/** Lowest Premium % allowed next to the seller's own sale: sale + gap (rounded up to 0.1). null = no sale, any Premium % is fine. */
-export function premiumMinPercent(price: number, compareAt: number, gap: number): number | null {
-  const sale = ownSalePercent(price, compareAt);
-  if (!(sale > 0)) return null;
-  return Math.ceil((sale + gap) * 10 - 1e-9) / 10;
-}
-
-/** Same rule as the API (premiumGapViolation): normal sale must be at least `gap` points below Premium. null = fine. */
-export function premiumGapMessage(price: number, compareAt: number, sellerPct: number, gap: number): string | null {
-  if (!(sellerPct > 0)) return null;
-  const sale = ownSalePercent(price, compareAt);
-  if (!(sale > 0)) return null;
-  if (sale <= Math.max(0, sellerPct - gap) + 1e-9) return null;
-  const min = premiumMinPercent(price, compareAt, gap) ?? 0;
-  return `Premium discount must be at least ${fmtPct(min)}% (your sale ${fmtPct(sale)}% + ${fmtPct(gap)}% gap). Raise Premium to ${fmtPct(min)}% or more, or lower your sale.`;
-}
+export { effectiveSellerPercent, ownSalePercent, premiumMinPercent, premiumGapMessage };
 /** Fee on an amount. null = the platform fee is not set yet (never shown as 0). */
 function feeOn(amount: number, terms: PremiumTerms): number | null {
   const f = terms.normalFee;

@@ -165,7 +165,7 @@ export function ProductFormSteps(p: ProductFormStepsProps) {
                 placeholder={pType === 'physical' ? 'e.g. Wooden Arabic Alphabet Puzzle (ages 3–6)' : 'e.g. My Purposeful Learning Week — printable planner'}
                 className={inp} />
             </F>
-            <F label="Description" req={p.mode === 'add'} htmlFor="ap-desc" hint="What's included, the learning goal, and how it's used at home or in class.">
+            <F label="Description" req htmlFor="ap-desc" hint="Required, at least 20 characters. What's included, the learning goal, and how it's used at home or in class.">
               <textarea id="ap-desc" value={cur.description} onChange={e => set('description', e.target.value)}
                 placeholder="Describe your product — what it includes, who it's for, and what makes it special…" className={ta} />
             </F>
@@ -229,6 +229,9 @@ export function ProductFormSteps(p: ProductFormStepsProps) {
               <F label="Stock quantity" req htmlFor="ap-stock">
                 <input id="ap-stock" type="number" min="0" inputMode="numeric" value={phys.stock} onChange={e => sp('stock', e.target.value)} placeholder="0" className={`${inp} sm:max-w-[240px]`} />
               </F>
+              <F label="Shipping weight" req htmlFor="ap-weight" hint="Required. Used to estimate delivery cost, e.g. 0.5 kg or 500 g.">
+                <input id="ap-weight" value={phys.shippingWeight} onChange={e => sp('shippingWeight', e.target.value)} placeholder="e.g. 0.5 kg or 500 g" className={`${inp} sm:max-w-[240px]`} />
+              </F>
               <F label="Variant attributes">
                 <VariantOptionsField options={phys.options} onChange={v => sp('options', v)} />
               </F>
@@ -266,12 +269,7 @@ export function ProductFormSteps(p: ProductFormStepsProps) {
           </Block>
         )}
 
-        <MoreOptions title="More options" hint={pType === 'physical' ? 'Shipping weight' : 'Download limit, link expiry, buyer message, PDF stamping, preview'}>
-          {pType === 'physical' && (
-            <F label="Shipping weight" htmlFor="ap-weight" hint="Used to estimate delivery cost.">
-              <input id="ap-weight" value={phys.shippingWeight} onChange={e => sp('shippingWeight', e.target.value)} placeholder="e.g. 0.5 kg" className={`${inp} sm:max-w-[240px]`} />
-            </F>
-          )}
+        {isDigitalFamily && <MoreOptions title="More options" hint="Download limit, link expiry, buyer message, PDF stamping, preview">
           {isDigitalFamily && (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -302,7 +300,7 @@ export function ProductFormSteps(p: ProductFormStepsProps) {
               </div>
             </>
           )}
-        </MoreOptions>
+        </MoreOptions>}
       </StepPanel>
 
       {/* ── 4. Category & details ────────────────────────────────────── */}

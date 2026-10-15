@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
-  AlertCircle, Check, CheckCircle2, ChevronDown, Copy, ExternalLink, FileText, ImagePlus, Loader2, Paperclip, Plus, RefreshCw, Trash2, UploadCloud, X,
+  AlertCircle, Check, CheckCircle2, ChevronDown, Copy, FileText, ImagePlus, Loader2, Paperclip, Plus, RefreshCw, Trash2, UploadCloud, X,
 } from 'lucide-react';
 import { useStoreWorkspace, StorePageHeader } from '@/components/layouts/StoreLayout';
 import { Modal } from '@/components/comman/ui';
@@ -14,14 +14,15 @@ import { CLASS_LEVELS } from '@/constants/classLevels';
 import { EMPTY_DELIVERY, deliveryPayload } from '@/features/seller/components/products/DeliveryFormatField';
 import { learningPayload } from '@/features/seller/components/products/LearningFields';
 import { ProductPhotosUploader } from './ProductPhotosUploader';
-import { effectiveSellerPercent, premiumGapMessage, usePremiumTerms } from './PremiumEarningsCalculator';
+import { usePremiumTerms } from './PremiumEarningsCalculator';
+import { effectiveSellerPercent, validatePrices, weightError, weightToStored, type PremiumConflict, type WeightUnit } from './priceRules';
 import { timeAgo, useDraftAutosave, useLeaveGuard } from './ProductWizard';
 import { inp } from './ProductFormKit';
 import {
   DOC_EXTENSIONS, MAX_BULK_FILES, MAX_BULK_PHOTOS, MAX_DOC_BYTES, MAX_PHOTO_BYTES, MAX_ROW_PHOTOS, PHOTO_EXTENSIONS,
-  baseOf, blankRow, duplicateTitles, effectiveLevel, extOf, filledGroups, findPhotoMatches, groupsFor, isDocName, isPhotoName, newId, normalizeRow, rowIssue,
+  baseOf, blankRow, duplicateTitles, effectiveLevel, extOf, filledGroups, findPhotoMatches, groupsFor, isDocName, isPhotoName, newId, normalizeRow, rowIssue, rowPremiumConflict,
   titleFromFileName,
-  type BulkRow, type BulkType, type DetailGroup, type TrayPhoto,
+  type RowContext, type BulkRow, type BulkType, type DetailGroup, type TrayPhoto,
 } from './bulkUtils';
 
 const CONCURRENCY = 3;
@@ -43,8 +44,10 @@ function pathTo(nodes: CategoryNode[], id: string): CategoryNode[] {
   return [];
 }
 
-function CategoryCascade({ categories, loading, categoryId, subId, onChange, idPrefix, disabled }: {
+function CategoryCascade({ categories, loading, categoryId, subId, onChange, idPrefix, disabled, auto, onConfirmAuto }: {
   categories: CategoryNode[]; loading: boolean; categoryId: string; subId: string; idPrefix: string; disabled?: boolean;
+  /** The category shown was filled in automatically (the store's own) - the seller should check it. */
+  auto?: boolean; onConfirmAuto?: () => void;
   onChange: (categoryId: string, subId: string) => void;
 }) {
   const root = categories.find(c => c._id === categoryId);
@@ -59,13 +62,24 @@ function CategoryCascade({ categories, loading, categoryId, subId, onChange, idP
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
       <div>
-        <label htmlFor={`${idPrefix}-cat`} className={lab}>Category</label>
-        <select id={`${idPrefix}-cat`} className={sel} disabled={loading || disabled} value={categoryId} onChange={e => onChange(e.target.value, '')}>
+        <label htmlFor={`${idPrefix}-cat`} className={lab}>Category{auto && <span data-testid="category-auto" className="ms-1.5 font-semibold text-[#8a5a00]">(auto - please check)</span>}</label>
+        <select id={`${idPrefix}-cat`} className={`${sel} ${auto ? '!border-[#e0b050] !bg-[#fff6e0]' : ''}`} disabled={loading || disabled} value={categoryId} onChange={e => onChange(e.target.value, '')}>
           {loading && <option value={categoryId}>Loading…</option>}
           {!loading && !categories.some(c => c._id === categoryId) && <option value="">Choose a category</option>}
           {categories.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
         </select>
       </div>
+      {auto && onConfirmAuto && (
+        <div className="flex items-end">
+          <button type="button" onClick={onConfirmAuto} disabled={disabled} className="px-2.5 py-2 rounded-lg text-[12.5px] font-bold text-brand-royal bg-white border border-bone cursor-pointer hover:bg-cream disabled:opacity-50">Category is correct</button>
+        </div>
+      )}
+      {!root && !loading && (
+        <div>
+          <label htmlFor={`${idPrefix}-sub-none`} className={lab}>Subcategory</label>
+          <select id={`${idPrefix}-sub-none`} className={sel} disabled value=""><option value="">Choose a category first</option></select>
+        </div>
+      )}
       {levels.map((lv, i) => (
         <div key={i}>
           <label htmlFor={`${idPrefix}-sub${i}`} className={lab}>{i === 0 ? 'Subcategory' : 'Sub-subcategory'}</label>
@@ -123,6 +137,7 @@ export default function StoreBulkUpload() {
   const [toast, setToast] = useState('');
   const [detail, setDetail] = useState<{ rowId: string; group: DetailGroup } | null>(null);
   const [undo, setUndo] = useState<{ row: BulkRow; index: number } | null>(null);
+  const [bannerConfirm, setBannerConfirm] = useState<null | 'continue' | 'fresh'>(null);
 
   const productTypes = store?.productTypes ?? [];
   // Same availability rules as the single Add Product form.
@@ -308,10 +323,11 @@ export default function StoreBulkUpload() {
   };
 
   // ── Row helpers ──────────────────────────────────────────────────────────────────────────────
-  const ctx = useMemo(() => ({
-    type, hasDefaultCategory: !!defaultCategoryId,
-    premiumGap: premiumTerms ? (price: number, compareAt: number) => premiumGapMessage(price, compareAt, effectiveSellerPercent('', storePremiumPct, false), premiumTerms.minGapPercent) : undefined,
-  }), [type, defaultCategoryId, premiumTerms, storePremiumPct]);
+  const ctx = useMemo<RowContext>(() => ({
+    type, hasDefaultCategory: !!defaultCategoryId, currency: store?.baseCurrency, symbol: currency,
+    // Bulk rows carry the store-wide Premium %, so the same rule as the Add / Edit product pages applies to them.
+    premium: premiumTerms ? { sellerPct: effectiveSellerPercent('', storePremiumPct, false), gap: premiumTerms.minGapPercent } : null,
+  }), [type, defaultCategoryId, premiumTerms, storePremiumPct, store?.baseCurrency, currency]);
   const issueOf = (r: BulkRow) => rowIssue(r, ctx);
   const dups = useMemo(() => duplicateTitles(rows), [rows]);
   const editable = rows.filter(r => r.createState !== 'created');
@@ -352,9 +368,9 @@ export default function StoreBulkUpload() {
   const dropPhoto = (id: string) => { queue.current = queue.current.filter(j => j.id !== id); filesRef.current.delete(id); setTray(prev => prev.filter(t => t.id !== id)); };
 
   // ── Apply to selected ────────────────────────────────────────────────────────────────────────
-  const [ap, setAp] = useState({ categoryId: '', subCategoryId: '', classFrom: '', classTo: '', level: '', price: '', compareAt: '', stock: '', description: '', mode: 'replace' as 'replace' | 'append' });
+  const [ap, setAp] = useState({ categoryId: '', subCategoryId: '', classFrom: '', classTo: '', level: '', price: '', compareAt: '', stock: '', weight: '', weightUnit: 'kg' as WeightUnit, unlimited: false, description: '', mode: 'replace' as 'replace' | 'append' });
   const [apOpen, setApOpen] = useState(true);
-  const apFilled = !!(ap.categoryId || ap.classFrom || ap.classTo || ap.level || ap.price.trim() || ap.compareAt.trim() || ap.stock.trim() || ap.description.trim());
+  const apFilled = !!(ap.categoryId || ap.classFrom || ap.classTo || ap.level || ap.price.trim() || ap.compareAt.trim() || ap.stock.trim() || ap.weight.trim() || ap.unlimited || ap.description.trim());
   const selectedRows = editable.filter(r => selected.has(r.id));
   const applyToSelected = () => {
     if (!selectedRows.length || !apFilled) return;
@@ -365,9 +381,11 @@ export default function StoreBulkUpload() {
       if (ap.categoryId) { n.categoryId = ap.categoryId; n.subCategoryId = ap.subCategoryId; }
       if (ap.classFrom || ap.classTo) { n.classFrom = ap.classFrom; n.classTo = ap.classTo; }
       if (ap.level) n.educationLevel = ap.level;
-      if (ap.price.trim()) n.price = ap.price.trim();
+      if (ap.price.trim()) { n.price = ap.price.trim(); n.free = false; }
       if (ap.compareAt.trim()) n.compareAt = ap.compareAt.trim();
-      if (ap.stock.trim()) { n.stock = ap.stock.trim(); n.unlimitedStock = false; }
+      if (ap.stock.trim()) { n.stock = ap.stock.trim(); n.unlimitedStock = false; n.zeroStockOk = false; }
+      if (ap.unlimited) { n.unlimitedStock = true; n.stock = ''; n.zeroStockOk = false; }
+      if (ap.weight.trim()) { n.weight = ap.weight.trim(); n.weightUnit = ap.weightUnit; }
       if (ap.description.trim()) n.description = ap.mode === 'append' && n.description.trim() ? `${n.description.trim()}\n${ap.description.trim()}` : ap.description.trim();
       if (n.createState === 'failed') { n.createState = 'idle'; n.createError = ''; }
       return n;
@@ -391,12 +409,12 @@ export default function StoreBulkUpload() {
         res = await apiCreatePhysicalProduct({
           ...common,
           variants: [{
-            price: Number(r.price),
+            price: r.free ? 0 : Number(r.price),
             compareAtPrice: r.compareAt.trim() ? Number(r.compareAt) : null,
             options: [],
             stock: r.unlimitedStock ? 0 : Number(r.stock),
             ...(r.unlimitedStock ? { unlimitedStock: true } : {}),
-            shippingWeight: r.weight.trim(),
+            shippingWeight: weightToStored(r.weight, r.weightUnit),
             ...(r.sku.trim() ? { sku: r.sku.trim() } : {}),
           }],
         });
@@ -406,7 +424,7 @@ export default function StoreBulkUpload() {
           productType: type,
           educationLevel: type === 'educational' ? (effectiveLevel(r) as EducationLevel) : null,
           customLevel: null,
-          price: Number(r.price), compareAtPrice: r.compareAt.trim() ? Number(r.compareAt) : null,
+          price: r.free ? 0 : Number(r.price), compareAtPrice: r.compareAt.trim() ? Number(r.compareAt) : null,
           ...deliveryPayload(EMPTY_DELIVERY),
           licenseTiers: [],
           digital: {
@@ -489,6 +507,17 @@ export default function StoreBulkUpload() {
         actions={<Link to={`/store/${storeId}/products/add`} className="text-[13px] font-bold text-brand-royal no-underline hover:underline">Add one product instead</Link>}
       />
       {guard.dialog}
+      {bannerConfirm && (
+        <Modal title={bannerConfirm === 'continue' ? 'Replace what is on screen?' : 'Delete the saved batch?'} onClose={() => setBannerConfirm(null)} width={460}
+          footer={<>
+            <button type="button" onClick={() => setBannerConfirm(null)} className="px-4 py-2 rounded-lg text-[13px] font-bold bg-white text-graphite border border-bone cursor-pointer">Cancel</button>
+            <button type="button" data-testid="restore-confirm" onClick={() => { if (bannerConfirm === 'continue') restore(); else draft.dismiss(); setBannerConfirm(null); }} className="px-4 py-2 rounded-lg text-[13px] font-bold bg-brand-royal text-white border-none cursor-pointer">{bannerConfirm === 'continue' ? 'Replace with saved batch' : 'Delete saved batch'}</button>
+          </>}>
+          <p className="m-0 text-[13.5px] text-carbon">{bannerConfirm === 'continue'
+            ? `The  product you are working on now will be replaced by the  saved ones. This cannot be undone.`
+            : `The  product saved on this device will be deleted.`}</p>
+        </Modal>
+      )}
 
       <div className="px-4 md:px-8 py-5 pb-28">
         <div className="mx-auto max-w-[1400px] flex flex-col gap-4">
@@ -507,8 +536,8 @@ export default function StoreBulkUpload() {
           {draft.restorable && !summary && (
             <div role="status" className="flex flex-wrap items-center gap-3 rounded-xl border border-info/30 bg-info-bg px-4 py-3 text-[13px] text-carbon">
               <span className="flex-1 min-w-[200px]"><b>Continue your bulk upload?</b> You have {draft.restorable.data?.rows?.length ?? 0} product{(draft.restorable.data?.rows?.length ?? 0) === 1 ? '' : 's'} saved from {timeAgo(draft.restorable.savedAt, now)}. Files that were already uploaded will not upload again.</span>
-              <button type="button" onClick={restore} className="px-3 py-1.5 rounded-lg text-[13px] font-bold bg-brand-royal text-white border-none cursor-pointer">Continue</button>
-              <button type="button" onClick={draft.dismiss} className="px-3 py-1.5 rounded-lg text-[13px] font-bold bg-white text-graphite border border-bone cursor-pointer">Start fresh</button>
+              <button type="button" data-testid="restore-continue" onClick={() => (rows.length > 0 || tray.length > 0 ? setBannerConfirm('continue') : restore())} className="px-3 py-1.5 rounded-lg text-[13px] font-bold bg-brand-royal text-white border-none cursor-pointer">Continue</button>
+              <button type="button" data-testid="restore-fresh" onClick={() => setBannerConfirm('fresh')} className="px-3 py-1.5 rounded-lg text-[13px] font-bold bg-white text-graphite border border-bone cursor-pointer">Start fresh</button>
             </div>
           )}
 
@@ -605,7 +634,7 @@ export default function StoreBulkUpload() {
                       </select>
                     ) : p.state === 'failed' ? (
                       <p className="m-0 text-[12px] text-error">{p.error} <button type="button" onClick={() => retryUpload('photo', p.id)} className="underline bg-transparent border-none cursor-pointer text-error p-0">Retry</button></p>
-                    ) : <p className="m-0 text-[12px] text-slate">{p.state === 'uploading' ? `Uploading ${p.pct}%` : 'Waiting…'}</p>}
+                    ) : <p className="m-0 text-[12px] text-slate">{p.state === 'uploading' ? (p.pct >= 100 ? 'Processing…' : `Uploading ${p.pct}%`) : 'Waiting…'}</p>}
                     <button type="button" onClick={() => dropPhoto(p.id)} className="text-[12px] text-slate underline bg-transparent border-none cursor-pointer p-0 self-start">Remove</button>
                   </div>
                 ))}
@@ -645,7 +674,17 @@ export default function StoreBulkUpload() {
                     {type === 'physical' && (
                       <div>
                         <label htmlFor="ap-stock" className={lab}>Stock quantity</label>
-                        <input id="ap-stock" type="number" min={0} inputMode="numeric" className={inp} value={ap.stock} onChange={e => setAp(a => ({ ...a, stock: e.target.value }))} />
+                        <input id="ap-stock" type="number" min={0} max={100000} inputMode="numeric" className={inp} value={ap.stock} disabled={ap.unlimited} onChange={e => setAp(a => ({ ...a, stock: e.target.value }))} />
+                        <label className="mt-1.5 inline-flex items-center gap-1.5 text-[12.5px] text-graphite cursor-pointer"><input type="checkbox" className="size-3.5 accent-brand-royal" checked={ap.unlimited} data-testid="ap-unlimited" onChange={e => setAp(a => ({ ...a, unlimited: e.target.checked, stock: e.target.checked ? '' : a.stock }))} />Unlimited stock</label>
+                      </div>
+                    )}
+                    {type === 'physical' && (
+                      <div>
+                        <label htmlFor="ap-weight" className={lab}>Shipping weight</label>
+                        <div className="flex gap-1.5">
+                          <input id="ap-weight" type="number" min={0} step="any" inputMode="decimal" className={inp} value={ap.weight} placeholder="e.g. 0.5" onChange={e => setAp(a => ({ ...a, weight: e.target.value }))} />
+                          <select aria-label="Weight unit" id="ap-weight-unit" className={` !w-[72px] shrink-0`} value={ap.weightUnit} onChange={e => setAp(a => ({ ...a, weightUnit: e.target.value as WeightUnit }))}><option value="kg">kg</option><option value="g">g</option></select>
+                        </div>
                       </div>
                     )}
                     {type === 'educational' && (
@@ -685,13 +724,13 @@ export default function StoreBulkUpload() {
               <div className="flex flex-wrap items-center gap-2 text-[13px] text-graphite">
                 <span className="font-bold text-carbon">{rows.length} product{rows.length === 1 ? '' : 's'}</span>
                 <span>· {readyRows.length} ready</span>
-                {editable.length - readyRows.length > 0 && <span className="text-error">· {editable.length - readyRows.length} need details</span>}
+                {editable.length - readyRows.length > 0 && <span className="text-error">· {editable.length - readyRows.length} {editable.length - readyRows.length === 1 ? 'product needs' : 'products need'} details</span>}
                 {createdRows.length > 0 && <span className="text-success">· {createdRows.length} created</span>}
                 {uploadingCount > 0 && <span className="inline-flex items-center gap-1 text-slate"><Loader2 size={13} className="animate-spin" /> uploading {uploadingCount}…</span>}
               </div>
               {rows.map((r, idx) => (
                 <RowCard
-                  key={r.id} row={r} index={idx} issue={r.createState === 'created' ? null : issueOf(r)} dupOf={dups.get(r.id)} currency={currency} type={type}
+                  key={r.id} row={r} index={idx} issue={r.createState === 'created' ? null : issueOf(r)} conflict={r.createState === 'created' ? null : rowPremiumConflict(r, ctx)} currencyCode={store?.baseCurrency} dupOf={dups.get(r.id)} currency={currency} type={type}
                   categories={categories} catLoading={catLoading} defaultCategoryId={defaultCategoryId}
                   selected={selected.has(r.id)}
                   onSelect={() => toggleSel(r.id)} onOpenDetail={g => setDetail({ rowId: r.id, group: g })}
@@ -717,7 +756,7 @@ export default function StoreBulkUpload() {
             <div className="min-w-0 basis-full sm:basis-0 sm:flex-1 text-[12.5px] text-slate leading-snug" role="status" data-testid="bulk-progress">
               {creating ? <span className="inline-flex items-center gap-1.5 font-bold text-carbon"><Loader2 size={14} className="animate-spin" /> Creating {progress.done}/{progress.total}…</span>
                 : <span className="hidden sm:inline">{draft.savedAt ? `Saved on this device ${timeAgo(draft.savedAt, now)}` : 'Your table is saved on this device as you go.'}</span>}
-              {!creating && editable.length - readyRows.length > 0 && <span className="block text-error font-semibold">{editable.length - readyRows.length} product{editable.length - readyRows.length === 1 ? '' : 's'} need details<span className="hidden sm:inline"> and will be left out until fixed</span>.</span>}
+              {!creating && editable.length - readyRows.length > 0 && <span className="block text-error font-semibold">{editable.length - readyRows.length} {editable.length - readyRows.length === 1 ? 'product needs' : 'products need'} details<span className="hidden sm:inline"> and will be left out until fixed</span>.</span>}
             </div>
             <button type="button" onClick={addRow} disabled={creating} aria-label="Add product" data-testid="bulk-add-row-bar"
               className="max-sm:flex-none px-3 py-[10px] rounded-lg text-[14px] font-bold text-brand-royal bg-white border border-brand-royal cursor-pointer disabled:opacity-50 inline-flex items-center gap-1 whitespace-nowrap">
@@ -747,7 +786,7 @@ export default function StoreBulkUpload() {
 
       {detail && detailRow && (
         <DetailModal
-          key={`${detail.rowId}-${detail.group}`} row={detailRow} group={detail.group} type={type} currency={currency} tray={tray.filter(t => t.state === 'done')}
+          key={`${detail.rowId}-${detail.group}`} row={detailRow} group={detail.group} type={type} currency={currency} currencyCode={store?.baseCurrency} tray={tray.filter(t => t.state === 'done')}
           onClose={() => setDetail(null)} onPatch={p => patchRow(detail.rowId, p)} onAssign={pid => assignPhoto(detail.rowId, pid)}
         />
       )}
@@ -789,24 +828,23 @@ function DetailsMenu({ row, type, onOpen, disabled }: { row: BulkRow; type: Bulk
 }
 
 const CHIP_LABEL = (g: DetailGroup, r: BulkRow) => ({
-  price: 'Compare-at', class: 'Classes', download: 'Download settings', inventory: 'SKU / weight',
+  price: 'Compare-at', download: 'Download settings', inventory: 'SKU',
   photos: `${r.images.length} photo${r.images.length === 1 ? '' : 's'}`, tags: `${r.tags.length} tag${r.tags.length === 1 ? '' : 's'}`,
 }[g]);
 
 // ── Modal that edits one optional group ───────────────────────────────────────────────────────
-function DetailModal({ row, group, type, currency, tray, onClose, onPatch, onAssign }: {
-  row: BulkRow; group: DetailGroup; type: BulkType; currency: string; tray: TrayPhoto[];
+function DetailModal({ row, group, type, currency, currencyCode, tray, onClose, onPatch, onAssign }: {
+  row: BulkRow; group: DetailGroup; type: BulkType; currency: string; currencyCode?: string | null; tray: TrayPhoto[];
   onClose: () => void; onPatch: (p: Partial<BulkRow>) => void; onAssign: (photoId: string) => void;
 }) {
   const [d, setD] = useState({
     compareAt: row.compareAt, classFrom: row.classFrom, classTo: row.classTo, tags: row.tags, tagInput: '',
-    sku: row.sku, weight: row.weight, unlimitedStock: row.unlimitedStock,
+    sku: row.sku,
     downloadLimit: row.downloadLimit === 'unlimited' ? '' : row.downloadLimit, linkExpiryDays: row.linkExpiryDays, buyerMessage: row.buyerMessage,
   });
   const label = groupsFor(type).find(g => g.key === group)?.label ?? 'Details';
   const err = (() => {
-    if (group === 'price' && d.compareAt.trim() && !(Number(d.compareAt) >= 0)) return 'Enter a valid price.';
-    if (group === 'class' && d.classFrom && d.classTo && CLASS_LEVELS.findIndex(c => c.value === d.classFrom) > CLASS_LEVELS.findIndex(c => c.value === d.classTo)) return '"From class" can’t come after "To class".';
+    if (group === 'price' && d.compareAt.trim()) { const c = validatePrices({ price: row.free ? '0' : row.price, compareAt: d.compareAt, currency: currencyCode, free: row.free }).compareAt; if (c) return c; }
     if (group === 'download' && d.downloadLimit.trim() && !(Number.isInteger(Number(d.downloadLimit)) && Number(d.downloadLimit) >= 1)) return 'Download limit must be a whole number, or leave it empty for unlimited.';
     if (group === 'download' && d.linkExpiryDays.trim() && !(Number.isInteger(Number(d.linkExpiryDays)) && Number(d.linkExpiryDays) >= 1)) return 'Link expiry must be a whole number of days.';
     return '';
@@ -819,12 +857,11 @@ function DetailModal({ row, group, type, currency, tray, onClose, onPatch, onAss
   const save = () => {
     if (err) return;
     if (group === 'price') onPatch({ compareAt: d.compareAt.trim() });
-    if (group === 'class') onPatch({ classFrom: d.classFrom, classTo: d.classTo });
     if (group === 'tags') {
       const extra = d.tagInput.split(',').map(s => s.trim()).filter(Boolean);
       onPatch({ tags: [...d.tags, ...extra.filter(p => !d.tags.includes(p))].slice(0, 30) });
     }
-    if (group === 'inventory') onPatch({ sku: d.sku.trim(), weight: d.weight.trim(), unlimitedStock: d.unlimitedStock });
+    if (group === 'inventory') onPatch({ sku: d.sku.trim() });
     if (group === 'download') onPatch({ downloadLimit: d.downloadLimit.trim() || 'unlimited', linkExpiryDays: d.linkExpiryDays.trim(), buyerMessage: d.buyerMessage.trim() });
     onClose();
   };
@@ -842,11 +879,10 @@ function DetailModal({ row, group, type, currency, tray, onClose, onPatch, onAss
         {group === 'price' && (
           <div>
             <label htmlFor="dm-compare" className={lab}>Compare-at price ({currency})</label>
-            <input id="dm-compare" type="number" min={0} inputMode="decimal" className={inp} value={d.compareAt} onChange={e => setD(x => ({ ...x, compareAt: e.target.value }))} />
+            <input id="dm-compare" type="number" min={0} step={currencyCode === 'PKR' ? 1 : 0.01} inputMode="decimal" className={inp} value={d.compareAt} onChange={e => setD(x => ({ ...x, compareAt: e.target.value }))} />
             <p className="m-0 mt-1.5 text-[12px] text-slate">Shown crossed out next to your price. Leave empty for no sale price.</p>
           </div>
         )}
-        {group === 'class' && <ClassRange idPrefix="dm" from={d.classFrom} to={d.classTo} onChange={(f, t) => setD(x => ({ ...x, classFrom: f, classTo: t }))} />}
         {group === 'photos' && (
           <>
             <p className="m-0 text-[12px] text-slate">The first photo is the cover (up to {MAX_ROW_PHOTOS}).</p>
@@ -886,15 +922,6 @@ function DetailModal({ row, group, type, currency, tray, onClose, onPatch, onAss
               <label htmlFor="dm-sku" className={lab}>SKU <span className="font-normal text-slate">(optional, made for you if empty)</span></label>
               <input id="dm-sku" className={inp} value={d.sku} maxLength={60} onChange={e => setD(x => ({ ...x, sku: e.target.value }))} />
             </div>
-            <div>
-              <label htmlFor="dm-weight" className={lab}>Shipping weight</label>
-              <input id="dm-weight" className={inp} value={d.weight} placeholder="e.g. 0.5 kg" onChange={e => setD(x => ({ ...x, weight: e.target.value }))} />
-              <p className="m-0 mt-1.5 text-[12px] text-slate">Used to estimate delivery cost.</p>
-            </div>
-            <label className="inline-flex items-center gap-2 text-[13px] text-carbon cursor-pointer">
-              <input type="checkbox" className="size-4 accent-brand-royal" checked={d.unlimitedStock} onChange={e => setD(x => ({ ...x, unlimitedStock: e.target.checked }))} />
-              Unlimited stock (no quantity needed)
-            </label>
           </>
         )}
         {group === 'download' && (
@@ -920,8 +947,8 @@ function DetailModal({ row, group, type, currency, tray, onClose, onPatch, onAss
 }
 
 // ── One product row ───────────────────────────────────────────────────────────────────────────
-function RowCard({ row: r, index, issue, dupOf, currency, type, categories, catLoading, defaultCategoryId, selected, storeId, onSelect, onOpenDetail, onChange, onRemove, onDuplicate, onRetryUpload, onAttach }: {
-  row: BulkRow; index: number; issue: string | null; dupOf?: number; currency: string; type: BulkType;
+function RowCard({ row: r, index, issue, conflict, currencyCode, dupOf, currency, type, categories, catLoading, defaultCategoryId, selected, storeId, onSelect, onOpenDetail, onChange, onRemove, onDuplicate, onRetryUpload, onAttach }: {
+  row: BulkRow; index: number; issue: string | null; conflict: PremiumConflict | null; currencyCode?: string | null; dupOf?: number; currency: string; type: BulkType;
   categories: CategoryNode[]; catLoading: boolean; defaultCategoryId: string; selected: boolean; storeId: string;
   onSelect: () => void; onOpenDetail: (g: DetailGroup) => void; onChange: (p: Partial<BulkRow>) => void; onRemove: () => void; onDuplicate: () => void; onRetryUpload: () => void; onAttach: (f: File) => void;
 }) {
@@ -939,8 +966,9 @@ function RowCard({ row: r, index, issue, dupOf, currency, type, categories, catL
   const uploading = r.uploadState === 'queued' || r.uploadState === 'uploading';
   const fileRef = useRef<HTMLInputElement>(null);
   const chips = filledGroups(r, type);
-  const name = r.title || r.fileName || 'product';
-
+  const name = r.title.trim() || r.fileName || `product ${index + 1}`;
+  const moneyStep = currencyCode === 'PKR' ? 1 : 0.01;
+  const priceErr = validatePrices({ price: r.free ? '0' : r.price, compareAt: r.compareAt, currency: currencyCode, free: r.free });
   return (
     <div className={`rounded-xl border bg-white p-3 sm:p-4 ${created ? 'border-success/30 opacity-90' : issue || r.createState === 'failed' ? 'border-error-border' : 'border-bone'}`} data-testid="bulk-row" data-row-title={r.title}>
       <div className="flex flex-wrap items-center gap-2">
@@ -959,16 +987,19 @@ function RowCard({ row: r, index, issue, dupOf, currency, type, categories, catL
         )}
         {needsFile && uploading && (
           <span className="inline-flex items-center gap-1.5 text-[12px] text-slate" role="status">
-            <Loader2 size={12} className="animate-spin" /> {r.uploadState === 'uploading' ? `Uploading ${r.uploadPct}%` : 'Waiting to upload'}
+            <Loader2 size={12} className="animate-spin" /> {r.uploadState === 'uploading' ? (r.uploadPct >= 100 ? 'Processing…' : `Uploading ${r.uploadPct}%`) : 'Waiting to upload'}
             <span className="inline-block w-20 h-1.5 rounded bg-mist overflow-hidden"><span className="block h-full bg-brand-royal" style={{ width: `${r.uploadPct}%` }} /></span>
           </span>
+        )}
+        {needsFile && !created && r.uploadState === 'done' && (
+          <span className="inline-flex items-center gap-1 text-[12px] text-success font-semibold" data-testid="upload-done"><CheckCircle2 size={12} /> Uploaded</span>
         )}
         {needsFile && r.uploadState === 'failed' && (
           <span className="text-[12px] text-error" role="alert">{r.uploadError} {r.fileName && <button type="button" onClick={onRetryUpload} className="underline bg-transparent border-none cursor-pointer text-error p-0 font-semibold">Retry upload</button>}</span>
         )}
         <span className="ms-auto inline-flex items-center gap-1.5">
           <span data-testid="bulk-row-status" className={`px-2.5 py-1 rounded-full text-[12px] font-bold border ${tone}`}>{statusLabel}</span>
-          {created && r.productId && <Link to={`/store/${storeId}/products/edit/${r.productId}`} className="inline-flex items-center gap-1 text-[12px] font-bold text-brand-royal no-underline hover:underline">View <ExternalLink size={12} /></Link>}
+          {created && r.productId && <Link to={`/store/${storeId}/products/edit/${r.productId}`} className="inline-flex items-center gap-1 text-[12px] font-bold text-brand-royal no-underline hover:underline">Edit</Link>}
           {!created && <DetailsMenu row={r} type={type} onOpen={onOpenDetail} disabled={busy} />}
           {!created && <button type="button" onClick={onDuplicate} disabled={busy || r.uploadState === 'queued' || r.uploadState === 'uploading'} aria-label={`Duplicate ${name}`} title="Duplicate" className="size-8 rounded-lg flex items-center justify-center text-slate hover:bg-cream border-none bg-transparent cursor-pointer disabled:opacity-40"><Copy size={15} /></button>}
           {!created && <button type="button" onClick={onRemove} disabled={busy} aria-label={`Remove ${name}`} title="Remove" className="size-8 rounded-lg flex items-center justify-center text-slate hover:text-error hover:bg-error-bg border-none bg-transparent cursor-pointer disabled:opacity-40"><Trash2 size={15} /></button>}
@@ -987,6 +1018,17 @@ function RowCard({ row: r, index, issue, dupOf, currency, type, categories, catL
       {r.createState === 'failed' && r.createError && <p role="alert" className="m-0 mt-2 text-[13px] text-error bg-error-bg rounded-lg px-3 py-2">{r.createError}</p>}
       {dupOf !== undefined && !created && <p className="m-0 mt-2 text-[12.5px] text-[#8a5a00] bg-[#fff6e0] rounded-lg px-3 py-1.5">Same title as product #{dupOf}. Buyers may find it confusing - consider changing it.</p>}
 
+      {conflict && (
+        <div role="alert" data-testid="premium-conflict" className="mt-2 rounded-lg border border-error-border bg-error-bg px-3 py-2 text-[12.5px] text-error flex flex-wrap items-center gap-x-3 gap-y-1.5">
+          <span className="flex-1 min-w-[220px]"><b>{conflict.short}.</b> {conflict.detail}</span>
+          <button type="button" data-testid="use-max-allowed" disabled={busy}
+            onClick={() => onChange({ compareAt: conflict.max == null ? '' : String(conflict.max) })}
+            className="px-3 py-1.5 rounded-lg text-[12px] font-bold bg-white text-brand-royal border border-brand-royal cursor-pointer disabled:opacity-50">
+            {conflict.max == null ? 'Remove compare-at price' : `Use max allowed (${currency} ${conflict.max.toLocaleString('en-US')})`}
+          </button>
+        </div>
+      )}
+
       {!created && (
         <div className="mt-3 grid grid-cols-12 gap-3">
           <div className="col-span-4 sm:col-span-2 lg:col-span-1">
@@ -1002,13 +1044,36 @@ function RowCard({ row: r, index, issue, dupOf, currency, type, categories, catL
             <input id={`t-${r.id}`} className={inp} disabled={lock} maxLength={200} value={r.title} onChange={e => onChange({ title: e.target.value })} placeholder="Product title" />
           </div>
           <div className={`col-span-6 ${type === 'digital' ? 'lg:col-span-3' : 'lg:col-span-2'}`}>
-            <label htmlFor={`p-${r.id}`} className={lab}>Price ({currency})</label>
-            <input id={`p-${r.id}`} className={inp} type="number" min={0} inputMode="decimal" disabled={lock} value={r.price} onChange={e => onChange({ price: e.target.value })} />
+            <div className="flex items-center justify-between gap-2">
+              <label htmlFor={`p-${r.id}`} className={lab}>Price ({currency})</label>
+              <label className="mb-1 inline-flex items-center gap-1 text-[12px] text-graphite cursor-pointer"><input type="checkbox" className="size-3.5 accent-brand-royal" disabled={lock} checked={r.free} data-testid="free-toggle" onChange={e => onChange({ free: e.target.checked, ...(e.target.checked ? { price: '' } : {}) })} />Free</label>
+            </div>
+            <input id={`p-${r.id}`} className={inp} type="number" min={0} step={moneyStep} inputMode="decimal" disabled={lock || r.free} value={r.free ? '' : r.price} placeholder={r.free ? 'Free' : ''} onChange={e => onChange({ price: e.target.value })} aria-invalid={!r.free && r.price.trim() !== '' && !!priceErr.price} />
           </div>
           {type === 'physical' && (
             <div className="col-span-6 lg:col-span-2">
-              <label htmlFor={`s-${r.id}`} className={lab}>Stock quantity</label>
-              <input id={`s-${r.id}`} className={inp} type="number" min={0} inputMode="numeric" disabled={lock || r.unlimitedStock} value={r.unlimitedStock ? '' : r.stock} placeholder={r.unlimitedStock ? 'Unlimited' : '0'} onChange={e => onChange({ stock: e.target.value })} />
+              <div className="flex items-center justify-between gap-2">
+                <label htmlFor={`s-${r.id}`} className={lab}>Stock quantity</label>
+                <label className="mb-1 inline-flex items-center gap-1 text-[12px] text-graphite cursor-pointer"><input type="checkbox" className="size-3.5 accent-brand-royal" disabled={lock} checked={r.unlimitedStock} data-testid="unlimited-toggle" onChange={e => onChange({ unlimitedStock: e.target.checked, ...(e.target.checked ? { stock: '', zeroStockOk: false } : {}) })} />Unlimited</label>
+              </div>
+              <input id={`s-${r.id}`} className={inp} type="number" min={0} max={100000} step={1} inputMode="numeric" disabled={lock || r.unlimitedStock} value={r.unlimitedStock ? '' : r.stock} placeholder={r.unlimitedStock ? 'Unlimited' : '0'} onChange={e => onChange({ stock: e.target.value, zeroStockOk: false })} />
+              {!r.unlimitedStock && r.stock.trim() !== '' && Number(r.stock) === 0 && (
+                <label className="mt-1.5 flex items-start gap-1.5 text-[12px] text-[#8a5a00] cursor-pointer" data-testid="zero-stock-warning">
+                  <input type="checkbox" className="mt-0.5 size-3.5 accent-brand-royal" disabled={lock} checked={r.zeroStockOk} data-testid="zero-stock-ok" onChange={e => onChange({ zeroStockOk: e.target.checked })} />
+                  <span>Stock is 0 - product will show as out of stock. Publish as out of stock</span>
+                </label>
+              )}
+            </div>
+          )}
+          {type === 'physical' && (
+            <div className="col-span-12 sm:col-span-6 lg:col-span-3">
+              <label htmlFor={`w-${r.id}`} className={`${lab} flex items-center gap-1.5`}>Shipping weight {weightError(r.weight, r.weightUnit) && !created && <span data-testid="weight-badge" className="rounded-full bg-error-bg text-error border border-error-border px-1.5 text-[12px] font-bold">{r.weight.trim() === '' ? 'Missing' : 'Invalid'}</span>}</label>
+              <div className="flex gap-1.5">
+                <input id={`w-${r.id}`} className={inp} type="number" min={0} step="any" inputMode="decimal" disabled={lock} value={r.weight} placeholder="e.g. 0.5" aria-invalid={!!weightError(r.weight, r.weightUnit)} onChange={e => onChange({ weight: e.target.value })} />
+                <select aria-label={`Weight unit for ${name}`} className={`${sel} !w-[72px] shrink-0`} disabled={lock} value={r.weightUnit} onChange={e => onChange({ weightUnit: e.target.value as WeightUnit })}>
+                  <option value="kg">kg</option><option value="g">g</option>
+                </select>
+              </div>
             </div>
           )}
           {type === 'educational' && (
@@ -1022,7 +1087,11 @@ function RowCard({ row: r, index, issue, dupOf, currency, type, categories, catL
           )}
           <div className="col-span-12">
             <CategoryCascade idPrefix={`r-${r.id}`} categories={categories} loading={catLoading} categoryId={catId} subId={r.subCategoryId} disabled={lock}
+              auto={!r.categoryId && !!defaultCategoryId} onConfirmAuto={() => onChange({ categoryId: catId })}
               onChange={(c, s) => onChange({ categoryId: c, subCategoryId: s })} />
+          </div>
+          <div className="col-span-12">
+            <ClassRange idPrefix={`c-${r.id}`} from={r.classFrom} to={r.classTo} disabled={lock} onChange={(f, t2) => onChange({ classFrom: f, classTo: t2 })} />
           </div>
           <div className="col-span-12">
             <label htmlFor={`d-${r.id}`} className={lab}>Description</label>

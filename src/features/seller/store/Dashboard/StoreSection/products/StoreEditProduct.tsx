@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Link, useNavigate, useParams, useLocation } from 'react-router-dom';
 import { AlertCircle } from 'lucide-react';
 import { useStoreWorkspace, StorePageHeader } from '@/components/layouts/StoreLayout';
@@ -22,6 +22,7 @@ import { currencySymbol as symbolForCurrency } from '@/utils/currency';
 import { offersPayload, PREMIUM_BLANK_MESSAGE, OFFER_CONFLICT_MESSAGE, type OfferFlags } from './ProductOffersCard';
 import { premiumPercentError } from './PremiumPriceField';
 import { effectiveSellerPercent, premiumGapMessage, usePremiumTerms } from './PremiumEarningsCalculator';
+import { descriptionError, validatePrices, weightTextError, parseWeightKg, stockError } from './priceRules';
 import type { VariantOption } from '@/api/services/product';
 import { findCategoryName, type DigForm, type LicenseType, type PhysForm, type ProductStatus } from './ProductFormKit';
 import {
@@ -125,6 +126,8 @@ export default function StoreEditProduct() {
   const storePremiumPct = store?.premiumDiscount?.enabled ? store.premiumDiscount.percent : 0;
   const { terms: premiumTerms } = usePremiumTerms(pType, store?.baseCurrency, storeId);
 
+  // Old products may have no weight: it is only required once the product has one (or the seller types one), so they stay editable.
+  const hadWeight = useRef(false);
   const sp = <K extends keyof PhysForm>(k: K, v: PhysForm[K]) => setPhys(f => ({ ...f, [k]: v }));
   const sd = <K extends keyof DigForm> (k: K, v: DigForm[K])  => setDig(f  => ({ ...f, [k]: v }));
 
@@ -134,7 +137,7 @@ export default function StoreEditProduct() {
     setReview(p.status === 'pending_review' || p.status === 'rejected' ? { status: p.status, note: p.reviewNote ?? null } : null);
     setVariantId(v._id || null);
     setLearning({ curricula: [...(p.curricula ?? [])], ageMin: p.ageMin != null ? String(p.ageMin) : '', ageMax: p.ageMax != null ? String(p.ageMax) : '', classFrom: p.classFrom ?? '', classTo: p.classTo ?? '' });
-    if (p.productType === 'physical') setPhys(physFromEntry(p, v));
+    if (p.productType === 'physical') { setPhys(physFromEntry(p, v)); hadWeight.current = !!String(v?.shippingWeight ?? '').trim(); }
     else                              setDig(digFromEntry(p, v));
   }
 
@@ -218,7 +221,16 @@ export default function StoreEditProduct() {
     const out: WizardIssue[] = [];
     if (!cur.name) out.push({ step: 0, message: 'Add a product title', fieldId: 'ap-name' });
     if (isDigitalFamily) { const dErr = deliveryError(delivery); if (dErr) out.push({ step: 1, message: dErr, fieldId: 'fld-delivery' }); }
-    if (String(cur.price).trim() === '') out.push({ step: 2, message: 'Enter the price before saving', fieldId: 'ap-price' });
+    const descErr = descriptionError(cur.description);
+    if (descErr) out.push({ step: 0, message: descErr, fieldId: 'ap-desc' });
+    const priceCheck = validatePrices({ price: cur.price, compareAt: cur.compareAtPrice, currency: store?.baseCurrency, free: true });
+    if (priceCheck.price) out.push({ step: 2, message: priceCheck.price, fieldId: 'ap-price' });
+    if (priceCheck.compareAt) out.push({ step: 2, message: priceCheck.compareAt, fieldId: 'ap-compare' });
+    if (pType === 'physical') {
+      const sErr = stockError(phys.stock, false);
+      if (sErr) out.push({ step: 2, message: sErr, fieldId: 'ap-stock' });
+      if (hadWeight.current || phys.shippingWeight.trim()) { const wErr = weightTextError(phys.shippingWeight); if (wErr) out.push({ step: 2, message: wErr, fieldId: 'ap-weight' }); }
+    }
     if (isDigitalFamily) { const tErr = tiersError(dig.tiers); if (tErr) out.push({ step: 2, message: tErr, fieldId: 'fld-tiers' }); }
     if (pType === 'educational' && !dig.educationLevel) out.push({ step: 3, message: 'Choose an education level', fieldId: 'fld-level' });
     else if (pType === 'educational' && dig.educationLevel === 'other' && !dig.customLevel.trim()) out.push({ step: 3, message: 'Describe the custom education level', fieldId: 'fld-level' });
@@ -235,7 +247,7 @@ export default function StoreEditProduct() {
     if (offerFlags.conflict) out.push({ step: 4, message: OFFER_CONFLICT_MESSAGE, fieldId: 'fld-offers' });
     return out;
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cur, pType, dig.tiers, dig.educationLevel, dig.customLevel, delivery, learning, attrDefs, attributeValues, premiumPct, premiumOptOut, campaignIds, premiumTerms, storePremiumPct, offerFlags]);
+  }, [cur, pType, phys.stock, phys.shippingWeight, store?.baseCurrency, dig.tiers, dig.educationLevel, dig.customLevel, delivery, learning, attrDefs, attributeValues, premiumPct, premiumOptOut, campaignIds, premiumTerms, storePremiumPct, offerFlags]);
 
   const wiz = useWizard(issues, 'Edit', [0, 1, 2, 3, 4, 5]);
   const guard = useLeaveGuard(touched && !saving);
@@ -264,7 +276,8 @@ export default function StoreEditProduct() {
         if (variantId) {
           const vRes = await apiUpdateVariant(productId, variantId, {
             price: Number(phys.price), compareAtPrice: phys.compareAtPrice ? Number(phys.compareAtPrice) : null,
-            options: phys.options, stock: Number(phys.stock), shippingWeight: phys.shippingWeight,
+            options: phys.options, stock: Number(phys.stock),
+            ...(parseWeightKg(phys.shippingWeight) !== null ? { shippingWeight: `${parseWeightKg(phys.shippingWeight)} kg` } : {}),
           });
           variant = vRes.data;
         }
@@ -351,7 +364,7 @@ export default function StoreEditProduct() {
     name: cur.name, images: cur.images, price: String(cur.price), compareAtPrice: cur.compareAtPrice, currency: store?.baseCurrency,
     productType: pType, deliveryFormat: delivery.format, educationLevel: dig.educationLevel, customLevel: dig.customLevel,
     premiumPercent: (campaignIds?.length ?? 0) > 0 ? 0 : effectiveSellerPercent(premiumPct ?? '', storePremiumPct, !!premiumOptOut),
-    ageMin: learning.ageMin, ageMax: learning.ageMax, storeName: store?.name,
+    ageMin: learning.ageMin, ageMax: learning.ageMax, classFrom: learning.classFrom, classTo: learning.classTo, storeName: store?.name,
   };
 
   const reviewBanner = review ? (
