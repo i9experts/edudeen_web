@@ -431,6 +431,7 @@ export const ENDPOINTS = {
       STATS:    '/api/admin/marketplace/stats',
       LISTINGS: '/api/admin/marketplace/listings',
       FEATURE:  (id: string) => `/api/admin/marketplace/listings/${id}/feature`,
+      TEST:     (id: string) => `/api/admin/marketplace/listings/${id}/test`,
       REMOVE:   (id: string) => `/api/admin/marketplace/listings/${id}/remove`,
       SET_STORE_BADGE: (storeId: string) => `/api/admin/marketplace/stores/${storeId}/badge`,
       SET_STORE_FULFILLMENT: (storeId: string) => `/api/admin/marketplace/stores/${storeId}/fulfillment-mode`,

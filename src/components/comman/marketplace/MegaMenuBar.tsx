@@ -15,12 +15,10 @@ import { RealAppQr, AppleGlyph, GooglePlayGlyph, useGooglePlayUrl, useAppStoreUr
 import { CategoryArt } from '@/components/comman/art/CategoryArt';
 import { StoreFeatureCard, useCompactOnScroll, CountdownUnit, ActionMenu } from '@/components/comman/ui';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
-import { currencySymbol } from '@/utils/currency';
+import { formatPrice } from '@/utils/formatPrice';
 import { memberPriceOf, usePremiumView } from '@/components/comman/marketplace/PremiumBits';
 import { usePremiumDeals } from '@/hooks/usePremiumDeals';
-import aboutImg1 from '@/assets/about/about-1.jfif';
-import aboutImg2 from '@/assets/about/about-2.jfif';
-import aboutImg3 from '@/assets/about/about-3.jfif';
+import type { Countdown } from '@/hooks/useCountdownTo';
 
 // ── Compact rail card — Flash Sale / Top Picks strip card ───────────────────────
 export function RailCard({ product, onClick, badge, rank, size = 'md', stockLabel }: {
@@ -35,7 +33,6 @@ export function RailCard({ product, onClick, badge, rank, size = 'md', stockLabe
   const nativePrice     = dv?.price ?? null;
   const nativeCompareAt = dv?.compareAtPrice ?? null;
   const { currency: displayCurrency, convert } = useCurrencyPreference();
-  const priceSymbol = currencySymbol(displayCurrency);
   // A running platform sale: the server computes campaignPrice per variant (from the list price). Show it, strike the old price.
   const campaignRaw = typeof dv?.campaignPrice === 'number' && nativePrice != null && dv.campaignPrice < nativePrice ? dv.campaignPrice : null;
   const price     = nativePrice != null ? convert(campaignRaw ?? nativePrice, dv?.currency) : null;
@@ -71,9 +68,9 @@ export function RailCard({ product, onClick, badge, rank, size = 'md', stockLabe
       <div className="px-[11px] pt-[9px] pb-[11px]">
         <p className="font-semibold text-carbon leading-snug line-clamp-2 text-[12.5px] min-h-[34px] mb-[6px]">{product.name}</p>
         <div className="flex items-baseline gap-[6px] flex-wrap">
-          <span className={clsx('font-bold text-[14px]', member ? 'text-[#8a6100]' : 'text-brand-deep-orange')}>{member ? `${priceSymbol}${member.price.toLocaleString()}` : price != null ? `${priceSymbol}${price.toLocaleString()}` : '—'}</span>
+          <span className={clsx('font-bold text-[14px]', member ? 'text-[#8a6100]' : 'text-brand-deep-orange')}>{member ? formatPrice(member.price, displayCurrency) : price != null ? formatPrice(price, displayCurrency) : '—'}</span>
           {compareAt != null && compareAt > (member ? member.price : (price ?? 0)) && (
-            <span className="text-[12px] text-slate line-through">{priceSymbol}{compareAt.toLocaleString()}</span>
+            <span className="text-[12px] text-slate line-through">{formatPrice(compareAt, displayCurrency)}</span>
           )}
         </div>
         <div className="flex items-center justify-between gap-2 mt-[6px]">
@@ -245,7 +242,7 @@ export function FlashSaleMegaContent({ flashDeals, countdown, onProductClick, on
   premium?: boolean;
   flashDeals: { product: MarketplaceProduct; pct: number }[];
   /** Time left in the live sale campaign; null when no sale is running (no timer shown). */
-  countdown:  { h: string; m: string; s: string } | null;
+  countdown:  Countdown | null;
   onProductClick: (id: string) => void;
   onViewAll?: () => void;
 }) {
@@ -272,12 +269,23 @@ export function FlashSaleMegaContent({ flashDeals, countdown, onProductClick, on
         {countdown && !premium && (
           <div className="relative z-[1] flex flex-col items-center lg:items-start shrink-0 lg:mb-4">
             <span className="text-[12px] font-bold uppercase tracking-[0.1em] text-white/65 mb-[5px]">Ends in</span>
+            {/* One shared format: 24h or more -> days / hours / minutes, under 24h -> hours / minutes / seconds. */}
             <div className="flex items-center gap-[5px]">
-              <CountdownUnit value={Number(countdown.h)} label="Hrs" size="sm" />
-              <span className="pb-[10px] text-[13px] font-bold leading-none text-white/50">:</span>
-              <CountdownUnit value={Number(countdown.m)} label="Min" size="sm" />
-              <span className="pb-[10px] text-[13px] font-bold leading-none text-white/50">:</span>
-              <CountdownUnit value={Number(countdown.s)} label="Sec" size="sm" />
+              {countdown.long ? (
+                <>
+                  <CountdownUnit value={countdown.days} label="Days" size="sm" />
+                  <CountdownUnit value={countdown.hours} label="Hrs" size="sm" />
+                  <CountdownUnit value={countdown.minutes} label="Min" size="sm" />
+                </>
+              ) : (
+                <>
+                  <CountdownUnit value={countdown.hours} label="Hrs" size="sm" />
+                  <span className="pb-[10px] text-[13px] font-bold leading-none text-white/50">:</span>
+                  <CountdownUnit value={countdown.minutes} label="Min" size="sm" />
+                  <span className="pb-[10px] text-[13px] font-bold leading-none text-white/50">:</span>
+                  <CountdownUnit value={countdown.seconds} label="Sec" size="sm" />
+                </>
+              )}
             </div>
           </div>
         )}
@@ -409,10 +417,10 @@ export function FeaturedSellersMegaContent({ topStores, onStoreClick }: {
 // grow evenly when there's room, `shrink-0`+`min-w` stops them shrinking
 // below legible size on a narrow screen instead — the row scrolls sideways
 // there rather than wrapping. ──
-const ABOUT_CARDS: { image: string; title: string; description: string; path: string }[] = [
-  { image: aboutImg1, title: 'Why Edudeen',      description: 'One platform for books, courses and learning downloads.', path: '/' },
-  { image: aboutImg2, title: 'Secure Checkout',  description: 'Payments handled by Edudeen, refunds on request.',    path: '/faq' },
-  { image: aboutImg3, title: 'Sell on Edudeen',  description: 'Launch your own branded store — no coding.',        path: '/sellers' },
+const ABOUT_CARDS: { Icon: LucideIcon; title: string; description: string; path: string }[] = [
+  { Icon: Sparkles,    title: 'Why Edudeen',      description: 'One platform for books, courses and learning downloads.', path: '/' },
+  { Icon: ShieldCheck, title: 'Secure Checkout',  description: 'Payments handled by Edudeen, refunds on request.',    path: '/faq' },
+  { Icon: Store,       title: 'Sell on Edudeen',  description: 'Launch your own branded store — no coding.',        path: '/sellers' },
 ];
 
 function AboutMegaContent({ onNavigate }: { onNavigate: (path: string) => void }) {
@@ -425,24 +433,17 @@ function AboutMegaContent({ onNavigate }: { onNavigate: (path: string) => void }
       <MegaSectionLabel action={{ label: 'Read our story', onClick: () => onNavigate('/about') }}>About Edudeen</MegaSectionLabel>
       <div className="flex flex-col lg:flex-row items-stretch gap-4 lg:gap-5">
         <div className="flex gap-3 sm:gap-4 overflow-x-auto scrollbar-hide -mx-4 px-4 pb-2 lg:mx-0 lg:px-0 lg:pb-0 lg:flex-1 lg:min-w-0">
-          {cards.map(({ image, title, description, path }, i) => (
+          {cards.map(({ Icon, title, description, path }, i) => (
             <button
               key={title}
               onClick={() => onNavigate(path)}
               style={{ animationDelay: `${i * 60}ms` }}
               className="dash-section-enter group flex-1 min-w-[190px] shrink-0 text-start bg-white border border-bone rounded-2xl overflow-hidden p-0 cursor-pointer transition-all duration-200 hover:-translate-y-[3px] hover:border-brand-orange/30 hover:shadow-[0_14px_28px_-14px_rgba(19,57,86,0.35)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange"
             >
-              <div className="relative h-[104px] overflow-hidden bg-cream">
-                <img
-                  src={image}
-                  alt=""
-                  loading="lazy"
-                  decoding="async"
-                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.06]"
-                />
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#152D43]/45 via-transparent to-transparent" />
-              </div>
-              <div className="px-4 pt-3 pb-4">
+              <div className="px-4 pt-4 pb-4">
+                <span className="mb-3 flex size-9 items-center justify-center rounded-full bg-brand-pale-orange text-brand-royal">
+                  <Icon size={17} />
+                </span>
                 <p className="font-serif text-[16px] text-carbon leading-snug m-0 mb-1 group-hover:text-brand-orange transition-colors">{title}</p>
                 <p className="text-[12.5px] text-slate leading-[1.5] m-0 mb-2">{description}</p>
                 <span className="inline-flex items-center gap-[3px] text-[12.5px] font-semibold text-brand-orange">
@@ -465,19 +466,29 @@ function AboutMegaContent({ onNavigate }: { onNavigate: (path: string) => void }
             <p className="font-serif text-[18px] leading-[1.15] m-0 mb-1">Get the Edudeen app</p>
             <p className="text-[12.5px] text-white/75 leading-[1.5] m-0 mb-3">Browse resources, chat with sellers and track your orders - anytime, anywhere.</p>
             <div className="flex items-center gap-3">
-              <div className="shrink-0 rounded-lg bg-white p-1.5">
-                <RealAppQr size={64} />
-              </div>
+              {/* The QR only exists once a public store link is configured (RealAppQr renders nothing before that). */}
+              {(GOOGLE_PLAY_URL || APP_STORE_URL) && (
+                <div className="shrink-0 rounded-lg bg-white p-1.5">
+                  <RealAppQr size={64} />
+                </div>
+              )}
               <div className="flex flex-col gap-[7px]">
-                <a
-                  href={GOOGLE_PLAY_URL}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center gap-[7px] rounded-lg bg-white px-[11px] py-[7px] no-underline hover:bg-[#F4DC4C] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-                >
-                  <GooglePlayGlyph size={12} />
-                  <span className="text-[12px] font-semibold text-[#152D43] leading-none">Google Play</span>
-                </a>
+                {GOOGLE_PLAY_URL ? (
+                  <a
+                    href={GOOGLE_PLAY_URL}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-[7px] rounded-lg bg-white px-[11px] py-[7px] no-underline hover:bg-[#F4DC4C] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                  >
+                    <GooglePlayGlyph size={12} />
+                    <span className="text-[12px] font-semibold text-[#152D43] leading-none">Google Play</span>
+                  </a>
+                ) : (
+                  <span className="flex items-center gap-[7px] rounded-lg bg-white/15 px-[11px] py-[7px]">
+                    <GooglePlayGlyph size={12} />
+                    <span className="text-[12px] font-semibold text-white leading-none">Google Play <span className="text-white/60 font-normal">· soon</span></span>
+                  </span>
+                )}
                 {APP_STORE_URL ? (
                   <a href={APP_STORE_URL} target="_blank" rel="noreferrer" className="flex items-center gap-[7px] rounded-lg bg-white px-[11px] py-[7px] no-underline hover:bg-[#F4DC4C] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
                     <AppleGlyph size={12} />
@@ -537,7 +548,7 @@ export function MegaMenuBar({
   bestRated?: MarketplaceProduct[];
   flashDeals: { product: MarketplaceProduct; pct: number }[];
   topStores:  PublicStoreListItem[];
-  countdown:  { h: string; m: string; s: string } | null;
+  countdown:  Countdown | null;
   onShopCategory?: (id: string) => void;
   onProductClick: (id: string) => void;
   onStoreClick:   (slug: string) => void;

@@ -28,6 +28,10 @@ export interface HomeContent {
   googlePlayUrl?: string;
   /** Set once an iOS app is live; until then the App Store badge says 'coming soon'. */
   appStoreUrl?: string;
+  /** Below these totals the homepage hides the numbers and shows plain trust points (defaults 50 sellers / 500 buyers / 100 resources). */
+  statsThresholds?: { sellers: number; buyers: number; products: number };
+  /** Optional Urdu version of the hero / feature / creator text (key = the English field name). */
+  ur?: Partial<Record<'heroEyebrow' | 'heroTitle' | 'heroHighlight' | 'heroText' | 'heroPrimaryLabel' | 'heroSecondaryLabel' | 'heroBadge' | 'featureEyebrow' | 'featureHeading' | 'featureText' | 'featureLinkLabel' | 'creatorEyebrow' | 'creatorHeading' | 'creatorText' | 'creatorLinkLabel', string>>;
   about?: AboutContent;
   /** Admin-written legal pages, keyed by route (privacy-policy, terms-of-service, cookie-policy). */
   legalPages?: Record<string, { text?: string; lastUpdated?: string }>;
@@ -58,6 +62,8 @@ export interface SellerPageContent {
 export interface PublicPlatformConfig {
   socialLinks: Partial<Record<SocialNetwork, string>>;
   homeContent?: HomeContent;
+  /** Derived facts the homepage trust points may claim. */
+  commerce?: { codAvailable?: boolean };
   sellerPage?: SellerPageContent;
   /** Edudeen Help chat widget content (effective: admin overrides merged over built-in defaults). */
   chatbot?: import('@/components/chat/chatbotDefaults').ChatbotConfig;

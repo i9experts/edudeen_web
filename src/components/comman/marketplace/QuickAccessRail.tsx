@@ -15,7 +15,9 @@ import { fetchRecentlyViewed } from '@/utils/recentlyViewedSync';
 import { ProductCoverFallback } from '@/components/comman/marketplace/ProductCoverFallback';
 import { CategoryArt } from '@/components/comman/art/CategoryArt';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
-import { currencySymbol } from '@/utils/currency';
+import { formatPrice } from '@/utils/formatPrice';
+import { upToLabel } from '@/utils/saleMath';
+import { useNow } from '@/hooks/useNow';
 
 type PanelId = 'deals' | 'categories' | 'recent' | 'account';
 
@@ -60,8 +62,8 @@ function PanelShell({ title, action, children }: { title: string; action?: React
 
 function DealsPanel({ close }: { close: () => void }) {
   const deals = useTopBarDeals();
+  const now = useNow(1000);
   const { currency, convert } = useCurrencyPreference();
-  const sym = currencySymbol(currency);
   if (!deals) return <PanelShell title="Deals"><p className="p-4 text-[13px] text-slate m-0">Loading…</p></PanelShell>;
   const empty = !deals.campaigns.length && !deals.flashDeals.length;
   return (
@@ -72,9 +74,9 @@ function DealsPanel({ close }: { close: () => void }) {
           <Flame size={18} className="shrink-0" />
           <span className="flex-1 min-w-0">
             <span className="block text-[13px] font-bold truncate">{c.name}</span>
-            <span className="block text-[12px] opacity-85">Ends in <span className="tabular-nums">{timeLeft(c.endDate)}</span></span>
+            <span className="block text-[12px] opacity-85">Ends in <span className="tabular-nums">{timeLeft(c.endDate, now)}</span></span>
           </span>
-          {c.discountType === 'percentage' && c.discountValue ? <span className="text-[12px] font-bold bg-white/20 rounded-full px-2 py-0.5">{`${c.discountValue}% off`}</span> : null}
+          {upToLabel(deals.maxPct) ? <span className="text-[12px] font-bold bg-white/20 rounded-full px-2 py-0.5">{upToLabel(deals.maxPct)}</span> : null}
         </Link>
       ))}
       {deals.flashDeals.length > 0 && (
@@ -89,8 +91,8 @@ function DealsPanel({ close }: { close: () => void }) {
                     <span className="block text-[12.5px] text-carbon font-medium truncate" translate="no">{p.name}</span>
                     {dv && (
                       <span className="block text-[12px] tabular-nums">
-                        <b className="text-carbon">{sym}{convert(dv.price, dv.currency).toLocaleString()}</b>
-                        {dv.compareAtPrice ? <span className="text-slate line-through ms-1.5">{sym}{convert(dv.compareAtPrice, dv.currency).toLocaleString()}</span> : null}
+                        <b className="text-carbon">{formatPrice(convert(dv.price, dv.currency), currency)}</b>
+                        {dv.compareAtPrice ? <span className="text-slate line-through ms-1.5">{formatPrice(convert(dv.compareAtPrice, dv.currency), currency)}</span> : null}
                       </span>
                     )}
                   </span>
@@ -138,7 +140,6 @@ function CategoriesPanel({ close }: { close: () => void }) {
 
 function RecentPanel({ items, onClear, close }: { items: RecentlyViewedItem[]; onClear: () => void; close: () => void }) {
   const { currency, convert } = useCurrencyPreference();
-  const sym = currencySymbol(currency);
   return (
     <PanelShell
       title="Recently viewed"
@@ -154,7 +155,7 @@ function RecentPanel({ items, onClear, close }: { items: RecentlyViewedItem[]; o
                 <Thumb image={it.image} name={it.name} />
                 <span className="flex-1 min-w-0">
                   <span className="block text-[12.5px] text-carbon font-medium truncate" translate="no">{it.name}</span>
-                  {it.price != null && <span className="block text-[12px] text-graphite tabular-nums">{sym}{convert(it.price, it.currency ?? 'PKR').toLocaleString()}</span>}
+                  {it.price != null && <span className="block text-[12px] text-graphite tabular-nums">{formatPrice(convert(it.price, it.currency ?? 'PKR'), currency)}</span>}
                 </span>
               </Link>
             </li>

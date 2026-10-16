@@ -6,6 +6,8 @@ import { Button } from './Button';
 import { EdudeenIcon } from './EdudeenLogo';
 import { useGooglePlayUrl } from './AppPromoParts';
 
+// Both the interstitial and the edge tab open the Play listing, so they only exist once a public link is configured.
+
 // Single source of truth for the Play listing lives in AppPromoParts.
 
 /** No iOS app yet — never push iPhone/iPad users toward the Play Store. */
@@ -35,7 +37,7 @@ export function AppOpenPrompt() {
   const PLAY_STORE_URL = useGooglePlayUrl();
   const [dismissed, setDismissed] = useState(() => sessionStorage.getItem(DISMISS_KEY) === '1');
 
-  if (dismissed || isIOS()) return null;
+  if (!PLAY_STORE_URL || dismissed || isIOS()) return null;
 
   const close = () => {
     sessionStorage.setItem(DISMISS_KEY, '1');
@@ -98,7 +100,7 @@ export function AppOpenPrompt() {
  */
 export function AppOpenFab() {
   const PLAY_STORE_URL = useGooglePlayUrl();
-  if (isIOS()) return null;
+  if (!PLAY_STORE_URL || isIOS()) return null;
   return (
     <button
       onClick={() => { window.location.href = PLAY_STORE_URL; }}

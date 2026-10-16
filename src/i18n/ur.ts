@@ -1774,6 +1774,33 @@ export const UR: Record<string, string> = {
   "Your message": "آپ کا پیغام",
   "Send": "بھیجیں",
   "Need help? Tap to ask Edudeen Help.": "مدد چاہیے؟ ایڈودین ہیلپ سے پوچھنے کے لیے دبائیں۔",
+  // ── Homepage audit (Phase 1) ──
+  'Every store is reviewed by our team': 'ہر اسٹور ہماری ٹیم سے جانچا جاتا ہے',
+  'Pay when your order arrives': 'آرڈر ملنے پر ادائیگی کریں',
+  'Mobile app coming soon': 'موبائل ایپ جلد آ رہی ہے',
+  'Available on Android and iOS': 'اینڈرائیڈ اور آئی او ایس پر دستیاب',
+  'Available now on iOS': 'اب آئی او ایس پر دستیاب',
+  'Coming soon on': 'جلد دستیاب',
+  'Price ($)': 'قیمت ($)',
+  'Cash': 'کیش',
+  'On delivery': 'ڈیلیوری پر',
+  'Quran & Tajweed': 'قرآن و تجوید',
+  'Arabic Language': 'عربی زبان',
+  'Urdu Language': 'اردو زبان',
+  'English Language': 'انگریزی زبان',
+  'Social Studies & Pakistan Studies': 'معاشرتی علوم و مطالعۂ پاکستان',
+  'Early Learning': 'ابتدائی تعلیم',
+  'Computer & Digital Skills': 'کمپیوٹر اور ڈیجیٹل مہارتیں',
+  'Exam Prep & Past Papers': 'امتحان کی تیاری اور پرانے پرچے',
+  'Teacher Resources': 'اساتذہ کے وسائل',
+  'Textbooks & Books': 'نصابی و دیگر کتب',
+  'Stationery & School Supplies': 'سٹیشنری اور اسکول کا سامان',
+  'Educational Toys & Games': 'تعلیمی کھلونے اور کھیل',
+  'Handwriting, Art & Creativity': 'خوشخطی، فن اور تخلیقی صلاحیت',
+  'Courses & Live Classes': 'کورسز اور لائیو کلاسز',
+  'Homeschool & Parenting': 'ہوم اسکولنگ اور والدین کی رہنمائی',
+  'Others': 'دیگر',
+  'Islamic & Educational Resources': 'اسلامی و تعلیمی وسائل',
 };
 
 const MONTHS: Record<string, string> = {
@@ -1788,6 +1815,15 @@ const urOr = (s: string) => UR[s] ?? s;
 
 /** Strings with numbers or names in them — `m` is the RegExp match. */
 export const UR_PATTERNS: [RegExp, (m: RegExpMatchArray) => string][] = [
+  // Homepage audit: countdowns in the one shared format, USD price filters, hero button built from a category name.
+  [/^Ends in (\d+)d (\d+)h (\d{2})m$/, m => `ختم ہونے میں ${m[1]} دن ${m[2]} گھنٹے ${m[3]} منٹ`],
+  [/^(\d+)d (\d+)h (\d{2})m$/, m => `${m[1]} دن ${m[2]} گھنٹے ${m[3]} منٹ`],
+  [/^UP TO (\d+)% OFF$/i, m => `${m[1]}% تک رعایت`],
+  [/^Under \$([\d,.]+)$/, m => `\$${m[1]} سے کم`],
+  [/^\$([\d,.]+) to \$([\d,.]+)$/, m => `\$${m[1]} سے \$${m[2]}`],
+  [/^Over \$([\d,.]+)$/, m => `\$${m[1]} سے زیادہ`],
+  [/^Explore (.+)$/, m => `${urOr(m[1])} دیکھیں`],
+  [/^From (Rs [\d,]+|\$[\d,.]+)$/, m => `${m[1]} سے شروع`],
   // Class ranges on the product page ("Class 2-4", optionally followed by the ages).
   [/^Class (\d{1,2})-(\d{1,2})( · (.+))?$/, m => `جماعت ${m[1]} سے ${m[2]}${m[4] ? ` · ${urOr(m[4])}` : ''}`],
   [/^(Nursery|Prep|KG|O Level|A Level|University) - (Nursery|Prep|KG|O Level|A Level|University)$/, m => `${urOr(m[1])} سے ${urOr(m[2])}`],

@@ -7,6 +7,8 @@ import { Heart, X, ArrowRight } from 'lucide-react';
 import { ProductCoverFallback } from '@/components/comman/marketplace/ProductCoverFallback';
 import { useWishlistContext } from '@/contexts/WishlistContext';
 import { useDropdownPosition } from '@/hooks/useDropdownPosition';
+import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
+import { formatPrice } from '@/utils/formatPrice';
 import { Button } from './Button';
 
 const CLOSE_DELAY_MS = 150;
@@ -28,6 +30,7 @@ function WishlistThumb({ images, name }: { images?: string[]; name: string }) {
 // + a single "Go to Wishlist" action when there isn't.
 export function MiniWishlist() {
   const t = useT();
+  const { currency, convert } = useCurrencyPreference();
   const navigate = useNavigate();
   const ref = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -137,7 +140,7 @@ export function MiniWishlist() {
                       <WishlistThumb images={item.product.images} name={item.product.name} />
                       <div className="flex-1 min-w-0">
                         <p className="text-[12px] font-medium text-charcoal leading-tight line-clamp-1">{item.product.name}</p>
-                        {variant && <p className="text-[12px] text-slate mt-[3px]">${variant.price.toLocaleString()}</p>}
+                        {variant && <p className="text-[12px] text-slate mt-[3px]">{formatPrice(convert(variant.price, variant.currency), currency)}</p>}
                       </div>
                     </div>
                   );

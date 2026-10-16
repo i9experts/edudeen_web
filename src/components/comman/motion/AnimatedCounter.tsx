@@ -28,5 +28,7 @@ export function AnimatedCounter({ value, duration = 1.4, format = (n) => Math.ro
     return () => controls.stop();
   }, [isInView, value, duration, reduceMotion]);
 
-  return <span ref={ref} className={className}>{format(display)}</span>;
+  // A whole-number stat stays a whole number at every frame of the count-up (no "5.8+" while counting to 6).
+  const shown = Number.isInteger(value) ? Math.round(display) : display;
+  return <span ref={ref} className={className}>{format(shown)}</span>;
 }

@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { apiGetPublicActiveCampaigns, type PublicCampaign } from '@/api/services/marketing/publicCampaigns';
 import { apiGetAllProducts, type MarketplaceProduct } from '@/api/services/marketplace';
+import { productSalePct, maxSalePct } from '@/utils/saleMath';
+import { timeLeftText } from '@/utils/countdown';
 
 export interface TopBarFlashDeal {
   product: MarketplaceProduct;
@@ -10,8 +12,13 @@ export interface TopBarFlashDeal {
 export interface TopBarDeals {
   /** Admin-created sale campaigns that are live right now (October sale, 11.11, Azadi sale…). */
   campaigns: PublicCampaign[];
-  /** The marketplace's deepest product discounts right now. */
+  /** The marketplace's deepest product discounts right now (top 5). */
   flashDeals: TopBarFlashDeal[];
+  /** Every on-sale product found, deepest discount first (the homepage flash-sale rail takes its slice). */
+  allDeals: TopBarFlashDeal[];
+  /** The REAL largest discount among the items on sale right now (0 = nothing discounted). The one number
+   *  every "Up to X% off" label uses. */
+  maxPct: number;
 }
 
 const TTL_MS = 5 * 60 * 1000;
@@ -23,23 +30,19 @@ function load(): Promise<TopBarDeals> {
   if (inflight) return inflight;
   inflight = Promise.all([
     apiGetPublicActiveCampaigns().then(r => r.data ?? []).catch(() => [] as PublicCampaign[]),
-    apiGetAllProducts(1, 40).then(r => r.data?.products ?? []).catch(() => [] as MarketplaceProduct[]),
+    // Three pages of 50: the ranking looks at a big slice of the catalogue, not just the first page.
+    Promise.all([1, 2, 3].map(pg => apiGetAllProducts(pg, 50).then(r => r.data?.products ?? []).catch(() => [] as MarketplaceProduct[]))).then(p => p.flat()),
   ]).then(([campaigns, products]) => {
     const now = Date.now();
-    const flashDeals = products
-      .map(p => {
-        const dv = (p.variants ?? []).find(v => v.isDefault) ?? p.variants?.[0];
-        const price = dv?.price ?? 0;
-        const compareAt = dv?.compareAtPrice ?? null;
-        const pct = compareAt != null && compareAt > price ? Math.round((1 - price / compareAt) * 100) : 0;
-        return { product: p, pct };
-      })
+    const allDeals = products
+      .map(p => ({ product: p, pct: productSalePct(p) }))
       .filter(d => d.pct > 0)
-      .sort((a, b) => b.pct - a.pct)
-      .slice(0, 5);
+      .sort((a, b) => b.pct - a.pct);
     const data: TopBarDeals = {
       campaigns: campaigns.filter(c => new Date(c.endDate).getTime() > now),
-      flashDeals,
+      flashDeals: allDeals.slice(0, 5),
+      allDeals,
+      maxPct: maxSalePct(allDeals),
     };
     cache = { at: Date.now(), data };
     return data;
@@ -73,14 +76,7 @@ export function useTopBarDeals(): TopBarDeals | null {
   return data;
 }
 
-/** "2d 4h" / "5h 12m" / "8m" until `iso`. */
+/** Time left until `iso` in the one shared countdown format ("15d 12h 03m" / "HH:MM:SS" / "ending now"). */
 export function timeLeft(iso: string, now = Date.now()): string {
-  const ms = new Date(iso).getTime() - now;
-  if (ms <= 0) return 'ending now';
-  const m = Math.floor(ms / 60000);
-  const d = Math.floor(m / 1440);
-  const h = Math.floor((m % 1440) / 60);
-  if (d > 0) return `${d}d ${h}h`;
-  if (h > 0) return `${h}h ${m % 60}m`;
-  return `${m}m`;
+  return timeLeftText(iso, now);
 }

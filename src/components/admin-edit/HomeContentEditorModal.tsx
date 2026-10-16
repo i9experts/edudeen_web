@@ -4,6 +4,7 @@ import { Button } from '@/components/comman/ui/Button';
 import { Input, Textarea } from '@/components/comman/ui/Input';
 import { SkeletonBox } from '@/components/comman/ui/SkeletonBox';
 import { effectiveAbout, effectiveHomeContent } from './homeDefaults';
+import { storeUrlProblem } from '@/utils/storeLinks';
 import type { AboutContent, HomeContent } from '@/api/services/publicPlatformConfig';
 import { apiUpdateHomeContent } from '@/api/services/config/adminConfig';
 import { apiUploadPublicFile } from '@/api/upload';
@@ -118,8 +119,8 @@ function HomeContentForm({ section, legalKey, legalInitialText, defaults, stored
   const update = async () => {
     setError('');
     if (section === 'apps') {
-      const bad = (['googlePlayUrl', 'appStoreUrl'] as const).find(k => payload[k] && !/^https?:\/\/\S+$/i.test(payload[k]!));
-      if (bad) { setError(`Enter a full link starting with https:// (${bad === 'googlePlayUrl' ? 'Google Play' : 'App Store'})`); return; }
+      const bad = (['googlePlayUrl', 'appStoreUrl'] as const).find(k => payload[k] && storeUrlProblem(payload[k]));
+      if (bad) { setError(`${bad === 'googlePlayUrl' ? 'Google Play' : 'App Store'}: ${storeUrlProblem(payload[bad])}`); return; }
     }
     if (Object.keys(payload).length === 0) { onClose(); return; } // nothing changed
     const token = await confirm();
@@ -173,8 +174,8 @@ function HomeContentForm({ section, legalKey, legalInitialText, defaults, stored
           <Input label="Category this block and the hero's second button open (name)" value={H('featuredCategory')} onChange={h('featuredCategory')} maxLength={300} />
         </>)}
         {section === 'apps' && (<>
-          <Input label="Google Play link (https://...)" value={H('googlePlayUrl')} onChange={h('googlePlayUrl')} maxLength={500} />
-          <Input label="App Store link (leave blank until the iOS app is live)" value={H('appStoreUrl')} onChange={h('appStoreUrl')} maxLength={500} />
+          <Input label="Google Play link (public https:// link; blank = Coming soon)" value={H('googlePlayUrl')} onChange={h('googlePlayUrl')} maxLength={500} />
+          <Input label="App Store link (public https:// link; blank = Coming soon)" value={H('appStoreUrl')} onChange={h('appStoreUrl')} maxLength={500} />
         </>)}
         {section === 'creator' && (<>
           <Input label="Small heading" value={H('creatorEyebrow')} onChange={h('creatorEyebrow')} maxLength={300} />

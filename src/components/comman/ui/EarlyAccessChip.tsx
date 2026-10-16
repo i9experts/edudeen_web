@@ -1,16 +1,12 @@
 import { useEffect, useState } from 'react';
 import { clsx } from 'clsx';
 import { Crown } from 'lucide-react';
+import { formatCountdown } from '@/utils/countdown';
 
-/** "1h 20m" / "2d 4h" / "8m" until `iso`; "a moment" once it has passed. */
+/** Time until `iso`; "a moment" once it has passed. */
 export function untilStart(iso: string, now = Date.now()): string {
-  const m = Math.floor((new Date(iso).getTime() - now) / 60000);
-  if (!(m > 0)) return 'a moment';
-  const d = Math.floor(m / 1440);
-  const h = Math.floor((m % 1440) / 60);
-  if (d > 0) return `${d}d ${h}h`;
-  if (h > 0) return `${h}h ${m % 60}m`;
-  return `${m}m`;
+  // Same shared format as every sale timer ("15d 12h 03m" / "HH:MM:SS").
+  return formatCountdown(new Date(iso).getTime() - now) || 'a moment';
 }
 
 /**
@@ -21,7 +17,7 @@ export function untilStart(iso: string, now = Date.now()): string {
 export function EarlyAccessChip({ startDate, onDark = false, short = false, className }: { startDate?: string | null; onDark?: boolean; short?: boolean; className?: string }) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 30_000);
+    const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
   const starts = startDate ? `Public sale starts in ${untilStart(startDate, now)}` : null;

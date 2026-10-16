@@ -6,7 +6,7 @@ import { Heart, Star } from 'lucide-react';
 import type { MarketplaceProduct } from '@/api/services/marketplace';
 import { EDUCATION_LEVELS } from '@/api/services/product';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
-import { currencySymbol } from '@/utils/currency';
+import { formatPrice } from '@/utils/formatPrice';
 import { isPlainLeftClick } from '@/utils/productLink';
 import { getStorePagePath } from '@/utils/storefrontUrl';
 import { coverPaletteFor } from './ProductCoverFallback';
@@ -124,9 +124,9 @@ export const ResourceCard = memo(function ResourceCard({
   const { isPremium } = usePremiumView();
   const member = isPremium && campaignRaw == null ? memberPriceOf(variant, convert, price) : null;
   const campaignOff = campaign?.discountValue
-    ? campaign.discountType === 'percentage' ? `${campaign.discountValue}% off` : `${currencySymbol(campaign.currency ?? 'USD')} ${campaign.discountValue} off`
+    ? campaign.discountType === 'percentage' ? `${campaign.discountValue}% off` : `${formatPrice(campaign.discountValue, campaign.currency ?? 'USD')} off`
     : null;
-  const fmt = (n: number) => `${currencySymbol(displayCurrency)} ${n.toLocaleString(undefined, { maximumFractionDigits: displayCurrency === 'PKR' ? 0 : 2 })}`;
+  const fmt = (n: number) => formatPrice(n, displayCurrency);
   const kind = product.productType ?? product.type ?? 'physical';
   const href = `/product/${product.slug}`;
   const go = (e: React.MouseEvent) => { if (isPlainLeftClick(e)) { e.preventDefault(); onClick(product.slug); } };

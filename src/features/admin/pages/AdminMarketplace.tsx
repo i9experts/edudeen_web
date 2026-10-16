@@ -12,7 +12,7 @@ import { AdminStudioHeader } from '@/features/admin/components/studio';
 import type { TableColumn } from '@/components/comman/ui';
 import { AnalyticsErrorState } from '@/components/comman/analytics/AnalyticsErrorState';
 import { formatCurrency, formatNumber } from '@/components/comman/analytics/format';
-import { Star, StoreIcon, RefreshCw, GraduationCap, Trash2, ClipboardCheck, ShieldCheck, Truck } from 'lucide-react';
+import { Star, StoreIcon, RefreshCw, GraduationCap, Trash2, ClipboardCheck, ShieldCheck, Truck, FlaskConical } from 'lucide-react';
 
 const STATUS_OPTIONS = [
   { value: 'pending_review', label: 'Waiting for review' },
@@ -67,13 +67,18 @@ export function AdminMarketplace() {
   );
 
   const { data, loading, error, refetch } = useMarketplaceListings(query);
-  const { setFeatured, removeListing, setStoreBadge, setFulfillmentMode, processingId, error: actionError } = useMarketplaceListingActions();
+  const { setFeatured, setTest, removeListing, setStoreBadge, setFulfillmentMode, processingId, error: actionError } = useMarketplaceListingActions();
   const [removing, setRemoving] = useState<MarketplaceListingRow | null>(null);
 
   function refreshAll() { refetchStats(); refetch(); loadPending(); }
 
   async function toggleFeatured(row: MarketplaceListingRow) {
     const ok = await setFeatured(row.id, !row.isFeatured);
+    if (ok) refetch();
+  }
+
+  async function toggleTest(row: MarketplaceListingRow) {
+    const ok = await setTest(row.id, !row.isTest);
     if (ok) refetch();
   }
 
@@ -96,7 +101,7 @@ export function AdminMarketplace() {
 
   const columns: TableColumn<MarketplaceListingRow>[] = [
     { key: 'id', header: 'ID', render: (r) => <span className="text-[12px] font-mono text-slate whitespace-nowrap">{r.id.slice(-8)}</span> },
-    { key: 'title', header: 'Title', render: (r) => <p className="text-[13px] font-medium text-graphite max-w-[220px] truncate">{r.title}</p> },
+    { key: 'title', header: 'Title', render: (r) => <p className="text-[13px] font-medium text-graphite max-w-[220px] truncate">{r.title}{r.isTest && <span className="ms-2 align-middle rounded-full bg-[#fff6d6] border border-[#f1d98a] px-[7px] py-[1px] text-[12px] font-bold text-[#8a6100]" title="Hidden from the public">Test</span>}</p> },
     { key: 'sellerName', header: 'Seller', render: (r) => <span className="text-[13px] text-graphite whitespace-nowrap">{r.sellerName}</span> },
     { key: 'price', header: 'Price', align: 'right', render: (r) => <span className="text-[13px] font-semibold text-charcoal">{r.price == null ? '—' : formatMoney(r.price, r.currency)}</span> },
     { key: 'purchaseCount', header: 'Sales', align: 'right', render: (r) => <span className="text-[13px] text-charcoal">{formatNumber(r.purchaseCount)}</span> },
@@ -144,6 +149,7 @@ export function AdminMarketplace() {
                 },
                 // Active listings are not in the review queue, so the trust-badge editor (inside the review modal) is reached from here.
                 ...(r.status === 'pending_review' || r.status === 'rejected' ? [] : [{ label: 'Edit badges', icon: <ShieldCheck size={13} />, onClick: () => setReviewing(r.id) }]),
+                { label: r.isTest ? 'Unmark as test (show to the public)' : 'Mark as test (hide from the public)', icon: <FlaskConical size={13} />, disabled: processingId === r.id, onClick: () => toggleTest(r) },
                 { label: 'Remove Listing', icon: <Trash2 size={13} />, danger: true, onClick: () => setRemoving(r) },
               ]}
             />

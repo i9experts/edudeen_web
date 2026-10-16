@@ -4,6 +4,7 @@ import { Input, Textarea } from '@/components/comman/ui/Input';
 import { apiGetPublicPlatformConfig, type HomeContent, type AboutContent } from '@/api/services/publicPlatformConfig';
 import { apiUpdateHomeContent } from '@/api/services/config/adminConfig';
 import { apiUploadPublicFile } from '@/api/upload';
+import { storeUrlProblem } from '@/utils/storeLinks';
 
 /** Homepage copy the admin controls: hero text + image, the tick strip and the four trust items. Leave a field blank to use the built-in default. */
 export function HomeContentCard() {
@@ -45,8 +46,17 @@ export function HomeContentCard() {
   const promise = (c.promiseItems ?? []).join('\n');
   const trust = c.trustItems ?? [];
 
+  const thresholds = c.statsThresholds ?? { sellers: 50, buyers: 500, products: 100 };
+  const setThreshold = (k: 'sellers' | 'buyers' | 'products', v: string) => set('statsThresholds', { ...thresholds, [k]: Math.max(0, Math.floor(Number(v) || 0)) });
+  const ur = c.ur ?? {};
+  const setUr = (k: keyof NonNullable<HomeContent['ur']>, v: string) => set('ur', { ...ur, [k]: v });
+  const googleProblem = storeUrlProblem(c.googlePlayUrl);
+  const appStoreProblem = storeUrlProblem(c.appStoreUrl);
+
   const save = async () => {
-    setError(''); setSaved(false); setBusy(true);
+    setError(''); setSaved(false);
+    if (googleProblem || appStoreProblem) { setError(googleProblem || appStoreProblem); return; }
+    setBusy(true);
     try {
       await apiUpdateHomeContent({
         ...c,
@@ -98,13 +108,35 @@ export function HomeContentCard() {
       <p className="text-[12px] font-semibold text-carbon mt-5 mb-2">Feature block and app link</p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-[14px]">
         <Input label="Category the buttons open (name)" value={c.featuredCategory ?? ''} disabled={!loaded} onChange={e => set('featuredCategory', e.target.value)} />
-        <Input label="App Store link (leave blank until the iOS app is live)" value={c.appStoreUrl ?? ''} disabled={!loaded} onChange={e => set('appStoreUrl', e.target.value)} />
-        <Input label="Google Play link" value={c.googlePlayUrl ?? ''} disabled={!loaded} onChange={e => set('googlePlayUrl', e.target.value)} />
+        <Input label="App Store link (public link only - blank shows Coming soon)" value={c.appStoreUrl ?? ''} disabled={!loaded} error={appStoreProblem || undefined} onChange={e => set('appStoreUrl', e.target.value)} />
+        <Input label="Google Play link (public link only - blank shows Coming soon)" value={c.googlePlayUrl ?? ''} disabled={!loaded} error={googleProblem || undefined} onChange={e => set('googlePlayUrl', e.target.value)} />
         <Input label="Block small heading" value={c.featureEyebrow ?? ''} disabled={!loaded} onChange={e => set('featureEyebrow', e.target.value)} />
         <Input label="Block heading" value={c.featureHeading ?? ''} disabled={!loaded} onChange={e => set('featureHeading', e.target.value)} />
         <Input label="Block link text" value={c.featureLinkLabel ?? ''} disabled={!loaded} onChange={e => set('featureLinkLabel', e.target.value)} />
       </div>
       <div className="mt-[14px]"><Textarea label="Block paragraph" rows={2} value={c.featureText ?? ''} disabled={!loaded} onChange={e => set('featureText', e.target.value)} /></div>
+      <p className="text-[12px] font-semibold text-carbon mt-5 mb-1">Homepage numbers (stats)</p>
+      <p className="text-[12px] text-slate mb-2">The homepage only shows its numbers once ALL three totals are reached; below that it shows plain trust points (verified sellers, secure checkout, cash on delivery) instead.</p>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-[14px]">
+        <Input label="Active sellers needed" type="number" min={0} value={String(thresholds.sellers)} disabled={!loaded} onChange={e => setThreshold('sellers', e.target.value)} />
+        <Input label="Registered buyers needed" type="number" min={0} value={String(thresholds.buyers)} disabled={!loaded} onChange={e => setThreshold('buyers', e.target.value)} />
+        <Input label="Resources listed needed" type="number" min={0} value={String(thresholds.products)} disabled={!loaded} onChange={e => setThreshold('products', e.target.value)} />
+      </div>
+      <p className="text-[12px] font-semibold text-carbon mt-5 mb-1">Urdu text (optional)</p>
+      <p className="text-[12px] text-slate mb-2">Shown instead of the English text when a visitor uses the Urdu site. Leave blank to use the built-in Urdu / English.</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-[14px]" dir="rtl">
+        <Input label="Small heading" value={ur.heroEyebrow ?? ''} disabled={!loaded} onChange={e => setUr('heroEyebrow', e.target.value)} />
+        <Input label="Headline" value={ur.heroTitle ?? ''} disabled={!loaded} onChange={e => setUr('heroTitle', e.target.value)} />
+        <Input label="Headline (coloured second line)" value={ur.heroHighlight ?? ''} disabled={!loaded} onChange={e => setUr('heroHighlight', e.target.value)} />
+        <Input label="Hero badge" value={ur.heroBadge ?? ''} disabled={!loaded} onChange={e => setUr('heroBadge', e.target.value)} />
+        <Input label="Main button" value={ur.heroPrimaryLabel ?? ''} disabled={!loaded} onChange={e => setUr('heroPrimaryLabel', e.target.value)} />
+        <Input label="Second button" value={ur.heroSecondaryLabel ?? ''} disabled={!loaded} onChange={e => setUr('heroSecondaryLabel', e.target.value)} />
+        <Input label="Block small heading" value={ur.featureEyebrow ?? ''} disabled={!loaded} onChange={e => setUr('featureEyebrow', e.target.value)} />
+        <Input label="Block heading" value={ur.featureHeading ?? ''} disabled={!loaded} onChange={e => setUr('featureHeading', e.target.value)} />
+        <Input label="Block link text" value={ur.featureLinkLabel ?? ''} disabled={!loaded} onChange={e => setUr('featureLinkLabel', e.target.value)} />
+      </div>
+      <div className="mt-[14px]" dir="rtl"><Textarea label="Hero paragraph" rows={2} value={ur.heroText ?? ''} disabled={!loaded} onChange={e => setUr('heroText', e.target.value)} /></div>
+      <div className="mt-[14px]" dir="rtl"><Textarea label="Block paragraph" rows={2} value={ur.featureText ?? ''} disabled={!loaded} onChange={e => setUr('featureText', e.target.value)} /></div>
       <p className="text-[12px] font-semibold text-carbon mt-5 mb-1">About page</p>
       <p className="text-[12px] text-slate mb-2">Leave a field blank to keep the built-in text.</p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-[14px]">

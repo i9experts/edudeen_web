@@ -6,8 +6,9 @@ import {
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { EditableHomeSection } from '@/components/admin-edit/EditableHomeSection';
-import { StoreBadgeChip, RealAppQr, useAppQrDataUrl, useGooglePlayUrl } from './AppPromoParts';
-import { apiGetPlatformStats, type PlatformStats } from '@/api/services/store';
+import { StoreBadgeChip, RealAppQr, useAppQrDataUrl, useGooglePlayUrl, useAppStoreUrl } from './AppPromoParts';
+import { usePlatformTrust } from '@/hooks/usePlatformTrust';
+import { formatPrice } from '@/utils/formatPrice';
 import { apiSubscribeNewsletter } from '@/api/services/newsletter';
 import { apiGetAllProducts, type MarketplaceProduct } from '@/api/services/marketplace';
 import { useCategoryTree } from '@/hooks/marketplace/useCategoryTree';
@@ -107,7 +108,7 @@ function OrdersScreenMockup() {
               {p ? (
                 <>
                   <p className="text-[12px] font-semibold text-carbon truncate">{p.name}</p>
-                  <p className="text-[12px] text-slate mt-[2px]">{priceOf(p) != null ? `Rs. ${priceOf(p)!.toLocaleString()}` : ''}</p>
+                  <p className="text-[12px] text-slate mt-[2px]">{priceOf(p) != null ? formatPrice(priceOf(p)!, 'PKR') : ''}</p>
                 </>
               ) : (
                 <>
@@ -181,7 +182,7 @@ export function HomeScreenMockup() {
           <p className="text-[12px] font-bold text-carbon flex items-center gap-[3px]">
             <Zap size={9} className="text-brand-orange fill-brand-orange" /> Flash Sale
           </p>
-          {countdown && <span className="text-[12px] font-semibold text-error tabular-nums">Ends in {countdown.h}:{countdown.m}:{countdown.s}</span>}
+          {countdown && <span className="text-[12px] font-semibold text-error tabular-nums">Ends in {countdown.text}</span>}
         </div>
         <div className="grid grid-cols-2 gap-[7px]">
           {(flash.length ? flash : [null, null]).map((d, i) => {
@@ -196,8 +197,8 @@ export function HomeScreenMockup() {
                   {d && v ? (
                     <>
                       <p className="text-[12px] font-semibold text-charcoal truncate">{d.product.name}</p>
-                      <p className="text-[12px] font-bold text-carbon">Rs. {v.price.toLocaleString()}</p>
-                      {v.compareAtPrice ? <p className="text-[5px] text-slate line-through">Rs. {v.compareAtPrice.toLocaleString()}</p> : null}
+                      <p className="text-[12px] font-bold text-carbon">{formatPrice(v.price, v.currency ?? 'PKR')}</p>
+                      {v.compareAtPrice ? <p className="text-[5px] text-slate line-through">{formatPrice(v.compareAtPrice, v.currency ?? 'PKR')}</p> : null}
                     </>
                   ) : (
                     <>
@@ -376,7 +377,9 @@ function NewsletterMini() {
 // wrapper/breakpoints/order moved.
 function CompactAppDownloadBanner({ className }: { className?: string }) {
   const GOOGLE_PLAY_URL = useGooglePlayUrl();
-  const qrDataUrl = useAppQrDataUrl(GOOGLE_PLAY_URL);
+  const APP_STORE_URL = useAppStoreUrl();
+  const qrTarget = GOOGLE_PLAY_URL || APP_STORE_URL;
+  const qrDataUrl = useAppQrDataUrl(qrTarget);
 
   return (
     <section className={clsx('flex flex-col gap-3 md:grid md:grid-cols-[3fr_1fr] md:gap-4', className)}>
@@ -417,15 +420,7 @@ function CompactAppDownloadBanner({ className }: { className?: string }) {
                sit in their own dedicated grid columns, not on top of this. */}
             <div className="flex items-center justify-center md:justify-start gap-2">
               <StoreBadgeChip platform="ios" onLight />
-              <a
-                href={GOOGLE_PLAY_URL}
-                target="_blank"
-                rel="noreferrer"
-                aria-label="Get it on Google Play"
-                className="rounded-[9px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange"
-              >
-                <StoreBadgeChip platform="android" onLight />
-              </a>
+              <StoreBadgeChip platform="android" onLight />
             </div>
           </div>
 
@@ -455,9 +450,10 @@ function CompactAppDownloadBanner({ className }: { className?: string }) {
              the phones. Sized up to ~68px so it reads clearly, with its own
              breathing room on both sides rather than sitting flush against
              the phone cluster. */}
+          {qrTarget && (
           <div className="order-3 md:order-2 flex flex-col items-center gap-[6px]">
             <a
-              href={GOOGLE_PLAY_URL}
+              href={qrTarget}
               target="_blank"
               rel="noreferrer"
               aria-label="Scan to download the Edudeen app"
@@ -469,6 +465,7 @@ function CompactAppDownloadBanner({ className }: { className?: string }) {
             </a>
             <p className="text-[12px] font-medium text-carbon leading-tight whitespace-nowrap">Scan to download</p>
           </div>
+          )}
         </div>
       </div>
 
@@ -503,30 +500,30 @@ export function AppDownloadBanner(props: { className?: string; variant?: 'full' 
 
 function AppDownloadBannerInner({ className, variant = 'full' }: { className?: string; variant?: 'full' | 'compact' }) {
   const GOOGLE_PLAY_URL = useGooglePlayUrl();
-  // Self-fetches — this banner is reused across several pages that don't already
-  // load platform stats, so it can't rely on a prop from the caller. Hooks run
-  // before the compact early-return below (Rules of Hooks); compact skips the fetch.
-  const [stats, setStats] = useState<PlatformStats | null>(null);
-  useEffect(() => {
-    if (variant === 'compact') return;
-    let cancelled = false;
-    apiGetPlatformStats()
-      .then(res => { if (!cancelled) setStats(res.data); })
-      .catch(() => { /* non-critical — trust stats just fall back to static copy */ });
-    return () => { cancelled = true; };
-  }, [variant]);
+  const APP_STORE_URL = useAppStoreUrl();
+  const availability = GOOGLE_PLAY_URL && APP_STORE_URL ? 'Available on Android and iOS' : GOOGLE_PLAY_URL ? 'Available now on Android — iOS coming soon' : APP_STORE_URL ? 'Available now on iOS' : 'Mobile app coming soon';
+  // Shared with the homepage stats block: real numbers only past the admin's thresholds, plain trust points before.
+  const trust = usePlatformTrust();
 
   if (variant === 'compact') return <CompactAppDownloadBanner className={className} />;
 
   // "Secure Shopping" and "Customer Support" are policy statements, not measured
   // metrics — there's no backing field for either, so those two stay static.
   // Happy Shoppers / Verified Stores are real counts once they load.
-  const trustStats = [
-    { Icon: ShoppingBag, value: stats ? `${compactNumber.format(stats.buyersCount)}+` : '—', label: 'Happy Shoppers' },
-    { Icon: ShieldCheck, value: 'Secure', label: 'Checkout' },
-    { Icon: Award,       value: stats ? `${compactNumber.format(stats.storesCount)}+` : '—', label: 'Stores' },
-    { Icon: Headphones,  value: 'Help', label: 'When You Need It' },
-  ];
+  const numberOf = (k: 'buyers' | 'sellers') => trust.items.find(i => i.key === k)?.value;
+  const trustStats = trust.showNumbers && numberOf('buyers') != null && numberOf('sellers') != null
+    ? [
+        { Icon: ShoppingBag, value: `${compactNumber.format(numberOf('buyers')!)}+`, label: 'Happy Shoppers' },
+        { Icon: ShieldCheck, value: 'Secure', label: 'Checkout' },
+        { Icon: Award,       value: `${compactNumber.format(numberOf('sellers')!)}+`, label: 'Sellers' },
+        { Icon: Headphones,  value: 'Help', label: 'When You Need It' },
+      ]
+    : [
+        { Icon: Award,       value: 'Verified', label: 'Sellers' },
+        { Icon: ShieldCheck, value: 'Secure', label: 'Checkout' },
+        ...(trust.codAvailable ? [{ Icon: ShoppingBag, value: 'Cash', label: 'On delivery' }] : []),
+        { Icon: Headphones,  value: 'Help', label: 'When You Need It' },
+      ];
 
   return (
     <section className={clsx('relative overflow-hidden rounded-2xl border border-bone bg-brand-pale-orange', className)}>
@@ -558,7 +555,7 @@ function AppDownloadBannerInner({ className, variant = 'full' }: { className?: s
           </p>
 
           <div className="flex items-center justify-center lg:justify-start gap-2 mb-4">
-            <p className="flex items-center gap-1.5 text-[12px] text-slate m-0"><Sparkles size={12} className="text-brand-royal" /> Available now on Android — iOS coming soon</p>
+            <p className="flex items-center gap-1.5 text-[12px] text-slate m-0"><Sparkles size={12} className="text-brand-royal" /> {availability}</p>
           </div>
 
           {/* Feature cards */}
@@ -583,30 +580,20 @@ function AppDownloadBannerInner({ className, variant = 'full' }: { className?: s
               stays the decorative/non-clickable chip — no iOS build yet. */}
           <div className="flex items-center justify-center lg:justify-start gap-3">
             <StoreBadgeChip platform="ios" onLight />
-            <a
-              href={GOOGLE_PLAY_URL}
-              target="_blank"
-              rel="noreferrer"
-              aria-label="Get it on Google Play"
-              className="rounded-[9px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange"
-            >
-              <StoreBadgeChip platform="android" onLight />
-            </a>
+            <StoreBadgeChip platform="android" onLight />
           </div>
         </div>
 
         {/* QR code — its own column, beside the phones (not attached to them).
             Real, scannable — links to the Google Play internal-test build. */}
+        {(GOOGLE_PLAY_URL || APP_STORE_URL) && (
         <div className="hidden lg:flex flex-col items-start gap-[8px] shrink-0">
           <div className="rounded-2xl border border-bone bg-white p-3 shadow-sm">
             <RealAppQr size={84} />
           </div>
           <p className="text-[12px] font-medium text-carbon leading-tight">Scan to download</p>
-          <div className="flex items-center gap-[6px]">
-            <Sparkles size={13} className="text-brand-royal" />
-            <p className="text-[12px] text-slate whitespace-nowrap">Android only — iOS coming soon</p>
-          </div>
         </div>
+        )}
 
         {/* Phone mockups — layered composition: back phone tilted left, lower,
             further left; front phone near-upright, overlapping ~40% of it. */}

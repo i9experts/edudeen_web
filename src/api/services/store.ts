@@ -376,6 +376,8 @@ export interface PlatformStats {
   storesCount:  number;
   sellersCount: number;
   buyersCount:  number;
+  /** Published, non-test listings (older API builds do not send it). */
+  productsCount?: number;
   gmv:          number;
   avgRating:    number;
   ratingCount:  number;

@@ -4,7 +4,7 @@ import { ShoppingCart, Heart, Loader2, Star, Check, AlertCircle } from 'lucide-r
 import { ProductImage } from './ProductCard';
 import type { MarketplaceProduct } from '@/api/services/marketplace';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
-import { currencySymbol } from '@/utils/currency';
+import { formatPrice } from '@/utils/formatPrice';
 import { memberPriceOf, usePremiumView } from './PremiumBits';
 
 // ── Skeleton ──────────────────────────────────────────────────────────────────
@@ -65,15 +65,17 @@ export function FlashSaleCard({ product, onClick, onAddToCart, isAdding, addToCa
 
   const { currency: displayCurrency, convert } = useCurrencyPreference();
   const nativeCurrency = defaultVariant?.currency;
-  const priceSymbol = currencySymbol(displayCurrency);
   const lowestPrice = nativeLowestPrice != null ? convert(nativeLowestPrice, nativeCurrency) : null;
   const subscriberPriceRaw = nativeSubscriberPrice != null ? convert(nativeSubscriberPrice, nativeCurrency) : undefined;
   // Premium member: only the list price struck through + the member price (no seller sale / subscriber price / campaign).
   const { isPremium } = usePremiumView();
   const member = isPremium ? memberPriceOf(defaultVariant, convert, subscriberPriceRaw ?? lowestPrice) : null;
   const subscriberPrice = member ? undefined : subscriberPriceRaw;
-  const displayPrice    = member ? member.price : (subscriberPrice ?? lowestPrice);
-  const compareAt = member ? (member.list ?? lowestPrice) : (nativeCompareAt != null ? convert(nativeCompareAt, nativeCurrency) : null);
+  // A running platform sale lowers the price further: the server sends it per variant as `campaignPrice`.
+  const campaignNative = typeof defaultVariant?.campaignPrice === 'number' && defaultVariant.campaignPrice < (defaultVariant.price ?? Infinity) ? defaultVariant.campaignPrice : null;
+  const campaignPrice = !member && campaignNative != null ? convert(campaignNative, nativeCurrency) : null;
+  const displayPrice    = member ? member.price : (campaignPrice ?? subscriberPrice ?? lowestPrice);
+  const compareAt = member ? (member.list ?? lowestPrice) : campaignPrice != null && defaultVariant ? convert(defaultVariant.price, nativeCurrency) : (nativeCompareAt != null ? convert(nativeCompareAt, nativeCurrency) : null);
   const pctOff = member && member.percent > 0 ? Math.round(member.percent) : compareAt != null && displayPrice != null && compareAt > displayPrice
     ? Math.round((1 - displayPrice / compareAt) * 100)
     : null;
@@ -157,64 +159,48 @@ export function FlashSaleCard({ product, onClick, onAddToCart, isAdding, addToCa
             className={clsx('heart-pop transition-colors duration-150', isWishlisted ? 'text-[#e11d48] fill-[#e11d48]' : 'text-slate')}
           />
         </button>
-
-        {/* Compact only — rating/price/savings/add-to-cart live in a bottom
-            overlay hidden until hover, so the resting card is pure image (image
-            stays small; details reveal on hover instead of a static body area). */}
-        {compact && (
-          <div className="absolute inset-x-0 bottom-0 flex flex-col gap-[4px] bg-white/95 backdrop-blur-[2px] px-[7px] py-[7px] translate-y-full opacity-0 transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100">
-            <div className="flex items-center gap-[4px]">
-              <div className="flex items-center gap-[1px]">
-                {[1, 2, 3, 4, 5].map(i => (
-                  <Star
-                    key={i}
-                    size={8}
-                    className={i <= Math.round(product.averageRating) ? 'text-brand-orange fill-brand-orange' : 'text-bone fill-bone'}
-                  />
-                ))}
-              </div>
-              <span className="text-[12px] font-semibold text-carbon">
-                {product.averageRating > 0 ? product.averageRating.toFixed(1) : 'New'}
-              </span>
-            </div>
-            <div className="flex items-end justify-between gap-1">
-              <div className="min-w-0">
-                <div className="flex items-baseline gap-[4px] flex-wrap">
-                  <span className={clsx('text-[13px] font-bold tracking-tight', member ? 'text-[#8a6100]' : subscriberPrice != null ? 'text-brand-orange' : 'text-carbon')}>
-                    {displayPrice != null ? `${priceSymbol}${displayPrice.toLocaleString()}` : '—'}
-                  </span>
-                  {compareAt != null && compareAt > (displayPrice ?? 0) && (
-                    <span className="text-[12px] text-slate line-through">{priceSymbol}{compareAt.toLocaleString()}</span>
-                  )}
-                </div>
-                {savings != null && savings > 0 && (
-                  <p className="text-[12px] font-semibold text-success">Save {priceSymbol}{savings.toLocaleString()}</p>
-                )}
-              </div>
-              <button
-                onClick={e => onAddToCart(e, product._id, vId, isPhysical ? 'physical' : 'digital')}
-                disabled={stock <= 0}
-                aria-label={stock <= 0 ? 'Out of stock' : 'Add to cart'}
-                className={clsx(
-                  'shrink-0 flex items-center justify-center w-6 h-6 rounded-full border transition-all duration-200',
-                  stock <= 0
-                    ? 'bg-bone text-slate border-bone cursor-not-allowed'
-                    : addToCartFailed
-                      ? 'bg-error text-white border-error'
-                      : justAdded
-                        ? 'bg-success text-white border-success'
-                        : 'bg-white text-brand-orange border-brand-orange hover:bg-brand-orange hover:text-white active:scale-[0.95] cursor-pointer',
-                )}
-              >
-                {isAdding ? <Loader2 size={11} className="animate-spin" /> : addToCartFailed ? <AlertCircle size={11} /> : justAdded ? <Check size={11} /> : <ShoppingCart size={11} />}
-              </button>
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* Body — unchanged, non-compact only (compact's equivalent content lives
-          in the hover overlay above instead). */}
+      {/* Compact (home flash-sale rail): ALWAYS-visible body - title, sale price, original price, rating.
+          Nothing depends on hover, so touch screens see the same card. */}
+      {compact && (
+        <div className="flex flex-col gap-[3px] px-[7px] pt-[6px] pb-[7px]">
+          <p className="text-[12px] font-semibold text-carbon leading-snug line-clamp-2 min-h-[2.6em] m-0">{product.name}</p>
+          <div className="flex items-center gap-[4px]">
+            <Star size={9} className={product.averageRating > 0 ? 'text-brand-orange fill-brand-orange' : 'text-bone fill-bone'} />
+            <span className="text-[12px] font-semibold text-carbon">{product.averageRating > 0 ? product.averageRating.toFixed(1) : 'New'}</span>
+          </div>
+          <div className="flex items-end justify-between gap-1">
+            <div className="min-w-0">
+              <span className={clsx('block text-[13px] font-bold tracking-tight', member ? 'text-[#8a6100]' : subscriberPrice != null ? 'text-brand-orange' : 'text-carbon')}>
+                {displayPrice != null ? formatPrice(displayPrice, displayCurrency) : '—'}
+              </span>
+              {compareAt != null && compareAt > (displayPrice ?? 0) && (
+                <span className="block text-[12px] text-slate line-through">{formatPrice(compareAt, displayCurrency)}</span>
+              )}
+            </div>
+            <button
+              onClick={e => onAddToCart(e, product._id, vId, isPhysical ? 'physical' : 'digital')}
+              disabled={stock <= 0}
+              aria-label={stock <= 0 ? 'Out of stock' : 'Add to cart'}
+              className={clsx(
+                'shrink-0 flex items-center justify-center w-7 h-7 rounded-full border transition-all duration-200',
+                stock <= 0
+                  ? 'bg-bone text-slate border-bone cursor-not-allowed'
+                  : addToCartFailed
+                    ? 'bg-error text-white border-error'
+                    : justAdded
+                      ? 'bg-success text-white border-success'
+                      : 'bg-white text-brand-orange border-brand-orange hover:bg-brand-orange hover:text-white active:scale-[0.95] cursor-pointer',
+              )}
+            >
+              {isAdding ? <Loader2 size={11} className="animate-spin" /> : addToCartFailed ? <AlertCircle size={11} /> : justAdded ? <Check size={11} /> : <ShoppingCart size={11} />}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Body - full-size card. */}
       {!compact && (
         <div className="flex-1 flex flex-col p-3">
           {/* Rating */}
@@ -246,14 +232,14 @@ export function FlashSaleCard({ product, onClick, onAddToCart, isAdding, addToCa
             <div className="min-w-0">
               <div className="flex items-baseline gap-[5px] flex-wrap">
                 <span className={clsx('text-[14.5px] font-bold tracking-tight', member ? 'text-[#8a6100]' : subscriberPrice != null ? 'text-brand-orange' : 'text-carbon')}>
-                  {displayPrice != null ? `${priceSymbol}${displayPrice.toLocaleString()}` : '—'}
+                  {displayPrice != null ? formatPrice(displayPrice, displayCurrency) : '—'}
                 </span>
                 {compareAt != null && compareAt > (displayPrice ?? 0) && (
-                  <span className="text-[12px] text-slate line-through">{priceSymbol}{compareAt.toLocaleString()}</span>
+                  <span className="text-[12px] text-slate line-through">{formatPrice(compareAt, displayCurrency)}</span>
                 )}
               </div>
               {savings != null && savings > 0 && (
-                <p className="text-[12px] font-semibold text-success mt-[2px]">Save {priceSymbol}{savings.toLocaleString()}</p>
+                <p className="text-[12px] font-semibold text-success mt-[2px]">Save {formatPrice(savings, displayCurrency)}</p>
               )}
             </div>
 

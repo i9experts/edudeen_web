@@ -4,6 +4,7 @@ import {
   apiGetMarketplaceStats,
   apiGetMarketplaceListings,
   apiSetListingFeatured,
+  apiSetListingTest,
   apiRemoveListing,
   apiSetStoreBadge,
   apiSetStoreFulfillmentMode,
@@ -85,7 +86,21 @@ export function useMarketplaceListingActions() {
     }
   }, []);
 
-  return { setFeatured, removeListing, setStoreBadge, setFulfillmentMode, processingId, error };
+  const setTest = useCallback(async (id: string, isTest: boolean) => {
+    setProcessingId(id);
+    setError('');
+    try {
+      await apiSetListingTest(id, isTest);
+      return true;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update the test mark.');
+      return false;
+    } finally {
+      setProcessingId(null);
+    }
+  }, []);
+
+  return { setFeatured, setTest, removeListing, setStoreBadge, setFulfillmentMode, processingId, error };
 }
 
 export function useLeads(query: LeadsQuery) {

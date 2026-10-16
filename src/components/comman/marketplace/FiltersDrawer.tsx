@@ -2,6 +2,8 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { clsx } from 'clsx';
 import { Check, SlidersHorizontal, Star, X } from 'lucide-react';
 import type { CategoryNode } from '@/api/services/categories';
+import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
+import { formatPrice } from '@/utils/formatPrice';
 
 /** Sentinel for "no upper price limit". */
 export const PRICE_NO_MAX = 1_000_000_000;
@@ -17,13 +19,12 @@ export const EMPTY_FILTERS: MarketplaceFilters = { priceRange: [0, PRICE_NO_MAX]
 
 const ITEM_TYPES = ['Physical', 'Digital', 'Educational'];
 
-// Preset buckets in the marketplace's selling currency (PKR).
-const PRICE_BUCKETS: { label: string; range: [number, number] }[] = [
-  { label: 'Under Rs 500',        range: [0, 500] },
-  { label: 'Rs 500 to Rs 1,000',  range: [500, 1000] },
-  { label: 'Rs 1,000 to Rs 2,500', range: [1000, 2500] },
-  { label: 'Over Rs 2,500',       range: [2500, PRICE_NO_MAX] },
-];
+// Price filters are stored in the catalogue's currency (PKR) - that is what the API compares against - but
+// every label, preset and custom input is shown in the currency the buyer picked (PKR or USD).
+const BUCKET_EDGES: Record<'PKR' | 'USD', number[]> = {
+  PKR: [500, 1000, 2500],
+  USD: [2, 5, 10],
+};
 
 const sameRange = (a: [number, number], b: [number, number]) => a[0] === b[0] && a[1] === b[1];
 
@@ -130,6 +131,19 @@ export function FiltersDrawer({
   /** Hide "On sale" where the page can't filter by it. */
   showOnSale?: boolean;
 }) {
+  const { currency: prefCurrency, convertBetween, ratesLoaded } = useCurrencyPreference();
+  // Without rates a USD amount cannot be turned into PKR, so show PKR until they arrive rather than guess.
+  const dispCur: 'PKR' | 'USD' = prefCurrency === 'USD' && ratesLoaded ? 'USD' : 'PKR';
+  const toBase = (v: number) => (dispCur === 'PKR' ? v : Math.round(convertBetween(v, dispCur, 'PKR')));
+  const fromBase = (v: number) => (dispCur === 'PKR' ? v : Math.round(convertBetween(v, 'PKR', dispCur) * 100) / 100);
+  const money = (v: number) => formatPrice(v, dispCur);
+  const edges = BUCKET_EDGES[dispCur];
+  const PRICE_BUCKETS: { label: string; range: [number, number] }[] = [
+    { label: `Under ${money(edges[0])}`, range: [0, toBase(edges[0])] },
+    { label: `${money(edges[0])} to ${money(edges[1])}`, range: [toBase(edges[0]), toBase(edges[1])] },
+    { label: `${money(edges[1])} to ${money(edges[2])}`, range: [toBase(edges[1]), toBase(edges[2])] },
+    { label: `Over ${money(edges[2])}`, range: [toBase(edges[2]), PRICE_NO_MAX] },
+  ];
   const bucketMatch = PRICE_BUCKETS.find(b => sameRange(b.range, filters.priceRange));
   const anyPrice = sameRange(filters.priceRange, EMPTY_FILTERS.priceRange);
   const [customOpen, setCustomOpen] = useState(!anyPrice && !bucketMatch);
@@ -140,10 +154,10 @@ export function FiltersDrawer({
   useEffect(() => {
     const isCustom = !anyPrice && !bucketMatch;
     setCustomOpen(isCustom);
-    setLow(isCustom && filters.priceRange[0] > 0 ? String(filters.priceRange[0]) : '');
-    setHigh(isCustom && filters.priceRange[1] < PRICE_NO_MAX ? String(filters.priceRange[1]) : '');
+    setLow(isCustom && filters.priceRange[0] > 0 ? String(fromBase(filters.priceRange[0])) : '');
+    setHigh(isCustom && filters.priceRange[1] < PRICE_NO_MAX ? String(fromBase(filters.priceRange[1])) : '');
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters.priceRange[0], filters.priceRange[1]]);
+  }, [filters.priceRange[0], filters.priceRange[1], dispCur]);
 
   // Esc closes; body behind stays put.
   useEffect(() => {
@@ -156,8 +170,8 @@ export function FiltersDrawer({
   const setType = (t: string | null) => onChange({ ...filters, type: t ? [t] : [] });
   const selectedType = filters.type.length === 1 ? filters.type[0] : null;
   const applyCustom = () => {
-    const lo = Math.max(0, Number(low) || 0);
-    const hi = Number(high) > 0 ? Number(high) : PRICE_NO_MAX;
+    const lo = toBase(Math.max(0, Number(low) || 0));
+    const hi = Number(high) > 0 ? toBase(Number(high)) : PRICE_NO_MAX;
     onChange({ ...filters, priceRange: lo <= hi ? [lo, hi] : [hi, lo] });
   };
 
@@ -215,7 +229,7 @@ export function FiltersDrawer({
             ))}
           </Section>
 
-          <Section title="Price (Rs)" hint="Before delivery and other fees">
+          <Section title={dispCur === 'USD' ? 'Price ($)' : 'Price (Rs)'} hint="Before delivery and other fees">
             <RadioRow
               name="f-price" label="Any price" checked={anyPrice && !customOpen}
               onChange={() => { setCustomOpen(false); onChange({ ...filters, priceRange: EMPTY_FILTERS.priceRange }); }}
@@ -233,13 +247,13 @@ export function FiltersDrawer({
                 className="flex items-center gap-3 ps-[38px] pt-2"
               >
                 <input
-                  type="number" min={0} inputMode="numeric" placeholder="Low" aria-label="Minimum price"
+                  type="number" min={0} step={dispCur === 'USD' ? 0.01 : 1} inputMode="decimal" placeholder="Low" aria-label="Minimum price"
                   value={low} onChange={e => setLow(e.target.value)}
                   className="w-0 flex-1 min-w-0 rounded-lg border border-[#8a959d] px-4 py-3 text-[16px] text-carbon outline-none focus:border-carbon"
                 />
                 <span className="text-[16px] text-slate">to</span>
                 <input
-                  type="number" min={0} inputMode="numeric" placeholder="High" aria-label="Maximum price"
+                  type="number" min={0} step={dispCur === 'USD' ? 0.01 : 1} inputMode="decimal" placeholder="High" aria-label="Maximum price"
                   value={high} onChange={e => setHigh(e.target.value)}
                   className="w-0 flex-1 min-w-0 rounded-lg border border-[#8a959d] px-4 py-3 text-[16px] text-carbon outline-none focus:border-carbon"
                 />

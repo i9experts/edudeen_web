@@ -1,5 +1,6 @@
 import { PlacementBanner } from '@/components/comman/marketplace/PlacementBanner';
-import { formatMoney } from '@/utils/currency';
+import { formatPrice } from '@/utils/formatPrice';
+import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 import type { PromotionPlacement } from '@/api/services/banner';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
@@ -95,6 +96,10 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
   const navigate = useNavigate();
   const t = useT();
   const { state, update } = useBrowseState();
+  const { currency: prefCurrency, convertBetween, ratesLoaded } = useCurrencyPreference();
+  // The price filter lives in PKR (catalogue currency); the chip shows it in the currency the buyer picked.
+  const chipCur = prefCurrency === 'USD' && ratesLoaded ? 'USD' : 'PKR';
+  const chipMoney = (pkr: number) => formatPrice(chipCur === 'PKR' ? pkr : Math.round(convertBetween(pkr, 'PKR', chipCur) * 100) / 100, chipCur);
   const { tree } = useCategoryTree();
   const { isWishlisted, wishlisting, toggleWishlist } = useWishlistContext();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -180,7 +185,7 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
     ...(state.type ? [{ key: 'type', label: PARAM_TO_TYPE[state.type] ?? state.type, clear: () => update({ type: undefined }) }] : []),
     ...(state.free ? [{ key: 'free', label: 'Free only', clear: () => update({ free: undefined }) }] : []),
     ...(!state.free && (state.min != null || state.max != null)
-      ? [{ key: 'price', label: `${formatMoney(state.min ?? 0, 'PKR')} – ${state.max != null ? formatMoney(state.max, 'PKR') : 'any'}`, clear: () => update({ min: undefined, max: undefined }) }]
+      ? [{ key: 'price', label: `${chipMoney(state.min ?? 0)} – ${state.max != null ? chipMoney(state.max) : 'any'}`, clear: () => update({ min: undefined, max: undefined }) }]
       : []),
     ...(state.rating ? [{ key: 'rating', label: `${state.rating}★ & up`, clear: () => update({ rating: undefined }) }] : []),
   ];

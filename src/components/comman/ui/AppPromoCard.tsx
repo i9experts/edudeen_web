@@ -1,22 +1,10 @@
 import { clsx } from 'clsx';
 import { Smartphone, GraduationCap } from 'lucide-react';
-import { RealAppQr, StoreBadgeChip, RatingRow, PhoneMockup, FloatingMiniCard, useGooglePlayUrl } from './AppPromoParts';
+import { RealAppQr, StoreBadgeChip, RatingRow, PhoneMockup, FloatingMiniCard } from './AppPromoParts';
 
-// Google Play links to the real internal-test build in every card below;
-// App Store stays the decorative/non-clickable chip — no iOS build yet.
+// Each badge links only once a public store URL exists (StoreBadgeChip decides); otherwise it is a "Coming soon" chip.
 function AndroidBadgeLink({ compact }: { compact?: boolean }) {
-  const GOOGLE_PLAY_URL = useGooglePlayUrl();
-  return (
-    <a
-      href={GOOGLE_PLAY_URL}
-      target="_blank"
-      rel="noreferrer"
-      aria-label="Get it on Google Play"
-      className="rounded-[9px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange"
-    >
-      <StoreBadgeChip platform="android" compact={compact} />
-    </a>
-  );
+  return <StoreBadgeChip platform="android" compact={compact} />;
 }
 
 type Tone = 'dark' | 'light';
@@ -93,7 +81,7 @@ export function EducationAppPromo({ className }: { className?: string }) {
         </div>
         <div className="min-w-0">
           <p className="text-[12px] font-bold text-white leading-tight">Learn on the go</p>
-          <RatingRow label="Android now · iOS soon" />
+          <RatingRow />
         </div>
       </div>
       <div className="flex items-center gap-2.5">

@@ -2,13 +2,14 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Sparkles, Send, X } from 'lucide-react';
 import { useAiFeatures } from '@/hooks/useAiFeatures';
+import { formatPrice } from '@/utils/formatPrice';
 import { aiErrorInfo, apiAssistantChat, type AiProductCard, type ChatTurn } from '@/api/services/aiFeatures';
 
 const HIDDEN_PREFIXES = ['/store', '/admin', '/seller', '/onboarding', '/checkout', '/maintenance', '/login', '/register'];
 
 interface Msg extends ChatTurn { products?: AiProductCard[] }
 
-const money = (p: AiProductCard) => (p.price == null ? '' : `${p.currency === 'USD' ? '$' : 'Rs '}${p.price.toLocaleString()}`);
+const money = (p: AiProductCard) => (p.price == null ? '' : formatPrice(p.price, p.currency ?? 'PKR'));
 
 /** Floating shopping assistant. Only real catalogue products are shown (cards come from the API, never from the model's text). */
 export function AiAssistantWidget() {

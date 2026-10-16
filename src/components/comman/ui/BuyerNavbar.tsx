@@ -19,7 +19,7 @@ import { ProfileAvatar } from './ProfileAvatar';
 import { PlatformTopBar } from './PlatformTopBar';
 import { ActionMenu } from './ActionMenu';
 import { useCurrencyPreference, type SupportedCurrency } from '@/contexts/CurrencyPreferenceContext';
-import { currencySymbol } from '@/utils/currency';
+import { formatPrice } from '@/utils/formatPrice';
 import { SignInPreview } from './SignInPreview';
 import { MiniCart } from './MiniCart';
 import { MiniWishlist } from './MiniWishlist';
@@ -200,7 +200,6 @@ function RecommendedProductRow({ product, categoryName, query, onClick }: { prod
   const nativePrice     = dv?.price ?? null;
   const nativeCompareAt = dv?.compareAtPrice ?? null;
   const { currency: displayCurrency, convert } = useCurrencyPreference();
-  const priceSymbol = currencySymbol(displayCurrency);
   const price     = nativePrice != null ? convert(nativePrice, dv?.currency) : null;
   const compareAt = nativeCompareAt != null ? convert(nativeCompareAt, dv?.currency) : null;
   return (
@@ -226,9 +225,9 @@ function RecommendedProductRow({ product, categoryName, query, onClick }: { prod
         </div>
       </div>
       <div className="flex flex-col items-end gap-[2px] shrink-0">
-        <span className="text-[13px] font-bold text-carbon">{price != null ? (price === 0 ? t('Free') : `${priceSymbol}${price.toLocaleString()}`) : '—'}</span>
+        <span className="text-[13px] font-bold text-carbon">{price != null ? (price === 0 ? t('Free') : formatPrice(price, displayCurrency)) : '—'}</span>
         {compareAt != null && price != null && compareAt > price && (
-          <span className="text-[12px] text-slate line-through">{priceSymbol}{compareAt.toLocaleString()}</span>
+          <span className="text-[12px] text-slate line-through">{formatPrice(compareAt, displayCurrency)}</span>
         )}
       </div>
     </button>

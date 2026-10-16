@@ -43,6 +43,8 @@ interface CurrencyPreferenceContextValue {
    *  navbar toggle change visible prices — every price display must call
    *  this instead of showing a product/cart item's raw stored amount. */
   convert: (amount: number, fromCurrency?: string | null) => number;
+  /** Converts between any two supported currencies with the live rates (e.g. the buyer's USD filter input -> the PKR the catalogue is priced in). */
+  convertBetween: (amount: number, from: string, to: string) => number;
   ratesLoaded: boolean;
 }
 
@@ -95,9 +97,14 @@ export function CurrencyPreferenceProvider({ children }: { children: ReactNode }
     [currency, rates],
   );
 
+  const convertBetween = useCallback(
+    (amount: number, from: string, to: string) => convertAmount(amount, from, to, rates),
+    [rates],
+  );
+
   const value = useMemo<CurrencyPreferenceContextValue>(
-    () => ({ currency, setCurrency, convert, ratesLoaded }),
-    [currency, setCurrency, convert, ratesLoaded],
+    () => ({ currency, setCurrency, convert, convertBetween, ratesLoaded }),
+    [currency, setCurrency, convert, convertBetween, ratesLoaded],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

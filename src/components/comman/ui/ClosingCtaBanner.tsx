@@ -9,6 +9,7 @@ import { ProductImage } from '@/components/comman/marketplace/ProductCard';
 import { TokenStorage } from '@/api/services/auth';
 import { formatMoney } from '@/utils/currency';
 import { apiGetPlatformStats, type PlatformStats } from '@/api/services/store';
+import { MIN_REVIEWS_FOR_RATING } from '@/hooks/usePlatformTrust';
 import { apiGetTestimonials, type Testimonial } from '@/api/services/testimonials';
 import { apiGetAllProducts, type MarketplaceProduct } from '@/api/services/marketplace';
 
@@ -18,7 +19,6 @@ import { apiGetAllProducts, type MarketplaceProduct } from '@/api/services/marke
 const CLOSING_TAB_ICONS = [Home, ShoppingBag, Package, User] as const;
 
 const compactNumber   = new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 });
-const compactCurrency = new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1, style: 'currency', currency: 'USD' });
 
 // Stats, avatars, ratings and phone-mockup rows never fall back to made-up
 // figures or products — they render from real data or not at all.
@@ -74,21 +74,11 @@ export function ClosingCtaBanner({ className }: { className?: string }) {
     return () => { cancelled = true; };
   }, []);
 
-  // Real platform numbers only — nothing is shown until the stats API answers,
-  // and a missing/zero field drops its stat instead of rendering "NaN+"/"0+".
-  const sellers = finite(stats?.sellersCount);
-  const gmv     = finite(stats?.gmv);
-  const buyers  = finite(stats?.buyersCount);
+  // The stats numbers live in ONE place (the homepage stats block); this band only quotes real reviews.
+  // A rating is only quoted once enough reviews stand behind it (see usePlatformTrust).
   const ratingCount = finite(stats?.ratingCount) ?? 0;
   const avgRating   = finite(stats?.avgRating);
-  const hasRealRating = ratingCount > 0 && avgRating !== null;
-  const displayStatItems = [
-    ...(sellers ? [{ value: `${compactNumber.format(sellers)}+`, label: 'Active Sellers' }] : []),
-    ...(gmv     ? [{ value: `${compactCurrency.format(gmv)}+`,   label: 'GMV Processed' }] : []),
-    ...(buyers  ? [{ value: `${compactNumber.format(buyers)}+`,  label: 'Registered Buyers' }] : []),
-    ...(hasRealRating ? [{ value: `${(avgRating as number).toFixed(1)}★`, label: 'Store Rating' }] : []),
-  ];
-
+  const hasRealRating = ratingCount >= MIN_REVIEWS_FOR_RATING && avgRating !== null && avgRating > 0;
   const avatarNames = testimonials.slice(0, 5).map(t => t.name);
 
   // Real catalogue items only — ones with a photo first, then the rest (the
@@ -122,6 +112,7 @@ export function ClosingCtaBanner({ className }: { className?: string }) {
 
       {/* Stats row — same orange background as the CTA below, just a thin
          hairline divider instead of a separate solid-color band. */}
+      {(avatarNames.length > 0 || hasRealRating) && (
       <div className="relative z-[1] pt-10 sm:pt-12 pb-5 sm:pb-6 px-4 sm:px-6 lg:px-12 border-b border-white/15">
         {/* Kept in one start-aligned column (not pushed out to the right)
            so the avatar/rating row stays clear of the phone cluster, which
@@ -131,12 +122,6 @@ export function ClosingCtaBanner({ className }: { className?: string }) {
             Trusted by educators, parents &amp; learners
           </p>
           <div className="flex flex-wrap items-center gap-x-7 gap-y-3">
-            {displayStatItems.map(({ value, label }) => (
-              <div key={label}>
-                <p className="text-[19px] sm:text-[21px] font-bold text-white leading-none">{value}</p>
-                <p className="text-[12px] text-white/70 mt-1 whitespace-nowrap">{label}</p>
-              </div>
-            ))}
             <div className="flex items-center gap-3 ps-1 sm:ps-3">
               <div className="flex -space-x-2">
                 {avatarNames.map((name, i) => (
@@ -156,6 +141,7 @@ export function ClosingCtaBanner({ className }: { className?: string }) {
           </div>
         </div>
       </div>
+      )}
 
       <div className="relative z-[1] pt-8 sm:pt-10 pb-16 sm:pb-24 px-4 sm:px-6 lg:px-12">
         <div className="flex flex-col lg:flex-row lg:items-center gap-8 lg:gap-10 lg:pe-[170px]">

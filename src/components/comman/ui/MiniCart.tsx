@@ -7,6 +7,8 @@ import { ShoppingCart, X, ArrowRight } from 'lucide-react';
 import { ProductCoverFallback } from '@/components/comman/marketplace/ProductCoverFallback';
 import { useCartContext, type CartItem } from '@/contexts/CartContext';
 import { useDropdownPosition } from '@/hooks/useDropdownPosition';
+import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
+import { formatPrice } from '@/utils/formatPrice';
 import { Button } from './Button';
 
 const CLOSE_DELAY_MS = 150;
@@ -39,6 +41,8 @@ export function MiniCart({ accentColor }: { accentColor?: string }) {
   const [open, setOpen] = useState(false);
   const { cart, cartCount } = useCartContext();
   const pos = useDropdownPosition(ref, open);
+  // Amounts follow the currency the buyer picked (items keep their own native currency).
+  const { currency, convert } = useCurrencyPreference();
 
   const clearCloseTimer = () => { if (closeTimer.current) { clearTimeout(closeTimer.current); closeTimer.current = null; } };
   const scheduleClose = () => { clearCloseTimer(); closeTimer.current = setTimeout(() => setOpen(false), CLOSE_DELAY_MS); };
@@ -64,7 +68,7 @@ export function MiniCart({ accentColor }: { accentColor?: string }) {
   const items = cart?.items ?? [];
   const recent = [...items].reverse().slice(0, 4);
   const hiddenCount = Math.max(0, items.length - recent.length);
-  const subtotal = cart?.totalPrice ?? items.reduce((s, i) => s + lineTotal(i), 0);
+  const subtotal = items.reduce((s, i) => s + convert(lineTotal(i), i.currency), 0);
 
   const goTo = (path: string) => { setOpen(false); navigate(path); };
 
@@ -139,7 +143,7 @@ export function MiniCart({ accentColor }: { accentColor?: string }) {
                       <p className="text-[12px] font-medium text-charcoal leading-tight line-clamp-1">{item.name}</p>
                       <p className="text-[12px] text-slate mt-[3px]">Qty {item.quantity}</p>
                     </div>
-                    <p className="text-[12.5px] font-bold text-carbon shrink-0">${lineTotal(item).toLocaleString()}</p>
+                    <p className="text-[12.5px] font-bold text-carbon shrink-0">{formatPrice(convert(lineTotal(item), item.currency), currency)}</p>
                   </div>
                 ))}
               </div>
@@ -153,7 +157,7 @@ export function MiniCart({ accentColor }: { accentColor?: string }) {
               <div className="p-4 border-t border-bone">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-[12px] text-slate">Subtotal</span>
-                  <span className="text-[15px] font-bold text-carbon">${subtotal.toLocaleString()}</span>
+                  <span className="text-[15px] font-bold text-carbon">{formatPrice(subtotal, currency)}</span>
                 </div>
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" className="flex-1 min-w-0 justify-center" onClick={() => goTo('/cart')}>

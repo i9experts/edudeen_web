@@ -47,13 +47,18 @@ export function effectiveAbout(stored?: AboutContent | null): Required<Omit<Abou
 export interface HomeDefaultsContext {
   /** Label of the category the hero's second button / feature block open (first admin category when none chosen). */
   featuredLabel?: string;
+  /** 'ur' = use the admin's Urdu version (homeContent.ur) of each text that has one. */
+  lang?: string;
 }
 
 const str = (v: string | undefined, d: string) => (v ? v : d);
 
 /** Stored homepage copy, else exactly the text the homepage shows when nothing is saved. */
-export function effectiveHomeContent(stored: HomeContent | null | undefined, ctx: HomeDefaultsContext = {}): Required<Omit<HomeContent, 'about' | 'legalPages'>> {
-  const s = stored ?? {};
+export function effectiveHomeContent(stored: HomeContent | null | undefined, ctx: HomeDefaultsContext = {}): Required<Omit<HomeContent, 'about' | 'legalPages' | 'statsThresholds' | 'ur'>> {
+  // Urdu visitors get the admin's Urdu text for every field that has one (blank = the English / built-in text, which the dictionary then translates).
+  const urText = ctx.lang === 'ur' ? stored?.ur ?? {} : {};
+  const s: HomeContent = { ...(stored ?? {}) };
+  for (const k of Object.keys(urText) as (keyof typeof urText)[]) { const v = urText[k]; if (typeof v === 'string' && v.trim()) (s as Record<string, unknown>)[k] = v; }
   const f = ctx.featuredLabel;
   return {
     heroEyebrow: str(s.heroEyebrow, 'For curious minds & caring hearts'),
@@ -75,10 +80,9 @@ export function effectiveHomeContent(stored: HomeContent | null | undefined, ctx
     creatorHeading: str(s.creatorHeading, 'Your knowledge can go further.'),
     creatorText: str(s.creatorText, 'Give your teaching ideas a home in the Edudeen Creator Network.'),
     creatorLinkLabel: str(s.creatorLinkLabel, 'Start selling on Edudeen →'),
-    googlePlayUrl: str(s.googlePlayUrl, GOOGLE_PLAY_DEFAULT),
+    // Store links: blank = not published yet (badges say Coming soon). Only public links are ever shown.
+    googlePlayUrl: s.googlePlayUrl ?? '',
     appStoreUrl: s.appStoreUrl ?? '',
   };
 }
 
-// Same link AppPromoParts falls back to (kept here to avoid a UI import cycle; AppPromoParts imports it from here).
-export const GOOGLE_PLAY_DEFAULT = 'https://play.google.com/apps/internaltest/4699462862361720775';

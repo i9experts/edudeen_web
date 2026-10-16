@@ -106,8 +106,8 @@ export function StoreFeatureCard({ store, onClick, className }: {
           <p className="text-[14px] font-semibold text-carbon leading-tight truncate">{store.name}</p>
           {isVerified && <BadgeCheck size={14} className="text-info fill-info/15 shrink-0" />}
         </div>
-        {/* Always reserve the line so cards without a description stay the same height. */}
-        <p className="text-[12px] text-slate leading-snug line-clamp-1 mb-[10px] min-h-[1.375em]">{store.description || ' '}</p>
+        {/* The bio line only exists when the store wrote one - never an empty gap. */}
+        {store.description?.trim() ? <p className="text-[12px] text-slate leading-snug line-clamp-1 mb-[10px]">{store.description.trim()}</p> : <div className="mb-[10px]" />}
 
         <div className="flex items-center gap-3 pt-[10px] border-t border-bone">
           <span className="flex items-center gap-[4px] text-[12px] text-charcoal font-medium">

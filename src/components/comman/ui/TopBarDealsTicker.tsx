@@ -5,6 +5,7 @@ import { Zap, Tag, Crown, ChevronRight } from 'lucide-react';
 import { useTopBarDeals, timeLeft } from '@/hooks/useTopBarDeals';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 import { formatMoney } from '@/utils/currency';
+import { upToLabel } from '@/utils/saleMath';
 import { untilStart } from './EarlyAccessChip';
 import { usePremiumDeals } from '@/hooks/usePremiumDeals';
 
@@ -34,17 +35,18 @@ export function TopBarDealsTicker({ className }: { className?: string }) {
   const [paused, setPaused] = useState(false);
   const [now, setNow] = useState(() => Date.now());
 
-  // Countdown refresh — once a minute is enough for "2d 4h" style labels.
+  // Countdown refresh - every second (under 24h the shared format is a running HH:MM:SS).
   useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 60_000);
+    const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
 
   const items = useMemo<TickerItem[]>(() => {
     if (!deals) return [];
     const sales = deals.campaigns.map<TickerItem>(c => {
+      // "Up to X% off" is the REAL biggest discount among the items on sale (never the number typed into the campaign).
       const off = c.discountType === 'percentage' && c.discountValue != null
-        ? `Up to ${c.discountValue}% off`
+        ? upToLabel(deals.maxPct)
         : c.discountType === 'fixed' && c.discountValue != null
           ? `${formatMoney(Math.round(convert(c.discountValue, c.currency ?? 'USD')), currency)} off`
           : null;

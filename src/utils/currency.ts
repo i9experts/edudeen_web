@@ -4,6 +4,8 @@
 // hardcode a single currency across the whole app. Falls back to the code
 // itself (e.g. an unrecognized ISO code) so nothing silently disappears.
 
+import { formatPrice, formatPriceCompact } from './formatPrice';
+
 const CURRENCY_SYMBOLS: Record<string, string> = {
   USD: '$',
   PKR: 'Rs',
@@ -20,22 +22,15 @@ export function currencySymbol(code?: string | null): string {
   return CURRENCY_SYMBOLS[code.toUpperCase()] ?? code;
 }
 
-/** Formats an amount with the correct symbol for a given currency code — the one money format
- *  the app uses: symbol, a space, thousands separators, and no ".00" on whole amounts. */
-export function formatMoney(amount: number | null | undefined, code?: string | null): string {
-  if (amount == null || Number.isNaN(amount)) return '—';
-  const sign = amount < 0 ? '-' : '';
-  return `${sign}${currencySymbol(code)} ${Math.abs(amount).toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+/** Formats an amount with the correct symbol for a given currency code - delegates to the one shared
+ *  formatter (`formatPrice`): USD "$12.50", PKR "Rs 1,440". */
+export function formatMoney(amount: number | null | undefined, code?: string | null, locale?: string): string {
+  return formatPrice(amount, code, locale);
 }
 
-/** Same format, abbreviated (K/M) for tight spaces — "Rs 8K", "Rs 1.2M". The symbol always
- *  follows the currency code, so a PKR total never renders with a $ prefix. */
-export function formatMoneyCompact(amount: number | null | undefined, code?: string | null): string {
-  if (amount == null || Number.isNaN(amount)) return '—';
-  const abs = Math.abs(amount);
-  const sign = amount < 0 ? '-' : '';
-  const short = (n: number) => String(Number(n.toFixed(1)));
-  if (abs >= 1_000_000) return `${sign}${currencySymbol(code)} ${short(abs / 1_000_000)}M`;
-  if (abs >= 1_000) return `${sign}${currencySymbol(code)} ${short(abs / 1_000)}K`;
-  return formatMoney(amount, code);
+/** Same format, abbreviated (K/M) for tight spaces - "Rs 8K", "$1.2M". */
+export function formatMoneyCompact(amount: number | null | undefined, code?: string | null, locale?: string): string {
+  return formatPriceCompact(amount, code, locale);
 }
+
+export { formatPrice, formatPriceCompact, formatAmount, currencyDecimals } from './formatPrice';

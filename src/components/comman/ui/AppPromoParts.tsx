@@ -3,28 +3,35 @@ import { usePublicPlatformConfig } from '@/hooks/usePublicPlatformConfig';
 import { Sparkles } from 'lucide-react';
 import { clsx } from 'clsx';
 import QRCode from 'qrcode';
-import { GOOGLE_PLAY_DEFAULT } from '@/components/admin-edit/homeDefaults';
+import { ENV_APP_STORE_URL, ENV_GOOGLE_PLAY_URL, publicStoreUrl } from '@/utils/storeLinks';
 
-// Real Android build — internal testing track. No iOS build published yet,
-// so every App Store badge across the app stays the decorative/non-clickable
-// chip while every Google Play badge/QR links here for real.
-export const GOOGLE_PLAY_URL = GOOGLE_PLAY_DEFAULT;
+// Store links come ONLY from the admin config (Platform Config -> Homepage content) or the
+// VITE_GOOGLE_PLAY_URL / VITE_APP_STORE_URL env fallbacks, and only when they are PUBLIC https links
+// (internal-test / TestFlight links are ignored). With no link the badges are non-clickable "Coming soon"
+// chips and the QR block is hidden.
 
-/** The Play Store link — admin-editable (Admin → Platform Config → Homepage content); falls back to the built-in link. */
+/** The public App Store link, or '' (= coming soon). */
 export function useAppStoreUrl(): string {
   const { config } = usePublicPlatformConfig();
-  return config?.homeContent?.appStoreUrl || '';
+  return publicStoreUrl(config?.homeContent?.appStoreUrl) || ENV_APP_STORE_URL;
 }
 
+/** The public Google Play link, or '' (= coming soon). */
 export function useGooglePlayUrl(): string {
   const { config } = usePublicPlatformConfig();
-  return config?.homeContent?.googlePlayUrl || GOOGLE_PLAY_URL;
+  return publicStoreUrl(config?.homeContent?.googlePlayUrl) || ENV_GOOGLE_PLAY_URL;
+}
+
+/** True once at least one public store link exists (QR / "Open in app" prompts need it). */
+export function useHasAppLink(): boolean {
+  return !!useGooglePlayUrl() || !!useAppStoreUrl();
 }
 
 export function useAppQrDataUrl(value: string) {
   const [dataUrl, setDataUrl] = useState<string | null>(null);
   useEffect(() => {
     let cancelled = false;
+    if (!value) { setDataUrl(null); return; }
     QRCode.toDataURL(value, { margin: 1, width: 240, color: { dark: '#141413', light: '#ffffff' } })
       .then(url => { if (!cancelled) setDataUrl(url); })
       .catch(() => { /* non-critical — falls back to a blank white card */ });
@@ -39,11 +46,15 @@ export function useAppQrDataUrl(value: string) {
 // surrounding layout.
 export function RealAppQr({ size = 74, className }: { size?: number; className?: string }) {
   const GOOGLE_PLAY_URL = useGooglePlayUrl();
-  const dataUrl = useAppQrDataUrl(GOOGLE_PLAY_URL);
+  const appStoreUrl = useAppStoreUrl();
+  const target = GOOGLE_PLAY_URL || appStoreUrl;
+  const dataUrl = useAppQrDataUrl(target);
   const inner = size - 18;
+  // No public link yet: no QR at all (never a blank white card).
+  if (!target) return null;
   return (
     <a
-      href={GOOGLE_PLAY_URL}
+      href={target}
       target="_blank"
       rel="noreferrer"
       aria-label="Scan or click to download the Edudeen Android app"
@@ -91,10 +102,12 @@ export function GooglePlayGlyph({ size = 15, className }: { size?: number; class
 export function StoreBadgeChip({ platform, compact = false, onLight = false }: { platform: 'ios' | 'android'; compact?: boolean; onLight?: boolean }) {
   const isIos = platform === 'ios';
   const appStoreUrl = useAppStoreUrl();
+  const playUrl = useGooglePlayUrl();
+  const url = isIos ? appStoreUrl : playUrl;
   const chip = (
     <div
       role="img"
-      aria-label={isIos ? 'Download on the App Store' : 'Get it on Google Play'}
+      aria-label={isIos ? (url ? 'Download on the App Store' : 'App Store - coming soon') : (url ? 'Get it on Google Play' : 'Google Play - coming soon')}
       className={clsx(
         'flex items-center gap-[7px] rounded-[9px] border select-none transition-colors',
         onLight ? 'border-carbon bg-carbon hover:bg-charcoal' : 'border-white/20 bg-white/10 backdrop-blur-sm hover:bg-white/[0.16]',
@@ -108,25 +121,28 @@ export function StoreBadgeChip({ platform, compact = false, onLight = false }: {
         <p className="text-[12px] font-semibold text-white leading-none">{isIos ? 'App Store' : 'Google Play'}</p>
       ) : (
         <div className="text-start leading-none">
-          <p className="text-[12px] text-white/60 mb-[2px]">{isIos ? 'Download on the' : 'GET IT ON'}</p>
+          <p className="text-[12px] text-white/60 mb-[2px]">{!url ? 'Coming soon on' : isIos ? 'Download on the' : 'GET IT ON'}</p>
           <p className="text-[12.5px] font-bold text-white leading-none">{isIos ? 'App Store' : 'Google Play'}</p>
         </div>
       )}
     </div>
   );
-  // Becomes a real link once the admin adds an App Store URL.
-  return isIos && appStoreUrl ? <a href={appStoreUrl} target="_blank" rel="noreferrer" className="no-underline">{chip}</a> : chip;
+  // A real link only once a public store URL exists; until then it is a plain, non-clickable chip.
+  return url ? <a href={url} target="_blank" rel="noreferrer" className="no-underline rounded-[9px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange">{chip}</a> : chip;
 }
 
 // No published rating/download count to show yet (Android is internal-test
 // only) — this deliberately does NOT render a star rating or a download
 // count, both of which would be fabricated numbers with no backing data.
 // `label` lets a caller supply different real, honest copy instead.
-export function RatingRow({ label = 'Available now on Android — iOS coming soon' }: { label?: string }) {
+export function RatingRow({ label }: { label?: string }) {
+  const play = useGooglePlayUrl();
+  const ios = useAppStoreUrl();
+  const text = label ?? (play && ios ? 'Available on Android and iOS' : play ? 'Available now on Android — iOS coming soon' : ios ? 'Available now on iOS' : 'Mobile app coming soon');
   return (
     <div className="flex items-center gap-1.5">
       <Sparkles size={12} className="text-brand-orange" />
-      <span className="text-[12px] text-white/60">{label}</span>
+      <span className="text-[12px] text-white/60">{text}</span>
     </div>
   );
 }

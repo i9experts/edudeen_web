@@ -1,5 +1,6 @@
 import { Truck } from 'lucide-react';
-import { formatMoney } from '@/utils/currency';
+import { formatPrice } from '@/utils/formatPrice';
+import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 import { useShippingZones } from '@/hooks/shipping/useShippingZones';
 import { shippingZoneLabel } from '@/api/services/shipping';
 
@@ -10,6 +11,9 @@ import { shippingZoneLabel } from '@/api/services/shipping';
  */
 export function ShippingZonesSummary({ sellerName }: { sellerName?: string | null }) {
   const { zones, loading, error } = useShippingZones();
+  // Zone prices are stored in PKR; show them in the buyer's chosen currency.
+  const { currency, convertBetween } = useCurrencyPreference();
+  const money = (pkr: number) => formatPrice(convertBetween(pkr, 'PKR', currency), currency);
   const live = zones.filter(z => !z.isDelete && z.status !== 'inactive');
 
   let body: React.ReactNode;
@@ -20,13 +24,13 @@ export function ShippingZonesSummary({ sellerName }: { sellerName?: string | nul
     const cheapest = Math.min(...live.map(z => z.shippingPrice));
     body = (
       <>
-        <span>{cheapest > 0 ? `From Rs ${cheapest.toLocaleString()}` : 'Free delivery available'} · exact cost for your address at checkout</span>
+        <span>{cheapest > 0 ? `From ${money(cheapest)}` : 'Free delivery available'} · exact cost for your address at checkout</span>
         <ul className="list-none p-0 m-0 mt-1.5 flex flex-col gap-0.5">
           {live.slice(0, 6).map(z => (
             <li key={z._id} className="flex justify-between gap-3">
               <span className="truncate">{shippingZoneLabel(z)}</span>
               <span className="shrink-0 tabular-nums text-charcoal">
-                {z.shippingPrice > 0 ? formatMoney(z.shippingPrice, 'PKR') : 'Free'}{z.estimatedDeliveryTime ? ` · ${z.estimatedDeliveryTime}` : ''}
+                {z.shippingPrice > 0 ? money(z.shippingPrice) : 'Free'}{z.estimatedDeliveryTime ? ` · ${z.estimatedDeliveryTime}` : ''}
               </span>
             </li>
           ))}

@@ -9,7 +9,8 @@ import { ProductCoverFallback } from './ProductCoverFallback';
 import type { MarketplaceProduct } from '@/api/services/marketplace';
 import { useProductPreview } from '@/hooks/marketplace/useProductPreview';
 import { CompareToggle } from './CompareToggle';
-import { currencySymbol, formatMoney } from '@/utils/currency';
+import { formatMoney } from '@/utils/currency';
+import { formatPrice } from '@/utils/formatPrice';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 
 // Wraps the substring of `text` matching `query` in <mark> — same idea as
@@ -216,7 +217,6 @@ export const ProductCard = memo(function ProductCard({ product, onClick, onAddTo
   const lowestPrice = nativeLowestPrice != null ? convert(nativeLowestPrice, nativeCurrency) : null;
   const compareAt = nativeCompareAt != null ? convert(nativeCompareAt, nativeCurrency) : null;
   const subscriberPrice = nativeSubscriberPrice != null ? convert(nativeSubscriberPrice, nativeCurrency) : undefined;
-  const priceSymbol = currencySymbol(displayCurrency);
   // A running platform sale is part of the price shown: the SERVER computes it per variant (campaignPrice, from the list
   // price, only when cheaper than the seller's price), so the card, product page, cart and checkout agree.
   const nativeCampaignLowest = variants.reduce<number | null>((m, v) => (typeof v.campaignPrice === 'number' && (m == null || v.campaignPrice < m) ? v.campaignPrice : m), null);
@@ -250,7 +250,7 @@ export const ProductCard = memo(function ProductCard({ product, onClick, onAddTo
   const campaignAmount = campaign?.discountType && campaign.discountValue != null
     ? (campaign.discountType === 'percentage'
         ? `${campaign.discountValue}%`
-        : `${priceSymbol}${convert(campaign.discountValue, campaign.currency ?? 'USD')}`)
+        : formatPrice(convert(campaign.discountValue, campaign.currency ?? 'USD'), displayCurrency))
     : null;
 
   return (

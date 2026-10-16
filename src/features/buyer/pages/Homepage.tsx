@@ -12,6 +12,7 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { X } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useIsBuyer } from '@/hooks/auth/useIsBuyer';
+import { useLanguage } from '@/contexts/languageCtx';
 import { useEdgeHoverScroll } from '@/hooks/useEdgeHoverScroll';
 import { useTopBarDeals } from '@/hooks/useTopBarDeals';
 import { usePremiumDeals } from '@/hooks/usePremiumDeals';
@@ -38,20 +39,18 @@ import {
 import { SectionHead, sectionLinkClass } from '@/components/comman/marketplace/SectionHead';
 import { Star, Quote, BadgeCheck, Zap, Crown, Shield, CreditCard, Headset, RefreshCcw } from 'lucide-react';
 import { apiGetTestimonials, type Testimonial } from '@/api/services/testimonials';
-import { apiGetPlatformStats, apiGetTopStores, type PlatformStats, type PublicStoreListItem } from '@/api/services/store';
+import { apiGetTopStores, type PublicStoreListItem } from '@/api/services/store';
+import { PlatformStatsSection } from '@/features/buyer/components/PlatformStatsSection';
 import { apiGetCategoryTree, type CategoryNode } from '@/api/services/categories';
 import { EDUCATION_LEVELS } from '@/api/services/product';
-import { apiGetAllProducts, type MarketplaceProduct, type MarketplaceSortBy } from '@/api/services/marketplace';
+import { type MarketplaceProduct, type MarketplaceSortBy } from '@/api/services/marketplace';
+import { productSalePct } from '@/utils/saleMath';
 import { apiGetHomeShelves, type CuratedShelf } from '@/api/services/classroom';
 import { apiBrowseProducts } from '@/api/services/marketplace';
 import { RevealStagger } from '@/components/comman/motion/Reveal';
-import { AnimatedCounter } from '@/components/comman/motion/AnimatedCounter';
 import heroImage from '@/assets/learning-hero.jpg';
 import { PickedForChildRail } from '@/features/buyer/components/PickedForChildRail';
 import { ShoppingForBar } from '@/features/buyer/components/ShoppingForBar';
-
-const compactNumber   = new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 });
-const compactCurrency = new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1, style: 'currency', currency: 'USD' });
 
 // Text lives in admin-edit/homeDefaults.ts (shared with the inline editor).
 const TRUST_ITEMS = [{ Icon: Shield }, { Icon: CreditCard }, { Icon: RefreshCcw }, { Icon: Headset }];
@@ -89,6 +88,11 @@ function flattenCategories(nodes: CategoryNode[], out: CategoryNode[] = []): Cat
 }
 
 const sameRange = (a: [number, number], b: [number, number]) => a[0] === b[0] && a[1] === b[1];
+
+/** Mirrors the API rule for the Featured sellers rail (logo, banner, bio of 30+ characters, 5+ published items) in case an older API answers. */
+function isFeaturedSeller(s: PublicStoreListItem): boolean {
+  return !!s.logo && !!s.coverImage && (s.description ?? '').trim().length >= 30 && (s.productCount ?? 0) >= 5;
+}
 
 // Category names are left out on purpose: a broad category like "Islamic &
 // Educational Resources" would make every product match every subject.
@@ -165,7 +169,7 @@ function HomeLanding() {
 
   useEffect(() => {
     let cancelled = false;
-    apiGetTopStores(10).then(res => { if (!cancelled) setTopStores(res.data?.stores ?? []); }).catch(() => {});
+    apiGetTopStores(10).then(res => { if (!cancelled) setTopStores((res.data?.stores ?? []).filter(isFeaturedSeller)); }).catch(() => {});
     return () => { cancelled = true; };
   }, []);
 
@@ -195,30 +199,10 @@ function HomeLanding() {
   //    Marketplace page's own rails use ──
   const { products: featuredPool, loading: poolLoading } = useProductsByCategory(1, 24);
 
-  // Deals are ranked over a much bigger slice of the catalogue than the first page (the old pool of 24
-  // missed higher discounts further down). Three pages of 50 are fetched once, in parallel.
-  const [dealsPool, setDealsPool] = useState<MarketplaceProduct[]>([]);
-  useEffect(() => {
-    let cancelled = false;
-    Promise.all([1, 2, 3].map(pg => apiGetAllProducts(pg, 50).then(r => r.data?.products ?? []).catch(() => [] as MarketplaceProduct[])))
-      .then(pages => { if (!cancelled) setDealsPool(pages.flat()); });
-    return () => { cancelled = true; };
-  }, []);
-
-  const normalFlashDeals = (dealsPool.length > 0 ? dealsPool : featuredPool)
-    .map(p => {
-      const dv = (p.variants ?? []).find(v => v.isDefault) ?? p.variants?.[0];
-      const price = dv?.price ?? 0;
-      const compareAt = dv?.compareAtPrice != null && dv.compareAtPrice > price ? dv.compareAtPrice : null;
-      // A running platform sale lowers the price further: the server computes it per variant (campaignPrice).
-      const salePrice = typeof dv?.campaignPrice === 'number' ? dv.campaignPrice : null;
-      const effective = salePrice ?? price;
-      const was = salePrice != null ? price : compareAt;
-      const pct = was != null && was > effective ? Math.round((1 - effective / was) * 100) : 0;
-      return { product: p, pct };
-    })
-    .filter(x => x.pct > 0)
-    .sort((a, b) => b.pct - a.pct)
+  // Deals are ranked over a much bigger slice of the catalogue than the first page. The ranking is shared with
+  // the top-bar ticker (useTopBarDeals: one fetch, one maths helper), so every "Up to X% off" agrees.
+  const normalFlashDeals = (topBarDeals?.allDeals.length ? topBarDeals.allDeals : featuredPool.map(p => ({ product: p, pct: productSalePct(p) })).filter(x => x.pct > 0).sort((a, b) => b.pct - a.pct))
+    .filter(x => !!x.product.name?.trim() && (x.product.variants ?? []).length > 0)
     .slice(0, 10);
   // Premium members: the same slot shows the biggest member discounts (Premium Deals) instead of the seller / platform flash sale.
   const { deals: premiumDeals } = usePremiumDeals();
@@ -262,7 +246,8 @@ function HomeLanding() {
     return (want ? shopTabs.find(t => t.label.toLowerCase().includes(want)) : undefined) ?? shopTabs[0] ?? null;
   }, [shopTabs, hc.featuredCategory]);
   // What the page shows: stored text, else the built-in text. The inline editors start from this same object.
-  const eff = useMemo(() => effectiveHomeContent(hc, { featuredLabel: featuredTab?.label }), [hc, featuredTab?.label]);
+  const { lang } = useLanguage();
+  const eff = useMemo(() => effectiveHomeContent(hc, { featuredLabel: featuredTab?.label, lang }), [hc, featuredTab?.label, lang]);
 
   // A tab id, or `cat-<id>` for a subcategory picked from the mega menu.
   const subjectTab: ShopTab | null = useMemo(() => {
@@ -443,8 +428,7 @@ function HomeLanding() {
   // ── Platform stats + reviews (non-critical, self-hiding) ──
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [testimonialsLoading, setTestimonialsLoading] = useState(true);
-  const [stats, setStats] = useState<PlatformStats | null>(null);
-  const [statsLoading, setStatsLoading] = useState(true);
+
 
   useEffect(() => {
     let cancelled = false;
@@ -455,21 +439,6 @@ function HomeLanding() {
     return () => { cancelled = true; };
   }, []);
 
-  useEffect(() => {
-    let cancelled = false;
-    apiGetPlatformStats()
-      .then(res => { if (!cancelled) setStats(res.data); })
-      .catch(() => {})
-      .finally(() => { if (!cancelled) setStatsLoading(false); });
-    return () => { cancelled = true; };
-  }, []);
-
-  const statItems = stats ? [
-    { value: stats.sellersCount ?? 0, format: (n: number) => `${compactNumber.format(n)}+`, label: 'Active Sellers' },
-    { value: stats.gmv ?? 0,          format: (n: number) => `${compactCurrency.format(n)}+`, label: 'GMV Processed' },
-    { value: stats.buyersCount ?? 0,  format: (n: number) => `${compactNumber.format(n)}+`,  label: 'Registered Buyers' },
-    { value: stats.ratingCount > 0 ? stats.avgRating : null, format: (n: number) => `${n.toFixed(1)} ★`, label: 'Average Rating' },
-  ] : [];
 
 
   return (
@@ -570,7 +539,7 @@ function HomeLanding() {
               action={countdown ? (
                 <span className="shrink-0 flex items-center gap-[6px] text-[12px] sm:text-[13px] font-semibold text-slate">
                   <span className="hidden sm:inline">Ends in</span>
-                  <span className="tabular-nums text-error font-bold">{Number(countdown.h) >= 24 ? `${Math.floor(Number(countdown.h) / 24)}d ${Number(countdown.h) % 24}h` : `${countdown.h}:${countdown.m}:${countdown.s}`}</span>
+                  <span className="tabular-nums text-error font-bold">{countdown.text}</span>
                 </span>
               ) : earlyCampaign && !premiumDeals ? <EarlyAccessChip startDate={earlyCampaign.startDate} /> : undefined}
             />
@@ -831,28 +800,8 @@ function HomeLanding() {
           <EditableHomeSection section="trust" defaults={eff} label="trust items"><TrustServiceStrip variant="card" items={trustItems} /></EditableHomeSection>
         </section>
 
-        {/* ── Platform stats — self-hides until there's real data ── */}
-        {(statsLoading || statItems.length > 0) && (
-          <section className="mb-12 rounded-[14px] border border-bone px-5 py-8 md:py-10">
-            <RevealStagger className="grid grid-cols-2 sm:grid-cols-4 gap-6 justify-items-center" step={0.08} y={14}>
-              {statsLoading
-                ? Array.from({ length: 4 }).map((_, i) => (
-                    <div key={i} className="text-center">
-                      <SkeletonBox width={70} height={32} className="mb-2 mx-auto" />
-                      <SkeletonBox width={90} height={13} className="mx-auto" />
-                    </div>
-                  ))
-                : statItems.map(s => (
-                    <div key={s.label} className="text-center">
-                      {s.value === null
-                        ? <p className="block font-serif text-[34px] text-carbon">—</p>
-                        : <AnimatedCounter value={s.value} format={s.format} className="block font-serif text-[34px] text-carbon" />}
-                      <p className="text-[13px] text-slate mt-1">{s.label}</p>
-                    </div>
-                  ))}
-            </RevealStagger>
-          </section>
-        )}
+        {/* ── Platform stats - the single stats block; real numbers only past the admin's thresholds ── */}
+        <PlatformStatsSection />
 
         {/* ── Real reviews ── */}
         {(testimonialsLoading || testimonials.length > 0) && (

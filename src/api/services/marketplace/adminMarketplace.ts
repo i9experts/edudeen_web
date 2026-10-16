@@ -37,6 +37,8 @@ export interface MarketplaceListingRow {
   purchaseCount: number;
   status: string;
   isFeatured: boolean;
+  /** QA test listing - hidden from every public page while true. */
+  isTest?: boolean;
   /** The reviewer's note (set when a listing was sent back). */
   reviewNote?: string | null;
   createdAt?: string;
@@ -163,6 +165,11 @@ export function apiGetMarketplaceListings(query: MarketplaceListingQuery = {}) {
 
 export function apiSetListingFeatured(id: string, isFeatured: boolean) {
   return client.patch<never, ApiResponse<null>>(ENDPOINTS.MARKETPLACE.ADMIN.FEATURE(id), { isFeatured });
+}
+
+/** Mark / unmark a listing as a QA test listing (hidden from the public while marked). */
+export function apiSetListingTest(id: string, isTest: boolean) {
+  return client.patch<never, ApiResponse<null>>(ENDPOINTS.MARKETPLACE.ADMIN.TEST(id), { isTest });
 }
 
 export function apiRemoveListing(id: string) {

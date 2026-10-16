@@ -4,7 +4,8 @@ import { clsx } from 'clsx';
 import { ArrowRight, Zap, Gift } from 'lucide-react';
 import { apiGetPublicActiveCampaigns, type PublicCampaign } from '@/api/services/marketing/publicCampaigns';
 import { cloudinaryUrl, cloudinarySrcSet } from '@/utils/cloudinaryImage';
-import { currencySymbol } from '@/utils/currency';
+import { formatPrice } from '@/utils/formatPrice';
+import { useTopBarDeals } from '@/hooks/useTopBarDeals';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 import { EarlyAccessChip } from './EarlyAccessChip';
 
@@ -23,6 +24,8 @@ export function useCountdown(endDate: string) {
   const totalSeconds = Math.floor(clamped / 1000);
   return {
     expired: clamped <= 0,
+    /** 24h or more left: boxes show days / hours / minutes, never a wrapping daily HH:MM:SS. */
+    long: clamped >= 86_400_000,
     days:    Math.floor(totalSeconds / 86400),
     hours:   Math.floor((totalSeconds % 86400) / 3600),
     minutes: Math.floor((totalSeconds % 3600) / 60),
@@ -94,11 +97,34 @@ function CampaignImage({ src, fit = 'contain', rounded = true }: { src: string |
 // Remounted via a `key` at the call site each time `value` changes so the
 // existing `countdown-tick` keyframe (index.css) replays on every real tick
 // instead of being a static digit.
-function MiniCountdownUnit({ value }: { value: number }) {
+function MiniCountdownUnit({ value, suffix }: { value: number; suffix?: string }) {
   return (
-    <div className="countdown-tick flex h-[24px] w-[24px] items-center justify-center rounded-[7px] border border-bone bg-white text-[12px] font-bold tabular-nums leading-none text-carbon sm:h-[26px] sm:w-[26px]">
-      {String(value).padStart(2, '0')}
+    <div className="countdown-tick flex h-[24px] min-w-[24px] items-center justify-center rounded-[7px] border border-bone bg-white px-[3px] text-[12px] font-bold tabular-nums leading-none text-carbon sm:h-[26px] sm:min-w-[26px]">
+      {String(value).padStart(2, '0')}{suffix}
     </div>
+  );
+}
+
+/** The sale timer in the ONE shared format (utils/countdown.ts): 24h or more -> "15d 12h 03m" boxes, under 24h -> HH:MM:SS boxes. */
+function CountdownBoxes({ countdown }: { countdown: ReturnType<typeof useCountdown> }) {
+  const sep = <span className="pb-[1px] text-[12px] font-bold leading-none text-white/50">:</span>;
+  if (countdown.long) {
+    return (
+      <>
+        <MiniCountdownUnit key={`d${countdown.days}`} value={countdown.days} suffix="d" />
+        <MiniCountdownUnit key={`h${countdown.hours}`} value={countdown.hours} suffix="h" />
+        <MiniCountdownUnit key={`m${countdown.minutes}`} value={countdown.minutes} suffix="m" />
+      </>
+    );
+  }
+  return (
+    <>
+      <MiniCountdownUnit key={`h${countdown.hours}`} value={countdown.hours} />
+      {sep}
+      <MiniCountdownUnit key={`m${countdown.minutes}`} value={countdown.minutes} />
+      {sep}
+      <MiniCountdownUnit key={`s${countdown.seconds}`} value={countdown.seconds} />
+    </>
   );
 }
 
@@ -178,6 +204,7 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
   }, [campaigns.length, activeIndex]);
 
   const { currency: displayCurrency, convert } = useCurrencyPreference();
+  const deals = useTopBarDeals();
   const campaign = campaigns[activeIndex] ?? null;
   const countdown = useCountdown(campaign?.endDate ?? '');
 
@@ -191,13 +218,15 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
 
   if (!campaign) return null;
 
-  const hasPercentOff = campaign.discountType === 'percentage' && campaign.discountValue != null;
+  // "Up to X% off" is the REAL biggest discount among the items on sale, never the number typed into the campaign.
+  const realMaxPct = deals?.maxPct ?? 0;
+  const hasPercentOff = campaign.discountType === 'percentage' && realMaxPct > 0;
   const hasFixedOff = campaign.discountType === 'fixed' && campaign.discountValue != null;
   const displayedFixedOff = hasFixedOff ? convert(campaign.discountValue as number, campaign.currency ?? 'USD') : null;
   const discountHeadline = hasPercentOff
-    ? `UP TO ${campaign.discountValue}% OFF`
+    ? `UP TO ${realMaxPct}% OFF`
     : hasFixedOff
-      ? `${currencySymbol(displayCurrency)}${displayedFixedOff} OFF`
+      ? `${formatPrice(displayedFixedOff, displayCurrency)} OFF`
       : 'SPECIAL DEALS';
 
   const showStoreCount = campaign.sponsorType === 'platform' || campaign.storeCount >= MIN_STORE_COUNT_TO_SHOW;
@@ -293,7 +322,7 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
                 </div>
                 {hasPercentOff && (
                   <span className="absolute end-1 top-1 sm:end-auto sm:start-1 z-[1] inline-flex items-center rounded-full bg-brand-deep-orange px-[8px] py-[3px] text-[12px] font-bold leading-none text-white">
-                    -{campaign.discountValue}% OFF
+                    -{realMaxPct}% OFF
                   </span>
                 )}
 
@@ -333,11 +362,7 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
                     <div className="flex flex-col items-center gap-[3px]">
                       <span className="text-[12px] font-bold uppercase tracking-[0.1em] text-white/70">Ends In</span>
                       <div className="flex items-center gap-[3px]">
-                        <MiniCountdownUnit key={`h${countdown.hours}`} value={countdown.hours} />
-                        <span className="pb-[1px] text-[12px] font-bold leading-none text-white/50">:</span>
-                        <MiniCountdownUnit key={`m${countdown.minutes}`} value={countdown.minutes} />
-                        <span className="pb-[1px] text-[12px] font-bold leading-none text-white/50">:</span>
-                        <MiniCountdownUnit key={`s${countdown.seconds}`} value={countdown.seconds} />
+                        <CountdownBoxes countdown={countdown} />
                       </div>
                     </div>
                     <span className="inline-flex shrink-0 items-center gap-[6px] whitespace-nowrap rounded-full bg-brand-orange px-4 py-[8px] text-[12px] font-bold text-white transition-all duration-200 ease-out group-hover:-translate-y-[1px] group-hover:bg-brand-deep-orange group-active:translate-y-0">
@@ -371,11 +396,7 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
                 <div className="flex flex-col items-center gap-[3px]">
                   <span className="text-[12px] font-bold uppercase tracking-[0.1em] text-white/70">Ends In</span>
                   <div className="flex items-center gap-[3px]">
-                    <MiniCountdownUnit key={`h${countdown.hours}`} value={countdown.hours} />
-                    <span className="pb-[1px] text-[12px] font-bold leading-none text-white/50">:</span>
-                    <MiniCountdownUnit key={`m${countdown.minutes}`} value={countdown.minutes} />
-                    <span className="pb-[1px] text-[12px] font-bold leading-none text-white/50">:</span>
-                    <MiniCountdownUnit key={`s${countdown.seconds}`} value={countdown.seconds} />
+                    <CountdownBoxes countdown={countdown} />
                   </div>
                 </div>
                 <span className="inline-flex shrink-0 items-center gap-[6px] whitespace-nowrap rounded-full bg-brand-orange px-4 py-[8px] text-[12px] font-bold text-white transition-all duration-200 ease-out group-hover:-translate-y-[1px] group-hover:bg-brand-deep-orange group-active:translate-y-0">
@@ -398,7 +419,7 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
             <CampaignImage src={campaign.bannerImage} fit="cover" />
             {hasPercentOff && (
               <span className="absolute top-2 start-2 -rotate-6 flex flex-col items-center justify-center size-[42px] rounded-full bg-error text-white border-2 border-white/40 z-[1]">
-                <span className="text-[12px] font-bold leading-none">-{campaign.discountValue}%</span>
+                <span className="text-[12px] font-bold leading-none">-{realMaxPct}%</span>
                 <span className="text-[5px] font-semibold uppercase tracking-wide leading-none mt-[1px]">off</span>
               </span>
             )}
@@ -436,11 +457,7 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
             {/* RIGHT — countdown + CTA on one row/column pair. */}
             <div className="flex shrink-0 items-center justify-between gap-4 lg:flex-col lg:items-end lg:justify-center lg:gap-[8px]">
               <div className="countdown-pulse flex items-center gap-[4px]" aria-label="Time left">
-                <MiniCountdownUnit key={`h${countdown.hours}`} value={countdown.hours} />
-                <span className="pb-[1px] text-[12px] font-bold leading-none text-white/60">:</span>
-                <MiniCountdownUnit key={`m${countdown.minutes}`} value={countdown.minutes} />
-                <span className="pb-[1px] text-[12px] font-bold leading-none text-white/60">:</span>
-                <MiniCountdownUnit key={`s${countdown.seconds}`} value={countdown.seconds} />
+                <CountdownBoxes countdown={countdown} />
               </div>
               <span className="inline-flex shrink-0 items-center gap-[6px] whitespace-nowrap rounded-full bg-white px-5 py-[8px] text-[13px] font-bold text-brand-deep-orange shadow-sm transition-[background-color,transform] duration-150 group-hover:bg-cream group-hover:scale-[1.03]">
                 Shop the sale <ArrowRight size={13} className="transition-transform duration-150 group-hover:translate-x-0.5" />

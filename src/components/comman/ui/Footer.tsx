@@ -119,41 +119,33 @@ const SOCIALS: { key: SocialNetwork; label: string; Glyph: () => ReactElement }[
   { key: 'linkedin',  label: 'LinkedIn',  Glyph: LinkedinGlyph },
 ];
 
-// Android links to the real Play Store listing; there's no iOS app yet, so
-// that badge says so instead of pretending to be a link.
+// Each badge links only to a public store URL (admin config / env); until one exists it is a non-clickable "Coming soon" badge.
 function AppBadge({ platform }: { platform: 'ios' | 'android' }) {
   const GOOGLE_PLAY_URL = useGooglePlayUrl();
   const appStoreUrl = useAppStoreUrl();
   const isIos = platform === 'ios';
+  const url = isIos ? appStoreUrl : GOOGLE_PLAY_URL;
   const inner = (
     <>
       {isIos ? <AppleGlyph size={18} /> : <GooglePlayGlyph size={16} />}
       <span className="leading-none">
-        <span className="block text-[12px] text-white/70 tracking-[0.04em]">{isIos ? (appStoreUrl ? 'Download on the' : 'Coming soon on the') : 'GET IT ON'}</span>
+        <span className="block text-[12px] text-white/70 tracking-[0.04em]">{!url ? 'Coming soon on' : isIos ? 'Download on the' : 'GET IT ON'}</span>
         <span className="block text-[12.5px] font-bold mt-[2px]">{isIos ? 'App Store' : 'Google Play'}</span>
       </span>
     </>
   );
-  if (isIos && appStoreUrl) {
+  if (url) {
     return (
-      <a href={appStoreUrl} target="_blank" rel="noreferrer" aria-label="Download on the App Store"
+      <a href={url} target="_blank" rel="noreferrer" aria-label={isIos ? 'Download on the App Store' : 'Get it on Google Play'}
         className="flex items-center gap-2.5 h-11 px-3.5 rounded-[9px] bg-carbon text-white no-underline w-fit hover:bg-black transition-colors">
         {inner}
       </a>
     );
   }
-  if (isIos) {
-    return (
-      <div role="img" aria-label="iOS app coming soon" className="flex items-center gap-2.5 h-11 px-3.5 rounded-[9px] bg-carbon/60 text-white select-none w-fit">
-        {inner}
-      </div>
-    );
-  }
   return (
-    <a href={GOOGLE_PLAY_URL} target="_blank" rel="noreferrer" aria-label="Get it on Google Play"
-      className="flex items-center gap-2.5 h-11 px-3.5 rounded-[9px] bg-carbon text-white no-underline w-fit hover:bg-black transition-colors">
+    <div role="img" aria-label={isIos ? 'App Store - coming soon' : 'Google Play - coming soon'} className="flex items-center gap-2.5 h-11 px-3.5 rounded-[9px] bg-carbon/60 text-white select-none w-fit">
       {inner}
-    </a>
+    </div>
   );
 }
 
