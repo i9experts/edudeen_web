@@ -1,8 +1,6 @@
-import { useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
-import { UR } from '@/i18n/ur';
 import { LanguageCtx, type Lang } from './languageCtx';
-import { startUrdu, stopUrdu } from '@/i18n/domTranslator';
 
 const STORAGE_KEY = 'edudeen.lang';
 
@@ -19,13 +17,27 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>(initialLang);
   const [scoped, setScoped] = useState(true);
   const effective: Lang = scoped ? lang : 'en';
+  // The Urdu dictionary (~160 KB) is its own chunk: English visitors never download it.
+  const [dict, setDict] = useState<Record<string, string> | null>(null);
+  const translatorLoaded = useRef(false);
 
   useEffect(() => {
     const html = document.documentElement;
     html.lang = effective;
     html.dir = effective === 'ur' ? 'rtl' : 'ltr';
     html.classList.toggle('lang-ur', effective === 'ur');
-    if (effective === 'ur') startUrdu(); else stopUrdu();
+    let cancelled = false;
+    if (effective === 'ur') {
+      void Promise.all([import('@/i18n/ur'), import('@/i18n/domTranslator')]).then(([u, d]) => {
+        if (cancelled) return;
+        translatorLoaded.current = true;
+        setDict(u.UR);
+        d.startUrdu();
+      });
+    } else if (translatorLoaded.current) {
+      void import('@/i18n/domTranslator').then(d => d.stopUrdu());
+    }
+    return () => { cancelled = true; };
   }, [effective]);
 
   const setLang = useCallback((l: Lang) => {
@@ -33,7 +45,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     try { localStorage.setItem(STORAGE_KEY, l); } catch { /* private mode — still switches for this visit */ }
   }, []);
 
-  const t = useCallback((en: string) => (effective === 'ur' ? UR[en] ?? en : en), [effective]);
+  const t = useCallback((en: string) => (effective === 'ur' && dict ? dict[en] ?? en : en), [effective, dict]);
   const value = useMemo(() => ({ lang, setLang, t, setScoped }), [lang, setLang, t]);
   return <LanguageCtx.Provider value={value}>{children}</LanguageCtx.Provider>;
 }

@@ -1,12 +1,9 @@
-import { Suspense } from 'react';
+import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react';
 import { Outlet, ScrollRestoration, useLocation, useNavigation } from 'react-router-dom';
 import { ErrorBoundary } from '@/components/comman/ErrorBoundary';
 import { AuthGateModal } from '@/components/comman/ui/AuthGateModal';
 import { ToastContainer } from '@/components/comman/ui/ToastContainer';
-import { MaintenanceNotice } from '@/components/comman/ui/MaintenanceNotice';
-import { GoogleOneTapPrompt } from '@/components/comman/ui/GoogleOneTapPrompt';
 import { LanguageRouteSync } from '@/contexts/LanguageContext';
-import { AiAssistantWidget } from '@/components/ai/AiAssistantWidget';
 import { ChatWidgetGate } from '@/components/chat/ChatWidgetGate';
 import { useGlobalEdgeHoverScroll } from '@/hooks/useGlobalEdgeHoverScroll';
 import { useReferralCapture } from '@/hooks/useReferralCapture';
@@ -15,6 +12,25 @@ import { ReauthProvider } from '@/contexts/ReauthProvider';
 import { AdminEditToolbar } from '@/components/admin-edit/AdminEditToolbar';
 import { RouteMeta } from '@/components/seo/RouteMeta';
 import { SkipLink } from '@/components/seo/SkipLink';
+
+// Non-critical overlays: own chunks, mounted once the browser is idle so they never delay first paint.
+const MaintenanceNotice = lazy(() => import('@/components/comman/ui/MaintenanceNotice').then(m => ({ default: m.MaintenanceNotice })));
+const GoogleOneTapPrompt = lazy(() => import('@/components/comman/ui/GoogleOneTapPrompt').then(m => ({ default: m.GoogleOneTapPrompt })));
+const AiAssistantWidget = lazy(() => import('@/components/ai/AiAssistantWidget').then(m => ({ default: m.AiAssistantWidget })));
+
+function WhenIdle({ children }: { children: ReactNode }) {
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number; cancelIdleCallback?: (id: number) => void };
+    if (w.requestIdleCallback) {
+      const id = w.requestIdleCallback(() => setReady(true), { timeout: 1500 });
+      return () => w.cancelIdleCallback?.(id);
+    }
+    const id = window.setTimeout(() => setReady(true), 800);
+    return () => window.clearTimeout(id);
+  }, []);
+  return ready ? <Suspense fallback={null}>{children}</Suspense> : null;
+}
 
 function PageSpinner() {
   return (
@@ -48,12 +64,12 @@ export function RootLayout() {
       <SkipLink />
       <RouteMeta />
       <TopProgressBar />
-      <MaintenanceNotice />
+      <WhenIdle><MaintenanceNotice /></WhenIdle>
       <AuthGateModal />
       <ToastContainer />
-      <GoogleOneTapPrompt />
+      <WhenIdle><GoogleOneTapPrompt /></WhenIdle>
       <LanguageRouteSync />
-      <AiAssistantWidget />
+      <WhenIdle><AiAssistantWidget /></WhenIdle>
       <ChatWidgetGate />
       <ScrollRestoration />
       {/* resetKey (not key) â€” a new path clears a caught error, but the layouts
