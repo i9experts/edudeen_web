@@ -1,4 +1,4 @@
-import type { AboutContent, HomeContent } from '@/api/services/publicPlatformConfig';
+import type { AboutContent, HomeContact, HomeContent } from '@/api/services/publicPlatformConfig';
 
 /**
  * Built-in text of the public pages. The pages render `effectiveHomeContent()` /
@@ -53,6 +53,11 @@ export interface HomeDefaultsContext {
 
 const str = (v: string | undefined, d: string) => (v ? v : d);
 
+/** Support / footer contact details: nothing is invented, a blank field is simply not shown. */
+export function effectiveContact(c: HomeContact | undefined | null): Required<HomeContact> {
+  return { phone: c?.phone ?? '', whatsapp: c?.whatsapp ?? '', address: c?.address ?? '', email: c?.email ?? '' };
+}
+
 /** Stored homepage copy, else exactly the text the homepage shows when nothing is saved. */
 export function effectiveHomeContent(stored: HomeContent | null | undefined, ctx: HomeDefaultsContext = {}): Required<Omit<HomeContent, 'about' | 'legalPages' | 'statsThresholds' | 'ur'>> {
   // Urdu visitors get the admin's Urdu text for every field that has one (blank = the English / built-in text, which the dictionary then translates).
@@ -68,7 +73,9 @@ export function effectiveHomeContent(stored: HomeContent | null | undefined, ctx
     heroPrimaryLabel: str(s.heroPrimaryLabel, 'Find your next resource'),
     heroSecondaryLabel: str(s.heroSecondaryLabel, f ? 'Explore ' + f : 'Browse all'),
     heroBadge: str(s.heroBadge, 'A little learning. A lasting difference.'),
-    heroImageUrl: s.heroImageUrl ?? '', // empty = the built-in picture
+    heroImageUrl: s.heroImageUrl ?? '', // empty = the brand gradient + artwork (never a stock photo)
+    heroImageMobileUrl: s.heroImageMobileUrl ?? '', // empty = the desktop picture is used on phones too
+    contact: effectiveContact(s.contact),
     promiseItems: s.promiseItems?.length ? s.promiseItems : DEFAULT_PROMISE_ITEMS,
     trustItems: DEFAULT_TRUST_TEXT.map((d, i) => { const o = s.trustItems?.[i]; return o?.label ? { label: o.label, sub: o.sub ?? '' } : d; }),
     featureEyebrow: str(s.featureEyebrow, f ? 'The ' + f + ' collection' : 'Featured collection'),

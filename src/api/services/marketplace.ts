@@ -315,3 +315,13 @@ export function apiGetProductPreview(id: string) {
 export function apiGetAlsoBought(idOrSlug: string, limit = 8) {
   return client.get<never, { success: boolean; data: { basis: 'bought_together' | 'similar'; products: MarketplaceProduct[] } }>(`/api/products/also-bought/${idOrSlug}?limit=${limit}`);
 }
+
+/** GET /api/products/bestsellers: real best sellers (units on paid orders). `purchaseCount` is the real number. */
+export function apiGetBestsellers(limit = 10) {
+  return client.get<never, { success: boolean; data: { products: MarketplaceProduct[] } }>(`/api/products/bestsellers?limit=${limit}`);
+}
+
+/** GET /api/products/free-resources: free downloads (`freeKind: 'free'`) then paid products that offer a free sample (`'sample'`). */
+export function apiGetFreeResources(limit = 10) {
+  return client.get<never, { success: boolean; data: { products: (MarketplaceProduct & { freeKind?: 'free' | 'sample' })[] } }>(`/api/products/free-resources?limit=${limit}`);
+}

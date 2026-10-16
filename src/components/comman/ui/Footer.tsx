@@ -2,7 +2,7 @@ import { useT } from '@/contexts/languageCtx';
 import { useState, type ReactElement } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
-import { Send, Check, ChevronDown, Mail } from 'lucide-react';
+import { Send, Check, ChevronDown, Mail, Phone, MapPin, MessageCircle } from 'lucide-react';
 import { EdudeenLogo } from './EdudeenLogo';
 import { AppleGlyph, GooglePlayGlyph, useGooglePlayUrl, useAppStoreUrl } from './AppPromoParts';
 import { usePublicPlatformConfig } from '@/hooks/usePublicPlatformConfig';
@@ -13,6 +13,8 @@ import { isBuyerSession } from '@/hooks/auth/useIsBuyer';
 import { EditableHomeSection } from '@/components/admin-edit/EditableHomeSection';
 import { EditableSocialLinks } from '@/components/admin-edit/EditableInline';
 import { useAdminEdit } from '@/contexts/adminEditCtx';
+import { effectiveContact } from '@/components/admin-edit/homeDefaults';
+import { whatsappLink } from '@/features/buyer/components/home/homeRules';
 
 interface FooterLink {
   label: string;
@@ -250,6 +252,11 @@ export function Footer({ showNewsletter = true }: { showNewsletter?: boolean }) 
   const { config } = usePublicPlatformConfig();
   const socialLinks = config?.socialLinks ?? {};
   const socials = SOCIALS.filter(s => !!socialLinks[s.key]);
+  // Support details come from Admin -> Homepage content -> Support contact; a blank item is not shown.
+  const contact = effectiveContact(config?.homeContent?.contact);
+  const supportEmail = contact.email || CONTACT_EMAIL;
+  const wa = whatsappLink(contact.whatsapp);
+  const hasContact = !!(contact.phone || wa || contact.address);
   const { editing } = useAdminEdit();
   const navigate = useNavigate();
   const sellEntry = useSellEntry();
@@ -294,9 +301,27 @@ export function Footer({ showNewsletter = true }: { showNewsletter?: boolean }) 
             <p className="text-[13px] leading-relaxed max-w-[280px]">
               Islamic &amp; educational resources for homes and classrooms — plus your own storefront, digital delivery and AI-powered tools for teachers, scholars, publishers and educational creators.
             </p>
-            <a href={`mailto:${CONTACT_EMAIL}`} className="inline-block mt-3 text-[13px] text-carbon font-semibold hover:text-brand-orange">
-              {CONTACT_EMAIL}
-            </a>
+            <EditableHomeSection section="contact" label="support contact" global>
+            <div className="mt-3 flex flex-col gap-2 text-[13px]">
+              <a href={`mailto:${supportEmail}`} className="inline-flex items-center gap-2 text-carbon font-semibold hover:text-brand-orange w-fit" translate="no">
+                <Mail size={14} className="shrink-0 text-slate" aria-hidden />{supportEmail}
+              </a>
+              {contact.phone && (
+                <a href={`tel:${contact.phone.replace(/[^\d+]/g, '')}`} className="inline-flex items-center gap-2 text-carbon font-semibold hover:text-brand-orange w-fit" dir="ltr">
+                  <Phone size={14} className="shrink-0 text-slate" aria-hidden />{contact.phone}
+                </a>
+              )}
+              {wa && (
+                <a href={wa} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-carbon font-semibold hover:text-brand-orange w-fit">
+                  <MessageCircle size={14} className="shrink-0 text-slate" aria-hidden />WhatsApp
+                </a>
+              )}
+              {contact.address && (
+                <p className="m-0 inline-flex items-start gap-2 max-w-[280px] leading-snug"><MapPin size={14} className="shrink-0 mt-[2px] text-slate" aria-hidden />{contact.address}</p>
+              )}
+              {editing && !hasContact && <p className="m-0 text-[12px] text-slate/70">Add a support phone, WhatsApp number and address here.</p>}
+            </div>
+            </EditableHomeSection>
 
             {(socials.length > 0 || editing) && (
               <EditableSocialLinks className="mt-5 min-h-[40px] w-fit pe-16">

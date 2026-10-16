@@ -7,6 +7,7 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { useCategoryTree, categoryPath } from '@/hooks/marketplace/useCategoryTree';
 import { useT } from '@/contexts/languageCtx';
 import { BrowseResults } from './BrowseResults';
+import { isBrowseMode } from '@/utils/homeMode';
 
 /**
  * The homepage IS the shop. When the URL carries a category / search / filter
@@ -15,11 +16,7 @@ import { BrowseResults } from './BrowseResults';
  * the query string, so Back and shared links work. The category can be a main
  * category or any nested subcategory slug.
  */
-const BROWSE_KEYS = ['category', 'search', 'q', 'cat', 'grade', 'class', 'type', 'min', 'max', 'rating', 'free', 'board', 'age', 'sort', 'page', 'exact', 'browse'];
-
-export function isBrowseMode(params: URLSearchParams): boolean {
-  return BROWSE_KEYS.some(k => params.has(k));
-}
+export { isBrowseMode };
 
 export function HomeBrowse() {
   const t = useT();

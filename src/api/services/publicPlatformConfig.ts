@@ -15,9 +15,13 @@ export interface AboutContent {
   ctaHeading?: string; ctaButton?: string;
 }
 
+export interface HomeContact { phone?: string; whatsapp?: string; address?: string; email?: string }
+
 export interface HomeContent {
   heroEyebrow?: string; heroTitle?: string; heroHighlight?: string; heroText?: string;
   heroPrimaryLabel?: string; heroSecondaryLabel?: string; heroBadge?: string; heroImageUrl?: string;
+  /** Optional separate hero picture for phones (<768px); blank = the desktop picture is used. */
+  heroImageMobileUrl?: string;
   promiseItems?: string[];
   trustItems?: { label: string; sub: string }[];
   featureEyebrow?: string; featureHeading?: string; featureText?: string; featureLinkLabel?: string;
@@ -28,6 +32,8 @@ export interface HomeContent {
   googlePlayUrl?: string;
   /** Set once an iOS app is live; until then the App Store badge says 'coming soon'. */
   appStoreUrl?: string;
+  /** Support / footer contact details. Every field is optional; a blank one is not shown. */
+  contact?: HomeContact;
   /** Below these totals the homepage hides the numbers and shows plain trust points (defaults 50 sellers / 500 buyers / 100 resources). */
   statsThresholds?: { sellers: number; buyers: number; products: number };
   /** Optional Urdu version of the hero / feature / creator text (key = the English field name). */
@@ -59,11 +65,14 @@ export interface SellerPageContent {
   visible?: Partial<Record<SellerPageSectionKey, boolean>>;
 }
 
+/** Payment methods the platform can really take right now (derived server-side, never a guess). */
+export interface PublicPaymentMethods { card?: boolean; bankTransfer?: boolean; jazzcash?: boolean; easypaisa?: boolean }
+
 export interface PublicPlatformConfig {
   socialLinks: Partial<Record<SocialNetwork, string>>;
   homeContent?: HomeContent;
   /** Derived facts the homepage trust points may claim. */
-  commerce?: { codAvailable?: boolean };
+  commerce?: { codAvailable?: boolean; paymentMethods?: PublicPaymentMethods };
   sellerPage?: SellerPageContent;
   /** Edudeen Help chat widget content (effective: admin overrides merged over built-in defaults). */
   chatbot?: import('@/components/chat/chatbotDefaults').ChatbotConfig;

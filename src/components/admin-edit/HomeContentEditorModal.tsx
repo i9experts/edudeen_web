@@ -12,10 +12,10 @@ import { usePublicPlatformConfig } from '@/hooks/usePublicPlatformConfig';
 import { useReauth } from '@/contexts/reauthCtx';
 import { inlineEditConfig } from '@/api/services/reauth';
 
-export type HomeSection = 'hero' | 'promise' | 'trust' | 'feature' | 'about' | 'legal' | 'apps' | 'creator';
+export type HomeSection = 'hero' | 'promise' | 'trust' | 'feature' | 'about' | 'legal' | 'apps' | 'creator' | 'contact';
 
 const TITLES: Record<HomeSection, string> = {
-  hero: 'Edit hero', promise: 'Edit tick strip', trust: 'Edit trust items', feature: 'Edit feature block', about: 'Edit About page', legal: 'Edit legal page', apps: 'Edit app download links', creator: 'Edit seller invitation block',
+  hero: 'Edit hero', promise: 'Edit tick strip', trust: 'Edit trust items', feature: 'Edit feature block', about: 'Edit About page', legal: 'Edit legal page', apps: 'Edit app download links', creator: 'Edit seller invitation block', contact: 'Edit support contact',
 };
 
 type Pillar = { title: string; desc: string };
@@ -101,7 +101,11 @@ function HomeContentForm({ section, legalKey, legalInitialText, defaults, stored
 
   const textPayload = useMemo((): HomeContent => {
     switch (section) {
-      case 'hero': return pick(['heroEyebrow', 'heroTitle', 'heroHighlight', 'heroText', 'heroPrimaryLabel', 'heroSecondaryLabel', 'heroBadge', 'heroImageUrl']);
+      case 'hero': return pick(['heroEyebrow', 'heroTitle', 'heroHighlight', 'heroText', 'heroPrimaryLabel', 'heroSecondaryLabel', 'heroBadge', 'heroImageUrl', 'heroImageMobileUrl']);
+      case 'contact': {
+        const now = { phone: '', whatsapp: '', address: '', email: '', ...(c.contact ?? {}) };
+        return JSON.stringify(now) === JSON.stringify(init.contact) ? {} : { contact: now };
+      }
       case 'promise': {
         const items = promise.split('\n').map(s => s.trim()).filter(Boolean);
         return JSON.stringify(items) === JSON.stringify(init.promiseItems) ? {} : { promiseItems: items };
@@ -129,10 +133,10 @@ function HomeContentForm({ section, legalKey, legalInitialText, defaults, stored
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [textPayload, urChanged, urState]);
 
-  const uploadHero = async (file?: File) => {
+  const uploadHero = async (file?: File, key: 'heroImageUrl' | 'heroImageMobileUrl' = 'heroImageUrl') => {
     if (!file) return;
     setError(''); setUploading(true);
-    try { set('heroImageUrl', (await apiUploadPublicFile(file)).data.url); } // only saved on Update
+    try { set(key, (await apiUploadPublicFile(file)).data.url); } // only saved on Update
     catch (err) { setError(err instanceof Error ? err.message : 'Could not upload the image.'); }
     finally { setUploading(false); }
   };
@@ -178,12 +182,29 @@ function HomeContentForm({ section, legalKey, legalInitialText, defaults, stored
             </div>
           </details>
           <div>
-            <Input label="Hero image link (https://...) - empty = the built-in picture shown now" value={H('heroImageUrl')} onChange={h('heroImageUrl')} maxLength={500} />
+            <Input label="Hero image link (https://...) - empty = brand gradient and artwork" value={H('heroImageUrl')} onChange={h('heroImageUrl')} maxLength={500} />
             <label className="inline-block mt-2 text-[12px] font-semibold text-brand-orange cursor-pointer">
               {uploading ? 'Uploading...' : 'Or upload an image'}
               <input type="file" accept="image/*" className="hidden" disabled={uploading} onChange={e => { void uploadHero(e.target.files?.[0]); e.target.value = ''; }} />
             </label>
           </div>
+          <div>
+            <Input label="Phone hero image link (optional) - empty = the desktop picture is used" value={H('heroImageMobileUrl')} onChange={h('heroImageMobileUrl')} maxLength={500} />
+            <label className="inline-block mt-2 text-[12px] font-semibold text-brand-orange cursor-pointer">
+              {uploading ? 'Uploading...' : 'Or upload a phone image'}
+              <input type="file" accept="image/*" className="hidden" disabled={uploading} onChange={e => { void uploadHero(e.target.files?.[0], 'heroImageMobileUrl'); e.target.value = ''; }} />
+            </label>
+            <p className="text-[12px] text-slate mt-1">Recommended 1600x900 (desktop) and 900x700 (phone). Keep the subject near the centre so nothing important is cropped.</p>
+          </div>
+        </>)}
+        {section === 'contact' && (<>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Input label="Support phone" value={c.contact?.phone ?? ''} maxLength={30} onChange={e => set('contact', { ...(c.contact ?? {}), phone: e.target.value })} />
+            <Input label="WhatsApp number (with country code)" value={c.contact?.whatsapp ?? ''} maxLength={30} onChange={e => set('contact', { ...(c.contact ?? {}), whatsapp: e.target.value })} />
+          </div>
+          <Input label="Support email" value={c.contact?.email ?? ''} maxLength={120} onChange={e => set('contact', { ...(c.contact ?? {}), email: e.target.value })} />
+          <Input label="Business address" value={c.contact?.address ?? ''} maxLength={300} onChange={e => set('contact', { ...(c.contact ?? {}), address: e.target.value })} />
+          <p className="text-[12px] text-slate">A blank field is simply not shown in the footer.</p>
         </>)}
         {section === 'promise' && (
           <Textarea label="Tick strip (one per line, up to 6)" rows={5} value={promise} onChange={e => setPromise(e.target.value)} />

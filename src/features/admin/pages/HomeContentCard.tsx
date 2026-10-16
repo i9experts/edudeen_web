@@ -29,15 +29,15 @@ export function HomeContentCard() {
   const setPillar = (i: number, patch: { title?: string; desc?: string }) => { const t = [...pillars]; while (t.length <= i) t.push({ title: '', desc: '' }); t[i] = { ...t[i], ...patch }; setAbout({ pillars: t }); };
   const legal = c.legalPages ?? {};
   const setLegal = (key: string, patch: { text?: string; lastUpdated?: string }) => { setSaved(false); setC(p => ({ ...p, legalPages: { ...(p.legalPages ?? {}), [key]: { ...(p.legalPages?.[key] ?? {}), ...patch } } })); };
-  const uploadHero = async (file?: File) => {
+  const uploadHero = async (file?: File, key: 'heroImageUrl' | 'heroImageMobileUrl' = 'heroImageUrl') => {
     if (!file) return;
     setError(''); setUploading(true);
     try {
       const res = await apiUploadPublicFile(file);
-      set('heroImageUrl', res.data.url);
+      set(key, res.data.url);
       // Publish the picture right away (the PUT only touches the keys it is given) so it does not depend on
       // remembering to press 'Save homepage content' further down.
-      await apiUpdateHomeContent({ heroImageUrl: res.data.url });
+      await apiUpdateHomeContent({ [key]: res.data.url });
       setSaved(true);
     }
     catch (err) { setError(err instanceof Error ? err.message : 'Could not upload the image.'); }
@@ -49,6 +49,8 @@ export function HomeContentCard() {
   const thresholds = c.statsThresholds ?? { sellers: 50, buyers: 500, products: 100 };
   const setThreshold = (k: 'sellers' | 'buyers' | 'products', v: string) => set('statsThresholds', { ...thresholds, [k]: Math.max(0, Math.floor(Number(v) || 0)) });
   const ur = c.ur ?? {};
+  const contact = c.contact ?? {};
+  const setContact = (k: keyof NonNullable<HomeContent['contact']>, v: string) => set('contact', { ...contact, [k]: v });
   const setUr = (k: keyof NonNullable<HomeContent['ur']>, v: string) => set('ur', { ...ur, [k]: v });
   const googleProblem = storeUrlProblem(c.googlePlayUrl);
   const appStoreProblem = storeUrlProblem(c.appStoreUrl);
@@ -83,6 +85,14 @@ export function HomeContentCard() {
             <input type="file" accept="image/*" className="hidden" disabled={!loaded || uploading} onChange={e => { void uploadHero(e.target.files?.[0]); e.target.value = ''; }} />
           </label>
         </div>
+        <div>
+          <Input label="Phone hero image link - small screens (optional, tall/square crop works best)" value={c.heroImageMobileUrl ?? ''} disabled={!loaded} onChange={e => set('heroImageMobileUrl', e.target.value)} />
+          <label className="inline-block mt-2 text-[12px] font-semibold text-brand-orange cursor-pointer">
+            {uploading ? 'Uploading...' : 'Or upload a phone image'}
+            <input type="file" accept="image/*" className="hidden" disabled={!loaded || uploading} onChange={e => { void uploadHero(e.target.files?.[0], 'heroImageMobileUrl'); e.target.value = ''; }} />
+          </label>
+          <p className="text-[12px] text-slate mt-1">No image? The hero shows the Edudeen brand gradient and artwork. Recommended: 1600x900 desktop, 900x700 phone, keep the subject near the centre.</p>
+        </div>
         <Input label="Headline" value={c.heroTitle ?? ''} disabled={!loaded} onChange={e => set('heroTitle', e.target.value)} />
         <Input label="Headline (coloured second line)" value={c.heroHighlight ?? ''} disabled={!loaded} onChange={e => set('heroHighlight', e.target.value)} />
         <Input label="Main button" value={c.heroPrimaryLabel ?? ''} disabled={!loaded} onChange={e => set('heroPrimaryLabel', e.target.value)} />
@@ -115,6 +125,14 @@ export function HomeContentCard() {
         <Input label="Block link text" value={c.featureLinkLabel ?? ''} disabled={!loaded} onChange={e => set('featureLinkLabel', e.target.value)} />
       </div>
       <div className="mt-[14px]"><Textarea label="Block paragraph" rows={2} value={c.featureText ?? ''} disabled={!loaded} onChange={e => set('featureText', e.target.value)} /></div>
+      <p className="text-[12px] font-semibold text-carbon mt-5 mb-1">Support contact (footer)</p>
+      <p className="text-[12px] text-slate mb-2">Shown in the website footer and trust strip. A blank field is simply not shown.</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-[14px]">
+        <Input label="Support phone" value={contact.phone ?? ''} disabled={!loaded} maxLength={30} onChange={e => setContact('phone', e.target.value)} />
+        <Input label="WhatsApp number (with country code)" value={contact.whatsapp ?? ''} disabled={!loaded} maxLength={30} onChange={e => setContact('whatsapp', e.target.value)} />
+        <Input label="Support email" value={contact.email ?? ''} disabled={!loaded} maxLength={120} onChange={e => setContact('email', e.target.value)} />
+        <Input label="Business address" value={contact.address ?? ''} disabled={!loaded} maxLength={300} onChange={e => setContact('address', e.target.value)} />
+      </div>
       <p className="text-[12px] font-semibold text-carbon mt-5 mb-1">Homepage numbers (stats)</p>
       <p className="text-[12px] text-slate mb-2">The homepage only shows its numbers once ALL three totals are reached; below that it shows plain trust points (verified sellers, secure checkout, cash on delivery) instead.</p>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-[14px]">

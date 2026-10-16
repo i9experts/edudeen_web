@@ -351,3 +351,6 @@ export const apiVerifyCertificate = (code: string) => client.get<never, Ok<Certi
 export const apiGetMyCourses = () => client.get<never, Ok<MyCourse[]>>('/api/courses/mine');
 export const apiGetLiveAccess = (idOrSlug: string) => client.get<never, Ok<LiveAccess>>(`/api/courses/live/${idOrSlug}`);
 export const apiGetLiveSeats = (idOrSlug: string) => client.get<never, Ok<{ capacity: number | null; left: number | null }>>(`/api/courses/live-seats/${idOrSlug}`);
+
+/** Active bundles for the home shelf (live products only). */
+export const apiGetPublicBundles = (limit = 6) => client.get<never, Ok<PublicBundle[]>>(`/api/bundles/public?limit=${limit}`);

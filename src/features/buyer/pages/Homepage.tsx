@@ -12,7 +12,7 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { X } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useIsBuyer } from '@/hooks/auth/useIsBuyer';
-import { useLanguage } from '@/contexts/languageCtx';
+import { useLanguage, useT } from '@/contexts/languageCtx';
 import { useEdgeHoverScroll } from '@/hooks/useEdgeHoverScroll';
 import { useTopBarDeals } from '@/hooks/useTopBarDeals';
 import { usePremiumDeals } from '@/hooks/usePremiumDeals';
@@ -26,7 +26,7 @@ import { useCartContext } from '@/contexts/CartContext';
 import { useWishlistContext } from '@/contexts/WishlistContext';
 import { Avatar } from '@/components/comman/ui/Avatar';
 import {
-  BuyerNavbar, Footer, SkeletonBox, ClosingCtaBanner, StoreFeatureCard, TrustServiceStrip,
+  BuyerNavbar, Footer, SkeletonBox, StoreFeatureCard, TrustServiceStrip,
 } from '@/components/comman/ui';
 import { ResourceCard, ResourceCardSkeleton } from '@/components/comman/marketplace/ResourceCard';
 import { FlashSaleCard } from '@/components/comman/marketplace/FlashSaleCard';
@@ -48,9 +48,19 @@ import { productSalePct, soonestSaleEnd } from '@/utils/saleMath';
 import { apiGetHomeShelves, type CuratedShelf } from '@/api/services/classroom';
 import { apiBrowseProducts } from '@/api/services/marketplace';
 import { RevealStagger } from '@/components/comman/motion/Reveal';
-import heroImage from '@/assets/learning-hero.jpg';
 import { PickedForChildRail } from '@/features/buyer/components/PickedForChildRail';
 import { ShoppingForBar } from '@/features/buyer/components/ShoppingForBar';
+import { HomeHero, HomeHeroSkeleton } from '@/features/buyer/components/home/HomeHero';
+import { ShopByGrade } from '@/features/buyer/components/home/ShopByGrade';
+import { ShopByCategory } from '@/features/buyer/components/home/ShopByCategory';
+import { ProductShelf } from '@/features/buyer/components/home/ProductShelf';
+import { BundlesShelf } from '@/features/buyer/components/home/BundlesShelf';
+import { PaymentTrustStrip } from '@/features/buyer/components/home/PaymentTrustStrip';
+import { RecentlyViewedRail } from '@/features/buyer/components/home/RecentlyViewedRail';
+import { AppNotifyStrip } from '@/features/buyer/components/home/AppNotifyStrip';
+import { HomeNewsletter } from '@/features/buyer/components/home/HomeNewsletter';
+import { useHomeShelves, type FreeProduct } from '@/features/buyer/components/home/useHomeShelves';
+import { dedupeInOrder, soldLabel } from '@/features/buyer/components/home/homeRules';
 
 // Text lives in admin-edit/homeDefaults.ts (shared with the inline editor).
 const TRUST_ITEMS = [{ Icon: Shield }, { Icon: CreditCard }, { Icon: RefreshCcw }, { Icon: Headset }];
@@ -140,11 +150,10 @@ const linkButtonClass = sectionLinkClass;
 function HomeLanding() {
   // Admin-editable copy (Admin → Platform Config → Homepage content); blank = built-in default below.
   const { config: publicConfig, loading: configLoading } = usePublicPlatformConfig();
-  // Until the admin-edited content has arrived, don't paint the built-in default hero (it flashed for a few seconds, then swapped to the real one).
-  const heroReady = !!publicConfig || !configLoading;
   const hc = publicConfig?.homeContent ?? {};
   const trustItems = TRUST_ITEMS.map((d, i) => ({ ...d, ...effectiveHomeContent(hc).trustItems[i] }));
   const navigate = useNavigate();
+  const t = useT();
   // Edudeen's curated, seasonal shelves ("Exam ki tayyari" etc.), set by the admin team.
   const [shelves, setShelves] = useState<CuratedShelf[]>([]);
   useEffect(() => { apiGetHomeShelves().then(res => setShelves(res.data ?? [])).catch(() => {}); }, []);
@@ -160,12 +169,20 @@ function HomeLanding() {
   const [categories, setCategories] = useState<CategoryNode[]>([]);
   const [topStores, setTopStores] = useState<PublicStoreListItem[]>([]);
 
+  const [categoriesLoaded, setCategoriesLoaded] = useState(false);
   const reloadCategories = useCallback(() => { apiGetCategoryTree().then(res => setCategories(res.data ?? [])).catch(() => {}); }, []);
   useEffect(() => {
     let cancelled = false;
-    apiGetCategoryTree().then(res => { if (!cancelled) setCategories(res.data ?? []); }).catch(() => {});
+    apiGetCategoryTree()
+      .then(res => { if (!cancelled) setCategories(res.data ?? []); })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setCategoriesLoaded(true); });
     return () => { cancelled = true; };
   }, []);
+  // The hero is painted only once its text can no longer change: the admin's content is known (or cached from the last
+  // visit) AND the category list has answered (the default second button reads "Explore <category>", so painting
+  // earlier made "Browse all" flip to "Explore ..." a moment later). An admin-set second button needs no category.
+  const heroReady = (!!publicConfig || !configLoading) && (categoriesLoaded || !!hc.heroSecondaryLabel);
 
   useEffect(() => {
     let cancelled = false;
@@ -223,6 +240,23 @@ function HomeLanding() {
   const earlyCampaign = (topBarDeals?.campaigns ?? []).find(c => c.earlyAccess) ?? null;
   const saleCountdown = useCountdownTo(saleEnd);
   const countdown = premiumDeals ? null : saleCountdown;
+
+  // ── Home shelves with their own endpoints + the ONE de-dupe pass ──
+  // A product appears in at most one section of the landing page, in render order: Flash Sale first, then
+  // Bestsellers, Free resources, Featured by Edudeen, and each curated shelf. The catalogue grid at the bottom
+  // ("Browse everything") is the complete list and is deliberately left out of this.
+  const homeShelves = useHomeShelves();
+  const unique = dedupeInOrder<string, MarketplaceProduct>(
+    ['flash', 'bestsellers', 'free', 'featured', ...shelves.map(s => `shelf-${s._id}`)],
+    {
+      flash: flashDeals.map(d => d.product),
+      bestsellers: homeShelves.bestsellers.items,
+      free: homeShelves.free.items,
+      featured,
+      ...Object.fromEntries(shelves.map(s => [`shelf-${s._id}`, s.products])),
+    },
+    { bestsellers: 5, free: 5, featured: 5, ...Object.fromEntries(shelves.map(s => [`shelf-${s._id}`, 5])) },
+  );
 
   // ── Catalogue section filters ──
   const [subject, setSubject]   = useState<string | null>(null);
@@ -469,48 +503,11 @@ function HomeLanding() {
         {/* ── Admin banners / paid promotions (Admin → Banners, homepage slot) ── */}
         <PlacementBanner placement="homepageHero" className="mb-[25px]" />
 
-        {/* ── Hero ── */}
+        {/* ── Hero: admin content (text + desktop/phone picture); brand artwork when no picture is set. Same box while loading → no layout shift. ── */}
         <EditableHomeSection section="hero" defaults={eff} label="hero">
-        <section className="grid grid-cols-1 md:grid-cols-[1.2fr_1fr] md:min-h-[280px] rounded-[18px] overflow-hidden bg-[#eaf2f8] mb-[25px]">
-          <div className={`p-[25px] md:p-[30px] lg:py-[35px] lg:px-[40px] transition-opacity duration-200 ${heroReady ? 'opacity-100' : 'opacity-0'}`}>
-            <p className="text-[12px] font-bold tracking-[0.15em] uppercase text-brand-royal mb-[13px]">
-              {eff.heroEyebrow}
-            </p>
-            <h1 className="font-serif font-normal text-[34px] md:text-[44px] leading-[1.12] tracking-[-1px] text-carbon mb-[14px]">
-              {eff.heroTitle}<br />
-              <span className="text-brand-royal">{eff.heroHighlight}</span>
-            </h1>
-            <p className="max-w-[450px] text-[15px] md:text-[16px] leading-[1.5] text-graphite mb-[21px]">
-              {eff.heroText}
-            </p>
-            <div className="flex flex-wrap items-center gap-3">
-              <button
-                onClick={scrollToResources}
-                className="inline-block bg-brand-orange text-white border border-brand-orange rounded-lg px-5 py-[11px] text-[14px] font-bold cursor-pointer hover:brightness-95"
-              >
-                {eff.heroPrimaryLabel}
-              </button>
-              <button
-                onClick={() => selectSubject(featuredTab?.id ?? null)}
-                className="inline-block bg-white text-brand-orange border border-[#c5d2db] rounded-lg px-5 py-[11px] text-[14px] font-bold cursor-pointer hover:brightness-95"
-              >
-                {eff.heroSecondaryLabel}
-              </button>
-            </div>
-          </div>
-          <div className="relative h-[170px] md:h-auto bg-[#ddeaf2] overflow-hidden">
-            {heroReady && (
-              <img
-                src={eff.heroImageUrl || heroImage}
-                alt="Learning workbooks and colourful stationery arranged on a desk"
-                className="absolute inset-0 w-full h-full object-cover"
-              />
-            )}
-            <div className="absolute bottom-[22px] end-[22px] hidden sm:block bg-white px-[19px] py-3 rounded-[10px] text-[14px] text-carbon shadow-[0_8px_30px_rgba(19,57,86,0.09)]">
-              {eff.heroBadge}
-            </div>
-          </div>
-        </section>
+          {heroReady
+            ? <HomeHero eff={eff} onPrimary={scrollToResources} onSecondary={() => selectSubject(featuredTab?.id ?? null)} />
+            : <HomeHeroSkeleton />}
         </EditableHomeSection>
 
         {/* ── Promise strip ── */}
@@ -521,6 +518,10 @@ function HomeLanding() {
           ))}
         </div>
         </EditableHomeSection>
+
+        {/* ── 1-2. Shop by grade, shop by category ── */}
+        <ShopByGrade categories={categories} />
+        <ShopByCategory categories={categories} loading={!categoriesLoaded} />
 
         {/* While an admin has the flash sale / deals under maintenance, their message replaces this block. */}
         <FeatureMaintenance feature="flash_sale">
@@ -568,40 +569,156 @@ function HomeLanding() {
         )}
         </FeatureMaintenance>
 
-        {/* ── Edudeen picks (curated shelves) ── */}
+        {/* ── 4-6. Bestsellers, free resources, bundles (each hides itself when it has nothing) ── */}
+        <ProductShelf
+          eyebrow="What parents and teachers buy" title="Bestsellers"
+          action={{ label: 'View all', onClick: () => navigate('/?sort=popularity') }}
+          items={unique.bestsellers} loading={homeShelves.bestsellers.loading} renderCard={renderResourceCard}
+          note={p => { const s = soldLabel(p.purchaseCount); return s ? <p className="text-[12px] text-slate mt-1 mb-0">{s}</p> : null; }}
+        />
+        <ProductShelf
+          eyebrow="Try before you buy" title="Free resources"
+          action={{ label: 'View all', onClick: () => navigate('/?free=1') }}
+          items={unique.free as FreeProduct[]} loading={homeShelves.free.loading} renderCard={renderResourceCard}
+          note={p => ((p as FreeProduct).freeKind === 'sample' ? <p className="text-[12px] font-semibold text-brand-green mt-1 mb-0">{t('Free sample')}</p> : null)}
+        />
+        <BundlesShelf bundles={homeShelves.bundles.items} loading={homeShelves.bundles.loading} />
+
         {/* ── Picked for the active child (My children) ── */}
         <PickedForChildRail renderCard={renderResourceCard} />
 
         {/* ── Featured by Edudeen (admin-featured listings) ── */}
-        {featured.length > 0 && (
+        {unique.featured.length > 0 && (
           <section className="mb-12">
             <SectionHead eyebrow="Hand-picked by our team" title="Featured by Edudeen" />
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-[14px] gap-y-[25px] md:gap-x-[22px] md:gap-y-[28px]">
-              {featured.slice(0, 5).map(renderResourceCard)}
+              {unique.featured.map(renderResourceCard)}
             </div>
           </section>
         )}
 
-        {shelves.map(s => (
-          <section key={s._id} className="mb-12">
-            <SectionHead
-              eyebrow="Edudeen picks"
-              title={s.title}
-              action={{ label: 'View all', onClick: () => navigate(`/picks/${s.slug}`) }}
-            />
-            {s.subtitle && <p className="text-[13.5px] text-graphite -mt-3 mb-4">{s.subtitle}</p>}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-[14px] gap-y-[25px] md:gap-x-[22px] md:gap-y-[28px]">
-              {s.products.slice(0, 5).map(renderResourceCard)}
+        {/* ── Edudeen picks (curated shelves) ── */}
+        {shelves.map(s => {
+          const items = unique[`shelf-${s._id}`] ?? [];
+          if (items.length === 0) return null;
+          return (
+            <section key={s._id} className="mb-12">
+              <SectionHead
+                eyebrow="Edudeen picks"
+                title={s.title}
+                action={{ label: 'View all', onClick: () => navigate(`/picks/${s.slug}`) }}
+              />
+              {s.subtitle && <p className="text-[13.5px] text-graphite -mt-3 mb-4">{s.subtitle}</p>}
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-[14px] gap-y-[25px] md:gap-x-[22px] md:gap-y-[28px]">
+                {items.map(renderResourceCard)}
+              </div>
+            </section>
+          );
+        })}
+
+        {/* ── Featured sellers ── */}
+        {topStores.length > 0 && (
+          <section className="mb-12">
+            <SectionHead eyebrow="Meet the makers" title="Featured sellers" />
+            {/* Hover near either edge to glide the row that way. */}
+            <div ref={sellersRowRef} className="flex gap-3 overflow-x-auto scrollbar-hide pb-1 pt-1">
+              {topStores.map(s => (
+                <StoreFeatureCard key={s.storeId} store={s} onClick={slug => navigate(getStorePagePath(slug))} />
+              ))}
             </div>
           </section>
-        ))}
+        )}
 
-        {/* ── Catalogue with filters ── */}
-        <section ref={resourcesRef} className="scroll-mt-[150px] mb-12">
+        {/* ── Collections ── */}
+        <section className={clsx('mb-12 grid grid-cols-1 gap-[22px]', !isBuyer && 'md:grid-cols-2')}>
+          <EditableHomeSection section="feature" defaults={eff} label="feature block">
+          <div className="rounded-[14px] p-7 bg-[#edf5e7]">
+            <p className="text-[12px] font-bold tracking-[0.15em] uppercase text-brand-royal mb-[13px]">{eff.featureEyebrow}</p>
+            <h2 className="font-serif font-normal text-[27px] leading-[1.2] text-carbon mb-[10px]">{eff.featureHeading}</h2>
+            <p className="text-[14px] text-carbon max-w-[390px] mb-4">
+              {eff.featureText}
+            </p>
+            <button onClick={() => selectSubject(featuredTab?.id ?? null)} className={linkButtonClass}>
+              {eff.featureLinkLabel}
+            </button>
+          </div>
+          </EditableHomeSection>
+          {!isBuyer && (
+            <EditableHomeSection section="creator" defaults={eff} label="seller invitation block">
+            <div className="rounded-[14px] p-7 bg-[#f7f3d9]">
+              <p className="text-[12px] font-bold tracking-[0.15em] uppercase text-brand-royal mb-[13px]">{eff.creatorEyebrow}</p>
+              <h2 className="font-serif font-normal text-[27px] leading-[1.2] text-carbon mb-[10px]">{eff.creatorHeading}</h2>
+              <p className="text-[14px] text-carbon max-w-[390px] mb-4">
+                {eff.creatorText}
+              </p>
+              <button onClick={() => navigate('/sellers')} className={linkButtonClass}>
+                {eff.creatorLinkLabel}
+              </button>
+            </div>
+            </EditableHomeSection>
+          )}
+        </section>
+
+        {/* ── Trust ── */}
+        <section className="mb-12">
+          <SectionHead eyebrow="Shop with confidence" title="Why buyers choose Edudeen" />
+          <EditableHomeSection section="trust" defaults={eff} label="trust items"><TrustServiceStrip variant="card" items={trustItems} /></EditableHomeSection>
+          <PaymentTrustStrip />
+        </section>
+
+        {/* ── Platform stats - the single stats block; real numbers only past the admin's thresholds ── */}
+        <PlatformStatsSection />
+
+        {/* ── Real reviews ── */}
+        {(testimonialsLoading || testimonials.length > 0) && (
+          <section className="mb-4">
+            <SectionHead eyebrow="Trusted by buyers & sellers worldwide" title="Real stories from real people" />
+            <RevealStagger className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[22px]" step={0.1} y={16}>
+              {testimonialsLoading
+                ? Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="rounded-[14px] border border-bone p-6">
+                      <SkeletonBox width={70} height={12} className="mb-4" />
+                      <SkeletonBox width="100%" height={13} className="mb-2" />
+                      <SkeletonBox width="80%" height={13} className="mb-5" />
+                      <SkeletonBox width={120} height={13} />
+                    </div>
+                  ))
+                : testimonials.map(t => (
+                    <figure key={t.id} className="m-0 rounded-[14px] border border-bone p-6 bg-white">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-[2px]">
+                          {[1, 2, 3, 4, 5].map(i => (
+                            <Star key={i} size={13} className={i <= Math.round(t.rating) ? 'text-brand-gold fill-brand-gold' : 'text-bone fill-bone'} />
+                          ))}
+                        </div>
+                        <Quote size={20} className="text-brand-royal/25 fill-brand-royal/15 shrink-0" />
+                      </div>
+                      <blockquote className="m-0 font-serif text-[16px] text-carbon leading-[1.6] mb-5">"{t.text}"</blockquote>
+                      <figcaption className="flex items-center gap-[10px] pt-4 border-t border-bone">
+                        <Avatar name={t.name} size={32} />
+                        <div>
+                          <div className="flex items-center gap-[6px]">
+                            <p className="text-[13px] font-bold text-carbon">{t.name}</p>
+                            {t.isVerifiedSeller && <BadgeCheck size={13} className="text-brand-royal shrink-0" />}
+                          </div>
+                          <p className="text-[12px] text-slate">{t.storeName ? `Owner, ${t.storeName}` : t.isVerifiedSeller ? 'Verified Seller' : 'Edudeen member'}</p>
+                        </div>
+                      </figcaption>
+                    </figure>
+                  ))}
+            </RevealStagger>
+          </section>
+        )}
+        {/* ── Recently viewed (only when the visitor has some) + the app strip ── */}
+        <RecentlyViewedRail />
+        <AppNotifyStrip />
+
+        {/* ── Browse everything: category tabs + filters + 12 per page with "Show more". LAST content section before the newsletter. ── */}
+        <section ref={resourcesRef} id="browse" className="scroll-mt-[150px] mb-4">
           <SectionHead
             eyebrow={searchQ ? 'Search results' : campaignId ? (activeCampaign?.name ?? 'Sale') : subjectTab ? subjectTab.label : 'Your next teaching moment'}
-            title="Resources with a purpose"
-            sub="Thoughtful ideas for learning, growing and becoming."
+            title="Browse everything"
+            sub="Filter by subject, grade, language and price."
           />
 
           <EditableCategories onChanged={reloadCategories} className="mb-5">
@@ -721,134 +838,12 @@ function HomeLanding() {
           </FiltersDrawer>
         </section>
 
-        {/* ── Top picks ── */}
-        {(poolLoading || topPicks.length > 0) && (
-          <section className="mb-12">
-            <SectionHead
-              eyebrow="Loved by buyers"
-              title="Top picks for you"
-              action={{ label: 'View all', onClick: () => { setSort('popular'); selectSubject(null); } }}
-            />
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-[14px] gap-y-[25px] md:gap-x-[22px] md:gap-y-[28px]">
-              {poolLoading
-                ? Array.from({ length: 5 }).map((_, i) => <ResourceCardSkeleton key={i} />)
-                : topPicks.map(renderResourceCard)}
-            </div>
-          </section>
-        )}
-
-        {/* ── Best rated ── */}
-        {bestRated.length > 0 && (
-          <section className="mb-12">
-            <SectionHead
-              eyebrow="Highest reviews"
-              title="Best rated"
-              action={{ label: 'View all', onClick: () => { setFilters(f => ({ ...f, minRating: 4 })); selectSubject(null); } }}
-            />
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-[14px] gap-y-[25px] md:gap-x-[22px] md:gap-y-[28px]">
-              {bestRated.map(renderResourceCard)}
-            </div>
-          </section>
-        )}
-
-        {/* ── Collections ── */}
-        <section className={clsx('mb-12 grid grid-cols-1 gap-[22px]', !isBuyer && 'md:grid-cols-2')}>
-          <EditableHomeSection section="feature" defaults={eff} label="feature block">
-          <div className="rounded-[14px] p-7 bg-[#edf5e7]">
-            <p className="text-[12px] font-bold tracking-[0.15em] uppercase text-brand-royal mb-[13px]">{eff.featureEyebrow}</p>
-            <h2 className="font-serif font-normal text-[27px] leading-[1.2] text-carbon mb-[10px]">{eff.featureHeading}</h2>
-            <p className="text-[14px] text-carbon max-w-[390px] mb-4">
-              {eff.featureText}
-            </p>
-            <button onClick={() => selectSubject(featuredTab?.id ?? null)} className={linkButtonClass}>
-              {eff.featureLinkLabel}
-            </button>
-          </div>
-          </EditableHomeSection>
-          {!isBuyer && (
-            <EditableHomeSection section="creator" defaults={eff} label="seller invitation block">
-            <div className="rounded-[14px] p-7 bg-[#f7f3d9]">
-              <p className="text-[12px] font-bold tracking-[0.15em] uppercase text-brand-royal mb-[13px]">{eff.creatorEyebrow}</p>
-              <h2 className="font-serif font-normal text-[27px] leading-[1.2] text-carbon mb-[10px]">{eff.creatorHeading}</h2>
-              <p className="text-[14px] text-carbon max-w-[390px] mb-4">
-                {eff.creatorText}
-              </p>
-              <button onClick={() => navigate('/sellers')} className={linkButtonClass}>
-                {eff.creatorLinkLabel}
-              </button>
-            </div>
-            </EditableHomeSection>
-          )}
-        </section>
-
-        {/* ── Featured sellers ── */}
-        {topStores.length > 0 && (
-          <section className="mb-12">
-            <SectionHead eyebrow="Meet the makers" title="Featured sellers" />
-            {/* Hover near either edge to glide the row that way. */}
-            <div ref={sellersRowRef} className="flex gap-3 overflow-x-auto scrollbar-hide pb-1 pt-1">
-              {topStores.map(s => (
-                <StoreFeatureCard key={s.storeId} store={s} onClick={slug => navigate(getStorePagePath(slug))} />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* ── Trust ── */}
-        <section className="mb-12">
-          <SectionHead eyebrow="Shop with confidence" title="Why buyers choose Edudeen" />
-          <EditableHomeSection section="trust" defaults={eff} label="trust items"><TrustServiceStrip variant="card" items={trustItems} /></EditableHomeSection>
-        </section>
-
-        {/* ── Platform stats - the single stats block; real numbers only past the admin's thresholds ── */}
-        <PlatformStatsSection />
-
-        {/* ── Real reviews ── */}
-        {(testimonialsLoading || testimonials.length > 0) && (
-          <section className="mb-4">
-            <SectionHead eyebrow="Trusted by buyers & sellers worldwide" title="Real stories from real people" />
-            <RevealStagger className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[22px]" step={0.1} y={16}>
-              {testimonialsLoading
-                ? Array.from({ length: 3 }).map((_, i) => (
-                    <div key={i} className="rounded-[14px] border border-bone p-6">
-                      <SkeletonBox width={70} height={12} className="mb-4" />
-                      <SkeletonBox width="100%" height={13} className="mb-2" />
-                      <SkeletonBox width="80%" height={13} className="mb-5" />
-                      <SkeletonBox width={120} height={13} />
-                    </div>
-                  ))
-                : testimonials.map(t => (
-                    <figure key={t.id} className="m-0 rounded-[14px] border border-bone p-6 bg-white">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-[2px]">
-                          {[1, 2, 3, 4, 5].map(i => (
-                            <Star key={i} size={13} className={i <= Math.round(t.rating) ? 'text-brand-gold fill-brand-gold' : 'text-bone fill-bone'} />
-                          ))}
-                        </div>
-                        <Quote size={20} className="text-brand-royal/25 fill-brand-royal/15 shrink-0" />
-                      </div>
-                      <blockquote className="m-0 font-serif text-[16px] text-carbon leading-[1.6] mb-5">"{t.text}"</blockquote>
-                      <figcaption className="flex items-center gap-[10px] pt-4 border-t border-bone">
-                        <Avatar name={t.name} size={32} />
-                        <div>
-                          <div className="flex items-center gap-[6px]">
-                            <p className="text-[13px] font-bold text-carbon">{t.name}</p>
-                            {t.isVerifiedSeller && <BadgeCheck size={13} className="text-brand-royal shrink-0" />}
-                          </div>
-                          <p className="text-[12px] text-slate">{t.storeName ? `Owner, ${t.storeName}` : t.isVerifiedSeller ? 'Verified Seller' : 'Edudeen member'}</p>
-                        </div>
-                      </figcaption>
-                    </figure>
-                  ))}
-            </RevealStagger>
-          </section>
-        )}
       </main>
 
-      {/* ── Closing CTA — explore marketplace / create an account ── */}
-      <ClosingCtaBanner />
+      {/* ── Newsletter (the one sign-up block; the footer's own is switched off here) ── */}
+      <HomeNewsletter />
 
-      <Footer />
+      <Footer showNewsletter={false} />
     </div>
   );
 }

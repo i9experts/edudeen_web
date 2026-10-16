@@ -13,6 +13,7 @@ const SECTION_HINT: Record<string, string> = {
   feature: 'The highlighted promo block',
   creator: 'The invitation block for sellers',
   apps: 'App Store and Google Play links',
+  contact: 'Phone, WhatsApp, email and address in the footer',
   about: 'Heading and story text of this page',
   legal: 'The policy text of this page',
 };

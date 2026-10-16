@@ -1,13 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
-import { Zap, Tag, Crown, ChevronRight } from 'lucide-react';
+import { Zap, Tag, Crown, ChevronRight, Megaphone } from 'lucide-react';
 import { useTopBarDeals, timeLeft } from '@/hooks/useTopBarDeals';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 import { formatMoney } from '@/utils/currency';
 import { upToLabel } from '@/utils/saleMath';
 import { untilStart } from './EarlyAccessChip';
 import { usePremiumDeals } from '@/hooks/usePremiumDeals';
+import { useActiveAnnouncements } from '@/hooks/useActiveAnnouncements';
+import { usePublicPlatformConfig } from '@/hooks/usePublicPlatformConfig';
+import { isHomeLanding } from '@/utils/homeMode';
 
 interface TickerItem {
   key: string;
@@ -21,11 +24,47 @@ interface TickerItem {
 const ROTATE_MS = 4500;
 
 /**
- * Left side of the top bar: admin sale campaigns (October sale, 11.11, Azadi
- * sale…) followed by the marketplace's deepest flash deals, rotating one at a
- * time. Pauses while hovered; renders nothing when there's no live sale.
+ * Left side of the top bar. ONE-SALE-SURFACE RULE: on the home landing page the Mega Sale banner and the Flash Sale
+ * row already advertise the live sale, so the ticker must not repeat the same sale text there - it rotates the
+ * platform's announcements (Admin -> Announcements) or, failing that, the short tick-strip messages instead.
+ * Everywhere else (and on the home page while no sale banner is showing) it shows the sales below.
  */
 export function TopBarDealsTicker({ className }: { className?: string }) {
+  const { pathname, search } = useLocation();
+  const deals = useTopBarDeals();
+  const saleBannerVisible = isHomeLanding(pathname, search) && (deals?.campaigns.length ?? 0) > 0;
+  return saleBannerVisible ? <InfoTicker className={className} /> : <SaleTicker className={className} />;
+}
+
+/** Non-sale messages: active announcements for buyers, else the admin's tick-strip lines. Nothing to say = an empty bar. */
+function InfoTicker({ className }: { className?: string }) {
+  const announcements = useActiveAnnouncements('buyers');
+  const { config } = usePublicPlatformConfig();
+  const [index, setIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const items = useMemo(() => {
+    if (announcements.length) return announcements.map(a => ({ key: a._id, label: a.title, detail: a.message }));
+    return (config?.homeContent?.promiseItems ?? []).filter(Boolean).map(t => ({ key: t, label: t, detail: '' }));
+  }, [announcements, config]);
+  useEffect(() => {
+    if (paused || items.length < 2) return;
+    const t = setInterval(() => setIndex(i => (i + 1) % items.length), ROTATE_MS);
+    return () => clearInterval(t);
+  }, [paused, items.length]);
+  if (items.length === 0) return <div className={clsx('flex-1 min-w-0', className)} />;
+  const item = items[index % items.length];
+  return (
+    <div className={clsx('flex-1 min-w-0 flex items-center gap-2', className)} onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} aria-live="polite">
+      <Megaphone size={13} className="shrink-0 opacity-90" />
+      <span key={item.key} className="topbar-ticker-in min-w-0 flex items-center gap-1.5 text-[12.5px] text-white" title={item.detail ? `${item.label}: ${item.detail}` : item.label}>
+        <span className="font-bold truncate">{item.label}</span>
+        {item.detail && <span className="hidden sm:inline truncate text-white/85">{item.detail}</span>}
+      </span>
+    </div>
+  );
+}
+
+function SaleTicker({ className }: { className?: string }) {
   const navigate = useNavigate();
   const deals = useTopBarDeals();
   // Premium members: the biggest member discounts replace the normal flash deals.
