@@ -49,3 +49,22 @@ createRoot(document.getElementById('root')!).render(
     </ToastProvider>
   </StrictMode>,
 );
+
+// Branded splash (index.html #splash): shown until the app has mounted and the window finished loading; at least ~600 ms so it never flashes.
+{
+  const splash = document.getElementById('splash');
+  if (splash) {
+    const shownAt = performance.now();
+    const hide = () => {
+      const wait = Math.max(0, 600 - (performance.now() - shownAt));
+      window.setTimeout(() => {
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          splash.classList.add('hide');
+          window.setTimeout(() => splash.remove(), 350);
+        }));
+      }, wait);
+    };
+    if (document.readyState === 'complete') hide(); else window.addEventListener('load', hide, { once: true });
+    window.setTimeout(hide, 8000); // safety net: never block the app
+  }
+}
