@@ -183,6 +183,8 @@ export interface LoginPayload {
   email:    string;
   password: string;
   role:     AppRole;
+  /** Staff accounts: authenticator or recovery code. */
+  totp?:    string;
 }
 interface LoginUser   { id: string; name: string; email: string; role: AppRole; image: string | null }
 interface AuthTokens  { accessToken: string; refreshToken: string }

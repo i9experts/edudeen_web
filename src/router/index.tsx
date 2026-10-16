@@ -42,6 +42,8 @@ import { NotFoundPage }         from '@/features/buyer/pages/NotFoundPage';
 // ── Lazy helpers ──────────────────────────────────────────────────────────────
 // Seller-only / admin-only entry pages (heavy: Stripe wizard) stay out of the main bundle.
 const OnboardingPage = lazy(() => import('@/features/auth/pages/onboard/OnboardingPage').then(m => ({ default: m.OnboardingPage })));
+const AdminAcceptInvitePage = lazy(() => import('@/features/auth/pages/admin/AdminAcceptInvitePage').then(m => ({ default: m.AdminAcceptInvitePage })));
+const CollaborationPage = lazy(() => import('@/features/admin/pages/collaboration/CollaborationPage').then(m => ({ default: m.CollaborationPage })));
 const AdminLoginPage = lazy(() => import('@/features/auth/pages/admin/AdminLoginPage').then(m => ({ default: m.AdminLoginPage })));
 const CheckoutPage = lazy(() => import('@/features/buyer/pages/CheckoutPage').then(m => ({ default: m.CheckoutPage })));
 const PricingPage = lazy(() => import('@/features/buyer/pages/PricingPage').then(m => ({ default: m.PricingPage })));
@@ -348,6 +350,7 @@ const mainRouter = createBrowserRouter([
       // ── Auth ──────────────────────────────────────────────────────────
       { path: '/login',           element: <LoginPage /> },
       { path: '/admin/login',     element: <AdminLoginPage /> },
+      { path: '/admin/accept-invite/:token', element: <AdminAcceptInvitePage /> },
       { path: '/register',        element: <RegisterPage /> },
       { path: '/onboard',      element: <OnboardingPage /> },
       { path: '/forgot-password', element: <ForgotPasswordPage /> },
@@ -459,6 +462,7 @@ const mainRouter = createBrowserRouter([
           { path: 'config',       element: <RequireRole role="admin"><AdminConfig /></RequireRole> },
           { path: 'marketing',    element: <RequireRole role="admin"><AdminMarketing /></RequireRole> },
           { path: 'settings',     element: <AdminSettings /> },
+          { path: 'collaboration', element: <CollaborationPage /> },
           { path: 'seo',          element: <RequireRole role="admin"><AdminSEO /></RequireRole> },
           { path: 'seo/integrations/callback', element: <RequireRole role="admin"><AdminSeoCallback /></RequireRole> },
           { path: 'ai-studio',    element: <RequireRole role="admin"><AdminAiStudio /></RequireRole> },

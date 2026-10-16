@@ -37,6 +37,7 @@ export function AdminLoginPage() {
   usePageTitle('Admin Login');
 
   const [showPass, setShowPass] = useState(false);
+  const [totp, setTotp] = useState('');
   const { execute: login, loading, error: apiError } = useLogin();
 
   const { values, errors, set, blur, handleSubmit } = useForm(
@@ -47,6 +48,7 @@ export function AdminLoginPage() {
         email:    data.email,
         password: data.password,
         role:     'admin',
+        ...(totp.trim() ? { totp: totp.trim() } : {}),
       }, redirectTo),
     },
   );
@@ -111,6 +113,13 @@ export function AdminLoginPage() {
           </div>
         </div>
       </div>
+
+      {(totp || /authenticator|wrong code/i.test(apiError ?? '')) && (
+        <div className="mt-4">
+          <Input id="admin-login-totp" label="Authenticator code" placeholder="6-digit code (or a recovery code)" autoComplete="one-time-code" inputMode="numeric" value={totp} onChange={e => setTotp(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSubmit()} />
+          <p className="text-[12px] text-slate mt-1.5 mb-0">Staff accounts use two-step sign-in. Open your authenticator app for the code.</p>
+        </div>
+      )}
 
       <Button variant="primary" size="lg" fullWidth onClick={handleSubmit} loading={loading} className="mt-6">
         Sign In

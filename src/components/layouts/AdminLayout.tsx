@@ -1,4 +1,5 @@
 import { useState, useEffect, Suspense } from 'react';
+import { useAdminAccess, navAllowed } from '@/hooks/admin/useAdminAccess';
 import { Outlet, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { clsx } from 'clsx';
 import {
@@ -64,6 +65,7 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { id: 'announcements', Icon: Bell,            label: 'Announcements',   path: '/admin/announcements' },
   { id: 'app-slides',    Icon: Smartphone,      label: 'App Intro Slides', path: '/admin/app-slides'  },
   { id: 'config',        Icon: Settings,        label: 'Platform Config', path: '/admin/config'        },
+  { id: 'collaboration', Icon: Users,           label: 'Collaboration',   path: '/admin/collaboration' },
   { id: 'settings',      Icon: UserCog,         label: 'My Settings',     path: '/admin/settings'      },
 ];
 
@@ -85,7 +87,7 @@ interface AdminModule {
 export const ADMIN_MODULES: AdminModule[] = [
   { id: 'overview',  label: 'Overview',             Icon: LayoutDashboard, ids: ['overview'] },
   { id: 'commerce',  label: 'Commerce',             Icon: Store,           ids: ['orders', 'marketplace', 'categories', 'refunds', 'shipping-zones', 'subscriptions', 'platform-plans', 'premium'] },
-  { id: 'people',    label: 'Users & Communication', Icon: Users,          ids: ['users', 'leads', 'moderation', 'messages'] },
+  { id: 'people',    label: 'Users & Communication', Icon: Users,          ids: ['users', 'leads', 'moderation', 'messages', 'collaboration'] },
   { id: 'growth',    label: 'Growth',                Icon: TrendingUp,     ids: ['marketing', 'picks', 'seo', 'ai-studio'] },
   { id: 'finance',   label: 'Finance',               Icon: DollarSign,     ids: ['finance', 'monthly-payouts', 'manual-payments', 'fx-settings'] },
   { id: 'content',   label: 'Content',               Icon: ImageIcon,      ids: ['banners', 'faqs', 'testimonials', 'announcements', 'app-slides'] },
@@ -144,7 +146,7 @@ export function AdminNavMenu({ excludeItemIds = [] }: { excludeItemIds?: string[
   return (
     <div className="flex flex-col gap-4">
       {ADMIN_MODULES.filter(m => m.id !== 'overview')
-        .map(module => ({ ...module, items: module.ids.map(id => ADMIN_NAV.find(n => n.id === id)).filter((n): n is AdminNavItem => !!n && !hiddenItems.has(n.id)) }))
+        .map(module => ({ ...module, items: module.ids.map(id => ADMIN_NAV.find(n => n.id === id)).filter((n): n is AdminNavItem => !!n && !hiddenItems.has(n.id) && navAllowed(n.id)) }))
         .filter(module => module.items.length > 0)
         .map(module => (
         <div key={module.id} className="bg-white border border-bone rounded-xl overflow-hidden">
@@ -197,7 +199,7 @@ function AdminBottomNav() {
   // 5th tab: every admin module, grouped like the desktop sidebar.
   const groups = ADMIN_MODULES.filter(m => m.id !== 'overview').map(m => ({
     label: m.label,
-    items: m.ids.map(id => ADMIN_NAV.find(n => n.id === id)).filter((n): n is AdminNavItem => !!n).map(n => ({ id: n.id, label: n.label, Icon: n.Icon, active: isNavItemActive(n, pathname, search), onSelect: () => navigate(n.path) })),
+    items: m.ids.map(id => ADMIN_NAV.find(n => n.id === id)).filter((n): n is AdminNavItem => !!n && navAllowed(n.id)).map(n => ({ id: n.id, label: n.label, Icon: n.Icon, active: isNavItemActive(n, pathname, search), onSelect: () => navigate(n.path) })),
   })).filter(g => g.items.length > 0);
   const accountNav = ADMIN_NAV.find(n => n.id === 'settings');
   if (accountNav) {
@@ -383,7 +385,7 @@ function AdminSidebar({ open, onToggle }: AdminSidebarProps) {
           {ADMIN_MODULES.map(module => {
             const children = module.ids
               .map(id => ADMIN_NAV.find(n => n.id === id))
-              .filter((n): n is AdminNavItem => !!n);
+              .filter((n): n is AdminNavItem => !!n && navAllowed(n.id));
             if (!children.length) return null;
 
             const single = children.length === 1 ? children[0] : null;
@@ -572,6 +574,7 @@ function AdminSidebar({ open, onToggle }: AdminSidebarProps) {
 }
 
 export function AdminLayout() {
+  useAdminAccess(); // loads the signed-in person's permissions; the sidebar hides what they can't use
   // Only the dashboard's own content area scrolls — never the page around it.
   useLockPageScroll();
   const { pathname: currentPath } = useLocation();
