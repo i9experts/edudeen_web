@@ -8,6 +8,7 @@ import { EDUCATION_LEVELS } from '@/api/services/product';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 import { formatPrice } from '@/utils/formatPrice';
 import { isPlainLeftClick } from '@/utils/productLink';
+import { responsiveImg } from '@/utils/cloudinaryImage';
 import { getStorePagePath } from '@/utils/storefrontUrl';
 import { coverPaletteFor } from './ProductCoverFallback';
 import { ageLabel } from '@/constants/learning';
@@ -42,7 +43,7 @@ function ListCover({ product }: { product: MarketplaceProduct }) {
   return (
     <div className="w-[112px] sm:w-[168px] aspect-square rounded-xl overflow-hidden flex items-center justify-center shrink-0" style={{ background: bg }}>
       {image ? (
-        <img src={image} alt="" loading="lazy" decoding="async" onError={() => setImgFailed(true)} className="w-full h-full object-cover" />
+        <img {...responsiveImg(image, '168px', [168, 336], 336)} alt={product.name} width={168} height={168} loading="lazy" decoding="async" onError={() => setImgFailed(true)} className="w-full h-full object-cover" />
       ) : (
         <strong className="font-serif font-normal text-[15px] sm:text-[18px] leading-[1.1] text-center px-3 line-clamp-4" style={{ color: accent }}>
           {product.name}
@@ -68,8 +69,10 @@ function Cover({ product, tilt }: { product: MarketplaceProduct; tilt: number })
       >
         {image ? (
           <img
-            src={image}
-            alt=""
+            {...responsiveImg(image, '(min-width: 1024px) 22vw, (min-width: 640px) 33vw, 46vw', [240, 360, 480, 720], 480)}
+            alt={product.name}
+            width={480}
+            height={480}
             loading="lazy"
             decoding="async"
             onError={() => setImgFailed(true)}

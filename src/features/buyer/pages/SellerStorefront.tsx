@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { SITE_URL } from '@/utils/seo';
+import { usePageMeta } from '@/hooks/usePageMeta';
 import { useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
 import { CoverImage } from '@/components/comman/ui';
@@ -119,10 +121,13 @@ export function SellerStorefront() {
 
   const { banners: storeBanners } = useStoreBanners(store.storeId);
 
-  useEffect(() => {
-    document.title = `${store.name} — Edudeen`;
-    return () => { document.title = 'Edudeen'; };
-  }, [store.name]);
+  usePageMeta({
+    title: store.name,
+    description: ((store as { description?: string | null }).description ?? '').replace(/\s+/g, ' ').trim().slice(0, 155) || `Shop ${store.name} on Edudeen: educational worksheets, books, digital downloads and courses.`,
+    image: store.logo ?? null,
+    canonical: store.slug ? `/shop/${store.slug}` : undefined,
+    jsonLd: { '@context': 'https://schema.org', '@type': 'Store', name: store.name, url: `${SITE_URL}/shop/${store.slug}`, ...(store.logo ? { logo: store.logo } : {}) },
+  });
 
   // Total product count for the identity banner — cheap first-page fetch, the
   // real catalog listing/pagination lives inside `ProductCatalogSection`.

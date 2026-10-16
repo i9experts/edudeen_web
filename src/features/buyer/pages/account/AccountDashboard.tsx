@@ -1,7 +1,7 @@
 import { usePremium } from '@/hooks/usePremium';
 import { PremiumMemberBadge } from '@/components/comman/marketplace/PremiumBits';
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   ShoppingBag, Heart, Bell, MapPin, Package, ChevronRight,
   ShieldCheck, Mail, UserCog, Sparkles, ArrowRight, Store,
@@ -26,12 +26,11 @@ const STATUS_COLOR: Record<OrderStatus, 'orange' | 'blue' | 'green' | 'red'> = {
 };
 
 function RecentOrderRow({ order }: { order: OrderSummary }) {
-  const navigate = useNavigate();
   const itemCount = (order.stores ?? []).reduce((n, s) => n + s.itemCount, 0);
   return (
-    <button
-      onClick={() => navigate(`/account/orders/${order.orderId}`)}
-      className="group w-full flex items-center gap-3 px-4 py-3 text-start bg-transparent border-none cursor-pointer hover:bg-cream transition-colors rounded-[10px]"
+    <Link
+      to={`/account/orders/${order.orderId}`}
+      className="group w-full flex items-center gap-3 px-4 py-3 text-start no-underline bg-transparent border-none cursor-pointer hover:bg-cream transition-colors rounded-[10px]"
     >
       <div className="w-9 h-9 rounded-[9px] bg-brand-pale-orange flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-110">
         <Package size={14} className="text-brand-orange" />
@@ -49,7 +48,7 @@ function RecentOrderRow({ order }: { order: OrderSummary }) {
         </span>
         <ChevronRight size={13} className="text-bone shrink-0 transition-transform duration-200 group-hover:translate-x-[2px] group-hover:text-brand-orange" />
       </div>
-    </button>
+    </Link>
   );
 }
 
@@ -351,7 +350,7 @@ export function AccountDashboard() {
               <PageHeader
                 title="Recent Orders"
                 actions={
-                  <Button variant="ghost" size="sm" iconRight={<ArrowRight size={13} />} onClick={() => navigate('/account/orders')}>
+                  <Button variant="ghost" size="sm" iconRight={<ArrowRight size={13} />} to={'/account/orders'}>
                     View all
                   </Button>
                 }
@@ -382,7 +381,7 @@ export function AccountDashboard() {
               <PageHeader
                 title="Wishlist Preview"
                 actions={
-                  <Button variant="ghost" size="sm" iconRight={<ArrowRight size={13} />} onClick={() => navigate('/account/wishlist')}>
+                  <Button variant="ghost" size="sm" iconRight={<ArrowRight size={13} />} to={'/account/wishlist'}>
                     View all
                   </Button>
                 }
@@ -402,16 +401,16 @@ export function AccountDashboard() {
             ) : (
               <div className="px-5 pb-5 pt-1 flex gap-3 flex-wrap">
                 {wishlistItems.slice(0, 4).map(item => (
-                  <button
+                  <Link
                     key={item.product._id}
-                    onClick={() => navigate(`/product/${item.product.slug}`)}
-                    className="group flex flex-col items-start gap-1.5 bg-transparent border-none cursor-pointer p-0 text-start w-[84px] transition-transform duration-200 hover:-translate-y-[2px]"
+                    to={`/product/${item.product.slug}`}
+                    className="group flex flex-col items-start no-underline gap-1.5 bg-transparent border-none cursor-pointer p-0 text-start w-[84px] transition-transform duration-200 hover:-translate-y-[2px]"
                   >
                     <div className="overflow-hidden rounded-[10px]">
                       <WishlistPreviewImg src={item.product.images?.[0]} name={item.product.name} />
                     </div>
                     <p className="text-[12px] text-charcoal font-medium line-clamp-2 leading-tight group-hover:text-brand-orange transition-colors">{item.product.name}</p>
-                  </button>
+                  </Link>
                 ))}
               </div>
             )}
@@ -431,7 +430,7 @@ export function AccountDashboard() {
                 : 'Complete your profile for a smoother checkout experience.'}
             </p>
             {completionPct < 100 && (
-              <Button variant="outline" size="sm" fullWidth className="mt-3" onClick={() => navigate('/account/profile')}>
+              <Button variant="outline" size="sm" fullWidth className="mt-3" to={'/account/profile'}>
                 Complete Profile
               </Button>
             )}
@@ -456,7 +455,7 @@ export function AccountDashboard() {
                 ? <Badge color="gray" size="sm">Not set</Badge>
                 : <Badge color="green" size="sm">Active</Badge>}
             </div>
-            <Button variant="outline" size="sm" fullWidth onClick={() => navigate('/account/security')}>
+            <Button variant="outline" size="sm" fullWidth to={'/account/security'}>
               Manage Security
             </Button>
           </Card>
@@ -476,15 +475,15 @@ export function AccountDashboard() {
                 { label: 'Notification Settings', path: '/account/notifications', Icon: Bell },
                 { label: 'Browse resources',   path: '/',         Icon: Store },
               ].map(a => (
-                <button
+                <Link
                   key={a.path}
-                  onClick={() => navigate(a.path)}
-                  className="group w-full flex items-center gap-2.5 px-3 py-[9px] rounded-[8px] text-[12.5px] text-charcoal bg-cream hover:bg-brand-pale-orange border-none cursor-pointer transition-colors"
+                  to={a.path}
+                  className="group w-full flex items-center gap-2.5 no-underline px-3 py-[9px] rounded-[8px] text-[12.5px] text-charcoal bg-cream hover:bg-brand-pale-orange border-none cursor-pointer transition-colors"
                 >
                   <a.Icon size={14} className="text-brand-orange shrink-0 transition-transform duration-200 group-hover:scale-110" />
                   <span className="flex-1 text-start">{a.label}</span>
                   <ChevronRight size={13} className="text-slate shrink-0 transition-transform duration-200 group-hover:translate-x-[2px]" />
-                </button>
+                </Link>
               ))}
             </div>
           </Card>

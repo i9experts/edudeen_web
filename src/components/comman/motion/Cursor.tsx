@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { motion, useMotionValue, useSpring } from 'motion/react';
+import { m as motion, useMotionValue, useSpring } from 'motion/react';
 
 // Desktop-only custom cursor with contextual states driven by a
 // `data-cursor="label"` attribute on any element (label omitted or

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { CheckCircle2, Circle, Video, FileText, AlignLeft, ListChecks, Award, ChevronLeft, ChevronRight, Loader2, Menu, X } from 'lucide-react';
 import { clsx } from 'clsx';
 import { Button, ProgressBar } from '@/components/comman/ui';
@@ -69,7 +69,6 @@ function Quiz({ lesson, onResult }: { lesson: LessonContent; onResult: (r: QuizR
 export function CoursePlayerPage() {
   const { slug = '' } = useParams();
   const [params, setParams] = useSearchParams();
-  const navigate = useNavigate();
   const toast = useToast();
   const [view, setView] = useState<LearnView | null>(null);
   const [error, setError] = useState('');
@@ -119,7 +118,7 @@ export function CoursePlayerPage() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-3 p-6 text-center bg-cream">
         <p className="text-[15px] text-carbon font-semibold">{error}</p>
-        <Button variant="primary" size="md" onClick={() => navigate(`/product/${slug}`)}>Go to the course page</Button>
+        <Button variant="primary" size="md" to={`/product/${slug}`}>Go to the course page</Button>
       </div>
     );
   }

@@ -9,7 +9,7 @@ import { forgotPasswordSchema, type ForgotPasswordFormData } from '@/utils/valid
 import { AuthSplitLayout } from '@/features/auth/components/AuthSplitLayout';
 import { SecurityMockup } from '@/features/auth/components/mockups/AuthMockups';
 import { MagneticButton } from '@/components/comman/motion/MagneticButton';
-import { motion } from 'motion/react';
+import { m as motion } from 'motion/react';
 
 const fadeSlide = { initial: { opacity: 0, y: -6 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] as const } };
 

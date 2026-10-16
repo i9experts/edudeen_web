@@ -1,7 +1,7 @@
 import { useT } from '@/contexts/languageCtx';
 import { useState, useEffect, useRef, useCallback, useId } from 'react';
 import { createPortal } from 'react-dom';
-import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { clsx } from 'clsx';
 import { ArrowLeft, ArrowRight, Search, Clock, LayoutGrid, X, TrendingUp, Tag, Star, Sparkles, ChevronDown, Check, Store as StoreIcon, Lightbulb, Trash2, Eye, Loader2 } from 'lucide-react';
 import { CategoryArt } from '@/components/comman/art/CategoryArt';
@@ -932,7 +932,6 @@ export function CurrencySelector({ tone = 'light' }: { tone?: 'light' | 'dark' }
 // into a seller).
 function AccountActions({ simple = false }: { simple?: boolean }) {
   const t = useT();
-  const navigate = useNavigate();
   const sellEntry = useSellEntry();
 
   if (TokenStorage.isLoggedIn()) {
@@ -947,12 +946,12 @@ function AccountActions({ simple = false }: { simple?: boolean }) {
   if (simple) {
     return (
       <div className="flex items-center gap-2 shrink-0">
-        <button
-          onClick={() => navigate('/login')}
-          className="text-[13px] font-medium text-white border border-white/25 rounded-md px-[14px] py-[7px] bg-transparent cursor-pointer hover:bg-white/10 transition-colors"
+        <Link
+          to="/login"
+          className="text-[13px] font-medium text-white no-underline border border-white/25 rounded-md px-[14px] py-[7px] bg-transparent cursor-pointer hover:bg-white/10 transition-colors"
         >
           {t('Sign In')}
-        </button>
+        </Link>
         <button
           onClick={sellEntry.go}
           disabled={sellEntry.loading}
@@ -968,12 +967,12 @@ function AccountActions({ simple = false }: { simple?: boolean }) {
   return (
     <div className="flex items-center gap-1.5 md:gap-2.5 shrink-0">
       <SignInPreview />
-      <button
-        onClick={() => navigate('/login')}
-        className="md:hidden min-h-11 text-[13px] font-medium text-white border-none rounded-md px-[14px] py-[6px] bg-brand-orange cursor-pointer hover:bg-brand-deep-orange transition-colors"
+      <Link
+        to="/login"
+        className="md:hidden inline-flex items-center min-h-11 text-[13px] font-medium text-white no-underline border-none rounded-md px-[14px] py-[6px] bg-brand-orange cursor-pointer hover:bg-brand-deep-orange transition-colors"
       >
         {t('Sign In')}
-      </button>
+      </Link>
     </div>
   );
 }
@@ -983,7 +982,6 @@ function AccountActions({ simple = false }: { simple?: boolean }) {
 // a small panel of real sub-pages (e.g. FAQ/Contact/Privacy under "Resources"),
 // closes on outside click so it never lingers open while browsing elsewhere.
 function NavDropdown({ label, children }: { label: string; children: { label: string; path: string }[] }) {
-  const navigate = useNavigate();
   const { pathname } = useLocation();
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -1020,16 +1018,17 @@ function NavDropdown({ label, children }: { label: string; children: { label: st
       {open && (
         <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-[180px] rounded-xl border border-bone bg-white shadow-raised py-1.5 z-50">
           {children.map(c => (
-            <button
+            <Link
               key={c.path}
-              onClick={() => { navigate(c.path); setOpen(false); }}
+              to={c.path}
+              onClick={() => setOpen(false)}
               className={clsx(
-                'w-full text-start px-3.5 py-2 text-[13px] bg-transparent border-none cursor-pointer transition-colors duration-150',
+                'block w-full text-start no-underline px-3.5 py-2 text-[13px] bg-transparent border-none cursor-pointer transition-colors duration-150',
                 pathname.startsWith(c.path) ? 'text-brand-orange' : 'text-charcoal hover:bg-cream hover:text-brand-orange',
               )}
             >
               {c.label}
-            </button>
+            </Link>
           ))}
         </div>
       )}
@@ -1082,7 +1081,6 @@ export function useCompactOnScroll() {
 }
 
 export function BuyerNavbar({ variant = 'full', contextLabel, search, accentColor, backTo, hideSearch = false, centerLinks, hideCommerce = false }: BuyerNavbarProps) {
-  const navigate = useNavigate();
   const { pathname } = useLocation();
   const uncontrolled = useUncontrolledSearch();
   const { scrolled, hidden } = useCompactOnScroll();
@@ -1140,7 +1138,7 @@ export function BuyerNavbar({ variant = 'full', contextLabel, search, accentColo
   }, [search, searchValue, uncontrolled]);
 
   return (
-    <nav style={scrolled && topBarH ? { top: -topBarH } : undefined} className={clsx(
+    <nav aria-label="Main" style={scrolled && topBarH ? { top: -topBarH } : undefined} className={clsx(
       'sticky top-0 z-50 backdrop-blur-md transition-[background-color,border-color,transform] duration-200 border-b',
       scrolled ? 'bg-white border-bone' : 'bg-white/90 border-transparent',
       hidden ? '-translate-y-full md:translate-y-0' : 'translate-y-0',
@@ -1151,8 +1149,8 @@ export function BuyerNavbar({ variant = 'full', contextLabel, search, accentColo
       <div className="flex items-center gap-3 md:gap-6 px-[5%] md:px-[4%] h-[56px] md:h-[64px]">
 
         {/* Logo — hidden while the mobile search row is expanded so the input gets full width */}
-        <button
-          onClick={() => navigate('/')}
+        <Link
+          to="/"
           aria-label="Edudeen home"
           className={clsx(
             'items-center gap-[6px] shrink-0 cursor-pointer bg-transparent border-none p-0 outline-none rounded-sm focus-visible:ring-2 focus-visible:ring-brand-orange/40',
@@ -1168,7 +1166,7 @@ export function BuyerNavbar({ variant = 'full', contextLabel, search, accentColo
               <span className="text-[13px] text-slate hidden md:inline">{contextLabel}</span>
             </>
           )}
-        </button>
+        </Link>
 
         {/* Center nav links — desktop only, real navigation living in the one
            navbar instead of a separate strip underneath it. flex-1 + justify-center
@@ -1182,17 +1180,14 @@ export function BuyerNavbar({ variant = 'full', contextLabel, search, accentColo
               if (item.children?.length) {
                 return <NavDropdown key={item.label} label={item.label} children={item.children} />;
               }
-              return (
-                <button
-                  key={item.label}
-                  onClick={() => (item.onClick ? item.onClick() : navigate(item.path))}
-                  className={clsx(
-                    'text-[13px] font-medium bg-transparent border-none cursor-pointer transition-colors duration-150',
-                    isActive || item.highlight ? 'text-brand-orange' : 'text-charcoal hover:text-brand-orange',
-                  )}
-                >
-                  {item.label}
-                </button>
+              const cls = clsx(
+                'text-[13px] font-medium bg-transparent border-none cursor-pointer no-underline transition-colors duration-150',
+                isActive || item.highlight ? 'text-brand-orange' : 'text-charcoal hover:text-brand-orange',
+              );
+              return item.onClick ? (
+                <button key={item.label} onClick={() => item.onClick?.()} className={cls}>{item.label}</button>
+              ) : (
+                <Link key={item.label} to={item.path} className={cls}>{item.label}</Link>
               );
             })}
           </div>
@@ -1201,7 +1196,7 @@ export function BuyerNavbar({ variant = 'full', contextLabel, search, accentColo
         {variant === 'minimal' ? (
           <div className="flex-1 flex items-center justify-end">
             {backTo && (
-              <Button variant="ghost" size="sm" onClick={() => navigate(backTo.path)}>
+              <Button variant="ghost" size="sm" to={backTo.path}>
                 <ArrowLeft size={14} className="inline align-middle me-1" />
                 {backTo.label}
               </Button>
@@ -1269,7 +1264,7 @@ export function BuyerNavbar({ variant = 'full', contextLabel, search, accentColo
             <div className={clsx('items-center gap-1 md:gap-2.5 min-w-0 overflow-x-auto scrollbar-hide', mobileSearchOpen ? 'hidden md:flex' : 'flex', hideSearch && 'ms-auto')}>
               {backTo && (
                 <div className="hidden md:inline-flex">
-                  <Button variant="ghost" size="sm" onClick={() => navigate(backTo.path)}>
+                  <Button variant="ghost" size="sm" to={backTo.path}>
                     <ArrowLeft size={14} className="inline align-middle me-1" />
                     {backTo.label}
                   </Button>

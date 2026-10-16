@@ -106,7 +106,7 @@ export function StorefrontLayout() {
             ctaLink={store.announcementBar.ctaLink}
           />
         )}
-        <Outlet />
+        <main><Outlet /></main>
         <Footer />
       </div>
     </StorefrontProvider>

@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { usePublicPlatformConfig } from '@/hooks/usePublicPlatformConfig';
 import { Sparkles } from 'lucide-react';
 import { clsx } from 'clsx';
-import QRCode from 'qrcode';
 import { ENV_APP_STORE_URL, ENV_GOOGLE_PLAY_URL, publicStoreUrl } from '@/utils/storeLinks';
 
 // Store links come ONLY from the admin config (Platform Config -> Homepage content) or the
@@ -32,7 +31,9 @@ export function useAppQrDataUrl(value: string) {
   useEffect(() => {
     let cancelled = false;
     if (!value) { setDataUrl(null); return; }
-    QRCode.toDataURL(value, { margin: 1, width: 240, color: { dark: '#141413', light: '#ffffff' } })
+    // The QR library (~70 KB) is only loaded when a QR is actually shown.
+    import('qrcode')
+      .then(m => m.default.toDataURL(value, { margin: 1, width: 240, color: { dark: '#141413', light: '#ffffff' } }))
       .then(url => { if (!cancelled) setDataUrl(url); })
       .catch(() => { /* non-critical — falls back to a blank white card */ });
     return () => { cancelled = true; };
@@ -110,7 +111,7 @@ export function StoreBadgeChip({ platform, compact = false, onLight = false }: {
       aria-label={isIos ? (url ? 'Download on the App Store' : 'App Store - coming soon') : (url ? 'Get it on Google Play' : 'Google Play - coming soon')}
       className={clsx(
         'flex items-center gap-[7px] rounded-[9px] border select-none transition-colors',
-        onLight ? 'border-carbon bg-carbon hover:bg-charcoal' : 'border-white/20 bg-white/10 backdrop-blur-sm hover:bg-white/[0.16]',
+        onLight ? 'border-carbon bg-carbon hover:bg-charcoal' : 'border-white/20 bg-[#0b2a46]/60 backdrop-blur-sm hover:bg-[#0b2a46]/75',
         compact ? 'px-2.5 py-[6px]' : 'px-3.5 py-[9px]',
       )}
     >
@@ -121,7 +122,7 @@ export function StoreBadgeChip({ platform, compact = false, onLight = false }: {
         <p className="text-[12px] font-semibold text-white leading-none">{isIos ? 'App Store' : 'Google Play'}</p>
       ) : (
         <div className="text-start leading-none">
-          <p className="text-[12px] text-white/60 mb-[2px]">{!url ? 'Coming soon on' : isIos ? 'Download on the' : 'GET IT ON'}</p>
+          <p className="text-[12px] text-white/85 mb-[2px]">{!url ? 'Coming soon on' : isIos ? 'Download on the' : 'GET IT ON'}</p>
           <p className="text-[12.5px] font-bold text-white leading-none">{isIos ? 'App Store' : 'Google Play'}</p>
         </div>
       )}

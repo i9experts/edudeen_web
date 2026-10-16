@@ -1,5 +1,5 @@
 import { useT } from '@/contexts/languageCtx';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 import { clsx } from 'clsx';
 
@@ -9,7 +9,6 @@ export interface BreadcrumbItem {
 }
 
 export function Breadcrumb({ items, className }: { items: BreadcrumbItem[]; className?: string }) {
-  const navigate = useNavigate();
   const t = useT();
 
   return (
@@ -27,12 +26,12 @@ export function Breadcrumb({ items, className }: { items: BreadcrumbItem[]; clas
           <span key={`${item.label}-${i}`} className="flex items-center gap-1 shrink-0 self-stretch">
             {i > 0 && <ChevronRight size={12} className="text-bone shrink-0" />}
             {item.path && !isLast ? (
-              <button
-                onClick={() => navigate(item.path!)}
-                className="text-[12px] text-slate hover:text-brand-orange bg-transparent border-none cursor-pointer p-0 h-full min-h-11 font-medium transition-colors rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/30"
+              <Link
+                to={item.path!}
+                className="text-[12px] text-slate hover:text-brand-orange no-underline inline-flex items-center p-0 h-full min-h-11 font-medium transition-colors rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/30"
               >
                 {t(item.label)}
-              </button>
+              </Link>
             ) : (
               <span
                 className={clsx(

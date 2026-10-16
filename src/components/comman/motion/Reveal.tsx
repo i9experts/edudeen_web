@@ -1,4 +1,4 @@
-import { motion, useReducedMotion, type Variants } from 'motion/react';
+import { m as motion, useReducedMotion, type Variants } from 'motion/react';
 import { Children, type ReactNode } from 'react';
 
 // Shared scroll-reveal primitive for the public marketing/auth pages only —

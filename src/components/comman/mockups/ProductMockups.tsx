@@ -5,7 +5,7 @@ import {
   TrendingUp, TrendingDown, Users, Package, DollarSign,
   Bell, PackageCheck,
 } from 'lucide-react';
-import { motion, useReducedMotion } from 'motion/react';
+import { m as motion, useReducedMotion } from 'motion/react';
 import { PhoneShell, StatusBar } from '@/components/comman/ui/AppDownloadBanner';
 import { unsplashUrl } from '@/assets/stockPhotos';
 

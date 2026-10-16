@@ -12,7 +12,7 @@ import { Mail, ShieldCheck, KeyRound, Fingerprint } from 'lucide-react';
 import { InboxMockup, IdentityMockup } from '@/features/auth/components/mockups/AuthMockups';
 import { useToast } from '@/contexts/ToastContext';
 import { MagneticButton } from '@/components/comman/motion/MagneticButton';
-import { motion } from 'motion/react';
+import { m as motion } from 'motion/react';
 
 const fadeSlide = { initial: { opacity: 0, y: -6 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] as const } };
 

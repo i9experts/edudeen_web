@@ -3,23 +3,31 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="preconnect" href="https://api.edudeen.com" crossorigin />
+    <link rel="preconnect" href="https://res.cloudinary.com" crossorigin />
+    <link rel="dns-prefetch" href="https://api.edudeen.com" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#174771" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="apple-touch-icon" href="/icon-192.png" />
-    <title>Edudeen — Educational resources, books &amp; courses from trusted sellers</title>
+    <title>Edudeen - Educational resources, books &amp; courses from trusted sellers</title>
     <meta name="description" content="Edudeen is an education marketplace: worksheets, books, digital downloads and courses for home and classroom from verified sellers." />
     <link rel="canonical" href="https://edudeen.com/" />
     <meta property="og:site_name" content="Edudeen" />
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="Edudeen — Educational resources from trusted sellers" />
+    <meta property="og:title" content="Edudeen - Educational resources from trusted sellers" />
     <meta property="og:description" content="Worksheets, books, digital downloads and courses for home and classroom." />
-    <meta property="og:image" content="https://edudeen.com/edudeen-logo.png" />
-    <meta name="twitter:card" content="summary" />
+    <meta property="og:url" content="https://edudeen.com/" />
+    <meta property="og:image" content="https://edudeen.com/og-default.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Edudeen - education marketplace" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://edudeen.com/og-default.png" />
     <script type="application/ld+json">
       {"@context":"https://schema.org","@graph":[
         {"@type":"Organization","name":"Edudeen","url":"https://edudeen.com/","logo":"https://edudeen.com/edudeen-logo.png"},
-        {"@type":"WebSite","name":"Edudeen","url":"https://edudeen.com/","potentialAction":{"@type":"SearchAction","target":"https://edudeen.com/?search={search_term_string}","query-input":"required name=search_term_string"}}
+        {"@type":"WebSite","name":"Edudeen","url":"https://edudeen.com/","potentialAction":{"@type":"SearchAction","target":{"@type":"EntryPoint","urlTemplate":"https://edudeen.com/?search={search_term_string}"},"query-input":"required name=search_term_string"}}
       ]}
     </script>
     <style>
@@ -33,8 +41,15 @@
       @media (prefers-reduced-motion:reduce){#splash img,#splash .bar i{animation:none}}
     </style>  </head>
   <body>
-    <div id="splash" role="status" aria-label="Loading Edudeen"><img src="/edudeen-logo.png" alt="Edudeen" width="220" height="auto" /><div class="bar"><i></i></div></div>    <div id="root"></div>
-    <noscript>Edudeen needs JavaScript to run. Browse worksheets, books and courses at edudeen.com.</noscript>
+    <div id="splash" role="status" aria-label="Loading Edudeen"><img src="/edudeen-logo-320.webp" srcset="/edudeen-logo-320.webp 1x, /edudeen-logo-640.webp 2x" alt="Edudeen" width="220" height="84" fetchpriority="high" /><div class="bar"><i></i></div></div>    <div id="root"></div>
+    <noscript>
+      <header><a href="/">Edudeen</a></header>
+      <main>
+        <h1>Edudeen - educational resources, books and courses</h1>
+        <p>Edudeen is an education marketplace for parents, teachers and schools. Browse worksheets, books, digital downloads and courses for home and classroom from verified sellers. Edudeen works best with JavaScript turned on.</p>
+        <nav aria-label="Main"><a href="/">Home</a> | <a href="/learn">Learn by grade</a> | <a href="/premium">Premium</a> | <a href="/become-a-seller">Sell on Edudeen</a> | <a href="/about">About</a> | <a href="/faq">FAQ</a> | <a href="/contact-us">Contact</a> | <a href="/privacy-policy">Privacy</a> | <a href="/terms-of-service">Terms</a></nav>
+      </main>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

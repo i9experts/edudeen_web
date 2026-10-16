@@ -1,4 +1,3 @@
-import { useNavigate } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useSellEntry } from '@/hooks/auth/useSellEntry';
@@ -13,7 +12,6 @@ import { SOLUTIONS } from '@/features/buyer/data/solutions';
 
 export function SolutionsOverviewPage() {
   usePageTitle('Solutions');
-  const navigate = useNavigate();
   const sellEntry = useSellEntry();
 
   return (
@@ -30,7 +28,7 @@ export function SolutionsOverviewPage() {
 
       <RevealStagger className="px-4 md:px-8 lg:px-12 pb-16 max-w-[1100px] mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5" step={0.06} y={18}>
         {SOLUTIONS.map(s => (
-          <PremiumCard key={s.slug} onClick={() => navigate(`/solutions/${s.slug}`)} className="group overflow-hidden p-0">
+          <PremiumCard key={s.slug} to={`/solutions/${s.slug}`} className="group overflow-hidden p-0">
             <div className="aspect-[4/3] overflow-hidden">
               <img src={unsplashUrl(s.image, 400)} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" />
             </div>

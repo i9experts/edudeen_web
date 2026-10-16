@@ -13,6 +13,8 @@ interface SectionHeadingProps {
   tone?:      'light' | 'dark';
   size?:      'md' | 'lg';
   className?: string;
+  /** Heading level: h1 for the one page title, default h2. */
+  as?:        'h1' | 'h2';
 }
 
 // The one heading treatment every redesigned public section now shares — a
@@ -21,7 +23,7 @@ interface SectionHeadingProps {
 // all read as the same design system instead of each page inventing its own
 // heading style. Wraps its own `Reveal` so callers never hand-stagger a
 // heading + subtitle pair.
-export function SectionHeading({ kicker, title, subtitle, align = 'left', tone = 'light', size = 'md', className }: SectionHeadingProps) {
+export function SectionHeading({ kicker, title, subtitle, align = 'left', tone = 'light', size = 'md', className, as: Tag = 'h2' }: SectionHeadingProps) {
   const isDark = tone === 'dark';
   return (
     <Reveal className={clsx(align === 'center' && 'text-center', className)}>
@@ -33,7 +35,7 @@ export function SectionHeading({ kicker, title, subtitle, align = 'left', tone =
           </span>
         </div>
       )}
-      <h2
+      <Tag
         className={clsx(
           'font-bold leading-[1.18] tracking-[-0.01em]',
           size === 'lg' ? 'text-[28px] sm:text-[36px] lg:text-[44px]' : 'text-[24px] sm:text-[30px]',
@@ -42,7 +44,7 @@ export function SectionHeading({ kicker, title, subtitle, align = 'left', tone =
         style={{ fontFamily: SERIF }}
       >
         {title}
-      </h2>
+      </Tag>
       {subtitle && (
         <p className={clsx('text-[14px] sm:text-[15px] leading-[1.6] mt-3', align === 'center' && 'mx-auto max-w-[560px]', isDark ? 'text-[#b0aea8]' : 'text-slate')}>
           {subtitle}

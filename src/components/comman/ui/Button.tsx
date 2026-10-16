@@ -1,4 +1,5 @@
-import { type ButtonHTMLAttributes, type ReactNode } from 'react';
+import { type AnchorHTMLAttributes, type ButtonHTMLAttributes, type ReactNode } from 'react';
+import { Link } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { clsx } from 'clsx';
 
@@ -23,6 +24,8 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   fullWidth?: boolean;
   loading?:   boolean;
   pill?:      boolean;     // rounded-full shape
+  /** Navigation: renders a real <a href> (router Link) instead of a <button>, so right-click / new-tab / crawlers work. */
+  to?:        string;
   children?:  ReactNode;   // optional — allows icon-only buttons
 }
 
@@ -82,6 +85,7 @@ export function Button({
   fullWidth = false,
   loading   = false,
   pill      = false,
+  to,
   style,
   className,
   disabled,
@@ -89,6 +93,26 @@ export function Button({
   ...props
 }: ButtonProps) {
   const isDisabled = disabled || loading;
+  const cls = clsx(BASE, SIZES[size], VARIANTS[variant], fullWidth && 'w-full', pill && 'rounded-full!', isDisabled && 'opacity-50 cursor-not-allowed pointer-events-none', className);
+  const inner = (
+    <>
+      {loading ? (
+        <Loader2 size={ICON_SIZE[size]} className="animate-spin shrink-0" />
+      ) : icon ? (
+        <span className="leading-none shrink-0">{icon}</span>
+      ) : null}
+      {children}
+      {!loading && iconRight && <span className="leading-none shrink-0">{iconRight}</span>}
+    </>
+  );
+  if (to !== undefined) {
+    const { type: _type, ...anchorProps } = props;
+    return (
+      <Link to={to} className={cls} style={style} aria-disabled={isDisabled || undefined} tabIndex={isDisabled ? -1 : undefined} {...(anchorProps as unknown as AnchorHTMLAttributes<HTMLAnchorElement>)}>
+        {inner}
+      </Link>
+    );
+  }
 
   return (
     <button

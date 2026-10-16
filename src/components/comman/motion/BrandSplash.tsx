@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { m as motion, AnimatePresence } from 'motion/react';
 import { EdudeenLogo } from '@/components/comman/ui/EdudeenLogo';
 
 const FLAG = 'edudeen:splash-shown';

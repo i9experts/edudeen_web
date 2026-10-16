@@ -4,7 +4,7 @@ import type { LucideIcon } from 'lucide-react';
 import { EdudeenLogo, EdudeenIcon } from '@/components/comman/ui/EdudeenLogo';
 import { Reveal, RevealStagger } from '@/components/comman/motion/Reveal';
 import { BrandSplash } from '@/components/comman/motion/BrandSplash';
-import { motion, useReducedMotion } from 'motion/react';
+import { m as motion, useReducedMotion } from 'motion/react';
 
 interface AuthHighlight {
   Icon: LucideIcon;
@@ -151,15 +151,15 @@ export function AuthSplitLayout({
          screens, and on the rare oversized form only the invisible-scrollbar
          internal scroll (never a visible bar, never the page) kicks in. ── */}
       {bare ? (
-        <div className={clsx(
+        <main className={clsx(
           'flex-1 min-w-0 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-hide flex flex-col',
           'rounded-t-[28px] -mt-6 relative z-10 bg-cream shadow-[0_-6px_20px_rgba(0,0,0,0.06)]',
           'lg:rounded-none lg:mt-0 lg:shadow-none',
         )}>
           {children}
-        </div>
+        </main>
       ) : (
-        <div className={clsx(
+        <main className={clsx(
           'flex-1 min-w-0 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-hide flex flex-col items-center px-4 py-[clamp(12px,3vh,32px)]',
           'rounded-t-[28px] -mt-6 relative z-10 bg-cream shadow-[0_-6px_20px_rgba(0,0,0,0.06)]',
           'lg:rounded-none lg:mt-0 lg:shadow-none',
@@ -172,7 +172,7 @@ export function AuthSplitLayout({
           >
             {children}
           </motion.div>
-        </div>
+        </main>
       )}
     </div>
   );

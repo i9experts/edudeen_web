@@ -8,7 +8,7 @@ import { EditableCategories, EditableDeals } from '@/components/admin-edit/Edita
 import { DealsBanner } from '@/components/comman/ui/DealsBanner';
 import { FeatureMaintenance } from '@/components/comman/ui/FeatureMaintenance';
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { X } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useIsBuyer } from '@/hooks/auth/useIsBuyer';
@@ -17,7 +17,7 @@ import { useEdgeHoverScroll } from '@/hooks/useEdgeHoverScroll';
 import { useTopBarDeals } from '@/hooks/useTopBarDeals';
 import { usePremiumDeals } from '@/hooks/usePremiumDeals';
 import { apiSearchProducts } from '@/api/services/search';
-import { usePageTitle } from '@/hooks/usePageTitle';
+import { usePageMeta } from '@/hooks/usePageMeta';
 import { getStorePagePath } from '@/utils/storefrontUrl';
 import { categoryPath } from '@/hooks/marketplace/useCategoryTree';
 import { useProductsByCategory } from '@/hooks/marketplace/useProductsByCategory';
@@ -165,7 +165,7 @@ function HomeLanding() {
   useEffect(() => { apiBrowseProducts({ featured: true, limit: 10 }).then(res => setFeatured((res.data?.products ?? []).filter(p => p.isFeatured === true))).catch(() => {}); }, []);
   const isBuyer = useIsBuyer();
   const sellersRowRef = useEdgeHoverScroll<HTMLDivElement>();
-  usePageTitle('Home');
+  usePageMeta({ title: 'Edudeen - Educational resources, books & courses from trusted sellers', description: 'Edudeen is an education marketplace: worksheets, books, digital downloads and courses for home and classroom from verified sellers.', canonical: '/' });
 
   const [categories, setCategories] = useState<CategoryNode[]>([]);
   const [topStores, setTopStores] = useState<PublicStoreListItem[]>([]);
@@ -652,9 +652,9 @@ function HomeLanding() {
               <p className="text-[14px] text-carbon max-w-[390px] mb-4">
                 {eff.creatorText}
               </p>
-              <button onClick={() => navigate('/sellers')} className={linkButtonClass}>
+              <Link to="/become-a-seller" className={linkButtonClass}>
                 {eff.creatorLinkLabel}
-              </button>
+              </Link>
             </div>
             </EditableHomeSection>
           )}

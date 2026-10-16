@@ -1,6 +1,6 @@
 import { formatPrice } from '@/utils/formatPrice';
 import { useCallback, useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { AlertCircle, Check, Copy, Crown } from 'lucide-react';
 import { Badge, Button, Card, Modal, SkeletonBox } from '@/components/comman/ui';
 import { useToast } from '@/contexts/ToastContext';
@@ -33,7 +33,6 @@ function perkLines(b: PremiumBenefits): string[] {
 
 function CouponCard({ coupon }: { coupon: PremiumCoupon }) {
   const toast = useToast();
-  const navigate = useNavigate();
   const off = coupon.discountType === 'fixed' ? `${formatPrice(coupon.discountValue, 'USD')} off` : `${coupon.discountValue}% off`;
   const inactive = coupon.used || coupon.expired;
   const copy = async () => {
@@ -51,7 +50,7 @@ function CouponCard({ coupon }: { coupon: PremiumCoupon }) {
       <div className="flex items-center gap-2 flex-wrap">
         <code className={`font-mono text-[15px] font-bold px-3 py-1.5 rounded-lg border ${inactive ? 'border-bone text-slate line-through' : 'border-[#f1d98a] bg-[#fff6d6] text-[#8a6100]'}`}>{coupon.code}</code>
         <Button variant="outline" size="sm" onClick={copy} disabled={coupon.expired}><Copy size={13} /> Copy</Button>
-        {!inactive && <Button variant="primary" size="sm" onClick={() => navigate('/cart')}>Use at checkout</Button>}
+        {!inactive && <Button variant="primary" size="sm" to={'/cart'}>Use at checkout</Button>}
       </div>
       <p className="text-[12px] text-slate">Paste the code into the coupon box when you check out.</p>
     </Card>
@@ -62,7 +61,6 @@ function CouponCard({ coupon }: { coupon: PremiumCoupon }) {
 export function PremiumAccount() {
   usePageTitle('Edudeen Premium');
   const toast = useToast();
-  const navigate = useNavigate();
   const { me, isPremium, membership, coupon, pendingPayment, loading, error, reload } = usePremium();
   const [payments, setPayments] = useState<PremiumPayment[] | null>(null);
   const [payError, setPayError] = useState('');
@@ -148,7 +146,7 @@ export function PremiumAccount() {
                   <div><p className="text-slate text-[12px]">Days left</p><p className="font-semibold text-carbon">{membership.daysLeft}</p></div>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <Button variant="primary" size="sm" onClick={() => navigate('/premium#premiumPlans')}>Renew</Button>
+                  <Button variant="primary" size="sm" to={'/premium#premiumPlans'}>Renew</Button>
                   {membership.cancelAtPeriodEnd
                     ? <Button variant="outline" size="sm" onClick={() => setConfirm('resume')}>Keep my membership</Button>
                     : <Button variant="outline" size="sm" onClick={() => setConfirm('cancel')}>Cancel membership</Button>}

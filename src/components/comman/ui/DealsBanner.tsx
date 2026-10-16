@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { clsx } from 'clsx';
 import { ArrowRight, Zap, Gift } from 'lucide-react';
 import { apiGetPublicActiveCampaigns, type PublicCampaign } from '@/api/services/marketing/publicCampaigns';
@@ -165,7 +165,6 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
    *  actually is, rather than a shopper having to click through to find out. */
   label?: boolean;
 }) {
-  const navigate = useNavigate();
   const [campaigns, setCampaigns] = useState<PublicCampaign[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -295,10 +294,10 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
                countdown + "Shop Now" CTA on the right — a self-contained
                promo card rather than a bare thumbnail needing an external
                countdown row next to it. */
-            <button
+            <Link
               key={campaign._id}
-              onClick={() => navigate(`/?campaign=${encodeURIComponent(campaign._id)}`)}
-              className="group relative z-[1] flex w-full flex-col items-stretch border-none bg-transparent p-0 outline-none cursor-pointer overflow-hidden text-start sm:h-full sm:flex-row"
+              to={`/?campaign=${encodeURIComponent(campaign._id)}`}
+              className="no-underline group relative z-[1] flex w-full flex-col items-stretch border-none bg-transparent p-0 outline-none cursor-pointer overflow-hidden text-start sm:h-full sm:flex-row"
             >
               {/* Below `sm`, the image fills its box edge-to-edge (`cover`,
                   no padding) — there's no room there for the letterboxed
@@ -407,7 +406,7 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
                   Shop Now <ArrowRight size={11} className="transition-transform duration-200 ease-out group-hover:translate-x-[3px]" />
                 </span>
               </div>
-            </button>
+            </Link>
           ) : (
           /* Compact: the image alone, filling the card completely edge-to-
              edge (fit="cover") — one fixed, consistent size every campaign
@@ -415,10 +414,10 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
              source image's own aspect ratio. No headline/description/
              countdown text on top, since the image is the entire point of
              this placement. */
-          <button
+          <Link
             key={campaign._id}
-            onClick={() => navigate(`/?campaign=${encodeURIComponent(campaign._id)}`)}
-            className="group relative z-[1] block w-full h-full border-none bg-transparent p-0 outline-none cursor-pointer overflow-hidden rounded-[20px]"
+            to={`/?campaign=${encodeURIComponent(campaign._id)}`}
+            className="no-underline group relative z-[1] block w-full h-full border-none bg-transparent p-0 outline-none cursor-pointer overflow-hidden rounded-[20px]"
           >
             <CampaignImage src={campaign.bannerImage} fit="cover" />
             {hasPercentOff && (
@@ -427,14 +426,14 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
                 <span className="text-[5px] font-semibold uppercase tracking-wide leading-none mt-[1px]">off</span>
               </span>
             )}
-          </button>
+          </Link>
           )
         ) : (
-          <button
+          <Link
             key={campaign._id}
-            onClick={() => navigate(`/?campaign=${encodeURIComponent(campaign._id)}`)}
+            to={`/?campaign=${encodeURIComponent(campaign._id)}`}
             aria-label={`${campaign.name} — ${discountHeadline}. Shop the sale`}
-            className="campaign-fade group relative z-[1] flex w-full h-full flex-col gap-3 border-none bg-transparent text-start text-white outline-none cursor-pointer px-5 py-4 lg:flex-row lg:items-center lg:gap-6 lg:px-7 lg:py-0 lg:min-h-[112px]"
+            className="no-underline campaign-fade group relative z-[1] flex w-full h-full flex-col gap-3 border-none bg-transparent text-start text-white outline-none cursor-pointer px-5 py-4 lg:flex-row lg:items-center lg:gap-6 lg:px-7 lg:py-0 lg:min-h-[112px]"
           >
             {/* LEFT — one tidy block: label, headline, name + description on one line. */}
             <div className="flex min-w-0 flex-1 flex-col justify-center gap-[3px]">
@@ -466,7 +465,7 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
               <span className="inline-flex shrink-0 items-center gap-[6px] whitespace-nowrap rounded-full bg-white px-5 py-[8px] text-[13px] font-bold text-brand-deep-orange shadow-sm transition-[background-color,transform] duration-150 group-hover:bg-cream group-hover:scale-[1.03]">
                 Shop the sale <ArrowRight size={13} className="transition-transform duration-150 group-hover:translate-x-0.5" />
               </span>
-            </div>          </button>
+            </div>          </Link>
         )}
 
         {/* Carousel indicators — a bit bigger/more visible than a subtle hairline,

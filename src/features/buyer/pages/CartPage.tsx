@@ -1,6 +1,6 @@
 import { PremiumChip, PremiumTeaser, usePremiumView } from '@/components/comman/marketplace/PremiumBits';
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useCartContext } from '@/contexts/CartContext';
 import { useWishlistContext } from '@/contexts/WishlistContext';
@@ -34,6 +34,8 @@ function CartItemImage({ images, name }: { images?: string[]; name: string }) {
 }
 
 export function CartPage() {
+  // Checkout is a separate chunk: fetch it while the buyer reviews the cart so "Checkout" opens instantly.
+  useEffect(() => { void import('@/features/buyer/pages/CheckoutPage'); }, []);
   const navigate = useNavigate();
   usePageTitle('Cart');
 
@@ -168,7 +170,7 @@ export function CartPage() {
 
       <BuyerNavbar/>
 
-      <div className={clsx('max-w-[960px] mx-auto px-4 md:px-6 py-6 md:py-8', !isEmpty && items.length > 0 && 'pb-[88px] lg:pb-8')}>
+      <main className={clsx('max-w-[960px] mx-auto px-4 md:px-6 py-6 md:py-8', !isEmpty && items.length > 0 && 'pb-[88px] lg:pb-8')}>
         <Breadcrumb className="mb-4" items={[
           { label: 'Home', path: '/' },
           { label: 'Cart' },
@@ -204,7 +206,7 @@ export function CartPage() {
                 Nothing here yet — explore books, Quran and Islamic learning, courses, and worksheets from verified educators.
               </p>
               <div className="relative flex items-center gap-2 flex-wrap justify-center">
-                <Button variant="primary" onClick={() => navigate('/')}>Browse resources</Button>
+                <Button variant="primary" to={'/'}>Browse resources</Button>
               </div>
             </div>
 
@@ -215,10 +217,10 @@ export function CartPage() {
                 <p className="text-[13px] font-bold text-carbon mb-3">Continue where you left off</p>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {recentlyViewed.slice(0, 4).map(item => (
-                    <button
+                    <Link
                       key={item.id}
-                      onClick={() => navigate(`/product/${item.id}`)}
-                      className="group flex flex-col text-start bg-transparent border border-transparent rounded-xl p-1.5 cursor-pointer transition-all duration-200 hover:border-bone hover:-translate-y-[2px]"
+                      to={`/product/${item.id}`}
+                      className="group flex flex-col text-start no-underline bg-transparent border border-transparent rounded-xl p-1.5 cursor-pointer transition-all duration-200 hover:border-bone hover:-translate-y-[2px]"
                     >
                       <div className="aspect-square rounded-lg overflow-hidden bg-brand-pale-orange mb-2">
                         {item.image
@@ -229,7 +231,7 @@ export function CartPage() {
                       {item.price != null && (
                         <span className="text-[12px] font-bold text-carbon mt-[2px]">{formatPrice(convert(item.price, item.currency), displayCurrency)}</span>
                       )}
-                    </button>
+                    </Link>
                   ))}
                 </div>
               </div>
@@ -238,15 +240,15 @@ export function CartPage() {
             {/* Trust reassurance — only claims backed by a real feature
                 (token downloads, platform checkout, buyer return requests). */}
             <div className="flex items-center justify-center gap-5 sm:gap-8 flex-wrap text-[12px] text-slate">
-              <button onClick={() => navigate('/faq')} className="flex items-center gap-[6px] bg-transparent border-none cursor-pointer p-0 hover:text-brand-orange transition-colors">
+              <Link to="/faq" className="flex items-center gap-[6px] no-underline text-inherit hover:text-brand-orange transition-colors">
                 <ShieldCheck size={14} className="text-success" /> Instant Digital Downloads
-              </button>
-              <button onClick={() => navigate('/faq')} className="flex items-center gap-[6px] bg-transparent border-none cursor-pointer p-0 hover:text-brand-orange transition-colors">
+              </Link>
+              <Link to="/faq" className="flex items-center gap-[6px] no-underline text-inherit hover:text-brand-orange transition-colors">
                 <Lock size={14} className="text-success" /> Secure Checkout
-              </button>
-              <button onClick={() => navigate('/faq')} className="flex items-center gap-[6px] bg-transparent border-none cursor-pointer p-0 hover:text-brand-orange transition-colors">
+              </Link>
+              <Link to="/faq" className="flex items-center gap-[6px] no-underline text-inherit hover:text-brand-orange transition-colors">
                 <RotateCcw size={14} className="text-success" /> Returns on Physical Items
-              </button>
+              </Link>
             </div>
           </div>
         )}
@@ -572,7 +574,7 @@ export function CartPage() {
             </div>
           </div>
         )}
-      </div>
+      </main>
 
       {/* Mobile sticky checkout bar — mirrors ProductDetail's sticky Add to
           Cart bar, sits just above the bottom nav (CartPage is login-gated,

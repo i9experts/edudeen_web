@@ -1,5 +1,5 @@
 import { useState, useId } from 'react';
-import { useParams, useNavigate, Navigate } from 'react-router-dom';
+import { useParams, Navigate } from 'react-router-dom';
 import { clsx } from 'clsx';
 import { ArrowRight, Check, ChevronDown } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -42,7 +42,6 @@ function ProductFaqItem({ question, answer }: { question: string; answer: string
 
 export function PlatformProductPage() {
   const { slug = '' } = useParams();
-  const navigate = useNavigate();
   const sellEntry = useSellEntry();
   const product = getPlatformProduct(slug);
   usePageTitle(product?.name ?? 'Products');
@@ -75,7 +74,7 @@ export function PlatformProductPage() {
                     Start Selling Free <ArrowRight size={14} className="inline align-middle ms-1" />
                   </Button>
                 </MagneticButton>
-                <Button variant="outline" size="lg" onClick={() => navigate('/products')}>
+                <Button variant="outline" size="lg" to={'/products'}>
                   Explore other products
                 </Button>
               </div>

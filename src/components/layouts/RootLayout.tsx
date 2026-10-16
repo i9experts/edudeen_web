@@ -1,4 +1,4 @@
-﻿import { Suspense } from 'react';
+import { Suspense } from 'react';
 import { Outlet, ScrollRestoration, useLocation, useNavigation } from 'react-router-dom';
 import { ErrorBoundary } from '@/components/comman/ErrorBoundary';
 import { AuthGateModal } from '@/components/comman/ui/AuthGateModal';
@@ -13,6 +13,8 @@ import { useReferralCapture } from '@/hooks/useReferralCapture';
 import { AdminEditProvider } from '@/contexts/AdminEditContext';
 import { ReauthProvider } from '@/contexts/ReauthProvider';
 import { AdminEditToolbar } from '@/components/admin-edit/AdminEditToolbar';
+import { RouteMeta } from '@/components/seo/RouteMeta';
+import { SkipLink } from '@/components/seo/SkipLink';
 
 function PageSpinner() {
   return (
@@ -43,6 +45,8 @@ export function RootLayout() {
   return (
     <AdminEditProvider>
     <ReauthProvider>
+      <SkipLink />
+      <RouteMeta />
       <TopProgressBar />
       <MaintenanceNotice />
       <AuthGateModal />

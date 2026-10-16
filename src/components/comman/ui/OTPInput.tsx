@@ -1,6 +1,6 @@
 import { useRef, type KeyboardEvent, type ClipboardEvent } from 'react';
 import { Check } from 'lucide-react';
-import { motion } from 'motion/react';
+import { m as motion } from 'motion/react';
 
 interface OTPInputProps {
   values:   string[];

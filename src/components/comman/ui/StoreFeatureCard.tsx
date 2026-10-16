@@ -1,5 +1,7 @@
 import { useState } from 'react';
+import { imgUrl } from '@/utils/cloudinaryImage';
 import { clsx } from 'clsx';
+import { Link } from 'react-router-dom';
 import { Star, Users, TrendingUp, BadgeCheck, PackageCheck, UserPlus, UserCheck } from 'lucide-react';
 import { apiFollowStore, type PublicStoreListItem } from '@/api/services/store';
 import { useAuthGate } from '@/contexts/AuthGateContext';
@@ -82,7 +84,7 @@ export function StoreFeatureCard({ store, onClick, className }: {
           <div className="w-12 h-12 rounded-xl bg-white border border-bone p-[2px] shadow-sm">
             <div className="w-full h-full rounded-[10px] flex items-center justify-center overflow-hidden" style={store.logo ? undefined : { background: tone.tile }}>
               {store.logo
-                ? <img loading="lazy" decoding="async" src={store.logo} alt="" className="w-full h-full object-cover" />
+                ? <img loading="lazy" decoding="async" src={imgUrl(store.logo, { w: 160 })} alt={`${store.name} logo`} width={64} height={64} className="w-full h-full object-cover" />
                 : <span className="text-[15px] font-bold tracking-wide" style={{ color: tone.ink }}>{initialsOf(store.name)}</span>}
             </div>
           </div>
@@ -103,7 +105,10 @@ export function StoreFeatureCard({ store, onClick, className }: {
         </div>
 
         <div className="flex items-center gap-[5px] mb-[3px]">
-          <p className="text-[14px] font-semibold text-carbon leading-tight truncate">{store.name}</p>
+          <p className="text-[14px] font-semibold text-carbon leading-tight truncate">
+            {/* A real link (crawlable, new-tab friendly); the rest of the card still opens the store on click. */}
+            <Link to={`/shop/${store.slug}`} onClick={e => e.stopPropagation()} className="text-inherit no-underline hover:underline">{store.name}</Link>
+          </p>
           {isVerified && <BadgeCheck size={14} className="text-info fill-info/15 shrink-0" />}
         </div>
         {/* The bio line only exists when the store wrote one - never an empty gap. */}

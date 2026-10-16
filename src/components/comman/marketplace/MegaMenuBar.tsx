@@ -1,6 +1,9 @@
 import { useT } from '@/contexts/languageCtx';
 import { useState, useEffect, useRef, type ReactNode, type CSSProperties } from 'react';
 import { clsx } from 'clsx';
+import { Link } from 'react-router-dom';
+import { isPlainLeftClick } from '@/utils/productLink';
+import { categoryPath } from '@/hooks/marketplace/useCategoryTree';
 import { TokenStorage } from '@/api/services/auth';
 import { ProductImage } from '@/components/comman/marketplace/ProductCard';
 import {
@@ -43,10 +46,11 @@ export function RailCard({ product, onClick, badge, rank, size = 'md', stockLabe
   const isSm      = size === 'sm';
   const rankTone  = rank === 1 ? 'bg-[#F4DC4C] text-[#152D43]' : rank === 2 ? 'bg-[#dfe6ec] text-[#152D43]' : rank === 3 ? 'bg-[#f0d9bd] text-[#152D43]' : 'bg-carbon/85 text-white';
   return (
-    <button
-      onClick={() => onClick(product.slug)}
+    <Link
+      to={`/product/${product.slug}`}
+      onClick={e => { if (isPlainLeftClick(e)) { e.preventDefault(); onClick(product.slug); } }}
       className={clsx(
-        'relative shrink-0 text-start bg-white rounded-2xl border border-bone overflow-hidden cursor-pointer group transition-all duration-200 hover:-translate-y-[3px] hover:border-brand-orange/30 hover:shadow-[0_14px_28px_-14px_rgba(19,57,86,0.35)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange',
+        'relative block no-underline shrink-0 text-start bg-white rounded-2xl border border-bone overflow-hidden cursor-pointer group transition-all duration-200 hover:-translate-y-[3px] hover:border-brand-orange/30 hover:shadow-[0_14px_28px_-14px_rgba(19,57,86,0.35)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange',
         isSm ? 'w-[132px] sm:w-auto' : 'w-[146px] sm:w-auto',
       )}
     >
@@ -81,7 +85,7 @@ export function RailCard({ product, onClick, badge, rank, size = 'md', stockLabe
           {stockLabel && <span className="text-[12px] font-semibold text-[#9a5b00] bg-[#fff4d6] rounded-full px-[7px] py-[1px]">{stockLabel}</span>}
         </div>
       </div>
-    </button>
+    </Link>
   );
 }
 
@@ -183,20 +187,21 @@ export function CategoriesMegaContent({
         <MegaSectionLabel>Categories</MegaSectionLabel>
         <div className={clsx('flex flex-col gap-[2px] pe-1 -me-1', colInnerCls)}>
           {categories.map(cat => (
-            <button
+            <Link
               key={cat._id}
+              to={categoryPath(cat)}
               onMouseEnter={() => setActiveId(cat._id)}
               onFocus={() => setActiveId(cat._id)}
-              onClick={() => onShopCategory(cat._id)}
+              onClick={e => { if (isPlainLeftClick(e)) { e.preventDefault(); onShopCategory(cat._id); } }}
               className={clsx(
-                'w-full flex items-center gap-[10px] px-[10px] py-[9px] rounded-lg text-start bg-transparent border-none cursor-pointer transition-colors duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange',
+                'w-full flex items-center no-underline gap-[10px] px-[10px] py-[9px] rounded-lg text-start bg-transparent border-none cursor-pointer transition-colors duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange',
                 activeId === cat._id ? 'bg-brand-pale-orange text-brand-orange' : 'text-charcoal hover:bg-cream',
               )}
             >
               <CategoryBarIcon category={cat} />
               <span className="flex-1 text-[12.5px] font-medium truncate">{cat.name}</span>
               <ChevronRight size={13} className={clsx('shrink-0 transition-transform', activeId === cat._id ? 'text-brand-orange translate-x-[2px]' : 'text-slate/50')} />
-            </button>
+            </Link>
           ))}
         </div>
       </div>
@@ -212,10 +217,11 @@ export function CategoriesMegaContent({
           // with more items. `lg:` and up switches to that original grid.
           <div className="flex gap-3 overflow-x-auto scrollbar-hide -mx-4 px-4 pb-1 mb-5 lg:mx-0 lg:px-0 lg:pb-0 lg:mb-6 lg:grid lg:grid-cols-4 xl:grid-cols-5 lg:gap-x-3 lg:gap-y-4 lg:overflow-visible">
             {active.children.map(sub => (
-              <button
+              <Link
                 key={sub._id}
-                onClick={() => onShopCategory(sub._id)}
-                className="flex flex-col items-center gap-[7px] text-center bg-transparent border-none cursor-pointer p-0 shrink-0 w-[64px] lg:w-auto group focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange"
+                to={categoryPath(sub)}
+                onClick={e => { if (isPlainLeftClick(e)) { e.preventDefault(); onShopCategory(sub._id); } }}
+                className="flex flex-col items-center no-underline gap-[7px] text-center bg-transparent border-none cursor-pointer p-0 shrink-0 w-[64px] lg:w-auto group focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange"
               >
                 <span className="w-14 h-14 rounded-full overflow-hidden bg-cream border border-bone flex items-center justify-center shrink-0 transition-transform duration-150 group-hover:-translate-y-[2px] group-hover:border-brand-orange/40">
                   {sub.image
@@ -225,7 +231,7 @@ export function CategoriesMegaContent({
                 <span className="text-[12px] font-medium text-charcoal leading-tight line-clamp-2 group-hover:text-brand-orange transition-colors">
                   {sub.name}
                 </span>
-              </button>
+              </Link>
             ))}
           </div>
         ) : (
@@ -434,11 +440,12 @@ function AboutMegaContent({ onNavigate }: { onNavigate: (path: string) => void }
       <div className="flex flex-col lg:flex-row items-stretch gap-4 lg:gap-5">
         <div className="flex gap-3 sm:gap-4 overflow-x-auto scrollbar-hide -mx-4 px-4 pb-2 lg:mx-0 lg:px-0 lg:pb-0 lg:flex-1 lg:min-w-0">
           {cards.map(({ Icon, title, description, path }, i) => (
-            <button
+            <Link
               key={title}
-              onClick={() => onNavigate(path)}
+              to={path === '/sellers' ? '/become-a-seller' : path}
+              onClick={e => { if (isPlainLeftClick(e)) { e.preventDefault(); onNavigate(path); } }}
               style={{ animationDelay: `${i * 60}ms` }}
-              className="dash-section-enter group flex-1 min-w-[190px] shrink-0 text-start bg-white border border-bone rounded-2xl overflow-hidden p-0 cursor-pointer transition-all duration-200 hover:-translate-y-[3px] hover:border-brand-orange/30 hover:shadow-[0_14px_28px_-14px_rgba(19,57,86,0.35)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange"
+              className="dash-section-enter group no-underline flex-1 min-w-[190px] shrink-0 text-start bg-white border border-bone rounded-2xl overflow-hidden p-0 cursor-pointer transition-all duration-200 hover:-translate-y-[3px] hover:border-brand-orange/30 hover:shadow-[0_14px_28px_-14px_rgba(19,57,86,0.35)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange"
             >
               <div className="px-4 pt-4 pb-4">
                 <span className="mb-3 flex size-9 items-center justify-center rounded-full bg-brand-pale-orange text-brand-royal">
@@ -450,7 +457,7 @@ function AboutMegaContent({ onNavigate }: { onNavigate: (path: string) => void }
                   Learn more <ChevronRight size={13} className="transition-transform group-hover:translate-x-[2px]" />
                 </span>
               </div>
-            </button>
+            </Link>
           ))}
         </div>
 
@@ -732,9 +739,11 @@ export function MegaMenuBar({
             </button>
             );
           })}
-          <button
-            onClick={() => onNavigate('/learn')}
+          <Link
+            to="/learn"
+            onClick={e => { if (isPlainLeftClick(e)) { e.preventDefault(); onNavigate('/learn'); } }}
             className={clsx(
+              'no-underline',
               'group flex items-center whitespace-nowrap shrink-0 border-none cursor-pointer transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange',
               'gap-[6px] py-[7px] px-[11px] min-h-11 md:min-h-10 rounded-full text-[12.5px] font-semibold text-charcoal hover:bg-cream bg-transparent',
               compact && 'md:gap-1 md:py-1 md:px-0 md:min-h-0 md:rounded-none md:text-[12px] md:font-medium md:hover:bg-transparent md:text-slate md:hover:text-brand-orange',
@@ -742,7 +751,7 @@ export function MegaMenuBar({
           >
             <GraduationCap size={13} className={clsx('shrink-0 text-slate group-hover:text-brand-orange', compact && 'md:hidden')} />
             {t('Learn by grade')}
-          </button>
+          </Link>
           </div>
 
           {/* Utility links — desktop only. On mobile this row is already a

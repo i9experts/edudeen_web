@@ -27,7 +27,7 @@ import { AuthSplitLayout } from '@/features/auth/components/AuthSplitLayout';
 import { SellerDashboardMockup } from '@/features/auth/components/mockups/AuthMockups';
 import { StripeCardSetup, isStripeConfigured, confirmSubscriptionPayment } from './StripeCardSetup';
 import { MagneticButton } from '@/components/comman/motion/MagneticButton';
-import { motion } from 'motion/react';
+import { m as motion } from 'motion/react';
 
 const ONBOARDING_HIGHLIGHTS = [
   { Icon: Store,     text: 'A store built around how you sell' },

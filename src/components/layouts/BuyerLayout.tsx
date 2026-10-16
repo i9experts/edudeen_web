@@ -3,7 +3,7 @@ import { CompareTray } from '@/components/comman/marketplace/CompareTray';
 import { CompareAvailableCtx } from '@/utils/compareStore';
 import { useT } from '@/contexts/languageCtx';
 import { Suspense } from 'react';
-import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { Link, Outlet, useLocation } from 'react-router-dom';
 import { clsx } from 'clsx';
 import { Home, Heart, ShoppingCart, User } from 'lucide-react';
 import { TokenStorage } from '@/api/services/auth';
@@ -18,7 +18,6 @@ import { AnnouncementBanner, AppOpenPrompt, AppOpenFab } from '@/components/comm
 // SellerBottomNav/StoreBottomNav/AdminBottomNav (light variant, brand-orange
 // active state) for consistency across the app's mobile nav bars.
 function BuyerBottomNav() {
-  const navigate = useNavigate();
   const { pathname } = useLocation();
   const { cartCount } = useCartContext();
   // Same wishlist count the header heart and the account menu show — one source (WishlistContext).
@@ -39,12 +38,12 @@ function BuyerBottomNav() {
         {tabs.map(tab => {
           const active = isActive(tab.path);
           return (
-            <button
+            <Link
               key={tab.id}
-              onClick={() => navigate(tab.path)}
+              to={tab.path}
               aria-current={active ? 'page' : undefined}
               aria-label={t(tab.label)}
-              className="relative flex-1 flex flex-col items-center justify-center gap-[3px] cursor-pointer bg-transparent border-none"
+              className="relative flex-1 flex flex-col items-center justify-center gap-[3px] cursor-pointer bg-transparent border-none no-underline"
             >
               <span className="relative">
                 <tab.Icon
@@ -59,7 +58,7 @@ function BuyerBottomNav() {
                 )}
               </span>
               <span className={clsx('text-[12px] font-medium transition-colors duration-150', active ? 'text-brand-orange' : 'text-slate')}>{t(tab.label)}</span>
-            </button>
+            </Link>
           );
         })}
       </div>

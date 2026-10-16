@@ -1,4 +1,4 @@
-import { motion, useReducedMotion } from 'motion/react';
+import { m as motion, useReducedMotion } from 'motion/react';
 import type { ReactNode } from 'react';
 
 const EASE_OUT: [number, number, number, number] = [0.16, 1, 0.3, 1];

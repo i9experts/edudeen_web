@@ -20,7 +20,6 @@ import { FeatureMaintenance } from '@/components/comman/ui/FeatureMaintenance';
 // never shows a route-level Suspense spinner.
 import { ProductDetail } from '@/features/buyer/pages/ProductDetail';
 import { CartPage }     from '@/features/buyer/pages/CartPage';
-import { CheckoutPage } from '@/features/buyer/pages/CheckoutPage';
 import { LoginPage }    from '@/features/auth/pages/LoginPage';
 import { RegisterPage } from '@/features/auth/pages/RegisterPage';
 import { MarketplaceRedirect } from '@/features/buyer/pages/MarketplaceRedirect';
@@ -38,25 +37,26 @@ import { NewPasswordPage }    from '@/features/auth/pages/NewPasswordPage';
 // Public marketing pages — eagerly imported (no lazy/Suspense split) per
 // explicit instruction.
 import { Homepage }             from '@/features/buyer/pages/Homepage';
-import { PricingPage }          from '@/features/buyer/pages/PricingPage';
-import { BecomeSellerPage }     from '@/features/buyer/pages/BecomeSellerPage';
-import { FaqPage }              from '@/features/buyer/pages/FaqPage';
-import { PrivacyPolicyPage }    from '@/features/buyer/pages/PrivacyPolicyPage';
-import { DeleteAccountPage }    from '@/features/buyer/pages/DeleteAccountPage';
-import { TermsOfServicePage }   from '@/features/buyer/pages/TermsOfServicePage';
-import { CookiePolicyPage }     from '@/features/buyer/pages/CookiePolicyPage';
-import { ContactUsPage }        from '@/features/buyer/pages/ContactUsPage';
 import { NotFoundPage }         from '@/features/buyer/pages/NotFoundPage';
-import { AboutPage }            from '@/features/buyer/pages/AboutPage';
-import { ProductsOverviewPage } from '@/features/buyer/pages/products/ProductsOverviewPage';
-import { PlatformProductPage }  from '@/features/buyer/pages/products/PlatformProductPage';
-import { SolutionsOverviewPage } from '@/features/buyer/pages/solutions/SolutionsOverviewPage';
-import { SolutionPage }         from '@/features/buyer/pages/solutions/SolutionPage';
 
 // ── Lazy helpers ──────────────────────────────────────────────────────────────
 // Seller-only / admin-only entry pages (heavy: Stripe wizard) stay out of the main bundle.
 const OnboardingPage = lazy(() => import('@/features/auth/pages/onboard/OnboardingPage').then(m => ({ default: m.OnboardingPage })));
 const AdminLoginPage = lazy(() => import('@/features/auth/pages/admin/AdminLoginPage').then(m => ({ default: m.AdminLoginPage })));
+const CheckoutPage = lazy(() => import('@/features/buyer/pages/CheckoutPage').then(m => ({ default: m.CheckoutPage })));
+const PricingPage = lazy(() => import('@/features/buyer/pages/PricingPage').then(m => ({ default: m.PricingPage })));
+const BecomeSellerPage = lazy(() => import('@/features/buyer/pages/BecomeSellerPage').then(m => ({ default: m.BecomeSellerPage })));
+const FaqPage = lazy(() => import('@/features/buyer/pages/FaqPage').then(m => ({ default: m.FaqPage })));
+const PrivacyPolicyPage = lazy(() => import('@/features/buyer/pages/PrivacyPolicyPage').then(m => ({ default: m.PrivacyPolicyPage })));
+const DeleteAccountPage = lazy(() => import('@/features/buyer/pages/DeleteAccountPage').then(m => ({ default: m.DeleteAccountPage })));
+const TermsOfServicePage = lazy(() => import('@/features/buyer/pages/TermsOfServicePage').then(m => ({ default: m.TermsOfServicePage })));
+const CookiePolicyPage = lazy(() => import('@/features/buyer/pages/CookiePolicyPage').then(m => ({ default: m.CookiePolicyPage })));
+const ContactUsPage = lazy(() => import('@/features/buyer/pages/ContactUsPage').then(m => ({ default: m.ContactUsPage })));
+const AboutPage = lazy(() => import('@/features/buyer/pages/AboutPage').then(m => ({ default: m.AboutPage })));
+const ProductsOverviewPage = lazy(() => import('@/features/buyer/pages/products/ProductsOverviewPage').then(m => ({ default: m.ProductsOverviewPage })));
+const PlatformProductPage = lazy(() => import('@/features/buyer/pages/products/PlatformProductPage').then(m => ({ default: m.PlatformProductPage })));
+const SolutionsOverviewPage = lazy(() => import('@/features/buyer/pages/solutions/SolutionsOverviewPage').then(m => ({ default: m.SolutionsOverviewPage })));
+const SolutionPage = lazy(() => import('@/features/buyer/pages/solutions/SolutionPage').then(m => ({ default: m.SolutionPage })));
 const named = <T extends Record<string, unknown>>(
   p: Promise<T>,
   key: keyof T,

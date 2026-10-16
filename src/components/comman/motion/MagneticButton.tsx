@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { motion, useMotionValue, useSpring, useReducedMotion } from 'motion/react';
+import { m as motion, useMotionValue, useSpring, useReducedMotion } from 'motion/react';
 import type { ReactNode, MouseEvent } from 'react';
 
 // Restrained magnetic-hover wrapper for a primary CTA — the button drifts a

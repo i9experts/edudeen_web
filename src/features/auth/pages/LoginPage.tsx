@@ -16,7 +16,7 @@ import { resolveSellerDestinationRemote } from '@/utils/sellerRouting';
 import { AuthSplitLayout } from '@/features/auth/components/AuthSplitLayout';
 import { MarketplaceMockup } from '@/features/auth/components/mockups/AuthMockups';
 import { MagneticButton } from '@/components/comman/motion/MagneticButton';
-import { motion } from 'motion/react';
+import { m as motion } from 'motion/react';
 
 const fadeSlide = { initial: { opacity: 0, y: -6 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] as const } };
 
@@ -334,7 +334,7 @@ export function LoginPage() {
                 }
               />
               <div className="flex justify-end mt-2">
-                <Button variant="link" size="sm" onClick={() => navigate('/forgot-password')}>
+                <Button variant="link" size="sm" to={'/forgot-password'}>
                   Forgot password?
                 </Button>
               </div>
@@ -378,7 +378,7 @@ export function LoginPage() {
          pre-check — a failed sign-in still lands right next to this. */}
       <p className="text-center text-[12px] text-slate mt-3">
         New to Edudeen?{' '}
-        <Button variant="link" size="sm" onClick={() => navigate('/register')} className="font-semibold!">
+        <Button variant="link" size="sm" to={'/register'} className="font-semibold!">
           Create an account
         </Button>
       </p>

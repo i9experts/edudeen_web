@@ -72,7 +72,7 @@ export function SignInPreview() {
 
   return (
     <div ref={ref} className="relative hidden md:block" onMouseEnter={openNow} onMouseLeave={scheduleClose}>
-      <Button variant="primary" size="sm" onClick={() => navigate('/login')}>
+      <Button variant="primary" size="sm" to={'/login'}>
         {t('Sign In')}
       </Button>
 

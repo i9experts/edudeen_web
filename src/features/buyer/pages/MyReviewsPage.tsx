@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Star, ImageOff, Pencil, Trash2, AlertTriangle } from 'lucide-react';
 import {
   Card, EmptyState, StarRating, SkeletonBox,
@@ -13,7 +13,6 @@ import { useToast } from '@/contexts/ToastContext';
 const PER_PAGE = 10;
 
 export function ReviewsTab() {
-  const navigate = useNavigate();
   const toast = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const [reviews, setReviews] = useState<MyReviewEntry[]>([]);
@@ -71,11 +70,11 @@ export function ReviewsTab() {
     {
       key: 'product', header: 'Product', width: '240px',
       render: r => (
-        <button
+        <Link
           // /product/:slug also resolves a raw product id (and then normalizes
           // the URL to the real slug), so the id is a working fallback.
-          onClick={() => r.product && navigate(`/product/${r.product.slug || r.product.productId}`)}
-          className="flex items-center gap-[10px] bg-transparent border-0 cursor-pointer text-start p-0"
+          to={r.product ? `/product/${r.product.slug || r.product.productId}` : '#'}
+          className="flex items-center gap-[10px] no-underline bg-transparent border-0 cursor-pointer text-start p-0"
         >
           <div className="w-10 h-10 rounded-lg bg-cream border border-bone overflow-hidden shrink-0">
             {r.product?.image ? (
@@ -85,7 +84,7 @@ export function ReviewsTab() {
             )}
           </div>
           <span className="text-[13px] font-semibold text-charcoal truncate max-w-[160px]">{r.product?.name ?? 'Product'}</span>
-        </button>
+        </Link>
       ),
     },
     {

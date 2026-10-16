@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { clsx } from 'clsx';
 import { Zap, Tag, Crown, ChevronRight, Megaphone } from 'lucide-react';
 import { useTopBarDeals, timeLeft } from '@/hooks/useTopBarDeals';
@@ -65,7 +65,6 @@ function InfoTicker({ className }: { className?: string }) {
 }
 
 function SaleTicker({ className }: { className?: string }) {
-  const navigate = useNavigate();
   const deals = useTopBarDeals();
   // Premium members: the biggest member discounts replace the normal flash deals.
   const { deals: premiumDeals } = usePremiumDeals();
@@ -138,16 +137,16 @@ function SaleTicker({ className }: { className?: string }) {
         <Icon size={11} className={item.kind === 'flash' ? 'fill-current' : undefined} />
         <span className="hidden sm:inline">{item.early ? 'Early access' : item.kind === 'sale' ? 'Sale' : item.kind === 'premium' ? 'Premium' : 'Flash'}</span>
       </span>
-      <button
+      <Link
         key={item.key}
-        onClick={() => navigate(item.path)}
-        className="topbar-ticker-in min-w-0 min-h-10 md:min-h-0 flex items-center gap-1.5 bg-transparent border-none p-0 text-white cursor-pointer text-[12.5px] hover:underline underline-offset-4"
+        to={item.path}
+        className="topbar-ticker-in min-w-0 min-h-10 md:min-h-0 flex items-center gap-1.5 bg-transparent border-none p-0 text-white no-underline cursor-pointer text-[12.5px] hover:underline underline-offset-4"
         title={`${item.label}${item.detail ? ` — ${item.detail}` : ''}`}
       >
         <span className="font-bold truncate">{item.label}</span>
         {item.detail && <span className="hidden sm:inline shrink-0 text-white/85 whitespace-nowrap">{item.detail}</span>}
         <ChevronRight size={13} className="shrink-0 opacity-80" />
-      </button>
+      </Link>
       {items.length > 1 && (
         <span className="hidden md:flex shrink-0 items-center gap-1 ms-1" aria-hidden>
           {items.map((it, i) => (

@@ -52,7 +52,7 @@ export { InfoRow }                           from './InfoRow';
 
 export { Toggle }                            from './Toggle';
 
-export { LocationPickerMap }                 from './LocationPickerMap';
+// LocationPickerMap (Leaflet, ~150 KB) is NOT exported here: it is lazy-loaded where used (AddressForm).
 
 export { Field }                             from './Field';
 

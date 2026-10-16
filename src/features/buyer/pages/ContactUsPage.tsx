@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Mail, LifeBuoy, Clock, Send, Check, ArrowRight, Crown } from 'lucide-react';
 import { usePremium } from '@/hooks/usePremium';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -9,7 +9,7 @@ import { RevealStagger } from '@/components/comman/motion/Reveal';
 import { MagneticButton } from '@/components/comman/motion/MagneticButton';
 import { SectionHeading } from '@/components/comman/motion/SectionHeading';
 import { PremiumCard } from '@/components/comman/motion/PremiumCard';
-import { motion } from 'motion/react';
+import { m as motion } from 'motion/react';
 
 const TOPICS = ['General question', 'Order or delivery', 'Billing & payments', 'Selling on Edudeen', 'Report a problem'];
 
@@ -21,7 +21,6 @@ const CONTACT_CARDS: { Icon: typeof Mail; label: string; value: string; href?: s
 
 export function ContactUsPage() {
   usePageTitle('Contact Us');
-  const navigate = useNavigate();
   const { isPremium, entitlements } = usePremium();
 
   const [name, setName]       = useState('');
@@ -54,7 +53,7 @@ export function ContactUsPage() {
     <div className="bg-cream min-h-full">
       {/* ── Hero ── */}
       <div className="px-4 md:px-8 lg:px-12 pt-14 md:pt-20 pb-10 max-w-[720px] mx-auto">
-        <SectionHeading title="Get in touch" subtitle="Questions, feedback, or need a hand with an order? We're here to help." align="center" size="lg" />
+        <SectionHeading as="h1" title="Get in touch" subtitle="Questions, feedback, or need a hand with an order? We're here to help." align="center" size="lg" />
       </div>
 
       {/* ── Contact info cards ── */}
@@ -94,7 +93,7 @@ export function ContactUsPage() {
               <p className="text-[13px] text-slate max-w-[360px]">
                 Thanks for reaching out — our support team will get back to you at {email}, usually within 24 hours.
               </p>
-              <Button variant="outline" size="sm" className="mt-2" onClick={() => navigate('/faq')}>
+              <Button variant="outline" size="sm" className="mt-2" to={'/faq'}>
                 Browse the Help Center
               </Button>
             </div>
@@ -134,7 +133,7 @@ export function ContactUsPage() {
               {/* ── FAQ cross-link — inside the same white block, right below
                   the form, so it reads as one connected section instead of a
                   card floating alone in open space. */}
-              <PremiumCard onClick={() => navigate('/faq')} className="p-5 flex items-center justify-between gap-3 mt-8">
+              <PremiumCard to={'/faq'} className="p-5 flex items-center justify-between gap-3 mt-8">
                 <div>
                   <p className="text-[13px] font-semibold text-carbon">Looking for a quick answer?</p>
                   <p className="text-[12px] text-slate mt-0.5">Check our Frequently Asked Questions first — you might not need to wait for a reply.</p>

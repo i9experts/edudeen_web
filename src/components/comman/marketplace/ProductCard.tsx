@@ -1,4 +1,5 @@
 import { PremiumChip, PremiumTeaser, memberPriceOf, usePremiumView } from './PremiumBits';
+import { responsiveImg, imgUrl } from '@/utils/cloudinaryImage';
 import { useState, useEffect, useRef, memo } from 'react';
 import { clsx } from 'clsx';
 import { Link } from 'react-router-dom';
@@ -80,7 +81,7 @@ export function ProductImage({ images, name, className, categoryName, tags, prod
 
   return (
     <img
-      src={src}
+      {...responsiveImg(src, '(min-width: 1024px) 22vw, (min-width: 640px) 33vw, 46vw', [240, 360, 480, 720], 480)}
       alt={name}
       loading="lazy"
       decoding="async"
@@ -304,7 +305,7 @@ export const ProductCard = memo(function ProductCard({ product, onClick, onAddTo
                     activeImageSrc === img ? 'ring-brand-orange' : 'ring-transparent',
                   )}
                 >
-                  <img src={img} alt="" className="w-full h-full object-cover" />
+                  <img src={imgUrl(img, { w: 80 })} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
                 </button>
               ))}
               {variantSwatchImages.length > 2 && (
@@ -514,12 +515,12 @@ export const ProductCard = memo(function ProductCard({ product, onClick, onAddTo
         {!previewLoading && !previewError && previewData?.type === 'pdf' && (
           <div className="flex flex-col gap-3">
             {previewData.pages.map((url, i) => (
-              <img key={i} src={url} alt={`Preview page ${i + 1}`} className="w-full rounded-lg border border-bone" />
+              <img key={i} src={url} alt={`${product.name} - preview page ${i + 1}`} loading="lazy" decoding="async" className="w-full rounded-lg border border-bone" />
             ))}
           </div>
         )}
         {!previewLoading && !previewError && previewData?.type === 'image' && (
-          <img src={previewData.url} alt="Preview" className="w-full rounded-lg border border-bone" />
+          <img src={previewData.url} alt={`${product.name} - preview`} loading="lazy" decoding="async" className="w-full rounded-lg border border-bone" />
         )}
         {!previewLoading && !previewError && previewData?.type === 'video' && (
           <video src={previewData.url} controls className="w-full rounded-lg" />

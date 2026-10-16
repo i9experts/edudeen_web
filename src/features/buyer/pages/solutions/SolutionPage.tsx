@@ -1,5 +1,5 @@
 import type { ReactElement } from 'react';
-import { useParams, useNavigate, Navigate } from 'react-router-dom';
+import { useParams, Navigate } from 'react-router-dom';
 import { ArrowRight, Check, Store, BarChart3, PackageCheck, Users } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -48,7 +48,6 @@ const RELATED_PRODUCTS: Record<string, string[]> = {
 
 export function SolutionPage() {
   const { slug = '' } = useParams();
-  const navigate = useNavigate();
   const sellEntry = useSellEntry();
   const solution = getSolution(slug);
   usePageTitle(solution?.name ?? 'Solutions');
@@ -97,7 +96,7 @@ export function SolutionPage() {
               </div>
             ))}
           </div>
-          <Button variant="outline" className="mt-6" onClick={() => navigate('/products')}>
+          <Button variant="outline" className="mt-6" to={'/products'}>
             See every product <ArrowRight size={14} className="inline align-middle ms-1" />
           </Button>
         </Reveal>
@@ -117,7 +116,7 @@ export function SolutionPage() {
               if (!product) return null;
               const Icon = PRODUCT_ICONS[slug] ?? Store;
               return (
-                <PremiumCard key={slug} onClick={() => navigate(`/products/${slug}`)} className="p-6">
+                <PremiumCard key={slug} to={`/products/${slug}`} className="p-6">
                   <span className="w-10 h-10 rounded-lg bg-brand-pale-orange flex items-center justify-center mb-3.5">
                     <Icon size={18} className="text-brand-orange" />
                   </span>

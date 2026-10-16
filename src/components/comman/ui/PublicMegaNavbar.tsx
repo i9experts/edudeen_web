@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { clsx } from 'clsx';
-import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
+import { m as motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import type { Variants } from 'motion/react';
 import {
   Store, BarChart3, PackageCheck, Users,

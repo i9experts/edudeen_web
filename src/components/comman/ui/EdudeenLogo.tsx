@@ -17,7 +17,8 @@ const LOCKUP_RATIO = 2048 / 782;
 export function EdudeenIcon({ size = 32 }: { size?: number }) {
   return (
     <img
-      src="/edudeen-mark.png"
+      src="/edudeen-mark-160.webp"
+      srcSet="/edudeen-mark-80.webp 1x, /edudeen-mark-160.webp 2x"
       alt="Edudeen"
       width={Math.round(size * MARK_RATIO)}
       height={size}
@@ -53,7 +54,9 @@ export function EdudeenLogo({ size = 32, showWordmark = true, className, variant
   return (
     <div className={clsx('flex items-center', className)}>
       <img
-        src="/edudeen-logo.png"
+        src="/edudeen-logo-640.webp"
+        srcSet="/edudeen-logo-320.webp 320w, /edudeen-logo-640.webp 640w"
+        sizes={`${Math.round(height * LOCKUP_RATIO)}px`}
         alt="Edudeen — Your partner in Tarbiyyah"
         width={Math.round(height * LOCKUP_RATIO)}
         height={height}

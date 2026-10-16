@@ -103,7 +103,7 @@ function OrdersScreenMockup() {
         {(products.length ? products : [null, null, null]).map((p, i) => (
           <div key={p?._id ?? i} className="flex items-center gap-[8px] rounded-[10px] border border-bone p-[8px]">
             {p?.images?.[0]
-              ? <img src={p.images[0]} alt="" className="w-9 h-9 rounded-[7px] object-cover shrink-0" />
+              ? <img src={p.images[0]} alt={p.name} loading="lazy" decoding="async" className="w-9 h-9 rounded-[7px] object-cover shrink-0" />
               : <div className="w-9 h-9 rounded-[7px] bg-brand-pale-orange shrink-0" />}
             <div className="min-w-0 flex-1">
               {p ? (
@@ -191,7 +191,7 @@ export function HomeScreenMockup() {
             return (
               <div key={d?.product._id ?? i} className="rounded-[8px] border border-bone overflow-hidden relative">
                 <div className="aspect-square relative bg-cream">
-                  {d?.product.images?.[0] && <img src={d.product.images[0]} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+                  {d?.product.images?.[0] && <img src={d.product.images[0]} alt={d.product.name} loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover" />}
                   {d && <span className="absolute top-[3px] start-[3px] px-[4px] py-[1px] rounded-[3px] text-[5px] font-bold bg-[#e11d48] text-white">-{d.pct}%</span>}
                 </div>
                 <div className="px-[5px] py-[4px]">

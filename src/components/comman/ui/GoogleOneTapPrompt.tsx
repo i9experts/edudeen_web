@@ -22,7 +22,11 @@ export function GoogleOneTapPrompt() {
     if (TokenStorage.isLoggedIn()) return;
     // Login / sign-up screens already render Google's real button; a second request would clash with it.
     if (/^\/(login|register|verify-otp|forgot-password|new-password|onboard|admin|store|seller)(\/|$)/.test(window.location.pathname)) return;
-    promptOneTap();
+    // Not at first paint: Google's 90 KB script would compete with the page's own JS. Wait until the page has loaded + a moment.
+    let timer = 0;
+    const start = () => { timer = window.setTimeout(() => promptOneTap(), 3500); };
+    if (document.readyState === 'complete') start(); else window.addEventListener('load', start, { once: true });
+    return () => { window.clearTimeout(timer); window.removeEventListener('load', start); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

@@ -1,9 +1,10 @@
-import { type ReactNode } from 'react';
+import { lazy, Suspense, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { TrendingUp, TrendingDown, ArrowUpRight } from 'lucide-react';
 import { Card } from './Card';
 import { SkeletonBox } from './SkeletonBox';
-import { SparkLine } from '@/components/comman/charts';
+// recharts is large: it loads only when a card actually shows a sparkline (admin/seller dashboards).
+const SparkLine = lazy(() => import('@/components/comman/charts/SparkLine').then(m => ({ default: m.SparkLine })));
 
 interface MetricCardProps {
   label:    string;
@@ -77,7 +78,9 @@ export function MetricCard({ label, value, trend, trendUp, sub, icon, loading, c
           )}
           {sparkline && sparkline.length > 1 && (
             <div className="opacity-70 group-hover:opacity-100 transition-opacity duration-200">
-              <SparkLine data={sparkline} color={accent} width={64} height={28} showTooltip={false} />
+              <Suspense fallback={<span className="block" style={{ width: 64, height: 28 }} />}>
+                <SparkLine data={sparkline} color={accent} width={64} height={28} showTooltip={false} />
+              </Suspense>
             </div>
           )}
         </div>

@@ -1947,6 +1947,8 @@ export const UR: Record<string, string> = {
   'Something went wrong. Please try again.': 'کچھ غلط ہو گیا۔ براہ کرم دوبارہ کوشش کریں۔',
   'Sending…': 'بھیجا جا رہا ہے…',
   'Newsletter': 'نیوز لیٹر',
+  'Skip to main content': 'مرکزی مواد پر جائیں',
+  'Item added to your cart': 'آئٹم آپ کی ٹوکری میں شامل ہو گیا',
   'New arrivals, sale alerts and price-drop updates in your inbox. Unsubscribe any time.': 'نئی آمد، سیل الرٹس اور قیمت کم ہونے کی اطلاعات آپ کے ان باکس میں۔ جب چاہیں ان سبسکرائب کریں۔',
 };
 

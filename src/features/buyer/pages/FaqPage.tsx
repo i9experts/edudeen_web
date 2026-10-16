@@ -1,5 +1,4 @@
 import { useState, useId, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
 import { Search, ChevronDown, HelpCircle, LifeBuoy, MessageCircle } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -58,7 +57,6 @@ function FaqSkeleton() {
 
 export function FaqPage() {
   usePageTitle('FAQ');
-  const navigate = useNavigate();
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('');
   const categories = useFaqCategories();
@@ -87,6 +85,7 @@ export function FaqPage() {
           </div>
         </Reveal>
         <SectionHeading
+          as="h1"
           title="Frequently asked questions"
           subtitle="Find answers about your account, orders, payments and more."
           align="center"
@@ -187,7 +186,7 @@ export function FaqPage() {
                 <p className="text-[12.5px] text-slate mt-0.5">Can't find what you're looking for? Our support team is here for you.</p>
               </div>
             </div>
-            <Button variant="outline" size="sm" icon={<MessageCircle size={13} />} className="shrink-0" onClick={() => navigate('/contact-us')}>
+            <Button variant="outline" size="sm" icon={<MessageCircle size={13} />} className="shrink-0" to={'/contact-us'}>
               Contact Us
             </Button>
           </PremiumCard>

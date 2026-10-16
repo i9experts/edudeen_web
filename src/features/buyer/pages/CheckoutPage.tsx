@@ -974,7 +974,7 @@ export function CheckoutPage() {
               </div>
             ))}
           </div>
-          <Button variant="primary" size="lg" onClick={() => navigate('/account/orders')} className="gap-2">
+          <Button variant="primary" size="lg" to={'/account/orders'} className="gap-2">
             View My Orders <ChevronRight size={14} />
           </Button>
         </div>

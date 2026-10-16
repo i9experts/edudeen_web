@@ -54,7 +54,7 @@ function ResendLink({ orderId, productId }: { orderId: string; productId: string
 function ItemImg({ src, name }: { src: string | null; name: string }) {
   const [err, setErr] = useState(false);
   if (!src || err) return <ProductCoverFallback name={name} size="sm" className="w-[64px] h-[64px] rounded-[10px] shrink-0" />;
-  return <img loading="lazy" decoding="async" src={src} alt="" onError={() => setErr(true)} className="w-[64px] h-[64px] rounded-[10px] object-cover shrink-0 border border-[#edebe2]" />;
+  return <img loading="lazy" decoding="async" src={src} alt="" width={64} height={64} onError={() => setErr(true)} className="w-[64px] h-[64px] rounded-[10px] object-cover shrink-0 border border-[#edebe2]" />;
 }
 
 const subjectOf = (i: LibraryItem) => i.subCategory ?? i.category ?? 'Other';

@@ -1,13 +1,11 @@
-import { useNavigate } from 'react-router-dom';
 import { Compass } from 'lucide-react';
-import { usePageTitle } from '@/hooks/usePageTitle';
+import { usePageMeta } from '@/hooks/usePageMeta';
 import { TokenStorage, type AppRole } from '@/api/services/auth';
 import { Button } from '@/components/comman/ui/Button';
 
 /** Shown for any URL that matches no route (instead of silently bouncing to the homepage). */
 export function NotFoundPage() {
-  usePageTitle('Page not found');
-  const navigate = useNavigate();
+  usePageMeta({ title: 'Page not found', noindex: true });
   const role = TokenStorage.isLoggedIn() ? TokenStorage.getUser<{ role?: AppRole }>()?.role : undefined;
   const dashboard = role === 'admin' ? { label: 'Admin dashboard', path: '/admin' }
     : role === 'seller' ? { label: 'Seller dashboard', path: '/seller' }
@@ -26,8 +24,8 @@ export function NotFoundPage() {
           The link may be old or mistyped. Let's get you back to something useful.
         </p>
         <div className="flex flex-wrap items-center justify-center gap-3">
-          <Button variant="primary" size="md" onClick={() => navigate('/')}>Go to homepage</Button>
-          {dashboard && <Button variant="outline" size="md" onClick={() => navigate(dashboard.path)}>{dashboard.label}</Button>}
+          <Button variant="primary" size="md" to={'/'}>Go to homepage</Button>
+          {dashboard && <Button variant="outline" size="md" to={dashboard.path}>{dashboard.label}</Button>}
         </div>
       </div>
     </div>

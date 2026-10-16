@@ -3,7 +3,9 @@ import { Navigate, useSearchParams } from 'react-router-dom';
 import { BuyerNavbar } from '@/components/comman/ui';
 import { FeatureMaintenance } from '@/components/comman/ui/FeatureMaintenance';
 import { ResourceCardSkeleton } from '@/components/comman/marketplace/ResourceCard';
-import { usePageTitle } from '@/hooks/usePageTitle';
+import { usePageMeta } from '@/hooks/usePageMeta';
+import { breadcrumbJsonLd } from '@/utils/seoSchema';
+import { SITE_URL } from '@/utils/seo';
 import { useCategoryTree, categoryPath } from '@/hooks/marketplace/useCategoryTree';
 import { useT } from '@/contexts/languageCtx';
 import { BrowseResults } from './BrowseResults';
@@ -27,7 +29,20 @@ export function HomeBrowse() {
   const entry = slug ? (bySlug.get(slug.toLowerCase()) ?? byId.get(slug) ?? null) : null;
 
   const pageTitle = entry ? entry.node.name : q ? `“${q}” — ${t('Search')}` : t('All resources');
-  usePageTitle(pageTitle);
+  // Category pages are indexable (canonical /c/<slug>, the same URL the bot prerender serves); search / filtered lists are not.
+  const isFiltered = ['sort', 'class', 'type', 'min', 'max', 'rating', 'free', 'board', 'age', 'grade', 'page', 'exact', 'cat'].some(k => params.has(k));
+  usePageMeta(entry ? {
+    title: `${entry.node.name} - worksheets, books & courses`,
+    description: (entry.node.description ?? '').replace(/\s+/g, ' ').trim().slice(0, 155) || `Browse ${entry.node.name} resources on Edudeen: worksheets, books, digital downloads and courses from trusted sellers.`,
+    canonical: `/c/${entry.node.slug ?? slug}`,
+    image: entry.node.image ?? null,
+    noindex: isFiltered && params.has('page') && params.get('page') !== '1',
+    jsonLd: breadcrumbJsonLd([
+      { name: 'Home', url: `${SITE_URL}/` },
+      ...entry.ancestors.map(a => ({ name: a.name, url: `${SITE_URL}/c/${a.slug}` })),
+      { name: entry.node.name, url: `${SITE_URL}/c/${entry.node.slug ?? slug}` },
+    ]),
+  } : { title: pageTitle, canonical: '/', noindex: !!q || isFiltered });
 
   const crumbs = useMemo(() => {
     if (entry) {

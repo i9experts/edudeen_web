@@ -1,7 +1,8 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
 import { useHasSellerAccount, useSwitchToStore } from '@/hooks/auth/useSellerAccount';
 import { createPortal } from 'react-dom';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { isPlainLeftClick } from '@/utils/productLink';
 import { clsx } from 'clsx';
 import {
   User, LayoutDashboard, LogOut, ShoppingBag,
@@ -140,14 +141,16 @@ function DropdownHeader({
 // MenuItem
 // ─────────────────────────────────────────────────────────────────────────────
 function MenuItem({
-  icon: Icon, label, sublabel, onClick, danger = false,
+  icon: Icon, label, sublabel, onClick, to, danger = false,
 }: {
-  icon: LucideIcon; label: string; sublabel?: string; onClick: () => void; danger?: boolean;
+  icon: LucideIcon; label: string; sublabel?: string; onClick: () => void; to?: string; danger?: boolean;
 }) {
+  const Tag = (to ? Link : 'button') as React.ElementType;
   return (
-    <button
-      onClick={onClick}
+    <Tag
+      {...(to ? { to, onClick: (e: React.MouseEvent) => { if (isPlainLeftClick(e)) { e.preventDefault(); onClick(); } } } : { onClick })}
       className={clsx(
+        to && 'no-underline',
         'w-full flex items-center gap-[10px] py-[9px] px-3 rounded-[9px] border-0 cursor-pointer text-start group',
         'transition-colors',
         danger ? 'hover:bg-[#fff0f0]' : 'hover:bg-cream',
@@ -166,7 +169,7 @@ function MenuItem({
         {sublabel && <p className="text-[12px] text-slate mt-[1px]">{sublabel}</p>}
       </div>
       {!danger && <ChevronRight size={12} className="text-bone shrink-0 group-hover:text-slate transition-colors" />}
-    </button>
+    </Tag>
   );
 }
 
@@ -187,7 +190,7 @@ function DropdownMenu({
             icon={User}
             label="My Account"
             sublabel="Dashboard & settings"
-            onClick={() => onNavigate('/account/dashboard')}
+            to={'/account/dashboard'} onClick={() => onNavigate('/account/dashboard')}
           />
         )}
         {hasBuyer && (
@@ -195,29 +198,29 @@ function DropdownMenu({
             icon={ShoppingBag}
             label="My Orders"
             sublabel="Track your purchases"
-            onClick={() => onNavigate('/account/orders')}
+            to={'/account/orders'} onClick={() => onNavigate('/account/orders')}
           />
         )}
         {hasBuyer && (isPremium
-          ? <MenuItem icon={Crown} label="My Premium" sublabel="Membership & perks" onClick={() => onNavigate('/account/premium')} />
-          : <MenuItem icon={Crown} label="Go Premium" sublabel="Member prices & early access" onClick={() => onNavigate('/premium')} />)}
+          ? <MenuItem icon={Crown} label="My Premium" sublabel="Membership & perks" to={'/account/premium'} onClick={() => onNavigate('/account/premium')} />
+          : <MenuItem icon={Crown} label="Go Premium" sublabel="Member prices & early access" to={'/premium'} onClick={() => onNavigate('/premium')} />)}
         {canSell && (hasSellerAccount
           ? <MenuItem icon={Store} label="Switch to your store" sublabel="Open your seller account" onClick={onSwitchStore} />
-          : <MenuItem icon={Store} label="Sell on Edudeen" sublabel="Open your own store" onClick={() => onNavigate('/become-a-seller')} />)}
+          : <MenuItem icon={Store} label="Sell on Edudeen" sublabel="Open your own store" to={'/become-a-seller'} onClick={() => onNavigate('/become-a-seller')} />)}
         {hasDash && (
           <MenuItem
             icon={isAdmin ? Shield : LayoutDashboard}
             label={isAdmin ? 'Admin Panel' : 'Store Dashboard'}
             sublabel={isAdmin ? 'Manage the platform' : 'Manage your store'}
-            onClick={() => onNavigate(isAdmin ? '/admin' : '/seller')}
+            to={isAdmin ? '/admin' : '/seller'} onClick={() => onNavigate(isAdmin ? '/admin' : '/seller')}
           />
         )}
         {hasDash && !isAdmin && (
           <>
-            <MenuItem icon={Package} label="Products" sublabel="Add and manage your listings" onClick={() => onNavigate('/seller/products')} />
-            <MenuItem icon={ShoppingBag} label="Orders" sublabel="Sales and fulfilment" onClick={() => onNavigate('/seller/orders')} />
-            <MenuItem icon={Wallet} label="Finance" sublabel="Earnings and payouts" onClick={() => onNavigate('/seller/finance')} />
-            <MenuItem icon={CreditCard} label="Plan & Billing" sublabel="Your Edudeen plan" onClick={() => onNavigate('/seller/plan-billing')} />
+            <MenuItem icon={Package} label="Products" sublabel="Add and manage your listings" to={'/seller/products'} onClick={() => onNavigate('/seller/products')} />
+            <MenuItem icon={ShoppingBag} label="Orders" sublabel="Sales and fulfilment" to={'/seller/orders'} onClick={() => onNavigate('/seller/orders')} />
+            <MenuItem icon={Wallet} label="Finance" sublabel="Earnings and payouts" to={'/seller/finance'} onClick={() => onNavigate('/seller/finance')} />
+            <MenuItem icon={CreditCard} label="Plan & Billing" sublabel="Your Edudeen plan" to={'/seller/plan-billing'} onClick={() => onNavigate('/seller/plan-billing')} />
           </>
         )}
         {hasDash && !isAdmin && (
@@ -225,7 +228,7 @@ function DropdownMenu({
             icon={User}
             label="Account"
             sublabel="Profile, login & notifications"
-            onClick={() => onNavigate('/seller/settings')}
+            to={'/seller/settings'} onClick={() => onNavigate('/seller/settings')}
           />
         )}
       </div>

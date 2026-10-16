@@ -192,6 +192,7 @@ export function FiltersDrawer({
         aria-modal="true"
         aria-label="Filters"
         aria-hidden={!open}
+      inert={!open}
         className={clsx(
           'fixed top-0 start-0 h-full w-[min(510px,100vw)] z-[60] bg-white shadow-2xl flex flex-col',
           'transition-transform duration-300 ease-out',

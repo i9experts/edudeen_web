@@ -155,7 +155,7 @@ export function ClosingCtaBanner({ className }: { className?: string }) {
             <div className="flex flex-wrap gap-3">
               {/* Plain buyer sign-up (not the seller flow); hidden once signed in. */}
               {!TokenStorage.isLoggedIn() && (
-                <Button variant="dark" size="md" pill onClick={() => navigate('/register')}>
+                <Button variant="dark" size="md" pill to={'/register'}>
                   Create Your Account <ArrowRight size={13} className="inline align-middle ms-1" />
                 </Button>
               )}

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ProductCoverFallback } from '@/components/comman/marketplace/ProductCoverFallback';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, FileText, Truck, Package, Download, MapPin, CreditCard, CheckCircle2, Circle } from 'lucide-react';
 import { clsx } from 'clsx';
 import { Card, SkeletonBox, Button, StatusBadge } from '@/components/comman/ui';
@@ -54,7 +54,6 @@ function Timeline({ placedAt, paidAt, so }: { placedAt: string; paidAt?: string 
 
 export function OrderDetailPage() {
   const { orderId = '' } = useParams();
-  const navigate = useNavigate();
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [error, setError] = useState('');
 
@@ -70,7 +69,7 @@ export function OrderDetailPage() {
     return (
       <Card>
         <p className="text-[13px] text-error mb-3">{error}</p>
-        <Button variant="outline" size="sm" onClick={() => navigate('/account/orders')}>Back to orders</Button>
+        <Button variant="outline" size="sm" to={'/account/orders'}>Back to orders</Button>
       </Card>
     );
   }

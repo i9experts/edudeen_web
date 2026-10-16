@@ -11,7 +11,7 @@ import { AuthContext } from '@/api/services/auth';
 import { AuthSplitLayout } from '@/features/auth/components/AuthSplitLayout';
 import { PasswordSecurityMockup } from '@/features/auth/components/mockups/AuthMockups';
 import { MagneticButton } from '@/components/comman/motion/MagneticButton';
-import { motion } from 'motion/react';
+import { m as motion } from 'motion/react';
 
 const fadeSlide = { initial: { opacity: 0, y: -6 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] as const } };
 
@@ -136,7 +136,7 @@ export function NewPasswordPage() {
           Your password has been changed. You can now sign in.
         </p>
         <MagneticButton className="block">
-          <Button variant="primary" size="lg" fullWidth onClick={() => navigate('/login')} iconRight={<ArrowRight size={14} />}>
+          <Button variant="primary" size="lg" fullWidth to={'/login'} iconRight={<ArrowRight size={14} />}>
             Sign In Now
           </Button>
         </MagneticButton>

@@ -1,11 +1,14 @@
 import { EarlyAccessChip } from '@/components/comman/ui/EarlyAccessChip';
+import { responsiveImg, imgUrl } from '@/utils/cloudinaryImage';
 import { PremiumChip, PremiumTeaser, usePremiumView } from '@/components/comman/marketplace/PremiumBits';
 import { useEffect, useState } from 'react';
 import { getScrollTop } from '@/utils/scrollRoot';
 import { clsx } from 'clsx';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { isPlainLeftClick, blockLinkForButtons } from '@/utils/productLink';
-import { usePageTitle } from '@/hooks/usePageTitle';
+import { usePageMeta } from '@/hooks/usePageMeta';
+import { productJsonLd, breadcrumbJsonLd } from '@/utils/seoSchema';
+import { SITE_URL } from '@/utils/seo';
 import { useEdgeSwipeBack } from '@/hooks/useEdgeSwipeBack';
 import { useProductById } from '@/hooks/marketplace/useProductById';
 import { useProductPreview } from '@/hooks/marketplace/useProductPreview';
@@ -141,7 +144,8 @@ function ImageGallery({ images, name }: { images: string[]; name: string }) {
         ) : (
           <>
             <img
-              loading="lazy" decoding="async" src={src} alt={name}
+              {...responsiveImg(src, '(min-width: 1024px) 520px, 100vw', [480, 720, 960, 1280], 960)} alt={name} width={960} height={960}
+              loading={selected === 0 ? 'eager' : 'lazy'} fetchPriority={selected === 0 ? 'high' : undefined} decoding="async"
               onError={() => setErrored(e => ({ ...e, [selected]: true }))}
               className="w-full h-full object-contain"
             />
@@ -175,7 +179,7 @@ function ImageGallery({ images, name }: { images: string[]; name: string }) {
               )}
             >
               {!errored[i] && img
-                ? <img loading="lazy" decoding="async" src={img} alt="" onError={() => setErrored(e => ({ ...e, [i]: true }))} className="w-full h-full object-cover" />
+                ? <img loading="lazy" decoding="async" src={imgUrl(img, { w: 128 })} alt="" width={64} height={64} onError={() => setErrored(e => ({ ...e, [i]: true }))} className="w-full h-full object-cover" />
                 : <ProductCoverFallback name={name} size="xs" className="w-full h-full" />}
             </button>
           ))}
@@ -277,7 +281,7 @@ function SellerLogoAvatar({ logo, name }: { logo?: string | null; name: string }
   return (
     <div className="w-[60px] h-[60px] rounded-full bg-success-bg text-success flex items-center justify-center font-bold text-[18px] flex-shrink-0 overflow-hidden border-2 border-white outline outline-1 outline-bone">
       {logo && !errored
-        ? <img loading="lazy" decoding="async" src={logo} alt="" onError={() => setErrored(true)} className="w-full h-full object-contain p-1.5 bg-white" />
+        ? <img loading="lazy" decoding="async" src={imgUrl(logo, { w: 120 })} alt={`${name} logo`} width={60} height={60} onError={() => setErrored(true)} className="w-full h-full object-contain p-1.5 bg-white" />
         : initials}
     </div>
   );
@@ -315,7 +319,7 @@ function RelatedCard({ id, name, image, price: nativePrice, compareAtPrice: nati
     >
       <div className="relative h-[110px] bg-brand-pale-orange flex items-center justify-center overflow-hidden">
         {image && !errored
-          ? <img loading="lazy" decoding="async" src={image} alt="" onError={() => setErrored(true)} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+          ? <img loading="lazy" decoding="async" src={imgUrl(image, { w: 300 })} alt={name} width={150} height={110} onError={() => setErrored(true)} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
           : <ProductCoverFallback name={name} size="sm" className="w-full h-full" />}
 
         {/* Badges */}
@@ -387,7 +391,6 @@ export function ProductDetail() {
   const navigate = useNavigate();
   const location = useLocation();
   const { slug = '' } = useParams<{ slug: string }>();
-  usePageTitle('Product Detail');
   const swipeHandlers = useEdgeSwipeBack(() => navigate(-1));
 
   const { detail, loading, error, refetch } = useProductById(slug);
@@ -561,6 +564,28 @@ export function ProductDetail() {
     ? (product.educationLevel === 'other' ? product.customLevel : EDUCATION_LEVELS.find(l => l.value === product.educationLevel)?.label) ?? null
     : null;
 
+  // Head tags + structured data. Real data only: no rating block until there is a review; price is the seller's own (never the Premium member price).
+  usePageMeta(product ? {
+    title: product.name,
+    description: (product.description ?? '').replace(/\s+/g, ' ').trim().slice(0, 155) || `${product.name} on Edudeen`,
+    image: product.images?.[0] ?? null,
+    canonical: `/product/${product.slug}`,
+    type: 'product',
+    jsonLd: [
+      productJsonLd({
+        name: product.name, description: product.description ?? '', images: product.images ?? [], url: `${SITE_URL}/product/${product.slug}`,
+        sellerName: storeData?.name ?? product.sellerName ?? product.storeName ?? null,
+        price: activeVariant?.campaignPrice ?? activeVariant?.price ?? null, currency: activeVariant?.currency ?? 'USD',
+        inStock: stock > 0, rating: product.averageRating, ratingCount: product.totalRatings,
+      }),
+      breadcrumbJsonLd([
+        { name: 'Home', url: `${SITE_URL}/` },
+        ...(category?.slug ? [{ name: category.name, url: `${SITE_URL}/c/${category.slug}` }] : []),
+        ...(subCategory?.slug ? [{ name: subCategory.name, url: `${SITE_URL}/c/${subCategory.slug}` }] : []),
+        { name: product.name, url: `${SITE_URL}/product/${product.slug}` },
+      ]),
+    ],
+  } : null);
   // What other teachers bought alongside this one.
   const [alsoBought, setAlsoBought] = useState<{ basis: 'bought_together' | 'similar'; products: MarketplaceProduct[] }>({ basis: 'similar', products: [] });
   // A product shows in only one rail: level/bought-together first, then this seller, then related.
@@ -713,13 +738,13 @@ export function ProductDetail() {
           <p className="text-[15px] text-error mb-4">{error}</p>
           <div className="flex items-center justify-center gap-2">
             <Button variant="outline" onClick={refetch}>Try again</Button>
-            <Button variant="secondary" onClick={() => navigate('/')}>Back to resources</Button>
+            <Button variant="secondary" to={'/'}>Back to resources</Button>
           </div>
         </div>
       )}
 
       {!loading && product && (
-        <div className="px-4 md:px-6 lg:px-10 py-6 md:py-8 pb-[92px] lg:pb-8">
+        <main className="px-4 md:px-6 lg:px-10 py-6 md:py-8 pb-[92px] lg:pb-8">
           <Breadcrumb className="mb-4" items={[
             { label: 'Home', path: '/' },
             ...(category ? [{ label: category.name, path: categoryPath(category) }] : []),
@@ -776,19 +801,22 @@ export function ProductDetail() {
                         actually shopping from) over the individual seller's
                         personal account name — falls back to sellerName only
                         if the store lookup hasn't resolved (or has no name). */}
-                    {(storeData?.name ?? product.sellerName) && <>by {storeData?.name ?? product.sellerName}</>}
+                    {(storeData?.name ?? product.sellerName) && (
+                      <>by {product.storeSlug
+                        ? <Link to={getStorePagePath(product.storeSlug)} className="text-inherit no-underline hover:underline">{storeData?.name ?? product.sellerName}</Link>
+                        : (storeData?.name ?? product.sellerName)}</>
+                    )}
                     {product.averageRating > 0 && (
-                      <span
-                        role="link" tabIndex={0}
-                        onClick={() => document.getElementById('reviews')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-                        onKeyDown={e => { if (e.key === 'Enter') document.getElementById('reviews')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}
-                        className="flex items-center gap-[3px] cursor-pointer hover:underline"
+                      <a
+                        href="#reviews"
+                        onClick={e => { e.preventDefault(); document.getElementById('reviews')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}
+                        className="flex items-center gap-[3px] cursor-pointer text-inherit no-underline hover:underline"
                       >
                         • <Star size={11} className="text-brand-orange fill-brand-orange" />
                         {product.averageRating.toFixed(1)} ({product.totalRatings} reviews)
-                      </span>
+                      </a>
                     )}
-                    {product.purchaseCount > 0 && <span className="text-slate/70">• {product.purchaseCount} sold</span>}
+                    {product.purchaseCount > 0 && <span className="text-slate">• {product.purchaseCount} sold</span>}
                   </p>
 
                   {/* Price */}
@@ -1259,7 +1287,7 @@ export function ProductDetail() {
               </ProductRail>
             );
           })()}
-        </div>
+        </main>
       )}
 
       {!loading && product && (

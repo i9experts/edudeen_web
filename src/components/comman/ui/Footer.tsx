@@ -1,6 +1,6 @@
 import { useT } from '@/contexts/languageCtx';
 import { useState, type ReactElement } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
 import { Send, Check, ChevronDown, Mail, Phone, MapPin, MessageCircle } from 'lucide-react';
 import { EdudeenLogo } from './EdudeenLogo';
@@ -131,7 +131,7 @@ function AppBadge({ platform }: { platform: 'ios' | 'android' }) {
     <>
       {isIos ? <AppleGlyph size={18} /> : <GooglePlayGlyph size={16} />}
       <span className="leading-none">
-        <span className="block text-[12px] text-white/70 tracking-[0.04em]">{!url ? 'Coming soon on' : isIos ? 'Download on the' : 'GET IT ON'}</span>
+        <span className="block text-[12px] text-white/85 tracking-[0.04em]">{!url ? 'Coming soon on' : isIos ? 'Download on the' : 'GET IT ON'}</span>
         <span className="block text-[12.5px] font-bold mt-[2px]">{isIos ? 'App Store' : 'Google Play'}</span>
       </span>
     </>
@@ -145,7 +145,7 @@ function AppBadge({ platform }: { platform: 'ios' | 'android' }) {
     );
   }
   return (
-    <div role="img" aria-label={isIos ? 'App Store - coming soon' : 'Google Play - coming soon'} className="flex items-center gap-2.5 h-11 px-3.5 rounded-[9px] bg-carbon/60 text-white select-none w-fit">
+    <div role="img" aria-label={isIos ? 'App Store - coming soon' : 'Google Play - coming soon'} className="flex items-center gap-2.5 h-11 px-3.5 rounded-[9px] bg-carbon/85 text-white select-none w-fit">
       {inner}
     </div>
   );
@@ -197,6 +197,7 @@ function Newsletter() {
         />
         <button
           type="submit"
+          aria-label="Subscribe"
           disabled={loading}
           className="shrink-0 flex items-center gap-2 px-5 bg-brand-orange text-white text-[13px] font-bold border-none cursor-pointer hover:brightness-95 disabled:opacity-70"
         >
@@ -231,13 +232,20 @@ function FooterColumn({ heading, links, navigate }: { heading: string; links: Fo
       <ul id={contentId} className={clsx(open ? 'flex' : 'hidden', 'sm:!flex flex-col gap-3 pb-4 sm:pb-0 m-0 p-0 list-none')}>
         {links.map(link => (
           <li key={link.label}>
-            {link.path ? (
+            {link.path === '/onboard' ? (
               <button
                 onClick={() => navigate(link.path!)}
                 className="min-h-11 sm:min-h-0 text-[13px] text-slate hover:text-brand-orange transition-colors bg-transparent border-none p-0 cursor-pointer text-start"
               >
                 {link.label}
               </button>
+            ) : link.path ? (
+              <Link
+                to={link.path}
+                className="inline-flex items-center min-h-11 sm:min-h-0 text-[13px] text-slate hover:text-brand-orange transition-colors no-underline text-start"
+              >
+                {link.label}
+              </Link>
             ) : (
               <span className="inline-flex items-center min-h-11 sm:min-h-0 text-[13px] text-slate/60 cursor-default">{link.label}</span>
             )}
@@ -294,9 +302,9 @@ export function Footer({ showNewsletter = true }: { showNewsletter?: boolean }) 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1.4fr_repeat(6,1fr)_1fr] gap-8 lg:gap-6">
 
           <div className="sm:col-span-2 lg:col-span-1 pb-2 sm:pb-0">
-            <button onClick={() => navigate('/')} aria-label="Edudeen home" className="bg-transparent border-none p-0 cursor-pointer">
+            <Link to="/" aria-label="Edudeen home" className="inline-block bg-transparent border-none p-0 cursor-pointer">
               <EdudeenLogo size={28} />
-            </button>
+            </Link>
             <p className="text-[13px] text-brand-orange mt-3 mb-2">Purposeful learning. Meaningful possibilities.</p>
             <p className="text-[13px] leading-relaxed max-w-[280px]">
               Islamic &amp; educational resources for homes and classrooms — plus your own storefront, digital delivery and AI-powered tools for teachers, scholars, publishers and educational creators.

@@ -1,7 +1,7 @@
 import { formatPrice } from '@/utils/formatPrice';
 import { useEffect, useState } from 'react';
 import { useHasSellerAccount, useSwitchToStore } from '@/hooks/auth/useSellerAccount';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Check, Loader2, ArrowRight, ChevronDown, BookOpen, Headphones, Users } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useToast } from '@/contexts/ToastContext';
@@ -364,7 +364,7 @@ export function BecomeSellerPage() {
               return external
                 ? <a key={i} href={c.ctaLink} target="_blank" rel="noopener noreferrer" className={cls}>{body}</a>
                 : c.ctaLink
-                  ? <button key={i} onClick={() => navigate(c.ctaLink)} className={cls}>{body}</button>
+                  ? <Link key={i} to={c.ctaLink} className={cls + ' no-underline'}>{body}</Link>
                   : <div key={i} className={cls.replace('cursor-pointer hover:border-brand-orange/40', '')}>{body}</div>;
             })}
           </div>
@@ -376,7 +376,7 @@ export function BecomeSellerPage() {
         <section id="faqs" className="px-4 md:px-10 pb-16 scroll-mt-16">
           <div className="max-w-[760px] mx-auto">
             <h2 className="text-[26px] md:text-[30px] font-bold text-carbon text-center mb-2" style={{ fontFamily: SERIF }}>{page.headings.faqs}</h2>
-            <p className="text-[12.5px] text-slate text-center mb-6">Have more questions? <button onClick={() => navigate('/help')} className="text-brand-orange font-semibold cursor-pointer bg-transparent border-none">Visit our Help Centre</button></p>
+            <p className="text-[12.5px] text-slate text-center mb-6">Have more questions? <Link to="/faq" className="text-brand-orange font-semibold cursor-pointer no-underline">Visit our Help Centre</Link></p>
             <div className="flex flex-col gap-3">
               {page.faqs.map((f, i) => (
                 <details key={i} className="bg-white rounded-xl border border-bone px-5 py-4 group">

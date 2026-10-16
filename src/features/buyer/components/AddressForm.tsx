@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { clsx } from 'clsx';
 import { Loader2 } from 'lucide-react';
-import { LocationPickerMap } from '@/components/comman/ui';
+const LocationPickerMap = lazy(() => import('@/components/comman/ui/LocationPickerMap').then(m => ({ default: m.LocationPickerMap })));
 import { apiAddAddress, type Address, type AddressPayload } from '@/api/services/address';
 
 const INPUT_CLS = 'w-full py-[10px] px-[13px] text-[13px] border border-bone rounded-[9px] outline-none text-charcoal bg-white box-border focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/10 transition-colors';
@@ -130,11 +130,13 @@ export function AddressForm({ initial, onSave, onCancel, saving, submitLabel = '
         <AddrField label="State"                     value={form.state}              onChange={v => set('state', v)}          placeholder="e.g. Sindh"       half required />
         <AddrField label="Zip Code"                  value={form.zipCode}            onChange={v => set('zipCode', v)}        placeholder="e.g. 75300"       half required />
         <div className="sm:col-span-2">
-          <LocationPickerMap
-            latitude={form.latitude ?? null}
-            longitude={form.longitude ?? null}
-            onChange={(lat, lng) => setForm(p => ({ ...p, latitude: lat, longitude: lng }))}
-          />
+          <Suspense fallback={<div className="h-[220px] rounded-xl bg-cream animate-pulse" aria-hidden />}>
+            <LocationPickerMap
+              latitude={form.latitude ?? null}
+              longitude={form.longitude ?? null}
+              onChange={(lat, lng) => setForm(p => ({ ...p, latitude: lat, longitude: lng }))}
+            />
+          </Suspense>
         </div>
         <div className="sm:col-span-2 flex items-center gap-2">
           <input

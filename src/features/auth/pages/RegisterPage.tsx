@@ -15,7 +15,7 @@ import { resolveSellerDestinationRemote } from '@/utils/sellerRouting';
 import { AuthSplitLayout } from '@/features/auth/components/AuthSplitLayout';
 import { MarketplaceMockup, DashboardMockup } from '@/features/auth/components/mockups/AuthMockups';
 import { MagneticButton } from '@/components/comman/motion/MagneticButton';
-import { motion } from 'motion/react';
+import { m as motion } from 'motion/react';
 
 const fadeSlide = { initial: { opacity: 0, y: -6 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] as const } };
 
@@ -294,7 +294,7 @@ export function RegisterPage() {
 
       <p className="text-center text-[12px] text-slate mt-3">
         Already have an account?{' '}
-        <Button variant="link" size="sm" onClick={() => navigate('/login')} className="font-semibold!">
+        <Button variant="link" size="sm" to={'/login'} className="font-semibold!">
           Sign In
         </Button>
       </p>

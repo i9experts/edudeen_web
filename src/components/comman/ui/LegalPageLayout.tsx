@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
 import { Info, ShieldAlert, ShieldCheck, Printer, Link2, Check, ArrowRight, LifeBuoy } from 'lucide-react';
 import { Button } from './Button';
@@ -117,7 +116,6 @@ function useRevealOnScroll<T extends HTMLElement>(id: string, revealed: Set<stri
  *  bar, and print/copy-link actions. The two pages only ever differ in their
  *  content array. */
 export function LegalPageLayout({ title, subtitle, lastUpdated: lastUpdatedProp, sections: sectionsProp, relatedPages = [], pageKey }: LegalPageLayoutProps) {
-  const navigate = useNavigate();
   const { config } = usePublicPlatformConfig();
   const override = pageKey ? config?.homeContent?.legalPages?.[pageKey] : undefined;
   const parsed = override?.text ? parseLegalText(override.text) : [];
@@ -271,7 +269,7 @@ export function LegalPageLayout({ title, subtitle, lastUpdated: lastUpdatedProp,
                 </div>
               </div>
               <MagneticButton className="shrink-0">
-                <Button variant="outline" size="sm" onClick={() => navigate('/faq')}>
+                <Button variant="outline" size="sm" to={'/faq'}>
                   Contact Support
                 </Button>
               </MagneticButton>
@@ -284,7 +282,7 @@ export function LegalPageLayout({ title, subtitle, lastUpdated: lastUpdatedProp,
               {relatedPages.map(p => (
                 <PremiumCard
                   key={p.path}
-                  onClick={() => navigate(p.path)}
+                  to={p.path}
                   className="p-5"
                 >
                   <p className="text-[13px] font-semibold text-carbon flex items-center justify-between gap-2">

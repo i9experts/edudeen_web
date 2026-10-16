@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#174771"/>
+      <stop offset="1" stop-color="#0d2c47"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <circle cx="1040" cy="120" r="210" fill="#ffffff" fill-opacity="0.05"/>
+  <circle cx="1120" cy="560" r="150" fill="#f5b800" fill-opacity="0.18"/>
+  <rect x="80" y="96" width="76" height="76" rx="18" fill="#f5b800"/>
+  <path d="M118 120l-28 14 28 14 28-14z M98 146v14c0 8 10 14 20 14s20-6 20-14v-14l-20 10z" fill="#174771"/>
+  <text x="176" y="150" font-family="Georgia, 'Times New Roman', serif" font-size="56" font-weight="700" fill="#ffffff">Edudeen</text>
+  <text x="80" y="330" font-family="Georgia, 'Times New Roman', serif" font-size="72" font-weight="700" fill="#ffffff">Educational resources,</text>
+  <text x="80" y="415" font-family="Georgia, 'Times New Roman', serif" font-size="72" font-weight="700" fill="#f5b800">books &amp; courses</text>
+  <text x="80" y="495" font-family="Arial, Helvetica, sans-serif" font-size="32" fill="#cfe0ef">Worksheets, downloads and classes from trusted sellers.</text>
+  <text x="80" y="570" font-family="Arial, Helvetica, sans-serif" font-size="28" fill="#f5b800">edudeen.com</text>
+</svg>

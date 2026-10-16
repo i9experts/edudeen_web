@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { imgUrl } from '@/utils/cloudinaryImage';
 import { Package2 } from 'lucide-react';
 import { SectionHead } from '@/components/comman/marketplace/SectionHead';
 import { ProductCoverFallback } from '@/components/comman/marketplace/ProductCoverFallback';
@@ -18,7 +19,7 @@ function BundleCard({ bundle }: { bundle: PublicBundle }) {
         {covers.map((p, i) => (
           <div key={p._id} className="size-[64px] rounded-[10px] overflow-hidden border-2 border-white bg-[#eaf2f8] shrink-0" style={{ zIndex: covers.length - i }}>
             {p.images?.[0]
-              ? <img src={p.images[0]} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
+              ? <img src={imgUrl(p.images[0], { w: 160 })} alt={p.name} width={80} height={80} loading="lazy" decoding="async" className="w-full h-full object-cover" />
               : <ProductCoverFallback name={p.name} size="xs" className="w-full h-full" />}
           </div>
         ))}

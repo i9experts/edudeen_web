@@ -133,7 +133,7 @@ export function PremiumPage() {
               </Button>
             )}
             {isPremium && (
-              <Button variant="primary" size="lg" className="mt-7" onClick={() => navigate('/account/premium')}>
+              <Button variant="primary" size="lg" className="mt-7" to={'/account/premium'}>
                 You are a member - open my Premium
               </Button>
             )}
@@ -167,7 +167,7 @@ export function PremiumPage() {
             ) : (
               <>
                 <div><p className="text-[14px] font-bold text-carbon">You are an Edudeen Premium member</p><p className="text-[12.5px] text-slate">{membership?.daysLeft != null ? `${membership.daysLeft} days left in your current period.` : 'Thank you for being a member.'}</p></div>
-                <Button variant="outline" size="md" onClick={() => navigate('/account/premium')}>Manage membership</Button>
+                <Button variant="outline" size="md" to={'/account/premium'}>Manage membership</Button>
               </>
             )}
           </div>

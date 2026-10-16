@@ -1,4 +1,3 @@
-import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Store, BarChart3, PackageCheck, Users } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -20,7 +19,6 @@ const ICONS: Record<string, LucideIcon> = {
 
 export function ProductsOverviewPage() {
   usePageTitle('Products');
-  const navigate = useNavigate();
   const sellEntry = useSellEntry();
 
   return (
@@ -39,7 +37,7 @@ export function ProductsOverviewPage() {
         {PLATFORM_PRODUCTS.map(p => {
           const Icon = ICONS[p.slug] ?? Store;
           return (
-            <PremiumCard key={p.slug} onClick={() => navigate(`/products/${p.slug}`)} className="overflow-hidden p-0">
+            <PremiumCard key={p.slug} to={`/products/${p.slug}`} className="overflow-hidden p-0">
               {/* Real product UI, not a decorative icon panel — cropped to a
                  peek so the card teases the actual interface. */}
               <div className="h-[168px] overflow-hidden bg-cream p-4 pointer-events-none flex items-start justify-center">

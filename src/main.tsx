@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { RouterProvider } from 'react-router-dom';
+import { LazyMotion, domAnimation } from 'motion/react';
 import { router } from '@/router';
 import { CartProvider } from '@/contexts/CartContext';
 import { WishlistProvider } from '@/contexts/WishlistContext';
@@ -31,6 +32,8 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
+    {/* domAnimation = animations + hover/tap/in-view only (no drag/layout engine): ~100 KB less JS than the full motion component. */}
+    <LazyMotion features={domAnimation}>
     <ToastProvider>
       <AuthGateProvider>
         <LanguageProvider>
@@ -47,6 +50,7 @@ createRoot(document.getElementById('root')!).render(
         </LanguageProvider>
       </AuthGateProvider>
     </ToastProvider>
+    </LazyMotion>
   </StrictMode>,
 );
 

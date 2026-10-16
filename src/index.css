@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Lora:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Roboto:wght@400;500;700&family=Playfair+Display:wght@500;600;700;800&family=Montserrat:wght@400;500;600;700;800&family=Nunito:wght@400;600;700;800&family=DM+Sans:wght@400;500;700&family=Fraunces:wght@500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+/* The old Google Fonts import (10 families, render-blocking) was removed: nothing in the app uses them (system fonts + the local Urdu face below). */
 @import "tailwindcss";
 
 @theme {
@@ -10,7 +10,7 @@
   --color-brand-pale-orange: #EAF2F8;
 
   /* Secondary logo colors — royal blue (hexagon), green (tagline bar), gold (minaret) */
-  --color-brand-royal: #3978B8;
+  --color-brand-royal: #2F6AA8;
   --color-brand-green: #66AD36;
   --color-brand-gold:  #CCB000;
 
