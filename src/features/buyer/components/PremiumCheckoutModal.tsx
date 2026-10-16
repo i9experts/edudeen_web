@@ -1,3 +1,4 @@
+import { formatPrice } from '@/utils/formatPrice';
 import { useEffect, useState } from 'react';
 import { AlertCircle, CheckCircle2, Crown, PackageCheck } from 'lucide-react';
 import { Button, Modal, SkeletonBox } from '@/components/comman/ui';
@@ -11,7 +12,7 @@ import { BankDetailsCard, ProofFields } from './BankDetailsCard';
 
 type Step = 'confirm' | 'pay' | 'done';
 
-const money = (usd: number, pkr: number | null | undefined) => (pkr != null ? `PKR ${pkr.toLocaleString()}` : `$${usd.toLocaleString()}`);
+const money = (usd: number, pkr: number | null | undefined) => (pkr != null ? `${formatPrice(pkr, 'PKR')}` : `${formatPrice(usd, 'USD')}`);
 
 /**
  * Edudeen Premium purchase by bank transfer: choose interval -> subscribe -> pay into the platform account ->
@@ -132,7 +133,7 @@ export function PremiumCheckoutModal({ plan, interval: initialInterval, payment:
               <span className="text-[13px] text-slate">{interval === 'yearly' ? 'You pay once a year' : 'You pay once a month'}</span>
               <span className="text-[22px] font-bold text-carbon">{money(planPrice, planPKR)}</span>
             </div>
-            {planPKR != null && <p className="text-[12px] text-slate -mt-3 text-end">{`≈ $${planPrice.toLocaleString()} USD`}</p>}
+            {planPKR != null && <p className="text-[12px] text-slate -mt-3 text-end">{`≈ ${formatPrice(planPrice, 'USD')} USD`}</p>}
             <p className="text-[12px] text-slate leading-[1.6]">You pay by bank transfer or mobile wallet to Edudeen. Next you will see the account details and upload your receipt. Your membership starts once we confirm the payment.</p>
             {err}
           </>
@@ -156,10 +157,10 @@ export function PremiumCheckoutModal({ plan, interval: initialInterval, payment:
               <>
                 <BankDetailsCard
                   bankDetails={bank}
-                  amountText={`PKR ${payment.amountPKR.toLocaleString()}`}
+                  amountText={`${formatPrice(payment.amountPKR, 'PKR')}`}
                   note={(
                     <p className="text-[10.5px] text-slate">
-                      {`${payment.planName ?? 'Edudeen Premium'} · ${payment.interval === 'yearly' ? 'yearly' : 'monthly'} · ≈ $${payment.amountUSD.toLocaleString()}`}
+                      {`${payment.planName ?? 'Edudeen Premium'} · ${payment.interval === 'yearly' ? 'yearly' : 'monthly'} · ≈ ${formatPrice(payment.amountUSD, 'USD')}`}
                       {payment.fxRateUsed ? ` at PKR ${payment.fxRateUsed.toLocaleString(undefined, { maximumFractionDigits: 2 })}/USD` : ''}
                     </p>
                   )}

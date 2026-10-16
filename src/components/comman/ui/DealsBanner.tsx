@@ -6,6 +6,7 @@ import { apiGetPublicActiveCampaigns, type PublicCampaign } from '@/api/services
 import { cloudinaryUrl, cloudinarySrcSet } from '@/utils/cloudinaryImage';
 import { formatPrice } from '@/utils/formatPrice';
 import { useTopBarDeals } from '@/hooks/useTopBarDeals';
+import { soonestSaleEnd } from '@/utils/saleMath';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 import { EarlyAccessChip } from './EarlyAccessChip';
 
@@ -206,15 +207,18 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
   const { currency: displayCurrency, convert } = useCurrencyPreference();
   const deals = useTopBarDeals();
   const campaign = campaigns[activeIndex] ?? null;
-  const countdown = useCountdown(campaign?.endDate ?? '');
+  // Sale-timer rule (utils/saleMath.soonestSaleEnd): the banner counts down to the SOONEST-ENDING public sale, the
+  // same moment the Flash Sale header shows. A members-only early-access campaign shows its own end.
+  const ownCountdown = useCountdown(campaign?.endDate ?? '');
+  const countdown = useCountdown((campaign?.earlyAccess ? campaign.endDate : soonestSaleEnd(campaigns)) ?? campaign?.endDate ?? '');
 
   // A campaign that expires while it's on screen is dropped from the
   // rotation instead of freezing on a dead 00:00:00 countdown.
   useEffect(() => {
-    if (campaign && countdown.expired) {
+    if (campaign && ownCountdown.expired) {
       setCampaigns(prev => prev.filter(c => c._id !== campaign._id));
     }
-  }, [campaign, countdown.expired]);
+  }, [campaign, ownCountdown.expired]);
 
   if (!campaign) return null;
 

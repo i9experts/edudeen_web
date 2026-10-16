@@ -22,6 +22,9 @@ import { currencySymbol as symbolForCurrency } from '@/utils/currency';
 import { offersPayload, PREMIUM_BLANK_MESSAGE, OFFER_CONFLICT_MESSAGE, type OfferFlags } from './ProductOffersCard';
 import { premiumPercentError } from './PremiumPriceField';
 import { effectiveSellerPercent, premiumGapMessage, usePremiumTerms } from './PremiumEarningsCalculator';
+import { titleError, classRangeError } from './productQuality';
+import { reviewNoticeText } from './reviewNotice';
+import { useToast } from '@/contexts/ToastContext';
 import { descriptionError, validatePrices, weightTextError, parseWeightKg, stockError } from './priceRules';
 import type { VariantOption } from '@/api/services/product';
 import { findCategoryName, type DigForm, type LicenseType, type PhysForm, type ProductStatus } from './ProductFormKit';
@@ -89,6 +92,7 @@ function digFromEntry(p: StoreProduct, v: ProductVariant): DigForm {
 
 export default function StoreEditProduct() {
   const navigate           = useNavigate();
+  const toast              = useToast();
   const { state }          = useLocation() as { state: { entry?: ProductEntry } | null };
   const { productId = '' } = useParams<{ productId: string }>();
   const { storeId, store } = useStoreWorkspace();
@@ -128,12 +132,14 @@ export default function StoreEditProduct() {
 
   // Old products may have no weight: it is only required once the product has one (or the seller types one), so they stay editable.
   const hadWeight = useRef(false);
+  const originalName = useRef('');
   const sp = <K extends keyof PhysForm>(k: K, v: PhysForm[K]) => setPhys(f => ({ ...f, [k]: v }));
   const sd = <K extends keyof DigForm> (k: K, v: DigForm[K])  => setDig(f  => ({ ...f, [k]: v }));
 
   function init(p: StoreProduct, v: ProductVariant) {
     setPType(p.productType);
     if (p.categoryId) setCategoryChoice(p.categoryId);
+    originalName.current = p.name ?? '';
     setReview(p.status === 'pending_review' || p.status === 'rejected' ? { status: p.status, note: p.reviewNote ?? null } : null);
     setVariantId(v._id || null);
     setLearning({ curricula: [...(p.curricula ?? [])], ageMin: p.ageMin != null ? String(p.ageMin) : '', ageMax: p.ageMax != null ? String(p.ageMax) : '', classFrom: p.classFrom ?? '', classTo: p.classTo ?? '' });
@@ -219,7 +225,9 @@ export default function StoreEditProduct() {
   // Every rule the form enforces, grouped by the step it belongs to.
   const issues = useMemo<WizardIssue[]>(() => {
     const out: WizardIssue[] = [];
-    if (!cur.name) out.push({ step: 0, message: 'Add a product title', fieldId: 'ap-name' });
+    // Only a title the seller changed must meet the minimum (old short titles stay editable).
+    const tErr0 = !cur.name.trim() ? 'Add a product title' : cur.name.trim() !== originalName.current.trim() ? titleError(cur.name) : null;
+    if (tErr0) out.push({ step: 0, message: tErr0, fieldId: 'ap-name' });
     if (isDigitalFamily) { const dErr = deliveryError(delivery); if (dErr) out.push({ step: 1, message: dErr, fieldId: 'fld-delivery' }); }
     const descErr = descriptionError(cur.description);
     if (descErr) out.push({ step: 0, message: descErr, fieldId: 'ap-desc' });
@@ -236,6 +244,8 @@ export default function StoreEditProduct() {
     else if (pType === 'educational' && dig.educationLevel === 'other' && !dig.customLevel.trim()) out.push({ step: 3, message: 'Describe the custom education level', fieldId: 'fld-level' });
     const lErr = learningError(learning);
     if (lErr) out.push({ step: 3, message: lErr, fieldId: 'fld-learning' });
+    const cErr = cur.status === 'active' || cur.status === 'scheduled' ? classRangeError(pType, learning.classFrom, learning.classTo) : null;
+    if (cErr) out.push({ step: 3, message: cErr, fieldId: 'fld-learning', publishOnly: true });
     const missingAttr = findMissingRequiredAttribute(attrDefs, attributeValues);
     if (missingAttr) out.push({ step: 3, message: `${missingAttr.label} is required`, fieldId: 'fld-attrs' });
     const pErr = premiumPercentError(premiumPct ?? '');
@@ -272,6 +282,7 @@ export default function StoreEditProduct() {
           scheduledAt: finalStatus === 'scheduled' ? phys.scheduledAt || null : null,
           ...learningPayload(learning),
         });
+        const note = reviewNoticeText(res); if (note) toast.info(note);
         let variant = res.data.variant;
         if (variantId) {
           const vRes = await apiUpdateVariant(productId, variantId, {
@@ -301,6 +312,7 @@ export default function StoreEditProduct() {
           licenseTiers: pType === 'educational' && dig.licenseType !== 'commercial' ? tiersPayload(dig.tiers.filter(t => t.license !== dig.licenseType)) : [],
           digital: { files, downloadLimit: dig.downloadLimit, linkExpiryDays: dig.linkExpiryDays ? Number(dig.linkExpiryDays) : null, pdfStampingEnabled: dig.pdfStampingEnabled, licenseType: dig.licenseType, buyerDeliveryMessage: dig.buyerDeliveryMessage, preview: { enabled: dig.previewEnabled, sourceFileIndex: 0 }, sampleFile: dig.sampleFile ? toFile(dig.sampleFile) : null },
         });
+        const note = reviewNoticeText(res); if (note) toast.info(note);
         updateCachedProduct(storeId, productId, { product: res.data.product, variant: res.data.variant });
       }
 

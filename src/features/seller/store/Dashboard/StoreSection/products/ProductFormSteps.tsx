@@ -21,6 +21,7 @@ import {
   type DigForm, type PhysForm, type ProductStatus, type ProductType,
 } from './ProductFormKit';
 import { IssueLinks, StepPanel, SummaryRows, type WizardIssue } from './ProductWizard';
+import { normalizeTitle, qualityWarnings, titleClassConflict, contactWarning, classRangeRequired, POLICY_LINE } from './productQuality';
 
 export interface ProductFormStepsProps {
   mode: 'add' | 'edit';
@@ -163,13 +164,19 @@ export function ProductFormSteps(p: ProductFormStepsProps) {
           <div className="flex flex-col gap-4">
             <F label="Product title" req htmlFor="ap-name" hint="Say what it is and who it's for — e.g. age or level.">
               <input id="ap-name" value={cur.name} onChange={e => set('name', e.target.value)}
+                onBlur={() => { const t = normalizeTitle(cur.name); if (t !== cur.name) set('name', t); }}
                 placeholder={pType === 'physical' ? 'e.g. Wooden Arabic Alphabet Puzzle (ages 3–6)' : 'e.g. My Purposeful Learning Week — printable planner'}
                 className={inp} />
+              {/* Non-blocking hints: vague title / title vs class range / contact details. */}
+              {[...qualityWarnings(cur.name, p.learning.classFrom, p.learning.classTo), contactWarning(cur.name, cur.description)].filter(Boolean).map(w => (
+                <p key={w} role="status" className="text-[12.5px] text-[#8a6100] bg-[#fff6d6] border border-[#f1d98a] rounded-lg px-3 py-2 mt-2 mb-0">{w}</p>
+              ))}
             </F>
             <F label="Description" req htmlFor="ap-desc" hint="Required, at least 20 characters. What's included, the learning goal, and how it's used at home or in class.">
               <textarea id="ap-desc" value={cur.description} onChange={e => set('description', e.target.value)}
                 placeholder="Describe your product — what it includes, who it's for, and what makes it special…" className={ta} />
             </F>
+            <p className="text-[12px] text-slate m-0">{POLICY_LINE}</p>
           </div>
         </Block>
         {p.basicsExtra}
@@ -346,8 +353,8 @@ export function ProductFormSteps(p: ProductFormStepsProps) {
           </Block>
         )}
 
-        <Block id="fld-learning" title="Who it's for" need="optional" hint="Boards, ages and class range help the right buyers find this.">
-          <LearningFields value={p.learning} onChange={p.setLearning} />
+        <Block id="fld-learning" title="Who it's for" need={classRangeRequired(isDigitalFamily ? 'digital' : 'physical') ? 'required' : 'optional'} hint="Boards, ages and class range help the right buyers find this.">
+          <LearningFields value={p.learning} onChange={p.setLearning} classRequired={isDigitalFamily} classWarning={titleClassConflict(cur.name, p.learning.classFrom, p.learning.classTo)} />
         </Block>
 
         {(p.attrs.loading || p.attrs.defs.length > 0) && (

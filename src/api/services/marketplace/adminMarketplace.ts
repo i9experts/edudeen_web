@@ -41,6 +41,10 @@ export interface MarketplaceListingRow {
   isTest?: boolean;
   /** The reviewer's note (set when a listing was sent back). */
   reviewNote?: string | null;
+  /** Server review flags, e.g. 'contact_info'. */
+  flags?: string[];
+  /** The matched phone / email / WhatsApp text behind a contact_info flag. */
+  contactMatches?: string[];
   createdAt?: string;
 }
 
@@ -71,6 +75,9 @@ export interface ListingReview {
   status: string;
   scheduledAt: string | null;
   reviewNote: string | null;
+  flags?: string[];
+  contactMatches?: string[];
+  flagReason?: string | null;
   ageMin?: number | null;
   ageMax?: number | null;
   trust?: TrustBadges | null;

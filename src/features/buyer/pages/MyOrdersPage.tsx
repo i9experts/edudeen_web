@@ -12,7 +12,7 @@ import {
   type OrderSummary, type OrderStatus, type OrderLineItem,
 } from '@/api/services/orders';
 import { DigitalFileDownloads } from '@/features/buyer/components/DigitalFileDownloads';
-import { currencySymbol } from '@/utils/currency';
+import { formatPrice } from '@/utils/formatPrice';
 import { useToast } from '@/contexts/ToastContext';
 import { buildOrderProgress, OrderProgressTrack, OrderNextStep } from './account/orderProgress';
 
@@ -172,7 +172,7 @@ function OrderItemRow({ item, orderId, orderStatus, currency }: { item: OrderLin
         </div>
       </div>
       <div className="flex flex-col items-end gap-1.5 shrink-0">
-        <p className="text-[12px] font-bold text-charcoal">{currencySymbol(currency)} {item.totalPrice.toLocaleString()}</p>
+        <p className="text-[12px] font-bold text-charcoal">{formatPrice(item.totalPrice, currency)}</p>
         {isDigital && item.productId && (
           <DigitalFileDownloads orderId={orderId} productId={item.productId} />
         )}
@@ -280,7 +280,7 @@ function OrderCard({ order, onChanged }: { order: OrderSummary; onChanged: () =>
         <div className="flex items-center gap-3 shrink-0">
           <div className="text-end">
             <p className="text-[12px] text-slate mb-[1px]">Total</p>
-            <p className="text-[14px] font-bold text-carbon">{currencySymbol(order.currency)} {order.totalAmount.toLocaleString()}</p>
+            <p className="text-[14px] font-bold text-carbon">{formatPrice(order.totalAmount, order.currency)}</p>
           </div>
           <div className={clsx(
             'w-7 h-7 rounded-full flex items-center justify-center bg-cream border border-bone transition-transform',
@@ -368,19 +368,19 @@ function OrderCard({ order, onChanged }: { order: OrderSummary; onChanged: () =>
           <div className="px-4 md:px-5 py-3 bg-cream border-t border-bone flex flex-col gap-[6px]">
             <div className="flex justify-between text-[12px]">
               <span className="text-slate">Subtotal</span>
-              <span className="font-medium text-charcoal">{currencySymbol(order.currency)} {order.subtotal.toLocaleString()}</span>
+              <span className="font-medium text-charcoal">{formatPrice(order.subtotal, order.currency)}</span>
             </div>
             {!allDigital && (
               <div className="flex justify-between text-[12px]">
                 <span className="text-slate">Shipping</span>
                 <span className="font-medium text-charcoal">
-                  {order.shippingFee === 0 ? 'Free' : `${currencySymbol(order.currency)} ${order.shippingFee.toLocaleString()}`}
+                  {order.shippingFee === 0 ? 'Free' : `${formatPrice(order.shippingFee, order.currency)}`}
                 </span>
               </div>
             )}
             <div className="flex justify-between text-[13px] font-bold pt-2 border-t border-bone">
               <span className="text-charcoal">Total</span>
-              <span className="text-carbon">{currencySymbol(order.currency)} {order.totalAmount.toLocaleString()}</span>
+              <span className="text-carbon">{formatPrice(order.totalAmount, order.currency)}</span>
             </div>
           </div>
 

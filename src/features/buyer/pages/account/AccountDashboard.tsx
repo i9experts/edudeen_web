@@ -14,7 +14,7 @@ import { useNotification } from '@/contexts/NotificationContext';
 import { apiGetMyOrders, type OrderSummary, type OrderStatus } from '@/api/services/orders';
 import { apiGetMyAddresses } from '@/api/services/address';
 import { Card, MetricCard, PageHeader, Badge, ProgressBar, Button, SkeletonBox, EmptyState, Avatar } from '@/components/comman/ui';
-import { currencySymbol } from '@/utils/currency';
+import { formatPrice } from '@/utils/formatPrice';
 import { useNavGroups } from '@/components/layouts/AccountLayout';
 import { ReferralCard } from './ReferralCard';
 import { PickUpWhereYouLeftOff } from '@/features/buyer/components/PickUpWhereYouLeftOff';
@@ -45,7 +45,7 @@ function RecentOrderRow({ order }: { order: OrderSummary }) {
       <div className="flex items-center gap-2 shrink-0">
         <Badge color={STATUS_COLOR[order.orderStatus]} size="sm" className="capitalize">{order.orderStatus}</Badge>
         <span className="text-[12.5px] font-bold text-carbon whitespace-nowrap">
-          {currencySymbol(order.currency)} {order.totalAmount.toLocaleString()}
+          {formatPrice(order.totalAmount, order.currency)}
         </span>
         <ChevronRight size={13} className="text-bone shrink-0 transition-transform duration-200 group-hover:translate-x-[2px] group-hover:text-brand-orange" />
       </div>

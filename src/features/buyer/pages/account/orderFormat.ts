@@ -1,8 +1,8 @@
 import type { OrderDetail } from '@/api/services/orders';
-import { currencySymbol } from '@/utils/currency';
+import { formatPrice } from '@/utils/formatPrice';
 
 export const money = (n: number | undefined, currency: string) =>
-  `${currencySymbol(currency)} ${(n ?? 0).toLocaleString(undefined, { maximumFractionDigits: currency === 'PKR' ? 0 : 2 })}`;
+  formatPrice(n ?? 0, currency);
 
 /** Discount lines that actually apply, for the totals box and the invoice. */
 export function discountLines(o: OrderDetail): [string, number][] {

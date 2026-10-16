@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { formatPrice } from '@/utils/formatPrice';
 import { useNavigate } from 'react-router-dom';
 import {
   ShoppingBag, Plus, Download,
@@ -25,7 +26,6 @@ import {
   type LowStockSummaryData,
 } from '@/api/services/product';
 import { usePageTitle } from '@/hooks/usePageTitle';
-import { currencySymbol } from '@/utils/currency';
 import { useDebouncedValue } from '@/hooks/seller/useInventorySearch';
 import { ProductCell, ProductStatsGrid } from '../../components/ProductListShared';
 
@@ -211,7 +211,7 @@ export function StoreInventory() {
     {
       key: 'price', header: 'Price', align: 'right',
       render: p => (
-        <span className="font-semibold text-charcoal">{currencySymbol(store?.baseCurrency)}{p.price.toLocaleString()}</span>
+        <span className="font-semibold text-charcoal">{formatPrice(p.price, store?.baseCurrency)}</span>
       ),
     },
     {

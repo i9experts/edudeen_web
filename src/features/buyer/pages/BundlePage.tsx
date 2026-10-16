@@ -7,7 +7,7 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { usePageMeta } from '@/hooks/usePageMeta';
 import { useAddAllToCart } from '@/hooks/marketplace/useAddAllToCart';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
-import { currencySymbol } from '@/utils/currency';
+import { formatPrice } from '@/utils/formatPrice';
 import { getStorePagePath } from '@/utils/storefrontUrl';
 import { apiGetBundle, type PublicBundle } from '@/api/services/classroom';
 
@@ -19,7 +19,6 @@ export function BundlePage() {
   const [error, setError] = useState(false);
   const { addAll, adding } = useAddAllToCart();
   const { currency: display, convert } = useCurrencyPreference();
-  const sym = currencySymbol(display);
 
   usePageTitle(bundle?.name ?? 'Bundle');
   usePageMeta(bundle ? `${bundle.name}: ${bundle.products.length} resources, save ${bundle.discountPercent}% when bought together on Edudeen.` : null);
@@ -48,8 +47,8 @@ export function BundlePage() {
               {bundle && (
                 <div className="flex flex-col items-start md:items-end gap-2">
                   <p className="m-0 text-[14px]">
-                    <span className="line-through text-slate me-2">{sym}{convert(bundle.totalPrice, bundle.currency).toLocaleString()}</span>
-                    <b className="text-[22px] text-carbon">{sym}{convert(bundle.bundlePrice, bundle.currency).toLocaleString()}</b>
+                    <span className="line-through text-slate me-2">{formatPrice(convert(bundle.totalPrice, bundle.currency), display)}</span>
+                    <b className="text-[22px] text-carbon">{formatPrice(convert(bundle.bundlePrice, bundle.currency), display)}</b>
                   </p>
                   <Button variant="primary" size="md" loading={adding} onClick={() => addAll(bundle.products, `Bundle added — ${bundle.discountPercent}% comes off at checkout`)}>
                     Add all {bundle.products.length} to cart

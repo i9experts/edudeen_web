@@ -24,7 +24,7 @@ const dedupeAddressParts = (parts: (string | null | undefined)[]) => {
   }
   return kept.join(', ');
 };
-const zonePrice = (z: ShippingZone) => (z.shippingPrice > 0 ? `Rs ${z.shippingPrice.toLocaleString()}` : 'Free');
+const zonePrice = (z: ShippingZone) => (z.shippingPrice > 0 ? formatPrice(z.shippingPrice, 'PKR') : 'Free');
 import { apiGetMyAddresses, type Address, type AddressPayload } from '@/api/services/address';
 import { apiCreateCheckout, apiApplyCoupon, apiRemoveCoupon, apiApplyGiftCard, apiRemoveGiftCard, type Checkout, type CheckoutSummary, type SubscriptionSavingsHint } from '@/api/services/checkout';
 import { apiPlaceCodOrder, apiPlaceFreeOrder, apiInitiatePayment, apiGetPaymentStatus } from '@/api/services/payment';
@@ -51,7 +51,7 @@ import { PremiumChip } from '@/components/comman/marketplace/PremiumBits';
 import { usePremium } from '@/hooks/usePremium';
 import { BankDetailsCard, ProofFields } from '@/features/buyer/components/BankDetailsCard';
 import { clsx } from 'clsx';
-import { currencySymbol } from '@/utils/currency';
+import { formatPrice } from '@/utils/formatPrice';
 import { computeCartTotals } from '@/utils/cartTotals';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 
@@ -259,12 +259,12 @@ function ManualBankTransferSlot({
       <BankDetailsCard
         bankDetails={bankDetails}
         amountText={amountPKR != null
-          ? `PKR ${amountPKR.toLocaleString(undefined, { maximumFractionDigits: 0 })}`
-          : `${amount.toFixed(2)}`}
+          ? formatPrice(amountPKR, 'PKR')
+          : formatPrice(amount, currency)}
         note={currency !== 'PKR' && (
           <p className="text-[10.5px] text-slate">
             {amountPKR != null && usdToPkr
-              ? <>≈ {currencySymbol(currency)}{amount.toFixed(2)} at PKR {usdToPkr.toLocaleString(undefined, { maximumFractionDigits: 2 })}/USD</>
+              ? <>≈ {formatPrice(amount, currency)} at PKR {usdToPkr.toLocaleString(undefined, { maximumFractionDigits: 2 })}/USD</>
               : 'The exact PKR amount is confirmed when you submit your proof.'}
           </p>
         )}
@@ -327,7 +327,7 @@ function PaymentMethodOptions({
         const meta = PAYMENT_LABELS[method] ?? { label: method, desc: '', Icon: CreditCard };
         const { label, Icon } = meta;
         const desc = method === 'split' && summary?.digitalSubtotal != null && summary?.physicalSubtotal != null
-          ? `Pay ${currencySymbol(currency)} ${summary.digitalSubtotal.toFixed(2)} now, ${currencySymbol(currency)} ${summary.physicalSubtotal.toFixed(2)} on delivery`
+          ? `Pay ${formatPrice(summary.digitalSubtotal, currency)} now, ${formatPrice(summary.physicalSubtotal, currency)} on delivery`
           : meta.desc;
         const unavailable = (method === 'stripe' || method === 'split') && !isStripeConfigured();
         return (
@@ -401,7 +401,7 @@ export function CheckoutPage() {
   const { cart, loading: cartLoading, clearCart, refetch: refetchCart } = useCartContext();
   // Before the checkout exists (steps 1-2) the sidebar shows the cart's own figures in the buyer's display currency,
   // through the same maths as the Cart page; from step 3 on the server's checkout is the source of truth.
-  const { currency: displayCurrency, convert: convertToDisplay, ratesLoaded } = useCurrencyPreference();
+  const { currency: displayCurrency, convert: convertToDisplay } = useCurrencyPreference();
 
   // Checkout is one store at a time. On the main marketplace site the cart
   // can span several stores — `?store=` picks which one this checkout is
@@ -490,7 +490,7 @@ export function CheckoutPage() {
   const [checkoutError, setCheckoutError] = useState('');
   const [checkout, setCheckout] = useState<Checkout | null>(null);
   // Blank until the checkout has loaded — never guess a currency (it used to flash "$" for a Rs order).
-  const checkoutSymbol = checkout ? currencySymbol(checkout.currency) : '';
+  const checkoutCur = checkout?.currency ?? displayCurrency;
   const [summary, setSummary] = useState<CheckoutSummary | null>(null);
   const [allowedMethods, setAllowedMethods] = useState<string[]>([]);
   const [savingsHints, setSavingsHints] = useState<SubscriptionSavingsHint[]>([]);
@@ -756,7 +756,6 @@ export function CheckoutPage() {
   const bakedInDiscounts = (summary?.subscriberSavingsUSD ?? 0) + (summary?.campaignDiscountUSD ?? 0) + (summary?.autoDiscountUSD ?? 0) + premiumSavings;
   // The running sale only applies to the whole store cart, not to a Buy Now line or a physical-only subset.
   const estimate = computeCartTotals(cartItems, buyNow || physicalOnly ? null : cart?.campaignDiscount, convertToDisplay);
-  const estimateSymbol = ratesLoaded ? currencySymbol(displayCurrency) : '';
   // Before the checkout exists a member's estimate already uses their member price (cart lines carry it for members only).
   const memberEstimateSavings = cartItems.reduce((sum, i) => (i.premiumItemTotal != null ? sum + Math.max(0, convertToDisplay(i.itemTotal ?? (i.unitPrice ?? i.price ?? 0) * i.quantity, i.currency) - convertToDisplay(i.premiumItemTotal, i.currency)) : sum), 0);
   const total = checkout ? checkout.totalAmount : Math.max(0, estimate.payable - memberEstimateSavings);
@@ -765,7 +764,7 @@ export function CheckoutPage() {
     ? Math.max(0, total - (isDigital ? 0 : shipping) - tax + bakedInDiscounts + couponDiscount + giftCardDiscount)
     : Math.max(0, estimate.subtotal - memberEstimateSavings);
   // Symbol for every sidebar amount: the checkout's own currency once it exists, else the display currency.
-  const summarySymbol = checkout ? checkoutSymbol : estimateSymbol;
+  const summaryCur = checkout ? checkout.currency : displayCurrency;
 
   // ── Handlers ─────────────────────────────────────────────────────────────
   async function handleApplyCoupon() {
@@ -776,7 +775,7 @@ export function CheckoutPage() {
     try {
       const res = await apiApplyCoupon({ checkoutId: checkout._id, code: couponInput.trim() });
       setCheckout(c => c && { ...c, couponCode: res.data.couponCode, couponDiscountUSD: res.data.couponDiscountUSD, totalAmount: res.data.totalAmount });
-      setCouponSuccessMsg(`Coupon applied — you saved ${currencySymbol(checkout.currency)}${res.data.couponDiscountUSD.toFixed(2)}.`);
+      setCouponSuccessMsg(`Coupon applied — you saved ${formatPrice(res.data.couponDiscountUSD, checkout.currency)}.`);
       setCouponInput('');
     } catch (err) {
       setCouponError(err instanceof Error ? err.message : 'Failed to apply coupon.');
@@ -811,7 +810,7 @@ export function CheckoutPage() {
     try {
       const res = await apiApplyGiftCard({ checkoutId: checkout._id, code: giftCardInput.trim() });
       setCheckout(c => c && { ...c, giftCardCode: res.data.giftCardCode, giftCardDiscountUSD: res.data.giftCardDiscountUSD, totalAmount: res.data.totalAmount });
-      setGiftCardSuccessMsg(`Gift card applied — ${currencySymbol(checkout.currency)}${res.data.giftCardDiscountUSD.toFixed(2)} used. ${currencySymbol(checkout.currency)}${res.data.remainingBalance.toFixed(2)} remains on the card.`);
+      setGiftCardSuccessMsg(`Gift card applied — ${formatPrice(res.data.giftCardDiscountUSD, checkout.currency)} used. ${formatPrice(res.data.remainingBalance, checkout.currency)} remains on the card.`);
       setGiftCardInput('');
     } catch (err) {
       setGiftCardError(err instanceof Error ? err.message : 'Failed to apply gift card.');
@@ -964,14 +963,14 @@ export function CheckoutPage() {
           </div>
           <h1 className="text-[20px] font-bold text-carbon mb-2">We're verifying your payment</h1>
           <p className="text-[13px] text-slate mb-6">
-            Your order has been placed and your transfer proof of <span className="font-semibold text-carbon">PKR {manualPaymentResult.amountPKR.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span> was received.
+            Your order has been placed and your transfer proof of <span className="font-semibold text-carbon">{formatPrice(manualPaymentResult.amountPKR, 'PKR')}</span> was received.
             We'll notify you as soon as it's confirmed — usually within a few hours.
           </p>
           <div className="bg-white border border-bone rounded-[10px] divide-y divide-bone text-start mb-8">
             {manualPaymentResult.orders.map(o => (
               <div key={o.orderId} className="flex justify-between items-center px-4 py-3 text-[13px]">
                 <span className="font-mono font-semibold text-brand-deep-orange">{o.orderNumber}</span>
-                <span className="text-slate">{currencySymbol(o.currency)}{o.totalAmount.toFixed(2)}</span>
+                <span className="text-slate">{formatPrice(o.totalAmount, o.currency)}</span>
               </div>
             ))}
           </div>
@@ -1533,9 +1532,9 @@ export function CheckoutPage() {
                 <div className="px-5 py-3 text-[13px] text-carbon">
                   <span className="font-medium">{PAYMENT_LABELS[selectedMethod]?.label ?? selectedMethod}</span>
                   {selectedMethod === 'split' && summary?.digitalSubtotal != null && summary?.physicalSubtotal != null ? (
-                    <> {' — '}{checkoutSymbol} {summary.digitalSubtotal.toFixed(2)} now, {checkoutSymbol} {summary.physicalSubtotal.toFixed(2)} on delivery</>
+                    <> {' — '}{formatPrice(summary.digitalSubtotal, checkoutCur)} now, {formatPrice(summary.physicalSubtotal, checkoutCur)} on delivery</>
                   ) : (
-                    <> {' — '}{checkoutSymbol} {(chargeAmount ?? total).toFixed(2)}</>
+                    <> {' — '}{formatPrice((chargeAmount ?? total), checkoutCur)}</>
                   )}
                 </div>
               )}
@@ -1564,15 +1563,15 @@ export function CheckoutPage() {
                     <div className="flex justify-between gap-3 text-[12.5px]">
                       <span className="text-slate flex-shrink-0">Shipping</span>
                       <span className="font-medium text-carbon text-end">
-                        {selectedZone ? `${zoneTitle(selectedZone)} · ${selectedZone.shippingPrice > 0 ? `${checkoutSymbol} ${selectedZone.shippingPrice.toLocaleString()}` : 'Free'}` : '—'}
+                        {selectedZone ? `${zoneTitle(selectedZone)} · ${selectedZone.shippingPrice > 0 ? `${formatPrice(selectedZone.shippingPrice, checkoutCur)}` : 'Free'}` : '—'}
                       </span>
                     </div>
                     <div className="flex justify-between gap-3 text-[12.5px]">
                       <span className="text-slate flex-shrink-0">Payment</span>
                       <span className="font-medium text-carbon text-end">
                         {!selectedMethod ? '—' : selectedMethod === 'split' && summary?.digitalSubtotal != null && summary?.physicalSubtotal != null
-                          ? `${PAYMENT_LABELS.split.label} · ${checkoutSymbol} ${summary.digitalSubtotal.toFixed(2)} now, ${checkoutSymbol} ${summary.physicalSubtotal.toFixed(2)} on delivery`
-                          : `${PAYMENT_LABELS[selectedMethod]?.label ?? selectedMethod} · ${checkoutSymbol} ${(chargeAmount ?? total).toFixed(2)}`}
+                          ? `${PAYMENT_LABELS.split.label} · ${formatPrice(summary.digitalSubtotal, checkoutCur)} now, ${formatPrice(summary.physicalSubtotal, checkoutCur)} on delivery`
+                          : `${PAYMENT_LABELS[selectedMethod]?.label ?? selectedMethod} · ${formatPrice((chargeAmount ?? total), checkoutCur)}`}
                       </span>
                     </div>
                   </div>
@@ -1639,7 +1638,7 @@ export function CheckoutPage() {
 
             {/* Items — the whole cart, one order */}
             <div className="flex flex-col gap-2 mb-5">
-              {(() => { const cur = summarySymbol; return checkout
+              {(() => { return checkout
                 ? checkout.items.map(item => (
                   <div key={item.variantId} className="flex justify-between text-[12px] gap-2">
                     <span className="text-carbon truncate max-w-[150px]">
@@ -1649,9 +1648,9 @@ export function CheckoutPage() {
                     </span>
                     <span className="font-medium text-carbon flex-shrink-0 text-end">
                       {!!item.premiumDiscountPercent && item.premiumDiscountPercent > 0 && item.originalPrice != null && (
-                        <s className="block text-[12px] font-normal text-slate">{cur} {(item.originalPrice * item.quantity).toLocaleString()}</s>
+                        <s className="block text-[12px] font-normal text-slate">{formatPrice((item.originalPrice * item.quantity), summaryCur)}</s>
                       )}
-                      {cur} {item.totalPrice.toLocaleString()}
+                      {formatPrice(item.totalPrice, summaryCur)}
                     </span>
                   </div>
                 ))
@@ -1665,7 +1664,7 @@ export function CheckoutPage() {
                         <span className="text-slate ms-1">×{item.quantity}</span>
                       </span>
                       <span className="font-medium text-carbon flex-shrink-0">
-                        {cur} {ttl.toLocaleString()}
+                        {formatPrice(ttl, summaryCur)}
                       </span>
                     </div>
                   );
@@ -1678,19 +1677,19 @@ export function CheckoutPage() {
             <div className="flex flex-col gap-3 mb-5">
               <div className="flex justify-between text-[13px]">
                 <span className="text-slate">Subtotal</span>
-                <span className="font-semibold text-carbon">{summarySymbol} {orderSubtotal.toLocaleString()}</span>
+                <span className="font-semibold text-carbon">{formatPrice(orderSubtotal, summaryCur)}</span>
               </div>
               {!checkout && estimate.campaignAmount > 0 && (
                 <div className="flex justify-between text-[13px]">
                   <span className="text-success">{cart?.campaignDiscount?.name || 'Sale discount'}</span>
-                  <span className="font-semibold text-success">-{summarySymbol}{estimate.campaignAmount.toFixed(2)}</span>
+                  <span className="font-semibold text-success">-{formatPrice(estimate.campaignAmount, summaryCur)}</span>
                 </div>
               )}
               {!isDigital && (
                 <div className="flex justify-between text-[13px]">
                   <span className="text-slate">Shipping</span>
                   {checkout || summary
-                    ? <span className="font-semibold text-carbon">{checkoutSymbol} {shipping.toLocaleString()}</span>
+                    ? <span className="font-semibold text-carbon">{formatPrice(shipping, checkoutCur)}</span>
                     : <span className="text-slate font-medium">Calculated next</span>
                   }
                 </div>
@@ -1698,13 +1697,13 @@ export function CheckoutPage() {
               {tax > 0 && (
                 <div className="flex justify-between text-[13px]">
                   <span className="text-slate">Tax</span>
-                  <span className="font-semibold text-carbon">{checkoutSymbol} {tax.toLocaleString()}</span>
+                  <span className="font-semibold text-carbon">{formatPrice(tax, checkoutCur)}</span>
                 </div>
               )}
               {!!summary?.subscriberSavingsUSD && summary.subscriberSavingsUSD > 0 && (
                 <div className="flex justify-between text-[13px]">
                   <span className="text-success">Member savings</span>
-                  <span className="font-semibold text-success">-{checkoutSymbol}{summary.subscriberSavingsUSD.toFixed(2)}</span>
+                  <span className="font-semibold text-success">-{formatPrice(summary.subscriberSavingsUSD, checkoutCur)}</span>
                 </div>
               )}
               {/* Already baked into each item's totalPrice at checkout-creation
@@ -1719,13 +1718,13 @@ export function CheckoutPage() {
               {premiumSavings > 0 && (
                 <div className="flex justify-between text-[13px]">
                   <span className="text-[#8a6100]">Premium savings</span>
-                  <span className="font-semibold text-[#8a6100]">-{checkoutSymbol}{premiumSavings.toFixed(2)}</span>
+                  <span className="font-semibold text-[#8a6100]">-{formatPrice(premiumSavings, checkoutCur)}</span>
                 </div>
               )}
               {!!summary?.campaignDiscountUSD && summary.campaignDiscountUSD > 0 && (
                 <div className="flex justify-between text-[13px]">
                   <span className="text-success">Sale discount</span>
-                  <span className="font-semibold text-success">-{checkoutSymbol}{summary.campaignDiscountUSD.toFixed(2)}</span>
+                  <span className="font-semibold text-success">-{formatPrice(summary.campaignDiscountUSD, checkoutCur)}</span>
                 </div>
               )}
               {/* Same "already baked in" convention as the sale discount above —
@@ -1734,7 +1733,7 @@ export function CheckoutPage() {
               {!!summary?.autoDiscountUSD && summary.autoDiscountUSD > 0 && (
                 <div className="flex justify-between text-[13px]">
                   <span className="text-success">Discount</span>
-                  <span className="font-semibold text-success">-{checkoutSymbol}{summary.autoDiscountUSD.toFixed(2)}</span>
+                  <span className="font-semibold text-success">-{formatPrice(summary.autoDiscountUSD, checkoutCur)}</span>
                 </div>
               )}
               {/* The backend rejects a coupon outright (see CheckoutService.applyCoupon)
@@ -1746,7 +1745,7 @@ export function CheckoutPage() {
                   <span className="flex items-center gap-1 text-success">
                     <CheckCircle2 size={12} /> Coupon ({checkout.couponCode})
                   </span>
-                  <span className="font-semibold text-success">-{checkoutSymbol}{couponDiscount.toFixed(2)}</span>
+                  <span className="font-semibold text-success">-{formatPrice(couponDiscount, checkoutCur)}</span>
                 </div>
               )}
               {!!checkout?.giftCardCode && (
@@ -1754,7 +1753,7 @@ export function CheckoutPage() {
                   <span className="flex items-center gap-1 text-success">
                     <CheckCircle2 size={12} /> Gift card ({checkout.giftCardCode})
                   </span>
-                  <span className="font-semibold text-success">-{checkoutSymbol}{giftCardDiscount.toFixed(2)}</span>
+                  <span className="font-semibold text-success">-{formatPrice(giftCardDiscount, checkoutCur)}</span>
                 </div>
               )}
             </div>
@@ -1840,7 +1839,7 @@ export function CheckoutPage() {
 
             <div className="flex justify-between text-[16px] font-bold">
               <span className="text-carbon">Total</span>
-              <span className="text-carbon">{summarySymbol} {total.toLocaleString()}</span>
+              <span className="text-carbon">{formatPrice(total, summaryCur)}</span>
             </div>
 
             {checkout && (
@@ -1858,7 +1857,7 @@ export function CheckoutPage() {
                     className="w-full text-start px-3.5 py-3 rounded-lg bg-brand-pale-orange border border-brand-orange/20 cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange"
                   >
                     <p className="text-[12.5px] font-semibold text-brand-deep-orange">
-                      You could save ${hint.potentialSavingsUSD.toFixed(2)} on this order
+                      {`You could save ${formatPrice(hint.potentialSavingsUSD, 'USD')} on this order`}
                     </p>
                     <p className="text-[11px] text-brand-orange/80 mt-0.5">
                       Join {hint.storeName}'s {hint.planName} membership before checking out →

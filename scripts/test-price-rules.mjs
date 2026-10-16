@@ -1,3 +1,4 @@
+import { normalizeTitle, titleError, vagueTitleWarning, titleClassConflict, classRangeError, findContactInfo, contactWarning } from '../src/features/seller/store/Dashboard/StoreSection/products/productQuality.ts';
 // Run: npm run test:rules  (Node 22.6+/24 strips the TypeScript types itself; no test runner needed)
 import assert from 'node:assert/strict';
 import { weightError, toggleRemember, weightTextError, weightToStored, weightFromStored, stockError, parseWeightKg, validatePrices, descriptionError, premiumConflict, maxCompareAtForPremium } from '../src/features/seller/store/Dashboard/StoreSection/products/priceRules.ts';
@@ -109,4 +110,38 @@ t('stock: 0 ok (warned elsewhere), negative, 2.5, huge, empty, unlimited', () =>
   assert.equal(stockError('-9', true), null);
   assert.equal(stockError('12', false), null);
 });
+
+// -- title / class / contact quality (mirrors the API) --
+t('title: 10+ chars, first letter capitalised', () => {
+  assert.ok(titleError('Maths'));
+  assert.equal(titleError('Grade 5 Maths Workbook'), null);
+  assert.equal(normalizeTitle('  class 5   maths '), 'Class 5 maths');
+});
+t('vague titles warn, specific ones do not', () => {
+  assert.ok(vagueTitleWarning('Course G1'));
+  assert.ok(vagueTitleWarning('Books class 5'));
+  assert.equal(vagueTitleWarning('Grade 5 Complete Course Book Set - Oxford'), null);
+});
+t('title vs class range', () => {
+  assert.match(titleClassConflict('Class 5 Science Guide', 'class-6', 'class-12'), /Title says Class 5 but suitable classes are 6-12/);
+  assert.match(titleClassConflict('Course G1 English', 'nursery', 'university'), /Class 1/);
+  assert.match(titleClassConflict('Beginner Level Arabic', 'class-6', 'class-12'), /Beginner/);
+  assert.equal(titleClassConflict('Class 5 Science Guide', 'class-4', 'class-6'), null);
+});
+t('class range required for digital/educational only', () => {
+  assert.ok(classRangeError('digital', null, null));
+  assert.ok(classRangeError('educational', '', ''));
+  assert.equal(classRangeError('physical', null, null), null);
+  assert.equal(classRangeError('digital', 'class-3', null), null);
+});
+t('contact info: flags phones/emails/whatsapp, ignores ISBN, prices, years, pages, classes', () => {
+  assert.ok(findContactInfo('Call 0300-1234567').length);
+  assert.ok(findContactInfo('+92 300 1234567').length);
+  assert.ok(findContactInfo('ali@gmail.com').length);
+  assert.ok(findContactInfo('wa.me/923001234567').length);
+  for (const s of ['ISBN 978-3-16-148410-0', 'ISBN-13: 9783161484100', 'Only Rs 1,500 (was Rs 3,000)', 'Published 2024, 320 pages', 'Class 10 Physics, Grade 5 to 8']) assert.deepEqual(findContactInfo(s), [], s);
+  assert.equal(contactWarning('Clean title', 'Clean text'), null);
+  assert.match(contactWarning('x', 'Order 03001234567'), /sent to review/);
+});
+
 console.log(`\n${n} checks passed`);

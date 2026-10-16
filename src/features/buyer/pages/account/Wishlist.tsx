@@ -7,7 +7,7 @@ import { useWishlistContext } from '@/contexts/WishlistContext';
 import { useCartContext } from '@/contexts/CartContext';
 import { Card, EmptyState, SkeletonBox, PageHeader, Modal, Button } from '@/components/comman/ui';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
-import { currencySymbol } from '@/utils/currency';
+import { formatPrice } from '@/utils/formatPrice';
 import { ShareSavedControl } from './ShareSavedControl';
 import { WishlistAlertsToggle } from './WishlistAlertsToggle';
 
@@ -28,8 +28,7 @@ export function Wishlist() {
   const { wishlistItems, wishlistCount, loading: wLoading, wishlisting, removeFromWishlist, clearWishlist, clearing } = useWishlistContext();
   const { addToCart, adding } = useCartContext();
   const { currency: displayCurrency, convert } = useCurrencyPreference();
-  const displaySymbol = currencySymbol(displayCurrency);
-  const [removingId, setRemovingId] = useState<string | null>(null);
+    const [removingId, setRemovingId] = useState<string | null>(null);
   const [addingId, setAddingId] = useState<string | null>(null);
   const [confirmingClear, setConfirmingClear] = useState(false);
   const [clearError, setClearError] = useState('');
@@ -169,9 +168,9 @@ export function Wishlist() {
 
                 {variant && (
                   <div className="flex items-center gap-[8px]">
-                    <span className="font-bold text-[16px] text-carbon">{displaySymbol}{convert(variant.price, variant.currency).toLocaleString()}</span>
+                    <span className="font-bold text-[16px] text-carbon">{formatPrice(convert(variant.price, variant.currency), displayCurrency)}</span>
                     {variant.compareAtPrice && variant.compareAtPrice > variant.price && (
-                      <span className="text-[12px] line-through text-[#b0aeaa]">{displaySymbol}{convert(variant.compareAtPrice, variant.currency).toLocaleString()}</span>
+                      <span className="text-[12px] line-through text-[#b0aeaa]">{formatPrice(convert(variant.compareAtPrice, variant.currency), displayCurrency)}</span>
                     )}
                     {discount && (
                       <span className="text-[12px] font-bold px-[7px] py-[2px] rounded-[5px] bg-[#dcfce7] text-[#15803d]">Save {discount}%</span>

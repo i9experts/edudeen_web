@@ -1,3 +1,4 @@
+import { formatPrice } from '@/utils/formatPrice';
 import { useEffect, useState } from 'react';
 import { useHasSellerAccount, useSwitchToStore } from '@/hooks/auth/useSellerAccount';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -104,7 +105,7 @@ export function BecomeSellerPage() {
     : [];
   const paidPrices = (plans ?? []).filter(p => !p.isFree).map(p => p.monthlyPriceUSD ?? 0);
   const minPrice = paidPrices.length ? Math.min(...paidPrices) : null;
-  const fromPrice = minPrice != null ? ` starting at $${minPrice.toLocaleString()} a month` : '';
+  const fromPrice = minPrice != null ? ` starting at ${formatPrice(minPrice, 'USD')} a month` : '';
 
   const V = page.visible;
   const hero = page.hero;
@@ -217,7 +218,7 @@ export function BecomeSellerPage() {
                       {p.badge && <span className="text-[12px] font-bold bg-brand-pale-orange text-brand-deep-orange px-2 py-[2px] rounded">{p.badge}</span>}
                     </div>
                     <p className="mb-1">
-                      <span className="text-[34px] font-extrabold text-carbon" style={{ fontFamily: SERIF }}>{p.isFree ? 'Free' : `$${planPriceFor(p, interval).toLocaleString()}`}</span>
+                      <span className="text-[34px] font-extrabold text-carbon" style={{ fontFamily: SERIF }}>{p.isFree ? 'Free' : `${formatPrice(planPriceFor(p, interval), 'USD')}`}</span>
                       <span className="text-[13px] text-slate"> {p.isFree ? `for ${p.trialDays} days · no card needed` : interval === 'yearly' ? 'yearly' : 'monthly'}</span>
                       {!p.isFree && interval === 'yearly' && planYearlySavePct(p) > 0 && <span className="ms-2 text-[12px] font-bold text-success">Save {planYearlySavePct(p)}%</span>}
                     </p>

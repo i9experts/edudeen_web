@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { formatPrice } from '@/utils/formatPrice';
 import { Link } from 'react-router-dom';
 import { FileSpreadsheet, FileText, Phone } from 'lucide-react';
 import { clsx } from 'clsx';
@@ -10,7 +11,6 @@ import { useToast } from '@/contexts/ToastContext';
 import {
   apiGetSellerQuotes, apiSendQuoteOffer, apiDeclineQuote, INSTITUTION_TYPES, NET_TERMS_LABEL, QUOTE_STATUS_LABEL, QUOTE_TONE, type NetTerms, type QuoteRequest,
 } from '@/api/services/classroom';
-import { currencySymbol } from '@/utils/currency';
 
 const FILTERS = [
   { id: 'pending', label: 'New requests' },
@@ -18,7 +18,7 @@ const FILTERS = [
   { id: 'accepted', label: 'Accepted' },
   { id: '', label: 'All' },
 ];
-const fmt = (n: number, c: string) => `${currencySymbol(c)} ${n.toLocaleString()}`;
+const fmt = (n: number, c: string) => `${formatPrice(n, c)}`;
 
 function OfferDialog({ q, storeId, currency, onDone, onClose }: { q: QuoteRequest; storeId: string; currency: string; onDone: (q: QuoteRequest) => void; onClose: () => void }) {
   const toast = useToast();

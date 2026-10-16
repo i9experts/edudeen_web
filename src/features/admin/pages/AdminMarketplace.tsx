@@ -101,7 +101,7 @@ export function AdminMarketplace() {
 
   const columns: TableColumn<MarketplaceListingRow>[] = [
     { key: 'id', header: 'ID', render: (r) => <span className="text-[12px] font-mono text-slate whitespace-nowrap">{r.id.slice(-8)}</span> },
-    { key: 'title', header: 'Title', render: (r) => <p className="text-[13px] font-medium text-graphite max-w-[220px] truncate">{r.title}{r.isTest && <span className="ms-2 align-middle rounded-full bg-[#fff6d6] border border-[#f1d98a] px-[7px] py-[1px] text-[12px] font-bold text-[#8a6100]" title="Hidden from the public">Test</span>}</p> },
+    { key: 'title', header: 'Title', render: (r) => <p className="text-[13px] font-medium text-graphite max-w-[220px] truncate">{r.title}{r.flags?.includes('contact_info') && <span className="ms-2 align-middle rounded-full bg-error-bg border border-error-border px-[7px] py-[1px] text-[12px] font-bold text-error" title={(r.contactMatches ?? []).join(' | ')}>Contains contact info</span>}{r.isTest && <span className="ms-2 align-middle rounded-full bg-[#fff6d6] border border-[#f1d98a] px-[7px] py-[1px] text-[12px] font-bold text-[#8a6100]" title="Hidden from the public">Test</span>}</p> },
     { key: 'sellerName', header: 'Seller', render: (r) => <span className="text-[13px] text-graphite whitespace-nowrap">{r.sellerName}</span> },
     { key: 'price', header: 'Price', align: 'right', render: (r) => <span className="text-[13px] font-semibold text-charcoal">{r.price == null ? '—' : formatMoney(r.price, r.currency)}</span> },
     { key: 'purchaseCount', header: 'Sales', align: 'right', render: (r) => <span className="text-[13px] text-charcoal">{formatNumber(r.purchaseCount)}</span> },

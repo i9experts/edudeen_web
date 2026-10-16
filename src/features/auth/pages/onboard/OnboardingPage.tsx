@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, type ReactNode } from 'react';
+import { formatPrice } from '@/utils/formatPrice';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { clsx } from 'clsx';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -486,7 +487,7 @@ function Step2Payment({ form, setForm, onNext, onBack, step, maxReached, onStepC
                 <StripeCardSetup
                   clientSecret={clientSecret}
                   onConfirmed={handleConfirmed}
-                  note={`Secured by Stripe — $${planPriceFor(selected, interval).toLocaleString()} is charged each ${interval === 'yearly' ? 'year' : 'month'} once your store launches.`}
+                  note={`Secured by Stripe — ${formatPrice(planPriceFor(selected, interval), 'USD')} is charged each ${interval === 'yearly' ? 'year' : 'month'} once your store launches.`}
                 />
                 {confirmError && (
                   <div className="flex items-center gap-2 rounded-lg bg-error-bg px-[14px] py-[10px] mt-3 text-[13px] text-error">
@@ -673,14 +674,14 @@ function Step5Review({ form, submitting, submitError, onSubmit, onBack, step, ma
           <p className="text-[12px] font-bold text-carbon uppercase tracking-[0.05em] pb-2 mb-3 border-b border-bone">Plan</p>
           <div className="flex items-center justify-between gap-3">
             <p className="text-[12.5px] font-semibold text-carbon">{form.planName || '—'}</p>
-            <p className="text-[12.5px] font-semibold text-brand-orange">{form.planPriceUSD === 0 ? 'Free trial' : `$${(form.billingInterval === 'yearly' ? (form.planYearlyUSD ?? form.planPriceUSD * 12) : form.planPriceUSD).toLocaleString()} / ${form.billingInterval === 'yearly' ? 'year' : 'month'}`}</p>
+            <p className="text-[12.5px] font-semibold text-brand-orange">{form.planPriceUSD === 0 ? 'Free trial' : `${formatPrice((form.billingInterval === 'yearly' ? (form.planYearlyUSD ?? form.planPriceUSD * 12) : form.planPriceUSD), 'USD')} / ${form.billingInterval === 'yearly' ? 'year' : 'month'}`}</p>
           </div>
         </div>
 
         <div className="flex items-start gap-2 text-start mb-6 bg-success-bg rounded-xl px-[14px] py-[12px]">
           <ShieldCheck size={16} className="text-success shrink-0 mt-[1px]" />
           <p className="text-[12.5px] text-success leading-[1.6]">
-            {form.planPriceUSD === 0 ? 'Your free trial starts when your store opens — no payment now. Sales are credited to your wallet after the platform fee.' : `Launching charges your saved card $${(form.billingInterval === 'yearly' ? (form.planYearlyUSD ?? form.planPriceUSD * 12) : form.planPriceUSD).toLocaleString()} for the first ${form.billingInterval === 'yearly' ? 'year' : 'month'}, then renews. Buyers pay Edudeen; each sale is credited to your wallet after the platform fee and paid out via payout requests.`}
+            {form.planPriceUSD === 0 ? 'Your free trial starts when your store opens — no payment now. Sales are credited to your wallet after the platform fee.' : `Launching charges your saved card ${formatPrice((form.billingInterval === 'yearly' ? (form.planYearlyUSD ?? form.planPriceUSD * 12) : form.planPriceUSD), 'USD')} for the first ${form.billingInterval === 'yearly' ? 'year' : 'month'}, then renews. Buyers pay Edudeen; each sale is credited to your wallet after the platform fee and paid out via payout requests.`}
           </p>
         </div>
 

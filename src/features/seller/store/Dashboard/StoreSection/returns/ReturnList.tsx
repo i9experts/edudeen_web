@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { formatPrice } from '@/utils/formatPrice';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useStoreWorkspace, StorePageHeader } from '@/components/layouts/StoreLayout';
@@ -7,7 +8,7 @@ import {
   apiGetSellerReturns, apiReturnAction,
   type SellerReturnItem, type ReturnStatus,
 } from '@/api/services/orders';
-import { currencySymbol, formatMoney } from '@/utils/currency';
+import { formatMoney } from '@/utils/currency';
 import { useDebouncedValue } from '@/hooks/seller/useInventorySearch';
 import { SellerRefundRequests } from './SellerRefundRequests';
 
@@ -84,7 +85,7 @@ function ReturnActionModal({
         <div>
           <p className="text-[13px] font-semibold text-charcoal">{item.productName}</p>
           <p className="text-[12px] text-slate mt-[2px]">Customer: {item.customer.name}</p>
-          <p className="text-[12px] text-slate">Amount: {currencySymbol(currency)}{item.amount.toLocaleString()}</p>
+          <p className="text-[12px] text-slate">Amount: {formatPrice(item.amount, currency)}</p>
         </div>
         <div className="bg-cream rounded-[9px] px-3 py-[10px]">
           <p className="text-[12px] font-semibold text-slate uppercase tracking-[0.05em] mb-1">Customer's Reason</p>
@@ -148,7 +149,7 @@ export function StoreReturnList() {
     { key: 'customer', header: 'Customer', render: r => <span className="text-graphite whitespace-nowrap">{r.customer.name}</span> },
     { key: 'productName', header: 'Product', render: r => <span className="text-graphite max-w-[180px] truncate block">{r.productName}</span> },
     { key: 'returnReason', header: 'Reason', render: r => <span className="text-slate max-w-[180px] truncate block">{r.returnReason}</span> },
-    { key: 'amount', header: 'Amount', render: r => <span className="font-semibold text-carbon whitespace-nowrap">{currencySymbol(store?.baseCurrency)}{r.amount.toLocaleString()}</span> },
+    { key: 'amount', header: 'Amount', render: r => <span className="font-semibold text-carbon whitespace-nowrap">{formatPrice(r.amount, store?.baseCurrency)}</span> },
     {
       key: 'returnStatus', header: 'Status',
       render: r => {

@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { ProductCoverFallback } from '@/components/comman/marketplace/ProductCoverFallback';
 import { clsx } from 'clsx';
-import { currencySymbol } from '@/utils/currency';
+import { formatPrice } from '@/utils/formatPrice';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 import { useNavigate } from 'react-router-dom';
 import { TokenStorage } from '@/api/services/auth';
@@ -62,7 +62,6 @@ export function StorefrontCartPage() {
   const isEmpty = !loading && !items.length;
 
   const { currency: displayCurrency, convert } = useCurrencyPreference();
-  const displaySymbol = currencySymbol(displayCurrency);
   const displayTotal = items.reduce((s, i) => {
     const unit = i.unitPrice ?? i.price ?? 0;
     const lineTotal = i.itemTotal ?? unit * i.quantity;
@@ -175,7 +174,7 @@ export function StorefrontCartPage() {
                         </span>
                       )}
                     </div>
-                    <p className="text-[12px] text-slate mb-3">{displaySymbol}{price.toLocaleString()} each</p>
+                    <p className="text-[12px] text-slate mb-3">{formatPrice(price, displayCurrency)} each</p>
 
                     <div className="flex items-center gap-[6px] flex-wrap">
                       <button
@@ -215,7 +214,7 @@ export function StorefrontCartPage() {
                     </div>
                   </div>
 
-                  <p className="font-bold text-[15px] text-carbon shrink-0">{displaySymbol}{lineTotal.toLocaleString()}</p>
+                  <p className="font-bold text-[15px] text-carbon shrink-0">{formatPrice(lineTotal, displayCurrency)}</p>
                 </div>
               );
             })}
@@ -243,7 +242,7 @@ export function StorefrontCartPage() {
                       <span className="text-carbon truncate">
                         {item.name}<span className="text-slate ms-1">×{item.quantity}</span>
                       </span>
-                      <span className="font-medium text-carbon shrink-0">{displaySymbol}{ttl.toLocaleString()}</span>
+                      <span className="font-medium text-carbon shrink-0">{formatPrice(ttl, displayCurrency)}</span>
                     </div>
                   );
                 })}
@@ -254,7 +253,7 @@ export function StorefrontCartPage() {
 
             <div className="flex justify-between text-[16px] font-bold">
               <span className="text-carbon">Total</span>
-              <span className="text-carbon">{displaySymbol}{displayTotal.toLocaleString()}</span>
+              <span className="text-carbon">{formatPrice(displayTotal, displayCurrency)}</span>
             </div>
 
             <Button variant="primary" fullWidth className="justify-center!" onClick={handleCheckout}>

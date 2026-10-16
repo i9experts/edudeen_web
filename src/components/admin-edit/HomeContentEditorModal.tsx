@@ -62,6 +62,7 @@ function HomeContentForm({ section, legalKey, legalInitialText, defaults, stored
   const [legalText, setLegalText] = useState(() => (legalKey && hc.legalPages?.[legalKey]?.text) || legalInitialText || '');
   const [legalDate, setLegalDate] = useState(() => (legalKey && hc.legalPages?.[legalKey]?.lastUpdated) || '');
   const [promise, setPromise] = useState(() => init.promiseItems.join('\n'));
+  const [urState, setUrState] = useState<NonNullable<HomeContent['ur']>>(() => ({ ...(hc.ur ?? {}) }));
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
@@ -85,7 +86,20 @@ function HomeContentForm({ section, legalKey, legalInitialText, defaults, stored
     return out as HomeContent;
   };
 
-  const payload = useMemo((): HomeContent => {
+  /** Optional Urdu version of the text keys of this section; the API replaces the whole `ur` map, so the merged map is sent. */
+  const urKeys: (keyof NonNullable<HomeContent['ur']>)[] =
+    section === 'hero' ? ['heroEyebrow', 'heroTitle', 'heroHighlight', 'heroText', 'heroPrimaryLabel', 'heroSecondaryLabel', 'heroBadge']
+    : section === 'feature' ? ['featureEyebrow', 'featureHeading', 'featureText', 'featureLinkLabel']
+    : section === 'creator' ? ['creatorEyebrow', 'creatorHeading', 'creatorText', 'creatorLinkLabel'] : [];
+  const urChanged = urKeys.some(k => (urState[k] ?? '').trim() !== (hc.ur?.[k] ?? ''));
+  // Called as a plain function (not a component) so typing never remounts the input.
+  const UrField = ({ k, label, area }: { k: keyof NonNullable<HomeContent['ur']>; label: string; area?: boolean }) => (
+    area
+      ? <Textarea label={label} rows={2} dir="rtl" value={urState[k] ?? ''} onChange={e => setUrState(p => ({ ...p, [k]: e.target.value }))} maxLength={300} />
+      : <Input label={label} dir="rtl" value={urState[k] ?? ''} onChange={e => setUrState(p => ({ ...p, [k]: e.target.value }))} maxLength={300} />
+  );
+
+  const textPayload = useMemo((): HomeContent => {
     switch (section) {
       case 'hero': return pick(['heroEyebrow', 'heroTitle', 'heroHighlight', 'heroText', 'heroPrimaryLabel', 'heroSecondaryLabel', 'heroBadge', 'heroImageUrl']);
       case 'promise': {
@@ -107,6 +121,13 @@ function HomeContentForm({ section, legalKey, legalInitialText, defaults, stored
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [section, c, promise, trust, about, pillars, legalKey, legalText, legalDate, init, initAbout]);
+  const payload = useMemo((): HomeContent => {
+    if (!urChanged) return textPayload;
+    const merged = { ...(hc.ur ?? {}) } as Record<string, string>;
+    for (const k of urKeys) { const v = (urState[k] ?? '').trim(); if (v) merged[k] = v; else delete merged[k]; }
+    return { ...textPayload, ur: merged };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [textPayload, urChanged, urState]);
 
   const uploadHero = async (file?: File) => {
     if (!file) return;
@@ -149,6 +170,13 @@ function HomeContentForm({ section, legalKey, legalInitialText, defaults, stored
             <Input label="Second button" value={H('heroSecondaryLabel')} onChange={h('heroSecondaryLabel')} maxLength={300} />
           </div>
           <Input label="Badge on the hero image" value={H('heroBadge')} onChange={h('heroBadge')} maxLength={300} />
+          <details className="rounded-lg border border-bone px-3 py-2">
+            <summary className="cursor-pointer text-[12.5px] font-semibold text-carbon">Urdu version (optional)</summary>
+            <div className="flex flex-col gap-3 mt-3">
+              {UrField({ k: 'heroEyebrow', label: 'Small heading' })}{UrField({ k: 'heroTitle', label: 'Headline' })}{UrField({ k: 'heroHighlight', label: 'Headline (coloured second line)' })}
+              {UrField({ k: 'heroText', label: 'Hero paragraph', area: true })}{UrField({ k: 'heroPrimaryLabel', label: 'Main button' })}{UrField({ k: 'heroSecondaryLabel', label: 'Second button' })}{UrField({ k: 'heroBadge', label: 'Badge' })}
+            </div>
+          </details>
           <div>
             <Input label="Hero image link (https://...) - empty = the built-in picture shown now" value={H('heroImageUrl')} onChange={h('heroImageUrl')} maxLength={500} />
             <label className="inline-block mt-2 text-[12px] font-semibold text-brand-orange cursor-pointer">
@@ -172,6 +200,12 @@ function HomeContentForm({ section, legalKey, legalInitialText, defaults, stored
           <Textarea label="Paragraph" rows={3} value={H('featureText')} onChange={h('featureText')} maxLength={300} />
           <Input label="Link text" value={H('featureLinkLabel')} onChange={h('featureLinkLabel')} maxLength={300} />
           <Input label="Category this block and the hero's second button open (name)" value={H('featuredCategory')} onChange={h('featuredCategory')} maxLength={300} />
+          <details className="rounded-lg border border-bone px-3 py-2">
+            <summary className="cursor-pointer text-[12.5px] font-semibold text-carbon">Urdu version (optional)</summary>
+            <div className="flex flex-col gap-3 mt-3">
+              {UrField({ k: 'featureEyebrow', label: 'Small heading' })}{UrField({ k: 'featureHeading', label: 'Heading' })}{UrField({ k: 'featureText', label: 'Paragraph', area: true })}{UrField({ k: 'featureLinkLabel', label: 'Link text' })}
+            </div>
+          </details>
         </>)}
         {section === 'apps' && (<>
           <Input label="Google Play link (public https:// link; blank = Coming soon)" value={H('googlePlayUrl')} onChange={h('googlePlayUrl')} maxLength={500} />
@@ -182,6 +216,12 @@ function HomeContentForm({ section, legalKey, legalInitialText, defaults, stored
           <Input label="Heading" value={H('creatorHeading')} onChange={h('creatorHeading')} maxLength={300} />
           <Textarea label="Paragraph" rows={3} value={H('creatorText')} onChange={h('creatorText')} maxLength={300} />
           <Input label="Link text" value={H('creatorLinkLabel')} onChange={h('creatorLinkLabel')} maxLength={300} />
+          <details className="rounded-lg border border-bone px-3 py-2">
+            <summary className="cursor-pointer text-[12.5px] font-semibold text-carbon">Urdu version (optional)</summary>
+            <div className="flex flex-col gap-3 mt-3">
+              {UrField({ k: 'creatorEyebrow', label: 'Small heading' })}{UrField({ k: 'creatorHeading', label: 'Heading' })}{UrField({ k: 'creatorText', label: 'Paragraph', area: true })}{UrField({ k: 'creatorLinkLabel', label: 'Link text' })}
+            </div>
+          </details>
         </>)}
         {section === 'about' && (<>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

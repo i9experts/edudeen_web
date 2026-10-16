@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
+import { formatPrice } from '@/utils/formatPrice';
 import {
   Loader2, Plus, Pencil, Archive, Download, Users, TrendingUp, RefreshCw,
   Trash2, AlertTriangle, CheckCircle2, Tag, Truck, Clock, Star, Gift, Headset, CalendarClock,
@@ -487,8 +488,8 @@ export function StoreSubscriptions() {
 
   const metrics = dashboard ? [
     { label: 'Active Subscribers', value: String(dashboard.activeSubscribersCount), Icon: Users },
-    { label: 'MRR', value: `$${dashboard.mrr.toFixed(2)}`, Icon: TrendingUp },
-    { label: 'ARR', value: `$${dashboard.arr.toFixed(2)}`, Icon: TrendingUp },
+    { label: 'MRR', value: `${formatPrice(dashboard.mrr, 'USD')}`, Icon: TrendingUp },
+    { label: 'ARR', value: `${formatPrice(dashboard.arr, 'USD')}`, Icon: TrendingUp },
     { label: 'Churn Rate', value: `${dashboard.churnRate}%`, Icon: RefreshCw },
   ] : [];
 

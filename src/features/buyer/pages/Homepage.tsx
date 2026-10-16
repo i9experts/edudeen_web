@@ -44,7 +44,7 @@ import { PlatformStatsSection } from '@/features/buyer/components/PlatformStatsS
 import { apiGetCategoryTree, type CategoryNode } from '@/api/services/categories';
 import { EDUCATION_LEVELS } from '@/api/services/product';
 import { type MarketplaceProduct, type MarketplaceSortBy } from '@/api/services/marketplace';
-import { productSalePct } from '@/utils/saleMath';
+import { productSalePct, soonestSaleEnd } from '@/utils/saleMath';
 import { apiGetHomeShelves, type CuratedShelf } from '@/api/services/classroom';
 import { apiBrowseProducts } from '@/api/services/marketplace';
 import { RevealStagger } from '@/components/comman/motion/Reveal';
@@ -218,7 +218,7 @@ function HomeLanding() {
 
   // The flash-sale timer counts down to the soonest-ending live sale campaign;
   // with no campaign running there's no timer (discounted items still show).
-  const saleEnd = (topBarDeals?.campaigns ?? []).filter(c => !c.earlyAccess).map(c => c.endDate).sort()[0] ?? null;
+  const saleEnd = soonestSaleEnd(topBarDeals?.campaigns);
   // Premium members: a sale that is not public yet (the API only sends these to members).
   const earlyCampaign = (topBarDeals?.campaigns ?? []).find(c => c.earlyAccess) ?? null;
   const saleCountdown = useCountdownTo(saleEnd);

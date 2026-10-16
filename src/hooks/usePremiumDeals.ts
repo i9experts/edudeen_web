@@ -17,7 +17,7 @@ function load(): Promise<PremiumDeal[]> {
       const deals = (res.data?.products ?? [])
         .map(product => {
           const v = (product.variants ?? []).find(x => x.isDefault && x.premiumPrice != null) ?? (product.variants ?? []).find(x => x.premiumPrice != null);
-          return { product, pct: Math.round(v?.premiumDiscountPercent ?? 0) };
+          return { product, pct: Math.floor((v?.premiumDiscountPercent ?? 0) + 1e-9) };
         })
         .filter(d => d.pct > 0)
         .sort((a, b) => b.pct - a.pct);

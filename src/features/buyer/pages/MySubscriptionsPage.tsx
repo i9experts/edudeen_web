@@ -1,3 +1,4 @@
+import { formatPrice } from '@/utils/formatPrice';
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { RefreshCw, ImageOff } from 'lucide-react';
@@ -130,16 +131,16 @@ function ManageSubscriptionModal({ sub, onClose, onChanged }: {
         <div className="bg-cream rounded-lg px-4 py-3 flex items-center justify-between">
           <div>
             <p className="text-[13px] font-semibold text-charcoal">{sub.store?.name ?? 'Store'}</p>
-            <p className="text-[12px] text-slate">{sub.billingInterval} — ${sub.amountUSD.toFixed(2)}</p>
+            <p className="text-[12px] text-slate">{sub.billingInterval} — {formatPrice(sub.amountUSD, 'USD')}</p>
           </div>
           <Badge color={STATUS_COLOR[sub.status] ?? 'gray'}>{sub.status}{sub.pendingCancellation ? ' (ending)' : ''}</Badge>
         </div>
 
         <div className="grid grid-cols-2 gap-3 text-[12px]">
           <div><p className="text-slate mb-0.5">Next billing</p><p className="font-semibold text-charcoal">{new Date(sub.nextBillingDate).toLocaleDateString()}</p></div>
-          <div><p className="text-slate mb-0.5">Total paid</p><p className="font-semibold text-charcoal">${sub.totalPaidUSD.toFixed(2)}</p></div>
+          <div><p className="text-slate mb-0.5">Total paid</p><p className="font-semibold text-charcoal">{formatPrice(sub.totalPaidUSD, 'USD')}</p></div>
           {sub.creditBalanceUSD > 0 && (
-            <div className="col-span-2"><p className="text-slate mb-0.5">Account credit</p><p className="font-semibold text-[#1e7a3c]">${sub.creditBalanceUSD.toFixed(2)}</p></div>
+            <div className="col-span-2"><p className="text-slate mb-0.5">Account credit</p><p className="font-semibold text-[#1e7a3c]">{formatPrice(sub.creditBalanceUSD, 'USD')}</p></div>
           )}
         </div>
 
@@ -226,7 +227,7 @@ function ManageSubscriptionModal({ sub, onClose, onChanged }: {
                 <div key={inv._id} className="flex items-center justify-between text-[12px] px-2 py-1.5 rounded bg-cream">
                   <span className="text-slate">{new Date(inv.createdAt).toLocaleDateString()} · {inv.type}</span>
                   <span className={`font-semibold ${inv.status === 'paid' ? 'text-[#1e7a3c]' : inv.status === 'failed' ? 'text-error' : 'text-slate'}`}>
-                    {inv.amountUSD < 0 ? '−' : ''}${Math.abs(inv.amountUSD).toFixed(2)}
+                    {inv.amountUSD < 0 ? '−' : ''}{formatPrice(Math.abs(inv.amountUSD), 'USD')}
                   </span>
                 </div>
               ))}
@@ -449,7 +450,7 @@ export function SubscriptionsTab() {
       ),
     },
     { key: 'plan', header: 'Plan', render: s => <span className="text-[13px] text-graphite">{s.plan?.name ?? '—'} — {s.billingInterval}</span> },
-    { key: 'amount', header: 'Amount', render: s => <span className="text-[13px] font-semibold text-charcoal">${s.amountUSD.toFixed(2)}</span> },
+    { key: 'amount', header: 'Amount', render: s => <span className="text-[13px] font-semibold text-charcoal">{formatPrice(s.amountUSD, 'USD')}</span> },
     {
       key: 'status', header: 'Status',
       render: s => <Badge color={STATUS_COLOR[s.status] ?? 'gray'} dot>{s.status}{s.pendingCancellation ? ' (ending)' : ''}</Badge>,

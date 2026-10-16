@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { formatPrice } from '@/utils/formatPrice';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import {
   Edit2, Package, Download, Tag, Globe,
@@ -8,7 +9,6 @@ import { useStoreWorkspace } from '@/components/layouts/StoreLayout';
 import { apiGetMyProductById } from '@/api/services/product';
 import { getCachedProducts, type ProductEntry } from './_cache';
 import { SkeletonBox, StatusBadge, InfoRow, Card } from '@/components/comman/ui';
-import { currencySymbol } from '@/utils/currency';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function formatDate(iso: string) {
@@ -181,9 +181,9 @@ export default function StoreProductDetail() {
                   </div>
                 </div>
                 <div className="text-right shrink-0">
-                  <p className="text-[24px] font-bold text-brand-orange">{currencySymbol(store?.baseCurrency)}{v.price.toLocaleString()}</p>
+                  <p className="text-[24px] font-bold text-brand-orange">{formatPrice(v.price, store?.baseCurrency)}</p>
                   {v.compareAtPrice != null && (
-                    <p className="text-[12px] text-slate line-through mt-0.5">{currencySymbol(store?.baseCurrency)}{v.compareAtPrice.toLocaleString()}</p>
+                    <p className="text-[12px] text-slate line-through mt-0.5">{formatPrice(v.compareAtPrice, store?.baseCurrency)}</p>
                   )}
                   {discountPct !== null && (
                     <span className="inline-block text-[12px] font-bold text-success bg-success-bg px-2 py-0.5 rounded-[5px] mt-1">{discountPct}% OFF</span>
@@ -248,11 +248,11 @@ export default function StoreProductDetail() {
             {/* Pricing */}
             <SectionCard title="Pricing" icon={Tag}>
               <InfoRow label="Selling Price" value={
-                <span className="font-bold text-charcoal">{currencySymbol(store?.baseCurrency)}{v.price.toLocaleString()}</span>
+                <span className="font-bold text-charcoal">{formatPrice(v.price, store?.baseCurrency)}</span>
               } />
               <InfoRow label="Compare At Price" value={
                 v.compareAtPrice != null
-                  ? <span className="line-through text-slate">{currencySymbol(store?.baseCurrency)}{v.compareAtPrice.toLocaleString()}</span>
+                  ? <span className="line-through text-slate">{formatPrice(v.compareAtPrice, store?.baseCurrency)}</span>
                   : '—'
               } />
               {discountPct !== null && (

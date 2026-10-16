@@ -1,3 +1,4 @@
+import { formatPrice } from '@/utils/formatPrice';
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Baby, BadgeDollarSign, Check, Crown, Gift, Headphones, Timer, type LucideIcon } from 'lucide-react';
@@ -16,7 +17,7 @@ const NAVY = '#174771';
 const GOLD = '#F4DC4C';
 
 /** "10%" / "$5" — value comes from the plan, never hard-coded. */
-const couponText = (b: PremiumBenefits) => (b.monthlyCouponType === 'fixed' ? `$${b.monthlyCouponValue}` : `${b.monthlyCouponValue}%`);
+const couponText = (b: PremiumBenefits) => (b.monthlyCouponType === 'fixed' ? formatPrice(b.monthlyCouponValue, 'USD') : `${b.monthlyCouponValue}%`);
 
 /** Short, plan-driven benefit lines (only the ones the plan actually gives). */
 function planBenefitLines(b: PremiumBenefits): string[] {
@@ -83,8 +84,8 @@ export function PremiumPage() {
   const priceOf = (p: PremiumPlan, iv: PremiumInterval = interval) => {
     const usd = iv === 'yearly' ? p.yearlyPriceUSD : p.monthlyPriceUSD;
     const pkr = iv === 'yearly' ? p.yearlyPricePKR : p.monthlyPricePKR;
-    const main = currency === 'PKR' && pkr != null ? `PKR ${pkr.toLocaleString()}` : `$${usd.toLocaleString()}`;
-    const alt = currency === 'PKR' && pkr != null ? `$${usd.toLocaleString()} USD` : pkr != null ? `PKR ${pkr.toLocaleString()}` : null;
+    const main = currency === 'PKR' && pkr != null ? `${formatPrice(pkr, 'PKR')}` : `${formatPrice(usd, 'USD')}`;
+    const alt = currency === 'PKR' && pkr != null ? `${formatPrice(usd, 'USD')} USD` : pkr != null ? `${formatPrice(pkr, 'PKR')}` : null;
     return { main, alt };
   };
 
@@ -217,7 +218,7 @@ export function PremiumPage() {
                       {(['monthly', 'yearly'] as const).map(iv => {
                         const { main: m, alt: a2 } = priceOf(p, iv);
                         const selected = interval === iv;
-                        const perMonth = iv === 'yearly' && (currency === 'PKR' && p.yearlyPricePKR != null ? `PKR ${Math.round(p.yearlyPricePKR / 12).toLocaleString()}` : `$${(p.yearlyPriceUSD / 12).toFixed(2)}`);
+                        const perMonth = iv === 'yearly' && (currency === 'PKR' && p.yearlyPricePKR != null ? `${formatPrice(Math.round(p.yearlyPricePKR / 12), 'PKR')}` : `${formatPrice((p.yearlyPriceUSD / 12), 'USD')}`);
                         return (
                           <button key={iv} type="button" role="radio" aria-checked={selected} onClick={() => setInterval(iv)}
                             className={'relative text-start rounded-xl border-2 px-3.5 py-3 cursor-pointer transition-colors bg-white ' + (selected ? 'border-brand-orange shadow-[0_6px_16px_-10px_rgba(23,71,113,0.6)]' : 'border-bone hover:border-brand-orange/40')}>

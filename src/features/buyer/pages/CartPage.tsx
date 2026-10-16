@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { ProductCoverFallback } from '@/components/comman/marketplace/ProductCoverFallback';
 import { clsx } from 'clsx';
-import { currencySymbol } from '@/utils/currency';
+import { formatPrice } from '@/utils/formatPrice';
 import { computeCartTotals } from '@/utils/cartTotals';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 
@@ -154,7 +154,6 @@ export function CartPage() {
   // checkout" placeholder. The authoritative amount is still always
   // recomputed fresh, server-side, at checkout creation regardless.
   const { currency: displayCurrency, convert } = useCurrencyPreference();
-  const displaySymbol = currencySymbol(displayCurrency);
   // Same maths as the checkout sidebar before the checkout exists (utils/cartTotals): one rule, so they cannot differ.
   const campaign = cart?.campaignDiscount ?? null;
   const { subtotal: displayTotal, campaignAmount, payable: payablePreMember } = computeCartTotals(items, campaign, convert);
@@ -228,7 +227,7 @@ export function CartPage() {
                       </div>
                       <span className="text-[12px] font-medium text-charcoal leading-tight line-clamp-2 group-hover:text-brand-orange transition-colors">{item.name}</span>
                       {item.price != null && (
-                        <span className="text-[12px] font-bold text-carbon mt-[2px]">{displaySymbol}{convert(item.price, item.currency).toLocaleString()}</span>
+                        <span className="text-[12px] font-bold text-carbon mt-[2px]">{formatPrice(convert(item.price, item.currency), displayCurrency)}</span>
                       )}
                     </button>
                   ))}
@@ -340,13 +339,13 @@ export function CartPage() {
                       <p className="text-[12px] text-slate mb-3 flex items-center gap-1.5 flex-wrap">
                         {member ? (
                           <>
-                            <span className="text-[#8a6100] font-semibold">{displaySymbol}{member.unit.toLocaleString()} each</span>
-                            <s>{displaySymbol}{(member.list ?? price).toLocaleString()}</s>
+                            <span className="text-[#8a6100] font-semibold">{formatPrice(member.unit, displayCurrency)} each</span>
+                            <s>{formatPrice((member.list ?? price), displayCurrency)}</s>
                             <PremiumChip percent={item.premiumDiscountPercent} seller={item.premiumSellerPercent} platform={item.premiumPlatformPercent} />
                           </>
                         ) : (
                           <>
-                            {displaySymbol}{price.toLocaleString()} each
+                            {formatPrice(price, displayCurrency)} each
                             {showTeaser && !item.onCampaign && <PremiumTeaser percent={item.premiumPercent} seller={item.premiumSellerPercent} platform={item.premiumPlatformPercent} link />}
                           </>
                         )}
@@ -402,10 +401,10 @@ export function CartPage() {
                     <p className="font-bold text-[15px] text-carbon shrink-0 text-end">
                       {member ? (
                         <>
-                          <span className="block text-[12px] font-normal text-slate line-through">{displaySymbol}{lineTotal.toLocaleString()}</span>
-                          <span className="text-[#8a6100]">{displaySymbol}{member.total.toLocaleString()}</span>
+                          <span className="block text-[12px] font-normal text-slate line-through">{formatPrice(lineTotal, displayCurrency)}</span>
+                          <span className="text-[#8a6100]">{formatPrice(member.total, displayCurrency)}</span>
                         </>
-                      ) : <>{displaySymbol}{lineTotal.toLocaleString()}</>}
+                      ) : <>{formatPrice(lineTotal, displayCurrency)}</>}
                     </p>
                   </div>
                   </div>
@@ -444,7 +443,7 @@ export function CartPage() {
                           {item.name}
                           <span className="text-slate ms-1">×{item.quantity}</span>
                         </span>
-                        <span className="font-medium text-carbon shrink-0">{displaySymbol}{ttl.toLocaleString()}</span>
+                        <span className="font-medium text-carbon shrink-0">{formatPrice(ttl, displayCurrency)}</span>
                       </div>
                     );
                   })}
@@ -456,18 +455,18 @@ export function CartPage() {
               <div className="flex flex-col gap-2">
                 <div className="flex justify-between text-[13px]">
                   <span className="text-slate">Subtotal ({cartCount} items)</span>
-                  <span className="font-semibold text-carbon">{displaySymbol}{displayTotal.toLocaleString()}</span>
+                  <span className="font-semibold text-carbon">{formatPrice(displayTotal, displayCurrency)}</span>
                 </div>
                 {campaignAmount > 0 && (
                   <div className="flex justify-between text-[13px]">
                     <span className="text-success font-medium">{campaign?.name ?? 'Sale'}</span>
-                    <span className="text-success font-semibold">-{displaySymbol}{Math.round(campaignAmount).toLocaleString()}</span>
+                    <span className="text-success font-semibold">-{formatPrice(Math.round(campaignAmount), displayCurrency)}</span>
                   </div>
                 )}
                 {premiumSavings > 0 && (
                   <div className="flex justify-between text-[13px]">
                     <span className="text-[#8a6100] font-medium">Premium savings</span>
-                    <span className="text-[#8a6100] font-semibold">-{displaySymbol}{Math.round(premiumSavings).toLocaleString()}</span>
+                    <span className="text-[#8a6100] font-semibold">-{formatPrice(Math.round(premiumSavings), displayCurrency)}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-[13px]">
@@ -482,7 +481,7 @@ export function CartPage() {
 
               <div className="flex justify-between text-[16px] font-bold">
                 <span className="text-carbon">Total</span>
-                <span className="text-carbon">{displaySymbol}{Math.round(payableTotal).toLocaleString()}</span>
+                <span className="text-carbon">{formatPrice(Math.round(payableTotal), displayCurrency)}</span>
               </div>
 
               {/* ── Checkout ── One order for the whole cart, mixed physical +
@@ -582,7 +581,7 @@ export function CartPage() {
         <div className="fixed bottom-[64px] inset-x-0 z-40 lg:hidden bg-white border-t border-bone px-4 py-3 flex items-center gap-3">
           <div className="min-w-0 flex-1">
             <p className="text-[12px] text-slate leading-none mb-[3px]">Total</p>
-            <p className="text-[17px] font-extrabold text-carbon leading-none truncate">{displaySymbol}{Math.round(payableTotal).toLocaleString()}</p>
+            <p className="text-[17px] font-extrabold text-carbon leading-none truncate">{formatPrice(Math.round(payableTotal), displayCurrency)}</p>
           </div>
           <Button
             variant="primary" size="md" className="justify-center flex-1 max-w-[220px]"

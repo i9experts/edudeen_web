@@ -16,6 +16,9 @@ import { currencySymbol as symbolForCurrency } from '@/utils/currency';
 import { offersPayload, PREMIUM_BLANK_MESSAGE, OFFER_CONFLICT_MESSAGE, type OfferFlags } from './ProductOffersCard';
 import { premiumPercentError } from './PremiumPriceField';
 import { effectiveSellerPercent, premiumGapMessage, usePremiumTerms } from './PremiumEarningsCalculator';
+import { titleError, classRangeError } from './productQuality';
+import { reviewNoticeText } from './reviewNotice';
+import { useToast } from '@/contexts/ToastContext';
 import { descriptionError, validatePrices, weightTextError, parseWeightKg, stockError } from './priceRules';
 import {
   isDigitalFamilyType, findCategoryName,
@@ -55,6 +58,7 @@ interface DraftSnapshot {
 
 export default function StoreAddProduct() {
   const navigate           = useNavigate();
+  const toast              = useToast();
   const { storeId, store } = useStoreWorkspace();
   // Every price on this form is in the STORE's own currency (locked at onboarding) — never assume PKR.
   const currencySymbol = symbolForCurrency(store?.baseCurrency);
@@ -129,7 +133,8 @@ export default function StoreAddProduct() {
   const collectIssues = (status: ProductStatus): WizardIssue[] => {
     const out: WizardIssue[] = [];
     const finalStatus = isCourse ? 'draft' : status;
-    if (!cur.name) out.push({ step: 0, message: 'Add a product title', fieldId: 'ap-name' });
+    const tErr0 = titleError(cur.name);
+    if (tErr0) out.push({ step: 0, message: tErr0, fieldId: 'ap-name' });
     const descErr = descriptionError(cur.description);
     if (descErr) out.push({ step: 0, message: descErr, fieldId: 'ap-desc' });
     if (isDigitalFamily) {
@@ -153,6 +158,9 @@ export default function StoreAddProduct() {
     else if (pType === 'educational' && dig.educationLevel === 'other' && !dig.customLevel.trim()) out.push({ step: 3, message: 'Describe the custom education level', fieldId: 'fld-level' });
     const lErr = learningError(learning);
     if (lErr) out.push({ step: 3, message: lErr, fieldId: 'fld-learning' });
+    // Digital / educational listings need a class range to go live (drafts may stay incomplete).
+    const cErr = finalStatus === 'active' || finalStatus === 'scheduled' ? classRangeError(pType, learning.classFrom, learning.classTo) : null;
+    if (cErr) out.push({ step: 3, message: cErr, fieldId: 'fld-learning', publishOnly: true });
     const missingAttr = findMissingRequiredAttribute(attrDefs, attributeValues);
     if (missingAttr) out.push({ step: 3, message: `${missingAttr.label} is required`, fieldId: 'fld-attrs' });
     const pErr = premiumPercentError(premiumPct);
@@ -217,6 +225,7 @@ export default function StoreAddProduct() {
             shippingWeight: `${parseWeightKg(phys.shippingWeight)} kg`,
           }],
         });
+        const note = reviewNoticeText(res); if (note) toast.info(note);
         const created = res.data.defaultVariant ?? res.data.variants?.find(v => v.isDefault) ?? res.data.variants?.[0];
         if (created) addCachedProduct(storeId, { product: res.data.product, variant: created });
         productId = res.data.product._id;
@@ -237,6 +246,7 @@ export default function StoreAddProduct() {
           licenseTiers: tiersPayload(dig.tiers.filter(t => t.license !== dig.licenseType)),
           digital: { files, downloadLimit: dig.downloadLimit, linkExpiryDays: dig.linkExpiryDays ? Number(dig.linkExpiryDays) : null, pdfStampingEnabled: dig.pdfStampingEnabled, licenseType: dig.licenseType, buyerDeliveryMessage: dig.buyerDeliveryMessage, preview: { enabled: dig.previewEnabled, sourceFileIndex: 0 }, sampleFile: dig.sampleFile ? toFile(dig.sampleFile) : null },
         });
+        const note = reviewNoticeText(res); if (note) toast.info(note);
         if (res.data.defaultVariant) addCachedProduct(storeId, { product: res.data.product, variant: res.data.defaultVariant });
         productId = res.data.product._id;
       }

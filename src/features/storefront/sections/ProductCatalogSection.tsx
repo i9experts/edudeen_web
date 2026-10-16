@@ -10,7 +10,7 @@ import {
 import { useCartContext } from '@/contexts/CartContext';
 import { useWishlistContext } from '@/contexts/WishlistContext';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
-import { currencySymbol } from '@/utils/currency';
+import { formatPrice } from '@/utils/formatPrice';
 import { useStorefront, useStorefrontPaths } from '../StorefrontContext';
 import { ProductCardShell, ProductCardImage } from '../ProductCard';
 import { ProductCoverFallback } from '@/components/comman/marketplace/ProductCoverFallback';
@@ -68,7 +68,6 @@ export function ProductCatalogSection({ settings }: { settings: ProductCatalogSe
   const { store, cfg } = useStorefront();
   const { toMain } = useStorefrontPaths();
   const { currency: displayCurrency, convert } = useCurrencyPreference();
-  const displaySymbol = currencySymbol(displayCurrency);
   const { addToCart, adding } = useCartContext();
   const { isWishlisted, wishlisting, toggleWishlist } = useWishlistContext();
 
@@ -177,7 +176,7 @@ export function ProductCatalogSection({ settings }: { settings: ProductCatalogSe
                         <span className="flex items-center gap-[3px] px-[5px] py-[2px] rounded-[4px] text-[12px] font-bold leading-none bg-gradient-to-r from-brand-orange to-[#66AD36] text-white">
                           <Zap size={8} className="fill-white shrink-0" />
                           {p.activeCampaign.discountType && p.activeCampaign.discountValue != null
-                            ? (p.activeCampaign.discountType === 'percentage' ? `${p.activeCampaign.discountValue}% OFF` : `${displaySymbol}${convert(p.activeCampaign.discountValue, p.activeCampaign.currency ?? 'USD')} OFF`)
+                            ? (p.activeCampaign.discountType === 'percentage' ? `${p.activeCampaign.discountValue}% OFF` : `${formatPrice(convert(p.activeCampaign.discountValue, p.activeCampaign.currency ?? 'USD'), displayCurrency)} OFF`)
                             : 'FEATURED'}
                         </span>
                       </div>
@@ -194,12 +193,12 @@ export function ProductCatalogSection({ settings }: { settings: ProductCatalogSe
                         <span className="font-bold text-[12px] sm:text-[15px]" style={{ color: p.subscriberPrice != null ? cfg.primaryColor : cfg.textColor }}>
                           {(() => {
                             const shown = p.subscriberPrice ?? p.defaultVariantPrice;
-                            return shown != null ? `${displaySymbol}${convert(shown, store.baseCurrency).toLocaleString()}` : '—';
+                            return shown != null ? `${formatPrice(convert(shown, store.baseCurrency), displayCurrency)}` : '—';
                           })()}
                         </span>
                         {p.subscriberPrice != null && p.defaultVariantPrice != null && (
                           <span className="text-[12px] sm:text-[12px] line-through opacity-60" style={{ color: cfg.textColor }}>
-                            {displaySymbol}{convert(p.defaultVariantPrice, store.baseCurrency).toLocaleString()}
+                            {formatPrice(convert(p.defaultVariantPrice, store.baseCurrency), displayCurrency)}
                           </span>
                         )}
                       </span>

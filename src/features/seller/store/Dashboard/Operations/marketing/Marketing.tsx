@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { formatPrice } from '@/utils/formatPrice';
 
 import { useSearchParams } from 'react-router-dom';
 import { useStoreCampaigns } from '@/hooks/store/useStoreCampaigns';
@@ -991,7 +992,7 @@ export function StoreMarketing() {
                   ['Clicks', promotionAnalytics.clicks.toLocaleString()],
                   ['CTR', `${promotionAnalytics.ctr.toFixed(1)}%`],
                   ['Orders', promotionAnalytics.orders.toLocaleString()],
-                  ['Revenue', `$${promotionAnalytics.revenueUSD.toFixed(2)}`],
+                  ['Revenue', `${formatPrice(promotionAnalytics.revenueUSD, 'USD')}`],
                 ].map(([label, value]) => (
                   <div key={label} className="bg-white border border-bone rounded-[10px] px-3.5 py-3">
                     <p className="text-[12px] font-medium text-slate uppercase tracking-[0.06em] mb-1">{label}</p>
@@ -1616,7 +1617,7 @@ export function StoreMarketing() {
                       {giftCards.map(g => (
                         <tr key={g._id} className="border-t border-bone">
                           <td className="px-4 py-2.5 font-mono font-semibold text-carbon">{g.code}</td>
-                          <td className="px-4 py-2.5 text-carbon">{currencySymbol(g.currency)}{g.balance.toFixed(2)} / {currencySymbol(g.currency)}{g.initialValue.toFixed(2)}</td>
+                          <td className="px-4 py-2.5 text-carbon">{formatPrice(g.balance, g.currency)} / {formatPrice(g.initialValue, g.currency)}</td>
                           <td className="px-4 py-2.5 text-slate capitalize">{g.issuedBy}</td>
                           <td className="px-4 py-2.5">
                             <span className="px-2.5 py-[3px] rounded-[5px] text-[12px] font-semibold" style={{ background: g.status === 'active' ? '#E3F4EA' : '#F0EEE6', color: g.status === 'active' ? '#1E7A3C' : '#5A5852' }}>

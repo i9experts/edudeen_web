@@ -1,5 +1,6 @@
 import type { PrivateUploadData } from '@/api/upload';
 import { classIndex, levelForClass } from '@/constants/classLevels';
+import { titleError, classRangeError, qualityWarnings, contactWarning } from './productQuality';
 import { descriptionError, premiumConflict, stockError, validatePrices, weightError, type PremiumConflict, type WeightUnit } from './priceRules';
 
 /** Pure helpers + types for the seller bulk upload (kept UI-free so they are easy to test). */
@@ -159,7 +160,8 @@ export function rowIssue(row: BulkRow, ctx: RowContext): string | null {
     if (row.uploadState === 'queued' || row.uploadState === 'uploading') return 'File is still uploading';
     if (row.uploadState !== 'done' || !row.upload) return 'Add the file buyers will receive';
   }
-  if (!row.title.trim()) return 'Add a title';
+  const tErr = titleError(row.title);
+  if (tErr) return tErr;
   const dErr = descriptionError(row.description);
   if (dErr) return dErr;
   const free = row.free && ctx.type !== 'physical'; // physical products have no Free option
@@ -175,11 +177,19 @@ export function rowIssue(row: BulkRow, ctx: RowContext): string | null {
   if (pc.compareAt) return pc.compareAt;
   if (!row.categoryId && !ctx.hasDefaultCategory) return 'Pick a category';
   if (row.classFrom && row.classTo && classIndex(row.classFrom) > classIndex(row.classTo)) return '"From class" comes after "To class"';
+  const cErr = classRangeError(ctx.type, row.classFrom, row.classTo);
+  if (cErr) return cErr;
   if (ctx.type === 'educational' && !effectiveLevel(row)) return 'Choose an education level';
   if (row.linkExpiryDays.trim() !== '' && (!Number.isInteger(Number(row.linkExpiryDays)) || Number(row.linkExpiryDays) < 1)) return 'Link expiry must be a whole number of days';
   const pr = rowPremiumConflict(row, ctx);
   if (pr) return pr.short;
   return null;
+}
+
+/** Non-blocking hints for a row: vague title, title vs class range, contact details (the API holds those for review). */
+export function rowWarnings(row: BulkRow): string[] {
+  const c = contactWarning(row.title, row.description);
+  return [...qualityWarnings(row.title, row.classFrom, row.classTo), ...(c ? [c] : [])];
 }
 
 /** Which optional detail groups apply to a product type. */

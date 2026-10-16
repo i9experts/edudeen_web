@@ -50,7 +50,8 @@ import { CourseOrLiveInfo } from '@/features/buyer/components/CourseOrLiveInfo';
 import { PlacementBanner } from '@/components/comman/marketplace/PlacementBanner';
 import { ShippingZonesSummary } from '@/features/buyer/components/ShippingZonesSummary';
 import { syncRecentlyViewed } from '@/utils/recentlyViewedSync';
-import { currencySymbol, formatMoney } from '@/utils/currency';
+import { formatMoney } from '@/utils/currency';
+import { formatPrice } from '@/utils/formatPrice';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 
 // ── Skeleton ──────────────────────────────────────────────────────────────────
@@ -438,7 +439,7 @@ export function ProductDetail() {
     return () => clearTimeout(t);
   }, [product, location.hash]);
 
-  // The backend resolves this route's :slug param by slug OR raw id (id
+  // The backend resolves this route's :slug param by slug, a PREVIOUS slug (renamed product) OR raw id (id
   // kept as a permanent fallback for old bookmarked links) — if we got here
   // via a raw id (or any other stale form), normalize the address bar to
   // the product's real current slug.
@@ -483,7 +484,6 @@ export function ProductDetail() {
   // not just their symbol. The real checkout amount is always computed
   // fresh, server-side, at checkout creation regardless of this.
   const { currency: displayCurrency, convert } = useCurrencyPreference();
-  const displaySymbol = currencySymbol(displayCurrency);
   const listPrice = activeVariant ? convert(activeVariant.price, activeVariant.currency) : null;
   // A running platform sale is part of the price shown here: the SERVER computes it per variant (campaignPrice, from the
   // list price, only when cheaper than the seller's price) - checkout charges the same number.
@@ -761,7 +761,7 @@ export function ProductDetail() {
                           {product.activeCampaign.discountType && product.activeCampaign.discountValue != null
                             ? (product.activeCampaign.discountType === 'percentage'
                                 ? `${product.activeCampaign.discountValue}% OFF`
-                                : `${displaySymbol}${convert(product.activeCampaign.discountValue, product.activeCampaign.currency ?? 'USD')} OFF`)
+                                : `${formatPrice(convert(product.activeCampaign.discountValue, product.activeCampaign.currency ?? 'USD'), displayCurrency)} OFF`)
                             : product.activeCampaign.name}
                         </span>
                       )}
@@ -795,18 +795,18 @@ export function ProductDetail() {
                   {memberShown != null && displayPrice != null ? (
                     <>
                       <div className="flex items-baseline gap-[10px] mb-1">
-                        <span className="text-[30px] font-extrabold text-[#8a6100] tracking-[-0.5px]">{displaySymbol}{memberShown.toLocaleString()}</span>
+                        <span className="text-[30px] font-extrabold text-[#8a6100] tracking-[-0.5px]">{formatPrice(memberShown, displayCurrency)}</span>
                         {(memberList ?? displayPrice) > memberShown && (
-                          <span className="text-[14px] text-slate line-through">{displaySymbol}{(memberList ?? displayPrice).toLocaleString()}</span>
+                          <span className="text-[14px] text-slate line-through">{formatPrice((memberList ?? displayPrice), displayCurrency)}</span>
                         )}
                       </div>
                       <div className="flex items-center gap-2 flex-wrap mb-2">
                         <PremiumChip percent={activeVariant?.premiumDiscountPercent} seller={activeVariant?.premiumSellerPercent} platform={activeVariant?.premiumPlatformPercent} />
-<span className="text-[12px] text-slate">{`You save ${displaySymbol}${((memberList ?? displayPrice) - memberShown).toLocaleString()}`}</span>
+<span className="text-[12px] text-slate">{`You save ${formatPrice(((memberList ?? displayPrice) - memberShown), displayCurrency)}`}</span>
                       </div>
                       {memberList != null && displayPrice < memberList && (
                         <p className="text-[12px] text-slate/80 mb-2 mt-0" title="A seller's regular sale is not combined with the Premium price">
-                          {`Regular sale price ${displaySymbol}${displayPrice.toLocaleString()} - not for Premium members`}
+                          {`Regular sale price ${formatPrice(displayPrice, displayCurrency)} - not for Premium members`}
                         </p>
                       )}
                     </>
@@ -814,10 +814,10 @@ export function ProductDetail() {
                     <>
                       <div className="flex items-baseline gap-[10px] mb-1">
                         <span className="text-[30px] font-extrabold text-carbon tracking-[-0.5px]">
-                          {displayPrice != null ? `${displaySymbol}${displayPrice.toLocaleString()}` : '—'}
+                          {displayPrice != null ? `${formatPrice(displayPrice, displayCurrency)}` : '—'}
                         </span>
                         {displayCompareAt != null && displayPrice != null && displayCompareAt > displayPrice && (
-                          <span className="text-[14px] text-slate line-through">{displaySymbol}{displayCompareAt.toLocaleString()}</span>
+                          <span className="text-[14px] text-slate line-through">{formatPrice(displayCompareAt, displayCurrency)}</span>
                         )}
                       </div>
                       <PremiumTeaser percent={product.premiumPercent} seller={product.premiumSellerPercent} platform={product.premiumPlatformPercent} link className="mb-2" />
@@ -825,7 +825,7 @@ export function ProductDetail() {
                   )}
                   {activeVariant?.subscriberPrice != null && (
                     <p className="text-[12px] font-semibold text-brand-orange mb-2">
-                      Members pay {displaySymbol}{convert(activeVariant.subscriberPrice, activeVariant.currency).toLocaleString()} — save {activeVariant.discountPercent}%
+                      Members pay {formatPrice(convert(activeVariant.subscriberPrice, activeVariant.currency), displayCurrency)} — save {activeVariant.discountPercent}%
                     </p>
                   )}
 
@@ -921,7 +921,7 @@ export function ProductDetail() {
                       disabled={stock <= 0} loading={adding === activeVariant?._id}
                       onClick={() => handleAddToCart(true)}
                     >
-                      {stock <= 0 ? t('Out of Stock') : <>{t('Buy Now')} <ArrowRight size={14} className="inline align-middle ms-[6px]" />{(memberShown ?? displayPrice) != null ? ` ${displaySymbol}${((memberShown ?? displayPrice)! * qty).toLocaleString()}` : ''}</>}
+                      {stock <= 0 ? t('Out of Stock') : <>{t('Buy Now')} <ArrowRight size={14} className="inline align-middle ms-[6px]" />{(memberShown ?? displayPrice) != null ? ` ${formatPrice(((memberShown ?? displayPrice)! * qty), displayCurrency)}` : ''}</>}
                     </Button>
                     <div className="flex gap-2">
                       <Button
@@ -1274,7 +1274,7 @@ export function ProductDetail() {
         <div className="fixed bottom-16 inset-x-0 z-50 lg:hidden bg-white border-t border-bone px-4 py-3 flex items-center gap-3">
           <div className="min-w-0 flex-1">
             <p className="text-[12px] text-slate leading-none mb-[3px]">Price</p>
-            <p className="text-[17px] font-extrabold text-carbon leading-none truncate">{displaySymbol}{displayPrice?.toLocaleString()}</p>
+            <p className="text-[17px] font-extrabold text-carbon leading-none truncate">{formatPrice(displayPrice, displayCurrency)}</p>
           </div>
           <Button
             variant="primary" size="md" className="justify-center flex-1 max-w-[220px]"

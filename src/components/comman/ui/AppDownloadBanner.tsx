@@ -9,6 +9,7 @@ import { EditableHomeSection } from '@/components/admin-edit/EditableHomeSection
 import { StoreBadgeChip, RealAppQr, useAppQrDataUrl, useGooglePlayUrl, useAppStoreUrl } from './AppPromoParts';
 import { usePlatformTrust } from '@/hooks/usePlatformTrust';
 import { formatPrice } from '@/utils/formatPrice';
+import { soonestSaleEnd } from '@/utils/saleMath';
 import { apiSubscribeNewsletter } from '@/api/services/newsletter';
 import { apiGetAllProducts, type MarketplaceProduct } from '@/api/services/marketplace';
 import { useCategoryTree } from '@/hooks/marketplace/useCategoryTree';
@@ -131,7 +132,7 @@ const CATEGORY_ICONS = [BookMarked, GraduationCap, Pencil, BookOpen];
 export function HomeScreenMockup() {
   const { tree } = useCategoryTree();
   const deals = useTopBarDeals();
-  const saleEnd = (deals?.campaigns ?? []).map(c => c.endDate).sort()[0] ?? null;
+  const saleEnd = soonestSaleEnd(deals?.campaigns);
   const countdown = useCountdownTo(saleEnd);
   const flash = (deals?.flashDeals ?? []).slice(0, 2);
   const categories = tree.slice(0, 4);

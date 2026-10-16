@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
+import { formatPrice } from '@/utils/formatPrice';
 import {
   Check, Zap, Package, Sparkles, AlertTriangle, Clock, CreditCard,
   XCircle, RotateCcw, Loader2, type LucideIcon,
@@ -329,7 +330,7 @@ export default function StorePlanBilling() {
               <div>
                 <p className="text-[13px] font-bold text-carbon">Your current plan — {entitlements.currentPlanName}</p>
                 <p className="text-[12px] text-slate mt-[3px]">
-                  {current.amountUSD > 0 ? `$${current.amountUSD.toFixed(2)}/${current.billingInterval === 'yearly' ? 'yr' : 'mo'} · ` : ''}
+                  {current.amountUSD > 0 ? `${formatPrice(current.amountUSD, 'USD')}/${current.billingInterval === 'yearly' ? 'yr' : 'mo'} · ` : ''}
                   {isExpired ? 'Ended — choose a plan to continue'
                     : planEndsAt ? `${current.status === 'trialing' ? 'Trial ends' : isCancelPending ? 'Ends' : 'Renews'} ${new Date(planEndsAt).toLocaleDateString()} · ${daysLeftText}`
                     : 'No end date'}

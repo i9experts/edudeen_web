@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { useStoreWorkspace, StorePageHeader } from '@/components/layouts/StoreLayout';
 import { Modal } from '@/components/comman/ui';
+import { normalizeTitle, POLICY_LINE } from './productQuality';
 import { apiCreateDigitalProduct, apiCreatePhysicalProduct, EDUCATION_LEVELS, type EducationLevel } from '@/api/services/product';
 import { apiUploadPrivateFile, apiUploadPublicFile } from '@/api/upload';
 import { useSellerCategories } from '@/hooks/store/useSellerCategories';
@@ -20,7 +21,7 @@ import { timeAgo, useDraftAutosave, useLeaveGuard } from './ProductWizard';
 import { inp } from './ProductFormKit';
 import {
   DOC_EXTENSIONS, MAX_BULK_FILES, MAX_BULK_PHOTOS, MAX_DOC_BYTES, MAX_PHOTO_BYTES, MAX_ROW_PHOTOS, PHOTO_EXTENSIONS,
-  baseOf, blankRow, duplicateTitles, effectiveLevel, extOf, filledGroups, findPhotoMatches, groupsFor, isDocName, isPhotoName, newId, normalizeRow, rowIssue, rowPremiumConflict,
+  baseOf, blankRow, rowWarnings, duplicateTitles, effectiveLevel, extOf, filledGroups, findPhotoMatches, groupsFor, isDocName, isPhotoName, newId, normalizeRow, rowIssue, rowPremiumConflict,
   titleFromFileName,
   type RowContext, type BulkRow, type BulkType, type DetailGroup, type TrayPhoto,
 } from './bulkUtils';
@@ -412,7 +413,7 @@ export default function StoreBulkUpload() {
     patchRow(r.id, { createState: 'creating', createError: '' });
     try {
       const common = {
-        storeId, name: r.title.trim(), description: r.description.trim(),
+        storeId, name: normalizeTitle(r.title), description: r.description.trim(),
         categoryId: r.categoryId || undefined, subCategoryId: r.subCategoryId || null,
         images: r.images, tags: r.tags,
         isListedOnEdudeen: true, status: (mode === 'publish' ? 'active' : 'draft') as 'active' | 'draft',
@@ -546,6 +547,7 @@ export default function StoreBulkUpload() {
               </li>
             ))}
           </ol>
+          <p className="m-0 text-[12.5px] text-slate">{POLICY_LINE}</p>
 
           {draft.restorable && !summary && (
             <div role="status" className="flex flex-wrap items-center gap-3 rounded-xl border border-info/30 bg-info-bg px-4 py-3 text-[13px] text-carbon">
@@ -1044,6 +1046,7 @@ function RowCard({ row: r, index, issue, conflict, currencyCode, dupOf, currency
         </div>
       )}
       {r.createState === 'failed' && r.createError && <p role="alert" className="m-0 mt-2 text-[13px] text-error bg-error-bg rounded-lg px-3 py-2">{r.createError}</p>}
+      {!created && rowWarnings(r).map(w => <p key={w} role="status" className="m-0 mt-2 text-[12.5px] text-[#8a5a00] bg-[#fff6e0] rounded-lg px-3 py-1.5">{w}</p>)}
       {dupOf !== undefined && !created && <p className="m-0 mt-2 text-[12.5px] text-[#8a5a00] bg-[#fff6e0] rounded-lg px-3 py-1.5">Same title as product #{dupOf}. Buyers may find it confusing - consider changing it.</p>}
 
       {conflict && (

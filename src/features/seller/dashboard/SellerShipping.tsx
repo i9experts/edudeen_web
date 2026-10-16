@@ -1,4 +1,5 @@
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { formatPrice } from '@/utils/formatPrice';
 import { StorePageHeader } from '@/components/layouts/StoreLayout';
 import { MapPin, Info } from 'lucide-react';
 import { useShippingZones } from '@/hooks/shipping/useShippingZones';
@@ -59,7 +60,7 @@ export function SellerShipping() {
                       PKR-priced regardless of a store's own baseCurrency (see
                       checkout.service.ts's SHIPPING_ZONE_CURRENCY constant), so this
                       is intentionally never store-currency-dependent. */}
-                  <span className="text-sm font-bold text-brand-orange shrink-0">Rs {zone.shippingPrice.toLocaleString()}</span>
+                  <span className="text-sm font-bold text-brand-orange shrink-0">{formatPrice(zone.shippingPrice, 'PKR')}</span>
                 </div>
               </div>
             ))}

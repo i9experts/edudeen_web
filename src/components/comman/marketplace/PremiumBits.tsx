@@ -4,10 +4,15 @@ import { Crown } from 'lucide-react';
 import { usePremium } from '@/hooks/usePremium';
 import { TokenStorage } from '@/api/services/auth';
 
+/** Premium percentages are always shown rounded DOWN (19.8% reads "19%", never a promise of 20%). Seller-side math keeps the exact value. */
+export function floorPct(n: number | null | undefined): number {
+  return Math.floor((n ?? 0) + 1e-9);
+}
+
 /** "15% from the seller + 5% from Edudeen" - the plain-language breakdown of a combined Premium percent. */
 export function premiumBreakdownText(seller?: number | null, platform?: number | null): string {
-  const s = seller ?? 0;
-  const p = platform ?? 0;
+  const s = floorPct(seller);
+  const p = floorPct(platform);
   if (s > 0 && p > 0) return `${s}% from the seller + ${p}% from Edudeen`;
   if (s > 0) return `${s}% from the seller`;
   return '';
@@ -15,7 +20,7 @@ export function premiumBreakdownText(seller?: number | null, platform?: number |
 
 /** Small "Premium price: 20% off" chip shown next to a member price (hover: "15% from the seller + 5% from Edudeen"). */
 export function PremiumChip({ percent, seller, platform, label, className }: { percent?: number | null; seller?: number | null; platform?: number | null; label?: string; className?: string }) {
-  const text = label ?? (percent && percent > 0 ? `Premium price: ${percent}% off` : 'Premium price');
+  const text = label ?? (floorPct(percent) > 0 ? `Premium price: ${floorPct(percent)}% off` : 'Premium price');
   const tip = premiumBreakdownText(seller, platform);
   return (
     <span title={tip || undefined} className={clsx('inline-flex items-center gap-[3px] px-[6px] py-[1px] rounded-full text-[12px] font-bold bg-[#fff6d6] text-[#8a6100] border border-[#f1d98a] whitespace-nowrap', className)}>
@@ -64,8 +69,8 @@ export function memberPriceOf(
 /** Understated teaser: "Premium members save up to 20%" (seller% + Edudeen%; hover shows the breakdown). A link on its own page, plain text inside a card link. */
 export function PremiumTeaser({ percent, seller, platform, link = false, className }: { percent?: number | null; seller?: number | null; platform?: number | null; link?: boolean; className?: string }) {
   const { showTeaser } = usePremiumView();
-  if (!showTeaser || !percent || percent <= 0) return null;
-  const text = `Premium members save up to ${percent}%`;
+  if (!showTeaser || floorPct(percent) <= 0) return null;
+  const text = `Premium members save up to ${floorPct(percent)}%`;
   const cls = clsx('inline-flex items-center gap-1 text-[12px] font-semibold text-[#8a6100]', className);
   const tip = premiumBreakdownText(seller, platform) || undefined;
   const inner = <><Crown size={11} className="shrink-0" aria-hidden /> {text}</>;

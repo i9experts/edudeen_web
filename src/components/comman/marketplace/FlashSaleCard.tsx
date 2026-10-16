@@ -76,7 +76,7 @@ export function FlashSaleCard({ product, onClick, onAddToCart, isAdding, addToCa
   const campaignPrice = !member && campaignNative != null ? convert(campaignNative, nativeCurrency) : null;
   const displayPrice    = member ? member.price : (campaignPrice ?? subscriberPrice ?? lowestPrice);
   const compareAt = member ? (member.list ?? lowestPrice) : campaignPrice != null && defaultVariant ? convert(defaultVariant.price, nativeCurrency) : (nativeCompareAt != null ? convert(nativeCompareAt, nativeCurrency) : null);
-  const pctOff = member && member.percent > 0 ? Math.round(member.percent) : compareAt != null && displayPrice != null && compareAt > displayPrice
+  const pctOff = member && member.percent > 0 ? Math.floor(member.percent + 1e-9) : compareAt != null && displayPrice != null && compareAt > displayPrice
     ? Math.round((1 - displayPrice / compareAt) * 100)
     : null;
   const savings = compareAt != null && displayPrice != null && compareAt > displayPrice

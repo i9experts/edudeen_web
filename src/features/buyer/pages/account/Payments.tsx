@@ -1,3 +1,4 @@
+import { formatPrice } from '@/utils/formatPrice';
 import { useState, useEffect, useCallback } from 'react';
 import { Landmark, RefreshCcw, AlertCircle, UploadCloud } from 'lucide-react';
 import { clsx } from 'clsx';
@@ -138,7 +139,7 @@ export function Payments() {
             <div key={p._id} className="flex flex-col sm:flex-row sm:items-center gap-3 px-5 py-[16px]">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="font-bold text-[14px] text-carbon">PKR {p.amountPKR.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                  <span className="font-bold text-[14px] text-carbon">{formatPrice(p.amountPKR, 'PKR')}</span>
                   <StatusBadge status={STATUS_LABEL[p.status]} />
                 </div>
                 <p className="text-[12px] text-slate">Submitted {formatDate(p.createdAt)} · {p.orderIds.length} order{p.orderIds.length !== 1 ? 's' : ''}</p>

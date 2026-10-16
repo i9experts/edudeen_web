@@ -3,7 +3,7 @@ import { loadStripe, type Stripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { Button } from '@/components/comman/ui/Button';
 import { AlertTriangle, ShieldCheck } from 'lucide-react';
-import { currencySymbol } from '@/utils/currency';
+import { formatPrice } from '@/utils/formatPrice';
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string | undefined;
 
@@ -74,7 +74,7 @@ function PaymentForm({ amount, currency, onConfirmed }: Omit<StripeCardPaymentPr
       )}
 
       <Button variant="primary" size="lg" fullWidth type="submit" loading={submitting} disabled={!stripe || !elements}>
-        Pay {currencySymbol(currency)}{amount.toLocaleString()}
+        Pay {formatPrice(amount, currency)}
       </Button>
 
       <p className="flex items-center justify-center gap-[6px] text-[12px] text-slate">

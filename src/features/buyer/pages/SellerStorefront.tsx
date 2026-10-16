@@ -19,7 +19,7 @@ import { apiBrowseStorePlans, apiSubscribeToPlan, type BuyerPlan, type BillingIn
 import { apiGetPublicStoreProducts } from '@/api/services/store';
 import { Modal } from '@/components/comman/ui/Modal';
 import { TokenStorage } from '@/api/services/auth';
-import { currencySymbol } from '@/utils/currency';
+import { formatPrice } from '@/utils/formatPrice';
 import { useStorefront, useStorefrontPaths, storeCoverGradient } from '@/features/storefront/StorefrontContext';
 import { FeaturedProductsSection } from '@/features/storefront/sections/FeaturedProductsSection';
 import { EducatorCard, hasEducatorProfile } from '@/components/comman/marketplace/EducatorCard';
@@ -86,7 +86,6 @@ export function SellerStorefront() {
     ? { 1: 'line-clamp-1', 2: 'line-clamp-2', 3: 'line-clamp-3' }[Math.min(identityBanner.descriptionMaxLines, 3)]
     : '';
   const { currency: displayCurrency, convert } = useCurrencyPreference();
-  const displaySymbol = currencySymbol(displayCurrency);
   const isLoggedIn = TokenStorage.isLoggedIn();
   const { requireAuth } = useAuthGate();
   const toast = useToast();
@@ -440,7 +439,7 @@ export function SellerStorefront() {
                   <p className="text-[16px] font-bold text-carbon mb-1">{plan.name}</p>
                   {plan.description && <p className="text-[12px] text-slate mb-4">{plan.description}</p>}
                   <div className="mb-4">
-                    <span className="text-[32px] font-bold" style={{ color: cfg.textColor }}>{displaySymbol}{convert(price, plan.displayCurrency).toLocaleString()}</span>
+                    <span className="text-[32px] font-bold" style={{ color: cfg.textColor }}>{formatPrice(convert(price, plan.displayCurrency), displayCurrency)}</span>
                     <span className="text-[12px] text-slate">/{billingInterval === 'yearly' ? 'yr' : 'mo'}</span>
                   </div>
                   <ul className="flex flex-col gap-2 mb-6 p-0 list-none flex-1">
@@ -499,7 +498,7 @@ export function SellerStorefront() {
                     <div>
                       <p className="text-[13px] font-semibold text-carbon">{r.name}</p>
                       <p className="text-[12px] text-slate">
-                        {r.pointsCost.toLocaleString()} points — {r.type === 'fixed_discount' ? `${displaySymbol}${convert(r.discountValue ?? 0, store.baseCurrency).toLocaleString()} off` : 'Free product'}
+                        {r.pointsCost.toLocaleString()} points — {r.type === 'fixed_discount' ? `${formatPrice(convert(r.discountValue ?? 0, store.baseCurrency), displayCurrency)} off` : 'Free product'}
                       </p>
                     </div>
                     <button
@@ -553,7 +552,7 @@ export function SellerStorefront() {
                       )}
                       style={giftCardAmount === d ? { background: cfg.primaryColor } : undefined}
                     >
-                      {currencySymbol(giftCardSettings.currency)}{d}
+                      {formatPrice(d, giftCardSettings.currency)}
                     </button>
                   ))}
                 </div>

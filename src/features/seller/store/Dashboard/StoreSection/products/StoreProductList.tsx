@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { formatPrice } from '@/utils/formatPrice';
 import { useNavigate } from 'react-router-dom';
 import {
   ShoppingBag, Plus,
@@ -25,7 +26,6 @@ import {
   type InventoryProduct,
 } from '@/api/services/product';
 import { useStoreCampaigns } from '@/hooks/store/useStoreCampaigns';
-import { currencySymbol } from '@/utils/currency';
 import { ProductCell } from '../../components/ProductListShared';
 
 const OFFER_TITLES: Record<BulkOfferAction, string> = {
@@ -223,7 +223,7 @@ export default function StoreProductList() {
       key: 'price', header: 'Price', align: 'right', sortable: true,
       render: p => (
         <span className="font-semibold text-charcoal">
-          {currencySymbol(store?.baseCurrency)}{p.price.toLocaleString()}
+          {formatPrice(p.price, store?.baseCurrency)}
         </span>
       ),
     },

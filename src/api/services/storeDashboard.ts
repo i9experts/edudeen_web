@@ -19,6 +19,10 @@ export interface OnboardingChecklist {
   allDone: boolean;
 }
 
+export interface ProfileCheckItem { key: 'logo' | 'banner' | 'bio' | 'products'; label: string; done: boolean; detail: string }
+/** Same four rules the home page 'Featured sellers' rail uses. */
+export interface ProfileCompleteness { percent: number; complete: boolean; items: ProfileCheckItem[] }
+
 export interface StoreDashboardSummary {
   overview: SellerOverviewData;
   revenueSeries: RevenuePoint[];
@@ -27,6 +31,7 @@ export interface StoreDashboardSummary {
   activeProducts: number;
   shelf: Array<Pick<InventoryProduct, 'productId' | 'name' | 'type' | 'productType' | 'status' | 'image' | 'price'>>;
   checklist: OnboardingChecklist;
+  profile?: ProfileCompleteness;
   /** Edudeen Premium member orders in the last `windowDays` days. */
   premium?: {
     premiumOrders: number;

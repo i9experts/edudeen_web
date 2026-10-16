@@ -1,3 +1,4 @@
+import { formatPrice } from '@/utils/formatPrice';
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AlertCircle, Check, Copy, Crown } from 'lucide-react';
@@ -24,7 +25,7 @@ const STATUS: Record<PremiumPaymentStatus, { label: string; color: 'yellow' | 'b
 function perkLines(b: PremiumBenefits): string[] {
   const lines = ['Member prices on selected products'];
   if (b.earlyAccessHours > 0) lines.push(`${b.earlyAccessHours} hour${b.earlyAccessHours === 1 ? '' : 's'} early access to every sale`);
-  if (b.monthlyCouponValue > 0) lines.push(`A personal ${b.monthlyCouponType === 'fixed' ? `$${b.monthlyCouponValue}` : `${b.monthlyCouponValue}%`} coupon every month`);
+  if (b.monthlyCouponValue > 0) lines.push(`A personal ${b.monthlyCouponType === 'fixed' ? formatPrice(b.monthlyCouponValue, 'USD') : `${b.monthlyCouponValue}%`} coupon every month`);
   lines.push(`Up to ${b.childrenLimit} children profiles`);
   if (b.prioritySupport) lines.push('Priority support');
   return lines;
@@ -33,7 +34,7 @@ function perkLines(b: PremiumBenefits): string[] {
 function CouponCard({ coupon }: { coupon: PremiumCoupon }) {
   const toast = useToast();
   const navigate = useNavigate();
-  const off = coupon.discountType === 'fixed' ? `$${coupon.discountValue} off` : `${coupon.discountValue}% off`;
+  const off = coupon.discountType === 'fixed' ? `${formatPrice(coupon.discountValue, 'USD')} off` : `${coupon.discountValue}% off`;
   const inactive = coupon.used || coupon.expired;
   const copy = async () => {
     try { await navigator.clipboard.writeText(coupon.code); toast.success('Coupon code copied'); } catch { toast.error('Could not copy. Select the code and copy it.'); }
@@ -186,7 +187,7 @@ export function PremiumAccount() {
                     <div key={p._id} className="py-2.5 flex items-center gap-3 flex-wrap">
                       <div className="min-w-0 flex-1">
                         <p className="text-[13px] font-semibold text-carbon">{p.planName ?? 'Edudeen Premium'} · {p.interval === 'yearly' ? 'Yearly' : 'Monthly'}</p>
-                        <p className="text-[12px] text-slate">{fmtDate(p.createdAt)} · PKR {p.amountPKR.toLocaleString()}</p>
+                        <p className="text-[12px] text-slate">{fmtDate(p.createdAt)} · {formatPrice(p.amountPKR, 'PKR')}</p>
                         {p.status === 'rejected' && p.rejectionReason && <p className="text-[12px] text-error mt-0.5">{p.rejectionReason}</p>}
                       </div>
                       <Badge color={STATUS[p.status].color} size="sm">{STATUS[p.status].label}</Badge>

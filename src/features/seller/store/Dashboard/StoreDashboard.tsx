@@ -13,7 +13,8 @@ import { AreaChart } from '@/components/comman/charts';
 import { MetricCard, SkeletonBox, Button, PageHeader } from '@/components/comman/ui';
 import type { SellerOverviewData, RevenuePoint, SellerTodaySummaryData } from '@/api/services/analytics/analytics';
 import type { InventoryProduct } from '@/api/services/product';
-import { apiStoreDashboardSummary, type OnboardingChecklist, type StoreDashboardSummary } from '@/api/services/storeDashboard';
+import { apiStoreDashboardSummary, type OnboardingChecklist, type ProfileCompleteness, type StoreDashboardSummary } from '@/api/services/storeDashboard';
+import { ProfileMeterCard } from './ProfileMeterCard';
 import { OnboardingChecklistCard } from './OnboardingChecklistCard';
 import { WeeklyDigestCard } from './Analytic/ai/components/WeeklyDigestCard';
 import { getStorefrontUrl } from '@/utils/storefrontUrl';
@@ -32,6 +33,7 @@ interface StoreMetrics {
   shelf:         InventoryProduct[];
   today:         SellerTodaySummaryData;
   checklist:     OnboardingChecklist;
+  profile?:      ProfileCompleteness;
   premium?:      StoreDashboardSummary['premium'];
 }
 
@@ -61,6 +63,7 @@ function useStoreDashboardMetrics(storeId: string) {
           shelf: d.shelf as InventoryProduct[],
           today: d.today,
           checklist: d.checklist,
+          profile: d.profile,
           premium: d.premium,
         });
       })
@@ -456,6 +459,7 @@ export default function StoreDashboard() {
 
           {/* Setup checklist (real data; hidden once complete) */}
           {metrics?.checklist && <OnboardingChecklistCard checklist={metrics.checklist} storeId={storeId} />}
+          {metrics?.profile && <ProfileMeterCard profile={metrics.profile} storeId={storeId} />}
 
           {/* Metric Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">

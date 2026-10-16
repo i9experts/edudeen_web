@@ -1,3 +1,4 @@
+import { formatPrice } from '@/utils/formatPrice';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
@@ -28,7 +29,7 @@ const ADDON_ICONS: Record<string, LucideIcon> = {
 };
 
 function formatUSD(n: number) {
-  return Number.isInteger(n) ? `$${n}` : `$${n.toFixed(2)}`;
+  return formatPrice(n, 'USD');
 }
 
 function addonUnit(a: PublicAddonCatalogItem) {
@@ -192,7 +193,7 @@ export function PricingPage() {
                 ) : (
                   <div className="flex items-baseline gap-1">
                     <span className={clsx('text-[36px] font-bold', isFeatured ? 'text-brand-orange' : 'text-carbon')}>
-                      <AnimatedCounter value={monthlyEquivalent(plan)} format={n => `$${Math.round(n)}`} duration={0.8} />
+                      <AnimatedCounter value={monthlyEquivalent(plan)} format={n => formatPrice(Math.round(n), 'USD')} duration={0.8} />
                     </span>
                     <span className={clsx('text-[13px]', isFeatured ? 'text-[#b0aea8]' : 'text-slate')}>
                       /month
@@ -201,7 +202,7 @@ export function PricingPage() {
                 )}
                 {billing === 'annual' && !plan.isFree && !plan.isCustomPricing && (
                   <p className={clsx('text-[12px] mt-1', isFeatured ? 'text-brand-orange' : 'text-success')}>
-                    {hasYearly(plan) ? `Billed $${plan.yearlyPriceUSD}/year` : 'Monthly billing only'}
+                    {hasYearly(plan) ? `Billed ${formatPrice(plan.yearlyPriceUSD, 'USD')}/year` : 'Monthly billing only'}
                   </p>
                 )}
                 {plan.trialDays > 0 && !plan.isFree && !plan.isCustomPricing && (

@@ -5,7 +5,7 @@ import { Button } from '@/components/comman/ui';
 import { ProductImage } from '@/components/comman/marketplace/ProductCard';
 import { useAddAllToCart } from '@/hooks/marketplace/useAddAllToCart';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
-import { currencySymbol } from '@/utils/currency';
+import { formatPrice } from '@/utils/formatPrice';
 import { apiGetBundlesForProduct, type PublicBundle } from '@/api/services/classroom';
 
 /** "Buy together and save" — the bundles a product belongs to, on its page. */
@@ -13,7 +13,6 @@ export function BundleOffer({ productId }: { productId: string }) {
   const [bundles, setBundles] = useState<PublicBundle[]>([]);
   const { addAll, adding } = useAddAllToCart();
   const { currency: display, convert } = useCurrencyPreference();
-  const sym = currencySymbol(display);
 
   useEffect(() => {
     let alive = true;
@@ -44,9 +43,9 @@ export function BundleOffer({ productId }: { productId: string }) {
           </div>
           <div className="flex items-center gap-3 flex-wrap mt-3">
             <p className="text-[13px] text-graphite m-0">
-              <span className="line-through text-slate me-1">{sym}{convert(b.totalPrice, b.currency).toLocaleString()}</span>
-              <b className="text-[16px] text-carbon">{sym}{convert(b.bundlePrice, b.currency).toLocaleString()}</b>
-              <span className="text-success font-semibold ms-2">You save {sym}{convert(b.savings, b.currency).toLocaleString()}</span>
+              <span className="line-through text-slate me-1">{formatPrice(convert(b.totalPrice, b.currency), display)}</span>
+              <b className="text-[16px] text-carbon">{formatPrice(convert(b.bundlePrice, b.currency), display)}</b>
+              <span className="text-success font-semibold ms-2">You save {formatPrice(convert(b.savings, b.currency), display)}</span>
             </p>
             <Button variant="primary" size="sm" className="ms-auto" loading={adding} onClick={() => addAll(b.products, `Bundle added — ${b.discountPercent}% comes off at checkout`)}>
               Add all {b.products.length} to cart

@@ -116,6 +116,12 @@ export function ListingReviewModal({ listingId, onClose, onDone }: { listingId: 
             <StatusBadge status={data.status} size="sm" />
           </div>
 
+          {data.flags?.includes('contact_info') && (
+            <div className="rounded-lg bg-error-bg text-error px-3 py-2 text-[12.5px]" role="alert">
+              <b>Contains contact info.</b> {data.flagReason ?? 'The title or description shows a phone number, WhatsApp or email.'}
+              {(data.contactMatches ?? []).length > 0 && <ul className="m-0 mt-1 ps-4">{(data.contactMatches ?? []).map(t => <li key={t} className="font-mono">{t}</li>)}</ul>}
+            </div>
+          )}
           {data.status === 'rejected' && data.reviewNote && (
             <p className="rounded-lg bg-error-bg text-error px-3 py-2 text-[12.5px]"><b>Sent back earlier:</b> {data.reviewNote}</p>
           )}

@@ -37,3 +37,16 @@ export function maxSalePct(items: Array<{ pct: number }> | Array<Pick<Marketplac
 export function upToLabel(maxPct: number | null | undefined): string | null {
   return maxPct && maxPct > 0 ? `Up to ${Math.round(maxPct)}% off` : null;
 }
+
+/**
+ * THE sale-timer rule (one rule for the whole site): the page-level countdowns - the DealsBanner timer, the
+ * Flash Sale header and the mega-menu timer - all count down to the SOONEST-ENDING public sale's `endDate`
+ * (that is the next moment the offer changes). A timer that belongs to one specific sale card (the top-bar
+ * ticker item, a campaign's own chip) shows THAT sale's own end. Early-access (members-only) campaigns are
+ * not public sales, so they never set the page-level timer.
+ */
+export function soonestSaleEnd(campaigns: Array<{ endDate: string; earlyAccess?: boolean }> | null | undefined): string | null {
+  const ends = (campaigns ?? []).filter(c => !c.earlyAccess && c.endDate && !Number.isNaN(new Date(c.endDate).getTime())).map(c => c.endDate);
+  if (!ends.length) return null;
+  return ends.reduce((a, b) => (new Date(b).getTime() < new Date(a).getTime() ? b : a));
+}

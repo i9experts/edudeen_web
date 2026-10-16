@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { formatPrice } from '@/utils/formatPrice';
 import {
   ShoppingCart, RefreshCw,
   DollarSign, Clock, TrendingUp, CheckCheck, Truck, Eye,
@@ -23,7 +24,7 @@ import {
   type SellerOrderFilters,
 } from '@/api/services/product';
 import { usePageTitle } from '@/hooks/usePageTitle';
-import { currencySymbol, formatMoney } from '@/utils/currency';
+import { formatMoney } from '@/utils/currency';
 import {
   OrderDetailModal, canMarkPaid, canComplete, canProcess, canShip, paymentLabel,
 } from './OrderDetailModal';
@@ -172,7 +173,7 @@ export function StoreOrderList() {
       key: 'amount', header: 'Amount', align: 'right',
       render: o => (
         <span className="text-[13px] font-bold text-charcoal whitespace-nowrap">
-          {currencySymbol(o.currency ?? store?.baseCurrency)}{o.amount.toLocaleString()}
+          {formatPrice(o.amount, o.currency ?? store?.baseCurrency)}
         </span>
       ),
     },

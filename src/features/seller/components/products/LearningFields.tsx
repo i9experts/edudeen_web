@@ -37,7 +37,7 @@ export function learningError(v: LearningValue): string | null {
   return null;
 }
 
-export function LearningFields({ value, onChange }: { value: LearningValue; onChange: (v: LearningValue) => void }) {
+export function LearningFields({ value, onChange, classRequired = false, classWarning = null }: { value: LearningValue; onChange: (v: LearningValue) => void; /** Digital / educational products need a class range to be published. */ classRequired?: boolean; /** Non-blocking message when the title and the class range disagree. */ classWarning?: string | null }) {
   const toggle = (c: string) => onChange({
     ...value,
     curricula: value.curricula.includes(c) ? value.curricula.filter(x => x !== c) : [...value.curricula, c],
@@ -60,7 +60,7 @@ export function LearningFields({ value, onChange }: { value: LearningValue; onCh
         </div>
       </div>
       <div>
-        <span className={lbl}>Suitable classes</span>
+        <span className={lbl}>Suitable classes{classRequired && <span className="text-error"> *</span>}</span>
         <div className="flex items-center gap-2 max-w-[420px]">
           <select id="lf-class-from" aria-label="From class" value={value.classFrom} onChange={e => onChange({ ...value, classFrom: e.target.value })} className={inp}>
             <option value="">From class</option>
@@ -72,7 +72,8 @@ export function LearningFields({ value, onChange }: { value: LearningValue; onCh
             {CLASS_LEVELS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
           </select>
         </div>
-        <p className="text-[12px] text-slate mt-1.5">Optional. Parents filter by exact class, e.g. Class 2 to Class 4. Pick one side for a single class.</p>
+        <p className="text-[12px] text-slate mt-1.5">{classRequired ? 'Required to publish. ' : 'Optional. '}Parents filter by exact class, e.g. Class 2 to Class 4. Pick one side for a single class.</p>
+        {classWarning && <p role="status" className="text-[12.5px] text-[#8a6100] bg-[#fff6d6] border border-[#f1d98a] rounded-lg px-3 py-2 mt-2 mb-0">{classWarning}</p>}
       </div>
       <div>
         <span className={lbl}>Suitable ages</span>

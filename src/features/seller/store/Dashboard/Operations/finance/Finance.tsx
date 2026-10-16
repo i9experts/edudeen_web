@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { formatPrice } from '@/utils/formatPrice';
 import { clsx } from 'clsx';
 import { Download, Plus, X, Star, AlertTriangle, CalendarCheck } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -13,7 +14,6 @@ import { useSearchParams } from 'react-router-dom';
 import { EarningsStatement } from './EarningsStatement';
 
 type FinanceTab = 'overview' | 'earnings';
-import { currencySymbol } from '@/utils/currency';
 import {
   apiGetFinanceDashboard, apiGetFinanceTransactions, apiExportFinanceTransactions,
   apiGetPayouts, apiGetPayoutById,
@@ -54,7 +54,7 @@ const PAYOUT_STATUS_COLOR: Record<PayoutStatus, BadgeColor> = {
 // — never summed across a seller's separate PKR/USD wallets into one
 // misleading number (see FinanceDashboard.wallets, StoreFinance's wallet
 // selector).
-function fmt(n: number, currency?: string | null) { return `${currencySymbol(currency)}${n.toFixed(2)}`; }
+function fmt(n: number, currency?: string | null) { return `${formatPrice(n, currency)}`; }
 
 // ── Payout method modal (add or edit) ────────────────────────────────────────
 function PayoutMethodModal({
