@@ -84,7 +84,7 @@ export function MiniCart({ accentColor }: { accentColor?: string }) {
         aria-label={`Cart${cartCount > 0 ? ` (${cartCount} items)` : ''}`}
         aria-haspopup="true"
         aria-expanded={open}
-        className="relative h-10 min-w-10 md:h-9 md:min-w-9 px-0 md:px-1 flex items-center justify-center gap-[5px] bg-transparent border-none cursor-pointer shrink-0 whitespace-nowrap text-[15px] text-carbon hover:text-brand-orange transition-colors outline-none rounded-md focus-visible:ring-2 focus-visible:ring-brand-orange/40"
+        className="relative h-11 min-w-11 md:h-9 md:min-w-9 px-0 md:px-1 flex items-center justify-center gap-[5px] bg-transparent border-none cursor-pointer shrink-0 whitespace-nowrap text-[15px] text-carbon hover:text-brand-orange transition-colors outline-none rounded-md focus-visible:ring-2 focus-visible:ring-brand-orange/40"
       >
         <ShoppingCart size={15} style={accentColor ? { color: accentColor } : undefined} className={clsx('shrink-0 md:hidden', !accentColor && 'text-carbon')} />
         <span className="hidden md:inline">{t('Cart')}</span>

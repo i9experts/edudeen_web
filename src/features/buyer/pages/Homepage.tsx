@@ -29,6 +29,7 @@ import {
   BuyerNavbar, Footer, SkeletonBox, StoreFeatureCard, TrustServiceStrip,
 } from '@/components/comman/ui';
 import { ResourceCard, ResourceCardSkeleton } from '@/components/comman/marketplace/ResourceCard';
+import { ScrollRow } from '@/components/comman/ui/ScrollRow';
 import { FlashSaleCard } from '@/components/comman/marketplace/FlashSaleCard';
 import { MegaMenuBar } from '@/components/comman/marketplace/MegaMenuBar';
 import { CategoryTabs } from '@/components/comman/marketplace/CategoryTabs';
@@ -539,12 +540,12 @@ function HomeLanding() {
                 : <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-error-bg text-error"><Zap size={14} className="fill-error" /></span>}
               action={countdown ? (
                 <span className="shrink-0 flex items-center gap-[6px] text-[12px] sm:text-[13px] font-semibold text-slate">
-                  <span className="hidden sm:inline">Ends in</span>
+                  <span>Ends in</span>
                   <span className="tabular-nums text-error font-bold">{countdown.text}</span>
                 </span>
               ) : earlyCampaign && !premiumDeals ? <EarlyAccessChip startDate={earlyCampaign.startDate} /> : undefined}
             />
-            <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1 snap-x snap-mandatory">
+            <ScrollRow className="flex gap-3 pb-1 snap-x snap-mandatory">
               {flashDeals.map(({ product: p }) => {
                 const dv = (p.variants ?? []).find(v => v.isDefault) ?? p.variants?.[0];
                 const vId = dv?._id ?? '';
@@ -564,7 +565,7 @@ function HomeLanding() {
                   </div>
                 );
               })}
-            </div>
+            </ScrollRow>
           </section>
         )}
         </FeatureMaintenance>

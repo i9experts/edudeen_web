@@ -712,3 +712,18 @@
 /* Seller product forms on phones: every button/select reaches a 40px tap target (switches get theirs from a pseudo hit area; [data-compact] opts out). */
 @media (max-width: 1023px) { .tap-safe :is(button, select, input:not([type='checkbox'], [type='radio'], [type='range'], [type='file'], [type='hidden'])):not([role='switch'], [data-compact]) { min-height: 40px; } }
 @media (max-width: 1023px) { :is(.tap-safe, [role='dialog']) label:has(> input:is([type='checkbox'], [type='radio'])) { min-height: 40px; display: inline-flex; align-items: center; } }
+
+/* Touch / small screens: every button, link and role=button gets an invisible 44x44 minimum hit area
+   (a centred ::after expander) without changing layout. Lives in @layer base, so any utility
+   (absolute, fixed, after:...) wins and nothing that positions itself differently is touched. */
+@layer base {
+  @media (pointer: coarse), (max-width: 1023px) {
+    :where(button, a[href], [role='button'], [role='tab'], summary):not([class*='after:'], [data-no-hit-expand]) { position: relative; }
+    :where(button, a[href], [role='button'], [role='tab'], summary):not([class*='after:'], [data-no-hit-expand])::after {
+      content: ''; position: absolute; inset-block-start: 50%; inset-inline-start: 50%;
+      width: max(100%, 44px); height: max(100%, 44px);
+      transform: translate(-50%, -50%); z-index: 0;
+    }
+    [dir='rtl'] :where(button, a[href], [role='button'], [role='tab'], summary):not([class*='after:'], [data-no-hit-expand])::after { transform: translate(50%, -50%); }
+  }
+}

@@ -23,7 +23,7 @@ import { formatPrice } from '@/utils/formatPrice';
 import { SignInPreview } from './SignInPreview';
 import { MiniCart } from './MiniCart';
 import { MiniWishlist } from './MiniWishlist';
-import { scrollRootRef } from '@/utils/scrollRoot';
+import { getScrollTop, getScrollMax, onPageScroll } from '@/utils/scrollRoot';
 import { useSellEntry } from '@/hooks/auth/useSellEntry';
 import { VoiceSearchButton } from '@/components/ai/VoiceSearchButton';
 
@@ -970,7 +970,7 @@ function AccountActions({ simple = false }: { simple?: boolean }) {
       <SignInPreview />
       <button
         onClick={() => navigate('/login')}
-        className="md:hidden min-h-10 text-[13px] font-medium text-white border-none rounded-md px-[14px] py-[6px] bg-brand-orange cursor-pointer hover:bg-brand-deep-orange transition-colors"
+        className="md:hidden min-h-11 text-[13px] font-medium text-white border-none rounded-md px-[14px] py-[6px] bg-brand-orange cursor-pointer hover:bg-brand-deep-orange transition-colors"
       >
         {t('Sign In')}
       </button>
@@ -1060,13 +1060,11 @@ export function useCompactOnScroll() {
   const anchor = useRef(0);
   const dir    = useRef<0 | 1 | -1>(0);
   useEffect(() => {
-    const el = scrollRootRef.current;
-    if (!el) return;
     const TRAVEL = 24;
     const onScroll = () => {
       // Clamp away overscroll/rubber-band values outside the real range.
-      const max = Math.max(0, el.scrollHeight - el.clientHeight);
-      const y = Math.min(Math.max(el.scrollTop, 0), max);
+      const max = getScrollMax();
+      const y = Math.min(Math.max(getScrollTop(), 0), max);
       // Hysteresis so the solid-background state can't flap right at the threshold.
       setScrolled(s => (s ? y > 2 : y > 16));
 
@@ -1078,8 +1076,7 @@ export function useCompactOnScroll() {
       lastY.current = y;
     };
     onScroll();
-    el.addEventListener('scroll', onScroll, { passive: true });
-    return () => el.removeEventListener('scroll', onScroll);
+    return onPageScroll(onScroll);
   }, []);
   return { scrolled, hidden };
 }
@@ -1246,7 +1243,7 @@ export function BuyerNavbar({ variant = 'full', contextLabel, search, accentColo
               <button
                 onClick={() => setMobileSearchOpen(true)}
                 aria-label="Search"
-                className="md:hidden ms-auto shrink-0 w-10 h-10 flex items-center justify-center rounded-full text-charcoal cursor-pointer hover:bg-cream transition-colors"
+                className="md:hidden ms-auto shrink-0 w-11 h-11 flex items-center justify-center rounded-full text-charcoal cursor-pointer hover:bg-cream transition-colors"
               >
                 <Search size={16} />
               </button>

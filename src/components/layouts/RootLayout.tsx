@@ -1,7 +1,6 @@
-import { Suspense, useEffect } from 'react';
-import { Outlet, useLocation, useNavigation } from 'react-router-dom';
+﻿import { Suspense } from 'react';
+import { Outlet, ScrollRestoration, useLocation, useNavigation } from 'react-router-dom';
 import { ErrorBoundary } from '@/components/comman/ErrorBoundary';
-import { scrollRootRef } from '@/utils/scrollRoot';
 import { AuthGateModal } from '@/components/comman/ui/AuthGateModal';
 import { ToastContainer } from '@/components/comman/ui/ToastContainer';
 import { MaintenanceNotice } from '@/components/comman/ui/MaintenanceNotice';
@@ -24,7 +23,7 @@ function PageSpinner() {
 }
 
 // Thin top bar shown while React Router is loading a route (e.g. fetching a
-// lazy page's chunk) — keeps the previous page on screen instead of swapping
+// lazy page's chunk) â€” keeps the previous page on screen instead of swapping
 // it for a centered spinner, so navigation feels continuous rather than blocked.
 function TopProgressBar() {
   const navigation = useNavigation();
@@ -41,17 +40,6 @@ export function RootLayout() {
   useReferralCapture();
   const { pathname } = useLocation();
 
-  // `window` never scrolls in this app (see the div below) and nothing
-  // resets *its* scroll position on navigation either — so the scroll
-  // container kept whatever offset the previous page was left at, and the
-  // next page rendered already scrolled down by that same amount. From a
-  // product-search result that could genuinely land you on the new page's
-  // footer instead of its top, looking like navigation went to the wrong
-  // place entirely.
-  useEffect(() => {
-    scrollRootRef.current?.scrollTo({ top: 0 });
-  }, [pathname]);
-
   return (
     <AdminEditProvider>
     <ReauthProvider>
@@ -63,24 +51,14 @@ export function RootLayout() {
       <LanguageRouteSync />
       <AiAssistantWidget />
       <ChatWidgetGate />
-      {/* `fixed inset-0` (not paddingTop + height:100vh) so this wrapper IS the
-          scroll container — the previous approach had no overflow container of
-          its own, so tall pages fell back to scrolling the whole document.
-          Anything that used to read window.scrollY / call window.scrollTo now
-          goes through scrollRootRef (see utils/scrollRoot.ts) instead, since
-          window itself no longer scrolls. */}
-      <div
-        ref={el => { scrollRootRef.current = el; }}
-        className="fixed inset-0 overflow-y-auto"
-      >
-        {/* resetKey (not key) — a new path clears a caught error, but the layouts
-            (dashboard sidebars etc.) stay mounted instead of rebuilding on every click */}
+      <ScrollRestoration />
+      {/* resetKey (not key) â€” a new path clears a caught error, but the layouts
+         (dashboard sidebars etc.) stay mounted instead of rebuilding on every click */}
         <ErrorBoundary resetKey={pathname}>
           <Suspense fallback={<PageSpinner />}>
             <Outlet />
           </Suspense>
         </ErrorBoundary>
-      </div>
       <AdminEditToolbar />
     </ReauthProvider>
     </AdminEditProvider>

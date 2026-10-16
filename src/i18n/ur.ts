@@ -984,6 +984,10 @@ export const UR: Record<string, string> = {
   'Add': 'شامل کریں',
   // ── Small common words ────────────────────────────────────────────────────
   'Close': 'بند کریں',
+  'Language & currency': 'زبان اور کرنسی',
+  'Currency': 'کرنسی',
+  'Scroll left': 'بائیں اسکرول کریں',
+  'Scroll right': 'دائیں اسکرول کریں',
   'Back': 'واپس',
   'Next': 'اگلا',
   'Previous': 'پچھلا',

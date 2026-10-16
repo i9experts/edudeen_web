@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { clsx } from 'clsx';
-import { scrollRootRef } from '@/utils/scrollRoot';
+import { getScrollTop, scrollRootToTop } from '@/utils/scrollRoot';
 import { TokenStorage } from '@/api/services/auth';
 import { useTopBarDeals, timeLeft } from '@/hooks/useTopBarDeals';
 import { useCategoryTree, categoryPath } from '@/hooks/marketplace/useCategoryTree';
@@ -24,12 +24,12 @@ type PanelId = 'deals' | 'categories' | 'recent' | 'account';
 /** Pages where a floating rail would get in the way of the task. */
 const HIDDEN_ON = /^\/(checkout|order-success|account)(\/|$)/;
 
-function useScrolledPast(px: number) {
+function useScrolledPast(px: number, screens = 0) {
   const [past, setPast] = useState(false);
   useEffect(() => {
     // Scroll events don't bubble, but a capturing listener on the document
     // sees the app's scroll container (RootLayout) whenever it's ready.
-    const onScroll = () => setPast((scrollRootRef.current?.scrollTop ?? 0) > px);
+    const onScroll = () => setPast(getScrollTop() > (screens ? window.innerHeight * screens : px));
     onScroll();
     document.addEventListener('scroll', onScroll, { capture: true, passive: true });
     return () => document.removeEventListener('scroll', onScroll, { capture: true });
@@ -213,6 +213,7 @@ function AccountPanel({ close }: { close: () => void }) {
 export function QuickAccessRail() {
   const { pathname } = useLocation();
   const scrolled = useScrolledPast(600);
+  const scrolledFar = useScrolledPast(0, 1.5);
   const [open, setOpen] = useState<PanelId | null>(null);
   const [recent, setRecent] = useState<RecentlyViewedItem[]>([]);
   const deals = useTopBarDeals();
@@ -253,7 +254,7 @@ export function QuickAccessRail() {
 
   if (HIDDEN_ON.test(pathname)) return null;
 
-  const toTop = () => scrollRootRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+  const toTop = () => scrollRootToTop('smooth');
   const liveSale = (deals?.campaigns.length ?? 0) > 0;
   const clearRecent = () => { clearRecentlyViewed(); setRecent([]); };
 
@@ -267,7 +268,7 @@ export function QuickAccessRail() {
   return (
     <>
       {/* Desktop rail */}
-      <div ref={rootRef} className="hidden lg:flex fixed end-1 min-[1500px]:end-3 top-[calc(50%+40px)] -translate-y-1/2 z-[60] items-center gap-2 print:hidden" onMouseLeave={scheduleClose}>
+      <div ref={rootRef} className="hidden xl:flex fixed end-1 min-[1500px]:end-3 top-[calc(50%+40px)] -translate-y-1/2 z-[60] items-center gap-2 print:hidden" onMouseLeave={scheduleClose}>
         {open && (
           <div className="order-first" onMouseEnter={() => show(open)} role="dialog" aria-label={buttons.find(b => b.id === open)?.label}>
             {open === 'deals' && <DealsPanel close={close} />}
@@ -323,10 +324,10 @@ export function QuickAccessRail() {
         onClick={toTop}
         aria-label="Back to top"
         className={clsx(
-          'lg:hidden fixed start-4 bottom-[140px] z-40 size-11 rounded-full bg-white border border-bone shadow-lg flex items-center justify-center text-brand-royal cursor-pointer transition-all duration-200 print:hidden',
-          scrolled ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3 pointer-events-none',
+          'xl:hidden fixed start-4 bottom-[calc(80px+env(safe-area-inset-bottom,0px))] z-40 size-11 rounded-full bg-white border border-bone shadow-lg flex items-center justify-center text-brand-royal cursor-pointer transition-all duration-200 print:hidden',
+          scrolledFar ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3 pointer-events-none',
         )}
-        tabIndex={scrolled ? 0 : -1}
+        tabIndex={scrolledFar ? 0 : -1}
       >
         <ChevronUp size={20} />
       </button>

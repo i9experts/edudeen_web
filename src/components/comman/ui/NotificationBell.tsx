@@ -267,7 +267,7 @@ export function NotificationBell() {
                   </div>
 
                   {/* Actions on hover */}
-                  <div className="absolute end-2 top-2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="absolute end-2 top-2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity">
                     {!notif.isRead && (
                       <button
                         title="Mark as read"

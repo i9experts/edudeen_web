@@ -51,9 +51,9 @@ function AssistantInner() {
       {!open && (
         <button
           type="button" onClick={() => setOpen(true)} aria-label="Open shopping assistant"
-          className={`fixed z-40 ${/^\/(product\/|cart|checkout)/.test(pathname) ? 'bottom-[252px]' : 'bottom-[196px]'} md:bottom-[88px] end-4 flex items-center gap-2 rounded-full bg-brand-royal text-white shadow-lg px-4 py-3 text-[13px] font-semibold hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/60`}
+          className={`fixed z-40 ${/^\/(product\/|cart|checkout)/.test(pathname) ? 'bottom-[calc(228px+env(safe-area-inset-bottom,0px))]' : 'bottom-[calc(144px+env(safe-area-inset-bottom,0px))]'} md:bottom-[88px] end-4 flex items-center justify-center gap-2 rounded-full bg-brand-royal text-white shadow-lg size-11 md:size-auto md:px-4 md:py-3 text-[13px] font-semibold hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/60`}
         >
-          <Sparkles size={16} /> Ask Edudeen
+          <Sparkles size={18} /> <span className="hidden md:inline">Ask Edudeen</span>
         </button>
       )}
       {open && (

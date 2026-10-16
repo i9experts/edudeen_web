@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { ScrollRow } from '@/components/comman/ui/ScrollRow';
 import { Link } from 'react-router-dom';
 import { SectionHead } from '@/components/comman/marketplace/SectionHead';
 import { ProductCoverFallback } from '@/components/comman/marketplace/ProductCoverFallback';
@@ -34,7 +35,7 @@ export function RecentlyViewedRail() {
   return (
     <section className="mb-12" aria-label="Recently viewed">
       <SectionHead eyebrow="Pick up where you left off" title="Recently viewed" />
-      <ul className="flex gap-3 overflow-x-auto scrollbar-hide pb-1 list-none p-0 m-0">
+      <ScrollRow><ul className="flex gap-3 pb-1 list-none p-0 m-0 w-max">
         {items.map(i => (
           <li key={i.id} className="w-[150px] md:w-[170px] shrink-0">
             <Link to={`/product/${i.slug ?? i.id}`} className="group block no-underline">
@@ -44,7 +45,7 @@ export function RecentlyViewedRail() {
             </Link>
           </li>
         ))}
-      </ul>
+      </ul></ScrollRow>
     </section>
   );
 }

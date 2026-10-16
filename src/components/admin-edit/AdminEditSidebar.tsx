@@ -6,7 +6,6 @@ import { useAdminEdit } from '@/contexts/adminEditCtx';
 import { pulseElement, useEditableRegistry, type EditableEntry } from '@/contexts/editRegistryCtx';
 import { apiGetAllProducts } from '@/api/services/marketplace';
 import { categoryPath, useCategoryTree } from '@/hooks/marketplace/useCategoryTree';
-import { scrollRootRef } from '@/utils/scrollRoot';
 
 const PANEL_WIDTH = 340;
 
@@ -81,8 +80,8 @@ export default function AdminEditSidebar({ onCollapse }: { onCollapse: () => voi
 
   // On desktop the panel pushes the page aside instead of covering it, so the page stays fully usable.
   useEffect(() => {
-    const root = scrollRootRef.current;
-    if (!root || isMobile) return;
+    const root = document.documentElement;
+    if (isMobile) return;
     root.style.paddingInlineEnd = `${PANEL_WIDTH}px`;
     return () => { root.style.paddingInlineEnd = ''; };
   }, [isMobile]);

@@ -173,7 +173,7 @@ export const ResourceCard = memo(function ResourceCard({
               <Link
                 to={href}
                 onClick={go}
-                className="block p-0 text-start text-carbon no-underline font-bold text-[15px] sm:text-[17px] leading-[1.4] cursor-pointer hover:underline line-clamp-2"
+                className="block py-1 -my-1 text-start text-carbon no-underline font-bold text-[15px] sm:text-[17px] leading-[1.4] cursor-pointer hover:underline line-clamp-2"
               >
                 {product.name}
               </Link>
@@ -245,7 +245,7 @@ export const ResourceCard = memo(function ResourceCard({
       <Link
         to={href}
         onClick={go}
-        className="block p-0 text-start text-carbon no-underline font-bold text-[14px] sm:text-[16px] leading-[1.4] cursor-pointer hover:underline line-clamp-2"
+        className="block py-1 -my-1 text-start text-carbon no-underline font-bold text-[14px] sm:text-[16px] leading-[1.4] cursor-pointer hover:underline line-clamp-2"
       >
         {product.name}
       </Link>

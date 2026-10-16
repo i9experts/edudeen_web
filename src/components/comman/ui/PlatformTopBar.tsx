@@ -1,6 +1,10 @@
+import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
-import { Tag, Shield } from 'lucide-react';
+import { Tag, Shield, Globe, X } from 'lucide-react';
+import { useLanguage } from '@/contexts/languageCtx';
+import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 import { TokenStorage } from '@/api/services/auth';
 import { CurrencySelector } from './BuyerNavbar';
 import { LanguageToggle } from './LanguageToggle';
@@ -76,6 +80,41 @@ function AdminIdentity() {
   );
 }
 
+/** Phones: currency + language live behind one globe button (a bottom sheet) so the bar can show a single short message. */
+function MobilePrefs() {
+  const [open, setOpen] = useState(false);
+  const { t } = useLanguage();
+  const { currency, setCurrency } = useCurrencyPreference();
+  return (
+    <div className="md:hidden shrink-0">
+      <button type="button" onClick={() => setOpen(true)} aria-label={t('Language & currency')}
+        className="relative inline-flex items-center gap-1 text-[12px] font-bold text-white bg-white/10 border border-white/30 rounded-full ps-2 pe-2.5 h-7 cursor-pointer before:absolute before:-inset-2">
+        <Globe size={13} aria-hidden /> {currency}
+      </button>
+      {open && createPortal(
+        <div className="fixed inset-0 z-[80] flex items-end bg-black/40" onClick={() => setOpen(false)}>
+          <div role="dialog" aria-label={t('Language & currency')} className="w-full rounded-t-2xl bg-white text-carbon p-4 pb-[calc(16px+env(safe-area-inset-bottom,0px))]" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-3">
+              <p className="m-0 text-[15px] font-bold">{t('Language & currency')}</p>
+              <button type="button" onClick={() => setOpen(false)} aria-label={t('Close')} className="size-11 -me-2 inline-flex items-center justify-center bg-transparent border-none cursor-pointer text-slate"><X size={20} /></button>
+            </div>
+            <p className="m-0 mb-1.5 text-[12px] font-semibold text-slate">{t('Currency')}</p>
+            <div className="flex gap-2 mb-4">
+              {(['PKR', 'USD'] as const).map(c => (
+                <button key={c} type="button" aria-pressed={currency === c} onClick={() => setCurrency(c)}
+                  className={clsx('flex-1 min-h-11 rounded-xl border text-[14px] font-semibold cursor-pointer', currency === c ? 'bg-brand-royal text-white border-brand-royal' : 'bg-white text-carbon border-bone')}>{c}</button>
+              ))}
+            </div>
+            <p className="m-0 mb-1.5 text-[12px] font-semibold text-slate">{t('Language')}</p>
+            <div className="flex"><LanguageToggle tone="light" /></div>
+          </div>
+        </div>,
+        document.body,
+      )}
+    </div>
+  );
+}
+
 /**
  * Thin navy → green strip at the very top of every Edudeen surface. What it
  * holds depends on who it's for (see `TopBarVariant`). With `showAccount` it
@@ -101,8 +140,11 @@ export function PlatformTopBar({ variant = 'shop', store, showAccount = false, c
           <>
             {/* Left: live admin sales + top marketplace flash deals. */}
             <TopBarDealsTicker />
-            <CurrencySelector tone="dark" />
-            <LanguageToggle tone="dark" />
+            <MobilePrefs />
+            <div className="hidden md:flex items-center gap-4">
+              <CurrencySelector tone="dark" />
+              <LanguageToggle tone="dark" />
+            </div>
             {action && (
               <>
                 {/* On a phone the sales ticker gets the room; this link stays in the footer. */}

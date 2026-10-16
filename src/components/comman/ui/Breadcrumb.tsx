@@ -16,7 +16,7 @@ export function Breadcrumb({ items, className }: { items: BreadcrumbItem[]; clas
     <nav
       aria-label="Breadcrumb"
       className={clsx(
-        'flex items-center h-10 min-h-10 gap-1 overflow-x-auto whitespace-nowrap',
+        'flex items-center h-11 min-h-11 gap-1 overflow-x-auto whitespace-nowrap',
         '[scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
         className,
       )}
@@ -29,7 +29,7 @@ export function Breadcrumb({ items, className }: { items: BreadcrumbItem[]; clas
             {item.path && !isLast ? (
               <button
                 onClick={() => navigate(item.path!)}
-                className="text-[12px] text-slate hover:text-brand-orange bg-transparent border-none cursor-pointer p-0 h-full min-h-10 font-medium transition-colors rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/30"
+                className="text-[12px] text-slate hover:text-brand-orange bg-transparent border-none cursor-pointer p-0 h-full min-h-11 font-medium transition-colors rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/30"
               >
                 {t(item.label)}
               </button>

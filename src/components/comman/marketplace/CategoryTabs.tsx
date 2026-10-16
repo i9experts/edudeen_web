@@ -1,4 +1,5 @@
 import { clsx } from 'clsx';
+import { ScrollRow } from '@/components/comman/ui/ScrollRow';
 
 export interface CategoryTab {
   id:    string;
@@ -19,13 +20,8 @@ export function CategoryTabs({ tabs, activeId, onSelect, allLabel = 'All resourc
   const all: { id: string | null; label: string }[] = [{ id: null, label: allLabel }, ...tabs];
 
   return (
-    <nav
-      aria-label="Resource categories"
-      className={clsx(
-        'flex gap-[22px] md:gap-[30px] px-[5%] md:px-[4%] border-b border-bone overflow-x-auto scrollbar-hide bg-white',
-        className,
-      )}
-    >
+    <nav aria-label="Resource categories" className="bg-white">
+    <ScrollRow arrows={false} className={clsx('flex gap-[22px] md:gap-[30px] px-[5%] md:px-[4%] border-b border-bone', className)}>
       {all.map(t => {
         const active = t.id === activeId;
         return (
@@ -42,6 +38,7 @@ export function CategoryTabs({ tabs, activeId, onSelect, allLabel = 'All resourc
           </button>
         );
       })}
+    </ScrollRow>
     </nav>
   );
 }

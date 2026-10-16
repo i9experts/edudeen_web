@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
 import { Info, ShieldAlert, ShieldCheck, Printer, Link2, Check, ArrowRight, LifeBuoy } from 'lucide-react';
 import { Button } from './Button';
-import { scrollRootRef } from '@/utils/scrollRoot';
+import { getScrollTop, getScrollMax, onPageScroll } from '@/utils/scrollRoot';
 import { Reveal } from '@/components/comman/motion/Reveal';
 import { MagneticButton } from '@/components/comman/motion/MagneticButton';
 import { PremiumCard } from '@/components/comman/motion/PremiumCard';
@@ -134,15 +134,12 @@ export function LegalPageLayout({ title, subtitle, lastUpdated: lastUpdatedProp,
 
   // Reading-progress bar — how far through the article the reader is.
   useEffect(() => {
-    const el = scrollRootRef.current;
-    if (!el) return;
     const onScroll = () => {
-      const total = el.scrollHeight - el.clientHeight;
-      setProgress(total > 0 ? Math.min(100, Math.max(0, (el.scrollTop / total) * 100)) : 0);
+      const total = getScrollMax();
+      setProgress(total > 0 ? Math.min(100, Math.max(0, (getScrollTop() / total) * 100)) : 0);
     };
     onScroll();
-    el.addEventListener('scroll', onScroll, { passive: true });
-    return () => el.removeEventListener('scroll', onScroll);
+    return onPageScroll(onScroll);
   }, []);
 
   // Scroll-spy — highlights the TOC entry for whichever section is in view.

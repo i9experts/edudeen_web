@@ -372,7 +372,7 @@ export function NotificationsPanel() {
                 </div>
 
                 {/* Operations */}
-                <div className="flex items-center gap-1.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity absolute end-4 top-1/2 -translate-y-1/2">
+                <div className="flex items-center gap-1.5 shrink-0 opacity-0 group-hover:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity absolute end-4 top-1/2 -translate-y-1/2">
                   {!notif.isRead && (
                     <button
                       title="Mark as read"

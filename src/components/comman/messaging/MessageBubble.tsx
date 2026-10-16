@@ -132,7 +132,7 @@ function BubbleMenu({ own, canEdit, onReply, onEdit, onDelete }: BubbleMenuProps
         aria-haspopup="menu"
         aria-expanded={open}
         className={clsx(
-          'opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity duration-150 w-[18px] h-[18px] rounded-full flex items-center justify-center border-none cursor-pointer outline-none',
+          'opacity-0 group-hover:opacity-100 [@media(hover:none)]:opacity-100 focus-visible:opacity-100 transition-opacity duration-150 w-[18px] h-[18px] rounded-full flex items-center justify-center border-none cursor-pointer outline-none',
           own ? 'bg-black/15 text-white hover:bg-black/25' : 'bg-black/8 text-charcoal hover:bg-black/15',
         )}
         title="Message options"

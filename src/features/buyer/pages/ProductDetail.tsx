@@ -1,7 +1,7 @@
 import { EarlyAccessChip } from '@/components/comman/ui/EarlyAccessChip';
 import { PremiumChip, PremiumTeaser, usePremiumView } from '@/components/comman/marketplace/PremiumBits';
 import { useEffect, useState } from 'react';
-import { scrollRootRef } from '@/utils/scrollRoot';
+import { getScrollTop } from '@/utils/scrollRoot';
 import { clsx } from 'clsx';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { isPlainLeftClick, blockLinkForButtons } from '@/utils/productLink';
@@ -108,7 +108,7 @@ function ZoomViewer({ pages, alt, start = 0 }: { pages: string[]; alt: string; s
     el.scrollTop = ((e.clientY - r.top) / r.height) * (el.scrollHeight - el.clientHeight);
   };
   const go = (n: number) => { setI((n + pages.length) % pages.length); setZoom(1); };
-  const btn = 'w-10 h-10 rounded-full border border-bone bg-white flex items-center justify-center text-carbon hover:bg-bone disabled:opacity-40 cursor-pointer';
+  const btn = 'w-11 h-11 rounded-full border border-bone bg-white flex items-center justify-center text-carbon hover:bg-bone disabled:opacity-40 cursor-pointer';
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-center gap-2">
@@ -248,7 +248,7 @@ function QuantityStepper({ qty, max, onChange }: { qty: number; max: number; onC
         onClick={() => onChange(Math.max(1, qty - 1))}
         disabled={qty <= 1}
         aria-label="Decrease quantity"
-        className="w-10 h-10 flex items-center justify-center bg-cream text-charcoal cursor-pointer border-none disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange"
+        className="w-11 h-11 flex items-center justify-center bg-cream text-charcoal cursor-pointer border-none disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange"
       >
         <Minus size={13} />
       </button>
@@ -257,7 +257,7 @@ function QuantityStepper({ qty, max, onChange }: { qty: number; max: number; onC
         onClick={() => onChange(Math.min(max, qty + 1))}
         disabled={qty >= max}
         aria-label="Increase quantity"
-        className="w-10 h-10 flex items-center justify-center bg-cream text-charcoal cursor-pointer border-none disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange"
+        className="w-11 h-11 flex items-center justify-center bg-cream text-charcoal cursor-pointer border-none disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange"
       >
         <Plus size={13} />
       </button>
@@ -337,7 +337,7 @@ function RelatedCard({ id, name, image, price: nativePrice, compareAtPrice: nati
             aria-label={wishlist.active ? 'Remove from wishlist' : 'Save to wishlist'}
             className={clsx(
               'absolute top-[6px] end-[6px] w-6 h-6 rounded-full flex items-center justify-center border-0 cursor-pointer transition-opacity focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange',
-              wishlist.active ? 'bg-white opacity-100' : 'bg-white/85 opacity-0 group-hover:opacity-100',
+              wishlist.active ? 'bg-white opacity-100' : 'bg-white/85 opacity-0 group-hover:opacity-100 [@media(hover:none)]:opacity-100',
             )}
           >
             <Heart size={12} className={wishlist.active ? 'text-[#e11d48] fill-[#e11d48]' : 'text-slate'} />
@@ -425,7 +425,7 @@ export function ProductDetail() {
   const [showStickyBar, setShowStickyBar] = useState(false);
   useEffect(() => {
     // RootLayout's wrapper is the scroll container (scroll events don't bubble, so capture on document).
-    const onScroll = () => setShowStickyBar((scrollRootRef.current?.scrollTop ?? 0) > 520);
+    const onScroll = () => setShowStickyBar(getScrollTop() > 520);
     onScroll();
     document.addEventListener('scroll', onScroll, { capture: true, passive: true });
     return () => document.removeEventListener('scroll', onScroll, { capture: true });
