@@ -144,7 +144,9 @@ export const ResourceCard = memo(function ResourceCard({
     : product.deliveryFormat === 'live_class' && product.liveSession
       ? `Live · ${new Date(product.liveSession.startsAt).toLocaleDateString('en-PK', { day: 'numeric', month: 'short' })}`
       : 'Instant download';
-  const meta = [classRangeLabel(product.classFrom, product.classTo) ?? ageLabel(product.ageMin, product.ageMax) ?? level ?? 'All ages', delivery].join(' · ');
+  // Separate text nodes so the Urdu DOM translator can match each part ("All ages", "Ships to you").
+  const meta = [classRangeLabel(product.classFrom, product.classTo) ?? ageLabel(product.ageMin, product.ageMax) ?? level ?? 'All ages', delivery]
+    .map((part, i) => <span key={i}>{i > 0 ? ' · ' : ''}<span>{part}</span></span>);
 
   const badge = member ? null : (campaignOff || percentOff > 0) ? (campaign && campaignOff ? `${campaign.name} · ${campaignOff}` : `-${percentOff}%`) : null;
   const wishlistButton = onToggleWishlist && variantId ? (

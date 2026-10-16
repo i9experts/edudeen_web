@@ -102,7 +102,7 @@ export function MyChildren() {
           <Plus size={14} /> Add a child
         </Button>
       </div>
-      {!!children.length && <p className="text-[12.5px] text-slate">{` of ${limit} children`}</p>}
+      {!!children.length && <p className="text-[12.5px] text-slate">{`${children.length} of ${limit} children`}</p>}
       {full && !isPremium && (
         <div className="flex items-center gap-2 flex-wrap rounded-lg border border-[#f1d98a] bg-[#fff6d6] px-3 py-2.5 text-[12.5px] text-[#8a6100]">
           <Crown size={14} className="shrink-0" aria-hidden />

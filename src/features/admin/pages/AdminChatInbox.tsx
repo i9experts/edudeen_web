@@ -66,7 +66,7 @@ function Thread({ id, onChanged, onBack }: { id: string; onChanged: () => void; 
     try { await apiAdminChatClose(id); await load(); } catch (e) { setError(errMsg(e, 'Could not close the conversation.')); } finally { setBusy(false); }
   }
 
-  if (!t) return <div className="p-6 text-[13px] text-slate">{error ? <span className="text-error">{error}</span> : 'Loading conversation…'}</div>;
+  if (!t) return <div className="p-6 text-[13px] text-slate">{error ? <span className="text-error">{error}</span> : 'Loading conversationâ€¦'}</div>;
   const closed = t.status === 'closed';
   return (
     <div className="flex flex-col h-full min-h-0">
@@ -78,7 +78,7 @@ function Thread({ id, onChanged, onBack }: { id: string; onChanged: () => void; 
             {t.senderEmail && <span className="text-[12px] text-slate">{t.senderEmail}</span>}
             {t.senderPhone && <span className="text-[12px] text-slate">{t.senderPhone}</span>}
           </div>
-          {t.userId && <Link to={t.userKind === 'seller' ? '/admin/users?role=seller' : '/admin/users?role=user'} className="text-[12px] text-brand-royal underline">Find the {t.userKind} account in Users</Link>}
+          {t.userId && <Link to={t.userKind === 'seller' ? '/admin/users?role=seller' : '/admin/users?role=buyer'} className="text-[12px] text-brand-royal underline">Find the {t.userKind} account in Users</Link>}
         </div>
         {!closed && <Button variant="outline" size="sm" onClick={close} disabled={busy} icon={<CheckCircle2 size={14} />}>Mark closed</Button>}
       </div>
@@ -86,7 +86,7 @@ function Thread({ id, onChanged, onBack }: { id: string; onChanged: () => void; 
         {t.messages.map(m => (
           <div key={m.id} className={clsx('max-w-[85%] rounded-2xl px-3 py-2 text-[13.5px] leading-relaxed whitespace-pre-wrap break-words', m.from === 'admin' ? 'self-end bg-brand-royal text-white' : 'self-start bg-white border border-bone text-carbon')}>
             {m.text}
-            <span className={clsx('block text-[11px] mt-1', m.from === 'admin' ? 'text-white/70' : 'text-slate')}>{m.from === 'admin' ? 'Edudeen team' : t.senderName} · {when(m.at)}</span>
+            <span className={clsx('block text-[11px] mt-1', m.from === 'admin' ? 'text-white/70' : 'text-slate')}>{m.from === 'admin' ? 'Edudeen team' : t.senderName} Â· {when(m.at)}</span>
           </div>
         ))}
       </div>
@@ -147,9 +147,9 @@ export function AdminChatInbox({ embedded = false }: { embedded?: boolean } = {}
   return (
     <div>
       {embedded
-        ? <p className="px-4 sm:px-7 pt-4 -mb-2 text-[12.5px] text-slate">{`${stats.unread} unread · ${stats.open} open · ${stats.answered} answered · ${stats.closed} closed`}</p>
-        : <AdminStudioHeader eyebrow="Edudeen team workspace · People" title="Chat inbox"
-          subtitle={`${stats.unread} unread · ${stats.open} open · ${stats.answered} answered · ${stats.closed} closed`} />}
+        ? <p className="px-4 sm:px-7 pt-4 -mb-2 text-[12.5px] text-slate">{`${stats.unread} unread Â· ${stats.open} open Â· ${stats.answered} answered Â· ${stats.closed} closed`}</p>
+        : <AdminStudioHeader eyebrow="Edudeen team workspace Â· People" title="Chat inbox"
+          subtitle={`${stats.unread} unread Â· ${stats.open} open Â· ${stats.answered} answered Â· ${stats.closed} closed`} />}
       <div className="px-4 sm:px-7 pt-5 pb-8">
         {unavailable ? (
           <div role="alert" className="bg-white border border-bone rounded-xl p-6 text-center">
@@ -173,7 +173,7 @@ export function AdminChatInbox({ embedded = false }: { embedded?: boolean } = {}
             </div>
             <div className="flex-1 min-h-0 overflow-y-auto">
               {error && <div className="p-4 text-[13px] text-error">{error} <button type="button" onClick={() => void refresh()} className="underline bg-transparent border-0 cursor-pointer text-error">Retry</button></div>}
-              {!error && loading && rows.length === 0 && <p className="p-4 text-[13px] text-slate">Loading…</p>}
+              {!error && loading && rows.length === 0 && <p className="p-4 text-[13px] text-slate">Loadingâ€¦</p>}
               {!error && !loading && rows.length === 0 && (
                 <div className="p-8 text-center text-slate text-[13px]"><MessageCircle size={28} className="mx-auto mb-2" />No conversations here yet.</div>
               )}
@@ -186,7 +186,7 @@ export function AdminChatInbox({ embedded = false }: { embedded?: boolean } = {}
                   </div>
                   <div className="mt-0.5"><RoleBadge row={r} /></div>
                   <p className="text-[12.5px] text-slate truncate mt-1">{r.lastFrom === 'admin' ? 'You: ' : ''}{r.preview}</p>
-                  <p className="text-[11.5px] text-slate/80 mt-0.5">#{r.shortCode} · {r.status} · {when(r.lastMessageAt)}</p>
+                  <p className="text-[11.5px] text-slate/80 mt-0.5">#{r.shortCode} Â· {r.status} Â· {when(r.lastMessageAt)}</p>
                 </button>
               ))}
               {total > rows.length && <p className="p-3 text-[12px] text-slate text-center">Showing the newest {rows.length} of {total}. Use search to narrow down.</p>}

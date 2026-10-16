@@ -42,7 +42,7 @@ function ResendLink({ orderId, productId }: { orderId: string; productId: string
   return (
     <div className="flex flex-col items-start gap-1">
       <button type="button" onClick={send} disabled={state !== 'idle'}
-        className={clsx('inline-flex items-center gap-1.5 text-[12px] font-semibold bg-transparent border-none p-0', state === 'idle' ? 'text-brand-orange cursor-pointer hover:underline' : 'text-slate cursor-default')}>
+        className={clsx('inline-flex items-center gap-1.5 min-h-[40px] text-[12px] font-semibold bg-transparent border-none p-0', state === 'idle' ? 'text-brand-orange cursor-pointer hover:underline' : 'text-slate cursor-default')}>
         {state === 'busy' ? <Loader2 size={11} className="animate-spin" /> : <Mail size={11} />}
         {state === 'sent' ? 'Sent to your email' : 'Re-send download link to my email'}
       </button>

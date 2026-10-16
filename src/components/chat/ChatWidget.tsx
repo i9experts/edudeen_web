@@ -132,7 +132,7 @@ export default function ChatWidget() {
   const openRef = useRef(open);
   const convRef = useRef<ConvState | null>(null);
   const sinceRef = useRef<string | undefined>(undefined);
-  useEffect(() => () => { alive.current = false; }, []);
+  useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []); // re-arm: StrictMode mounts twice
   useEffect(() => { openRef.current = open; }, [open]);
   useEffect(() => { convRef.current = conv; }, [conv]);
 
@@ -247,9 +247,14 @@ export default function ChatWidget() {
   // hide the bubble (and nudge) while a page modal/bottom sheet is open so it never covers the sheet
   useEffect(() => {
     let raf = 0;
-    const check = () => { raf = 0; setModalOpen(Array.from(document.querySelectorAll('[aria-modal="true"]')).some(el => !el.closest('[data-chat-root]'))); };
+    const check = () => { raf = 0; setModalOpen(Array.from(document.querySelectorAll('[aria-modal="true"]')).some(el => {
+      if (el.closest('[data-chat-root]')) return false;
+      // a closed sheet can stay mounted off-screen / hidden (e.g. the mobile Filters drawer): only a dialog actually on screen counts
+      const r = el.getBoundingClientRect(); const cs = getComputedStyle(el);
+      return r.width > 0 && r.height > 0 && r.right > 0 && r.left < window.innerWidth && r.bottom > 0 && r.top < window.innerHeight && cs.visibility !== 'hidden' && cs.display !== 'none';
+    })); };
     const mo = new MutationObserver(() => { if (!raf) raf = requestAnimationFrame(check); });
-    mo.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['aria-modal'] });
+    mo.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['aria-modal', 'class', 'style'] });
     check();
     return () => { mo.disconnect(); if (raf) cancelAnimationFrame(raf); };
   }, []);

@@ -133,7 +133,7 @@ export function Wishlist() {
             <div
               key={p._id}
               className={clsx(
-                'group flex gap-4 items-center px-5 py-[18px] transition-all hover:bg-[#fafaf8]',
+                'group flex flex-wrap sm:flex-nowrap gap-x-4 gap-y-3 items-center px-5 py-[18px] transition-all hover:bg-[#fafaf8]',
                 isRemoving && 'opacity-40',
               )}
             >
@@ -142,7 +142,7 @@ export function Wishlist() {
               <div className="flex-1 min-w-0 flex flex-col gap-[7px]">
                 <p
                   onClick={() => navigate(`/product/${p.slug}`)}
-                  className="font-bold text-[14px] text-carbon cursor-pointer leading-snug hover:text-brand-orange transition-colors line-clamp-1"
+                  className="font-bold text-[14px] text-carbon cursor-pointer leading-snug hover:text-brand-orange transition-colors line-clamp-2"
                 >
                   {p.name}
                 </p>
@@ -179,7 +179,7 @@ export function Wishlist() {
                 )}
               </div>
 
-              <div className="flex flex-col gap-[8px] justify-center shrink-0">
+              <div className="flex flex-row sm:flex-col gap-[8px] justify-center shrink-0 w-full sm:w-auto [&>button]:flex-1 sm:[&>button]:flex-none">
                 {variant && (
                   <button
                     onClick={() => handleAddToCart(p._id, variant._id, isPhysical ? 'physical' : 'digital')}

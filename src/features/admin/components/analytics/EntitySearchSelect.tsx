@@ -49,7 +49,7 @@ export function EntitySearchSelect({ label, placeholder, selectedId, onSelect, s
   const displayValue = selectedId ? selectedLabel : query;
 
   return (
-    <div ref={ref} className="relative w-[220px]">
+    <div ref={ref} className="relative w-[220px] max-w-full">
       <label className="block text-[12px] font-semibold text-slate mb-1">{label}</label>
       <div className="relative">
         <Search size={13} className="absolute left-[10px] top-1/2 -translate-y-1/2 text-slate pointer-events-none" />

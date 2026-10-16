@@ -919,6 +919,8 @@ export function CheckoutPage() {
 
   if (!loggedIn) {
     // Checkout needs an account: go straight to the login page and come back here afterwards.
+    // Render can re-run while the router is already moving to /login; reading window.location then would nest the redirect.
+    if (!window.location.pathname.startsWith('/checkout')) return null;
     const back = `${window.location.pathname}${window.location.search}`;
     try { sessionStorage.setItem('afterAuthPath', back); } catch { /* storage blocked */ }
     return <Navigate to={`/login?redirect=${encodeURIComponent(back)}`} replace />;
@@ -1115,7 +1117,7 @@ export function CheckoutPage() {
                   </p>
                 </div>
                 <span className={clsx(
-                  'text-[11px] font-semibold px-3 py-1 rounded-full',
+                  'text-[12px] font-semibold px-3 py-1 rounded-full',
                   step === 4 ? 'bg-[#e3f4ea] text-[#1e7a3c]' : 'bg-brand-pale-orange text-brand-orange',
                 )}>
                   Step {step} of 4
@@ -1148,7 +1150,7 @@ export function CheckoutPage() {
                 ] as const).map(({ n, label }) => (
                   <div key={n} className="relative z-10 flex flex-col items-center gap-[6px]">
                     <div className={clsx(
-                      'w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-all duration-200',
+                      'w-6 h-6 rounded-full flex items-center justify-center text-[12px] font-bold transition-all duration-200',
                       step > n ? 'bg-success text-white' :
                         step === n ? 'bg-brand-orange text-white ring-4 ring-brand-pale-orange' :
                           'bg-bone text-slate',
@@ -1156,7 +1158,7 @@ export function CheckoutPage() {
                       {step > n ? <CheckCircle2 size={12} /> : n}
                     </div>
                     <span className={clsx(
-                      'text-[10px] font-semibold whitespace-nowrap',
+                      'text-[12px] font-semibold whitespace-nowrap',
                       step === n ? 'text-brand-orange' : step > n ? 'text-[#1e7a3c]' : 'text-slate',
                     )}>{label}</span>
                   </div>

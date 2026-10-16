@@ -13,7 +13,6 @@ import { X } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useIsBuyer } from '@/hooks/auth/useIsBuyer';
 import { useLanguage, useT } from '@/contexts/languageCtx';
-import { useEdgeHoverScroll } from '@/hooks/useEdgeHoverScroll';
 import { useTopBarDeals } from '@/hooks/useTopBarDeals';
 import { usePremiumDeals } from '@/hooks/usePremiumDeals';
 import { apiSearchProducts } from '@/api/services/search';
@@ -164,7 +163,6 @@ function HomeLanding() {
   // the `featured` filter (it would otherwise return the newest products).
   useEffect(() => { apiBrowseProducts({ featured: true, limit: 10 }).then(res => setFeatured((res.data?.products ?? []).filter(p => p.isFeatured === true))).catch(() => {}); }, []);
   const isBuyer = useIsBuyer();
-  const sellersRowRef = useEdgeHoverScroll<HTMLDivElement>();
   usePageMeta({ title: 'Edudeen - Educational resources, books & courses from trusted sellers', description: 'Edudeen is an education marketplace: worksheets, books, digital downloads and courses for home and classroom from verified sellers.', canonical: '/' });
 
   const [categories, setCategories] = useState<CategoryNode[]>([]);
@@ -621,12 +619,11 @@ function HomeLanding() {
         {topStores.length > 0 && (
           <section className="mb-12">
             <SectionHead eyebrow="Meet the makers" title="Featured sellers" />
-            {/* Hover near either edge to glide the row that way. */}
-            <div ref={sellersRowRef} className="flex gap-3 overflow-x-auto scrollbar-hide pb-1 pt-1">
+            <ScrollRow className="flex gap-3 pb-1 pt-1">
               {topStores.map(s => (
                 <StoreFeatureCard key={s.storeId} store={s} onClick={slug => navigate(getStorePagePath(slug))} />
               ))}
-            </div>
+            </ScrollRow>
           </section>
         )}
 

@@ -587,10 +587,10 @@ export function SearchBox({
             value={value}
             onChange={e => onChange(e.target.value)}
             onFocus={() => setOpen(true)}
-            placeholder={placeholder ?? t('What would you love to teach today?')}
+            placeholder={placeholder ?? (isLg ? t('What would you love to teach today?') : t('Search resources'))}
             aria-label={placeholder ?? 'Search resources, products and stores'}
             autoFocus={autoFocus}
-            className={clsx('border-0 outline-none text-carbon placeholder:text-slate/80 bg-transparent w-full min-w-0', isLg ? 'text-[15px] md:text-[16px] py-[8px]' : 'text-[14px] md:text-[15px] py-[11px] md:py-[13px]')}
+            className={clsx('border-0 outline-none text-carbon placeholder:text-slate/80 bg-transparent w-full min-w-0 text-ellipsis', isLg ? 'text-[15px] md:text-[16px] py-[8px]' : 'text-[14px] md:text-[15px] py-[11px] md:py-[13px]')}
           />
           {value && (
             <button

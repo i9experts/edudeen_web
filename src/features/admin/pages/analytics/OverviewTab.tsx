@@ -25,12 +25,12 @@ export function OverviewTab({ params, compareToPreviousPeriod }: { params: BaseA
   const d = overview.data;
   const loading = overview.loading;
 
-  // Fed to the matching stat tile below — only when that tile's own series
+  // Fed to the matching stat tile below â€” only when that tile's own series
   // has actually loaded, never a placeholder shape (see MetricCard's own
   // "never fabricate one" note on `sparkline`).
   const revenueSparkline = revenue.data?.series.map(p => p.netRevenue);
   // The platform-wide series sums order subtotals as stored, so it only has a
-  // single currency when the API says so — never assume USD.
+  // single currency when the API says so â€” never assume USD.
   const revenueCurrency = revenue.data?.currency;
   const ordersSparkline = orders.data?.series.map(p => p.orderCount);
 
@@ -54,7 +54,7 @@ export function OverviewTab({ params, compareToPreviousPeriod }: { params: BaseA
       trend: `${d.sellersActiveThisMonthChange >= 0 ? '+' : ''}${d.sellersActiveThisMonthChange} vs prev.`, trendUp: d.sellersActiveThisMonthChange >= 0,
     },
     { to: '/admin/leads', label: 'Total Stores', value: formatNumber(d.totalStores), icon: <Store size={16} /> },
-    { to: '/admin/leads?status=verified', label: 'Active Stores', value: formatNumber(d.activeStores), icon: <Store size={16} /> },
+    { to: '/admin/leads?status=active', label: 'Active Stores', value: formatNumber(d.activeStores), icon: <Store size={16} /> },
     { to: '/admin/users?role=buyer', label: 'Total Customers', value: formatNumber(d.totalCustomers), icon: <Users size={16} /> },
     { to: '/admin/users?role=buyer', label: 'New Users', value: formatNumber(d.newUsers), icon: <UserPlus size={16} /> },
     { to: '/admin/refunds', label: 'Refunds', value: formatCurrency(d.totalRefunds), icon: <RotateCcw size={16} />, sub: `${formatPercent(d.refundRatePercent)} of GMV` },
@@ -93,7 +93,7 @@ export function OverviewTab({ params, compareToPreviousPeriod }: { params: BaseA
           <div className="px-5 pt-4 pb-3">
             <p className="font-serif font-normal text-[19px] sm:text-[21px] text-carbon leading-[1.25]">Period Comparison</p>
             <p className="text-[12px] text-slate">
-              {formatDate(d.previousPeriod.period.from)} – {formatDate(d.previousPeriod.period.to)} vs. {formatDate(d.period.from)} – {formatDate(d.period.to)}
+              {formatDate(d.previousPeriod.period.from)} â€“ {formatDate(d.previousPeriod.period.to)} vs. {formatDate(d.period.from)} â€“ {formatDate(d.period.to)}
             </p>
           </div>
           <Table columns={comparisonColumns} data={comparisonRows} keyExtractor={r => r.metric} />
@@ -110,7 +110,7 @@ export function OverviewTab({ params, compareToPreviousPeriod }: { params: BaseA
             title="Revenue Over Time"
             subtitle={revenueCurrency
               ? `Gross vs. net, platform-wide (${revenueCurrency})`
-              : 'Gross vs. net, platform-wide · each order in its own currency, not converted'}
+              : 'Gross vs. net, platform-wide Â· each order in its own currency, not converted'}
             data={(revenue.data?.series ?? []).map(p => ({
               label: formatBucketLabel(p.date, revenue.data!.granularity),
               gross: p.grossRevenue,
