@@ -147,7 +147,7 @@ export function FlashSaleCard({ product, onClick, onAddToCart, isAdding, addToCa
           onClick={e => onToggleWishlist(e, product._id, vId)}
           disabled={isWishlisting}
           className={clsx(
-            'absolute rounded-full bg-white border border-bone flex items-center justify-center z-[1]',
+            'absolute rounded-full bg-white border border-bone flex items-center justify-center z-[1] before:absolute before:-inset-[5px] before:rounded-full md:before:-inset-[9px]',
             compact ? 'bottom-[6px] end-[6px] w-9 h-9 md:w-7 md:h-7' : 'bottom-2 end-2 w-8 h-8',
             'transition-all duration-200 hover:scale-110 hover:bg-brand-pale-orange',
             isWishlisting ? 'cursor-wait' : 'cursor-pointer',
@@ -184,7 +184,7 @@ export function FlashSaleCard({ product, onClick, onAddToCart, isAdding, addToCa
               disabled={stock <= 0}
               aria-label={stock <= 0 ? 'Out of stock' : 'Add to cart'}
               className={clsx(
-                'shrink-0 flex items-center justify-center w-9 h-9 md:w-7 md:h-7 rounded-full border transition-all duration-200',
+                'relative before:absolute before:-inset-[5px] before:rounded-full md:before:-inset-[9px] shrink-0 flex items-center justify-center w-9 h-9 md:w-7 md:h-7 rounded-full border transition-all duration-200',
                 stock <= 0
                   ? 'bg-bone text-slate border-bone cursor-not-allowed'
                   : addToCartFailed

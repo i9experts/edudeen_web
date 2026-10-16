@@ -1,4 +1,5 @@
 import { EarlyAccessChip } from '@/components/comman/ui/EarlyAccessChip';
+import { ScrollRow } from '@/components/comman/ui/ScrollRow';
 import { responsiveImg, imgUrl } from '@/utils/cloudinaryImage';
 import { PremiumChip, PremiumTeaser, usePremiumView } from '@/components/comman/marketplace/PremiumBits';
 import { useEffect, useState } from 'react';
@@ -382,7 +383,7 @@ function ProductRail({ title, children }: { title: string; children: React.React
   return (
     <div className="mb-6">
       <p className="text-[15px] font-bold text-carbon mb-3">{title}</p>
-      <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1">{children}</div>
+      <ScrollRow className="flex gap-3 pb-1">{children}</ScrollRow>
     </div>
   );
 }

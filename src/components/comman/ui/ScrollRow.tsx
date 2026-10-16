@@ -1,4 +1,4 @@
-﻿import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useT } from '@/contexts/languageCtx';
@@ -8,7 +8,7 @@ import { useT } from '@/contexts/languageCtx';
  * more content, and (desktop, mouse only) arrow buttons. RTL-aware. Pass the same
  * className you would give the scrolling div (flex, gap, snap ...).
  */
-export function ScrollRow({ children, className, arrows = true }: { children: ReactNode; className?: string; arrows?: boolean }) {
+export function ScrollRow({ children, className, arrows = true, wrapperClassName }: { children: ReactNode; className?: string; arrows?: boolean; wrapperClassName?: string }) {
   const ref = useRef<HTMLDivElement>(null);
   const t = useT();
   const [edges, setEdges] = useState({ start: false, end: false });
@@ -40,7 +40,7 @@ export function ScrollRow({ children, className, arrows = true }: { children: Re
   };
   const arrowCls = 'hidden [@media(hover:hover)]:md:flex absolute top-1/2 -translate-y-1/2 z-10 size-9 rounded-full bg-white border border-bone shadow-md items-center justify-center text-carbon cursor-pointer hover:bg-cream before:absolute before:-inset-1';
   return (
-    <div className="relative">
+    <div className={clsx('relative', wrapperClassName)}>
       <div ref={ref} style={mask ? { WebkitMaskImage: mask, maskImage: mask } : undefined} className={clsx('overflow-x-auto scrollbar-hide', className)}>
         {children}
       </div>

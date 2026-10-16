@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { ScrollRow } from '@/components/comman/ui/ScrollRow';
 import { Link } from 'react-router-dom';
 import { ProductCoverFallback } from '@/components/comman/marketplace/ProductCoverFallback';
 import { useWishlistContext } from '@/contexts/WishlistContext';
@@ -53,7 +54,7 @@ export function PickUpWhereYouLeftOff() {
   return (
     <section aria-label="Pick up where you left off" className="bg-white rounded-2xl border border-bone px-4 md:px-5 py-4">
       <h2 className="text-[15px] font-bold text-carbon mb-3">Pick up where you left off</h2>
-      <ul className="flex gap-3 overflow-x-auto scrollbar-hide pb-1 list-none p-0 m-0">
+      <ScrollRow><ul className="flex gap-3 pb-1 list-none p-0 m-0 w-max">
         {cards.map(c => (
           <li key={c.id} className="w-[150px] shrink-0">
             <Link to={`/product/${c.slug}`} className="group block no-underline">
@@ -64,7 +65,7 @@ export function PickUpWhereYouLeftOff() {
             </Link>
           </li>
         ))}
-      </ul>
+      </ul></ScrollRow>
     </section>
   );
 }

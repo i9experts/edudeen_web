@@ -1,4 +1,5 @@
 import { PlacementBanner } from '@/components/comman/marketplace/PlacementBanner';
+import { ScrollRow } from '@/components/comman/ui/ScrollRow';
 import { formatPrice } from '@/utils/formatPrice';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 import type { PromotionPlacement } from '@/api/services/banner';
@@ -210,17 +211,17 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
         </header>
 
         {subcategories && subcategories.length > 0 && (
-          <nav aria-label={subcategoriesLabel ?? 'Subcategories'} className="flex gap-2 overflow-x-auto pb-2 mb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <nav aria-label={subcategoriesLabel ?? 'Subcategories'} className="mb-4"><ScrollRow className="flex gap-2 pb-2">
             {subcategories.map(s => (
               <Link
                 key={s._id}
                 to={subcategoryHref(s)}
-                className="shrink-0 rounded-full border border-bone bg-white px-4 py-[7px] min-h-10 inline-flex items-center text-[13.5px] font-medium text-carbon no-underline hover:border-brand-orange hover:text-brand-orange transition-colors"
+                className="shrink-0 rounded-full border border-bone bg-white px-4 py-[7px] min-h-11 inline-flex items-center text-[13.5px] font-medium text-carbon no-underline hover:border-brand-orange hover:text-brand-orange transition-colors"
               >
                 {s.name}{typeof s.productCount === 'number' && <span className="text-slate ms-1.5">{s.productCount}</span>}
               </Link>
             ))}
-          </nav>
+          </ScrollRow></nav>
         )}
 
         {state.q && fix.corrected && !loading && (
@@ -241,7 +242,7 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
         <div className="flex flex-wrap items-center gap-3 mb-3">
           <FiltersButton count={chips.length} onClick={() => setDrawerOpen(true)} />
           <SortMenu value={state.sort} onChange={v => update({ sort: v || undefined })} />
-          <label className="inline-flex items-center gap-2 text-[14px] font-medium text-carbon cursor-pointer select-none">
+          <label className="inline-flex items-center gap-2 min-h-11 text-[14px] -mx-3 px-3 font-medium text-carbon cursor-pointer select-none">
             <input type="checkbox" id="browse-free" checked={state.free} onChange={e => update({ free: e.target.checked || undefined })} className="w-4 h-4 accent-brand-orange" />
             Free only
           </label>
@@ -514,7 +515,7 @@ function SearchEmptyHelp({ didYouMean, categories }: { didYouMean?: string; cate
     return () => { cancelled = true; };
   }, []);
   const cats = categories.filter(c => c.slug || c._id).slice(0, 8);
-  const pill = 'rounded-full border border-bone bg-white px-4 py-[7px] min-h-10 inline-flex items-center text-[13.5px] font-medium text-carbon no-underline hover:border-brand-orange hover:text-brand-orange transition-colors';
+  const pill = 'rounded-full border border-bone bg-white px-4 py-[7px] min-h-11 inline-flex items-center text-[13.5px] font-medium text-carbon no-underline hover:border-brand-orange hover:text-brand-orange transition-colors';
   return (
     <div className="max-w-[720px] mx-auto mt-2 mb-6 text-center space-y-6">
       {didYouMean && (

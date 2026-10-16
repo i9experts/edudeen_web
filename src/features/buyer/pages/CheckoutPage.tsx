@@ -752,17 +752,19 @@ export function CheckoutPage() {
   // Edudeen Premium member price: already inside every item price (like the other baked-in discounts), shown as its own row.
   const premiumSellerSavings = checkout?.premiumDiscountTotalUSD ?? summary?.premiumDiscountUSD ?? 0;
   const premiumPlatformSavings = checkout?.premiumPlatformDiscountTotalUSD ?? summary?.premiumPlatformDiscountUSD ?? 0;
-  const premiumSavings = premiumSellerSavings + premiumPlatformSavings;
+  const memberEstimateSavingsEarly = cartItems.reduce((sum, i) => (i.premiumItemTotal != null ? sum + Math.max(0, convertToDisplay(i.itemTotal ?? (i.unitPrice ?? i.price ?? 0) * i.quantity, i.currency) - convertToDisplay(i.premiumItemTotal, i.currency)) : sum), 0);
+  // Before the checkout exists, show the member estimate so the summary has the same Premium line as the cart.
+  const premiumSavings = premiumSellerSavings + premiumPlatformSavings || (checkout ? 0 : memberEstimateSavingsEarly);
   const bakedInDiscounts = (summary?.subscriberSavingsUSD ?? 0) + (summary?.campaignDiscountUSD ?? 0) + (summary?.autoDiscountUSD ?? 0) + premiumSavings;
   // The running sale only applies to the whole store cart, not to a Buy Now line or a physical-only subset.
   const estimate = computeCartTotals(cartItems, buyNow || physicalOnly ? null : cart?.campaignDiscount, convertToDisplay);
   // Before the checkout exists a member's estimate already uses their member price (cart lines carry it for members only).
-  const memberEstimateSavings = cartItems.reduce((sum, i) => (i.premiumItemTotal != null ? sum + Math.max(0, convertToDisplay(i.itemTotal ?? (i.unitPrice ?? i.price ?? 0) * i.quantity, i.currency) - convertToDisplay(i.premiumItemTotal, i.currency)) : sum), 0);
+  const memberEstimateSavings = memberEstimateSavingsEarly;
   const total = checkout ? checkout.totalAmount : Math.max(0, estimate.payable - memberEstimateSavings);
   // Subtotal before discounts, so the summary adds up: subtotal − discounts + shipping + tax = total.
   const orderSubtotal = checkout
     ? Math.max(0, total - (isDigital ? 0 : shipping) - tax + bakedInDiscounts + couponDiscount + giftCardDiscount)
-    : Math.max(0, estimate.subtotal - memberEstimateSavings);
+    : Math.max(0, estimate.subtotal);
   // Symbol for every sidebar amount: the checkout's own currency once it exists, else the display currency.
   const summaryCur = checkout ? checkout.currency : displayCurrency;
 

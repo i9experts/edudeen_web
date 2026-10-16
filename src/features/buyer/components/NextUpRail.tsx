@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { ScrollRow } from '@/components/comman/ui/ScrollRow';
 import { Link } from 'react-router-dom';
 import { ProductCoverFallback } from '@/components/comman/marketplace/ProductCoverFallback';
 import { apiGetAlsoBought, apiGetProductById, apiBrowseProducts } from '@/api/services/marketplace';
@@ -90,7 +91,7 @@ export function NextUpRail({
   return (
     <section aria-label={title} className="bg-white rounded-[14px] border border-bone px-4 md:px-5 py-4">
       <h2 className="text-[15px] font-bold text-carbon mb-3">{title}</h2>
-      <ul className="flex gap-3 overflow-x-auto scrollbar-hide pb-1 list-none p-0 m-0">
+      <ScrollRow><ul className="flex gap-3 pb-1 list-none p-0 m-0 w-max">
         {items.map(s => (
           <li key={s.id} className="w-[160px] shrink-0">
             <Link to={`/product/${s.slug || s.id}`} className="group block no-underline">
@@ -101,7 +102,7 @@ export function NextUpRail({
             </Link>
           </li>
         ))}
-      </ul>
+      </ul></ScrollRow>
     </section>
   );
 }

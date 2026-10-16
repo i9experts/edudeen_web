@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Construction, Database, CreditCard, ShieldCheck, Gauge, Siren, Wrench, Clock, type LucideIcon } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { useT } from '@/contexts/languageCtx';
+import { durationText, isUrduUi, localeDateTime } from '@/utils/localeTime';
 import { useMaintenanceStatus } from '@/hooks/useMaintenanceStatus';
 import { EdudeenLogo } from '@/components/comman/ui';
 import { scopeLabel, MAINTENANCE_TYPE_INFO, type MaintenanceType } from '@/api/services/maintenance';
@@ -16,14 +18,14 @@ function useCountdown(target?: string | null) {
   if (!target) return null;
   const ms = new Date(target).getTime() - now;
   if (Number.isNaN(ms)) return null;
-  if (ms <= 0) return 'any moment now';
-  const s = Math.floor(ms / 1000), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
-  return h > 0 ? `${h}h ${m}m` : m > 0 ? `${m}m ${s % 60}s` : `${s}s`;
+  if (ms <= 0) return isUrduUi() ? 'کسی بھی لمحے' : 'any moment now';
+  return durationText(ms / 1000);
 }
 
 /** Shown when the backend answers a maintenance 503. Says what is down, why, and when it should be back; returns to the site on its own once it is over. */
 export function MaintenancePage() {
   usePageTitle('Under Maintenance');
+  const t = useT();
   const status = useMaintenanceStatus(15_000);
   const left = useCountdown(status?.state === 'active' ? status.endsAt : null);
 
@@ -60,7 +62,7 @@ export function MaintenancePage() {
       {status?.endsAt && (
         <p className="text-[13px] text-charcoal inline-flex items-center gap-1.5 mb-6">
           <Clock size={14} className="text-slate" />
-          Expected back {new Date(status.endsAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}{left && left !== 'any moment now' ? ` · in ${left}` : left ? ` · ${left}` : ''}
+          <span>{t('Expected back')} {localeDateTime(new Date(status.endsAt))}{left ? (left === 'any moment now' || !/\d/.test(left) ? ` · ${left}` : isUrduUi() ? ` · ${left} میں` : ` · in ${left}`) : ''}</span>
         </p>
       )}
 

@@ -28,7 +28,7 @@ export function Breadcrumb({ items, className }: { items: BreadcrumbItem[]; clas
             {item.path && !isLast ? (
               <Link
                 to={item.path!}
-                className="text-[12px] text-slate hover:text-brand-orange no-underline inline-flex items-center p-0 h-full min-h-11 font-medium transition-colors rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/30"
+                className="text-[12px] text-slate hover:text-brand-orange no-underline inline-flex items-center justify-center p-0 h-full min-h-11 min-w-11 font-medium transition-colors rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/30"
               >
                 {t(item.label)}
               </Link>

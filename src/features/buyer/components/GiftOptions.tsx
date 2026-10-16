@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { Gift } from 'lucide-react';
 import client from '@/api/client';
 
@@ -30,7 +30,7 @@ export function GiftOptions({ checkoutId }: { checkoutId: string }) {
   return (
     <div className="rounded-xl border border-bone bg-white px-4 py-3 mb-4">
       <p className="flex items-center gap-2 text-[13px] font-bold text-carbon mb-2"><Gift size={14} aria-hidden="true" /> Sending this as a gift?</p>
-      <label className="flex items-center gap-2 text-[13px] text-charcoal cursor-pointer mb-2">
+      <label className="flex items-center gap-2 min-h-11 text-[13px] -mx-3 px-3 text-charcoal cursor-pointer mb-1">
         <input
           type="checkbox"
           checked={wrap}

@@ -21,7 +21,7 @@ export function CategoryTabs({ tabs, activeId, onSelect, allLabel = 'All resourc
 
   return (
     <nav aria-label="Resource categories" className="bg-white">
-    <ScrollRow arrows={false} className={clsx('flex gap-[22px] md:gap-[30px] px-[5%] md:px-[4%] border-b border-bone', className)}>
+    <ScrollRow arrows={false} className={clsx('flex gap-[6px] md:gap-[14px] px-[4%] md:px-[4%] border-b border-bone', className)}>
       {all.map(t => {
         const active = t.id === activeId;
         return (
@@ -30,7 +30,7 @@ export function CategoryTabs({ tabs, activeId, onSelect, allLabel = 'All resourc
             onClick={() => onSelect(t.id)}
             aria-current={active ? 'page' : undefined}
             className={clsx(
-              'shrink-0 whitespace-nowrap bg-transparent border-0 border-b-[3px] py-[14px] px-0 text-[14px] text-carbon cursor-pointer transition-colors',
+              'shrink-0 whitespace-nowrap bg-transparent border-0 border-b-[3px] py-[14px] px-[8px] md:px-[8px] min-w-11 text-[14px] text-carbon cursor-pointer transition-colors',
               active ? 'border-brand-green font-bold' : 'border-transparent hover:border-bone',
             )}
           >

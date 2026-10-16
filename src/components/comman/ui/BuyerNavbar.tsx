@@ -1261,7 +1261,7 @@ export function BuyerNavbar({ variant = 'full', contextLabel, search, accentColo
                previously the excess (usually the currency picker, being last) just rendered
                past the screen edge with no way to reach it at all. This guarantees every
                icon stays reachable by a horizontal swipe even in the tightest case. */}
-            <div className={clsx('items-center gap-1 md:gap-2.5 min-w-0 overflow-x-auto scrollbar-hide', mobileSearchOpen ? 'hidden md:flex' : 'flex', hideSearch && 'ms-auto')}>
+            <div className={clsx('items-center gap-1 md:gap-2.5 min-w-0 overflow-x-auto scrollbar-hide px-[7px] -mx-[7px]', mobileSearchOpen ? 'hidden md:flex' : 'flex', hideSearch && 'ms-auto')}>
               {backTo && (
                 <div className="hidden md:inline-flex">
                   <Button variant="ghost" size="sm" to={backTo.path}>

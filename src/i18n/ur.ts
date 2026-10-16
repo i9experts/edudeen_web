@@ -1995,6 +1995,15 @@ const urOr = (s: string) => UR[s] ?? s;
 
 /** Strings with numbers or names in them — `m` is the RegExp match. */
 export const UR_PATTERNS: [RegExp, (m: RegExpMatchArray) => string][] = [
+  // Relative times (reviews, notifications, wishlist) — ur-PK wording, Latin digits.
+  [/^(\d+) (?:min|mins|minutes?) ago$/, m => `${m[1]} منٹ پہلے`],
+  [/^(\d+) (?:hrs?|hours?) ago$/, m => `${m[1]} گھنٹے پہلے`],
+  [/^(\d+) days? ago$/, m => `${m[1]} دن پہلے`],
+  [/^(\d+)m ago$/, m => `${m[1]} منٹ پہلے`],
+  [/^(\d+)h ago$/, m => `${m[1]} گھنٹے پہلے`],
+  [/^(\d+)d ago$/, m => `${m[1]} دن پہلے`],
+  [/^Resend in (\d+)s$/, m => `${m[1]} سیکنڈ میں دوبارہ بھیجیں`],
+  [/^Public sale starts in (.+)$/, m => `عوامی سیل ${m[1].replace(/(\d+)d/, '$1 دن').replace(/(\d+)h/, '$1 گھنٹے').replace(/(\d+)m/, '$1 منٹ')} میں شروع ہوگا`],
   // Homepage audit: countdowns in the one shared format, USD price filters, hero button built from a category name.
   [/^Ends in (\d+)d (\d+)h (\d{2})m$/, m => `ختم ہونے میں ${m[1]} دن ${m[2]} گھنٹے ${m[3]} منٹ`],
   [/^(\d+)d (\d+)h (\d{2})m$/, m => `${m[1]} دن ${m[2]} گھنٹے ${m[3]} منٹ`],

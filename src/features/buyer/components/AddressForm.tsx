@@ -138,17 +138,17 @@ export function AddressForm({ initial, onSave, onCancel, saving, submitLabel = '
             />
           </Suspense>
         </div>
-        <div className="sm:col-span-2 flex items-center gap-2">
+        <label htmlFor="addr-default" className="sm:col-span-2 flex items-center gap-2 min-h-11 cursor-pointer -mx-3 px-3">
           <input
             type="checkbox" id="addr-default"
             checked={form.isDefault ?? false}
             onChange={e => set('isDefault', e.target.checked)}
             className="w-[15px] h-[15px] cursor-pointer accent-brand-orange"
           />
-          <label htmlFor="addr-default" className="text-[12px] text-graphite cursor-pointer">
+          <span className="text-[12px] text-graphite">
             Set as default address
-          </label>
-        </div>
+          </span>
+        </label>
       </div>
       {error && <p role="alert" className="text-[12px] text-error mt-3">{error}</p>}
       <div className="flex gap-[10px] mt-[18px]">

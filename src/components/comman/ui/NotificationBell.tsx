@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { relAgo, localeDate } from '@/utils/localeTime';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useNotification } from '@/contexts/NotificationContext';
@@ -19,10 +20,10 @@ function formatRelativeTime(dateStr: string): string {
     const diffHours = Math.floor(diffMins / 60);
 
     if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffMins < 60) return relAgo(diffMins, 'min');
+    if (diffHours < 24) return relAgo(diffHours, 'h');
 
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return localeDate(date);
   } catch {
     return '';
   }

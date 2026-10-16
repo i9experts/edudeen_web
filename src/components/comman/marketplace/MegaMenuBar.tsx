@@ -1,6 +1,7 @@
 import { useT } from '@/contexts/languageCtx';
 import { useState, useEffect, useRef, type ReactNode, type CSSProperties } from 'react';
 import { clsx } from 'clsx';
+import { ScrollRow } from '@/components/comman/ui/ScrollRow';
 import { Link } from 'react-router-dom';
 import { isPlainLeftClick } from '@/utils/productLink';
 import { categoryPath } from '@/hooks/marketplace/useCategoryTree';
@@ -675,7 +676,7 @@ export function MegaMenuBar({
           'flex flex-wrap items-center gap-x-4 gap-y-2 px-4 sm:px-6 lg:px-10',
           compact ? 'py-[7px]' : 'py-[11px]',
         )}>
-          <div className="flex flex-nowrap items-center gap-x-4 overflow-x-auto scrollbar-hide min-w-0 shrink">
+          <ScrollRow wrapperClassName="min-w-0 shrink" className="flex flex-nowrap items-center gap-x-4 min-w-0">
           <button
             aria-haspopup="true"
             aria-expanded={active === 'categories'}
@@ -752,7 +753,7 @@ export function MegaMenuBar({
             <GraduationCap size={13} className={clsx('shrink-0 text-slate group-hover:text-brand-orange', compact && 'md:hidden')} />
             {t('Learn by grade')}
           </Link>
-          </div>
+          </ScrollRow>
 
           {/* Utility links — desktop only. On mobile this row is already a
               tight, swipeable chip bar (native-app style); cramming these

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { localeTime } from '@/utils/localeTime';
 import { Link, useLocation } from 'react-router-dom';
 import { Bot, MessageCircle, RotateCcw, Send, X } from 'lucide-react';
 import { clsx } from 'clsx';
@@ -52,7 +53,7 @@ function save(s: Saved) {
 function loadGuest(): GuestInfo { try { return JSON.parse(localStorage.getItem(GUEST_KEY) || '{}') as GuestInfo; } catch { return {}; } }
 function saveGuest(g: GuestInfo) { try { localStorage.setItem(GUEST_KEY, JSON.stringify(g)); } catch { /* storage blocked */ } }
 const reducedMotion = () => { try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch { return false; } };
-const timeOf = (ms: number) => { try { return ms ? new Date(ms).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''; } catch { return ''; } };
+const timeOf = (ms: number) => (ms ? localeTime(new Date(ms), { hour: '2-digit', minute: '2-digit' }) : '');
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const PHONE_RE = /^\+?[0-9][0-9\s-]{6,17}$/;
 
