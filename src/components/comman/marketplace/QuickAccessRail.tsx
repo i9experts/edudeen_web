@@ -76,7 +76,7 @@ function DealsPanel({ close }: { close: () => void }) {
             <span className="block text-[13px] font-bold truncate">{c.name}</span>
             <span className="block text-[12px] opacity-85">Ends in <span className="tabular-nums">{timeLeft(c.endDate, now)}</span></span>
           </span>
-          {upToLabel(deals.maxPct) ? <span className="text-[12px] font-bold bg-white/20 rounded-full px-2 py-0.5">{upToLabel(deals.maxPct)}</span> : null}
+          {upToLabel(deals.campaignMaxPct) ? <span className="text-[12px] font-bold bg-white/20 rounded-full px-2 py-0.5">{upToLabel(deals.campaignMaxPct)}</span> : null}
         </Link>
       ))}
       {deals.flashDeals.length > 0 && (

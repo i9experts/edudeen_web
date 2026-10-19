@@ -222,7 +222,7 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
   if (!campaign) return null;
 
   // "Up to X% off" is the REAL biggest discount among the items on sale, never the number typed into the campaign.
-  const realMaxPct = deals?.maxPct ?? 0;
+  const realMaxPct = deals?.campaignMaxPct ?? 0;
   const hasPercentOff = campaign.discountType === 'percentage' && realMaxPct > 0;
   const hasFixedOff = campaign.discountType === 'fixed' && campaign.discountValue != null;
   const displayedFixedOff = hasFixedOff ? convert(campaign.discountValue as number, campaign.currency ?? 'USD') : null;

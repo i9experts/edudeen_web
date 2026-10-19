@@ -637,6 +637,7 @@ export const UR: Record<string, string> = {
   'No notifications yet': 'ابھی کوئی اطلاع نہیں',
   'You will receive updates here whenever order activity, chat updates, or promotion events occur.': 'آرڈر، پیغامات یا آفرز کی ہر خبر یہاں ملے گی۔',
   'All': 'سب',
+  'Main categories': 'اہم زمرے',
   'Pending': 'زیرِ التوا',
   'Processing': 'تیاری میں',
   'Shipped': 'روانہ',

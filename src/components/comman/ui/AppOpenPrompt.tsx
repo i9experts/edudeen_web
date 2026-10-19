@@ -6,7 +6,10 @@ import { Button } from './Button';
 import { EdudeenIcon } from './EdudeenLogo';
 import { useGooglePlayUrl } from './AppPromoParts';
 
-// Both the interstitial and the edge tab open the Play listing, so they only exist once a public link is configured.
+// Last-resort target (the old internal-testing listing) until the admin sets a public Play link.
+const GOOGLE_PLAY_DEFAULT = 'https://play.google.com/apps/internaltest/4699462862361720775';
+
+// Both the interstitial and the edge tab always show on phones; they open the admin's Play link, else the built-in listing.
 
 // Single source of truth for the Play listing lives in AppPromoParts.
 
@@ -34,10 +37,10 @@ const DISMISS_KEY = 'edudeen_app_open_prompt_dismissed';
  * the tab is about to leave the site anyway.
  */
 export function AppOpenPrompt() {
-  const PLAY_STORE_URL = useGooglePlayUrl();
+  const PLAY_STORE_URL = useGooglePlayUrl() || GOOGLE_PLAY_DEFAULT;
   const [dismissed, setDismissed] = useState(() => sessionStorage.getItem(DISMISS_KEY) === '1');
 
-  if (!PLAY_STORE_URL || dismissed || isIOS()) return null;
+  if (dismissed || isIOS()) return null;
 
   const close = () => {
     sessionStorage.setItem(DISMISS_KEY, '1');
@@ -99,8 +102,8 @@ export function AppOpenPrompt() {
  * dismissed. Always does the same single action: jump straight to the app.
  */
 export function AppOpenFab() {
-  const PLAY_STORE_URL = useGooglePlayUrl();
-  if (!PLAY_STORE_URL || isIOS()) return null;
+  const PLAY_STORE_URL = useGooglePlayUrl() || GOOGLE_PLAY_DEFAULT;
+  if (isIOS()) return null;
   return (
     <button
       onClick={() => { window.location.href = PLAY_STORE_URL; }}

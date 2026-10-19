@@ -78,7 +78,8 @@ function useBrowseState() {
   return { state, update, params };
 }
 
-export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, subcategories, showCategoryFilter, emptyHint, fixedGrade, subcategoryHref = categoryPath, subcategoriesLabel, bannerPlacement }: {
+export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, subcategories, showCategoryFilter, emptyHint, fixedGrade, subcategoryHref = categoryPath, subcategoriesLabel, bannerPlacement, showMainCategories = false }: {
+  showMainCategories?: boolean;
   title: string;
   eyebrow?: string;
   intro?: string | null;
@@ -101,7 +102,11 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
   // The price filter lives in PKR (catalogue currency); the chip shows it in the currency the buyer picked.
   const chipCur = prefCurrency === 'USD' && ratesLoaded ? 'USD' : 'PKR';
   const chipMoney = (pkr: number) => formatPrice(chipCur === 'PKR' ? pkr : Math.round(convertBetween(pkr, 'PKR', chipCur) * 100) / 100, chipCur);
-  const { tree } = useCategoryTree();
+  const { tree, byId } = useCategoryTree();
+  // Main-category switcher (shop views only): main categories that have products; the active one is the root of the open category.
+  const mainCategories = showMainCategories ? tree.filter(c => (c.productCount ?? 0) > 0) : [];
+  const activeRootId = categoryId ? (byId.get(categoryId)?.ancestors[0]?._id ?? categoryId) : '';
+  const pillBase = 'shrink-0 rounded-full border px-4 py-[7px] min-h-11 inline-flex items-center text-[13.5px] font-medium no-underline transition-colors';
   const { isWishlisted, wishlisting, toggleWishlist } = useWishlistContext();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [products, setProducts] = useState<MarketplaceProduct[]>([]);
@@ -209,6 +214,28 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
           <h1 className="font-serif font-normal text-[28px] md:text-[36px] leading-[1.15] text-carbon text-balance">{title}</h1>
           {intro && <p className="text-[14.5px] text-graphite mt-2 max-w-[70ch]">{intro}</p>}
         </header>
+
+        {mainCategories.length > 0 && (
+          <nav aria-label="Main categories" className="mb-3"><ScrollRow className="flex gap-2 pb-2">
+            <Link
+              to="/?browse=1"
+              aria-current={!activeRootId ? 'page' : undefined}
+              className={clsx(pillBase, !activeRootId ? 'border-brand-royal bg-brand-royal text-white' : 'border-bone bg-white text-carbon hover:border-brand-orange hover:text-brand-orange')}
+            >
+              {t('All')}
+            </Link>
+            {mainCategories.map(c => (
+              <Link
+                key={c._id}
+                to={categoryPath(c)}
+                aria-current={c._id === activeRootId ? 'page' : undefined}
+                className={clsx(pillBase, c._id === activeRootId ? 'border-brand-royal bg-brand-royal text-white' : 'border-bone bg-white text-carbon hover:border-brand-orange hover:text-brand-orange')}
+              >
+                {c.name}
+              </Link>
+            ))}
+          </ScrollRow></nav>
+        )}
 
         {subcategories && subcategories.length > 0 && (
           <nav aria-label={subcategoriesLabel ?? 'Subcategories'} className="mb-4"><ScrollRow className="flex gap-2 pb-2">

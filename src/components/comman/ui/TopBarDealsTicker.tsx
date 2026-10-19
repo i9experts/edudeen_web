@@ -84,7 +84,7 @@ function SaleTicker({ className }: { className?: string }) {
     const sales = deals.campaigns.map<TickerItem>(c => {
       // "Up to X% off" is the REAL biggest discount among the items on sale (never the number typed into the campaign).
       const off = c.discountType === 'percentage' && c.discountValue != null
-        ? upToLabel(deals.maxPct)
+        ? upToLabel(deals.campaignMaxPct)
         : c.discountType === 'fixed' && c.discountValue != null
           ? `${formatMoney(Math.round(convert(c.discountValue, c.currency ?? 'USD')), currency)} off`
           : null;

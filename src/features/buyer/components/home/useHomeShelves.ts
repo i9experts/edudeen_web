@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { apiGetBestsellers, apiGetFreeResources, type MarketplaceProduct } from '@/api/services/marketplace';
+import { apiGetBestsellers, type MarketplaceProduct } from '@/api/services/marketplace';
 import { apiGetPublicBundles, type PublicBundle } from '@/api/services/classroom';
 
 export interface Shelf<T> { items: T[]; loading: boolean }
@@ -23,7 +23,6 @@ function useShelf<T>(load: () => Promise<T[]>): Shelf<T> {
 export function useHomeShelves() {
   // 24 candidates each: the page de-duplicates across sections and then shows the first few of what is left.
   const bestsellers = useShelf<MarketplaceProduct>(() => apiGetBestsellers(24).then(r => r.data?.products ?? []));
-  const free = useShelf<FreeProduct>(() => apiGetFreeResources(24).then(r => r.data?.products ?? []));
   const bundles = useShelf<PublicBundle>(() => apiGetPublicBundles(6).then(r => r.data ?? []));
-  return { bestsellers, free, bundles };
+  return { bestsellers, bundles };
 }

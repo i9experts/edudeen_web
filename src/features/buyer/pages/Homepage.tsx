@@ -12,7 +12,7 @@ import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-do
 import { X } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useIsBuyer } from '@/hooks/auth/useIsBuyer';
-import { useLanguage, useT } from '@/contexts/languageCtx';
+import { useLanguage } from '@/contexts/languageCtx';
 import { useTopBarDeals } from '@/hooks/useTopBarDeals';
 import { usePremiumDeals } from '@/hooks/usePremiumDeals';
 import { apiSearchProducts } from '@/api/services/search';
@@ -51,15 +51,13 @@ import { RevealStagger } from '@/components/comman/motion/Reveal';
 import { PickedForChildRail } from '@/features/buyer/components/PickedForChildRail';
 import { ShoppingForBar } from '@/features/buyer/components/ShoppingForBar';
 import { HomeHero, HomeHeroSkeleton } from '@/features/buyer/components/home/HomeHero';
-import { ShopByGrade } from '@/features/buyer/components/home/ShopByGrade';
 import { ShopByCategory } from '@/features/buyer/components/home/ShopByCategory';
 import { ProductShelf } from '@/features/buyer/components/home/ProductShelf';
 import { BundlesShelf } from '@/features/buyer/components/home/BundlesShelf';
 import { PaymentTrustStrip } from '@/features/buyer/components/home/PaymentTrustStrip';
 import { RecentlyViewedRail } from '@/features/buyer/components/home/RecentlyViewedRail';
-import { AppNotifyStrip } from '@/features/buyer/components/home/AppNotifyStrip';
 import { HomeNewsletter } from '@/features/buyer/components/home/HomeNewsletter';
-import { useHomeShelves, type FreeProduct } from '@/features/buyer/components/home/useHomeShelves';
+import { useHomeShelves } from '@/features/buyer/components/home/useHomeShelves';
 import { dedupeInOrder, soldLabel } from '@/features/buyer/components/home/homeRules';
 
 // Text lives in admin-edit/homeDefaults.ts (shared with the inline editor).
@@ -153,7 +151,6 @@ function HomeLanding() {
   const hc = publicConfig?.homeContent ?? {};
   const trustItems = TRUST_ITEMS.map((d, i) => ({ ...d, ...effectiveHomeContent(hc).trustItems[i] }));
   const navigate = useNavigate();
-  const t = useT();
   // Edudeen's curated, seasonal shelves ("Exam ki tayyari" etc.), set by the admin team.
   const [shelves, setShelves] = useState<CuratedShelf[]>([]);
   useEffect(() => { apiGetHomeShelves().then(res => setShelves(res.data ?? [])).catch(() => {}); }, []);
@@ -246,15 +243,14 @@ function HomeLanding() {
   // ("Browse everything") is the complete list and is deliberately left out of this.
   const homeShelves = useHomeShelves();
   const unique = dedupeInOrder<string, MarketplaceProduct>(
-    ['flash', 'bestsellers', 'free', 'featured', ...shelves.map(s => `shelf-${s._id}`)],
+    ['flash', 'bestsellers', 'featured', ...shelves.map(s => `shelf-${s._id}`)],
     {
       flash: flashDeals.map(d => d.product),
       bestsellers: homeShelves.bestsellers.items,
-      free: homeShelves.free.items,
       featured,
       ...Object.fromEntries(shelves.map(s => [`shelf-${s._id}`, s.products])),
     },
-    { bestsellers: 5, free: 5, featured: 5, ...Object.fromEntries(shelves.map(s => [`shelf-${s._id}`, 5])) },
+    { bestsellers: 5, featured: 5, ...Object.fromEntries(shelves.map(s => [`shelf-${s._id}`, 5])) },
   );
 
   // ── Catalogue section filters ──
@@ -518,8 +514,7 @@ function HomeLanding() {
         </div>
         </EditableHomeSection>
 
-        {/* ── 1-2. Shop by grade, shop by category ── */}
-        <ShopByGrade categories={categories} />
+        {/* ── Shop by category ── */}
         <ShopByCategory categories={categories} loading={!categoriesLoaded} />
 
         {/* While an admin has the flash sale / deals under maintenance, their message replaces this block. */}
@@ -575,12 +570,131 @@ function HomeLanding() {
           items={unique.bestsellers} loading={homeShelves.bestsellers.loading} renderCard={renderResourceCard}
           note={p => { const s = soldLabel(p.purchaseCount); return s ? <p className="text-[12px] text-slate mt-1 mb-0">{s}</p> : null; }}
         />
-        <ProductShelf
-          eyebrow="Try before you buy" title="Free resources"
-          action={{ label: 'View all', onClick: () => navigate('/?free=1') }}
-          items={unique.free as FreeProduct[]} loading={homeShelves.free.loading} renderCard={renderResourceCard}
-          note={p => ((p as FreeProduct).freeKind === 'sample' ? <p className="text-[12px] font-semibold text-brand-green mt-1 mb-0">{t('Free sample')}</p> : null)}
-        />
+        {/* ── Browse everything: category tabs + filters + 12 per page with "Show more". Sits right under Bestsellers. ── */}
+        <section ref={resourcesRef} id="browse" className="scroll-mt-[150px] mb-12">
+          <SectionHead
+            eyebrow={searchQ ? 'Search results' : campaignId ? (activeCampaign?.name ?? 'Sale') : subjectTab ? subjectTab.label : 'Your next teaching moment'}
+            title="Browse everything"
+            sub="Filter by subject, grade, language and price."
+          />
+
+          <EditableCategories onChanged={reloadCategories} className="mb-5">
+          <CategoryTabs
+            tabs={shopTabs}
+            activeId={subjectTab && !shopTabs.some(t => t.id === subjectTab.id) ? null : subject}
+            onSelect={selectSubject}
+            className="!px-0 mb-5"
+          />
+          </EditableCategories>
+
+          <div className="flex gap-[10px] flex-wrap mb-6 items-center">
+            <FiltersButton count={pageFilterCount + drawerFilterCount} onClick={() => setFiltersOpen(true)} />
+            {campaignId && (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#F4DC4C] text-[#152D43] text-[13px] font-semibold ps-3 pe-1.5 py-[6px]">
+                Sale: {activeCampaign?.name ?? 'Selected sale'}
+                <button onClick={clearCampaign} aria-label="Clear sale filter" className="size-5 rounded-full flex items-center justify-center bg-transparent border-none cursor-pointer hover:bg-white/60">
+                  <X size={13} />
+                </button>
+              </span>
+            )}
+            {searchQ && (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-pale-orange text-carbon text-[13px] font-semibold ps-3 pe-1.5 py-[6px]">
+                “{searchQ}”
+                <button onClick={clearSearch} aria-label="Clear search" className="size-5 rounded-full flex items-center justify-center bg-transparent border-none cursor-pointer hover:bg-white/70">
+                  <X size={13} />
+                </button>
+              </span>
+            )}
+            {subjectTab && !shopTabs.some(t => t.id === subjectTab.id) && (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-pale-orange text-carbon text-[13px] font-semibold ps-3 pe-1.5 py-[6px]">
+                {subjectTab.label}
+                <button onClick={() => setSubject(null)} aria-label="Clear category" className="size-5 rounded-full flex items-center justify-center bg-transparent border-none cursor-pointer hover:bg-white/70">
+                  <X size={13} />
+                </button>
+              </span>
+            )}
+            {hasFilters && (
+              <button onClick={resetFilters} className="bg-transparent border-none p-0 text-[13px] text-slate underline cursor-pointer">
+                Clear filters
+              </button>
+            )}
+            <span className="w-full sm:w-auto sm:ms-auto text-[14px] text-slate" aria-live="polite">
+              {loading ? 'Loading…' : `${total} resource${total === 1 ? '' : 's'}`}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-[14px] gap-y-[25px] md:gap-x-[22px] md:gap-y-[28px]">
+            {loading && products.length === 0
+              ? Array.from({ length: 8 }).map((_, i) => <ResourceCardSkeleton key={i} />)
+              : products.length === 0
+                ? (
+                  <div className="col-span-full p-[50px] text-center bg-cream rounded-xl">
+                    <h3 className="text-[17px] font-bold text-carbon mb-2">No resources match just yet.</h3>
+                    <p className="text-[14px] text-slate mb-4">Try a different subject or clear your filters.</p>
+                    {hasFilters && (
+                      <button onClick={resetFilters} className="bg-white text-brand-orange border border-[#c5d2db] rounded-lg px-5 py-[11px] text-[14px] font-bold cursor-pointer">
+                        Clear filters
+                      </button>
+                    )}
+                  </div>
+                )
+                : products.map(renderResourceCard)}
+          </div>
+
+          {products.length > 0 && products.length < total && (
+            <div className="flex justify-center mt-9">
+              <button
+                onClick={() => setLimit(l => l + PAGE_SIZE)}
+                disabled={loading}
+                className="bg-white text-brand-orange border border-[#c5d2db] rounded-lg px-5 py-[11px] text-[14px] font-bold cursor-pointer disabled:opacity-60"
+              >
+                {loading ? 'Loading…' : 'Show more resources'}
+              </button>
+            </div>
+          )}
+
+          <FiltersDrawer
+            open={filtersOpen}
+            onClose={() => setFiltersOpen(false)}
+            filters={filters}
+            onChange={setFilters}
+            onClear={resetFilters}
+            total={total}
+            extraActiveCount={pageFilterCount}
+          >
+            <Section title="Subject">
+              <RadioRow name="f-subject" label="All resources" checked={!subject} onChange={() => setSubject(null)} />
+              {shopTabs.map(t => (
+                <RadioRow key={t.id} name="f-subject" label={t.label} checked={subject === t.id} onChange={() => setSubject(t.id)} />
+              ))}
+            </Section>
+
+            <Section title="Age & grade">
+              <RadioRow name="f-level" label="All ages & grades" checked={!level} onChange={() => setLevel('')} />
+              {EDUCATION_LEVELS.filter(l => l.value !== 'other').map(l => (
+                <RadioRow key={l.value} name="f-level" label={l.label} checked={level === l.value} onChange={() => setLevel(l.value)} />
+              ))}
+            </Section>
+
+            <Section title="Language">
+              <RadioRow name="f-lang" label="All languages" checked={!language} onChange={() => setLanguage('')} />
+              {LANGUAGES.map(l => (
+                <RadioRow key={l.value} name="f-lang" label={l.label} checked={language === l.value} onChange={() => setLanguage(l.value)} />
+              ))}
+            </Section>
+
+            <Section title="Sort by">
+              {(Object.keys(SORT_LABELS) as SortFilter[]).map(s => (
+                <RadioRow key={s} name="f-sort" label={SORT_LABELS[s]} checked={sort === s} onChange={() => setSort(s)} />
+              ))}
+            </Section>
+
+            <Section title="Price type">
+              <CheckRow label="Free resources" checked={freeOnly} onChange={() => setFreeOnly(v => !v)} />
+            </Section>
+          </FiltersDrawer>
+        </section>
+
         <BundlesShelf bundles={homeShelves.bundles.items} loading={homeShelves.bundles.loading} />
 
         {/* ── Picked for the active child (My children) ── */}
@@ -707,134 +821,10 @@ function HomeLanding() {
             </RevealStagger>
           </section>
         )}
-        {/* ── Recently viewed (only when the visitor has some) + the app strip ── */}
+        {/* ── Recently viewed (only when the visitor has some) ── */}
         <RecentlyViewedRail />
-        <AppNotifyStrip />
 
-        {/* ── Browse everything: category tabs + filters + 12 per page with "Show more". LAST content section before the newsletter. ── */}
-        <section ref={resourcesRef} id="browse" className="scroll-mt-[150px] mb-4">
-          <SectionHead
-            eyebrow={searchQ ? 'Search results' : campaignId ? (activeCampaign?.name ?? 'Sale') : subjectTab ? subjectTab.label : 'Your next teaching moment'}
-            title="Browse everything"
-            sub="Filter by subject, grade, language and price."
-          />
 
-          <EditableCategories onChanged={reloadCategories} className="mb-5">
-          <CategoryTabs
-            tabs={shopTabs}
-            activeId={subjectTab && !shopTabs.some(t => t.id === subjectTab.id) ? null : subject}
-            onSelect={selectSubject}
-            className="!px-0 mb-5"
-          />
-          </EditableCategories>
-
-          <div className="flex gap-[10px] flex-wrap mb-6 items-center">
-            <FiltersButton count={pageFilterCount + drawerFilterCount} onClick={() => setFiltersOpen(true)} />
-            {campaignId && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#F4DC4C] text-[#152D43] text-[13px] font-semibold ps-3 pe-1.5 py-[6px]">
-                Sale: {activeCampaign?.name ?? 'Selected sale'}
-                <button onClick={clearCampaign} aria-label="Clear sale filter" className="size-5 rounded-full flex items-center justify-center bg-transparent border-none cursor-pointer hover:bg-white/60">
-                  <X size={13} />
-                </button>
-              </span>
-            )}
-            {searchQ && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-pale-orange text-carbon text-[13px] font-semibold ps-3 pe-1.5 py-[6px]">
-                “{searchQ}”
-                <button onClick={clearSearch} aria-label="Clear search" className="size-5 rounded-full flex items-center justify-center bg-transparent border-none cursor-pointer hover:bg-white/70">
-                  <X size={13} />
-                </button>
-              </span>
-            )}
-            {subjectTab && !shopTabs.some(t => t.id === subjectTab.id) && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-pale-orange text-carbon text-[13px] font-semibold ps-3 pe-1.5 py-[6px]">
-                {subjectTab.label}
-                <button onClick={() => setSubject(null)} aria-label="Clear category" className="size-5 rounded-full flex items-center justify-center bg-transparent border-none cursor-pointer hover:bg-white/70">
-                  <X size={13} />
-                </button>
-              </span>
-            )}
-            {hasFilters && (
-              <button onClick={resetFilters} className="bg-transparent border-none p-0 text-[13px] text-slate underline cursor-pointer">
-                Clear filters
-              </button>
-            )}
-            <span className="w-full sm:w-auto sm:ms-auto text-[14px] text-slate" aria-live="polite">
-              {loading ? 'Loading…' : `${total} resource${total === 1 ? '' : 's'}`}
-            </span>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-[14px] gap-y-[25px] md:gap-x-[22px] md:gap-y-[28px]">
-            {loading && products.length === 0
-              ? Array.from({ length: 8 }).map((_, i) => <ResourceCardSkeleton key={i} />)
-              : products.length === 0
-                ? (
-                  <div className="col-span-full p-[50px] text-center bg-cream rounded-xl">
-                    <h3 className="text-[17px] font-bold text-carbon mb-2">No resources match just yet.</h3>
-                    <p className="text-[14px] text-slate mb-4">Try a different subject or clear your filters.</p>
-                    {hasFilters && (
-                      <button onClick={resetFilters} className="bg-white text-brand-orange border border-[#c5d2db] rounded-lg px-5 py-[11px] text-[14px] font-bold cursor-pointer">
-                        Clear filters
-                      </button>
-                    )}
-                  </div>
-                )
-                : products.map(renderResourceCard)}
-          </div>
-
-          {products.length > 0 && products.length < total && (
-            <div className="flex justify-center mt-9">
-              <button
-                onClick={() => setLimit(l => l + PAGE_SIZE)}
-                disabled={loading}
-                className="bg-white text-brand-orange border border-[#c5d2db] rounded-lg px-5 py-[11px] text-[14px] font-bold cursor-pointer disabled:opacity-60"
-              >
-                {loading ? 'Loading…' : 'Show more resources'}
-              </button>
-            </div>
-          )}
-
-          <FiltersDrawer
-            open={filtersOpen}
-            onClose={() => setFiltersOpen(false)}
-            filters={filters}
-            onChange={setFilters}
-            onClear={resetFilters}
-            total={total}
-            extraActiveCount={pageFilterCount}
-          >
-            <Section title="Subject">
-              <RadioRow name="f-subject" label="All resources" checked={!subject} onChange={() => setSubject(null)} />
-              {shopTabs.map(t => (
-                <RadioRow key={t.id} name="f-subject" label={t.label} checked={subject === t.id} onChange={() => setSubject(t.id)} />
-              ))}
-            </Section>
-
-            <Section title="Age & grade">
-              <RadioRow name="f-level" label="All ages & grades" checked={!level} onChange={() => setLevel('')} />
-              {EDUCATION_LEVELS.filter(l => l.value !== 'other').map(l => (
-                <RadioRow key={l.value} name="f-level" label={l.label} checked={level === l.value} onChange={() => setLevel(l.value)} />
-              ))}
-            </Section>
-
-            <Section title="Language">
-              <RadioRow name="f-lang" label="All languages" checked={!language} onChange={() => setLanguage('')} />
-              {LANGUAGES.map(l => (
-                <RadioRow key={l.value} name="f-lang" label={l.label} checked={language === l.value} onChange={() => setLanguage(l.value)} />
-              ))}
-            </Section>
-
-            <Section title="Sort by">
-              {(Object.keys(SORT_LABELS) as SortFilter[]).map(s => (
-                <RadioRow key={s} name="f-sort" label={SORT_LABELS[s]} checked={sort === s} onChange={() => setSort(s)} />
-              ))}
-            </Section>
-
-            <Section title="Price type">
-              <CheckRow label="Free resources" checked={freeOnly} onChange={() => setFreeOnly(v => !v)} />
-            </Section>
-          </FiltersDrawer>
-        </section>
 
       </main>
 

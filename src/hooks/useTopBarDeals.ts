@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { apiGetPublicActiveCampaigns, type PublicCampaign } from '@/api/services/marketing/publicCampaigns';
 import { apiGetAllProducts, type MarketplaceProduct } from '@/api/services/marketplace';
-import { productSalePct, maxSalePct } from '@/utils/saleMath';
+import { productSalePct, platformSalePct, maxSalePct } from '@/utils/saleMath';
 import { timeLeftText } from '@/utils/countdown';
 
 export interface TopBarFlashDeal {
@@ -19,6 +19,9 @@ export interface TopBarDeals {
   /** The REAL largest discount among the items on sale right now (0 = nothing discounted). The one number
    *  every "Up to X% off" label uses. */
   maxPct: number;
+  /** Largest discount among products in a PLATFORM (admin) sale only - seller compare-at discounts are excluded.
+   *  Used by the Mega Sale banner / sale label. 0 = no product has a running platform sale price. */
+  campaignMaxPct: number;
 }
 
 const TTL_MS = 5 * 60 * 1000;
@@ -43,6 +46,7 @@ function load(): Promise<TopBarDeals> {
       flashDeals: allDeals.slice(0, 5),
       allDeals,
       maxPct: maxSalePct(allDeals),
+      campaignMaxPct: maxSalePct(products.map(p => ({ pct: platformSalePct(p) }))),
     };
     cache = { at: Date.now(), data };
     return data;

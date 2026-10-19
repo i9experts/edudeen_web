@@ -92,6 +92,7 @@ export function HomeBrowse() {
           categoryId={entry.node._id}
           subcategories={subs.filter(s => s._id !== entry.node._id)}
           showCategoryFilter={false}
+          showMainCategories
           bannerPlacement="categoryHero"
           emptyHint="Sellers haven't listed anything in this category yet."
         />
@@ -106,6 +107,7 @@ export function HomeBrowse() {
         eyebrow={q ? 'Search' : undefined}
         breadcrumb={crumbs}
         showCategoryFilter
+        showMainCategories
         bannerPlacement="marketplaceHero"
         emptyHint="Check the spelling, or try a broader word like “maths” or “Quran”."
       />

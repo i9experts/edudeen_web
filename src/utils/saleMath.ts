@@ -23,6 +23,15 @@ export function productSalePct(p: Pick<MarketplaceProduct, 'variants'>): number 
   return variantSalePct(variants.find(v => v.isDefault) ?? variants[0]);
 }
 
+/** Discount from a running PLATFORM sale only (campaignPrice off the normal price); the seller's own compare-at is ignored. */
+export function platformSalePct(p: Pick<MarketplaceProduct, 'variants'>): number {
+  const variants = (p.variants ?? []) as SaleVariant[];
+  const v = variants.find(x => x.isDefault) ?? variants[0];
+  if (!v || typeof v.price !== 'number' || v.price <= 0) return 0;
+  if (typeof v.campaignPrice !== 'number' || !(v.campaignPrice >= 0 && v.campaignPrice < v.price)) return 0;
+  return Math.round((1 - v.campaignPrice / v.price) * 100);
+}
+
 /** Largest discount among the given sale items (0 when none is on sale). */
 export function maxSalePct(items: Array<{ pct: number }> | Array<Pick<MarketplaceProduct, 'variants'>>): number {
   let max = 0;
