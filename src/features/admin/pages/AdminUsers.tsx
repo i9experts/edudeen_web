@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { StaffNotes } from '@/features/admin/components/StaffNotes';
 import { useSearchParams } from 'react-router-dom';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useAdminUsersStats, useAdminUsersList, useAdminUserActions, useAdminUserDetail } from '@/hooks/admin/useAdminUsers';
@@ -139,6 +140,7 @@ function AccountDetailModal({ account, onClose, onChanged }: { account: AccountR
           </p>
         )}
         {error && <p className="text-[12px] text-error">{error}</p>}
+        <StaffNotes entityType={account.role === 'seller' ? 'seller' : 'user'} entityId={account.id} className="pt-3 border-t border-bone" />
       </div>
     </Modal>
   );

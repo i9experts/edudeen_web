@@ -7,11 +7,12 @@ import { useToast } from '@/contexts/ToastContext';
 import { useAdminAccess, loadAdminAccess } from '@/hooks/admin/useAdminAccess';
 import {
   apiStaffList, apiStaffRoles, apiStaffPermissions, apiInviteStaff, apiUpdateStaff, apiStaffAction, apiRemoveStaff, apiSaveStaffRole, apiDeleteStaffRole,
-  apiStaffTasks, apiCreateStaffTask, apiUpdateStaffTask, apiCommentStaffTask, apiDeleteStaffTask, apiStaffAudit,
-  type StaffMember, type StaffRole, type PermissionDef, type StaffTask, type AuditRow, type InviteResult,
+  apiStaffUnreadTasks, apiStaffMarkTasksSeen, apiApprovalCount, apiStaffTasks, apiCreateStaffTask, apiUpdateStaffTask, apiCommentStaffTask, apiDeleteStaffTask, apiStaffAudit,
+  type StaffMember, type StaffRole, type PermissionDef, type StaffTask, type AuditRow, type InviteResult, type WorkHours,
 } from '@/api/services/staff';
+import { ApprovalsTab, SecurityTab, NotesTab, RestrictionFields, parseIps } from './CollaborationExtras';
 
-const TABS = ['team', 'roles', 'tasks', 'activity'] as const;
+const TABS = ['team', 'roles', 'tasks', 'approvals', 'notes', 'activity', 'security'] as const;
 type Tab = (typeof TABS)[number];
 const STATUS_TONE: Record<string, string> = { active: 'bg-green-50 text-success', invited: 'bg-amber-50 text-amber-700', suspended: 'bg-red-50 text-error' };
 const fmt = (d?: string | null) => (d ? new Date(d).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : '—');
@@ -45,7 +46,7 @@ function TeamTab({ isOwner }: { isOwner: boolean }) {
   const [roles, setRoles] = useState<StaffRole[]>([]);
   const [catalog, setCatalog] = useState<PermissionDef[]>([]);
   const [editing, setEditing] = useState<StaffMember | 'new' | null>(null);
-  const [invite, setInvite] = useState<{ email: string; token: string } | null>(null);
+  const [invite, setInvite] = useState<{ email: string; token: string; emailSent?: boolean } | null>(null);
   const load = useCallback(() => {
     Promise.all([apiStaffList(), apiStaffRoles(), apiStaffPermissions()]).then(([a, b, c]) => { setRows(a.data); setRoles(b.data); setCatalog(c.data); }).catch(e => { toast.error(err(e, 'Could not load the team.')); setRows([]); });
   }, [toast]);
@@ -57,7 +58,7 @@ function TeamTab({ isOwner }: { isOwner: boolean }) {
     if (warn && !window.confirm(warn)) return;
     try {
       const r = await apiStaffAction(m._id, action);
-      if (r.data.inviteToken) setInvite({ email: m.email, token: r.data.inviteToken });
+      if (r.data.inviteToken) setInvite({ email: m.email, token: r.data.inviteToken, emailSent: r.data.emailSent });
       toast.success('Done'); load(); loadAdminAccess(true);
     } catch (e) { toast.error(err(e, 'Could not do that.')); }
   };
@@ -79,6 +80,7 @@ function TeamTab({ isOwner }: { isOwner: boolean }) {
               <p className="text-[14px] font-bold text-carbon m-0">{m.name} <span className="font-normal text-slate text-[12.5px]">· {m.email}</span></p>
               <p className="text-[12px] text-slate m-0 mt-0.5">
                 {m.roleName}{m.accessExpiresAt && ` · access ends ${fmt(m.accessExpiresAt)}`} · last sign-in {fmt(m.lastLoginAt)}
+                {((m.allowedIps?.length ?? 0) > 0 || m.workHours) && <span className="ms-1 text-brand-royal" title="This person has IP or working-hours limits"> · limited{(m.allowedIps?.length ?? 0) > 0 ? ` (${m.allowedIps.length} IP)` : '}{m.workHours ? ` (${m.workHours.from}–${m.workHours.to})` : '}</span>}
               </p>
             </div>
             <span className={clsx('rounded-full px-2.5 py-[3px] text-[11.5px] font-semibold capitalize', m.isOwner ? 'bg-brand-pale-orange text-brand-orange' : STATUS_TONE[m.staffStatus])}>{m.isOwner ? 'Owner' : m.staffStatus}</span>
@@ -97,11 +99,11 @@ function TeamTab({ isOwner }: { isOwner: boolean }) {
         ))}
       </div>
       {editing && <StaffEditor member={editing === 'new' ? null : editing} roles={roles} catalog={catalog} onClose={() => setEditing(null)}
-        onSaved={(res) => { setEditing(null); if (res) setInvite({ email: res.staff.email, token: res.inviteToken }); load(); loadAdminAccess(true); }} />}
+        onSaved={(res) => { setEditing(null); if (res) setInvite({ email: res.staff.email, token: res.inviteToken, emailSent: res.emailSent }); load(); loadAdminAccess(true); }} />}
       {invite && (
         <Modal title="Invitation link" onClose={() => setInvite(null)} footer={<Button variant="primary" onClick={() => setInvite(null)}>Done</Button>}>
           <div className="px-5 py-4 flex flex-col gap-3">
-            <p className="text-[13px] text-charcoal m-0">Send this link to <b>{invite.email}</b>. It works once and expires in 48 hours. They choose a password and set up two-step sign-in.</p>
+            <p className="text-[13px] text-charcoal m-0">{invite.emailSent ? <>We emailed this invitation to <b>{invite.email}</b>. You can also copy the link below.</> : <>The email could not be sent, so send this link to <b>{invite.email}</b> yourself.</>} It works once and expires in 48 hours. They choose a password and set up two-step sign-in.</p>
             <div className="flex gap-2"><input readOnly value={link(invite.token)} className="flex-1 min-w-0 border border-bone rounded-lg px-3 py-2 text-[12.5px]" onFocus={e => e.currentTarget.select()} />
               <Button size="sm" variant="outline" icon={<Copy size={13} />} onClick={() => { void navigator.clipboard?.writeText(link(invite.token)); toast.success('Link copied'); }}>Copy</Button></div>
             <p className="text-[12px] text-slate m-0">Treat the link like a password — anyone who opens it first can claim the account.</p>
@@ -120,6 +122,8 @@ function StaffEditor({ member, roles, catalog, onClose, onSaved }: { member: Sta
   const [extra, setExtra] = useState<string[]>(member?.permissionsAdd ?? []);
   const [removed, setRemoved] = useState<string[]>(member?.permissionsRemove ?? []);
   const [expires, setExpires] = useState(member?.accessExpiresAt ? member.accessExpiresAt.slice(0, 10) : '');
+  const [ips, setIps] = useState((member?.allowedIps ?? []).join('\n'));
+  const [hours, setHours] = useState<WorkHours | null>(member?.workHours ?? null);
   const [busy, setBusy] = useState(false);
   const role = roles.find(r => r._id === roleId);
   const base = role?.permissions ?? [];
@@ -132,7 +136,7 @@ function StaffEditor({ member, roles, catalog, onClose, onSaved }: { member: Sta
   const save = async () => {
     setBusy(true);
     try {
-      const body = { name, roleId, permissionsAdd: extra, permissionsRemove: removed, accessExpiresAt: expires ? new Date(`${expires}T23:59:59`).toISOString() : null };
+      const body = { name, roleId, permissionsAdd: extra, permissionsRemove: removed, accessExpiresAt: expires ? new Date(`${expires}T23:59:59`).toISOString() : null, allowedIps: parseIps(ips), workHours: hours };
       if (member) { await apiUpdateStaff(member._id, body); toast.success('Access updated — it applies the next time they sign in'); onSaved(); }
       else { const r = await apiInviteStaff({ ...body, email }); onSaved(r.data); }
     } catch (e) { toast.error(err(e, 'Could not save.')); } finally { setBusy(false); }
@@ -149,6 +153,7 @@ function StaffEditor({ member, roles, catalog, onClose, onSaved }: { member: Sta
           {role && <span className="block text-[12px] font-normal text-slate mt-1">{role.description}</span>}
         </label>
         <Input label="Access ends on (optional)" type="date" value={expires} onChange={e => setExpires(e.target.value)} />
+        <RestrictionFields ips={ips} setIps={setIps} hours={hours} setHours={setHours} />
         <div>
           <p className="text-[12.5px] font-semibold text-charcoal m-0 mb-1">What they can do <span className="font-normal text-slate">— start from the role, then tick or untick for this person</span></p>
           <PermissionPicker catalog={catalog} value={effective} onChange={setEffective} />
@@ -215,6 +220,7 @@ function TasksTab({ canAssign }: { canAssign: boolean }) {
   const [f, setF] = useState({ title: '', description: '', assigneeId: '', priority: 'normal', dueAt: '', linkType: 'other', linkId: '' });
   const load = useCallback(() => { apiStaffTasks(scope).then(r => setTasks(r.data)).catch(e => { toast.error(err(e, 'Could not load tasks.')); setTasks([]); }); }, [scope, toast]);
   useEffect(load, [load]);
+  useEffect(() => { void apiStaffMarkTasksSeen(); }, []); // opening the board clears the 'new' count
   useEffect(() => { if (canAssign) apiStaffList().then(r => setPeople(r.data.filter(p => p.staffStatus !== 'suspended' && p.staffStatus !== 'invited'))).catch(() => {}); }, [canAssign]);
   const create = async () => {
     try {
@@ -320,7 +326,15 @@ export function CollaborationPage() {
   const { me, isOwner, can } = useAdminAccess();
   const [tab, setTab] = useState<Tab>('team');
   const canAssign = isOwner || can('tasks.assign');
-  const label: Record<Tab, string> = { team: 'Team', roles: 'Roles & rights', tasks: 'Tasks', activity: 'Activity' };
+const [counts, setCounts] = useState({ unread: 0, approvals: 0 });
+  useEffect(() => {
+    const poll = () => { void Promise.all([apiStaffUnreadTasks().catch(() => null), apiApprovalCount().catch(() => null)]).then(([u, a]) => setCounts({ unread: u?.data.count ?? 0, approvals: a?.data.pending ?? 0 })); };
+    poll(); const id = window.setInterval(poll, 60_000); return () => window.clearInterval(id);
+  }, [tab]);
+  const label: Record<Tab, string> = {
+    team: 'Team', roles: 'Roles & rights', tasks: counts.unread ? `Tasks (${counts.unread} new)` : 'Tasks', approvals: counts.approvals ? `Approvals (${counts.approvals})` : 'Approvals',
+    notes: 'Notes', activity: 'Activity', security: 'Security',
+  };
   return (
     <div className="px-4 md:px-8 py-6">
       <p className="text-[12px] font-bold uppercase tracking-[0.15em] text-brand-royal m-0">Edudeen team workspace</p>
@@ -334,7 +348,10 @@ export function CollaborationPage() {
       {tab === 'team' && <TeamTab isOwner={isOwner} />}
       {tab === 'roles' && <RolesTab isOwner={isOwner} />}
       {tab === 'tasks' && <TasksTab canAssign={canAssign} />}
+      {tab === 'approvals' && <ApprovalsTab />}
+      {tab === 'notes' && <NotesTab />}
       {tab === 'activity' && <ActivityTab />}
+      {tab === 'security' && <SecurityTab />}
     </div>
   );
 }

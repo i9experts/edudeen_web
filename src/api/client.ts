@@ -119,6 +119,11 @@ client.interceptors.response.use(
         status: res.status,
       });
     }
+    // A staff member's sensitive action was turned into an approval request instead of running.
+    try {
+      const d = res.data as { approvalRequired?: boolean; message?: string };
+      if (d.approvalRequired) window.dispatchEvent(new CustomEvent('edudeen:approval-required', { detail: d.message ?? 'Sent for approval.' }));
+    } catch { /* ignore */ }
     // Admin inline-edit writes: tell the Edit-mode toolbar so it can show "Saved".
     try {
       if (res.config?.headers?.get?.('X-Inline-Edit') && (res.config.method ?? 'get').toLowerCase() !== 'get') {

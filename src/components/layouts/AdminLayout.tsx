@@ -1,4 +1,5 @@
 import { useState, useEffect, Suspense } from 'react';
+import { useToast } from '@/contexts/ToastContext';
 import { useAdminAccess, navAllowed } from '@/hooks/admin/useAdminAccess';
 import { Outlet, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { clsx } from 'clsx';
@@ -575,6 +576,12 @@ function AdminSidebar({ open, onToggle }: AdminSidebarProps) {
 
 export function AdminLayout() {
   useAdminAccess(); // loads the signed-in person's permissions; the sidebar hides what they can't use
+  const approvalToast = useToast();
+  useEffect(() => {
+    const on = (e: Event) => approvalToast.success(String((e as CustomEvent).detail ?? 'Sent for approval.'));
+    window.addEventListener('edudeen:approval-required', on);
+    return () => window.removeEventListener('edudeen:approval-required', on);
+  }, [approvalToast]);
   // Only the dashboard's own content area scrolls — never the page around it.
   useLockPageScroll();
   const { pathname: currentPath } = useLocation();
