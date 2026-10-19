@@ -114,9 +114,9 @@ export function AdminLoginPage() {
         </div>
       </div>
 
-      {(totp || /authenticator|wrong code/i.test(apiError ?? '')) && (
+      {(totp || /authenticator|wrong code|emailed|sign-in code/i.test(apiError ?? '')) && (
         <div className="mt-4">
-          <Input id="admin-login-totp" label="Authenticator code" placeholder="6-digit code (or a recovery code)" autoComplete="one-time-code" inputMode="numeric" value={totp} onChange={e => setTotp(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSubmit()} />
+          <Input id="admin-login-totp" label="Sign-in code" placeholder="6-digit code from your email (or authenticator)" autoComplete="one-time-code" inputMode="numeric" value={totp} onChange={e => setTotp(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSubmit()} />
           <p className="text-[12px] text-slate mt-1.5 mb-0">Staff accounts use two-step sign-in. Open your authenticator app for the code.</p>
         </div>
       )}
