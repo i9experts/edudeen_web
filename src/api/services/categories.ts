@@ -24,6 +24,8 @@ export interface CategoryNode extends Category {
   children: CategoryNode[];
   /** Active products in this category plus all of its descendants — attached server-side. */
   productCount?: number;
+  /** First photo of a real listed product in this category (or a descendant) — attached server-side. */
+  coverImage?: string | null;
 }
 
 export interface CategoryPayload {

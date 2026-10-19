@@ -14,11 +14,13 @@ function Tile({ node }: { node: CategoryNode }) {
   const t = useT();
   const [broken, setBroken] = useState(false);
   const n = node.productCount;
+  // Real product photo first, then the admin's category image, then the illustration.
+  const photo = node.coverImage || node.image;
   return (
     <Link to={categoryUrl(node.slug || node._id)} className="group block no-underline">
       <div className="aspect-[4/3] rounded-[14px] overflow-hidden bg-[#eaf2f8] border border-transparent group-hover:border-brand-royal/30 transition-colors">
-        {node.image && !broken
-          ? <img src={cloudinaryUrl(node.image, 480)} alt="" loading="lazy" decoding="async" onError={() => setBroken(true)} className="w-full h-full object-cover" />
+        {photo && !broken
+          ? <img src={cloudinaryUrl(photo, 480)} alt="" loading="lazy" decoding="async" onError={() => setBroken(true)} className="w-full h-full object-cover" />
           : <CategoryArt name={node.name} className="w-full h-full" />}
       </div>
       <p className="text-[14px] md:text-[15px] font-bold text-carbon mt-2 mb-0 line-clamp-1 group-hover:text-brand-orange">{node.name}</p>
@@ -34,7 +36,7 @@ export function ShopByCategory({ categories, loading }: { categories: CategoryNo
   const t = useT();
   const top = useMemo(
     () => categories
-      .filter(c => c.productCount === undefined || c.productCount > 0)
+      .filter(c => (c.productCount ?? 0) > 0)
       .map((c, i) => ({ c, i }))
       .sort((a, b) => (b.c.productCount ?? 0) - (a.c.productCount ?? 0) || a.i - b.i)
       .slice(0, MAX_TILES)
