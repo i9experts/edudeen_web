@@ -237,6 +237,10 @@ export interface EditDigitalPayload extends LearningMetaInput {
   description:    string;
   categoryId?:    string;
   subCategoryId:  string | null;
+  /** Cover + gallery photos (max 20). Omit to leave unchanged. */
+  images?:        string[];
+  tags?:          string[];
+  isListedOnEdudeen?: boolean;
   educationLevel?: EducationLevel | null;
   customLevel?:   string | null;
   status:         'draft' | 'active' | 'scheduled';

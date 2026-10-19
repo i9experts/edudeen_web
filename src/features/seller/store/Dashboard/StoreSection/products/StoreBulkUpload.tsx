@@ -139,6 +139,8 @@ export default function StoreBulkUpload() {
   const pendingType = useRef<BulkType | null>(null);
   const [detail, setDetail] = useState<{ rowId: string; group: DetailGroup } | null>(null);
   const [undo, setUndo] = useState<{ row: BulkRow; index: number } | null>(null);
+  // A product type the store isn't set up for: tapping it explains how to turn it on instead of doing nothing.
+  const [lockedType, setLockedType] = useState<BulkType | null>(null);
   const [bannerConfirm, setBannerConfirm] = useState<null | 'continue' | 'fresh'>(null);
 
   const productTypes = store?.productTypes ?? [];
@@ -587,15 +589,21 @@ export default function StoreBulkUpload() {
               <span className="text-[13px] font-bold text-carbon">These are:</span>
               <div role="radiogroup" aria-label="Product type" className="inline-flex flex-wrap gap-2">
                 {(['digital', 'educational', 'physical'] as const).map(t => (
-                  <button key={t} type="button" role="radio" aria-checked={type === t} disabled={!canType[t] || (rows.length > 0 && type !== t)}
-                    onClick={() => { if (!store) pendingType.current = t; setType(t); }}
-                    className={`px-3 py-1.5 rounded-full text-[13px] font-bold border cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${type === t ? 'bg-brand-royal text-white border-brand-royal' : 'bg-white text-graphite border-bone hover:bg-cream'}`}>
+                  <button key={t} type="button" role="radio" aria-checked={type === t} disabled={rows.length > 0 && type !== t} aria-disabled={!canType[t] || undefined}
+                    onClick={() => { if (!canType[t]) { setLockedType(t); return; } setLockedType(null); if (!store) pendingType.current = t; setType(t); }}
+                    className={`px-3 py-1.5 rounded-full text-[13px] font-bold border cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${!canType[t] ? 'opacity-60' : ''} ${type === t ? 'bg-brand-royal text-white border-brand-royal' : 'bg-white text-graphite border-bone hover:bg-cream'}`}>
                     {TYPE_LABEL[t]}
                   </button>
                 ))}
               </div>
               {rows.length > 0 && <span className="text-[12px] text-slate">To switch type, remove all rows first.</span>}
             </div>
+            {lockedType && !canType[lockedType] && (
+              <p role="alert" className="m-0 text-[13px] text-[#8a5a00] bg-[#fff6e0] border border-[#e0b050]/50 rounded-lg px-3 py-2">
+                Your store is not set up for {TYPE_LABEL[lockedType].toLowerCase()} yet. Turn it on under <b>Product types</b> in{' '}
+                <Link to={`/store/${storeId}/settings`} className="font-bold text-brand-royal underline">Store settings</Link>, then come back.
+              </p>
+            )}
             <div
               onDragOver={e => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)} onDrop={onDrop}
               className={`rounded-xl border-2 border-dashed text-center transition-colors ${drag ? 'border-brand-royal bg-info-bg' : 'border-bone bg-cream/50'} ${showEmpty ? 'py-10 px-4' : 'py-4 px-4'}`}

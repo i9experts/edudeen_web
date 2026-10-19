@@ -300,6 +300,7 @@ export default function StoreEditProduct() {
           productId, variantId,
           name: dig.name, description: dig.description,
           categoryId: categoryId || undefined, subCategoryId: dig.subCategoryId || null,
+          images: dig.images, tags: dig.tags, isListedOnEdudeen: dig.isListedOnEdudeen,
           educationLevel: pType === 'educational' ? (dig.educationLevel || null) : undefined,
           customLevel: pType === 'educational' && dig.educationLevel === 'other' ? dig.customLevel : undefined,
           status: finalStatus,
