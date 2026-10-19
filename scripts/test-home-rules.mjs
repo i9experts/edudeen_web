@@ -1,6 +1,6 @@
 // Run: npm run test:rules  (Node 22.6+/24 strips the TypeScript types itself; no test runner needed)
 import assert from 'node:assert/strict';
-import { soldLabel, dedupeInOrder, paymentTrust, whatsappLink, GRADE_TILES, learnLevelPath } from '../src/features/buyer/components/home/homeRules.ts';
+import { soldLabel, dedupeInOrder, paymentTrust, paymentTrustSub, railSize, whatsappLink, GRADE_TILES, learnLevelPath } from '../src/features/buyer/components/home/homeRules.ts';
 
 let n = 0;
 const t = (name, fn) => { fn(); n += 1; console.log('ok  ', name); };
@@ -13,6 +13,17 @@ t('"X sold" only from 10 sales', () => {
   assert.equal(soldLabel(1234), '1234 sold');
   assert.equal(soldLabel(undefined), null);
   assert.equal(soldLabel(NaN), null);
+});
+
+t('rails show 8, 4 or all - never 5', () => {
+  assert.deepEqual([0, 1, 3, 4, 5, 7, 8, 12].map(railSize), [0, 1, 3, 4, 4, 4, 8, 8]);
+});
+
+t('payment trust line names exactly the enabled methods', () => {
+  assert.equal(paymentTrustSub([]), 'Pay securely through Edudeen');
+  assert.equal(paymentTrustSub(['cod']), 'COD');
+  assert.equal(paymentTrustSub(['cod', 'bank']), 'COD & bank transfer');
+  assert.equal(paymentTrustSub(['cod', 'card', 'bank']), 'COD, Cards & bank transfer');
 });
 
 t('a product shows in only one home section, in render order', () => {
