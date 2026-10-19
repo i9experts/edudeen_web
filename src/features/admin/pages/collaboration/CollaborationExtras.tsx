@@ -7,7 +7,7 @@ import { useToast } from '@/contexts/ToastContext';
 import { useAdminAccess, loadAdminAccess } from '@/hooks/admin/useAdminAccess';
 import { StaffNotes } from '@/features/admin/components/StaffNotes';
 import {
-  apiStaffApprovals, apiDecideApproval, apiStaffSettings, apiSaveStaffSettings, apiMy2faSetup, apiMy2faEnable, apiMy2faDisable,
+  apiSignOutMe, apiStaffApprovals, apiDecideApproval, apiStaffSettings, apiSaveStaffSettings, apiMy2faSetup, apiMy2faEnable, apiMy2faDisable,
   type ApprovalRow, type StaffSafetySettings, type WorkHours,
 } from '@/api/services/staff';
 
@@ -116,7 +116,10 @@ export function SecurityTab() {
     if (!c) return;
     try { await apiMy2faDisable(c); toast.success('Two-step sign-in is off'); loadAdminAccess(true); } catch (e) { toast.error(err(e, 'Could not turn it off.')); }
   };
-  const saveSettings = async (patch: Partial<Pick<StaffSafetySettings, 'approvalsEnabled' | 'approvalKinds'>>) => {
+  const [limits, setLimits] = useState({ usd: '', pkr: '' });
+  useEffect(() => { if (settings) setLimits({ usd: String(settings.approvalThresholdUSD || ''), pkr: String(settings.approvalThresholdPKR || '') }); }, [settings?.approvalThresholdUSD, settings?.approvalThresholdPKR]); // eslint-disable-line react-hooks/exhaustive-deps
+  const signOutMe = async () => { if (!window.confirm('Sign out of every device, including this one?')) return; try { await apiSignOutMe(); window.location.href = '/admin/login'; } catch (e) { toast.error(err(e, 'Could not sign out.')); } };
+  const saveSettings = async (patch: Partial<Pick<StaffSafetySettings, 'approvalsEnabled' | 'approvalKinds' | 'approvalThresholdUSD' | 'approvalThresholdPKR'>>) => {
     try { setSettings((await apiSaveStaffSettings(patch)).data); toast.success('Saved'); } catch (e) { toast.error(err(e, 'Could not save.')); }
   };
 
@@ -143,6 +146,12 @@ export function SecurityTab() {
         )}
       </div>
 
+      <div className="bg-white border border-bone rounded-xl px-5 py-4">
+        <p className="text-[14px] font-bold text-carbon m-0">Signed in on other devices?</p>
+        <p className="text-[13px] text-slate mt-1 mb-3">Ends every open session of your account (a lost laptop, a shared computer). You will sign in again here.</p>
+        <Button size="sm" variant="outline" onClick={signOutMe}>Sign out everywhere</Button>
+      </div>
+
       {isOwner && settings && (
         <div className="bg-white border border-bone rounded-xl px-5 py-4">
           <p className="text-[14px] font-bold text-carbon m-0">Two-person approval</p>
@@ -150,6 +159,11 @@ export function SecurityTab() {
           <label className="flex items-center gap-2 text-[13px] font-semibold text-carbon cursor-pointer mb-2">
             <input type="checkbox" className="accent-brand-orange" checked={settings.approvalsEnabled} onChange={e => saveSettings({ approvalsEnabled: e.target.checked })} /> Require approval
           </label>
+          <div className="flex gap-3 flex-wrap mb-3 ps-6">
+            <div className="w-[190px]"><Input label="No approval below (USD)" type="number" min={0} value={limits.usd} placeholder="0 = always ask" onChange={e => setLimits({ ...limits, usd: e.target.value })} onBlur={() => saveSettings({ approvalThresholdUSD: Number(limits.usd) || 0 })} disabled={!settings.approvalsEnabled} /></div>
+            <div className="w-[190px]"><Input label="No approval below (PKR)" type="number" min={0} value={limits.pkr} placeholder="0 = always ask" onChange={e => setLimits({ ...limits, pkr: e.target.value })} onBlur={() => saveSettings({ approvalThresholdPKR: Number(limits.pkr) || 0 })} disabled={!settings.approvalsEnabled} /></div>
+            <p className="text-[12px] text-slate m-0 self-end max-w-[40ch]">Small payouts and payment proofs under these amounts go through. Refunds always wait.</p>
+          </div>
           <div className="grid gap-1.5 ps-6">
             {settings.available.map(k => (
               <label key={k.key} className={clsx('flex items-center gap-2 text-[13px]', !settings.approvalsEnabled && 'opacity-50')}>

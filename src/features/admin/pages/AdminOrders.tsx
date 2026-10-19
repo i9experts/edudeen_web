@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { StaffNotes } from '@/features/admin/components/StaffNotes';
 import { useSearchParams } from 'react-router-dom';
 import { ShoppingBag, RefreshCw, ExternalLink, Truck, CheckCircle2 } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -150,6 +151,7 @@ function OrderDetailModal({ id, onClose, onChanged }: { id: string; onClose: () 
             {order.taxAmount > 0 && <div className="flex justify-between"><dt className="text-slate">Tax</dt><dd>{money(order.taxAmount, order.currency)}</dd></div>}
             <div className="flex justify-between border-t border-bone pt-1 mt-1 font-bold text-carbon"><dt>Total</dt><dd>{money(order.totalAmount, order.currency)}</dd></div>
           </dl>
+          <StaffNotes entityType="order" entityId={id} className="pt-3 border-t border-bone" />
         </div>
       )}
     </Modal>

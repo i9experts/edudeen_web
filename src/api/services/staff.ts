@@ -52,12 +52,14 @@ export interface ApprovalRow { _id: string; requestedById: string; requestedByNa
 export const apiStaffApprovals = (status?: string) => client.get<never, R<ApprovalRow[]>>(`${B}/approvals`, { params: { status } });
 export const apiApprovalCount = () => client.get<never, R<{ pending: number }>>(`${B}/approvals/count`);
 export const apiDecideApproval = (id: string, approve: boolean, note?: string) => client.post<never, R<ApprovalRow>>(`${B}/approvals/${id}/decide`, { approve, note });
-export interface StaffSafetySettings { approvalsEnabled: boolean; approvalKinds: string[]; available: { key: string; label: string }[] }
+export interface StaffSafetySettings { approvalsEnabled: boolean; approvalKinds: string[]; approvalThresholdUSD: number; approvalThresholdPKR: number; available: { key: string; label: string }[] }
 export const apiStaffSettings = () => client.get<never, R<StaffSafetySettings>>(`${B}/settings`);
-export const apiSaveStaffSettings = (body: Partial<Pick<StaffSafetySettings, 'approvalsEnabled' | 'approvalKinds'>>) => client.put<never, R<StaffSafetySettings>>(`${B}/settings`, body);
+export const apiSaveStaffSettings = (body: Partial<Pick<StaffSafetySettings, 'approvalsEnabled' | 'approvalKinds' | 'approvalThresholdUSD' | 'approvalThresholdPKR'>>) => client.put<never, R<StaffSafetySettings>>(`${B}/settings`, body);
 
 export const apiMy2faSetup = () => client.post<never, R<{ secret: string; otpauthUrl: string }>>(`${B}/me/2fa/setup`);
 export const apiMy2faEnable = (code: string) => client.post<never, R<{ recoveryCodes: string[] }>>(`${B}/me/2fa/enable`, { code });
 export const apiMy2faDisable = (code: string) => client.post<never, R<unknown>>(`${B}/me/2fa/disable`, { code });
 export const apiStaffUnreadTasks = () => client.get<never, R<{ count: number }>>(`${B}/tasks/unread`);
 export const apiStaffMarkTasksSeen = () => client.post<never, R<unknown>>(`${B}/tasks/seen`);
+export const apiSignOutStaff = (id: string) => client.post<never, R<unknown>>(`${B}/${id}/sign-out`);
+export const apiSignOutMe = () => client.post<never, R<unknown>>(`${B}/me/sign-out-everywhere`);

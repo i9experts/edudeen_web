@@ -146,10 +146,20 @@ client.interceptors.response.use(
       // Refresh failed — fall through to the logout handling below.
     }
 
+    // A slow or dropped connection: read requests are retried once with more time before we give up.
+    const isRead = (original?.method ?? 'get').toLowerCase() === 'get';
+    const slow = err.code === 'ECONNABORTED' || (!err.response && err.code !== 'ERR_CANCELED');
+    if (original && isRead && slow && !(original as { _retriedSlow?: boolean })._retriedSlow) {
+      (original as { _retriedSlow?: boolean })._retriedSlow = true;
+      original.timeout = 30_000;
+      return client(original);
+    }
+
     let msg: string =
       err.response?.data?.message ||
       err.message ||
       'Something went wrong. Please try again.';
+    if (err.code === 'ECONNABORTED' && !err.response) msg = 'The server took too long to answer. Check your internet connection and try again.';
 
     // Session expired → force logout. Not for the auth-attempt endpoints
     // above — there, a 401 is the expected "wrong credentials/OTP/token"

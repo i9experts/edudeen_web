@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { StaffNotes } from '@/features/admin/components/StaffNotes';
 import { CheckCircle2, ExternalLink, FileText, XCircle } from 'lucide-react';
 import { Modal, Button, Textarea, SkeletonBox, StatusBadge } from '@/components/comman/ui';
 import {
@@ -183,6 +184,7 @@ export function ListingReviewModal({ listingId, onClose, onDone }: { listingId: 
           </div>
           <TrustBadgesEditor listingId={listingId} initial={data.trust} sellerAgeHint={ageLabel(data.ageMin, data.ageMax)} />
           <AiModerationPanel listingId={listingId} />
+          <StaffNotes entityType="listing" entityId={listingId} className="pt-3 border-t border-bone" />
           {error && <p role="alert" className="text-[12.5px] text-error">{error}</p>}
         </div>
       )}

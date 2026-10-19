@@ -6,7 +6,7 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { useToast } from '@/contexts/ToastContext';
 import { useAdminAccess, loadAdminAccess } from '@/hooks/admin/useAdminAccess';
 import {
-  apiStaffList, apiStaffRoles, apiStaffPermissions, apiInviteStaff, apiUpdateStaff, apiStaffAction, apiRemoveStaff, apiSaveStaffRole, apiDeleteStaffRole,
+  apiStaffList, apiStaffRoles, apiStaffPermissions, apiInviteStaff, apiUpdateStaff, apiStaffAction, apiSignOutStaff, apiRemoveStaff, apiSaveStaffRole, apiDeleteStaffRole,
   apiStaffUnreadTasks, apiStaffMarkTasksSeen, apiApprovalCount, apiStaffTasks, apiCreateStaffTask, apiUpdateStaffTask, apiCommentStaffTask, apiDeleteStaffTask, apiStaffAudit,
   type StaffMember, type StaffRole, type PermissionDef, type StaffTask, type AuditRow, type InviteResult, type WorkHours,
 } from '@/api/services/staff';
@@ -92,6 +92,7 @@ function TeamTab({ isOwner }: { isOwner: boolean }) {
                 {m.staffStatus === 'active' && <Button size="xs" variant="ghost" onClick={() => act(m, 'suspend')}>Suspend</Button>}
                 {m.staffStatus === 'suspended' && <Button size="xs" variant="ghost" onClick={() => act(m, 'reactivate')}>Reactivate</Button>}
                 <Button size="xs" variant="ghost" icon={<KeyRound size={12} />} onClick={() => act(m, 'reset-2fa')}>Reset 2FA</Button>
+                {m.staffStatus === 'active' && <Button size="xs" variant="ghost" onClick={async () => { if (!window.confirm(`Sign ${m.name} out of every device?`)) return; try { await apiSignOutStaff(m._id); toast.success('Signed out everywhere'); } catch (e) { toast.error(err(e, 'Could not sign out.')); } }}>Sign out</Button>}
                 <Button size="xs" variant="ghost" onClick={() => remove(m)} aria-label={`Remove ${m.name}`}><Trash2 size={13} /></Button>
               </div>
             )}

@@ -1,4 +1,5 @@
 import { useState, useEffect, Suspense } from 'react';
+import { apiStaffUnreadTasks, apiApprovalCount } from '@/api/services/staff';
 import { useToast } from '@/contexts/ToastContext';
 import { useAdminAccess, navAllowed } from '@/hooks/admin/useAdminAccess';
 import { Outlet, Navigate, useNavigate, useLocation } from 'react-router-dom';
@@ -287,7 +288,15 @@ function AdminSidebar({ open, onToggle }: AdminSidebarProps) {
     apiAdminChatStats().then(r => { if (alive) setUnreadChats(r.data?.unread ?? 0); }).catch((e: { status?: number }) => { if (e?.status === 404) chatApiMissing = true; /* API not updated yet: stop asking */ });
     return () => { alive = false; };
   }, [pathname]);
-  const badgeFor = (id: string) => (id === 'marketplace' ? pendingListings : id === 'premium' ? pendingPremium : id === 'messages' ? unreadChats : 0);
+  // Collaboration: new tasks for me + sensitive actions waiting for my approval.
+  const [teamBadge, setTeamBadge] = useState(0);
+  useEffect(() => {
+    let alive = true;
+    if (!navAllowed('collaboration')) return;
+    void Promise.all([apiStaffUnreadTasks().catch(() => null), apiApprovalCount().catch(() => null)]).then(([u, a]) => { if (alive) setTeamBadge((u?.data.count ?? 0) + (a?.data.pending ?? 0)); });
+    return () => { alive = false; };
+  }, [pathname]);
+  const badgeFor = (id: string) => (id === 'marketplace' ? pendingListings : id === 'premium' ? pendingPremium : id === 'messages' ? unreadChats : id === 'collaboration' ? teamBadge : 0);
   useEffect(() => { setExpandedModuleId(moduleForPath(pathname, search)); }, [pathname, search]);
 
   const handleLogout = async () => {
@@ -473,7 +482,7 @@ function AdminSidebar({ open, onToggle }: AdminSidebarProps) {
                         <button
                           key={item.id}
                           type="button"
-                          onClick={() => goTo(item.id === 'messages' && badge ? `${item.path}?tab=chat&filter=unread` : item.id === 'premium' && badge ? `${item.path}?tab=payments&status=pending` : badge ? `${item.path}?status=pending_review` : item.path)}
+                          onClick={() => goTo(item.id === 'collaboration' ? item.path : item.id === 'messages' && badge ? `${item.path}?tab=chat&filter=unread` : item.id === 'premium' && badge ? `${item.path}?tab=payments&status=pending` : badge ? `${item.path}?status=pending_review` : item.path)}
                           aria-current={active ? 'page' : undefined}
                           className={clsx(
                             'w-full flex items-center gap-[8px] py-[8px] px-[9px] rounded-lg border-none text-left',
@@ -487,7 +496,7 @@ function AdminSidebar({ open, onToggle }: AdminSidebarProps) {
                             {item.label}
                           </span>
                           {badge > 0 && (
-                            <span aria-label={item.id === 'messages' ? `${badge} unread` : `${badge} waiting for review`} className={clsx('text-[12px] font-bold px-[6px] py-[1px] rounded-full leading-[14px] shrink-0', active ? 'bg-white text-brand-orange' : 'bg-info text-white')}>
+                            <span aria-label={item.id === 'messages' ? `${badge} unread` : item.id === 'collaboration' ? `${badge} need your attention` : `${badge} waiting for review`} className={clsx('text-[12px] font-bold px-[6px] py-[1px] rounded-full leading-[14px] shrink-0', active ? 'bg-white text-brand-orange' : 'bg-info text-white')}>
                               {badge > 99 ? '99+' : badge}
                             </span>
                           )}
