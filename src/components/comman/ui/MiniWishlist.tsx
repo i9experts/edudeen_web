@@ -81,9 +81,11 @@ export function MiniWishlist() {
       >
         <Heart size={15} className={wishlistCount > 0 ? 'text-brand-orange fill-brand-orange' : 'fill-none'} />
         <span className="hidden md:inline">{t('Saved')}</span>
-        <b className="hidden md:inline text-[12px] font-bold bg-mist rounded-full px-[6px] py-[2px] leading-none">
-          {wishlistCount > 99 ? '99+' : wishlistCount}
-        </b>
+        {wishlistCount > 0 && (
+          <b className="hidden md:inline text-[12px] font-bold bg-mist rounded-full px-[6px] py-[2px] leading-none">
+            {wishlistCount > 99 ? '99+' : wishlistCount}
+          </b>
+        )}
         {wishlistCount > 0 && (
           <span className="md:hidden absolute top-[-2px] end-[-4px] min-w-[17px] h-[17px] rounded-[9px] bg-brand-orange text-white text-[12px] font-bold leading-[17px] text-center px-1">
             {wishlistCount > 99 ? '99+' : wishlistCount}

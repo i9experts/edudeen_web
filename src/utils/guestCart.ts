@@ -20,13 +20,14 @@ function saveGuestCartItems(items: GuestCartItem[]): void {
   localStorage.setItem(GUEST_CART_KEY, JSON.stringify(items));
 }
 
-export function addGuestCartItem(productId: string, productVariantId: string, type?: 'physical' | 'digital'): GuestCartItem[] {
+export function addGuestCartItem(productId: string, productVariantId: string, type?: 'physical' | 'digital', quantity = 1): GuestCartItem[] {
   const items = getGuestCartItems();
+  const qty = Math.max(1, Math.floor(quantity) || 1);
   const existing = items.find(i => i.productVariantId === productVariantId);
   if (existing) {
-    existing.quantity += 1;
+    existing.quantity += qty;
   } else {
-    items.push({ productId, productVariantId, quantity: 1, type });
+    items.push({ productId, productVariantId, quantity: qty, type });
   }
   saveGuestCartItems(items);
   return items;

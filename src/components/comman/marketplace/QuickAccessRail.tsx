@@ -42,7 +42,7 @@ function Thumb({ image, name }: { image: string | null | undefined; name: string
   return (
     <span className="w-11 h-11 rounded-lg overflow-hidden shrink-0 block border border-bone">
       {image
-        ? <img src={image} alt="" loading="lazy" className="w-full h-full object-cover block" />
+        ? <img src={image} alt={name} loading="lazy" className="w-full h-full object-cover block" />
         : <ProductCoverFallback name={name} size="xs" className="w-full h-full" />}
     </span>
   );
@@ -123,7 +123,7 @@ function CategoriesPanel({ close }: { close: () => void }) {
       <ul className="list-none p-0 m-0 py-2">
         {tree.map(c => (
           <li key={c._id} className="px-4 py-2">
-            <Link to={categoryPath(c)} onClick={close} className="flex items-center gap-2 text-[13px] font-semibold text-carbon no-underline hover:text-brand-orange"><span className="size-6 rounded-lg overflow-hidden shrink-0">{c.image ? <img src={c.image} alt="" loading="lazy" className="w-full h-full object-cover" /> : <CategoryArt name={c.name || c.slug} />}</span>{c.name}</Link>
+            <Link to={categoryPath(c)} onClick={close} className="flex items-center gap-2 text-[13px] font-semibold text-carbon no-underline hover:text-brand-orange"><span className="size-6 rounded-lg overflow-hidden shrink-0">{c.image ? <img src={c.image} alt={c.name || c.slug} loading="lazy" className="w-full h-full object-cover" /> : <CategoryArt name={c.name || c.slug} />}</span>{c.name}</Link>
             {(c.children?.length ?? 0) > 0 && (
               <div className="flex flex-wrap gap-1.5 mt-1.5">
                 {c.children!.slice(0, 6).map(s => (
@@ -210,8 +210,23 @@ function AccountPanel({ close }: { close: () => void }) {
  * back-to-top button shows. Uses start/end positioning, so in Urdu it sits
  * on the left automatically.
  */
+// True while the page footer is on screen (the phone back-to-top button steps aside so it never covers footer content).
+function useFooterInView() {
+  const [inView, setInView] = useState(false);
+  const { pathname } = useLocation();
+  useEffect(() => {
+    const el = document.querySelector('footer');
+    if (!el || typeof IntersectionObserver === 'undefined') return;
+    const io = new IntersectionObserver(([e]) => setInView(e.isIntersecting), { threshold: 0 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [pathname]);
+  return inView;
+}
+
 export function QuickAccessRail() {
   const { pathname } = useLocation();
+  const footerInView = useFooterInView();
   const scrolled = useScrolledPast(600);
   const scrolledFar = useScrolledPast(0, 1.5);
   const [open, setOpen] = useState<PanelId | null>(null);
@@ -325,9 +340,9 @@ export function QuickAccessRail() {
         aria-label="Back to top"
         className={clsx(
           'xl:hidden fixed start-4 bottom-[calc(80px+env(safe-area-inset-bottom,0px))] z-40 size-11 rounded-full bg-white border border-bone shadow-lg flex items-center justify-center text-brand-royal cursor-pointer transition-all duration-200 print:hidden',
-          scrolledFar ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3 pointer-events-none',
+          scrolledFar && !footerInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3 pointer-events-none',
         )}
-        tabIndex={scrolledFar ? 0 : -1}
+        tabIndex={scrolledFar && !footerInView ? 0 : -1}
       >
         <ChevronUp size={20} />
       </button>

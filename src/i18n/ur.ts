@@ -2035,6 +2035,7 @@ export const UR_PATTERNS: [RegExp, (m: RegExpMatchArray) => string][] = [
   [/^(\d[\d,]*) products?$/, m => `${m[1]} مصنوعات`],
   [/^(\d[\d,]*) items?$/, m => `${m[1]} اشیاء`],
   [/^(\d[\d,]*) items? in this order$/, m => `اس آرڈر میں ${m[1]} اشیاء`],
+  [/^(\d[\d,]*) products? · (\d[\d,]*) items? in this order$/, m => `اس آرڈر میں ${m[1]} پروڈکٹ · ${m[2]} اشیاء`],
   [/^(\d[\d,]*) sold$/, m => `${m[1]} فروخت`],
   [/^\((\d[\d,]*) reviews?\)$/, m => `(${m[1]} ریویوز)`],
   [/^(\d[\d,]*) reviews?$/, m => `${m[1]} ریویوز`],

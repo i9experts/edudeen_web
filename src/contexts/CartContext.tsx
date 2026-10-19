@@ -45,6 +45,21 @@ function mergeTypes(cart: Cart): Cart {
   };
 }
 
+// After an optimistic edit of items, rebuild the per-store groups from the SAME items so the summary / per-store checkout
+// buttons never show a store whose last item was just removed.
+function withStoreGroups(prev: Cart, items: CartItem[]): Cart {
+  const totalItems = items.reduce((s, i) => s + i.quantity, 0);
+  const totalPrice = items.reduce((s, i) => s + (i.itemTotal ?? (i.unitPrice ?? i.price ?? 0) * i.quantity), 0);
+  if (!prev.stores) return { ...prev, items, totalItems, totalPrice };
+  const stores = prev.stores
+    .map(s => {
+      const own = items.filter(i => i.storeId === s.storeId);
+      return { ...s, items: own, totalItems: own.reduce((n, i) => n + i.quantity, 0), totalPrice: own.reduce((n, i) => n + (i.itemTotal ?? (i.unitPrice ?? i.price ?? 0) * i.quantity), 0) };
+    })
+    .filter(s => s.items.length > 0);
+  return { ...prev, items, totalItems, totalPrice, stores, storeId: stores.length === 1 ? stores[0].storeId : undefined, campaignDiscount: stores.length === 1 ? stores[0].campaignDiscount : undefined };
+}
+
 // ── Context ───────────────────────────────────────────────────────────────────
 
 interface CartContextValue {
@@ -54,7 +69,7 @@ interface CartContextValue {
   adding:        string | null;
   error:         string | null;
   clearError:    () => void;
-  addToCart:     (productId: string, productVariantId: string, type?: 'physical' | 'digital') => Promise<void>;
+  addToCart:     (productId: string, productVariantId: string, type?: 'physical' | 'digital', quantity?: number) => Promise<void>;
   updateQty:     (productId: string, productVariantId: string, action: 'increase' | 'decrease') => Promise<void>;
   removeItem:    (productId: string, productVariantId: string) => Promise<void>;
   /** Main site: pass a storeId to clear just that store's cart (e.g. after
@@ -248,13 +263,14 @@ export function CartProvider({ storeId, children }: { storeId?: string; children
     productId: string,
     productVariantId: string,
     type?: 'physical' | 'digital',
+    quantity = 1,
   ) => {
     if (type) storeType(productVariantId, type);
     setError(null);
     setAdding(productVariantId);
 
     if (!TokenStorage.isLoggedIn()) {
-      addGuestCartItem(productId, productVariantId, type);
+      addGuestCartItem(productId, productVariantId, type, quantity);
       await refreshGuestCartDisplay();
       setAdding(null);
       toast.success('Added to cart');
@@ -262,7 +278,7 @@ export function CartProvider({ storeId, children }: { storeId?: string; children
     }
 
     try {
-      const res = await apiAddToCart(productId, productVariantId, storeId);
+      const res = await apiAddToCart(productId, productVariantId, storeId, quantity);
       if (storeId) setCart(mergeTypes(res.data));
       else await fetchMyCarts();
       toast.success('Added to cart');
@@ -295,9 +311,7 @@ export function CartProvider({ storeId, children }: { storeId?: string; children
         const unitPrice = item.unitPrice ?? item.price ?? 0;
         return { ...item, quantity: newQty, itemTotal: unitPrice * newQty };
       });
-      const totalItems = items.reduce((s, i) => s + i.quantity, 0);
-      const totalPrice = items.reduce((s, i) => s + (i.itemTotal ?? 0), 0);
-      return { ...prev, items, totalItems, totalPrice };
+      return withStoreGroups(prev, items);
     });
 
     setError(null);
@@ -328,10 +342,8 @@ export function CartProvider({ storeId, children }: { storeId?: string; children
 
     setCart(prev => {
       if (!prev) return prev;
-      const items      = (prev.items ?? []).filter(i => i.productVariantId !== productVariantId);
-      const totalItems = items.reduce((s, i) => s + i.quantity, 0);
-      const totalPrice = items.reduce((s, i) => s + (i.itemTotal ?? (i.unitPrice ?? i.price ?? 0) * i.quantity), 0);
-      return { ...prev, items, totalItems, totalPrice };
+      const items = (prev.items ?? []).filter(i => i.productVariantId !== productVariantId);
+      return withStoreGroups(prev, items);
     });
 
     setError(null);

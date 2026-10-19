@@ -434,6 +434,10 @@ export function CheckoutPage() {
     ? [{ productId: buyNow.productId, variantId: buyNow.variantId, quantity: buyNow.quantity }]
     : physicalOnly ? cartItems.map(i => ({ productId: i.productId, variantId: i.productVariantId })) : undefined;
   const checkoutCount = cartItems.reduce((s, i) => s + i.quantity, 0);
+  // '1 product · 2 items' when a line has quantity > 1, plain 'N items' otherwise.
+  const orderCountLabel = cartItems.length > 0 && cartItems.length !== checkoutCount
+    ? `${cartItems.length} product${cartItems.length !== 1 ? 's' : ''} · ${checkoutCount} item${checkoutCount !== 1 ? 's' : ''} in this order`
+    : `${checkoutCount} item${checkoutCount !== 1 ? 's' : ''} in this order`;
   const hasDigital = cartItems.some(i => i.type === 'digital');
   // Fully-digital carts skip address/shipping entirely; a mixed cart still
   // needs both, for its physical items — so this only means "skip the
@@ -1014,7 +1018,7 @@ export function CheckoutPage() {
                     </span>
                   </div>
                   <p className="text-[12px] text-slate mt-[2px]">
-                    {cartLoading ? 'Loading…' : `${checkoutCount} item${checkoutCount !== 1 ? 's' : ''} in this order`}
+                    {cartLoading ? 'Loading…' : orderCountLabel}
                   </p>
                 </div>
                 <span className="text-[11px] font-semibold px-3 py-1 rounded-full bg-[#eef0ff] text-[#3851d1]">
@@ -1115,7 +1119,7 @@ export function CheckoutPage() {
                 <div>
                   <h1 className="text-[20px] font-bold text-carbon leading-tight">Checkout</h1>
                   <p className="text-[12px] text-slate mt-[2px]">
-                    {cartLoading ? 'Loading…' : `${checkoutCount} item${checkoutCount !== 1 ? 's' : ''} in this order`}
+                    {cartLoading ? 'Loading…' : orderCountLabel}
                   </p>
                 </div>
                 <span className={clsx(
@@ -1692,8 +1696,8 @@ export function CheckoutPage() {
               {!isDigital && (
                 <div className="flex justify-between text-[13px]">
                   <span className="text-slate">Shipping</span>
-                  {checkout || summary
-                    ? <span className="font-semibold text-carbon">{formatPrice(shipping, checkoutCur)}</span>
+                  {checkout || summary || selectedZone
+                    ? <span className="font-semibold text-carbon">{shipping > 0 ? formatPrice(shipping, checkoutCur) : 'Free'}</span>
                     : <span className="text-slate font-medium">Calculated next</span>
                   }
                 </div>

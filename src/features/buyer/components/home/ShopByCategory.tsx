@@ -17,7 +17,7 @@ function Tile({ node }: { node: CategoryNode }) {
   // Real product photos (up to 4) first, then the admin's category image, then the illustration.
   const photos = (node.coverImages?.length ? node.coverImages : [node.coverImage || node.image]).filter((u): u is string => !!u && !broken.includes(u));
   const img = (u: string, w: number, cls = '') => (
-    <img key={u} src={cloudinaryUrl(u, w)} alt="" loading="lazy" decoding="async" onError={() => setBroken(b => [...b, u])} className={`w-full h-full object-cover ${cls}`} />
+    <img key={u} src={cloudinaryUrl(u, w)} alt={node.name} loading="lazy" decoding="async" onError={() => setBroken(b => [...b, u])} className={`w-full h-full object-cover ${cls}`} />
   );
   // 1 = full tile, 2 = side by side, 3 = one large + two stacked, 4 = 2x2.
   const layout = photos.length >= 4 ? 'grid grid-cols-2 grid-rows-2 gap-0.5'

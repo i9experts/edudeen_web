@@ -456,8 +456,8 @@ export function CartPage() {
 
               <div className="flex flex-col gap-2">
                 <div className="flex justify-between text-[13px]">
-                  <span className="text-slate">Subtotal ({cartCount} items)</span>
-                  <span className="font-semibold text-carbon">{formatPrice(displayTotal, displayCurrency)}</span>
+                  <span className="text-slate">{loading ? 'Subtotal' : `Subtotal (${cartCount} items)`}</span>
+                  {loading ? <SkeletonBox width={70} height={14} /> : <span className="font-semibold text-carbon">{formatPrice(displayTotal, displayCurrency)}</span>}
                 </div>
                 {campaignAmount > 0 && (
                   <div className="flex justify-between text-[13px]">
@@ -473,9 +473,11 @@ export function CartPage() {
                 )}
                 <div className="flex justify-between text-[13px]">
                   <span className="text-slate">{hasPhysical ? 'Shipping' : 'Delivery'}</span>
-                  <span className="text-charcoal font-medium text-[12px]">
-                    {hasPhysical ? 'Calculated at checkout' : 'Instant'}
-                  </span>
+                  {loading ? <SkeletonBox width={90} height={12} /> : !typeKnown ? <span className="text-slate text-[12px]">—</span> : (
+                    <span className="text-charcoal font-medium text-[12px]">
+                      {hasPhysical ? 'Calculated at checkout' : 'Instant'}
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -483,7 +485,7 @@ export function CartPage() {
 
               <div className="flex justify-between text-[16px] font-bold">
                 <span className="text-carbon">Total</span>
-                <span className="text-carbon">{formatPrice(Math.round(payableTotal), displayCurrency)}</span>
+                {loading ? <SkeletonBox width={80} height={18} /> : <span className="text-carbon">{formatPrice(Math.round(payableTotal), displayCurrency)}</span>}
               </div>
 
               {/* ── Checkout ── One order for the whole cart, mixed physical +
@@ -495,7 +497,9 @@ export function CartPage() {
                     {physicalCount} physical · {digitalCount} digital — delivered together
                   </p>
                 )}
-                {isMultiStore ? (
+                {loading ? (
+                  <SkeletonBox height={44} rounded="12px" />
+                ) : isMultiStore ? (
                   <>
                     <p className="text-[12px] text-slate text-center -mt-1 mb-1">
                       Items from {storeCarts.length} stores — each store checks out separately

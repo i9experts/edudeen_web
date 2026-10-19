@@ -87,8 +87,8 @@ interface ClearResponse  { message: string; data: [] }
 
 // `storeId` omitted (main marketplace site) → the server files the item
 // under the product's own store.
-export function apiAddToCart(productId: string, productVariantId: string, storeId?: string) {
-  return client.post<never, CartResponse>(ENDPOINTS.CART.ADD, { productId, productVariantId, ...(storeId ? { storeId } : {}) });
+export function apiAddToCart(productId: string, productVariantId: string, storeId?: string, quantity = 1) {
+  return client.post<never, CartResponse>(ENDPOINTS.CART.ADD, { productId, productVariantId, ...(quantity > 1 ? { quantity } : {}), ...(storeId ? { storeId } : {}) });
 }
 
 export function apiGetCart(storeId: string) {

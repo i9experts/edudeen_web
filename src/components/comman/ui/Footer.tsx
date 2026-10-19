@@ -2,7 +2,8 @@ import { useT } from '@/contexts/languageCtx';
 import { useState, type ReactElement } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
-import { Send, Check, ChevronDown, Mail, Phone, MapPin, MessageCircle } from 'lucide-react';
+import { Send, Check, ChevronDown, ChevronUp, Mail, Phone, MapPin, MessageCircle } from 'lucide-react';
+import { scrollRootToTop } from '@/utils/scrollRoot';
 import { EdudeenLogo } from './EdudeenLogo';
 import { AppleGlyph, GooglePlayGlyph, useGooglePlayUrl, useAppStoreUrl } from './AppPromoParts';
 import { usePublicPlatformConfig } from '@/hooks/usePublicPlatformConfig';
@@ -139,13 +140,13 @@ function AppBadge({ platform }: { platform: 'ios' | 'android' }) {
   if (url) {
     return (
       <a href={url} target="_blank" rel="noreferrer" aria-label={isIos ? 'Download on the App Store' : 'Get it on Google Play'}
-        className="flex items-center gap-2.5 h-11 px-3.5 rounded-[9px] bg-carbon text-white no-underline w-fit hover:bg-black transition-colors">
+        className="flex items-center gap-2.5 min-h-11 py-1.5 px-3.5 whitespace-nowrap shrink-0 rounded-[9px] bg-carbon text-white no-underline w-fit hover:bg-black transition-colors">
         {inner}
       </a>
     );
   }
   return (
-    <div role="img" aria-label={isIos ? 'App Store - coming soon' : 'Google Play - coming soon'} className="flex items-center gap-2.5 h-11 px-3.5 rounded-[9px] bg-carbon/85 text-white select-none w-fit">
+    <div role="img" aria-label={isIos ? 'App Store - coming soon' : 'Google Play - coming soon'} className="flex items-center gap-2.5 min-h-11 py-1.5 px-3.5 whitespace-nowrap shrink-0 rounded-[9px] bg-carbon/85 text-white select-none w-fit">
       {inner}
     </div>
   );
@@ -371,6 +372,10 @@ export function Footer({ showNewsletter = true }: { showNewsletter?: boolean }) 
       <div className="border-t border-bone">
         <div className="max-w-[1480px] mx-auto px-[5%] md:px-[4%] py-4 flex flex-col-reverse sm:flex-row items-center justify-between gap-3 text-[12px]">
           <p className="m-0">© {new Date().getFullYear()} Edudeen LLC. All rights reserved.</p>
+          {/* Phones: the floating back-to-top hides while the footer is on screen (it covered the contact details), so it lives here. */}
+          <button type="button" onClick={() => scrollRootToTop('smooth')} className="xl:hidden inline-flex items-center gap-1 min-h-11 px-3 rounded-full border border-bone bg-white text-[12px] font-semibold text-carbon cursor-pointer">
+            <ChevronUp size={14} aria-hidden /> Back to top
+          </button>
 
         </div>
       </div>

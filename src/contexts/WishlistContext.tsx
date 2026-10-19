@@ -42,6 +42,8 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
   const [wishlisting,   setWishlisting]   = useState<string | null>(null);
   const [clearing,      setClearing]      = useState(false);
   const [wishlistedKeys, setWishlistedKeys] = useState(() => new Set<string>());
+  // false until the first wishlist load finishes: the header keeps the last known count (never a 0 flash).
+  const [settled, setSettled] = useState(false);
 
   // Maps "productId::variantId" → wishlistId (needed for removal)
   const idMap = useRef(new Map<string, string>());
@@ -56,6 +58,7 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
     setWishlistedKeys(new Set());
     idMap.current.clear();
     setLoading(false);
+    setSettled(true);
   }, []);
 
   const fetchWishlist = useCallback(() => {
@@ -74,7 +77,7 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
         setWishlistedKeys(keys);
       })
       .catch(() => {})
-      .finally(() => { if (seq === fetchSeq.current) setLoading(false); });
+      .finally(() => { if (seq === fetchSeq.current) { setLoading(false); setSettled(true); } });
   }, [resetWishlist]);
 
   // Initial fetch, then re-fetch on every sign-in and clear on sign-out —
@@ -215,9 +218,19 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
     }
   }, [wishlistItems, wishlistedKeys, toast]);
 
+  // Count = distinct saved products, from the same keys the hearts use, so it moves the instant a heart is toggled (optimistic).
+  const liveCount = useMemo(() => new Set(Array.from(wishlistedKeys, k => k.split('::')[0])).size, [wishlistedKeys]);
+  useEffect(() => {
+    if (!settled) return;
+    try { sessionStorage.setItem('edudeen_wishlist_count', String(liveCount)); } catch { /* ignore */ }
+  }, [liveCount, settled]);
+  const wishlistCount = settled ? liveCount : (() => {
+    try { return TokenStorage.isLoggedIn() ? Number(sessionStorage.getItem('edudeen_wishlist_count')) || 0 : 0; } catch { return 0; }
+  })();
+
   const value = useMemo<WishlistContextValue>(() => ({
     wishlistItems,
-    wishlistCount: wishlistItems.length,
+    wishlistCount,
     loading,
     wishlisting,
     clearing,
@@ -226,7 +239,7 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
     removeFromWishlist,
     toggleWishlist,
     clearWishlist,
-  }), [wishlistItems, loading, wishlisting, clearing, isWishlisted, addToWishlist, removeFromWishlist, toggleWishlist, clearWishlist]);
+  }), [wishlistItems, wishlistCount, loading, wishlisting, clearing, isWishlisted, addToWishlist, removeFromWishlist, toggleWishlist, clearWishlist]);
 
   return (
     <WishlistContext.Provider value={value}>

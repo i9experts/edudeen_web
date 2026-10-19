@@ -1,5 +1,5 @@
-import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react';
-import { Outlet, ScrollRestoration, useLocation, useNavigation } from 'react-router-dom';
+import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { Outlet, ScrollRestoration, useLocation, useNavigation, useNavigationType } from 'react-router-dom';
 import { ErrorBoundary } from '@/components/comman/ErrorBoundary';
 import { AuthGateModal } from '@/components/comman/ui/AuthGateModal';
 import { ToastContainer } from '@/components/comman/ui/ToastContainer';
@@ -53,6 +53,24 @@ function TopProgressBar() {
   );
 }
 
+// A new page (path change by link/redirect/push) always opens at the top, even when its lazy chunk renders a moment
+// later; Back/Forward (POP) keep the saved position via <ScrollRestoration/>. Filter changes on the same path are left alone.
+function ScrollToTopOnNavigate() {
+  const { pathname, hash } = useLocation();
+  const type = useNavigationType();
+  const last = useRef(pathname);
+  useLayoutEffect(() => {
+    if (last.current === pathname) return;
+    last.current = pathname;
+    if (type === 'POP' || hash) return;
+    const top = () => window.scrollTo({ top: 0, left: 0, behavior: 'instant' as ScrollBehavior });
+    top();
+    const r1 = requestAnimationFrame(() => { top(); requestAnimationFrame(top); });
+    return () => cancelAnimationFrame(r1);
+  }, [pathname, hash, type]);
+  return null;
+}
+
 export function RootLayout() {
   useGlobalEdgeHoverScroll();
   useReferralCapture();
@@ -72,6 +90,7 @@ export function RootLayout() {
       <WhenIdle><AiAssistantWidget /></WhenIdle>
       <ChatWidgetGate />
       <ScrollRestoration />
+      <ScrollToTopOnNavigate />
       {/* resetKey (not key) â€” a new path clears a caught error, but the layouts
          (dashboard sidebars etc.) stay mounted instead of rebuilding on every click */}
         <ErrorBoundary resetKey={pathname}>

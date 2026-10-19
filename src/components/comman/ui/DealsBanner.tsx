@@ -61,7 +61,7 @@ export function CountdownUnit({ value, label, size = 'md' }: { value: number; la
 // fallback (a plain decorative icon, not a fake photo) when there's no real
 // image or it fails to load. Local error state is keyed by campaign id at the
 // call site, so switching campaigns doesn't get stuck on a stale error. ──
-function CampaignImage({ src, fit = 'contain', rounded = true }: { src: string | null; fit?: 'contain' | 'cover'; rounded?: boolean }) {
+function CampaignImage({ src, fit = 'contain', rounded = true, alt = '' }: { src: string | null; fit?: 'contain' | 'cover'; rounded?: boolean; alt?: string }) {
   const [errored, setErrored] = useState(false);
 
   if (!src || errored) {
@@ -79,7 +79,7 @@ function CampaignImage({ src, fit = 'contain', rounded = true }: { src: string |
       src={cloudinaryUrl(src, 500)}
       srcSet={cloudinarySrcSet(src, [250, 500, 750])}
       sizes="(min-width: 1024px) 230px, 170px"
-      alt=""
+      alt={alt}
       loading="lazy"
       decoding="async"
       onError={() => setErrored(true)}
@@ -312,7 +312,7 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
                   card has none. */}
               <div className="relative h-[150px] w-full shrink-0 sm:h-full sm:w-[280px] md:w-[340px]">
                 <div className="absolute inset-0 sm:hidden">
-                  <CampaignImage src={campaign.bannerImage} fit="cover" rounded={false} />
+                  <CampaignImage src={campaign.bannerImage} alt={campaign.name} fit="cover" rounded={false} />
                 </div>
                 {/* `cover` here, not `contain` — the box is short (the card
                     itself is only ~100px tall), so a `contain` image sizes
@@ -321,7 +321,7 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
                     on both axes, so widening the box really does widen the
                     visible photo. */}
                 <div className="hidden sm:block sm:absolute sm:inset-y-2 sm:inset-x-0">
-                  <CampaignImage src={campaign.bannerImage} fit="cover" />
+                  <CampaignImage src={campaign.bannerImage} alt={campaign.name} fit="cover" />
                 </div>
                 {hasPercentOff && (
                   <span className="absolute end-1 top-1 sm:end-auto sm:start-1 z-[1] inline-flex items-center rounded-full bg-brand-deep-orange px-[8px] py-[3px] text-[12px] font-bold leading-none text-white">
@@ -419,7 +419,7 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
             to={`/?campaign=${encodeURIComponent(campaign._id)}`}
             className="no-underline group relative z-[1] block w-full h-full border-none bg-transparent p-0 outline-none cursor-pointer overflow-hidden rounded-[20px]"
           >
-            <CampaignImage src={campaign.bannerImage} fit="cover" />
+            <CampaignImage src={campaign.bannerImage} alt={campaign.name} fit="cover" />
             {hasPercentOff && (
               <span className="absolute top-2 start-2 -rotate-6 flex flex-col items-center justify-center size-[42px] rounded-full bg-error text-white border-2 border-white/40 z-[1]">
                 <span className="text-[12px] font-bold leading-none">-{realMaxPct}%</span>
@@ -453,7 +453,7 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
             {/* MIDDLE — small product thumbnail, only when the campaign has an image (no empty glass panel). */}
             {campaign.bannerImage && (
               <div className="relative hidden lg:block h-[84px] w-[150px] shrink-0 overflow-hidden rounded-xl ring-1 ring-white/25 bg-white/10">
-                <CampaignImage src={campaign.bannerImage} fit="cover" />
+                <CampaignImage src={campaign.bannerImage} alt={campaign.name} fit="cover" />
               </div>
             )}
 

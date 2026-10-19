@@ -395,7 +395,9 @@ export function ProductDetail() {
   const swipeHandlers = useEdgeSwipeBack(() => navigate(-1));
 
   const { detail, loading, error, refetch } = useProductById(slug);
-  const { addToCart, updateQty, adding } = useCartContext();
+  const { addToCart } = useCartContext();
+  // Own loading state per button: Add to Cart and Buy Now never spin together.
+  const [pendingAction, setPendingAction] = useState<'cart' | 'buy' | null>(null);
   const { isWishlisted, wishlisting, toggleWishlist } = useWishlistContext();
   const { requireAuth } = useAuthGate();
   const toast = useToast();
@@ -575,7 +577,7 @@ export function ProductDetail() {
     jsonLd: [
       productJsonLd({
         name: product.name, description: product.description ?? '', images: product.images ?? [], url: `${SITE_URL}/product/${product.slug}`,
-        sellerName: storeData?.name ?? product.sellerName ?? product.storeName ?? null,
+        sellerName: storeData?.name ?? product.storeName ?? product.sellerName ?? null,
         price: activeVariant?.campaignPrice ?? activeVariant?.price ?? null, currency: activeVariant?.currency ?? 'USD',
         inStock: stock > 0, rating: product.averageRating, ratingCount: product.totalRatings,
       }),
@@ -663,16 +665,16 @@ export function ProductDetail() {
   }
 
   async function handleAddToCart(buyNow: boolean) {
-    if (!product || !activeVariant) return;
-    await addToCart(product._id, activeVariant._id, isPhysical ? 'physical' : 'digital');
+    if (!product || !activeVariant || pendingAction) return;
+    setPendingAction(buyNow ? 'buy' : 'cart');
+    try {
+    // Add to Cart sends the selected quantity (the API merges it into an existing line); Buy Now checks out ?buyNow=...:qty.
+    await addToCart(product._id, activeVariant._id, isPhysical ? 'physical' : 'digital', buyNow ? 1 : qty);
     // Buy Now checks out only this product and quantity — the cart's other
     // items stay in the cart (the checkout page reads `?buyNow=`).
     if (buyNow) {
       navigate(`/checkout?store=${encodeURIComponent(product.storeId ?? '')}&buyNow=${product._id}:${activeVariant._id}:${qty}`);
       return;
-    }
-    for (let i = 1; i < qty; i++) {
-      await updateQty(product._id, activeVariant._id, 'increase');
     }
     // "Buy Now" skips straight to checkout instead of the cart page — the
     // checkout gate itself (see CheckoutPage.tsx) handles a still-logged-out
@@ -680,6 +682,7 @@ export function ProductDetail() {
     // cart page first.
     if (buyNow) navigate('/checkout');
     else { setAddedFeedback(true); setTimeout(() => setAddedFeedback(false), 2000); }
+    } finally { setPendingAction(null); }
   }
 
   async function handleShare() {
@@ -802,10 +805,10 @@ export function ProductDetail() {
                         actually shopping from) over the individual seller's
                         personal account name — falls back to sellerName only
                         if the store lookup hasn't resolved (or has no name). */}
-                    {(storeData?.name ?? product.sellerName) && (
+                    {(storeData?.name ?? product.storeName ?? product.sellerName) && (
                       <>by {product.storeSlug
-                        ? <Link to={getStorePagePath(product.storeSlug)} className="text-inherit no-underline hover:underline">{storeData?.name ?? product.sellerName}</Link>
-                        : (storeData?.name ?? product.sellerName)}</>
+                        ? <Link to={getStorePagePath(product.storeSlug)} className="text-inherit no-underline hover:underline">{storeData?.name ?? product.storeName ?? product.sellerName}</Link>
+                        : (storeData?.name ?? product.storeName ?? product.sellerName)}</>
                     )}
                     {product.averageRating > 0 && (
                       <a
@@ -947,7 +950,7 @@ export function ProductDetail() {
                   <div className="flex flex-col gap-[10px] mb-6">
                     <Button
                       variant="primary" size="lg" fullWidth className="justify-center"
-                      disabled={stock <= 0} loading={adding === activeVariant?._id}
+                      disabled={stock <= 0 || !!pendingAction} loading={pendingAction === 'buy'}
                       onClick={() => handleAddToCart(true)}
                     >
                       {stock <= 0 ? t('Out of Stock') : <>{t('Buy Now')} <ArrowRight size={14} className="inline align-middle ms-[6px]" />{(memberShown ?? displayPrice) != null ? ` ${formatPrice(((memberShown ?? displayPrice)! * qty), displayCurrency)}` : ''}</>}
@@ -955,7 +958,7 @@ export function ProductDetail() {
                     <div className="flex gap-2">
                       <Button
                         variant="secondary" size="md" fullWidth className="justify-center flex-1"
-                        disabled={stock <= 0} loading={adding === activeVariant?._id}
+                        disabled={stock <= 0 || !!pendingAction} loading={pendingAction === 'cart'}
                         onClick={() => handleAddToCart(false)}
                       >
                         {stock <= 0 ? t('Out of Stock') : addedFeedback ? t('✓ Added to Cart') : <><ShoppingCart size={14} /> {t('Add to Cart')}</>}
@@ -1025,8 +1028,8 @@ export function ProductDetail() {
                         <ShieldCheck size={14} className="text-brand-orange" />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-[12px] font-semibold text-charcoal leading-tight truncate">{t('Secure checkout')}</p>
-                        <p className="text-[12px] text-slate mt-[1px] truncate">{t('Pay safely through Edudeen')}</p>
+                        <p className="text-[12px] font-semibold text-charcoal leading-tight">{t('Secure checkout')}</p>
+                        <p className="text-[12px] text-slate mt-[1px] leading-snug">{t('Pay safely through Edudeen')}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-[8px] min-w-0">
@@ -1034,8 +1037,8 @@ export function ProductDetail() {
                         <Truck size={14} className="text-brand-orange" />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-[12px] font-semibold text-charcoal leading-tight truncate">{isDigital ? t('Instant delivery') : t('Shipped by the seller')}</p>
-                        <p className="text-[12px] text-slate mt-[1px] truncate">{isDigital ? t('Download right after purchase') : t('Track it from My Orders')}</p>
+                        <p className="text-[12px] font-semibold text-charcoal leading-tight">{isDigital ? t('Instant delivery') : t('Shipped by the seller')}</p>
+                        <p className="text-[12px] text-slate mt-[1px] leading-snug">{isDigital ? t('Download right after purchase') : t('Track it from My Orders')}</p>
                       </div>
                     </div>
                   </div>
@@ -1109,10 +1112,10 @@ export function ProductDetail() {
                   <div>
                     <CoverImage src={storeData?.coverImage} className="h-[100px] -mx-6 -mt-6" />
                     <div className="relative flex items-start gap-[14px] mb-5 flex-wrap -mt-8">
-                      <SellerLogoAvatar logo={storeData?.logo} name={product.sellerName ?? 'Unknown Seller'} />
+                      <SellerLogoAvatar logo={storeData?.logo ?? product.storeLogo} name={storeData?.name ?? product.storeName ?? product.sellerName ?? 'Unknown Seller'} />
                       <div className="flex-1 min-w-0 pt-8">
                         <div className="flex items-center gap-[6px] flex-wrap">
-                          <span className="text-[16px] font-bold text-carbon">{storeData?.name ?? product.sellerName ?? 'Unknown Seller'}</span>
+                          <span className="text-[16px] font-bold text-carbon">{storeData?.name ?? product.storeName ?? product.sellerName ?? 'Unknown Seller'}</span>
                           {storeData?.badges?.includes('verified') && (
                             <Badge color="green" size="sm"><ShieldCheck size={11} /> Verified Seller</Badge>
                           )}
@@ -1196,12 +1199,12 @@ export function ProductDetail() {
 
                 {activeTab === 'shipping' && (
                   <div className="flex flex-col gap-4">
-                    {!isDigital && <ShippingZonesSummary sellerName={product.sellerName} />}
+                    {!isDigital && <ShippingZonesSummary sellerName={storeData?.name ?? product.storeName ?? product.sellerName} />}
                     {[
                       ...(isDigital
                         ? [{ Icon: Download, label: 'Instant Digital Delivery', value: 'Download link available immediately after purchase' }]
                         : []),
-                      { Icon: Package, label: 'Seller Fulfilled', value: `Sold and shipped by ${product.sellerName ?? 'seller'}` },
+                      { Icon: Package, label: 'Seller Fulfilled', value: `Sold and shipped by ${storeData?.name ?? product.storeName ?? product.sellerName ?? 'the store'}` },
                       { Icon: ClipboardList, label: 'SKU', value: activeVariant?.sku ?? '—' },
                     ].map(row => (
                       <div key={row.label} className="flex gap-3 items-start">
@@ -1222,7 +1225,7 @@ export function ProductDetail() {
           {/* ── Reviews ────────────────────────────────────────────────────────── */}
           <div id="reviews" className="bg-white rounded-2xl border border-bone p-6 mb-6 scroll-mt-24">
             <AiReviewSummary productId={product._id} />
-            <ProductReviewsSection productId={product._id} storeName={product.sellerName} canReview={product.canReview} />
+            <ProductReviewsSection productId={product._id} storeName={storeData?.name ?? product.storeName ?? product.sellerName} canReview={product.canReview} />
           </div>
 
           {/* ── Bought together ──────────────────────────────────────────────── */}
@@ -1307,7 +1310,7 @@ export function ProductDetail() {
           </div>
           <Button
             variant="primary" size="md" className="justify-center flex-1 max-w-[220px]"
-            disabled={stock <= 0} loading={adding === activeVariant._id}
+            disabled={stock <= 0 || !!pendingAction} loading={pendingAction === 'cart'}
             onClick={() => handleAddToCart(false)}
           >
             {stock <= 0 ? t('Out of Stock') : addedFeedback ? t('✓ Added to Cart') : <><ShoppingCart size={14} /> {t('Add to Cart')}</>}

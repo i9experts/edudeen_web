@@ -65,6 +65,7 @@ export function StoreFeatureCard({ store, onClick, className }: {
       {/* Cover */}
       <CoverImage
         src={store.coverImage}
+        alt={`${store.name} cover`}
         imgClassName="transition-transform duration-500 group-hover:scale-105"
         className="h-[76px]"
         // No cover photo → a calm single-hue gradient (per store), not the loud default one.
@@ -120,11 +121,15 @@ export function StoreFeatureCard({ store, onClick, className }: {
               ? <><Star size={11} className="text-brand-orange fill-brand-orange" />{store.averageRating.toFixed(1)}</>
               : <span className="px-[6px] py-[1px] rounded-full bg-success-bg text-success text-[12px] font-semibold">New</span>}
           </span>
-          <span className="w-px h-3 bg-bone" />
-          <span className="flex items-center gap-[4px] text-[12px] text-slate">
-            <Users size={11} />
-            {store.followersCount.toLocaleString()}
-          </span>
+          {store.followersCount > 0 && (
+            <>
+              <span className="w-px h-3 bg-bone" />
+              <span className="flex items-center gap-[4px] text-[12px] text-slate">
+                <Users size={11} />
+                {store.followersCount.toLocaleString()}
+              </span>
+            </>
+          )}
           <span className="w-px h-3 bg-bone" />
           <span className="flex items-center gap-[4px] text-[12px] text-slate">
             <PackageCheck size={11} />

@@ -126,7 +126,7 @@ export function BannerCarousel({ banners, entityType, fit = 'cover', onActiveCha
               loading={i === 0 ? 'eager' : 'lazy'}
               fetchPriority={i === 0 ? 'high' : undefined}
               decoding="async"
-              alt=""
+              alt="Edudeen offer"
               onLoad={() => setLoadedIds((prev) => (prev.has(banner._id) ? prev : new Set(prev).add(banner._id)))}
               className={clsx(
                 'absolute inset-0 w-full h-full',

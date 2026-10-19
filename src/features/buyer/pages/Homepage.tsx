@@ -58,7 +58,7 @@ import { PaymentTrustStrip } from '@/features/buyer/components/home/PaymentTrust
 import { RecentlyViewedRail } from '@/features/buyer/components/home/RecentlyViewedRail';
 import { HomeNewsletter } from '@/features/buyer/components/home/HomeNewsletter';
 import { useHomeShelves } from '@/features/buyer/components/home/useHomeShelves';
-import { dedupeInOrder, soldLabel } from '@/features/buyer/components/home/homeRules';
+import { dedupeInOrder, soldLabel, paymentTrust, paymentTrustSub, railSize } from '@/features/buyer/components/home/homeRules';
 
 // Text lives in admin-edit/homeDefaults.ts (shared with the inline editor).
 const TRUST_ITEMS = [{ Icon: Shield }, { Icon: CreditCard }, { Icon: RefreshCcw }, { Icon: Headset }];
@@ -97,9 +97,9 @@ function flattenCategories(nodes: CategoryNode[], out: CategoryNode[] = []): Cat
 
 const sameRange = (a: [number, number], b: [number, number]) => a[0] === b[0] && a[1] === b[1];
 
-/** Mirrors the API rule for the Featured sellers rail (logo, banner, bio of 30+ characters, 5+ published items) in case an older API answers. */
+/** Mirrors the API rule for the Featured sellers rail: every approved store with at least one published listing. */
 function isFeaturedSeller(s: PublicStoreListItem): boolean {
-  return !!s.logo && !!s.coverImage && (s.description ?? '').trim().length >= 30 && (s.productCount ?? 0) >= 5;
+  return (s.productCount ?? 0) >= 1;
 }
 
 // Category names are left out on purpose: a broad category like "Islamic &
@@ -149,7 +149,12 @@ function HomeLanding() {
   // Admin-editable copy (Admin → Platform Config → Homepage content); blank = built-in default below.
   const { config: publicConfig, loading: configLoading } = usePublicPlatformConfig();
   const hc = publicConfig?.homeContent ?? {};
-  const trustItems = TRUST_ITEMS.map((d, i) => ({ ...d, ...effectiveHomeContent(hc).trustItems[i] }));
+  // The 'Flexible Payment' tile lists exactly the methods enabled right now (same source as the 'Ways to pay' row) unless the admin wrote their own line.
+  const enabledMethods = paymentTrust(publicConfig?.commerce?.paymentMethods, publicConfig?.commerce?.codAvailable, !!(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string | undefined)?.trim());
+  const trustItems = TRUST_ITEMS.map((d, i) => {
+    const item = { ...d, ...effectiveHomeContent(hc).trustItems[i] };
+    return i === 1 && !hc.trustItems?.[1]?.sub?.trim() ? { ...item, sub: paymentTrustSub(enabledMethods) } : item;
+  });
   const navigate = useNavigate();
   // Edudeen's curated, seasonal shelves ("Exam ki tayyari" etc.), set by the admin team.
   const [shelves, setShelves] = useState<CuratedShelf[]>([]);
@@ -182,7 +187,7 @@ function HomeLanding() {
 
   useEffect(() => {
     let cancelled = false;
-    apiGetTopStores(10).then(res => { if (!cancelled) setTopStores((res.data?.stores ?? []).filter(isFeaturedSeller)); }).catch(() => {});
+    apiGetTopStores(24).then(res => { if (!cancelled) setTopStores((res.data?.stores ?? []).filter(isFeaturedSeller)); }).catch(() => {});
     return () => { cancelled = true; };
   }, []);
 
@@ -250,7 +255,7 @@ function HomeLanding() {
       featured,
       ...Object.fromEntries(shelves.map(s => [`shelf-${s._id}`, s.products])),
     },
-    { bestsellers: 5, featured: 5, ...Object.fromEntries(shelves.map(s => [`shelf-${s._id}`, 5])) },
+    { bestsellers: 8, featured: 5, ...Object.fromEntries(shelves.map(s => [`shelf-${s._id}`, 5])) },
   );
 
   // ── Catalogue section filters ──
@@ -567,7 +572,7 @@ function HomeLanding() {
         <ProductShelf
           eyebrow="What parents and teachers buy" title="Bestsellers"
           action={{ label: 'View all', onClick: () => navigate('/?sort=popularity') }}
-          items={unique.bestsellers} loading={homeShelves.bestsellers.loading} renderCard={renderResourceCard}
+          items={unique.bestsellers.slice(0, railSize(unique.bestsellers.length))} loading={homeShelves.bestsellers.loading} renderCard={renderResourceCard}
           note={p => { const s = soldLabel(p.purchaseCount); return s ? <p className="text-[12px] text-slate mt-1 mb-0">{s}</p> : null; }}
         />
         {/* ── Browse everything: category tabs + filters + 12 per page with "Show more". Sits right under Bestsellers. ── */}

@@ -142,6 +142,7 @@ export interface MarketplaceProduct {
   sellerName?:       string;
   /** TODO(owner): list endpoints don't return the store name yet (only product detail does); cards fall back to sellerName until they do. */
   storeName?:        string | null;
+  storeLogo?:        string | null;
   sellerVerified?:   boolean;
   activeCampaign?:   ActiveCampaignBadge | null;
   /** Lowest sale price across variants when a platform sale really discounts this product. */

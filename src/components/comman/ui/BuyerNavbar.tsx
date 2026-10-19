@@ -246,7 +246,7 @@ function StoreMatchRow({ store, query, onClick }: { store: PublicStoreListItem; 
     >
       <span className="w-14 h-14 rounded-[10px] overflow-hidden shrink-0 bg-brand-pale-orange flex items-center justify-center">
         {store.logo
-          ? <img loading="lazy" decoding="async" src={store.logo} alt="" className="w-full h-full object-cover" />
+          ? <img loading="lazy" decoding="async" src={store.logo} alt={store.name ?? 'Store logo'} className="w-full h-full object-cover" />
           : <StoreIcon size={20} className="text-brand-orange opacity-50" />}
       </span>
       <div className="flex-1 min-w-0">
@@ -683,7 +683,7 @@ export function SearchBox({
                         >
                           <span className="block w-[74px] h-[74px] rounded-[10px] overflow-hidden bg-brand-pale-orange">
                             {item.image
-                              ? <img loading="lazy" decoding="async" src={item.image} alt="" className="w-full h-full object-cover" />
+                              ? <img loading="lazy" decoding="async" src={item.image} alt={item.name ?? ''} className="w-full h-full object-cover" />
                               : <span className="w-full h-full flex items-center justify-center"><Sparkles size={16} className="text-brand-orange opacity-40" /></span>}
                           </span>
                           <span className="block text-[12px] text-charcoal leading-snug line-clamp-2 mt-[5px] group-hover:text-brand-deep-orange transition-colors">
@@ -732,7 +732,7 @@ export function SearchBox({
                         >
                           <span className="w-6 h-6 rounded-full overflow-hidden shrink-0 bg-brand-pale-orange flex items-center justify-center">
                             {s.logo
-                              ? <img loading="lazy" decoding="async" src={s.logo} alt="" className="w-full h-full object-cover" />
+                              ? <img loading="lazy" decoding="async" src={s.logo} alt={s.name ?? 'Store logo'} className="w-full h-full object-cover" />
                               : <StoreIcon size={12} className="text-brand-orange opacity-60" />}
                           </span>
                           <span className="truncate">{s.name}</span>

@@ -37,6 +37,11 @@ export function dedupeInOrder<K extends string, T extends HasId>(
   return out;
 }
 
+/** A rail shows a full row: 8 items when there are 8+, else 4 when there are 4+, else whatever exists (never an odd 5). */
+export function railSize(available: number): number {
+  return available >= 8 ? 8 : available >= 4 ? 4 : Math.max(0, available);
+}
+
 export interface PaymentFlags { card?: boolean; bankTransfer?: boolean; jazzcash?: boolean; easypaisa?: boolean }
 export type PaymentTrustId = 'cod' | 'jazzcash' | 'easypaisa' | 'card' | 'bank';
 
@@ -52,6 +57,14 @@ export function paymentTrust(flags: PaymentFlags | undefined, codAvailable: bool
   if (flags?.card && stripeKeyPresent) out.push('card');
   if (flags?.bankTransfer) out.push('bank');
   return out;
+}
+
+/** One line naming the enabled payment methods (e.g. 'COD & bank transfer'); the single source for the trust tile and the 'Ways to pay' row. */
+export function paymentTrustSub(ids: PaymentTrustId[]): string {
+  const name: Record<PaymentTrustId, string> = { cod: 'COD', jazzcash: 'JazzCash', easypaisa: 'Easypaisa', card: 'Cards', bank: 'bank transfer' };
+  const list = ids.map(i => name[i]);
+  if (list.length === 0) return 'Pay securely through Edudeen';
+  return list.length === 1 ? list[0] : `${list.slice(0, -1).join(', ')} & ${list[list.length - 1]}`;
 }
 
 /** https://wa.me link for a stored WhatsApp number (digits only; a leading 0 is treated as Pakistan, +92). Empty when unusable. */

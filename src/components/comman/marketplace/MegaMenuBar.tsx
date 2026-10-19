@@ -95,7 +95,7 @@ export function CategoryBarIcon({ category, parentName }: { category: CategoryNo
   if (category.image) {
     return (
       <span className="w-[24px] h-[24px] rounded-lg overflow-hidden shrink-0 bg-cream border border-bone">
-        <img loading="lazy" decoding="async" src={category.image} alt="" className="w-full h-full object-cover" />
+        <img loading="lazy" decoding="async" src={category.image} alt={category.name} className="w-full h-full object-cover" />
       </span>
     );
   }
@@ -226,7 +226,7 @@ export function CategoriesMegaContent({
               >
                 <span className="w-14 h-14 rounded-full overflow-hidden bg-cream border border-bone flex items-center justify-center shrink-0 transition-transform duration-150 group-hover:-translate-y-[2px] group-hover:border-brand-orange/40">
                   {sub.image
-                    ? <img loading="lazy" decoding="async" src={sub.image} alt="" className="w-full h-full object-cover" />
+                    ? <img loading="lazy" decoding="async" src={sub.image} alt={sub.name} className="w-full h-full object-cover" />
                     : <CategoryArt name={sub.name || sub.slug} parentName={active.name} />}
                 </span>
                 <span className="text-[12px] font-medium text-charcoal leading-tight line-clamp-2 group-hover:text-brand-orange transition-colors">
