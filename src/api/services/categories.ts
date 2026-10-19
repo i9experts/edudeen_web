@@ -26,6 +26,8 @@ export interface CategoryNode extends Category {
   productCount?: number;
   /** First photo of a real listed product in this category (or a descendant) — attached server-side. */
   coverImage?: string | null;
+  /** Up to 4 photos of different listed products in this category. */
+  coverImages?: string[];
 }
 
 export interface CategoryPayload {
