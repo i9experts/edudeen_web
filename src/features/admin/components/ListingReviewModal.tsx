@@ -10,6 +10,7 @@ import { getStorePagePath } from '@/utils/storefrontUrl';
 import { AiModerationPanel } from './AiModerationPanel';
 import { TrustBadgesEditor } from './TrustBadgesEditor';
 import { ageLabel } from '@/constants/learning';
+import { classRangeLabel } from '@/constants/classLevels';
 
 const LICENSE: Record<string, string> = {
   personal: 'Personal use', single_classroom: 'One classroom', school: 'Whole school', commercial: 'Commercial',
@@ -63,9 +64,11 @@ export function ListingReviewModal({ listingId, onClose, onDone }: { listingId: 
     finally { setBusy(false); }
   }
 
-  const grade = data?.educationLevel
+  const level = data?.educationLevel
     ? data.educationLevel === 'other' ? data.customLevel : EDUCATION_LEVELS.find(l => l.value === data.educationLevel)?.label
     : null;
+  const range = data ? classRangeLabel(data.classFrom, data.classTo) : null;
+  const grade = [range, level].filter(Boolean).join(' · ') || null;
   const price = data?.variants.find(v => v.isDefault) ?? data?.variants[0];
 
   return (

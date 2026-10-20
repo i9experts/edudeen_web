@@ -72,6 +72,8 @@ export interface ListingReview {
   productType: 'physical' | 'digital' | 'educational';
   educationLevel: string | null;
   customLevel: string | null;
+  classFrom?: string | null;
+  classTo?: string | null;
   status: string;
   scheduledAt: string | null;
   reviewNote: string | null;

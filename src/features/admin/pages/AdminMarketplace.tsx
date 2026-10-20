@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { formatMoney } from '@/utils/currency';
 import { useSearchParams } from 'react-router-dom';
 import { ListingReviewModal } from '@/features/admin/components/ListingReviewModal';
-import { apiGetListingReviewCount } from '@/api/services/marketplace/adminMarketplace';
+import { apiGetListingReviewCount, apiApproveListing } from '@/api/services/marketplace/adminMarketplace';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useMarketplaceStats, useMarketplaceListings, useMarketplaceListingActions } from '@/hooks/admin/useAdminMarketplace';
 import type { MarketplaceListingRow, ListingStatus } from '@/api/services/marketplace/adminMarketplace';
@@ -12,7 +12,7 @@ import { AdminStudioHeader } from '@/features/admin/components/studio';
 import type { TableColumn } from '@/components/comman/ui';
 import { AnalyticsErrorState } from '@/components/comman/analytics/AnalyticsErrorState';
 import { formatCurrency, formatNumber } from '@/components/comman/analytics/format';
-import { Star, StoreIcon, RefreshCw, GraduationCap, Trash2, ClipboardCheck, ShieldCheck, Truck, FlaskConical } from 'lucide-react';
+import { Star, StoreIcon, RefreshCw, GraduationCap, Trash2, ClipboardCheck, ShieldCheck, Truck, FlaskConical, CheckCircle2 } from 'lucide-react';
 
 const STATUS_OPTIONS = [
   { value: 'pending_review', label: 'Waiting for review' },
@@ -71,6 +71,26 @@ export function AdminMarketplace() {
   const [removing, setRemoving] = useState<MarketplaceListingRow | null>(null);
 
   function refreshAll() { refetchStats(); refetch(); loadPending(); }
+
+  // Bulk publish: each approval is its own atomic call, so one failure never blocks the rest.
+  const [selected, setSelected] = useState<Set<string | number>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkMsg, setBulkMsg] = useState('');
+  useEffect(() => { setSelected(new Set()); }, [page, statusFilter, search, categoryId]);
+
+  async function approveSelected() {
+    const rows = (data?.items ?? []).filter(r => selected.has(r.id) && (r.status === 'pending_review' || r.status === 'rejected'));
+    if (rows.length === 0) { setBulkMsg('Select listings that are waiting for review.'); return; }
+    setBulkBusy(true); setBulkMsg('');
+    let ok = 0; const failed: string[] = [];
+    for (const r of rows) {
+      try { await apiApproveListing(r.id); ok++; }
+      catch { failed.push(r.title); }
+    }
+    setBulkBusy(false); setSelected(new Set());
+    setBulkMsg(`${ok} published${failed.length ? `, ${failed.length} failed: ${failed.slice(0, 3).join(', ')}${failed.length > 3 ? '…' : ''}` : ''}.`);
+    refreshAll();
+  }
 
   async function toggleFeatured(row: MarketplaceListingRow) {
     const ok = await setFeatured(row.id, !row.isFeatured);
@@ -173,6 +193,7 @@ export function AdminMarketplace() {
           <Button size="sm" variant="primary" icon={<ClipboardCheck size={13} />} onClick={() => { setStatusFilter('pending_review'); setPage(1); }}>Review now</Button>
         </div>
       )}
+      {bulkMsg && <div role="status" className="bg-info-bg border border-info/30 rounded-lg px-4 py-2.5 text-[12.5px] text-carbon">{bulkMsg}</div>}
       {actionError && <div className="bg-error-bg border border-error-border rounded-lg px-4 py-2.5 text-[12.5px] text-error">{actionError}</div>}
 
       {statsError ? (
@@ -207,6 +228,12 @@ export function AdminMarketplace() {
             columns={columns}
             data={data?.items ?? []}
             keyExtractor={(r) => r.id}
+            selectable
+            selectedKeys={selected}
+            onSelectionChange={setSelected}
+            bulkActions={() => (
+              <Button size="xs" variant="primary" icon={<CheckCircle2 size={11} />} onClick={approveSelected} loading={bulkBusy}>Approve &amp; publish selected</Button>
+            )}
             loading={loading}
             emptyState={{ icon: <StoreIcon size={28} className="text-slate/50" />, title: 'No listings match your filters', description: 'Try adjusting your search or clearing filters.' }}
             pagination={{ page, total: data?.total ?? 0, perPage: 10, onChange: setPage, label: 'listings' }}
