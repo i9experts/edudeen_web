@@ -6,6 +6,7 @@ import { TokenStorage } from '@/api/services/auth';
 import { EdudeenLogo } from '@/components/comman/ui/EdudeenLogo';
 import { LICENSE_LABEL } from '@/constants/learning';
 import { money, discountLines } from './orderFormat';
+import { formatAddressLine, formatPhone } from '@/utils/formatAddress';
 
 const PAYMENT_LABEL: Record<string, string> = {
   stripe: 'Card', cash_on_delivery: 'Cash on delivery', manual_bank_transfer: 'Bank transfer',
@@ -61,8 +62,8 @@ export function InvoicePage() {
             <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-slate mb-1">Billed to</p>
             <p className="font-semibold">{addr?.recipientName || buyer?.name || 'Customer'}</p>
             {buyer?.email && <p>{buyer.email}</p>}
-            {addr?.addressLine1 && <p className="text-graphite">{[addr.addressLine1, addr.addressLine2, addr.city, addr.state, addr.zipCode].filter(Boolean).join(', ')}</p>}
-            {addr?.phoneNumber && <p className="text-graphite">{addr.phoneNumber}</p>}
+            {addr?.addressLine1 && <p className="text-graphite">{formatAddressLine(addr)}</p>}
+            {addr?.phoneNumber && <p className="text-graphite">{formatPhone(addr.phoneNumber)}</p>}
           </div>
           <div>
             <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-slate mb-1">Sold by</p>

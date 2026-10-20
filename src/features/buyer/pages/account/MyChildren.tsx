@@ -10,6 +10,7 @@ import {
 } from '@/api/services/children';
 import { useChildren, childLevelLabel, refreshChildren, selectChild } from '@/hooks/useChildren';
 import { usePremium } from '@/hooks/usePremium';
+import { AccountPageHeader } from './AccountPageHeader';
 
 const parseSubjects = (s: string) => [...new Set(s.split(',').map(x => x.trim()).filter(Boolean))].slice(0, 10);
 
@@ -93,15 +94,15 @@ export function MyChildren() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-3 flex-wrap">
-        <div>
-          <h1 className="text-[20px] font-bold text-carbon">My children</h1>
-          <p className="text-[13px] text-slate">Save your children's class so Edudeen can show resources that fit them.</p>
-        </div>
-        <Button variant="primary" size="sm" className="ms-auto" disabled={full || !!error} onClick={() => setEditing('new')}>
-          <Plus size={14} /> Add a child
-        </Button>
-      </div>
+      <AccountPageHeader
+        title="My Children"
+        description="Save your children's class so Edudeen can show resources that fit them."
+        actions={
+          <Button variant="primary" size="sm" disabled={full || !!error} onClick={() => setEditing('new')}>
+            <Plus size={14} /> Add a child
+          </Button>
+        }
+      />
       {!!children.length && <p className="text-[12.5px] text-slate">{`${children.length} of ${limit} children`}</p>}
       {full && !isPremium && (
         <div className="flex items-center gap-2 flex-wrap rounded-lg border border-[#f1d98a] bg-[#fff6d6] px-3 py-2.5 text-[12.5px] text-[#8a6100]">

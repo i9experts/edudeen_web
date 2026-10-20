@@ -276,6 +276,13 @@ export function AccountDashboard() {
     !!profile?.profileImage,
     !!profile?.isVerified,
   ];
+  const missingFields = [
+    !profile?.name && 'Add your name',
+    !profile?.phone && 'Add a phone number',
+    !addressCount && addressCount !== null && 'Add a delivery address',
+    !profile?.profileImage && 'Add a profile photo',
+    !profile?.isVerified && 'Verify your email',
+  ].filter(Boolean) as string[];
   const completionPct = Math.round((completionChecks.filter(Boolean).length / completionChecks.length) * 100);
 
   const memberSince = profile?.createdAt
@@ -313,24 +320,28 @@ export function AccountDashboard() {
          would just repeat the same three numbers a second time on mobile. */}
       <div className="hidden lg:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         <MetricCard
+          to="/account/orders"
           label="Total Orders"
           value={totalOrders ?? 0}
           loading={ordersLoading}
           icon={<ShoppingBag size={16} />}
         />
         <MetricCard
+          to="/account/wishlist"
           label="Wishlist Items"
           value={wishlistCount}
           loading={wishlistLoading}
           icon={<Heart size={16} />}
         />
         <MetricCard
+          to="/account/addresses"
           label="Saved Addresses"
           value={addressCount ?? 0}
           loading={addressCount === null}
           icon={<MapPin size={16} />}
         />
         <MetricCard
+          to="/account/notifications"
           label="Unread Alerts"
           value={unreadCount}
           icon={<Bell size={16} />}
@@ -429,6 +440,11 @@ export function AccountDashboard() {
                 ? 'Your profile is fully set up.'
                 : 'Complete your profile for a smoother checkout experience.'}
             </p>
+            {missingFields.length > 0 && (
+              <ul className="mt-2 m-0 ps-4 list-disc text-[12px] text-graphite flex flex-col gap-0.5">
+                {missingFields.map(f => <li key={f}>{f}</li>)}
+              </ul>
+            )}
             {completionPct < 100 && (
               <Button variant="outline" size="sm" fullWidth className="mt-3" to={'/account/profile'}>
                 Complete Profile

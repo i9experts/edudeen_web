@@ -1,6 +1,6 @@
 import { useT } from '@/contexts/languageCtx';
 import { useState, Suspense } from 'react';
-import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
 import {
   LayoutDashboard, ShoppingBag, Heart, Star, Baby,
@@ -47,8 +47,6 @@ export function useNavGroups(): NavGroup[] {
         { id: 'downloads', label: t('My Library'), Icon: Download,  path: 'downloads' },
         { id: 'wishlist', label: t('Saved'), Icon: Heart,       path: 'wishlist', badge: wishlistCount },
         { id: 'lists',    label: t('My Lists'), Icon: ListChecks,  path: 'lists' },
-        { id: 'children', label: t('My children'), Icon: Baby,     path: 'children' },
-        { id: 'premium',  label: t('Premium'), Icon: Crown,        path: 'premium' },
         { id: 'quotes',   label: t('School Quotes'), Icon: FileSpreadsheet, path: 'quotes' },
         { id: 'reviews',  label: t('Reviews'),  Icon: Star,        path: 'reviews' },
         { id: 'payments', label: t('Bank Transfers'), Icon: Landmark, path: 'payments' },
@@ -67,6 +65,8 @@ export function useNavGroups(): NavGroup[] {
         { id: 'profile',       label: t('Profile'),        Icon: User,      path: 'profile' },
         { id: 'security',      label: t('Login & Security'), Icon: Shield,  path: 'security' },
         { id: 'addresses',     label: t('Addresses'),      Icon: MapPin,    path: 'addresses' },
+        { id: 'children',      label: t('My Children'),    Icon: Baby,      path: 'children' },
+        { id: 'premium',       label: t('Premium'),        Icon: Crown,     path: 'premium' },
         { id: 'subscriptions', label: t('Subscriptions'),  Icon: RefreshCw, path: 'subscriptions' },
       ],
     },
@@ -96,8 +96,6 @@ function AccountSidebar({ open, onToggle }: SidebarProps) {
   const navGroups = useNavGroups();
 
   const isActive = (path: string) => pathname === `/account/${path}` || pathname.startsWith(`/account/${path}/`);
-
-  const go = (path: string) => navigate(`/account/${path}`);
 
   return (
     <aside className={clsx(
@@ -157,17 +155,14 @@ function AccountSidebar({ open, onToggle }: SidebarProps) {
               {section.items.map(item => {
                 const active = isActive(item.path);
                 return (
-                  <div
+                  <Link
                     key={item.id}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => go(item.path)}
-                    onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(item.path); } }}
+                    to={`/account/${item.path}`}
                     title={!open ? item.label : undefined}
                     aria-label={item.label}
                     aria-current={active ? 'page' : undefined}
                     className={clsx(
-                      'flex items-center gap-[10px] min-h-11 py-[9px] px-[10px] rounded-md mb-0.5 cursor-pointer',
+                      'flex items-center gap-[10px] min-h-11 py-[9px] px-[10px] rounded-md mb-0.5 cursor-pointer no-underline',
                       'transition-colors duration-150',
                       !open && 'lg:justify-center lg:px-0',
                       active ? 'bg-brand-orange shadow-[0_2px_8px_rgba(23,71,113,0.28)]' : 'bg-transparent hover:bg-[#e3ecf3]',
@@ -187,10 +182,9 @@ function AccountSidebar({ open, onToggle }: SidebarProps) {
                             {item.badge > 99 ? '99+' : item.badge}
                           </span>
                         )}
-                        
                       </>
                     )}
-                  </div>
+                  </Link>
                 );
               })}
             </div>

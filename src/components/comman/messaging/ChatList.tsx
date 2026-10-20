@@ -116,8 +116,8 @@ export function ChatList({
       className="w-full md:w-[var(--list-w)] md:shrink-0 border-e border-[#eeece4] flex flex-col bg-white h-full relative"
       style={{ '--list-w': `${width}px` } as React.CSSProperties}
     >
-        <div className="px-4 pt-4 pb-[10px] flex items-center justify-between shrink-0">
-          <h2 className="text-[18px] font-bold text-charcoal">{title}</h2>
+        <div className={clsx('px-4 pt-4 pb-[10px] flex items-center shrink-0', title ? 'justify-between' : 'justify-end', !title && !onNew && 'hidden')}>
+          {title && <h2 className="text-[18px] font-bold text-charcoal">{title}</h2>}
           {onNew && (
             <button
               onClick={onNew}

@@ -8,6 +8,7 @@ import client from '@/api/client';
 import { apiAttachPurchaseOrder, apiGetMyQuotes, apiRespondToQuote, NET_TERMS_LABEL, QUOTE_STATUS_LABEL, QUOTE_TONE, type QuoteRequest } from '@/api/services/classroom';
 import { getStorePagePath } from '@/utils/storefrontUrl';
 import { money } from './orderFormat';
+import { AccountPageHeader } from './AccountPageHeader';
 
 const date = (iso?: string | null) => (iso ? new Date(iso).toLocaleDateString('en-PK', { day: 'numeric', month: 'short', year: 'numeric' }) : '');
 
@@ -73,10 +74,7 @@ export function QuotesPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <h1 className="text-[20px] font-bold text-carbon">School Quotes</h1>
-        <p className="text-[13px] text-slate">Bulk prices you asked for on behalf of a school, madrasa or academy.</p>
-      </div>
+      <AccountPageHeader title="School Quotes" description="Bulk prices you asked for on behalf of a school, madrasa or academy." />
       {quotes === null ? (
         <SkeletonBox height={140} rounded="12px" />
       ) : quotes.length === 0 ? (

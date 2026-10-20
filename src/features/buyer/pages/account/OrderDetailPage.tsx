@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ProductCoverFallback } from '@/components/comman/marketplace/ProductCoverFallback';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, FileText, Truck, Package, Download, MapPin, CreditCard, CheckCircle2, Circle } from 'lucide-react';
-import { clsx } from 'clsx';
+import { ArrowLeft, FileText, Truck, Package, Download, MapPin, CreditCard } from 'lucide-react';
 import { Card, SkeletonBox, Button, StatusBadge } from '@/components/comman/ui';
 import { apiGetOrderById, type OrderDetail } from '@/api/services/orders';
 import { getStorePagePath } from '@/utils/storefrontUrl';
@@ -10,7 +9,8 @@ import { money, discountLines } from './orderFormat';
 import { LICENSE_LABEL } from '@/constants/learning';
 import { DigitalFileDownloads } from '@/features/buyer/components/DigitalFileDownloads';
 import { RefundRequestPanel } from '@/features/buyer/components/RefundRequestPanel';
-import { OrderNextStep } from './orderProgress';
+import { OrderNextStep, OrderProgressTrack, buildOrderProgress } from './orderProgress';
+import { formatAddressLine, formatPhone } from '@/utils/formatAddress';
 
 const PAYMENT_LABEL: Record<string, string> = {
   stripe: 'Card', cash_on_delivery: 'Cash on delivery', manual_bank_transfer: 'Bank transfer',
@@ -19,37 +19,14 @@ const PAYMENT_LABEL: Record<string, string> = {
 const fmt = (iso?: string | null) => (iso ? new Date(iso).toLocaleString('en-PK', { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : null);
 
 /** One store's part of the order, as a step-by-step timeline with dates. */
-function Timeline({ placedAt, paidAt, so }: { placedAt: string; paidAt?: string | null; so: OrderDetail['sellerOrders'][number] }) {
-  const digital = so.fulfillmentType === 'digital';
-  const steps = digital
-    ? [
-        { label: 'Order placed', at: placedAt, done: true },
-        { label: 'Payment confirmed', at: paidAt, done: !!paidAt },
-        { label: 'Ready to download', at: paidAt, done: !!paidAt },
-      ]
-    : [
-        { label: 'Order placed', at: placedAt, done: true },
-        { label: 'Being prepared', at: null, done: ['processing', 'shipped', 'delivered', 'completed'].includes(so.status) },
-        { label: 'Shipped', at: so.shippedAt, done: ['shipped', 'delivered', 'completed'].includes(so.status) },
-        { label: 'Delivered', at: so.deliveredAt, done: ['delivered', 'completed'].includes(so.status) },
-      ];
+function Timeline({ order, so }: { order: OrderDetail; so: OrderDetail['sellerOrders'][number] }) {
   if (so.status === 'cancelled') return <p className="text-[12.5px] text-error">This part of the order was cancelled.</p>;
-  return (
-    <ol className="flex flex-col sm:flex-row gap-3 sm:gap-0 list-none p-0 m-0">
-      {steps.map((s, i) => (
-        <li key={s.label} className="flex sm:flex-col items-center sm:items-start gap-2 sm:flex-1 min-w-0">
-          <div className="flex items-center w-auto sm:w-full">
-            {s.done ? <CheckCircle2 size={18} className="text-success shrink-0" /> : <Circle size={18} className="text-bone shrink-0" />}
-            {i < steps.length - 1 && <span className={clsx('hidden sm:block flex-1 h-[2px] mx-1', steps[i + 1].done ? 'bg-success' : 'bg-bone')} />}
-          </div>
-          <div className="min-w-0">
-            <p className={clsx('text-[12.5px] font-semibold', s.done ? 'text-carbon' : 'text-slate')}>{s.label}</p>
-            {s.done && s.at && <p className="text-[12px] text-slate">{fmt(s.at)}</p>}
-          </div>
-        </li>
-      ))}
-    </ol>
-  );
+  // Same step config as the orders list (account/orderProgress), scoped to this store's part of the order.
+  const steps = buildOrderProgress({
+    orderStatus: order.orderStatus, isPaid: order.isPaid, paymentType: order.paymentType, paymentStatus: order.paymentStatus,
+    createdAt: order.createdAt, paidAt: order.paidAt ?? null, stores: [so],
+  });
+  return steps ? <OrderProgressTrack steps={steps} /> : null;
 }
 
 export function OrderDetailPage() {
@@ -107,7 +84,7 @@ export function OrderDetailPage() {
             )}
           </div>
           <div className="px-4 md:px-5 py-4 border-b border-bone">
-            <Timeline placedAt={order.createdAt} paidAt={order.paidAt} so={so} />
+            <Timeline order={order} so={so} />
             <OrderNextStep input={{ orderStatus: so.status === 'cancelled' ? 'cancelled' : order.orderStatus, isPaid: order.isPaid, paymentType: order.paymentType, paymentStatus: order.paymentStatus, stores: [so], shippingEstimate: order.shippingEstimate ?? null }} />
             {Array.isArray((so as any).trackingEvents) && (so as any).trackingEvents.length > 0 && (
               <div className="mt-4 pt-3 border-t border-bone">
@@ -150,8 +127,8 @@ export function OrderDetailPage() {
           <p className="flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-[0.08em] text-slate mb-2"><MapPin size={12} /> Delivery address</p>
           {addr && Object.keys(addr).length ? (
             <p className="text-[13px] text-charcoal leading-relaxed">
-              {addr.recipientName}{addr.phoneNumber ? ` · ${addr.phoneNumber}` : ''}<br />
-              {[addr.addressLine1, addr.addressLine2, addr.city, addr.state, addr.zipCode].filter(Boolean).join(', ')}
+              {addr.recipientName}{addr.phoneNumber ? ` · ${formatPhone(addr.phoneNumber)}` : ''}<br />
+              {formatAddressLine(addr)}
             </p>
           ) : <p className="text-[13px] text-slate">Digital order — nothing to ship.</p>}
         </Card>

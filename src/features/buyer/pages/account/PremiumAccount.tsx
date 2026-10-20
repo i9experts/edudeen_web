@@ -1,8 +1,8 @@
 import { formatPrice } from '@/utils/formatPrice';
 import { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { AlertCircle, Check, Copy, Crown } from 'lucide-react';
+import { AlertCircle, Check, Copy } from 'lucide-react';
 import { Badge, Button, Card, Modal, SkeletonBox } from '@/components/comman/ui';
+import { AccountPageHeader } from './AccountPageHeader';
 import { useToast } from '@/contexts/ToastContext';
 import { usePremium, refreshPremium } from '@/hooks/usePremium';
 import {
@@ -91,15 +91,14 @@ export function PremiumAccount() {
 
   const live = isPremium && membership?.status === 'active';
   const b = membership?.benefits ?? null;
+  const ended = membership?.status === 'expired' || membership?.status === 'cancelled';
+  const lastPaid = payments?.find(p => p.status === 'approved') ?? null;
+  const src = (membership?.source ?? '').toLowerCase();
+  const grantLabel = src.includes('trial') ? 'Free trial' : src.includes('grant') ? 'Given by the Edudeen team' : '';
 
   return (
-    <div className="flex flex-col gap-4 max-w-[760px]">
-      <div className="flex items-center gap-3 flex-wrap">
-        <div>
-          <h1 className="text-[20px] font-bold text-carbon flex items-center gap-2"><Crown size={20} className="text-[#8a6100]" aria-hidden /> Edudeen Premium</h1>
-          <p className="text-[13px] text-slate">Your membership, member perks and payments.</p>
-        </div>
-      </div>
+    <div className="flex flex-col gap-4">
+      <AccountPageHeader title="Edudeen Premium" description="Your membership, member perks and payments." />
 
       {loading && !me ? (
         <div className="flex flex-col gap-3"><SkeletonBox height={150} rounded="12px" /><SkeletonBox height={100} rounded="12px" /></div>
@@ -167,9 +166,17 @@ export function PremiumAccount() {
             </>
           ) : (
             <Card className="flex flex-col gap-2">
-              <p className="text-[15px] font-bold text-carbon">{membership?.status === 'expired' || membership?.status === 'cancelled' ? 'Your Premium membership has ended' : 'Join Edudeen Premium'}</p>
+              <p className="text-[15px] font-bold text-carbon">{ended ? 'Your Premium membership has ended' : 'Join Edudeen Premium'}</p>
+              {ended && membership && (
+                <p className="text-[13px] text-charcoal">
+                  {membership.planName ?? 'Edudeen Premium'}
+                  {lastPaid ? ` · ${formatPrice(lastPaid.amountPKR, 'PKR')}` : ''}
+                  {` · ended ${fmtDate(membership.currentPeriodEnd)}`}
+                  {grantLabel ? ` · ${grantLabel}` : ''}
+                </p>
+              )}
               <p className="text-[13px] text-slate">Member prices from sellers, early access to sales, a monthly coupon and priority support.</p>
-              <div><Link to="/premium" className="no-underline"><Button variant="primary" size="sm">{membership?.status === 'expired' || membership?.status === 'cancelled' ? 'Renew Premium' : 'See Premium plans'}</Button></Link></div>
+              <div><Button variant="primary" size="sm" to="/premium">{ended ? 'Renew Premium' : 'See Premium plans'}</Button></div>
             </Card>
           )}
 
@@ -178,7 +185,7 @@ export function PremiumAccount() {
             <p className="text-[14px] font-bold text-carbon">Payments</p>
             {payments === null ? <SkeletonBox height={60} rounded="8px" />
               : payError ? <p className="text-[13px] text-error">{payError}</p>
-              : payments.length === 0 ? <p className="text-[13px] text-slate">No Premium payments yet.</p>
+              : payments.length === 0 ? <p className="text-[13px] text-slate">{grantLabel && membership ? `No payments - this membership was ${grantLabel === 'Free trial' ? 'a free trial' : 'given to you by the Edudeen team'}.` : 'No Premium payments yet.'}</p>
               : (
                 <div className="flex flex-col divide-y divide-bone">
                   {payments.map(p => (

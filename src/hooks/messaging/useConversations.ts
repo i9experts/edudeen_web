@@ -6,6 +6,18 @@ import {
 import { acquireMessagingSocket, releaseMessagingSocket } from '@/api/messagingSocket';
 import { TokenStorage } from '@/api/services/auth';
 
+// Several components on one page (sidebar badge, mobile menu, inbox) mount this
+// hook at once - share one in-flight request instead of firing one each.
+const inFlight = new Map<string, ReturnType<typeof apiListConversations>>();
+function listShared(params: ListConversationsParams) {
+  const key = JSON.stringify(params);
+  const existing = inFlight.get(key);
+  if (existing) return existing;
+  const p = apiListConversations(params).finally(() => { inFlight.delete(key); });
+  inFlight.set(key, p);
+  return p;
+}
+
 export function useConversations(params?: ListConversationsParams) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,7 +37,7 @@ export function useConversations(params?: ListConversationsParams) {
     if (!TokenStorage.isLoggedIn()) { setLoading(false); return Promise.resolve(); }
     const thisRequest = ++requestId.current;
     setLoading(true);
-    return apiListConversations({
+    return listShared({
       ...(storeId ? { storeId } : {}),
       ...(isArchived !== undefined ? { isArchived } : {}),
       ...(isPinned !== undefined ? { isPinned } : {}),

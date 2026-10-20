@@ -40,8 +40,16 @@ export function notificationsPath(): string {
 /** In-app page a notification points to (e.g. a sale campaign → Marketing), if any.
  *  Only same-app paths — never an outside URL. */
 export function notificationLink(data: Record<string, unknown> | null | undefined): string | null {
-  const link = data?.link;
+  let link = data?.link;
+  // Older "team replied" notifications point at "/" - send buyers to a page where the help chat opens.
+  if (link === '/?openChat=1' && TokenStorage.getUser<{ role?: string }>()?.role === 'user') link = '/account/dashboard?openChat=1';
   return typeof link === 'string' && link.startsWith('/') && !link.startsWith('//') ? link : null;
+}
+
+/** Body text with any raw Mongo order id swapped for the human order number (or dropped for old notifications that lack it). */
+export function notificationBody(n: { body: string; data?: Record<string, unknown> | null }): string {
+  const num = typeof n.data?.orderNumber === 'string' ? n.data.orderNumber : '';
+  return n.body.replace(/#?\b[a-f0-9]{24}\b/gi, num ? `${num.startsWith('#') ? '' : '#'}${num}` : '').replace(/\s{2,}/g, ' ').replace(/\s+([.,])/g, '$1');
 }
 
 /** Real-time push toast — rendered by whichever component owns notifications on the page. */
@@ -62,7 +70,7 @@ export function NotificationToast() {
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-[12.5px] font-bold leading-tight">{toast.title}</p>
-        <p className="text-[12px] text-slate mt-1 leading-normal">{toast.body}</p>
+        <p className="text-[12px] text-slate mt-1 leading-normal">{notificationBody(toast)}</p>
       </div>
       <button
         onClick={clearToast}
@@ -119,7 +127,7 @@ export function NotificationsMenuSection({ onNavigate }: { onNavigate: (path: st
               <span className="size-7 rounded-lg bg-bone flex items-center justify-center shrink-0">{getNotificationIcon(n.type)}</span>
               <span className="flex-1 min-w-0">
                 <span className={clsx('block text-[12px] text-charcoal leading-tight truncate', n.isRead ? 'font-medium' : 'font-bold')}>{n.title}</span>
-                <span className="block text-[12px] text-slate leading-snug line-clamp-1 mt-[2px]">{n.body}</span>
+                <span className="block text-[12px] text-slate leading-snug line-clamp-1 mt-[2px]">{notificationBody(n)}</span>
                 <span className="flex items-center gap-1 text-[12px] text-slate mt-[3px]"><Clock size={9} /> {formatRelativeTime(n.createdAt)}</span>
               </span>
             </button>
@@ -259,7 +267,7 @@ export function NotificationBell() {
                       {notif.title}
                     </p>
                     <p className="text-[12px] text-slate mt-1 leading-normal break-words">
-                      {notif.body}
+                      {notificationBody(notif)}
                     </p>
                     <div className="flex items-center gap-1 text-[12px] text-slate mt-1.5">
                       <Clock size={9} />

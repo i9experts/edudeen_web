@@ -4,7 +4,8 @@ import { useLocation } from 'react-router-dom';
 // Own chunk, fetched when the browser is idle - the widget never delays first paint.
 const ChatWidget = lazy(() => import('./ChatWidget'));
 
-const HIDDEN = /^\/(admin|maintenance)(\/|$)/;
+// /account/messages: the bubble would sit on the composer's send/mic buttons.
+const HIDDEN = /^\/(admin|maintenance|account\/messages)(\/|$)/;
 
 /** Mounted once in RootLayout: buyer + public pages and the seller dashboard. Hidden on /admin. */
 export function ChatWidgetGate() {

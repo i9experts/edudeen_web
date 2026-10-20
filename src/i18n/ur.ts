@@ -1576,6 +1576,7 @@ export const UR: Record<string, string> = {
   'Next steps': 'اگلے اقدامات',
   'Browse resources for this level': 'اس سطح کے وسائل دیکھیں',
   'My children': 'میرے بچے',
+  'My Children': 'میرے بچے',
   'Add a child': 'بچہ شامل کریں',
   'Edit child': 'بچے میں ترمیم',
   'Removed': 'ہٹا دیا گیا',

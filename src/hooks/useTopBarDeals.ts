@@ -61,6 +61,8 @@ function load(): Promise<TopBarDeals> {
 export function useTopBarDeals(): TopBarDeals | null {
   const [data, setData] = useState<TopBarDeals | null>(cache?.data ?? null);
   useEffect(() => {
+    // Account pages show no sale widgets - don't pull 150 products just for the top bar.
+    if (!cache && window.location.pathname.startsWith('/account')) return;
     let cancelled = false;
     // Premium members also get early-access sales, so a login/logout changes what the API returns.
     const onAuth = () => { cache = null; load().then(d => { if (!cancelled) setData(d); }); };

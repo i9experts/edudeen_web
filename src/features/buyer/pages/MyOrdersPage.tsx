@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
-  Package, Download, Truck, CheckCircle2, Clock, XCircle,
+  Package, Truck, CheckCircle2, Clock, XCircle,
   ChevronDown, MapPin, Box, ShoppingBag,
   RotateCcw, Ban, Undo2, Star,
 } from 'lucide-react';
@@ -13,6 +13,8 @@ import {
 } from '@/api/services/orders';
 import { DigitalFileDownloads } from '@/features/buyer/components/DigitalFileDownloads';
 import { formatPrice } from '@/utils/formatPrice';
+import { formatAddress, formatPhone } from '@/utils/formatAddress';
+import { ProductCoverFallback } from '@/components/comman/marketplace/ProductCoverFallback';
 import { useToast } from '@/contexts/ToastContext';
 import { buildOrderProgress, OrderProgressTrack, OrderNextStep } from './account/orderProgress';
 
@@ -147,15 +149,18 @@ function OrderItemRow({ item, orderId, orderStatus, currency }: { item: OrderLin
   return (
     <div className="flex items-center justify-between gap-3 py-3 border-b border-bone last:border-0">
       <div className="flex items-center gap-3 min-w-0">
-        <div className={clsx(
-          'w-8 h-8 rounded-[8px] flex items-center justify-center shrink-0',
-          isDigital ? 'bg-[#eef0ff]' : 'bg-brand-pale-orange',
-        )}>
-          {isDigital ? <Download size={13} className="text-[#3851d1]" /> : <Package size={13} className="text-brand-orange" />}
-        </div>
+        {item.image ? (
+          <img loading="lazy" decoding="async" src={item.image} alt="" className="w-12 h-12 rounded-lg object-cover border border-bone shrink-0" />
+        ) : (
+          <ProductCoverFallback name={item.name} size="xs" className="w-12 h-12 rounded-lg shrink-0" />
+        )}
         <div className="min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap mb-[2px]">
-            <p className="text-[12px] font-semibold text-charcoal truncate">{item.name}</p>
+            {item.productId ? (
+              <Link to={`/product/${item.productId}`} className="text-[12px] font-semibold text-charcoal no-underline hover:text-brand-orange truncate">{item.name}</Link>
+            ) : (
+              <p className="text-[12px] font-semibold text-charcoal truncate">{item.name}</p>
+            )}
             {isDigital && (
               <span className="shrink-0 text-[12px] font-bold px-1.5 py-[1px] rounded-full bg-[#eef0ff] text-[#3851d1]">Digital</span>
             )}
@@ -315,12 +320,9 @@ function OrderCard({ order, onChanged }: { order: OrderSummary; onChanged: () =>
               </div>
               <div className="bg-cream rounded-[9px] px-3 md:px-4 py-3">
                 <p className="text-[12px] font-semibold text-charcoal">{addr.recipientName}</p>
-                <p className="text-[12px] text-slate mt-[2px]">{addr.phoneNumber}</p>
+                <p className="text-[12px] text-slate mt-[2px]">{formatPhone(addr.phoneNumber)}</p>
                 <p className="text-[12px] text-charcoal mt-[2px]">
-                  {addr.addressLine1}{addr.addressLine2 ? `, ${addr.addressLine2}` : ''}
-                </p>
-                <p className="text-[12px] text-charcoal">
-                  {addr.city}, {addr.state} {addr.zipCode}
+                  {formatAddress([addr.addressLine1, addr.addressLine2, addr.city, addr.state, addr.zipCode])}
                 </p>
               </div>
             </div>

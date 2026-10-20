@@ -13,6 +13,7 @@ import {
 import { AddressForm, EMPTY_ADDRESS_FORM, addressFromProfile, saveNewAddress } from '@/features/buyer/components/AddressForm';
 import { useGetProfile } from '@/hooks/auth/useGetProfile';
 import { useToast } from '@/contexts/ToastContext';
+import { formatAddress, formatPhone } from '@/utils/formatAddress';
 
 const LABEL_ICON: Record<string, LucideIcon> = { Home, Work: Briefcase, Other: StarIcon };
 
@@ -117,18 +118,18 @@ export function Addresses() {
         </div>
       ),
     },
-    { key: 'phoneNumber', header: 'Phone', render: a => <span className="text-slate">{a.phoneNumber}</span> },
+    { key: 'phoneNumber', header: 'Phone', render: a => <span className="text-slate">{formatPhone(a.phoneNumber)}</span> },
     {
       key: 'address', header: 'Address',
       render: a => (
         <span className="text-slate text-[12px] block max-w-[220px] truncate">
-          {a.addressLine1}{a.addressLine2 ? `, ${a.addressLine2}` : ''}, {a.city}, {a.state}
+          {formatAddress([a.addressLine1, a.addressLine2, a.city, a.state])}
         </span>
       ),
     },
     {
       key: 'isDefault', header: 'Status',
-      render: a => <Badge color={a.isDefault ? 'green' : 'gray'} dot>{a.isDefault ? 'Default' : 'Saved'}</Badge>,
+      render: a => (a.isDefault ? <Badge color="green" dot>Default</Badge> : null),
     },
     {
       key: 'actions', header: '', align: 'center', width: '60px',

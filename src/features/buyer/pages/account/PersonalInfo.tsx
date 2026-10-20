@@ -126,7 +126,7 @@ export function PersonalInfo() {
                 <p className="text-[12.5px] text-slate truncate mt-[3px]">{loading ? '' : profile?.email ?? '—'}</p>
                 {!loading && (
                   <div className="flex items-center gap-1.5 mt-2">
-                    <Badge color="orange" size="sm" className="capitalize">{profile?.role ?? ''}</Badge>
+                    <Badge color="orange" size="sm" className="capitalize">{profile?.role === 'user' ? 'Buyer' : (profile?.role ?? '')}</Badge>
                     {profile?.isVerified && <Badge color="green" size="sm"><Check size={9} className="me-[2px]" /> Verified</Badge>}
                   </div>
                 )}

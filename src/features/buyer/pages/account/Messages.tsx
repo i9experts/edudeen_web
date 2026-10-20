@@ -17,6 +17,13 @@ const TYPE_PREVIEW: Partial<Record<MessageType, string>> = {
   voice: 'Voice note', image: 'Photo', video: 'Video', pdf: 'File', document: 'File', product_share: 'Product shared',
 };
 
+/** Time when it was today, otherwise a short date ("Sep 30"). */
+function listTime(iso: string): string {
+  const d = new Date(iso);
+  if (d.toDateString() === new Date().toDateString()) return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
 // NOTE: buyer role has no archive/pin/mute — those messaging actions are
 // seller-only per the API. Buyer can start/search/delete conversations,
 // send/edit/delete messages, and block/report a seller.
@@ -27,7 +34,7 @@ function toBuyerEntry(c: Conversation, online: Record<string, boolean>): ChatLis
     image:       c.store?.logo,
     preview:     c.lastMessage ? (c.lastMessage.type === 'text' ? (c.lastMessage.text ?? '') : (TYPE_PREVIEW[c.lastMessage.type] ?? 'Message')) : 'No messages yet',
     previewType: c.lastMessage?.type,
-    time:        c.lastMessage ? new Date(c.lastMessage.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '',
+    time:        c.lastMessage ? listTime(c.lastMessage.sentAt) : '',
     unread:      c.buyerUnread,
     online:      online[c.sellerId],
     verified:    c.store?.badges?.includes('verified'),
@@ -163,7 +170,7 @@ export function Messages() {
       <div className="hidden lg:block">
         <PageHeader eyebrow="Account" title="Messages" description="Chat with sellers about your orders and questions." />
       </div>
-      <Card padding="none" className="flex-1 min-h-0 min-h-[560px] -mx-4 rounded-none border-x-0 lg:mx-0 lg:rounded-xl lg:border-x">
+      <Card padding="none" className="flex-1 min-h-[420px] lg:h-[calc(100dvh-240px)] lg:max-h-[760px] -mx-4 rounded-none border-x-0 lg:mx-0 lg:rounded-xl lg:border-x">
         <div className="flex overflow-hidden h-full">
           {/* This wrapper had no width of its own — a plain flex item with
              no flex-grow shrinks to content, so ChatList's `w-full` below
@@ -174,7 +181,7 @@ export function Messages() {
              breakpoint instead of stretching further than that. */}
           <div className={clsx(activeId ? 'hidden md:flex' : 'flex', 'w-full md:w-auto md:shrink-0')}>
             <ChatList
-              title="Messages"
+              title=""
               entries={list.map(c => toBuyerEntry(c, online))}
               activeId={activeId}
               onSelect={setActiveId}

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ListChecks, Globe, Lock, Copy, Trash2, Pencil, Plus } from 'lucide-react';
 import { Card, Button, Input, Textarea, Modal, SkeletonBox, EmptyState } from '@/components/comman/ui';
 import { useToast } from '@/contexts/ToastContext';
+import { AccountPageHeader } from './AccountPageHeader';
 import { apiGetMyLists, apiCreateList, apiUpdateList, apiDeleteList, type SavedListSummary } from '@/api/services/classroom';
 
 const shareUrl = (slug: string) => `${window.location.origin}/lists/${slug}`;
@@ -67,13 +68,11 @@ export function ListsPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-3 flex-wrap">
-        <div>
-          <h1 className="text-[20px] font-bold text-carbon">My Lists</h1>
-          <p className="text-[13px] text-slate">Plan a term, a unit or a class — and share it with parents or colleagues.</p>
-        </div>
-        <Button variant="primary" size="sm" className="ms-auto" onClick={() => setEditing('new')}><Plus size={14} /> New list</Button>
-      </div>
+      <AccountPageHeader
+        title="My Lists"
+        description="Plan a term, a unit or a class — and share it with parents or colleagues."
+        actions={<Button variant="primary" size="sm" onClick={() => setEditing('new')}><Plus size={14} /> New list</Button>}
+      />
 
       {lists === null ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3"><SkeletonBox height={150} rounded="12px" /><SkeletonBox height={150} rounded="12px" /></div>

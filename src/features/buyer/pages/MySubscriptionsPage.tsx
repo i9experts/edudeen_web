@@ -473,12 +473,12 @@ export function SubscriptionsTab() {
           eyebrow="Account"
           title="Subscriptions"
           description={`${total} subscription${total !== 1 ? 's' : ''} · Manage plans, invoices, and billing`}
-          actions={
+          actions={total === 0 ? undefined : (
             <div className="flex flex-col items-end gap-1">
               <Button size="sm" variant="outline" loading={openingPortal} onClick={handleManageBilling}>Manage Billing</Button>
               {billingError && <p className="text-[12px] text-error max-w-[220px] text-end">{billingError}</p>}
             </div>
-          }
+          )}
         />
       </div>
 

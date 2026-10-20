@@ -12,7 +12,7 @@ import { clsx } from 'clsx';
 import { getNotificationIcon } from './notificationIcon';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/contexts/ToastContext';
-import { notificationLink } from './NotificationBell';
+import { notificationLink, notificationBody } from './NotificationBell';
 
 function formatFullTime(dateStr: string): string {
   try {
@@ -377,7 +377,7 @@ export function NotificationsPanel() {
                     )}
                   </div>
                   <p className="text-[12px] text-slate mt-1 leading-relaxed break-words">
-                    {notif.body}
+                    {notificationBody(notif)}
                   </p>
                   <div className="flex items-center gap-1.5 text-[12px] text-slate mt-2">
                     <Clock size={10} />
