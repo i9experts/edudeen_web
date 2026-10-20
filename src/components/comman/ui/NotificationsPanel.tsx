@@ -6,11 +6,12 @@ import { EmptyState } from './EmptyState';
 import { SkeletonBox } from './SkeletonBox';
 import {
   Bell, Mail, Smartphone, Check, Trash2,
-  Clock, Package, MessageSquare, Star, Sparkles, Filter
+  Clock, Package, MessageSquare, Star, Sparkles, Filter, Tag
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { getNotificationIcon } from './notificationIcon';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/contexts/ToastContext';
 import { notificationLink } from './NotificationBell';
 
 function formatFullTime(dateStr: string): string {
@@ -36,6 +37,9 @@ export function NotificationsPanel() {
     notificationsLoading,
     preferences,
     fetchNotifications,
+    hasMoreNotifications,
+    loadingMoreNotifications,
+    loadMoreNotifications,
     markAsRead,
     markAllAsRead,
     deleteNotification,
@@ -45,8 +49,7 @@ export function NotificationsPanel() {
   const navigate = useNavigate();
 
   const [unreadOnly, setUnreadOnly] = useState(false);
-  const [prefError, setPrefError] = useState('');
-  const [prefSuccess, setPrefSuccess] = useState(false);
+  const toast = useToast();
   const [prefsLoaded, setPrefsLoaded] = useState(false);
 
   useEffect(() => {
@@ -57,15 +60,22 @@ export function NotificationsPanel() {
     fetchPreferences().finally(() => setPrefsLoaded(true));
   }, [fetchPreferences]);
 
+  // WhatsApp/SMS reminders need a WhatsApp or SMS channel: the switch is locked while both are off.
+  const whatsappOn = preferences?.whatsappEnabled ?? false;
+  const smsOn = preferences?.smsEnabled ?? false;
+  const remindersLocked = !whatsappOn && !smsOn;
+
   const handleTogglePref = async (key: string, value: boolean) => {
-    setPrefError('');
-    setPrefSuccess(false);
+    const dto: Record<string, boolean> = { [key]: value };
+    // Turning off the LAST of WhatsApp/SMS also turns reminders off, in the same request.
+    if (!value && ((key === 'whatsappEnabled' && !smsOn) || (key === 'smsEnabled' && !whatsappOn)) && preferences?.retentionChannelsEnabled) {
+      dto.retentionChannelsEnabled = false;
+    }
     try {
-      await updatePreferences({ [key]: value });
-      setPrefSuccess(true);
-      setTimeout(() => setPrefSuccess(false), 3000);
+      await updatePreferences(dto);   // the context rolls the switch back if this throws
+      toast.success('Preferences saved');
     } catch (err) {
-      setPrefError(err instanceof Error ? err.message : 'Failed to update preferences');
+      toast.error(err instanceof Error ? err.message : 'Failed to update preferences');
     }
   };
 
@@ -80,16 +90,6 @@ export function NotificationsPanel() {
             <h2 className="text-[16px] font-bold text-carbon">Notification Preferences</h2>
             <p className="text-[12px] text-slate mt-0.5">Control how and when you want to receive alerts.</p>
           </div>
-          {prefSuccess && (
-            <span className="text-[12px] font-medium text-success bg-success-bg px-2.5 py-1 rounded-md animate-fade-in">
-              Preferences updated
-            </span>
-          )}
-          {prefError && (
-            <span className="text-[12px] font-medium text-error bg-error-bg px-2.5 py-1 rounded-md">
-              {prefError}
-            </span>
-          )}
         </div>
 
         <div className="p-5 flex flex-col gap-5 divide-y divide-[#f5f4ef]">
@@ -194,12 +194,14 @@ export function NotificationsPanel() {
                     <div>
                       <p className="text-[13px] font-semibold text-charcoal leading-none">Reminders and price alerts on WhatsApp/SMS</p>
                       <p className="text-[12px] text-slate mt-1 leading-normal">Cart reminders, back-in-stock and price-drop alerts for saved items, and referral rewards. Needs WhatsApp or SMS turned on above and the Promotions topic enabled.</p>
+                      {remindersLocked && <p className="text-[12px] text-slate mt-1 font-medium">Turn on WhatsApp or SMS first</p>}
                     </div>
                   </div>
                   <Toggle
                     label="Reminders and price alerts on WhatsApp or SMS"
-                    checked={preferences?.retentionChannelsEnabled ?? false}
+                    checked={(preferences?.retentionChannelsEnabled ?? false) && !remindersLocked}
                     onChange={(v) => handleTogglePref('retentionChannelsEnabled', v)}
+                    disabled={remindersLocked}
                   />
                 </div>
               </div>
@@ -233,7 +235,7 @@ export function NotificationsPanel() {
                     </div>
                     <div>
                       <p className="text-[12.5px] font-medium text-charcoal">Direct Messages</p>
-                      <p className="text-[12px] text-slate leading-normal">Alerts when a client or admin sends a new message.</p>
+                      <p className="text-[12px] text-slate leading-normal">Alerts when a seller or the Edudeen team sends a new message.</p>
                     </div>
                   </div>
                   <Toggle
@@ -259,6 +261,24 @@ export function NotificationsPanel() {
                     label="Loyalty and reward points"
                     checked={preferences?.prefs?.loyalty ?? true}
                     onChange={(v) => handleTogglePref('loyalty', v)}
+                  />
+                </div>
+
+                <div className="flex justify-between items-center gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="size-7 rounded bg-[#fff0f6] flex items-center justify-center shrink-0">
+                      <Tag size={13} className="text-[#c2255c]" />
+                    </div>
+                    <div>
+                      <p className="text-[12.5px] font-medium text-charcoal">Promotions & Offers</p>
+                      <p className="text-[12px] text-slate leading-normal">Sales, price drops on saved items, cart reminders and personal coupons.</p>
+                    </div>
+                  </div>
+                  <Toggle
+                    size="sm"
+                    label="Promotions and offers"
+                    checked={preferences?.prefs?.promotions ?? true}
+                    onChange={(v) => handleTogglePref('promotions', v)}
                   />
                 </div>
 
@@ -295,10 +315,12 @@ export function NotificationsPanel() {
           <div className="flex items-center gap-3 shrink-0">
             {/* Unread-only filter */}
             <button
+              type="button"
+              aria-pressed={unreadOnly}
               onClick={() => setUnreadOnly(!unreadOnly)}
               className={clsx(
                 'px-[10px] py-[6px] rounded-lg border text-xs font-semibold flex items-center gap-1.5 cursor-pointer bg-white transition-colors duration-150',
-                unreadOnly ? 'border-brand-orange text-brand-orange bg-brand-pale-orange/10' : 'border-bone text-slate hover:bg-cream'
+                unreadOnly ? 'border-brand-orange text-white bg-brand-orange' : 'border-bone text-slate hover:bg-cream'
               )}
             >
               <Filter size={12} />
@@ -404,6 +426,18 @@ export function NotificationsPanel() {
             />
           )}
         </div>
+        {hasMoreNotifications && notifications.length > 0 && (
+          <div className="p-4 border-t border-bone flex justify-center">
+            <button
+              type="button"
+              onClick={() => { void loadMoreNotifications(); }}
+              disabled={loadingMoreNotifications}
+              className="px-4 py-2 rounded-lg border border-bone bg-white text-[13px] font-semibold text-carbon cursor-pointer hover:bg-cream disabled:opacity-60 disabled:cursor-wait"
+            >
+              {loadingMoreNotifications ? 'Loading…' : 'Load more'}
+            </button>
+          </div>
+        )}
       </Card>
     </div>
   );

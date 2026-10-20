@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
 import { io } from 'socket.io-client';
 import { TokenStorage } from '@/api/services/auth';
 import { API_BASE_URL } from '@/api/apiBase';
@@ -23,11 +23,15 @@ interface NotificationContextValue {
   notificationsLoading: boolean;
   preferences:   NotificationPreferenceData | null;
   fetchNotifications: (unreadOnly?: boolean) => Promise<void>;
+  /** Older notifications exist beyond what is loaded (page-based "Load more"). */
+  hasMoreNotifications: boolean;
+  loadingMoreNotifications: boolean;
+  loadMoreNotifications: () => Promise<void>;
   markAsRead:    (id: string) => Promise<void>;
   markAllAsRead: () => Promise<void>;
   deleteNotification: (id: string) => Promise<void>;
   fetchPreferences: () => Promise<void>;
-  updatePreferences: (dto: Partial<NotificationPreferenceFlags> & { pushEnabled?: boolean; emailEnabled?: boolean; whatsappEnabled?: boolean; smsEnabled?: boolean; language?: 'en' | 'ur' }) => Promise<void>;
+  updatePreferences: (dto: Partial<NotificationPreferenceFlags> & { pushEnabled?: boolean; emailEnabled?: boolean; whatsappEnabled?: boolean; smsEnabled?: boolean; retentionChannelsEnabled?: boolean; language?: 'en' | 'ur' }) => Promise<void>;
   toast:         NotificationItem | null;
   clearToast:    () => void;
 }
@@ -46,6 +50,10 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const [notificationsLoading, setNotificationsLoading] = useState(false);
   const [preferences,   setPreferences]   = useState<NotificationPreferenceData | null>(null);
   const [toast,         setToast]         = useState<NotificationItem | null>(null);
+  const [notificationsTotal, setNotificationsTotal] = useState(0);
+  const [loadingMore, setLoadingMore] = useState(false);
+  // Page of the last list request + which filter it used, so Load more continues the same list.
+  const listState = useRef({ page: 1, unreadOnly: false });
 
   const clearToast = useCallback(() => setToast(null), []);
 
@@ -64,12 +72,33 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     setNotificationsLoading(true);
     try {
       const res = await apiListNotifications({ unreadOnly, limit: 50 });
+      listState.current = { page: 1, unreadOnly };
       setNotifications(res.data?.items ?? []);
+      setNotificationsTotal(res.data?.total ?? 0);
       setUnreadCount(res.data?.unreadCount ?? 0);
     } catch {
       // Ignore list fetch errors
     } finally {
       setNotificationsLoading(false);
+    }
+  }, []);
+
+  const loadMoreNotifications = useCallback(async () => {
+    if (!TokenStorage.isLoggedIn()) return;
+    const { page, unreadOnly } = listState.current;
+    setLoadingMore(true);
+    try {
+      const res = await apiListNotifications({ unreadOnly, limit: 50, page: page + 1 });
+      listState.current = { page: page + 1, unreadOnly };
+      setNotifications(prev => {
+        const seen = new Set(prev.map(n => n._id));
+        return [...prev, ...(res.data?.items ?? []).filter(n => !seen.has(n._id))];
+      });
+      setNotificationsTotal(res.data?.total ?? 0);
+    } catch {
+      // Ignore: the button stays so the user can retry
+    } finally {
+      setLoadingMore(false);
     }
   }, []);
 
@@ -122,7 +151,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const updatePrefs = useCallback(async (dto: Partial<NotificationPreferenceFlags> & { pushEnabled?: boolean; emailEnabled?: boolean; whatsappEnabled?: boolean; smsEnabled?: boolean; language?: 'en' | 'ur' }) => {
+  const updatePrefs = useCallback(async (dto: Partial<NotificationPreferenceFlags> & { pushEnabled?: boolean; emailEnabled?: boolean; whatsappEnabled?: boolean; smsEnabled?: boolean; retentionChannelsEnabled?: boolean; language?: 'en' | 'ur' }) => {
     let snapshot: NotificationPreferenceData | null = null;
 
     setPreferences(prev => {
@@ -210,6 +239,9 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         notificationsLoading,
         preferences,
         fetchNotifications,
+        hasMoreNotifications: notifications.length < notificationsTotal,
+        loadingMoreNotifications: loadingMore,
+        loadMoreNotifications,
         markAsRead,
         markAllAsRead,
         deleteNotification,

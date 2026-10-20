@@ -17,6 +17,7 @@ export function Toggle({ checked, onChange, disabled = false, size = 'md', label
       aria-checked={checked}
       aria-label={label ?? 'Toggle setting'}
       disabled={disabled}
+      aria-disabled={disabled || undefined}
       onClick={() => !disabled && onChange(!checked)}
       className={clsx(
         size === 'md' ? 'w-10 h-[22px]' : 'w-8 h-5',

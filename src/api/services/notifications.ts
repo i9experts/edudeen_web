@@ -79,7 +79,7 @@ export function apiGetPreferences() {
   return client.get<never, ApiResponse<NotificationPreferenceData>>(ENDPOINTS.NOTIFICATIONS.PREFERENCES);
 }
 
-export function apiUpdatePreferences(dto: Partial<NotificationPreferenceFlags> & { pushEnabled?: boolean; emailEnabled?: boolean; whatsappEnabled?: boolean; smsEnabled?: boolean; language?: 'en' | 'ur' }) {
+export function apiUpdatePreferences(dto: Partial<NotificationPreferenceFlags> & { pushEnabled?: boolean; emailEnabled?: boolean; whatsappEnabled?: boolean; smsEnabled?: boolean; retentionChannelsEnabled?: boolean; language?: 'en' | 'ur' }) {
   return client.patch<never, ApiResponse<NotificationPreferenceData>>(ENDPOINTS.NOTIFICATIONS.UPDATE_PREFERENCES, dto);
 }
 
