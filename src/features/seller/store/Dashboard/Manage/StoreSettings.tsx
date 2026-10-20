@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAiStudioCredits } from '@/hooks/seller/useAiStudio';
 import { currencySymbol } from '@/utils/currency';
+import { statusLabel } from '@/constants/statusLabels';
 import { Save, Store, Loader2, CheckCircle, AlertCircle, Globe, Lock, History, ChevronLeft, ChevronRight, Copy, Check, CreditCard } from 'lucide-react';
 import { useStoreWorkspace, StorePageHeader, StoreNavMenu } from '@/components/layouts/StoreLayout';
 import { getStorefrontUrl } from '@/utils/storefrontUrl';
@@ -777,8 +778,8 @@ export default function StoreSettings() {
               <div className="mt-6 border-t border-bone pt-[18px]">
                 <p className="text-[12px] font-semibold text-charcoal mb-3">Store Info</p>
                 {[
-                  { label: 'Status',   value: store?.status   ?? '—' },
-                  { label: 'Seller',   value: store?.sellerType ?? '—' },
+                  { label: 'Status',   value: store?.status ? statusLabel(store.status) : '—' },
+                  { label: 'Seller',   value: store?.sellerType ? statusLabel(store.sellerType) : '—' },
                   { label: 'AI Credits', value: aiCreditBalance == null ? '—' : String(aiCreditBalance) },
                 ].map(r => (
                   <div key={r.label} className="flex justify-between text-[12px] py-1.5 border-b border-[#f3f2ec]">

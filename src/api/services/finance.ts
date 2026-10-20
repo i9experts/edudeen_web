@@ -282,6 +282,8 @@ export interface MonthlyStatement {
   commissionRate?:   number;
   /** Platform fee rate (0-1 fraction) — new name for commissionRate. */
   platformFeeRate:   number;
+  /** Configured fee per type, e.g. "20% digital, 10% physical". */
+  platformFeeText?:  string | null;
   orderCount:        number;
   grossSales:        number;
   commission?:       number;

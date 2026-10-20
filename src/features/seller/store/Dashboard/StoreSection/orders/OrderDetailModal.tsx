@@ -4,7 +4,7 @@ import { Truck, CheckCheck, RefreshCw } from 'lucide-react';
 import { Modal, Button, Badge, StatusBadge, Input, SkeletonBox } from '@/components/comman/ui';
 import { apiMarkOrderPaid, apiUpdateOrderStatus } from '@/api/services/orders';
 import { apiGetSellerOrderDetail, type SellerOrder, type SellerOrderDetail } from '@/api/services/product';
-import { currencySymbol } from '@/utils/currency';
+import { formatPrice } from '@/utils/formatPrice';
 import { CodRiskBadge } from '@/components/ai/CodRiskBadge';
 import { CourierBooking } from './CourierBooking';
 
@@ -57,7 +57,7 @@ export function OrderDetailModal({ order, storeId, onClose, onUpdated }: Props) 
   const [trackingNumber, setTrackingNumber] = useState('');
   const [trackingUrl, setTrackingUrl]       = useState('');
 
-  const sym = currencySymbol(order.currency ?? undefined);
+  const money = (n: number) => formatPrice(n, order.currency ?? undefined);
 
   // Full item list + shipping address come from the seller-scoped detail endpoint.
   const [detail, setDetail]               = useState<SellerOrderDetail | null>(null);
@@ -119,7 +119,7 @@ export function OrderDetailModal({ order, storeId, onClose, onUpdated }: Props) 
           <Row label="Placed">{new Date(order.date).toLocaleString('en-PK', { dateStyle: 'medium', timeStyle: 'short' })}</Row>
           <Row label="Type"><Badge color={order.type === 'digital' ? 'blue' : 'orange'}>{typeLabel}</Badge></Row>
           <Row label="Status"><StatusBadge status={order.status} /></Row>
-          <Row label="Your subtotal"><span className="font-bold">{sym}{order.amount.toLocaleString()}</span></Row>
+          <Row label="Your subtotal"><span className="font-bold">{money(order.amount)}</span></Row>
         </section>
 
         {(detail?.giftWrap || detail?.giftMessage) && (
@@ -177,8 +177,8 @@ export function OrderDetailModal({ order, storeId, onClose, onUpdated }: Props) 
                       {extras.length > 0 && <p className="text-[12px] text-slate">{extras.join(' · ')}</p>}
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="text-[13px] font-semibold text-carbon">{sym}{it.totalPrice.toLocaleString()}</p>
-                      <p className="text-[12px] text-slate">{it.quantity} × {sym}{it.price.toLocaleString()}</p>
+                      <p className="text-[13px] font-semibold text-carbon">{money(it.totalPrice)}</p>
+                      <p className="text-[12px] text-slate">{it.quantity} × {money(it.price)}</p>
                     </div>
                   </li>
                 );

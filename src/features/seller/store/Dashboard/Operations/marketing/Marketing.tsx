@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { formatPrice } from '@/utils/formatPrice';
+import { useUsdMoney } from '@/hooks/useUsdMoney';
 import { statusLabel } from '@/constants/statusLabels';
 
 import { useSearchParams } from 'react-router-dom';
@@ -404,6 +405,7 @@ function PromotionPaymentModal({ request, onClose, onPaid }: { request: Promotio
 export function StoreMarketing() {
   usePageTitle('Marketing');
   const { store, storeId } = useStoreWorkspace();
+  const usd = useUsdMoney();
   // `?tab=` picks the tab, so notifications and the dashboard sale card can
   // link straight to Platform Sales.
   const [searchParams, setSearchParams] = useSearchParams();
@@ -993,7 +995,7 @@ export function StoreMarketing() {
                   ['Clicks', promotionAnalytics.clicks.toLocaleString()],
                   ['CTR', `${promotionAnalytics.ctr.toFixed(1)}%`],
                   ['Orders', promotionAnalytics.orders.toLocaleString()],
-                  ['Revenue', `${formatPrice(promotionAnalytics.revenueUSD, 'USD')}`],
+                  ['Revenue', `${usd(promotionAnalytics.revenueUSD)}`],
                 ].map(([label, value]) => (
                   <div key={label} className="bg-white border border-bone rounded-[10px] px-3.5 py-3">
                     <p className="text-[12px] font-medium text-slate uppercase tracking-[0.06em] mb-1">{label}</p>
@@ -1568,7 +1570,7 @@ export function StoreMarketing() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 mb-4">
                 <div>
                   <label className="text-xs font-medium text-graphite mb-[5px] block">Value ({currencySymbol(store?.baseCurrency)})</label>
-                  <input value={issueForm.value} onChange={e => setIssueForm(f => ({ ...f, value: e.target.value }))} placeholder="25.00" className={INPUT_CLS} />
+                  <input value={issueForm.value} onChange={e => setIssueForm(f => ({ ...f, value: e.target.value }))} placeholder={store?.baseCurrency === 'USD' ? '25.00' : '1000'} className={INPUT_CLS} />
                 </div>
                 <div>
                   <label className="text-xs font-medium text-graphite mb-[5px] block">Recipient Email</label>

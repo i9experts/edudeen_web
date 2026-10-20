@@ -209,8 +209,8 @@ export function ActivityLogTab() {
               const actorName = isMe ? me!.name : (item.actorName ?? 'Team member');
               const actorRole = (isMe ? me!.role : item.actorRole ?? '') ;
               const roleLabel = actorRole ? actorRole.charAt(0).toUpperCase() + actorRole.slice(1) : '';
-              const cs = item.isSecurityAlert && item.action !== 'login_success' ? { bg: '#FDECEA', color: '#C0392B' } : (categoryStyle[item.category] ?? { bg: '#F0EEE6', color: '#5A5852' });
-              const isAlert = item.isSecurityAlert && item.action !== 'login_success';
+              const isAlert = item.isSecurityAlert && item.category === 'security' && ['login_failed', 'password_changed', 'email_changed', 'new_device_login', 'new_ip_login'].includes(item.action);
+              const cs = isAlert ? { bg: '#FDECEA', color: '#C0392B' } : (categoryStyle[item.category] ?? { bg: '#F0EEE6', color: '#5A5852' });
               const catLabel = isAlert ? 'Security Alert' : item.category.charAt(0).toUpperCase() + item.category.slice(1);
               return (
                 <div key={item._id} className="px-4 py-[14px] transition-colors duration-150 hover:bg-cream" style={{ borderBottom: i < logs.length - 1 ? '1px solid #F0EEE6' : 'none' }}>

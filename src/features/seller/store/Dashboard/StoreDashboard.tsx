@@ -17,6 +17,7 @@ import { apiStoreDashboardSummary, type OnboardingChecklist, type ProfileComplet
 import { ProfileMeterCard } from './ProfileMeterCard';
 import { OnboardingChecklistCard } from './OnboardingChecklistCard';
 import { WeeklyDigestCard } from './Analytic/ai/components/WeeklyDigestCard';
+import { statusLabel } from '@/constants/statusLabels';
 import { getStorefrontUrl } from '@/utils/storefrontUrl';
 import { formatNumber, formatBucketLabel } from '@/components/comman/analytics/format';
 import { formatMoneyCompact, formatMoney, currencySymbol } from '@/utils/currency';
@@ -292,6 +293,7 @@ const STATUS_PILL: Record<string, { tone: 'green' | 'amber' | 'gray' | 'blue'; l
   draft:     { tone: 'gray',  label: 'Draft' },
   scheduled: { tone: 'blue',  label: 'Scheduled' },
   pending:   { tone: 'amber', label: 'Pending review' },
+  pending_review: { tone: 'amber', label: 'Pending review' },
   archived:  { tone: 'gray',  label: 'Archived' },
 };
 
@@ -327,7 +329,7 @@ function ProductShelf({ products, total, currency, storeId }: {
           ]}
         >
           {products.map(p => {
-            const pill = STATUS_PILL[p.status] ?? { tone: 'gray' as const, label: p.status };
+            const pill = STATUS_PILL[p.status] ?? { tone: 'gray' as const, label: statusLabel(p.status) };
             const kind = p.type === 'digital' ? (p.productType === 'educational' ? 'Educational' : 'Digital') : 'Physical';
             return (
               <tr key={p.productId}>

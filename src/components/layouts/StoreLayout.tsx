@@ -8,7 +8,7 @@ import {
   Settings, Sparkles, ChevronLeft, ChevronRight, Store,
   Megaphone, Star, Search, Wallet, FileSpreadsheet, Truck, Boxes, Gift,
   MessageSquare, FolderTree, RefreshCw, Undo2, CreditCard,
-  MoreHorizontal, PanelLeftClose, Loader2, PanelLeftOpen, AlertTriangle, AlertCircle, XCircle, Clock, LogOut, UserRound,
+  MoreHorizontal, PanelLeftClose, Loader2, PanelLeftOpen, AlertTriangle, AlertCircle, XCircle, Clock, LogOut, UserRound, Bell,
 } from 'lucide-react';
 import { EdudeenIcon, EdudeenLogo } from '@/components/comman/ui/EdudeenLogo';
 import { apiGetStoreById, type StoreData } from '@/api/services/store';
@@ -89,6 +89,7 @@ export const NAV: { group: string; items: NavItem[] }[] = [
     group: 'Settings',
     items: [
       { id: 'settings',      Icon: Settings,    label: 'Store Settings',        path: 'settings'      },
+      { id: 'notifications', Icon: Bell,        label: 'Notifications',         path: 'notifications' },
       { id: 'account',       Icon: UserRound,   label: 'Account',               path: 'account'       },
     ],
   },
@@ -279,10 +280,17 @@ function StoreSidebar({ open, onToggle }: StoreSidebarProps) {
   const { pathname, search } = useLocation();
   const { store, storeId, loading } = useStoreWorkspace();
   const [planName, setPlanName] = useState<string | null>(null);
+  const [planLoaded, setPlanLoaded] = useState(false);
   useEffect(() => {
     if (!storeId) return;
     let cancelled = false;
-    apiGetStorePlatformPlan(storeId).then(res => { if (!cancelled) setPlanName(res.data?.plan?.name ?? null); }).catch(() => {});
+    apiGetStorePlatformPlan(storeId).then(res => {
+      if (cancelled) return;
+      const sub = res.data;
+      const left = sub?.status === 'trialing' && sub.trialEndsAt ? Math.max(0, Math.ceil((new Date(sub.trialEndsAt).getTime() - Date.now()) / 86400000)) : null;
+      setPlanName(sub?.plan?.name ? `${sub.plan.name}${left != null ? ` (trial: ${left}d left)` : ''}` : null);
+      setPlanLoaded(true);
+    }).catch(() => {});
     return () => { cancelled = true; };
   }, [storeId]);
   const { open: paletteOpen, setOpen: setPaletteOpen } = useCommandPalette();
@@ -379,7 +387,7 @@ function StoreSidebar({ open, onToggle }: StoreSidebarProps) {
                   <>
                     <p className="text-[13px] font-bold text-carbon leading-[1.3] truncate">{store?.name ?? 'Loading…'}</p>
                     <p className="text-[12px] text-slate leading-[1.3] truncate capitalize">
-                      {planName ?? store?.plan ?? ''}{store?.slug ? ` · /${store.slug}` : ''}
+                      {planName ?? (planLoaded ? 'No active plan' : '')}{store?.slug ? ` · /${store.slug}` : ''}
                     </p>
                   </>
                 )}

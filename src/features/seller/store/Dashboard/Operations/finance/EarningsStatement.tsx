@@ -211,7 +211,7 @@ export function EarningsStatement({ storeId, currencies, defaultCurrency }: Prop
               sub={`${statement.orderCount} paid order${statement.orderCount === 1 ? '' : 's'} in ${monthLabel(statement.month || month)}`}
             />
             <MetricCard
-              label={`Platform commission (${formatCommissionRate(statement.platformFeeRate)})`}
+              label={`Platform commission (${statement.platformFeeText ?? formatCommissionRate(statement.platformFeeRate)})`}
               value={money(statement.platformFee)}
               sub="Deducted from your sales"
             />
@@ -233,7 +233,7 @@ export function EarningsStatement({ storeId, currencies, defaultCurrency }: Prop
               <dl className="flex flex-col">
                 {([
                   ['Gross sales', statement.grossSales, 'plus'],
-                  [`Platform commission (${formatCommissionRate(statement.platformFeeRate)})`, statement.platformFee, 'minus'],
+                  [`Platform commission (${statement.platformFeeText ?? formatCommissionRate(statement.platformFeeRate)})`, statement.platformFee, 'minus'],
                   ['Payment processing fees', statement.processingFees, 'minus'],
                   ['Refunds', statement.refunds, 'minus'],
                   ['Commission owed on cash-on-delivery orders', statement.codPlatformFeeOwed, 'minus'],

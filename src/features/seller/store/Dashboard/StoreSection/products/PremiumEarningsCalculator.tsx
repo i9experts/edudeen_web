@@ -108,6 +108,7 @@ export function PremiumEarningsCalculator({ price, compareAtPrice, premiumValue,
   if (!terms) return <p className="text-[12px] text-slate mt-3">Loading your earnings preview...</p>;
   if (!calc) return <p className="text-[12px] text-slate mt-3">Enter a price to see what you earn from normal and Premium buyers.</p>;
 
+  const feeTypeNote = ` (${productType === 'physical' ? 'physical' : 'digital'} product)`;
   const campaignOn = !!campaign;
   const campaignLabel = campaign ? `${campaign.name} ${campaign.discountType === 'percentage' ? `${campaign.discountValue}%` : 'sale'}` : '';
   const campaignFee = camp && camp.applies ? feeOn(camp.settle, terms) : null;
@@ -131,7 +132,7 @@ export function PremiumEarningsCalculator({ price, compareAtPrice, premiumValue,
             </>
           ) : (
             <>
-              <Row k={`Platform charges ${calc.normalFeeLabel}`} v={`- ${money(calc.normalFee)}`} />
+              <Row k={`Platform charges ${calc.normalFeeLabel}${feeTypeNote}`} v={`- ${money(calc.normalFee)}`} />
               <Row k="You receive" v={money(calc.normalGets ?? 0)} strong />
             </>
           )}
@@ -165,7 +166,7 @@ export function PremiumEarningsCalculator({ price, compareAtPrice, premiumValue,
                 <>
                   <Row k={`Member pays (list ${money(calc.list)} less ${fmtPct(calc.sellerPct)}% + ${fmtPct(calc.platformPct)}%)`} v={money(calc.premiumPays)} />
                   <Row k="Edudeen adds from its own pocket" v={`+ ${money(calc.edudeenAdds)}`} />
-                  <Row k={`You give ${fmtPct(calc.sellerPct)}% - your price`} v={money(calc.sellerSideS)} />
+                  <Row k={`Your price after your ${fmtPct(calc.sellerPct)}% Premium discount`} v={money(calc.sellerSideS)} />
                   <Row k={`Platform charges ${fmtPct(terms.premiumSellerFeePercent)}%`} v={`- ${money(calc.premiumFee)}`} />
                   <Row k="You receive" v={money(calc.premiumGets)} strong />
                 </>

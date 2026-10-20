@@ -6,6 +6,7 @@ import { getNotificationIcon } from '@/components/comman/ui/notificationIcon';
 import { notificationBody, notificationLink } from '@/components/comman/ui/NotificationBell';
 import { localeDate } from '@/utils/localeTime';
 import { Button } from '@/components/comman/ui/Button';
+import { StorePageHeader } from '@/components/layouts/StoreLayout';
 
 export function StoreNotifications() {
   const nav = useNavigate();
@@ -23,11 +24,13 @@ export function StoreNotifications() {
   };
 
   return (
-    <div className="p-4 sm:p-6 max-w-[760px]">
-      <div className="flex items-center justify-between gap-3 mb-4">
-        <h1 className="text-[20px] font-bold text-charcoal m-0">Notifications</h1>
-        {unreadCount > 0 && <Button size="sm" variant="outline" onClick={() => void markAllAsRead()}>Mark all as read</Button>}
-      </div>
+    <>
+    <StorePageHeader
+      title="Notifications"
+      subtitle="Orders, reviews, payouts and platform updates for your store"
+      actions={unreadCount > 0 ? <Button size="sm" variant="outline" onClick={() => void markAllAsRead()}>Mark all as read</Button> : undefined}
+    />
+    <div className="px-4 md:px-8 pt-6 pb-10 max-w-[760px]">
       {notificationsLoading && notifications.length === 0 ? (
         <p className="text-[14px] text-slate">Loading…</p>
       ) : notifications.length === 0 ? (
@@ -61,5 +64,6 @@ export function StoreNotifications() {
         </div>
       )}
     </div>
+    </>
   );
 }
