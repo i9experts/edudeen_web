@@ -46,9 +46,9 @@ const initDig: DigForm = {
   sampleFile: null,
   tiers: EMPTY_TIERS,
   downloadLimit: 'unlimited', linkExpiryDays: '',
-  pdfStampingEnabled: false, licenseType: 'personal',
+  pdfStampingEnabled: true, licenseType: 'personal',
   buyerDeliveryMessage: '', educationLevel: '', customLevel: '',
-  previewEnabled: false,
+  previewEnabled: true,
 };
 
 interface DraftSnapshot {
@@ -142,6 +142,8 @@ export default function StoreAddProduct() {
       if (dErr) out.push({ step: 1, message: dErr, fieldId: 'fld-delivery' });
       if (delivery.format === 'download' && finalStatus !== 'draft' && dig.files.length === 0)
         out.push({ step: 1, message: 'Upload the file buyers will receive (or save as draft)', fieldId: 'fld-files', publishOnly: true });
+      if (finalStatus !== 'draft' && !dig.sampleFile)
+        out.push({ step: 1, message: 'Upload a free sample (or save as draft)', fieldId: 'fld-sample', publishOnly: true });
     }
     // free: this form documents "Enter 0 for a free resource", so a typed 0 is the seller's explicit free choice here.
     const priceCheck = validatePrices({ price: cur.price, compareAt: cur.compareAtPrice, currency: store?.baseCurrency, free: true });

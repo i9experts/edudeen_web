@@ -446,8 +446,8 @@ export default function StoreBulkUpload() {
           licenseTiers: [],
           digital: {
             files: [{ url: r.upload!.publicId, name: r.upload!.fileName, size: r.upload!.fileSize, mimeType: r.upload!.mimeType }],
-            downloadLimit: r.downloadLimit || 'unlimited', linkExpiryDays: r.linkExpiryDays.trim() ? Number(r.linkExpiryDays) : null, pdfStampingEnabled: false, licenseType: 'personal', buyerDeliveryMessage: r.buyerMessage.trim(),
-            preview: { enabled: false, sourceFileIndex: 0 }, sampleFile: null,
+            downloadLimit: r.downloadLimit || 'unlimited', linkExpiryDays: r.linkExpiryDays.trim() ? Number(r.linkExpiryDays) : null, pdfStampingEnabled: true, licenseType: 'personal', buyerDeliveryMessage: r.buyerMessage.trim(),
+            preview: { enabled: true, sourceFileIndex: 0 }, sampleFile: null,
           },
         });
       }

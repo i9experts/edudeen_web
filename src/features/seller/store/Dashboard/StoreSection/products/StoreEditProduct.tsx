@@ -126,6 +126,8 @@ export default function StoreEditProduct() {
   // null until the product is read fresh, so saving never clears a Premium price that has not loaded.
   const [premiumPct, setPremiumPct] = useState<string | null>(null);
   const [premiumOptOut, setPremiumOptOut] = useState<boolean | null>(null);
+  // Edits to a live listing wait for admin approval; the form shows that state.
+  const [editReview, setEditReview] = useState<{ pending: boolean; rejection: string | null }>({ pending: false, rejection: null });
   const [offerFlags, setOfferFlags] = useState<OfferFlags>({ premiumBlank: false, conflict: false });
   const storePremiumPct = store?.premiumDiscount?.enabled ? store.premiumDiscount.percent : 0;
   const { terms: premiumTerms } = usePremiumTerms(pType, store?.baseCurrency, storeId);
@@ -172,6 +174,8 @@ export default function StoreEditProduct() {
         setCampaignIds([...(p.campaignIds ?? [])]);
         setPremiumPct(p.premiumDiscountPercent != null ? String(p.premiumDiscountPercent) : '');
         setPremiumOptOut(!!p.premiumOptOut);
+        const pe = p as unknown as { pendingEditInfo?: unknown; lastEditRejection?: { reason?: string } | null };
+        setEditReview({ pending: !!pe.pendingEditInfo, rejection: pe.lastEditRejection?.reason ?? null });
         setLearning({ curricula: [...(p.curricula ?? [])], ageMin: p.ageMin != null ? String(p.ageMin) : '', ageMax: p.ageMax != null ? String(p.ageMax) : '', classFrom: p.classFrom ?? '', classTo: p.classTo ?? '' });
         if (p.type === 'digital') {
           setDelivery(deliveryFromProduct(p));
@@ -229,6 +233,7 @@ export default function StoreEditProduct() {
     const tErr0 = !cur.name.trim() ? 'Add a product title' : cur.name.trim() !== originalName.current.trim() ? titleError(cur.name) : null;
     if (tErr0) out.push({ step: 0, message: tErr0, fieldId: 'ap-name' });
     if (isDigitalFamily) { const dErr = deliveryError(delivery); if (dErr) out.push({ step: 1, message: dErr, fieldId: 'fld-delivery' }); }
+    if (isDigitalFamily && cur.status !== 'draft' && !dig.sampleFile) out.push({ step: 1, message: 'Upload a free sample', fieldId: 'fld-sample' });
     const descErr = descriptionError(cur.description);
     if (descErr) out.push({ step: 0, message: descErr, fieldId: 'ap-desc' });
     const priceCheck = validatePrices({ price: cur.price, compareAt: cur.compareAtPrice, currency: store?.baseCurrency, free: true });
@@ -257,7 +262,7 @@ export default function StoreEditProduct() {
     if (offerFlags.conflict) out.push({ step: 4, message: OFFER_CONFLICT_MESSAGE, fieldId: 'fld-offers' });
     return out;
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cur, pType, phys.stock, phys.shippingWeight, store?.baseCurrency, dig.tiers, dig.educationLevel, dig.customLevel, delivery, learning, attrDefs, attributeValues, premiumPct, premiumOptOut, campaignIds, premiumTerms, storePremiumPct, offerFlags]);
+  }, [cur, pType, phys.stock, phys.shippingWeight, store?.baseCurrency, dig.sampleFile, dig.tiers, dig.educationLevel, dig.customLevel, delivery, learning, attrDefs, attributeValues, premiumPct, premiumOptOut, campaignIds, premiumTerms, storePremiumPct, offerFlags]);
 
   const wiz = useWizard(issues, 'Edit', [0, 1, 2, 3, 4, 5]);
   const guard = useLeaveGuard(touched && !saving);
@@ -402,6 +407,16 @@ export default function StoreEditProduct() {
           <StepRail step={wiz.step} statusOf={wiz.statusOf} onGo={i => wiz.go(i)} />
 
           <div className="flex flex-col gap-5 min-w-0">
+            {editReview.pending && (
+              <div role="status" className="rounded-xl border border-info/30 bg-info-bg px-4 py-3 text-[13px] text-carbon">
+                <b>Your changes are waiting for Edudeen's review.</b> The live listing keeps its previous content until they are approved. You can keep editing.
+              </div>
+            )}
+            {editReview.rejection && !editReview.pending && (
+              <div role="status" className="rounded-xl border border-error/30 bg-error-bg px-4 py-3 text-[13px] text-error">
+                <b>Your last changes were not approved:</b> {editReview.rejection} The live listing was not changed.
+              </div>
+            )}
             {review && wiz.step !== 5 && reviewBanner}
             {error && (
               <p role="alert" className="m-0 flex items-start gap-2 text-[13px] text-error font-medium bg-error-bg border border-error-border rounded-lg px-4 py-3">

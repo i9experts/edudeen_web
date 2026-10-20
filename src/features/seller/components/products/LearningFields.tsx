@@ -171,8 +171,8 @@ export function DeliverableFilesField({ files, onChange }: { files: PrivateUploa
 export function SampleFileField({ value, onChange }: { value: PrivateUploadData | null; onChange: (v: PrivateUploadData | null) => void }) {
   return (
     <div className="flex flex-col gap-2">
-      <p className="text-[12px] text-slate">A few pages or one worksheet anyone can download before buying. Listings with a sample sell better.</p>
-      <FileUpload value={value} onChange={onChange} label="Upload a free sample (optional)" />
+      <p className="text-[12px] text-slate">Required. A few pages or one worksheet that shows buyers what is inside (shown to Edudeen when reviewing your listing).</p>
+      <FileUpload value={value} onChange={onChange} label="Upload a free sample (required)" />
     </div>
   );
 }

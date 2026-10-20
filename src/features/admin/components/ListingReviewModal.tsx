@@ -47,7 +47,8 @@ export function ListingReviewModal({ listingId, onClose, onDone }: { listingId: 
     return () => { alive = false; };
   }, [listingId]);
 
-  const canDecide = data?.status === 'pending_review' || data?.status === 'rejected';
+  const hasEdit = !!data?.pendingEdit;
+  const canDecide = hasEdit || data?.status === 'pending_review' || data?.status === 'rejected';
   const reasonOk = reason.trim().length >= 10;
 
   async function approve() {
@@ -73,7 +74,7 @@ export function ListingReviewModal({ listingId, onClose, onDone }: { listingId: 
 
   return (
     <Modal
-      title={data && !canDecide ? 'Listing and trust badges' : 'Review listing'}
+      title={data && !canDecide ? 'Listing and trust badges' : hasEdit ? 'Review listing update' : 'Review listing'}
       onClose={onClose}
       width={720}
       mobileSheet
@@ -84,8 +85,8 @@ export function ListingReviewModal({ listingId, onClose, onDone }: { listingId: 
         </>
       ) : (
         <>
-          <Button variant="outline" icon={<XCircle size={14} />} onClick={() => setMode('reject')} disabled={busy}>Needs changes</Button>
-          <Button variant="primary" icon={<CheckCircle2 size={14} />} onClick={approve} loading={busy}>Approve &amp; publish</Button>
+          <Button variant="outline" icon={<XCircle size={14} />} onClick={() => setMode('reject')} disabled={busy}>{hasEdit ? 'Decline changes' : 'Needs changes'}</Button>
+          <Button variant="primary" icon={<CheckCircle2 size={14} />} onClick={approve} loading={busy}>{hasEdit ? 'Approve changes' : 'Approve & publish'}</Button>
         </>
       )}
     >
@@ -119,6 +120,37 @@ export function ListingReviewModal({ listingId, onClose, onDone }: { listingId: 
             </div>
             <StatusBadge status={data.status} size="sm" />
           </div>
+
+          {data.pendingEdit && (
+            <div className="rounded-lg border border-info/30 bg-info-bg px-3 py-3">
+              <p className="text-[13px] font-bold text-carbon mb-1">Seller edited this live listing</p>
+              <p className="text-[12px] text-slate mb-2">Buyers still see the version below until you approve. Declining keeps the current version. Sent {new Date(data.pendingEdit.submittedAt).toLocaleString()}.</p>
+              <div className="flex flex-col gap-2">
+                {data.pendingEdit.diff.map(row => (
+                  <div key={row.key} className="rounded-md bg-white border border-bone px-3 py-2">
+                    <p className="text-[12px] uppercase tracking-[0.06em] text-slate font-semibold mb-1">{row.label}</p>
+                    {row.kind === 'images' ? (
+                      <div className="flex flex-col gap-1">
+                        {([['Now', row.before], ['New', row.after]] as const).map(([t, list]) => (
+                          <div key={t} className="flex items-center gap-2 flex-wrap">
+                            <span className="text-[12px] font-semibold w-8">{t}</span>
+                            {(Array.isArray(list) ? list as string[] : []).length === 0 ? <span className="text-slate">—</span>
+                              : (list as string[]).map(src => <img key={src} src={src} alt="" className="h-[54px] w-[54px] object-cover rounded border border-bone" />)}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="flex flex-col gap-1 text-[13px]">
+                        <p className="m-0 text-slate line-through break-words whitespace-pre-line"><span className="no-underline font-semibold me-1">Now:</span>{Array.isArray(row.before) ? (row.before as string[]).join(', ') || '—' : String(row.before ?? '—')}</p>
+                        <p className="m-0 text-carbon break-words whitespace-pre-line"><span className="font-semibold me-1">New:</span>{Array.isArray(row.after) ? (row.after as string[]).join(', ') || '—' : String(row.after ?? '—')}</p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+                {data.pendingEdit.diff.length === 0 && <p className="text-[12.5px] text-slate m-0">Only internal fields changed.</p>}
+              </div>
+            </div>
+          )}
 
           {data.flags?.includes('contact_info') && (
             <div className="rounded-lg bg-error-bg text-error px-3 py-2 text-[12.5px]" role="alert">

@@ -20,7 +20,7 @@ import { useToast } from '@/contexts/ToastContext';
 import { useT, useLanguage } from '@/contexts/languageCtx';
 import { AiReviewSummary } from '@/components/ai/AiReviewSummary';
 import { TokenStorage } from '@/api/services/auth';
-import { apiGetAllProducts, apiGetProductSample, apiGetAlsoBought, type MarketplaceProduct, type ProductVariant } from '@/api/services/marketplace';
+import { apiGetAllProducts, apiGetAlsoBought, type MarketplaceProduct, type ProductVariant } from '@/api/services/marketplace';
 import { apiStartConversation, apiSendMessage } from '@/api/services/messaging';
 import { apiGetPublicStoreProducts, apiGetPublicStore, apiFollowStore, apiGetFollowStatus, type PublicStoreProduct, type PublicStoreData } from '@/api/services/store';
 import { getStorePagePath } from '@/utils/storefrontUrl';
@@ -606,21 +606,6 @@ export function ProductDetail() {
     return () => { cancelled = true; };
   }, [product?._id]);
 
-  // Free sample: the link is short-lived, so it's fetched on click.
-  const [sampleBusy, setSampleBusy] = useState(false);
-  async function openSample() {
-    if (!product) return;
-    setSampleBusy(true);
-    try {
-      const res = await apiGetProductSample(product._id);
-      window.open(res.data.url, '_blank', 'noopener');
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Could not open the sample.');
-    } finally {
-      setSampleBusy(false);
-    }
-  }
-
   // Seller-filled category fields (subject, format, language, …).
   const [attributes, setAttributes] = useState<ProductAttributeValue[]>([]);
   useEffect(() => {
@@ -875,7 +860,7 @@ export function ProductDetail() {
                     {stock <= 0 ? 'Out of stock' : isDigital ? t('Available — instant delivery') : stock <= 5 ? `Only ${stock} left in stock` : 'In stock'}
                   </div>
 
-                  {isDigital && (product.digital?.previewAvailable || product.digital?.sampleAvailable) && (
+                  {isDigital && product.digital?.previewAvailable && (
                     <div className="flex gap-2 mb-3">
                       {product.digital?.previewAvailable && (
                         <Button
@@ -883,15 +868,6 @@ export function ProductDetail() {
                           onClick={() => { setPreviewOpen(true); loadPreview(); }}
                         >
                           <Eye size={14} className="inline align-middle me-[6px]" /> {t('Preview')}
-                        </Button>
-                      )}
-                      {product.digital?.sampleAvailable && (
-                        <Button
-                          variant="outline" size="md" fullWidth className="justify-center flex-1"
-                          loading={sampleBusy}
-                          onClick={openSample}
-                        >
-                          <Download size={14} className="inline align-middle me-[6px]" /> {t('Free sample')}
                         </Button>
                       )}
                     </div>

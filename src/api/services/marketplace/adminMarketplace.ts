@@ -41,6 +41,8 @@ export interface MarketplaceListingRow {
   isTest?: boolean;
   /** The reviewer's note (set when a listing was sent back). */
   reviewNote?: string | null;
+  /** A seller edit to this live listing is waiting for approval. */
+  hasPendingEdit?: boolean;
   /** Server review flags, e.g. 'contact_info'. */
   flags?: string[];
   /** The matched phone / email / WhatsApp text behind a contact_info flag. */
@@ -74,6 +76,11 @@ export interface ListingReview {
   customLevel: string | null;
   classFrom?: string | null;
   classTo?: string | null;
+  /** Seller edit waiting for approval: the fields above are still the LIVE version. */
+  pendingEdit?: {
+    submittedAt: string;
+    diff: { key: string; label: string; kind: 'text' | 'images' | 'files'; before: unknown; after: unknown }[];
+  } | null;
   status: string;
   scheduledAt: string | null;
   reviewNote: string | null;

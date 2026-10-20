@@ -205,7 +205,7 @@ export function ProductFormSteps(p: ProductFormStepsProps) {
         )}
 
         {isDigitalFamily && (
-          <Block title="Free sample" need="optional" hint="Let teachers and parents try before they buy.">
+          <Block id="fld-sample" title="Free sample" need="required" hint="Required to publish — drafts can be saved without it.">
             <SampleFileField value={dig.sampleFile} onChange={v => sd('sampleFile', v)} />
           </Block>
         )}
