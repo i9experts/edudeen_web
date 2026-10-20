@@ -469,20 +469,24 @@ export default function StoreDashboard() {
               label="Order value (30 days)" value={formatMoneyCompact(metrics?.overview.totalRevenue ?? 0, store?.baseCurrency)}
               sub={metrics?.overview.totalRevenue ? 'Last 30 days' : 'No sales yet'}
               sparkline={revenueSparkline}
+              to={`/store/${storeId}/orders`}
             />
             <MetricCard
               label="Orders (30 days)" value={formatNumber(metrics?.overview.totalOrders ?? 0)}
               sub={metrics?.overview.totalOrders ? `${formatNumber(metrics.overview.cancelledOrders)} cancelled` : 'No orders yet'}
+              to={`/store/${storeId}/orders`}
             />
             <MetricCard
               label="Active products" value={formatNumber(metrics?.activeProducts ?? 0)}
               sub={metrics?.totalProducts
                 ? (metrics.totalProducts > metrics.activeProducts ? `${formatNumber(metrics.totalProducts - metrics.activeProducts)} not published` : 'All published')
                 : 'Add your first product'}
+              to={`/store/${storeId}/products`}
             />
             <MetricCard
               label="Customers (30 days)" value={formatNumber(totalCustomers)}
               sub={totalCustomers ? `${formatNumber(metrics?.overview.newCustomersCount ?? 0)} new` : 'No customers yet'}
+              to={`/store/${storeId}/customer/list`}
             />
           </div>
 
