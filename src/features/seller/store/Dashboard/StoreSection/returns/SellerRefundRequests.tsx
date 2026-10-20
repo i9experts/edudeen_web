@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { clsx } from 'clsx';
+import { statusLabel } from '@/constants/statusLabels';
 import { Check, X, Loader2 } from 'lucide-react';
 import { Button, Modal, Textarea } from '@/components/comman/ui';
 import { useToast } from '@/contexts/ToastContext';
@@ -71,7 +72,7 @@ export function SellerRefundRequests({ storeId }: { storeId: string }) {
               <div className="flex-1 min-w-[220px]">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-mono text-[12px] text-slate">Order …{r.orderId.slice(-6)}</span>
-                  <span className={clsx('rounded-full px-2 py-[2px] text-[12px] font-semibold capitalize', TONE[r.status])}>{r.status}</span>
+                  <span className={clsx('rounded-full px-2 py-[2px] text-[12px] font-semibold capitalize', TONE[r.status])}>{statusLabel(r.status)}</span>
                   <span className="text-[12px] text-slate">{new Date(r.createdAt).toLocaleDateString()}</span>
                 </div>
                 <p className="text-[13px] text-carbon mt-1 mb-0">{r.reason}</p>

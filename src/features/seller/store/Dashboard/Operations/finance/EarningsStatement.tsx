@@ -206,9 +206,9 @@ export function EarningsStatement({ storeId, currencies, defaultCurrency }: Prop
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             <MetricCard
-              label="Gross sales"
+              label="Paid sales"
               value={money(statement.grossSales)}
-              sub={`${statement.orderCount} order${statement.orderCount === 1 ? '' : 's'} in ${monthLabel(statement.month || month)}`}
+              sub={`${statement.orderCount} paid order${statement.orderCount === 1 ? '' : 's'} in ${monthLabel(statement.month || month)}`}
             />
             <MetricCard
               label={`Platform commission (${formatCommissionRate(statement.platformFeeRate)})`}

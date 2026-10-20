@@ -9,6 +9,7 @@ import {
   type SellerReturnItem, type ReturnStatus,
 } from '@/api/services/orders';
 import { formatMoney } from '@/utils/currency';
+import { returnSummary } from '@/utils/sellerTrust';
 import { useDebouncedValue } from '@/hooks/seller/useInventorySearch';
 import { SellerRefundRequests } from './SellerRefundRequests';
 
@@ -205,8 +206,12 @@ export function StoreReturnList() {
         <div className="bg-white border border-bone rounded-[10px] px-[22px] py-[18px]">
           <p className="text-[14px] font-semibold text-carbon mb-1.5">Return Policy Summary</p>
           <p className="text-[13px] text-slate leading-[1.6]">
-            Physical: 30-day returns in original condition. Digital: Non-refundable unless defective. Damaged items: replacement or full refund.
+            Physical: {returnSummary(store?.returnPolicy, false).line}. Digital: {returnSummary(store?.returnPolicy, true).detail[0]}
           </p>
+          {store?.returnPolicy?.note?.trim() && (
+            <p className="text-[12px] text-slate mt-1.5">Your note: {store.returnPolicy.note.trim()}</p>
+          )}
+          <p className="text-[12px] text-slate mt-1.5">Change your policy in Store Settings.</p>
         </div>
 
         {/* Error */}

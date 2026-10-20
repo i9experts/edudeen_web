@@ -90,7 +90,11 @@ export function SellerAnalyticsView({ storeId, currency }: SellerAnalyticsViewPr
         showExport={!!storeId && advanced?.allowed !== false}
       />
 
-      <TabBar tabs={TABS} active={activeTab} onChange={setActiveTab} />
+      <TabBar
+        tabs={!!storeId && advanced?.allowed === false
+          ? TABS.map(t => t.id === 'overview' ? t : { ...t, icon: <Lock size={14} aria-label="Locked on your plan" /> })
+          : TABS}
+        active={activeTab} onChange={setActiveTab} />
 
       {locked && (
         <div className="flex flex-col items-center text-center gap-3 bg-white border border-bone rounded-xl px-6 py-12">

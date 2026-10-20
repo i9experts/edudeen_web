@@ -24,7 +24,7 @@ export function SellerOverviewTab({ params, compareToPreviousPeriod, currency }:
 
   const metrics = d && [
     {
-      label: 'Total Revenue (net)', value: formatMoneyCompact(d.totalRevenue, currency), icon: <DollarSign size={16} />,
+      label: 'Order value (net of refunds)', value: formatMoneyCompact(d.totalRevenue, currency), icon: <DollarSign size={16} />,
       trend: d.totalRevenueChangePercent != null ? formatPercent(d.totalRevenueChangePercent, { signed: true }) : undefined,
       trendUp: (d.totalRevenueChangePercent ?? 0) >= 0,
     },
@@ -57,7 +57,7 @@ export function SellerOverviewTab({ params, compareToPreviousPeriod, currency }:
 
   const comparisonRows: ComparisonRow[] = d?.previousPeriod ? [
     { metric: 'Gross Revenue', current: formatMoneyCompact(d.grossRevenue, currency), previous: formatMoneyCompact(d.previousPeriod.grossRevenue, currency) },
-    { metric: 'Total Revenue (net)', current: formatMoneyCompact(d.totalRevenue, currency), previous: formatMoneyCompact(d.previousPeriod.totalRevenue, currency) },
+    { metric: 'Order value (net of refunds)', current: formatMoneyCompact(d.totalRevenue, currency), previous: formatMoneyCompact(d.previousPeriod.totalRevenue, currency) },
     { metric: 'Total Orders', current: formatNumber(d.totalOrders), previous: formatNumber(d.previousPeriod.totalOrders) },
     { metric: 'Avg. Order Value', current: formatMoneyCompact(d.avgOrderValue, currency), previous: formatMoneyCompact(d.previousPeriod.avgOrderValue, currency) },
     { metric: 'Repeat Buyers', current: formatPercent(d.repeatBuyerPercent), previous: formatPercent(d.previousPeriod.repeatBuyerPercent) },

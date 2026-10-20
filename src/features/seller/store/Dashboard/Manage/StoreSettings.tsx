@@ -485,7 +485,7 @@ export default function StoreSettings() {
     setSaving(true);
     setSaveMsg(null);
     try {
-      await apiUpdateStore({ storeId, name, description, tagline, contactEmail, contactPhone, productTypes, logo, coverImage, categoryId, codEnabled });
+      await apiUpdateStore({ storeId, name, description, tagline, contactEmail, contactPhone, productTypes, logo, coverImage, codEnabled });
       refetch();
       setSaveMsg({ ok: true, text: 'Store updated successfully.' });
     } catch (err) {
@@ -504,7 +504,6 @@ export default function StoreSettings() {
       contactPhone !== (store.contactPhone ?? '') ||
       logo !== (store.logo ?? '') ||
       coverImage !== (store.coverImage ?? '') ||
-      categoryId !== (store.categoryId ?? '') ||
       JSON.stringify(productTypes.slice().sort()) !==
         JSON.stringify((store.productTypes ?? []).slice().sort()) ||
       codEnabled !== (store.codEnabled !== false));
@@ -649,14 +648,12 @@ export default function StoreSettings() {
               </Field>
 
               <Field label="Category">
-                <select
-                  value={categoryId}
-                  onChange={e => setCategoryId(e.target.value)}
-                  className={inputCls}
-                >
-                  <option value="">{categoriesLoading ? 'Loading categories…' : 'Select a category…'}</option>
-                  {categories.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
-                </select>
+                <input
+                  value={categoriesLoading ? 'Loading…' : (categories.find(c => c._id === categoryId)?.name ?? '—')}
+                  readOnly
+                  className={`${inputCls} text-slate cursor-default bg-[#f3f2ec]`}
+                />
+                <p className="text-[12px] text-slate mt-1">Set when your store was created. To change it, contact Edudeen support.</p>
               </Field>
 
               <Field label="Description">
@@ -802,7 +799,7 @@ export default function StoreSettings() {
               <p className="text-[13.5px] font-semibold text-charcoal mb-1">Payments & your store link</p>
               <p className="text-[12.5px] text-slate leading-relaxed">
                 Your store lives at <span className="font-semibold text-charcoal">{store?.slug ? getStorefrontUrl(store.slug).replace(/^https?:\/\//, '') : 'edudeen.com/shop/…'}</span>.
-                Buyers pay through Edudeen's checkout; Edudeen pays your full earnings monthly (only the card processing fee is deducted) —
+                Buyers pay through Edudeen's checkout; Edudeen credits your earnings after its platform fee and pays them out when you request a payout —
                 add or change where you get paid under <a href={`/store/${storeId}/finance?tab=earnings`} className="text-brand-orange font-semibold">Earnings</a>.
               </p>
             </div>

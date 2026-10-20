@@ -249,7 +249,7 @@ export function StoreOrderList() {
       <div className="px-4 lg:px-7 py-5 flex flex-col gap-5">
 
         {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
           <MetricCard
             label="Total Orders"
             value={stats?.totalOrders ?? 0}
@@ -257,8 +257,14 @@ export function StoreOrderList() {
             loading={loading && !stats}
           />
           <MetricCard
-            label="Revenue"
-            value={stats ? `${formatMoney(stats.revenue, store?.baseCurrency)}` : 0}
+            label="Order value"
+            value={stats ? `${formatMoney(stats.orderValue ?? stats.revenue, store?.baseCurrency)}` : 0}
+            icon={<DollarSign size={16} />}
+            loading={loading && !stats}
+          />
+          <MetricCard
+            label="Paid revenue"
+            value={stats ? `${formatMoney(stats.paidRevenue ?? 0, store?.baseCurrency)}` : 0}
             icon={<DollarSign size={16} />}
             loading={loading && !stats}
           />

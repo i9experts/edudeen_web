@@ -114,7 +114,7 @@ export default function StoreCustomerList() {
       render: c => <Badge color={c.orderCount > 1 ? 'green' : 'orange'}>{c.orderCount}</Badge>,
     },
     {
-      key: 'totalSpent', header: 'Total Spent', align: 'right',
+      key: 'totalSpent', header: 'Order value', align: 'right',
       render: c => <span className="font-semibold text-charcoal">{formatMoneyCompact(c.totalSpent, store?.baseCurrency)}</span>,
     },
     { key: 'lastOrderAt', header: 'Last Order', render: c => <span className="text-slate">{fmtDate(c.lastOrderAt)}</span> },
@@ -148,7 +148,7 @@ export default function StoreCustomerList() {
         <div className="flex flex-wrap gap-3">
           <MetricCard label="Total Customers" value={(storeTotal ?? total).toLocaleString()} icon={<Users size={16} />} loading={loading && page === 1 && customers.length === 0} />
           <MetricCard label="Total Orders"     value={summary.totalOrders.toLocaleString()} icon={<ShoppingBag size={16} />} loading={loading && page === 1 && customers.length === 0} />
-          <MetricCard label="Total Revenue"    value={formatMoneyCompact(summary.totalRevenue, store?.baseCurrency)} icon={<DollarSign size={16} />} loading={loading && page === 1 && customers.length === 0} />
+          <MetricCard label="Order value"    value={formatMoneyCompact(summary.totalRevenue, store?.baseCurrency)} icon={<DollarSign size={16} />} loading={loading && page === 1 && customers.length === 0} />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4 items-start">

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { formatPrice } from '@/utils/formatPrice';
+import { statusLabel } from '@/constants/statusLabels';
 
 import { useSearchParams } from 'react-router-dom';
 import { useStoreCampaigns } from '@/hooks/store/useStoreCampaigns';
@@ -332,7 +333,7 @@ function PromotionRequestFormModal({ storeId, onClose, onSaved }: { storeId: str
             <span className="text-[12px] text-slate">
               {preview.unit === 'festival' ? `Festival rate (${preview.festivalName})` : `${preview.unit} rate, ${preview.hours.toFixed(1)}h`}
             </span>
-            <span className="text-[16px] font-bold text-charcoal">${preview.priceUSD.toFixed(2)}</span>
+            <span className="text-[16px] font-bold text-charcoal">{formatPrice(preview.priceUSD, 'USD')}</span>
           </div>
         )}
 
@@ -1026,7 +1027,7 @@ export function StoreMarketing() {
                           <span className="px-2.5 py-[3px] rounded-[5px] text-[12px] font-semibold" style={{ background: st.bg, color: st.color }}>{st.label}</span>
                         </div>
                         <p className="text-[12px] text-slate">
-                          {new Date(r.startAt).toLocaleDateString()} – {new Date(r.endAt).toLocaleDateString()} · ${r.priceUSD.toFixed(2)}
+                          {new Date(r.startAt).toLocaleDateString()} – {new Date(r.endAt).toLocaleDateString()} · {formatPrice(r.priceUSD, 'USD')}
                         </p>
                         {r.status === 'rejected' && r.rejectionReason && (
                           <p className="text-[12px] text-error bg-error-bg rounded-md px-2 py-1.5">{r.rejectionReason}</p>
@@ -1034,7 +1035,7 @@ export function StoreMarketing() {
                         <div className="flex gap-2 mt-1">
                           {r.status === 'approved' && r.paymentStatus !== 'paid' && (
                             <button onClick={() => setPayingRequest(r)} className="flex-1 py-[7px] bg-brand-orange border-0 rounded-[7px] text-xs font-semibold text-white cursor-pointer hover:bg-brand-deep-orange">
-                              Pay ${r.priceUSD.toFixed(2)}
+                              Pay {formatPrice(r.priceUSD, 'USD')}
                             </button>
                           )}
                           {['pending', 'approved', 'active'].includes(r.status) && (
@@ -1249,8 +1250,8 @@ export function StoreMarketing() {
                     className={INPUT_CLS} />
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-graphite mb-[5px] block">Minimum Order ($)</label>
-                  <input placeholder="0.00" value={form.minOrder} onChange={e => setForm(f => ({ ...f, minOrder: e.target.value }))}
+                  <label className="text-xs font-medium text-graphite mb-[5px] block">Minimum Order ({currencySymbol(store?.baseCurrency)})</label>
+                  <input placeholder="0" value={form.minOrder} onChange={e => setForm(f => ({ ...f, minOrder: e.target.value }))}
                     className={INPUT_CLS} />
                 </div>
                 <div>
@@ -1531,7 +1532,7 @@ export function StoreMarketing() {
                         <input
                           value={denominationsInput}
                           onChange={e => setDenominationsInput(e.target.value)}
-                          placeholder="10, 25, 50, 100"
+                          placeholder={store?.baseCurrency === 'USD' ? '10, 25, 50, 100' : '500, 1000, 2500, 5000'}
                           className={INPUT_CLS}
                         />
                         <button
@@ -1621,7 +1622,7 @@ export function StoreMarketing() {
                           <td className="px-4 py-2.5 text-slate capitalize">{g.issuedBy}</td>
                           <td className="px-4 py-2.5">
                             <span className="px-2.5 py-[3px] rounded-[5px] text-[12px] font-semibold" style={{ background: g.status === 'active' ? '#E3F4EA' : '#F0EEE6', color: g.status === 'active' ? '#1E7A3C' : '#5A5852' }}>
-                              {g.status}
+                              {statusLabel(g.status)}
                             </span>
                           </td>
                           <td className="px-4 py-2.5 text-slate">{g.recipientEmail ?? '—'}</td>

@@ -28,6 +28,15 @@ export const STATUS_LABELS: Record<string, string> = {
   pending_verification: 'Pending verification',
   out_of_stock: 'Out of stock',
   low_stock: 'Low stock',
+  trialing: 'Free trial',
+  past_due: 'Payment overdue',
+  expired: 'Expired',
+  educator: 'Educator',
+  approved: 'Approved',
+  rejected: 'Rejected',
+  paid: 'Paid',
+  unpaid: 'Unpaid',
+  refunded: 'Refunded',
 };
 
 /** Extra colours that make the seven headline statuses identical everywhere. */

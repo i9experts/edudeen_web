@@ -464,7 +464,7 @@ export default function StoreDashboard() {
           {/* Metric Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             <MetricCard
-              label="Revenue (30 days)" value={formatMoneyCompact(metrics?.overview.totalRevenue ?? 0, store?.baseCurrency)}
+              label="Order value (30 days)" value={formatMoneyCompact(metrics?.overview.totalRevenue ?? 0, store?.baseCurrency)}
               sub={metrics?.overview.totalRevenue ? 'Last 30 days' : 'No sales yet'}
               sparkline={revenueSparkline}
             />

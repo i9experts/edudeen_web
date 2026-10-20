@@ -32,6 +32,8 @@ function formatRelativeTime(dateStr: string): string {
 /** Where "View all" goes for the signed-in role. */
 export function notificationsPath(): string {
   const role = TokenStorage.getUser<{ role?: 'user' | 'seller' | 'admin' }>()?.role;
+  const storeId = window.location.pathname.match(/^\/store\/([^/]+)/)?.[1];
+  if (role === 'seller' && storeId) return `/store/${storeId}/notifications`;
   if (role === 'seller') return '/seller/settings?tab=notifications';
   if (role === 'admin') return '/admin/settings?tab=notifications';
   return '/account/notifications';

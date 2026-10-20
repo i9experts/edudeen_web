@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
+import { statusLabel } from '@/constants/statusLabels';
 import { formatPrice } from '@/utils/formatPrice';
 import {
   Check, Zap, Package, Sparkles, AlertTriangle, Clock, CreditCard,
@@ -324,6 +325,13 @@ export default function StorePlanBilling() {
           );
         })()}
 
+        {entitlements && !current && (
+          <div className="bg-white border border-bone rounded-[10px] px-5 py-4">
+            <p className="text-[13px] font-bold text-carbon">Your current plan — {entitlements.currentPlanName}</p>
+            <p className="text-[12px] text-slate mt-[3px]">No active subscription on this store. Choose a plan below to get started.</p>
+          </div>
+        )}
+
         {entitlements && current && (
           <div className="bg-white border border-bone rounded-[10px] px-5 py-4">
             <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
@@ -340,7 +348,7 @@ export default function StorePlanBilling() {
                 <span className={`text-[12px] font-semibold px-2 py-[3px] rounded-full capitalize ${
                   isPastDue ? 'bg-error-bg text-error' : isCancelPending ? 'bg-[#fdf2da] text-[#946200]' : 'bg-[#e3f4ea] text-[#1e7a3c]'
                 }`}>
-                  {isCancelPending ? 'Canceling' : current.status}
+                  {isCancelPending ? 'Canceling' : statusLabel(current.status)}
                 </span>
                 {current.stripeCustomerId && (
                   <Button size="sm" variant="outline" icon={<CreditCard size={13} />} loading={portalBusy} onClick={openBillingPortal}>
@@ -399,7 +407,7 @@ export default function StorePlanBilling() {
                     : plan.badge && <span className="text-[12px] font-bold px-2 py-[2px] rounded-full bg-brand-pale-orange text-brand-deep-orange">{plan.badge}</span>}
                 </div>
                 <p className="text-[20px] font-bold text-brand-orange mb-2">
-                  {plan.isFree ? `Free${plan.trialDays > 0 ? ` · ${plan.trialDays} days` : ''}` : plan.isCustomPricing ? 'Custom' : `$${price}/${interval === 'yearly' ? 'yr' : 'mo'}`}
+                  {plan.isFree ? `Free${plan.trialDays > 0 ? ` · ${plan.trialDays} days` : ''}` : plan.isCustomPricing ? 'Custom' : `${formatPrice(Number(price), 'USD')}/${interval === 'yearly' ? 'yr' : 'mo'}`}
                   {!plan.isFree && !plan.isCustomPricing && savePct > 0 && <span className="ms-2 text-[12px] font-semibold text-success">Save {savePct}%</span>}
                 </p>
                 {isCurrent && planEndsAt && <p className="text-[12px] font-semibold text-[#1e7a3c] mb-2">{daysLeftText} · {current?.status === 'trialing' ? 'ends' : 'renews'} {new Date(planEndsAt).toLocaleDateString()}</p>}
@@ -435,7 +443,7 @@ export default function StorePlanBilling() {
                 <div key={a._id} className="flex items-center justify-between gap-3 flex-wrap px-5 py-3 border-b border-[#f0eee6] last:border-b-0">
                   <div className="min-w-0">
                     <p className="text-[13px] font-medium text-carbon">{addonLabel(a.addonType)}</p>
-                    <p className="text-[12px] text-slate">Qty {a.quantity} · ${a.amountUSD.toFixed(2)}/mo</p>
+                    <p className="text-[12px] text-slate">Qty {a.quantity} · {formatPrice(a.amountUSD, 'USD')}/mo</p>
                   </div>
                   <button onClick={() => { setCancelingAddon(a); setActionError(''); }} className="px-2.5 py-1 bg-white border border-bone rounded-[6px] text-[12px] text-error cursor-pointer shrink-0">Cancel</button>
                 </div>
@@ -457,8 +465,8 @@ export default function StorePlanBilling() {
                   <div className="min-w-0">
                     <p className="text-[13px] font-medium text-carbon">{inv.invoiceNumber}</p>
                     <p className="text-[12px] text-slate">
-                      {new Date(inv.createdAt).toLocaleDateString()} · ${inv.amountUSD.toFixed(2)}
-                      {inv.refundedAmountUSD > 0 && <span className="text-error"> · ${inv.refundedAmountUSD.toFixed(2)} refunded</span>}
+                      {new Date(inv.createdAt).toLocaleDateString()} · {formatPrice(inv.amountUSD, 'USD')}
+                      {inv.refundedAmountUSD > 0 && <span className="text-error"> · {formatPrice(inv.refundedAmountUSD, 'USD')} refunded</span>}
                     </p>
                   </div>
                   <div className="flex items-center gap-2.5 shrink-0">
@@ -512,24 +520,24 @@ export default function StorePlanBilling() {
             <div className="bg-cream border border-bone rounded-lg p-3.5 flex flex-col gap-[6px]">
               <div className="flex justify-between text-[12.5px]">
                 <span className="text-slate">New plan price</span>
-                <span className="text-charcoal font-medium">${preview.newAmountUSD.toFixed(2)}/{preview.newBillingInterval === 'yearly' ? 'yr' : 'mo'}</span>
+                <span className="text-charcoal font-medium">{formatPrice(preview.newAmountUSD, 'USD')}/{preview.newBillingInterval === 'yearly' ? 'yr' : 'mo'}</span>
               </div>
               {preview.unusedCreditFromCurrentPlanUSD > 0 && (
                 <div className="flex justify-between text-[12.5px]">
                   <span className="text-slate">Unused credit ({preview.remainingDaysInCurrentPeriod} day{preview.remainingDaysInCurrentPeriod === 1 ? '' : 's'} left)</span>
-                  <span className="text-success">−${preview.unusedCreditFromCurrentPlanUSD.toFixed(2)}</span>
+                  <span className="text-success">−{formatPrice(preview.unusedCreditFromCurrentPlanUSD, 'USD')}</span>
                 </div>
               )}
               {preview.existingCreditBalanceUSD > 0 && (
                 <div className="flex justify-between text-[12.5px]">
                   <span className="text-slate">Existing account credit</span>
-                  <span className="text-success">−${preview.existingCreditBalanceUSD.toFixed(2)}</span>
+                  <span className="text-success">−{formatPrice(preview.existingCreditBalanceUSD, 'USD')}</span>
                 </div>
               )}
               <div className="flex justify-between text-[13.5px] font-bold pt-[6px] mt-[2px] border-t border-bone">
                 <span className="text-carbon">{preview.creditAppliedToBalanceUSD > 0 ? 'Credited to your account' : 'Due today'}</span>
                 <span className={preview.creditAppliedToBalanceUSD > 0 ? 'text-success' : 'text-brand-orange'}>
-                  ${(preview.creditAppliedToBalanceUSD > 0 ? preview.creditAppliedToBalanceUSD : preview.amountDueTodayUSD).toFixed(2)}
+                  {formatPrice(preview.creditAppliedToBalanceUSD > 0 ? preview.creditAppliedToBalanceUSD : preview.amountDueTodayUSD, 'USD')}
                 </span>
               </div>
             </div>

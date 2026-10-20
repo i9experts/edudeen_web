@@ -10,9 +10,11 @@ interface CreditsHeaderProps {
   credits: AiCreditsOverview | null;
   loading: boolean;
   onCreditsChanged: () => void;
+  /** AI key not set up on the platform: buying credits is pointless. */
+  aiUnavailable?: boolean;
 }
 
-export function CreditsHeader({ storeId, credits, loading, onCreditsChanged }: CreditsHeaderProps) {
+export function CreditsHeader({ storeId, credits, loading, onCreditsChanged, aiUnavailable }: CreditsHeaderProps) {
   const [buying, setBuying] = useState(false);
   const [buyError, setBuyError] = useState('');
 
@@ -64,7 +66,10 @@ export function CreditsHeader({ storeId, credits, loading, onCreditsChanged }: C
           <p className="font-serif font-normal text-[48px] sm:text-[56px] text-brand-orange leading-none">{balance}</p>
         )}
         <p className="text-[13px] text-slate mt-1">AI credits left this month</p>
-        <Button variant="primary" size="sm" loading={buying} onClick={handleBuyCredits} className="mt-3">
+        <Button
+          variant="primary" size="sm" loading={buying} onClick={handleBuyCredits} className="mt-3"
+          disabled={aiUnavailable} title={aiUnavailable ? 'AI is not configured yet' : undefined}
+        >
           {credits?.buyCredits?.creditsPerUnit ? `Buy ${credits.buyCredits.creditsPerUnit.toLocaleString()} Credits` : 'Buy Credits'}
         </Button>
       </div>

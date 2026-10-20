@@ -175,10 +175,12 @@ export function ActivityLogTab() {
                 className="border-none outline-none text-[13px] py-2 w-full text-charcoal bg-transparent"
               />
             </div>
-            <div className="flex items-center gap-[5px] shrink-0">
-              <span className="w-2 h-2 rounded-full" style={{ background: live ? '#2D8A4E' : '#C0BDB5' }} />
-              <span className="text-[12px] font-medium" style={{ color: live ? '#2D8A4E' : '#8C8A82' }}>{live ? 'Live' : 'Connecting…'}</span>
-            </div>
+            {live && (
+              <div className="flex items-center gap-[5px] shrink-0">
+                <span className="w-2 h-2 rounded-full" style={{ background: '#2D8A4E' }} />
+                <span className="text-[12px] font-medium" style={{ color: '#2D8A4E' }}>Live</span>
+              </div>
+            )}
           </div>
 
           {loading ? (
@@ -207,8 +209,9 @@ export function ActivityLogTab() {
               const actorName = isMe ? me!.name : (item.actorName ?? 'Team member');
               const actorRole = (isMe ? me!.role : item.actorRole ?? '') ;
               const roleLabel = actorRole ? actorRole.charAt(0).toUpperCase() + actorRole.slice(1) : '';
-              const cs = item.isSecurityAlert ? { bg: '#FDECEA', color: '#C0392B' } : (categoryStyle[item.category] ?? { bg: '#F0EEE6', color: '#5A5852' });
-              const catLabel = item.isSecurityAlert ? 'Security Alert' : item.category.charAt(0).toUpperCase() + item.category.slice(1);
+              const cs = item.isSecurityAlert && item.action !== 'login_success' ? { bg: '#FDECEA', color: '#C0392B' } : (categoryStyle[item.category] ?? { bg: '#F0EEE6', color: '#5A5852' });
+              const isAlert = item.isSecurityAlert && item.action !== 'login_success';
+              const catLabel = isAlert ? 'Security Alert' : item.category.charAt(0).toUpperCase() + item.category.slice(1);
               return (
                 <div key={item._id} className="px-4 py-[14px] transition-colors duration-150 hover:bg-cream" style={{ borderBottom: i < logs.length - 1 ? '1px solid #F0EEE6' : 'none' }}>
                   <div className="flex items-center gap-2 mb-1.5">

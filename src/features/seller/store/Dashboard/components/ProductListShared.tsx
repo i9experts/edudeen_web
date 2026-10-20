@@ -33,15 +33,17 @@ export interface ProductListStats {
   inStock:       number;
   lowStock:      number;
   outOfStock:    number;
+  unlimited?:    number;
 }
 
 export function ProductStatsGrid({ stats, loading }: { stats: ProductListStats | null; loading: boolean }) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
       <MetricCard label="Total Products" value={stats?.totalProducts ?? 0} icon={<ShoppingBag size={16} />} loading={loading && !stats} />
       <MetricCard label="In Stock"       value={stats?.inStock ?? 0}       icon={<CheckCircle2 size={16} />} loading={loading && !stats} />
       <MetricCard label="Low Stock"      value={stats?.lowStock ?? 0}      icon={<AlertTriangle size={16} />} loading={loading && !stats} />
       <MetricCard label="Out of Stock"   value={stats?.outOfStock ?? 0}    icon={<XCircle size={16} />}      loading={loading && !stats} />
+      <MetricCard label="Digital / Unlimited" value={stats?.unlimited ?? 0} icon={<CheckCircle2 size={16} />} loading={loading && !stats} />
     </div>
   );
 }

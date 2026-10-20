@@ -1,4 +1,4 @@
-import { useState, useEffect, type ReactNode, Suspense } from 'react';
+import { useState, useEffect, useRef, type ReactNode, Suspense } from 'react';
 import { Outlet, Navigate, useNavigate, useLocation, useParams } from 'react-router-dom';
 import { TokenStorage, type AppRole } from '@/api/services/auth';
 import { clsx } from 'clsx';
@@ -12,7 +12,8 @@ import {
 } from 'lucide-react';
 import { EdudeenIcon, EdudeenLogo } from '@/components/comman/ui/EdudeenLogo';
 import { apiGetStoreById, type StoreData } from '@/api/services/store';
-import { apiGetStorePlatformPlan, apiGetStoreEntitlements, type StorePlatformSubscription } from '@/api/services/platformPlans';
+import { apiGetStorePlatformPlan, type StorePlatformSubscription } from '@/api/services/platformPlans';
+import { apiGetAiStudioCredits } from '@/api/services/aiStudio';
 import { useCommandPalette } from '@/hooks/useCommandPalette';
 import { useLogout } from '@/hooks/auth/useLogout';
 import { AnnouncementBanner, Modal, Button } from '@/components/comman/ui';
@@ -254,7 +255,8 @@ function isNavItemActive(path: string, pathname: string, search: string, storeId
   // Merged pages (e.g. Questions lives under Reviews) keep their parent entry highlighted.
   const MERGED: Record<string, string> = { questions: 'reviews', collections: 'categories', bundles: 'categories' };
   const base = `/store/${storeId}/`;
-  const cur = pathname.startsWith(base) ? pathname.slice(base.length).split('/')[0] : '';
+  // Multi-segment routes (e.g. 'ai/studio') compare as many segments as the nav path has.
+  const cur = pathname.startsWith(base) ? pathname.slice(base.length).split('/').slice(0, seg.split('/').length).join('/') : '';
   if ((MERGED[cur] ?? cur) !== seg) return false;
   // The only nav entry for this route stays highlighted whatever tab is open.
   const siblings = ALL_NAV_PATHS.filter(p => p.split('?')[0] === seg);
@@ -312,12 +314,13 @@ function StoreSidebar({ open, onToggle }: StoreSidebarProps) {
   useEffect(() => {
     if (!storeId) return;
     let cancelled = false;
-    apiGetStoreEntitlements(storeId)
-      .then(res => { if (!cancelled) setAiCredits(res.data.aiCredits ?? null); })
+    // Same wallet AI Studio and Store Settings read (one source of truth).
+    apiGetAiStudioCredits(storeId)
+      .then(res => { if (!cancelled) setAiCredits(res.data ? { monthlyAllowance: res.data.monthlyAllowance, balance: res.data.balance } : null); })
       .catch(() => {});
     return () => { cancelled = true; };
   }, [storeId]);
-  const credits    = aiCredits?.balance ?? store?.aiCredits ?? 0;
+  const credits    = aiCredits?.balance ?? 0;
   const maxCredits = aiCredits && aiCredits.monthlyAllowance > 0 ? aiCredits.monthlyAllowance : null;
   const unlimited  = aiCredits?.monthlyAllowance === -1;
   const pct        = maxCredits ? Math.min(100, Math.round((credits / maxCredits) * 100)) : 0;
@@ -746,6 +749,8 @@ export function StoreLayout() {
   const { pathname: currentPath } = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const toggle = () => setSidebarOpen(o => !o);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  useEffect(() => { scrollRef.current?.scrollTo({ top: 0 }); }, [currentPath]);
 
   const user = TokenStorage.getUser<{ role?: AppRole }>();
   if (!TokenStorage.isLoggedIn() || user?.role !== 'seller') {
@@ -765,7 +770,7 @@ export function StoreLayout() {
           <AnnouncementBanner audience="sellers" />
           <StoreVerificationBanner />
           <PlatformBillingBanner />
-          <div className="flex-1 overflow-y-auto overscroll-contain pb-[64px] lg:pb-0 tap-safe">
+          <div ref={scrollRef} className="flex-1 overflow-y-auto overscroll-contain pb-[64px] lg:pb-0 tap-safe">
             {/* Content column capped at a readable studio width; the builder
                and messages views keep the full canvas they need. */}
             <div className={isFullBleedRoute(currentPath) ? 'min-h-full' : 'w-full max-w-[1440px] mx-auto min-h-full'}>

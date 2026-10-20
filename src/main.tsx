@@ -11,7 +11,12 @@ import { AuthGateProvider } from '@/contexts/AuthGateContext';
 import { ToastProvider } from '@/contexts/ToastContext';
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import { InstallAppPrompt } from '@/components/InstallAppPrompt';
+import { reloadOnceForStaleChunk, armChunkReloadGuardReset } from '@/utils/lazyWithRetry';
 import './index.css';
+
+// Stale chunk after a deploy: Vite fires this when a preload fails; reload once (guarded in sessionStorage).
+window.addEventListener('vite:preloadError', (e) => { if (reloadOnceForStaleChunk()) e.preventDefault(); });
+armChunkReloadGuardReset();
 
 // Optional Sentry: only when VITE_SENTRY_DSN is set and @sentry/react is installed. Never blocks the app.
 const sentryDsn = import.meta.env.VITE_SENTRY_DSN as string | undefined;

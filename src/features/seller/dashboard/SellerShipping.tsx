@@ -1,6 +1,6 @@
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { formatPrice } from '@/utils/formatPrice';
-import { StorePageHeader } from '@/components/layouts/StoreLayout';
+import { StorePageHeader, useStoreWorkspace } from '@/components/layouts/StoreLayout';
 import { MapPin, Info } from 'lucide-react';
 import { useShippingZones } from '@/hooks/shipping/useShippingZones';
 import { shippingZoneLabel } from '@/api/services/shipping';
@@ -11,6 +11,7 @@ import { Button, SkeletonBox, EmptyState } from '@/components/comman/ui';
 // not per seller. This page just shows sellers what buyers are charged.
 export function SellerShipping() {
   usePageTitle('Shipping');
+  const { store } = useStoreWorkspace();
   const { zones, loading, error, refetch } = useShippingZones();
   const liveZones = zones.filter(z => z.status === 'active');
 
@@ -25,7 +26,11 @@ export function SellerShipping() {
 
         <div className="flex items-start gap-2 text-[12.5px] text-carbon bg-info-bg border border-[#bfdcf3] rounded-lg px-3 py-2.5">
           <Info size={14} className="shrink-0 mt-[1px] text-brand-royal" />
-          <span>Edudeen sets the delivery zones and prices for physical orders — you don’t need to configure anything here.</span>
+          <span>
+            {store?.fulfillmentMode === 'platform'
+              ? 'Edudeen ships your physical orders. Delivery zones and prices are set by Edudeen — you don’t need to configure anything here.'
+              : 'You ship your own physical orders. Edudeen sets the delivery zones and the shipping price buyers are charged at checkout; these are the rates buyers see.'}
+          </span>
         </div>
 
         <div className="bg-white border border-bone rounded-[10px] px-5 py-4 max-w-[320px]">

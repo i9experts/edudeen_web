@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { formatPrice } from '@/utils/formatPrice';
+import { statusLabel } from '@/constants/statusLabels';
 import {
   Loader2, Plus, Pencil, Archive, Download, Users, TrendingUp, RefreshCw,
   Trash2, AlertTriangle, CheckCircle2, Tag, Truck, Clock, Star, Gift, Headset, CalendarClock,
@@ -49,10 +50,10 @@ function benefitSummary(b: PlanBenefit): string {
   switch (b.type) {
     case 'discount': {
       const scope = b.scope === 'store' ? 'storewide' : b.scope === 'category' ? 'on selected categories' : 'on selected products';
-      return `${b.discountPercent ?? 0}% off ${scope}${b.maxDiscountAmountUSD ? `, capped at $${b.maxDiscountAmountUSD}` : ''}${b.minOrderValueUSD ? `, on orders over $${b.minOrderValueUSD}` : ''}`;
+      return `${b.discountPercent ?? 0}% off ${scope}${b.maxDiscountAmountUSD ? `, capped at ${formatPrice(b.maxDiscountAmountUSD, 'USD')}` : ''}${b.minOrderValueUSD ? `, on orders over ${formatPrice(b.minOrderValueUSD, 'USD')}` : ''}`;
     }
     case 'shipping':
-      return b.shippingType === 'free' ? 'Free shipping' + (b.minOrderValueForShippingUSD ? ` on orders over $${b.minOrderValueForShippingUSD}` : '') : `${b.shippingDiscountPercent ?? 0}% off shipping`;
+      return b.shippingType === 'free' ? 'Free shipping' + (b.minOrderValueForShippingUSD ? ` on orders over ${formatPrice(b.minOrderValueForShippingUSD, 'USD')}` : '') : `${b.shippingDiscountPercent ?? 0}% off shipping`;
     case 'early_access': return `${b.earlyAccessHours ?? 24}h early access to new arrivals`;
     case 'loyalty_multiplier': return `${b.multiplier ?? 2}x loyalty points`;
     case 'credits': return `${b.creditsPerCycle ?? 0} ${b.creditType ?? 'download'} credits per cycle`;
@@ -326,9 +327,9 @@ function SubscriberDetailModal({ storeId, subId, onClose }: { storeId: string; s
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[12px]">
             <div><p className="text-slate">Customer</p><p className="font-semibold text-charcoal">{data.customer?.name} ({data.customer?.email})</p></div>
             <div><p className="text-slate">Plan</p><p className="font-semibold text-charcoal">{data.plan?.name ?? '—'}</p></div>
-            <div><p className="text-slate">Status</p><p className="font-semibold text-charcoal capitalize">{data.status}</p></div>
+            <div><p className="text-slate">Status</p><p className="font-semibold text-charcoal">{statusLabel(data.status)}</p></div>
             <div><p className="text-slate">Started</p><p className="font-semibold text-charcoal">{new Date(data.startedAt).toLocaleDateString()}</p></div>
-            <div><p className="text-slate">Total Paid</p><p className="font-semibold text-charcoal">${data.totalPaidUSD.toFixed(2)}</p></div>
+            <div><p className="text-slate">Total Paid</p><p className="font-semibold text-charcoal">{formatPrice(data.totalPaidUSD, 'USD')}</p></div>
             <div><p className="text-slate">Next Billing</p><p className="font-semibold text-charcoal">{new Date(data.nextBillingDate).toLocaleDateString()}</p></div>
           </div>
           <div>
@@ -336,7 +337,7 @@ function SubscriberDetailModal({ storeId, subId, onClose }: { storeId: string; s
             <div className="flex flex-col gap-1.5 max-h-[220px] overflow-y-auto">
               {(data.invoices ?? []).map((inv: SubscriptionInvoice) => (
                 <div key={inv._id} className="flex items-center justify-between text-[12px] px-2.5 py-1.5 rounded bg-cream">
-                  <span className="text-slate">{inv.invoiceNumber} · {inv.status} · ${inv.amountUSD.toFixed(2)}</span>
+                  <span className="text-slate">{inv.invoiceNumber} · {statusLabel(inv.status)} · {formatPrice(inv.amountUSD, 'USD')}</span>
                   {['paid', 'partially_refunded'].includes(inv.status) && (
                     <button disabled={refundingId === inv._id} onClick={() => { setConfirmingRefund(inv); setRefundError(''); }}
                       className="px-2 py-[3px] bg-white border border-bone rounded-[5px] text-[12px] text-error cursor-pointer disabled:opacity-50">
@@ -364,7 +365,7 @@ function SubscriberDetailModal({ storeId, subId, onClose }: { storeId: string; s
           }
         >
           <p className="text-[13px] text-charcoal">
-            Refund invoice <strong>{confirmingRefund.invoiceNumber}</strong> (${confirmingRefund.amountUSD.toFixed(2)})?
+            Refund invoice <strong>{confirmingRefund.invoiceNumber}</strong> ({formatPrice(confirmingRefund.amountUSD, 'USD')})?
             This cannot be undone.
           </p>
           {refundError && <p className="text-[12px] text-error mt-2">{refundError}</p>}
@@ -509,21 +510,21 @@ export function StoreSubscriptions() {
       ),
     },
     { key: 'planName', header: 'Plan', render: sub => <span className="text-graphite whitespace-nowrap">{sub.planName} — {sub.billingInterval}</span> },
-    { key: 'amountUSD', header: 'Amount', render: sub => <span className="font-semibold text-carbon whitespace-nowrap">${sub.amountUSD.toFixed(2)}</span> },
+    { key: 'amountUSD', header: 'Amount', render: sub => <span className="font-semibold text-carbon whitespace-nowrap">{formatPrice(sub.amountUSD, 'USD')}</span> },
     {
       key: 'status', header: 'Status',
       render: sub => {
         const style = STATUS_STYLE[sub.status] ?? { bg: '#F0EEE6', color: '#5A5852' };
         return (
           <span className="px-[10px] py-[3px] rounded-[5px] text-[12px] font-semibold" style={{ background: style.bg, color: style.color }}>
-            {sub.status}{sub.pendingCancellation ? ' (ending)' : ''}
+            {statusLabel(sub.status)}{sub.pendingCancellation ? ' (ending)' : ''}
           </span>
         );
       },
     },
     { key: 'startedAt', header: 'Started', render: sub => <span className="text-slate whitespace-nowrap">{new Date(sub.startedAt).toLocaleDateString()}</span> },
     { key: 'nextBillingDate', header: 'Next Billing', render: sub => <span className="text-slate whitespace-nowrap">{new Date(sub.nextBillingDate).toLocaleDateString()}</span> },
-    { key: 'totalPaidUSD', header: 'Total Paid', render: sub => <span className="font-semibold text-carbon">${sub.totalPaidUSD.toFixed(2)}</span> },
+    { key: 'totalPaidUSD', header: 'Total Paid', render: sub => <span className="font-semibold text-carbon">{formatPrice(sub.totalPaidUSD, 'USD')}</span> },
     {
       key: 'actions', header: '',
       render: sub => (
@@ -587,11 +588,11 @@ export function StoreSubscriptions() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <div>
                 <p className="text-[12px] text-slate uppercase tracking-wide mb-1">Subscriber Revenue</p>
-                <p className="text-[18px] font-bold text-success">${dashboard.subscriberEconomics.subscriberRevenue.toFixed(2)}</p>
+                <p className="text-[18px] font-bold text-success">{formatPrice(dashboard.subscriberEconomics.subscriberRevenue, 'USD')}</p>
               </div>
               <div>
                 <p className="text-[12px] text-slate uppercase tracking-wide mb-1">Regular Revenue</p>
-                <p className="text-[18px] font-bold text-carbon">${dashboard.subscriberEconomics.regularRevenue.toFixed(2)}</p>
+                <p className="text-[18px] font-bold text-carbon">{formatPrice(dashboard.subscriberEconomics.regularRevenue, 'USD')}</p>
               </div>
               <div>
                 <p className="text-[12px] text-slate uppercase tracking-wide mb-1">Orders/Subscriber</p>
@@ -600,7 +601,7 @@ export function StoreSubscriptions() {
               </div>
               <div>
                 <p className="text-[12px] text-slate uppercase tracking-wide mb-1">Member Savings Given</p>
-                <p className="text-[18px] font-bold text-brand-orange">${dashboard.subscriberEconomics.totalCustomerSavingsUSD.toFixed(2)}</p>
+                <p className="text-[18px] font-bold text-brand-orange">{formatPrice(dashboard.subscriberEconomics.totalCustomerSavingsUSD, 'USD')}</p>
               </div>
             </div>
           </div>
@@ -618,8 +619,8 @@ export function StoreSubscriptions() {
                   {plan.status === 'archived' && <span className="text-[12px] font-bold px-[8px] py-[2px] rounded-full bg-[#f0eee6] text-[#5a5852] shrink-0">Archived</span>}
                 </div>
                 <div className="flex items-baseline gap-2 mb-[10px]">
-                  <span className="text-[18px] font-bold text-brand-orange">${plan.monthlyPriceUSD.toFixed(2)}/mo</span>
-                  {plan.yearlyPriceUSD != null && <span className="text-xs text-slate">or ${plan.yearlyPriceUSD.toFixed(2)}/yr</span>}
+                  <span className="text-[18px] font-bold text-brand-orange">{formatPrice(plan.monthlyPriceUSD, 'USD')}/mo</span>
+                  {plan.yearlyPriceUSD != null && <span className="text-xs text-slate">or {formatPrice(plan.yearlyPriceUSD, 'USD')}/yr</span>}
                 </div>
                 {plan.description && <p className="text-xs text-slate mb-3 leading-[1.6]">{plan.description}</p>}
                 <ul className="flex flex-col gap-1.5 mb-3 p-0 list-none">
@@ -635,7 +636,7 @@ export function StoreSubscriptions() {
                 )}
                 <div className="flex items-center justify-between py-3 border-t border-[#f0eee6] mb-[14px] mt-auto">
                   <span className="text-xs text-slate">{plan.subscriberCount} subscribers</span>
-                  <span className="text-xs font-bold text-success">${plan.monthlyRecurringRevenueUSD.toFixed(2)}/mo</span>
+                  <span className="text-xs font-bold text-success">{formatPrice(plan.monthlyRecurringRevenueUSD, 'USD')}/mo</span>
                 </div>
                 <div className="flex gap-2">
                   <button onClick={() => setEditingPlan(plan)} className="flex-1 flex items-center justify-center gap-1 py-2 bg-white border border-bone rounded-lg text-xs font-medium text-graphite cursor-pointer transition-colors duration-150 hover:bg-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/50">
@@ -710,7 +711,7 @@ export function StoreSubscriptions() {
               </div>
               <div>
                 <p className="text-[12px] text-slate uppercase tracking-wide mb-1">Realized LTV</p>
-                <p className="text-[18px] font-bold text-success">${advanced.realizedLtvUSD.toFixed(2)}</p>
+                <p className="text-[18px] font-bold text-success">{formatPrice(advanced.realizedLtvUSD, 'USD')}</p>
               </div>
               <div>
                 <p className="text-[12px] text-slate uppercase tracking-wide mb-1">Upgrades / Downgrades</p>

@@ -163,7 +163,7 @@ export function ProductOffersCard({
               </div>
             )}
             {!custom && storePremiumPct > 0 && minError && <p role="alert" className="text-[12px] text-red-600 m-0">{minError}</p>}
-            {minReq != null && !error && <p className="text-[12px] text-slate m-0">Minimum {String(Math.round(minReq * 10) / 10)}% (your sale {String(Math.round(ownSalePercent(priceN, compareN) * 10) / 10)}% + {String(gap)}% gap). You can set it higher.</p>}
+            {minReq != null && !error && <p className="text-[12px] text-slate m-0">Minimum {String(Math.round(minReq * 10) / 10)}% (your sale {String(Math.round((minReq - gap) * 10) / 10)}% + {String(gap)}% gap). You can set it higher.</p>}
           </div>
         )}
         {!premiumOn && optOut && storePremiumPct > 0 && (

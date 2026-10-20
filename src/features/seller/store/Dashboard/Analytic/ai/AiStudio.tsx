@@ -59,7 +59,7 @@ export function StoreAIStudio() {
       />
 
       <div className="px-4 md:px-7 pt-5 pb-8 flex flex-col gap-5">
-        <CreditsHeader storeId={storeId} credits={credits} loading={creditsLoading} onCreditsChanged={refetchCredits} />
+        <CreditsHeader storeId={storeId} credits={credits} loading={creditsLoading} onCreditsChanged={refetchCredits} aiUnavailable={notConfigured} />
 
         {!featuresLoading && (notConfigured || tools.length === 0) && (
           <div role="status" className="rounded-[10px] border border-bone bg-white px-5 py-6 text-center">
@@ -77,6 +77,7 @@ export function StoreAIStudio() {
                 key={tool.id}
                 onClick={() => setPicked(tool.id)}
                 disabled={notConfigured}
+                title={notConfigured ? 'AI is not configured yet' : undefined}
                 aria-pressed={active}
                 className="text-left disabled:opacity-50 disabled:cursor-not-allowed px-5 py-[18px] rounded-[10px] cursor-pointer transition-[border-color,background] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/50"
                 style={{

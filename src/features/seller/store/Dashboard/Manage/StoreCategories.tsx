@@ -2,12 +2,20 @@ import { FolderTree, Tag } from 'lucide-react';
 import { useStoreWorkspace, StorePageHeader } from '@/components/layouts/StoreLayout';
 import { useStoreSubcategories } from '@/hooks/store/useStoreSubcategories';
 import { SkeletonBox } from '@/components/comman/ui';
+import type { CategoryNode } from '@/api/services/categories';
 
 // A store's main category is fixed at creation (assertValidRootCategory on
 // the backend) — sellers can never change it or see other main categories
 // here. Subcategories are platform-wide (shared by every store under the same
 // main category), so the seller workspace only lists them; new ones are added
 // by the Edudeen team, not by individual sellers.
+// Same taxonomy (category tree API) the product form uses, nested levels included.
+function flatten(nodes: CategoryNode[], depth: number): { node: CategoryNode; depth: number }[] {
+  return [...nodes]
+    .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+    .flatMap(n => [{ node: n, depth }, ...flatten(n.children ?? [], depth + 1)]);
+}
+
 export default function StoreCategories() {
   const { store } = useStoreWorkspace();
   const { mainCategory, subcategories, loading } = useStoreSubcategories(store?.categoryId);
@@ -61,8 +69,8 @@ export default function StoreCategories() {
             <p className="px-5 py-8 text-center text-[13px] text-slate">No subcategories yet.</p>
           ) : (
             <div className="flex flex-col">
-              {subcategories.map(sub => (
-                <div key={sub._id} className="flex items-center gap-2.5 px-5 py-3 border-b border-[#f0eee6] last:border-b-0 transition-colors duration-150 hover:bg-cream">
+              {flatten(subcategories, 0).map(({ node: sub, depth }) => (
+                <div key={sub._id} style={{ paddingInlineStart: 20 + depth * 20 }} className="flex items-center gap-2.5 pe-5 py-3 border-b border-[#f0eee6] last:border-b-0 transition-colors duration-150 hover:bg-cream">
                   <Tag size={13} className="text-slate shrink-0" />
                   <span className="text-[13px] font-medium text-carbon flex-1 truncate">{sub.name}</span>
                   {sub.description && <span className="hidden sm:inline text-[12px] text-slate truncate max-w-[220px]">{sub.description}</span>}

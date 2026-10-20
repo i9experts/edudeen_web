@@ -329,6 +329,7 @@ export interface InventoryStats {
   inStock:       number;
   lowStock:      number;
   outOfStock:    number;
+  unlimited?:    number;
 }
 
 export interface InventoryPagination {
@@ -465,6 +466,8 @@ export interface SellerOrderStats {
   revenue:     number;
   pending:     number;
   avgOrder:    number;
+  orderValue?: number;
+  paidRevenue?: number;
 }
 
 export interface SellerOrderPagination {
