@@ -447,7 +447,8 @@ export default function StoreBulkUpload() {
           digital: {
             files: [{ url: r.upload!.publicId, name: r.upload!.fileName, size: r.upload!.fileSize, mimeType: r.upload!.mimeType }],
             downloadLimit: r.downloadLimit || 'unlimited', linkExpiryDays: r.linkExpiryDays.trim() ? Number(r.linkExpiryDays) : null, pdfStampingEnabled: true, licenseType: 'personal', buyerDeliveryMessage: r.buyerMessage.trim(),
-            preview: { enabled: true, sourceFileIndex: 0 }, sampleFile: null,
+            preview: { enabled: true, sourceFileIndex: 0 },
+            sampleFile: r.sample ? { url: r.sample.publicId, name: r.sample.fileName, size: r.sample.fileSize, mimeType: r.sample.mimeType } : null,
           },
         });
       }
@@ -1003,6 +1004,9 @@ function RowCard({ row: r, index, issue, conflict, currencyCode, dupOf, currency
     : r.createState === 'creating' ? 'bg-info-bg text-brand-royal border-info/30' : 'bg-success-bg text-success border-success/30';
   const uploading = r.uploadState === 'queued' || r.uploadState === 'uploading';
   const fileRef = useRef<HTMLInputElement>(null);
+  const sampleRef = useRef<HTMLInputElement>(null);
+  const [sampleBusy, setSampleBusy] = useState(false);
+  const [sampleError, setSampleError] = useState('');
   const chips = filledGroups(r, type);
   const name = r.title.trim() || r.fileName || `product ${index + 1}`;
   const moneyStep = currencyCode === 'PKR' ? 1 : 0.01;
@@ -1031,6 +1035,34 @@ function RowCard({ row: r, index, issue, conflict, currencyCode, dupOf, currency
         )}
         {needsFile && !created && r.uploadState === 'done' && (
           <span className="inline-flex items-center gap-1 text-[12px] text-success font-semibold" data-testid="upload-done"><CheckCircle2 size={12} /> Uploaded</span>
+        )}
+        {needsFile && !created && (
+          <>
+            {r.sample ? (
+              <span className="inline-flex items-center gap-1.5 text-[12px] text-graphite min-w-0 max-w-full" data-testid="sample-done">
+                <FileText size={13} className="shrink-0 text-success" /><span className="truncate" title={r.sample.fileName}>Sample: {r.sample.fileName}</span>
+                <button type="button" onClick={() => onChange({ sample: null })} disabled={busy} aria-label={`Remove sample for ${name}`} className="bg-transparent border-none cursor-pointer text-slate hover:text-error p-0"><X size={12} /></button>
+              </span>
+            ) : sampleBusy ? (
+              <span className="inline-flex items-center gap-1.5 text-[12px] text-slate" role="status"><Loader2 size={12} className="animate-spin" /> Uploading sample…</span>
+            ) : (
+              <button type="button" onClick={() => sampleRef.current?.click()} disabled={busy} data-testid="attach-sample"
+                className="inline-flex items-center gap-1 text-[12px] font-bold text-brand-royal bg-transparent border-none cursor-pointer p-0 hover:underline">
+                <Paperclip size={12} /> Add free sample
+              </button>
+            )}
+            <input ref={sampleRef} type="file" accept={DOC_EXTENSIONS.map(x => `.${x}`).join(',')} className="hidden" aria-label={`Free sample for ${name}`}
+              onChange={e => {
+                const f = e.target.files?.[0]; e.target.value = '';
+                if (!f) return;
+                setSampleBusy(true); setSampleError('');
+                apiUploadPrivateFile(f)
+                  .then(res => { if (!res.data?.publicId) throw new Error('Upload failed'); onChange({ sample: res.data }); })
+                  .catch((err: unknown) => setSampleError(err instanceof Error && err.message ? err.message : 'Sample upload failed'))
+                  .finally(() => setSampleBusy(false));
+              }} />
+            {sampleError && <span className="text-[12px] text-error" role="alert">{sampleError}</span>}
+          </>
         )}
         {needsFile && r.uploadState === 'failed' && (
           <span className="text-[12px] text-error" role="alert">{r.uploadError} {r.fileName && <button type="button" onClick={onRetryUpload} className="underline bg-transparent border-none cursor-pointer text-error p-0 font-semibold">Retry upload</button>}</span>

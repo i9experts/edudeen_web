@@ -30,6 +30,8 @@ export interface BulkRow {
   uploadState: UploadState;
   uploadPct: number;
   uploadError: string;
+  /** Optional free sample (a few pages) shown to Edudeen and used for the buyer preview. */
+  sample?: PrivateUploadData | null;
   title: string;
   description: string;
   price: string;
