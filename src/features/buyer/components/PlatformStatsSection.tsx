@@ -1,4 +1,6 @@
-import { BadgeCheck, Banknote, ShieldCheck } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { BadgeCheck, Banknote, LifeBuoy, RotateCcw, ShieldCheck } from 'lucide-react';
+import { useT } from '@/contexts/languageCtx';
 import { RevealStagger } from '@/components/comman/motion/Reveal';
 import { AnimatedCounter } from '@/components/comman/motion/AnimatedCounter';
 import { SkeletonBox } from '@/components/comman/ui';
@@ -66,6 +68,19 @@ export function PlatformStatsSection({ className = 'mb-12' }: { className?: stri
           </li>
         ))}
       </ul>
+      <HelpLinks />
     </section>
+  );
+}
+
+/** Refund and support pages, shown under the trust points. */
+function HelpLinks() {
+  const t = useT();
+  const linkCls = 'inline-flex items-center gap-1.5 min-h-11 md:min-h-0 text-[13px] font-semibold text-carbon no-underline hover:text-brand-orange';
+  return (
+    <div className="mt-5 pt-4 border-t border-bone flex flex-wrap items-center justify-center gap-x-8 gap-y-1">
+      <Link to="/faq" className={linkCls}><RotateCcw size={14} className="text-brand-royal" aria-hidden />{t('Refunds & returns')}</Link>
+      <Link to="/contact-us" className={linkCls}><LifeBuoy size={14} className="text-brand-royal" aria-hidden />{t('Contact support')}</Link>
+    </div>
   );
 }

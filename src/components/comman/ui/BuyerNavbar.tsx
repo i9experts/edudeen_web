@@ -980,7 +980,7 @@ function AccountActions({ simple = false }: { simple?: boolean }) {
       <SignInPreview />
       <Link
         to="/login"
-        className="md:hidden inline-flex items-center min-h-11 text-[13px] font-medium text-white no-underline border-none rounded-md px-[14px] py-[6px] bg-brand-orange cursor-pointer hover:bg-brand-deep-orange transition-colors"
+        className="md:hidden inline-flex items-center shrink-0 whitespace-nowrap min-h-11 text-[13px] font-medium text-white no-underline border-none rounded-md px-3 py-[6px] bg-brand-orange cursor-pointer hover:bg-brand-deep-orange transition-colors"
       >
         {t('Sign In')}
       </Link>
@@ -1272,7 +1272,7 @@ export function BuyerNavbar({ variant = 'full', contextLabel, search, accentColo
                previously the excess (usually the currency picker, being last) just rendered
                past the screen edge with no way to reach it at all. This guarantees every
                icon stays reachable by a horizontal swipe even in the tightest case. */}
-            <div className={clsx('items-center gap-1 md:gap-2.5 min-w-0 overflow-x-auto scrollbar-hide px-[7px] -mx-[7px]', mobileSearchOpen ? 'hidden md:flex' : 'flex', hideSearch && 'ms-auto')}>
+            <div className={clsx('items-center gap-1 md:gap-2.5 shrink-0 md:shrink md:min-w-0 overflow-x-auto scrollbar-hide px-[7px] -mx-[7px]', mobileSearchOpen ? 'hidden md:flex' : 'flex', hideSearch && 'ms-auto')}>
               {backTo && (
                 <div className="hidden md:inline-flex">
                   <Button variant="ghost" size="sm" to={backTo.path}>
@@ -1283,7 +1283,8 @@ export function BuyerNavbar({ variant = 'full', contextLabel, search, accentColo
               )}
               {!hideCommerce && (
                 <>
-                  <MiniWishlist />
+                  {/* Phones: Saved lives in the bottom nav, so drop the heart here to keep Sign In fully visible. */}
+                  <div className="hidden md:contents"><MiniWishlist /></div>
                   <MiniCart accentColor={accentColor} />
                 </>
               )}

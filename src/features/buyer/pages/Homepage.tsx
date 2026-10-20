@@ -25,7 +25,7 @@ import { useCartContext } from '@/contexts/CartContext';
 import { useWishlistContext } from '@/contexts/WishlistContext';
 import { Avatar } from '@/components/comman/ui/Avatar';
 import {
-  BuyerNavbar, Footer, SkeletonBox, StoreFeatureCard, TrustServiceStrip,
+  BuyerNavbar, Footer, SkeletonBox, StoreFeatureCard,
 } from '@/components/comman/ui';
 import { ResourceCard, ResourceCardSkeleton } from '@/components/comman/marketplace/ResourceCard';
 import { ScrollRow } from '@/components/comman/ui/ScrollRow';
@@ -37,7 +37,7 @@ import {
   EMPTY_FILTERS, PRICE_NO_MAX, type MarketplaceFilters,
 } from '@/components/comman/marketplace/FiltersDrawer';
 import { SectionHead, sectionLinkClass } from '@/components/comman/marketplace/SectionHead';
-import { Star, Quote, BadgeCheck, Zap, Crown, Shield, CreditCard, Headset, RefreshCcw } from 'lucide-react';
+import { Star, Quote, BadgeCheck, Zap, Crown } from 'lucide-react';
 import { apiGetTestimonials, type Testimonial } from '@/api/services/testimonials';
 import { apiGetTopStores, type PublicStoreListItem } from '@/api/services/store';
 import { PlatformStatsSection } from '@/features/buyer/components/PlatformStatsSection';
@@ -54,14 +54,12 @@ import { HomeHero, HomeHeroSkeleton } from '@/features/buyer/components/home/Hom
 import { ShopByCategory } from '@/features/buyer/components/home/ShopByCategory';
 import { ProductShelf } from '@/features/buyer/components/home/ProductShelf';
 import { BundlesShelf } from '@/features/buyer/components/home/BundlesShelf';
-import { PaymentTrustStrip } from '@/features/buyer/components/home/PaymentTrustStrip';
 import { RecentlyViewedRail } from '@/features/buyer/components/home/RecentlyViewedRail';
 import { HomeNewsletter } from '@/features/buyer/components/home/HomeNewsletter';
 import { useHomeShelves } from '@/features/buyer/components/home/useHomeShelves';
-import { dedupeInOrder, soldLabel, paymentTrust, paymentTrustSub, railSize } from '@/features/buyer/components/home/homeRules';
+import { dedupeInOrder, soldLabel, railSize } from '@/features/buyer/components/home/homeRules';
 
 // Text lives in admin-edit/homeDefaults.ts (shared with the inline editor).
-const TRUST_ITEMS = [{ Icon: Shield }, { Icon: CreditCard }, { Icon: RefreshCcw }, { Icon: Headset }];
 
 type TypeFilter = '' | 'physical' | 'digital' | 'educational';
 type SortFilter = 'featured' | 'popular' | 'low' | 'high';
@@ -149,12 +147,6 @@ function HomeLanding() {
   // Admin-editable copy (Admin → Platform Config → Homepage content); blank = built-in default below.
   const { config: publicConfig, loading: configLoading } = usePublicPlatformConfig();
   const hc = publicConfig?.homeContent ?? {};
-  // The 'Flexible Payment' tile lists exactly the methods enabled right now (same source as the 'Ways to pay' row) unless the admin wrote their own line.
-  const enabledMethods = paymentTrust(publicConfig?.commerce?.paymentMethods, publicConfig?.commerce?.codAvailable, !!(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string | undefined)?.trim());
-  const trustItems = TRUST_ITEMS.map((d, i) => {
-    const item = { ...d, ...effectiveHomeContent(hc).trustItems[i] };
-    return i === 1 && !hc.trustItems?.[1]?.sub?.trim() ? { ...item, sub: paymentTrustSub(enabledMethods) } : item;
-  });
   const navigate = useNavigate();
   // Edudeen's curated, seasonal shelves ("Exam ki tayyari" etc.), set by the admin team.
   const [shelves, setShelves] = useState<CuratedShelf[]>([]);
@@ -774,13 +766,6 @@ function HomeLanding() {
             </div>
             </EditableHomeSection>
           )}
-        </section>
-
-        {/* ── Trust ── */}
-        <section className="mb-12">
-          <SectionHead eyebrow="Shop with confidence" title="Why buyers choose Edudeen" />
-          <EditableHomeSection section="trust" defaults={eff} label="trust items"><TrustServiceStrip variant="card" items={trustItems} /></EditableHomeSection>
-          <PaymentTrustStrip />
         </section>
 
         {/* ── Platform stats - the single stats block; real numbers only past the admin's thresholds ── */}
