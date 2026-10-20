@@ -16,6 +16,11 @@ import './index.css';
 
 // Stale chunk after a deploy: Vite fires this when a preload fails; reload once (guarded in sessionStorage).
 window.addEventListener('vite:preloadError', (e) => { if (reloadOnceForStaleChunk()) e.preventDefault(); });
+// A focused number box changes its value when the page is scrolled over it (price 300 -> 298, or down to 0). Blur it instead.
+window.addEventListener('wheel', () => {
+  const el = document.activeElement;
+  if (el instanceof HTMLInputElement && el.type === 'number') el.blur();
+}, { passive: true });
 armChunkReloadGuardReset();
 
 // Optional Sentry: only when VITE_SENTRY_DSN is set and @sentry/react is installed. Never blocks the app.
