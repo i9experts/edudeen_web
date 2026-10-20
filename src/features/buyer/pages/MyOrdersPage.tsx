@@ -64,7 +64,7 @@ function StatusBadge({ status }: { status: OrderStatus }) {
 // ─────────────────────────────────────────────────────────────────────────────
 // Cancel / Return reason modal
 // ─────────────────────────────────────────────────────────────────────────────
-function ReasonModal({
+export function ReasonModal({
   title, confirmLabel, onClose, onSubmit,
 }: {
   title: string;

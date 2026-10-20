@@ -9,6 +9,7 @@ import {
 import { apiGetMyReviews, apiDeleteReview, type MyReviewEntry } from '@/api/services/rating';
 import { ReviewFormModal } from '@/features/buyer/components/ReviewFormModal';
 import { useToast } from '@/contexts/ToastContext';
+import { PendingReviews } from './account/PendingReviews';
 
 const PER_PAGE = 10;
 
@@ -126,7 +127,8 @@ export function ReviewsTab() {
   ];
 
   return (
-    <div>
+    <div className="flex flex-col gap-5">
+    <PendingReviews key={refreshKey} onReviewed={() => setRefreshKey(k => k + 1)} />
     <Card padding="none">
       {/* Header — desktop only; mobile's AccountLayout top bar already shows "Reviews". */}
       <div className="hidden lg:block px-5 pt-5 pb-4 border-b border-bone">

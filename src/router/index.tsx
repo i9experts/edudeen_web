@@ -99,6 +99,8 @@ const StoreQuestions     = lazy(() => named(import('@/features/seller/store/Dash
 const StoreQuotes        = lazy(() => named(import('@/features/seller/store/Dashboard/Operations/quotes/StoreQuotes'),       'StoreQuotes'));
 const AccountDownloads     = lazy(() => named(import('@/features/buyer/pages/account/Downloads'),                'Downloads'));
 const AccountWishlist      = lazy(() => named(import('@/features/buyer/pages/account/Wishlist'),                 'Wishlist'));
+const AccountReferrals     = lazy(() => named(import('@/features/buyer/pages/account/Referrals'),                'Referrals'));
+const AccountReturns       = lazy(() => named(import('@/features/buyer/pages/account/ReturnsPage'),              'ReturnsPage'));
 const AccountReviews       = lazy(() => named(import('@/features/buyer/pages/MyReviewsPage'),                    'ReviewsTab'));
 const AccountPayments      = lazy(() => named(import('@/features/buyer/pages/account/Payments'),                 'Payments'));
 const AccountMessages      = lazy(() => named(import('@/features/buyer/pages/account/Messages'),                 'Messages'));
@@ -273,6 +275,8 @@ const mainRouter = createBrowserRouter([
               { path: 'dashboard',     element: <AccountDashboard /> },
               { path: 'orders',        element: <FeatureMaintenance feature="orders"><AccountOrders /></FeatureMaintenance> },
               { path: 'orders/:orderId', element: <FeatureMaintenance feature="orders"><AccountOrderDetail /></FeatureMaintenance> },
+              { path: 'returns',       element: <FeatureMaintenance feature="orders"><AccountReturns /></FeatureMaintenance> },
+              { path: 'referrals',     element: <AccountReferrals /> },
               { path: 'downloads',     element: <AccountDownloads /> },
               { path: 'lists',         element: <AccountLists /> },
               { path: 'children',      element: <AccountChildren /> },

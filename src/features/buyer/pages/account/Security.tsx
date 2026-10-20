@@ -4,7 +4,7 @@ import { clsx } from 'clsx';
 import { AuthContext, apiResendOtp, type AppRole } from '@/api/services/auth';
 import { Shield, Mail, Check, Loader2, KeyRound, Eye, EyeOff } from 'lucide-react';
 import { useGetProfile } from '@/hooks/auth/useGetProfile';
-import { apiChangePassword, validateNewPassword, PASSWORD_RULES_TEXT } from '@/api/services/users';
+import { apiChangePassword, apiLogoutOtherDevices, validateNewPassword, PASSWORD_RULES_TEXT } from '@/api/services/users';
 import { Card, PageHeader, Badge, SkeletonBox } from '@/components/comman/ui';
 import { DeleteAccountSection } from './DeleteAccountSection';
 
@@ -44,6 +44,9 @@ export function Security() {
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [loggingOut, setLoggingOut] = useState(false);
+  const [logoutMsg, setLogoutMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [pwSaving, setPwSaving] = useState(false);
   const [pwError, setPwError] = useState('');
   const [pwSuccess, setPwSuccess] = useState(false);
@@ -81,15 +84,29 @@ export function Security() {
     setPwError(''); setPwSuccess(false);
     const invalid = validateNewPassword(currentPassword, newPassword);
     if (invalid) { setPwError(invalid); return; }
+    if (confirmPassword !== newPassword) { setPwError('The new passwords do not match.'); return; }
     setPwSaving(true);
     try {
       await apiChangePassword({ currentPassword, newPassword });
       setPwSuccess(true);
-      setCurrentPassword(''); setNewPassword('');
+      setCurrentPassword(''); setNewPassword(''); setConfirmPassword('');
     } catch (err) {
       setPwError(err instanceof Error ? err.message : 'Failed to change password');
     } finally {
       setPwSaving(false);
+    }
+  };
+
+  const handleLogoutOthers = async () => {
+    setLogoutMsg(null);
+    setLoggingOut(true);
+    try {
+      await apiLogoutOtherDevices();
+      setLogoutMsg({ ok: true, text: 'Signed out of all other devices. This device stays signed in.' });
+    } catch (err) {
+      setLogoutMsg({ ok: false, text: err instanceof Error ? err.message : 'Could not sign out other devices.' });
+    } finally {
+      setLoggingOut(false);
     }
   };
 
@@ -162,13 +179,17 @@ export function Security() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
             <PasswordField label="Current Password" value={currentPassword} onChange={setCurrentPassword} />
             <PasswordField label="New Password" value={newPassword} onChange={setNewPassword} />
+            <PasswordField label="Confirm New Password" value={confirmPassword} onChange={setConfirmPassword} />
           </div>
+          {confirmPassword !== '' && confirmPassword !== newPassword && (
+            <p className="text-[12px] text-error mb-2">The new passwords do not match.</p>
+          )}
           <p className="text-[12px] text-slate mb-3">{PASSWORD_RULES_TEXT}</p>
 
           <div className="flex items-center gap-3 flex-wrap pt-2 border-t border-[#f0ede5]">
             <button
               onClick={handleChangePassword}
-              disabled={pwSaving}
+              disabled={pwSaving || (confirmPassword !== '' && confirmPassword !== newPassword)}
               className={clsx(
                 'mt-4 px-6 py-[11px] bg-brand-orange border-none rounded-[10px] text-[13px] font-semibold text-white flex items-center gap-2',
                 pwSaving ? 'cursor-not-allowed opacity-70' : 'cursor-pointer hover:bg-brand-deep-orange transition-colors',
@@ -212,6 +233,27 @@ export function Security() {
             <span className="text-[12.5px] text-graphite">Email verification</span>
             <Badge color={profile?.isVerified ? 'green' : 'gray'} size="sm" dot>{profile?.isVerified ? 'Verified' : 'Unverified'}</Badge>
           </div>
+        </div>
+      </Card>
+      <Card padding="none" className="rounded-2xl overflow-hidden">
+        <div className="p-6 flex items-center gap-4 flex-wrap">
+          <div className="flex-1 min-w-[220px]">
+            <p className="text-[13px] font-bold text-charcoal">Signed in on other devices?</p>
+            <p className="text-[12px] text-slate mt-1">Sign out everywhere else. You stay signed in on this device.</p>
+            {logoutMsg && <p className={clsx('text-[12px] mt-2 font-medium', logoutMsg.ok ? 'text-success' : 'text-error')}>{logoutMsg.text}</p>}
+          </div>
+          <button
+            type="button"
+            onClick={handleLogoutOthers}
+            disabled={loggingOut}
+            className={clsx(
+              'px-5 py-[10px] rounded-[10px] text-[13px] font-semibold border border-bone bg-white text-charcoal flex items-center gap-2',
+              loggingOut ? 'cursor-wait opacity-70' : 'cursor-pointer hover:border-brand-orange',
+            )}
+          >
+            {loggingOut && <Loader2 size={13} className="animate-spin" />}
+            Log out of all other devices
+          </button>
         </div>
       </Card>
       <DeleteAccountSection />

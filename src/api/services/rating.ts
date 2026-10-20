@@ -145,6 +145,11 @@ export function apiDeleteReview(reviewId: string) {
 }
 
 /** GET /api/rating/my-reviews?page= */
+/** GET /api/rating/my-reviewed-ids — products this buyer has already reviewed. */
+export function apiGetMyReviewedIds() {
+  return client.get<never, ApiResponse<{ productIds: string[] }>>('/api/rating/my-reviewed-ids');
+}
+
 export function apiGetMyReviews(page = 1) {
   return client.get<never, ApiResponse<{ pagination: Pagination; reviews: MyReviewEntry[] }>>(
     `${ENDPOINTS.RATING.MY_REVIEWS}?page=${page}`,

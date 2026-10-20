@@ -38,6 +38,15 @@ export async function apiChangePassword(payload: ChangePasswordPayload) {
   }
   return res;
 }
+/** PUT /api/users/logout-others — revokes every other session; this device keeps a fresh token pair. */
+export async function apiLogoutOtherDevices() {
+  const res = await client.put<never, ApiResponse<{ token?: { accessToken?: string; refreshToken?: string } }>>('/api/users/logout-others');
+  const t = res.data?.token;
+  if (t?.accessToken && t?.refreshToken) {
+    TokenStorage.save(t.accessToken, t.refreshToken, getAuthCookie('authRemember') !== '0');
+  }
+  return res;
+}
 /** DELETE /api/users/profile — soft-deletes (deactivates) the account */
 export function apiDeleteAccount() {
   return client.delete<never, ApiResponse<null>>(ENDPOINTS.USERS.DELETE_ACCOUNT);

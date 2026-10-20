@@ -5,7 +5,7 @@ import { clsx } from 'clsx';
 import {
   LayoutDashboard, ShoppingBag, Heart, Star, Baby,
   MessageSquare, Landmark, Download, ListChecks, FileSpreadsheet,
-  User, Shield, MapPin, Bell, RefreshCw, Crown,
+  User, Shield, MapPin, Bell, RefreshCw, Crown, Undo2, Gift,
   ChevronLeft, PanelLeftClose, PanelLeftOpen, type LucideIcon,
 } from 'lucide-react';
 import { useWishlistContext } from '@/contexts/WishlistContext';
@@ -44,6 +44,7 @@ export function useNavGroups(): NavGroup[] {
       group: t('Shopping'),
       items: [
         { id: 'orders',   label: t('Orders'),   Icon: ShoppingBag, path: 'orders' },
+        { id: 'returns',  label: t('Returns'),  Icon: Undo2,       path: 'returns' },
         { id: 'downloads', label: t('My Library'), Icon: Download,  path: 'downloads' },
         { id: 'wishlist', label: t('Saved'), Icon: Heart,       path: 'wishlist', badge: wishlistCount },
         { id: 'lists',    label: t('My Lists'), Icon: ListChecks,  path: 'lists' },
@@ -67,6 +68,7 @@ export function useNavGroups(): NavGroup[] {
         { id: 'addresses',     label: t('Addresses'),      Icon: MapPin,    path: 'addresses' },
         { id: 'children',      label: t('My Children'),    Icon: Baby,      path: 'children' },
         { id: 'premium',       label: t('Premium'),        Icon: Crown,     path: 'premium' },
+        { id: 'referrals',     label: t('Refer & Earn'),   Icon: Gift,      path: 'referrals' },
         { id: 'subscriptions', label: t('Subscriptions'),  Icon: RefreshCw, path: 'subscriptions' },
       ],
     },

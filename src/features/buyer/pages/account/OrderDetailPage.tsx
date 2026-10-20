@@ -1,9 +1,13 @@
 import { useEffect, useState } from 'react';
 import { ProductCoverFallback } from '@/components/comman/marketplace/ProductCoverFallback';
-import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, FileText, Truck, Package, Download, MapPin, CreditCard } from 'lucide-react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { ArrowLeft, FileText, Truck, Package, Download, MapPin, CreditCard, MessageSquare, RotateCcw, Ban } from 'lucide-react';
 import { Card, SkeletonBox, Button, StatusBadge } from '@/components/comman/ui';
-import { apiGetOrderById, type OrderDetail } from '@/api/services/orders';
+import { apiGetOrderById, apiCancelOrder, type OrderDetail, type OrderLineItem } from '@/api/services/orders';
+import { apiStartConversation } from '@/api/services/messaging';
+import { apiAddToCart } from '@/api/services/cart';
+import { useToast } from '@/contexts/ToastContext';
+import { ReasonModal } from '../MyOrdersPage';
 import { getStorePagePath } from '@/utils/storefrontUrl';
 import { money, discountLines } from './orderFormat';
 import { LICENSE_LABEL } from '@/constants/learning';
@@ -33,6 +37,11 @@ export function OrderDetailPage() {
   const { orderId = '' } = useParams();
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [error, setError] = useState('');
+  const [reloadKey, setReloadKey] = useState(0);
+  const [cancelling, setCancelling] = useState(false);
+  const [busy, setBusy] = useState<'contact' | 'again' | null>(null);
+  const toast = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     let alive = true;
@@ -40,7 +49,36 @@ export function OrderDetailPage() {
       .then(res => { if (alive) setOrder(res.data); })
       .catch(err => { if (alive) setError(err instanceof Error ? err.message : 'Could not load this order.'); });
     return () => { alive = false; };
-  }, [orderId]);
+  }, [orderId, reloadKey]);
+
+  const contactSeller = async (storeId: string) => {
+    setBusy('contact');
+    try {
+      const conv = await apiStartConversation({ storeId });
+      navigate(`/account/messages?conversation=${conv._id}`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not open the conversation.');
+    } finally { setBusy(null); }
+  };
+
+  const buyAgain = async () => {
+    if (!order) return;
+    setBusy('again');
+    let added = 0;
+    try {
+      for (const so of order.sellerOrders) {
+        for (const it of so.items as (OrderLineItem & { variantId?: string | null })[]) {
+          if (!it.productId || !it.variantId) continue;
+          await apiAddToCart(it.productId, it.variantId, so.storeId, it.quantity ?? 1);
+          added += 1;
+        }
+      }
+      if (added === 0) { toast.error('These items can no longer be added to your cart.'); return; }
+      navigate('/cart');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not add the items to your cart.');
+    } finally { setBusy(null); }
+  };
 
   if (error) {
     return (
@@ -54,6 +92,9 @@ export function OrderDetailPage() {
 
   const addr = order.shippingAddress as Record<string, string> | null;
   const discounts = discountLines(order);
+  const canCancel = ['pending', 'processing'].includes(order.orderStatus)
+    && order.sellerOrders.some(so => (so.items ?? []).some(i => i.status !== 'cancelled'));
+  const sellers = order.sellerOrders.filter(so => so.storeId);
 
   return (
     <div className="flex flex-col gap-4">
@@ -67,6 +108,14 @@ export function OrderDetailPage() {
         </Link>
       </div>
       <p className="text-[12.5px] text-slate -mt-2">Placed {fmt(order.createdAt)} · {PAYMENT_LABEL[order.paymentType] ?? order.paymentType}</p>
+
+      <div className="flex flex-wrap gap-2">
+        {sellers.length === 1 && (
+          <Button variant="outline" size="sm" icon={<MessageSquare size={13} />} loading={busy === 'contact'} onClick={() => void contactSeller(sellers[0].storeId)}>Contact seller</Button>
+        )}
+        <Button variant="outline" size="sm" icon={<RotateCcw size={13} />} loading={busy === 'again'} onClick={() => void buyAgain()}>Buy again</Button>
+        {canCancel && <Button variant="danger" size="sm" icon={<Ban size={13} />} onClick={() => setCancelling(true)}>Cancel order</Button>}
+      </div>
 
       {order.sellerOrders.map((so, idx) => (
         <Card key={so._id ?? idx} padding="none">
@@ -146,6 +195,19 @@ export function OrderDetailPage() {
 
       {/* Item-level refund requests (reviewed by the seller / Edudeen). */}
       <RefundRequestPanel order={order} />
+
+      {cancelling && (
+        <ReasonModal
+          title="Cancel Order"
+          confirmLabel="Cancel Order"
+          onClose={() => setCancelling(false)}
+          onSubmit={async reason => {
+            await apiCancelOrder(order._id, { reason });
+            toast.success('Order cancelled');
+            setReloadKey(k => k + 1);
+          }}
+        />
+      )}
     </div>
   );
 }
