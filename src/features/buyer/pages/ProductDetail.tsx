@@ -450,11 +450,14 @@ export function ProductDetail() {
   // via a raw id (or any other stale form), normalize the address bar to
   // the product's real current slug.
   useEffect(() => {
-    if (product && product.slug && product.slug !== slug) {
-      // Keep any #reviews / #write-review anchor through the normalization.
-      navigate(`/product/${product.slug}${location.hash}`, { replace: true });
-    }
-  }, [product, slug, navigate, location.hash]);
+    // Only canonicalise once the loaded product belongs to THIS url param (its id or a previous slug) — never
+    // while loading, or with the previous product's data still on screen (that bounced B back to A).
+    if (loading || !product || !product.slug || product.slug === slug) return;
+    const p = product as { _id?: string; previousSlugs?: string[] };
+    if (slug !== p._id && !p.previousSlugs?.includes(slug)) return;
+    // Keep any #reviews / #write-review anchor through the normalization.
+    navigate(`/product/${product.slug}${location.hash}`, { replace: true });
+  }, [product, slug, loading, navigate, location.hash]);
 
   // Deep links to the reviews section (e.g. "Write a review" from My Orders)
   // — the section only exists once the product has loaded, so scroll then.

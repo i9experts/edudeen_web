@@ -119,7 +119,11 @@ function removeLocalRecentSearch(term: string) {
 
 function useUncontrolledSearch() {
   const navigate = useNavigate();
-  const [value, setValue] = useState('');
+  const [urlParams] = useSearchParams();
+  const urlQuery = (urlParams.get('search') ?? urlParams.get('q') ?? '').trim();
+  const [value, setValue] = useState(urlQuery);
+  // Keep the box in step with the results page's query (prefill on load, clear when leaving search).
+  useEffect(() => { setValue(urlQuery); }, [urlQuery]);
   const submit = (term?: string) => {
     const q = (term ?? value).trim();
     if (q) navigate(`/?search=${encodeURIComponent(q)}`);
@@ -444,17 +448,20 @@ export function SearchBox({
     onClose?.();
   };
 
-  const goToProduct = (slug: string) => {
+  // One navigation per click (guards against the click firing twice, e.g. bubbling/duplicate handlers).
+  const lastNavRef = useRef<{ to: string; at: number } | null>(null);
+  const go = (to: string) => {
+    const last = lastNavRef.current;
+    if (last && last.to === to && Date.now() - last.at < 600) return;
+    lastNavRef.current = { to, at: Date.now() };
     setOpen(false);
+    inputRef.current?.blur();
+    (document.activeElement as HTMLElement | null)?.blur?.();
     onClose?.();
-    navigate(`/product/${slug}`);
+    navigate(to);
   };
-
-  const goToStore = (slug: string) => {
-    setOpen(false);
-    onClose?.();
-    navigate(getStorePagePath(slug));
-  };
+  const goToProduct = (slug: string) => go(`/product/${slug}`);
+  const goToStore = (slug: string) => go(getStorePagePath(slug));
 
   // Arrow-key navigation across every suggestion — moves real DOM focus (not
   // a simulated highlight), so Enter/Space on a focused item just works via
@@ -809,6 +816,10 @@ export function SearchBox({
                       </div>
                     )}
                   </div>
+                )}
+
+                {matchingProducts.length === 0 && storeMatches.length === 0 && matchingCategories.length === 0 && !poolLoading && !storesLoading && (
+                  <p className="px-4 py-3 text-[13px] text-slate border-b border-bone">No results for "{value.trim()}"</p>
                 )}
 
                 {matchingCategories.length > 0 && (

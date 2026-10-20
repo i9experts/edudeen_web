@@ -268,7 +268,7 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
         {/* Toolbar */}
         <div className="flex flex-wrap items-center gap-3 mb-3">
           <FiltersButton count={chips.length} onClick={() => setDrawerOpen(true)} />
-          <SortMenu value={state.sort} onChange={v => update({ sort: v || undefined })} />
+          <SortMenu value={state.sort} defaultLabel={state.q ? 'Relevance' : 'Newest'} onChange={v => update({ sort: v || undefined })} />
           <label className="inline-flex items-center gap-2 min-h-11 text-[14px] -mx-3 px-3 font-medium text-carbon cursor-pointer select-none">
             <input type="checkbox" id="browse-free" checked={state.free} onChange={e => update({ free: e.target.checked || undefined })} className="w-4 h-4 accent-brand-orange" />
             Free only
@@ -394,7 +394,7 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
       >
         <Section title="Sort by">
           {SORTS.map(s => (
-            <RadioRow key={s.value || 'newest'} name="f-sort" label={s.label} checked={state.sort === s.value} onChange={() => update({ sort: s.value || undefined })} />
+            <RadioRow key={s.value || 'newest'} name="f-sort" label={s.value === '' && state.q ? 'Relevance' : s.label} checked={state.sort === s.value} onChange={() => update({ sort: s.value || undefined })} />
           ))}
         </Section>
         <Section title="Exam board" hint="Resources that follow your child's syllabus">
@@ -454,9 +454,10 @@ function useBrowseView(): [BrowseView, (v: BrowseView) => void] {
 }
 
 /** "Sort by: Newest ⌄" — opens a small menu of sort orders. */
-function SortMenu({ value, onChange }: { value: MarketplaceSortBy | ''; onChange: (v: MarketplaceSortBy | '') => void }) {
+function SortMenu({ value, onChange, defaultLabel }: { value: MarketplaceSortBy | ''; onChange: (v: MarketplaceSortBy | '') => void; defaultLabel: string }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const labelOf = (s: { value: string; label: string }) => (s.value === '' ? defaultLabel : s.label);
   const current = SORTS.find(s => s.value === value) ?? SORTS[0];
 
   useEffect(() => {
@@ -479,7 +480,7 @@ function SortMenu({ value, onChange }: { value: MarketplaceSortBy | ''; onChange
         className="inline-flex items-center gap-2 rounded-full bg-transparent border-none px-2 py-[9px] text-[15px] text-carbon cursor-pointer hover:bg-[#f3f5f6]"
       >
         <span>Sort by:</span>
-        <b className="font-bold">{current.label}</b>
+        <b className="font-bold">{labelOf(current)}</b>
         <ChevronDown size={17} className={clsx('transition-transform', open && 'rotate-180')} aria-hidden />
       </button>
       {open && (
@@ -496,7 +497,7 @@ function SortMenu({ value, onChange }: { value: MarketplaceSortBy | ''; onChange
                   s.value === value ? 'bg-[#f3f5f6] font-bold text-carbon' : 'bg-transparent text-carbon hover:bg-[#f7f8f9]',
                 )}
               >
-                {s.label}
+                {labelOf(s)}
                 {s.value === value && <Check size={15} className="text-success" aria-hidden />}
               </button>
             </li>
