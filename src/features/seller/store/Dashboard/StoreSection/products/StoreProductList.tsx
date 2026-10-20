@@ -267,6 +267,19 @@ export default function StoreProductList() {
           <Badge color="red">Needs changes</Badge>
           {p.reviewNote && <span className="text-[12px] text-error leading-snug line-clamp-3" title={p.reviewNote}>{p.reviewNote}</span>}
         </div>
+      ) : p.hasPendingEdit ? (
+        <div className="flex flex-col items-start gap-1 max-w-[220px]">
+          <StatusBadge status={p.status} />
+          <span title="Your changes are waiting for Edudeen's approval. The live listing keeps its previous content until then.">
+            <Badge color="yellow">Update pending approval</Badge>
+          </span>
+        </div>
+      ) : p.editRejection ? (
+        <div className="flex flex-col items-start gap-1 max-w-[220px]">
+          <StatusBadge status={p.status} />
+          <Badge color="red">Update not approved</Badge>
+          <span className="text-[12px] text-error leading-snug line-clamp-3" title={p.editRejection}>{p.editRejection}</span>
+        </div>
       ) : <StatusBadge status={p.status} />,
     },
     {

@@ -125,7 +125,9 @@ export function AdminMarketplace() {
     { key: 'sellerName', header: 'Seller', render: (r) => <span className="text-[13px] text-graphite whitespace-nowrap">{r.sellerName}</span> },
     { key: 'price', header: 'Price', align: 'right', render: (r) => <span className="text-[13px] font-semibold text-charcoal">{r.price == null ? '—' : formatMoney(r.price, r.currency)}</span> },
     { key: 'purchaseCount', header: 'Sales', align: 'right', render: (r) => <span className="text-[13px] text-charcoal">{formatNumber(r.purchaseCount)}</span> },
-    { key: 'status', header: 'Status', render: (r) => <StatusBadge status={r.status} size="sm" /> },
+    { key: 'status', header: 'Status', render: (r) => r.hasPendingEdit
+      ? <div className="flex flex-col items-start gap-1"><StatusBadge status="pending_review" size="sm" /><span className="text-[12px] font-bold text-info whitespace-nowrap">Seller updated a live listing</span></div>
+      : <StatusBadge status={r.status} size="sm" /> },
     {
       key: 'isFeatured',
       header: 'Featured',

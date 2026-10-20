@@ -297,6 +297,9 @@ export interface InventoryProduct {
   status:       'active' | 'draft' | 'archived' | 'inactive' | 'scheduled' | 'pending_review' | 'rejected';
   /** Reviewer's note when an admin sent the listing back. */
   reviewNote?:  string | null;
+  /** An edit to this live listing is waiting for admin approval / was declined (reason). */
+  hasPendingEdit?: boolean;
+  editRejection?: string | null;
   price:        number;
   allTimeSales: number;
   /** Set for products whose stock can be edited inline (single variant). */
