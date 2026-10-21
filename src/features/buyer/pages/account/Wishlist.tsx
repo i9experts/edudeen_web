@@ -147,7 +147,7 @@ export function Wishlist() {
                   {p.name}
                 </p>
 
-                <div className="flex items-center gap-[4px]">
+                {p.averageRating > 0 && <div className="flex items-center gap-[4px]">
                   {[1, 2, 3, 4, 5].map(i => (
                     <Star key={i} size={11} className={clsx(
                       i <= Math.round(p.averageRating) ? 'text-brand-orange fill-brand-orange' : 'text-bone fill-bone',
@@ -156,7 +156,7 @@ export function Wishlist() {
                   {p.averageRating > 0 && (
                     <span className="text-[12px] text-slate ms-[2px]">({p.averageRating.toFixed(1)})</span>
                   )}
-                </div>
+                </div>}
 
                 {variant && variant.options?.length > 0 && (
                   <div className="flex items-center gap-[5px] flex-wrap">

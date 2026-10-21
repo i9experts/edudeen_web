@@ -422,7 +422,7 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
             <CampaignImage src={campaign.bannerImage} alt={campaign.name} fit="cover" />
             {hasPercentOff && (
               <span className="absolute top-2 start-2 -rotate-6 flex flex-col items-center justify-center size-[42px] rounded-full bg-error text-white border-2 border-white/40 z-[1]">
-                <span className="text-[12px] font-bold leading-none">-{realMaxPct}%</span>
+                <span dir="ltr" translate="no" className="text-[12px] font-bold leading-none">-{realMaxPct}%</span>
                 <span className="text-[5px] font-semibold uppercase tracking-wide leading-none mt-[1px]">off</span>
               </span>
             )}

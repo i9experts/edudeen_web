@@ -34,7 +34,13 @@ export function InvoicePage() {
 
   const addr = order.shippingAddress as Record<string, string> | null;
   const items = order.sellerOrders.flatMap(so => so.items.map((it: any) => ({ ...it, store: so.storeName ?? so.sellerName ?? 'Store' })));
-  const sellers = order.sellerOrders.map(so => ({ name: so.storeName ?? so.sellerName ?? 'Store', email: so.storeContactEmail, phone: so.storeContactPhone }));
+  const sellers = order.sellerOrders.map(so => {
+    const extra = so as unknown as { storeAddress?: string | Record<string, string>; storeContactAddress?: string | Record<string, string> };
+    const a = extra.storeAddress ?? extra.storeContactAddress;
+    const address = typeof a === 'string' ? a : a ? formatAddressLine(a) : '';
+    return { name: so.storeName ?? so.sellerName ?? 'Store', email: so.storeContactEmail, phone: so.storeContactPhone, address };
+  });
+  const invoiceNo = (order as unknown as { invoiceNumber?: string }).invoiceNumber; // shown only when the API provides one
 
   return (
     <div className="min-h-screen bg-[#eef1f4] print:bg-white py-8 print:py-0 px-4">
@@ -51,7 +57,8 @@ export function InvoicePage() {
           </div>
           <div className="text-end">
             <h1 className="text-[22px] font-bold tracking-tight">Invoice</h1>
-            <p className="font-mono mt-1">{order.orderNumber}</p>
+            {invoiceNo && <p className="font-mono mt-1">Invoice no. {invoiceNo}</p>}
+            <p className={invoiceNo ? 'font-mono text-slate' : 'font-mono mt-1'}>{invoiceNo ? 'Order ' : ''}{order.orderNumber}</p>
             <p className="text-slate">Date: {new Date(order.createdAt).toLocaleDateString('en-PK', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
             <p className="mt-1 font-semibold">{order.isPaid ? `Paid${order.paidAt ? ` on ${new Date(order.paidAt).toLocaleDateString('en-PK')}` : ''}` : 'Payment due'}</p>
           </div>
@@ -68,7 +75,7 @@ export function InvoicePage() {
           <div>
             <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-slate mb-1">Sold by</p>
             {sellers.map(s => (
-              <p key={s.name}><span className="font-semibold">{s.name}</span>{s.email ? ` · ${s.email}` : ''}{s.phone ? ` · ${s.phone}` : ''}</p>
+              <p key={s.name}><span className="font-semibold">{s.name}</span>{s.email ? ` · ${s.email}` : ''}{s.phone ? ` · ${s.phone}` : ''}{s.address ? ` · ${s.address}` : ''}</p>
             ))}
             <p className="text-graphite mt-1">Payment: {PAYMENT_LABEL[order.paymentType] ?? order.paymentType}</p>
           </div>
@@ -77,7 +84,7 @@ export function InvoicePage() {
         <table className="w-full mt-6 border-collapse">
           <thead>
             <tr className="text-start text-[12px] uppercase tracking-[0.06em] text-slate border-b border-bone">
-              <th className="py-2 font-semibold">Item</th>
+              <th className="py-2 font-semibold text-start">Item</th>
               <th className="py-2 font-semibold text-end">Qty</th>
               <th className="py-2 font-semibold text-end">Unit price</th>
               <th className="py-2 font-semibold text-end">Amount</th>

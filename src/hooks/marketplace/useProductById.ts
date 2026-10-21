@@ -11,6 +11,7 @@ export function useProductById(id: string) {
   const [detail,  setDetail]  = useState<ProductDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState('');
+  const [notFound, setNotFound] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
 
   const loadedIdRef = useRef(id);
@@ -24,14 +25,22 @@ export function useProductById(id: string) {
     if (loadedIdRef.current !== id) { setDetail(null); loadedIdRef.current = id; }
     setLoading(true);
     setError('');
+    setNotFound(false);
     apiGetProductById(id)
-      .then(res => { if (!cancelled) setDetail(res.data); })
+      .then(res => {
+        if (cancelled) return;
+        // The API answers an unknown/hidden product with 200 { success:false, data:null }.
+        if (!res?.data?.product) { setDetail(null); setNotFound(true); return; }
+        setDetail(res.data);
+      })
       .catch((err: unknown) => {
-        if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load product.');
+        if (cancelled) return;
+        if ((err as { response?: { status?: number } })?.response?.status === 404) { setDetail(null); setNotFound(true); return; }
+        setError(err instanceof Error ? err.message : 'Failed to load product.');
       })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, [id, reloadKey]);
 
-  return { detail, loading, error, refetch };
+  return { detail, loading, error, notFound, refetch };
 }

@@ -28,10 +28,16 @@ export function ReviewFormModal({
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [saving, setSaving]     = useState(false);
   const [error, setError]       = useState('');
+  const [fieldErrs, setFieldErrs] = useState<{ rating?: string; comment?: string }>({});
   const toast = useToast();
 
   async function submit() {
-    if (rating < 1) { setError('Please select a star rating.'); return; }
+    const errs: { rating?: string; comment?: string } = {};
+    if (rating < 1) errs.rating = 'Please select a star rating.';
+    if (mode === 'create' && comment.trim().length < 10) errs.comment = 'Please write at least 10 characters.';
+    else if (mode === 'edit' && comment.trim().length > 0 && comment.trim().length < 10) errs.comment = 'Please write at least 10 characters.';
+    setFieldErrs(errs);
+    if (errs.rating || errs.comment) return;
     setError('');
     setSaving(true);
     try {
@@ -65,16 +71,19 @@ export function ReviewFormModal({
       }
     >
       <p className="text-[12px] font-semibold text-charcoal mb-2">How would you rate this product?</p>
-      <StarRating value={rating} onChange={setRating} size={30} className="mb-5" />
+      <StarRating value={rating} onChange={v => { setRating(v); setFieldErrs(f => ({ ...f, rating: undefined })); }} size={30} className={fieldErrs.rating ? 'mb-1' : 'mb-5'} />
+      {fieldErrs.rating && <p role="alert" className="text-[12px] text-error mb-4">{fieldErrs.rating}</p>}
 
       <p className="text-[12px] font-semibold text-charcoal mb-2">Your review</p>
       <textarea
         value={comment}
-        onChange={e => setComment(e.target.value)}
+        onChange={e => { setComment(e.target.value); setFieldErrs(f => ({ ...f, comment: undefined })); }}
         placeholder="What did you like or dislike? How did you use this product?"
         rows={4}
-        className="w-full border border-bone rounded-lg px-3 py-2 text-[13px] text-charcoal outline-none box-border resize-vertical mb-4 focus:border-brand-orange"
+        aria-invalid={!!fieldErrs.comment}
+        className={`w-full border rounded-lg px-3 py-2 text-[13px] text-charcoal outline-none box-border resize-vertical focus:border-brand-orange ${fieldErrs.comment ? 'border-error mb-1' : 'border-bone mb-4'}`}
       />
+      {fieldErrs.comment && <p role="alert" className="text-[12px] text-error mb-4">{fieldErrs.comment}</p>}
 
       <p className="text-[12px] font-semibold text-charcoal mb-2">Where did you use it? <span className="font-normal text-slate">(optional)</span></p>
       <div className="flex gap-2 flex-wrap mb-4">

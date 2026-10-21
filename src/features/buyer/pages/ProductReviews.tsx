@@ -482,6 +482,9 @@ export function ProductReviewsSection({ productId, storeName, canReview }: Produ
               Write a Review
             </Button>
           )}
+          {isLoggedIn && !hasOwnReview && canReview === false && (
+            <span className="text-[12px] text-slate">Only buyers can review</span>
+          )}
         </div>
       </div>
 

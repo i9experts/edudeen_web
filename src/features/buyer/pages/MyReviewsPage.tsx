@@ -128,16 +128,16 @@ export function ReviewsTab() {
 
   return (
     <div className="flex flex-col gap-5">
+    {/* Header — desktop only; mobile's AccountLayout top bar already shows "Reviews". */}
+    <div className="hidden lg:block">
+      <PageHeader
+        eyebrow="Account"
+        title="Reviews"
+        description={`${total} review${total !== 1 ? 's' : ''} written`}
+      />
+    </div>
     <PendingReviews key={refreshKey} onReviewed={() => setRefreshKey(k => k + 1)} />
     <Card padding="none">
-      {/* Header — desktop only; mobile's AccountLayout top bar already shows "Reviews". */}
-      <div className="hidden lg:block px-5 pt-5 pb-4 border-b border-bone">
-        <PageHeader
-          eyebrow="Account"
-          title="Reviews"
-          description={`${total} review${total !== 1 ? 's' : ''} written`}
-        />
-      </div>
 
       {loading ? (
         <div className="flex flex-col gap-2 p-5">

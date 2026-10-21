@@ -217,6 +217,9 @@ export function CartProvider({ storeId, children }: { storeId?: string; children
     const onLogin = async () => {
       const guestItems = getGuestCartItems();
       if (guestItems.length > 0) {
+        // The login event can fire more than once (and from several mounted providers); take the guest items
+        // and clear them BEFORE the first await so a second run can't re-add (and double) the same items.
+        clearGuestCart();
         setLoading(true);
         for (const item of guestItems) {
           try {
@@ -234,7 +237,6 @@ export function CartProvider({ storeId, children }: { storeId?: string; children
             // blocking the rest of the merge.
           }
         }
-        clearGuestCart();
       }
       fetchCart();
     };

@@ -1616,12 +1616,28 @@ export function CheckoutPage() {
                     </div>
                   </div>
 
+                  {checkout && checkout.items.length > 0 && (
+                    <ul className="list-none p-0 m-0 mb-4 rounded-[10px] border border-bone divide-y divide-bone">
+                      {checkout.items.map(item => (
+                        <li key={item.variantId} className="flex justify-between gap-3 px-4 py-2.5 text-[12.5px]">
+                          <span className="text-carbon min-w-0">
+                            {item.name}
+                            <span className="text-slate ms-1">×{item.quantity}</span>
+                          </span>
+                          <span className="font-medium text-carbon shrink-0">{formatPrice(item.totalPrice, summaryCur)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+
                   {checkout && !isDigital && <GiftOptions checkoutId={checkout._id} />}
 
-                  <div className="flex items-center gap-1 text-[11px] text-slate mb-4">
-                    <ShieldCheck size={12} className="text-success" />
-                    Your payment info is secure and encrypted
-                  </div>
+                  {selectedMethod !== 'cash_on_delivery' && (
+                    <div className="flex items-center gap-1 text-[11px] text-slate mb-4">
+                      <ShieldCheck size={12} className="text-success" />
+                      Your payment info is secure and encrypted
+                    </div>
+                  )}
 
                   {placeError && (
                     <div className="flex items-start gap-2 text-[12px] text-error bg-error-bg border border-error-border rounded-[8px] px-3 py-2 mb-4">
@@ -1662,7 +1678,7 @@ export function CheckoutPage() {
                       onClick={handlePlaceOrder}
                       className="gap-2 w-full justify-center"
                     >
-                      {placing ? 'Placing Order…' : selectedMethod === 'free' ? 'Place free order' : 'Confirm & Pay'}
+                      {placing ? 'Placing Order…' : selectedMethod === 'free' ? 'Place free order' : selectedMethod === 'cash_on_delivery' ? 'Place order' : 'Confirm & Pay'}
                     </Button>
                   )}
                 </div>
@@ -1881,12 +1897,6 @@ export function CheckoutPage() {
               <span className="text-carbon">Total</span>
               <span className="text-carbon">{formatPrice(total, summaryCur)}</span>
             </div>
-
-            {checkout && (
-              <p className="text-[11px] text-slate mt-2 text-end">
-                Checkout ID: {checkout._id.slice(-8).toUpperCase()}
-              </p>
-            )}
 
             {savingsHints.length > 0 && (
               <div className="mt-4 flex flex-col gap-2">

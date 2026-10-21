@@ -63,11 +63,12 @@ function WishlistPreviewImg({ src, name }: { src?: string; name: string }) {
 // ── Welcome hero — the storefront's own hero language (pale blue panel,
 // royal-blue eyebrow, serif greeting, navy primary + white secondary
 // button), so the account area reads as part of the same site. ──
+import { titleCaseName } from '@/utils/formatName';
+
 function WelcomeHero({ name, image, memberSince }: { name?: string; image?: string | null; memberSince: string }) {
   const navigate = useNavigate();
   const { isPremium } = usePremium();
-  const firstName = name?.split(' ')[0];
-  const displayName = firstName ? firstName.charAt(0).toUpperCase() + firstName.slice(1) : '';
+  const displayName = titleCaseName(name).split(' ')[0] ?? '';
   return (
     <div className="dash-section-enter relative overflow-hidden rounded-[18px] bg-[#eaf2f8] px-6 py-6 sm:px-8 sm:py-7 flex flex-col sm:flex-row sm:items-center gap-5 sm:gap-6">
       <div className="relative flex items-center gap-4 flex-1 min-w-0">
@@ -157,7 +158,7 @@ function MobileProfileHero({
                 <Avatar name={name ?? 'You'} size={80} />
               </div>
             )}
-            <p className="relative text-[19px] font-bold text-white mt-3 leading-tight">{name ?? 'Welcome'}</p>
+            <p className="relative text-[19px] font-bold text-white mt-3 leading-tight">{name ? titleCaseName(name) : 'Welcome'}</p>
             {email && <p className="relative text-[13px] text-white/75 mt-[2px]">{email}</p>}
             <span className="relative inline-flex mt-3 px-4 py-[6px] rounded-full bg-white/20 text-[12px] font-semibold text-white">
               Buyer Account

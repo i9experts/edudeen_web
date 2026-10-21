@@ -1,4 +1,5 @@
 import { PremiumChip, PremiumTeaser, memberPriceOf, usePremiumView } from './PremiumBits';
+import { useLocalizedProduct } from '@/hooks/useLocalizedProduct';
 import { responsiveImg, imgUrl } from '@/utils/cloudinaryImage';
 import { useState, useEffect, useRef, memo } from 'react';
 import { clsx } from 'clsx';
@@ -122,7 +123,7 @@ export function StarRating({ rating, count }: { rating: number; count?: number }
 // same visual language as FlashSaleCard's Homepage rail tile, just in a
 // grid-card shape instead of a rail-card shape. Fix bugs here once, they're
 // fixed everywhere.
-export const ProductCard = memo(function ProductCard({ product, onClick, onAddToCart, isAdding, addToCartFailed = false, isWishlisted, isWishlisting, onToggleWishlist, compact = false, layout = 'grid', highlightQuery }: {
+export const ProductCard = memo(function ProductCard({ product: rawProduct, onClick, onAddToCart, isAdding, addToCartFailed = false, isWishlisted, isWishlisting, onToggleWishlist, compact = false, layout = 'grid', highlightQuery }: {
   product:          MarketplaceProduct;
   onClick:          (id: string) => void;
   /** Active search term, when this card is rendered inside search results —
@@ -148,6 +149,7 @@ export const ProductCard = memo(function ProductCard({ product, onClick, onAddTo
    *  just reflowed, not a separate card design. */
   layout?: 'grid' | 'list';
 }) {
+  const product      = useLocalizedProduct(rawProduct);
   const isList       = layout === 'list';
   const pType        = product.productType ?? product.type ?? 'physical';
   const isPhysical   = pType === 'physical';
@@ -331,7 +333,7 @@ export const ProductCard = memo(function ProductCard({ product, onClick, onAddTo
             {typeLabel}
           </span>
           {!member && pctOff != null && pctOff > 0 && (
-            <span className="px-[6px] py-[2px] rounded-md text-[12px] font-bold bg-error text-white">
+            <span dir="ltr" translate="no" className="px-[6px] py-[2px] rounded-md text-[12px] font-bold bg-error text-white">
               -{pctOff}%
             </span>
           )}

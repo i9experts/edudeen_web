@@ -189,6 +189,7 @@ export default function ChatWidget() {
     if (!alive.current) return;
     const c = r.data.conversation;
     if (!c) { setConv(null); convRef.current = null; return; }
+    if (!c.messages.length && r.data.serverTime) sinceRef.current = r.data.serverTime; // advance even when nothing is new
     const state: ConvState = { id: c.id, shortCode: c.shortCode, status: c.status };
     setConv(state); convRef.current = state;
     if (c.messages.length) {
@@ -216,8 +217,8 @@ export default function ChatWidget() {
 
   const convLive = !!conv && conv.status !== 'closed';
   useEffect(() => { // keep polling only while a conversation is active; fast when the panel is open, slow otherwise
-    if (!convLive) return;
-    let stop = false; let timer = 0; let delay = open ? POLL_OPEN : POLL_CLOSED;
+    if (!convLive || !open) return; // only while the panel is open (it refetches on open)
+    let stop = false; let timer = 0; let delay = POLL_OPEN;
     const base = delay;
     const tick = async () => {
       if (stop) return;

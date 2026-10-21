@@ -13,6 +13,7 @@ import { getStorePagePath } from '@/utils/storefrontUrl';
 import { coverPaletteFor } from './ProductCoverFallback';
 import { ageLabel } from '@/constants/learning';
 import { classRangeLabel } from '@/constants/classLevels';
+import { useLocalizedProduct } from '@/hooks/useLocalizedProduct';
 import { TrustBadges } from './TrustBadges';
 import { CompareToggle } from './CompareToggle';
 import { PremiumChip, PremiumTeaser, memberPriceOf, usePremiumView } from './PremiumBits';
@@ -107,8 +108,9 @@ export function RatingLine({ rating, count, className }: { rating?: number; coun
 }
 
 export const ResourceCard = memo(function ResourceCard({
-  product, index = 0, onClick, isWishlisted = false, isWishlisting = false, onToggleWishlist, layout = 'grid',
+  product: rawProduct, index = 0, onClick, isWishlisted = false, isWishlisting = false, onToggleWishlist, layout = 'grid',
 }: ResourceCardProps) {
+  const product = useLocalizedProduct(rawProduct);
   const { currency: displayCurrency, convert } = useCurrencyPreference();
   const variant = (product.variants ?? []).find(v => v.isDefault) ?? product.variants?.[0];
   const variantId = variant?._id ?? '';

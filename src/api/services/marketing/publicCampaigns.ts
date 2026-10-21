@@ -1,5 +1,6 @@
 import client from '../../client';
 import { ENDPOINTS } from '../../endpoints';
+import { cachedRequest } from '../requestCache';
 
 export interface PublicCampaign {
   _id: string;
@@ -27,5 +28,6 @@ interface ApiResponse<T> { success: boolean; message?: string; data: T }
  * `storeType` (e.g. 'educational_resources') scopes seller-sponsored campaigns to only those with a
  * participating store of that type — platform-sponsored campaigns are unaffected either way. */
 export function apiGetPublicActiveCampaigns(storeType?: string) {
-  return client.get<never, ApiResponse<PublicCampaign[]>>(ENDPOINTS.MARKETING.PUBLIC_CAMPAIGNS, { params: storeType ? { storeType } : undefined });
+  return cachedRequest(`public-campaigns:${storeType ?? ''}`, 5000, () =>
+    client.get<never, ApiResponse<PublicCampaign[]>>(ENDPOINTS.MARKETING.PUBLIC_CAMPAIGNS, { params: storeType ? { storeType } : undefined }));
 }

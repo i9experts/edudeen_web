@@ -257,7 +257,7 @@ function FooterColumn({ heading, links, navigate }: { heading: string; links: Fo
   );
 }
 
-export function Footer({ showNewsletter = true }: { showNewsletter?: boolean }) {
+export function Footer({ showNewsletter = false }: { showNewsletter?: boolean }) {
   const { config } = usePublicPlatformConfig();
   const socialLinks = config?.socialLinks ?? {};
   const socials = SOCIALS.filter(s => !!socialLinks[s.key]);

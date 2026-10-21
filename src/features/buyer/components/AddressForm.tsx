@@ -74,13 +74,38 @@ export async function saveNewAddress(form: AddressPayload): Promise<Address> {
   return res.data;
 }
 
-function AddrField({ label, value, onChange, placeholder, half, required }: {
+export const PK_PROVINCES = ['Sindh', 'Punjab', 'Khyber Pakhtunkhwa', 'Balochistan', 'Islamabad Capital Territory', 'Gilgit-Baltistan', 'Azad Kashmir'] as const;
+
+/** Per-field errors (empty object = valid). Mirrors the API rules in address.service.ts. */
+export function validateAddress(form: AddressPayload): Partial<Record<keyof AddressPayload, string>> {
+  const e: Partial<Record<keyof AddressPayload, string>> = {};
+  if (!form.recipientName.trim()) e.recipientName = 'Enter the recipient name';
+  if (!/^(?:\+92|92|0)3\d{9}$/.test(form.phoneNumber.replace(/[\s-]/g, ''))) e.phoneNumber = 'Enter a valid mobile number (03XXXXXXXXX or +923XXXXXXXXX)';
+  if (form.addressLine1.trim().length < 5) e.addressLine1 = 'Address must be at least 5 characters';
+  const city = form.city.trim();
+  if (city.length < 2 || !/^[\p{L}][\p{L} ]*$/u.test(city)) e.city = 'Letters and spaces only, at least 2 characters';
+  if (!(PK_PROVINCES as readonly string[]).includes(form.state)) e.state = 'Select a province';
+  if (!/^\d{5}$/.test(form.zipCode.trim())) e.zipCode = 'Postal code must be exactly 5 digits';
+  return e;
+}
+
+function AddrField({ label, value, onChange, placeholder, half, required, error, options }: {
   label: string; value: string; onChange: (v: string) => void; placeholder?: string; half?: boolean; required?: boolean;
+  error?: string; options?: readonly string[];
 }) {
+  const cls = clsx(INPUT_CLS, error && 'border-error focus:border-error focus:ring-error/10');
   return (
     <div className={half ? '' : 'sm:col-span-2'}>
       <label className={LABEL_CLS}>{label}{required && <span className="text-brand-orange"> *</span>}</label>
-      <input value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} className={INPUT_CLS} />
+      {options ? (
+        <select value={value} onChange={e => onChange(e.target.value)} className={cls} aria-invalid={!!error}>
+          <option value="">Select province</option>
+          {options.map(o => <option key={o} value={o}>{o}</option>)}
+        </select>
+      ) : (
+        <input value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} className={cls} aria-invalid={!!error} />
+      )}
+      {error && <p role="alert" className="text-[12px] text-error mt-1">{error}</p>}
     </div>
   );
 }
@@ -92,13 +117,16 @@ export function AddressForm({ initial, onSave, onCancel, saving, submitLabel = '
   note?: string;
 }) {
   const [form, setForm] = useState<AddressPayload>(initial);
-  const [error, setError] = useState('');
-  const set = (k: keyof AddressPayload, v: string | boolean | number | null) => setForm(p => ({ ...p, [k]: v }));
+  const [errors, setErrors] = useState<Partial<Record<keyof AddressPayload, string>>>({});
+  const set = (k: keyof AddressPayload, v: string | boolean | number | null) => {
+    setForm(p => ({ ...p, [k]: v }));
+    setErrors(p => (p[k] ? { ...p, [k]: undefined } : p));
+  };
 
   const submit = () => {
-    const missing = missingAddressFields(form);
-    if (missing) { setError(missing); return; }
-    setError('');
+    const found = validateAddress(form);
+    setErrors(found);
+    if (Object.keys(found).length) return;
     onSave(form);
   };
 
@@ -122,13 +150,13 @@ export function AddressForm({ initial, onSave, onCancel, saving, submitLabel = '
             ))}
           </div>
         </div>
-        <AddrField label="Recipient Name"            value={form.recipientName}      onChange={v => set('recipientName', v)}  placeholder="Full name"        half required />
-        <AddrField label="Phone Number"              value={form.phoneNumber}        onChange={v => set('phoneNumber', v)}    placeholder="e.g. 03001234567" half required />
-        <AddrField label="Address Line 1"            value={form.addressLine1}       onChange={v => set('addressLine1', v)}   placeholder="House no, Street" required />
+        <AddrField label="Recipient Name"            value={form.recipientName}      onChange={v => set('recipientName', v)}  placeholder="Full name"        half required error={errors.recipientName} />
+        <AddrField label="Phone Number"              value={form.phoneNumber}        onChange={v => set('phoneNumber', v)}    placeholder="e.g. 03001234567" half required error={errors.phoneNumber} />
+        <AddrField label="Address Line 1"            value={form.addressLine1}       onChange={v => set('addressLine1', v)}   placeholder="House no, Street" required error={errors.addressLine1} />
         <AddrField label="Address Line 2 (Optional)" value={form.addressLine2 ?? ''} onChange={v => set('addressLine2', v)}   placeholder="Landmark, Area"   />
-        <AddrField label="City"                      value={form.city}               onChange={v => set('city', v)}           placeholder="e.g. Karachi"     half required />
-        <AddrField label="State"                     value={form.state}              onChange={v => set('state', v)}          placeholder="e.g. Sindh"       half required />
-        <AddrField label="Zip Code"                  value={form.zipCode}            onChange={v => set('zipCode', v)}        placeholder="e.g. 75300"       half required />
+        <AddrField label="City"                      value={form.city}               onChange={v => set('city', v)}           placeholder="e.g. Karachi"     half required error={errors.city} />
+        <AddrField label="State / Province"          value={form.state}              onChange={v => set('state', v)}          half required error={errors.state} options={PK_PROVINCES} />
+        <AddrField label="Zip Code"                  value={form.zipCode}            onChange={v => set('zipCode', v)}        placeholder="e.g. 75300"       half required error={errors.zipCode} />
         <div className="sm:col-span-2">
           <Suspense fallback={<div className="h-[220px] rounded-xl bg-cream animate-pulse" aria-hidden />}>
             <LocationPickerMap
@@ -150,7 +178,6 @@ export function AddressForm({ initial, onSave, onCancel, saving, submitLabel = '
           </span>
         </label>
       </div>
-      {error && <p role="alert" className="text-[12px] text-error mt-3">{error}</p>}
       <div className="flex gap-[10px] mt-[18px]">
         <button
           type="button" onClick={submit} disabled={saving}

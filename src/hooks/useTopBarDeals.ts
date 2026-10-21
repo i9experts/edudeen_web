@@ -31,11 +31,16 @@ let inflight: Promise<TopBarDeals> | null = null;
 function load(): Promise<TopBarDeals> {
   if (cache && Date.now() - cache.at < TTL_MS) return Promise.resolve(cache.data);
   if (inflight) return inflight;
-  inflight = Promise.all([
-    apiGetPublicActiveCampaigns().then(r => r.data ?? []).catch(() => [] as PublicCampaign[]),
-    // Three pages of 50: the ranking looks at a big slice of the catalogue, not just the first page.
-    Promise.all([1, 2, 3].map(pg => apiGetAllProducts(pg, 50).then(r => r.data?.products ?? []).catch(() => [] as MarketplaceProduct[]))).then(p => p.flat()),
-  ]).then(([campaigns, products]) => {
+  const fetchProducts = (campaignId?: string) =>
+    apiGetAllProducts(1, 50, undefined, undefined, undefined, undefined, campaignId, undefined, undefined, undefined, 'popularity')
+      .then(r => r.data?.products ?? []).catch(() => [] as MarketplaceProduct[]);
+  inflight = apiGetPublicActiveCampaigns().then(r => r.data ?? []).catch(() => [] as PublicCampaign[]).then(async campaigns => {
+    // No full-catalogue prefetch: one page of popular products + each live campaign's own products (bounded).
+    const lists = await Promise.all([fetchProducts(), ...campaigns.slice(0, 3).map(c => fetchProducts(c._id))]);
+    const seen = new Set<string>();
+    const products = lists.flat().filter(p => !seen.has(p._id) && !!seen.add(p._id));
+    return [campaigns, products] as [PublicCampaign[], MarketplaceProduct[]];
+  }).then(([campaigns, products]) => {
     const now = Date.now();
     const allDeals = products
       .map(p => ({ product: p, pct: productSalePct(p) }))

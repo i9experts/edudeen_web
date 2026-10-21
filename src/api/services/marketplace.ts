@@ -1,6 +1,7 @@
 import client from '../client';
 import { ENDPOINTS } from '../endpoints';
 import type { VariantOption } from './product';
+import { cachedRequest } from './requestCache';
 
 export type { VariantOption };
 
@@ -300,9 +301,9 @@ export function apiGenerateWorksheetTrial(payload: WorksheetTrialPayload) {
 }
 
 export function apiGetProductById(id: string) {
-  return client.get<never, ProductByIdResponse>(
+  return cachedRequest(`product:${id}`, 3000, () => client.get<never, ProductByIdResponse>(
     ENDPOINTS.MARKETPLACE.PRODUCT_BY_ID(id),
-  );
+  ));
 }
 
 /** GET /api/products/preview/:id — watermarked/trimmed preview of a digital product, never the original file. */

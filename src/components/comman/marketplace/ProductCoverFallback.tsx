@@ -66,7 +66,7 @@ export function ProductCoverFallback({ name, size = 'sm', className, categoryNam
         <span className={clsx('min-h-0 flex items-center justify-center', tiny ? 'w-full h-full' : 'flex-1 w-full py-[6%]')}>
           <CategoryArt art={art} className={clsx('h-full w-auto aspect-square max-w-full rounded-[18%]', size === 'lg' && 'max-h-[160px]')} />
         </span>
-        {!tiny && <span className={clsx('font-serif break-words shrink-0', TEXT[size], size !== 'lg' && '!line-clamp-2')}>{name}</span>}
+        {!tiny && <span className={clsx('font-serif break-words shrink-0 w-full overflow-hidden no-underline [text-decoration:none] px-[2px]', TEXT[size], size !== 'lg' && '!line-clamp-2 !leading-[1.25] pb-[3px]')}>{name}</span>}
         {size === 'lg' && <span className="text-[12px] tracking-[1px] uppercase mt-2 mb-3 shrink-0">Learn with purpose</span>}
       </div>
     </div>

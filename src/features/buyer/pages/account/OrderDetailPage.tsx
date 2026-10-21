@@ -9,6 +9,7 @@ import { apiStartConversation } from '@/api/services/messaging';
 import { apiAddToCart } from '@/api/services/cart';
 import { useToast } from '@/contexts/ToastContext';
 import { ReasonModal } from '../MyOrdersPage';
+import { CANCEL_PRESETS } from '../../utils/cancelReasons';
 import { getStorePagePath } from '@/utils/storefrontUrl';
 import { money, discountLines } from './orderFormat';
 import { LICENSE_LABEL } from '@/constants/learning';
@@ -103,7 +104,7 @@ export function OrderDetailPage() {
         <Link to="/account/orders" className="inline-flex items-center gap-1 text-[13px] text-slate hover:text-brand-orange no-underline"><ArrowLeft size={14} /> Orders</Link>
         <h1 className="text-[20px] font-bold text-carbon font-mono">{order.orderNumber}</h1>
         <StatusBadge status={order.orderStatus} size="sm" />
-        <StatusBadge status={order.paymentStatus} size="sm" />
+        {order.orderStatus !== 'cancelled' && <StatusBadge status={order.paymentStatus} size="sm" />}
         <Link to={`/account/orders/${order._id}/invoice`} target="_blank" className="ms-auto inline-flex items-center gap-1.5 rounded-lg border border-bone bg-white px-3 py-[7px] text-[12.5px] font-semibold text-carbon no-underline hover:border-brand-orange">
           <FileText size={13} /> Invoice
         </Link>
@@ -200,7 +201,10 @@ export function OrderDetailPage() {
       {cancelling && (
         <ReasonModal
           title="Cancel Order"
-          confirmLabel="Cancel Order"
+          confirmLabel="Cancel order"
+          dismissLabel="Keep order"
+          destructive
+          presets={CANCEL_PRESETS}
           onClose={() => setCancelling(false)}
           onSubmit={async reason => {
             await apiCancelOrder(order._id, { reason });

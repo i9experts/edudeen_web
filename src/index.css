@@ -684,6 +684,11 @@
 .lang-ur [class*="leading-"]:not(.leading-none) { line-height: 1.95; }
 .lang-ur h1, .lang-ur h2, .lang-ur h3 { line-height: 2.05; }
 .lang-ur .num, .lang-ur [class*="text-price"] { line-height: 1.5; }
+/* Tabs, chips and pills: Nastaliq ascenders/descenders were clipped by their tight boxes. */
+.lang-ur [role="tab"], .lang-ur button, .lang-ur a.rounded-full, .lang-ur span.rounded-full, .lang-ur [class*="chip"] { line-height: 1.9; overflow: visible; }
+.lang-ur [role="tab"], .lang-ur [class*="chip"], .lang-ur span.rounded-full:not(.size-2):not(.size-3) { padding-block: 0.2em; }
+/* Numeric badges (-15%, counts) keep Latin line-height and left-to-right order. */
+.lang-ur [dir="ltr"][class*="rounded-full"] { line-height: 1.5; }
 /* Arrows and chevrons point the reading direction. */
 [dir='rtl'] .lucide-arrow-right,
 [dir='rtl'] .lucide-arrow-left,

@@ -6,6 +6,7 @@ import {
   RotateCcw, Ban, Undo2, Star,
 } from 'lucide-react';
 import { clsx } from 'clsx';
+import { CANCEL_PRESETS } from '../utils/cancelReasons';
 import { Card, EmptyState, Modal, Textarea, Button, SkeletonBox, PageHeader } from '@/components/comman/ui';
 import {
   apiGetMyOrders, apiCancelOrder, apiRequestReturn,
@@ -65,23 +66,31 @@ function StatusBadge({ status }: { status: OrderStatus }) {
 // Cancel / Return reason modal
 // ─────────────────────────────────────────────────────────────────────────────
 export function ReasonModal({
-  title, confirmLabel, onClose, onSubmit,
+  title, confirmLabel, onClose, onSubmit, presets, dismissLabel = 'Cancel', destructive = false,
 }: {
   title: string;
   confirmLabel: string;
   onClose: () => void;
   onSubmit: (reason: string) => Promise<void>;
+  /** Preset reasons shown as chips; "Other" requires the note. */
+  presets?: string[];
+  dismissLabel?: string;
+  destructive?: boolean;
 }) {
   const [reason, setReason] = useState('');
+  const [preset, setPreset] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError]   = useState('');
 
   const submit = async () => {
-    if (!reason.trim()) { setError('Please provide a reason.'); return; }
+    const note = reason.trim();
+    const full = presets && preset && preset !== 'Other' ? (note ? `${preset} — ${note}` : preset) : note;
+    if (!full) { setError(presets ? 'Please choose a reason.' : 'Please provide a reason.'); return; }
+    if (presets && preset === 'Other' && !note) { setError('Please add a short note.'); return; }
     setError('');
     setSaving(true);
     try {
-      await onSubmit(reason.trim());
+      await onSubmit(full);
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong.');
@@ -96,14 +105,25 @@ export function ReasonModal({
       onClose={onClose}
       footer={
         <>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={submit} loading={saving}>{confirmLabel}</Button>
+          <Button variant="outline" onClick={onClose}>{dismissLabel}</Button>
+          <Button variant={destructive ? 'danger' : undefined} onClick={submit} loading={saving}>{confirmLabel}</Button>
         </>
       }
     >
+      {presets && (
+        <div className="flex flex-wrap gap-2 mb-3" role="radiogroup" aria-label="Reason">
+          {presets.map(p => (
+            <button
+              key={p} type="button" role="radio" aria-checked={preset === p}
+              onClick={() => { setPreset(p); setError(''); }}
+              className={`text-[12.5px] font-semibold rounded-full px-3 py-[6px] border cursor-pointer transition-colors ${preset === p ? 'bg-brand-pale-orange text-brand-deep-orange border-brand-orange/40' : 'bg-white text-slate border-bone hover:bg-cream'}`}
+            >{p}</button>
+          ))}
+        </div>
+      )}
       <Textarea
-        label="Reason"
-        rows={4}
+        label={presets ? 'Note (optional)' : 'Reason'}
+        rows={presets ? 3 : 4}
         placeholder="Tell us why…"
         value={reason}
         onChange={e => setReason(e.target.value)}
@@ -417,7 +437,10 @@ function OrderCard({ order, onChanged }: { order: OrderSummary; onChanged: () =>
       {modal === 'cancel' && (
         <ReasonModal
           title="Cancel Order"
-          confirmLabel="Cancel Order"
+          confirmLabel="Cancel order"
+          dismissLabel="Keep order"
+          destructive
+          presets={CANCEL_PRESETS}
           onClose={() => setModal(null)}
           onSubmit={async reason => {
             await apiCancelOrder(order.orderId, { reason });

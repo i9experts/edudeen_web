@@ -47,6 +47,7 @@ export function CartPage() {
   const [clearing,   setClearing]   = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [pickStore, setPickStore] = useState(false);
 
   // "You might also like" — a real, unfiltered catalog pool (same source
   // Marketplace.tsx's/Homepage's own rails draw from), minus whatever's
@@ -355,7 +356,7 @@ export function CartPage() {
 
                       {/* Qty controls — 40x40px min hit area for touch */}
                       <div className="flex items-center gap-[6px] flex-wrap">
-                        <button
+                        {item.type !== 'digital' && <button
                           onClick={() => handleUpdateQty(item.productId, key, 'decrease')}
                           disabled={item.quantity <= 1 || isUpdating}
                           aria-label={`Decrease quantity of ${item.name}`}
@@ -367,15 +368,15 @@ export function CartPage() {
                           )}
                         >
                           <Minus size={14} />
-                        </button>
+                        </button>}
 
                         <span className="min-w-[36px] text-center text-[14px] font-bold text-carbon">
                           {isUpdating
                             ? <Loader2 size={13} className="animate-spin mx-auto block" />
-                            : item.quantity}
+                            : item.type === 'digital' ? 'Qty 1' : item.quantity}
                         </span>
 
-                        <button
+                        {item.type !== 'digital' && <button
                           onClick={() => handleUpdateQty(item.productId, key, 'increase')}
                           disabled={isUpdating}
                           aria-label={`Increase quantity of ${item.name}`}
@@ -385,7 +386,7 @@ export function CartPage() {
                           )}
                         >
                           <Plus size={14} />
-                        </button>
+                        </button>}
 
                         <Button
                           variant="danger" size="xs"
@@ -494,7 +495,7 @@ export function CartPage() {
               <div className="flex flex-col gap-2">
                 {typeKnown && hasPhysical && hasDigital && (
                   <p className="text-[12px] text-slate text-center -mt-1 mb-1">
-                    {physicalCount} physical · {digitalCount} digital — delivered together
+                    {physicalCount} physical item{physicalCount === 1 ? '' : 's'} shipped to you · {digitalCount} digital item{digitalCount === 1 ? '' : 's'} available instantly in My Library
                   </p>
                 )}
                 {loading ? (
@@ -508,12 +509,13 @@ export function CartPage() {
                       <Button
                         key={sc.storeId}
                         variant="primary" fullWidth
-                        className="justify-between! px-5! py-[11px]! rounded-xl!"
+                        className="justify-between! px-5! py-[11px]! rounded-xl! h-auto! text-start"
+                        title={`Checkout · ${sc.store.name}`}
                         onClick={() => navigate(`/checkout?store=${encodeURIComponent(sc.storeId)}`)}
                       >
                         <span className="flex items-center gap-2 min-w-0">
                           <Package size={15} className="shrink-0" />
-                          <span className="truncate">Checkout {sc.store.name}</span>
+                          <span className="line-clamp-2 break-words leading-tight">Checkout · {sc.store.name}</span>
                         </span>
                         <span className="flex items-center gap-1 opacity-80 text-[12px] shrink-0">
                           {sc.totalItems}
@@ -591,10 +593,32 @@ export function CartPage() {
           </div>
           <Button
             variant="primary" size="md" className="justify-center flex-1 max-w-[220px]"
-            onClick={() => navigate('/checkout')}
+            onClick={() => (isMultiStore ? setPickStore(true) : navigate('/checkout'))}
           >
             Checkout <ChevronRight size={14} />
           </Button>
+        </div>
+      )}
+
+      {/* Multi-store carts: the sticky Checkout opens a store picker (each store checks out separately). */}
+      {pickStore && isMultiStore && (
+        <div className="fixed inset-0 z-[80] lg:hidden" role="dialog" aria-modal="true" aria-label="Choose a store to check out">
+          <button type="button" aria-label="Close" className="absolute inset-0 bg-black/40 border-0 cursor-default" onClick={() => setPickStore(false)} />
+          <div className="absolute inset-x-0 bottom-0 bg-white rounded-t-2xl p-4 pb-[calc(16px+env(safe-area-inset-bottom,0px))] max-h-[80dvh] overflow-y-auto">
+            <p className="text-[15px] font-bold text-carbon mb-1">Choose a store to check out</p>
+            <p className="text-[12px] text-slate mb-3">Each store checks out separately.</p>
+            <div className="flex flex-col gap-2">
+              {storeCarts.map(sc => (
+                <Button
+                  key={sc.storeId} variant="primary" fullWidth className="justify-between! h-auto! py-[11px]! text-start"
+                  onClick={() => { setPickStore(false); navigate(`/checkout?store=${encodeURIComponent(sc.storeId)}`); }}
+                >
+                  <span className="line-clamp-2 break-words leading-tight">{sc.store.name}</span>
+                  <span className="text-[12px] opacity-80 shrink-0">{sc.totalItems} item{sc.totalItems === 1 ? '' : 's'}</span>
+                </Button>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 

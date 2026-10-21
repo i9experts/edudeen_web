@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
 import { isPlainLeftClick } from '@/utils/productLink';
 import { clsx } from 'clsx';
+import { titleCaseName } from '@/utils/formatName';
 import {
   User, LayoutDashboard, LogOut, ShoppingBag,
   ChevronRight, Shield, Store, Package, Wallet, CreditCard, Crown, type LucideIcon,
@@ -283,7 +284,7 @@ function ProfileDropdown({
       <div className="relative bg-white border border-bone rounded-[16px] overflow-y-auto overscroll-contain" style={maxHeight ? { maxHeight } : undefined}>
       <DropdownHeader
         profileImage={profile?.profileImage}
-        name={profile?.name}
+        name={profile?.name ? titleCaseName(profile.name) : profile?.name}
         email={profile?.email}
         initials={initials}
         hasBuyer={hasBuyer}

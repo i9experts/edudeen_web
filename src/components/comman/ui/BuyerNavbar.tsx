@@ -1125,6 +1125,7 @@ export function BuyerNavbar({ variant = 'full', contextLabel, search, accentColo
   // 320-375px viewport has) — so on mobile the search collapses to a single icon button
   // that expands to a full-width row in its place, same pattern as Amazon/Shopify mobile.
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const isHome = useLocation().pathname === '/';
 
   // The bottom-nav "Shop"/search tab links here with `?openSearch=1` so
   // tapping it feels like a native app's dedicated search screen — landing
@@ -1152,7 +1153,9 @@ export function BuyerNavbar({ variant = 'full', contextLabel, search, accentColo
     <nav aria-label="Main" style={scrolled && topBarH ? { top: -topBarH } : undefined} className={clsx(
       'sticky top-0 z-50 backdrop-blur-md transition-[background-color,border-color,transform] duration-200 border-b',
       scrolled ? 'bg-white border-bone' : 'bg-white/90 border-transparent',
-      hidden ? '-translate-y-full md:translate-y-0' : 'translate-y-0',
+      // The home header wraps this nav in its own sticky block with the mega-menu; sliding only the nav away left the
+      // wrapper without a logo on phones, so the home route keeps the logo row pinned.
+      hidden && !isHome ? '-translate-y-full md:translate-y-0' : 'translate-y-0',
     )}>
       {variant === 'full' && <div ref={topBarRef}><PlatformTopBar /></div>}
       {/* Fixed height — shrinking it on scroll shifted the page under the

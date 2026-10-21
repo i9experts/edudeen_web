@@ -698,10 +698,16 @@ function HomeLanding() {
         <PickedForChildRail renderCard={renderResourceCard} />
 
         {/* ── Featured by Edudeen (admin-featured listings) ── */}
-        {unique.featured.length > 0 && (
+        {unique.featured.length >= 2 && (
           <section className="mb-12">
             <SectionHead eyebrow="Hand-picked by our team" title="Featured by Edudeen" />
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-[14px] gap-y-[25px] md:gap-x-[22px] md:gap-y-[28px]">
+            {/* fewer than 4 items: one row sized to the count, no empty grid cells */}
+            <div className={clsx(
+              'grid grid-cols-2 gap-x-[14px] gap-y-[25px] md:gap-x-[22px] md:gap-y-[28px]',
+              unique.featured.length === 2 && 'md:grid-cols-2 max-w-[560px]',
+              unique.featured.length === 3 && 'md:grid-cols-3 max-w-[840px]',
+              unique.featured.length > 3 && 'md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5',
+            )}>
               {unique.featured.map(renderResourceCard)}
             </div>
           </section>
@@ -825,7 +831,7 @@ function HomeLanding() {
 
       </main>
 
-      <Footer showNewsletter={false} />
+      <Footer />
     </div>
   );
 }

@@ -68,7 +68,7 @@ export function ToastContainer() {
   if (toasts.length === 0) return null;
 
   return (
-    <div className="fixed z-[9999] flex flex-col gap-3 items-center pointer-events-none bottom-[calc(88px+env(safe-area-inset-bottom,0px))] left-1/2 -translate-x-1/2 md:bottom-6 md:left-6 md:translate-x-0 md:items-start">
+    <div className="fixed z-[10000] flex flex-col gap-3 items-center pointer-events-none bottom-[calc(88px+env(safe-area-inset-bottom,0px))] left-1/2 -translate-x-1/2 md:bottom-6 md:left-6 md:translate-x-0 md:items-start">
       {toasts.map(t => {
         const style = resolveStyle(t.variant, t.message);
         const Icon = style.icon;

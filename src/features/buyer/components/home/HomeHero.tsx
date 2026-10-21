@@ -79,7 +79,7 @@ export function HomeHero({ eff, onPrimary, onSecondary }: { eff: Eff; onPrimary:
               // The hero picture is the first thing painted: load it eagerly, not lazily.
               fetchPriority="high"
               decoding="async"
-              className="absolute inset-0 w-full h-full object-cover object-[50%_35%]"
+              className="absolute inset-0 w-full h-full object-contain object-center" /* contain: images with baked-in text must never be cropped */
             />
           </picture>
         ) : <BrandArt />}

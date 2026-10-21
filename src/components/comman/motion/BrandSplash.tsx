@@ -3,6 +3,7 @@ import { m as motion, AnimatePresence } from 'motion/react';
 import { EdudeenLogo } from '@/components/comman/ui/EdudeenLogo';
 
 const FLAG = 'edudeen:splash-shown';
+let bootSplashDone = false; // module-level: survives layout remounts for the lifetime of the page
 const EASE_OUT: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
 // A minimal brand splash — just the Edudeen mark, once, centered. No staged
@@ -25,13 +26,15 @@ export function BrandSplash() {
   const [visible, setVisible] = useState(() => {
     if (typeof window === 'undefined') return false;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return false;
-    if (import.meta.env.DEV) return true;
+    // First app boot only: never on in-app navigations (layout swaps remount this), in dev too.
+    if (bootSplashDone) return false;
+    bootSplashDone = true;
     try { return sessionStorage.getItem(FLAG) !== '1'; } catch { return false; }
   });
 
   useEffect(() => {
     if (!visible) return;
-    if (!import.meta.env.DEV) { try { sessionStorage.setItem(FLAG, '1'); } catch { /* storage blocked */ } }
+    try { sessionStorage.setItem(FLAG, '1'); } catch { /* storage blocked */ }
     const t = setTimeout(() => setVisible(false), ENTER_MS + HOLD_MS);
     return () => clearTimeout(t);
   }, [visible]);

@@ -126,7 +126,7 @@ export function FlashSaleCard({ product, onClick, onAddToCart, isAdding, addToCa
         {/* Category badge — compact, opaque (no blur/glass) */}
         <span className={clsx(
           'absolute rounded-full font-bold tracking-[0.02em] border bg-white',
-          compact ? 'top-[5px] start-[5px] px-[5px] py-[1px] text-[12px]' : 'top-[7px] start-[7px] px-[6px] py-[1.5px] text-[12px]',
+          compact ? 'bottom-[6px] start-[5px] px-[5px] py-[1px] text-[12px]' : 'bottom-2 start-[7px] px-[6px] py-[1.5px] text-[12px]',
           isDigital ? 'text-[#7c3aed] border-[#ddd6fe]' : 'text-[#3b6720] border-[#c7e0b5]',
         )}>
           {typeLabel}
@@ -134,7 +134,7 @@ export function FlashSaleCard({ product, onClick, onAddToCart, isAdding, addToCa
 
         {/* Discount — premium sale chip */}
         {pctOff != null && pctOff > 0 && (
-          <span className={clsx(
+          <span dir="ltr" translate="no" className={clsx(
             'absolute rounded-full font-bold bg-error text-white',
             compact ? 'top-[5px] end-[5px] px-[6px] py-[2px] text-[12px]' : 'top-[7px] end-[7px] px-[7px] py-[2.5px] text-[12px]',
           )}>

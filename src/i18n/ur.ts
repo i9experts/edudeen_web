@@ -311,7 +311,7 @@ export const UR: Record<string, string> = {
   'Special offers': 'خصوصی آفرز',
   'On sale': 'سیل میں',
   'Item type': 'چیز کی قسم',
-  'Physical': 'طبعی (ڈاک سے)',
+  'Physical': 'پرنٹ شدہ',
   'Digital': 'ڈیجیٹل',
   'Educational': 'تعلیمی',
   'Price (Rs)': 'قیمت (روپے)',
@@ -2020,6 +2020,10 @@ export const UR_PATTERNS: [RegExp, (m: RegExpMatchArray) => string][] = [
   [/^Ends in (\d+)d (\d+)h (\d{2})m$/, m => `ختم ہونے میں ${m[1]} دن ${m[2]} گھنٹے ${m[3]} منٹ`],
   [/^(\d+)d (\d+)h (\d{2})m$/, m => `${m[1]} دن ${m[2]} گھنٹے ${m[3]} منٹ`],
   [/^UP TO (\d+)% OFF$/i, m => `${m[1]}% تک رعایت`],
+  // Sale banner sub-line ("Sponsored by Edudeen · All 12 stores participating") and fixed-amount headline.
+  [/^(?=.)(?:(Sponsored by Edudeen)(?: · )?)?(?:(All )?(\d+) stores participating)?$/, m => [m[1] ? 'ایڈودین کی جانب سے' : '', m[3] ? `${m[2] ? 'تمام ' : ''}${m[3]} اسٹورز شریک ہیں` : ''].filter(Boolean).join(' · ')],
+  [/^(Rs [\d,]+|\$[\d,.]+) OFF$/, m => `${m[1]} رعایت`],
+  [/^SPECIAL DEALS$/i, () => 'خصوصی ڈیلز'],
   [/^Under \$([\d,.]+)$/, m => `\$${m[1]} سے کم`],
   [/^\$([\d,.]+) to \$([\d,.]+)$/, m => `\$${m[1]} سے \$${m[2]}`],
   [/^Over \$([\d,.]+)$/, m => `\$${m[1]} سے زیادہ`],
@@ -2029,7 +2033,7 @@ export const UR_PATTERNS: [RegExp, (m: RegExpMatchArray) => string][] = [
   [/^From (Rs [\d,]+|\$[\d,.]+)$/, m => `${m[1]} سے شروع`],
   // Class ranges on the product page ("Class 2-4", optionally followed by the ages).
   [/^Class (\d{1,2})-(\d{1,2})( · (.+))?$/, m => `جماعت ${m[1]} سے ${m[2]}${m[4] ? ` · ${urOr(m[4])}` : ''}`],
-  [/^(Nursery|Prep|KG|O Level|A Level|University) - (Nursery|Prep|KG|O Level|A Level|University)$/, m => `${urOr(m[1])} سے ${urOr(m[2])}`],
+  [/^(Nursery|Prep|KG|Class \d{1,2}|O Level|A Level|University) [-–] (Nursery|Prep|KG|Class \d{1,2}|O Level|A Level|University)$/, m => `${urOr(m[1])} سے ${urOr(m[2])}`],
   // Order next-step sentence + delivery estimate (orderProgress.tsx).
   [/^(.+\.) Estimated delivery: (.+) from the day you placed the order\.$/, m => `${urOr(m[1])} متوقع ڈیلیوری: آرڈر دینے کے دن سے ${m[2]}۔`],
   [/^Estimated delivery: (.+)$/, m => `متوقع ڈیلیوری: ${m[1]}`],
@@ -2095,6 +2099,7 @@ export const UR_PATTERNS: [RegExp, (m: RegExpMatchArray) => string][] = [
   [/^Nothing for (.+) here yet — check back soon, teachers add new resources every week\.$/, () => 'یہاں ابھی کچھ نہیں — جلد دوبارہ دیکھیں، اساتذہ ہر ہفتے نئے وسائل شامل کرتے ہیں۔'],
   // Edudeen Premium (buyer)
   [/^Premium members save (\d+)%$/, m => `پریمیم ممبرز ${m[1]}% بچت کرتے ہیں`],
+  [/^Get Premium to save ([\d.]+)%$/, m => `${m[1]}% بچت کے لیے پریمیم لیں`],
   [/^Premium members save up to ([\d.]+)%$/, m => `پریمیم ممبرز ${m[1]}% تک بچت کرتے ہیں`],
   [/^Premium price: ([\d.]+)% off$/, m => `پریمیم قیمت: ${m[1]}% رعایت`],
   [/^([\d.]+)% from the seller \+ ([\d.]+)% from Edudeen$/, m => `${m[1]}% سیلر کی طرف سے + ${m[2]}% ایڈودین کی طرف سے`],

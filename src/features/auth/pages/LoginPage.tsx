@@ -194,6 +194,8 @@ export function LoginPage() {
         {showChooser && !onPasswordStep ? 'Choose an account to continue' : 'Enter your details to continue'}
       </p>
 
+      {/* Reserve the space of the taller (email + password) state so the page doesn't jump when the password field appears. */}
+      <div className="lg:min-h-[480px]">
       {showChooser ? (
         onPasswordStep ? (
           <>
@@ -373,6 +375,7 @@ export function LoginPage() {
           )}
         </motion.div>
       )}
+      </div>
 
       {/* Covers the "account doesn't exist" case without a real
          pre-check — a failed sign-in still lands right next to this. */}

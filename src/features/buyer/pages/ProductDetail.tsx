@@ -31,6 +31,7 @@ import { ageLabel, CURRICULUM_LABEL } from '@/constants/learning';
 import { classRangeLabel } from '@/constants/classLevels';
 import { EducatorCard, hasEducatorProfile } from '@/components/comman/marketplace/EducatorCard';
 import { Button } from '@/components/comman/ui/Button';
+import { NotFoundPage } from '@/features/buyer/pages/NotFoundPage';
 import { Badge } from '@/components/comman/ui/Badge';
 import { Card } from '@/components/comman/ui/Card';
 import { SkeletonBox } from '@/components/comman/ui/SkeletonBox';
@@ -248,6 +249,7 @@ function VariantSelector({ variants, selected, onSelect }: {
 // ── Quantity stepper ────────────────────────────────────────────────────────────
 function QuantityStepper({ qty, max, onChange }: { qty: number; max: number; onChange: (n: number) => void }) {
   return (
+    <div className="flex flex-col items-end gap-1">
     <div className="flex items-center border border-bone rounded-[10px] overflow-hidden w-fit">
       <button
         onClick={() => onChange(Math.max(1, qty - 1))}
@@ -266,6 +268,8 @@ function QuantityStepper({ qty, max, onChange }: { qty: number; max: number; onC
       >
         <Plus size={13} />
       </button>
+    </div>
+    {qty >= max && max < 99 && <span role="status" className="text-[12px] text-amber-600">Only {max} available</span>}
     </div>
   );
 }
@@ -326,7 +330,7 @@ function RelatedCard({ id, name, image, price: nativePrice, compareAtPrice: nati
         {/* Badges */}
         <div className="absolute top-[6px] start-[6px] flex flex-col gap-1 items-start">
           {member == null && pctOff != null && pctOff > 0 && (
-            <span className="text-[12px] font-bold text-white bg-error px-[6px] py-[2px] rounded-md">-{pctOff}%</span>
+            <span dir="ltr" translate="no" className="text-[12px] font-bold text-white bg-error px-[6px] py-[2px] rounded-md">-{pctOff}%</span>
           )}
           {isBestseller && (
             <span className="flex items-center gap-[3px] text-[12px] font-bold text-white bg-brand-deep-orange px-[6px] py-[2px] rounded-md"><Flame size={9} /> Bestseller</span>
@@ -394,7 +398,7 @@ export function ProductDetail() {
   const { slug = '' } = useParams<{ slug: string }>();
   const swipeHandlers = useEdgeSwipeBack(() => navigate(-1));
 
-  const { detail, loading, error, refetch } = useProductById(slug);
+  const { detail, loading, error, notFound, refetch } = useProductById(slug);
   const { addToCart } = useCartContext();
   // Own loading state per button: Add to Cart and Buy Now never spin together.
   const [pendingAction, setPendingAction] = useState<'cart' | 'buy' | null>(null);
@@ -666,8 +670,11 @@ export function ProductDetail() {
       return;
     }
     // Add to Cart sends the selected quantity (the API merges it into an existing line).
+    // Within 3 s of adding, the same button reads "Added ✓ · View cart" and opens the cart.
+    if (addedFeedback) { navigate('/cart'); return; }
     await addToCart(product._id, activeVariant._id, isPhysical ? 'physical' : 'digital', qty);
-    setAddedFeedback(true); setTimeout(() => setAddedFeedback(false), 2000);
+    toast.success('Added to cart');
+    setAddedFeedback(true); setTimeout(() => setAddedFeedback(false), 3000);
     } finally { setPendingAction(null); }
   }
 
@@ -716,6 +723,8 @@ export function ProductDetail() {
     ...(activeVariant?.options ?? []).map(o => ({ label: o.name, value: o.value })),
     ...(activeVariant?.shippingWeight ? [{ label: 'Weight', value: activeVariant.shippingWeight }] : []),
   ] : [];
+
+  if (notFound) return <NotFoundPage />;
 
   return (
     <div className="min-h-screen bg-cream" {...swipeHandlers}>
@@ -938,7 +947,7 @@ export function ProductDetail() {
                         disabled={stock <= 0 || !!pendingAction} loading={pendingAction === 'cart'}
                         onClick={() => handleAddToCart(false)}
                       >
-                        {stock <= 0 ? t('Out of Stock') : addedFeedback ? t('✓ Added to Cart') : <><ShoppingCart size={14} /> {t('Add to Cart')}</>}
+                        {stock <= 0 ? t('Out of Stock') : addedFeedback ? t('Added ✓ · View cart') : <><ShoppingCart size={14} /> {t('Add to Cart')}</>}
                       </Button>
                       {product && activeVariant && (() => {
                         const wishlisted = isWishlisted(product._id, activeVariant._id);
@@ -1286,12 +1295,21 @@ export function ProductDetail() {
             <p className="text-[17px] font-extrabold text-carbon leading-none truncate">{formatPrice(displayPrice, displayCurrency)}</p>
           </div>
           <Button
-            variant="primary" size="md" className="justify-center flex-1 max-w-[220px]"
+            variant="secondary" size="md" className="justify-center flex-1 max-w-[170px]"
             disabled={stock <= 0 || !!pendingAction} loading={pendingAction === 'cart'}
             onClick={() => handleAddToCart(false)}
           >
-            {stock <= 0 ? t('Out of Stock') : addedFeedback ? t('✓ Added to Cart') : <><ShoppingCart size={14} /> {t('Add to Cart')}</>}
+            {stock <= 0 ? t('Out of Stock') : addedFeedback ? t('Added ✓ · View cart') : <><ShoppingCart size={14} /> {t('Add to Cart')}</>}
           </Button>
+          {stock > 0 && (
+            <Button
+              variant="primary" size="md" className="justify-center flex-1 max-w-[140px]"
+              disabled={!!pendingAction} loading={pendingAction === 'buy'}
+              onClick={() => handleAddToCart(true)}
+            >
+              {t('Buy Now')}
+            </Button>
+          )}
         </div>
       )}
 

@@ -96,7 +96,7 @@ function DealsPanel({ close }: { close: () => void }) {
                       </span>
                     )}
                   </span>
-                  <span className="text-[12px] font-bold text-error bg-error-bg rounded-full px-2 py-0.5 shrink-0">-{pct}%</span>
+                  <span dir="ltr" translate="no" className="text-[12px] font-bold text-error bg-error-bg rounded-full px-2 py-0.5 shrink-0">-{pct}%</span>
                 </Link>
               </li>
             );
@@ -339,10 +339,12 @@ export function QuickAccessRail() {
         onClick={toTop}
         aria-label="Back to top"
         className={clsx(
-          'xl:hidden fixed start-4 bottom-[calc(80px+env(safe-area-inset-bottom,0px))] z-40 size-11 rounded-full bg-white border border-bone shadow-lg flex items-center justify-center text-brand-royal cursor-pointer transition-all duration-200 print:hidden',
+          'xl:hidden fixed end-4 z-40 size-11 rounded-full bg-white border border-bone shadow-lg flex items-center justify-center text-brand-royal cursor-pointer transition-all duration-200 print:hidden',
           scrolledFar && !footerInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3 pointer-events-none',
         )}
         tabIndex={scrolledFar && !footerInView ? 0 : -1}
+        // stacks on the same right edge, directly above the chat bubble (76px nav offset + 52px bubble + gap)
+        style={{ bottom: `calc(${/^\/(cart|checkout|product\/)/.test(pathname) ? 228 : 144}px + env(safe-area-inset-bottom, 0px))` }}
       >
         <ChevronUp size={20} />
       </button>

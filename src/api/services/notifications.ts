@@ -1,5 +1,6 @@
 import client from '../client';
 import { ENDPOINTS } from '../endpoints';
+import { cachedRequest } from './requestCache';
 
 export interface NotificationItem {
   _id:           string;
@@ -68,7 +69,9 @@ export function apiListNotifications(query?: ListNotificationsQuery) {
   if (query?.unreadOnly !== undefined) params.unreadOnly = String(query.unreadOnly);
   if (query?.type) params.type = query.type;
 
-  return client.get<never, ApiResponse<ListNotificationsData>>(ENDPOINTS.NOTIFICATIONS.LIST, { params });
+  // 1.5 s: only collapses duplicate mount-time calls; later refreshes always hit the API.
+  return cachedRequest(`notifications:${JSON.stringify(params)}`, 1500, () =>
+    client.get<never, ApiResponse<ListNotificationsData>>(ENDPOINTS.NOTIFICATIONS.LIST, { params }));
 }
 
 export function apiGetUnreadCount() {

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { titleCaseName } from '@/utils/formatName';
 import {
   MapPin, Plus, Pencil, ArrowLeft, Home, Briefcase, Star as StarIcon,
   Trash2, type LucideIcon,
@@ -114,7 +115,7 @@ export function Addresses() {
           <div className="w-[26px] h-[26px] rounded-full bg-[#eaf3fb] text-[12px] font-bold flex items-center justify-center shrink-0 text-[#2156a8]">
             {(a.recipientName ?? '').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
           </div>
-          <span className="text-charcoal">{a.recipientName}</span>
+          <span className="text-charcoal">{titleCaseName(a.recipientName)}</span>
         </div>
       ),
     },
@@ -122,7 +123,7 @@ export function Addresses() {
     {
       key: 'address', header: 'Address',
       render: a => (
-        <span className="text-slate text-[12px] block max-w-[220px] truncate">
+        <span className="text-slate text-[12px] block max-w-[220px] truncate" title={formatAddress([a.addressLine1, a.addressLine2, a.city, a.state, a.zipCode])}>
           {formatAddress([a.addressLine1, a.addressLine2, a.city, a.state])}
         </span>
       ),

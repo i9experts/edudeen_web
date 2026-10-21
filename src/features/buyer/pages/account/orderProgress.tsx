@@ -57,11 +57,13 @@ export function buildOrderProgress(o: ProgressInput): ProgressStep[] | null {
   if (o.orderStatus === 'cancelled') return null;
 
   const isCod = o.paymentType === 'cash_on_delivery';
-  const paymentDone = o.isPaid || isCod;
+  const isPending = o.orderStatus === 'pending';
+  // COD is only "Confirmed" once the order status has moved past pending.
+  const paymentDone = o.isPaid || (isCod && !isPending);
   const paymentStep: ProgressStep = o.isPaid
     ? { key: 'payment', label: 'Paid', icon: BadgeCheck, date: o.paidAt ?? null, state: 'done' }
     : isCod
-      ? { key: 'payment', label: 'Confirmed', icon: BadgeCheck, date: null, hint: 'Pay on delivery', state: 'done' }
+      ? { key: 'payment', label: 'Confirmed', icon: BadgeCheck, date: null, hint: 'Pay on delivery', state: isPending ? 'todo' : 'done' }
       : o.paymentStatus === 'pending_verification'
         ? { key: 'payment', label: 'Verifying payment', icon: Clock, date: null, state: 'active' }
         : { key: 'payment', label: 'Awaiting payment', icon: Clock, date: null, state: 'active' };
@@ -84,7 +86,7 @@ export function buildOrderProgress(o: ProgressInput): ProgressStep[] | null {
     { key: 'delivered',  label: 'Delivered',  icon: CheckCircle2, date: deliveredAt, state: 'todo' },
   ];
 
-  if (!paymentDone) return steps; // nothing ships before payment
+  if (!paymentDone || isPending) return steps; // pending = only Placed (+ Paid) done; nothing ships before payment
 
   // Current fulfilment step: pending/processing → Processing, shipped → Shipped, delivered/completed → Delivered.
   const currentIdx = rank >= 3 ? 4 : rank === 2 ? 3 : 2;

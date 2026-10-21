@@ -5,7 +5,7 @@ import { useLocation } from 'react-router-dom';
 const ChatWidget = lazy(() => import('./ChatWidget'));
 
 // /account/messages: the bubble would sit on the composer's send/mic buttons.
-const HIDDEN = /^\/(admin|maintenance|account\/messages)(\/|$)/;
+const HIDDEN = /^\/(admin|maintenance|account\/messages)(\/|$)|\/invoice\/?$/;
 
 /** Mounted once in RootLayout: buyer + public pages and the seller dashboard. Hidden on /admin. */
 export function ChatWidgetGate() {

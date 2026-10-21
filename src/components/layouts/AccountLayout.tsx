@@ -1,5 +1,7 @@
 import { useT } from '@/contexts/languageCtx';
-import { useState, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
+import { usePublicPlatformConfig } from '@/hooks/usePublicPlatformConfig';
+import { apiGetMyReferral } from '@/api/services/retention';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
 import {
@@ -17,6 +19,19 @@ import { useLockPageScroll } from '@/hooks/useLockPageScroll';
 import { AnnouncementBanner } from '@/components/comman/ui';
 import { useEdgeSwipeBack } from '@/hooks/useEdgeSwipeBack';
 
+// One shared lookup (the nav model is built in several places); false until the API says the programme is on.
+let referralsEnabledPromise: Promise<boolean> | null = null;
+function useReferralsEnabled(): boolean {
+  const [on, setOn] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    referralsEnabledPromise ??= apiGetMyReferral().then(r => r.data?.enabled === true).catch(() => { referralsEnabledPromise = null; return false; });
+    void referralsEnabledPromise.then(v => { if (alive) setOn(v); });
+    return () => { alive = false; };
+  }, []);
+  return on;
+}
+
 // ── Nav model ─────────────────────────────────────────────────────────────────
 export interface NavItem { id: string; label: string; Icon: LucideIcon; path: string; badge?: number }
 export interface NavGroup { group: string; items: NavItem[] }
@@ -32,6 +47,10 @@ export function useNavGroups(): NavGroup[] {
   // NotificationContext already tracks the unread count (initial fetch +
   // socket `notification:unread-count` pushes) — reuse it, no extra request.
   const { unreadCount: notificationsUnread } = useNotification();
+  // Hide pages for features the admin hasn't enabled: bank-transfer proofs need the platform bank account, Refer & Earn needs the programme on.
+  const { config } = usePublicPlatformConfig();
+  const bankTransferOn = config?.commerce?.paymentMethods?.bankTransfer === true;
+  const referralsOn = useReferralsEnabled();
 
   return [
     {
@@ -50,7 +69,7 @@ export function useNavGroups(): NavGroup[] {
         { id: 'lists',    label: t('My Lists'), Icon: ListChecks,  path: 'lists' },
         { id: 'quotes',   label: t('School Quotes'), Icon: FileSpreadsheet, path: 'quotes' },
         { id: 'reviews',  label: t('Reviews'),  Icon: Star,        path: 'reviews' },
-        { id: 'payments', label: t('Bank Transfers'), Icon: Landmark, path: 'payments' },
+        ...(bankTransferOn ? [{ id: 'payments', label: t('Bank Transfers'), Icon: Landmark, path: 'payments' }] : []),
       ],
     },
     {
@@ -68,7 +87,7 @@ export function useNavGroups(): NavGroup[] {
         { id: 'addresses',     label: t('Addresses'),      Icon: MapPin,    path: 'addresses' },
         { id: 'children',      label: t('My Children'),    Icon: Baby,      path: 'children' },
         { id: 'premium',       label: t('Premium'),        Icon: Crown,     path: 'premium' },
-        { id: 'referrals',     label: t('Refer & Earn'),   Icon: Gift,      path: 'referrals' },
+        ...(referralsOn ? [{ id: 'referrals', label: t('Refer & Earn'), Icon: Gift, path: 'referrals' }] : []),
         { id: 'subscriptions', label: t('Subscriptions'),  Icon: RefreshCw, path: 'subscriptions' },
       ],
     },
