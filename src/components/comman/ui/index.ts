@@ -110,7 +110,6 @@ export { AppDownloadBanner, PhoneShell, StatusBar } from './AppDownloadBanner';
 
 export { ClosingCtaBanner }                   from './ClosingCtaBanner';
 
-export { TrustServiceStrip }                  from './TrustServiceStrip';
 
 export { SignInPreview }                      from './SignInPreview';
 
