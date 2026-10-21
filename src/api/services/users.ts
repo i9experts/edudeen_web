@@ -47,7 +47,10 @@ export async function apiLogoutOtherDevices() {
   }
   return res;
 }
-/** DELETE /api/users/profile — soft-deletes (deactivates) the account */
-export function apiDeleteAccount() {
-  return client.delete<never, ApiResponse<null>>(ENDPOINTS.USERS.DELETE_ACCOUNT);
+/** DELETE /api/users/profile — soft-deletes (deactivates) the account. Needs the typed word and the password (when the
+ *  account has one); the API answers 409 with the reasons while orders, Premium, payouts or wallet money are open. */
+export function apiDeleteAccount(payload: { password?: string; confirm: string }) {
+  return client.delete<never, ApiResponse<null>>(ENDPOINTS.USERS.DELETE_ACCOUNT, {
+    data: { confirm: payload.confirm.trim(), ...(payload.password ? { password: payload.password } : {}) },
+  });
 }

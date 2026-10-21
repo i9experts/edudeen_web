@@ -11,6 +11,7 @@ import { useMyStores } from '@/hooks/store/useMyStores';
 import { apiDeleteAccount } from '@/api/services/users';
 import { TokenStorage } from '@/api/services/auth';
 import { Modal, Button, NotificationsPanel } from '@/components/comman/ui';
+import { DeleteAccountFields, EMPTY_DELETE_FORM, canSubmitDelete, type DeleteAccountForm } from '@/components/comman/ui/DeleteAccountFields';
 import {
   User, KeyRound, Bell,
   Trash2, Camera, Settings, Check, Loader2, Eye, EyeOff, ChevronLeft, ChevronRight, type LucideIcon,
@@ -178,6 +179,7 @@ export function SellerSettings() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+  const [deleteForm, setDeleteForm] = useState<DeleteAccountForm>(EMPTY_DELETE_FORM);
 
   const { profile, loading: profileLoading } = useGetProfile();
   const { execute: editProfile, loading: saving, error: saveError, success: saved } = useEditProfile();
@@ -198,7 +200,7 @@ export function SellerSettings() {
     setDeleting(true);
     setDeleteError('');
     try {
-      await apiDeleteAccount();
+      await apiDeleteAccount(deleteForm);
       TokenStorage.clear();
       invalidateProfileCache();
       navigate('/login');
@@ -562,17 +564,18 @@ export function SellerSettings() {
       </div>
 
       {showDeleteConfirm && (
-        <Modal title="Delete your account?" onClose={() => setShowDeleteConfirm(false)} footer={
+        <Modal title="Delete your account?" onClose={() => { setShowDeleteConfirm(false); setDeleteForm(EMPTY_DELETE_FORM); }} footer={
           <>
-            <Button variant="ghost" onClick={() => setShowDeleteConfirm(false)} disabled={deleting}>Cancel</Button>
-            <Button variant="danger" onClick={handleDeleteAccount} loading={deleting}>Delete Account</Button>
+            <Button variant="ghost" onClick={() => { setShowDeleteConfirm(false); setDeleteForm(EMPTY_DELETE_FORM); }} disabled={deleting}>Cancel</Button>
+            <Button variant="danger" onClick={handleDeleteAccount} loading={deleting} disabled={!canSubmitDelete(deleteForm)}>Delete Account</Button>
           </>
         }>
           <p className="text-[13px] text-slate">
             This deactivates your seller account and signs you out immediately. Your stores and listings will no
-            longer be visible to buyers. You'll need to contact support to reactivate it.
+            longer be visible to buyers. You'll need to contact support to reactivate it. Open customer orders,
+            payouts in progress and any money left in your store wallet must be settled first.
           </p>
-          {deleteError && <p className="text-[12px] text-error mt-2">{deleteError}</p>}
+          <DeleteAccountFields value={deleteForm} onChange={setDeleteForm} error={deleteError} disabled={deleting} />
         </Modal>
       )}
     </>

@@ -1,28 +1,34 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AlertTriangle, Trash2 } from 'lucide-react';
 import { invalidateProfileCache } from '@/hooks/auth/useGetProfile';
 import { apiDeleteAccount } from '@/api/services/users';
 import { TokenStorage } from '@/api/services/auth';
 import { Card, Modal, Button } from '@/components/comman/ui';
-import { useToast } from '@/contexts/ToastContext';
+import { DeleteAccountFields, EMPTY_DELETE_FORM, canSubmitDelete, type DeleteAccountForm } from '@/components/comman/ui/DeleteAccountFields';
 
 /** Account deletion lives under Account -> Login & Security (moved from the footer / profile page). */
 export function DeleteAccountSection() {
   const navigate = useNavigate();
-  const toast = useToast();
   const [showConfirm, setShowConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [form, setForm] = useState<DeleteAccountForm>(EMPTY_DELETE_FORM);
+  const [error, setError] = useState('');
+
+  const close = () => { setShowConfirm(false); setForm(EMPTY_DELETE_FORM); setError(''); };
 
   const handleDelete = async () => {
+    if (!canSubmitDelete(form)) return;
     setDeleting(true);
+    setError('');
     try {
-      await apiDeleteAccount();
+      await apiDeleteAccount(form);
       TokenStorage.clear();
       invalidateProfileCache();
       navigate('/login');
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to delete account.');
+      // Shows the server's reason (wrong password, open orders, active Premium...) right in the dialog.
+      setError(err instanceof Error ? err.message : 'Failed to delete account.');
     } finally {
       setDeleting(false);
     }
@@ -47,15 +53,17 @@ export function DeleteAccountSection() {
         </div>
       </Card>
       {showConfirm && (
-        <Modal title="Delete your account?" onClose={() => setShowConfirm(false)} footer={
+        <Modal title="Delete your account?" onClose={close} footer={
           <>
-            <Button variant="ghost" onClick={() => setShowConfirm(false)}>Cancel</Button>
-            <Button variant="danger" onClick={handleDelete} loading={deleting}>Delete Account</Button>
+            <Button variant="ghost" onClick={close} disabled={deleting}>Cancel</Button>
+            <Button variant="danger" onClick={handleDelete} loading={deleting} disabled={!canSubmitDelete(form)}>Delete Account</Button>
           </>
         }>
           <p className="text-[13px] text-slate">
             This deactivates your account and signs you out immediately. You'll need to contact support to reactivate it.
+            Orders still in progress or an active Premium membership must finish first.
           </p>
+          <DeleteAccountFields value={form} onChange={setForm} error={error} disabled={deleting} />
         </Modal>
       )}
     </>
