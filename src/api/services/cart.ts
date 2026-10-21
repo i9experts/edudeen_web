@@ -99,6 +99,11 @@ export function apiGetMyCarts() {
   return client.get<never, MyCartsResponse>(ENDPOINTS.CART.MY_CARTS);
 }
 
+/** Buy Now: prices one product-page selection (same shape as `my-carts`, one store). The real cart is untouched. */
+export function apiGetBuyNowCart(productId: string, variantId: string, quantity = 1) {
+  return client.get<never, MyCartsResponse>(ENDPOINTS.CART.BUY_NOW, { params: { productId, variantId, quantity } });
+}
+
 export function apiUpdateCartQuantity(
   productId: string,
   productVariantId: string,

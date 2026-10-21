@@ -3,6 +3,7 @@ import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { getStorePagePath } from '@/utils/storefrontUrl';
 import { useCartContext } from '@/contexts/CartContext';
+import { useBuyNowCart } from '@/hooks/useBuyNowCart';
 import { TokenStorage } from '@/api/services/auth';
 import { useShippingZones } from '@/hooks/shipping/useShippingZones';
 import { shippingZoneLabel, zonesForAddress, type ShippingZone } from '@/api/services/shipping';
@@ -398,7 +399,17 @@ export function CheckoutPage() {
   // called, never before (an early return up here would make React call a
   // different number of hooks on the next render the instant login succeeds
   // and this same component instance re-renders instead of navigating away).
-  const { cart, loading: cartLoading, clearCart, refetch: refetchCart } = useCartContext();
+  const { cart: ctxCart, loading: ctxCartLoading, clearCart, refetch: refetchCart } = useCartContext();
+  // `?buyNow=productId:variantId:qty` — a Buy Now purchase: only that line, at that quantity. It is priced by the
+  // server without touching the buyer's real cart, so the page shows that one line instead of the cart.
+  const [searchParams] = useSearchParams();
+  const [buyNowProduct, buyNowVariant, buyNowQtyRaw] = (searchParams.get('buyNow') ?? '').split(':');
+  const buyNow = buyNowProduct && buyNowVariant
+    ? { productId: buyNowProduct, variantId: buyNowVariant, quantity: Math.min(99, Math.max(1, Number.parseInt(buyNowQtyRaw ?? '1', 10) || 1)) }
+    : null;
+  const buyNowCart = useBuyNowCart(buyNow, loggedIn);
+  const cart = buyNow ? buyNowCart.cart : ctxCart;
+  const cartLoading = buyNow ? buyNowCart.loading : ctxCartLoading;
   // Before the checkout exists (steps 1-2) the sidebar shows the cart's own figures in the buyer's display currency,
   // through the same maths as the Cart page; from step 3 on the server's checkout is the source of truth.
   const { currency: displayCurrency, convert: convertToDisplay } = useCurrencyPreference();
@@ -407,7 +418,6 @@ export function CheckoutPage() {
   // can span several stores — `?store=` picks which one this checkout is
   // for (the cart page links each store's own checkout); a single-store
   // cart (or a storefront) needs no param.
-  const [searchParams] = useSearchParams();
   const checkoutStoreId = searchParams.get('store') ?? cart?.storeId ?? undefined;
   const needsStorePick = !checkoutStoreId && (cart?.stores?.length ?? 0) > 1;
 
@@ -420,19 +430,13 @@ export function CheckoutPage() {
   // (e.g. no online payment rail is available yet for the digital ones).
   // Digital items stay in the cart; the backend removes only what was bought.
   const physicalOnly = searchParams.get('only') === 'physical';
-  // `?buyNow=productId:variantId:qty` — a Buy Now purchase: only that line, at that quantity.
-  const [buyNowProduct, buyNowVariant, buyNowQtyRaw] = (searchParams.get('buyNow') ?? '').split(':');
-  const buyNow = buyNowProduct && buyNowVariant
-    ? { productId: buyNowProduct, variantId: buyNowVariant, quantity: Math.min(99, Math.max(1, Number.parseInt(buyNowQtyRaw ?? '1', 10) || 1)) }
-    : null;
+  // The Buy Now cart already holds exactly the chosen line and quantity, so no re-filtering is needed for it.
   const cartItems  = (cart?.items ?? [])
     .filter(i => !checkoutStoreId || !i.storeId || i.storeId === checkoutStoreId)
-    .filter(i => !physicalOnly || i.type !== 'digital')
-    .filter(i => !buyNow || (i.productId === buyNow.productId && i.productVariantId === buyNow.variantId))
-    .map(i => (buyNow ? { ...i, quantity: buyNow.quantity, itemTotal: (i.unitPrice ?? 0) * buyNow.quantity, ...(i.premiumUnitPrice != null ? { premiumItemTotal: Math.round(i.premiumUnitPrice * buyNow.quantity * 100) / 100 } : {}) } : i));
-  const checkoutItemsPayload = buyNow
-    ? [{ productId: buyNow.productId, variantId: buyNow.variantId, quantity: buyNow.quantity }]
-    : physicalOnly ? cartItems.map(i => ({ productId: i.productId, variantId: i.productVariantId })) : undefined;
+    .filter(i => !physicalOnly || i.type !== 'digital');
+  const checkoutItemsPayload = physicalOnly && !buyNow
+    ? cartItems.map(i => ({ productId: i.productId, variantId: i.productVariantId }))
+    : undefined;
   const checkoutCount = cartItems.reduce((s, i) => s + i.quantity, 0);
   // '1 product · 2 items' when a line has quantity > 1, plain 'N items' otherwise.
   const orderCountLabel = cartItems.length > 0 && cartItems.length !== checkoutCount
@@ -601,7 +605,7 @@ export function CheckoutPage() {
     let cancelled = false;
     setCreatingCheckout(true);
     setCheckoutError('');
-    apiCreateCheckout({ storeId: checkoutStoreId, ...(checkoutItemsPayload && { items: checkoutItemsPayload }) })
+    apiCreateCheckout({ storeId: checkoutStoreId, ...(buyNow && { buyNow }), ...(checkoutItemsPayload && { items: checkoutItemsPayload }) })
       .then(res => {
         if (cancelled) return;
         setCheckout(res.data.checkout);
@@ -657,7 +661,8 @@ export function CheckoutPage() {
   // store's cart (its digital items are still waiting there) — the backend
   // already removed exactly the checked-out items, so just re-sync.
   const finishCheckoutCart = async () => {
-    if (physicalOnly) await refetchCart();
+    // Buy Now never came from the cart, so the cart is left exactly as it was.
+    if (physicalOnly || buyNow) await refetchCart();
     else await clearCart(checkoutStoreId);
   };
 
@@ -768,8 +773,9 @@ export function CheckoutPage() {
   // Before the checkout exists, show the member estimate so the summary has the same Premium line as the cart.
   const premiumSavings = premiumSellerSavings + premiumPlatformSavings || (checkout ? 0 : memberEstimateSavingsEarly);
   const bakedInDiscounts = (summary?.subscriberSavingsUSD ?? 0) + (summary?.campaignDiscountUSD ?? 0) + (summary?.autoDiscountUSD ?? 0) + premiumSavings;
-  // The running sale only applies to the whole store cart, not to a Buy Now line or a physical-only subset.
-  const estimate = computeCartTotals(cartItems, buyNow || physicalOnly ? null : cart?.campaignDiscount, convertToDisplay);
+  // The running sale applies to the whole store cart, not to a physical-only subset. (A Buy Now cart is priced for
+  // that single line by the server, so its own sale figure is right to use.)
+  const estimate = computeCartTotals(cartItems, physicalOnly ? null : cart?.campaignDiscount, convertToDisplay);
   // Before the checkout exists a member's estimate already uses their member price (cart lines carry it for members only).
   const memberEstimateSavings = memberEstimateSavingsEarly;
   const total = checkout ? checkout.totalAmount : Math.max(0, estimate.payable - memberEstimateSavings);
@@ -887,6 +893,7 @@ export function CheckoutPage() {
         addressId: selectedAddr._id,
         ...(selectedZoneId !== STANDARD_DELIVERY._id && { shippingZoneId: selectedZoneId }),
         storeId: checkoutStoreId,
+        ...(buyNow && { buyNow }),
         ...(checkoutItemsPayload && { items: checkoutItemsPayload }),
       });
       setCheckout(res.data.checkout);
@@ -941,6 +948,20 @@ export function CheckoutPage() {
     const back = `${window.location.pathname}${window.location.search}`;
     try { sessionStorage.setItem('afterAuthPath', back); } catch { /* storage blocked */ }
     return <Navigate to={`/login?redirect=${encodeURIComponent(back)}`} replace />;
+  }
+  if (buyNow && buyNowCart.error) {
+    return (
+      <div className="min-h-screen bg-cream flex flex-col">
+        <BuyerNavbar variant="minimal" contextLabel="Checkout" hideCommerce />
+        <div className="max-w-[560px] w-full mx-auto px-4 py-12">
+          <h1 className="text-[20px] font-bold text-carbon mb-1">This item can't be bought right now</h1>
+          <p className="text-[13px] text-slate mb-6" role="alert">{buyNowCart.error}</p>
+          <button onClick={() => navigate(-1)} className="text-[12.5px] text-slate hover:text-charcoal transition-colors bg-transparent border-none cursor-pointer">
+            Go back
+          </button>
+        </div>
+      </div>
+    );
   }
   if (needsStorePick && cart?.stores) {
     return (

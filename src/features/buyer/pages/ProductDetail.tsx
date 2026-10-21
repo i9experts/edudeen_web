@@ -658,20 +658,16 @@ export function ProductDetail() {
     if (!product || !activeVariant || pendingAction) return;
     setPendingAction(buyNow ? 'buy' : 'cart');
     try {
-    // Add to Cart sends the selected quantity (the API merges it into an existing line); Buy Now checks out ?buyNow=...:qty.
-    await addToCart(product._id, activeVariant._id, isPhysical ? 'physical' : 'digital', buyNow ? 1 : qty);
-    // Buy Now checks out only this product and quantity — the cart's other
-    // items stay in the cart (the checkout page reads `?buyNow=`).
+    // Buy Now checks out only this product and quantity and never touches the cart: the checkout page
+    // reads `?buyNow=` and the server prices that one line itself. A signed-out buyer is sent to log in
+    // by the checkout page and returns to this same URL.
     if (buyNow) {
       navigate(`/checkout?store=${encodeURIComponent(product.storeId ?? '')}&buyNow=${product._id}:${activeVariant._id}:${qty}`);
       return;
     }
-    // "Buy Now" skips straight to checkout instead of the cart page — the
-    // checkout gate itself (see CheckoutPage.tsx) handles a still-logged-out
-    // buyer with an inline modal now, so there's no reason to stop at the
-    // cart page first.
-    if (buyNow) navigate('/checkout');
-    else { setAddedFeedback(true); setTimeout(() => setAddedFeedback(false), 2000); }
+    // Add to Cart sends the selected quantity (the API merges it into an existing line).
+    await addToCart(product._id, activeVariant._id, isPhysical ? 'physical' : 'digital', qty);
+    setAddedFeedback(true); setTimeout(() => setAddedFeedback(false), 2000);
     } finally { setPendingAction(null); }
   }
 
