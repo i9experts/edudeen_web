@@ -6,6 +6,9 @@ interface ErrorBoundaryProps {
   children: ReactNode;
   /** Changing this clears a caught error (e.g. the route path) without remounting the children. */
   resetKey?: unknown;
+  /** What to show instead of the default "Something went wrong" card once something below crashes.
+   *  `null` = render nothing (for add-ons like chat/toasts, so they can never white-screen the page). */
+  fallback?: ReactNode;
 }
 
 interface ErrorBoundaryState {
@@ -35,6 +38,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
   render() {
     if (!this.state.error) return this.props.children;
+    if (this.props.fallback !== undefined) return this.props.fallback;
 
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center gap-4 px-6 text-center">

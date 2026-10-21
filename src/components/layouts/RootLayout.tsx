@@ -71,6 +71,10 @@ function ScrollToTopOnNavigate() {
   return null;
 }
 
+function Silent({ resetKey, children }: { resetKey: unknown; children: ReactNode }) {
+  return <ErrorBoundary resetKey={resetKey} fallback={null}>{children}</ErrorBoundary>;
+}
+
 export function RootLayout() {
   useGlobalEdgeHoverScroll();
   useReferralCapture();
@@ -80,17 +84,19 @@ export function RootLayout() {
     <AdminEditProvider>
     <ReauthProvider>
       <SkipLink />
-      <RouteMeta />
-      <TopProgressBar />
-      <WhenIdle><MaintenanceNotice /></WhenIdle>
-      <AuthGateModal />
-      <ToastContainer />
-      <WhenIdle><GoogleOneTapPrompt /></WhenIdle>
-      <LanguageRouteSync />
-      <WhenIdle><AiAssistantWidget /></WhenIdle>
-      <ChatWidgetGate />
+      {/* Add-ons each get their own silent boundary: if one crashes it disappears (until the next navigation) instead of
+         white-screening the whole page, and the others keep working. */}
+      <Silent resetKey={pathname}><RouteMeta /></Silent>
+      <Silent resetKey={pathname}><TopProgressBar /></Silent>
+      <Silent resetKey={pathname}><WhenIdle><MaintenanceNotice /></WhenIdle></Silent>
+      <Silent resetKey={pathname}><AuthGateModal /></Silent>
+      <Silent resetKey={pathname}><ToastContainer /></Silent>
+      <Silent resetKey={pathname}><WhenIdle><GoogleOneTapPrompt /></WhenIdle></Silent>
+      <Silent resetKey={pathname}><LanguageRouteSync /></Silent>
+      <Silent resetKey={pathname}><WhenIdle><AiAssistantWidget /></WhenIdle></Silent>
+      <Silent resetKey={pathname}><ChatWidgetGate /></Silent>
       <ScrollRestoration />
-      <ScrollToTopOnNavigate />
+      <Silent resetKey={pathname}><ScrollToTopOnNavigate /></Silent>
       {/* resetKey (not key) â€” a new path clears a caught error, but the layouts
          (dashboard sidebars etc.) stay mounted instead of rebuilding on every click */}
         <ErrorBoundary resetKey={pathname}>
@@ -98,7 +104,7 @@ export function RootLayout() {
             <Outlet />
           </Suspense>
         </ErrorBoundary>
-      <AdminEditToolbar />
+      <Silent resetKey={pathname}><AdminEditToolbar /></Silent>
     </ReauthProvider>
     </AdminEditProvider>
   );

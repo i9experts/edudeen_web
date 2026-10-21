@@ -11,6 +11,8 @@ import { AuthGateProvider } from '@/contexts/AuthGateContext';
 import { ToastProvider } from '@/contexts/ToastContext';
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import { InstallAppPrompt } from '@/components/InstallAppPrompt';
+import { ErrorBoundary } from '@/components/comman/ErrorBoundary';
+import { AppCrashScreen } from '@/components/comman/AppCrashScreen';
 import { reloadOnceForStaleChunk, armChunkReloadGuardReset } from '@/utils/lazyWithRetry';
 import './index.css';
 
@@ -42,6 +44,8 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
+    {/* Outermost net: a crash in a provider (or anything above the router's own boundaries) shows a recovery screen, not a white page. */}
+    <ErrorBoundary fallback={<AppCrashScreen />}>
     {/* domAnimation = animations + hover/tap/in-view only (no drag/layout engine): ~100 KB less JS than the full motion component. */}
     <LazyMotion features={domAnimation}>
     <ToastProvider>
@@ -61,6 +65,7 @@ createRoot(document.getElementById('root')!).render(
       </AuthGateProvider>
     </ToastProvider>
     </LazyMotion>
+    </ErrorBoundary>
   </StrictMode>,
 );
 

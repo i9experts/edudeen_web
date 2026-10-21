@@ -4,6 +4,7 @@ import { getStoreSlugFromHost, isCustomDomainCandidate } from '@/utils/storefron
 
 // Root wrapper (reference nav + outlet + global Suspense)
 import { RootLayout }   from '@/components/layouts/RootLayout';
+import { RouterErrorScreen } from './RouterErrorScreen';
 
 // Layouts — eagerly imported (needed as wrappers immediately)
 import { BuyerLayout }  from '@/components/layouts/BuyerLayout';
@@ -198,6 +199,7 @@ const AdminAiStudio      = lazy(() => named(import('@/features/admin/pages/Admin
 const storefrontRouter = createBrowserRouter([
   {
     element: <RootLayout />,
+    errorElement: <RouterErrorScreen />,
     children: [
       {
         path: '/',
@@ -237,6 +239,7 @@ const FEEDBACK_TABS = [
 const mainRouter = createBrowserRouter([
   {
     element: <RootLayout />,
+    errorElement: <RouterErrorScreen />,
     children: [
 
       // ── All buyer-facing pages — BuyerLayout adds the mobile bottom nav ─
