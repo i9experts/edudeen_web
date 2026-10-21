@@ -38,8 +38,15 @@ interface BannerCarouselProps {
 
 const ROTATE_MS = 5000;
 
+/** Seller/admin typed links: only http(s) or a site path - never javascript:/data: (defence in depth). */
+function isSafeLink(url: string) {
+  const u = url.trim();
+  if (u.startsWith('//')) return /^\/\/[^/\s]/.test(u);
+  return u.startsWith('/') || /^https?:\/\//i.test(u);
+}
+
 function isExternalLink(url: string) {
-  if (url.startsWith('/')) return false;
+  if (url.startsWith('/') && !url.startsWith('//')) return false;
   try { return new URL(url).host !== window.location.host; } catch { return true; }
 }
 
@@ -155,7 +162,7 @@ export function BannerCarousel({ banners, entityType, fit = 'cover', onActiveCha
               isActive ? 'z-[1]' : 'pointer-events-none',
             )}
           >
-            {isActive && banner.linkUrl ? (
+            {isActive && banner.linkUrl && isSafeLink(banner.linkUrl) ? (
               // Links inside Edudeen (a category, product, sale…) open in place;
               // only outside sites get a new tab.
               <a

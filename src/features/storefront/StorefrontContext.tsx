@@ -234,7 +234,8 @@ export interface StorefrontLinkSettings {
  *  render a prettier URL — matches the existing Marketplace legacy-id
  *  redirect precedent rather than requiring a second slug lookup here. */
 export function resolveStorefrontLink(link: StorefrontLinkSettings, basePath = ''): { to?: string; href?: string } {
-  if (link.linkType === 'external') return { href: link.url };
+  // Seller-typed URL: only http(s)/mailto/tel - never javascript:/data: (stored XSS; tokens live in JS-readable cookies).
+  if (link.linkType === 'external') return /^(https?:\/\/|mailto:|tel:)/i.test((link.url ?? '').trim()) ? { href: (link.url ?? '').trim() } : { to: basePath || `/` };
   if (link.linkType === 'blog') return { to: `${basePath}/blog` };
   if (link.linkType === 'page' && link.pageSlug) return { to: `${basePath}/${link.pageSlug}` };
   if (link.linkType === 'category' && link.categoryId) return { to: `${basePath}/category/${link.categoryId}` };

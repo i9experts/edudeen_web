@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { safeHttpUrl } from '@/utils/safeRedirect';
 import { Link } from 'react-router-dom';
 import { FileSpreadsheet, FileText } from 'lucide-react';
 import { clsx } from 'clsx';
@@ -46,7 +47,7 @@ function PurchaseOrderForm({ quote, onSaved }: { quote: QuoteRequest; onSaved: (
       <div className="flex flex-wrap items-center gap-2">
         <input aria-label="PO number" value={num} onChange={e => setNum(e.target.value)} maxLength={40} placeholder="PO number" className="w-[160px] py-[7px] px-2 text-[13px] border border-bone rounded-lg bg-white text-charcoal" />
         <input aria-label="Upload purchase order" type="file" accept="application/pdf,image/*" onChange={e => void upload(e.target.files?.[0])} className="text-[12px]" />
-        {url && <a href={url} target="_blank" rel="noopener noreferrer" className="text-[12px] text-brand-orange underline">uploaded file</a>}
+        {safeHttpUrl(url) && <a href={safeHttpUrl(url)} target="_blank" rel="noopener noreferrer" className="text-[12px] text-brand-orange underline">uploaded file</a>}
         <Button variant="outline" size="sm" loading={busy} disabled={!num.trim() && !url} onClick={save}>Save</Button>
       </div>
     </div>

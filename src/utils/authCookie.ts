@@ -50,7 +50,8 @@ export function setAuthCookie(name: string, value: string, persistent = true): v
 
 export function getAuthCookie(name: string): string | null {
   const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
-  return match ? decodeURIComponent(match[1]) : null;
+  if (!match) return null;
+  try { return decodeURIComponent(match[1]); } catch { return null; }
 }
 
 export function deleteAuthCookie(name: string): void {

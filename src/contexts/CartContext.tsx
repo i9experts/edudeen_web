@@ -21,17 +21,17 @@ function getStoredTypes(): Record<string, 'physical' | 'digital'> {
 function storeType(variantId: string, type: 'physical' | 'digital') {
   const map = getStoredTypes();
   map[variantId] = type;
-  localStorage.setItem(TYPES_KEY, JSON.stringify(map));
+  try { localStorage.setItem(TYPES_KEY, JSON.stringify(map)); } catch { /* storage blocked */ }
 }
 
 function removeType(variantId: string) {
   const map = getStoredTypes();
   delete map[variantId];
-  localStorage.setItem(TYPES_KEY, JSON.stringify(map));
+  try { localStorage.setItem(TYPES_KEY, JSON.stringify(map)); } catch { /* storage blocked */ }
 }
 
 function clearTypes() {
-  localStorage.removeItem(TYPES_KEY);
+  try { localStorage.removeItem(TYPES_KEY); } catch { /* storage blocked */ }
 }
 
 function mergeTypes(cart: Cart): Cart {

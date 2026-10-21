@@ -62,7 +62,7 @@ function useBrowseState() {
     board: params.get('board') ?? '',
     age: num(params.get('age')),
     sort: (params.get('sort') ?? '') as MarketplaceSortBy | '',
-    page: Math.max(1, num(params.get('page')) ?? 1),
+    page: Math.min(1000, Math.max(1, Math.floor(num(params.get('page')) ?? 1))),
   };
   const update = useCallback((patch: Record<string, string | number | boolean | undefined | null>, keepPage = false, replace = false) => {
     setParams(prev => {

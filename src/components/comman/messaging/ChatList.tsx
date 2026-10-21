@@ -55,7 +55,8 @@ const DEFAULT_W = 340;
 function useResizableWidth(storageKey: string | undefined, rootRef: React.RefObject<HTMLDivElement | null>) {
   const [width, setWidth] = useState(() => {
     if (!storageKey) return DEFAULT_W;
-    const saved = Number(localStorage.getItem(storageKey));
+    let saved = 0;
+    try { saved = Number(localStorage.getItem(storageKey)); } catch { /* storage blocked */ }
     return saved >= MIN_W && saved <= MAX_W ? saved : DEFAULT_W;
   });
   const dragging = useRef(false);
@@ -76,7 +77,7 @@ function useResizableWidth(storageKey: string | undefined, rootRef: React.RefObj
       dragging.current = false;
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
-      setWidth(w => { localStorage.setItem(key, String(w)); return w; });
+      setWidth(w => { try { localStorage.setItem(key, String(w)); } catch { /* storage blocked */ } return w; });
     }
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', onUp);

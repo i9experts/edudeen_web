@@ -348,18 +348,21 @@ function SummaryPanel({ orders, navigate }: { orders: PlacedOrder[]; navigate: (
 // of bouncing the buyer to the homepage.
 const LAST_ORDER_KEY = 'edudeen_last_order_success';
 
-function readStoredOrders(): PlacedOrder[] {
+// The copy is tagged with its checkout so another order's link never shows these orders.
+function readStoredOrders(checkoutId?: string | null): PlacedOrder[] {
   try {
     const raw = sessionStorage.getItem(LAST_ORDER_KEY);
     const parsed = raw ? JSON.parse(raw) : null;
-    return Array.isArray(parsed) ? (parsed as PlacedOrder[]) : [];
+    if (!parsed || !Array.isArray(parsed.orders)) return [];
+    if (checkoutId && parsed.checkoutId !== checkoutId) return [];
+    return parsed.orders as PlacedOrder[];
   } catch {
     return [];
   }
 }
 
-function storeOrders(orders: PlacedOrder[]) {
-  try { sessionStorage.setItem(LAST_ORDER_KEY, JSON.stringify(orders)); } catch { /* storage unavailable — refresh just won't restore */ }
+function storeOrders(orders: PlacedOrder[], checkoutId?: string | null) {
+  try { sessionStorage.setItem(LAST_ORDER_KEY, JSON.stringify({ checkoutId: checkoutId ?? null, orders })); } catch { /* storage unavailable — refresh just won't restore */ }
 }
 
 /** my-orders shape -> the confirmation page's shape (used when state/session copy is gone). */
@@ -388,15 +391,15 @@ export function OrderSuccessPage() {
   const stateOrders = (location.state as { orders?: PlacedOrder[] } | null)?.orders;
   const checkoutId = useSearchParams()[0].get('checkout');
   const [fetched, setFetched] = useState<PlacedOrder[]>([]);
-  const [fetching, setFetching] = useState(() => !!checkoutId && !(stateOrders && stateOrders.length > 0) && readStoredOrders().length === 0);
+  const [fetching, setFetching] = useState(() => !!checkoutId && !(stateOrders && stateOrders.length > 0) && readStoredOrders(checkoutId).length === 0);
   const orders = useMemo<PlacedOrder[]>(
-    () => (stateOrders && stateOrders.length > 0 ? stateOrders : (() => { const s = readStoredOrders(); return s.length > 0 ? s : fetched; })()),
-    [stateOrders, fetched],
+    () => (stateOrders && stateOrders.length > 0 ? stateOrders : (() => { const s = readStoredOrders(checkoutId); return s.length > 0 ? s : fetched; })()),
+    [stateOrders, fetched, checkoutId],
   );
 
   // Opened in a new tab / from a saved link: nothing in router state or this tab's session, so ask the server.
   useEffect(() => {
-    if (!checkoutId || (stateOrders && stateOrders.length > 0) || readStoredOrders().length > 0) return;
+    if (!checkoutId || (stateOrders && stateOrders.length > 0) || readStoredOrders(checkoutId).length > 0) return;
     let cancelled = false;
     setFetching(true);
     apiGetOrdersByCheckout(checkoutId)
@@ -407,8 +410,8 @@ export function OrderSuccessPage() {
   }, [checkoutId, stateOrders]);
 
   useEffect(() => {
-    if (stateOrders && stateOrders.length > 0) storeOrders(stateOrders);
-  }, [stateOrders]);
+    if (stateOrders && stateOrders.length > 0) storeOrders(stateOrders, checkoutId);
+  }, [stateOrders, checkoutId]);
 
   useEffect(() => {
     if (orders.length === 0 && !fetching) navigate('/', { replace: true });

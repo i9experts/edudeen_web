@@ -10,5 +10,5 @@ export function getDismissedBannerIds(): string[] {
 
 export function dismissBanner(id: string): void {
   const next = [...new Set([...getDismissedBannerIds(), id])];
-  localStorage.setItem(DISMISSED_KEY, JSON.stringify(next));
+  try { localStorage.setItem(DISMISSED_KEY, JSON.stringify(next)); } catch { /* storage blocked */ }
 }

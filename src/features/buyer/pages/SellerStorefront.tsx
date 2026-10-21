@@ -322,14 +322,14 @@ export function SellerStorefront() {
                 {showRating && (store.reviewCount ?? 0) > 0 && (
                   <>
                     <Star size={13} className="fill-current" style={{ color: cfg.primaryColor }} />
-                    <span>{store.averageRating.toFixed(1)} ({store.reviewCount.toLocaleString()} reviews)</span>
+                    <span>{(store.averageRating ?? 0).toFixed(1)} ({(store.reviewCount ?? 0).toLocaleString()} reviews)</span>
                     <span className="mx-1">·</span>
                   </>
                 )}
                 {showFollowerCount && (
                   <>
                     <Users size={13} />
-                    <span>{store.followersCount.toLocaleString()} followers</span>
+                    <span>{(store.followersCount ?? 0).toLocaleString()} followers</span>
                   </>
                 )}
                 {showProductCount && (

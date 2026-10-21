@@ -39,7 +39,7 @@ export function StoreAnnouncementBar({ storeId, message, type, ctaLabel, ctaLink
       <Icon size={15} className={`${text} shrink-0`} />
       <div className="flex-1 min-w-0 flex items-baseline gap-2 flex-wrap">
         <p className={`text-[12.5px] font-medium ${text}`}>{message}</p>
-        {ctaLabel && ctaLink && (
+        {ctaLabel && ctaLink && /^(https?:\/\/|\/(?!\/))/i.test(ctaLink.trim()) && (
           <a href={ctaLink} className={`text-[12.5px] font-semibold underline ${text}`}>{ctaLabel}</a>
         )}
       </div>

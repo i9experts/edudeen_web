@@ -155,7 +155,8 @@ export interface CreateCheckoutPayload {
 // preference or the platform default, it's never trusted blindly.
 const CURRENCY_STORAGE_KEY = 'edudeen_currency_preference';
 function getCurrencyPreference(): string | undefined {
-  const saved = localStorage.getItem(CURRENCY_STORAGE_KEY);
+  let saved: string | null = null;
+  try { saved = localStorage.getItem(CURRENCY_STORAGE_KEY); } catch { /* storage blocked */ }
   return saved === 'PKR' || saved === 'USD' ? saved : undefined;
 }
 

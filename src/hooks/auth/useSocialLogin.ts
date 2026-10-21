@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiSocialLogin, TokenStorage, getRoleRedirect, LastRolePreference, RememberedAccount, type SocialLoginPayload, type AppRole } from '@/api/services/auth';
+import { safeRedirectPath } from '@/utils/safeRedirect';
 import { resolveSellerDestinationRemote } from '@/utils/sellerRouting';
 import type { SocialProvider } from '@/components/comman/ui/SocialIcons';
 
@@ -160,7 +161,7 @@ export function useSocialLogin(role: AppRole = 'seller') {
       try { afterAuth = sessionStorage.getItem('afterAuthPath'); sessionStorage.removeItem('afterAuthPath'); } catch { /* storage blocked */ }
       const destination = serverRole === 'seller'
         ? await resolveSellerDestinationRemote()
-        : (afterAuth?.startsWith('/') && !afterAuth.startsWith('//') ? afterAuth : getRoleRedirect(serverRole));
+        : (safeRedirectPath(afterAuth) ?? getRoleRedirect(serverRole));
       navigate(destination, { replace: true });
       window.location.reload();
     } catch (err) {

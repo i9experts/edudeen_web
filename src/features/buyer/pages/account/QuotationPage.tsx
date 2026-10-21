@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { safeHttpUrl } from '@/utils/safeRedirect';
 import { useParams } from 'react-router-dom';
 import { Printer } from 'lucide-react';
 import { EdudeenLogo } from '@/components/comman/ui/EdudeenLogo';
@@ -94,7 +95,7 @@ export function QuotationPage() {
           <section className="mt-6">
             <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-slate mb-1">Purchase order</p>
             {q.purchaseOrderNumber && <p className="text-graphite">PO number: <span className="font-mono">{q.purchaseOrderNumber}</span></p>}
-            {q.purchaseOrderUrl && <p className="text-graphite print:hidden"><a href={q.purchaseOrderUrl} target="_blank" rel="noopener noreferrer" className="text-brand-orange underline">View purchase order file</a></p>}
+            {safeHttpUrl(q.purchaseOrderUrl) && <p className="text-graphite print:hidden"><a href={safeHttpUrl(q.purchaseOrderUrl)} target="_blank" rel="noopener noreferrer" className="text-brand-orange underline">View purchase order file</a></p>}
           </section>
         )}
         {q.offer?.note && (

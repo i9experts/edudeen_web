@@ -15,7 +15,7 @@ const AVATAR_PALETTE = [
   ['#FFF4E5', '#B36200'], ['#F1EEFB', '#5B3EC4'], ['#E5F4FB', '#1A6A8A'],
 ];
 function avatarStyle(name: string) {
-  const idx = name.charCodeAt(0) % AVATAR_PALETTE.length;
+  const idx = (name.charCodeAt(0) || 0) % AVATAR_PALETTE.length;
   const [bg, color] = AVATAR_PALETTE[idx];
   return { bg, color };
 }
@@ -147,7 +147,7 @@ function RatingSummaryCard({
 
         <div className="flex-1 flex flex-col gap-[7px] min-w-0 lg:border-s lg:border-bone lg:ps-8">
           {(['5', '4', '3', '2', '1'] as const).map(star => {
-            const count = stats.ratingBreakdown[star] ?? 0;
+            const count = stats.ratingBreakdown?.[star] ?? 0;
             const pct = stats.totalReviews > 0 ? Math.round((count / stats.totalReviews) * 100) : 0;
             const active = ratingFilter === Number(star);
             return (
@@ -232,8 +232,8 @@ interface ReviewCardProps {
   onOpenPhoto: (index: number) => void;
 }
 function ReviewCard({ review: r, storeName, onToggleHelpful, onEdit, onDelete, onOpenPhoto }: ReviewCardProps) {
-  const av = avatarStyle(r.customerName);
-  const initials = r.isOwn ? 'Y' : r.customerName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  const av = avatarStyle(r.customerName ?? '');
+  const initials = r.isOwn ? 'Y' : (r.customerName ?? 'Customer').split(' ').filter(Boolean).map(w => w[0]).join('').slice(0, 2).toUpperCase() || 'C';
 
   return (
     <div className={`rounded-2xl p-4 sm:p-5 bg-white border transition-colors hover:border-slate/30 ${r.isOwn ? 'bg-brand-pale-orange/40 border-brand-orange/30' : 'border-bone'
@@ -347,6 +347,7 @@ export function ProductReviewsSection({ productId, storeName, canReview }: Produ
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
+    setError('');
     // Fetched once (a generous batch) per product; rating/sort/photo filtering and
     // pagination below all happen client-side against this already-fetched set.
     apiGetProductReviews(productId, { limit: FETCH_LIMIT })

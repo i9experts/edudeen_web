@@ -17,24 +17,28 @@ const Ctx = createContext<ActiveStoreContextValue | null>(null);
 export function ActiveStoreProvider({ children }: { children: ReactNode }) {
   const { stores, loading } = useMyStores();
   const [activeStoreId, setActiveStoreId] = useState<string>(
-    () => localStorage.getItem(STORAGE_KEY) ?? 'all'
+    () => { try { return localStorage.getItem(STORAGE_KEY) ?? 'all'; } catch { return 'all'; } }
   );
 
   // Once the shared store list resolves, drop a stale persisted store id
   // (e.g. a store that was deleted, or belongs to a stale cached session).
   useEffect(() => {
     if (loading) return;
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved && saved !== 'all' && !stores.find(s => s._id === saved)) {
-      setActiveStoreId('all');
-      localStorage.removeItem(STORAGE_KEY);
-    }
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved && saved !== 'all' && !stores.find(s => s._id === saved)) {
+        setActiveStoreId('all');
+        localStorage.removeItem(STORAGE_KEY);
+      }
+    } catch { /* storage blocked */ }
   }, [loading, stores]);
 
   const switchStore = useCallback((id: string) => {
     setActiveStoreId(id);
-    if (id === 'all') localStorage.removeItem(STORAGE_KEY);
-    else              localStorage.setItem(STORAGE_KEY, id);
+    try {
+      if (id === 'all') localStorage.removeItem(STORAGE_KEY);
+      else              localStorage.setItem(STORAGE_KEY, id);
+    } catch { /* storage blocked */ }
   }, []);
 
   const activeStore =

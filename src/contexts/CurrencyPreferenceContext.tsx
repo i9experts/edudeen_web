@@ -52,7 +52,8 @@ const Ctx = createContext<CurrencyPreferenceContextValue | null>(null);
 
 export function CurrencyPreferenceProvider({ children }: { children: ReactNode }) {
   const [currency, setCurrencyState] = useState<SupportedCurrency>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
+    let saved: string | null = null;
+    try { saved = localStorage.getItem(STORAGE_KEY); } catch { /* storage blocked */ }
     return saved === 'PKR' || saved === 'USD' ? saved : detectDefaultCurrency();
   });
   const [rates, setRates] = useState<CurrentRatesMap>({});
@@ -77,13 +78,13 @@ export function CurrencyPreferenceProvider({ children }: { children: ReactNode }
     const user = TokenStorage.getUser<{ currencyPreference?: SupportedCurrency | null }>();
     if (user?.currencyPreference === 'PKR' || user?.currencyPreference === 'USD') {
       setCurrencyState(user.currencyPreference);
-      localStorage.setItem(STORAGE_KEY, user.currencyPreference);
+      try { localStorage.setItem(STORAGE_KEY, user.currencyPreference); } catch { /* storage blocked */ }
     }
   }, []);
 
   const setCurrency = useCallback((value: SupportedCurrency) => {
     setCurrencyState(value);
-    localStorage.setItem(STORAGE_KEY, value);
+    try { localStorage.setItem(STORAGE_KEY, value); } catch { /* storage blocked */ }
     if (TokenStorage.isLoggedIn()) {
       apiEditProfile({ currencyPreference: value }).catch(() => {
         // Best-effort — the local choice still applies to this device/browser

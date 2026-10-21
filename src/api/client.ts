@@ -165,12 +165,14 @@ client.interceptors.response.use(
     // above — there, a 401 is the expected "wrong credentials/OTP/token"
     // response for that one request, and must show inline on the form.
     const isAuthAttempt = AUTH_ATTEMPT_PATHS.some(p => err.config?.url?.includes(p));
-    if (err.response?.status === 401 && !isAuthAttempt) {
+    // A wrong *current password* on change-password is also a rejected attempt, not an expired session.
+    const isWrongCurrentPassword = !!err.config?.url?.includes('/api/users/change-password') && /current password/i.test(String(err.response?.data?.message ?? ''));
+    if (err.response?.status === 401 && !isAuthAttempt && !isWrongCurrentPassword) {
       deleteAuthCookie('accessToken');
       deleteAuthCookie('refreshToken');
       deleteAuthCookie('user');
       deleteAuthCookie('authRemember');
-      sessionStorage.removeItem('authCtx');
+      try { sessionStorage.removeItem('authCtx'); } catch { /* storage blocked */ }
       // Carries the page the user was on back through login so a session
       // expiring mid-task doesn't strand them on the role's default
       // dashboard afterward — LoginPage/AdminLoginPage read this back.

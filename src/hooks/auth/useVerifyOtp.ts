@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiVerifyOtp, AuthContext, TokenStorage, LastRolePreference, RememberedAccount, getRoleRedirect, type AppRole } from '@/api/services/auth';
+import { safeRedirectPath } from '@/utils/safeRedirect';
 import { resolveSellerDestinationRemote } from '@/utils/sellerRouting';
 
 export function useVerifyOtp() {
@@ -39,7 +40,7 @@ export function useVerifyOtp() {
       // ever bounce through /login.
       let afterAuth: string | null = null;
       try { afterAuth = sessionStorage.getItem('afterAuthPath'); sessionStorage.removeItem('afterAuthPath'); } catch { /* storage blocked */ }
-      const destination = role === 'seller' ? await resolveSellerDestinationRemote() : (afterAuth?.startsWith('/') && !afterAuth.startsWith('//') ? afterAuth : getRoleRedirect(role));
+      const destination = role === 'seller' ? await resolveSellerDestinationRemote() : (safeRedirectPath(afterAuth) ?? getRoleRedirect(role));
       navigate(destination, { replace: true });
     } catch (err) {
       const e = err as Error & { code?: string; attemptsLeft?: number };

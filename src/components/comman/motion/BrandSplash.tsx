@@ -26,12 +26,12 @@ export function BrandSplash() {
     if (typeof window === 'undefined') return false;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return false;
     if (import.meta.env.DEV) return true;
-    return sessionStorage.getItem(FLAG) !== '1';
+    try { return sessionStorage.getItem(FLAG) !== '1'; } catch { return false; }
   });
 
   useEffect(() => {
     if (!visible) return;
-    if (!import.meta.env.DEV) sessionStorage.setItem(FLAG, '1');
+    if (!import.meta.env.DEV) { try { sessionStorage.setItem(FLAG, '1'); } catch { /* storage blocked */ } }
     const t = setTimeout(() => setVisible(false), ENTER_MS + HOLD_MS);
     return () => clearTimeout(t);
   }, [visible]);

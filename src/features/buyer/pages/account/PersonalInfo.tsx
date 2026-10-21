@@ -40,7 +40,7 @@ export function PersonalInfo() {
 
   useEffect(() => {
     if (!profile) return;
-    const parts = profile.name.split(' ');
+    const parts = (profile.name ?? '').split(' ');
     setFirstName(parts[0] ?? '');
     setLastName(parts.slice(1).join(' '));
     setPhone(profile.phone ?? '');

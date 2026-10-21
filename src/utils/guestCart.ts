@@ -17,7 +17,7 @@ export function getGuestCartItems(): GuestCartItem[] {
 }
 
 function saveGuestCartItems(items: GuestCartItem[]): void {
-  localStorage.setItem(GUEST_CART_KEY, JSON.stringify(items));
+  try { localStorage.setItem(GUEST_CART_KEY, JSON.stringify(items)); } catch { /* storage blocked */ }
 }
 
 export function addGuestCartItem(productId: string, productVariantId: string, type?: 'physical' | 'digital', quantity = 1): GuestCartItem[] {
@@ -50,5 +50,5 @@ export function removeGuestCartItem(productVariantId: string): GuestCartItem[] {
 }
 
 export function clearGuestCart(): void {
-  localStorage.removeItem(GUEST_CART_KEY);
+  try { localStorage.removeItem(GUEST_CART_KEY); } catch { /* storage blocked */ }
 }

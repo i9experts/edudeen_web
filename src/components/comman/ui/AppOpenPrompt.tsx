@@ -38,12 +38,12 @@ const DISMISS_KEY = 'edudeen_app_open_prompt_dismissed';
  */
 export function AppOpenPrompt() {
   const PLAY_STORE_URL = useGooglePlayUrl() || GOOGLE_PLAY_DEFAULT;
-  const [dismissed, setDismissed] = useState(() => sessionStorage.getItem(DISMISS_KEY) === '1');
+  const [dismissed, setDismissed] = useState(() => { try { return sessionStorage.getItem(DISMISS_KEY) === '1'; } catch { return false; } });
 
   if (dismissed || isIOS()) return null;
 
   const close = () => {
-    sessionStorage.setItem(DISMISS_KEY, '1');
+    try { sessionStorage.setItem(DISMISS_KEY, '1'); } catch { /* storage blocked */ }
     setDismissed(true);
   };
 

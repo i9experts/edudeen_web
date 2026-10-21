@@ -526,6 +526,8 @@ export function CheckoutPage() {
   const [initiatePaymentErr,  setInitiatePaymentErr]  = useState('');
   const [pollingStatus,       setPollingStatus]       = useState(false);
   const pollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pollGiveUp = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const placeInFlight = useRef(false);
 
   // Coupon
   const [couponInput,   setCouponInput]   = useState('');
@@ -680,13 +682,15 @@ export function CheckoutPage() {
   };
 
   // Stop any in-flight poll on unmount (e.g. buyer navigates away mid-confirmation).
-  useEffect(() => () => { if (pollTimer.current) clearTimeout(pollTimer.current); }, []);
+  useEffect(() => () => { if (pollTimer.current) clearTimeout(pollTimer.current); if (pollGiveUp.current) clearTimeout(pollGiveUp.current); }, []);
 
   // Stripe confirmed the PaymentIntent client-side — the order itself is created
   // server-side (webhook, or this poll acting as a fallback for local dev / slow
   // webhook delivery). Poll until the order shows up, then hand off to Order Success.
   const handleStripeConfirmed = () => {
     if (!checkout) return;
+    if (pollTimer.current) clearTimeout(pollTimer.current);
+    if (pollGiveUp.current) clearTimeout(pollGiveUp.current);
     setPollingStatus(true);
     setPlaceError('');
     let stopped = false;
@@ -696,12 +700,16 @@ export function CheckoutPage() {
         const res = await apiGetPaymentStatus(checkout._id);
         if (stopped) return;
         if (res.data.status === 'completed') {
+          stopped = true;
+          if (pollGiveUp.current) clearTimeout(pollGiveUp.current);
           setPollingStatus(false);
           await finishCheckoutCart();
           navigate(`/order-success?checkout=${checkout._id}`, { state: { orders: res.data.orders } });
           return;
         }
         if (res.data.status === 'failed') {
+          stopped = true;
+          if (pollGiveUp.current) clearTimeout(pollGiveUp.current);
           setPollingStatus(false);
           setPlaceError('Payment could not be confirmed. Please try again.');
           return;
@@ -715,7 +723,7 @@ export function CheckoutPage() {
     // Stop waiting after ~30s so the buyer isn't stuck on a spinner forever —
     // the payment likely succeeded (Stripe already confirmed it), it just means
     // order finalization is taking unusually long; direct them to their orders.
-    setTimeout(() => {
+    pollGiveUp.current = setTimeout(() => {
       if (!stopped) {
         stopped = true;
         if (pollTimer.current) clearTimeout(pollTimer.current);
@@ -903,6 +911,8 @@ export function CheckoutPage() {
   // handleStripeConfirmed instead, since it has its own form/submit button.
   const handlePlaceOrder = async () => {
     if (!checkout || (selectedMethod !== 'cash_on_delivery' && selectedMethod !== 'free')) return;
+    if (placeInFlight.current) return; // a fast double-tap must not send two requests before the button re-renders as loading
+    placeInFlight.current = true;
     setPlacing(true);
     setPlaceError('');
     try {
@@ -914,6 +924,7 @@ export function CheckoutPage() {
     } catch (err) {
       setPlaceError(err instanceof Error ? err.message : 'Failed to place order. Please try again.');
     } finally {
+      placeInFlight.current = false;
       setPlacing(false);
     }
   };

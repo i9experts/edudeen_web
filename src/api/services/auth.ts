@@ -34,7 +34,7 @@ export const TokenStorage = {
     deleteAuthCookie('refreshToken');
     deleteAuthCookie('user');
     deleteAuthCookie('authRemember');
-    sessionStorage.removeItem('authCtx');
+    try { sessionStorage.removeItem('authCtx'); } catch { /* storage blocked */ }
     // Mirror of the login event in save() — lets account-scoped state
     // (wishlist, cart) drop the previous user's data without a page reload.
     window.dispatchEvent(new Event('edudeen:auth-logout'));
@@ -43,7 +43,8 @@ export const TokenStorage = {
   getRefresh()   { return getAuthCookie('refreshToken'); },
   getUser<T = Record<string, unknown>>(): T | null {
     const u = getAuthCookie('user');
-    return u ? (JSON.parse(u) as T) : null;
+    if (!u) return null;
+    try { return JSON.parse(u) as T; } catch { return null; } // corrupted cookie must not crash the app
   },
   isLoggedIn()   { return !!getAuthCookie('accessToken'); },
   /** Role of the saved session user, or null when unknown. */
@@ -85,7 +86,8 @@ export function getRoleRedirect(role: AppRole): string {
 const LAST_ROLE_KEY = 'edudeen_last_role';
 export const LastRolePreference = {
   get(): AppRole {
-    const stored = localStorage.getItem(LAST_ROLE_KEY);
+    let stored: string | null = null;
+    try { stored = localStorage.getItem(LAST_ROLE_KEY); } catch { /* storage unavailable */ }
     return stored === 'seller' || stored === 'admin' ? stored : 'user';
   },
   set(role: AppRole) {
@@ -151,13 +153,15 @@ export interface AuthCtx {
 
 export const AuthContext = {
   set(data: AuthCtx) {
-    sessionStorage.setItem('authCtx', JSON.stringify(data));
+    try { sessionStorage.setItem('authCtx', JSON.stringify(data)); } catch { /* storage blocked */ }
   },
   get(): AuthCtx | null {
-    const s = sessionStorage.getItem('authCtx');
-    return s ? (JSON.parse(s) as AuthCtx) : null;
+    try {
+      const s = sessionStorage.getItem('authCtx');
+      return s ? (JSON.parse(s) as AuthCtx) : null;
+    } catch { return null; }
   },
-  clear() { sessionStorage.removeItem('authCtx'); },
+  clear() { try { sessionStorage.removeItem('authCtx'); } catch { /* storage blocked */ } },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────

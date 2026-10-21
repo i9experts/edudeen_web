@@ -511,6 +511,8 @@ export function ProductDetail() {
   const memberList = memberShown != null && activeVariant?.listPrice != null ? convert(activeVariant.listPrice, activeVariant.currency) : null;
 
   useEffect(() => { setQty(1); }, [activeVariant?._id]);
+  // Same route element is reused when the buyer opens another product from a rail: never carry the old variant over.
+  useEffect(() => { setSelectedVariant(null); setAlsoBought({ basis: 'similar', products: [] }); setFollowing(false); }, [product?._id]);
 
   // Recently viewed — kept on this device, and on the account when signed in
   // (so it follows the buyer across devices); shown in the search dropdown.

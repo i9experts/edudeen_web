@@ -163,7 +163,7 @@ export function CartPage() {
   const { isPremium, showTeaser } = usePremiumView();
   const memberLine = (it: (typeof items)[number]) => (isPremium && it.premiumUnitPrice != null && it.premiumItemTotal != null ? { unit: convert(it.premiumUnitPrice, it.currency), total: convert(it.premiumItemTotal, it.currency), list: it.listPrice != null ? convert(it.listPrice, it.currency) : null } : null);
   const premiumSavings = items.reduce((s, it) => { const m = memberLine(it); return m ? s + Math.max(0, convert(it.itemTotal ?? (it.unitPrice ?? it.price ?? 0) * it.quantity, it.currency) - m.total) : s; }, 0);
-  const payableTotal = payablePreMember - premiumSavings;
+  const payableTotal = Math.max(0, payablePreMember - premiumSavings);
 
   return (
     <div className="min-h-screen bg-cream">
@@ -462,13 +462,13 @@ export function CartPage() {
                 {campaignAmount > 0 && (
                   <div className="flex justify-between text-[13px]">
                     <span className="text-success font-medium">{campaign?.name ?? 'Sale'}</span>
-                    <span className="text-success font-semibold">-{formatPrice(Math.round(campaignAmount), displayCurrency)}</span>
+                    <span className="text-success font-semibold">-{formatPrice(campaignAmount, displayCurrency)}</span>
                   </div>
                 )}
                 {premiumSavings > 0 && (
                   <div className="flex justify-between text-[13px]">
                     <span className="text-[#8a6100] font-medium">Premium savings</span>
-                    <span className="text-[#8a6100] font-semibold">-{formatPrice(Math.round(premiumSavings), displayCurrency)}</span>
+                    <span className="text-[#8a6100] font-semibold">-{formatPrice(premiumSavings, displayCurrency)}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-[13px]">
@@ -485,7 +485,7 @@ export function CartPage() {
 
               <div className="flex justify-between text-[16px] font-bold">
                 <span className="text-carbon">Total</span>
-                {loading ? <SkeletonBox width={80} height={18} /> : <span className="text-carbon">{formatPrice(Math.round(payableTotal), displayCurrency)}</span>}
+                {loading ? <SkeletonBox width={80} height={18} /> : <span className="text-carbon">{formatPrice(payableTotal, displayCurrency)}</span>}
               </div>
 
               {/* ── Checkout ── One order for the whole cart, mixed physical +
@@ -587,7 +587,7 @@ export function CartPage() {
         <div className="fixed bottom-[64px] inset-x-0 z-40 lg:hidden bg-white border-t border-bone px-4 py-3 flex items-center gap-3">
           <div className="min-w-0 flex-1">
             <p className="text-[12px] text-slate leading-none mb-[3px]">Total</p>
-            <p className="text-[17px] font-extrabold text-carbon leading-none truncate">{formatPrice(Math.round(payableTotal), displayCurrency)}</p>
+            <p className="text-[17px] font-extrabold text-carbon leading-none truncate">{formatPrice(payableTotal, displayCurrency)}</p>
           </div>
           <Button
             variant="primary" size="md" className="justify-center flex-1 max-w-[220px]"

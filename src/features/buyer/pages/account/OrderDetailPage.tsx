@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { safeHttpUrl } from '@/utils/safeRedirect';
 import { ProductCoverFallback } from '@/components/comman/marketplace/ProductCoverFallback';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, FileText, Truck, Package, Download, MapPin, CreditCard, MessageSquare, RotateCcw, Ban } from 'lucide-react';
@@ -128,7 +129,7 @@ export function OrderDetailPage() {
             {so.tracking?.trackingNumber && (
               <span className="ms-auto inline-flex items-center gap-1 text-[12px] text-slate">
                 <Truck size={12} /> {so.tracking.carrier} {so.tracking.trackingNumber}
-                {so.tracking.trackingUrl && <a href={so.tracking.trackingUrl} target="_blank" rel="noreferrer" className="text-brand-orange font-semibold ms-1">Track package</a>}
+                {safeHttpUrl(so.tracking.trackingUrl) && <a href={safeHttpUrl(so.tracking.trackingUrl)} target="_blank" rel="noreferrer" className="text-brand-orange font-semibold ms-1">Track package</a>}
               </span>
             )}
           </div>
