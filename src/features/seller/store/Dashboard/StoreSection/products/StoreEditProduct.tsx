@@ -135,6 +135,8 @@ export default function StoreEditProduct() {
   // Old products may have no weight: it is only required once the product has one (or the seller types one), so they stay editable.
   const hadWeight = useRef(false);
   const originalName = useRef('');
+  // The attribute list as loaded from the server (null = never loaded): an unchanged list is not sent again on save.
+  const savedAttrs = useRef<string | null>(null);
   const sp = <K extends keyof PhysForm>(k: K, v: PhysForm[K]) => setPhys(f => ({ ...f, [k]: v }));
   const sd = <K extends keyof DigForm> (k: K, v: DigForm[K])  => setDig(f  => ({ ...f, [k]: v }));
 
@@ -199,6 +201,7 @@ export default function StoreEditProduct() {
         const seeded: AttributeValuesState = {};
         for (const a of res.data) seeded[a.attributeDefinitionId] = a.values;
         setAttributeValues(seeded);
+        savedAttrs.current = JSON.stringify(toAttributeInputs(seeded));
       })
       .catch(() => {}); // no existing classification yet — leave the form blank
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -289,14 +292,18 @@ export default function StoreEditProduct() {
         });
         const note = reviewNoticeText(res); if (note) toast.info(note);
         let variant = res.data.variant;
-        if (variantId) {
-          const vRes = await apiUpdateVariant(productId, variantId, {
+        // The variant update and the attribute list are independent writes: send them together (the product edit above validates first).
+        const attrInputs = toAttributeInputs(attributeValues);
+        const attrJson = JSON.stringify(attrInputs);
+        const [vRes] = await Promise.all([
+          variantId ? apiUpdateVariant(productId, variantId, {
             price: Number(phys.price), compareAtPrice: phys.compareAtPrice ? Number(phys.compareAtPrice) : null,
             options: phys.options, stock: Number(phys.stock),
             ...(parseWeightKg(phys.shippingWeight) !== null ? { shippingWeight: `${parseWeightKg(phys.shippingWeight)} kg` } : {}),
-          });
-          variant = vRes.data;
-        }
+          }) : Promise.resolve(null),
+          attrJson === savedAttrs.current ? Promise.resolve(null) : apiSetProductAttributes(productId, attrInputs), // replace-all — also clears any removed values
+        ]);
+        if (vRes) variant = vRes.data;
         updateCachedProduct(storeId, productId, { product: res.data.product, variant });
       } else {
         const toFile = (f: PrivateUploadData) => ({ url: f.publicId, name: f.fileName, size: f.fileSize, mimeType: f.mimeType });
@@ -322,8 +329,10 @@ export default function StoreEditProduct() {
         updateCachedProduct(storeId, productId, { product: res.data.product, variant: res.data.variant });
       }
 
-      const attrInputs = toAttributeInputs(attributeValues);
-      await apiSetProductAttributes(productId, attrInputs); // replace-all — also clears any removed values
+      if (pType !== 'physical') {
+        const attrInputs = toAttributeInputs(attributeValues);
+        if (JSON.stringify(attrInputs) !== savedAttrs.current) await apiSetProductAttributes(productId, attrInputs); // replace-all — also clears any removed values
+      }
 
       guard.allow.current = true;
       navigate(`/store/${storeId}/products`);
@@ -454,7 +463,7 @@ export default function StoreEditProduct() {
       </div>
 
       <ActionBar
-        saving={saving} primaryLabel="Save changes" onPrimary={() => handleSubmit()} onCancel={() => navigate(-1)}
+        saving={saving} primaryLabel="Save changes" onPrimary={() => handleSubmit()} onCancel={() => navigate(`/store/${storeId}/products`)}
         saveNote={saving ? 'Saving…' : touched ? 'Unsaved changes' : 'No changes yet'} missing={issues.length} onShowMissing={() => { wiz.setAttempted(true); wiz.go(5); }}
       />
 

@@ -383,10 +383,21 @@ export function apiEditDigitalProduct(_id: string, payload: EditDigitalPayload) 
   );
 }
 
+// Identical GETs fired while the first is still in flight (two components, React StrictMode's double effect)
+// share one network request. Nothing is cached once it settles, so later calls always read fresh data.
+const inflightGets = new Map<string, Promise<unknown>>();
+function dedupeGet<T>(key: string, run: () => Promise<T>): Promise<T> {
+  const hit = inflightGets.get(key);
+  if (hit) return hit as Promise<T>;
+  const p = run().finally(() => { inflightGets.delete(key); });
+  inflightGets.set(key, p);
+  return p;
+}
+
 export function apiGetMyProductById(id: string) {
-  return client.get<never, ApiResponse<GetProductData>>(
+  return dedupeGet(`my-product:${id}`, () => client.get<never, ApiResponse<GetProductData>>(
     ENDPOINTS.PRODUCT.GET_MY_PRODUCT_BY_ID(id),
-  );
+  ));
 }
 
 export function apiDeleteProduct(id: string) {
@@ -425,9 +436,8 @@ export function apiGetStoreInventory(
   const params = new URLSearchParams({ page: String(page), limit: String(limit) });
   if (filters.status) params.set('status', filters.status);
   if (filters.q?.trim()) params.set('q', filters.q.trim());
-  return client.get<never, ApiResponse<GetInventoryData>>(
-    `${ENDPOINTS.INVENTORY.GET_STORE_INVENTORY(storeId)}?${params.toString()}`,
-  );
+  const url = `${ENDPOINTS.INVENTORY.GET_STORE_INVENTORY(storeId)}?${params.toString()}`;
+  return dedupeGet(url, () => client.get<never, ApiResponse<GetInventoryData>>(url));
 }
 
 /** GET /api/inventory/low-stock-summary/:storeId — seller/admin only. */

@@ -275,8 +275,8 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
           )
         ) : (
           <div className="absolute inset-0 overflow-hidden rounded-[20px] border border-black/10">
-            <div className="gradient-drift absolute inset-0 bg-gradient-to-br from-brand-orange via-[#4E8F28] to-[#66AD36]" />
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(255,255,255,0.18),transparent_55%)]" />
+            <div className="gradient-drift absolute inset-0 bg-gradient-to-r from-[#0F3354] via-[#174771] to-[#2F6AA8]" />
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(255,255,255,0.14),transparent_55%)]" />
             <div className="pointer-events-none absolute inset-0 opacity-[0.08] bg-[radial-gradient(circle_at_1px_1px,#ffffff_1px,transparent_0)] bg-[length:16px_16px]" />
             <div className="pointer-events-none absolute -top-10 start-[38%] size-40 rounded-full bg-white/10 blur-3xl" />
             <div className="pointer-events-none absolute -bottom-14 end-[20%] size-48 rounded-full bg-[#0B2A45]/25 blur-3xl" />
@@ -433,39 +433,35 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
             key={campaign._id}
             to={`/?campaign=${encodeURIComponent(campaign._id)}`}
             aria-label={`${campaign.name} — ${discountHeadline}. Shop the sale`}
-            className="no-underline campaign-fade group relative z-[1] flex w-full h-full flex-col gap-3 border-none bg-transparent text-start text-white outline-none cursor-pointer px-5 py-4 lg:flex-row lg:items-center lg:gap-6 lg:px-7 lg:py-0 lg:min-h-[112px]"
+            className="no-underline campaign-fade group relative z-[1] flex w-full h-full flex-wrap items-center gap-x-4 gap-y-2 border-none bg-transparent text-start text-white outline-none cursor-pointer px-4 py-2.5 lg:flex-nowrap lg:gap-5 lg:px-6 lg:py-0 lg:min-h-[52px]"
           >
-            {/* LEFT — one tidy block: label, headline, name + description on one line. */}
-            <div className="flex min-w-0 flex-1 flex-col justify-center gap-[3px]">
-              <span className="inline-flex w-fit items-center gap-[5px] rounded-full bg-white/15 px-[10px] py-[3px] text-[12px] font-semibold uppercase tracking-[0.08em] text-white ring-1 ring-white/25">
-                <Zap size={11} className="fill-white" /> Limited time{campaign.sponsorType === 'platform' ? ' · Edudeen' : ''}
+            {/* One thin row: badge + headline + campaign name on the left, timer + CTA on the right. */}
+            <div className="flex w-full min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5 lg:w-auto lg:flex-1 lg:flex-nowrap">
+              <span className="inline-flex shrink-0 items-center gap-[5px] rounded-full bg-[#F5B301] px-[9px] py-[3px] text-[12px] font-bold uppercase tracking-[0.08em] text-[#3a2a00]">
+                <Zap size={11} className="fill-[#3a2a00]" /> Limited time
               </span>
-              <span className="font-serif text-[24px] sm:text-[27px] font-bold leading-[1.1] tracking-[-0.01em] text-white">
+              <span className="shrink-0 font-serif text-[18px] sm:text-[20px] font-bold leading-none tracking-[-0.01em] text-white">
                 {discountHeadline}
               </span>
-              <p className="truncate text-[13px] text-white/90">
+              <p className="hidden min-w-0 truncate text-[13px] text-white/85 md:block">
                 <span className="font-semibold">{campaign.name}</span>
-                {campaign.description ? <span className="text-white/75"> · {campaign.description}</span> : null}
+                {campaign.description ? <span className="text-white/70"> · {campaign.description}</span> : null}
               </p>
-              {campaign.earlyAccess ? <EarlyAccessChip startDate={campaign.startDate} onDark className="w-fit" /> : metaText && <p className="hidden sm:block truncate text-[12px] text-white/65">{metaText}</p>}
+              {campaign.earlyAccess && <EarlyAccessChip startDate={campaign.startDate} onDark className="hidden w-fit lg:inline-flex" />}
             </div>
 
-            {/* MIDDLE — small product thumbnail, only when the campaign has an image (no empty glass panel). */}
-            {campaign.bannerImage && (
-              <div className="relative hidden lg:block h-[84px] w-[150px] shrink-0 overflow-hidden rounded-xl ring-1 ring-white/25 bg-white/10">
-                <CampaignImage src={campaign.bannerImage} alt={campaign.name} fit="cover" />
+            <div className="flex w-full flex-wrap items-center justify-between gap-x-3 gap-y-2 lg:w-auto lg:shrink-0 lg:flex-nowrap lg:justify-end">
+              <div className="flex items-center gap-[6px]" aria-label="Time left">
+                <span className="hidden text-[12px] font-semibold uppercase tracking-[0.1em] text-white/70 sm:inline">Ends in</span>
+                <div className="flex items-center gap-[3px]">
+                  <CountdownBoxes countdown={countdown} />
+                </div>
               </div>
-            )}
-
-            {/* RIGHT — countdown + CTA on one row/column pair. */}
-            <div className="flex shrink-0 items-center justify-between gap-4 lg:flex-col lg:items-end lg:justify-center lg:gap-[8px]">
-              <div className="countdown-pulse flex items-center gap-[4px]" aria-label="Time left">
-                <CountdownBoxes countdown={countdown} />
-              </div>
-              <span className="inline-flex shrink-0 items-center gap-[6px] whitespace-nowrap rounded-full bg-white px-5 py-[8px] text-[13px] font-bold text-brand-deep-orange shadow-sm transition-[background-color,transform] duration-150 group-hover:bg-cream group-hover:scale-[1.03]">
+              <span className="inline-flex shrink-0 items-center gap-[5px] whitespace-nowrap rounded-full bg-white px-4 py-[6px] text-[13px] font-bold text-[#0F3354] transition-[background-color,transform] duration-150 group-hover:bg-cream group-hover:scale-[1.03]">
                 Shop the sale <ArrowRight size={13} className="transition-transform duration-150 group-hover:translate-x-0.5" />
               </span>
-            </div>          </Link>
+            </div>
+          </Link>
         )}
 
         {/* Carousel indicators — a bit bigger/more visible than a subtle hairline,

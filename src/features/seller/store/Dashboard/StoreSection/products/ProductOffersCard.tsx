@@ -160,6 +160,11 @@ export function ProductOffersCard({
                   value={pct} onChange={e => setPremiumPct(e.target.value)} placeholder="e.g. 10" className={inputCls}
                 />
                 {error && <p role="alert" className="text-[12px] text-red-600 mt-1">{error}</p>}
+                {minError && !rangeError && minReq != null && Math.ceil(minReq * 10) / 10 <= 50 && (
+                  <button type="button" onClick={() => setPremiumPct(String(Math.ceil(minReq * 10) / 10))} className="mt-1.5 px-3 py-1.5 rounded-lg bg-brand-royal text-white text-[12px] font-semibold border-none cursor-pointer">
+                    Set to {String(Math.ceil(minReq * 10) / 10)}%
+                  </button>
+                )}
               </div>
             )}
             {!custom && storePremiumPct > 0 && minError && <p role="alert" className="text-[12px] text-red-600 m-0">{minError}</p>}

@@ -2,8 +2,18 @@ import { useT } from '@/contexts/languageCtx';
 import { EmailCapture } from './EmailCapture';
 
 /** Full-width newsletter band at the end of the home page (the footer's own newsletter block is switched off here so there is only one). */
-export function HomeNewsletter() {
+export function HomeNewsletter({ embedded = false }: { embedded?: boolean }) {
   const t = useT();
+  if (embedded) {
+    return (
+      <section className="h-full rounded-[14px] border border-bone bg-[#f5f8fa] px-5 py-6 flex flex-col justify-center" aria-label={t('Newsletter')}>
+        <p className="text-[12px] font-bold tracking-[0.15em] uppercase text-brand-royal mb-2">{t('Stay in the loop')}</p>
+        <h2 className="font-serif font-normal text-[20px] text-carbon leading-tight m-0">{t('Get new resources & deals before anyone else')}</h2>
+        <p className="text-[13px] text-slate mt-2 mb-4">{t('New arrivals, sale alerts and price-drop updates in your inbox. Unsubscribe any time.')}</p>
+        <EmailCapture source="home" submitLabel="Subscribe" successText="You're subscribed — welcome aboard!" />
+      </section>
+    );
+  }
   return (
     <section className="bg-[#f5f8fa] border-t border-b border-bone" aria-label={t('Newsletter')}>
       <div className="max-w-[1480px] mx-auto px-[5%] md:px-[4%] py-9 flex flex-col lg:flex-row lg:items-center justify-between gap-6">

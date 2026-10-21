@@ -769,7 +769,14 @@ function HomeLanding() {
         </section>
 
         {/* ── Platform stats - the single stats block; real numbers only past the admin's thresholds ── */}
-        <PlatformStatsSection />
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 mb-12 items-stretch">
+          <div className="lg:col-span-8 [&>section]:h-full [&>section]:flex [&>section]:flex-col [&>section]:justify-center">
+            <PlatformStatsSection className="mb-0" />
+          </div>
+          <div className="lg:col-span-4">
+            <HomeNewsletter embedded />
+          </div>
+        </div>
 
         {/* ── Real reviews ── */}
         {(testimonialsLoading || testimonials.length > 0) && (
@@ -817,9 +824,6 @@ function HomeLanding() {
 
 
       </main>
-
-      {/* ── Newsletter (the one sign-up block; the footer's own is switched off here) ── */}
-      <HomeNewsletter />
 
       <Footer showNewsletter={false} />
     </div>

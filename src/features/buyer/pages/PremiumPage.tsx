@@ -1,7 +1,7 @@
 import { formatPrice } from '@/utils/formatPrice';
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Baby, BadgeDollarSign, Check, Crown, Gift, Headphones, Timer, type LucideIcon } from 'lucide-react';
+import { Baby, BadgeDollarSign, Check, Crown, Gift, Headphones, RotateCcw, ShieldCheck, Timer, type LucideIcon } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { Button } from '@/components/comman/ui/Button';
 import { Footer, Accordion } from '@/components/comman/ui';
@@ -138,13 +138,39 @@ export function PremiumPage() {
               </Button>
             )}
           </div>
-          <div className="grid grid-cols-2 gap-3" aria-hidden>
-            {[{ t: 'Member prices', c: '#FFF4DC' }, { t: 'Early access', c: '#E4EEF9' }, { t: 'Monthly coupon', c: '#E3F4EA' }, { t: 'Priority support', c: '#FCE8EE' }].map(x => (
-              <div key={x.t} className="rounded-2xl p-5 h-[110px] flex items-end text-carbon text-[14px] font-bold" style={{ background: x.c }}>{x.t}</div>
-            ))}
+          <div className="relative" aria-hidden>
+            <div className="absolute -inset-6 rounded-[32px] opacity-30 blur-2xl" style={{ background: GOLD }} />
+            <div className="relative rounded-3xl bg-white text-carbon p-6 shadow-[0_30px_60px_-24px_rgba(0,0,0,0.55)]">
+              <div className="flex items-center justify-between">
+                <span className="inline-flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-[0.08em] text-[#8a6100]"><Crown size={13} /> Member</span>
+                <span className="text-[12px] font-semibold text-success bg-success-bg px-2 py-[2px] rounded-full">Active</span>
+              </div>
+              <div className="mt-4 rounded-2xl border border-bone p-4">
+                <p className="text-[12px] text-slate">Example product</p>
+                <p className="text-[15px] font-bold mt-0.5">Grade 5 Maths Worksheets</p>
+                <div className="flex items-baseline gap-2 mt-2">
+                  <span className="text-[24px] font-extrabold" style={{ fontFamily: SERIF }}>Member price</span>
+                  <span className="text-[12px] bg-[#fff6d6] text-[#8a6100] font-bold px-2 py-[2px] rounded">Extra savings</span>
+                </div>
+              </div>
+              <ul className="mt-4 grid grid-cols-2 gap-2.5 text-[12.5px] text-charcoal">
+                {['Member prices', 'Early access', 'Monthly coupon', 'Priority support'].map(t => (
+                  <li key={t} className="flex items-center gap-1.5"><Check size={14} className="text-success shrink-0" />{t}</li>
+                ))}
+              </ul>
+            </div>
           </div>
         </div>
       </section>
+
+      {/* Trust strip */}
+      <div className="bg-white border-b border-bone px-4 md:px-10 py-4">
+        <ul className="max-w-[1100px] mx-auto grid grid-cols-1 sm:grid-cols-3 gap-3 text-[13px] text-charcoal">
+          {[{ Icon: ShieldCheck, t: 'Secure bank / wallet payment' }, { Icon: Timer, t: 'Activated within 24 hours' }, { Icon: RotateCcw, t: 'Cancel any time' }].map(({ Icon, t }) => (
+            <li key={t} className="flex items-center justify-center gap-2 font-semibold"><Icon size={16} className="text-brand-royal" aria-hidden />{t}</li>
+          ))}
+        </ul>
+      </div>
 
       {/* Status banners */}
       {(isStaff || needsProof || underReview || (isPremium && membership)) && (
@@ -192,6 +218,26 @@ export function PremiumPage() {
             ))}
           </div>
         )}
+      </section>
+
+      {/* How it works */}
+      <section className="px-4 md:px-10 pb-14">
+        <div className="max-w-[1100px] mx-auto">
+          <h2 className="text-[26px] md:text-[32px] font-bold text-carbon text-center mb-10" style={{ fontFamily: SERIF }}>How it works</h2>
+          <ol className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {[
+              { n: 1, t: 'Choose a plan', d: 'Pick monthly or yearly. Yearly costs less per month.' },
+              { n: 2, t: 'Pay and upload your receipt', d: 'Transfer to Edudeen by bank or wallet and upload the receipt.' },
+              { n: 3, t: 'Start saving', d: 'We activate your membership and member prices appear everywhere you shop.' },
+            ].map(s => (
+              <li key={s.n} className="relative rounded-2xl bg-white border border-bone p-6">
+                <span className="size-9 rounded-full flex items-center justify-center text-[15px] font-bold text-white mb-3" style={{ background: NAVY }}>{s.n}</span>
+                <p className="text-[15px] font-bold text-carbon mb-1">{s.t}</p>
+                <p className="text-[13px] text-slate leading-[1.65]">{s.d}</p>
+              </li>
+            ))}
+          </ol>
+        </div>
       </section>
 
       {/* Plans */}
@@ -250,6 +296,41 @@ export function PremiumPage() {
           )}
         </div>
       </section>
+
+      {/* Free vs Premium */}
+      {top && (
+        <section className="px-4 md:px-10 pb-14">
+          <div className="max-w-[820px] mx-auto">
+            <h2 className="text-[24px] md:text-[28px] font-bold text-carbon text-center mb-8" style={{ fontFamily: SERIF }}>Free vs Premium</h2>
+            <div className="rounded-2xl bg-white border border-bone overflow-hidden">
+              <table className="w-full text-[13px]">
+                <thead>
+                  <tr className="bg-[#f6f8fb] text-start">
+                    <th scope="col" className="text-start px-5 py-3 font-semibold text-slate">Feature</th>
+                    <th scope="col" className="px-4 py-3 font-semibold text-slate">Free</th>
+                    <th scope="col" className="px-4 py-3 font-bold text-[#8a6100]">Premium</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    { f: 'Member prices on selected products', free: false, pro: true },
+                    { f: 'Early access to sales', free: false, pro: top.earlyAccessHours > 0 },
+                    { f: 'Personal monthly coupon', free: false, pro: top.monthlyCouponValue > 0 },
+                    { f: 'Children profiles', free: '8', pro: String(top.childrenLimit) },
+                    { f: 'Priority support', free: false, pro: top.prioritySupport },
+                  ].filter(r => r.pro).map(r => (
+                    <tr key={r.f} className="border-t border-bone">
+                      <td className="px-5 py-3 text-charcoal">{r.f}</td>
+                      <td className="px-4 py-3 text-center text-slate">{typeof r.free === 'string' ? r.free : r.free ? <Check size={16} className="inline text-success" /> : '—'}</td>
+                      <td className="px-4 py-3 text-center font-semibold text-carbon">{typeof r.pro === 'string' ? r.pro : <Check size={16} className="inline text-success" />}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* FAQ */}
       <section className="px-4 md:px-10 pb-16">

@@ -56,8 +56,8 @@ export function PlatformStatsSection({ className = 'mb-12' }: { className?: stri
     { Icon: ShieldCheck, title: 'Secure checkout', sub: 'Payments handled by Edudeen' },
   ];
   return (
-    <section className={`${className} rounded-[14px] border border-bone px-5 py-7 md:py-8`}>
-      <ul className={`m-0 p-0 list-none grid grid-cols-1 ${points.length === 3 ? 'sm:grid-cols-3' : 'sm:grid-cols-2'} gap-5 justify-items-center`}>
+    <section className={`${className} flex h-full flex-col justify-center rounded-[14px] border border-bone px-4 py-6 sm:px-5 md:py-8`}>
+      <ul className={`m-0 p-0 list-none grid grid-cols-1 ${points.length === 3 ? 'sm:grid-cols-3' : 'sm:grid-cols-2'} gap-4 sm:gap-5 justify-items-start sm:justify-items-center`}>
         {points.map(({ Icon, title, sub }) => (
           <li key={title} className="flex items-center gap-3 text-start">
             <span className="size-10 shrink-0 rounded-full bg-brand-pale-orange flex items-center justify-center"><Icon size={18} className="text-brand-royal" /></span>

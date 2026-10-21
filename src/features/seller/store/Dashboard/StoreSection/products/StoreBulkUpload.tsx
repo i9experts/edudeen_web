@@ -1166,7 +1166,7 @@ function RowCard({ row: r, index, issue, conflict, currencyCode, dupOf, currency
           </div>
           <div className="col-span-12">
             <label htmlFor={`d-${r.id}`} className={lab}>Description</label>
-            <textarea id={`d-${r.id}`} disabled={lock} rows={2} className={`${inp} resize-y min-h-[56px] focus:min-h-[130px]`} value={r.description} onChange={e => onChange({ description: e.target.value })} placeholder="Tell buyers what they get (required)" />
+            <textarea id={`d-${r.id}`} disabled={lock} rows={2} className={`${inp} resize-y min-h-[96px]`} value={r.description} onChange={e => onChange({ description: e.target.value })} placeholder="Tell buyers what they get (required)" />
           </div>
         </div>
       )}

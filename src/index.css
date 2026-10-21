@@ -727,3 +727,6 @@
     [dir='rtl'] :where(button, a[href], [role='button'], [role='tab'], summary):not([class*='after:'], [data-no-hit-expand])::after { transform: translate(50%, -50%); }
   }
 }
+/* language switch: no sliding while direction/font flip */
+html.lang-switching *, html.lang-switching *::before, html.lang-switching *::after { transition: none !important; animation-duration: 0s !important; scroll-behavior: auto !important; }
+
