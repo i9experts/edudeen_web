@@ -3,7 +3,7 @@ import { apiGetBuyNowCart, type Cart, type CartItem } from '@/api/services/cart'
 
 export interface BuyNowSelection { productId: string; variantId: string; quantity: number }
 
-interface State { key: string; cart: Cart | null; error: string }
+interface State { key: string; cart: Cart | null; error: string; legacy?: boolean }
 
 /**
  * The cart-shaped view of a Buy Now purchase (checkout page). The server prices the single line with the
@@ -34,11 +34,18 @@ export function useBuyNowCart(sel: BuyNowSelection | null, enabled: boolean) {
           },
         });
       })
-      .catch(err => { if (!cancelled) setState({ key, cart: null, error: err instanceof Error ? err.message : 'Could not load this item.' }); });
+      .catch(err => {
+        if (cancelled) return;
+        const msg = err instanceof Error ? err.message : 'Could not load this item.';
+        // An API that predates the Buy Now endpoint answers 404 "Cannot GET": the page falls back to the cart flow.
+        const legacy = (err as { response?: { status?: number } })?.response?.status === 404 || /Cannot GET/i.test(msg);
+        setState({ key, cart: null, error: legacy ? '' : msg, legacy });
+      });
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
 
   const ready = state.key === key;
-  return { cart: ready ? state.cart : null, loading: !!key && !ready, error: ready ? state.error : '' };
+  const legacy = ready && !!state.legacy;
+  return { cart: ready ? state.cart : null, loading: (!!key && !ready) || legacy, error: ready ? state.error : '', legacy };
 }

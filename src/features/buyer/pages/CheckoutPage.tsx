@@ -4,6 +4,7 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { getStorePagePath } from '@/utils/storefrontUrl';
 import { useCartContext } from '@/contexts/CartContext';
 import { useBuyNowCart } from '@/hooks/useBuyNowCart';
+import { apiAddToCart } from '@/api/services/cart';
 import { TokenStorage } from '@/api/services/auth';
 import { useShippingZones } from '@/hooks/shipping/useShippingZones';
 import { shippingZoneLabel, zonesForAddress, type ShippingZone } from '@/api/services/shipping';
@@ -408,6 +409,18 @@ export function CheckoutPage() {
     ? { productId: buyNowProduct, variantId: buyNowVariant, quantity: Math.min(99, Math.max(1, Number.parseInt(buyNowQtyRaw ?? '1', 10) || 1)) }
     : null;
   const buyNowCart = useBuyNowCart(buyNow, loggedIn);
+  // Older API without the Buy Now endpoint: add the item to the cart and continue with a normal checkout.
+  const legacyBuyNowRef = useRef(false);
+  useEffect(() => {
+    if (!buyNow || !buyNowCart.legacy || legacyBuyNowRef.current) return;
+    legacyBuyNowRef.current = true;
+    const store = searchParams.get('store') ?? undefined;
+    apiAddToCart(buyNow.productId, buyNow.variantId, store, buyNow.quantity)
+      .then(() => refetchCart())
+      .then(() => navigate(store ? `/checkout?store=${encodeURIComponent(store)}` : '/checkout', { replace: true }))
+      .catch(() => navigate('/cart', { replace: true }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [buyNowCart.legacy]);
   const cart = buyNow ? buyNowCart.cart : ctxCart;
   const cartLoading = buyNow ? buyNowCart.loading : ctxCartLoading;
   // Before the checkout exists (steps 1-2) the sidebar shows the cart's own figures in the buyer's display currency,
