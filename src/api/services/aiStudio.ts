@@ -1,4 +1,5 @@
 import client from '../client';
+import { cachedRequest } from './requestCache';
 import { ENDPOINTS } from '../endpoints';
 
 // ── Shared response envelope ──────────────────────────────────────────────────
@@ -45,7 +46,7 @@ export interface AiCreditsOverview {
 }
 
 export function apiGetAiStudioCredits(storeId: string) {
-  return client.get<never, ApiResponse<AiCreditsOverview>>(ENDPOINTS.AI_STUDIO.CREDITS(storeId));
+  return cachedRequest(`ai-credits:${storeId}`,5_000, () => client.get<never, ApiResponse<AiCreditsOverview>>(ENDPOINTS.AI_STUDIO.CREDITS(storeId)));
 }
 
 // ── Generation history ────────────────────────────────────────────────────────

@@ -18,6 +18,7 @@ import {
   type PlatformPlanInvoice, type PlanChangePreview,
 } from '@/api/services/platformPlans';
 import { apiGetAiStudioCredits } from '@/api/services/aiStudio';
+import { NO_PLAN_LABEL, planName } from '@/hooks/store/useStorePlan';
 import { planPriceFor, planYearlySavePct } from '@/utils/planPricing';
 import { confirmSubscriptionPayment } from '@/features/auth/pages/onboard/StripeCardSetup';
 
@@ -327,7 +328,7 @@ export default function StorePlanBilling() {
 
         {entitlements && !current && (
           <div className="bg-white border border-bone rounded-[10px] px-5 py-4">
-            <p className="text-[13px] font-bold text-carbon">Your current plan — {entitlements.currentPlanName}</p>
+            <p className="text-[13px] font-bold text-carbon">Your current plan — {NO_PLAN_LABEL}</p>
             <p className="text-[12px] text-slate mt-[3px]">No active subscription on this store. Choose a plan below to get started.</p>
           </div>
         )}
@@ -336,7 +337,7 @@ export default function StorePlanBilling() {
           <div className="bg-white border border-bone rounded-[10px] px-5 py-4">
             <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
               <div>
-                <p className="text-[13px] font-bold text-carbon">Your current plan — {entitlements.currentPlanName}</p>
+                <p className="text-[13px] font-bold text-carbon">Your current plan — {planName(current)}</p>
                 <p className="text-[12px] text-slate mt-[3px]">
                   {current.amountUSD > 0 ? `${formatPrice(current.amountUSD, 'USD')}/${current.billingInterval === 'yearly' ? 'yr' : 'mo'} · ` : ''}
                   {isExpired ? 'Ended — choose a plan to continue'

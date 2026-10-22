@@ -11,7 +11,6 @@ import { BuyerLayout }  from '@/components/layouts/BuyerLayout';
 import { AccountLayout } from '@/components/layouts/AccountLayout';
 import { PublicLayout } from '@/components/layouts/PublicLayout';
 import { SellerStoreRedirect } from './SellerStoreRedirect';
-import { AdminLayout }  from '@/components/layouts/AdminLayout';
 import { StoreLayout }  from '@/components/layouts/StoreLayout';
 import { RequireRole }  from './RequireRole';
 import { FeatureMaintenance } from '@/components/comman/ui/FeatureMaintenance';
@@ -42,6 +41,8 @@ import { NotFoundPage }         from '@/features/buyer/pages/NotFoundPage';
 
 // ── Lazy helpers ──────────────────────────────────────────────────────────────
 // Seller-only / admin-only entry pages (heavy: Stripe wizard) stay out of the main bundle.
+// Admin shell (+ its admin API services) loads only on /admin routes.
+const AdminLayout = lazy(() => import('@/components/layouts/AdminLayout').then(m => ({ default: m.AdminLayout })));
 const OnboardingPage = lazy(() => import('@/features/auth/pages/onboard/OnboardingPage').then(m => ({ default: m.OnboardingPage })));
 const AdminAcceptInvitePage = lazy(() => import('@/features/auth/pages/admin/AdminAcceptInvitePage').then(m => ({ default: m.AdminAcceptInvitePage })));
 const CollaborationPage = lazy(() => import('@/features/admin/pages/collaboration/CollaborationPage').then(m => ({ default: m.CollaborationPage })));

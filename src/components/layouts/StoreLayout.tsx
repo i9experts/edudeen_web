@@ -12,7 +12,6 @@ import {
 } from 'lucide-react';
 import { EdudeenIcon, EdudeenLogo } from '@/components/comman/ui/EdudeenLogo';
 import { apiGetStoreById, type StoreData } from '@/api/services/store';
-import { apiGetStorePlatformPlan, type StorePlatformSubscription } from '@/api/services/platformPlans';
 import { apiGetAiStudioCredits } from '@/api/services/aiStudio';
 import { useCommandPalette } from '@/hooks/useCommandPalette';
 import { useLogout } from '@/hooks/auth/useLogout';
@@ -22,6 +21,8 @@ import { MoreSheet } from '@/components/comman/ui/MoreSheet';
 import { useLockPageScroll } from '@/hooks/useLockPageScroll';
 import { CommandPalette, type CommandPaletteItem } from '@/components/comman/ui/CommandPalette';
 import { StoreWorkspaceCtx, useStoreWorkspace } from './StoreWorkspaceContext';
+import { SellerStoreRedirect } from '@/router/SellerStoreRedirect';
+import { useStorePlan } from '@/hooks/store/useStorePlan';
 import { useStoreCampaigns } from '@/hooks/store/useStoreCampaigns';
 
 // ── Store Workspace Context ───────────────────────────────────────────────────
@@ -279,20 +280,7 @@ function StoreSidebar({ open, onToggle }: StoreSidebarProps) {
   const navigate     = useNavigate();
   const { pathname, search } = useLocation();
   const { store, storeId, loading } = useStoreWorkspace();
-  const [planName, setPlanName] = useState<string | null>(null);
-  const [planLoaded, setPlanLoaded] = useState(false);
-  useEffect(() => {
-    if (!storeId) return;
-    let cancelled = false;
-    apiGetStorePlatformPlan(storeId).then(res => {
-      if (cancelled) return;
-      const sub = res.data;
-      const left = sub?.status === 'trialing' && sub.trialEndsAt ? Math.max(0, Math.ceil((new Date(sub.trialEndsAt).getTime() - Date.now()) / 86400000)) : null;
-      setPlanName(sub?.plan?.name ? `${sub.plan.name}${left != null ? ` (trial: ${left}d left)` : ''}` : null);
-      setPlanLoaded(true);
-    }).catch(() => {});
-    return () => { cancelled = true; };
-  }, [storeId]);
+  const { label: planText, loaded: planLoaded, hasPlan } = useStorePlan(storeId);
   const { open: paletteOpen, setOpen: setPaletteOpen } = useCommandPalette();
   const paletteItems = buildPaletteItems(navigate, storeId);
   const logout = useLogout();
@@ -387,7 +375,7 @@ function StoreSidebar({ open, onToggle }: StoreSidebarProps) {
                   <>
                     <p className="text-[13px] font-bold text-carbon leading-[1.3] truncate">{store?.name ?? 'Loading…'}</p>
                     <p className="text-[12px] text-slate leading-[1.3] truncate capitalize">
-                      {planName ?? (planLoaded ? 'No active plan' : '')}{store?.slug ? ` · /${store.slug}` : ''}
+                      {hasPlan || planLoaded ? planText : ''}{store?.slug ? ` · /${store.slug}` : ''}
                     </p>
                   </>
                 )}
@@ -578,6 +566,9 @@ function StoreWorkspaceProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState('');
   const [tick,    setTick]    = useState(0);
+  // Store this provider last resolved for — the shell (and every store-scoped call in it) waits for it.
+  const [resolvedFor, setResolvedFor] = useState('');
+  const [denied, setDenied] = useState(false);
 
   useEffect(() => {
     if (!storeId) return;
@@ -588,11 +579,13 @@ function StoreWorkspaceProvider({ children }: { children: ReactNode }) {
       setError('');
       try {
         const res = await apiGetStoreById(storeId);
-        if (!cancelled) setStore(res.data);
+        // The API hands non-owners the public storefront shape (no order/product counts): not this seller's store.
+        const owned = typeof (res.data as { orderCount?: unknown } | null)?.orderCount === 'number';
+        if (!cancelled) { setDenied(!owned); setStore(owned ? res.data : null); }
       } catch (err: unknown) {
         if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load store.');
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) { setLoading(false); setResolvedFor(storeId); }
       }
     }
 
@@ -603,6 +596,18 @@ function StoreWorkspaceProvider({ children }: { children: ReactNode }) {
   const refetch = useCallback(() => setTick(t => t + 1), []);
   // Stable value: consumers (sidebar, banners, every page) only re-render when the workspace really changes.
   const value = useMemo(() => ({ store, storeId, loading, error, refetch }), [store, storeId, loading, error, refetch]);
+
+  // Not this seller's store: send them to their own — the shell never mounts, so no store-scoped API is called.
+  if (resolvedFor === storeId && denied) return <SellerStoreRedirect to="dashboard" />;
+  if (resolvedFor !== storeId || (error && !store)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        {error && resolvedFor === storeId
+          ? <StoreWorkspaceError error={error} onRetry={refetch} />
+          : <Loader2 size={22} className="text-brand-orange animate-spin" role="status" aria-label="Loading" />}
+      </div>
+    );
+  }
 
   return (
     <StoreWorkspaceCtx.Provider value={value}>
@@ -642,16 +647,7 @@ function StoreVerificationBanner() {
 function PlatformBillingBanner() {
   const navigate = useNavigate();
   const { storeId } = useStoreWorkspace();
-  const [sub, setSub] = useState<StorePlatformSubscription | null>(null);
-
-  useEffect(() => {
-    if (!storeId) return;
-    let cancelled = false;
-    apiGetStorePlatformPlan(storeId)
-      .then(res => { if (!cancelled) setSub(res.data); })
-      .catch(() => {}); // non-critical — workspace still works without this banner
-    return () => { cancelled = true; };
-  }, [storeId]);
+  const { sub } = useStorePlan(storeId);
 
   if (!sub) return null;
   const goToBilling = () => navigate(`/store/${storeId}/plan-billing`);
@@ -753,6 +749,21 @@ function StoreTopBar() {
 }
 
 // ── Layout ────────────────────────────────────────────────────────────────────
+// "Orders · Store name | Edudeen" — kept in sync with the open seller page (it used to keep the previous page's title).
+function StoreDocumentTitle() {
+  const { pathname } = useLocation();
+  const { store, storeId } = useStoreWorkspace();
+  const name = store?.name;
+  useEffect(() => {
+    const seg = pathname.split('/').filter(Boolean)[2] ?? 'dashboard';
+    const item = NAV.flatMap(g => g.items).find(i => i.path.split('?')[0].split('/')[0] === seg);
+    const page = item?.label ?? seg.replace(/-/g, ' ').replace(/^./, c => c.toUpperCase());
+    const prev = document.title;
+    document.title = `${page}${name ? ` · ${name}` : ''} | Edudeen`;
+    return () => { document.title = prev; };
+  }, [pathname, name, storeId]);
+  return null;
+}
 export function StoreLayout() {
   // Only the dashboard's own content area scrolls — never the page around it.
   useLockPageScroll();
@@ -773,6 +784,7 @@ export function StoreLayout() {
 
   return (
     <StoreWorkspaceProvider>
+      <StoreDocumentTitle />
       <div className={clsx('flex bg-white overflow-hidden', 'h-screen')}>
         <StoreSidebar open={sidebarOpen} onToggle={toggle} />
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">

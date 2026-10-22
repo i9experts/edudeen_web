@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useStoreWorkspace, StorePageHeader } from '@/components/layouts/StoreLayout';
+import { useStorePlan } from '@/hooks/store/useStorePlan';
 import { PlatformSalesCard } from './PlatformSalesCard';
 import { AreaChart } from '@/components/comman/charts';
 import { MetricCard, SkeletonBox, Button, PageHeader } from '@/components/comman/ui';
@@ -93,10 +94,11 @@ function StoreInfoCard() {
   const navigate = useNavigate();
   const { store, storeId } = useStoreWorkspace();
   const [copied, setCopied] = useState(false);
+  const { name: platformPlanName, hasPlan } = useStorePlan(storeId);
 
   const statusColor = store?.status === 'active' ? '#2D8A4E' : '#64727B';
   const StatusIcon  = store?.status === 'active' ? CheckCircle : Clock;
-  const planStyle   = planStyles[store?.plan ?? ''] ?? { bg: '#EDF2F4', color: '#486071' };
+  const planStyle   = planStyles[hasPlan ? platformPlanName.toLowerCase() : ''] ?? { bg: '#EDF2F4', color: '#486071' };
   const typeStyle   = typeStyles[store?.sellerType ?? ''] ?? { bg: '#EDF2F4', color: '#486071' };
 
   const handleCopy = () => {
@@ -137,7 +139,7 @@ function StoreInfoCard() {
             className="text-[12px] font-medium px-[9px] py-[3px] rounded-full capitalize"
             style={planStyle}
           >
-            {store?.plan ?? '—'} plan
+            {hasPlan ? `${platformPlanName} plan` : platformPlanName}
           </span>
           <span
             className="text-[12px] font-medium px-[9px] py-[3px] rounded-full capitalize"

@@ -17,7 +17,7 @@ export function formatNumber(n: number | null | undefined): string {
 export function formatPercent(n: number | null | undefined, opts?: { signed?: boolean }): string {
   if (n == null || Number.isNaN(n)) return '—';
   const sign = opts?.signed && n > 0 ? '+' : '';
-  return `${sign}${n.toFixed(1)}%`;
+  return `${sign}${n.toFixed(1).replace(/\.0$/, '')}%`;
 }
 
 export function formatBucketLabel(dateStr: string, granularity: AnalyticsGranularity): string {

@@ -1,5 +1,6 @@
 import client from '../client';
 import { ENDPOINTS } from '../endpoints';
+import { cachedRequest, invalidateCache } from './requestCache';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -213,11 +214,12 @@ export function apiGetFinanceAnalytics(storeId: string, months = 6) {
 
 // ── Payouts ───────────────────────────────────────────────────────────────────
 export function apiRequestPayout(storeId: string, amount: number, payoutMethodId: string, notes?: string) {
-  return client.post<never, Payout>(ENDPOINTS.FINANCE.SELLER.REQUEST_PAYOUT(storeId), { amount, payoutMethodId, notes });
+  invalidateCache(`payouts:${storeId}`);
+  return client.post<never, Payout>(ENDPOINTS.FINANCE.SELLER.REQUEST_PAYOUT(storeId), { amount, payoutMethodId, notes }).finally(() => invalidateCache(`payouts:${storeId}`));
 }
 
 export function apiGetPayouts(storeId: string, query: { page?: number; limit?: number; status?: PayoutStatus; currency?: string } = {}) {
-  return client.get<never, Paginated & { payouts: Payout[] }>(`${ENDPOINTS.FINANCE.SELLER.PAYOUTS(storeId)}${qs(query)}`);
+  return cachedRequest(`payouts:${storeId}:${qs(query)}`, 5_000, () => client.get<never, Paginated & { payouts: Payout[] }>(`${ENDPOINTS.FINANCE.SELLER.PAYOUTS(storeId)}${qs(query)}`));
 }
 
 export function apiGetPayoutById(storeId: string, payoutId: string) {
@@ -226,23 +228,27 @@ export function apiGetPayoutById(storeId: string, payoutId: string) {
 
 // ── Payout methods ────────────────────────────────────────────────────────────
 export function apiAddPayoutMethod(storeId: string, payload: AddPayoutMethodPayload) {
-  return client.post<never, PayoutMethod>(ENDPOINTS.FINANCE.SELLER.ADD_PAYOUT_METHOD(storeId), payload);
+  invalidateCache(`payout-methods:${storeId}`);
+  return client.post<never, PayoutMethod>(ENDPOINTS.FINANCE.SELLER.ADD_PAYOUT_METHOD(storeId), payload).finally(() => invalidateCache(`payout-methods:${storeId}`));
 }
 
 export function apiGetPayoutMethods(storeId: string) {
-  return client.get<never, PayoutMethod[]>(ENDPOINTS.FINANCE.SELLER.PAYOUT_METHODS(storeId));
+  return cachedRequest(`payout-methods:${storeId}`,5_000, () => client.get<never, PayoutMethod[]>(ENDPOINTS.FINANCE.SELLER.PAYOUT_METHODS(storeId)));
 }
 
 export function apiSetDefaultPayoutMethod(storeId: string, methodId: string) {
-  return client.patch<never, { isDefault: boolean }>(ENDPOINTS.FINANCE.SELLER.SET_DEFAULT_METHOD(storeId, methodId));
+  invalidateCache(`payout-methods:${storeId}`);
+  return client.patch<never, { isDefault: boolean }>(ENDPOINTS.FINANCE.SELLER.SET_DEFAULT_METHOD(storeId, methodId)).finally(() => invalidateCache(`payout-methods:${storeId}`));
 }
 
 export function apiUpdatePayoutMethod(storeId: string, methodId: string, payload: AddPayoutMethodPayload) {
-  return client.patch<never, PayoutMethod>(ENDPOINTS.FINANCE.SELLER.UPDATE_PAYOUT_METHOD(storeId, methodId), payload);
+  invalidateCache(`payout-methods:${storeId}`);
+  return client.patch<never, PayoutMethod>(ENDPOINTS.FINANCE.SELLER.UPDATE_PAYOUT_METHOD(storeId, methodId), payload).finally(() => invalidateCache(`payout-methods:${storeId}`));
 }
 
 export function apiDeletePayoutMethod(storeId: string, methodId: string) {
-  return client.delete<never, { deleted: boolean }>(ENDPOINTS.FINANCE.SELLER.DELETE_PAYOUT_METHOD(storeId, methodId));
+  invalidateCache(`payout-methods:${storeId}`);
+  return client.delete<never, { deleted: boolean }>(ENDPOINTS.FINANCE.SELLER.DELETE_PAYOUT_METHOD(storeId, methodId)).finally(() => invalidateCache(`payout-methods:${storeId}`));
 }
 
 // ── Payout schedule ───────────────────────────────────────────────────────────

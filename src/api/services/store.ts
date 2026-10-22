@@ -1,4 +1,5 @@
 import client from '../client';
+import { cachedRequest, invalidateCache } from './requestCache';
 import { ENDPOINTS } from '../endpoints';
 import type { ActiveCampaignBadge } from './marketplace';
 import type { StoreReturnPolicy, StoreResponseStats } from '@/utils/sellerTrust';
@@ -122,12 +123,13 @@ export function apiCreateStore(payload: CreateStorePayload) {
 
 /** POST /api/store/update-store */
 export function apiUpdateStore(payload: UpdateStorePayload) {
-  return client.post<never, ApiResponse<StoreData>>(ENDPOINTS.STORE.UPDATE, payload);
+  invalidateCache('store:');
+  return client.post<never, ApiResponse<StoreData>>(ENDPOINTS.STORE.UPDATE, payload).finally(() => invalidateCache('store:'));
 }
 
 /** GET /api/store/getStoreById/:id */
 export function apiGetStoreById(id: string) {
-  return client.get<never, ApiResponse<StoreData>>(ENDPOINTS.STORE.GET_BY_ID(id));
+  return cachedRequest(`store:${id}`,10_000, () => client.get<never, ApiResponse<StoreData>>(ENDPOINTS.STORE.GET_BY_ID(id)));
 }
 
 export type CustomDomainStatus = 'unverified' | 'verified';

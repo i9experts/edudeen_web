@@ -260,6 +260,8 @@ function PayoutDetailModal({ onClose, storeId, payoutId }: { onClose: () => void
 export function StoreFinance() {
   usePageTitle('Finance');
   const { storeId, store } = useStoreWorkspace();
+  // Every finance tab opens in the store's own currency; another wallet is shown only when picked (and labelled).
+  const baseCurrency = store?.baseCurrency;
 
   // Tabs live in the URL (?tab=earnings) so the sidebar's "Earnings" entry
   // and shared links can open the monthly statement directly.
@@ -321,12 +323,12 @@ export function StoreFinance() {
     ])
       .then(([d, m]) => {
         setDashboard(d);
-        setActiveCurrency(prev => prev && (d.wallets ?? []).some(w => w.currency === prev) ? prev : (d.wallets?.[0]?.currency ?? null));
+        setActiveCurrency(prev => prev && (d.wallets ?? []).some(w => w.currency === prev) ? prev : (d.wallets?.find(w => w.currency === baseCurrency)?.currency ?? d.wallets?.[0]?.currency ?? null));
         setMethods(m ?? []);
       })
       .catch(err => setError(err instanceof Error ? err.message : 'Failed to load finance data.'))
       .finally(() => setLoading(false));
-  }, [storeId]);
+  }, [storeId, baseCurrency]);
 
   const loadWalletScoped = useCallback(() => {
     if (!storeId || !activeCurrency) return;
