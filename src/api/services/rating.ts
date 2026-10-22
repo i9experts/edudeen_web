@@ -102,6 +102,7 @@ export interface StoreReviewEntry {
   isVerifiedPurchase: boolean;
   sellerReply:        SellerReply | null;
   isFlagged:          boolean;
+  flaggedByAdmin?:    boolean;
   createdAt:          string;
 }
 

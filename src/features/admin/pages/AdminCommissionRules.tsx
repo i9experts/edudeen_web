@@ -281,6 +281,12 @@ export function AdminCommissionRules() {
         subtitle="Global default rate and per-seller commission overrides — layered above each store's platform-plan tier rate."
       />
 
+      <div role="note" className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-[13px] text-amber-900">
+        <strong>Legacy screen.</strong> Edudeen now earns through seller plans and the per-sale platform fees set in
+        Platform Config → Platform fees (digital / physical). These commission rules are only used as a fallback when
+        no platform fee is set, so changing them here usually has no effect on new sales.
+      </div>
+
       <GlobalDefaultCard />
 
       <div className="bg-white border border-bone rounded-xl overflow-hidden">

@@ -6,7 +6,7 @@ import {
   Table, type TableColumn, ActionMenu, type ActionMenuItem,
   Modal, Button,
 } from '@/components/comman/ui';
-import { Star, Flag, MessageSquare, Trash2, ImageIcon } from 'lucide-react';
+import { Star, Flag, MessageSquare, ImageIcon } from 'lucide-react';
 import {
   apiGetStoreReviews, apiReplyToReview, apiEditReply, apiFlagReview, apiUnflagReview, apiModerateDeleteReview,
   type StoreReviewEntry, type StoreReviewStats,
@@ -158,20 +158,21 @@ export function StoreReviews() {
     {
       key: 'actions', header: '', align: 'right', width: '60px',
       render: r => {
+        // Sellers flag/unflag only; removing a review is an admin decision. Admin-flagged reviews stay flagged.
+        const flagItem = (rv: StoreReviewEntry): ActionMenuItem =>
+          rv.isFlagged
+            ? rv.flaggedByAdmin
+              ? { label: 'Flagged by Edudeen', disabled: true, onClick: () => {} }
+              : { label: 'Unflag', onClick: () => handleUnflag(rv) }
+            : { label: 'Flag Review', icon: <Flag size={13} />, onClick: () => handleFlag(rv) };
         const items: ActionMenuItem[] = r.sellerReply
           ? [
               { label: 'Edit Reply', icon: <MessageSquare size={13} />, onClick: () => setEditingReplyOf(r) },
-              r.isFlagged
-                ? { label: 'Unflag', onClick: () => handleUnflag(r) }
-                : { label: 'Flag Review', icon: <Flag size={13} />, onClick: () => handleFlag(r) },
-              { label: 'Remove', icon: <Trash2 size={13} />, danger: true, onClick: () => { setDeletingReview(r); setActionError(''); } },
+              flagItem(r),
             ]
           : [
               { label: 'Reply', icon: <MessageSquare size={13} />, onClick: () => setReplyingTo(r) },
-              r.isFlagged
-                ? { label: 'Unflag', onClick: () => handleUnflag(r) }
-                : { label: 'Flag Review', icon: <Flag size={13} />, onClick: () => handleFlag(r) },
-              { label: 'Remove', icon: <Trash2 size={13} />, danger: true, onClick: () => { setDeletingReview(r); setActionError(''); } },
+              flagItem(r),
             ];
         return <ActionMenu items={items} />;
       },
