@@ -19,9 +19,9 @@ export function ProductCell({ p }: { p: InventoryProduct }) {
             ? <Download size={14} className="text-brand-orange" />
             : <Package  size={14} className="text-brand-orange" />}
       </div>
-      <div>
-        <p className="text-[13px] font-medium text-charcoal mb-[1px]">{p.name}</p>
-        <p className="text-[12px] text-slate">SKU: {p.sku}</p>
+      <div className="min-w-[200px] max-w-[340px]">
+        <p className="text-[13px] font-medium text-charcoal mb-[1px] line-clamp-2 break-words" title={p.name}>{p.name}</p>
+        {p.sku && <p className="text-[12px] text-slate truncate" title={p.sku}>{p.sku}</p>}
       </div>
     </div>
   );

@@ -200,14 +200,6 @@ export default function StoreProductList() {
   // ── Table columns ──────────────────────────────────────────────────────────
   const columns: TableColumn<InventoryProduct>[] = [
     {
-      key: 'no', header: '#', width: '48px',
-      render: (_, i) => (
-        <span className="text-[12px] text-slate font-medium">
-          {(page - 1) * LIMIT + i + 1}
-        </span>
-      ),
-    },
-    {
       key: 'name', header: 'Product', sortable: true,
       render: p => <ProductCell p={p} />,
     },

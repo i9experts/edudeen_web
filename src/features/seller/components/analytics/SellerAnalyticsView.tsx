@@ -67,7 +67,7 @@ export function SellerAnalyticsView({ storeId, currency }: SellerAnalyticsViewPr
       .catch(() => {}); // unknown → leave unlocked; the server still enforces the plan
     return () => { cancelled = true; };
   }, [storeId]);
-  const locked = !!storeId && advanced?.allowed === false && activeTab !== 'overview';
+  const planLocked = !!storeId && advanced?.allowed === false;
   const [filters, setFilters] = useState(DEFAULT_SELLER_ANALYTICS_FILTERS);
   const [csvSection, setCsvSection] = useState(TAB_TO_CSV_SECTION.overview);
   const { exportReport, exporting } = useSellerAnalyticsExport();
@@ -87,30 +87,37 @@ export function SellerAnalyticsView({ storeId, currency }: SellerAnalyticsViewPr
         csvSections={CSV_SECTION_OPTIONS}
         csvSection={csvSection}
         onCsvSectionChange={setCsvSection}
-        showExport={!!storeId && advanced?.allowed !== false}
+        showExport={!!storeId && !planLocked}
       />
 
-      <TabBar
-        tabs={!!storeId && advanced?.allowed === false
-          ? TABS.map(t => t.id === 'overview' ? t : { ...t, icon: <Lock size={14} aria-label="Locked on your plan" /> })
-          : TABS}
-        active={activeTab} onChange={setActiveTab} />
+      {/* Without Advanced analytics only Overview exists: no row of locked tabs, one upgrade card instead. */}
+      {!planLocked && <TabBar tabs={TABS} active={activeTab} onChange={setActiveTab} />}
 
-      {locked && (
-        <div className="flex flex-col items-center text-center gap-3 bg-white border border-bone rounded-xl px-6 py-12">
-          <div className="size-12 rounded-full bg-brand-pale-orange flex items-center justify-center"><Lock size={20} className="text-brand-orange" /></div>
-          <p className="text-[15px] font-bold text-carbon">Advanced analytics is not in your plan</p>
-          <p className="text-[12.5px] text-slate max-w-[420px] leading-[1.6]">
-            Your Overview stays free. Upgrade{advanced?.requiredPlan ? ` to the ${advanced.requiredPlan} plan` : ''} to unlock revenue, product, customer, traffic and payment reports and exports.
-          </p>
+      {(planLocked || activeTab === 'overview') && <SellerOverviewTab params={params} compareToPreviousPeriod={filters.compareToPreviousPeriod} currency={currency} />}
+      {!planLocked && activeTab === 'revenue'   && <SellerRevenueTab params={params} currency={currency} />}
+      {!planLocked && activeTab === 'products'  && <SellerProductsTab params={params} currency={currency} />}
+      {!planLocked && activeTab === 'customers' && <SellerCustomersTab params={params} currency={currency} />}
+      {!planLocked && activeTab === 'traffic'   && <SellerTrafficPaymentsTab params={params} currency={currency} />}
+
+      {planLocked && (
+        <div className="flex flex-col sm:flex-row sm:items-center gap-5 bg-white border border-bone rounded-xl px-6 py-6">
+          <div className="size-12 rounded-full bg-brand-pale-orange flex items-center justify-center shrink-0"><Lock size={20} className="text-brand-orange" /></div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[15px] font-bold text-carbon">Upgrade to unlock advanced analytics</p>
+            <p className="text-[12.5px] text-slate leading-[1.6] mb-2">
+              Your Overview stays free.{advanced?.requiredPlan ? ` The ${advanced.requiredPlan} plan adds:` : ' A higher plan adds:'}
+            </p>
+            <ul className="m-0 pl-4 text-[12.5px] text-charcoal leading-[1.7] grid grid-cols-1 sm:grid-cols-2 gap-x-6">
+              <li>Revenue reports (gross vs. net, composition)</li>
+              <li>Product performance</li>
+              <li>Customer insights (new, returning, repeat)</li>
+              <li>Traffic sources and payment methods</li>
+              <li>PDF and CSV exports</li>
+            </ul>
+          </div>
           <Button variant="primary" size="md" onClick={() => navigate(`/store/${storeId}/plan-billing`)}>See plans</Button>
         </div>
       )}
-      {activeTab === 'overview'  && <SellerOverviewTab params={params} compareToPreviousPeriod={filters.compareToPreviousPeriod} currency={currency} />}
-      {!locked && activeTab === 'revenue'   && <SellerRevenueTab params={params} currency={currency} />}
-      {!locked && activeTab === 'products'  && <SellerProductsTab params={params} currency={currency} />}
-      {!locked && activeTab === 'customers' && <SellerCustomersTab params={params} currency={currency} />}
-      {!locked && activeTab === 'traffic'   && <SellerTrafficPaymentsTab params={params} currency={currency} />}
     </div>
   );
 }

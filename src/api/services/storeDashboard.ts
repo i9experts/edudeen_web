@@ -1,4 +1,5 @@
 import client from '../client';
+import { cachedRequest } from './requestCache';
 import type { SellerOverviewData, RevenuePoint, SellerTodaySummaryData } from './analytics/analytics';
 import type { InventoryProduct } from './product';
 
@@ -38,6 +39,11 @@ export interface StoreDashboardSummary {
     byCurrency: { currency: string; orders: number; premiumDiscountGiven: number; platformFundedDiscount?: number; revenue: number }[];
     windowDays: number;
   };
+}
+
+/** Short-lived shared copy (in-flight requests are deduped) for the sidebar's order-count check. */
+export function apiStoreDashboardSummaryCached(storeId: string) {
+  return cachedRequest(`dash-summary:${storeId}`, 60_000, () => apiStoreDashboardSummary(storeId));
 }
 
 /** One call for the whole seller dashboard (replaces five). */

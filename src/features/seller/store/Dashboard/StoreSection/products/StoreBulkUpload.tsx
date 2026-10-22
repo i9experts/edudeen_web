@@ -522,7 +522,7 @@ export default function StoreBulkUpload() {
       <StorePageHeader
         title="Bulk upload"
         subtitle="Add many products at once - digital, educational or physical."
-        actions={<Link to={`/store/${storeId}/products/add`} className="text-[13px] font-bold text-brand-royal no-underline hover:underline">Add one product instead</Link>}
+        actions={<Link to={`/store/${storeId}/products/add`} className="text-[13px] font-bold text-brand-royal no-underline hover:underline">Add product</Link>}
       />
       {guard.dialog}
       {bannerConfirm && (

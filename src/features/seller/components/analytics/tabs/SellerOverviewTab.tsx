@@ -114,6 +114,7 @@ export function SellerOverviewTab({ params, compareToPreviousPeriod, currency }:
         ) : (
           <BarChart
             title="Orders Over Time"
+            allowDecimals={false}
             subtitle="Non-cancelled orders"
             data={(orders.data?.series ?? []).map(p => ({
               label: formatBucketLabel(p.date, orders.data!.granularity),

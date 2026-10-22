@@ -35,6 +35,8 @@ export interface BarChartProps {
   valueSuffix?: string;
   maxBarSize?: number;
   yTickFormatter?: (v: number) => string;
+  /** false = whole-number y ticks only (counts such as orders). */
+  allowDecimals?: boolean;
 }
 
 export function BarChart({
@@ -49,6 +51,7 @@ export function BarChart({
   valueSuffix = '',
   maxBarSize = 40,
   yTickFormatter,
+  allowDecimals = true,
 }: BarChartProps) {
   const defaultYFmt = (v: number) =>
     v >= 1000 ? `${valuePrefix}${(v / 1000).toFixed(0)}k` : `${valuePrefix}${v}`;
@@ -85,7 +88,7 @@ export function BarChart({
         <RechartsBar data={data} margin={{ top: 4, right: 20, left: 0, bottom: 0 }}>
           <CartesianGrid {...CHART_GRID} vertical={false} />
           <XAxis dataKey={xKey}  tick={CHART_TICK} axisLine={false} tickLine={false} />
-          <YAxis tick={CHART_TICK} axisLine={false} tickLine={false} tickFormatter={yFmt} width={40} />
+          <YAxis tick={CHART_TICK} axisLine={false} tickLine={false} tickFormatter={yFmt} width={40} allowDecimals={allowDecimals} />
           <Tooltip content={<ChartTooltip valuePrefix={valuePrefix} valueSuffix={valueSuffix} />} />
           <Bar dataKey={dataKey} fill={hasValue ? color : 'transparent'} radius={[4, 4, 0, 0]} maxBarSize={maxBarSize} />
         </RechartsBar>

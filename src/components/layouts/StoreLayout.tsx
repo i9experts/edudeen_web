@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef, useMemo, useCallback, type ReactNode, Suspense } from 'react';
-import { Outlet, Navigate, useNavigate, useLocation, useParams } from 'react-router-dom';
+import { useState, useEffect, useLayoutEffect, useContext, useRef, useMemo, useCallback, type ReactNode, Suspense } from 'react';
+import { PageTabsCtx } from './PageTabsContext';
+import { Outlet, Navigate, Link, useNavigate, useLocation, useParams } from 'react-router-dom';
 import { TokenStorage, type AppRole } from '@/api/services/auth';
 import { clsx } from 'clsx';
 import type { LucideIcon } from 'lucide-react';
@@ -8,11 +9,13 @@ import {
   Settings, Sparkles, ChevronLeft, ChevronRight, Store,
   Megaphone, Star, Search, Wallet, FileSpreadsheet, Truck, Boxes, Gift,
   MessageSquare, FolderTree, RefreshCw, Undo2, CreditCard,
-  MoreHorizontal, PanelLeftClose, Loader2, PanelLeftOpen, AlertTriangle, AlertCircle, XCircle, Clock, LogOut, UserRound, Bell,
+  ChevronDown, Lock, MoreHorizontal, PanelLeftClose, Loader2, PanelLeftOpen, AlertTriangle, AlertCircle, XCircle, Clock, LogOut, UserRound, Bell,
 } from 'lucide-react';
 import { EdudeenIcon, EdudeenLogo } from '@/components/comman/ui/EdudeenLogo';
 import { apiGetStoreById, type StoreData } from '@/api/services/store';
 import { apiGetAiStudioCredits } from '@/api/services/aiStudio';
+import { apiGetStoreEntitlements } from '@/api/services/platformPlans';
+import { apiStoreDashboardSummaryCached } from '@/api/services/storeDashboard';
 import { useCommandPalette } from '@/hooks/useCommandPalette';
 import { useLogout } from '@/hooks/auth/useLogout';
 import { AnnouncementBanner, Modal, Button } from '@/components/comman/ui';
@@ -95,6 +98,16 @@ export const NAV: { group: string; items: NavItem[] }[] = [
     ],
   },
 ];
+
+// Sidebar: these Growth items fold into a "Growth tools" section (open by default once a store has this many orders).
+const GROWTH_TOOL_IDS = ['subscriptions', 'loyalty', 'seo', 'ai'];
+const GROWTH_TOOLS_OPEN_AFTER_ORDERS = 5;
+// Nav item -> plan entitlement flag; a `false` flag shows a small lock instead of hiding the item.
+const LOCK_KEY: Record<string, string> = {
+  subscriptions: 'subscriptionProductsAllowed',
+  loyalty: 'loyaltyProgramAllowed',
+  seo: 'advancedSeoToolsAllowed',
+};
 
 // ── Shared grouped nav menu — the mobile "account hub" content for a store
 // workspace, reused wherever the full list of store sections needs to be
@@ -316,6 +329,20 @@ function StoreSidebar({ open, onToggle }: StoreSidebarProps) {
       .catch(() => {});
     return () => { cancelled = true; };
   }, [storeId]);
+  // Plan features (lock badges) + order count (Growth tools start collapsed for young stores).
+  const [entitlements, setEntitlements] = useState<Record<string, unknown> | null>(null);
+  const [orderCount, setOrderCount] = useState<number | null>(null);
+  const [growthOpen, setGrowthOpen] = useState<boolean | null>(null);
+  useEffect(() => {
+    if (!storeId) return;
+    let cancelled = false;
+    apiGetStoreEntitlements(storeId).then(res => { if (!cancelled) setEntitlements(res.data ?? null); }).catch(() => {});
+    apiStoreDashboardSummaryCached(storeId)
+      .then(res => { if (!cancelled) setOrderCount(res.data?.overview?.totalOrders ?? 0); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [storeId]);
+  const toolsExpanded = growthOpen ?? (orderCount ?? 0) >= GROWTH_TOOLS_OPEN_AFTER_ORDERS;
   const credits    = aiCredits?.balance ?? 0;
   const maxCredits = aiCredits && aiCredits.monthlyAllowance > 0 ? aiCredits.monthlyAllowance : null;
   const unlimited  = aiCredits?.monthlyAllowance === -1;
@@ -395,57 +422,85 @@ function StoreSidebar({ open, onToggle }: StoreSidebarProps) {
 
         {/* Nav */}
         <nav aria-label="Store workspace" className={clsx('flex-1 overflow-y-auto', open ? 'px-3 pt-1' : 'px-[12px] pt-1')}>
-          {NAV.map(section => (
-            <div key={section.group} className="mb-3">
-              {open
-                ? <p className="text-[12px] font-bold text-graphite px-3 py-1 uppercase tracking-[0.12em] mb-0.5">{section.group}</p>
-                : <div className="h-px bg-bone mx-1 mb-2" />
-              }
-              {section.items.map(item => {
-                const active = isActive(item.path);
-                const goToItem = () => navigate(itemTarget(item));
-                const badge = item.id === 'marketing' ? campaignsToJoin : 0;
-                return (
-                  <div
-                    key={item.id}
-                    role="button"
-                    tabIndex={0}
-                    onClick={goToItem}
-                    onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goToItem(); } }}
-                    title={!open ? (badge ? `${item.label} — ${badge} sale${badge > 1 ? 's' : ''} to join` : item.label) : undefined}
-                    aria-label={badge ? `${item.label}, ${badge} sale${badge > 1 ? 's' : ''} to join` : item.label}
-                    aria-current={active ? 'page' : undefined}
-                    className={clsx(
-                      'relative flex items-center gap-[10px] py-[8px] px-3 rounded-lg mb-0.5 cursor-pointer',
-                      'transition-colors duration-150',
-                      !open && 'lg:justify-center lg:px-0',
-                      active ? 'bg-brand-orange shadow-[0_2px_8px_rgba(23,71,113,0.28)]' : 'bg-transparent hover:bg-[#e3ecf3]',
-                    )}
-                  >
-                    <item.Icon
-                      size={16}
-                      className={clsx('shrink-0', active ? 'text-white' : 'text-charcoal')}
-                    />
+          {NAV.map(section => {
+            const isGrowth = section.group === 'Growth';
+            const mainItems = isGrowth ? section.items.filter(i => !GROWTH_TOOL_IDS.includes(i.id)) : section.items;
+            const toolItems = isGrowth ? section.items.filter(i => GROWTH_TOOL_IDS.includes(i.id)) : [];
+            const toolActive = toolItems.some(i => isActive(i.path));
+            // Icon-only rail always lists every item; the expanded rail folds the tools away for young stores.
+            const toolsVisible = !open || toolsExpanded || toolActive;
+
+            const renderItem = (item: NavItem, nested = false) => {
+              const active = isActive(item.path);
+              const badge = item.id === 'marketing' ? campaignsToJoin : 0;
+              const locked = !!LOCK_KEY[item.id] && entitlements?.[LOCK_KEY[item.id]] === false;
+              const label = locked ? `${item.label} (not in your plan)` : item.label;
+              return (
+                <Link
+                  key={item.id}
+                  to={itemTarget(item)}
+                  title={!open ? (badge ? `${label} — ${badge} sale${badge > 1 ? 's' : ''} to join` : label) : undefined}
+                  aria-label={badge ? `${item.label}, ${badge} sale${badge > 1 ? 's' : ''} to join` : label}
+                  aria-current={active ? 'page' : undefined}
+                  className={clsx(
+                    'relative flex items-center gap-[10px] py-[8px] px-3 rounded-lg mb-0.5 no-underline',
+                    'transition-colors duration-150',
+                    !open && 'lg:justify-center lg:px-0',
+                    open && nested && 'ms-3',
+                    active ? 'bg-brand-orange shadow-[0_2px_8px_rgba(23,71,113,0.28)]' : 'bg-transparent hover:bg-[#e3ecf3]',
+                  )}
+                >
+                  <item.Icon
+                    size={16}
+                    className={clsx('shrink-0', active ? 'text-white' : 'text-charcoal')}
+                  />
+                  {open && (
+                    <span className={clsx('text-[13.5px] flex-1', active ? 'font-semibold text-white' : 'font-medium text-carbon')}>
+                      {item.label}
+                    </span>
+                  )}
+                  {locked && open && <Lock size={12} className={clsx('shrink-0', active ? 'text-white' : 'text-slate')} aria-hidden />}
+                  {badge > 0 && (open ? (
+                    <span className={clsx(
+                      'text-[12px] font-bold px-[6px] py-[1px] rounded-full leading-[14px] shrink-0',
+                      active ? 'bg-white text-brand-orange' : 'bg-brand-green text-white',
+                    )}>
+                      {badge} new sale{badge > 1 ? 's' : ''}
+                    </span>
+                  ) : (
+                    <span className="absolute top-1 right-1 size-2 rounded-full bg-brand-green" aria-hidden />
+                  ))}
+                </Link>
+              );
+            };
+
+            return (
+              <div key={section.group} className="mb-3">
+                {open
+                  ? <p className="text-[12px] font-bold text-graphite px-3 py-1 uppercase tracking-[0.12em] mb-0.5">{section.group}</p>
+                  : <div className="h-px bg-bone mx-1 mb-2" />
+                }
+                {mainItems.map(item => renderItem(item))}
+                {toolItems.length > 0 && (
+                  <>
                     {open && (
-                      <span className={clsx('text-[13.5px] flex-1', active ? 'font-semibold text-white' : 'font-medium text-carbon')}>
-                        {item.label}
-                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setGrowthOpen(!(toolsExpanded || toolActive))}
+                        aria-expanded={toolsVisible}
+                        aria-controls="growth-tools"
+                        className="w-full flex items-center gap-[10px] py-[8px] px-3 rounded-lg mb-0.5 bg-transparent border-0 cursor-pointer text-start hover:bg-[#e3ecf3]"
+                      >
+                        <ChevronDown size={16} className={clsx('shrink-0 text-charcoal transition-transform', !toolsVisible && '-rotate-90 rtl:rotate-90')} />
+                        <span className="text-[13.5px] flex-1 font-medium text-carbon">Growth tools</span>
+                      </button>
                     )}
-                    {badge > 0 && (open ? (
-                      <span className={clsx(
-                        'text-[12px] font-bold px-[6px] py-[1px] rounded-full leading-[14px] shrink-0',
-                        active ? 'bg-white text-brand-orange' : 'bg-brand-green text-white',
-                      )}>
-                        {badge} new sale{badge > 1 ? 's' : ''}
-                      </span>
-                    ) : (
-                      <span className="absolute top-1 right-1 size-2 rounded-full bg-brand-green" aria-hidden />
-                    ))}
-                  </div>
-                );
-              })}
-            </div>
-          ))}
+                    {toolsVisible && <div id="growth-tools">{toolItems.map(item => renderItem(item, true))}</div>}
+                  </>
+                )}
+              </div>
+            );
+          })}
         </nav>
 
         {/* Footer: AI credits + sign out */}
@@ -530,9 +585,13 @@ export function StorePageHeader({ title, subtitle, actions, eyebrow }: StorePage
   const dashboardPath = `/store/${storeId}/dashboard`;
   const isDashboard = pathname === dashboardPath;
   const eyebrowText = eyebrow ?? store?.name ?? '';
+  const tabsCtx = useContext(PageTabsCtx);
+  const claimTabs = tabsCtx?.claim;
+  useLayoutEffect(() => claimTabs?.(), [claimTabs]);
 
   return (
-    <div className="bg-white/95 backdrop-blur-md border-b border-bone px-4 md:px-8 py-[14px] flex items-center justify-between gap-3 sticky top-0 z-10 shrink-0">
+    <div className="bg-white/95 backdrop-blur-md border-b border-bone sticky top-0 z-10 shrink-0">
+    <div className="px-4 md:px-8 py-[14px] flex items-center justify-between gap-3">
       <div className="flex items-center gap-3 min-w-0">
         {/* Mobile only, and only away from the dashboard "menu" screen —
            real drill-in navigation (back to the menu) instead of a
@@ -555,6 +614,8 @@ export function StorePageHeader({ title, subtitle, actions, eyebrow }: StorePage
         </div>
       </div>
       {actions && <div className="flex items-center gap-[10px] shrink-0">{actions}</div>}
+    </div>
+    {tabsCtx && <div className="px-4 md:px-8">{tabsCtx.tabBar}</div>}
     </div>
   );
 }

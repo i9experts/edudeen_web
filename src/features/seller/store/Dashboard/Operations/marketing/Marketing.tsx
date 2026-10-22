@@ -683,6 +683,15 @@ export function StoreMarketing() {
 
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const couponFormRef = useRef<HTMLDivElement>(null);
+  const tabBarRef = useRef<HTMLDivElement>(null);
+
+  // Keep the active tab visible inside the horizontally scrolling tab bar (it used to sit cut off).
+  useEffect(() => {
+    const bar = tabBarRef.current;
+    const el = bar?.querySelector<HTMLElement>('[aria-current="page"]');
+    if (!bar || !el) return;
+    bar.scrollTo({ left: el.offsetLeft - (bar.clientWidth - el.offsetWidth) / 2, behavior: 'smooth' });
+  }, [tab]);
 
   function focusCouponForm() {
     couponFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -937,10 +946,10 @@ export function StoreMarketing() {
         </div>
 
         {/* Tab bar — horizontally scrollable so 9 tabs never wrap/get cut off on narrower screens */}
-        <div className="border-b border-bone overflow-x-auto scrollbar-none">
+        <div ref={tabBarRef} className="border-b border-bone overflow-x-auto scrollbar-none">
           <div className="flex items-center gap-0.5 w-max">
             {TABS.map(t => (
-              <button key={t.id} onClick={() => setTab(t.id)}
+              <button key={t.id} onClick={() => setTab(t.id)} aria-current={tab === t.id ? 'page' : undefined}
                 className="flex items-center gap-1.5 shrink-0 whitespace-nowrap px-3 sm:px-4 py-2.5 text-[13px] font-medium cursor-pointer border-none bg-transparent -mb-px transition-colors duration-150 hover:text-brand-orange rounded-t-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/50"
                 style={{ borderBottom: `2px solid ${tab === t.id ? '#174771' : 'transparent'}`, color: tab === t.id ? '#174771' : '#8C8A82' }}
               >

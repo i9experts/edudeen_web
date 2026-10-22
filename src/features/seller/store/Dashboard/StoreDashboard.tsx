@@ -15,15 +15,14 @@ import { MetricCard, SkeletonBox, Button, PageHeader } from '@/components/comman
 import type { SellerOverviewData, RevenuePoint, SellerTodaySummaryData } from '@/api/services/analytics/analytics';
 import type { InventoryProduct } from '@/api/services/product';
 import { apiStoreDashboardSummary, type OnboardingChecklist, type ProfileCompleteness, type StoreDashboardSummary } from '@/api/services/storeDashboard';
-import { ProfileMeterCard } from './ProfileMeterCard';
-import { OnboardingChecklistCard } from './OnboardingChecklistCard';
+import { SetupChecklistCard } from './SetupChecklistCard';
 import { WeeklyDigestCard } from './Analytic/ai/components/WeeklyDigestCard';
 import { statusLabel } from '@/constants/statusLabels';
 import { getStorefrontUrl } from '@/utils/storefrontUrl';
 import { formatNumber, formatBucketLabel } from '@/components/comman/analytics/format';
 import { formatMoneyCompact, formatMoney, currencySymbol } from '@/utils/currency';
 import {
-  StudioPanel, StudioTextLink, StudioWorkflow, StudioPill, StudioTable,
+  StudioPanel, StudioTextLink, StudioPill, StudioTable,
 } from '@/features/seller/components/studio/Studio';
 
 interface StoreMetrics {
@@ -363,12 +362,6 @@ function ProductShelf({ products, total, currency, storeId }: {
   );
 }
 
-const WORKFLOW = [
-  { tag: 'Learning',     title: 'Start with an outcome', body: 'Make the age, learning goal and classroom or home use clear in your title and description.' },
-  { tag: 'Presentation', title: 'Show what is inside',   body: 'Give families and teachers useful images, a preview and a clear description of what they get.' },
-  { tag: 'Trust',        title: 'Prepare for review',    body: 'Check accuracy, Islamic suitability and your rights to share every element before publishing.' },
-];
-
 // ── Skeleton ──────────────────────────────────────────────────────────────────
 function DashSkeleton() {
   return (
@@ -462,11 +455,10 @@ export default function StoreDashboard() {
           <WeeklyDigestCard storeId={storeId} />
 
           {/* Setup checklist (real data; hidden once complete) */}
-          {metrics?.checklist && <OnboardingChecklistCard checklist={metrics.checklist} storeId={storeId} />}
-          {metrics?.profile && <ProfileMeterCard profile={metrics.profile} storeId={storeId} />}
+          <SetupChecklistCard checklist={metrics?.checklist} profile={metrics?.profile} storeId={storeId} />
 
-          {/* Metric Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          {/* Metric Cards — 4 equal columns, 5 when Premium buyers are present */}
+          <div className={`grid grid-cols-1 sm:grid-cols-2 gap-5 ${(metrics?.premium?.premiumOrders ?? 0) > 0 ? 'lg:grid-cols-5' : 'lg:grid-cols-4'}`}>
             <MetricCard
               label="Order value (30 days)" value={formatMoneyCompact(metrics?.overview.totalRevenue ?? 0, store?.baseCurrency)}
               sub={metrics?.overview.totalRevenue ? 'Last 30 days' : 'No sales yet'}
@@ -490,18 +482,15 @@ export default function StoreDashboard() {
               sub={totalCustomers ? `${formatNumber(metrics?.overview.newCustomersCount ?? 0)} new` : 'No customers yet'}
               to={`/store/${storeId}/customer/list`}
             />
-          </div>
-
-          {(metrics?.premium?.premiumOrders ?? 0) > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {(metrics?.premium?.premiumOrders ?? 0) > 0 && (
               <MetricCard
                 label={`Premium buyers (${metrics!.premium!.windowDays} days)`}
                 value={`${formatNumber(metrics!.premium!.premiumOrders)} order${metrics!.premium!.premiumOrders === 1 ? '' : 's'}`}
                 sub={metrics!.premium!.byCurrency.map(c => `${formatMoneyCompact(c.premiumDiscountGiven, c.currency)} discount given${(c.platformFundedDiscount ?? 0) > 0 ? ` + ${formatMoneyCompact(c.platformFundedDiscount ?? 0, c.currency)} paid by Edudeen` : ''}`).join(' · ') || undefined}
                 to={`/store/${storeId}/settings`}
               />
-            </div>
-          )}
+            )}
+          </div>
 
           {metrics?.today && <TodaySnapshot today={metrics.today} currency={store?.baseCurrency} />}
 
@@ -512,11 +501,6 @@ export default function StoreDashboard() {
             currency={store?.baseCurrency}
             storeId={storeId}
           />
-
-          {/* Workflow guidance */}
-          <StudioPanel title="Make your next product ready to share.">
-            <StudioWorkflow steps={WORKFLOW} />
-          </StudioPanel>
 
           {/* Revenue Chart + Store Info */}
           <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-5">

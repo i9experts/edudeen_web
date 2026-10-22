@@ -9,7 +9,7 @@ import { useStoreWorkspace, StorePageHeader } from '@/components/layouts/StoreLa
 import {
   Table,      type TableColumn,
   MetricCard,
-  Badge,      StatusBadge,
+  StatusBadge,
   Card,
   Avatar,
   SearchInput,
@@ -128,18 +128,13 @@ export function StoreOrderList() {
   // ── Columns ──────────────────────────────────────────────────────────────────
   const columns: TableColumn<SellerOrder>[] = [
     {
-      key: 'no', header: '#', width: '48px',
-      render: (_, i) => (
-        <span className="text-[12px] text-slate font-medium">
-          {(page - 1) * LIMIT + i + 1}
-        </span>
-      ),
-    },
-    {
       key: 'orderNumber', header: 'Order',
       render: o => (
-        <span className="text-[12px] font-bold text-brand-deep-orange font-mono">
-          {o.orderNumber}
+        <span
+          className="text-[12px] font-bold text-brand-deep-orange font-mono whitespace-nowrap"
+          title={o.orderNumber}
+        >
+          {o.orderNumber.length > 10 ? `…${o.orderNumber.slice(-6)}` : o.orderNumber}
         </span>
       ),
     },
@@ -150,15 +145,12 @@ export function StoreOrderList() {
     {
       key: 'product', header: 'Product',
       render: o => (
-        <span className="text-[13px] text-carbon max-w-[180px] truncate block">{o.product}</span>
-      ),
-    },
-    {
-      key: 'type', header: 'Type',
-      render: o => (
-        <Badge color={o.type === 'digital' ? 'blue' : 'orange'}>
-          {o.type === 'digital' ? (o.productType === 'educational' ? 'Educational' : 'Digital') : o.type === 'mixed' ? 'Mixed' : 'Physical'}
-        </Badge>
+        <div className="max-w-[180px]">
+          <span className="text-[13px] text-carbon truncate block" title={o.product}>{o.product}</span>
+          <span className="text-[12px] text-slate block">
+            {o.type === 'digital' ? (o.productType === 'educational' ? 'Educational' : 'Digital') : o.type === 'mixed' ? 'Mixed' : 'Physical'}
+          </span>
+        </div>
       ),
     },
     {

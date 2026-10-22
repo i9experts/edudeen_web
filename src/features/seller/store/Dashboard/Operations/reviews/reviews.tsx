@@ -68,6 +68,8 @@ export function StoreReviews() {
   function reload() { setRefreshKey(k => k + 1); }
 
   const filtered = reviews;
+  // Nothing to respond to yet: show a neutral dash instead of a green 0% / 0 hrs.
+  const noReviews = !!stats && stats.totalReviews === 0;
 
   async function handleFlag(r: StoreReviewEntry) {
     setActionError('');
@@ -234,8 +236,8 @@ export function StoreReviews() {
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {[
-                  { value: stats?.responseRate ?? '0%',    label: 'Response Rate',     sub: 'Reply to all reviews', color: '#2D8A4E' },
-                  { value: stats?.avgResponseTime ?? '—',  label: 'Avg Response Time', sub: 'Within 24hrs is great', color: '#1A72C2' },
+                  { value: noReviews ? '—' : (stats?.responseRate ?? '—'),   label: 'Response Rate',     sub: 'Reply to all reviews', color: noReviews ? '#64727B' : '#2D8A4E' },
+                  { value: noReviews ? '—' : (stats?.avgResponseTime ?? '—'), label: 'Avg Response Time', sub: 'Within 24hrs is great', color: noReviews ? '#64727B' : '#1A72C2' },
                   { value: stats?.fiveStarRate ?? '0%',    label: '5-Star Rate',       sub: '',                      color: '#2D8A4E' },
                   { value: String(stats?.reviewsThisMonth ?? 0), label: 'Reviews This Month', sub: '', color: '#141413' },
                   { value: String(stats?.flaggedReviews ?? 0),   label: 'Flagged Reviews',    sub: 'Under moderation', color: '#C08B1E' },

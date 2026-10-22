@@ -151,7 +151,7 @@ export default function StoreCustomerList() {
           <MetricCard label="Order value"    value={formatMoneyCompact(summary.totalRevenue, store?.baseCurrency)} icon={<DollarSign size={16} />} loading={loading && page === 1 && customers.length === 0} />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4 items-start">
+        <div className={`grid grid-cols-1 gap-4 items-start ${sel ? 'lg:grid-cols-[minmax(0,1fr)_300px]' : ''}`}>
           <div className="bg-white border border-bone rounded-[10px] min-w-0 overflow-hidden">
             <div className="px-5 py-3.5 border-b border-bone">
               <SearchInput value={search} onChange={setSearch} placeholder="Search customers…" className="max-w-[260px]" />

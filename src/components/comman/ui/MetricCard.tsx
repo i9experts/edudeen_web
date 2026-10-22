@@ -87,7 +87,7 @@ export function MetricCard({ label, value, trend, trendUp, sub, icon, loading, c
         <p className="text-[13px] sm:text-[14px] text-carbon mb-2">
           {label}
         </p>
-        <p className="num font-serif text-[28px] sm:text-[32px] font-normal text-carbon leading-[1.1]">
+        <p className="num font-serif text-[clamp(20px,2.3vw,32px)] font-normal text-carbon leading-[1.1] whitespace-nowrap" title={typeof value === 'string' ? value : undefined}>
           {value}
         </p>
         {trend && (

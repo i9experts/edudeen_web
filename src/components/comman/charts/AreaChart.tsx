@@ -97,7 +97,8 @@ export function AreaChart({
           </defs>
           <CartesianGrid {...CHART_GRID} vertical={false} />
           <XAxis dataKey={xKey}  tick={CHART_TICK} axisLine={false} tickLine={false} />
-          <YAxis tick={CHART_TICK} axisLine={false} tickLine={false} tickFormatter={yFmt} width={46} />
+          {/* 10% headroom so the line never clips above the plot */}
+          <YAxis tick={CHART_TICK} axisLine={false} tickLine={false} tickFormatter={yFmt} width={46} domain={[0, (max: number) => Math.ceil(max * 1.1)]} />
           <Tooltip content={<ChartTooltip valuePrefix={valuePrefix} valueSuffix={valueSuffix} />} />
           <Area
             type="monotone"
