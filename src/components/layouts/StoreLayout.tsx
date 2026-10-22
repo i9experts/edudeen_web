@@ -853,7 +853,7 @@ export function StoreLayout() {
           <AnnouncementBanner audience="sellers" />
           <StoreVerificationBanner />
           <PlatformBillingBanner />
-          <div ref={scrollRef} className="flex-1 overflow-y-auto overscroll-contain pb-[64px] lg:pb-0 tap-safe">
+          <div ref={scrollRef} className="flex-1 overflow-y-auto overscroll-contain pb-[136px] lg:pb-[84px] tap-safe">
             {/* Content column capped at a readable studio width; the builder
                and messages views keep the full canvas they need. */}
             <div className={isFullBleedRoute(currentPath) ? 'min-h-full' : 'w-full max-w-[1440px] mx-auto min-h-full'}>

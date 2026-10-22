@@ -21,6 +21,7 @@ import {
   type DigForm, type PhysForm, type ProductStatus, type ProductType,
 } from './ProductFormKit';
 import { IssueLinks, StepPanel, SummaryRows, type WizardIssue } from './ProductWizard';
+import { FieldErrorsContext } from './fieldErrorsContext';
 import { normalizeTitle, qualityWarnings, titleClassConflict, contactWarning, classRangeRequired, POLICY_LINE } from './productQuality';
 
 export interface ProductFormStepsProps {
@@ -84,8 +85,11 @@ export function ProductFormSteps(p: ProductFormStepsProps) {
   const banner = (i: number) => p.blockedStep === i
     ? <IssueLinks issues={p.stepIssues(i, true)} onGo={go} title="Please fix this before moving on" /> : null;
 
+  const fieldErrors: Record<string, string> = {};
+  if (p.blockedStep !== null) for (const i of p.stepIssues(p.blockedStep, true)) if (i.fieldId && !fieldErrors[i.fieldId]) fieldErrors[i.fieldId] = i.message;
+
   return (
-    <>
+    <FieldErrorsContext.Provider value={fieldErrors}>
       {/* ── 1. Type & basics ─────────────────────────────────────────── */}
       <StepPanel active={step === 0}>
         {banner(0)}
@@ -447,6 +451,6 @@ export function ProductFormSteps(p: ProductFormStepsProps) {
           </div>
         </Block>
       </StepPanel>
-    </>
+    </FieldErrorsContext.Provider>
   );
 }

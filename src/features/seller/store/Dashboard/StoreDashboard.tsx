@@ -432,7 +432,7 @@ export default function StoreDashboard() {
                     View live store
                   </a>
                 )}
-                <Button size="md" className="!text-[14px] !font-bold" onClick={() => navigate(`/store/${storeId}/products/add`)} icon={<Plus size={15} />}>
+                <Button size="md" className="!text-[14px] !font-bold max-sm:w-full max-sm:order-last max-sm:justify-center" onClick={() => navigate(`/store/${storeId}/products/add`)} icon={<Plus size={15} />}>
                   New product
                 </Button>
               </>
@@ -458,7 +458,7 @@ export default function StoreDashboard() {
           <SetupChecklistCard checklist={metrics?.checklist} profile={metrics?.profile} storeId={storeId} />
 
           {/* Metric Cards — 4 equal columns, 5 when Premium buyers are present */}
-          <div className={`grid grid-cols-1 sm:grid-cols-2 gap-5 ${(metrics?.premium?.premiumOrders ?? 0) > 0 ? 'lg:grid-cols-5' : 'lg:grid-cols-4'}`}>
+          <div className={`grid grid-cols-2 gap-3 sm:gap-5 ${(metrics?.premium?.premiumOrders ?? 0) > 0 ? 'lg:grid-cols-5' : 'lg:grid-cols-4'}`}>
             <MetricCard
               label="Order value (30 days)" value={formatMoneyCompact(metrics?.overview.totalRevenue ?? 0, store?.baseCurrency)}
               sub={metrics?.overview.totalRevenue ? 'Last 30 days' : 'No sales yet'}

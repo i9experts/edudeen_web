@@ -1,4 +1,5 @@
-import { useState, type ReactNode } from 'react';
+import { FieldErrorsContext } from './fieldErrorsContext';
+import { useState, useContext, isValidElement, cloneElement, type ReactNode } from 'react';
 import { ChevronDown, Plus, X } from 'lucide-react';
 import type { VariantOption, EducationLevel } from '@/api/services/product';
 import type { PrivateUploadData } from '@/components/comman/ui';
@@ -33,17 +34,30 @@ export function L({ children, req, htmlFor }: { children: ReactNode; req?: boole
     <label htmlFor={htmlFor} className="text-[13px] font-bold text-carbon flex items-center gap-1.5 mb-1.5">
       {children}
       {req
-        ? <span className="text-[12px] font-bold text-brand-orange bg-brand-pale-orange rounded-full px-1.5 py-px leading-4">Required</span>
+        ? <><span aria-hidden className="text-error -ms-0.5">*</span><span className="text-[12px] font-bold text-brand-orange bg-brand-pale-orange rounded-full px-1.5 py-px leading-4">Required</span></>
         : <span className="text-[12px] font-normal text-slate">(optional)</span>}
     </label>
   );
 }
 
+
 export function F({ label, req, hint, htmlFor, children }: { label: string; req?: boolean; hint?: string; htmlFor?: string; children: ReactNode }) {
+  const errors = useContext(FieldErrorsContext);
+  const error = htmlFor ? errors[htmlFor] : undefined;
+  const errId = htmlFor ? `${htmlFor}-err` : undefined;
+  // wire a11y attributes onto the control this label points to
+  const control = htmlFor && isValidElement<Record<string, unknown>>(children) && children.props.id === htmlFor
+    ? cloneElement(children, {
+        'aria-required': req || undefined,
+        'aria-invalid': error ? true : undefined,
+        'aria-describedby': error ? errId : undefined,
+      })
+    : children;
   return (
     <div>
       <L req={req} htmlFor={htmlFor}>{label}</L>
-      {children}
+      {control}
+      {error && <p id={errId} role="alert" className="text-[12px] text-error mt-1.5">{error}</p>}
       {hint && <p className="text-[12px] text-slate mt-1.5 leading-relaxed">{hint}</p>}
     </div>
   );

@@ -22,7 +22,8 @@ const STORE_KEY = 'edudeen.chat.v1';
 const NUDGE_KEY = 'edudeen.chat.nudged';
 const GUEST_KEY = 'edudeen.chat.guest';
 const SELLER_PATH = /^\/(store|seller|become-a-seller|onboarding)(\/|$)/;
-const LIFT_PATH = /^\/(cart|checkout|product\/)/; // pages with a sticky bottom action bar on phones
+const WIZARD_PATH = /^\/(store\/[^/]+\/products\/(add|edit|bulk)|onboarding)/;
+const LIFT_PATH =/^\/(cart|checkout|product\/)/; // pages with a sticky bottom action bar on phones
 const CURATED = ['en', 'ur', 'ur-latn'];
 const BUBBLE = 52; // bubble diameter
 const GAP = 12; // space between bubble and panel (caret lives here)
@@ -386,6 +387,7 @@ export default function ChatWidget() {
   }
 
   if (cfg.enabled === false) return null;
+  if (!open && WIZARD_PATH.test(pathname)) return null; // product wizards / onboarding: the bubble would cover Save/Publish
   if (editing && adminPanelOpen && isMobile) return null; // the admin editor's bottom sheet owns the screen
 
   // ---- geometry -------------------------------------------------------------------------------------------------
