@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { formatPrice } from '@/utils/formatPrice';
 import { useUsdMoney } from '@/hooks/useUsdMoney';
 import { statusLabel } from '@/constants/statusLabels';
@@ -200,6 +200,13 @@ function StoreBannerFormModal({ storeId, onClose, onSaved }: { storeId: string; 
       </div>
     </Modal>
   );
+}
+
+/** Computed status from the API; falls back to the stored flag + expiry for older responses. */
+function couponState(c: { status?: string; isActive: boolean; expiresAt: string | null }): 'active' | 'paused' | 'expired' {
+  if (c.status === 'active' || c.status === 'paused' || c.status === 'expired') return c.status;
+  if (c.expiresAt && new Date(c.expiresAt).getTime() < Date.now()) return 'expired';
+  return c.isActive ? 'active' : 'paused';
 }
 
 const emptyForm = { code: '', discountType: '' as DiscountType | '', value: '', minOrder: '', usageLimit: '', expiryDate: '' };
@@ -674,11 +681,39 @@ export function StoreMarketing() {
     }
   }
 
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const couponFormRef = useRef<HTMLDivElement>(null);
+
+  function focusCouponForm() {
+    couponFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    window.setTimeout(() => couponFormRef.current?.querySelector<HTMLInputElement>('input')?.focus(), 350);
+  }
+
+  function validateCoupon() {
+    const errs: Record<string, string> = {};
+    const code = form.code.trim().toUpperCase();
+    if (!/^[A-Z0-9_-]{3,20}$/.test(code)) errs.code = 'Use 3-20 letters, numbers, - or _';
+    if (!form.discountType) errs.discountType = 'Choose a discount type';
+    const value = Number(form.value);
+    if (!form.value || !Number.isFinite(value) || value <= 0) errs.value = 'Enter a value greater than 0';
+    else if (form.discountType === 'percentage' && value > 100) errs.value = 'Percentage cannot exceed 100';
+    const min = form.minOrder ? Number(form.minOrder) : null;
+    if (min !== null && (!Number.isFinite(min) || min < 0)) errs.minOrder = 'Enter 0 or more';
+    else if (form.discountType === 'fixed' && min && value > min) errs.value = 'Fixed discount cannot be more than the minimum order';
+    if (form.usageLimit && (!Number.isInteger(Number(form.usageLimit)) || Number(form.usageLimit) < 1)) errs.usageLimit = 'Enter a whole number, 1 or more';
+    if (form.expiryDate) {
+      const d = new Date(`${form.expiryDate}T23:59:59`);
+      if (Number.isNaN(d.getTime()) || d.getTime() < Date.now()) errs.expiryDate = 'Expiry date cannot be in the past';
+    }
+    setFormErrors(errs);
+    return errs;
+  }
+
   async function handleSubmit() {
-    if (!form.code || !form.discountType || !form.value) return;
-    setError('');
+    setFormErrors({});
+    if (Object.keys(validateCoupon()).length) return;
     const payload = {
-      code: form.code,
+      code: form.code.trim().toUpperCase(),
       discountType: form.discountType as DiscountType,
       discountValue: Number(form.value),
       minOrderAmount: form.minOrder ? Number(form.minOrder) : undefined,
@@ -696,7 +731,7 @@ export function StoreMarketing() {
       setEditingId(null);
       setForm(emptyForm);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save coupon.');
+      setFormErrors({ _form: err instanceof Error ? err.message : 'Failed to save coupon.' });
     }
   }
 
@@ -1189,6 +1224,7 @@ export function StoreMarketing() {
                 icon={<TagIcon size={28} className="text-brand-orange opacity-55" />}
                 title="No coupons yet"
                 description="Create your first coupon using the form below."
+                action={{ label: 'Create coupon', onClick: focusCouponForm }}
               />
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -1198,8 +1234,8 @@ export function StoreMarketing() {
                       <div className="px-3 py-[5px] rounded-lg border-2 border-dashed border-brand-orange font-mono text-[13px] font-bold text-brand-deep-orange bg-brand-pale-orange">
                         {coupon.code}
                       </div>
-                      <span className="px-2.5 py-[3px] rounded-[5px] text-[12px] font-semibold" style={{ background: coupon.isActive ? '#E3F4EA' : '#F0EEE6', color: coupon.isActive ? '#1E7A3C' : '#5A5852' }}>
-                        {coupon.isActive ? 'Active' : 'Paused'}
+                      <span className="px-2.5 py-[3px] rounded-[5px] text-[12px] font-semibold" style={{ background: couponState(coupon) === 'active' ? '#E3F4EA' : couponState(coupon) === 'expired' ? '#FBE9E7' : '#F0EEE6', color: couponState(coupon) === 'active' ? '#1E7A3C' : couponState(coupon) === 'expired' ? '#B3261E' : '#5A5852' }}>
+                        {couponState(coupon) === 'active' ? 'Active' : couponState(coupon) === 'expired' ? 'Expired' : 'Paused'}
                       </span>
                     </div>
                     <p className="text-[13px] font-semibold text-carbon mb-3">
@@ -1220,7 +1256,7 @@ export function StoreMarketing() {
                     </table>
                     <div className="flex gap-2">
                       <button onClick={() => startEdit(coupon)} className="flex-1 py-[7px] bg-white border border-bone rounded-[7px] text-xs text-graphite cursor-pointer transition-colors duration-150 hover:bg-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/50">Edit</button>
-                      <button onClick={() => togglePause(coupon)} className="flex-1 py-[7px] bg-white border border-bone rounded-[7px] text-xs text-graphite cursor-pointer transition-colors duration-150 hover:bg-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/50">{coupon.isActive ? 'Pause' : 'Activate'}</button>
+                      <button onClick={() => togglePause(coupon)} className="flex-1 py-[7px] bg-white border border-bone rounded-[7px] text-xs text-graphite cursor-pointer transition-colors duration-150 hover:bg-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/50">{couponState(coupon) === 'paused' ? 'Activate' : 'Pause'}</button>
                       <button onClick={() => setDeletingCoupon(coupon)} className="flex-1 py-[7px] bg-white border border-bone rounded-[7px] text-xs text-error cursor-pointer transition-colors duration-150 hover:bg-error hover:text-white hover:border-error focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/50">Delete</button>
                     </div>
                   </div>
@@ -1229,44 +1265,51 @@ export function StoreMarketing() {
             )}
 
             {/* Create / Edit coupon form */}
-            <div className="bg-white border border-bone rounded-[10px] px-[22px] py-5">
+            <div ref={couponFormRef} className="bg-white border border-bone rounded-[10px] px-[22px] py-5">
               <p className="text-sm font-bold text-carbon mb-4">{editingId ? 'Edit Coupon' : 'Create New Coupon'}</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 mb-4">
                 <div>
-                  <label className="text-xs font-medium text-graphite mb-[5px] block">Coupon Code</label>
-                  <input placeholder="e.g. SAVE20" value={form.code} onChange={e => setForm(f => ({ ...f, code: e.target.value.toUpperCase() }))}
+                  <label htmlFor="cp-code" className="text-xs font-medium text-graphite mb-[5px] block">Coupon Code <span className="text-error">*</span></label>
+                  <input id="cp-code" aria-invalid={!!formErrors.code} aria-describedby={formErrors.code ? 'cp-code-err' : undefined} placeholder="e.g. SAVE20" value={form.code} onChange={e => setForm(f => ({ ...f, code: e.target.value.toUpperCase() }))}
                     className={INPUT_CLS} />
+                  {formErrors.code && <p id="cp-code-err" className="text-[11.5px] text-error mt-1">{formErrors.code}</p>}
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-graphite mb-[5px] block">Discount Type</label>
-                  <select value={form.discountType} onChange={e => setForm(f => ({ ...f, discountType: e.target.value as DiscountType }))}
+                  <label htmlFor="cp-discountType" className="text-xs font-medium text-graphite mb-[5px] block">Discount Type <span className="text-error">*</span></label>
+                  <select id="cp-discountType" aria-invalid={!!formErrors.discountType} aria-describedby={formErrors.discountType ? 'cp-discountType-err' : undefined} value={form.discountType} onChange={e => setForm(f => ({ ...f, discountType: e.target.value as DiscountType }))}
                     className={`${INPUT_CLS} cursor-pointer`}>
                     <option value="">Select type…</option>
                     <option value="percentage">Percentage Off</option>
                     <option value="fixed">Fixed Amount Off</option>
                   </select>
+                  {formErrors.discountType && <p id="cp-discountType-err" className="text-[11.5px] text-error mt-1">{formErrors.discountType}</p>}
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-graphite mb-[5px] block">Value</label>
-                  <input placeholder="e.g. 20 or 10.00" value={form.value} onChange={e => setForm(f => ({ ...f, value: e.target.value }))}
+                  <label htmlFor="cp-value" className="text-xs font-medium text-graphite mb-[5px] block">Value <span className="text-error">*</span></label>
+                  <input id="cp-value" aria-invalid={!!formErrors.value} aria-describedby={formErrors.value ? 'cp-value-err' : undefined} placeholder="e.g. 20 or 10.00" value={form.value} onChange={e => setForm(f => ({ ...f, value: e.target.value }))}
                     className={INPUT_CLS} />
+                  {formErrors.value && <p id="cp-value-err" className="text-[11.5px] text-error mt-1">{formErrors.value}</p>}
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-graphite mb-[5px] block">Minimum Order ({currencySymbol(store?.baseCurrency)})</label>
-                  <input placeholder="0" value={form.minOrder} onChange={e => setForm(f => ({ ...f, minOrder: e.target.value }))}
+                  <label htmlFor="cp-minOrder" className="text-xs font-medium text-graphite mb-[5px] block">Minimum Order ({currencySymbol(store?.baseCurrency)})</label>
+                  <input id="cp-minOrder" aria-invalid={!!formErrors.minOrder} aria-describedby={formErrors.minOrder ? 'cp-minOrder-err' : undefined} placeholder="0" value={form.minOrder} onChange={e => setForm(f => ({ ...f, minOrder: e.target.value }))}
                     className={INPUT_CLS} />
+                  {formErrors.minOrder && <p id="cp-minOrder-err" className="text-[11.5px] text-error mt-1">{formErrors.minOrder}</p>}
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-graphite mb-[5px] block">Usage Limit</label>
-                  <input placeholder="Leave blank for unlimited" value={form.usageLimit} onChange={e => setForm(f => ({ ...f, usageLimit: e.target.value }))}
+                  <label htmlFor="cp-usageLimit" className="text-xs font-medium text-graphite mb-[5px] block">Usage Limit</label>
+                  <input id="cp-usageLimit" aria-invalid={!!formErrors.usageLimit} aria-describedby={formErrors.usageLimit ? 'cp-usageLimit-err' : undefined} placeholder="Leave blank for unlimited" value={form.usageLimit} onChange={e => setForm(f => ({ ...f, usageLimit: e.target.value }))}
                     className={INPUT_CLS} />
+                  {formErrors.usageLimit && <p id="cp-usageLimit-err" className="text-[11.5px] text-error mt-1">{formErrors.usageLimit}</p>}
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-graphite mb-[5px] block">Expiry Date</label>
-                  <input type="date" value={form.expiryDate} onChange={e => setForm(f => ({ ...f, expiryDate: e.target.value }))}
+                  <label htmlFor="cp-expiryDate" className="text-xs font-medium text-graphite mb-[5px] block">Expiry Date</label>
+                  <input id="cp-expiryDate" aria-invalid={!!formErrors.expiryDate} aria-describedby={formErrors.expiryDate ? 'cp-expiryDate-err' : undefined} type="date" min={new Date().toISOString().slice(0, 10)} value={form.expiryDate} onChange={e => setForm(f => ({ ...f, expiryDate: e.target.value }))}
                     className={INPUT_CLS} />
+                  {formErrors.expiryDate && <p id="cp-expiryDate-err" className="text-[11.5px] text-error mt-1">{formErrors.expiryDate}</p>}
                 </div>
               </div>
+              {formErrors._form && <p className="text-xs text-error mb-3" role="alert">{formErrors._form}</p>}
               <div className="flex gap-2">
                 <button onClick={handleSubmit} className="px-6 py-2.5 bg-brand-orange border-none rounded-lg text-[13px] font-semibold text-white cursor-pointer transition-colors duration-150 hover:bg-brand-deep-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-brand-orange/50">
                   {editingId ? 'Update Coupon' : 'Create Coupon'}

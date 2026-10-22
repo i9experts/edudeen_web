@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, type ReactNode, Suspense } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback, type ReactNode, Suspense } from 'react';
 import { Outlet, Navigate, useNavigate, useLocation, useParams } from 'react-router-dom';
 import { TokenStorage, type AppRole } from '@/api/services/auth';
 import { clsx } from 'clsx';
@@ -600,10 +600,12 @@ function StoreWorkspaceProvider({ children }: { children: ReactNode }) {
     return () => { cancelled = true; };
   }, [storeId, tick]);
 
-  const refetch = () => setTick(t => t + 1);
+  const refetch = useCallback(() => setTick(t => t + 1), []);
+  // Stable value: consumers (sidebar, banners, every page) only re-render when the workspace really changes.
+  const value = useMemo(() => ({ store, storeId, loading, error, refetch }), [store, storeId, loading, error, refetch]);
 
   return (
-    <StoreWorkspaceCtx.Provider value={{ store, storeId, loading, error, refetch }}>
+    <StoreWorkspaceCtx.Provider value={value}>
       {children}
     </StoreWorkspaceCtx.Provider>
   );

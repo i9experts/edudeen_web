@@ -14,6 +14,8 @@ export interface Coupon {
   usageCount:     number;
   expiresAt:      string | null;
   isActive:       boolean;
+  /** Computed by the API: expired > paused > active. */
+  status?:        'active' | 'paused' | 'expired';
   createdAt:      string;
 }
 

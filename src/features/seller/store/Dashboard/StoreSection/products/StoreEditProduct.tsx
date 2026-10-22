@@ -268,13 +268,19 @@ export default function StoreEditProduct() {
   }, [cur, pType, phys.stock, phys.shippingWeight, store?.baseCurrency, dig.sampleFile, dig.tiers, dig.educationLevel, dig.customLevel, delivery, learning, attrDefs, attributeValues, premiumPct, premiumOptOut, campaignIds, premiumTerms, storePremiumPct, offerFlags]);
 
   const wiz = useWizard(issues, 'Edit', [0, 1, 2, 3, 4, 5]);
+  // A banner raised by a failed Save/Publish check disappears as soon as that problem is fixed.
+  const validationMsg = useRef('');
+  useEffect(() => {
+    if (validationMsg.current && !issues.some(i => i.message === validationMsg.current)) { validationMsg.current = ''; setError(''); }
+  }, [issues]);
   const guard = useLeaveGuard(touched && !saving);
 
   const handleSubmit = async (statusOverride?: ProductStatus) => {
     setError('');
     if (issues.length) {
       wiz.setAttempted(true);
-      setError(issues[0].message);
+      validationMsg.current = issues[0].message;
+      setError(issues.length > 1 ? ` (+ more to fix)` : issues[0].message);
       wiz.go(issues[0].step, issues[0].fieldId);
       return;
     }

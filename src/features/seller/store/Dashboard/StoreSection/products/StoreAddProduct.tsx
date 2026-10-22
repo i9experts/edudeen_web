@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useStoreWorkspace, StorePageHeader } from '@/components/layouts/StoreLayout';
 import { apiCreatePhysicalProduct, apiCreateDigitalProduct, type VariantOption } from '@/api/services/product';
@@ -178,6 +178,11 @@ export default function StoreAddProduct() {
   // Issues for the status currently chosen (what Publish would run into).
   const issues = collectIssues(cur.status);
   const wiz = useWizard(issues, 'Add');
+  // A banner raised by a failed Save/Publish check disappears as soon as that problem is fixed.
+  const validationMsg = useRef('');
+  useEffect(() => {
+    if (validationMsg.current && !issues.some(i => i.message === validationMsg.current)) { validationMsg.current = ''; setError(''); }
+  }, [issues]);
 
   // ── Autosave to this device (never publishes) ───────────────────────────────
   const snapshot = useMemo<DraftSnapshot>(() => ({ pType, phys, dig, learning, delivery, campaignIds, premiumPct, premiumOptOut, attributeValues, categoryChoice }),
@@ -202,7 +207,8 @@ export default function StoreAddProduct() {
     const found = collectIssues(finalStatus);
     if (found.length) {
       wiz.setAttempted(true);
-      setError(found[0].message);
+      validationMsg.current = found[0].message;
+      setError(found.length > 1 ? ` (+ more to fix)` : found[0].message);
       wiz.go(found[0].step, found[0].fieldId);
       if (found[0].fieldId === 'fld-schedule') setShowScheduleModal(true);
       return;

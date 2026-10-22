@@ -19,7 +19,7 @@ export function WeightField({ id, value, onChange }: { id: string; value: string
   }, [value]);
   return (
     <div className="flex gap-2 sm:max-w-[240px]">
-      <input id={id} type="number" min={0} step="any" inputMode="decimal" value={num} placeholder="e.g. 500"
+      <input id={id} type="number" min={0} step="any" inputMode="decimal" value={num} placeholder={unit === 'kg' ? 'e.g. 0.5' : 'e.g. 500'}
         onChange={e => { setNum(e.target.value); onChange(compose(e.target.value, unit)); }} className={inp} />
       <select aria-label="Weight unit" value={unit} className={`${inp} !w-[80px] shrink-0 cursor-pointer`}
         onChange={e => { const u = e.target.value as WeightUnit; setUnit(u); onChange(compose(num, u)); }}>

@@ -71,13 +71,40 @@ function PayoutMethodModal({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [confirmRemove, setConfirmRemove] = useState(false);
+  const [removing, setRemoving] = useState(false);
+  const isPkr = currency === 'PKR';
+
+  function validate() {
+    const errs: Record<string, string> = {};
+    if (type === 'bank_transfer') {
+      if (!bankName.trim()) errs.bankName = 'Bank name is required';
+      if (!accountHolder.trim()) errs.accountHolder = 'Account holder name is required';
+      const acct = accountNumber.replace(/\s+/g, '').toUpperCase();
+      if (!(editing && !acct)) {
+        if (isPkr) { if (!/^PK\d{2}[A-Z]{4}\d{16}$/.test(acct)) errs.accountNumber = 'Enter a valid IBAN, e.g. PK36SCBL0000001123456702'; }
+        else if (acct.length < 4) errs.accountNumber = 'Account number is required';
+      }
+    } else if (type === 'paypal') {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(externalAccountId.trim())) errs.externalAccountId = 'Enter a valid PayPal email';
+    } else if (!/^acct_[A-Za-z0-9]+$/.test(externalAccountId.trim())) {
+      errs.externalAccountId = 'Enter your Stripe connected account id (starts with acct_)';
+    }
+    setFieldErrors(errs);
+    return Object.keys(errs).length === 0;
+  }
+
   async function handleSave() {
-    setSaving(true); setError('');
+    setError('');
+    if (!validate()) return;
+    setSaving(true);
+    const acct = accountNumber.replace(/\s+/g, '');
     const payload = {
       type, currency, setAsDefault,
       ...(type === 'bank_transfer'
-        ? { bankName, accountHolder, ...(accountNumber ? { accountNumber } : {}), routingNumber }
-        : { externalAccountId }),
+        ? { bankName: bankName.trim(), accountHolder: accountHolder.trim(), ...(acct ? { accountNumber: isPkr ? acct.toUpperCase() : acct } : {}), ...(!isPkr && routingNumber ? { routingNumber } : {}) }
+        : { externalAccountId: externalAccountId.trim() }),
     };
     try {
       if (editing) await apiUpdatePayoutMethod(storeId, editing._id, payload);
@@ -90,13 +117,32 @@ function PayoutMethodModal({
     }
   }
 
+  async function handleRemove() {
+    if (!editing) return;
+    setRemoving(true); setError('');
+    try {
+      await apiDeletePayoutMethod(storeId, editing._id);
+      onSaved();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to remove payout method.');
+      setConfirmRemove(false);
+    } finally {
+      setRemoving(false);
+    }
+  }
+
+  const inputCls = (k: string) => clsx('w-full px-3 py-2 border rounded-lg text-[13px] outline-none', fieldErrors[k] ? 'border-error' : 'border-bone');
+  const labelCls = 'block text-[12px] font-medium text-charcoal mb-1';
+  const fieldErr = (k: string) => fieldErrors[k] ? <p id={`pm-${k}-err`} className="text-[11.5px] text-error mt-1">{fieldErrors[k]}</p> : null;
+  const aria = (k: string) => ({ id: `pm-${k}`, 'aria-invalid': !!fieldErrors[k], 'aria-describedby': fieldErrors[k] ? `pm-${k}-err` : undefined });
+
   return (
     <Modal title={editing ? 'Edit Payout Method' : 'Add Payout Method'} width={420} onClose={onClose}>
       <div className="flex flex-col gap-3">
         {error && <p className="text-[12px] text-error">{error}</p>}
         <div className="flex gap-2">
           {(['bank_transfer', 'paypal', 'stripe'] as const).map(t => (
-            <button key={t} onClick={() => setType(t)}
+            <button key={t} type="button" onClick={() => { setType(t); setFieldErrors({}); }}
               className={clsx(
                 'flex-1 px-2.5 py-2 rounded-lg text-[12px] font-semibold border cursor-pointer',
                 type === t ? 'border-brand-orange bg-brand-pale-orange text-brand-deep-orange' : 'border-bone bg-white text-graphite',
@@ -111,7 +157,7 @@ function PayoutMethodModal({
           </label>
           <div className="flex gap-2">
             {(['PKR', 'USD'] as const).map(c => (
-              <button key={c} disabled={!!editing} onClick={() => setCurrency(c)}
+              <button key={c} type="button" disabled={!!editing} onClick={() => { setCurrency(c); setFieldErrors({}); }}
                 className={clsx(
                   'flex-1 px-2.5 py-2 rounded-lg text-[12px] font-semibold border disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer',
                   currency === c ? 'border-brand-orange bg-brand-pale-orange text-brand-deep-orange' : 'border-bone bg-white text-graphite',
@@ -123,31 +169,62 @@ function PayoutMethodModal({
         </div>
         {type === 'bank_transfer' ? (
           <>
-            <input value={bankName} onChange={e => setBankName(e.target.value)} placeholder="Bank name"
-              className="px-3 py-2 border border-bone rounded-lg text-[13px] outline-none" />
-            <input value={accountHolder} onChange={e => setAccountHolder(e.target.value)} placeholder="Account holder name"
-              className="px-3 py-2 border border-bone rounded-lg text-[13px] outline-none" />
-            <input value={accountNumber} onChange={e => setAccountNumber(e.target.value)}
-              placeholder={editing ? `Account number (leave blank to keep ••${editing.accountLast4 ?? '----'})` : 'Account number'}
-              className="px-3 py-2 border border-bone rounded-lg text-[13px] outline-none" />
-            <input value={routingNumber} onChange={e => setRoutingNumber(e.target.value)} placeholder="Routing number"
-              className="px-3 py-2 border border-bone rounded-lg text-[13px] outline-none" />
+            <div>
+              <label htmlFor="pm-bankName" className={labelCls}>Bank name <span className="text-error">*</span></label>
+              <input {...aria('bankName')} value={bankName} onChange={e => setBankName(e.target.value)} className={inputCls('bankName')} />
+              {fieldErr('bankName')}
+            </div>
+            <div>
+              <label htmlFor="pm-accountHolder" className={labelCls}>Account holder name <span className="text-error">*</span></label>
+              <input {...aria('accountHolder')} value={accountHolder} onChange={e => setAccountHolder(e.target.value)} className={inputCls('accountHolder')} />
+              {fieldErr('accountHolder')}
+            </div>
+            <div>
+              <label htmlFor="pm-accountNumber" className={labelCls}>
+                {isPkr ? 'IBAN' : 'Account number'} {!editing && <span className="text-error">*</span>}
+              </label>
+              <input {...aria('accountNumber')} value={accountNumber} onChange={e => setAccountNumber(e.target.value)}
+                placeholder={editing ? `Leave blank to keep ••${editing.accountLast4 ?? '----'}` : isPkr ? 'PK36SCBL0000001123456702' : ''}
+                className={inputCls('accountNumber')} />
+              {fieldErr('accountNumber')}
+            </div>
+            {!isPkr && (
+              <div>
+                <label htmlFor="pm-routingNumber" className={labelCls}>Routing number</label>
+                <input id="pm-routingNumber" value={routingNumber} onChange={e => setRoutingNumber(e.target.value)} className={inputCls('routingNumber')} />
+              </div>
+            )}
           </>
         ) : (
-          <input value={externalAccountId} onChange={e => setExternalAccountId(e.target.value)}
-            placeholder={type === 'paypal' ? 'PayPal email' : 'Stripe account ID'}
-            className="px-3 py-2 border border-bone rounded-lg text-[13px] outline-none" />
+          <div>
+            <label htmlFor="pm-externalAccountId" className={labelCls}>
+              {type === 'paypal' ? 'PayPal email' : 'Stripe connected account ID'} <span className="text-error">*</span>
+            </label>
+            <input {...aria('externalAccountId')} value={externalAccountId} onChange={e => setExternalAccountId(e.target.value)}
+              placeholder={type === 'paypal' ? 'you@example.com' : 'acct_...'} className={inputCls('externalAccountId')} />
+            {fieldErr('externalAccountId')}
+          </div>
         )}
         <label className="flex items-center gap-2 text-[12.5px] text-graphite cursor-pointer">
           <input type="checkbox" checked={setAsDefault} onChange={e => setSetAsDefault(e.target.checked)} />
           Set as default payout method
         </label>
         <Button size="sm" loading={saving} onClick={handleSave}>Save Method</Button>
+        {editing && (confirmRemove ? (
+          <div className="rounded-lg border border-error/30 bg-error/5 p-3 flex flex-col gap-2">
+            <p className="text-[12px] text-charcoal">Remove this payout method? This can’t be undone.</p>
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" onClick={() => setConfirmRemove(false)}>Keep it</Button>
+              <Button size="sm" loading={removing} onClick={handleRemove}>Yes, remove</Button>
+            </div>
+          </div>
+        ) : (
+          <button type="button" onClick={() => setConfirmRemove(true)} className="text-[12px] font-semibold text-error cursor-pointer self-start">Remove this method</button>
+        ))}
       </div>
     </Modal>
   );
 }
-
 // ── Payout detail modal ───────────────────────────────────────────────────────
 function PayoutDetailModal({ onClose, storeId, payoutId }: { onClose: () => void; storeId: string; payoutId: string }) {
   const [payout, setPayout] = useState<Payout | null>(null);
@@ -339,7 +416,7 @@ export function StoreFinance() {
 
   // Payout-method modal stays reachable from the header on every tab/state.
   const methodModalEl = methodModal && (
-    <PayoutMethodModal storeId={storeId} defaultCurrency={activeWallet?.currency ?? store?.baseCurrency ?? undefined} onClose={() => setMethodModal(false)} onSaved={() => { setMethodModal(false); loadCore(); loadWalletScoped(); }} />
+    <PayoutMethodModal storeId={storeId} defaultCurrency={store?.baseCurrency ?? activeWallet?.currency ?? undefined} onClose={() => setMethodModal(false)} onSaved={() => { setMethodModal(false); loadCore(); loadWalletScoped(); }} />
   );
 
   if (tab === 'earnings') {

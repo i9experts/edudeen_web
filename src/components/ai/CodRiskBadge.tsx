@@ -10,19 +10,39 @@ export function CodRiskBadge({ storeId, orderId }: { storeId: string; orderId: s
   const { enabled } = useAiFeatures(storeId);
   const [risk, setRisk] = useState<CodRisk | null>(null);
   const [failed, setFailed] = useState(false);
+  const [retryKey, setRetryKey] = useState(0);
   const explain = enabled('cod_risk');
 
+  // 1) The score (plain code, fast) — never waits on the AI-features flag or the AI explanation.
   useEffect(() => {
     let alive = true;
     setRisk(null); setFailed(false);
-    apiCodRisk(storeId, orderId, explain)
+    apiCodRisk(storeId, orderId, false)
       .then(r => { if (alive) setRisk(r.data); })
       .catch(() => { if (alive) setFailed(true); });
     return () => { alive = false; };
-  }, [storeId, orderId, explain]);
+  }, [storeId, orderId, retryKey]);
 
-  if (failed) return null;
-  if (!risk) return <p className="text-[12px] text-slate mt-2">Checking cash-on-delivery risk…</p>;
+  // 2) The optional AI explanation, merged in when it arrives; a failure just leaves the score as is.
+  const scoreLoaded = !!risk;
+  useEffect(() => {
+    if (!explain || !scoreLoaded) return;
+    let alive = true;
+    apiCodRisk(storeId, orderId, true)
+      .then(r => { if (alive && r.data?.explanation) setRisk(prev => (prev ? { ...prev, explanation: r.data.explanation } : r.data)); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, [storeId, orderId, explain, scoreLoaded]);
+
+  if (failed) {
+    return (
+      <p className="text-[12px] text-slate mt-2">
+        Couldn’t check cash-on-delivery risk.{' '}
+        <button type="button" onClick={() => setRetryKey(k => k + 1)} className="font-semibold text-brand-royal underline cursor-pointer bg-transparent border-none p-0">Retry</button>
+      </p>
+    );
+  }
+  if (!risk) return <p className="text-[12px] text-slate mt-2" role="status">Checking cash-on-delivery risk…</p>;
   return (
     <div className="mt-3 rounded-lg border border-bone px-3 py-2">
       <p className="flex items-center justify-between gap-2 text-[12px]">

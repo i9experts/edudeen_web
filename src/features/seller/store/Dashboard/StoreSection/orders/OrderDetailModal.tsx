@@ -16,7 +16,7 @@ export type SellerOrderStatus = 'processing' | 'shipped' | 'delivered' | 'comple
 // processing → shipped → delivered → completed, never on a cancelled order,
 // "shipped" needs tracking, "completed" needs the order to be paid.
 export const canMarkPaid = (o: SellerOrder) =>
-  !o.isPaid && o.paymentType === 'cash_on_delivery' && o.status !== 'cancelled' && o.status !== 'completed';
+  !o.isPaid && o.paymentType === 'cash_on_delivery' && (o.status === 'shipped' || o.status === 'delivered');
 
 export const needsShipping = (o: SellerOrder) => o.type === 'physical' || o.type === 'mixed';
 
