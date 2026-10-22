@@ -21,6 +21,7 @@ import { EdudeenLogo, EdudeenIcon } from '@/components/comman/ui/EdudeenLogo';
 import { PlatformTopBar } from '@/components/comman/ui/PlatformTopBar';
 import { MoreSheet } from '@/components/comman/ui/MoreSheet';
 import { MoreHorizontal } from 'lucide-react';
+import { ReauthProvider } from '@/contexts/ReauthProvider';
 import { useLockPageScroll } from '@/hooks/useLockPageScroll';
 import { apiGetListingReviewCount } from '@/api/services/marketplace/adminMarketplace';
 import { apiAdminPremiumStats } from '@/api/services/adminPremium';
@@ -603,6 +604,7 @@ export function AdminLayout() {
   }
 
   return (
+    <ReauthProvider>
     <div className={clsx('flex bg-white overflow-hidden', 'h-screen')}>
       <AdminSidebar open={sidebarOpen} onToggle={toggle} />
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
@@ -618,5 +620,6 @@ export function AdminLayout() {
       </div>
       <AdminBottomNav />
     </div>
+    </ReauthProvider>
   );
 }

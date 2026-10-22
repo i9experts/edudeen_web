@@ -1,9 +1,10 @@
-import { useCallback, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { Modal } from '@/components/comman/ui/Modal';
 import { Button } from '@/components/comman/ui/Button';
 import { Input } from '@/components/comman/ui/Input';
 import { apiVerifyAdminPassword } from '@/api/services/reauth';
 import { ReauthCtx } from './reauthCtx';
+import { registerReauthPrompt } from '@/api/reauthPrompt';
 
 /**
  * Password confirmation for inline site edits. Each write asks again (the token
@@ -22,6 +23,8 @@ export function ReauthProvider({ children }: { children: ReactNode }) {
     resolver.current = resolve;
     setPassword(''); setError(''); setBusy(false); setOpen(true);
   }), []);
+
+  useEffect(() => { registerReauthPrompt(confirm); return () => registerReauthPrompt(null); }, [confirm]);
 
   const finish = (token: string | null) => {
     setOpen(false); setPassword(''); setError('');
@@ -52,12 +55,12 @@ export function ReauthProvider({ children }: { children: ReactNode }) {
       {open && (
         <Modal title="Enter your admin password" onClose={() => finish(null)}>
           <form onSubmit={submit} className="flex flex-col gap-3" autoComplete="off">
-            <p className="text-[13px] text-slate">Enter your admin password to publish this change.</p>
+            <p className="text-[13px] text-slate">Enter your admin password to confirm this action.</p>
             <Input label="Admin password" type="password" autoFocus autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} />
             {error && <p className="text-[12px] text-error" role="alert">{error}</p>}
             <div className="flex justify-end gap-2 pt-1">
               <Button type="button" variant="ghost" onClick={() => finish(null)}>Cancel</Button>
-              <Button type="submit" loading={busy} disabled={!password}>Confirm and publish</Button>
+              <Button type="submit" loading={busy} disabled={!password}>Confirm</Button>
             </div>
           </form>
         </Modal>

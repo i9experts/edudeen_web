@@ -41,7 +41,7 @@ export function GrantModal({ onClose, onDone, initialWho = '' }: { onClose: () =
   const errors = {
     who: who.trim().length < 3 || (!isId && !who.includes('@')) ? 'Enter the buyer\'s email address or user id.' : '',
     plan: planId ? '' : 'Choose a plan.',
-    days: Number.isInteger(d) && d >= 1 && d <= 3650 ? '' : 'Whole number of days from 1 to 3650.',
+    days: Number.isInteger(d) && d >= 1 && d <= 366 ? '' : 'Whole number of days from 1 to 366.',
   };
 
   async function submit() {
@@ -62,7 +62,7 @@ export function GrantModal({ onClose, onDone, initialWho = '' }: { onClose: () =
       <div className="flex flex-col gap-3">
         <Input label="Buyer email or user id" value={who} onChange={e => setWho(e.target.value)} error={touched ? errors.who : undefined} placeholder="buyer@example.com" />
         <Select label="Plan" value={planId} onChange={e => setPlanId(e.target.value)} error={touched ? errors.plan : undefined}>
-          {loading && <option value="">Loading plans…</option>}
+          {loading && <option value="">Loading plansâ€¦</option>}
           {(plans ?? []).map(p => <option key={p._id} value={p._id}>{p.name}</option>)}
         </Select>
         <div>
@@ -72,7 +72,7 @@ export function GrantModal({ onClose, onDone, initialWho = '' }: { onClose: () =
               <button key={v} type="button" onClick={() => setDays(v)} className={'px-3 py-1.5 rounded-full text-[12.5px] font-medium border cursor-pointer transition-colors ' + (days === v ? 'bg-carbon text-white border-carbon' : 'bg-white text-charcoal border-bone hover:bg-cream')}>{label}</button>
             ))}
           </div>
-          <Input label="Or a custom number of days" type="number" min={1} max={3650} value={days} onChange={e => setDays(e.target.value)} error={touched ? errors.days : undefined} />
+          <Input label="Or a custom number of days" type="number" min={1} max={366} value={days} onChange={e => setDays(e.target.value)} error={touched ? errors.days : undefined} />
         </div>
         <p className="text-[12px] text-slate">A free gift from Edudeen - the buyer is notified. If they are already a member, the time is added on top.</p>
         {plansError && <p role="alert" className="text-[12px] text-error">{plansError}</p>}
@@ -125,8 +125,8 @@ export function PremiumMembersTab({ initialStatus }: { initialStatus: string }) 
   const members = data?.members ?? [];
 
   const columns: TableColumn<AdminPremiumMember>[] = [
-    { key: 'member', header: 'Member', render: m => (<div className="max-w-[220px]"><p className="font-semibold truncate">{m.userName || '—'}</p><p className="text-[12px] text-slate truncate">{m.userEmail || m.userId}</p></div>) },
-    { key: 'plan', header: 'Plan', render: m => <span className="whitespace-nowrap">{m.planName || '—'} <span className="text-slate">· {m.interval}</span></span> },
+    { key: 'member', header: 'Member', render: m => (<div className="max-w-[220px]"><p className="font-semibold truncate">{m.userName || 'â€”'}</p><p className="text-[12px] text-slate truncate">{m.userEmail || m.userId}</p></div>) },
+    { key: 'plan', header: 'Plan', render: m => <span className="whitespace-nowrap">{m.planName || 'â€”'} <span className="text-slate">Â· {m.interval}</span></span> },
     { key: 'source', header: 'Source', render: m => <span className="text-graphite whitespace-nowrap">{SOURCE_LABEL[m.source] ?? m.source}</span> },
     { key: 'end', header: 'Valid until', render: m => <span className="whitespace-nowrap">{fmtDate(m.currentPeriodEnd)}{m.cancelAtPeriodEnd && m.isLive ? <span className="text-slate"> (won't renew)</span> : null}</span> },
     { key: 'status', header: 'Status', render: m => statusBadge(m) },
