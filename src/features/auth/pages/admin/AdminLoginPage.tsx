@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { safeRedirectPath } from '@/utils/safeRedirect';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { Button } from '@/components/comman/ui/Button';
@@ -31,13 +31,13 @@ const BRANDING_HEADER = (
 
 // ── Component ─────────────────────────────────────────────────────────────────
 export function AdminLoginPage() {
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const redirectTo = safeRedirectPath(searchParams.get('redirect'));
   usePageTitle('Admin Login');
 
   const [showPass, setShowPass] = useState(false);
   const [totp, setTotp] = useState('');
+  const [showForgot, setShowForgot] = useState(false);
   const { execute: login, loading, error: apiError } = useLogin();
 
   const { values, errors, set, blur, handleSubmit } = useForm(
@@ -106,10 +106,15 @@ export function AdminLoginPage() {
               </button>
             }
           />
-          <div className="flex justify-end mt-2">
-            <Button variant="link" size="sm" onClick={() => navigate('/forgot-password')}>
+          <div className="flex flex-col items-end mt-2">
+            <Button variant="link" size="sm" onClick={() => setShowForgot(s => !s)}>
               Forgot password?
             </Button>
+            {showForgot && (
+              <p className="text-[12px] text-slate mt-1 mb-0 text-right max-w-[34ch]">
+                Admin passwords are not reset by email. Staff: ask the owner to re-send your invitation. Owner: run the server command <b>admin:reset-password</b>.
+              </p>
+            )}
           </div>
         </div>
       </div>

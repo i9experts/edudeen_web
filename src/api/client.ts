@@ -100,7 +100,12 @@ function refreshAccessToken(): Promise<string | null> {
       setAuthCookie('refreshToken', tokens.refreshToken, persistent);
       return tokens.accessToken as string;
     })
-    .catch(() => null)
+    .catch(() => {
+      // Admin refresh tokens are single-use: another tab may have just rotated them (shared cookie). If the cookie
+      // changed while we waited, that tab's fresh pair is the valid session — use it instead of logging out.
+      const current = getAuthCookie('refreshToken');
+      return current && current !== refreshToken ? getAuthCookie('accessToken') : null;
+    })
     .finally(() => { refreshInFlight = null; });
   return refreshInFlight;
 }
@@ -188,8 +193,13 @@ client.interceptors.response.use(
       // expiring mid-task doesn't strand them on the role's default
       // dashboard afterward — LoginPage/AdminLoginPage read this back.
       const here = window.location.pathname + window.location.search;
+      const onAdmin = window.location.pathname.startsWith('/admin');
       const isLoginPage = window.location.pathname.startsWith('/login') || window.location.pathname.startsWith('/admin/login');
-      window.location.href = isLoginPage ? '/login' : `/login?redirect=${encodeURIComponent(here)}`;
+      try { window.dispatchEvent(new Event('edudeen:auth-logout')); } catch { /* ignore */ }
+      // Admin panel sessions go back to the ADMIN sign-in (the buyer login has no admin option).
+      const loginPath = onAdmin ? '/admin/login' : '/login';
+      if (!isLoginPage) window.location.href = `${loginPath}?redirect=${encodeURIComponent(here)}`;
+      else if (!window.location.pathname.startsWith('/admin/login')) window.location.href = '/login';
     }
 
     // Platform-wide maintenance mode (see main.ts) — admin/auth routes are

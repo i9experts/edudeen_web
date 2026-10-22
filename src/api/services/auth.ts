@@ -311,7 +311,3 @@ export function apiSocialLogin(payload: SocialLoginPayload) {
 }
 
 
-/** Admin-only: add another admin (POST /api/auth/admin/create-admin). */
-export function apiCreateAdmin(payload: { name: string; email: string; password: string; phone?: string }) {
-  return client.post<never, { success: boolean; message?: string }>('/api/auth/admin/create-admin', payload);
-}
