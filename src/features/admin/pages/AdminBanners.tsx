@@ -170,9 +170,10 @@ export function AdminBanners() {
               return (
                 <div key={b._id} className="bg-white border border-bone rounded-xl overflow-hidden flex flex-col transition-colors duration-200 hover:border-brand-orange/25">
                   <div className="aspect-[16/9] bg-cream">
-                    <img loading="lazy" decoding="async" src={b.bannerImage} alt="" className="w-full h-full object-cover" />
+                    <img loading="lazy" decoding="async" src={b.bannerImage} alt={b.title ?? ""} className="w-full h-full object-cover" />
                   </div>
                   <div className="p-3 flex flex-col gap-2 flex-1">
+                    {b.title && <p className="text-[13.5px] font-semibold text-charcoal m-0 truncate" title={b.title}>{b.title}</p>}
                     <div className="flex items-center justify-between">
                       <span className="px-[8px] py-[2px] rounded-[5px] text-[12px] font-semibold"
                         style={{ background: statusStyle.bg, color: statusStyle.color }}>

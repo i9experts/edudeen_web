@@ -27,15 +27,15 @@ function withTransform(url: string, transform: string): string {
 export const HERO_SRCSET_WIDTHS = [480, 768, 1024, 1440, 1920, 2560];
 
 /** A single sized + format/quality-optimized delivery URL (the `src` fallback for browsers without `srcset` support). */
-export function cloudinaryUrl(url: string, width: number): string {
+export function cloudinaryUrl(url: string, width: number, quality = 'auto'): string {
   if (!isCloudinaryUrl(url)) return url;
-  return withTransform(url, `w_${width},c_limit,q_auto,f_auto`);
+  return withTransform(url, `w_${width},c_limit,q_${quality},f_auto`);
 }
 
 /** `srcset` string across `widths` — `undefined` for non-Cloudinary URLs, in which case the caller should omit `srcSet`/`sizes` entirely and fall back to a plain `src`. */
-export function cloudinarySrcSet(url: string, widths: number[] = HERO_SRCSET_WIDTHS): string | undefined {
+export function cloudinarySrcSet(url: string, widths: number[] = HERO_SRCSET_WIDTHS, quality = 'auto'): string | undefined {
   if (!isCloudinaryUrl(url)) return undefined;
-  return widths.map((w) => `${withTransform(url, `w_${w},c_limit,q_auto,f_auto`)} ${w}w`).join(', ');
+  return widths.map((w) => `${withTransform(url, `w_${w},c_limit,q_${quality},f_auto`)} ${w}w`).join(', ');
 }
 
 /** 1x/2x density `srcset` for a `<picture><source>` art-direction variant

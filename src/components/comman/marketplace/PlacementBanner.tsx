@@ -69,7 +69,7 @@ export function PlacementBanner({ placement, className, tall = false }: { placem
     <>
       <EditableRegion label={`${PLACEMENT_NAME[placement]} banner`} id={`banner:${placement}`} group="Banners" hint={PLACEMENT_WHERE[placement]} placement={placement} onEdit={() => { setFocusId(visibleId.current); setEditorOpen(true); }}>
         <section aria-label="Featured promotions" className={clsx('relative w-full overflow-hidden rounded-2xl bg-cream', tall ? 'aspect-[2/1] sm:aspect-[5/2] lg:aspect-[3.2/1]' : 'aspect-[2/1] sm:aspect-[3/1] lg:aspect-[4/1]', className)}>
-          <BannerCarousel entityType="banner" banners={items} onActiveChange={trackVisible} />
+          <BannerCarousel entityType="banner" banners={items} onActiveChange={trackVisible} fit="cover" showDots={false} />
         </section>
       </EditableRegion>
       {editor}

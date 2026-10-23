@@ -498,8 +498,7 @@ function HomeLanding() {
         <ShoppingForBar className="mb-4" />
 
         {/* ── Admin banners / paid promotions (Admin → Banners, homepage slot) ── */}
-        <PlacementBanner placement="homepageHero" tall className={heroBanners.has && homeCards.cards.length ? "mb-4 lg:mb-0" : "mb-[25px]"} />
-        {heroBanners.has && <HomeCardGrid cards={homeCards.cards} overlap />}
+        <PlacementBanner placement="homepageHero" tall className="mb-[25px]" />
 
         {/* ── Hero: admin content (text + desktop/phone picture); brand artwork when no picture is set. Same box while loading → no layout shift. ── */}
         <EditableHomeSection section="hero" defaults={eff} label="hero">
@@ -508,16 +507,14 @@ function HomeLanding() {
             : heroBanners.has ? null
             : <HomeHero eff={eff} onPrimary={scrollToResources} onSecondary={() => selectSubject(featuredTab?.id ?? null)} />}
         </EditableHomeSection>
-        {!heroBanners.has && <HomeCardGrid cards={homeCards.cards} />}
+        {/* Sale banner (Mega Sale) first, then the category cards under it. */}
+        <FeatureMaintenance feature="flash_sale">
+        <EditableDeals className="min-h-[56px] mb-8"><DealsBanner className="!px-0 !pt-0 mb-8" /></EditableDeals>
+        </FeatureMaintenance>
 
-        {/* ── Promise strip ── */}
-        <EditableHomeSection section="promise" defaults={eff} label="tick strip">
-        <div className="flex flex-wrap justify-between md:justify-center gap-x-[15px] gap-y-2 md:gap-x-10 pt-2 pb-[27px] text-[12px] md:text-[14px] text-carbon border-b border-bone mb-[30px]">
-          {eff.promiseItems.map(t => (
-            <span key={t}><span className="text-brand-green">✓</span> {t}</span>
-          ))}
-        </div>
-        </EditableHomeSection>
+        <HomeCardGrid cards={homeCards.cards} />
+
+        
 
         {/* ── Shop by category ── */}
         {homeCards.loaded && homeCards.cards.length === 0 && <ShopByCategory categories={categories} loading={!categoriesLoaded} />}
@@ -525,8 +522,6 @@ function HomeLanding() {
         {/* While an admin has the flash sale / deals under maintenance, their message replaces this block. */}
         <FeatureMaintenance feature="flash_sale">
         {/* ── Live sale campaign (Admin → Marketing → Campaigns), with its banner image ── */}
-        <EditableDeals className="min-h-[56px] mb-12"><DealsBanner className="!px-0 !pt-0 mb-12" /></EditableDeals>
-
         {/* ── Flash sale ── */}
         {flashDeals.length > 0 && (
           <section id="deals" className="mb-12 scroll-mt-[150px]">

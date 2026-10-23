@@ -25,9 +25,9 @@ function flatten(nodes: CategoryNode[], depth = 0, out: { slug: string; label: s
 }
 
 /** Admin picks WHAT the banner/card opens (category, sale, type, class, free, custom); the matching `/?...` link is built for them. */
-export function LinkTargetPicker({ value, onChange, label = 'When clicked, show' }: { value: string; onChange: (link: string) => void; label?: string }) {
+export function LinkTargetPicker({ value, onChange, label = 'When clicked, show', defaultKind }: { value: string; onChange: (link: string) => void; label?: string; /** Pre-selected option while no link is set yet (banners start on 'A category'). */ defaultKind?: LinkKind }) {
   const parsed = useMemo(() => parseLink(value), [value]);
-  const [kind, setKind] = useState<LinkKind>(parsed.kind);
+  const [kind, setKind] = useState<LinkKind>(parsed.kind === 'none' && defaultKind ? defaultKind : parsed.kind);
   const { tree } = useCategoryTree();
   const cats = useMemo(() => flatten(tree), [tree]);
   const [campaigns, setCampaigns] = useState<PublicCampaign[]>([]);
@@ -80,6 +80,7 @@ export function LinkTargetPicker({ value, onChange, label = 'When clicked, show'
         <Input value={val} onChange={e => setVal(e.target.value)} placeholder="/?q=maths or https://example.com/sale" aria-label="Custom link" />
       )}
       {kind !== 'none' && value && <p className="text-[12px] text-slate m-0">Opens: <span className="font-mono">{value}</span></p>}
+      {kind === 'category' && value && <p className="text-[12px] text-slate m-0">Visitors who click this banner land on the shop with every product of this category.</p>}
       {kind !== 'none' && kind !== 'free' && !value && <p className="text-[12px] text-error m-0">Choose what it should open, or pick “No link”.</p>}
     </div>
   );

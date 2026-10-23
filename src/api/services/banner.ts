@@ -20,6 +20,8 @@ export interface Banner {
   _id:         string;
   bannerImage: string;
   publicId:    string;
+  /** Admin-given name (admin list + picture alt text). */
+  title?:      string;
   urlOnTap:    string | null;
   isActive:    boolean;
   status:      BannerStatus;
@@ -51,6 +53,7 @@ export interface BannerCountData {
 }
 
 export interface CreateBannerPayload {
+  title?:       string;
   bannerImage?: string;
   urlOnTap?:    string;
   placements?:  PromotionPlacement[];
@@ -62,6 +65,7 @@ export interface CreateBannerPayload {
 }
 
 export interface UpdateBannerPayload {
+  title?:       string;
   bannerImage?: string;
   urlOnTap?:    string;
   placements?:  PromotionPlacement[];

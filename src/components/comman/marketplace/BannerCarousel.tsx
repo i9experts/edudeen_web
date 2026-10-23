@@ -13,6 +13,8 @@ export interface BannerCarouselItem {
   order: number;
   imageUrl: string;
   linkUrl?: string | null;
+  /** Admin-given title, used as the picture's alt text. */
+  title?: string;
   /** Store-banner-only: a seller-provided dedicated mobile crop. Swapped in
    *  below 768px via `<picture>` art-direction instead of just serving a
    *  smaller version of the desktop crop. */
@@ -30,8 +32,12 @@ interface BannerCarouselProps {
    *  for a full-bleed page hero. 'contain' instead shows the whole image
    *  un-cropped (letterboxed if its aspect ratio doesn't match the box) — for
    *  a fixed-size showcase slot where any uploaded image, small or large,
-   *  needs to display in full (e.g. Marketplace's WelcomeStrip hero cell). */
-  fit?: 'cover' | 'contain';
+   *  needs to display in full (e.g. Marketplace's WelcomeStrip hero cell).
+   *  'blend' = whole picture, never cropped, stretched or upscaled, on a blurred copy of itself that fills the
+   *  rest of the box - any picture shape looks right and keeps its full quality (homepage hero). */
+  fit?: 'cover' | 'contain' | 'blend';
+  /** Dot indicators under the slides (default on). Off where the prev/next arrows are enough. */
+  showDots?: boolean;
   /** Called with the id of the slide currently visible (admin inline editor uses it to focus that banner). */
   onActiveChange?: (id: string) => void;
 }
@@ -59,7 +65,7 @@ function isExternalLink(url: string) {
  *  *shortest signed distance* from the active index (wrapping around the
  *  list), so going from the last slide back to the first (or vice versa)
  *  slides one step over instead of sweeping across every slide in between. */
-export function BannerCarousel({ banners, entityType, fit = 'cover', onActiveChange }: BannerCarouselProps) {
+export function BannerCarousel({ banners, entityType, fit = 'cover', showDots = true, onActiveChange }: BannerCarouselProps) {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const [loadedIds, setLoadedIds] = useState<Set<string>>(() => new Set());
@@ -121,27 +127,49 @@ export function BannerCarousel({ banners, entityType, fit = 'cover', onActiveCha
 
       {sorted.map((banner, i) => {
         const isActive = i === index;
+        const hq = fit === 'contain' ? 'auto' : 'auto:best';
         const img = (
+          <>
           <picture>
+            {fit === 'blend' && (
+              <img
+                src={cloudinaryUrl(banner.imageUrl, 480)}
+                alt=""
+                aria-hidden
+                decoding="async"
+                className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl opacity-90"
+              />
+            )}
             {banner.mobileImageUrl && (
               <source media={MOBILE_BREAKPOINT} srcSet={cloudinaryDensitySrcSet(banner.mobileImageUrl, 480)} />
             )}
             <img
-              src={cloudinaryUrl(banner.imageUrl, 1920)}
-              srcSet={cloudinarySrcSet(banner.imageUrl)}
+              src={cloudinaryUrl(banner.imageUrl, 1920, hq)}
+              srcSet={cloudinarySrcSet(banner.imageUrl, undefined, hq)}
               sizes="100vw"
               loading={i === 0 ? 'eager' : 'lazy'}
               fetchPriority={i === 0 ? 'high' : undefined}
               decoding="async"
-              alt="Edudeen offer"
+              alt={banner.title || 'Edudeen offer'}
               onLoad={() => setLoadedIds((prev) => (prev.has(banner._id) ? prev : new Set(prev).add(banner._id)))}
               className={clsx(
                 'absolute inset-0 w-full h-full',
-                fit === 'contain' ? 'object-contain bg-cream' : 'object-cover',
+                fit === 'contain' ? 'object-contain bg-cream' : fit === 'blend' ? 'object-contain' : 'object-cover',
                 fit === 'cover' && isActive && !prefersReducedMotion && 'hero-kenburns',
               )}
             />
           </picture>
+          {banner.title && (
+            <>
+              <div aria-hidden className="absolute inset-y-0 start-0 w-[70%] bg-gradient-to-r from-[#0F3354]/75 via-[#0F3354]/35 to-transparent pointer-events-none rtl:bg-gradient-to-l" />
+              <div className="absolute inset-y-0 start-0 flex items-center ps-5 sm:ps-8 lg:ps-12 pe-4 max-w-[75%] sm:max-w-[60%] pointer-events-none">
+                <h2 className="m-0 text-white font-bold leading-tight tracking-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.45)] text-[20px] sm:text-[28px] lg:text-[40px] line-clamp-3">
+                  {banner.title}
+                </h2>
+              </div>
+            </>
+          )}
+          </>
         );
 
         // Shortest signed distance from the active slide, wrapping around the
@@ -196,7 +224,7 @@ export function BannerCarousel({ banners, entityType, fit = 'cover', onActiveCha
           >
             <ChevronRight size={16} className="text-charcoal" />
           </button>
-          <div className="absolute bottom-4 end-4 sm:end-6 lg:end-10 flex gap-[6px] z-10">
+          {showDots && <div className="absolute bottom-4 end-4 sm:end-6 lg:end-10 flex gap-[6px] z-10">
             {sorted.map((b, i) => (
               <button
                 key={b._id}
@@ -211,7 +239,7 @@ export function BannerCarousel({ banners, entityType, fit = 'cover', onActiveCha
                 />
               </button>
             ))}
-          </div>
+          </div>}
         </>
       )}
     </div>

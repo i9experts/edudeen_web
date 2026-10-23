@@ -8,8 +8,8 @@ import {
 import { Button } from '@/components/comman/ui/Button';
 import { Modal } from '@/components/comman/ui/Modal';
 import { Input } from '@/components/comman/ui/Input';
+import { BannerImagePicker } from '@/features/admin/components/BannerImagePicker';
 import { LinkTargetPicker } from '@/features/admin/components/LinkTargetPicker';
-import { ImageUpload } from '@/components/comman/ui/Upload';
 export const PLACEMENT_LABEL: Record<PromotionPlacement, string> = {
   homepageHero: 'Homepage Hero',
   marketplaceHero: 'Marketplace Hero',
@@ -61,6 +61,7 @@ export function BannerFormModal({
 }) {
   const isEdit = !!banner;
   const [images, setImages] = useState<string[]>(banner?.bannerImage ? [banner.bannerImage] : []);
+  const [title, setTitle] = useState(banner?.title ?? '');
   const [urlOnTap, setUrlOnTap] = useState(banner?.urlOnTap ?? '');
   const [placements, setPlacements] = useState<PromotionPlacement[]>(
     banner ? bannerPlacements(banner) : [defaultPlacement ?? 'homepageHero'],
@@ -93,6 +94,7 @@ export function BannerFormModal({
       }
       const common = {
         bannerImage: images[0],
+        title: title.trim(),
         urlOnTap: urlOnTap || undefined,
         placements,
         order: Number(order) || 0,
@@ -126,11 +128,10 @@ export function BannerFormModal({
     >
       <div className="flex flex-col gap-4">
         <div>
+          <Input label="Banner title" value={title} maxLength={80} onChange={e => setTitle(e.target.value)} placeholder="e.g. Mathematics sale" />
+          <p className="text-[12px] text-slate/70 mt-1 mb-3">Shown as a headline on the left side of the banner. Leave it empty if the picture already has its own text.</p>
           <label className="block text-[12px] font-medium text-charcoal mb-1.5">Banner Image</label>
-          <ImageUpload value={images} onChange={setImages} maxFiles={1} autoUpscaleBelow={1280} />
-          <p className="mt-1.5 text-[12px] text-slate/70">
-            Recommended: 2560×720px. Smaller pictures are enlarged automatically (they may look a little soft), so use the biggest image you have.
-          </p>
+          <BannerImagePicker value={images[0] ?? ''} onChange={u => setImages([u])} />
         </div>
         <div>
           <label className="block text-[12px] font-medium text-charcoal mb-1.5">Placement</label>
@@ -149,7 +150,7 @@ export function BannerFormModal({
             ))}
           </div>
         </div>
-        <LinkTargetPicker value={urlOnTap} onChange={setUrlOnTap} label="When a visitor clicks the banner, show" />
+        <LinkTargetPicker value={urlOnTap} onChange={setUrlOnTap} label="Banner category (opens that category's products when clicked)" defaultKind="category" />
         <Input label="Display Order" type="number" min={0} value={order} onChange={e => setOrder(e.target.value)} />
         <div className="rounded-xl border border-bone bg-cream/50 p-3">
           <p className="text-[12px] font-semibold text-charcoal mb-1 flex items-center gap-1.5"><CalendarClock size={13} /> Schedule (optional)</p>
