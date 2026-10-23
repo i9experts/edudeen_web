@@ -94,6 +94,22 @@ export function BannerCarousel({ banners, entityType, fit = 'cover', showDots = 
     apiTrackPromotionImpression(entityType, active._id);
   }, [active, entityType]);
 
+  // Finger swipe (phones have no arrows): a mostly-horizontal drag of 40px+ moves one slide.
+  const touchStart = useRef<{ x: number; y: number } | null>(null);
+  const onTouchStart = (e: React.TouchEvent) => { const p = e.touches[0]; touchStart.current = { x: p.clientX, y: p.clientY }; setPaused(true); };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    const s = touchStart.current;
+    touchStart.current = null;
+    setPaused(false);
+    if (!s || sorted.length < 2) return;
+    const p = e.changedTouches[0];
+    const dx = p.clientX - s.x;
+    const dy = p.clientY - s.y;
+    if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy)) return;
+    const rtl = document.documentElement.dir === 'rtl';
+    go((dx < 0) !== rtl ? 1 : -1);
+  };
+
   const go = (dir: 1 | -1) => setIndex((i) => (i + dir + sorted.length) % sorted.length);
 
   function handleClick() {
@@ -108,7 +124,10 @@ export function BannerCarousel({ banners, entityType, fit = 'cover', showDots = 
 
   return (
     <div
-      className="absolute inset-0 group"
+      className="absolute inset-0 group touch-pan-y"
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+      onTouchCancel={() => { touchStart.current = null; setPaused(false); }}
       role="region"
       aria-roledescription="carousel"
       aria-label="Promotional banners"
@@ -213,16 +232,16 @@ export function BannerCarousel({ banners, entityType, fit = 'cover', showDots = 
           <button
             onClick={() => go(-1)}
             aria-label="Previous banner"
-            className="absolute start-3 top-1/2 -translate-y-1/2 size-10 rounded-full bg-white/85 shadow-[0_4px_14px_rgba(20,15,10,0.12)] backdrop-blur-sm hover:bg-white hover:scale-105 flex items-center justify-center border-none cursor-pointer opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-[opacity,transform,background-color] duration-200 z-10"
+            className="absolute start-3 top-1/2 -translate-y-1/2 size-10 rounded-full bg-transparent hover:bg-black/15 hover:scale-105 hidden md:flex items-center justify-center border-none cursor-pointer opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-[opacity,transform,background-color] duration-200 z-10"
           >
-            <ChevronLeft size={16} className="text-charcoal" />
+            <ChevronLeft size={26} strokeWidth={2.5} className="text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.6)]" />
           </button>
           <button
             onClick={() => go(1)}
             aria-label="Next banner"
-            className="absolute end-3 top-1/2 -translate-y-1/2 size-10 rounded-full bg-white/85 shadow-[0_4px_14px_rgba(20,15,10,0.12)] backdrop-blur-sm hover:bg-white hover:scale-105 flex items-center justify-center border-none cursor-pointer opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-[opacity,transform,background-color] duration-200 z-10"
+            className="absolute end-3 top-1/2 -translate-y-1/2 size-10 rounded-full bg-transparent hover:bg-black/15 hover:scale-105 hidden md:flex items-center justify-center border-none cursor-pointer opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-[opacity,transform,background-color] duration-200 z-10"
           >
-            <ChevronRight size={16} className="text-charcoal" />
+            <ChevronRight size={26} strokeWidth={2.5} className="text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.6)]" />
           </button>
           {showDots && <div className="absolute bottom-4 end-4 sm:end-6 lg:end-10 flex gap-[6px] z-10">
             {sorted.map((b, i) => (
