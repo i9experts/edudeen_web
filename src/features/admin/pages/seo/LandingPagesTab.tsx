@@ -3,6 +3,7 @@ import { Plus, Pencil, Trash2, FileStack } from 'lucide-react';
 import { Card } from '@/components/comman/ui/Card';
 import { Button } from '@/components/comman/ui/Button';
 import { Modal } from '@/components/comman/ui/Modal';
+import { useBusyAction } from '@/hooks/useBusyAction';
 import { Input, Select } from '@/components/comman/ui/Input';
 import { Field } from '@/components/comman/ui/Field';
 import { Badge } from '@/components/comman/ui/Badge';
@@ -21,7 +22,8 @@ export function LandingPagesTab() {
   const [title, setTitle] = useState('');
   const [status, setStatus] = useState<'draft' | 'published'>('draft');
   const [deleting, setDeleting] = useState<LandingPageRow | null>(null);
-  const [deletingBusy, setDeletingBusy] = useState(false);
+  const delAction = useBusyAction();
+  const deletingBusy = delAction.busy;
 
   const openNew = () => { setSlug(''); setTitle(''); setStatus('draft'); setEditing('new'); };
   const openEdit = (row: LandingPageRow) => { setSlug(row.slug); setTitle(row.title); setStatus(row.status as 'draft' | 'published'); setEditing(row); };
@@ -33,14 +35,9 @@ export function LandingPagesTab() {
     if (ok) { setEditing(null); refetch(); }
   };
 
-  const handleDeleteConfirm = async () => {
+  const handleDeleteConfirm = () => {
     if (!deleting) return;
-    setDeletingBusy(true);
-    try {
-      if (await deleteLandingPage(deleting._id)) { setDeleting(null); refetch(); }
-    } finally {
-      setDeletingBusy(false);
-    }
+    void delAction.run(async () => { if (await deleteLandingPage(deleting._id)) { setDeleting(null); refetch(); } });
   };
 
   const columns: TableColumn<LandingPageRow>[] = [

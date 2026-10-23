@@ -1,3 +1,5 @@
+import { useUrlParam } from '@/hooks/useUrlParam';
+import { safeHttpUrl } from '@/utils/safeRedirect';
 import { useMemo, useState } from 'react';
 import { Plus, ImageIcon, ExternalLink, Pencil, Trash2, Pause, Play, AlertTriangle, CalendarClock, Radio } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -29,7 +31,8 @@ export function AdminBanners() {
   const [toggleBusyId, setToggleBusyId] = useState<string | null>(null);
   const [toggleErrorId, setToggleErrorId] = useState<string | null>(null);
   const [toggleError, setToggleError] = useState('');
-  const [filter, setFilter] = useState<'all' | 'live' | 'scheduled' | 'draft' | 'paused' | 'expired'>('all');
+  const [filterParam, setFilter] = useUrlParam('status', 'all');
+  const filter = (['all', 'live', 'scheduled', 'draft', 'paused', 'expired'].includes(filterParam) ? filterParam : 'all') as 'all' | 'live' | 'scheduled' | 'draft' | 'paused' | 'expired';
 
   const withState = useMemo(() => banners.map(b => ({ b, st: effectiveState(b) })), [banners]);
   const stateCounts = useMemo(() => {
@@ -190,8 +193,8 @@ export function AdminBanners() {
                         <span>{b.startAt ? `From ${fmtWhen(b.startAt)}` : ''}{b.startAt && b.endAt ? ' · ' : ''}{b.endAt ? `Until ${fmtWhen(b.endAt)}` : ''}</span>
                       </p>
                     )}
-                    {b.urlOnTap && (
-                      <a href={b.urlOnTap} target="_blank" rel="noreferrer" className="text-[12px] text-brand-orange truncate flex items-center gap-1">
+                    {safeHttpUrl(b.urlOnTap) && (
+                      <a href={safeHttpUrl(b.urlOnTap)} target="_blank" rel="noreferrer" className="text-[12px] text-brand-orange truncate flex items-center gap-1">
                         <ExternalLink size={10} /> {b.urlOnTap}
                       </a>
                     )}

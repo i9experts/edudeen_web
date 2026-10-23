@@ -3,6 +3,8 @@ import { Plus } from 'lucide-react';
 import { Card } from '@/components/comman/ui/Card';
 import { Button } from '@/components/comman/ui/Button';
 import { Modal } from '@/components/comman/ui/Modal';
+import { ConfirmActionModal } from '@/components/comman/ui/ConfirmActionModal';
+import { useBusyAction } from '@/hooks/useBusyAction';
 import { Input } from '@/components/comman/ui/Input';
 import { Field } from '@/components/comman/ui/Field';
 import { AnalyticsErrorState } from '@/components/comman/analytics/AnalyticsErrorState';
@@ -16,6 +18,8 @@ export function CanonicalTab() {
   const [editing, setEditing] = useState<CanonicalRuleRowData | 'new' | null>(null);
   const [pathPattern, setPathPattern] = useState('');
   const [canonicalUrl, setCanonicalUrl] = useState('');
+  const [deleting, setDeleting] = useState<CanonicalRuleRowData | null>(null);
+  const delAction = useBusyAction();
 
   if (error) return <AnalyticsErrorState message={error} onRetry={refetch} />;
 
@@ -29,8 +33,9 @@ export function CanonicalTab() {
     if (ok) { setEditing(null); refetch(); }
   };
 
-  const handleDelete = async (row: CanonicalRuleRowData) => {
-    if (await deleteRule(row._id)) refetch();
+  const handleDeleteConfirm = () => {
+    if (!deleting) return;
+    void delAction.run(async () => { if (await deleteRule(deleting._id)) { setDeleting(null); refetch(); } });
   };
 
   const handleToggle = async (row: CanonicalRuleRowData, next: boolean) => {
@@ -56,7 +61,7 @@ export function CanonicalTab() {
             label: 'rules',
           } : undefined}
           onEdit={openEdit}
-          onDelete={handleDelete}
+          onDelete={setDeleting}
           onToggleActive={handleToggle}
         />
         {!loading && (data?.items ?? []).length === 0 && (
@@ -64,6 +69,19 @@ export function CanonicalTab() {
         )}
       </Card>
 
+      {deleting && (
+        <ConfirmActionModal
+          title="Delete canonical rule?"
+          message="Pages matching this rule go back to their default canonical URL."
+          details={[{ label: 'Path', value: deleting.pathPattern }, { label: 'Canonical URL', value: deleting.canonicalUrl }]}
+          confirmLabel="Delete rule"
+          danger
+          busy={delAction.busy}
+          error={delAction.error}
+          onConfirm={handleDeleteConfirm}
+          onClose={() => { if (!delAction.busy) { setDeleting(null); delAction.setError(''); } }}
+        />
+      )}
       {editing && (
         <Modal
           title={editing === 'new' ? 'New Canonical Rule' : 'Edit Canonical Rule'}

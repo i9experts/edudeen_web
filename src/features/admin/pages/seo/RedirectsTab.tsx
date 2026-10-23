@@ -3,6 +3,8 @@ import { Plus } from 'lucide-react';
 import { Card } from '@/components/comman/ui/Card';
 import { Button } from '@/components/comman/ui/Button';
 import { Modal } from '@/components/comman/ui/Modal';
+import { ConfirmActionModal } from '@/components/comman/ui/ConfirmActionModal';
+import { useBusyAction } from '@/hooks/useBusyAction';
 import { Input, Select } from '@/components/comman/ui/Input';
 import { Field } from '@/components/comman/ui/Field';
 import { AnalyticsErrorState } from '@/components/comman/analytics/AnalyticsErrorState';
@@ -17,6 +19,8 @@ export function RedirectsTab() {
   const [source, setSource] = useState('');
   const [destination, setDestination] = useState('');
   const [statusCode, setStatusCode] = useState<301 | 302>(301);
+  const [deleting, setDeleting] = useState<RedirectRowData | null>(null);
+  const delAction = useBusyAction();
 
   if (error) return <AnalyticsErrorState message={error} onRetry={refetch} />;
 
@@ -32,8 +36,9 @@ export function RedirectsTab() {
     if (ok) { setEditing(null); refetch(); }
   };
 
-  const handleDelete = async (row: RedirectRowData) => {
-    if (await deleteRedirect(row._id)) refetch();
+  const handleDeleteConfirm = () => {
+    if (!deleting) return;
+    void delAction.run(async () => { if (await deleteRedirect(deleting._id)) { setDeleting(null); refetch(); } });
   };
 
   const handleToggle = async (row: RedirectRowData, next: boolean) => {
@@ -59,7 +64,7 @@ export function RedirectsTab() {
             label: 'redirects',
           } : undefined}
           onEdit={openEdit}
-          onDelete={handleDelete}
+          onDelete={setDeleting}
           onToggleActive={handleToggle}
         />
         {!loading && (data?.items ?? []).length === 0 && (
@@ -67,6 +72,19 @@ export function RedirectsTab() {
         )}
       </Card>
 
+      {deleting && (
+        <ConfirmActionModal
+          title="Delete redirect?"
+          message="Visitors using the old path will no longer be sent to the new one."
+          details={[{ label: 'From', value: deleting.source }, { label: 'To', value: deleting.destination }]}
+          confirmLabel="Delete redirect"
+          danger
+          busy={delAction.busy}
+          error={delAction.error}
+          onConfirm={handleDeleteConfirm}
+          onClose={() => { if (!delAction.busy) { setDeleting(null); delAction.setError(''); } }}
+        />
+      )}
       {editing && (
         <Modal
           title={editing === 'new' ? 'New Redirect' : 'Edit Redirect'}

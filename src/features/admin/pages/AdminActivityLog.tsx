@@ -1,3 +1,4 @@
+import { useUrlParam, useUrlPage } from '@/hooks/useUrlParam';
 import { useMemo, useState } from 'react';
 import { Activity as ActivityIcon, Download, ShieldAlert } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -50,11 +51,13 @@ function daysAgo(n: number): string {
 export function AdminActivityLog() {
   usePageTitle('Activity Log');
 
-  const [search, setSearch] = useState('');
-  const [category, setCategory] = useState('');
-  const [dateRange, setDateRange] = useState('last30');
-  const [securityOnly, setSecurityOnly] = useState(false);
-  const [page, setPage] = useState(1);
+  const [search, setSearch] = useUrlParam('q');
+  const [category, setCategory] = useUrlParam('category');
+  const [dateRange, setDateRange] = useUrlParam('range', 'last30');
+  const [securityParam, setSecurityParam] = useUrlParam('security');
+  const securityOnly = securityParam === '1';
+  const setSecurityOnly = (v: boolean) => setSecurityParam(v ? '1' : '');
+  const [page, setPage] = useUrlPage();
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState('');
 

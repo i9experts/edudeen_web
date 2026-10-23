@@ -1,5 +1,5 @@
 import { useState, useEffect, Suspense } from 'react';
-import { apiStaffUnreadTasks, apiApprovalCount } from '@/api/services/staff';
+import { useAdminBadges } from '@/hooks/admin/useAdminBadges';
 import { useToast } from '@/contexts/ToastContext';
 import { useAdminAccess, navAllowed } from '@/hooks/admin/useAdminAccess';
 import { Outlet, Navigate, useNavigate, useLocation } from 'react-router-dom';
@@ -23,12 +23,6 @@ import { MoreSheet } from '@/components/comman/ui/MoreSheet';
 import { MoreHorizontal } from 'lucide-react';
 import { ReauthProvider } from '@/contexts/ReauthProvider';
 import { useLockPageScroll } from '@/hooks/useLockPageScroll';
-import { apiGetListingReviewCount } from '@/api/services/marketplace/adminMarketplace';
-import { apiAdminPremiumStats } from '@/api/services/adminPremium';
-import { apiAdminChatStats } from '@/api/services/adminChat';
-
-// Set once the server answers 404 for the chat routes (older API deployed): no more requests until reload.
-let chatApiMissing = false;
 
 interface AdminNavItem {
   id:    string;
@@ -54,7 +48,8 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { id: 'subscriptions', Icon: RefreshCw,       label: 'Subscriptions',   path: '/admin/subscriptions' },
   { id: 'marketing',     Icon: Tag,             label: 'Marketing',       path: '/admin/marketing'     },
   { id: 'picks',         Icon: BookMarked,      label: 'Edudeen Picks',   path: '/admin/picks'         },
-  { id: 'premium',       Icon: Crown,           label: 'Premium',         path: '/admin/premium'       },
+  { id: 'learning-paths', Icon: BookMarked,     label: 'Learning Paths',  path: '/admin/learning-paths' },
+  { id: 'premium',       Icon: Crown,          label: 'Premium',         path: '/admin/premium'       },
   { id: 'platform-plans',Icon: Layers,          label: 'Platform Plans',  path: '/admin/platform-plans' },
   { id: 'finance',       Icon: DollarSign,      label: 'Finance',         path: '/admin/finance'       },
   { id: 'monthly-payouts', Icon: CalendarCheck, label: 'Monthly Payouts', path: '/admin/finance?tab=monthly-payouts' },
@@ -91,7 +86,7 @@ export const ADMIN_MODULES: AdminModule[] = [
   { id: 'overview',  label: 'Overview',             Icon: LayoutDashboard, ids: ['overview'] },
   { id: 'commerce',  label: 'Commerce',             Icon: Store,           ids: ['orders', 'marketplace', 'categories', 'refunds', 'shipping-zones', 'subscriptions', 'platform-plans', 'premium'] },
   { id: 'people',    label: 'Users & Communication', Icon: Users,          ids: ['users', 'leads', 'moderation', 'messages', 'collaboration'] },
-  { id: 'growth',    label: 'Growth',                Icon: TrendingUp,     ids: ['marketing', 'picks', 'seo', 'ai-studio'] },
+  { id: 'growth',    label: 'Growth',                Icon: TrendingUp,     ids: ['marketing', 'picks', 'learning-paths', 'seo', 'ai-studio'] },
   { id: 'finance',   label: 'Finance',               Icon: DollarSign,     ids: ['finance', 'monthly-payouts', 'manual-payments', 'fx-settings'] },
   { id: 'content',   label: 'Content',               Icon: ImageIcon,      ids: ['banners', 'faqs', 'testimonials', 'announcements', 'app-slides'] },
   { id: 'analytics', label: 'Analytics',             Icon: BarChart3,       ids: ['analytics'] },
@@ -267,37 +262,9 @@ function AdminSidebar({ open, onToggle }: AdminSidebarProps) {
   // by default; re-synced on every route change, but a manual
   // expand/collapse while staying on the same page is left alone.
   const [expandedModuleId, setExpandedModuleId] = useState<string | null>(() => moduleForPath(pathname, search));
-  // New listings waiting for approval — shown as a badge on Listings.
-  const [pendingListings, setPendingListings] = useState(0);
-  useEffect(() => {
-    let alive = true;
-    apiGetListingReviewCount().then(r => { if (alive) setPendingListings(r.data?.pending ?? 0); }).catch(() => {});
-    return () => { alive = false; };
-  }, [pathname]);
-  // Premium bank-transfer payments waiting for review.
-  const [pendingPremium, setPendingPremium] = useState(0);
-  useEffect(() => {
-    let alive = true;
-    apiAdminPremiumStats().then(r => { if (alive) setPendingPremium(r.data?.pendingPayments ?? 0); }).catch(() => {});
-    return () => { alive = false; };
-  }, [pathname]);
-  // Chat inbox: conversations with unread messages from users.
-  const [unreadChats, setUnreadChats] = useState(0);
-  useEffect(() => {
-    let alive = true;
-    if (chatApiMissing) return;
-    apiAdminChatStats().then(r => { if (alive) setUnreadChats(r.data?.unread ?? 0); }).catch((e: { status?: number }) => { if (e?.status === 404) chatApiMissing = true; /* API not updated yet: stop asking */ });
-    return () => { alive = false; };
-  }, [pathname]);
-  // Collaboration: new tasks for me + sensitive actions waiting for my approval.
-  const [teamBadge, setTeamBadge] = useState(0);
-  useEffect(() => {
-    let alive = true;
-    if (!navAllowed('collaboration')) return;
-    void Promise.all([apiStaffUnreadTasks().catch(() => null), apiApprovalCount().catch(() => null)]).then(([u, a]) => { if (alive) setTeamBadge((u?.data.count ?? 0) + (a?.data.pending ?? 0)); });
-    return () => { alive = false; };
-  }, [pathname]);
-  const badgeFor = (id: string) => (id === 'marketplace' ? pendingListings : id === 'premium' ? pendingPremium : id === 'messages' ? unreadChats : id === 'collaboration' ? teamBadge : 0);
+  // Sidebar badges (listings, premium proofs, chats, team) come from one shared 60 s poller.
+  const badges = useAdminBadges();
+  const badgeFor = (id: string) => (id === 'marketplace' ? badges.listings : id === 'premium' ? badges.premium : id === 'messages' ? badges.chats : id === 'collaboration' ? badges.team : 0);
   useEffect(() => { setExpandedModuleId(moduleForPath(pathname, search)); }, [pathname, search]);
 
   const handleLogout = async () => {
@@ -309,7 +276,7 @@ function AdminSidebar({ open, onToggle }: AdminSidebarProps) {
 
   const goTo = (path: string) => navigate(path);
 
-  const paletteItems = ADMIN_NAV.map(item => ({
+  const paletteItems = ADMIN_NAV.filter(item => navAllowed(item.id)).map(item => ({
     id:       item.id,
     label:    item.label,
     icon:     item.Icon,
@@ -352,7 +319,7 @@ function AdminSidebar({ open, onToggle }: AdminSidebarProps) {
         className={clsx(
           'hidden lg:flex bg-[#f3f7fa] border-r border-[#d5dfe6] flex-col shrink-0',
           'transition-[width] duration-300 ease-in-out',
-          'h-screen',
+          'h-dvh',
           open ? 'w-[236px]' : 'w-[64px]',
         )}
       >
@@ -605,7 +572,7 @@ export function AdminLayout() {
 
   return (
     <ReauthProvider>
-    <div className={clsx('flex bg-white overflow-hidden', 'h-screen')}>
+    <div className={clsx('flex bg-white overflow-hidden', 'h-dvh')}>
       <AdminSidebar open={sidebarOpen} onToggle={toggle} />
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <PlatformTopBar variant="admin" showAccount />

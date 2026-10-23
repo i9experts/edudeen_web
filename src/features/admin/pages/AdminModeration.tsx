@@ -1,3 +1,4 @@
+import { useUrlParam, useUrlPage } from '@/hooks/useUrlParam';
 import { useMemo, useState } from 'react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useModerationStats, useModerationQueue, useModerationActions } from '@/hooks/admin/useAdminModeration';
@@ -114,10 +115,10 @@ export function AdminModeration() {
   usePageTitle('Moderation');
   const { data: stats, loading: statsLoading, error: statsError, refetch: refetchStats } = useModerationStats();
 
-  const [search, setSearch] = useState('');
-  const [typeFilter, setTypeFilter] = useState('');
-  const [riskFilter, setRiskFilter] = useState('');
-  const [page, setPage] = useState(1);
+  const [search, setSearch] = useUrlParam('q');
+  const [typeFilter, setTypeFilter] = useUrlParam('type');
+  const [riskFilter, setRiskFilter] = useUrlParam('risk');
+  const [page, setPage] = useUrlPage();
 
   const query = useMemo(
     () => ({

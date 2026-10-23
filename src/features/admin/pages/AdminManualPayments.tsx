@@ -1,3 +1,5 @@
+import { useUrlParam } from '@/hooks/useUrlParam';
+import { safeHttpUrl } from '@/utils/safeRedirect';
 import { useState } from 'react';
 import { Landmark, CheckCircle2, XCircle, ExternalLink } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -84,9 +86,9 @@ function ReviewModal({ proof, onClose, onDone }: { proof: AdminManualPaymentProo
           <p className="text-[12px] text-warning bg-warning-bg rounded-md px-2 py-1">Re-uploaded {proof.reuploadCount} time{proof.reuploadCount !== 1 ? 's' : ''} after a prior rejection.</p>
         )}
 
-        {proof.proofImageUrl && (
-          <a href={proof.proofImageUrl} target="_blank" rel="noreferrer" className="block group relative rounded-[8px] overflow-hidden border border-bone">
-            <img src={proof.proofImageUrl} alt="Payment proof" className="w-full max-h-[320px] object-contain bg-cream" />
+        {safeHttpUrl(proof.proofImageUrl) && (
+          <a href={safeHttpUrl(proof.proofImageUrl)} target="_blank" rel="noreferrer" className="block group relative rounded-[8px] overflow-hidden border border-bone">
+            <img src={safeHttpUrl(proof.proofImageUrl)} alt="Payment proof" className="w-full max-h-[320px] object-contain bg-cream" />
             <span className="absolute top-2 right-2 bg-white/90 rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
               <ExternalLink size={13} className="text-charcoal" />
             </span>
@@ -122,7 +124,8 @@ function ReviewModal({ proof, onClose, onDone }: { proof: AdminManualPaymentProo
 // ── Main page ─────────────────────────────────────────────────────────────────
 export function AdminManualPayments() {
   usePageTitle('Payment proofs');
-  const [statusFilter, setStatusFilter] = useState<ManualPaymentProofStatus | ''>('pending');
+  const [statusParam, setStatusFilter] = useUrlParam('status', 'pending');
+  const statusFilter = statusParam as ManualPaymentProofStatus | '';
   const { proofs, loading, error, refetch } = useAdminManualPayments(statusFilter || undefined);
   const [viewing, setViewing] = useState<AdminManualPaymentProof | null>(null);
 

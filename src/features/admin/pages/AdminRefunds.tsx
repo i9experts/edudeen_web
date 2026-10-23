@@ -1,3 +1,4 @@
+import { useUrlPage } from '@/hooks/useUrlParam';
 import { useEffect, useState } from 'react';
 import { Undo2, CheckCircle2, XCircle } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -153,7 +154,7 @@ function ReviewModal({ request, onClose, onDone }: { request: RefundRequestRow; 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export function AdminRefunds() {
   usePageTitle('Refunds');
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useUrlPage();
   const { data, loading, error, refetch } = useAdminPendingRefunds(page, PER_PAGE);
   const [viewing, setViewing] = useState<RefundRequestRow | null>(null);
 

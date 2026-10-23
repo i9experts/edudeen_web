@@ -1,3 +1,4 @@
+import { safeHttpUrl } from '@/utils/safeRedirect';
 import { useId, useRef, useState } from 'react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { X, MessageSquare, Flag, Paperclip, Inbox, FlagOff } from 'lucide-react';
@@ -78,7 +79,7 @@ function ConversationDrawer({ conversationId, onClose }: { conversationId: strin
                     <p className="text-[13px] text-charcoal">Shared product: {m.productShare?.title ?? `#${m.productShare?.productId}`}{m.productShare?.price != null && ` — $${m.productShare.price}`}</p>
                   )}
                   {(m.type === 'image' || m.type === 'document' || m.type === 'video') && m.attachments?.map(a => (
-                    <a key={a.url} href={a.url} target="_blank" rel="noreferrer" className="text-[13px] text-brand-orange underline flex items-center gap-1">
+                    <a key={a.url} href={safeHttpUrl(a.url)} target="_blank" rel="noreferrer" className="text-[13px] text-brand-orange underline flex items-center gap-1">
                       <Paperclip size={11} /> {a.fileName}
                     </a>
                   ))}

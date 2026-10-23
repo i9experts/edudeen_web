@@ -1,3 +1,4 @@
+import { safeHttpUrl } from '@/utils/safeRedirect';
 import { useState } from 'react';
 import { Landmark, CheckCircle2, XCircle, ExternalLink } from 'lucide-react';
 import { Badge, Button, FilterDropdown, Modal, Table, Textarea, type TableColumn } from '@/components/comman/ui';
@@ -71,9 +72,9 @@ function ReviewModal({ payment, onClose, onDone }: { payment: AdminPremiumPaymen
         {payment.reuploadCount > 0 && <p className="text-[12px] text-warning bg-warning-bg rounded-md px-2 py-1">Re-uploaded {payment.reuploadCount} time{payment.reuploadCount !== 1 ? 's' : ''} after a prior rejection.</p>}
 
         {payment.hasProof ? (
-          proofUrl ? (
-            <a href={proofUrl} target="_blank" rel="noreferrer" className="block group relative rounded-[8px] overflow-hidden border border-bone">
-              <img src={proofUrl} alt="Payment receipt" className="w-full max-h-[320px] object-contain bg-cream" />
+          safeHttpUrl(proofUrl) ? (
+            <a href={safeHttpUrl(proofUrl)} target="_blank" rel="noreferrer" className="block group relative rounded-[8px] overflow-hidden border border-bone">
+              <img src={safeHttpUrl(proofUrl)} alt="Payment receipt" className="w-full max-h-[320px] object-contain bg-cream" />
               <span className="absolute top-2 right-2 bg-white/90 rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity"><ExternalLink size={13} className="text-charcoal" /></span>
             </a>
           ) : (

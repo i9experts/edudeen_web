@@ -1,5 +1,7 @@
+import { useUrlParam, useUrlPage } from '@/hooks/useUrlParam';
 import { useState } from 'react';
-import { FilterDropdown, Table, Button, Input, Modal, type TableColumn } from '@/components/comman/ui';
+import { FilterDropdown, Table, Button, Input, Modal, ConfirmActionModal, type TableColumn } from '@/components/comman/ui';
+import { useBusyAction } from '@/hooks/useBusyAction';
 import { RefreshCw, Wallet } from 'lucide-react';
 import { useAdminPayoutQueue, useAdminPayoutActions, useAdminProcessClearing } from '@/hooks/admin/useAdminFinance';
 import { apiAdminGetPayoutDestination, type PayoutRow, type PayoutDestination } from '@/api/services/finance/adminFinance';
@@ -17,8 +19,8 @@ const STATUS_OPTIONS = [
 ];
 
 export function FinancePayoutsTab() {
-  const [status, setStatus] = useState('');
-  const [page, setPage] = useState(1);
+  const [status, setStatus] = useUrlParam('payoutStatus');
+  const [page, setPage] = useUrlPage('payoutPage');
   const queue = useAdminPayoutQueue({ status: (status || undefined) as never, page, limit: 15 });
   const { approvePayout, rejectPayout, retryPayout, processingId, error } = useAdminPayoutActions();
   const clearing = useAdminProcessClearing();
@@ -36,12 +38,20 @@ export function FinancePayoutsTab() {
   const [rejectingId, setRejectingId] = useState<string | null>(null);
   const [reason, setReason] = useState('');
 
-  const handleApprove = async (id: string) => {
-    if (await approvePayout(id)) queue.refetch();
+  // Approve / Retry / Process clearing move money: they always go through a confirm dialog first.
+  const [confirm, setConfirm] = useState<{ kind: 'approve' | 'retry'; payout: PayoutRow } | { kind: 'clearing' } | null>(null);
+  const action = useBusyAction();
+  const runConfirmed = () => {
+    if (!confirm) return;
+    void action.run(async () => {
+      let ok: boolean;
+      if (confirm.kind === 'approve') ok = await approvePayout(confirm.payout._id);
+      else if (confirm.kind === 'retry') ok = await retryPayout(confirm.payout._id);
+      else { ok = (await clearing.triggerClearing()) !== null; }
+      if (ok) { setConfirm(null); queue.refetch(); }
+    });
   };
-  const handleRetry = async (id: string) => {
-    if (await retryPayout(id)) queue.refetch();
-  };
+  const closeConfirm = () => { if (!action.busy) { setConfirm(null); action.setError(''); } };
   const confirmReject = async () => {
     if (!rejectingId || !reason) return;
     if (await rejectPayout(rejectingId, reason)) {
@@ -50,11 +60,6 @@ export function FinancePayoutsTab() {
       queue.refetch();
     }
   };
-  const handleTriggerClearing = async () => {
-    await clearing.triggerClearing();
-    queue.refetch();
-  };
-
   const columns: TableColumn<PayoutRow>[] = [
     { key: 'storeName', header: 'Store', render: (p) => p.storeName ?? p.storeId },
     { key: 'amount', header: 'Amount', align: 'right', render: (p) => formatMoneyCompact(p.amount, p.currency) },
@@ -66,12 +71,12 @@ export function FinancePayoutsTab() {
         <Button size="xs" variant="ghost" onClick={() => showDestination(p._id)} loading={destLoadingId === p._id}>Pay to</Button>
         {(p.status === 'pending' || p.status === 'processing') && (
           <>
-            <Button size="xs" variant="outline" onClick={() => handleApprove(p._id)} loading={processingId === p._id}>Approve</Button>
+            <Button size="xs" variant="outline" onClick={() => setConfirm({ kind: 'approve', payout: p })} loading={processingId === p._id}>Approve</Button>
             <Button size="xs" variant="danger" onClick={() => setRejectingId(p._id)}>Reject</Button>
           </>
         )}
         {p.status === 'failed' && (
-          <Button size="xs" variant="outline" onClick={() => handleRetry(p._id)} loading={processingId === p._id}>Retry</Button>
+          <Button size="xs" variant="outline" onClick={() => setConfirm({ kind: 'retry', payout: p })} loading={processingId === p._id}>Retry</Button>
         )}
       </div>
     ) },
@@ -82,7 +87,7 @@ export function FinancePayoutsTab() {
       <div className="flex flex-wrap items-center gap-3">
         <FilterDropdown options={STATUS_OPTIONS} value={status} onChange={(v) => { setStatus(v); setPage(1); }} />
         <div className="flex-1" />
-        <Button variant="outline" size="sm" icon={<RefreshCw size={13} />} onClick={handleTriggerClearing} loading={clearing.processing}>
+        <Button variant="outline" size="sm" icon={<RefreshCw size={13} />} onClick={() => setConfirm({ kind: 'clearing' })} loading={clearing.processing}>
           Process Clearing Balances
         </Button>
       </div>
@@ -113,6 +118,24 @@ export function FinancePayoutsTab() {
         />
       )}
 
+      {confirm && (
+        <ConfirmActionModal
+          title={confirm.kind === 'approve' ? 'Approve this payout?' : confirm.kind === 'retry' ? 'Retry this payout?' : 'Process clearing balances?'}
+          message={confirm.kind === 'clearing'
+            ? 'This moves every seller balance that has finished its clearing period to Available. It cannot be undone.'
+            : confirm.kind === 'approve' ? 'The seller is told it was approved. Send the money to the account below.' : 'The payout is sent again to the account below.'}
+          details={confirm.kind === 'clearing' ? undefined : [
+            { label: 'Store', value: confirm.payout.storeName ?? confirm.payout.storeId },
+            { label: 'Amount', value: formatMoneyCompact(confirm.payout.amount, confirm.payout.currency) },
+            { label: 'Pay to', value: [confirm.payout.payoutMethodSnapshot?.bankName || confirm.payout.payoutMethodSnapshot?.type, confirm.payout.payoutMethodSnapshot?.accountLast4 ? ('•••• ' + confirm.payout.payoutMethodSnapshot.accountLast4) : ''].filter(Boolean).join(' · ') || '—' },
+          ]}
+          confirmLabel={confirm.kind === 'approve' ? 'Approve payout' : confirm.kind === 'retry' ? 'Retry payout' : 'Process clearing'}
+          busy={action.busy}
+          error={action.error || error || clearing.error}
+          onConfirm={runConfirmed}
+          onClose={closeConfirm}
+        />
+      )}
       {dest && (
         <Modal mobileSheet title="Send this payout to" onClose={() => setDest(null)} footer={<Button variant="ghost" onClick={() => setDest(null)}>Close</Button>}>
           <dl className="grid grid-cols-[120px_1fr] gap-x-3 gap-y-2 text-[13px] m-0">

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { CheckCircle2 } from 'lucide-react';
 import { Button, Input, Select, SkeletonBox } from '@/components/comman/ui';
 import { useAdminConfig, useUpdatePayoutConfig } from '@/hooks/admin/useAdminConfig';
@@ -28,6 +28,8 @@ export function PayoutSettingsCard() {
   const { update, submitting, error } = useUpdatePayoutConfig();
   const [form, setForm] = useState<{ usd: string; pkr: string; frequency: PayoutFrequency } | null>(null);
   const [saved, setSaved] = useState(false);
+  const savedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (savedTimer.current) clearTimeout(savedTimer.current); }, []);
   const [validation, setValidation] = useState('');
 
   // Seed the form from the fetched config (during render, not in an effect).
@@ -50,7 +52,8 @@ export function PayoutSettingsCard() {
     const ok = await update({ minPayoutUSD: usd, minPayoutPKR: pkr, payoutFrequency: form.frequency });
     if (ok) {
       setSaved(true);
-      setTimeout(() => setSaved(false), 2500);
+      if (savedTimer.current) clearTimeout(savedTimer.current);
+      savedTimer.current = setTimeout(() => setSaved(false), 2500);
       refetch();
     }
   }

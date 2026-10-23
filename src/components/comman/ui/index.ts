@@ -74,6 +74,7 @@ export type { PrivateUploadData }            from './Upload';
 export { DateTimePickerModal }               from './DateTimePickerModal';
 export type { DateTimePickerModalProps }     from './DateTimePickerModal';
 
+export { ConfirmActionModal }                from './ConfirmActionModal';
 export { Modal }                             from './Modal';
 export type { ModalProps }                   from './Modal';
 

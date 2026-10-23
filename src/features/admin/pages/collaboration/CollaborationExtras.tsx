@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { clsx } from 'clsx';
 import QRCode from 'qrcode';
 import { ShieldCheck } from 'lucide-react';
-import { Button, Input } from '@/components/comman/ui';
+import { Button, Input, Modal } from '@/components/comman/ui';
 import { useToast } from '@/contexts/ToastContext';
 import { useAdminAccess, loadAdminAccess } from '@/hooks/admin/useAdminAccess';
 import { StaffNotes } from '@/features/admin/components/StaffNotes';
@@ -58,10 +58,12 @@ export function ApprovalsTab() {
   const [busy, setBusy] = useState<string | null>(null);
   const load = useCallback(() => { apiStaffApprovals().then(r => setRows(r.data)).catch(e => { toast.error(err(e, 'Could not load approvals.')); setRows([]); }); }, [toast]);
   useEffect(load, [load]);
-  const decide = async (a: ApprovalRow, approve: boolean) => {
-    const note = approve ? '' : (window.prompt('Reason (optional)') ?? '');
+  const [rejecting, setRejecting] = useState<ApprovalRow | null>(null);
+  const [rejectNote, setRejectNote] = useState('');
+  const decide = async (a: ApprovalRow, approve: boolean, note = '') => {
+    if (busy) return;
     setBusy(a._id);
-    try { await apiDecideApproval(a._id, approve, note); toast.success(approve ? `Approved — ${a.requestedByName} can now repeat the action (valid 24 h)` : 'Rejected'); load(); }
+    try { await apiDecideApproval(a._id, approve, note); toast.success(approve ? `Approved — ${a.requestedByName} can now repeat the action (valid 24 h)` : 'Rejected'); setRejecting(null); setRejectNote(''); load(); }
     catch (e) { toast.error(err(e, 'Could not save the decision.')); } finally { setBusy(null); }
   };
   const decider = can('approvals.decide');
@@ -78,13 +80,20 @@ export function ApprovalsTab() {
             </div>
             <span className={clsx('rounded-full px-2.5 py-[3px] text-[11.5px] font-semibold capitalize', TONE[a.status])}>{a.status}</span>
             {a.status === 'pending' && decider && a.requestedById !== me?._id && (
-              <div className="flex gap-1.5"><Button size="xs" variant="primary" loading={busy === a._id} onClick={() => decide(a, true)}>Approve</Button><Button size="xs" variant="ghost" disabled={busy === a._id} onClick={() => decide(a, false)}>Reject</Button></div>
+              <div className="flex gap-1.5"><Button size="xs" variant="primary" loading={busy === a._id} onClick={() => decide(a, true)}>Approve</Button><Button size="xs" variant="ghost" disabled={busy === a._id} onClick={() => { setRejectNote(''); setRejecting(a); }}>Reject</Button></div>
             )}
             {a.status === 'pending' && a.requestedById === me?._id && <span className="text-[12px] text-slate">Waiting for another person</span>}
           </article>
         ))}
         {rows && rows.length === 0 && <p className="text-[13px] text-slate">Nothing waiting.</p>}
       </div>
+      {rejecting && (
+        <Modal mobileSheet title="Reject this request?" onClose={() => { if (!busy) setRejecting(null); }}
+          footer={<><Button variant="ghost" onClick={() => setRejecting(null)} disabled={!!busy}>Cancel</Button><Button variant="danger" loading={busy === rejecting._id} onClick={() => decide(rejecting, false, rejectNote.trim())}>Reject</Button></>}>
+          <p className="text-[13px] text-slate mt-0 mb-3">{rejecting.label} — requested by {rejecting.requestedByName}</p>
+          <Input label="Reason (optional)" value={rejectNote} onChange={e => setRejectNote(e.target.value)} maxLength={300} />
+        </Modal>
+      )}
     </section>
   );
 }
@@ -111,10 +120,14 @@ export function SecurityTab() {
     try { const r = await apiMy2faEnable(code); setRecovery(r.data.recoveryCodes); setSetup(null); setCode(''); loadAdminAccess(true); }
     catch (e) { toast.error(err(e, 'That code did not work.')); } finally { setBusy(false); }
   };
+  const [disabling, setDisabling] = useState(false);
+  const [offCode, setOffCode] = useState('');
   const disable = async () => {
-    const c = window.prompt('Enter a current 6-digit code to turn two-step sign-in off');
-    if (!c) return;
-    try { await apiMy2faDisable(c); toast.success('Two-step sign-in is off'); loadAdminAccess(true); } catch (e) { toast.error(err(e, 'Could not turn it off.')); }
+    const c = offCode.trim();
+    if (!c || busy) return;
+    setBusy(true);
+    try { await apiMy2faDisable(c); toast.success('Two-step sign-in is off'); setDisabling(false); setOffCode(''); loadAdminAccess(true); }
+    catch (e) { toast.error(err(e, 'Could not turn it off.')); } finally { setBusy(false); }
   };
   const [limits, setLimits] = useState({ usd: '', pkr: '' });
   useEffect(() => { if (settings) setLimits({ usd: String(settings.approvalThresholdUSD || ''), pkr: String(settings.approvalThresholdPKR || '') }); }, [settings?.approvalThresholdUSD, settings?.approvalThresholdPKR]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -129,7 +142,7 @@ export function SecurityTab() {
         <p className="text-[14px] font-bold text-carbon m-0 flex items-center gap-2"><ShieldCheck size={16} className={me?.totpEnabled ? 'text-success' : 'text-slate'} /> Two-step sign-in (authenticator app)</p>
         <p className="text-[13px] text-slate mt-1 mb-3">{me?.totpEnabled ? 'On. You are asked for a 6-digit code every time you sign in.' : 'Off. Turn it on so a stolen password alone cannot open the admin panel.'}{!isOwner && ' Staff accounts always keep it on.'}</p>
         {!me?.totpEnabled && !setup && !recovery && <Button size="sm" variant="primary" loading={busy} onClick={start}>Turn on</Button>}
-        {me?.totpEnabled && isOwner && <Button size="sm" variant="outline" onClick={disable}>Turn off</Button>}
+        {me?.totpEnabled && isOwner && <Button size="sm" variant="outline" onClick={() => { setOffCode(''); setDisabling(true); }}>Turn off</Button>}
         {setup && (
           <div className="flex flex-col gap-3 max-w-[320px]">
             <img src={setup.qr} alt="Authenticator QR code" width={176} height={176} className="rounded-lg border border-bone" />
@@ -173,6 +186,12 @@ export function SecurityTab() {
             ))}
           </div>
         </div>
+      )}
+      {disabling && (
+        <Modal mobileSheet title="Turn off two-step sign-in?" onClose={() => { if (!busy) setDisabling(false); }}
+          footer={<><Button variant="ghost" onClick={() => setDisabling(false)} disabled={busy}>Cancel</Button><Button variant="danger" loading={busy} onClick={disable} disabled={offCode.trim().length < 6}>Turn off</Button></>}>
+          <Input label="Current 6-digit code" inputMode="numeric" autoComplete="one-time-code" value={offCode} onChange={e => setOffCode(e.target.value)} onKeyDown={e => e.key === 'Enter' && disable()} />
+        </Modal>
       )}
     </section>
   );

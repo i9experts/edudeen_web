@@ -4,7 +4,7 @@ import { SellerPageCard } from './SellerPageCard';
 import { ChatbotCard } from './ChatbotCard';
 import { MaintenanceCard } from './MaintenanceCard';
 import { ReferralSettingsCard } from './ReferralSettingsCard';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import {
@@ -36,9 +36,12 @@ function SavedHint({ show }: { show: boolean }) {
 
 function useSavedFlash() {
   const [saved, setSaved] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
   const flash = () => {
     setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => setSaved(false), 2500);
   };
   return { saved, flash };
 }

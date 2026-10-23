@@ -54,6 +54,8 @@ const NAV_PERMISSION: Record<string, string | null> = {
   finance: 'finance.view', 'monthly-payouts': 'finance.view', 'manual-payments': 'payments.view', 'fx-settings': 'finance.view',
   seo: 'seo.view', 'ai-studio': 'ai.manage', banners: 'content.view', faqs: 'content.view', testimonials: 'content.view', announcements: 'content.view',
   'app-slides': 'content.view', config: 'config.view',
+  // /api/admin/learning-paths is not mapped for staff on the server (default-deny) -> owner only
+  'learning-paths': 'staff.manage',
 };
 
 const allows = (m: StaffMember | null, perm: string | null | undefined) =>

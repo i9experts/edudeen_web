@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Trash2, Loader2 } from 'lucide-react';
 import { Modal } from '@/components/comman/ui/Modal';
 import { Button } from '@/components/comman/ui/Button';
@@ -76,15 +76,24 @@ export function AttributeManagerModal({ categoryId, categoryName, onClose }: Pro
     }
   }
 
+  // One row action at a time (busyId = the row being changed); failures show in the error line.
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const rowLock = useRef(false);
+  const runRow = async (id: string, fn: () => Promise<unknown>) => {
+    if (rowLock.current) return;
+    rowLock.current = true; setBusyId(id); setError('');
+    try { await fn(); load(); }
+    catch (err) { setError(err instanceof Error ? err.message : 'Could not update the attribute. Please try again.'); }
+    finally { rowLock.current = false; setBusyId(null); }
+  };
+
   async function toggleRequired(def: AttributeDefinition) {
-    await apiUpdateAttributeDefinition(def._id, { required: !def.required });
-    load();
+    await runRow(def._id, () => apiUpdateAttributeDefinition(def._id, { required: !def.required }));
   }
 
   async function remove(def: AttributeDefinition) {
     if (!confirm(`Remove "${def.label}"? Existing products keep their saved values, but this field will no longer appear.`)) return;
-    await apiDeleteAttributeDefinition(def._id);
-    load();
+    await runRow(def._id, () => apiDeleteAttributeDefinition(def._id));
   }
 
   return (
@@ -110,11 +119,11 @@ export function AttributeManagerModal({ categoryId, categoryName, onClose }: Pro
                     {TYPE_LABELS[def.type]}{def.options.length > 0 ? ` · ${def.options.join(', ')}` : ''}
                   </p>
                 </div>
-                <button type="button" onClick={() => toggleRequired(def)}
-                  className={`text-[12px] font-semibold px-2 py-1 rounded-full border ${def.required ? 'text-brand-orange border-brand-orange bg-brand-pale-orange' : 'text-slate border-bone bg-white'}`}>
+                <button type="button" onClick={() => toggleRequired(def)} disabled={busyId !== null}
+                  className={`disabled:opacity-50 text-[12px] font-semibold px-2 py-1 rounded-full border ${def.required ? 'text-brand-orange border-brand-orange bg-brand-pale-orange' : 'text-slate border-bone bg-white'}`}>
                   {def.required ? 'Required' : 'Optional'}
                 </button>
-                <button aria-label="Delete" type="button" onClick={() => remove(def)} className="text-slate hover:text-error p-1">
+                <button aria-label="Delete" type="button" onClick={() => remove(def)} disabled={busyId !== null} className="disabled:opacity-50 text-slate hover:text-error p-1">
                   <Trash2 size={14} />
                 </button>
               </div>

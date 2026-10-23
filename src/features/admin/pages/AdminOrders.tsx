@@ -1,3 +1,4 @@
+import { safeHttpUrl } from '@/utils/safeRedirect';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { StaffNotes } from '@/features/admin/components/StaffNotes';
 import { useSearchParams } from 'react-router-dom';
@@ -119,7 +120,7 @@ function OrderDetailModal({ id, onClose, onChanged }: { id: string; onClose: () 
                 {so.tracking?.trackingNumber && (
                   <span className="ml-auto inline-flex items-center gap-1 text-slate">
                     <Truck size={12} /> {so.tracking.carrier} {so.tracking.trackingNumber}
-                    {so.tracking.trackingUrl && <a href={so.tracking.trackingUrl} target="_blank" rel="noreferrer" className="text-brand-orange">track</a>}
+                    {safeHttpUrl(so.tracking.trackingUrl) && <a href={safeHttpUrl(so.tracking.trackingUrl)} target="_blank" rel="noreferrer" className="text-brand-orange">track</a>}
                   </span>
                 )}
               </div>

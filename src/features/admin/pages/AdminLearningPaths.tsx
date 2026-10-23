@@ -34,8 +34,9 @@ function PathForm({ initial, onClose, onSaved }: { initial: Draft; onClose: () =
 
   useEffect(() => {
     if (q.trim().length < 2) { setResults([]); return; }
-    const t = setTimeout(() => { apiAdminSearchProducts(q.trim()).then(res => setResults(res.data ?? [])).catch(() => setResults([])); }, 250);
-    return () => clearTimeout(t);
+    let alive = true; // a slower, older search must not overwrite a newer one
+    const t = setTimeout(() => { apiAdminSearchProducts(q.trim()).then(res => { if (alive) setResults(res.data ?? []); }).catch(() => { if (alive) setResults([]); }); }, 250);
+    return () => { alive = false; clearTimeout(t); };
   }, [q]);
 
   const addPick = (p: { _id: string; name: string }) => {

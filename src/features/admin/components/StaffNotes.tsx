@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { StickyNote, Trash2 } from 'lucide-react';
-import { Button } from '@/components/comman/ui';
+import { Button, ConfirmActionModal } from '@/components/comman/ui';
+import { useBusyAction } from '@/hooks/useBusyAction';
 import { useAdminAccess } from '@/hooks/admin/useAdminAccess';
 import { apiStaffNotes, apiAddStaffNote, apiDeleteStaffNote, type StaffNoteRow } from '@/api/services/staff';
 
@@ -14,6 +15,8 @@ export function StaffNotes({ entityType, entityId, className }: { entityType: 'u
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const allowed = can(NEEDS[entityType]);
+  const [deleting, setDeleting] = useState<StaffNoteRow | null>(null);
+  const delAction = useBusyAction();
 
   const load = useCallback(() => {
     apiStaffNotes(entityType, entityId).then(r => setRows(r.data)).catch(e => { setError(e instanceof Error ? e.message : 'Could not load notes.'); setRows([]); });
@@ -28,7 +31,10 @@ export function StaffNotes({ entityType, entityId, className }: { entityType: 'u
     catch (e) { setError(e instanceof Error ? e.message : 'Could not save the note.'); }
     finally { setBusy(false); }
   };
-  const del = async (n: StaffNoteRow) => { try { await apiDeleteStaffNote(n._id); load(); } catch (e) { setError(e instanceof Error ? e.message : 'Could not delete.'); } };
+  const confirmDelete = () => {
+    if (!deleting) return;
+    void delAction.run(async () => { await apiDeleteStaffNote(deleting._id); setDeleting(null); load(); });
+  };
 
   return (
     <section className={className} aria-label="Team notes">
@@ -42,11 +48,24 @@ export function StaffNotes({ entityType, entityId, className }: { entityType: 'u
         {(rows ?? []).map(n => (
           <li key={n._id} className="bg-cream border border-bone rounded-lg px-3 py-2 text-[12.5px] flex gap-2">
             <span className="flex-1 min-w-0"><span className="block whitespace-pre-wrap">{n.text}</span><span className="text-[11px] text-slate">{n.authorName} · {new Date(n.createdAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</span></span>
-            {(me?.isOwner || n.authorId === me?._id) && <button type="button" aria-label="Delete note" onClick={() => del(n)} className="bg-transparent border-none cursor-pointer text-slate p-1"><Trash2 size={13} /></button>}
+            {(me?.isOwner || n.authorId === me?._id) && <button type="button" aria-label="Delete note" onClick={() => setDeleting(n)} className="bg-transparent border-none cursor-pointer text-slate p-1"><Trash2 size={13} /></button>}
           </li>
         ))}
         {rows && rows.length === 0 && <li className="text-[12px] text-slate">No notes yet.</li>}
       </ul>
+      {deleting && (
+        <ConfirmActionModal
+          title="Delete this note?"
+          message="The team will no longer see it. This cannot be undone."
+          details={[{ label: 'Note', value: <span className="whitespace-pre-wrap">{deleting.text}</span> }]}
+          confirmLabel="Delete note"
+          danger
+          busy={delAction.busy}
+          error={delAction.error}
+          onConfirm={confirmDelete}
+          onClose={() => { if (!delAction.busy) { setDeleting(null); delAction.setError(''); } }}
+        />
+      )}
     </section>
   );
 }

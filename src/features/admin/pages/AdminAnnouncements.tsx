@@ -1,3 +1,4 @@
+import { useUrlParam, useUrlPage } from '@/hooks/useUrlParam';
 import { useMemo, useState } from 'react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useAdminAnnouncements, useAnnouncementActions } from '@/hooks/admin/useAdminAnnouncements';
@@ -128,10 +129,10 @@ function ScheduleModal({ announcement, onClose, onSaved }: { announcement: Annou
 // ── Component ─────────────────────────────────────────────────────────────────
 export function AdminAnnouncements() {
   usePageTitle('Announcements');
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [audienceFilter, setAudienceFilter] = useState('');
-  const [page, setPage] = useState(1);
+  const [search, setSearch] = useUrlParam('q');
+  const [statusFilter, setStatusFilter] = useUrlParam('status');
+  const [audienceFilter, setAudienceFilter] = useUrlParam('audience');
+  const [page, setPage] = useUrlPage();
 
   const query = useMemo(
     () => ({
