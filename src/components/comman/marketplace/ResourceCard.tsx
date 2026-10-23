@@ -54,47 +54,48 @@ function ListCover({ product }: { product: MarketplaceProduct }) {
   );
 }
 
-function Cover({ product, tilt }: { product: MarketplaceProduct; tilt: number }) {
-  const { bg, accent } = paletteFor(product.name || product._id);
+function Cover({ product }: { product: MarketplaceProduct }) {
+  const { accent } = paletteFor(product.name || product._id);
   const [imgFailed, setImgFailed] = useState(false);
   const image = !imgFailed ? product.images?.[0] : undefined;
+  const imgProps = image ? responsiveImg(image, '(min-width: 1024px) 14vw, (min-width: 640px) 22vw, 36vw', [200, 320, 480, 640], 480) : null;
+  const clipId = `bk-${product._id}`;
 
+  // Front-facing book drawn in SVG: the seller's image (or the title) fills the WHOLE cover; pages show as a thin edge behind it.
   return (
-    <div
-      className="h-[205px] sm:h-[230px] lg:h-[245px] rounded-xl overflow-hidden flex items-center justify-center p-[10px] sm:p-[22px]"
-      style={{ background: bg }}
-    >
-      <div
-        className="bg-white w-[90%] sm:w-[82%] h-[172px] sm:h-[190px] lg:h-[205px] shadow-[6px_9px_0_rgba(0,0,0,0.06)] border-t-[7px] flex flex-col overflow-hidden transition-transform duration-300 group-hover:rotate-0"
-        style={{ borderTopColor: accent, transform: `rotate(${tilt}deg)` }}
-      >
-        {image ? (
-          <img
-            {...responsiveImg(image, '(min-width: 1024px) 22vw, (min-width: 640px) 33vw, 46vw', [240, 360, 480, 720], 480)}
-            alt={product.name}
-            width={480}
-            height={480}
-            loading="lazy"
-            decoding="async"
-            onError={() => setImgFailed(true)}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="flex-1 flex flex-col items-center justify-center text-center px-3 py-4" style={{ color: accent }}>
-            <span className="text-[12px] tracking-[1px] uppercase">Learn with purpose</span>
-            <strong className="block font-serif font-normal text-[19px] sm:text-[23px] leading-[1.08] my-3 line-clamp-3">
-              {product.name}
-            </strong>
-            <small className="text-[12px] sm:text-[12px] text-[#5d6570] line-clamp-1">
-              {product.storeName ?? product.sellerName ?? 'Edudeen'}
-            </small>
-          </div>
-        )}
-      </div>
+    <div className="h-[178px] sm:h-[194px] lg:h-[205px] rounded-lg overflow-hidden">
+      <svg viewBox="0 0 210 198" className="w-full h-full" role="img" aria-label={product.name} preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <clipPath id={clipId}><rect x="30" y="8" width="148" height="172" rx="3" /></clipPath>
+        </defs>
+        <g transform="rotate(-3 106 99)">
+        <ellipse cx="106" cy="188" rx="76" ry="5" fill="#000" fillOpacity="0.10" />
+        {/* pages */}
+        <rect x="35" y="13" width="148" height="172" rx="3" fill="#fff" stroke="#9aa3aa" strokeWidth="1" />
+        <path d="M181 17v164M183 19v160" stroke="#c9d0d5" strokeWidth="0.8" />
+        {/* cover */}
+        <g clipPath={`url(#${clipId})`}>
+          <rect x="30" y="8" width="148" height="172" fill="#fff" />
+          {imgProps ? (
+            <image href={imgProps.src} x="30" y="8" width="148" height="172" preserveAspectRatio="xMidYMid slice" onError={() => setImgFailed(true)} />
+          ) : (
+            <foreignObject x="30" y="8" width="148" height="172">
+              <div className="w-full h-full flex flex-col items-center justify-center text-center px-3" style={{ color: accent }}>
+                <strong className="block font-serif font-normal text-[14px] leading-[1.15] line-clamp-5">{product.name}</strong>
+                <small className="mt-2 text-[10px] text-[#5d6570] line-clamp-1">{product.storeName ?? product.sellerName ?? 'Edudeen'}</small>
+              </div>
+            </foreignObject>
+          )}
+          {/* spine shading */}
+          <rect x="30" y="8" width="9" height="172" fill="#000" fillOpacity="0.16" />
+          <rect x="39" y="8" width="1.2" height="172" fill="#000" fillOpacity="0.12" />
+        </g>
+        <rect x="30" y="8" width="148" height="172" rx="3" fill="none" stroke="#7d868d" strokeWidth="1.2" />
+      </g>
+      </svg>
     </div>
   );
 }
-
 /** Stars + review count, e.g. "★ 4.6 (128)". Nothing for an unreviewed item. */
 export function RatingLine({ rating, count, className }: { rating?: number; count?: number; className?: string }) {
   if (!count || !rating) return null;
@@ -108,7 +109,7 @@ export function RatingLine({ rating, count, className }: { rating?: number; coun
 }
 
 export const ResourceCard = memo(function ResourceCard({
-  product: rawProduct, index = 0, onClick, isWishlisted = false, isWishlisting = false, onToggleWishlist, layout = 'grid',
+  product: rawProduct, onClick, isWishlisted = false, isWishlisting = false, onToggleWishlist, layout = 'grid',
 }: ResourceCardProps) {
   const product = useLocalizedProduct(rawProduct);
   const { currency: displayCurrency, convert } = useCurrencyPreference();
@@ -214,14 +215,14 @@ export const ResourceCard = memo(function ResourceCard({
   }
 
   return (
-    <article className="group relative min-w-0">
+    <article className="group relative min-w-0 overflow-hidden rounded-xl border border-[#e6ecee] bg-white p-2 transition-all duration-200 hover:shadow-[0_6px_18px_rgba(15,51,84,0.10)] hover:border-[#cfdadf]">
       <Link
         to={href}
         onClick={go}
         aria-label={`View ${product.name}`}
         className="block w-full p-0 cursor-pointer text-start"
       >
-        <Cover product={product} tilt={index % 2 === 0 ? -4 : 4} />
+        <Cover product={product} />
       </Link>
 
       {(campaignOff || percentOff > 0) && (
@@ -248,11 +249,12 @@ export const ResourceCard = memo(function ResourceCard({
 
       <CompareToggle product={product} className="absolute end-[7px] top-[43px] sm:end-3 sm:top-[54px]" />
 
-      <p className="text-[12px] text-slate mt-[13px] mb-[5px] truncate">{meta}</p>
+      <div className="px-1.5 pb-1">
+      <p className="text-[12px] text-slate mt-2.5 mb-1 truncate">{meta}</p>
       <Link
         to={href}
         onClick={go}
-        className="block py-1 -my-1 text-start text-carbon no-underline font-bold text-[14px] sm:text-[16px] leading-[1.4] cursor-pointer hover:underline line-clamp-2"
+        className="block py-1 -my-1 text-start text-carbon no-underline font-bold text-[13px] sm:text-[13.5px] leading-[1.35] cursor-pointer hover:underline line-clamp-2"
       >
         {product.name}
       </Link>
@@ -272,7 +274,7 @@ export const ResourceCard = memo(function ResourceCard({
       <TrustBadges trust={product.trust} className="mt-1" />
       <div className="flex items-center justify-between gap-2 mt-2">
         <span className="flex items-baseline gap-1.5 min-w-0 flex-wrap">
-          <strong className={clsx('num text-[14px] sm:text-[16px]', member ? 'text-[#8a6100]' : was ? 'text-error' : 'text-carbon')}>
+          <strong className={clsx('num text-[14px] sm:text-[15px]', member ? 'text-[#8a6100]' : was ? 'text-error' : 'text-carbon')}>
             {rawPrice === 0 ? 'Free' : fmt(member ? member.price : price)}
           </strong>
           {member && <s className="text-[12px] text-slate">{fmt(member.list ?? price)}</s>}
@@ -285,14 +287,15 @@ export const ResourceCard = memo(function ResourceCard({
         </span>
       </div>
       {member ? <PremiumChip percent={member.percent} className="mt-1" /> : <PremiumTeaser percent={product.premiumPercent} className="mt-1" />}
+      </div>
     </article>
   );
 });
 
 export function ResourceCardSkeleton() {
   return (
-    <div className="min-w-0 animate-pulse">
-      <div className="h-[205px] sm:h-[230px] lg:h-[245px] rounded-xl bg-bone" />
+    <div className="min-w-0 animate-pulse rounded-xl border border-[#e6ecee] p-2">
+      <div className="h-[178px] sm:h-[194px] lg:h-[205px] rounded-lg bg-bone" />
       <div className="h-3 w-1/2 bg-bone rounded mt-4" />
       <div className="h-4 w-4/5 bg-bone rounded mt-3" />
       <div className="h-3 w-1/3 bg-bone rounded mt-3" />

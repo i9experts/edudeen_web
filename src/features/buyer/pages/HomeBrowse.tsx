@@ -69,7 +69,7 @@ export function HomeBrowse() {
         <div className="sticky top-[var(--navbar-top,0px)] z-50"><BuyerNavbar /></div>
         <main className="max-w-[1480px] mx-auto px-[5%] md:px-[4%] pt-6 pb-12">
           <div className="h-8 w-64 bg-bone rounded animate-pulse mb-6" />
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-4 gap-y-5">
             {Array.from({ length: 8 }, (_, i) => <ResourceCardSkeleton key={i} />)}
           </div>
         </main>

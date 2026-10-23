@@ -314,7 +314,7 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-4 md:gap-x-6 gap-y-8">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-3 md:gap-x-4 gap-y-5">
               {Array.from({ length: 8 }, (_, i) => <ResourceCardSkeleton key={i} />)}
             </div>
           )
@@ -329,7 +329,7 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
             {state.q && <SearchEmptyHelp didYouMean={fix.didYouMean} categories={tree} />}
           </>
         ) : (
-          <div className={view === 'list' ? 'border-t border-bone' : 'grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-4 md:gap-x-6 gap-y-8'}>
+          <div className={view === 'list' ? 'border-t border-bone' : 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-3 md:gap-x-4 gap-y-5'}>
             {products.map((p, i) => {
               const dv = (p.variants ?? []).find(v => v.isDefault) ?? p.variants?.[0];
               const vId = dv?._id ?? '';
