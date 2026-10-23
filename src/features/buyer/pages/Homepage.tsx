@@ -501,7 +501,9 @@ function HomeLanding() {
         {/* ── Admin banners / paid promotions (Admin → Banners, homepage slot) ── */}
         <div className="mb-[25px] flex flex-col gap-3 lg:grid lg:grid-cols-12 lg:gap-4 lg:items-stretch">
           <div className="min-w-0 lg:col-span-10">
-            <PlacementBanner placement="homepageHero" tall />
+            {!heroBanners.loaded
+              ? <div aria-hidden="true" className="w-full animate-pulse rounded-2xl bg-cream aspect-[2/1] sm:aspect-[5/2] lg:aspect-[3.2/1]" />
+              : <PlacementBanner placement="homepageHero" tall />}
           </div>
           {heroBanners.has && (
             <div className="relative min-w-0 lg:col-span-2">
@@ -512,9 +514,9 @@ function HomeLanding() {
 
         {/* ── Hero: admin content (text + desktop/phone picture); brand artwork when no picture is set. Same box while loading → no layout shift. ── */}
         <EditableHomeSection section="hero" defaults={eff} label="hero">
-          {!heroBanners.loaded || !heroReady
+          {!heroBanners.loaded || heroBanners.has ? null
+            : !heroReady
             ? <HomeHeroSkeleton />
-            : heroBanners.has ? null
             : <HomeHero eff={eff} onPrimary={scrollToResources} onSecondary={() => selectSubject(featuredTab?.id ?? null)} />}
         </EditableHomeSection>
         {/* Sale banner (Mega Sale) first, then the category cards under it. */}

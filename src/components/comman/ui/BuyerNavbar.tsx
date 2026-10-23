@@ -25,6 +25,7 @@ import { MiniCart } from './MiniCart';
 import { MiniWishlist } from './MiniWishlist';
 import { getScrollTop, getScrollMax, onPageScroll } from '@/utils/scrollRoot';
 import { useSellEntry } from '@/hooks/auth/useSellEntry';
+import { isBuyerSession } from '@/hooks/auth/useIsBuyer';
 import { VoiceSearchButton } from '@/components/ai/VoiceSearchButton';
 
 export interface BuyerNavbarSearchConfig {
@@ -949,6 +950,15 @@ function AccountActions({ simple = false }: { simple?: boolean }) {
     // Currency lives in the top bar; notifications live inside the profile popup.
     return (
       <div className="flex items-center gap-2.5">
+        {isBuyerSession() && (
+          <Link
+            to="/become-a-seller"
+            className="hidden md:inline-flex items-center gap-[6px] shrink-0 whitespace-nowrap text-[13px] font-semibold text-white no-underline rounded-md px-[14px] py-[7px] bg-brand-orange hover:bg-brand-deep-orange transition-colors"
+          >
+            <StoreIcon size={14} />
+            {t('Sell on Edudeen')}
+          </Link>
+        )}
         <ProfileAvatar withNotifications />
       </div>
     );
