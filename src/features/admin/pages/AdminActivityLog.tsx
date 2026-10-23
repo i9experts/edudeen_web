@@ -7,7 +7,8 @@ import {
   apiExportAdminActivityLog, ADMIN_ACTIVITY_CATEGORIES,
   type AdminActivityLogEntry, type AdminActivityCategory,
 } from '@/api/services/activityLog';
-import { Table, Badge, Button, SearchInput, FilterDropdown, type TableColumn } from '@/components/comman/ui';
+import { Table, Badge, Button, Input, SearchInput, FilterDropdown, type TableColumn } from '@/components/comman/ui';
+import { useAdminAccess } from '@/hooks/admin/useAdminAccess';
 import { AdminStudioHeader } from '@/features/admin/components/studio';
 import type { BadgeColor } from '@/types';
 import { AnalyticsErrorState } from '@/components/comman/analytics/AnalyticsErrorState';
@@ -39,6 +40,7 @@ const DATE_RANGE_OPTIONS = [
   { value: 'last7', label: 'Last 7 days' },
   { value: 'last30', label: 'Last 30 days' },
   { value: 'last90', label: 'Last 90 days' },
+  { value: 'custom', label: 'Custom dates…' },
   { value: 'all', label: 'All time' },
 ];
 
@@ -50,6 +52,7 @@ function daysAgo(n: number): string {
 
 export function AdminActivityLog() {
   usePageTitle('Activity Log');
+  const canExport = useAdminAccess().can('activity.export');
 
   const [search, setSearch] = useUrlParam('q');
   const [category, setCategory] = useUrlParam('category');
@@ -58,15 +61,22 @@ export function AdminActivityLog() {
   const securityOnly = securityParam === '1';
   const setSecurityOnly = (v: boolean) => setSecurityParam(v ? '1' : '');
   const [page, setPage] = useUrlPage();
+  // Precise filters live in the URL too, so a filtered view can be shared or bookmarked.
+  const [actorId, setActorId] = useUrlParam('actor');
+  const [action, setAction] = useUrlParam('action');
+  const [targetId, setTargetId] = useUrlParam('target');
+  const [fromDate, setFromDate] = useUrlParam('from');
+  const [toDate, setToDate] = useUrlParam('to');
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState('');
 
   // Computed once per range choice. `daysAgo` embeds "now" to the millisecond, so
   // recomputing it every render changed the query each time and refetched forever.
   const from = useMemo(
-    () => (dateRange === 'last7' ? daysAgo(7) : dateRange === 'last30' ? daysAgo(30) : dateRange === 'last90' ? daysAgo(90) : undefined),
-    [dateRange],
+    () => (dateRange === 'last7' ? daysAgo(7) : dateRange === 'last30' ? daysAgo(30) : dateRange === 'last90' ? daysAgo(90) : dateRange === 'custom' ? (fromDate || undefined) : undefined),
+    [dateRange, fromDate],
   );
+  const to = dateRange === 'custom' ? (toDate || undefined) : undefined;
 
   const query = useMemo(
     () => ({
@@ -74,11 +84,17 @@ export function AdminActivityLog() {
       limit: PAGE_SIZE,
       search: search || undefined,
       category: (category || undefined) as AdminActivityCategory | undefined,
+      actorId: actorId.trim() || undefined,
+      action: action.trim() || undefined,
+      targetId: targetId.trim() || undefined,
       isSecurityAlert: securityOnly || undefined,
       from,
+      to,
     }),
-    [page, search, category, securityOnly, from],
+    [page, search, category, actorId, action, targetId, securityOnly, from, to],
   );
+  const filtersActive = !!(actorId || action || targetId || category || search || securityOnly || dateRange !== 'last30');
+  function clearFilters() { setSearch(''); setCategory(''); setActorId(''); setAction(''); setTargetId(''); setFromDate(''); setToDate(''); setSecurityParam(''); setDateRange('last30'); setPage(1); }
 
   const { data, loading, error, refetch } = useAdminActivityLog(query);
 
@@ -86,7 +102,7 @@ export function AdminActivityLog() {
     setExporting(true);
     setExportError('');
     try {
-      await apiExportAdminActivityLog(query);
+      await apiExportAdminActivityLog({ ...query, page: undefined, limit: undefined });
     } catch (err) {
       setExportError(err instanceof Error ? err.message : 'Failed to export activity log.');
     } finally {
@@ -133,11 +149,11 @@ export function AdminActivityLog() {
       <AdminStudioHeader eyebrow="Edudeen team workspace · System"
         title="Activity Log"
         subtitle="Platform-wide audit trail — every seller store plus platform-level actions, in one place."
-        actions={
+        actions={canExport ? (
           <Button variant="outline" size="sm" icon={<Download size={12} />} loading={exporting} onClick={handleExport}>
             Export CSV
           </Button>
-        }
+        ) : undefined}
       />
       <div className="px-4 sm:px-7 pt-6 pb-8 flex flex-col gap-5">
 
@@ -157,6 +173,18 @@ export function AdminActivityLog() {
             />
             Security alerts only
           </label>
+        </div>
+        <div className="px-5 py-3 border-b border-bone flex gap-[10px] items-end flex-wrap bg-cream/50">
+          <Input label="Actor (id)" value={actorId} onChange={e => { setActorId(e.target.value); setPage(1); }} placeholder="Admin or user id" className="w-[200px]" />
+          <Input label="Action" value={action} onChange={e => { setAction(e.target.value); setPage(1); }} placeholder="e.g. payout_approved" className="w-[200px]" />
+          <Input label="Target (id)" value={targetId} onChange={e => { setTargetId(e.target.value); setPage(1); }} placeholder="Order, payout, user id" className="w-[200px]" />
+          {dateRange === 'custom' && (
+            <>
+              <Input label="From" type="date" value={fromDate} onChange={e => { setFromDate(e.target.value); setPage(1); }} />
+              <Input label="To" type="date" value={toDate} onChange={e => { setToDate(e.target.value); setPage(1); }} />
+            </>
+          )}
+          {filtersActive && <Button variant="ghost" size="sm" onClick={clearFilters}>Clear filters</Button>}
         </div>
 
         {error ? (

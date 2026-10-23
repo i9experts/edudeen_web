@@ -98,6 +98,7 @@ function CreateCampaignModal({ campaign, onClose, onSaved }: { campaign?: Campai
   const [discountValue, setDiscountValue] = useState(campaign?.discountValue != null ? String(campaign.discountValue) : '');
   const [sponsorType, setSponsorType] = useState<CampaignSponsorType>(campaign?.sponsorType ?? 'seller');
   const [order, setOrder] = useState(campaign ? String(campaign.order) : '');
+  const [subsidyCap, setSubsidyCap] = useState(campaign?.subsidyCapUSD ? String(campaign.subsidyCapUSD) : '');
   const [validationError, setValidationError] = useState('');
 
   async function submit() {
@@ -107,6 +108,8 @@ function CreateCampaignModal({ campaign, onClose, onSaved }: { campaign?: Campai
       setValidationError('A platform-sponsored campaign needs a discount type and value — that\'s what the platform is covering.');
       return;
     }
+    const capValue = subsidyCap.trim() ? Number(subsidyCap) : 0;
+    if (sponsorType === 'platform' && (!Number.isFinite(capValue) || capValue < 0)) { setValidationError('The spending limit must be 0 (no limit) or more.'); return; }
     setValidationError('');
     const payload = {
       name: name.trim(),
@@ -117,6 +120,8 @@ function CreateCampaignModal({ campaign, onClose, onSaved }: { campaign?: Campai
       discountType: discountType || undefined,
       discountValue: discountType && discountValue ? Number(discountValue) : undefined,
       sponsorType,
+      // Only platform campaigns have a budget; sending 0 clears an old limit.
+      subsidyCapUSD: sponsorType === 'platform' ? capValue : undefined,
       order: order.trim() ? Number(order) : undefined,
     };
     const ok = isEdit ? await updateCampaign(campaign._id, payload) : await createCampaign(payload);
@@ -220,6 +225,13 @@ function CreateCampaignModal({ campaign, onClose, onSaved }: { campaign?: Campai
           </div>
         </div>
 
+        {sponsorType === 'platform' && (
+          <div>
+            <Input label="Platform spending limit in USD (optional)" type="number" min={0} placeholder="0 = no limit" value={subsidyCap} onChange={(e) => setSubsidyCap(e.target.value)} />
+            <p className="text-[12px] text-slate mt-1">When the platform has paid this much in discounts the campaign price stops applying and buyers see normal prices. Sales already in progress may go slightly over.</p>
+          </div>
+        )}
+
         {(validationError || error) && <p className="text-[12px] text-error">{validationError || error}</p>}
       </div>
     </Modal>
@@ -304,7 +316,12 @@ function CampaignsTab() {
         ? (
           <div>
             <Badge size="sm" color="orange"><Building2 size={10} /> Platform</Badge>
-            {c.totalPlatformSubsidyUSD > 0 && <p className="text-[12px] text-slate mt-1">{formatCurrency(c.totalPlatformSubsidyUSD)} spent</p>}
+            {(c.totalPlatformSubsidyUSD > 0 || (c.subsidyCapUSD ?? 0) > 0) && (
+              <p className="text-[12px] text-slate mt-1">
+                {formatCurrency(c.totalPlatformSubsidyUSD)} spent{(c.subsidyCapUSD ?? 0) > 0 ? ` of ${formatCurrency(c.subsidyCapUSD ?? 0)}` : ''}
+                {(c.subsidyCapUSD ?? 0) > 0 && c.totalPlatformSubsidyUSD >= (c.subsidyCapUSD ?? 0) && <span className="ms-1 font-bold text-error">· limit reached</span>}
+              </p>
+            )}
           </div>
         )
         : <Badge size="sm"><User size={10} /> Seller</Badge>,

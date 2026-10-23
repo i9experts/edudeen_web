@@ -264,7 +264,17 @@ function AdminSidebar({ open, onToggle }: AdminSidebarProps) {
   const [expandedModuleId, setExpandedModuleId] = useState<string | null>(() => moduleForPath(pathname, search));
   // Sidebar badges (listings, premium proofs, chats, team) come from one shared 60 s poller.
   const badges = useAdminBadges();
-  const badgeFor = (id: string) => (id === 'marketplace' ? badges.listings : id === 'premium' ? badges.premium : id === 'messages' ? badges.chats : id === 'collaboration' ? badges.team : 0);
+  const badgeFor = (id: string) => (id === 'marketplace' ? badges.listings : id === 'premium' ? badges.premium : id === 'messages' ? badges.chats : id === 'collaboration' ? badges.team
+    : id === 'finance' ? badges.payouts : id === 'manual-payments' ? badges.proofs : id === 'refunds' ? badges.refunds : id === 'marketing' ? badges.promotions : 0);
+  /** Where a click on an item that has a badge goes: straight to the waiting items. */
+  const badgeTarget = (id: string, path: string, badge: number) => {
+    if (!badge) return path;
+    if (id === 'messages') return `${path}?tab=chat&filter=unread`;
+    if (id === 'premium') return `${path}?tab=payments&status=pending`;
+    if (id === 'marketplace') return `${path}?status=pending_review`;
+    if (id === 'finance') return `${path}?tab=payouts&payoutStatus=pending`;
+    return path;
+  };
   useEffect(() => { setExpandedModuleId(moduleForPath(pathname, search)); }, [pathname, search]);
 
   const handleLogout = async () => {
@@ -450,7 +460,7 @@ function AdminSidebar({ open, onToggle }: AdminSidebarProps) {
                         <button
                           key={item.id}
                           type="button"
-                          onClick={() => goTo(item.id === 'collaboration' ? item.path : item.id === 'messages' && badge ? `${item.path}?tab=chat&filter=unread` : item.id === 'premium' && badge ? `${item.path}?tab=payments&status=pending` : badge ? `${item.path}?status=pending_review` : item.path)}
+                          onClick={() => goTo(badgeTarget(item.id, item.path, badge))}
                           aria-current={active ? 'page' : undefined}
                           className={clsx(
                             'w-full flex items-center gap-[8px] py-[8px] px-[9px] rounded-lg border-none text-left',

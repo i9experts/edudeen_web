@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { StaffNotes } from '@/features/admin/components/StaffNotes';
+import { ExportCsvButton } from '@/features/admin/components/ExportCsvButton';
 import { useSearchParams } from 'react-router-dom';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useAdminUsersStats, useAdminUsersList, useAdminUserActions, useAdminUserDetail } from '@/hooks/admin/useAdminUsers';
@@ -263,7 +264,8 @@ export function AdminUsers() {
   ];
   return (
     <>
-      <AdminStudioHeader eyebrow="Edudeen team workspace · People" title="Users & Sellers" subtitle="Manage all platform users, sellers and accounts." />
+      <AdminStudioHeader eyebrow="Edudeen team workspace · People" title="Users & Sellers" subtitle="Manage all platform users, sellers and accounts."
+        actions={<ExportCsvButton kind="users" params={{ role: roleFilter, status: statusFilter, search }} />} />
       <div className="px-4 sm:px-7 pt-6 pb-8 flex flex-col gap-5">
       {actionError && <div className="bg-error-bg border border-error-border rounded-lg px-4 py-2.5 text-[12.5px] text-error">{actionError}</div>}
 

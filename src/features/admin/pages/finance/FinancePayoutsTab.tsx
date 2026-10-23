@@ -4,7 +4,9 @@ import { FilterDropdown, Table, Button, Input, Modal, ConfirmActionModal, type T
 import { useBusyAction } from '@/hooks/useBusyAction';
 import { RefreshCw, Wallet } from 'lucide-react';
 import { useAdminPayoutQueue, useAdminPayoutActions, useAdminProcessClearing } from '@/hooks/admin/useAdminFinance';
-import { apiAdminGetPayoutDestination, type PayoutRow, type PayoutDestination } from '@/api/services/finance/adminFinance';
+import { BulkDecisionModal } from '@/features/admin/components/BulkDecisionModal';
+import { useBulkRunner } from '@/hooks/admin/useBulkRunner';
+import { apiAdminApprovePayout, apiAdminRejectPayout, apiAdminGetPayoutDestination, type PayoutRow, type PayoutDestination } from '@/api/services/finance/adminFinance';
 import { AnalyticsErrorState } from '@/components/comman/analytics/AnalyticsErrorState';
 import { formatDate } from '@/components/comman/analytics/format';
 import { formatMoneyCompact } from '@/utils/currency';
@@ -60,6 +62,19 @@ export function FinancePayoutsTab() {
       queue.refetch();
     }
   };
+
+  // Bulk approve / reject: one request per payout, through the single-action API (same rights, approval, reauth gates).
+  const [selected, setSelected] = useState<Set<string | number>>(new Set());
+  const [bulkMode, setBulkMode] = useState<'approve' | 'reject' | null>(null);
+  const bulk = useBulkRunner<PayoutRow>(p => p.storeName ?? p.storeId);
+  const selectedPayouts = (queue.data?.payouts ?? []).filter(p => selected.has(p._id) && (p.status === 'pending' || p.status === 'processing'));
+  const runBulkDecision = async (bulkReason: string) => {
+    const mode = bulkMode;
+    if (!mode) return;
+    const res = await bulk.run(selectedPayouts, p => mode === 'approve' ? apiAdminApprovePayout(p._id) : apiAdminRejectPayout(p._id, bulkReason), mode === 'approve' ? 'approved' : 'rejected');
+    setBulkMode(null); setSelected(new Set());
+    if (res) queue.refetch();
+  };
   const columns: TableColumn<PayoutRow>[] = [
     { key: 'storeName', header: 'Store', render: (p) => p.storeName ?? p.storeId },
     { key: 'amount', header: 'Amount', align: 'right', render: (p) => formatMoneyCompact(p.amount, p.currency) },
@@ -100,6 +115,24 @@ export function FinancePayoutsTab() {
         </p>
       )}
       {(error || clearing.error || destError) && <p className="text-[12px] text-error">{error || clearing.error || destError}</p>}
+      {bulk.message && <p role="status" className="text-[12.5px] text-carbon bg-info-bg border border-info/30 rounded-lg px-3 py-2 m-0">{bulk.message}</p>}
+      {bulkMode && (
+        <BulkDecisionModal
+          title={`${bulkMode === 'approve' ? 'Approve' : 'Reject'} ${selectedPayouts.length} payout${selectedPayouts.length === 1 ? '' : 's'}?`}
+          message={bulkMode === 'approve'
+            ? 'Each seller is told their payout was approved. You still send each amount manually to the account shown under "Pay to".'
+            : 'Each seller is told the payout was rejected and sees your reason.'}
+          items={selectedPayouts.map(p => `${p.storeName ?? p.storeId} - ${formatMoneyCompact(p.amount, p.currency)}`)}
+          requireReason={bulkMode === 'reject'}
+          reasonLabel="Reason (every seller sees it)"
+          confirmLabel={bulkMode === 'approve' ? 'Approve all' : 'Reject all'}
+          danger={bulkMode === 'reject'}
+          busy={bulk.busy}
+          progress={bulk.progress}
+          onConfirm={(r) => { void runBulkDecision(r); }}
+          onClose={() => setBulkMode(null)}
+        />
+      )}
 
       {queue.error ? (
         <AnalyticsErrorState message={queue.error} onRetry={queue.refetch} />
@@ -109,6 +142,15 @@ export function FinancePayoutsTab() {
           data={queue.data?.payouts ?? []}
           keyExtractor={(p) => p._id}
           loading={queue.loading}
+          selectable
+          selectedKeys={selected}
+          onSelectionChange={setSelected}
+          bulkActions={() => (
+            <>
+              <Button size="xs" variant="primary" onClick={() => setBulkMode('approve')} loading={bulk.busy} disabled={selectedPayouts.length === 0}>Approve selected</Button>
+              <Button size="xs" variant="outline" onClick={() => setBulkMode('reject')} disabled={bulk.busy || selectedPayouts.length === 0}>Reject selected</Button>
+            </>
+          )}
           emptyState={{
             icon: <Wallet size={28} className="text-slate/50" />,
             title: 'No payouts yet',

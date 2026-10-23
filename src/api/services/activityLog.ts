@@ -118,6 +118,7 @@ export interface AdminActivityLogQuery {
   actorRole?:       string;
   action?:          string;
   targetType?:      string;
+  targetId?:        string;
   isSecurityAlert?: boolean;
   search?:          string;
   from?:            string;

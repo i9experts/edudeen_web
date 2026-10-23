@@ -1,6 +1,7 @@
 import { safeHttpUrl } from '@/utils/safeRedirect';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { StaffNotes } from '@/features/admin/components/StaffNotes';
+import { ExportCsvButton } from '@/features/admin/components/ExportCsvButton';
 import { useSearchParams } from 'react-router-dom';
 import { ShoppingBag, RefreshCw, ExternalLink, Truck, CheckCircle2 } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -234,7 +235,10 @@ export function AdminOrders() {
         eyebrow="Edudeen team workspace · Commerce"
         title="Orders"
         subtitle="Every order on Edudeen. Search by order number, buyer name, email or phone."
-        actions={<Button variant="outline" size="sm" icon={<RefreshCw size={13} />} onClick={() => setReload(n => n + 1)}>Refresh</Button>}
+        actions={<div className="flex items-center gap-2 flex-wrap justify-end">
+          <ExportCsvButton kind="orders" params={{ status, paymentStatus, paymentType, from, to }} />
+          <Button variant="outline" size="sm" icon={<RefreshCw size={13} />} onClick={() => setReload(n => n + 1)}>Refresh</Button>
+        </div>}
       />
       <div className={`${ADMIN_GUTTER} pt-6 pb-8 flex flex-col gap-4`}>
         <div className="bg-white border border-bone rounded-xl overflow-hidden">

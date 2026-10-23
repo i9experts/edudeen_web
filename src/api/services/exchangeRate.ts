@@ -41,6 +41,18 @@ export function apiGetFxStaleness() {
   );
 }
 
+export interface HeldFxRate { _id: string; currency: string; ratePerUSD: number; effectiveFrom: string }
+
+export function apiGetHeldFxRates() {
+  return client.get<never, ApiResponse<HeldFxRate[]>>(ENDPOINTS.EXCHANGE_RATE.ADMIN_HELD);
+}
+export function apiConfirmHeldFxRate(id: string) {
+  return client.post<never, ApiResponse<{ applied: boolean }>>(ENDPOINTS.EXCHANGE_RATE.ADMIN_HELD_CONFIRM(id));
+}
+export function apiDismissHeldFxRate(id: string, reason?: string) {
+  return client.post<never, ApiResponse<{ dismissed: boolean }>>(ENDPOINTS.EXCHANGE_RATE.ADMIN_HELD_DISMISS(id), { reason });
+}
+
 export function apiOverrideFxRate(currency: string, ratePerUSD: number) {
   return client.post<never, ApiResponse<{ applied: boolean; held: boolean }>>(
     ENDPOINTS.EXCHANGE_RATE.ADMIN_OVERRIDE,

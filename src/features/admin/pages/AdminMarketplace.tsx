@@ -2,7 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { formatMoney } from '@/utils/currency';
 import { useSearchParams } from 'react-router-dom';
 import { ListingReviewModal } from '@/features/admin/components/ListingReviewModal';
-import { apiGetListingReviewCount, apiApproveListing } from '@/api/services/marketplace/adminMarketplace';
+import { apiGetListingReviewCount, apiApproveListing, apiRejectListing } from '@/api/services/marketplace/adminMarketplace';
+import { ExportCsvButton } from '@/features/admin/components/ExportCsvButton';
+import { BulkDecisionModal } from '@/features/admin/components/BulkDecisionModal';
+import { useBulkRunner } from '@/hooks/admin/useBulkRunner';
 import { useBusyAction } from '@/hooks/useBusyAction';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useMarketplaceStats, useMarketplaceListings, useMarketplaceListingActions } from '@/hooks/admin/useAdminMarketplace';
@@ -13,7 +16,7 @@ import { AdminStudioHeader } from '@/features/admin/components/studio';
 import type { TableColumn } from '@/components/comman/ui';
 import { AnalyticsErrorState } from '@/components/comman/analytics/AnalyticsErrorState';
 import { formatCurrency, formatNumber } from '@/components/comman/analytics/format';
-import { Star, StoreIcon, RefreshCw, GraduationCap, Trash2, ClipboardCheck, ShieldCheck, Truck, FlaskConical, CheckCircle2 } from 'lucide-react';
+import { Star, StoreIcon, RefreshCw, GraduationCap, Trash2, ClipboardCheck, ShieldCheck, Truck, FlaskConical, CheckCircle2, XCircle } from 'lucide-react';
 
 const STATUS_OPTIONS = [
   { value: 'pending_review', label: 'Waiting for review' },
@@ -100,6 +103,22 @@ export function AdminMarketplace() {
       setBulkMsg(`${ok} published${failed.length ? `, ${failed.length} failed: ${failed.slice(0, 3).join(', ')}${failed.length > 3 ? '…' : ''}` : ''}.`);
       refreshAll();
     });
+  }
+
+  // Bulk "send back to seller": one reject call per listing (same atomic call as the review modal), with one shared reason.
+  const [rejectRows, setRejectRows] = useState<MarketplaceListingRow[] | null>(null);
+  const bulkReject = useBulkRunner<MarketplaceListingRow>(r => r.title);
+  function rejectSelected() {
+    const rows = (data?.items ?? []).filter(r => selected.has(r.id) && r.status === 'pending_review');
+    if (rows.length === 0) { setBulkMsg('Select listings that are waiting for review.'); return; }
+    setBulkMsg(''); setRejectRows(rows);
+  }
+  async function sendBackSelected(reason: string) {
+    const rows = rejectRows;
+    if (!rows) return;
+    const res = await bulkReject.run(rows, r => apiRejectListing(r.id, reason), 'sent back');
+    setRejectRows(null); setSelected(new Set());
+    if (res) refreshAll();
   }
 
   async function toggleFeatured(row: MarketplaceListingRow) {
@@ -197,7 +216,10 @@ export function AdminMarketplace() {
       <AdminStudioHeader eyebrow="Edudeen team workspace · Commerce"
         title="Marketplace Management"
         subtitle="Review, feature and manage all marketplace listings."
-        actions={<Button variant="outline" size="sm" icon={<RefreshCw size={13} />} onClick={refreshAll}>Refresh</Button>}
+        actions={<div className="flex items-center gap-2 flex-wrap justify-end">
+          <ExportCsvButton kind="listings" params={{ status: statusFilter === 'flagged' ? '' : statusFilter, search }} />
+          <Button variant="outline" size="sm" icon={<RefreshCw size={13} />} onClick={refreshAll}>Refresh</Button>
+        </div>}
       />
       <div className="px-4 sm:px-7 pt-6 pb-8 flex flex-col gap-5">
       {pendingCount > 0 && statusFilter !== 'pending_review' && (
@@ -221,6 +243,22 @@ export function AdminMarketplace() {
           onClose={() => { if (!bulkBusy) setConfirmRows(null); }}
         />
       )}
+      {rejectRows && (
+        <BulkDecisionModal
+          title={`Send back ${rejectRows.length} listing${rejectRows.length === 1 ? '' : 's'} to the seller?`}
+          message="The sellers are told their listing was not approved, with your reason, and can fix and resubmit it."
+          items={rejectRows.map(r => r.title)}
+          requireReason
+          reasonLabel="Reason (required, every seller sees it)"
+          confirmLabel="Send back all"
+          danger
+          busy={bulkReject.busy}
+          progress={bulkReject.progress}
+          onConfirm={reason => { void sendBackSelected(reason); }}
+          onClose={() => setRejectRows(null)}
+        />
+      )}
+      {bulkReject.message && <div role="status" className="bg-info-bg border border-info/30 rounded-lg px-4 py-2.5 text-[12.5px] text-carbon">{bulkReject.message}</div>}
       {bulkMsg && <div role="status" className="bg-info-bg border border-info/30 rounded-lg px-4 py-2.5 text-[12.5px] text-carbon">{bulkMsg}</div>}
       {actionError && <div className="bg-error-bg border border-error-border rounded-lg px-4 py-2.5 text-[12.5px] text-error">{actionError}</div>}
 
@@ -260,7 +298,10 @@ export function AdminMarketplace() {
             selectedKeys={selected}
             onSelectionChange={setSelected}
             bulkActions={() => (
-              <Button size="xs" variant="primary" icon={<CheckCircle2 size={11} />} onClick={approveSelected} loading={bulkBusy}>Approve &amp; publish selected</Button>
+              <>
+                <Button size="xs" variant="primary" icon={<CheckCircle2 size={11} />} onClick={approveSelected} loading={bulkBusy} disabled={bulkReject.busy}>Approve &amp; publish selected</Button>
+                <Button size="xs" variant="outline" icon={<XCircle size={11} />} onClick={rejectSelected} disabled={bulkBusy || bulkReject.busy}>Send back selected</Button>
+              </>
             )}
             loading={loading}
             emptyState={{ icon: <StoreIcon size={28} className="text-slate/50" />, title: 'No listings match your filters', description: 'Try adjusting your search or clearing filters.' }}

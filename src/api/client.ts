@@ -6,7 +6,7 @@ import axios, { type AxiosResponse, type InternalAxiosRequestConfig } from 'axio
 // this `client` module.
 import { getAuthCookie, setAuthCookie, deleteAuthCookie } from '@/utils/authCookie';
 import { API_BASE_URL, API_URL_MISSING } from './apiBase';
-import { promptReauth } from './reauthPrompt';
+import { promptReauth, rememberedReauth, forgetReauth } from './reauthPrompt';
 
 // Endpoints where a 401 means "this specific attempt was rejected" (wrong
 // password, invalid/expired OTP, invalid reset token, invalid social token)
@@ -140,7 +140,7 @@ client.interceptors.response.use(
   },
   async err => {
     // Expired access token → refresh once, then replay the original request.
-    const original = err.config as (InternalAxiosRequestConfig & { _retriedAfterRefresh?: boolean; _reauthRetried?: boolean }) | undefined;
+    const original = err.config as (InternalAxiosRequestConfig & { _retriedAfterRefresh?: boolean; _reauthRetried?: boolean; _usedRememberedReauth?: boolean; _reauthPromptedAgain?: boolean }) | undefined;
     const skipRefresh = NO_REFRESH_PATHS.some(p => original?.url?.includes(p));
     if (err.response?.status === 401 && original && !original._retriedAfterRefresh && !skipRefresh && getAuthCookie('refreshToken')) {
       original._retriedAfterRefresh = true;
@@ -155,6 +155,21 @@ client.interceptors.response.use(
     // Money-sensitive admin action: the API wants a fresh password confirmation. Ask once, then replay.
     if (err.response?.status === 403 && err.response?.data?.code === 'REAUTH_REQUIRED' && original && !original._reauthRetried && !original.headers?.get?.('X-Admin-Reauth')) {
       original._reauthRetried = true;
+      // A password confirmed a moment ago is reused (the API honours it for 5 min); only if it is refused do we ask again.
+      const cached = rememberedReauth();
+      if (cached) {
+        original._usedRememberedReauth = true;
+        original.headers.set('X-Admin-Reauth', cached);
+        return client(original);
+      }
+      const token = await promptReauth();
+      if (token) {
+        original.headers.set('X-Admin-Reauth', token);
+        return client(original);
+      }
+    } else if (err.response?.status === 403 && err.response?.data?.code === 'REAUTH_REQUIRED' && original?._usedRememberedReauth && !original._reauthPromptedAgain) {
+      original._reauthPromptedAgain = true;
+      forgetReauth();
       const token = await promptReauth();
       if (token) {
         original.headers.set('X-Admin-Reauth', token);

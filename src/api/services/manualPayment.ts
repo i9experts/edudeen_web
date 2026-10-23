@@ -48,9 +48,13 @@ export interface ManualPaymentProof {
   updatedAt: string;
 }
 
+/** Advisory: another proof (different checkout) uses the same image or the same reference number. */
+export interface PossibleDuplicateProof { proofId: string; reason: 'same_image' | 'same_reference'; status: string; checkoutId: string }
+
 export interface AdminManualPaymentProof extends ManualPaymentProof {
   buyerName: string;
   buyerEmail: string;
+  possibleDuplicates?: PossibleDuplicateProof[];
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

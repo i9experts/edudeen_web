@@ -5,7 +5,7 @@ import { Button, Input, Toggle, StatusBadge, SkeletonBox, EmptyState, Table, typ
 import { AdminStudioHeader } from '@/features/admin/components/studio';
 import { useToast } from '@/contexts/ToastContext';
 import { apiGetPlatformConfig, apiUpdateFxConfig, type FxConfig } from '@/api/services/config/adminConfig';
-import { apiGetCurrentRates, apiGetFxHistory, apiGetFxStaleness, apiOverrideFxRate, type CurrentRatesMap, type ExchangeRateHistoryRow } from '@/api/services/exchangeRate';
+import { apiGetCurrentRates, apiGetFxHistory, apiGetFxStaleness, apiOverrideFxRate, apiGetHeldFxRates, apiConfirmHeldFxRate, apiDismissHeldFxRate, type CurrentRatesMap, type ExchangeRateHistoryRow, type HeldFxRate } from '@/api/services/exchangeRate';
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
@@ -95,6 +95,47 @@ function OverrideForm({ onDone }: { onDone: () => void }) {
   );
 }
 
+// ── Held rates: provider rates that jumped too far wait here for a decision ───
+function HeldRates({ rates, onDone }: { rates: HeldFxRate[]; onDone: () => void }) {
+  const [busyId, setBusyId] = useState('');
+  const [error, setError] = useState('');
+  const toast = useToast();
+
+  async function decide(r: HeldFxRate, action: 'confirm' | 'dismiss') {
+    setBusyId(r._id);
+    setError('');
+    try {
+      if (action === 'confirm') await apiConfirmHeldFxRate(r._id); else await apiDismissHeldFxRate(r._id);
+      toast.success(action === 'confirm' ? `${r.currency} rate applied` : `${r.currency} rate dismissed`);
+      onDone();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not complete this action.');
+    } finally {
+      setBusyId('');
+    }
+  }
+
+  if (rates.length === 0) return null;
+  return (
+    <div className="bg-warning-bg border border-warning/30 rounded-xl px-5 py-4" role="region" aria-label="Held exchange rates">
+      <p className="text-[13px] font-bold text-carbon flex items-center gap-1.5 m-0"><AlertTriangle size={14} /> {rates.length} exchange rate{rates.length === 1 ? '' : 's'} waiting for your decision</p>
+      <p className="text-[12px] text-slate mt-1 mb-3">The provider's new rate jumped further than the allowed change, so it was NOT applied. Confirm it only if the market really moved.</p>
+      <div className="flex flex-col gap-2">
+        {rates.map(r => (
+          <div key={r._id} className="flex items-center justify-between gap-3 flex-wrap bg-white border border-bone rounded-lg px-4 py-2.5">
+            <p className="text-[13px] text-charcoal m-0"><b>{r.currency}</b> {r.ratePerUSD.toLocaleString(undefined, { maximumFractionDigits: 2 })} per USD <span className="text-slate">· received {formatDate(r.effectiveFrom)}</span></p>
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" disabled={busyId === r._id} onClick={() => decide(r, 'dismiss')}>Dismiss</Button>
+              <Button size="sm" variant="primary" loading={busyId === r._id} onClick={() => decide(r, 'confirm')}>Apply this rate</Button>
+            </div>
+          </div>
+        ))}
+      </div>
+      {error && <p className="text-[12px] text-error mt-2 flex items-center gap-1"><AlertTriangle size={13} />{error}</p>}
+    </div>
+  );
+}
+
 // ── Main page ─────────────────────────────────────────────────────────────────
 export function AdminFxSettings() {
   usePageTitle('FX Settings');
@@ -102,6 +143,7 @@ export function AdminFxSettings() {
   const [staleness, setStaleness] = useState<Record<string, { hoursOld: number; isStale: boolean } | null>>({});
   const [fxConfig, setFxConfig] = useState<FxConfig | null>(null);
   const [history, setHistory] = useState<ExchangeRateHistoryRow[]>([]);
+  const [held, setHeld] = useState<HeldFxRate[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingConfig, setSavingConfig] = useState(false);
   // Per-section load errors — a failed request must not read as "no data".
@@ -113,12 +155,15 @@ export function AdminFxSettings() {
     setLoading(true);
     const msg = (r: PromiseSettledResult<unknown>, fallback: string) =>
       r.status === 'rejected' ? (r.reason instanceof Error ? r.reason.message : fallback) : undefined;
-    const [ratesRes, staleRes, configRes, historyRes] = await Promise.allSettled([
+    const [ratesRes, staleRes, configRes, historyRes, heldRes] = await Promise.allSettled([
       apiGetCurrentRates(),
       apiGetFxStaleness(),
       apiGetPlatformConfig(),
       apiGetFxHistory({ limit: 15 }),
+      apiGetHeldFxRates(),
     ]);
+    // Held rates only add a panel — a failure just hides it (the history table still shows them as Flagged).
+    setHeld(heldRes.status === 'fulfilled' ? heldRes.value.data ?? [] : []);
     if (ratesRes.status === 'fulfilled') setRates(ratesRes.value.data ?? {});
     // Staleness only adds a badge — a failure just hides it.
     setStaleness(staleRes.status === 'fulfilled' ? staleRes.value.data ?? {} : {});
@@ -190,6 +235,8 @@ export function AdminFxSettings() {
             )
           )}
         </div>
+
+        <HeldRates rates={held} onDone={load} />
 
         <OverrideForm onDone={() => { toast.success('Manual rate applied'); load(); }} />
 

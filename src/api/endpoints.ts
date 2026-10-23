@@ -41,7 +41,19 @@ export const ENDPOINTS = {
     ADMIN_HISTORY: '/api/admin/fx/history',
     ADMIN_STALENESS: '/api/admin/fx/staleness',
     ADMIN_OVERRIDE: '/api/admin/fx/override',
+    ADMIN_HELD: '/api/admin/fx/held',
+    ADMIN_HELD_CONFIRM: (id: string) => `/api/admin/fx/held/${id}/confirm`,
+    ADMIN_HELD_DISMISS: (id: string) => `/api/admin/fx/held/${id}/dismiss`,
   },
+
+  // ── ADMIN: CSV exports + pending counts (sidebar badges) ──────────────────
+  ADMIN_EXPORTS: {
+    USERS:    '/api/admin/exports/users',
+    ORDERS:   '/api/admin/exports/orders',
+    LISTINGS: '/api/admin/exports/listings',
+    PROOFS:   '/api/admin/exports/payment-proofs',
+  },
+  ADMIN_PENDING_COUNTS: '/api/admin/pending-counts',
 
   // ── MANUAL BANK TRANSFER (buyer, Pakistan track) ───────────────────────────
   MANUAL_PAYMENT: {

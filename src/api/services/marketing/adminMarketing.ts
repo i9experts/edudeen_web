@@ -22,6 +22,8 @@ export interface Campaign {
   discountValue: number | null;
   sponsorType: CampaignSponsorType;
   totalPlatformSubsidyUSD: number;
+  /** Platform budget in USD (null / 0 = no cap). When spent, the campaign stops giving its price. */
+  subsidyCapUSD?: number | null;
   participatingStoreIds: string[];
   // Rotation order in the buyer-facing deals banner when multiple campaigns
   // are active at once (0 = shown first) — same convention as Banner.order.
@@ -40,6 +42,7 @@ export interface CreateCampaignPayload {
   discountType?: DiscountType;
   discountValue?: number;
   sponsorType?: CampaignSponsorType;
+  subsidyCapUSD?: number;
   order?: number;
 }
 
