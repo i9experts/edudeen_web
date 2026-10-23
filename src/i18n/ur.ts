@@ -1939,6 +1939,7 @@ export const UR: Record<string, string> = {
   'Shop by grade': 'جماعت کے مطابق خریداری',
   'Browse by subject': 'مضمون کے مطابق دیکھیں',
   'Shop by category': 'زمرے کے مطابق خریداری',
+  'Shop all': 'سب دیکھیں',
   'Save when you buy together': 'مل کر خریدیں اور بچت کریں',
   'Bundles and course packs': 'بنڈلز اور کورس پیکس',
   'What parents and teachers buy': 'والدین اور اساتذہ کیا خریدتے ہیں',
