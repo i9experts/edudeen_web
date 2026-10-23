@@ -5,6 +5,7 @@ import {
   useCampaigns, useCampaignActions, usePlatformCoupons, usePlatformCouponActions,
 } from '@/hooks/admin/useAdminMarketing';
 import type { Campaign, CampaignStatus, DiscountType, CampaignSponsorType, PlatformCoupon } from '@/api/services/marketing/adminMarketing';
+import { StripImagePicker } from '../components/StripImagePicker';
 import { Button, Modal, Input, Textarea, Select, Table, StatusBadge, Badge, Toggle, TabBar, ImageUpload, ActionMenu, EmptyState } from '@/components/comman/ui';
 import { AdminStudioHeader } from '@/features/admin/components/studio';
 import type { TableColumn, Tab } from '@/components/comman/ui';
@@ -174,13 +175,13 @@ function CreateCampaignModal({ campaign, onClose, onSaved }: { campaign?: Campai
         <Input label="Campaign Name" placeholder="October Mega Sale" value={name} onChange={(e) => setName(e.target.value)} />
         <Textarea label="Description" rows={3} placeholder="Optional description sellers will see when opting in…" value={description} onChange={(e) => setDescription(e.target.value)} />
         <div>
-          <label className="text-[12px] font-medium text-charcoal block mb-1.5">Banner Image (optional)</label>
+          <label className="text-[12px] font-medium text-charcoal block mb-1.5">Small promo picture (optional) - used in the compact sale cards</label>
           <ImageUpload value={bannerImage ? [bannerImage] : []} onChange={(urls) => setBannerImage(urls[0] ?? '')} maxFiles={1} />
         </div>
         <div>
-          <label className="text-[12px] font-medium text-charcoal block mb-1.5">Mega Sale strip background image (optional)</label>
-          <ImageUpload value={backgroundImage ? [backgroundImage] : []} onChange={(urls) => setBackgroundImage(urls[0] ?? '')} maxFiles={1} />
-          <p className="text-[12px] text-slate mt-1">Shown behind the Mega Sale banner on the site. Wide image (2560×300 or similar) works best; a dark overlay keeps the text readable.</p>
+          <label className="text-[12px] font-medium text-charcoal block mb-1.5">Mega Sale strip background image (optional) - size 2560 × 200 px</label>
+          <StripImagePicker value={backgroundImage} onChange={setBackgroundImage} />
+          <p className="text-[12px] text-slate mt-1">Shown behind the Mega Sale banner on the site (if empty, the small promo picture is used instead). Best size 2560×200 px (about 13:1, matches the strip on desktop); the whole image is fitted to the strip's width and height (nothing is cut, but a different shape gets stretched, so keep to this size). Text sits on the left.</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Input label="Start Date" type="datetime-local" value={startDate} onChange={(e) => setStartDate(e.target.value)} />

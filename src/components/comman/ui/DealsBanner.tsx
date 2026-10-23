@@ -276,20 +276,20 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
         ) : (
           <div className="absolute inset-0 overflow-hidden rounded-[20px] border border-black/10">
             <div className="gradient-drift absolute inset-0 bg-gradient-to-r from-[#0F3354] via-[#174771] to-[#2F6AA8]" />
-            {campaign.backgroundImage && (
+            {(campaign.backgroundImage || campaign.bannerImage) && (
               <>
                 <img
-                  key={campaign.backgroundImage}
-                  src={cloudinaryUrl(campaign.backgroundImage, 1600)}
-                  srcSet={cloudinarySrcSet(campaign.backgroundImage, [800, 1600, 2400])}
+                  key={campaign.backgroundImage || campaign.bannerImage || ''}
+                  src={cloudinaryUrl((campaign.backgroundImage || campaign.bannerImage) as string, 1600)}
+                  srcSet={cloudinarySrcSet((campaign.backgroundImage || campaign.bannerImage) as string, [800, 1600, 2400])}
                   sizes="100vw"
                   alt=""
                   aria-hidden="true"
                   decoding="async"
-                  className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+                  className="pointer-events-none absolute inset-0 h-full w-full object-fill"
                   onError={(e) => { e.currentTarget.style.display = 'none'; }}
                 />
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[#0F3354]/70 via-[#0F3354]/45 to-[#0F3354]/25" />
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[#0F3354]/60 via-[#0F3354]/30 to-transparent" />
               </>
             )}
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(255,255,255,0.14),transparent_55%)]" />
