@@ -911,6 +911,7 @@ export const UR: Record<string, string> = {
   'Ends soon': 'جلد ختم ہو رہا ہے',
   'Limited Time': 'محدود وقت',
   'Shop Now': 'ابھی خریدیں',
+  'See more': 'مزید دیکھیں',
   'sec': 'سیکنڈ',
   'min': 'منٹ',
   'hrs': 'گھنٹے',

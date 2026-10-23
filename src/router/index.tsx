@@ -177,6 +177,7 @@ const AdminSubscriptions = lazy(() => named(import('@/features/admin/pages/Admin
 const AdminPlatformPlans = lazy(() => named(import('@/features/admin/pages/AdminPlatformPlans'),                 'AdminPlatformPlans'));
 const AdminFinance       = lazy(() => named(import('@/features/admin/pages/AdminFinance'),                      'AdminFinance'));
 const AdminAnnouncements = lazy(() => named(import('@/features/admin/pages/AdminAnnouncements'),                'AdminAnnouncements'));
+const AdminHomeCards      = lazy(() => named(import('@/features/admin/pages/AdminHomeCards'),                     'AdminHomeCards'));
 const AdminBanners       = lazy(() => named(import('@/features/admin/pages/AdminBanners'),                       'AdminBanners'));
 const AdminFaqs          = lazy(() => named(import('@/features/admin/pages/AdminFaqs'),                          'AdminFaqs'));
 const AdminTestimonials  = lazy(() => named(import('@/features/admin/pages/AdminTestimonials'),                  'AdminTestimonials'));
@@ -466,6 +467,7 @@ const mainRouter = createBrowserRouter([
           { path: 'commission-rules', element: <RequirePermission nav="finance"><RequireRole role="admin"><AdminCommissionRules /></RequireRole></RequirePermission> },
           { path: 'announcements',element: <RequirePermission nav="announcements"><RequireRole role="admin"><AdminAnnouncements /></RequireRole></RequirePermission> },
           { path: 'banners',      element: <RequirePermission nav="banners"><AdminBanners /></RequirePermission> },
+      { path: 'home-cards',   element: <RequirePermission nav="home-cards"><AdminHomeCards /></RequirePermission> },
           { path: 'faqs',         element: <RequirePermission nav="faqs"><AdminFaqs /></RequirePermission> },
           { path: 'contact',      element: <Navigate to="/admin/messages?tab=contact" replace /> },
           { path: 'chat',         element: <Navigate to="/admin/messages?tab=chat" replace /> },

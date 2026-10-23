@@ -8,6 +8,7 @@ import {
 import { Button } from '@/components/comman/ui/Button';
 import { Modal } from '@/components/comman/ui/Modal';
 import { Input } from '@/components/comman/ui/Input';
+import { LinkTargetPicker } from '@/features/admin/components/LinkTargetPicker';
 import { ImageUpload } from '@/components/comman/ui/Upload';
 export const PLACEMENT_LABEL: Record<PromotionPlacement, string> = {
   homepageHero: 'Homepage Hero',
@@ -148,7 +149,7 @@ export function BannerFormModal({
             ))}
           </div>
         </div>
-        <Input label="Link URL (optional)" placeholder="https://example.com/sale" value={urlOnTap} onChange={e => setUrlOnTap(e.target.value)} />
+        <LinkTargetPicker value={urlOnTap} onChange={setUrlOnTap} label="When a visitor clicks the banner, show" />
         <Input label="Display Order" type="number" min={0} value={order} onChange={e => setOrder(e.target.value)} />
         <div className="rounded-xl border border-bone bg-cream/50 p-3">
           <p className="text-[12px] font-semibold text-charcoal mb-1 flex items-center gap-1.5"><CalendarClock size={13} /> Schedule (optional)</p>

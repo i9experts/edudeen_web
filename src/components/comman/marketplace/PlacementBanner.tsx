@@ -20,7 +20,7 @@ const PlacementEditorModal = lazy(() => import('@/components/admin-edit/Placemen
  * tracked (and credited to the seller's promotion) by BannerCarousel.
  * When an admin has inline Edit mode on, it also offers Edit / "Add banner here".
  */
-export function PlacementBanner({ placement, className }: { placement: PromotionPlacement; className?: string }) {
+export function PlacementBanner({ placement, className, tall = false }: { placement: PromotionPlacement; className?: string; /** Big Amazon-style hero box (homepage). */ tall?: boolean }) {
   const [items, setItems] = useState(() => cachedBanners(placement));
   const [editorOpen, setEditorOpen] = useState(false);
   const { editing } = useAdminEdit();
@@ -68,7 +68,7 @@ export function PlacementBanner({ placement, className }: { placement: Promotion
   return (
     <>
       <EditableRegion label={`${PLACEMENT_NAME[placement]} banner`} id={`banner:${placement}`} group="Banners" hint={PLACEMENT_WHERE[placement]} placement={placement} onEdit={() => { setFocusId(visibleId.current); setEditorOpen(true); }}>
-        <section aria-label="Featured promotions" className={clsx('relative w-full overflow-hidden rounded-2xl bg-cream aspect-[2/1] sm:aspect-[3/1] lg:aspect-[4/1]', className)}>
+        <section aria-label="Featured promotions" className={clsx('relative w-full overflow-hidden rounded-2xl bg-cream', tall ? 'aspect-[2/1] sm:aspect-[5/2] lg:aspect-[3.2/1]' : 'aspect-[2/1] sm:aspect-[3/1] lg:aspect-[4/1]', className)}>
           <BannerCarousel entityType="banner" banners={items} onActiveChange={trackVisible} />
         </section>
       </EditableRegion>

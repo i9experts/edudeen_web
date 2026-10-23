@@ -52,6 +52,9 @@ import { PickedForChildRail } from '@/features/buyer/components/PickedForChildRa
 import { ShoppingForBar } from '@/features/buyer/components/ShoppingForBar';
 import { HomeHero, HomeHeroSkeleton } from '@/features/buyer/components/home/HomeHero';
 import { ShopByCategory } from '@/features/buyer/components/home/ShopByCategory';
+import { HomeCardGrid } from '@/features/buyer/components/home/HomeCardGrid';
+import { useHomeCards } from '@/hooks/useHomeCards';
+import { useHasPlacementBanners } from '@/hooks/useHasPlacementBanners';
 import { ProductShelf } from '@/features/buyer/components/home/ProductShelf';
 import { BundlesShelf } from '@/features/buyer/components/home/BundlesShelf';
 import { RecentlyViewedRail } from '@/features/buyer/components/home/RecentlyViewedRail';
@@ -175,6 +178,8 @@ function HomeLanding() {
   // The hero is painted only once its text can no longer change: the admin's content is known (or cached from the last
   // visit) AND the category list has answered (the default second button reads "Explore <category>", so painting
   // earlier made "Browse all" flip to "Explore ..." a moment later). An admin-set second button needs no category.
+  const homeCards = useHomeCards();
+  const heroBanners = useHasPlacementBanners('homepageHero');
   const heroReady = (!!publicConfig || !configLoading) && (categoriesLoaded || !!hc.heroSecondaryLabel);
 
   useEffect(() => {
@@ -493,14 +498,17 @@ function HomeLanding() {
         <ShoppingForBar className="mb-4" />
 
         {/* ── Admin banners / paid promotions (Admin → Banners, homepage slot) ── */}
-        <PlacementBanner placement="homepageHero" className="mb-[25px]" />
+        <PlacementBanner placement="homepageHero" tall className={heroBanners.has && homeCards.cards.length ? "mb-4 lg:mb-0" : "mb-[25px]"} />
+        {heroBanners.has && <HomeCardGrid cards={homeCards.cards} overlap />}
 
         {/* ── Hero: admin content (text + desktop/phone picture); brand artwork when no picture is set. Same box while loading → no layout shift. ── */}
         <EditableHomeSection section="hero" defaults={eff} label="hero">
-          {heroReady
-            ? <HomeHero eff={eff} onPrimary={scrollToResources} onSecondary={() => selectSubject(featuredTab?.id ?? null)} />
-            : <HomeHeroSkeleton />}
+          {!heroBanners.loaded || !heroReady
+            ? <HomeHeroSkeleton />
+            : heroBanners.has ? null
+            : <HomeHero eff={eff} onPrimary={scrollToResources} onSecondary={() => selectSubject(featuredTab?.id ?? null)} />}
         </EditableHomeSection>
+        {!heroBanners.has && <HomeCardGrid cards={homeCards.cards} />}
 
         {/* ── Promise strip ── */}
         <EditableHomeSection section="promise" defaults={eff} label="tick strip">
@@ -512,7 +520,7 @@ function HomeLanding() {
         </EditableHomeSection>
 
         {/* ── Shop by category ── */}
-        <ShopByCategory categories={categories} loading={!categoriesLoaded} />
+        {homeCards.loaded && homeCards.cards.length === 0 && <ShopByCategory categories={categories} loading={!categoriesLoaded} />}
 
         {/* While an admin has the flash sale / deals under maintenance, their message replaces this block. */}
         <FeatureMaintenance feature="flash_sale">
