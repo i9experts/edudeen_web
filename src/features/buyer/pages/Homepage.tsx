@@ -53,6 +53,7 @@ import { ShoppingForBar } from '@/features/buyer/components/ShoppingForBar';
 import { HomeHero, HomeHeroSkeleton } from '@/features/buyer/components/home/HomeHero';
 import { ShopByCategory } from '@/features/buyer/components/home/ShopByCategory';
 import { HomeCardGrid } from '@/features/buyer/components/home/HomeCardGrid';
+import { AppSideCard } from '@/features/buyer/components/home/AppSideCard';
 import { useHomeCards } from '@/hooks/useHomeCards';
 import { useHasPlacementBanners } from '@/hooks/useHasPlacementBanners';
 import { ProductShelf } from '@/features/buyer/components/home/ProductShelf';
@@ -498,7 +499,16 @@ function HomeLanding() {
         <ShoppingForBar className="mb-4" />
 
         {/* ── Admin banners / paid promotions (Admin → Banners, homepage slot) ── */}
-        <PlacementBanner placement="homepageHero" tall className="mb-[25px]" />
+        <div className="mb-[25px] flex flex-col gap-3 lg:grid lg:grid-cols-12 lg:gap-4 lg:items-stretch">
+          <div className="min-w-0 lg:col-span-10">
+            <PlacementBanner placement="homepageHero" tall />
+          </div>
+          {heroBanners.has && (
+            <div className="relative min-w-0 lg:col-span-2">
+              <AppSideCard />
+            </div>
+          )}
+        </div>
 
         {/* ── Hero: admin content (text + desktop/phone picture); brand artwork when no picture is set. Same box while loading → no layout shift. ── */}
         <EditableHomeSection section="hero" defaults={eff} label="hero">
@@ -623,7 +633,7 @@ function HomeLanding() {
             </span>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-[14px] gap-y-[25px] md:gap-x-[22px] md:gap-y-[28px]">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-[12px] gap-y-[18px] md:gap-x-[16px] md:gap-y-[20px]">
             {loading && products.length === 0
               ? Array.from({ length: 8 }).map((_, i) => <ResourceCardSkeleton key={i} />)
               : products.length === 0
