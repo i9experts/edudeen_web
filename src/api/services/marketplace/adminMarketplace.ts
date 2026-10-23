@@ -9,6 +9,7 @@ export interface MarketplaceStats {
   active: number;
   flagged: number;
   gmvThisMonth: number;
+  gmvByCurrency?: { currency: string; gmv: number }[];
 }
 
 export type ListingStatus = 'active' | 'inactive' | 'draft' | 'scheduled' | 'pending_review' | 'rejected' | 'flagged';
@@ -188,8 +189,8 @@ export function apiSetListingTest(id: string, isTest: boolean) {
   return client.patch<never, ApiResponse<null>>(ENDPOINTS.MARKETPLACE.ADMIN.TEST(id), { isTest });
 }
 
-export function apiRemoveListing(id: string) {
-  return client.patch<never, ApiResponse<null>>(ENDPOINTS.MARKETPLACE.ADMIN.REMOVE(id));
+export function apiRemoveListing(id: string, reason: string) {
+  return client.patch<never, ApiResponse<null>>(ENDPOINTS.MARKETPLACE.ADMIN.REMOVE(id), { reason });
 }
 
 // ── Listing review (new listings wait for approval before going live) ───────

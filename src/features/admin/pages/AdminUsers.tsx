@@ -5,7 +5,7 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { useAdminUsersStats, useAdminUsersList, useAdminUserActions, useAdminUserDetail } from '@/hooks/admin/useAdminUsers';
 import { useToast } from '@/contexts/ToastContext';
 import type { AccountRole, AccountRow } from '@/api/services/users/adminUsers';
-import { Table, StatusBadge, Badge, Button, Modal, SkeletonBox, SearchInput, FilterDropdown, MetricCard } from '@/components/comman/ui';
+import { Table, StatusBadge, Badge, Button, Modal, SkeletonBox, SearchInput, FilterDropdown, MetricCard, Textarea } from '@/components/comman/ui';
 import { AdminStudioHeader } from '@/features/admin/components/studio';
 import type { TableColumn } from '@/components/comman/ui';
 import { CellText } from '@/components/comman/ui/Table';
@@ -76,9 +76,12 @@ function AccountDetailModal({ account, onClose, onChanged }: { account: AccountR
   const { detail, loading: detailLoading, error: detailError, reload } = useAdminUserDetail(account.role, account.id);
   const status = detail?.status ?? account.status;
   const isSuspended = status === 'suspended';
+  const [reason, setReason] = useState('');
+  const reasonOk = reason.trim().length >= 3;
 
   async function toggle() {
-    const ok = isSuspended ? await unsuspend(account.role, account.id) : await suspend(account.role, account.id);
+    if (!isSuspended && !reasonOk) return;
+    const ok = isSuspended ? await unsuspend(account.role, account.id) : await suspend(account.role, account.id, reason.trim());
     if (ok) onChanged(isSuspended ? 'Account unsuspended' : 'Account suspended');
   }
 
@@ -92,6 +95,7 @@ function AccountDetailModal({ account, onClose, onChanged }: { account: AccountR
           variant={isSuspended ? 'secondary' : 'danger'}
           icon={isSuspended ? <CheckCircle2 size={13} /> : <Ban size={13} />}
           loading={processingId === account.id}
+          disabled={!isSuspended && !reasonOk}
           onClick={toggle}
         >
           {isSuspended ? 'Unsuspend Account' : 'Suspend Account'}
@@ -99,6 +103,9 @@ function AccountDetailModal({ account, onClose, onChanged }: { account: AccountR
       </>}
     >
       <div className="flex flex-col gap-3">
+        {!isSuspended && (
+          <Textarea id="suspend-reason-detail" label="Reason to suspend (required, kept in the audit log)" rows={2} value={reason} onChange={(e) => setReason(e.target.value)} />
+        )}
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-brand-pale-orange text-brand-deep-orange text-[13px] font-bold flex items-center justify-center shrink-0">
             {initialsOf(account.name)}
@@ -174,6 +181,7 @@ export function AdminUsers() {
 
   const [viewing, setViewing] = useState<AccountRow | null>(null);
   const [confirming, setConfirming] = useState<AccountRow | null>(null);
+  const [confirmReason, setConfirmReason] = useState('');
   const toast = useToast();
 
   function refreshAll() { refetchStats(); refetch(); }
@@ -181,8 +189,9 @@ export function AdminUsers() {
   async function handleToggleSuspend() {
     if (!confirming) return;
     const isSuspended = confirming.status === 'suspended';
-    const ok = isSuspended ? await unsuspend(confirming.role, confirming.id) : await suspend(confirming.role, confirming.id);
-    if (ok) { setConfirming(null); toast.success(isSuspended ? 'Account unsuspended' : 'Account suspended'); refreshAll(); }
+    if (!isSuspended && confirmReason.trim().length < 3) return;
+    const ok = isSuspended ? await unsuspend(confirming.role, confirming.id) : await suspend(confirming.role, confirming.id, confirmReason.trim());
+    if (ok) { setConfirming(null); setConfirmReason(''); toast.success(isSuspended ? 'Account unsuspended' : 'Account suspended'); refreshAll(); }
   }
 
   // One row per person: accounts that share an email (e.g. buyer + seller) are grouped, each with its own role chip and actions.
@@ -242,7 +251,7 @@ export function AdminUsers() {
                 variant={u.status === 'suspended' ? 'secondary' : 'danger'}
                 icon={u.status === 'suspended' ? <CheckCircle2 size={11} /> : <Ban size={11} />}
                 disabled={processingId === u.id}
-                onClick={() => setConfirming(u)}
+                onClick={() => { setConfirmReason(''); setConfirming(u); }}
               >
                 {u.status === 'suspended' ? 'Unsuspend' : 'Suspend'}
               </Button>
@@ -304,7 +313,7 @@ export function AdminUsers() {
           onClose={() => setConfirming(null)}
           footer={<>
             <Button variant="ghost" onClick={() => setConfirming(null)}>Cancel</Button>
-            <Button variant={confirming.status === 'suspended' ? 'secondary' : 'danger'} onClick={handleToggleSuspend} loading={processingId === confirming.id}>
+            <Button variant={confirming.status === 'suspended' ? 'secondary' : 'danger'} onClick={handleToggleSuspend} loading={processingId === confirming.id} disabled={confirming.status !== 'suspended' && confirmReason.trim().length < 3}>
               {confirming.status === 'suspended' ? 'Unsuspend' : 'Suspend'}
             </Button>
           </>}
@@ -314,6 +323,9 @@ export function AdminUsers() {
               ? <>Restore access for "<strong>{confirming.name}</strong>"? They will be able to log in again immediately.</>
               : <>Suspend "<strong>{confirming.name}</strong>"? They will be immediately blocked from accessing the platform.</>}
           </p>
+          {confirming.status !== 'suspended' && (
+            <Textarea id="suspend-reason" label="Reason (required, kept in the audit log)" rows={3} value={confirmReason} onChange={(e) => setConfirmReason(e.target.value)} />
+          )}
         </Modal>
       )}
       </div>

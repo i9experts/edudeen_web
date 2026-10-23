@@ -74,8 +74,8 @@ export function apiGetAdminUserById(role: AccountRole, id: string) {
   return client.get<never, ApiResponse<AdminAccountDetail>>(ENDPOINTS.USERS.ADMIN.GET_BY_ID(role, id));
 }
 
-export function apiSuspendAccount(role: AccountRole, id: string) {
-  return client.patch<never, ApiResponse<null>>(ENDPOINTS.USERS.ADMIN.SUSPEND(role, id));
+export function apiSuspendAccount(role: AccountRole, id: string, reason: string) {
+  return client.patch<never, ApiResponse<null>>(ENDPOINTS.USERS.ADMIN.SUSPEND(role, id), { reason });
 }
 
 export function apiUnsuspendAccount(role: AccountRole, id: string) {

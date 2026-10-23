@@ -45,11 +45,11 @@ export function useAdminUserActions() {
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [error, setError] = useState('');
 
-  const suspend = useCallback(async (role: AccountRole, id: string) => {
+  const suspend = useCallback(async (role: AccountRole, id: string, reason: string) => {
     setProcessingId(id);
     setError('');
     try {
-      await apiSuspendAccount(role, id);
+      await apiSuspendAccount(role, id, reason);
       return true;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to suspend account.');

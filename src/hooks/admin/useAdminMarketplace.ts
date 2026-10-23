@@ -44,11 +44,11 @@ export function useMarketplaceListingActions() {
     }
   }, []);
 
-  const removeListing = useCallback(async (id: string) => {
+  const removeListing = useCallback(async (id: string, reason: string) => {
     setProcessingId(id);
     setError('');
     try {
-      await apiRemoveListing(id);
+      await apiRemoveListing(id, reason);
       return true;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to remove listing.');

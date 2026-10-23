@@ -7,7 +7,7 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { useMarketplaceStats, useMarketplaceListings, useMarketplaceListingActions } from '@/hooks/admin/useAdminMarketplace';
 import type { MarketplaceListingRow, ListingStatus } from '@/api/services/marketplace/adminMarketplace';
 import { apiGetCategoryTree, type CategoryNode } from '@/api/services/categories';
-import { Table, StatusBadge, Button, Modal, SkeletonBox, SearchInput, FilterDropdown, MetricCard, ActionMenu } from '@/components/comman/ui';
+import { Table, StatusBadge, Button, Modal, SkeletonBox, SearchInput, FilterDropdown, MetricCard, ActionMenu, Textarea } from '@/components/comman/ui';
 import { AdminStudioHeader } from '@/features/admin/components/studio';
 import type { TableColumn } from '@/components/comman/ui';
 import { AnalyticsErrorState } from '@/components/comman/analytics/AnalyticsErrorState';
@@ -69,6 +69,7 @@ export function AdminMarketplace() {
   const { data, loading, error, refetch } = useMarketplaceListings(query);
   const { setFeatured, setTest, removeListing, setStoreBadge, setFulfillmentMode, processingId, error: actionError } = useMarketplaceListingActions();
   const [removing, setRemoving] = useState<MarketplaceListingRow | null>(null);
+  const [removeReason, setRemoveReason] = useState('');
 
   function refreshAll() { refetchStats(); refetch(); loadPending(); }
 
@@ -115,8 +116,9 @@ export function AdminMarketplace() {
 
   async function handleRemove() {
     if (!removing) return;
-    const ok = await removeListing(removing.id);
-    if (ok) { setRemoving(null); refreshAll(); }
+    if (removeReason.trim().length < 3) return;
+    const ok = await removeListing(removing.id, removeReason.trim());
+    if (ok) { setRemoving(null); setRemoveReason(''); refreshAll(); }
   }
 
   const columns: TableColumn<MarketplaceListingRow>[] = [
@@ -172,7 +174,7 @@ export function AdminMarketplace() {
                 // Active listings are not in the review queue, so the trust-badge editor (inside the review modal) is reached from here.
                 ...(r.status === 'pending_review' || r.status === 'rejected' ? [] : [{ label: 'Edit badges', icon: <ShieldCheck size={13} />, onClick: () => setReviewing(r.id) }]),
                 { label: r.isTest ? 'Unmark as test (show to the public)' : 'Mark as test (hide from the public)', icon: <FlaskConical size={13} />, disabled: processingId === r.id, onClick: () => toggleTest(r) },
-                { label: 'Remove Listing', icon: <Trash2 size={13} />, danger: true, onClick: () => setRemoving(r) },
+                { label: 'Remove Listing', icon: <Trash2 size={13} />, danger: true, onClick: () => { setRemoveReason(''); setRemoving(r); } },
               ]}
             />
           </div>
@@ -210,7 +212,7 @@ export function AdminMarketplace() {
               <MetricCard to="/admin/marketplace?status=active" label="Active" value={formatNumber(stats.active)} sub="Live on marketplace" />
               <MetricCard to="/admin/marketplace?status=pending_review" label="Waiting for Review" value={formatNumber(pendingCount)} sub="New listings not live yet" />
               <MetricCard to="/admin/moderation" label="Flagged" value={formatNumber(stats.flagged)} sub="Open reports on listings" />
-              <MetricCard to="/admin/orders" label="GMV This Month" value={formatCurrency(stats.gmvThisMonth)} />
+              <MetricCard to="/admin/orders" label="GMV This Month" value={gmvLabel(stats)} />
             </>
           ) : null}
         </div>
@@ -257,15 +259,24 @@ export function AdminMarketplace() {
           onClose={() => setRemoving(null)}
           footer={<>
             <Button variant="ghost" onClick={() => setRemoving(null)}>Cancel</Button>
-            <Button variant="danger" onClick={handleRemove} loading={processingId === removing.id}>Remove Listing</Button>
+            <Button variant="danger" onClick={handleRemove} loading={processingId === removing.id} disabled={removeReason.trim().length < 3}>Remove Listing</Button>
           </>}
         >
           <p className="text-[13px] text-charcoal leading-[1.6]">
-            Remove "<strong>{removing.title}</strong>" from the marketplace? It will be delisted and hidden from buyers immediately.
+            Remove "<strong>{removing.title}</strong>" from the marketplace? It will be delisted, hidden from buyers immediately and taken out of carts and wishlists. The seller is told why.
           </p>
+          <Textarea id="remove-reason" label="Reason (required, the seller sees it)" rows={3} value={removeReason} onChange={(e) => setRemoveReason(e.target.value)} />
+
         </Modal>
       )}
       </div>
     </>
   );
+}
+
+/** One figure per currency (PKR and USD are never added together). */
+function gmvLabel(stats: { gmvThisMonth: number; gmvByCurrency?: { currency: string; gmv: number }[] }): string {
+  const rows = (stats.gmvByCurrency ?? []).filter((r) => r.gmv > 0);
+  if (rows.length === 0) return formatCurrency(stats.gmvThisMonth);
+  return rows.map((r) => (r.currency === 'USD' ? formatCurrency(r.gmv) : `${r.currency} ${Math.round(r.gmv).toLocaleString('en-US')}`)).join(' · ');
 }
