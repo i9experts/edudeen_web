@@ -92,7 +92,8 @@ function CreateCampaignModal({ campaign, onClose, onSaved }: { campaign?: Campai
   const [name, setName] = useState(campaign?.name ?? '');
   const [description, setDescription] = useState(campaign?.description ?? '');
   const [bannerImage, setBannerImage] = useState(campaign?.bannerImage ?? '');
-  const [startDate, setStartDate] = useState(campaign ? toDatetimeLocalValue(campaign.startDate) : '');
+  const [backgroundImage, setBackgroundImage] = useState(campaign?.backgroundImage ?? '');
+  const [startDate, setStartDate] = useState(campaign ?toDatetimeLocalValue(campaign.startDate) : '');
   const [endDate, setEndDate] = useState(campaign ? toDatetimeLocalValue(campaign.endDate) : '');
   const [discountType, setDiscountType] = useState<DiscountType | ''>(campaign?.discountType ?? '');
   const [discountValue, setDiscountValue] = useState(campaign?.discountValue != null ? String(campaign.discountValue) : '');
@@ -115,6 +116,7 @@ function CreateCampaignModal({ campaign, onClose, onSaved }: { campaign?: Campai
       name: name.trim(),
       description: description.trim() || undefined,
       bannerImage: bannerImage || undefined,
+      backgroundImage: backgroundImage || (isEdit ? null : undefined),
       startDate: new Date(startDate).toISOString(),
       endDate: new Date(endDate).toISOString(),
       discountType: discountType || undefined,
@@ -174,6 +176,11 @@ function CreateCampaignModal({ campaign, onClose, onSaved }: { campaign?: Campai
         <div>
           <label className="text-[12px] font-medium text-charcoal block mb-1.5">Banner Image (optional)</label>
           <ImageUpload value={bannerImage ? [bannerImage] : []} onChange={(urls) => setBannerImage(urls[0] ?? '')} maxFiles={1} />
+        </div>
+        <div>
+          <label className="text-[12px] font-medium text-charcoal block mb-1.5">Mega Sale strip background image (optional)</label>
+          <ImageUpload value={backgroundImage ? [backgroundImage] : []} onChange={(urls) => setBackgroundImage(urls[0] ?? '')} maxFiles={1} />
+          <p className="text-[12px] text-slate mt-1">Shown behind the Mega Sale banner on the site. Wide image (2560×300 or similar) works best; a dark overlay keeps the text readable.</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Input label="Start Date" type="datetime-local" value={startDate} onChange={(e) => setStartDate(e.target.value)} />

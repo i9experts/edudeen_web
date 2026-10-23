@@ -276,6 +276,22 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
         ) : (
           <div className="absolute inset-0 overflow-hidden rounded-[20px] border border-black/10">
             <div className="gradient-drift absolute inset-0 bg-gradient-to-r from-[#0F3354] via-[#174771] to-[#2F6AA8]" />
+            {campaign.backgroundImage && (
+              <>
+                <img
+                  key={campaign.backgroundImage}
+                  src={cloudinaryUrl(campaign.backgroundImage, 1600)}
+                  srcSet={cloudinarySrcSet(campaign.backgroundImage, [800, 1600, 2400])}
+                  sizes="100vw"
+                  alt=""
+                  aria-hidden="true"
+                  decoding="async"
+                  className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                />
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[#0F3354]/70 via-[#0F3354]/45 to-[#0F3354]/25" />
+              </>
+            )}
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(255,255,255,0.14),transparent_55%)]" />
             <div className="pointer-events-none absolute inset-0 opacity-[0.08] bg-[radial-gradient(circle_at_1px_1px,#ffffff_1px,transparent_0)] bg-[length:16px_16px]" />
             <div className="pointer-events-none absolute -top-10 start-[38%] size-40 rounded-full bg-white/10 blur-3xl" />
@@ -433,31 +449,33 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
             key={campaign._id}
             to={`/?campaign=${encodeURIComponent(campaign._id)}`}
             aria-label={`${campaign.name} — ${discountHeadline}. Shop the sale`}
-            className="no-underline campaign-fade group relative z-[1] flex w-full h-full flex-wrap items-center gap-x-4 gap-y-2 border-none bg-transparent text-start text-white outline-none cursor-pointer px-4 py-2.5 lg:flex-nowrap lg:gap-5 lg:px-6 lg:py-0 lg:min-h-[52px]"
+            className="no-underline campaign-fade group relative z-[1] flex w-full h-full flex-wrap items-center gap-x-4 gap-y-3 border-none bg-transparent text-start text-white outline-none cursor-pointer px-4 py-4 sm:px-6 lg:flex-nowrap lg:gap-8 lg:px-8 lg:py-5 lg:min-h-[96px]"
           >
-            {/* One thin row: badge + headline + campaign name on the left, timer + CTA on the right. */}
-            <div className="flex w-full min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5 lg:w-auto lg:flex-1 lg:flex-nowrap">
-              <span className="inline-flex shrink-0 items-center gap-[5px] rounded-full bg-[#F5B301] px-[9px] py-[3px] text-[12px] font-bold uppercase tracking-[0.08em] text-[#3a2a00]">
-                <Zap size={11} className="fill-[#3a2a00]" /> Limited time
-              </span>
-              <span className="shrink-0 font-serif text-[18px] sm:text-[20px] font-bold leading-none tracking-[-0.01em] text-white">
+            {/* Left: badge + headline on one line, campaign name/description underneath. Right: timer + CTA, vertically centred. */}
+            <div className="flex w-full min-w-0 flex-col justify-center gap-2 lg:w-auto lg:flex-1">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                <span className="inline-flex shrink-0 items-center gap-[5px] rounded-full bg-[#F5B301] px-[10px] py-[4px] text-[12px] font-bold uppercase leading-none tracking-[0.08em] text-[#3a2a00]">
+                  <Zap size={11} className="fill-[#3a2a00]" /> Limited time
+                </span>
+                {campaign.earlyAccess && <EarlyAccessChip startDate={campaign.startDate} onDark className="w-fit" />}
+              </div>
+              <span className="font-serif text-[22px] sm:text-[28px] font-bold leading-[1.1] tracking-[-0.01em] text-white">
                 {discountHeadline}
               </span>
-              <p className="hidden min-w-0 truncate text-[13px] text-white/85 md:block">
+              <p className="min-w-0 truncate text-[13px] leading-snug text-white/85">
                 <span className="font-semibold">{campaign.name}</span>
-                {campaign.description ? <span className="text-white/70"> · {campaign.description}</span> : null}
+                {campaign.description ? <span className="hidden text-white/70 md:inline"> · {campaign.description}</span> : null}
               </p>
-              {campaign.earlyAccess && <EarlyAccessChip startDate={campaign.startDate} onDark className="hidden w-fit lg:inline-flex" />}
             </div>
 
-            <div className="flex w-full flex-wrap items-center justify-between gap-x-3 gap-y-2 lg:w-auto lg:shrink-0 lg:flex-nowrap lg:justify-end">
-              <div className="flex items-center gap-[6px]" aria-label="Time left">
+            <div className="flex w-full flex-wrap items-center justify-between gap-x-5 gap-y-3 lg:w-auto lg:shrink-0 lg:flex-nowrap lg:justify-end lg:gap-6">
+              <div className="flex items-center gap-3" aria-label="Time left">
                 <span className="hidden text-[12px] font-semibold uppercase tracking-[0.1em] text-white/70 sm:inline">Ends in</span>
-                <div className="flex items-center gap-[3px]">
+                <div className="flex items-center gap-[4px]">
                   <CountdownBoxes countdown={countdown} />
                 </div>
               </div>
-              <span className="inline-flex shrink-0 items-center gap-[5px] whitespace-nowrap rounded-full bg-white px-4 py-[6px] text-[13px] font-bold text-[#0F3354] transition-[background-color,transform] duration-150 group-hover:bg-cream group-hover:scale-[1.03]">
+              <span className="inline-flex h-11 shrink-0 items-center justify-center gap-[6px] whitespace-nowrap rounded-full bg-white px-6 text-[14px] font-bold text-[#0F3354] transition-[background-color,transform] duration-150 group-hover:bg-cream group-hover:scale-[1.03]">
                 Shop the sale <ArrowRight size={13} className="transition-transform duration-150 group-hover:translate-x-0.5" />
               </span>
             </div>

@@ -8,6 +8,7 @@ export interface PublicCampaign {
   name: string;
   description: string | null;
   bannerImage: string | null;
+  backgroundImage?: string | null;
   endDate: string;
   /** Edudeen Premium members only: the sale is not public yet; startDate is when it opens to everyone. */
   earlyAccess?: boolean;

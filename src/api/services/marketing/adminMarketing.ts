@@ -15,6 +15,7 @@ export interface Campaign {
   name: string;
   description: string | null;
   bannerImage: string | null;
+  backgroundImage?: string | null;
   startDate: string;
   endDate: string;
   status: CampaignStatus;
@@ -37,6 +38,8 @@ export interface CreateCampaignPayload {
   name: string;
   description?: string;
   bannerImage?: string;
+  /** null clears an existing background. */
+  backgroundImage?: string | null;
   startDate: string;
   endDate: string;
   discountType?: DiscountType;
