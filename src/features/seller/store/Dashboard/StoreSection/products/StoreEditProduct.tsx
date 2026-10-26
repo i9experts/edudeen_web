@@ -121,6 +121,8 @@ export default function StoreEditProduct() {
   const [review, setReview] = useState<{ status: string; note: string | null } | null>(null);
   const [learning, setLearning] = useState<LearningValue>(EMPTY_LEARNING);
   const [delivery, setDelivery] = useState(EMPTY_DELIVERY);
+  // The delivery format as saved on the server (null until read). The course builder only exists once the product is saved as a course.
+  const [savedFormat, setSavedFormat] = useState<string | null>(null);
   // null until the product's own list arrives, so a save never wipes a selection that was not loaded yet.
   const [campaignIds, setCampaignIds] = useState<string[] | null>(null);
   // null until the product is read fresh, so saving never clears a Premium price that has not loaded.
@@ -187,6 +189,7 @@ export default function StoreEditProduct() {
         }
         if (p.type === 'digital') {
           setDelivery(deliveryFromProduct(p));
+          setSavedFormat(p.deliveryFormat ?? 'download');
           const priceFor = (label: string) => variants.find(v => !v.isDefault && v.options?.some(o => o.name === 'License' && o.value === label));
           const fresh = digFromEntry(p, res.data.defaultVariant ?? variants[0]);
           setDig(f => ({
@@ -233,7 +236,9 @@ export default function StoreEditProduct() {
 
 
   const isDigitalFamily = pType === 'digital' || pType === 'educational';
-  const finalStatusOf = (s?: ProductStatus) => s ?? (pType === 'physical' ? phys.status : dig.status);
+  // Switching a product to "course" saves it as a draft first (a course needs lessons before it can go live), like Add does.
+  const becomingCourse = pType !== 'physical' && delivery.format === 'course' && savedFormat !== null && savedFormat !== 'course';
+  const finalStatusOf = (s?: ProductStatus) => becomingCourse ? 'draft' : s ?? (pType === 'physical' ? phys.status : dig.status);
 
   // Every rule the form enforces, grouped by the step it belongs to.
   const issues = useMemo<WizardIssue[]>(() => {
@@ -348,7 +353,7 @@ export default function StoreEditProduct() {
       }
 
       guard.allow.current = true;
-      navigate(`/store/${storeId}/products`);
+      navigate(pType !== 'physical' && delivery.format === 'course' ? `/store/${storeId}/products/${productId}/course` : `/store/${storeId}/products`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong.');
     } finally {
@@ -460,7 +465,9 @@ export default function StoreEditProduct() {
               setStatus={val => { if (pType === 'physical') sp('status', val); else sd('status', val); if (val === 'scheduled') setShowScheduleModal(true); }}
               openSchedule={() => setShowScheduleModal(true)} summaryRows={summaryRows}
               basicsExtra={<UrduCopyCard storeId={storeId} productId={productId} />}
-              deliveryExtra={delivery.format === 'course' ? (
+              deliveryExtra={delivery.format === 'course' && becomingCourse ? (
+                <p className="mt-3 mb-0 text-[12.5px] text-graphite rounded-lg bg-cream px-3 py-2">Save the changes first — it is saved as a draft and the course builder opens right after, where you add lessons and publish.</p>
+              ) : delivery.format === 'course' ? (
                 <Link to={`/store/${storeId}/products/${productId}/course`} className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-brand-royal text-white px-4 py-2 text-[13px] font-bold no-underline">
                   Open the course builder
                 </Link>
