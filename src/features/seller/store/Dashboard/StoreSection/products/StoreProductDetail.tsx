@@ -50,7 +50,8 @@ export default function StoreProductDetail() {
     apiGetMyProductById(productId)
       .then(res => setEntry({
         product: res.data.product,
-        variant: { _id: '', productId, sku: '—', price: 0, compareAtPrice: null, options: [], stock: 0, unlimitedStock: false, shippingWeight: null, images: [], isDefault: true, status: 'active', isDelete: false, createdAt: '', updatedAt: '' },
+        // The real default variant (never a made-up price 0, which the Edit form would then inherit).
+        variant: res.data.defaultVariant ?? res.data.variants?.[0] ?? { _id: '', productId, sku: '—', price: 0, compareAtPrice: null, options: [], stock: 0, unlimitedStock: false, shippingWeight: null, images: [], isDefault: true, status: 'active', isDelete: false, createdAt: '', updatedAt: '' },
       }))
       .catch(() => navigate(`/store/${storeId}/products`, { replace: true }))
       .finally(() => setFetching(false));

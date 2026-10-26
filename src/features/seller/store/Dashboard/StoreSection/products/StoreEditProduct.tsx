@@ -154,9 +154,9 @@ export default function StoreEditProduct() {
   useEffect(() => {
     const stateEntry = state?.entry;
     // A cached/router entry without its variant would show price 0 (or crash) - then read the product fresh instead.
-    if (stateEntry?.variant) { init(stateEntry.product, stateEntry.variant); setFetching(false); return; }
+    if (stateEntry?.variant?._id) { init(stateEntry.product, stateEntry.variant); setFetching(false); return; }
     const cached = getCachedProducts(storeId).find(e => e.product._id === productId);
-    if (cached?.variant) { init(cached.product, cached.variant); setFetching(false); return; }
+    if (cached?.variant?._id) { init(cached.product, cached.variant); setFetching(false); return; }
     apiGetMyProductById(productId)
       .then(res => {
         // No variant found: leave the price blank (never a made-up 0 that a save would write over the real price).
