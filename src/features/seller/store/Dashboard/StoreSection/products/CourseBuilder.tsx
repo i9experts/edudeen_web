@@ -185,7 +185,7 @@ export default function CourseBuilder() {
     <>
       <StorePageHeader
         title="Course builder"
-        subtitle={`${data.product.name} · ${lessonCount} lessons${minutes ? ` · ${Math.round(minutes / 6) / 10} h` : ''}${data.learners ? ` · ${data.learners} learners` : ''}`}
+        subtitle={`${data.product.name} · ${lessonCount} ${lessonCount === 1 ? 'lesson' : 'lessons'}${minutes ? ` · ${Math.round(minutes / 6) / 10} h` : ''}${data.learners ? ` · ${data.learners} learners` : ''}`}
         actions={
           <div className="flex gap-2">
             <Button variant="outline" size="sm" loading={saving === 'save'} onClick={() => save(false)}>{dirty ? 'Save changes' : 'Saved'}</Button>

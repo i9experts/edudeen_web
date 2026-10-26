@@ -215,6 +215,7 @@ export interface PreviewData {
   productType: 'physical' | 'digital' | 'educational'; deliveryFormat?: 'download' | 'course' | 'live_class';
   premiumPercent: number; educationLevel?: string | null; customLevel?: string | null;
   ageMin?: string; ageMax?: string; classFrom?: string; classTo?: string; storeName?: string | null;
+  liveStartsAt?: string | null;
 }
 
 function PreviewCard({ d }: { d: PreviewData }) {
@@ -225,6 +226,7 @@ function PreviewCard({ d }: { d: PreviewData }) {
       _id: 'preview', slug: 'preview', name: d.name.trim() || 'Your product title',
       images: d.images, productType: d.productType, type: d.productType === 'physical' ? 'physical' : 'digital',
       deliveryFormat: d.productType === 'physical' ? undefined : d.deliveryFormat,
+      liveSession: d.productType !== 'physical' && d.deliveryFormat === 'live_class' && d.liveStartsAt ? { startsAt: d.liveStartsAt } : undefined,
       educationLevel: d.productType === 'educational' ? d.educationLevel || null : null, customLevel: d.customLevel ?? null,
       ageMin: d.ageMin ? Number(d.ageMin) : null, ageMax: d.ageMax ? Number(d.ageMax) : null,
       classFrom: d.classFrom || d.classTo || null, classTo: d.classTo || d.classFrom || null,

@@ -1,5 +1,5 @@
 import { WeightField } from './WeightField';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Download, GraduationCap, CalendarClock, Check, Truck, FileDown } from 'lucide-react';
 import { EDUCATION_LEVELS } from '@/api/services/product';
 import type { CategoryNode } from '@/api/services/categories';
@@ -22,7 +22,7 @@ import {
 } from './ProductFormKit';
 import { IssueLinks, StepPanel, SummaryRows, type WizardIssue } from './ProductWizard';
 import { FieldErrorsContext } from './fieldErrorsContext';
-import { normalizeTitle, qualityWarnings, titleClassConflict, contactWarning, classRangeRequired, POLICY_LINE } from './productQuality';
+import { qualityWarnings, titleClassConflict, contactWarning, classRangeRequired, POLICY_LINE } from './productQuality';
 
 export interface ProductFormStepsProps {
   mode: 'add' | 'edit';
@@ -85,11 +85,19 @@ export function ProductFormSteps(p: ProductFormStepsProps) {
   const banner = (i: number) => p.blockedStep === i
     ? <IssueLinks issues={p.stepIssues(i, true)} onGo={go} title="Please fix this before moving on" /> : null;
 
+  // A field shows its red error as soon as the seller has typed in it / left it, or after a blocked Next.
+  const [touched, setTouched] = useState<Set<string>>(() => new Set());
+  const markTouched = (e: { target: EventTarget }) => {
+    const id = (e.target as HTMLElement | null)?.id;
+    if (id) setTouched(prev => (prev.has(id) ? prev : new Set(prev).add(id)));
+  };
   const fieldErrors: Record<string, string> = {};
+  for (const i of p.issues) if (i.fieldId && touched.has(i.fieldId) && !i.publishOnly && !fieldErrors[i.fieldId]) fieldErrors[i.fieldId] = i.message;
   if (p.blockedStep !== null) for (const i of p.stepIssues(p.blockedStep, true)) if (i.fieldId && !fieldErrors[i.fieldId]) fieldErrors[i.fieldId] = i.message;
 
   return (
     <FieldErrorsContext.Provider value={fieldErrors}>
+    <div style={{ display: 'contents' }} onInputCapture={markTouched} onBlurCapture={markTouched}>
       {/* ── 1. Type & basics ─────────────────────────────────────────── */}
       <StepPanel active={step === 0}>
         {banner(0)}
@@ -168,7 +176,7 @@ export function ProductFormSteps(p: ProductFormStepsProps) {
           <div className="flex flex-col gap-4">
             <F label="Product title" req htmlFor="ap-name" hint="Say what it is and who it's for — e.g. age or level.">
               <input id="ap-name" value={cur.name} onChange={e => set('name', e.target.value)}
-                onBlur={() => { const t = normalizeTitle(cur.name); if (t !== cur.name) set('name', t); }}
+                onBlur={() => { const t = cur.name.replace(/\s+/g, ' ').trim(); if (t !== cur.name) set('name', t); }}
                 placeholder={pType === 'physical' ? 'e.g. Wooden Arabic Alphabet Puzzle (ages 3–6)' : 'e.g. My Purposeful Learning Week — printable planner'}
                 className={inp} />
               {/* Non-blocking hints: vague title / title vs class range / contact details. */}
@@ -208,7 +216,7 @@ export function ProductFormSteps(p: ProductFormStepsProps) {
           </Block>
         )}
 
-        {isDigitalFamily && (
+        {isDigitalFamily && p.delivery.format === 'download' && (
           <Block id="fld-sample" title="Free sample" need="required" hint="Required to publish — drafts can be saved without it.">
             <SampleFileField value={dig.sampleFile} onChange={v => sd('sampleFile', v)} />
           </Block>
@@ -284,19 +292,19 @@ export function ProductFormSteps(p: ProductFormStepsProps) {
         {isDigitalFamily && <MoreOptions title="More options" hint="Download limit, link expiry, buyer message, PDF stamping, preview">
           {isDigitalFamily && (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {p.delivery.format === 'download' && <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <F label="Download limit" htmlFor="ap-dl" hint={'Type a number, or leave "unlimited".'}>
                   <input id="ap-dl" value={dig.downloadLimit} onChange={e => sd('downloadLimit', e.target.value)} placeholder="unlimited" className={inp} />
                 </F>
                 <F label="Link expiry (days)" htmlFor="ap-exp" hint="Leave empty for links that never expire.">
                   <input id="ap-exp" type="number" min="0" value={dig.linkExpiryDays} onChange={e => sd('linkExpiryDays', e.target.value)} placeholder="No expiry" className={inp} />
                 </F>
-              </div>
+              </div>}
               <F label="Buyer delivery message" htmlFor="ap-msg" hint="Shown to the buyer with their download.">
                 <textarea id="ap-msg" value={dig.buyerDeliveryMessage} onChange={e => sd('buyerDeliveryMessage', e.target.value)}
                   placeholder="Thank you for your purchase! Here is your download link…" className={ta} />
               </F>
-              <div className="flex items-center justify-between gap-4 py-0.5">
+              {p.delivery.format === 'download' && <><div className="flex items-center justify-between gap-4 py-0.5">
                 <div>
                   <p className="text-[13.5px] font-bold text-carbon m-0">PDF stamping</p>
                   <p className="text-[12px] text-slate mt-0.5 mb-0">Watermark PDFs with the buyer's name</p>
@@ -309,7 +317,7 @@ export function ProductFormSteps(p: ProductFormStepsProps) {
                   <p className="text-[12px] text-slate mt-0.5 mb-0">Let buyers see a watermarked/trimmed preview before purchase</p>
                 </div>
                 <Toggle label="Buyer preview" checked={dig.previewEnabled} onChange={v => sd('previewEnabled', v)} />
-              </div>
+              </div></>}
             </>
           )}
         </MoreOptions>}
@@ -459,6 +467,7 @@ export function ProductFormSteps(p: ProductFormStepsProps) {
           </div>
         </Block>
       </StepPanel>
+    </div>
     </FieldErrorsContext.Provider>
   );
 }

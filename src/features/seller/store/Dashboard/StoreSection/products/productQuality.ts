@@ -32,7 +32,15 @@ export function titleError(raw: unknown): string | null {
   return len < MIN_TITLE_LENGTH ? `Title needs at least ${MIN_TITLE_LENGTH} characters so buyers know what it is (now ${len}).` : null;
 }
 
-const GRADE_WORD = /\b(?:class|grade|g)\s*[-:#]?\s*(\d{1,2})(?:\s*(?:-|–|to)\s*(\d{1,2}))?\b/i;
+/** Add/Edit form title rule: titleError plus "must start with a capital letter" (the seller fixes it, nothing is silently rewritten). */
+export function titleFormError(raw: unknown): string | null {
+  const base = titleError(raw);
+  if (base) return base;
+  const first = String(raw ?? '').trim().charAt(0);
+  return first && first !== first.toUpperCase() ? 'Title must start with a capital letter (e.g. "Class 5 Maths Worksheets").' : null;
+}
+
+const GRADE_WORD =/\b(?:class|grade|g)\s*[-:#]?\s*(\d{1,2})(?:\s*(?:-|–|to)\s*(\d{1,2}))?\b/i;
 const KNOWN_LEVEL = /\b(kg|nursery|prep)\b/i;
 
 /** Non-blocking: a title that says almost nothing. */

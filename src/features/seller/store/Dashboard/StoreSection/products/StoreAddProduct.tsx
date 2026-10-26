@@ -16,7 +16,7 @@ import { currencySymbol as symbolForCurrency } from '@/utils/currency';
 import { offersPayload, PREMIUM_BLANK_MESSAGE, OFFER_CONFLICT_MESSAGE, type OfferFlags } from './ProductOffersCard';
 import { premiumPercentError } from './PremiumPriceField';
 import { effectiveSellerPercent, premiumGapMessage, usePremiumTerms } from './PremiumEarningsCalculator';
-import { titleError, classRangeError } from './productQuality';
+import { titleFormError, classRangeError } from './productQuality';
 import { reviewNoticeText } from './reviewNotice';
 import { useToast } from '@/contexts/ToastContext';
 import { descriptionError, validatePrices, weightTextError, parseWeightKg, stockError } from './priceRules';
@@ -133,7 +133,7 @@ export default function StoreAddProduct() {
   const collectIssues = (status: ProductStatus): WizardIssue[] => {
     const out: WizardIssue[] = [];
     const finalStatus = isCourse ? 'draft' : status;
-    const tErr0 = titleError(cur.name);
+    const tErr0 = titleFormError(cur.name);
     if (tErr0) out.push({ step: 0, message: tErr0, fieldId: 'ap-name' });
     const descErr = descriptionError(cur.description);
     if (descErr) out.push({ step: 0, message: descErr, fieldId: 'ap-desc' });
@@ -142,7 +142,7 @@ export default function StoreAddProduct() {
       if (dErr) out.push({ step: 1, message: dErr, fieldId: 'fld-delivery' });
       if (delivery.format === 'download' && finalStatus !== 'draft' && dig.files.length === 0)
         out.push({ step: 1, message: 'Upload the file buyers will receive (or save as draft)', fieldId: 'fld-files', publishOnly: true });
-      if (finalStatus !== 'draft' && !dig.sampleFile)
+      if (delivery.format === 'download' && finalStatus !== 'draft' && !dig.sampleFile)
         out.push({ step: 1, message: 'Upload a free sample (or save as draft)', fieldId: 'fld-sample', publishOnly: true });
     }
     // free: this form documents "Enter 0 for a free resource", so a typed 0 is the seller's explicit free choice here.
@@ -189,6 +189,7 @@ export default function StoreAddProduct() {
   const snapshot = useMemo<DraftSnapshot>(() => ({ pType, phys, dig, learning, delivery, campaignIds, premiumPct, premiumOptOut, attributeValues, categoryChoice }),
     [pType, phys, dig, learning, delivery, campaignIds, premiumPct, premiumOptOut, attributeValues, categoryChoice]);
   const hasContent = touched && !!(cur.name || cur.price || cur.description || cur.images.length || dig.files.length);
+  // useDraftAutosave already pauses writing while `restorable` (the Continue / Start fresh banner) is unanswered, so the old draft is never overwritten.
   const draft = useDraftAutosave<DraftSnapshot>(`edudeen:add-product:${storeId}`, snapshot, hasContent, true);
   const guard = useLeaveGuard(touched && !saving);
 
@@ -253,7 +254,7 @@ export default function StoreAddProduct() {
           ...learningPayload(learning),
           ...deliveryPayload(delivery),
           licenseTiers: tiersPayload(dig.tiers.filter(t => t.license !== dig.licenseType)),
-          digital: { files, downloadLimit: dig.downloadLimit, linkExpiryDays: dig.linkExpiryDays ? Number(dig.linkExpiryDays) : null, pdfStampingEnabled: dig.pdfStampingEnabled, licenseType: dig.licenseType, buyerDeliveryMessage: dig.buyerDeliveryMessage, preview: { enabled: dig.previewEnabled, sourceFileIndex: 0 }, sampleFile: dig.sampleFile ? toFile(dig.sampleFile) : null },
+          digital: { files, downloadLimit: dig.downloadLimit, linkExpiryDays: dig.linkExpiryDays ? Number(dig.linkExpiryDays) : null, pdfStampingEnabled: dig.pdfStampingEnabled, licenseType: dig.licenseType, buyerDeliveryMessage: dig.buyerDeliveryMessage, preview: delivery.format === 'download' && files.length > 0 && dig.previewEnabled ? { enabled: true, sourceFileIndex: 0 } : { enabled: false, sourceFileIndex: 0 }, sampleFile: dig.sampleFile ? toFile(dig.sampleFile) : null },
         });
         const note = reviewNoticeText(res); if (note) toast.info(note);
         if (res.data.defaultVariant) addCachedProduct(storeId, { product: res.data.product, variant: res.data.defaultVariant });
@@ -267,7 +268,9 @@ export default function StoreAddProduct() {
       guard.allow.current = true;
       navigate(isCourse ? `/store/${storeId}/products/${productId}/course` : `/store/${storeId}/products`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong.');
+      const msg = err instanceof Error ? err.message : 'Something went wrong.';
+      setError(msg);
+      toast.error(msg);
     } finally {
       setSaving(false);
     }
@@ -378,6 +381,7 @@ export default function StoreAddProduct() {
       productType: pType, deliveryFormat: delivery.format, educationLevel: dig.educationLevel, customLevel: dig.customLevel,
       premiumPercent: campaignIds.length ? 0 : effectiveSellerPercent(premiumPct, storePremiumPct, premiumOptOut),
       ageMin: learning.ageMin, ageMax: learning.ageMax, classFrom: learning.classFrom, classTo: learning.classTo, storeName: store?.name,
+      liveStartsAt: delivery.format === 'live_class' && delivery.date && delivery.time ? new Date(`${delivery.date}T${delivery.time}:00`).toISOString() : null,
     };
   }
 }

@@ -51,6 +51,9 @@ export function F({ label, req, hint, htmlFor, children }: { label: string; req?
         'aria-required': req || undefined,
         'aria-invalid': error ? true : undefined,
         'aria-describedby': error ? errId : undefined,
+        ...(error && typeof children.type === 'string'
+          ? { className: `${String(children.props.className ?? '')} !border-error focus:!ring-error/20` }
+          : {}),
       })
     : children;
   return (

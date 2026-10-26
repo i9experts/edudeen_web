@@ -22,7 +22,7 @@ import { currencySymbol as symbolForCurrency } from '@/utils/currency';
 import { offersPayload, PREMIUM_BLANK_MESSAGE, OFFER_CONFLICT_MESSAGE, type OfferFlags } from './ProductOffersCard';
 import { premiumPercentError } from './PremiumPriceField';
 import { effectiveSellerPercent, premiumGapMessage, usePremiumTerms } from './PremiumEarningsCalculator';
-import { titleError, classRangeError } from './productQuality';
+import { titleFormError, classRangeError } from './productQuality';
 import { reviewNoticeText } from './reviewNotice';
 import { useToast } from '@/contexts/ToastContext';
 import { descriptionError, validatePrices, weightTextError, parseWeightKg, stockError } from './priceRules';
@@ -239,10 +239,10 @@ export default function StoreEditProduct() {
   const issues = useMemo<WizardIssue[]>(() => {
     const out: WizardIssue[] = [];
     // Only a title the seller changed must meet the minimum (old short titles stay editable).
-    const tErr0 = !cur.name.trim() ? 'Add a product title' : cur.name.trim() !== originalName.current.trim() ? titleError(cur.name) : null;
+    const tErr0 = !cur.name.trim() ? 'Add a product title' : cur.name.trim() !== originalName.current.trim() ? titleFormError(cur.name) : null;
     if (tErr0) out.push({ step: 0, message: tErr0, fieldId: 'ap-name' });
     if (isDigitalFamily) { const dErr = deliveryError(delivery); if (dErr) out.push({ step: 1, message: dErr, fieldId: 'fld-delivery' }); }
-    if (isDigitalFamily && cur.status !== 'draft' && !dig.sampleFile) out.push({ step: 1, message: 'Upload a free sample', fieldId: 'fld-sample' });
+    if (isDigitalFamily && delivery.format === 'download' && cur.status !== 'draft' && !dig.sampleFile) out.push({ step: 1, message: 'Upload a free sample', fieldId: 'fld-sample' });
     const descErr = descriptionError(cur.description);
     if (descErr) out.push({ step: 0, message: descErr, fieldId: 'ap-desc' });
     const priceCheck = validatePrices({ price: cur.price, compareAt: cur.compareAtPrice, currency: store?.baseCurrency, free: true });
@@ -336,7 +336,7 @@ export default function StoreEditProduct() {
           ...learningPayload(learning),
           ...deliveryPayload(delivery),
           licenseTiers: pType === 'educational' && dig.licenseType !== 'commercial' ? tiersPayload(dig.tiers.filter(t => t.license !== dig.licenseType)) : [],
-          digital: { files, downloadLimit: dig.downloadLimit, linkExpiryDays: dig.linkExpiryDays ? Number(dig.linkExpiryDays) : null, pdfStampingEnabled: dig.pdfStampingEnabled, licenseType: dig.licenseType, buyerDeliveryMessage: dig.buyerDeliveryMessage, preview: { enabled: dig.previewEnabled, sourceFileIndex: 0 }, sampleFile: dig.sampleFile ? toFile(dig.sampleFile) : null },
+          digital: { files, downloadLimit: dig.downloadLimit, linkExpiryDays: dig.linkExpiryDays ? Number(dig.linkExpiryDays) : null, pdfStampingEnabled: dig.pdfStampingEnabled, licenseType: dig.licenseType, buyerDeliveryMessage: dig.buyerDeliveryMessage, preview: { enabled: delivery.format === 'download' && files.length > 0 && dig.previewEnabled, sourceFileIndex: 0 }, sampleFile: dig.sampleFile ? toFile(dig.sampleFile) : null },
         });
         const note = reviewNoticeText(res); if (note) toast.info(note);
         updateCachedProduct(storeId, productId, { product: res.data.product, variant: res.data.variant });
