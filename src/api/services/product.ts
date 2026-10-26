@@ -51,6 +51,7 @@ export interface LearningMetaInput {
   ageMax?:    number | null;
   classFrom?: string | null;
   classTo?:   string | null;
+  coverStyle?: 'book' | 'flat' | null;
   /** Digital only: files, an online course, or a scheduled live class. */
   deliveryFormat?: DeliveryFormat;
   liveSession?:    LiveSessionInput | null;
@@ -130,6 +131,7 @@ export interface StoreProduct {
   curricula?:        string[];
   ageMin?:           number | null;
   ageMax?:           number | null;
+  coverStyle?:       'book' | 'flat' | null;
   classFrom?:        string | null;
   classTo?:          string | null;
   /** Admin-assigned trust badges (listing review). */

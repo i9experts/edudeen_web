@@ -120,6 +120,8 @@ export interface MarketplaceProduct {
   /** Optional class range (constants/classLevels.ts values). */
   classFrom?:        string | null;
   classTo?:          string | null;
+  /** 'flat' = plain photo card (toys etc.); anything else = book-cover look. */
+  coverStyle?:       'book' | 'flat' | null;
   deliveryFormat?:   'download' | 'course' | 'live_class';
   /** Live classes only — the meeting link is never public. */
   liveSession?:      { startsAt: string; durationMinutes: number; platform: string; capacity: number | null; notes: string } | null;

@@ -7,7 +7,7 @@ import type { StoreData } from '@/api/services/store';
 import type { AttributeDefinition } from '@/api/services/attributes';
 import { ProductPhotosUploader } from './ProductPhotosUploader';
 import {
-  LearningFields, LicenseTiersField, DeliverableFilesField, SampleFileField,
+  LearningFields, CoverStyleField, LicenseTiersField, DeliverableFilesField, SampleFileField,
   type LearningValue,
 } from '@/features/seller/components/products/LearningFields';
 import { DeliveryFormatField, type DeliveryState } from '@/features/seller/components/products/DeliveryFormatField';
@@ -334,6 +334,14 @@ export function ProductFormSteps(p: ProductFormStepsProps) {
           />
         </Block>
 
+        <Block id="fld-cover" title="Product card style" need="required" hint="Choose how your product appears on Edudeen. Books and printed material use the book-cover look; toys and other items use a plain photo.">
+          <CoverStyleField
+            value={p.learning.coverStyle ?? ''}
+            onChange={v => p.setLearning({ ...p.learning, coverStyle: v })}
+            categoryNames={[p.category.rootName, p.category.subcategories.find(c => c._id === cur.subCategoryId)?.name]}
+          />
+        </Block>
+
         {pType === 'educational' && (
           <Block id="fld-level" title="Education level" need="required" hint="Helps parents and teachers find resources for the right stage.">
             <div className="flex flex-col gap-4">
@@ -367,7 +375,7 @@ export function ProductFormSteps(p: ProductFormStepsProps) {
           </Block>
         )}
 
-        <MoreOptions title="Tags & search" hint="Words buyers might search for — e.g. seerah, ramadan, phonics">
+        <MoreOptions title="Tags & search" defaultOpen={cur.tags.length > 0 || cur.tagInput.trim() !== ''} hint="Words buyers might search for — e.g. seerah, ramadan, phonics">
           <div>
             <TagInput
               tags={cur.tags} input={cur.tagInput}

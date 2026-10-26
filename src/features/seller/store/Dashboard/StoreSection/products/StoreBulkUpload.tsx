@@ -10,6 +10,7 @@ import { apiCreateDigitalProduct, apiCreatePhysicalProduct, EDUCATION_LEVELS, ty
 import { apiUploadPrivateFile, apiUploadPublicFile } from '@/api/upload';
 import { useSellerCategories } from '@/hooks/store/useSellerCategories';
 import type { CategoryNode } from '@/api/services/categories';
+import { suggestCoverStyle } from '@/constants/coverStyle';
 import { currencySymbol as symbolForCurrency } from '@/utils/currency';
 import { CLASS_LEVELS } from '@/constants/classLevels';
 import { EMPTY_DELIVERY, deliveryPayload } from '@/features/seller/components/products/DeliveryFormatField';
@@ -419,7 +420,13 @@ export default function StoreBulkUpload() {
         categoryId: r.categoryId || undefined, subCategoryId: r.subCategoryId || null,
         images: r.images, tags: r.tags,
         isListedOnEdudeen: true, status: (mode === 'publish' ? 'active' : 'draft') as 'active' | 'draft',
-        ...learningPayload({ curricula: [], ageMin: '', ageMax: '', classFrom: r.classFrom, classTo: r.classTo }),
+        ...learningPayload({
+          curricula: [], ageMin: '', ageMax: '', classFrom: r.classFrom, classTo: r.classTo,
+          // Files are printed-material style; physical items follow their category (toys etc. = flat), default flat.
+          coverStyle: type === 'physical'
+            ? (suggestCoverStyle([categories.find(c => c._id === r.categoryId)?.name]) ?? 'flat')
+            : 'book',
+        }),
       };
       let res;
       if (type === 'physical') {

@@ -27,7 +27,7 @@ import { reviewNoticeText } from './reviewNotice';
 import { useToast } from '@/contexts/ToastContext';
 import { descriptionError, validatePrices, weightTextError, parseWeightKg, stockError } from './priceRules';
 import type { VariantOption } from '@/api/services/product';
-import { findCategoryName, type DigForm, type LicenseType, type PhysForm, type ProductStatus } from './ProductFormKit';
+import { findCategoryName, withPendingTags, type DigForm, type LicenseType, type PhysForm, type ProductStatus } from './ProductFormKit';
 import {
   ActionBar, ProductPreview, StepRail, WizardNav, WIZARD_STEPS, dirtyCapture,
   useLeaveGuard, useWizard, type WizardIssue,
@@ -146,7 +146,7 @@ export default function StoreEditProduct() {
     originalName.current = p.name ?? '';
     setReview(p.status === 'pending_review' || p.status === 'rejected' ? { status: p.status, note: p.reviewNote ?? null } : null);
     setVariantId(v._id || null);
-    setLearning({ curricula: [...(p.curricula ?? [])], ageMin: p.ageMin != null ? String(p.ageMin) : '', ageMax: p.ageMax != null ? String(p.ageMax) : '', classFrom: p.classFrom ?? '', classTo: p.classTo ?? '' });
+    setLearning({ curricula: [...(p.curricula ?? [])], ageMin: p.ageMin != null ? String(p.ageMin) : '', ageMax: p.ageMax != null ? String(p.ageMax) : '', classFrom: p.classFrom ?? '', classTo: p.classTo ?? '', coverStyle: p.coverStyle ?? '' });
     if (p.productType === 'physical') { setPhys(physFromEntry(p, v)); hadWeight.current = !!String(v?.shippingWeight ?? '').trim(); }
     else                              setDig(digFromEntry(p, v));
   }
@@ -178,7 +178,13 @@ export default function StoreEditProduct() {
         setPremiumOptOut(!!p.premiumOptOut);
         const pe = p as unknown as { pendingEditInfo?: unknown; lastEditRejection?: { reason?: string } | null };
         setEditReview({ pending: !!pe.pendingEditInfo, rejection: pe.lastEditRejection?.reason ?? null });
-        setLearning({ curricula: [...(p.curricula ?? [])], ageMin: p.ageMin != null ? String(p.ageMin) : '', ageMax: p.ageMax != null ? String(p.ageMax) : '', classFrom: p.classFrom ?? '', classTo: p.classTo ?? '' });
+        setLearning({ curricula: [...(p.curricula ?? [])], ageMin: p.ageMin != null ? String(p.ageMin) : '', ageMax: p.ageMax != null ? String(p.ageMax) : '', classFrom: p.classFrom ?? '', classTo: p.classTo ?? '', coverStyle: p.coverStyle ?? '' });
+        // The list cache can lack tags: fill them from the fresh read (never over tags the seller already typed).
+        const freshTags = [...(p.tags ?? [])];
+        if (freshTags.length) {
+          setPhys(f => (f.tags.length ? f : { ...f, tags: freshTags }));
+          setDig(f => (f.tags.length ? f : { ...f, tags: freshTags }));
+        }
         if (p.type === 'digital') {
           setDelivery(deliveryFromProduct(p));
           const priceFor = (label: string) => variants.find(v => !v.isDefault && v.options?.some(o => o.name === 'License' && o.value === label));
@@ -254,6 +260,7 @@ export default function StoreEditProduct() {
     if (lErr) out.push({ step: 3, message: lErr, fieldId: 'fld-learning' });
     const cErr = cur.status === 'active' || cur.status === 'scheduled' ? classRangeError(pType, learning.classFrom, learning.classTo) : null;
     if (cErr) out.push({ step: 3, message: cErr, fieldId: 'fld-learning', publishOnly: true });
+    if (!learning.coverStyle) out.push({ step: 3, message: 'Choose the product card style (Book or Toy / item)', fieldId: 'fld-cover', publishOnly: true });
     const missingAttr = findMissingRequiredAttribute(attrDefs, attributeValues);
     if (missingAttr) out.push({ step: 3, message: `${missingAttr.label} is required`, fieldId: 'fld-attrs' });
     const pErr = premiumPercentError(premiumPct ?? '');
@@ -290,7 +297,7 @@ export default function StoreEditProduct() {
       if (pType === 'physical') {
         const res = await apiEditPhysicalProduct(productId, {
           productId, name: phys.name, description: phys.description,
-          categoryId: categoryId || undefined, subCategoryId: phys.subCategoryId || null, images: phys.images, tags: phys.tags,
+          categoryId: categoryId || undefined, subCategoryId: phys.subCategoryId || null, images: phys.images, tags: withPendingTags(phys.tags, phys.tagInput),
           isListedOnEdudeen: phys.isListedOnEdudeen, status: finalStatus,
           ...offersPayload({ premiumPct, premiumOptOut, campaignIds }),
           scheduledAt: finalStatus === 'scheduled' ? phys.scheduledAt || null : null,
@@ -318,7 +325,7 @@ export default function StoreEditProduct() {
           productId, variantId,
           name: dig.name, description: dig.description,
           categoryId: categoryId || undefined, subCategoryId: dig.subCategoryId || null,
-          images: dig.images, tags: dig.tags, isListedOnEdudeen: dig.isListedOnEdudeen,
+          images: dig.images, tags: withPendingTags(dig.tags, dig.tagInput), isListedOnEdudeen: dig.isListedOnEdudeen,
           educationLevel: pType === 'educational' ? (dig.educationLevel || null) : undefined,
           customLevel: pType === 'educational' && dig.educationLevel === 'other' ? dig.customLevel : undefined,
           status: finalStatus,

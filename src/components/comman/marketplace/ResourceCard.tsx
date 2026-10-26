@@ -61,6 +61,19 @@ function Cover({ product }: { product: MarketplaceProduct }) {
   const imgProps = image ? responsiveImg(image, '(min-width: 1024px) 14vw, (min-width: 640px) 22vw, 36vw', [200, 320, 480, 640], 480) : null;
   const clipId = `bk-${product._id}`;
 
+  // Toys, stationery and other non-book items: plain rounded photo, no book shape.
+  if (product.coverStyle === 'flat') {
+    return (
+      <div className="h-[178px] sm:h-[194px] lg:h-[205px] rounded-lg overflow-hidden flex items-center justify-center bg-[#f4f6f7]">
+        {imgProps ? (
+          <img {...imgProps} alt={product.name} loading="lazy" decoding="async" onError={() => setImgFailed(true)} className="w-full h-full object-contain" />
+        ) : (
+          <strong className="font-serif font-normal text-[14px] leading-[1.15] text-center px-3 line-clamp-5" style={{ color: accent }}>{product.name}</strong>
+        )}
+      </div>
+    );
+  }
+
   // Front-facing book drawn in SVG: the seller's image (or the title) fills the WHOLE cover; pages show as a thin edge behind it.
   return (
     <div className="h-[178px] sm:h-[194px] lg:h-[205px] rounded-lg overflow-hidden">

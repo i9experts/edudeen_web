@@ -3,6 +3,7 @@ import { Plus, Trash2 } from 'lucide-react';
 import { FileUpload, type PrivateUploadData } from '@/components/comman/ui';
 import { CURRICULA, LICENSE_LABEL } from '@/constants/learning';
 import { CLASS_LEVELS, classIndex } from '@/constants/classLevels';
+import { COVER_STYLES, suggestCoverStyle, type CoverStyle } from '@/constants/coverStyle';
 
 // Seller product-form fields that make a listing findable by teachers and
 // parents: exam board, age range, a free sample, extra files and
@@ -11,11 +12,39 @@ import { CLASS_LEVELS, classIndex } from '@/constants/classLevels';
 const inp = 'w-full px-3 py-[9px] text-[13px] border border-bone rounded-lg outline-none text-charcoal bg-white focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/10';
 const lbl = 'block text-[12.5px] font-semibold text-charcoal mb-1.5';
 
-export interface LearningValue { curricula: string[]; ageMin: string; ageMax: string; classFrom: string; classTo: string }
-export const EMPTY_LEARNING: LearningValue = { curricula: [], ageMin: '', ageMax: '', classFrom: '', classTo: '' };
+export interface LearningValue { curricula: string[]; ageMin: string; ageMax: string; classFrom: string; classTo: string; coverStyle?: '' | CoverStyle }
+export const EMPTY_LEARNING: LearningValue = { curricula: [], ageMin: '', ageMax: '', classFrom: '', classTo: '', coverStyle: '' };
+
+/** Required choice: how the product card looks (book cover or plain photo). Hint follows the picked category. */
+export function CoverStyleField({ value, onChange, categoryNames }: { value: '' | CoverStyle; onChange: (v: CoverStyle) => void; categoryNames: (string | null | undefined)[] }) {
+  const suggested = suggestCoverStyle(categoryNames);
+  const suggestedLabel = COVER_STYLES.find(s => s.value === suggested)?.label;
+  return (
+    <div>
+      <span className={lbl}>Product card style <span className="text-error">*</span></span>
+      <div role="radiogroup" aria-label="Product card style" className="grid gap-2 sm:grid-cols-2">
+        {COVER_STYLES.map(s => {
+          const on = value === s.value;
+          return (
+            <button key={s.value} type="button" role="radio" aria-checked={on} onClick={() => onChange(s.value)}
+              className={clsx('text-start rounded-xl border p-3 cursor-pointer transition-colors', on ? 'border-brand-orange bg-brand-pale-orange' : 'border-bone bg-white hover:bg-cream')}>
+              <b className={clsx('block text-[13px]', on ? 'text-brand-orange' : 'text-carbon')}>{s.label}</b>
+              <span className="block text-[12px] text-slate mt-0.5">{s.hint}</span>
+            </button>
+          );
+        })}
+      </div>
+      <p className="text-[12px] text-slate mt-1.5">
+        Required. If your product is related to books, choose “Book / printed material”.
+        {suggestedLabel && !value && <> For your category we suggest <b>{suggestedLabel}</b>.</>}
+      </p>
+    </div>
+  );
+}
 
 export function learningPayload(v: LearningValue) {
   return {
+    coverStyle: v.coverStyle || null,
     curricula: v.curricula,
     ageMin: v.ageMin === '' ? null : Number(v.ageMin),
     ageMax: v.ageMax === '' ? null : Number(v.ageMax),

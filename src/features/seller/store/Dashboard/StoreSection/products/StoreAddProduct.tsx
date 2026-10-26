@@ -21,7 +21,7 @@ import { reviewNoticeText } from './reviewNotice';
 import { useToast } from '@/contexts/ToastContext';
 import { descriptionError, validatePrices, weightTextError, parseWeightKg, stockError } from './priceRules';
 import {
-  isDigitalFamilyType, findCategoryName,
+  isDigitalFamilyType, findCategoryName, withPendingTags,
   type DigForm, type PhysForm, type ProductStatus, type ProductType,
 } from './ProductFormKit';
 import {
@@ -163,6 +163,7 @@ export default function StoreAddProduct() {
     // Digital / educational listings need a class range to go live (drafts may stay incomplete).
     const cErr = finalStatus === 'active' || finalStatus === 'scheduled' ? classRangeError(pType, learning.classFrom, learning.classTo) : null;
     if (cErr) out.push({ step: 3, message: cErr, fieldId: 'fld-learning', publishOnly: true });
+    if (!learning.coverStyle) out.push({ step: 3, message: 'Choose the product card style (Book or Toy / item)', fieldId: 'fld-cover', publishOnly: true });
     const missingAttr = findMissingRequiredAttribute(attrDefs, attributeValues);
     if (missingAttr) out.push({ step: 3, message: `${missingAttr.label} is required`, fieldId: 'fld-attrs' });
     const pErr = premiumPercentError(premiumPct);
@@ -221,7 +222,7 @@ export default function StoreAddProduct() {
       if (pType === 'physical') {
         const res = await apiCreatePhysicalProduct({
           storeId, name: phys.name, description: phys.description,
-          categoryId: categoryId || undefined, subCategoryId: phys.subCategoryId || null, images: phys.images, tags: phys.tags,
+          categoryId: categoryId || undefined, subCategoryId: phys.subCategoryId || null, images: phys.images, tags: withPendingTags(phys.tags, phys.tagInput),
           isListedOnEdudeen: phys.isListedOnEdudeen, status: finalStatus, ...offersPayload({ premiumPct, premiumOptOut, campaignIds }),
           scheduledAt: finalStatus === 'scheduled' ? phys.scheduledAt || null : null,
           ...learningPayload(learning),
@@ -243,7 +244,7 @@ export default function StoreAddProduct() {
         const res = await apiCreateDigitalProduct({
           storeId, name: dig.name, description: dig.description,
           productType: pType === 'educational' ? 'educational' : 'digital',
-          categoryId: categoryId || undefined, subCategoryId: dig.subCategoryId || null, images: dig.images, tags: dig.tags,
+          categoryId: categoryId || undefined, subCategoryId: dig.subCategoryId || null, images: dig.images, tags: withPendingTags(dig.tags, dig.tagInput),
           educationLevel: pType === 'educational' ? (dig.educationLevel || null) : null,
           customLevel: pType === 'educational' && dig.educationLevel === 'other' ? dig.customLevel : null,
           isListedOnEdudeen: dig.isListedOnEdudeen, status: finalStatus, ...offersPayload({ premiumPct, premiumOptOut, campaignIds }),

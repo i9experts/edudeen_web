@@ -1,5 +1,5 @@
 import { FieldErrorsContext } from './fieldErrorsContext';
-import { useState, useContext, isValidElement, cloneElement, type ReactNode } from 'react';
+import { useState, useEffect, useContext, isValidElement, cloneElement, type ReactNode } from 'react';
 import { ChevronDown, Plus, X } from 'lucide-react';
 import type { VariantOption, EducationLevel } from '@/api/services/product';
 import type { PrivateUploadData } from '@/components/comman/ui';
@@ -90,8 +90,10 @@ export function Block({ title, need, hint, id, children }: { title: string; need
  * Collapsed "More options" block for optional / advanced fields. The content stays MOUNTED while collapsed (hidden, not removed)
  * so nothing typed there is lost. Never put a required field in here.
  */
-export function MoreOptions({ title = 'More options', hint, children }: { title?: string; hint?: string; children: ReactNode }) {
-  const [open, setOpen] = useState(false);
+export function MoreOptions({ title = 'More options', hint, children, defaultOpen = false }: { title?: string; hint?: string; children: ReactNode; defaultOpen?: boolean }) {
+  const [open, setOpen] = useState(defaultOpen);
+  // Content that arrives after mount (an edited product's saved tags) opens the section instead of hiding it.
+  useEffect(() => { if (defaultOpen) setOpen(true); }, [defaultOpen]);
   return (
     <div className="border border-bone rounded-xl bg-white">
       <button type="button" onClick={() => setOpen(o => !o)} aria-expanded={open}
@@ -121,6 +123,12 @@ export function Toggle({ checked, onChange, label }: { checked: boolean; onChang
   );
 }
 
+/** Tags plus whatever is still typed in the tag box (comma separated), so a tag the seller typed but didn't confirm isn't lost on save. */
+export function withPendingTags(tags: string[], pending: string): string[] {
+  const extra = pending.split(',').map(s => s.trim()).filter(Boolean).filter(t => !tags.includes(t));
+  return [...tags, ...extra].slice(0, 30);
+}
+
 export function TagInput({ tags, input, onInput, onAdd, onRemove }: {
   tags: string[]; input: string;
   onInput: (v: string) => void; onAdd: () => void; onRemove: (i: number) => void;
@@ -135,6 +143,7 @@ export function TagInput({ tags, input, onInput, onAdd, onRemove }: {
       ))}
       <input value={input} onChange={e => onInput(e.target.value)} aria-label="Add a tag"
         onKeyDown={e => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); onAdd(); } }}
+        onBlur={() => { if (input.trim()) onAdd(); }}
         placeholder={tags.length === 0 ? 'Type a tag and press Enter…' : ''}
         className="border-none outline-none text-[12px] flex-[1_1_80px] min-w-[80px] bg-transparent text-charcoal placeholder:text-[#b5b3ac]"
       />
