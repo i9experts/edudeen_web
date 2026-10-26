@@ -97,7 +97,7 @@ export function ProductFormSteps(p: ProductFormStepsProps) {
 
   return (
     <FieldErrorsContext.Provider value={fieldErrors}>
-    <div style={{ display: 'contents' }} onInputCapture={markTouched} onBlurCapture={markTouched}>
+    <div style={{ display: 'contents' }} onChange={markTouched} onBlurCapture={markTouched}>
       {/* ── 1. Type & basics ─────────────────────────────────────────── */}
       <StepPanel active={step === 0}>
         {banner(0)}
@@ -289,7 +289,7 @@ export function ProductFormSteps(p: ProductFormStepsProps) {
           </Block>
         )}
 
-        {isDigitalFamily && <MoreOptions title="More options" hint="Download limit, link expiry, buyer message, PDF stamping, preview">
+        {isDigitalFamily && <MoreOptions title="More options" hint={p.delivery.format === 'download' ? 'Download limit, link expiry, buyer message, PDF stamping, preview' : p.delivery.format === 'course' ? 'Message shown to students when they get access' : 'Joining instructions shown to buyers'}>
           {isDigitalFamily && (
             <>
               {p.delivery.format === 'download' && <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -300,9 +300,10 @@ export function ProductFormSteps(p: ProductFormStepsProps) {
                   <input id="ap-exp" type="number" min="0" value={dig.linkExpiryDays} onChange={e => sd('linkExpiryDays', e.target.value)} placeholder="No expiry" className={inp} />
                 </F>
               </div>}
-              <F label="Buyer delivery message" htmlFor="ap-msg" hint="Shown to the buyer with their download.">
+              <F label={p.delivery.format === 'download' ? 'Buyer delivery message' : p.delivery.format === 'course' ? 'Course access message' : 'Joining information'} htmlFor="ap-msg"
+                hint={p.delivery.format === 'download' ? 'Shown to the buyer with their download.' : p.delivery.format === 'course' ? 'Shown to the student when they get access to the course.' : 'Shown to the buyer with their class details, e.g. what to bring or how to join.'}>
                 <textarea id="ap-msg" value={dig.buyerDeliveryMessage} onChange={e => sd('buyerDeliveryMessage', e.target.value)}
-                  placeholder="Thank you for your purchase! Here is your download link…" className={ta} />
+                  placeholder={p.delivery.format === 'download' ? 'Thank you for your purchase! Here is your download link…' : p.delivery.format === 'course' ? 'Welcome to the course! Start with the first lesson…' : 'Thank you for booking! Please join 5 minutes early…'} className={ta} />
               </F>
               {p.delivery.format === 'download' && <><div className="flex items-center justify-between gap-4 py-0.5">
                 <div>

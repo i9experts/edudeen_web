@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useStoreWorkspace, StorePageHeader } from '@/components/layouts/StoreLayout';
-import { apiCreatePhysicalProduct, apiCreateDigitalProduct, type VariantOption } from '@/api/services/product';
+import { apiCreatePhysicalProduct, apiCreateDigitalProduct, EDUCATION_LEVELS, type VariantOption } from '@/api/services/product';
 import { apiSetProductAttributes } from '@/api/services/attributes';
 import { addCachedProduct } from './_cache';
 import { toAttributeInputs, findMissingRequiredAttribute, type AttributeValuesState } from './attributeFormUtils';
@@ -296,7 +296,7 @@ export default function StoreAddProduct() {
     { label: 'Price', value: cur.price === '' ? 'Missing' : `${currencySymbol} ${cur.price}${cur.compareAtPrice ? ` (was ${currencySymbol} ${cur.compareAtPrice})` : ''}`, step: 2, ok: cur.price !== '' },
     ...(pType === 'physical' ? [{ label: 'Stock', value: phys.stock === '' ? 'Missing' : phys.stock, step: 2, ok: phys.stock !== '' }] : []),
     { label: 'Category', value: [rootCategory?.name, subName].filter(Boolean).join(' › ') || 'Not chosen', step: 3 },
-    ...(pType === 'educational' ? [{ label: 'Education level', value: dig.educationLevel || 'Missing', step: 3, ok: !!dig.educationLevel }] : []),
+    ...(pType === 'educational' ? [{ label: 'Education level', value: (dig.educationLevel === 'other' ? dig.customLevel : EDUCATION_LEVELS.find(l => l.value === dig.educationLevel)?.label) || 'Missing', step: 3, ok: !!dig.educationLevel }] : []),
     { label: 'Offers', value: campaignIds.length ? 'In a platform sale' : effectiveSellerPercent(premiumPct, storePremiumPct, premiumOptOut) > 0 ? `Premium discount ${effectiveSellerPercent(premiumPct, storePremiumPct, premiumOptOut)}%` : 'None', step: 4 },
     { label: 'Status', value: cur.status === 'active' ? 'Publish now' : cur.status === 'scheduled' ? 'Scheduled' : 'Draft', step: 5 },
   ];

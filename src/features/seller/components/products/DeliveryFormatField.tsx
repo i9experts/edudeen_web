@@ -52,6 +52,7 @@ export function deliveryFromProduct(p: { deliveryFormat?: DeliveryFormat | null;
 export function deliveryError(s: DeliveryState): string | null {
   if (s.format !== 'live_class') return null;
   if (!s.date || !s.time) return 'Pick the date and time of the live class.';
+  if (new Date(`${s.date}T${s.time}:00`).getTime() <= Date.now()) return 'Pick a future date and time for the live class.';
   const dur = Number(s.durationMinutes);
   if (!Number.isInteger(dur) || dur < 15 || dur > 600) return 'Class length should be 15–600 minutes.';
   if (!/^https:\/\/\S+$/i.test(s.meetingUrl.trim())) return 'Add the https:// meeting link.';

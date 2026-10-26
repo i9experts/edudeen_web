@@ -77,6 +77,8 @@ export function useWizard(issues: WizardIssue[], verb: 'Add' | 'Edit', initialVi
   const statusOf = (i: number): StepState => {
     const has = issues.some(x => x.step === i);
     if (has) return attempted || (visited.includes(i) && i !== step) ? 'attention' : 'empty';
+    // The last step (Review & publish) is only Done when nothing is missing anywhere.
+    if (i === LAST_STEP && issues.length > 0) return 'empty';
     return visited.includes(i) ? 'done' : 'empty';
   };
 

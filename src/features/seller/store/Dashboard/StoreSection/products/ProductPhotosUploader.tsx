@@ -134,7 +134,7 @@ export function ProductPhotosUploader({ value, onChange, max = MAX_PRODUCT_PHOTO
           type="button" disabled={full} onClick={() => inputRef.current?.click()}
           className="px-4 py-2 rounded-lg bg-brand-royal text-white text-[13px] font-semibold border-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >Select photos</button>
-        <input ref={inputRef} type="file" accept={ACCEPT} multiple className="hidden" onChange={onPick} data-testid="photos-input" />
+        <input ref={inputRef} type="file" aria-label="Add product photos" accept={ACCEPT} multiple className="hidden" onChange={onPick} data-testid="photos-input" />
         <p className="text-[12px] text-slate m-0" aria-live="polite">{total}/{max} photos · PNG, JPG or WebP, up to 10 MB each{full ? ' · limit reached' : ''}</p>
       </div>
       {notice && <p role="alert" className="text-[12px] text-error m-0">{notice}</p>}

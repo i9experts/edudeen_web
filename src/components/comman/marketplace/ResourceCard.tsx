@@ -158,7 +158,7 @@ export const ResourceCard = memo(function ResourceCard({
   const delivery = kind === 'physical' ? 'Ships to you'
     : product.deliveryFormat === 'course' ? 'Online course'
     : product.deliveryFormat === 'live_class'
-      ? (product.liveSession?.startsAt ? `Live class · ${new Date(product.liveSession.startsAt).toLocaleString('en-PK', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}` : 'Live class')
+      ? (product.liveSession?.startsAt ? `Live class · ${(() => { const d = new Date(product.liveSession.startsAt); return d.toLocaleString('en-PK', { day: 'numeric', month: 'short', ...(d.getFullYear() !== new Date().getFullYear() ? { year: 'numeric' as const } : {}), hour: 'numeric', minute: '2-digit' }); })()}` : 'Live class')
       : 'Instant download';
   // Separate text nodes so the Urdu DOM translator can match each part ("All ages", "Ships to you").
   const meta = [classRangeLabel(product.classFrom, product.classTo) ?? ageLabel(product.ageMin, product.ageMax) ?? level ?? 'All ages', delivery]

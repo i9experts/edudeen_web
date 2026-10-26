@@ -141,7 +141,7 @@ export function FileDropSelect({
         )}>
           <Upload size={20} className="text-slate" />
           <span className="text-[13px] text-slate">{label}</span>
-          <input type="file" accept={accept} className="hidden" onChange={handleFile} />
+          <input type="file" aria-label={label} accept={accept} className="hidden" onChange={handleFile} />
         </label>
       )}
     </div>
@@ -205,7 +205,7 @@ export function FileUpload({
             ? <Loader2 size={24} className="text-brand-orange animate-spin" />
             : <Upload size={24} className="text-slate" />}
           <span className="text-[13px] text-slate">{uploading ? 'Uploading…' : label}</span>
-          <input type="file" accept={accept} className="hidden" onChange={handleFile} disabled={uploading} />
+          <input type="file" aria-label={label} accept={accept} className="hidden" onChange={handleFile} disabled={uploading} />
         </label>
       )}
       {error && <p className="text-[12px] text-error mt-1">{error}</p>}

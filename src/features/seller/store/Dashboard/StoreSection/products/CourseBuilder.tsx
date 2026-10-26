@@ -174,7 +174,13 @@ export default function CourseBuilder() {
         toast.success(next === 'active' ? 'Course is live' : 'Course submitted — it goes live after a quick review');
         setData(d => d ? { ...d, product: { ...d.product, status: next } } : d);
       } else toast.success('Course saved');
-    } catch (err) { toast.error(err instanceof Error ? err.message : 'Could not save the course.'); }
+    } catch (err) {
+      // Network drops / 5xx can arrive as plain objects (no Error), so read the message from any shape.
+      const e = err as { message?: unknown; response?: { data?: { message?: unknown } } } | string | null;
+      const raw = typeof e === 'string' ? e : e?.response?.data?.message ?? e?.message;
+      const msg = Array.isArray(raw) ? raw.join(', ') : typeof raw === 'string' ? raw : '';
+      toast.error(msg || 'Could not save the course. Check your connection and try again.');
+    }
     finally { setSaving(null); }
   };
 

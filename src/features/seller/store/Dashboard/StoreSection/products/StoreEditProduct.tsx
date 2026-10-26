@@ -26,7 +26,7 @@ import { titleFormError, classRangeError } from './productQuality';
 import { reviewNoticeText } from './reviewNotice';
 import { useToast } from '@/contexts/ToastContext';
 import { descriptionError, validatePrices, weightTextError, parseWeightKg, stockError } from './priceRules';
-import type { VariantOption } from '@/api/services/product';
+import { EDUCATION_LEVELS, type VariantOption } from '@/api/services/product';
 import { findCategoryName, withPendingTags, type DigForm, type LicenseType, type PhysForm, type ProductStatus } from './ProductFormKit';
 import {
   ActionBar, ProductPreview, StepRail, WizardNav, WIZARD_STEPS, dirtyCapture,
@@ -395,7 +395,7 @@ export default function StoreEditProduct() {
     { label: 'Price', value: String(cur.price).trim() === '' ? 'Missing' : `${currencySymbol} ${cur.price}${cur.compareAtPrice ? ` (was ${currencySymbol} ${cur.compareAtPrice})` : ''}`, step: 2, ok: String(cur.price).trim() !== '' },
     ...(pType === 'physical' ? [{ label: 'Stock', value: phys.stock === '' ? 'Not set' : phys.stock, step: 2 }] : []),
     { label: 'Category', value: [rootCategory?.name, subName].filter(Boolean).join(' › ') || 'Not chosen', step: 3 },
-    ...(pType === 'educational' ? [{ label: 'Education level', value: dig.educationLevel || 'Missing', step: 3, ok: !!dig.educationLevel }] : []),
+    ...(pType === 'educational' ? [{ label: 'Education level', value: (dig.educationLevel === 'other' ? dig.customLevel : EDUCATION_LEVELS.find(l => l.value === dig.educationLevel)?.label) || 'Missing', step: 3, ok: !!dig.educationLevel }] : []),
     { label: 'Offers', value: (campaignIds?.length ?? 0) > 0 ? 'In a platform sale' : effectiveSellerPercent(premiumPct ?? '', storePremiumPct, !!premiumOptOut) > 0 ? `Premium discount ${effectiveSellerPercent(premiumPct ?? '', storePremiumPct, !!premiumOptOut)}%` : 'None', step: 4 },
     { label: 'Status', value: cur.status === 'active' ? 'Active' : cur.status === 'scheduled' ? 'Scheduled' : 'Draft', step: 5 },
   ];
