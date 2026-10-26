@@ -538,7 +538,7 @@ function HomeLanding() {
         {flashDeals.length > 0 && (
           <section id="deals" className="mb-12 scroll-mt-[150px]">
             <SectionHead
-              eyebrow={premiumDeals ? "Your member savings" : "Limited-time savings"}
+              eyebrow={premiumDeals ? "Your member savings" : undefined}
               title={premiumDeals ? "Premium Deals" : "Flash Sale"}
               icon={premiumDeals
                 ? <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#fff6d6] text-[#8a6100]"><Crown size={14} /></span>

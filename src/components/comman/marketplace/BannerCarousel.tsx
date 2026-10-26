@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { clsx } from 'clsx';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { apiTrackPromotionImpression, apiTrackPromotionClick } from '@/api/services/promotions';
@@ -43,6 +43,7 @@ interface BannerCarouselProps {
 }
 
 const ROTATE_MS = 5000;
+const SLIDE_MS = 600;
 
 /** Seller/admin typed links: only http(s) or a site path - never javascript:/data: (defence in depth). */
 function isSafeLink(url: string) {
@@ -56,17 +57,23 @@ function isExternalLink(url: string) {
   try { return new URL(url).host !== window.location.host; } catch { return true; }
 }
 
-/** Promotional banner carousel — full-bleed background layer. Fills its nearest
- *  `relative`-positioned, sized parent (`absolute inset-0`). Every slide is
- *  mounted up front (the admin-configurable per-placement limit keeps this to
- *  a handful of images) and slides via `transform: translateX` — swapping
- *  `src` on an interval instead would re-fetch/re-decode each slide on every
- *  rotation and flash blank on a slow connection. Each slide's offset is the
- *  *shortest signed distance* from the active index (wrapping around the
- *  list), so going from the last slide back to the first (or vice versa)
- *  slides one step over instead of sweeping across every slide in between. */
+/** Promotional banner carousel — fills its nearest `relative`, sized parent.
+ *  Classic infinite-loop slider: one horizontal track `[last*, 1, 2 … n, first*]`
+ *  (* = clones). Next always moves the track one step left, Previous one step
+ *  right, so the direction is always the natural one - including past the ends:
+ *  after sliding onto a clone the track silently jumps (no animation) to the
+ *  identical real slide. Auto-play moves forward only. Touch / mouse drag
+ *  follows the finger and then snaps to the next or previous slide. */
 export function BannerCarousel({ banners, entityType, fit = 'cover', showDots = true, onActiveChange }: BannerCarouselProps) {
-  const [index, setIndex] = useState(0);
+  const sorted = [...banners].sort((a, b) => a.order - b.order);
+  const n = sorted.length;
+  const loop = n > 1;
+  const slides = loop ? [sorted[n - 1], ...sorted, sorted[0]] : sorted;
+
+  // pos = index into `slides` (1..n are the real ones when looping).
+  const [pos, setPos] = useState(loop ? 1 : 0);
+  const [animate, setAnimate] = useState(true);
+  const [dragX, setDragX] = useState(0);
   const [paused, setPaused] = useState(false);
   const [loadedIds, setLoadedIds] = useState<Set<string>>(() => new Set());
   const impressedIds = useRef(new Set<string>());
@@ -74,19 +81,54 @@ export function BannerCarousel({ banners, entityType, fit = 'cover', showDots = 
     typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches,
   ).current;
 
-  const sorted = [...banners].sort((a, b) => a.order - b.order);
-  const len = sorted.length;
-  const active = sorted[index];
+  const posRef = useRef(pos);
+  const busy = useRef(false);
+  const settleTimer = useRef<number | undefined>(undefined);
+  const setPosition = (p: number) => { posRef.current = p; setPos(p); };
 
-  useEffect(() => {
-    if (sorted.length < 2 || paused || prefersReducedMotion) return;
-    const id = setInterval(() => setIndex((i) => (i + 1) % sorted.length), ROTATE_MS);
-    return () => clearInterval(id);
-  }, [sorted.length, paused, prefersReducedMotion]);
+  // Real slide index (0..n-1) behind the current track position.
+  const realIndex = loop ? (((pos - 1) % n) + n) % n : 0;
+  const active = sorted[realIndex];
 
+  // The list changed length (admin added / removed a banner): start again from the first slide.
   useEffect(() => {
-    if (index >= sorted.length) setIndex(0);
-  }, [sorted.length, index]);
+    window.clearTimeout(settleTimer.current);
+    busy.current = false;
+    setAnimate(false);
+    setDragX(0);
+    setPosition(n > 1 ? 1 : 0);
+  }, [n]);
+
+  // After arriving on a clone, jump (no animation) to the identical real slide.
+  const settle = useCallback(() => {
+    window.clearTimeout(settleTimer.current);
+    busy.current = false;
+    if (n < 2) return;
+    const p = posRef.current;
+    if (p === 0) { setAnimate(false); setPosition(n); }
+    else if (p === n + 1) { setAnimate(false); setPosition(1); }
+  }, [n]);
+
+  const moveBy = useCallback((delta: number) => {
+    if (n < 2 || busy.current) return;
+    const target = posRef.current + delta;
+    if (target < 0 || target > n + 1) return;
+    busy.current = true;
+    setAnimate(!prefersReducedMotion);
+    setDragX(0);
+    setPosition(target);
+    window.clearTimeout(settleTimer.current);
+    // Safety net: if `transitionend` never fires (background tab, reduced motion) still settle.
+    settleTimer.current = window.setTimeout(settle, SLIDE_MS + 150);
+  }, [n, prefersReducedMotion, settle]);
+  useEffect(() => () => window.clearTimeout(settleTimer.current), []);
+
+  // Auto-play: forward only; the timer restarts after every move so a manual click gets a full pause.
+  useEffect(() => {
+    if (n < 2 || paused || prefersReducedMotion) return;
+    const id = window.setTimeout(() => moveBy(1), ROTATE_MS);
+    return () => window.clearTimeout(id);
+  }, [n, paused, prefersReducedMotion, pos, moveBy]);
 
   useEffect(() => {
     if (!active || impressedIds.current.has(active._id)) return;
@@ -94,40 +136,57 @@ export function BannerCarousel({ banners, entityType, fit = 'cover', showDots = 
     apiTrackPromotionImpression(entityType, active._id);
   }, [active, entityType]);
 
-  // Finger swipe (phones have no arrows): a mostly-horizontal drag of 40px+ moves one slide.
-  const touchStart = useRef<{ x: number; y: number } | null>(null);
-  const onTouchStart = (e: React.TouchEvent) => { const p = e.touches[0]; touchStart.current = { x: p.clientX, y: p.clientY }; setPaused(true); };
-  const onTouchEnd = (e: React.TouchEvent) => {
-    const s = touchStart.current;
-    touchStart.current = null;
-    setPaused(false);
-    if (!s || sorted.length < 2) return;
-    const p = e.changedTouches[0];
-    const dx = p.clientX - s.x;
-    const dy = p.clientY - s.y;
-    if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy)) return;
-    const rtl = document.documentElement.dir === 'rtl';
-    go((dx < 0) !== rtl ? 1 : -1);
+  // Drag / swipe (touch + mouse). Vertical page scroll stays native (touch-action: pan-y).
+  const drag = useRef<{ x: number; y: number; w: number; on: boolean; id: number } | null>(null);
+  const suppressClick = useRef(false);
+  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (n < 2 || busy.current || (e.pointerType === 'mouse' && e.button !== 0)) return;
+    drag.current = { x: e.clientX, y: e.clientY, w: e.currentTarget.clientWidth || 1, on: false, id: e.pointerId };
   };
-
-  const go = (dir: 1 | -1) => setIndex((i) => (i + dir + sorted.length) % sorted.length);
-
-  function handleClick() {
-    apiTrackPromotionClick(entityType, active._id);
-    setPromotionAttribution(entityType, active._id);
-  }
+  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const d = drag.current;
+    if (!d || d.id !== e.pointerId) return;
+    const dx = e.clientX - d.x;
+    const dy = e.clientY - d.y;
+    if (!d.on) {
+      if (Math.abs(dx) < 8 || Math.abs(dx) < Math.abs(dy)) return;
+      d.on = true;
+      setPaused(true);
+      setAnimate(false);
+      try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* not capturable */ }
+    }
+    setDragX(dx);
+  };
+  const endDrag = (e: React.PointerEvent<HTMLDivElement>) => {
+    const d = drag.current;
+    drag.current = null;
+    if (!d || d.id !== e.pointerId || !d.on) return;
+    suppressClick.current = true;
+    window.setTimeout(() => { suppressClick.current = false; }, 0);
+    const dx = e.clientX - d.x;
+    if (Math.abs(dx) > Math.min(80, d.w * 0.15)) moveBy(dx < 0 ? 1 : -1);
+    else { setAnimate(true); setDragX(0); }
+    setPaused(false);
+  };
 
   const activeId = active?._id;
   useEffect(() => { if (activeId) onActiveChange?.(activeId); }, [activeId, onActiveChange]);
 
   const activeLoaded = active ? loadedIds.has(active._id) : false;
 
+  // Dots jump straight to a slide (more than one step is fine for a dot).
+  const goTo = (i: number) => { if (loop && !busy.current) moveBy(i + 1 - posRef.current); };
+
   return (
     <div
-      className="absolute inset-0 group touch-pan-y"
-      onTouchStart={onTouchStart}
-      onTouchEnd={onTouchEnd}
-      onTouchCancel={() => { touchStart.current = null; setPaused(false); }}
+      className="absolute inset-0 group overflow-hidden touch-pan-y select-none"
+      dir="ltr"
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={endDrag}
+      onPointerCancel={endDrag}
+      onClickCapture={(e) => { if (suppressClick.current) { e.preventDefault(); e.stopPropagation(); } }}
+      onDragStart={(e) => e.preventDefault()}
       role="region"
       aria-roledescription="carousel"
       aria-label="Promotional banners"
@@ -139,105 +198,99 @@ export function BannerCarousel({ banners, entityType, fit = 'cover', showDots = 
       {/* Skeleton — visible only until the currently-active slide has painted at least once */}
       {!activeLoaded && <div className="absolute inset-0 animate-pulse bg-[#edebe2]" />}
 
-      {/* Bottom legibility scrim — keeps the dot indicators readable regardless
-          of how light the active slide's image is, without touching the image
-          itself or adding any text content. */}
+      <div
+        className="flex h-full w-full will-change-transform"
+        style={{
+          transform: `translate3d(calc(${-pos * 100}% + ${dragX}px), 0, 0)`,
+          transition: animate ? `transform ${SLIDE_MS}ms cubic-bezier(0.22, 0.61, 0.36, 1)` : 'none',
+        }}
+        onTransitionEnd={(e) => { if (e.target === e.currentTarget && e.propertyName === 'transform') settle(); }}
+      >
+        {slides.map((banner, i) => {
+          const isActive = i === pos;
+          const hq = fit === 'contain' ? 'auto' : 'auto:best';
+          const img = (
+            <>
+              <picture>
+                {fit === 'blend' && (
+                  <img
+                    src={cloudinaryUrl(banner.imageUrl, 480)}
+                    alt=""
+                    aria-hidden
+                    decoding="async"
+                    draggable={false}
+                    className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl opacity-90"
+                  />
+                )}
+                {banner.mobileImageUrl && (
+                  <source media={MOBILE_BREAKPOINT} srcSet={cloudinaryDensitySrcSet(banner.mobileImageUrl, 480)} />
+                )}
+                <img
+                  src={cloudinaryUrl(banner.imageUrl, 1920, hq)}
+                  srcSet={cloudinarySrcSet(banner.imageUrl, undefined, hq)}
+                  sizes="100vw"
+                  loading="eager"
+                  fetchPriority={i === (loop ? 1 : 0) ? 'high' : undefined}
+                  decoding="async"
+                  draggable={false}
+                  alt={banner.title || 'Edudeen offer'}
+                  onLoad={() => setLoadedIds((prev) => (prev.has(banner._id) ? prev : new Set(prev).add(banner._id)))}
+                  className={clsx(
+                    'absolute inset-0 w-full h-full',
+                    fit === 'contain' ? 'object-contain bg-cream' : fit === 'blend' ? 'object-contain' : 'object-cover',
+                    fit === 'cover' && isActive && !prefersReducedMotion && 'hero-kenburns',
+                  )}
+                />
+              </picture>
+              {banner.title && (
+                <>
+                  <div aria-hidden className="absolute inset-y-0 start-0 w-[70%] bg-gradient-to-r from-[#0F3354]/75 via-[#0F3354]/35 to-transparent pointer-events-none" />
+                  <div className="absolute inset-y-0 start-0 flex items-center ps-5 sm:ps-8 lg:ps-12 pe-4 max-w-[75%] sm:max-w-[60%] pointer-events-none">
+                    <h2 className="m-0 text-white font-bold leading-tight tracking-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.45)] text-[20px] sm:text-[28px] lg:text-[40px] line-clamp-3">
+                      {banner.title}
+                    </h2>
+                  </div>
+                </>
+              )}
+            </>
+          );
+
+          return (
+            <div key={`${banner._id}-${i}`} aria-hidden={!isActive} className="relative h-full w-full flex-none overflow-hidden">
+              {isActive && banner.linkUrl && isSafeLink(banner.linkUrl) ? (
+                // Links inside Edudeen (a category, product, sale…) open in place;
+                // only outside sites get a new tab.
+                <a
+                  href={banner.linkUrl}
+                  draggable={false}
+                  {...(isExternalLink(banner.linkUrl) ? { target: '_blank', rel: 'noreferrer' } : {})}
+                  onClick={() => { apiTrackPromotionClick(entityType, banner._id); setPromotionAttribution(entityType, banner._id); }}
+                  className="absolute inset-0"
+                >
+                  {img}
+                </a>
+              ) : (
+                img
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Bottom legibility scrim — keeps the dot indicators readable on light images. */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/25 to-transparent z-[2]" />
 
-      {sorted.map((banner, i) => {
-        const isActive = i === index;
-        const hq = fit === 'contain' ? 'auto' : 'auto:best';
-        const img = (
-          <>
-          <picture>
-            {fit === 'blend' && (
-              <img
-                src={cloudinaryUrl(banner.imageUrl, 480)}
-                alt=""
-                aria-hidden
-                decoding="async"
-                className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl opacity-90"
-              />
-            )}
-            {banner.mobileImageUrl && (
-              <source media={MOBILE_BREAKPOINT} srcSet={cloudinaryDensitySrcSet(banner.mobileImageUrl, 480)} />
-            )}
-            <img
-              src={cloudinaryUrl(banner.imageUrl, 1920, hq)}
-              srcSet={cloudinarySrcSet(banner.imageUrl, undefined, hq)}
-              sizes="100vw"
-              loading={i === 0 ? 'eager' : 'lazy'}
-              fetchPriority={i === 0 ? 'high' : undefined}
-              decoding="async"
-              alt={banner.title || 'Edudeen offer'}
-              onLoad={() => setLoadedIds((prev) => (prev.has(banner._id) ? prev : new Set(prev).add(banner._id)))}
-              className={clsx(
-                'absolute inset-0 w-full h-full',
-                fit === 'contain' ? 'object-contain bg-cream' : fit === 'blend' ? 'object-contain' : 'object-cover',
-                fit === 'cover' && isActive && !prefersReducedMotion && 'hero-kenburns',
-              )}
-            />
-          </picture>
-          {banner.title && (
-            <>
-              <div aria-hidden className="absolute inset-y-0 start-0 w-[70%] bg-gradient-to-r from-[#0F3354]/75 via-[#0F3354]/35 to-transparent pointer-events-none rtl:bg-gradient-to-l" />
-              <div className="absolute inset-y-0 start-0 flex items-center ps-5 sm:ps-8 lg:ps-12 pe-4 max-w-[75%] sm:max-w-[60%] pointer-events-none">
-                <h2 className="m-0 text-white font-bold leading-tight tracking-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.45)] text-[20px] sm:text-[28px] lg:text-[40px] line-clamp-3">
-                  {banner.title}
-                </h2>
-              </div>
-            </>
-          )}
-          </>
-        );
-
-        // Shortest signed distance from the active slide, wrapping around the
-        // list — keeps every slide parked directly off-screen to the left or
-        // right of the active one instead of stacked at a single spot, so
-        // the transform transition below reads as a real slide, not a jump-cut.
-        let diff = i - index;
-        if (diff > len / 2) diff -= len;
-        if (diff < -len / 2) diff += len;
-
-        return (
-          <div
-            key={banner._id}
-            aria-hidden={!isActive}
-            style={{ transform: `translateX(${diff * 100}%)` }}
-            className={clsx(
-              'absolute inset-0 will-change-transform transition-transform ease-[cubic-bezier(0.65,0,0.35,1)] duration-[650ms]',
-              isActive ? 'z-[1]' : 'pointer-events-none',
-            )}
-          >
-            {isActive && banner.linkUrl && isSafeLink(banner.linkUrl) ? (
-              // Links inside Edudeen (a category, product, sale…) open in place;
-              // only outside sites get a new tab.
-              <a
-                href={banner.linkUrl}
-                {...(isExternalLink(banner.linkUrl) ? { target: '_blank', rel: 'noreferrer' } : {})}
-                onClick={handleClick}
-                className="absolute inset-0"
-              >
-                {img}
-              </a>
-            ) : (
-              img
-            )}
-          </div>
-        );
-      })}
-
-      {sorted.length > 1 && (
+      {loop && (
         <>
           <button
-            onClick={() => go(-1)}
+            onClick={() => moveBy(-1)}
             aria-label="Previous banner"
             className="absolute start-3 top-1/2 -translate-y-1/2 size-10 rounded-full bg-transparent hover:bg-black/15 hover:scale-105 hidden md:flex items-center justify-center border-none cursor-pointer opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-[opacity,transform,background-color] duration-200 z-10"
           >
             <ChevronLeft size={26} strokeWidth={2.5} className="text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.6)]" />
           </button>
           <button
-            onClick={() => go(1)}
+            onClick={() => moveBy(1)}
             aria-label="Next banner"
             className="absolute end-3 top-1/2 -translate-y-1/2 size-10 rounded-full bg-transparent hover:bg-black/15 hover:scale-105 hidden md:flex items-center justify-center border-none cursor-pointer opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-[opacity,transform,background-color] duration-200 z-10"
           >
@@ -247,14 +300,14 @@ export function BannerCarousel({ banners, entityType, fit = 'cover', showDots = 
             {sorted.map((b, i) => (
               <button
                 key={b._id}
-                onClick={() => setIndex(i)}
+                onClick={() => goTo(i)}
                 aria-label={`Go to banner ${i + 1}`}
-                aria-current={i === index}
+                aria-current={i === realIndex}
                 className="p-2 -m-2 flex items-center cursor-pointer"
               >
                 <span
                   className="block h-[6px] rounded-full border border-black/10 transition-all duration-300 ease-out"
-                  style={{ width: i === index ? 22 : 6, background: i === index ? '#174771' : 'rgba(255,255,255,0.75)' }}
+                  style={{ width: i === realIndex ? 22 : 6, background: i === realIndex ? '#174771' : 'rgba(255,255,255,0.75)' }}
                 />
               </button>
             ))}
