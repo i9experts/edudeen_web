@@ -36,8 +36,8 @@ export interface Campaign {
 
 export interface CreateCampaignPayload {
   name: string;
-  description?: string;
-  bannerImage?: string;
+  description?: string | null;
+  bannerImage?: string | null;
   /** null clears an existing background. */
   backgroundImage?: string | null;
   startDate: string;

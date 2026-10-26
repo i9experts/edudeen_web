@@ -115,8 +115,8 @@ function CreateCampaignModal({ campaign, onClose, onSaved }: { campaign?: Campai
     setValidationError('');
     const payload = {
       name: name.trim(),
-      description: description.trim() || undefined,
-      bannerImage: bannerImage || undefined,
+      description: description.trim() || (isEdit ? null : undefined),
+      bannerImage: bannerImage || (isEdit ? null : undefined),
       backgroundImage: backgroundImage || (isEdit ? null : undefined),
       startDate: new Date(startDate).toISOString(),
       endDate: new Date(endDate).toISOString(),
