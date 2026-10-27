@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { getStorePagePath } from '@/utils/storefrontUrl';
 import { useCartContext } from '@/contexts/CartContext';
@@ -961,6 +961,19 @@ export function CheckoutPage() {
     const back = `${window.location.pathname}${window.location.search}`;
     try { sessionStorage.setItem('afterAuthPath', back); } catch { /* storage blocked */ }
     return <Navigate to={`/login?redirect=${encodeURIComponent(back)}`} replace />;
+  }
+  if (TokenStorage.getUser<{ role?: string }>()?.role !== 'user') {
+    // Checkout endpoints are buyer-only; a seller/admin session would get a raw "Insufficient role" 403.
+    return (
+      <div className="min-h-screen bg-cream flex flex-col">
+        <BuyerNavbar variant="minimal" contextLabel="Checkout" hideCommerce />
+        <div className="max-w-[560px] w-full mx-auto px-4 py-12">
+          <h1 className="text-[20px] font-bold text-carbon mb-1">Switch to your buyer account</h1>
+          <p className="text-[13px] text-slate mb-6" role="alert">You are signed in with a store account. Sign out and sign in as a buyer to get this item.</p>
+          <Link to="/login" className="text-[13px] font-semibold text-brand-royal">Go to sign in</Link>
+        </div>
+      </div>
+    );
   }
   if (buyNow && buyNowCart.error) {
     return (

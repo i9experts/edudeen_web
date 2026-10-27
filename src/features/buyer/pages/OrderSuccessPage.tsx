@@ -422,16 +422,16 @@ export function OrderSuccessPage() {
   }
 
   return (
-    <div className="min-h-screen bg-cream">
+    <div className="min-h-screen bg-cream overflow-x-clip">
 
       <BuyerNavbar variant="minimal" />
 
       {/* Content */}
       <div className="max-w-[1040px] mx-auto px-4 md:px-6 py-6 md:py-10">
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_300px] gap-6 items-start">
 
-          {/* Left — hero + order cards */}
-          <div className="flex flex-col gap-5">
+          {/* Left — hero + order cards (min-w-0: a wide rail must not push the summary off-screen) */}
+          <div className="flex flex-col gap-5 min-w-0">
             <SuccessHero orders={orders} />
             {orders.map(order => (
               <OrderCard key={order.orderId} order={order} />
