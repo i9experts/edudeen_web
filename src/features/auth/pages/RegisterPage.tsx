@@ -68,6 +68,8 @@ export function RegisterPage() {
   const role: AppRole = SELLER_ONLY_REGISTER ? 'seller' : (searchParams.get('role') === 'seller' ? 'seller' : 'user');
   const social    = useSocialLogin(role);
   const isSeller = role === 'seller';
+  const roleRef = useRef<AppRole>(role);
+  roleRef.current = role;
   const remembered = RememberedAccount.get();
   const explicitNewAccount = searchParams.get('new') === '1';
   const showChooser = !!remembered && remembered.role === role && !explicitNewAccount;
@@ -84,11 +86,19 @@ export function RegisterPage() {
           password: data.password,
           phone:    data.phone,
           address:  data.address,
-          role:     (data.role === 'seller' ? 'seller' : 'user'),
+          role:     roleRef.current === 'seller' ? 'seller' : 'user',
         });
       },
     },
   );
+
+  const pickRole = useCallback((next: AppRole) => {
+    setSearchParams(prev => {
+      const p = new URLSearchParams(prev);
+      if (next === 'seller') p.set('role', 'seller'); else p.delete('role');
+      return p;
+    }, { replace: true });
+  }, [setSearchParams]);
 
   // Already signed in — send them to wherever they actually belong instead
   // of showing a registration form to someone who doesn't need one.
@@ -141,6 +151,26 @@ export function RegisterPage() {
       maxWidth="max-w-[520px]"
       visual={isSeller ? <DashboardMockup /> : <MarketplaceMockup />}
     >
+      {!SELLER_ONLY_REGISTER && (
+        <div role="radiogroup" aria-label="Account type" className="grid grid-cols-2 gap-1 p-1 mb-4 rounded-xl bg-bone/60">
+          {([
+            { id: 'user' as AppRole,   label: 'Buyer',  Icon: ShoppingBag },
+            { id: 'seller' as AppRole, label: 'Seller', Icon: Store },
+          ]).map(({ id, label, Icon }) => {
+            const active = role === id;
+            return (
+              <button
+                key={id} type="button" role="radio" aria-checked={active}
+                onClick={() => pickRole(id)}
+                className={`flex items-center justify-center gap-2 rounded-lg py-2 text-[13px] font-semibold cursor-pointer border-none transition-colors ${active ? 'bg-white text-carbon shadow-sm' : 'bg-transparent text-slate hover:text-carbon'}`}
+              >
+                <Icon size={15} /> {label}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       <h1 className="text-[22px] font-bold text-carbon mb-1 text-center lg:text-start">
         {showChooser
           ? <>Welcome <span className="text-brand-orange">back</span></>
