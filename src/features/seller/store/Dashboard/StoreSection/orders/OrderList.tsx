@@ -24,6 +24,7 @@ import {
   type SellerOrderFilters,
 } from '@/api/services/product';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { FreeClaimsCard } from './FreeClaimsCard';
 import { formatMoney } from '@/utils/currency';
 import {
   OrderDetailModal, canMarkPaid, canComplete, canProcess, canShip, paymentLabel,
@@ -273,6 +274,8 @@ export function StoreOrderList() {
             loading={loading && !stats}
           />
         </div>
+
+        {storeId && <FreeClaimsCard storeId={storeId} />}
 
         {/* Error */}
         {error && <InlineError message={error} onRetry={handleRetry} />}

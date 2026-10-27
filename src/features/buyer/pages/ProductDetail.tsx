@@ -22,6 +22,8 @@ import { AiReviewSummary } from '@/components/ai/AiReviewSummary';
 import { TokenStorage } from '@/api/services/auth';
 import { apiGetAllProducts, apiGetAlsoBought, type MarketplaceProduct, type ProductVariant } from '@/api/services/marketplace';
 import { apiStartConversation, apiSendMessage } from '@/api/services/messaging';
+import { apiCreateCheckout } from '@/api/services/checkout';
+import { apiPlaceFreeOrder } from '@/api/services/payment';
 import { apiGetPublicStoreProducts, apiGetPublicStore, apiFollowStore, apiGetFollowStatus, type PublicStoreProduct, type PublicStoreData } from '@/api/services/store';
 import { getStorePagePath } from '@/utils/storefrontUrl';
 import { apiGetProductAttributes, type ProductAttributeValue } from '@/api/services/attributes';
@@ -678,6 +680,25 @@ export function ProductDetail() {
     } finally { setPendingAction(null); }
   }
 
+  // Free digital resource: "Avail" gets it straight into the library (free order, no payment step) and
+  // lands on the order-success page, which has the Download button. The seller only sees who availed it.
+  const isFreeAvail = !!product && isDigital && displayPrice === 0;
+  function handleAvail() {
+    if (!product || !activeVariant || pendingAction) return;
+    requireAuth(async () => {
+      setPendingAction('buy');
+      try {
+        const buyNow = { productId: product._id, variantId: activeVariant._id, quantity: 1 };
+        const co = await apiCreateCheckout({ storeId: product.storeId ?? '', buyNow });
+        const checkoutId = co.data.checkout._id;
+        const res = await apiPlaceFreeOrder({ checkoutId });
+        navigate(`/order-success?checkout=${checkoutId}`, { state: { orders: res.data.orders } });
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : 'Could not get this resource. Please try again.');
+      } finally { setPendingAction(null); }
+    }, 'Sign in to get this free resource.');
+  }
+
   async function handleShare() {
     const url = window.location.href;
     if (navigator.share) {
@@ -937,9 +958,9 @@ export function ProductDetail() {
                     <Button
                       variant="primary" size="lg" fullWidth className="justify-center"
                       disabled={stock <= 0 || !!pendingAction} loading={pendingAction === 'buy'}
-                      onClick={() => handleAddToCart(true)}
+                      onClick={() => (isFreeAvail ? handleAvail() : handleAddToCart(true))}
                     >
-                      {stock <= 0 ? t('Out of Stock') : <>{t('Buy Now')} <ArrowRight size={14} className="inline align-middle ms-[6px]" />{(memberShown ?? displayPrice) != null ? ` ${formatPrice(((memberShown ?? displayPrice)! * qty), displayCurrency)}` : ''}</>}
+                      {stock <= 0 ? t('Out of Stock') : isFreeAvail ? <><Download size={14} className="inline align-middle me-[6px]" />{t('Avail for free')}</> : <>{t('Buy Now')} <ArrowRight size={14} className="inline align-middle ms-[6px]" />{(memberShown ?? displayPrice) != null ? ` ${formatPrice(((memberShown ?? displayPrice)! * qty), displayCurrency)}` : ''}</>}
                     </Button>
                     <div className="flex gap-2">
                       <Button
@@ -1305,9 +1326,9 @@ export function ProductDetail() {
             <Button
               variant="primary" size="md" className="justify-center flex-1 max-w-[140px]"
               disabled={!!pendingAction} loading={pendingAction === 'buy'}
-              onClick={() => handleAddToCart(true)}
+              onClick={() => (isFreeAvail ? handleAvail() : handleAddToCart(true))}
             >
-              {t('Buy Now')}
+              {isFreeAvail ? t('Avail') : t('Buy Now')}
             </Button>
           )}
         </div>

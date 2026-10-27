@@ -573,6 +573,22 @@ export function apiGetSellerOrderDetail(storeId: string, orderId: string) {
   );
 }
 
+export interface FreeClaim {
+  orderId:     string;
+  productId:   string | null;
+  productName: string;
+  buyerName:   string;
+  buyerEmail:  string | null;
+  claimedAt:   string;
+}
+
+/** GET /api/orders/seller-free-claims/:storeId — who availed this store's free products (not orders). */
+export function apiGetSellerFreeClaims(storeId: string, page = 1, limit = 10) {
+  return client.get<never, ApiResponse<{ claims: FreeClaim[]; total: number; page: number; totalPages: number }>>(
+    `/api/orders/seller-free-claims/${storeId}?page=${page}&limit=${limit}`,
+  );
+}
+
 /** Orders across every store the seller owns — used by the cross-store seller dashboard. */
 export function apiGetMySellerOrders(page = 1, limit = 10) {
   return client.get<never, ApiResponse<GetSellerOrdersData>>(
