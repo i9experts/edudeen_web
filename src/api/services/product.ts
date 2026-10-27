@@ -294,6 +294,7 @@ export interface InventoryProduct {
   image:        string | null;
   type:         'physical' | 'digital';
   productType?: 'physical' | 'digital' | 'educational';
+  deliveryFormat?: DeliveryFormat;
   stock:        number | string;
   stockStatus:  string;
   status:       'active' | 'draft' | 'archived' | 'inactive' | 'scheduled' | 'pending_review' | 'rejected';

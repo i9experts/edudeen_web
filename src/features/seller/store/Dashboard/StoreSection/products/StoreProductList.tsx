@@ -283,6 +283,7 @@ export default function StoreProductList() {
             align="right"
             items={[
               { label: 'View Detail',    onClick: () => goDetail(p),                icon: <Eye    size={13} /> },
+              ...(p.deliveryFormat === 'course' ? [{ label: 'Edit / build course', onClick: () => navigate(`/store/${storeId}/products/${p.productId}/course`), icon: <Pencil size={13} /> }] : []),
               { label: 'Add to Premium offer…',        onClick: () => openOffer('premium_on', [p.productId]),        icon: <Crown size={13} /> },
               { label: 'Remove from Premium offer',    onClick: () => openOffer('premium_off', [p.productId]),       icon: <Crown size={13} /> },
               { label: 'Add to platform sale…',        onClick: () => openOffer('campaign_add', [p.productId]),      icon: <Flame size={13} /> },

@@ -173,6 +173,7 @@ export default function CourseBuilder() {
         const next = (pub.data?.product as { status?: string } | undefined)?.status ?? 'pending_review';
         toast.success(next === 'active' ? 'Course is live' : 'Course submitted — it goes live after a quick review');
         setData(d => d ? { ...d, product: { ...d.product, status: next } } : d);
+        navigate(next === 'active' && data?.product.slug ? `/product/${data.product.slug}` : `/store/${storeId}/products/detail/${productId}`);
       } else toast.success('Course saved');
     } catch (err) {
       // Network drops / 5xx can arrive as plain objects (no Error), so read the message from any shape.
