@@ -1000,6 +1000,8 @@ export const UR: Record<string, string> = {
   // ── Small common words ────────────────────────────────────────────────────
   'Close': 'بند کریں',
   'Language & currency': 'زبان اور کرنسی',
+  'Approx. in your currency': 'آپ کی کرنسی میں تقریباً',
+  'Prices in your currency are for reference. Payment is charged in USD.': 'آپ کی کرنسی میں قیمتیں صرف حوالے کے لیے ہیں۔ ادائیگی امریکی ڈالر میں کی جاتی ہے۔',
   'Currency': 'کرنسی',
   'Scroll left': 'بائیں اسکرول کریں',
   'Scroll right': 'دائیں اسکرول کریں',

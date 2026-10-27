@@ -84,7 +84,7 @@ function AdminIdentity() {
 function MobilePrefs() {
   const [open, setOpen] = useState(false);
   const { t } = useLanguage();
-  const { currency, setCurrency } = useCurrencyPreference();
+  const { currency, setCurrency, options } = useCurrencyPreference();
   return (
     <div className="md:hidden shrink-0">
       <button type="button" onClick={() => setOpen(true)} aria-label={t('Language & currency')}
@@ -100,7 +100,7 @@ function MobilePrefs() {
             </div>
             <p className="m-0 mb-1.5 text-[12px] font-semibold text-slate">{t('Currency')}</p>
             <div className="flex gap-2 mb-4">
-              {(['PKR', 'USD'] as const).map(c => (
+              {options.map(c => (
                 <button key={c} type="button" aria-pressed={currency === c} onClick={() => setCurrency(c)}
                   className={clsx('flex-1 min-h-11 rounded-xl border text-[14px] font-semibold cursor-pointer', currency === c ? 'bg-brand-royal text-white border-brand-royal' : 'bg-white text-carbon border-bone')}>{c}</button>
               ))}

@@ -3,7 +3,7 @@ import { clsx } from 'clsx';
 import { Check, SlidersHorizontal, Star, X } from 'lucide-react';
 import type { CategoryNode } from '@/api/services/categories';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
-import { formatPrice } from '@/utils/formatPrice';
+import { currencyDecimals, currencySymbolOf, formatPrice } from '@/utils/formatPrice';
 
 /** Sentinel for "no upper price limit". */
 export const PRICE_NO_MAX = 1_000_000_000;
@@ -133,11 +133,17 @@ export function FiltersDrawer({
 }) {
   const { currency: prefCurrency, convertBetween, ratesLoaded } = useCurrencyPreference();
   // Without rates a USD amount cannot be turned into PKR, so show PKR until they arrive rather than guess.
-  const dispCur: 'PKR' | 'USD' = prefCurrency === 'USD' && ratesLoaded ? 'USD' : 'PKR';
+  const dispCur: string = ratesLoaded ? prefCurrency : 'PKR';
   const toBase = (v: number) => (dispCur === 'PKR' ? v : Math.round(convertBetween(v, dispCur, 'PKR')));
   const fromBase = (v: number) => (dispCur === 'PKR' ? v : Math.round(convertBetween(v, 'PKR', dispCur) * 100) / 100);
   const money = (v: number) => formatPrice(v, dispCur);
-  const edges = BUCKET_EDGES[dispCur];
+  // PKR / USD have hand-picked buckets; a local currency (AED, GBP...) gets the USD ones converted and rounded to 2 significant digits.
+  const edges: readonly number[] = BUCKET_EDGES[dispCur as 'PKR' | 'USD']
+    ?? BUCKET_EDGES.USD.map(v => {
+      const c = convertBetween(v, 'USD', dispCur);
+      const mag = 10 ** Math.max(0, Math.floor(Math.log10(Math.max(c, 1))) - 1);
+      return Math.max(1, Math.round(c / mag) * mag);
+    });
   const PRICE_BUCKETS: { label: string; range: [number, number] }[] = [
     { label: `Under ${money(edges[0])}`, range: [0, toBase(edges[0])] },
     { label: `${money(edges[0])} to ${money(edges[1])}`, range: [toBase(edges[0]), toBase(edges[1])] },
@@ -230,7 +236,7 @@ export function FiltersDrawer({
             ))}
           </Section>
 
-          <Section title={dispCur === 'USD' ? 'Price ($)' : 'Price (Rs)'} hint="Before delivery and other fees">
+          <Section title={`Price (${currencySymbolOf(dispCur)})`} hint="Before delivery and other fees">
             <RadioRow
               name="f-price" label="Any price" checked={anyPrice && !customOpen}
               onChange={() => { setCustomOpen(false); onChange({ ...filters, priceRange: EMPTY_FILTERS.priceRange }); }}
@@ -248,13 +254,13 @@ export function FiltersDrawer({
                 className="flex items-center gap-3 ps-[38px] pt-2"
               >
                 <input
-                  type="number" min={0} step={dispCur === 'USD' ? 0.01 : 1} inputMode="decimal" placeholder="Low" aria-label="Minimum price"
+                  type="number" min={0} step={currencyDecimals(dispCur) ? 0.01 : 1} inputMode="decimal" placeholder="Low" aria-label="Minimum price"
                   value={low} onChange={e => setLow(e.target.value)}
                   className="w-0 flex-1 min-w-0 rounded-lg border border-[#8a959d] px-4 py-3 text-[16px] text-carbon outline-none focus:border-carbon"
                 />
                 <span className="text-[16px] text-slate">to</span>
                 <input
-                  type="number" min={0} step={dispCur === 'USD' ? 0.01 : 1} inputMode="decimal" placeholder="High" aria-label="Maximum price"
+                  type="number" min={0} step={currencyDecimals(dispCur) ? 0.01 : 1} inputMode="decimal" placeholder="High" aria-label="Maximum price"
                   value={high} onChange={e => setHigh(e.target.value)}
                   className="w-0 flex-1 min-w-0 rounded-lg border border-[#8a959d] px-4 py-3 text-[16px] text-carbon outline-none focus:border-carbon"
                 />

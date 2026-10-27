@@ -18,6 +18,7 @@ import { SkeletonBox } from './SkeletonBox';
 import { ProfileAvatar } from './ProfileAvatar';
 import { PlatformTopBar } from './PlatformTopBar';
 import { ActionMenu } from './ActionMenu';
+import { currencyFlagEmoji, currencyName } from '@/utils/currencyMeta';
 import { useCurrencyPreference, type SupportedCurrency } from '@/contexts/CurrencyPreferenceContext';
 import { formatPrice } from '@/utils/formatPrice';
 import { SignInPreview } from './SignInPreview';
@@ -893,20 +894,22 @@ function FlagUS({ className }: { className?: string }) {
   );
 }
 
-const CURRENCY_OPTIONS: { code: SupportedCurrency; Flag: typeof FlagPK; label: string }[] = [
-  { code: 'PKR', Flag: FlagPK, label: 'Pakistani Rupee' },
-  { code: 'USD', Flag: FlagUS, label: 'US Dollar' },
-];
+// Flag for a currency: the existing SVGs for PKR/USD, an emoji flag for any local currency.
+function CurrencyFlag({ code }: { code: SupportedCurrency }) {
+  if (code === 'PKR') return <FlagPK className="w-4 h-3 rounded-[2px] shrink-0 object-cover" />;
+  if (code === 'USD') return <FlagUS className="w-4 h-3 rounded-[2px] shrink-0 object-cover" />;
+  return <span aria-hidden className="text-[13px] leading-none shrink-0">{currencyFlagEmoji(code)}</span>;
+}
 
-// PKR/USD dropdown, country flag + code in the trigger — built on the
+// Local / USD / PKR dropdown, country flag + code in the trigger — built on the
 // shared ActionMenu (same portal/positioning/keyboard-nav/click-outside
 // mechanics used by every other dropdown in the app, e.g. admin table row
 // actions) rather than a one-off implementation. Manual selection here
 // always wins and persists — location detection only ever sets the
 // initial default, never overrides an explicit choice.
 export function CurrencySelector({ tone = 'light' }: { tone?: 'light' | 'dark' } = {}) {
-  const { currency, setCurrency } = useCurrencyPreference();
-  const active = CURRENCY_OPTIONS.find(c => c.code === currency) ?? CURRENCY_OPTIONS[0];
+  const { currency, setCurrency, options } = useCurrencyPreference();
+  const active = { code: currency };
   const dark = tone === 'dark';
 
   return (
@@ -914,7 +917,7 @@ export function CurrencySelector({ tone = 'light' }: { tone?: 'light' | 'dark' }
       ariaLabel={`Currency: ${active.code}. Change currency`}
       trigger={
         <>
-          <active.Flag className="w-4 h-3 rounded-[2px] shrink-0 object-cover" />
+          <CurrencyFlag code={active.code} />
           <span className={dark ? 'inline' : 'hidden md:inline'}>{active.code}</span>
           <ChevronDown size={12} className={dark ? 'inline text-white/80' : 'hidden md:inline text-slate'} />
         </>
@@ -922,15 +925,15 @@ export function CurrencySelector({ tone = 'light' }: { tone?: 'light' | 'dark' }
       triggerClassName={dark
         ? 'flex items-center gap-1.5 text-[12px] font-semibold text-white border border-white/30 rounded-md ps-2 pe-[7px] py-[3px] min-h-10 md:min-h-0 bg-white/10 hover:bg-white/20 transition-colors cursor-pointer shrink-0'
         : 'flex items-center gap-1.5 text-[12px] font-semibold text-charcoal border border-bone rounded-md ps-2 pe-2 md:pe-[7px] py-1 bg-white hover:bg-cream transition-colors cursor-pointer shrink-0'}
-      items={CURRENCY_OPTIONS.map(c => ({
+      items={options.map(code => ({
         label: (
           <span className="flex items-center gap-2 flex-1">
-            <span className="flex-1">{c.code} — {c.label}</span>
-            {c.code === active.code && <Check size={13} className="text-brand-orange shrink-0" />}
+            <span className="flex-1">{code} — {currencyName(code)}</span>
+            {code === active.code && <Check size={13} className="text-brand-orange shrink-0" />}
           </span>
         ),
-        onClick: () => setCurrency(c.code),
-        icon: <c.Flag className="w-4 h-3 rounded-[2px] shrink-0 object-cover" />,
+        onClick: () => setCurrency(code),
+        icon: <CurrencyFlag code={code} />,
       }))}
     />
   );

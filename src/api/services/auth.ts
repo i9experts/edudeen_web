@@ -257,6 +257,8 @@ export interface ProfileData {
    *  which case it's the cross-device source of truth for checkout/display
    *  currency (see CurrencyPreferenceContext). */
   currencyPreference: 'PKR' | 'USD' | null;
+  displayCurrency?: string | null;
+  detectedCountry?: string | null;
   /** Social provider the account was created/linked with (absent for email sign-ups). */
   authProvider?: 'google' | 'facebook' | 'apple' | string | null;
   /** False for a social-only account that never set a password. Optional —
@@ -277,6 +279,10 @@ export interface EditProfilePayload {
   address?: string;
   profileImage?: string;
   currencyPreference?: 'PKR' | 'USD';
+  /** Display-only currency (any ISO code); never used for charging. */
+  displayCurrency?: string;
+  /** Country detected on first sign-in (server keeps the first one). */
+  detectedCountry?: string;
 }
 
 export function apiEditProfile(payload: EditProfilePayload) {

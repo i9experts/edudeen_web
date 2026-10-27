@@ -1923,6 +1923,18 @@ export function CheckoutPage() {
               <span className="text-carbon">Total</span>
               <span className="text-carbon">{formatPrice(total, summaryCur)}</span>
             </div>
+            {/* A local display currency (AED, GBP...) is for reference only: the order is charged in USD. */}
+            {displayCurrency !== 'USD' && displayCurrency !== 'PKR' && (
+              <div className="mt-2 text-[12px] text-slate">
+                {checkout && (
+                  <p className="m-0 flex justify-between">
+                    <span>Approx. in your currency</span>
+                    <span>{formatPrice(convertToDisplay(total, summaryCur), displayCurrency)}</span>
+                  </p>
+                )}
+                <p className="m-0 mt-1">Prices in your currency are for reference. Payment is charged in USD.</p>
+              </div>
+            )}
 
             {savingsHints.length > 0 && (
               <div className="mt-4 flex flex-col gap-2">

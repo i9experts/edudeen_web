@@ -100,7 +100,7 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
   const { state, update } = useBrowseState();
   const { currency: prefCurrency, convertBetween, ratesLoaded } = useCurrencyPreference();
   // The price filter lives in PKR (catalogue currency); the chip shows it in the currency the buyer picked.
-  const chipCur = prefCurrency === 'USD' && ratesLoaded ? 'USD' : 'PKR';
+  const chipCur = ratesLoaded ? prefCurrency : 'PKR';
   const chipMoney = (pkr: number) => formatPrice(chipCur === 'PKR' ? pkr : Math.round(convertBetween(pkr, 'PKR', chipCur) * 100) / 100, chipCur);
   const { tree, byId } = useCategoryTree();
   // Main-category switcher (shop views only): main categories that have products; the active one is the root of the open category.

@@ -23,6 +23,23 @@ export interface ExchangeRateHistoryRow {
 
 interface ApiResponse<T> { success: boolean; message?: string; data: T }
 
+export interface DisplayRateInfo {
+  country: string | null;
+  currency: string | null;
+  /** Units of `currency` per 1 USD; null = no valid rate (show native prices). */
+  ratePerUSD: number | null;
+  asOf: string | null;
+  /** true = providers failed, last-known-good rate in use. */
+  stale: boolean;
+}
+
+// Public — the visitor's country (CDN header, else the browser's `country` hint) -> display currency + live rate. Display only.
+export function apiGetDisplayRate(countryHint?: string | null) {
+  return client.get<never, ApiResponse<DisplayRateInfo>>(ENDPOINTS.EXCHANGE_RATE.DISPLAY, {
+    params: countryHint ? { country: countryHint } : undefined,
+  });
+}
+
 // Public — used to convert prices for display before checkout.
 export function apiGetCurrentRates() {
   return client.get<never, ApiResponse<CurrentRatesMap>>(ENDPOINTS.EXCHANGE_RATE.CURRENT);

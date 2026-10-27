@@ -156,11 +156,17 @@ export interface CreateCheckoutPayload {
 // Server-validated regardless (see CheckoutService.resolveCheckoutCurrency);
 // omitting/tampering with this just falls back to the buyer's saved account
 // preference or the platform default, it's never trusted blindly.
+// Only USD or PKR is ever charged: the context stores the CHARGE currency (local display currencies such as AED
+// are display-only and charge as USD) under its own key; the old display key is the fallback.
+const CHARGE_STORAGE_KEY = 'edudeen_charge_currency';
 const CURRENCY_STORAGE_KEY = 'edudeen_currency_preference';
 function getCurrencyPreference(): string | undefined {
-  let saved: string | null = null;
-  try { saved = localStorage.getItem(CURRENCY_STORAGE_KEY); } catch { /* storage blocked */ }
-  return saved === 'PKR' || saved === 'USD' ? saved : undefined;
+  for (const key of [CHARGE_STORAGE_KEY, CURRENCY_STORAGE_KEY]) {
+    let saved: string | null = null;
+    try { saved = localStorage.getItem(key); } catch { /* storage blocked */ }
+    if (saved === 'PKR' || saved === 'USD') return saved;
+  }
+  return undefined;
 }
 
 interface CreateCheckoutResponse {

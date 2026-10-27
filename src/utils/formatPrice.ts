@@ -2,16 +2,23 @@
 // symbol + a space), other codes -> "<symbol> 12.50". Digits are always Latin (also in Urdu mode) so a
 // price never switches script; only the grouping style follows `locale`.
 
-const SYMBOLS: Record<string, string> = { USD: '$', PKR: 'Rs', EUR: '€', GBP: '£', INR: '₹', AED: 'AED', CAD: 'CA$', AUD: 'AU$' };
+const SYMBOLS: Record<string, string> = {
+  USD: '$', PKR: 'Rs', EUR: '€', GBP: '£', INR: '₹', AED: 'AED', CAD: 'CA$', AUD: 'AU$', SAR: 'SAR', QAR: 'QAR', KWD: 'KWD',
+  BHD: 'BHD', OMR: 'OMR', BDT: '৳', LKR: 'Rs', NPR: 'NPR', JPY: '¥', CNY: 'CN¥', KRW: '₩', TRY: '₺', NGN: '₦', EGP: 'E£',
+  ZAR: 'R', SGD: 'S$', MYR: 'RM', NZD: 'NZ$', CHF: 'CHF', RUB: '₽', PHP: '₱', THB: '฿', IDR: 'Rp', VND: '₫',
+};
 
 export function currencySymbolOf(code?: string | null): string {
   if (!code) return '$';
   return SYMBOLS[code.toUpperCase()] ?? code;
 }
 
-/** Decimals a currency is shown with: PKR whole rupees, everything else 2. */
+// Currencies shown without decimals (no practical sub-unit): PKR plus the usual zero-decimal ones.
+const ZERO_DECIMAL = new Set(['PKR', 'JPY', 'KRW', 'VND', 'IDR', 'CLP', 'UGX', 'IQD', 'IRR', 'LBP']);
+
+/** Decimals a currency is shown with: PKR / JPY / KRW... whole units, everything else 2. */
 export function currencyDecimals(code?: string | null): number {
-  return (code ?? 'USD').toUpperCase() === 'PKR' ? 0 : 2;
+  return ZERO_DECIMAL.has((code ?? 'USD').toUpperCase()) ? 0 : 2;
 }
 
 const nfCache = new Map<string, Intl.NumberFormat>();

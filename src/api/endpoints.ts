@@ -38,6 +38,7 @@ export const ENDPOINTS = {
   // ── EXCHANGE RATE ───────────────────────────────────────────────────────────
   EXCHANGE_RATE: {
     CURRENT: '/api/exchange-rate/current',
+    DISPLAY: '/api/exchange-rate/display',
     ADMIN_HISTORY: '/api/admin/fx/history',
     ADMIN_STALENESS: '/api/admin/fx/staleness',
     ADMIN_OVERRIDE: '/api/admin/fx/override',
