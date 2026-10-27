@@ -409,7 +409,7 @@ export default function StoreEditProduct() {
     name: cur.name, images: cur.images, price: String(cur.price), compareAtPrice: cur.compareAtPrice, currency: store?.baseCurrency,
     productType: pType, deliveryFormat: delivery.format, educationLevel: dig.educationLevel, customLevel: dig.customLevel,
     premiumPercent: (campaignIds?.length ?? 0) > 0 ? 0 : effectiveSellerPercent(premiumPct ?? '', storePremiumPct, !!premiumOptOut),
-    ageMin: learning.ageMin, ageMax: learning.ageMax, classFrom: learning.classFrom, classTo: learning.classTo, storeName: store?.name,
+    ageMin: learning.ageMin, ageMax: learning.ageMax, classFrom: learning.classFrom, classTo: learning.classTo, coverStyle: learning.coverStyle || undefined, storeName: store?.name,
   };
 
   const reviewBanner = review ? (

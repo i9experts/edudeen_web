@@ -380,7 +380,7 @@ export default function StoreAddProduct() {
       name: cur.name, images: cur.images, price: cur.price, compareAtPrice: cur.compareAtPrice, currency: store?.baseCurrency,
       productType: pType, deliveryFormat: delivery.format, educationLevel: dig.educationLevel, customLevel: dig.customLevel,
       premiumPercent: campaignIds.length ? 0 : effectiveSellerPercent(premiumPct, storePremiumPct, premiumOptOut),
-      ageMin: learning.ageMin, ageMax: learning.ageMax, classFrom: learning.classFrom, classTo: learning.classTo, storeName: store?.name,
+      ageMin: learning.ageMin, ageMax: learning.ageMax, classFrom: learning.classFrom, classTo: learning.classTo, coverStyle: learning.coverStyle || undefined, storeName: store?.name,
       liveStartsAt: delivery.format === 'live_class' && delivery.date && delivery.time ? new Date(`${delivery.date}T${delivery.time}:00`).toISOString() : null,
     };
   }
