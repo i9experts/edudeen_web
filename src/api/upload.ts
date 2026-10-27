@@ -17,11 +17,12 @@ export interface PrivateUploadData {
 
 interface UploadApiResponse<T> { success: boolean; message: string; data: T }
 
-/** Optional progress callback (0-100) for long uploads; when given the 15 s request timeout is lifted. */
+/** Optional progress callback (0-100) for long uploads. Uploads always use a 10 min timeout (the default 15 s is too short for big files). */
 export type UploadProgress = (percent: number) => void;
-const uploadConfig = (onProgress?: UploadProgress) => onProgress
-  ? { timeout: 10 * 60_000, onUploadProgress: (e: { loaded: number; total?: number }) => { if (e.total) onProgress(Math.round((e.loaded / e.total) * 100)); } }
-  : undefined;
+const uploadConfig = (onProgress?: UploadProgress) => ({
+  timeout: 10 * 60_000,
+  ...(onProgress ? { onUploadProgress: (e: { loaded: number; total?: number }) => { if (e.total) onProgress(Math.round((e.loaded / e.total) * 100)); } } : {}),
+});
 
 export function apiUploadPublicFile(file: File, onProgress?: UploadProgress) {
   const fd = new FormData();
