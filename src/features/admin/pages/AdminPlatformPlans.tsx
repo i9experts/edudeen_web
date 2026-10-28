@@ -1,5 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Plus, Pencil, Archive, TrendingUp, Users, DollarSign, Eye } from 'lucide-react';
+import { Plus, Pencil, Archive, TrendingUp, Users, DollarSign, Eye, Gift } from 'lucide-react';
+import { EntitySearchSelect, type EntityOption } from '../components/analytics/EntitySearchSelect';
+import { apiSearchStores } from '@/api/services/search';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { Modal } from '@/components/comman/ui/Modal';
 import { Button } from '@/components/comman/ui/Button';
@@ -9,7 +11,7 @@ import { AdminStudioHeader } from '@/features/admin/components/studio';
 import {
   apiAdminListPlatformPlans, apiAdminCreatePlatformPlan, apiAdminUpdatePlatformPlan, apiAdminArchivePlatformPlan,
   apiAdminGetPlatformPlanRevenue, apiAdminGetPlatformPlanSubscribers, apiAdminListAddonPurchases,
-  apiAdminRefundPlatformInvoice,
+  apiAdminRefundPlatformInvoice, apiAdminGrantPlatformPlan,
   type PlatformPlan, type PlatformPlanLimits, type StorePlatformSubscription, type AddonPurchase,
 } from '@/api/services/platformPlans';
 
@@ -320,6 +322,71 @@ function SubscribersModal({ plan, onClose }: { plan: PlatformPlan; onClose: () =
 }
 
 // ── Add-on purchases panel ────────────────────────────────────────────────────
+async function searchStoresByName(query: string): Promise<EntityOption[]> {
+  const res = await apiSearchStores(query, 1, 8);
+  return res.data.stores.map(s => ({ id: s.storeId, label: s.name, sub: `/${s.slug}` }));
+}
+
+/** Admin gives one store free access to any active plan for up to 31 days. */
+function GrantPlanModal({ plans, onClose, onDone }: { plans: PlatformPlan[]; onClose: () => void; onDone: () => void }) {
+  const grantable = plans.filter(p => p.status === 'active');
+  const [storeId, setStoreId] = useState('');
+  const [planId, setPlanId] = useState(grantable[0]?._id ?? '');
+  const [days, setDays] = useState('30');
+  const [reason, setReason] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [done, setDone] = useState('');
+
+  async function submit() {
+    const n = Number(days);
+    if (!storeId) { setError('Choose a store.'); return; }
+    if (!planId) { setError('Choose a plan.'); return; }
+    if (!Number.isInteger(n) || n < 1 || n > 31) { setError('Days must be a whole number from 1 to 31.'); return; }
+    setBusy(true); setError('');
+    try {
+      const res = await apiAdminGrantPlatformPlan(storeId, { planId, days: n, reason: reason.trim() || undefined });
+      setDone(`${res.data.planName} plan active until ${new Date(res.data.until).toLocaleDateString()}.`);
+      onDone();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not give access.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Modal mobileSheet title="Give free plan access" width={480} onClose={onClose}
+      footer={done
+        ? <Button onClick={onClose}>Close</Button>
+        : <>
+            <Button variant="ghost" onClick={onClose} disabled={busy}>Cancel</Button>
+            <Button onClick={submit} loading={busy}>Give access</Button>
+          </>}
+    >
+      {done ? (
+        <p className="text-[13px] text-charcoal leading-[1.6]">{done} The seller was notified. The store returns to the free plan automatically when it ends.</p>
+      ) : (
+        <div className="flex flex-col gap-4">
+          <EntitySearchSelect label="Store" placeholder="Search by store name…" selectedId={storeId}
+            onSelect={opt => setStoreId(opt?.id ?? '')} search={searchStoresByName} />
+          <label className="flex flex-col gap-1.5 text-[12px] font-semibold text-carbon">
+            Plan
+            <select value={planId} onChange={e => setPlanId(e.target.value)}
+              className="h-11 rounded-lg border border-bone bg-white px-3 text-[13px] font-normal text-carbon">
+              {grantable.map(p => <option key={p._id} value={p._id}>{p.name}</option>)}
+            </select>
+          </label>
+          <Input label="Days (1 to 31)" type="number" min={1} max={31} value={days} onChange={e => setDays(e.target.value)} />
+          <Input label="Reason (optional)" value={reason} onChange={e => setReason(e.target.value)} maxLength={300} />
+          {error && <p className="text-[12px] text-error">{error}</p>}
+          <p className="text-[12px] text-charcoal">Free of charge. If the store pays for a plan through a live Stripe subscription, this is refused.</p>
+        </div>
+      )}
+    </Modal>
+  );
+}
+
 function AddonsPanel() {
   const [addons, setAddons] = useState<AddonPurchase[]>([]);
   const [loading, setLoading] = useState(true);
@@ -357,6 +424,7 @@ export function AdminPlatformPlans() {
   const [editing, setEditing] = useState<PlatformPlan | 'new' | null>(null);
   const [viewingSubscribersFor, setViewingSubscribersFor] = useState<PlatformPlan | null>(null);
   const [showAddons, setShowAddons] = useState(false);
+  const [granting, setGranting] = useState(false);
 
   const load = useCallback(() => {
     setLoading(true); setError('');
@@ -404,6 +472,7 @@ export function AdminPlatformPlans() {
         actions={
           <div className="flex items-center gap-2 flex-wrap">
             <Button variant="outline" onClick={() => setShowAddons(s => !s)} aria-expanded={showAddons}>{showAddons ? 'Hide Add-ons' : 'View Add-on Purchases'}</Button>
+            <Button variant="outline" icon={<Gift size={14} />} onClick={() => setGranting(true)}>Give free access</Button>
             <Button icon={<Plus size={14} />} onClick={() => setEditing('new')}>Create Plan</Button>
           </div>
         }
@@ -479,6 +548,7 @@ export function AdminPlatformPlans() {
       </div>
 
       {editing && <PlanFormModal plan={editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); load(); }} />}
+      {granting && <GrantPlanModal plans={plans} onClose={() => setGranting(false)} onDone={load} />}
       {viewingSubscribersFor && <SubscribersModal plan={viewingSubscribersFor} onClose={() => setViewingSubscribersFor(null)} />}
 
       {archiving && (

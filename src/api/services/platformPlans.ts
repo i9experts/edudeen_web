@@ -247,6 +247,11 @@ export function apiAdminUpdatePlatformPlan(id: string, payload: Partial<CreatePl
   return client.patch<never, ApiResponse<PlatformPlan>>(`${BASE}/admin/${id}`, payload);
 }
 
+/** Free access to any active plan for 1-31 days (admin password asked by the client). */
+export function apiAdminGrantPlatformPlan(storeId: string, payload: { planId: string; days: number; reason?: string }) {
+  return client.post<never, ApiResponse<{ planName: string; until: string; days: number }>>(`${BASE}/admin/grant/${storeId}`, payload);
+}
+
 export function apiAdminArchivePlatformPlan(id: string, force = false) {
   return client.delete<never, ApiResponse<never>>(`${BASE}/admin/${id}?force=${force}`);
 }
