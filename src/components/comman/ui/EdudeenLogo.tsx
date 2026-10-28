@@ -11,14 +11,14 @@ interface LogoProps {
 // mark on its own (≈0.8:1), `edudeen-logo.png` is the full lockup with the
 // "Your partner in Tarbiyyah" tagline (≈2.62:1, navy wordmark — only legible
 // on a light surface).
-const MARK_RATIO = 800 / 1000;
-const LOCKUP_RATIO = 2048 / 782;
+const MARK_RATIO = 1;
+const LOCKUP_RATIO = 157 / 60;
 
 export function EdudeenIcon({ size = 32 }: { size?: number }) {
   return (
     <img
-      src="/edudeen-mark-160.webp"
-      srcSet="/edudeen-mark-80.webp 1x, /edudeen-mark-160.webp 2x"
+      src="/edudeen-mark-160.png"
+      srcSet="/edudeen-mark-80.png 1x, /edudeen-mark-160.png 2x"
       alt="Edudeen"
       width={Math.round(size * MARK_RATIO)}
       height={size}
@@ -54,8 +54,8 @@ export function EdudeenLogo({ size = 32, showWordmark = true, className, variant
   return (
     <div className={clsx('flex items-center', className)}>
       <img
-        src="/edudeen-logo-640.webp"
-        srcSet="/edudeen-logo-320.webp 320w, /edudeen-logo-640.webp 640w"
+        src="/edudeen-logo-640.png"
+        srcSet="/edudeen-logo-320.png 320w, /edudeen-logo-640.png 640w"
         sizes={`${Math.round(height * LOCKUP_RATIO)}px`}
         alt="Edudeen — Your partner in Tarbiyyah"
         width={Math.round(height * LOCKUP_RATIO)}
