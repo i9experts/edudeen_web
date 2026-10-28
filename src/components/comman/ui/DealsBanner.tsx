@@ -454,25 +454,38 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
           </Link>
           )
         ) : comingSoon ? (
-          /* Coming soon: centred slide, no link (nothing to shop yet) — counts down to the start. */
+          /* Coming soon: no link (nothing to shop yet). Same structure and box sizes as the live slide below, so the strip
+             never changes height when the rotation moves between them. */
           <div
             key={campaign._id}
             aria-label={`${campaign.name} — coming soon`}
-            className="campaign-slide relative z-[1] flex w-full h-full flex-col items-center justify-center gap-2 overflow-hidden rounded-[20px] px-4 py-5 text-center text-white sm:px-6 lg:min-h-[96px]"
+            className="campaign-slide overflow-hidden rounded-[20px] relative z-[1] flex w-full flex-wrap items-center gap-x-4 gap-y-3 text-start text-white px-4 py-4 sm:px-6 lg:flex-nowrap lg:gap-8 lg:px-8 lg:py-5 h-[184px] sm:h-[176px] lg:h-[96px]"
           >
-            <span className="inline-flex shrink-0 items-center gap-[5px] rounded-full bg-[#F5B301] px-[12px] py-[4px] text-[12px] font-bold uppercase leading-none tracking-[0.08em] text-[#3a2a00]">
-              <Zap size={11} className="fill-[#3a2a00]" /> Coming soon
-            </span>
-            <span className="font-serif text-[22px] sm:text-[28px] font-bold leading-[1.1] tracking-[-0.01em]">{campaign.name}</span>
-            <p className="max-w-[640px] text-[13px] leading-snug text-white/85">
-              {hasFixedOff || (campaign.discountType === 'percentage' && campaign.discountValue)
-                ? <span className="font-semibold">{campaign.discountType === 'percentage' ? `Up to ${campaign.discountValue}% off` : `${formatPrice(displayedFixedOff, displayCurrency)} off`}</span>
-                : null}
-              {campaign.description ? <span className="text-white/75">{(hasFixedOff || campaign.discountValue) ? ' · ' : ''}{campaign.description}</span> : null}
-            </p>
-            <div className="flex items-center gap-3" aria-label="Time until the sale starts">
-              <span className="text-[12px] font-semibold uppercase tracking-[0.1em] text-white/70">Starts in</span>
-              <div className="flex items-center gap-[4px]"><CountdownBoxes countdown={countdown} /></div>
+            <div className="flex w-full min-w-0 flex-col justify-center gap-2 lg:w-auto lg:flex-1">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                <span className="inline-flex shrink-0 items-center gap-[5px] rounded-full bg-[#F5B301] px-[10px] py-[4px] text-[12px] font-bold uppercase leading-none tracking-[0.08em] text-[#3a2a00]">
+                  <Zap size={11} className="fill-[#3a2a00]" /> Coming soon
+                </span>
+              </div>
+              <span className="font-serif text-[22px] sm:text-[28px] font-bold leading-[1.1] tracking-[-0.01em] text-white">
+                {campaign.discountType === 'percentage' && campaign.discountValue
+                  ? `UP TO ${campaign.discountValue}% OFF`
+                  : hasFixedOff ? `${formatPrice(displayedFixedOff, displayCurrency)} OFF` : 'SPECIAL DEALS'}
+              </span>
+              <p className="min-w-0 truncate text-[13px] leading-snug text-white/85">
+                <span className="font-semibold">{campaign.name}</span>
+                {campaign.description ? <span className="hidden text-white/70 md:inline"> · {campaign.description}</span> : null}
+              </p>
+            </div>
+
+            <div className="flex w-full flex-wrap items-center justify-between gap-x-5 gap-y-3 lg:w-auto lg:shrink-0 lg:flex-nowrap lg:justify-end lg:gap-6">
+              <div className="flex items-center gap-3" aria-label="Time until the sale starts">
+                <span className="hidden text-[12px] font-semibold uppercase tracking-[0.1em] text-white/70 sm:inline">Starts in</span>
+                <div className="flex items-center gap-[4px]"><CountdownBoxes countdown={countdown} /></div>
+              </div>
+              <span className="inline-flex h-11 shrink-0 items-center justify-center whitespace-nowrap rounded-full border border-white/30 bg-white/10 px-6 text-[14px] font-bold text-white">
+                {new Date(campaign.startDate as string).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+              </span>
             </div>
           </div>
         ) : (
@@ -480,7 +493,7 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
             key={campaign._id}
             to={`/?campaign=${encodeURIComponent(campaign._id)}`}
             aria-label={`${campaign.name} — ${discountHeadline}. Shop the sale`}
-            className="no-underline campaign-slide overflow-hidden rounded-[20px] group relative z-[1] flex w-full h-full flex-wrap items-center gap-x-4 gap-y-3 border-none bg-transparent text-start text-white outline-none cursor-pointer px-4 py-4 sm:px-6 lg:flex-nowrap lg:gap-8 lg:px-8 lg:py-5 lg:min-h-[96px]"
+            className="no-underline campaign-slide overflow-hidden rounded-[20px] group relative z-[1] flex w-full flex-wrap items-center gap-x-4 gap-y-3 border-none bg-transparent text-start text-white outline-none cursor-pointer px-4 py-4 sm:px-6 lg:flex-nowrap lg:gap-8 lg:px-8 lg:py-5 h-[184px] sm:h-[176px] lg:h-[96px]"
           >
             {/* Left: badge + headline on one line, campaign name/description underneath. Right: timer + CTA, vertically centred. */}
             <div className="flex w-full min-w-0 flex-col justify-center gap-2 lg:w-auto lg:flex-1">
