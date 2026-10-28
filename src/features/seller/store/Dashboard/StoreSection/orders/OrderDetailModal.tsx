@@ -148,6 +148,13 @@ export function OrderDetailModal({ order, storeId, onClose, onUpdated }: Props) 
           )}
         </section>
 
+        {detail?.status === 'cancelled' && detail.cancelReason && (
+          <section role="note" className="rounded-lg border border-error/30 bg-error/5 px-3 py-2">
+            <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-error mb-1">Cancelled by buyer</p>
+            <p className="text-[13px] text-carbon break-words">{detail.cancelReason}</p>
+          </section>
+        )}
+
         <section>
           <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-slate mb-1">Items</p>
           {detailLoading ? (
@@ -175,6 +182,9 @@ export function OrderDetailModal({ order, storeId, onClose, onUpdated }: Props) 
                     <div className="min-w-0">
                       <p className="text-[13px] text-carbon font-medium break-words">{it.name}</p>
                       {extras.length > 0 && <p className="text-[12px] text-slate">{extras.join(' · ')}</p>}
+                      {it.status === 'cancelled' && it.cancelReason && it.cancelReason !== detail.cancelReason && (
+                        <p className="text-[12px] text-error">Cancelled: {it.cancelReason}</p>
+                      )}
                     </div>
                     <div className="text-right shrink-0">
                       <p className="text-[13px] font-semibold text-carbon">{money(it.totalPrice)}</p>

@@ -103,8 +103,14 @@ export function OrderDetailPage() {
       <div className="flex items-center gap-3 flex-wrap">
         <Link to="/account/orders" className="inline-flex items-center gap-1 text-[13px] text-slate hover:text-brand-orange no-underline"><ArrowLeft size={14} /> Orders</Link>
         <h1 className="text-[20px] font-bold text-carbon font-mono">{order.orderNumber}</h1>
-        <StatusBadge status={order.orderStatus} size="sm" />
-        {order.orderStatus !== 'cancelled' && <StatusBadge status={order.paymentStatus} size="sm" />}
+        {order.isFreeClaim && order.orderStatus !== 'cancelled' ? (
+          <span className="inline-flex items-center gap-1 px-2.5 py-[3px] rounded-full text-[12px] font-bold bg-[#e3f4ea] text-[#1a6b35] border border-[#a3d9b5]">Availed</span>
+        ) : (
+          <>
+            <StatusBadge status={order.orderStatus} size="sm" />
+            {order.orderStatus !== 'cancelled' && <StatusBadge status={order.paymentStatus} size="sm" />}
+          </>
+        )}
         <Link to={`/account/orders/${order._id}/invoice`} target="_blank" className="ms-auto inline-flex items-center gap-1.5 rounded-lg border border-bone bg-white px-3 py-[7px] text-[12.5px] font-semibold text-carbon no-underline hover:border-brand-orange">
           <FileText size={13} /> Invoice
         </Link>
@@ -126,7 +132,9 @@ export function OrderDetailPage() {
             {so.storeSlug ? (
               <Link to={getStorePagePath(so.storeSlug)} className="text-[13.5px] font-bold text-carbon no-underline hover:text-brand-orange">{so.storeName ?? so.sellerName ?? 'Store'}</Link>
             ) : <span className="text-[13.5px] font-bold text-carbon">{so.storeName ?? so.sellerName ?? 'Store'}</span>}
-            <StatusBadge status={so.status} size="sm" />
+            {order.isFreeClaim && so.status !== 'cancelled'
+              ? <span className="inline-flex items-center gap-1 px-2.5 py-[3px] rounded-full text-[12px] font-bold bg-[#e3f4ea] text-[#1a6b35] border border-[#a3d9b5]">Availed</span>
+              : <StatusBadge status={so.status} size="sm" />}
             {so.tracking?.trackingNumber && (
               <span className="ms-auto inline-flex items-center gap-1 text-[12px] text-slate">
                 <Truck size={12} /> {so.tracking.carrier} {so.tracking.trackingNumber}
@@ -135,8 +143,14 @@ export function OrderDetailPage() {
             )}
           </div>
           <div className="px-4 md:px-5 py-4 border-b border-bone">
-            <Timeline order={order} so={so} />
-            <OrderNextStep input={{ orderStatus: so.status === 'cancelled' ? 'cancelled' : order.orderStatus, isPaid: order.isPaid, paymentType: order.paymentType, paymentStatus: order.paymentStatus, stores: [so], shippingEstimate: order.shippingEstimate ?? null }} />
+            {order.isFreeClaim && so.status !== 'cancelled' ? (
+              <p className="text-[13px] text-carbon">You have already availed this free product. Download it from your library anytime.</p>
+            ) : (
+              <>
+                <Timeline order={order} so={so} />
+                <OrderNextStep input={{ orderStatus: so.status === 'cancelled' ? 'cancelled' : order.orderStatus, isPaid: order.isPaid, paymentType: order.paymentType, paymentStatus: order.paymentStatus, stores: [so], shippingEstimate: order.shippingEstimate ?? null }} />
+              </>
+            )}
             {Array.isArray((so as any).trackingEvents) && (so as any).trackingEvents.length > 0 && (
               <div className="mt-4 pt-3 border-t border-bone">
                 <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-slate mb-1.5">Courier updates</p>

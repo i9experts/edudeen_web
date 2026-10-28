@@ -532,6 +532,7 @@ export interface SellerOrderDetailItem {
   price:       number;
   totalPrice:  number;
   status:      string | null;
+  cancelReason?: string | null;
 }
 
 export interface SellerOrderShippingAddress {
@@ -554,9 +555,11 @@ export interface SellerOrderDetail {
   customer:        SellerOrderCustomer & { phone: string | null };
   shippingAddress: SellerOrderShippingAddress | null;
   status:          string;
+  cancelReason?:   string | null;
+  cancelledAt?:    string | null;
   type:            'physical' | 'digital' | 'mixed';
   subtotal:        number;
-  tracking:        { carrier: string | null; trackingNumber: string | null; trackingUrl: string | null } | null;
+  tracking:       { carrier: string | null; trackingNumber: string | null; trackingUrl: string | null } | null;
   /** Set when the shipment was booked through a courier integration. */
   shipment?:       { courier: string | null; trackingNumber: string | null; labelUrl: string | null; bookedAt: string | null } | null;
   giftMessage?:    string | null;

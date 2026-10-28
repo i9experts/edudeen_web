@@ -59,6 +59,8 @@ export interface OrderSummary {
   paymentType:      string;
   paymentStatus:    string;
   isPaid:           boolean;
+  /** Free product the buyer "availed" (no payment involved). */
+  isFreeClaim?:     boolean;
   subtotal:         number;
   shippingFee:      number;
   taxAmount:        number;
@@ -66,7 +68,7 @@ export interface OrderSummary {
   currency:         string;
   shippingAddress:  Record<string, unknown>;
   shippingEstimate?: string | null;
-  stores:           OrderStoreGroup[];
+  stores:          OrderStoreGroup[];
   createdAt:        string;
   paidAt?:          string | null;
 }
@@ -89,6 +91,7 @@ export interface OrderDetail {
   paymentType:     string;
   paymentStatus:   string;
   isPaid:          boolean;
+  isFreeClaim?:    boolean;
   subtotal:        number;
   shippingFee:     number;
   taxAmount:       number;
@@ -96,7 +99,7 @@ export interface OrderDetail {
   currency:        string;
   shippingAddress: Record<string, unknown>;
   shippingEstimate?: string | null;
-  sellerOrders:   (OrderStoreGroup & { _id?: string; storeName?: string | null; storeSlug?: string | null; storeContactEmail?: string | null; storeContactPhone?: string | null; sellerName?: string | null })[];
+  sellerOrders:  (OrderStoreGroup & { _id?: string; storeName?: string | null; storeSlug?: string | null; storeContactEmail?: string | null; storeContactPhone?: string | null; sellerName?: string | null })[];
   couponCode?:     string | null;
   couponDiscountTotal?: number;
   giftCardDiscountTotal?: number;

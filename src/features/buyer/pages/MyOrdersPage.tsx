@@ -140,6 +140,9 @@ export function ReasonModal({
 // "Confirmed"), and shipped/delivered come from the seller orders with their
 // real shippedAt/deliveredAt timestamps — see account/orderProgress.tsx.
 function OrderTimeline({ order }: { order: OrderSummary }) {
+  if (order.isFreeClaim && order.orderStatus !== 'cancelled') {
+    return <p className="text-[13px] text-carbon">You have already availed this free product. Download it from your library anytime.</p>;
+  }
   const input = {
     orderStatus:   order.orderStatus,
     isPaid:        order.isPaid,
@@ -286,11 +289,18 @@ function OrderCard({ order, onChanged }: { order: OrderSummary; onChanged: () =>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-[4px]">
             <span className="text-[13px] font-bold text-brand-deep-orange font-mono">{order.orderNumber}</span>
-            <StatusBadge status={order.orderStatus} />
-            {order.isPaid
-              ? <span className="px-2 py-[3px] rounded-full text-[12px] font-bold bg-[#e3f4ea] text-[#1a6b35] border border-[#a3d9b5]">Paid</span>
-              : <span className="px-2 py-[3px] rounded-full text-[12px] font-bold bg-[#fff0f0] text-error border border-[#f5bcbc]">Unpaid</span>
-            }
+            {order.isFreeClaim && order.orderStatus !== 'cancelled' ? (
+              <span className="inline-flex items-center gap-[5px] px-2.5 py-[4px] rounded-full text-[12px] font-bold bg-[#e3f4ea] text-[#1a6b35] border border-[#a3d9b5]">
+                <CheckCircle2 size={9} /> Availed
+              </span>
+            ) : (
+              <>
+                <StatusBadge status={order.orderStatus} />
+                {order.isPaid
+                  ? <span className="px-2 py-[3px] rounded-full text-[12px] font-bold bg-[#e3f4ea] text-[#1a6b35] border border-[#a3d9b5]">Paid</span>
+                  : <span className="px-2 py-[3px] rounded-full text-[12px] font-bold bg-[#fff0f0] text-error border border-[#f5bcbc]">Unpaid</span>}
+              </>
+            )}
             {hasDigital && (
               <span className="px-2 py-[3px] rounded-full text-[12px] font-bold bg-[#eef0ff] text-[#3851d1] border border-[#c7ceff]">Digital</span>
             )}
