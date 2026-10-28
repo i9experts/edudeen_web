@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Plus, Pencil, Archive, TrendingUp, Users, DollarSign, Eye, Gift } from 'lucide-react';
-import { EntitySearchSelect, type EntityOption } from '../components/analytics/EntitySearchSelect';
-import { apiSearchStores } from '@/api/services/search';
+import { EntitySearchSelect } from '../components/analytics/EntitySearchSelect';
+import { searchStoresByName } from '@/api/services/adminStoreLookup';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { Modal } from '@/components/comman/ui/Modal';
 import { Button } from '@/components/comman/ui/Button';
@@ -322,11 +322,6 @@ function SubscribersModal({ plan, onClose }: { plan: PlatformPlan; onClose: () =
 }
 
 // ── Add-on purchases panel ────────────────────────────────────────────────────
-async function searchStoresByName(query: string): Promise<EntityOption[]> {
-  const res = await apiSearchStores(query, 1, 8);
-  return res.data.stores.map(s => ({ id: s.storeId, label: s.name, sub: `/${s.slug}` }));
-}
-
 /** Admin gives one store free access to any active plan for up to 31 days. */
 function GrantPlanModal({ plans, onClose, onDone }: { plans: PlatformPlan[]; onClose: () => void; onDone: () => void }) {
   const grantable = plans.filter(p => p.status === 'active');

@@ -8,7 +8,7 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { useAdminAnalyticsExport } from '@/hooks/admin/useAdminAnalytics';
 import { AnalyticsFilterBar } from '@/components/comman/analytics/AnalyticsFilterBar';
 import type { ExportSection } from '@/api/services/analytics/adminAnalytics';
-import { apiSearchStores } from '@/api/services/search';
+import { searchStoresByName } from '@/api/services/adminStoreLookup';
 import { apiListAdminUsers } from '@/api/services/users/adminUsers';
 import {
   CSV_SECTION_OPTIONS,
@@ -26,11 +26,6 @@ import { ProductsTab } from './analytics/ProductsTab';
 import { OrdersTab } from './analytics/OrdersTab';
 import { PaymentsTab } from './analytics/PaymentsTab';
 import { PlatformTab } from './analytics/PlatformTab';
-
-async function searchStoresByName(query: string): Promise<EntityOption[]> {
-  const res = await apiSearchStores(query, 1, 8);
-  return res.data.stores.map(s => ({ id: s.storeId, label: s.name, sub: `/${s.slug}` }));
-}
 
 async function searchSellersByName(query: string): Promise<EntityOption[]> {
   const res = await apiListAdminUsers({ role: 'seller', search: query, limit: 8 });

@@ -5,7 +5,7 @@ import { AdminStudioHeader, ADMIN_GUTTER } from '../components/studio';
 import { FinanceMonthlySettlementTab } from './finance/FinanceMonthlySettlementTab';
 import { Button, TabBar, type Tab } from '@/components/comman/ui';
 import { EntitySearchSelect, type EntityOption } from '../components/analytics/EntitySearchSelect';
-import { apiSearchStores } from '@/api/services/search';
+import { searchStoresByName } from '@/api/services/adminStoreLookup';
 import { apiListAdminUsers } from '@/api/services/users/adminUsers';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useAdminFinanceExport } from '@/hooks/admin/useAdminFinance';
@@ -27,11 +27,6 @@ import { FinanceReportsTab } from './finance/FinanceReportsTab';
 import { FinanceCreditJobsTab } from './finance/FinanceCreditJobsTab';
 
 // Same name-search drill-down as AdminAnalytics — no raw ObjectIds to paste.
-async function searchStoresByName(query: string): Promise<EntityOption[]> {
-  const res = await apiSearchStores(query, 1, 8);
-  return res.data.stores.map(s => ({ id: s.storeId, label: s.name, sub: `/${s.slug}` }));
-}
-
 async function searchSellersByName(query: string): Promise<EntityOption[]> {
   const res = await apiListAdminUsers({ role: 'seller', search: query, limit: 8 });
   return res.data.items.map(u => ({ id: u.id, label: u.name, sub: u.email }));

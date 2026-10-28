@@ -27,7 +27,7 @@ export function EntitySearchSelect({ label, placeholder, selectedId, onSelect, s
   useEffect(() => { if (!selectedId) setSelectedLabel(''); }, [selectedId]);
 
   useEffect(() => {
-    if (!open || query.trim().length < 2) { setResults([]); return; }
+    if (!open || query.trim().length < 1) { setResults([]); return; }
     let cancelled = false;
     setLoading(true);
     const t = setTimeout(() => {
@@ -76,7 +76,7 @@ export function EntitySearchSelect({ label, placeholder, selectedId, onSelect, s
         )}
       </div>
 
-      {open && query.trim().length >= 2 && !selectedId && (
+      {open && query.trim().length >= 1 && !selectedId && (
         <div className="absolute z-20 mt-1 w-full bg-white border border-bone rounded-lg max-h-[220px] overflow-y-auto">
           {loading ? (
             <p className="px-3 py-[10px] text-[12px] text-slate">Searching…</p>
