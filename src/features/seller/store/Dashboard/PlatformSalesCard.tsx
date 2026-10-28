@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Megaphone, Check, ArrowRight, Clock } from 'lucide-react';
 import { clsx } from 'clsx';
@@ -32,20 +31,10 @@ function whenLabel(c: JoinableCampaign) {
 export function PlatformSalesCard({ storeId }: { storeId: string }) {
   const navigate = useNavigate();
   const { store } = useStoreWorkspace();
-  const { campaigns, loading, toggle } = useStoreCampaigns(storeId);
-  const [busyId, setBusyId] = useState<string | null>(null);
-  const [error, setError] = useState('');
+  const { campaigns, loading } = useStoreCampaigns(storeId);
 
   if (loading || campaigns.length === 0) return null;
   const shown = campaigns.slice(0, 3);
-
-  const join = async (c: JoinableCampaign) => {
-    setBusyId(c._id);
-    setError('');
-    try { await toggle(c); }
-    catch (err) { setError(err instanceof Error ? err.message : 'Could not join this sale.'); }
-    finally { setBusyId(null); }
-  };
 
   return (
     <section aria-labelledby="platform-sales-title" className="dash-section-enter rounded-2xl border border-brand-green/25 bg-white overflow-hidden">
@@ -82,35 +71,27 @@ export function PlatformSalesCard({ storeId }: { storeId: string }) {
                   {isPlatform ? 'Edudeen pays the discount' : 'Discount comes from your earnings'}
                 </p>
               </div>
-              {isPlatform ? (
-                <span className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-success shrink-0">
-                  <Check size={14} /> You're included
-                </span>
-              ) : c.isJoined ? (
+              {(c.selectedProductCount ?? 0) > 0 && (
                 <span className={clsx('inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-success shrink-0')}>
-                  <Check size={14} /> Joined
+                  <Check size={14} /> {c.selectedProductCount} {c.selectedProductCount === 1 ? 'product' : 'products'}
                 </span>
-              ) : (
-                <Button size="sm" className="shrink-0" loading={busyId === c._id} onClick={() => join(c)}>
-                  Join sale
-                </Button>
               )}
+              <Button size="sm" className="shrink-0" onClick={() => navigate(`/store/${storeId}/marketing/sale/${c._id}`)}>
+                {(c.selectedProductCount ?? 0) > 0 ? 'Manage' : 'Apply now'}
+              </Button>
             </li>
           );
         })}
       </ul>
 
-      {(error || campaigns.length > shown.length) && (
-        <div className="px-5 sm:px-6 py-3 border-t border-bone flex items-center justify-between gap-3">
-          {error ? <p className="text-[12px] text-error">{error}</p> : <span />}
-          {campaigns.length > shown.length && (
-            <button
-              onClick={() => navigate(`/store/${storeId}/marketing?tab=platform`)}
-              className="text-[12.5px] font-semibold text-brand-orange bg-transparent border-0 cursor-pointer"
-            >
-              +{campaigns.length - shown.length} more →
-            </button>
-          )}
+      {campaigns.length > shown.length && (
+        <div className="px-5 sm:px-6 py-3 border-t border-bone flex items-center justify-end gap-3">
+          <button
+            onClick={() => navigate(`/store/${storeId}/marketing?tab=platform`)}
+            className="text-[12.5px] font-semibold text-brand-orange bg-transparent border-0 cursor-pointer"
+          >
+            +{campaigns.length - shown.length} more →
+          </button>
         </div>
       )}
     </section>

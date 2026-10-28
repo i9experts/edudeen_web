@@ -1773,10 +1773,10 @@ export function CheckoutPage() {
                 <span className="text-slate">Subtotal</span>
                 <span className="font-semibold text-carbon">{formatPrice(orderSubtotal, summaryCur)}</span>
               </div>
-              {!checkout && estimate.campaignAmount > 0 && (
+              {!checkout && estimate.campaignAmount !== 0 && (
                 <div className="flex justify-between text-[13px]">
-                  <span className="text-success">{cart?.campaignDiscount?.name || 'Sale discount'}</span>
-                  <span className="font-semibold text-success">-{formatPrice(estimate.campaignAmount, summaryCur)}</span>
+                  <span className={estimate.campaignAmount > 0 ? 'text-success' : 'text-slate'}>{cart?.campaignDiscount?.name || 'Sale discount'}</span>
+                  <span className={`font-semibold ${estimate.campaignAmount > 0 ? 'text-success' : 'text-carbon'}`}>{estimate.campaignAmount > 0 ? '-' : '+'}{formatPrice(Math.abs(estimate.campaignAmount), summaryCur)}</span>
                 </div>
               )}
               {!isDigital && (

@@ -5,7 +5,8 @@ type Convert = (amount: number, fromCurrency?: string | null) => number;
 export interface CartTotals {
   /** sum of the lines, in the display currency */
   subtotal: number;
-  /** the running sale taken off the subtotal, in the display currency (0 when none) */
+  /** the running sale taken off the subtotal, in the display currency (0 when none; NEGATIVE = added back because the
+   *  sale price replaced a deeper seller sale) */
   campaignAmount: number;
   payable: number;
 }
@@ -26,7 +27,9 @@ export function computeCartTotals(items: CartItem[], campaign: Cart['campaignDis
   // send the flag at all means the whole cart, as before).
   const flagged = items.some((i) => i.onCampaign !== undefined);
   const eligibleSubtotal = flagged ? items.reduce((s, i) => (i.onCampaign ? s + lineOf(i) : s), 0) : subtotal;
-  const campaignAmount = !campaign || !campaign.discountType || campaign.discountValue == null ? 0
+  // The server already priced every line (incl. a seller's own sale being suspended): trust its figure when present.
+  const campaignAmount = campaign && typeof campaign.adjust === 'number' ? convert(campaign.adjust, campaign.currency)
+    : !campaign || !campaign.discountType || campaign.discountValue == null ? 0
     : Math.min(eligibleSubtotal, campaign.discountType === 'percentage'
       ? eligibleSubtotal * (campaign.discountValue / 100)
       : convert(campaign.discountValue, campaign.valueCurrency ?? 'USD'));

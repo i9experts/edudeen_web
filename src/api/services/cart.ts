@@ -62,7 +62,7 @@ export interface Cart {
   status?:    string;
   /** The store's running sale, applied at checkout — shown in the cart so the price doesn't change at the last step. */
   /** `amount` is in `currency` (the cart's own currency). `discountValue` is a percent, or - for a fixed sale - an amount in `valueCurrency` (USD unless stated). */
-  campaignDiscount?:  { name: string; discountType: 'percentage' | 'fixed' | null; discountValue: number | null; currency: string | null; valueCurrency?: string | null; amount?: number } | null;
+  campaignDiscount?:  { name: string; discountType: 'percentage' | 'fixed' | null; discountValue: number | null; currency: string | null; valueCurrency?: string | null; amount?: number; /** what the total really drops by (negative = the seller's own deeper sale was suspended) */ adjust?: number } | null;
   isPremium?:      boolean;
   premiumSavings?: number;
   /** Part of the member's price paid by Edudeen (platform-funded), in the cart currency. */

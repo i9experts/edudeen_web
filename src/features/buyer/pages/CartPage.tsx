@@ -460,10 +460,10 @@ export function CartPage() {
                   <span className="text-slate">{loading ? 'Subtotal' : `Subtotal (${cartCount} items)`}</span>
                   {loading ? <SkeletonBox width={70} height={14} /> : <span className="font-semibold text-carbon">{formatPrice(displayTotal, displayCurrency)}</span>}
                 </div>
-                {campaignAmount > 0 && (
+                {campaignAmount !== 0 && (
                   <div className="flex justify-between text-[13px]">
-                    <span className="text-success font-medium">{campaign?.name ?? 'Sale'}</span>
-                    <span className="text-success font-semibold">-{formatPrice(campaignAmount, displayCurrency)}</span>
+                    <span className={campaignAmount > 0 ? 'text-success font-medium' : 'text-slate font-medium'}>{campaign?.name ?? 'Sale'}</span>
+                    <span className={campaignAmount > 0 ? 'text-success font-semibold' : 'text-carbon font-semibold'}>{campaignAmount > 0 ? '-' : '+'}{formatPrice(Math.abs(campaignAmount), displayCurrency)}</span>
                   </div>
                 )}
                 {premiumSavings > 0 && (

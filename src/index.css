@@ -459,6 +459,15 @@
 }
 .campaign-fade { animation: campaign-fade 420ms var(--ease-out); }
 
+/* Deals strip: the next sale slides in from the side (mirrors in RTL). */
+@keyframes campaign-slide {
+  from { opacity: 0; transform: translateX(var(--slide-from, 48px)); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+[dir="rtl"] .campaign-slide { --slide-from: -48px; }
+.campaign-slide { animation: campaign-slide 480ms var(--ease-out); }
+@media (prefers-reduced-motion: reduce) { .campaign-slide { animation: none; } }
+
 /* Stories-style progress segment — fills left-to-right over the deals
    ribbon's rotation interval, driven by an inline animation-duration so it
    always matches ROTATE_MS in DealsBanner.tsx. */

@@ -182,14 +182,15 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
     // Rotation order comes straight from the backend (admin-set Campaign.order,
     // soonest-ending as the tiebreaker) — never re-sorted client-side, so an
     // admin's chosen position actually takes effect.
-    apiGetPublicActiveCampaigns(storeType)
+    // The full-width strip also announces sales that are about to start ("Coming soon"); embedded/compact cards do not.
+    apiGetPublicActiveCampaigns(storeType, !compact)
       .then((res) => {
         if (cancelled) return;
         setCampaigns(res.data ?? []);
       })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, [storeType, reloadTick]);
+  }, [storeType, reloadTick, compact]);
 
   // Auto-rotate through every active campaign, one at a time — pauses while
   // the cursor is over the banner so it never changes mid-read or mid-click.
@@ -208,16 +209,24 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
   const campaign = campaigns[activeIndex] ?? null;
   // Sale-timer rule (utils/saleMath.soonestSaleEnd): the banner counts down to the SOONEST-ENDING public sale, the
   // same moment the Flash Sale header shows. A members-only early-access campaign shows its own end.
-  const ownCountdown = useCountdown(campaign?.endDate ?? '');
-  const countdown = useCountdown((campaign?.earlyAccess ? campaign.endDate : soonestSaleEnd(campaigns)) ?? campaign?.endDate ?? '');
+  const comingSoon = !!campaign?.comingSoon && !!campaign.startDate;
+  // A coming-soon slide counts down to its START; when it reaches zero the banner re-fetches and it turns into a live sale.
+  const ownCountdown = useCountdown((comingSoon ? campaign?.startDate : campaign?.endDate) ?? '');
+  const countdown = useCountdown(
+    (comingSoon ? campaign?.startDate : campaign?.earlyAccess ? campaign.endDate : soonestSaleEnd(campaigns.filter(c => !c.comingSoon))) ?? campaign?.endDate ?? '',
+  );
 
   // A campaign that expires while it's on screen is dropped from the
-  // rotation instead of freezing on a dead 00:00:00 countdown.
+  // rotation instead of freezing on a dead 00:00:00 countdown. A coming-soon one that just started reloads the list.
   useEffect(() => {
-    if (campaign && ownCountdown.expired) {
-      setCampaigns(prev => prev.filter(c => c._id !== campaign._id));
+    if (!campaign || !ownCountdown.expired) return;
+    if (comingSoon) {
+      // wait past the 5 s request cache so the refetch really sees it as live
+      const id = setTimeout(() => setReloadTick(t => t + 1), 6000);
+      return () => clearTimeout(id);
     }
-  }, [campaign, ownCountdown.expired]);
+    setCampaigns(prev => prev.filter(c => c._id !== campaign._id));
+  }, [campaign, comingSoon, ownCountdown.expired]);
 
   if (!campaign) return null;
 
@@ -444,12 +453,34 @@ export function DealsBanner({ className, storeType, compact = false, label = fal
             )}
           </Link>
           )
+        ) : comingSoon ? (
+          /* Coming soon: centred slide, no link (nothing to shop yet) — counts down to the start. */
+          <div
+            key={campaign._id}
+            aria-label={`${campaign.name} — coming soon`}
+            className="campaign-slide relative z-[1] flex w-full h-full flex-col items-center justify-center gap-2 overflow-hidden rounded-[20px] px-4 py-5 text-center text-white sm:px-6 lg:min-h-[96px]"
+          >
+            <span className="inline-flex shrink-0 items-center gap-[5px] rounded-full bg-[#F5B301] px-[12px] py-[4px] text-[12px] font-bold uppercase leading-none tracking-[0.08em] text-[#3a2a00]">
+              <Zap size={11} className="fill-[#3a2a00]" /> Coming soon
+            </span>
+            <span className="font-serif text-[22px] sm:text-[28px] font-bold leading-[1.1] tracking-[-0.01em]">{campaign.name}</span>
+            <p className="max-w-[640px] text-[13px] leading-snug text-white/85">
+              {hasFixedOff || (campaign.discountType === 'percentage' && campaign.discountValue)
+                ? <span className="font-semibold">{campaign.discountType === 'percentage' ? `Up to ${campaign.discountValue}% off` : `${formatPrice(displayedFixedOff, displayCurrency)} off`}</span>
+                : null}
+              {campaign.description ? <span className="text-white/75">{(hasFixedOff || campaign.discountValue) ? ' · ' : ''}{campaign.description}</span> : null}
+            </p>
+            <div className="flex items-center gap-3" aria-label="Time until the sale starts">
+              <span className="text-[12px] font-semibold uppercase tracking-[0.1em] text-white/70">Starts in</span>
+              <div className="flex items-center gap-[4px]"><CountdownBoxes countdown={countdown} /></div>
+            </div>
+          </div>
         ) : (
           <Link
             key={campaign._id}
             to={`/?campaign=${encodeURIComponent(campaign._id)}`}
             aria-label={`${campaign.name} — ${discountHeadline}. Shop the sale`}
-            className="no-underline campaign-fade group relative z-[1] flex w-full h-full flex-wrap items-center gap-x-4 gap-y-3 border-none bg-transparent text-start text-white outline-none cursor-pointer px-4 py-4 sm:px-6 lg:flex-nowrap lg:gap-8 lg:px-8 lg:py-5 lg:min-h-[96px]"
+            className="no-underline campaign-slide overflow-hidden rounded-[20px] group relative z-[1] flex w-full h-full flex-wrap items-center gap-x-4 gap-y-3 border-none bg-transparent text-start text-white outline-none cursor-pointer px-4 py-4 sm:px-6 lg:flex-nowrap lg:gap-8 lg:px-8 lg:py-5 lg:min-h-[96px]"
           >
             {/* Left: badge + headline on one line, campaign name/description underneath. Right: timer + CTA, vertically centred. */}
             <div className="flex w-full min-w-0 flex-col justify-center gap-2 lg:w-auto lg:flex-1">

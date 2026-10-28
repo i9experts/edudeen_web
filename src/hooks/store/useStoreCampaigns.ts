@@ -59,6 +59,14 @@ export function useStoreCampaigns(storeId: string | undefined) {
     window.dispatchEvent(new CustomEvent(CHANGED, { detail: storeId }));
   }, [storeId, campaigns]);
 
+  /** Re-reads from the API (e.g. after products were added to / removed from a sale) and updates every user of the hook. */
+  const refresh = useCallback(async () => {
+    if (!storeId) return;
+    const data = await load(storeId, true);
+    setCampaigns(data);
+    window.dispatchEvent(new CustomEvent(CHANGED, { detail: storeId }));
+  }, [storeId]);
+
   const needsAction = campaigns.filter(c => c.sponsorType === 'seller' && !c.isJoined).length;
-  return { campaigns, loading, error, toggle, needsAction };
+  return { campaigns, loading, error, toggle, needsAction, refresh };
 }

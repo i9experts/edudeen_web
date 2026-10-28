@@ -3,7 +3,7 @@ import { formatPrice } from '@/utils/formatPrice';
 import { useUsdMoney } from '@/hooks/useUsdMoney';
 import { statusLabel } from '@/constants/statusLabels';
 
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useStoreCampaigns } from '@/hooks/store/useStoreCampaigns';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { Tag as TagIcon, Mail, ShoppingCart, Handshake, Gift, Megaphone, Building2, User, Image as ImageIcon, Pause, Play, Trash2, Plus, Star, Bell, ArrowUp, ArrowDown, Rocket, X, Percent, type LucideIcon } from 'lucide-react';
@@ -1374,13 +1374,11 @@ export function StoreMarketing() {
                         <> · {c.discountType === 'percentage' ? `${c.discountValue}% off` : `${currencySymbol(c.currency ?? 'USD')}${c.discountValue} off`}</>
                       )}
                     </p>
-                    {c.isJoined && (
-                      <p className="text-[12px] text-graphite mb-2">
-                        {(c.selectedProductCount ?? 0) > 0
-                          ? `${c.selectedProductCount} of your products ${c.selectedProductCount === 1 ? 'is' : 'are'} in this sale. Tick or untick it on a product's page to change that.`
-                          : 'All your products are in this sale. Open a product and tick this sale to choose only some.'}
-                      </p>
-                    )}
+                    <p className="text-[12px] text-graphite mb-2">
+                      {(c.selectedProductCount ?? 0) > 0
+                        ? `${c.selectedProductCount} of your products ${c.selectedProductCount === 1 ? 'is' : 'are'} in this sale.`
+                        : 'None of your products are in this sale yet. Choose the ones you want.'}
+                    </p>
                     {c.sponsorType === 'platform' ? (
                       <div className="flex items-start gap-1.5 mb-3 px-2.5 py-2 rounded-[7px] bg-success-bg">
                         <Building2 size={13} className="text-success shrink-0 mt-[1px]" />
@@ -1396,23 +1394,23 @@ export function StoreMarketing() {
                         </p>
                       </div>
                     )}
-                    {c.sponsorType === 'platform' ? (
-                      <div className="w-full py-2 rounded-[7px] text-xs font-semibold text-center border border-bone bg-cream text-slate">
-                        Automatically Included
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => toggleCampaign(c)}
-                        disabled={campaignBusyId === c._id}
-                        className={`w-full py-2 rounded-[7px] text-xs font-semibold cursor-pointer transition-colors duration-150 border disabled:opacity-50 ${
-                          c.isJoined
-                            ? 'bg-white border-bone text-graphite hover:bg-cream'
-                            : 'bg-brand-orange border-transparent text-white hover:bg-brand-deep-orange'
-                        }`}
+                    <div className="flex flex-col gap-2">
+                      <Link
+                        to={`/store/${storeId}/marketing/sale/${c._id}`}
+                        className="w-full py-2 rounded-[7px] text-xs font-semibold text-center no-underline border border-transparent bg-brand-orange text-white hover:bg-brand-deep-orange transition-colors duration-150"
                       >
-                        {campaignBusyId === c._id ? 'Updating…' : c.isJoined ? 'Leave Campaign' : 'Join Campaign'}
-                      </button>
-                    )}
+                        {(c.selectedProductCount ?? 0) > 0 ? 'Manage products' : 'Apply now'}
+                      </Link>
+                      {c.sponsorType !== 'platform' && c.isJoined && (
+                        <button
+                          onClick={() => toggleCampaign(c)}
+                          disabled={campaignBusyId === c._id}
+                          className="w-full py-2 rounded-[7px] text-xs font-semibold cursor-pointer transition-colors duration-150 border disabled:opacity-50 bg-white border-bone text-graphite hover:bg-cream"
+                        >
+                          {campaignBusyId === c._id ? 'Updating…' : 'Leave Campaign'}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
