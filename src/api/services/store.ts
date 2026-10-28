@@ -32,6 +32,8 @@ export interface EducatorProfile {
   teachingLevels:  string[];
 }
 export interface StorePremiumDiscount { enabled: boolean; percent: number }
+export interface StoreDeliverySettings { enabled: boolean; fee: number; freeOverAmount: number | null }
+export interface StoreGiftWrap { enabled: boolean; fee: number }
 
 export interface UpdateStorePayload {
   storeId:      string;
@@ -45,6 +47,10 @@ export interface UpdateStorePayload {
   returnPolicy?: StoreReturnPolicy | null;
   /** Seller-funded Edudeen Premium member discount; null clears it. */
   premiumDiscount?: StorePremiumDiscount | null;
+  /** Seller's own delivery charge (store currency); null/disabled = platform zone fee. */
+  deliverySettings?: StoreDeliverySettings | null;
+  /** Gift wrap charge (store currency); null = free. */
+  giftWrap?: StoreGiftWrap | null;
   contactEmail?: string;
   contactPhone?: string;
   productTypes?: ProductType[];
@@ -65,6 +71,8 @@ export interface StoreData {
   educatorProfile?: EducatorProfile | null;
   returnPolicy?: StoreReturnPolicy | null;
   premiumDiscount?: StorePremiumDiscount | null;
+  deliverySettings?: StoreDeliverySettings | null;
+  giftWrap?: StoreGiftWrap | null;
   contactEmail: string | null;
   contactPhone: string | null;
   sellerType:   SellerType;

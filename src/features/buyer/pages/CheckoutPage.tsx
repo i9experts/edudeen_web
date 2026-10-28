@@ -868,6 +868,18 @@ export function CheckoutPage() {
   }
 
   const selectAddress = (addr: Address) => {
+    // A checkout (and any card payment started on it) was built for the OLD address: drop it so the order can't go there.
+    if (selectedAddr?._id !== addr._id) {
+      setCheckout(null);
+      setSummary(null);
+      setAllowedMethods([]);
+      setSelectedMethod(null);
+      setClientSecret(null);
+      setClientSecretMode(null);
+      setChargeAmount(null);
+      setInitiatePaymentErr('');
+      setPlaceError('');
+    }
     setSelectedAddr(addr);
     setSelectedZoneId(null);
     setAddrDropOpen(false);
@@ -1656,7 +1668,7 @@ export function CheckoutPage() {
                     </ul>
                   )}
 
-                  {checkout && !isDigital && <GiftOptions checkoutId={checkout._id} />}
+                  {checkout && !isDigital && <GiftOptions checkoutId={checkout._id} onTotals={t => setCheckout(c => c && { ...c, shippingFee: t.shippingFee, totalAmount: t.totalAmount })} />}
 
                   {selectedMethod !== 'cash_on_delivery' && (
                     <div className="flex items-center gap-1 text-[11px] text-slate mb-4">
