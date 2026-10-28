@@ -136,6 +136,8 @@ export function CartPage() {
   // bills on its own, so each gets its own checkout.
   const storeCarts = cart?.stores ?? [];
   const isMultiStore = storeCarts.length > 1;
+  // Cash on Delivery needs all physical items from one store; with more, offer the one-store-at-a-time route.
+  const physicalStoreCount = new Set(items.filter(i => i.type === 'physical').map(i => i.storeId)).size;
 
   // Real, honest recall — the shopper's own recently-viewed products
   // (client-tracked from ProductDetail, same source the navbar's search
@@ -500,45 +502,37 @@ export function CartPage() {
                 )}
                 {loading ? (
                   <SkeletonBox height={44} rounded="12px" />
-                ) : isMultiStore ? (
-                  <>
-                    <p className="text-[12px] text-slate text-center -mt-1 mb-1">
-                      Items from {storeCarts.length} stores — each store checks out separately
-                    </p>
-                    {storeCarts.map(sc => (
-                      <Button
-                        key={sc.storeId}
-                        variant="primary" fullWidth
-                        className="justify-between! px-5! py-[11px]! rounded-xl! h-auto! text-start"
-                        title={`Checkout · ${sc.store.name}`}
-                        onClick={() => navigate(`/checkout?store=${encodeURIComponent(sc.storeId)}`)}
-                      >
-                        <span className="flex items-center gap-2 min-w-0">
-                          <Package size={15} className="shrink-0" />
-                          <span className="line-clamp-2 break-words leading-tight">Checkout · {sc.store.name}</span>
-                        </span>
-                        <span className="flex items-center gap-1 opacity-80 text-[12px] shrink-0">
-                          {sc.totalItems}
-                          <ChevronRight size={13} />
-                        </span>
-                      </Button>
-                    ))}
-                  </>
                 ) : (
-                  <Button
-                    variant="primary" fullWidth
-                    className="justify-between! px-5! py-[11px]! rounded-xl!"
-                    onClick={() => navigate('/checkout')}
-                  >
-                    <span className="flex items-center gap-2">
-                      <Package size={15} />
-                      Proceed to Checkout
-                    </span>
-                    <span className="flex items-center gap-1 opacity-80 text-[12px]">
-                      {cartCount} item{cartCount !== 1 ? 's' : ''}
-                      <ChevronRight size={13} />
-                    </span>
-                  </Button>
+                  <>
+                    {isMultiStore && (
+                      <p className="text-[12px] text-slate text-center -mt-1 mb-1">
+                        Items from {storeCarts.length} stores — one payment, a separate order from each store
+                      </p>
+                    )}
+                    <Button
+                      variant="primary" fullWidth
+                      className="justify-between! px-5! py-[11px]! rounded-xl!"
+                      onClick={() => navigate('/checkout')}
+                    >
+                      <span className="flex items-center gap-2">
+                        <Package size={15} />
+                        Proceed to Checkout
+                      </span>
+                      <span className="flex items-center gap-1 opacity-80 text-[12px]">
+                        {cartCount} item{cartCount !== 1 ? 's' : ''}
+                        <ChevronRight size={13} />
+                      </span>
+                    </Button>
+                    {isMultiStore && physicalStoreCount > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => setPickStore(true)}
+                        className="bg-transparent border-none cursor-pointer text-[12px] text-slate hover:text-carbon underline underline-offset-2 text-center"
+                      >
+                        Want Cash on Delivery? Check out one store at a time
+                      </button>
+                    )}
+                  </>
                 )}
               </div>
 
@@ -593,7 +587,7 @@ export function CartPage() {
           </div>
           <Button
             variant="primary" size="md" className="justify-center flex-1 max-w-[220px]"
-            onClick={() => (isMultiStore ? setPickStore(true) : navigate('/checkout'))}
+            onClick={() => navigate('/checkout')}
           >
             Checkout <ChevronRight size={14} />
           </Button>
@@ -602,11 +596,11 @@ export function CartPage() {
 
       {/* Multi-store carts: the sticky Checkout opens a store picker (each store checks out separately). */}
       {pickStore && isMultiStore && (
-        <div className="fixed inset-0 z-[80] lg:hidden" role="dialog" aria-modal="true" aria-label="Choose a store to check out">
+        <div className="fixed inset-0 z-[80]" role="dialog" aria-modal="true" aria-label="Choose a store to check out">
           <button type="button" aria-label="Close" className="absolute inset-0 bg-black/40 border-0 cursor-default" onClick={() => setPickStore(false)} />
           <div className="absolute inset-x-0 bottom-0 bg-white rounded-t-2xl p-4 pb-[calc(16px+env(safe-area-inset-bottom,0px))] max-h-[80dvh] overflow-y-auto">
-            <p className="text-[15px] font-bold text-carbon mb-1">Choose a store to check out</p>
-            <p className="text-[12px] text-slate mb-3">Each store checks out separately.</p>
+            <p className="text-[15px] font-bold text-carbon mb-1">Choose a store to check out (Cash on Delivery)</p>
+            <p className="text-[12px] text-slate mb-3">Cash on Delivery works for one store at a time.</p>
             <div className="flex flex-col gap-2">
               {storeCarts.map(sc => (
                 <Button

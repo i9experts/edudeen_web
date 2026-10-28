@@ -119,8 +119,9 @@ export function apiPlaceFreeOrder(payload: CodPaymentPayload) {
  *  `paymentMode: 'split'` (mixed carts only) charges just the digital-items
  *  subtotal now, leaving the physical items to be settled via COD. Omit or
  *  pass 'full' to charge the whole checkout, same as before this existed. */
-export function apiInitiatePayment(payload: { checkoutId: string; paymentMode?: 'full' | 'split' }) {
-  const key = keyFor('init', payload.checkoutId, `${payload.paymentMode ?? 'full'}:${SESSION_ID}`);
+export function apiInitiatePayment(payload: { checkoutId: string; paymentMode?: 'full' | 'split' }, amountHint?: number) {
+  // amountHint (checkout total) keeps a coupon / gift-card / gift-wrap change from replaying a cached intent for the old amount.
+  const key = keyFor('init', payload.checkoutId, `${payload.paymentMode ?? 'full'}:${amountHint ?? ''}:${SESSION_ID}`);
   return client.post<never, InitiatePaymentResponse>(ENDPOINTS.PAYMENT.INITIATE_PAYMENT, payload, {
     headers: { 'Idempotency-Key': key },
   });

@@ -427,12 +427,10 @@ export function CheckoutPage() {
   // through the same maths as the Cart page; from step 3 on the server's checkout is the source of truth.
   const { currency: displayCurrency, convert: convertToDisplay } = useCurrencyPreference();
 
-  // Checkout is one store at a time. On the main marketplace site the cart
-  // can span several stores — `?store=` picks which one this checkout is
-  // for (the cart page links each store's own checkout); a single-store
-  // cart (or a storefront) needs no param.
+  // On the main marketplace site the cart can span several stores. With no `?store=` the API builds ONE
+  // checkout for every store's items (one payment, one order per store); `?store=` limits it to a single
+  // store (the cart page's "one store at a time" link, needed for Cash on Delivery across stores).
   const checkoutStoreId = searchParams.get('store') ?? cart?.storeId ?? undefined;
-  const needsStorePick = !checkoutStoreId && (cart?.stores?.length ?? 0) > 1;
 
   // One unified checkout for the chosen store's cart, mixed physical+digital
   // included (Amazon/Alibaba/Shopify/Daraz all check out a mixed cart as one
@@ -535,6 +533,7 @@ export function CheckoutPage() {
   // the initiate-payment effect below tell "buyer switched stripe↔split" apart
   // from "nothing changed", since 'full' and 'split' charge different amounts.
   const [clientSecretMode,    setClientSecretMode]    = useState<'full' | 'split' | null>(null);
+  const secretTotalRef = useRef<string>('');
   // The amount actually being charged right now (from the initiate-payment
   // response) — not the same as `total` once 'split' only charges the
   // digital portion, so the "Pay $X" button must reflect this, not `total`.
@@ -614,7 +613,7 @@ export function CheckoutPage() {
 
   // Digital: auto-create checkout (no address/shipping needed) and jump to payment
   useEffect(() => {
-    if (!loggedIn || !isDigital || checkout || !checkoutStoreId) return;
+    if (!loggedIn || !isDigital || checkout) return;
     let cancelled = false;
     setCreatingCheckout(true);
     setCheckoutError('');
@@ -652,13 +651,15 @@ export function CheckoutPage() {
       selectedMethod === 'split' ? 'split' : selectedMethod === 'stripe' ? 'full' : null;
     if (!mode || !checkout || !isStripeConfigured()) return;
     if (!isDigital && step !== 4) return;
-    if (clientSecret && clientSecretMode === mode) return;
+    // Re-initiate when the checkout total changed since the secret was made (coupon, gift card, gift wrap).
+    if (clientSecret && clientSecretMode === mode && secretTotalRef.current === `${checkout._id}:${checkout.totalAmount}`) return;
     let cancelled = false;
     setInitiatingPayment(true);
     setInitiatePaymentErr('');
-    apiInitiatePayment({ checkoutId: checkout._id, paymentMode: mode })
+    apiInitiatePayment({ checkoutId: checkout._id, paymentMode: mode }, checkout.totalAmount)
       .then(res => {
         if (cancelled) return;
+        secretTotalRef.current = `${checkout._id}:${checkout.totalAmount}`;
         setClientSecret(res.data.clientSecret);
         setChargeAmount(res.data.amount);
         setClientSecretMode(mode);
@@ -921,6 +922,10 @@ export function CheckoutPage() {
         ...(buyNow && { buyNow }),
         ...(checkoutItemsPayload && { items: checkoutItemsPayload }),
       });
+      // A new checkout must never reuse the previous checkout's card secret.
+      setClientSecret(null);
+      setClientSecretMode(null);
+      setChargeAmount(null);
       setCheckout(res.data.checkout);
       setSummary(res.data.summary);
       setSavingsHints(res.data.subscriptionSavingsHints ?? []);
@@ -1001,36 +1006,6 @@ export function CheckoutPage() {
       </div>
     );
   }
-  if (needsStorePick && cart?.stores) {
-    return (
-      <div className="min-h-screen bg-cream flex flex-col">
-        <BuyerNavbar variant="minimal" contextLabel="Checkout" hideCommerce />
-        <div className="max-w-[560px] w-full mx-auto px-4 py-12">
-          <h1 className="text-[20px] font-bold text-carbon mb-1">Which store are you checking out?</h1>
-          <p className="text-[13px] text-slate mb-6">Your cart has items from {cart.stores.length} stores. Each store ships and bills separately, so check out one at a time.</p>
-          <div className="bg-white border border-bone rounded-[10px] divide-y divide-bone">
-            {cart.stores.map(s => (
-              <button
-                key={s.storeId}
-                onClick={() => navigate(`/checkout?store=${encodeURIComponent(s.storeId)}`)}
-                className="w-full flex items-center justify-between gap-3 px-4 py-3.5 text-start bg-transparent border-none cursor-pointer hover:bg-fog transition-colors"
-              >
-                <span className="min-w-0">
-                  <span className="block text-[14px] font-semibold text-carbon truncate">{s.store.name}</span>
-                  <span className="block text-[12px] text-slate">{s.totalItems} item{s.totalItems === 1 ? '' : 's'}</span>
-                </span>
-                <ChevronRight size={16} className="text-slate shrink-0" />
-              </button>
-            ))}
-          </div>
-          <button onClick={() => navigate('/cart')} className="mt-5 text-[12.5px] text-slate hover:text-charcoal transition-colors bg-transparent border-none cursor-pointer">
-            Back to Cart
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   if (manualPaymentResult) {
     return (
       <div className="min-h-screen bg-cream">
@@ -1583,6 +1558,11 @@ export function CheckoutPage() {
                       No payment method is available for this order right now. Please try again shortly or contact support.
                     </div>
                   )}
+                  {!checkoutStoreId && new Set(cartItems.filter(i => i.type !== 'digital').map(i => i.storeId)).size > 1 && !allowedMethods.includes('cash_on_delivery') && (
+                    <p className="text-[12px] text-slate mb-3">
+                      Cash on Delivery is only available when your physical items are from one store. To use it, go back to the cart and check out one store at a time.
+                    </p>
+                  )}
                   <div className={clsx('mb-4', digitalPaymentBlocked && 'hidden')}>
                     <PaymentMethodOptions
                       methods={effectiveMethods}
@@ -1641,7 +1621,7 @@ export function CheckoutPage() {
                     <div className="flex justify-between gap-3 text-[12.5px]">
                       <span className="text-slate flex-shrink-0">Shipping</span>
                       <span className="font-medium text-carbon text-end">
-                        {selectedZone ? `${zoneTitle(selectedZone)} · ${selectedZone.shippingPrice > 0 ? `${formatPrice(selectedZone.shippingPrice, checkoutCur)}` : 'Free'}` : '—'}
+                        {selectedZone ? `${zoneTitle(selectedZone)} · ${checkout ? (checkout.shippingFee > 0 ? formatPrice(checkout.shippingFee, checkoutCur) : 'Free') : zonePrice(selectedZone)}` : '—'}
                       </span>
                     </div>
                     <div className="flex justify-between gap-3 text-[12.5px]">
