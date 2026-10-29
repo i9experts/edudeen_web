@@ -58,7 +58,6 @@ import { useHomeCards } from '@/hooks/useHomeCards';
 import { useHasPlacementBanners } from '@/hooks/useHasPlacementBanners';
 import { ProductShelf } from '@/features/buyer/components/home/ProductShelf';
 import { BundlesShelf } from '@/features/buyer/components/home/BundlesShelf';
-import { RecentlyViewedRail } from '@/features/buyer/components/home/RecentlyViewedRail';
 import { HomeNewsletter } from '@/features/buyer/components/home/HomeNewsletter';
 import { useHomeShelves } from '@/features/buyer/components/home/useHomeShelves';
 import { dedupeInOrder, soldLabel, railSize } from '@/features/buyer/components/home/homeRules';
@@ -75,9 +74,9 @@ const SORT_TO_API: Record<SortFilter, MarketplaceSortBy | undefined> = {
   high:     'price_desc',
 };
 
-const PAGE_SIZE = 12;
+const PAGE_SIZE = 100;
 // The API caps a page at 50 — the pool used when a filter has to run in the browser.
-const CLIENT_POOL = 50;
+const CLIENT_POOL = 100;
 
 const SORT_LABELS: Record<SortFilter, string> = {
   featured: 'Featured',
@@ -660,7 +659,7 @@ function HomeLanding() {
                 disabled={loading}
                 className="bg-white text-brand-orange border border-[#c5d2db] rounded-lg px-5 py-[11px] text-[14px] font-bold cursor-pointer disabled:opacity-60"
               >
-                {loading ? 'Loading…' : 'Show more resources'}
+                {loading ? 'Loading…' : 'More'}
               </button>
             </div>
           )}
@@ -839,8 +838,6 @@ function HomeLanding() {
             </RevealStagger>
           </section>
         )}
-        {/* ── Recently viewed (only when the visitor has some) ── */}
-        <RecentlyViewedRail />
 
 
 

@@ -54,6 +54,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const [loadingMore, setLoadingMore] = useState(false);
   // Page of the last list request + which filter it used, so Load more continues the same list.
   const listState = useRef({ page: 1, unreadOnly: false });
+  const listLoadedRef = useRef(false);
+  const fetchNotificationsRef = useRef<(unreadOnly?: boolean) => Promise<void>>(async () => {});
 
   const clearToast = useCallback(() => setToast(null), []);
 
@@ -73,6 +75,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     try {
       const res = await apiListNotifications({ unreadOnly, limit: 50 });
       listState.current = { page: 1, unreadOnly };
+      listLoadedRef.current = true;
       setNotifications(res.data?.items ?? []);
       setNotificationsTotal(res.data?.total ?? 0);
       setUnreadCount(res.data?.unreadCount ?? 0);
@@ -82,6 +85,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       setNotificationsLoading(false);
     }
   }, []);
+
+  fetchNotificationsRef.current = fetchNotifications;
 
   const loadMoreNotifications = useCallback(async () => {
     if (!TokenStorage.isLoggedIn()) return;
@@ -187,6 +192,18 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // Login/logout also reset the inbox + badge (the old effect only ran on first mount).
+  useEffect(() => {
+    const onLogin = () => { fetchUnreadCount(); };
+    const onLogout = () => { setNotifications([]); setUnreadCount(0); setPreferences(null); setToast(null); listLoadedRef.current = false; };
+    window.addEventListener('edudeen:auth-login', onLogin);
+    window.addEventListener('edudeen:auth-logout', onLogout);
+    return () => {
+      window.removeEventListener('edudeen:auth-login', onLogin);
+      window.removeEventListener('edudeen:auth-logout', onLogout);
+    };
+  }, [fetchUnreadCount]);
+
   // Fetch initial stats when logged in. Preferences are only needed by the
   // notification settings screen (NotificationsPanel), which loads them itself
   // — no need to request them on every page load.
@@ -200,35 +217,87 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     }
   }, [fetchUnreadCount]);
 
-  // Real-time Sockets
+  // Real-time socket. Follows login/logout (no page refresh needed), always handshakes with the
+  // CURRENT token, reconnects itself when the server drops it (expired token / restart), and a
+  // light poll covers the gaps while the socket is down.
   useEffect(() => {
-    if (!TokenStorage.isLoggedIn()) return;
+    let socket: ReturnType<typeof io> | null = null;
+    let retryTimer: number | undefined;
+    let pollTimer: number | undefined;
+    let disposed = false;
 
-    const token = TokenStorage.getToken();
-    const base = API_BASE_URL;
-    const socket = io(`${base}/notifications`, {
-      auth: { token },
-      transports: ['websocket', 'polling'],
-    });
-
-    socket.on('connect', () => {
-      console.log('Connected to notifications socket');
-    });
-
-    socket.on('notification:unread-count', (data: { unreadCount: number }) => {
-      setUnreadCount(data.unreadCount);
-    });
-
-    socket.on('notification:new', (notification: NotificationItem) => {
-      setNotifications(prev => [notification, ...prev]);
-      setUnreadCount(prev => prev + 1);
-      setToast(notification);
-    });
-
-    return () => {
-      socket.disconnect();
+    const stopPoll = () => { if (pollTimer) { window.clearInterval(pollTimer); pollTimer = undefined; } };
+    const startPoll = () => {
+      if (pollTimer) return;
+      pollTimer = window.setInterval(() => {
+        if (document.visibilityState === 'visible') fetchUnreadCount();
+      }, 30_000);
     };
-  }, []);
+
+    const disconnect = () => {
+      if (retryTimer) { window.clearTimeout(retryTimer); retryTimer = undefined; }
+      stopPoll();
+      if (socket) { socket.removeAllListeners(); socket.disconnect(); socket = null; }
+    };
+
+    const connect = () => {
+      disconnect();
+      if (disposed || !TokenStorage.isLoggedIn()) return;
+
+      const s = io(`${API_BASE_URL}/notifications`, {
+        // function form: re-read the token on every (re)connect attempt
+        auth: (cb) => cb({ token: TokenStorage.getToken() }),
+        transports: ['websocket', 'polling'],
+        reconnection: true,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 10_000,
+      });
+      socket = s;
+
+      s.on('connect', () => {
+        stopPoll();
+        // anything that arrived while we were offline
+        fetchUnreadCount();
+        if (listLoadedRef.current) fetchNotificationsRef.current(listState.current.unreadOnly);
+      });
+
+      s.on('disconnect', (reason) => {
+        startPoll();
+        // The server closed it (e.g. expired token): socket.io will not retry by itself.
+        if (reason === 'io server disconnect' && !disposed) {
+          retryTimer = window.setTimeout(connect, 3000);
+        }
+      });
+      s.on('connect_error', () => startPoll());
+
+      s.on('notification:unread-count', (data: { unreadCount: number }) => {
+        setUnreadCount(data.unreadCount);
+      });
+
+      s.on('notification:new', (notification: NotificationItem) => {
+        setNotifications(prev => (prev.some(n => n._id === notification._id) ? prev : [notification, ...prev]));
+        setToast(notification);
+      });
+    };
+
+    const onVisible = () => {
+      if (document.visibilityState !== 'visible' || !TokenStorage.isLoggedIn()) return;
+      fetchUnreadCount();
+      if (!socket || !socket.connected) connect();
+    };
+
+    connect();
+    window.addEventListener('edudeen:auth-login', connect);
+    window.addEventListener('edudeen:auth-logout', disconnect);
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      disposed = true;
+      disconnect();
+      window.removeEventListener('edudeen:auth-login', connect);
+      window.removeEventListener('edudeen:auth-logout', disconnect);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [fetchUnreadCount]);
 
   return (
     <NotificationCtx.Provider
