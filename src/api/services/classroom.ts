@@ -273,10 +273,24 @@ export interface CourseLessonInput {
 export interface CourseSectionInput { _id?: string; title: string; lessons: CourseLessonInput[] }
 export interface CourseInstructor { name: string; bio: string }
 
+/** Seller's design for the completion certificate. Every field is optional (older courses have none). */
+export interface CertificateConfig {
+  watermarkText?: string | null;
+  watermarkImageUrl?: string | null;
+  stampImageUrl?: string | null;
+  signatureName?: string | null;
+  signatureTitle?: string | null;
+  issuerName?: string | null;
+}
+
+/** What the buyer prints on their certificate. */
+export interface CertificateDetails { fullName: string; guardianName?: string | null; institute?: string | null; city?: string | null; country?: string | null }
+
 export interface CourseBuilderData {
   product: { _id: string; name: string; slug: string; status: string; deliveryFormat: string };
   sections: CourseSectionInput[];
   certificateEnabled: boolean;
+  certificateConfig?: CertificateConfig | null;
   outcomes?: string[];
   instructor?: CourseInstructor | null;
   /** null = lifetime access */
@@ -300,6 +314,8 @@ export interface LearnView {
   product: { _id: string; name: string; slug: string; image: string | null; storeName: string | null; storeSlug: string | null };
   sections: { _id: string; title: string; lessons: { _id: string; title: string; type: LessonType; durationMinutes: number | null }[] }[];
   certificateEnabled: boolean;
+  certificateDetails?: CertificateDetails | null;
+  certificateDetailsRequired?: boolean;
   progress: { completedLessonIds: string[]; quizScores: Record<string, number>; lastLessonId: string | null; completedAt: string | null; certificateCode: string | null };
 }
 
@@ -335,6 +351,16 @@ export interface CertificateData {
   teacher: string | null;
   storeSlug: string | null;
   completedAt: string;
+  /** Added with the certificate designer; older certificates lack these. */
+  courseTitle?: string;
+  instructorName?: string | null;
+  storeName?: string | null;
+  issuedAt?: string;
+  guardianName?: string | null;
+  institute?: string | null;
+  city?: string | null;
+  country?: string | null;
+  config?: CertificateConfig | null;
 }
 
 export interface MyCourse {
@@ -357,10 +383,12 @@ export interface MyCourse {
 export interface LiveAccess { name: string; startsAt: string; endsAt: string; durationMinutes: number; platform: string; meetingUrl: string | null; notes: string; ended: boolean; opensAt?: string; joinOpen?: boolean; status?: 'scheduled' | 'cancelled'; recordingUrl?: string | null }
 
 export const apiGetCourseBuilder = (storeId: string, productId: string) => client.get<never, Ok<CourseBuilderData>>(`/api/courses/seller/${storeId}/${productId}`);
-export const apiSaveCourse = (storeId: string, productId: string, body: { sections: CourseSectionInput[]; certificateEnabled: boolean; outcomes?: string[]; instructor?: CourseInstructor | null; accessDays?: number | null }) =>
+export const apiSaveCourse = (storeId: string, productId: string, body: { sections: CourseSectionInput[]; certificateEnabled: boolean; certificateConfig?: CertificateConfig | null; outcomes?: string[]; instructor?: CourseInstructor | null; accessDays?: number | null }) =>
   client.put<never, Ok<{ sections: CourseSectionInput[]; certificateEnabled: boolean }>>(`/api/courses/seller/${storeId}/${productId}`, body);
 export const apiGetCourseOutline = (idOrSlug: string) => client.get<never, Ok<CourseOutline>>(`/api/courses/outline/${idOrSlug}`);
 export const apiGetPreviewLesson = (idOrSlug: string, lessonId: string) => client.get<never, Ok<LessonContent>>(`/api/courses/preview/${idOrSlug}/${lessonId}`);
+export const apiSaveCertificateDetails = (idOrSlug: string, body: CertificateDetails) =>
+  client.post<never, Ok<{ certificateDetails: CertificateDetails | null }>>(`/api/courses/learn/${idOrSlug}/certificate-details`, body);
 export const apiGetLearnView = (idOrSlug: string) => client.get<never, Ok<LearnView>>(`/api/courses/learn/${idOrSlug}`);
 export const apiGetLesson = (idOrSlug: string, lessonId: string) => client.get<never, Ok<LessonContent>>(`/api/courses/learn/${idOrSlug}/lessons/${lessonId}`);
 export const apiCompleteLesson = (idOrSlug: string, lessonId: string) =>

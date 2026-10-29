@@ -8,6 +8,7 @@ import { useStoreWorkspace, StorePageHeader } from '@/components/layouts/StoreLa
 import { Button, Card, Input, Textarea, Toggle, FileUpload, type PrivateUploadData } from '@/components/comman/ui';
 import { useToast } from '@/contexts/ToastContext';
 import { apiSetProductStatus } from '@/api/services/product';
+import { CertificateDesigner, EMPTY_DESIGN, designFromConfig, configFromDesign, type CertDesign } from './CertificateDesigner';
 import {
   apiGetCourseBuilder, apiSaveCourse,
   type CourseBuilderData, type CourseLessonInput, type CourseSectionInput, type LessonType,
@@ -173,6 +174,8 @@ export default function CourseBuilder() {
   const [data, setData] = useState<CourseBuilderData | null>(null);
   const [sections, setSections] = useState<CourseSectionInput[]>([]);
   const [certificate, setCertificate] = useState(true);
+  const [design, setDesign] = useState<CertDesign>(EMPTY_DESIGN);
+  const [designDirty, setDesignDirty] = useState(false);
   const [outcomes, setOutcomes] = useState<string[]>([]);
   const [instructor, setInstructor] = useState({ name: '', bio: '' });
   const [accessMode, setAccessMode] = useState<'lifetime' | 'days'>('lifetime');
@@ -187,6 +190,7 @@ export default function CourseBuilder() {
         setData(res.data);
         setSections(res.data.sections.length ? res.data.sections : [{ title: 'Getting started', lessons: [newLesson('video')] }]);
         setCertificate(res.data.certificateEnabled);
+        setDesign(designFromConfig(res.data.certificateConfig));
         setOutcomes(res.data.outcomes ?? []);
         setInstructor({ name: res.data.instructor?.name ?? '', bio: res.data.instructor?.bio ?? '' });
         if (res.data.accessDays) { setAccessMode('days'); setAccessDays(String(res.data.accessDays)); }
@@ -222,12 +226,15 @@ export default function CourseBuilder() {
       const res = await apiSaveCourse(storeId, productId, {
         sections: sections.map(s => ({ ...s, lessons: s.lessons.map(l => ({ ...l, videoUrl: l.type === 'video' && l.videoUrl?.trim() ? l.videoUrl.trim() : null })) })),
         certificateEnabled: certificate,
+        // Only sent when the seller touched the design (null values clear a field).
+        ...(designDirty ? { certificateConfig: configFromDesign(design) } : {}),
         outcomes: cleanOutcomes,
         instructor: instructor.name.trim() ? { name: instructor.name.trim(), bio: instructor.bio.trim() } : null,
         accessDays: accessMode === 'days' ? daysNum : null,
       });
       setSections(res.data.sections);
       setDirty(false);
+      setDesignDirty(false);
       if (publish) {
         const pub = await apiSetProductStatus(productId, 'active');
         const next = (pub.data?.product as { status?: string } | undefined)?.status ?? 'pending_review';
@@ -344,6 +351,15 @@ export default function CourseBuilder() {
               <span className="block text-[12.5px] text-slate mt-0.5">Learners who finish every lesson (and pass every quiz) get a certificate with a code anyone can verify on Edudeen.</span>
             </span>
           </label>
+          {certificate && (
+            <CertificateDesigner
+              value={design}
+              onChange={d => { setDesign(d); setDesignDirty(true); setDirty(true); }}
+              courseTitle={data?.product.name ?? ''}
+              instructorName={instructor.name.trim()}
+              storeName={design.issuerName.trim()}
+            />
+          )}
         </Card>
       </div>
     </>

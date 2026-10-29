@@ -746,3 +746,15 @@ html.lang-switching *, html.lang-switching *::before, html.lang-switching *::aft
 
 
 [data-live-invalid="true"] { border-color: var(--color-error) !important; }
+
+/* Certificate printing (CertificatePage adds html.cert-printing): one A4 landscape page, only the certificate visible. */
+@media print {
+  @page { size: A4 landscape; margin: 0; }
+  html.cert-printing, html.cert-printing body { height: 793px !important; overflow: hidden !important; background: #fff !important; }
+  html.cert-printing body * { visibility: hidden !important; }
+  html.cert-printing .cert-print-root, html.cert-printing .cert-print-root * { visibility: visible !important; }
+  html.cert-printing .cert-no-print { display: none !important; }
+  html.cert-printing .cert-print-root { position: fixed !important; left: 0 !important; top: 0 !important; width: 1122px !important; height: 793px !important; }
+  html.cert-printing .cert-print-root .cert-sheet { transform: none !important; box-shadow: none !important; }
+  html.cert-printing .cert-print-root, html.cert-printing .cert-print-root * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}

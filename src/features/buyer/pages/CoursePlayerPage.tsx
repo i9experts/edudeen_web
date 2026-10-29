@@ -1,15 +1,17 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
-import { CheckCircle2, Circle, Video, FileText, AlignLeft, ListChecks, Award, ChevronLeft, ChevronRight, Loader2, Menu, X } from 'lucide-react';
+import { CheckCircle2, Circle, Video, FileText, AlignLeft, ListChecks, Award, ChevronLeft, ChevronRight, Loader2, Menu, X, IdCard } from 'lucide-react';
 import { clsx } from 'clsx';
 import { Button, ProgressBar } from '@/components/comman/ui';
 import { EdudeenLogo } from '@/components/comman/ui/EdudeenLogo';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useToast } from '@/contexts/ToastContext';
 import { LessonVideo } from '@/features/buyer/components/LessonVideo';
+import { CertificateDetailsModal } from '@/features/buyer/components/CertificateDetailsModal';
+import { useGetProfile } from '@/hooks/auth/useGetProfile';
 import {
   apiGetLearnView, apiGetLesson, apiCompleteLesson, apiSubmitQuiz,
-  type LearnView, type LessonContent, type LessonType, type QuizResult,
+  type LearnView, type CertificateDetails, type LessonContent, type LessonType, type QuizResult,
 } from '@/api/services/classroom';
 
 const ICON: Record<LessonType, typeof Video> = { video: Video, pdf: FileText, text: AlignLeft, quiz: ListChecks };
@@ -76,11 +78,20 @@ export function CoursePlayerPage() {
   const [lesson, setLesson] = useState<LessonContent | null>(null);
   const [marking, setMarking] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const asked = useRef(false);
+  const { profile } = useGetProfile();
   usePageTitle(view?.product.name ?? 'Course');
 
   useEffect(() => {
     apiGetLearnView(slug).then(res => setView(res.data)).catch(err => setError(err instanceof Error ? err.message : 'Could not open this course.'));
   }, [slug]);
+
+  // Starting a course with a certificate: ask what to print on it (once per visit; a banner + button remain if they skip).
+  const needsDetails = !!view && !!view.certificateEnabled && !!view.certificateDetailsRequired && !view.certificateDetails && !view.progress.certificateCode;
+  useEffect(() => {
+    if (needsDetails && !asked.current) { asked.current = true; setDetailsOpen(true); }
+  }, [needsDetails]);
 
   const flat = useMemo(() => (view?.sections ?? []).flatMap(s => s.lessons), [view]);
   const done = new Set(view?.progress.completedLessonIds ?? []);
@@ -98,10 +109,15 @@ export function CoursePlayerPage() {
     return () => { alive = false; };
   }, [slug, currentId, view?.product._id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const applyProgress = (p: { completedLessonIds: string[]; completedAt: string | null; certificateCode: string | null } | null) => {
+  const applyProgress = (p: { completedLessonIds: string[]; completedAt: string | null; certificateCode: string | null; certificateDetailsRequired?: boolean } | null) => {
     if (!p) return;
-    setView(v => v ? { ...v, progress: { ...v.progress, ...p } } : v);
-    if (p.completedAt && !view?.progress.completedAt) toast.success(p.certificateCode ? 'Course complete — your certificate is ready!' : 'Course complete!');
+    const { certificateDetailsRequired, ...progress } = p;
+    setView(v => v ? { ...v, ...(certificateDetailsRequired !== undefined ? { certificateDetailsRequired } : {}), progress: { ...v.progress, ...progress } } : v);
+    if (p.completedAt && !view?.progress.completedAt) {
+      if (p.certificateCode) toast.success('Course complete — your certificate is ready!');
+      else if (view?.certificateEnabled && (certificateDetailsRequired || !view.certificateDetails)) { toast.success('Course complete! Add your details to get your certificate.'); setDetailsOpen(true); }
+      else toast.success('Course complete!');
+    }
   };
 
   const markDone = async () => {
@@ -113,6 +129,14 @@ export function CoursePlayerPage() {
       if (idx >= 0 && idx < flat.length - 1) open(flat[idx + 1]._id);
     } catch (err) { toast.error(err instanceof Error ? err.message : 'Could not save progress.'); }
     finally { setMarking(false); }
+  };
+
+  const onDetailsSaved = (d: CertificateDetails) => {
+    setDetailsOpen(false);
+    setView(v => v ? { ...v, certificateDetails: d, certificateDetailsRequired: false } : v);
+    toast.success('Certificate details saved');
+    // The certificate is issued once details exist and the course is finished: re-read to pick up its code.
+    if (view?.progress.completedAt) apiGetLearnView(slug).then(res => setView(res.data)).catch(() => undefined);
   };
 
   if (error) {
@@ -168,6 +192,9 @@ export function CoursePlayerPage() {
         <Link to={`/product/${view.product.slug}`} className="text-[13.5px] font-semibold text-white no-underline truncate">{view.product.name}</Link>
         <div className="ms-auto flex items-center gap-3">
           <div className="hidden md:flex items-center gap-2 w-[200px]"><ProgressBar value={pct} className="flex-1" /><span className="text-[12px] tabular-nums">{pct}%</span></div>
+          {view.certificateEnabled && !view.progress.certificateCode && (
+            <button type="button" onClick={() => setDetailsOpen(true)} className="hidden sm:inline-flex items-center gap-1 rounded-lg bg-white/10 text-white px-3 py-1.5 text-[12.5px] font-semibold border-none cursor-pointer"><IdCard size={14} /> Certificate details</button>
+          )}
           {view.progress.certificateCode && (
             <Link to={`/certificates/${view.progress.certificateCode}`} className="inline-flex items-center gap-1 rounded-lg bg-brand-gold text-carbon px-3 py-1.5 text-[12.5px] font-bold no-underline"><Award size={14} /> Certificate</Link>
           )}
@@ -177,6 +204,13 @@ export function CoursePlayerPage() {
 
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_340px]">
         <main className="min-w-0 px-4 md:px-8 py-6 max-w-[960px] w-full mx-auto">
+          {needsDetails && !detailsOpen && (
+            <div role="status" className="mb-5 rounded-xl bg-brand-pale-orange/50 border border-brand-gold/40 px-4 py-3 flex items-center gap-3 flex-wrap">
+              <Award size={18} className="text-brand-royal shrink-0" />
+              <p className="m-0 text-[13px] text-carbon flex-1 min-w-[200px]">Add the name to print on your certificate before you finish the course.</p>
+              <button type="button" onClick={() => setDetailsOpen(true)} className="text-[13px] font-semibold text-brand-royal bg-transparent border-none cursor-pointer p-0">Add details</button>
+            </div>
+          )}
           {view.progress.completedAt && (
             <div className="mb-5 rounded-xl bg-green-50 border border-success/30 px-4 py-3 flex items-center gap-3 flex-wrap">
               <Award size={20} className="text-success" />
@@ -225,6 +259,9 @@ export function CoursePlayerPage() {
           {outline}
         </aside>
       </div>
+      {detailsOpen && view.certificateEnabled && !view.progress.certificateCode && (
+        <CertificateDetailsModal idOrSlug={slug} initial={view.certificateDetails} defaultName={profile?.name} onClose={() => setDetailsOpen(false)} onSaved={onDetailsSaved} />
+      )}
     </div>
   );
 }
