@@ -92,6 +92,7 @@ export function CertificateView({ data, config, sample, printable }: Props) {
     <div ref={box} className={printable ? 'cert-print-root relative w-full' : 'relative w-full'} style={{ height: H * scale }}>
       {sample && <span className="cert-no-print absolute start-2 top-2 z-10 rounded-full bg-brand-gold text-carbon text-[11px] font-bold px-2.5 py-0.5">Sample</span>}
       <div
+        translate="no"
         className="cert-sheet relative bg-white overflow-hidden text-center shadow-sm"
         style={{ width: W, height: H, transform: `scale(${scale})`, transformOrigin: 'top left' }}
       >
