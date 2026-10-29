@@ -2,6 +2,7 @@ import { WeightField } from './WeightField';
 import { useState, type ReactNode } from 'react';
 import { Download, GraduationCap, CalendarClock, Check, Truck, FileDown } from 'lucide-react';
 import { EDUCATION_LEVELS } from '@/api/services/product';
+import { pktWallLabel } from '@/utils/pkTime';
 import type { CategoryNode } from '@/api/services/categories';
 import type { StoreData } from '@/api/services/store';
 import type { AttributeDefinition } from '@/api/services/attributes';
@@ -453,7 +454,7 @@ export function ProductFormSteps(p: ProductFormStepsProps) {
               <CalendarClock size={14} className="text-brand-orange shrink-0" />
               <span className="truncate">
                 {cur.scheduledAt
-                  ? new Date(cur.scheduledAt).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })
+                  ? pktWallLabel(cur.scheduledAt)
                   : 'Set schedule date & time'}
               </span>
             </button>

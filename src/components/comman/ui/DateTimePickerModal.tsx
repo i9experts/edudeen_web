@@ -1,6 +1,7 @@
 import { useId, useState, type KeyboardEvent } from 'react';
 import { X, ChevronLeft, ChevronRight, CalendarClock } from 'lucide-react';
 import { DialogShell } from './DialogShell';
+import { pktNowWall } from '@/utils/pkTime';
 
 const MONTHS    = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const WEEK_DAYS = ['Su','Mo','Tu','We','Th','Fr','Sa'];
@@ -27,7 +28,8 @@ export function DateTimePickerModal({ value, onChange, onClose }: DateTimePicker
   const titleId   = useId();
 
   const init = value ? new Date(value) : null;
-  const now  = new Date();
+  // "Today" is Pakistan's today (the schedule is in Pakistan time), parsed as a plain wall clock like `value`.
+  const now  = new Date(pktNowWall());
 
   const [viewY, setViewY] = useState(init?.getFullYear() ?? now.getFullYear());
   const [viewM, setViewM] = useState(init?.getMonth()    ?? now.getMonth());
@@ -101,7 +103,7 @@ export function DateTimePickerModal({ value, onChange, onClose }: DateTimePicker
             </div>
             <div>
               <p id={titleId} className="text-[14px] font-bold text-charcoal leading-tight">Schedule Go-Live</p>
-              <p className="text-[12px] text-slate mt-[1px]">Choose date &amp; time</p>
+              <p className="text-[12px] text-slate mt-[1px]">Choose date &amp; time (Pakistan time)</p>
             </div>
           </div>
           <button

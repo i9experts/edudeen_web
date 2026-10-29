@@ -19,6 +19,7 @@ import {
 } from '@/features/seller/components/products/LearningFields';
 import { EMPTY_DELIVERY, deliveryPayload, deliveryError, deliveryFromProduct } from '@/features/seller/components/products/DeliveryFormatField';
 import { currencySymbol as symbolForCurrency } from '@/utils/currency';
+import { isoToPktWall, pktWallToIso } from '@/utils/pkTime';
 import { offersPayload, PREMIUM_BLANK_MESSAGE, OFFER_CONFLICT_MESSAGE, type OfferFlags } from './ProductOffersCard';
 import { premiumPercentError } from './PremiumPriceField';
 import { effectiveSellerPercent, premiumGapMessage, usePremiumTerms } from './PremiumEarningsCalculator';
@@ -54,8 +55,14 @@ const blankDig: DigForm = {
 
 // A listing waiting for review (or sent back) shows as "Active": saving it
 // asks to publish again, and the server puts it back in the review queue.
-function formStatus(s: string): ProductStatus {
+function formStatus(s: string, scheduledAt?: string | null): ProductStatus {
+  // Waiting for review with a go-live date still ahead = the seller asked to schedule: keep that choice (and the date) on re-save.
+  if (s === 'pending_review' && scheduledAt && new Date(scheduledAt).getTime() > Date.now()) return 'scheduled';
   return s === 'pending_review' || s === 'rejected' ? 'active' : (s as ProductStatus);
+}
+// The form keeps the go-live time as a Pakistan wall-clock string; without this a re-save of a scheduled product sent no date and failed.
+function scheduledWall(p: StoreProduct): string {
+  return p.scheduledAt && (p.status === 'scheduled' || p.status === 'pending_review') ? isoToPktWall(p.scheduledAt) : '';
 }
 function physFromEntry(p: StoreProduct, v: ProductVariant): PhysForm {
   return {
@@ -63,8 +70,8 @@ function physFromEntry(p: StoreProduct, v: ProductVariant): PhysForm {
     price: String(v.price), compareAtPrice: v.compareAtPrice != null ? String(v.compareAtPrice) : '',
     stock: String(v.stock), options: [...(v.options ?? [])], shippingWeight: v.shippingWeight ?? '',
     subCategoryId: p.subCategoryId ?? '',
-    status: formStatus(p.status), isListedOnEdudeen: p.isListedOnEdudeen,
-    scheduledAt: '', tags: [...(p.tags ?? [])], tagInput: '', images: [...(p.images ?? [])],
+    status: formStatus(p.status, p.scheduledAt), isListedOnEdudeen: p.isListedOnEdudeen,
+    scheduledAt: scheduledWall(p), tags: [...(p.tags ?? [])], tagInput: '', images: [...(p.images ?? [])],
   };
 }
 function digFromEntry(p: StoreProduct, v: ProductVariant): DigForm {
@@ -74,8 +81,8 @@ function digFromEntry(p: StoreProduct, v: ProductVariant): DigForm {
     name: p.name, description: p.description,
     price: String(v.price), compareAtPrice: v.compareAtPrice != null ? String(v.compareAtPrice) : '',
     subCategoryId: p.subCategoryId ?? '',
-    status: formStatus(p.status), isListedOnEdudeen: p.isListedOnEdudeen,
-    scheduledAt: '', tags: [...(p.tags ?? [])], tagInput: '', images: [...(p.images ?? [])],
+    status: formStatus(p.status, p.scheduledAt), isListedOnEdudeen: p.isListedOnEdudeen,
+    scheduledAt: scheduledWall(p), tags: [...(p.tags ?? [])], tagInput: '', images: [...(p.images ?? [])],
     files: (d?.files ?? []).map(toUpload),
     sampleFile: d?.sampleFile ? toUpload(d.sampleFile) : null,
     tiers: EMPTY_TIERS,
@@ -182,6 +189,13 @@ export default function StoreEditProduct() {
         setEditReview({ pending: !!pe.pendingEditInfo, rejection: pe.lastEditRejection?.reason ?? null });
         setLearning({ curricula: [...(p.curricula ?? [])], ageMin: p.ageMin != null ? String(p.ageMin) : '', ageMax: p.ageMax != null ? String(p.ageMax) : '', classFrom: p.classFrom ?? '', classTo: p.classTo ?? '', coverStyle: p.coverStyle ?? '' });
         // The list cache can lack tags: fill them from the fresh read (never over tags the seller already typed).
+        // The list cache can also lack the go-live date: fill it (and the scheduled choice) from the fresh read.
+        const freshWall = scheduledWall(p);
+        if (freshWall) {
+          const freshStatus = formStatus(p.status, p.scheduledAt);
+          setPhys(f => (f.scheduledAt ? f : { ...f, scheduledAt: freshWall, status: freshStatus }));
+          setDig(f => (f.scheduledAt ? f : { ...f, scheduledAt: freshWall, status: freshStatus }));
+        }
         const freshTags = [...(p.tags ?? [])];
         if (freshTags.length) {
           setPhys(f => (f.tags.length ? f : { ...f, tags: freshTags }));
@@ -305,7 +319,7 @@ export default function StoreEditProduct() {
           categoryId: categoryId || undefined, subCategoryId: phys.subCategoryId || null, images: phys.images, tags: withPendingTags(phys.tags, phys.tagInput),
           isListedOnEdudeen: phys.isListedOnEdudeen, status: finalStatus,
           ...offersPayload({ premiumPct, premiumOptOut, campaignIds }),
-          scheduledAt: finalStatus === 'scheduled' ? phys.scheduledAt || null : null,
+          scheduledAt: finalStatus === 'scheduled' ? pktWallToIso(phys.scheduledAt) : null,
           ...learningPayload(learning),
         });
         const note = reviewNoticeText(res); if (note) toast.info(note);
@@ -335,7 +349,7 @@ export default function StoreEditProduct() {
           customLevel: pType === 'educational' && dig.educationLevel === 'other' ? dig.customLevel : undefined,
           status: finalStatus,
           ...offersPayload({ premiumPct, premiumOptOut, campaignIds }),
-          scheduledAt: finalStatus === 'scheduled' ? dig.scheduledAt || null : null,
+          scheduledAt: finalStatus === 'scheduled' ? pktWallToIso(dig.scheduledAt) : null,
           price: Number(dig.price),
           compareAtPrice: dig.compareAtPrice ? Number(dig.compareAtPrice) : null,
           ...learningPayload(learning),

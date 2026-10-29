@@ -334,7 +334,7 @@ export interface MyCourse {
   liveSession: { startsAt: string; durationMinutes: number; platform: string } | null;
 }
 
-export interface LiveAccess { name: string; startsAt: string; endsAt: string; durationMinutes: number; platform: string; meetingUrl: string; notes: string; ended: boolean }
+export interface LiveAccess { name: string; startsAt: string; endsAt: string; durationMinutes: number; platform: string; meetingUrl: string | null; notes: string; ended: boolean; opensAt?: string; joinOpen?: boolean }
 
 export const apiGetCourseBuilder = (storeId: string, productId: string) => client.get<never, Ok<CourseBuilderData>>(`/api/courses/seller/${storeId}/${productId}`);
 export const apiSaveCourse = (storeId: string, productId: string, body: { sections: CourseSectionInput[]; certificateEnabled: boolean }) =>

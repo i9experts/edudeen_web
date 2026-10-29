@@ -1,5 +1,6 @@
 import { Download, MonitorPlay, Video } from 'lucide-react';
 import { clsx } from 'clsx';
+import { isoToPktWall, pktNowWall, pktWallToIso } from '@/utils/pkTime';
 import type { DeliveryFormat, LiveSessionInput } from '@/api/services/product';
 
 export interface DeliveryState {
@@ -33,13 +34,13 @@ const lbl = 'text-[13px] font-bold text-carbon block mb-1.5';
 /** Builds state from a saved product (edit form). */
 export function deliveryFromProduct(p: { deliveryFormat?: DeliveryFormat | null; liveSession?: (Partial<LiveSessionInput> & { startsAt?: string }) | null }): DeliveryState {
   const live = p.liveSession;
-  const d = live?.startsAt ? new Date(live.startsAt) : null;
-  const pad = (n: number) => String(n).padStart(2, '0');
+  // Pakistan wall clock, whatever timezone the seller's device is in (the field says "Pakistan time").
+  const wall = isoToPktWall(live?.startsAt);
   return {
     ...EMPTY_DELIVERY,
     format: p.deliveryFormat ?? 'download',
-    date: d ? `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` : '',
-    time: d ? `${pad(d.getHours())}:${pad(d.getMinutes())}` : EMPTY_DELIVERY.time,
+    date: wall ? wall.slice(0, 10) : '',
+    time: wall ? wall.slice(11, 16) : EMPTY_DELIVERY.time,
     durationMinutes: live?.durationMinutes ? String(live.durationMinutes) : EMPTY_DELIVERY.durationMinutes,
     platform: (live?.platform as LiveSessionInput['platform']) ?? 'zoom',
     meetingUrl: live?.meetingUrl ?? '',
@@ -52,7 +53,8 @@ export function deliveryFromProduct(p: { deliveryFormat?: DeliveryFormat | null;
 export function deliveryError(s: DeliveryState): string | null {
   if (s.format !== 'live_class') return null;
   if (!s.date || !s.time) return 'Pick the date and time of the live class.';
-  if (new Date(`${s.date}T${s.time}:00`).getTime() <= Date.now()) return 'Pick a future date and time for the live class.';
+  const startIso = pktWallToIso(`${s.date}T${s.time}`);
+  if (!startIso || new Date(startIso).getTime() <= Date.now()) return 'Pick a future date and time for the live class.';
   const dur = Number(s.durationMinutes);
   if (!Number.isInteger(dur) || dur < 15 || dur > 600) return 'Class length should be 15–600 minutes.';
   if (!/^https:\/\/\S+$/i.test(s.meetingUrl.trim())) return 'Add the https:// meeting link.';
@@ -65,7 +67,7 @@ export function deliveryPayload(s: DeliveryState): { deliveryFormat: DeliveryFor
   return {
     deliveryFormat: 'live_class',
     liveSession: {
-      startsAt: new Date(`${s.date}T${s.time}:00`).toISOString(),
+      startsAt: pktWallToIso(`${s.date}T${s.time}`) ?? '',
       durationMinutes: Number(s.durationMinutes),
       platform: s.platform,
       meetingUrl: s.meetingUrl.trim(),
@@ -78,7 +80,7 @@ export function deliveryPayload(s: DeliveryState): { deliveryFormat: DeliveryFor
 /** "How buyers get it" — downloads, an online course, or a live class with its schedule. */
 export function DeliveryFormatField({ value, onChange }: { value: DeliveryState; onChange: (v: DeliveryState) => void }) {
   const set = <K extends keyof DeliveryState>(k: K, v: DeliveryState[K]) => onChange({ ...value, [k]: v });
-  const today = new Date().toISOString().slice(0, 10);
+  const today = pktNowWall().slice(0, 10);
   return (
     <div className="flex flex-col gap-4">
       <div role="radiogroup" aria-label="How buyers get it" className="grid grid-cols-1 sm:grid-cols-3 gap-2">

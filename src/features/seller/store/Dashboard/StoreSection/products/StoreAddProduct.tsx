@@ -13,6 +13,7 @@ import {
 } from '@/features/seller/components/products/LearningFields';
 import { EMPTY_DELIVERY, deliveryPayload, deliveryError } from '@/features/seller/components/products/DeliveryFormatField';
 import { currencySymbol as symbolForCurrency } from '@/utils/currency';
+import { pktWallToIso } from '@/utils/pkTime';
 import { offersPayload, PREMIUM_BLANK_MESSAGE, OFFER_CONFLICT_MESSAGE, type OfferFlags } from './ProductOffersCard';
 import { premiumPercentError } from './PremiumPriceField';
 import { effectiveSellerPercent, premiumGapMessage, usePremiumTerms } from './PremiumEarningsCalculator';
@@ -225,7 +226,7 @@ export default function StoreAddProduct() {
           storeId, name: phys.name, description: phys.description,
           categoryId: categoryId || undefined, subCategoryId: phys.subCategoryId || null, images: phys.images, tags: withPendingTags(phys.tags, phys.tagInput),
           isListedOnEdudeen: phys.isListedOnEdudeen, status: finalStatus, ...offersPayload({ premiumPct, premiumOptOut, campaignIds }),
-          scheduledAt: finalStatus === 'scheduled' ? phys.scheduledAt || null : null,
+          scheduledAt: finalStatus === 'scheduled' ? pktWallToIso(phys.scheduledAt) : null,
           ...learningPayload(learning),
           variants: [{
             price: Number(phys.price),
@@ -249,7 +250,7 @@ export default function StoreAddProduct() {
           educationLevel: pType === 'educational' ? (dig.educationLevel || null) : null,
           customLevel: pType === 'educational' && dig.educationLevel === 'other' ? dig.customLevel : null,
           isListedOnEdudeen: dig.isListedOnEdudeen, status: finalStatus, ...offersPayload({ premiumPct, premiumOptOut, campaignIds }),
-          scheduledAt: finalStatus === 'scheduled' ? dig.scheduledAt || null : null,
+          scheduledAt: finalStatus === 'scheduled' ? pktWallToIso(dig.scheduledAt) : null,
           price: Number(dig.price), compareAtPrice: dig.compareAtPrice ? Number(dig.compareAtPrice) : null,
           ...learningPayload(learning),
           ...deliveryPayload(delivery),

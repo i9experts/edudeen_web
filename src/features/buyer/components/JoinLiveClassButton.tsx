@@ -19,6 +19,13 @@ export function JoinLiveClassButton({ productId, startsAt }: { productId: string
     try {
       const res = await apiGetLiveAccess(productId);
       if (res.data.ended) { tab?.close(); toast.error('This class has ended.'); return; }
+      // The link opens 30 minutes before the start; until then say when.
+      if (!res.data.meetingUrl) {
+        tab?.close();
+        const opens = res.data.opensAt ? new Date(res.data.opensAt).toLocaleString('en-PK', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Karachi' }) : 'shortly before the class';
+        toast.error(`The class link opens 30 minutes before the start (${opens} Pakistan time). We will remind you.`);
+        return;
+      }
       if (tab) tab.location.href = res.data.meetingUrl; else window.location.href = res.data.meetingUrl;
     } catch (err) {
       tab?.close();
@@ -32,7 +39,7 @@ export function JoinLiveClassButton({ productId, startsAt }: { productId: string
         className="inline-flex items-center gap-1.5 rounded-lg bg-brand-royal text-white px-3 py-[7px] text-[12.5px] font-bold border-none cursor-pointer disabled:opacity-60">
         {busy ? <Loader2 size={13} className="animate-spin" /> : <Video size={13} />} Join live class
       </button>
-      {start && <span className="text-[12px] text-slate">{start.toLocaleString('en-PK', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}</span>}
+      {start && <span className="text-[12px] text-slate">{start.toLocaleString('en-PK', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Karachi' })} (Pakistan time)</span>}
     </div>
   );
 }

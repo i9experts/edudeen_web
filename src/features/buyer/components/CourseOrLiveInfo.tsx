@@ -90,9 +90,9 @@ function LiveClassInfo({ product }: { product: MarketplaceProduct }) {
       <div className="flex-1 min-w-0">
         <p className="text-[12px] font-bold uppercase tracking-[0.1em] text-brand-royal m-0">Live class · {PLATFORM[live.platform] ?? 'Online'}</p>
         <p className="text-[17px] font-bold text-carbon m-0 mt-0.5">
-          {start.toLocaleDateString('en-PK', { weekday: 'long', day: 'numeric', month: 'long' })}, {start.toLocaleTimeString('en-PK', { hour: 'numeric', minute: '2-digit' })} – {end.toLocaleTimeString('en-PK', { hour: 'numeric', minute: '2-digit' })}
+          {start.toLocaleDateString('en-PK', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Asia/Karachi' })}, {start.toLocaleTimeString('en-PK', { hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Karachi' })} – {end.toLocaleTimeString('en-PK', { hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Karachi' })} <span className="text-[12px] font-semibold text-slate">(Pakistan time)</span>
         </p>
-        <p className="text-[12.5px] text-slate m-0 mt-0.5">{hours(live.durationMinutes)} · the joining link appears in My Library after you buy{live.notes ? ` · ${live.notes}` : ''}</p>
+        <p className="text-[12.5px] text-slate m-0 mt-0.5">{hours(live.durationMinutes)} · you get reminders 1 hour, 30, 15 and 5 minutes before; the joining link opens 30 minutes before the start{live.notes ? ` · ${live.notes}` : ''}</p>
       </div>
       {ended ? (
         <span className="rounded-full bg-fog text-slate px-3 py-1 text-[12.5px] font-semibold">This class has ended</span>
