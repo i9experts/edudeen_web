@@ -74,23 +74,23 @@ export function StoreFeatureCard({ store, onClick, className }: {
         className,
       )}
     >
-      {/* What this seller actually sells: up to 3 best-selling product photos */}
-      <div className="relative h-[104px] bg-[#f1f3f5]" style={photos.length === 0 ? { background: tone.cover } : undefined}>
-        {photos.length > 0 && (
-          <div className="grid h-full gap-px bg-bone" style={{ gridTemplateColumns: `repeat(${photos.length}, minmax(0, 1fr))` }}>
-            {photos.map(p => (
-              <img
-                key={p.id}
-                loading="lazy"
-                decoding="async"
-                src={imgUrl(p.image, { w: 220 })}
-                alt={p.name}
-                width={88}
-                height={104}
-                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-              />
-            ))}
+      {/* What this seller sells: up to 3 best-selling covers as fixed-size tiles (never full-bleed, so nothing gets cropped oddly) */}
+      <div className="relative flex h-[124px] items-center justify-center gap-[10px] px-4" style={{ background: photos.length === 0 ? tone.cover : `linear-gradient(180deg, ${tone.tile} 0%, #f7f8fa 100%)` }}>
+        {photos.map(p => (
+          <div key={p.id} className="h-[92px] w-[68px] shrink-0 overflow-hidden rounded-[6px] bg-white shadow-[0_4px_10px_-2px_rgba(16,24,40,0.25)] ring-1 ring-black/5 transition-transform duration-300 group-hover:-translate-y-[2px]">
+            <img
+              loading="lazy"
+              decoding="async"
+              src={imgUrl(p.image, { w: 200 })}
+              alt={p.name}
+              width={68}
+              height={92}
+              className="h-full w-full object-cover"
+            />
           </div>
+        ))}
+        {photos.length === 0 && (
+          <span className="text-[34px] font-bold tracking-wide text-white/90" aria-hidden="true">{initialsOf(store.name)}</span>
         )}
         {isTopSeller && (
           <span className="absolute top-[8px] end-[8px] inline-flex items-center gap-[3px] px-[7px] py-[3px] rounded-full bg-carbon/80 backdrop-blur-sm text-white text-[12px] font-bold">
@@ -100,14 +100,24 @@ export function StoreFeatureCard({ store, onClick, className }: {
       </div>
 
       {/* Body */}
-      <div className="relative px-4 pb-4 -mt-6">
-        <div className="flex items-end justify-between mb-2">
-          <div className="w-12 h-12 rounded-xl bg-white border border-bone p-[2px] shadow-sm">
-            <div className="w-full h-full rounded-[10px] flex items-center justify-center overflow-hidden" style={store.logo ? undefined : { background: tone.tile }}>
+      <div className="px-4 pb-4 pt-3">
+        <div className="mb-[10px] flex items-center gap-[10px]">
+          <div className="h-10 w-10 shrink-0 rounded-xl border border-bone bg-white p-[2px]">
+            <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-[9px]" style={store.logo ? undefined : { background: tone.tile }}>
               {store.logo
-                ? <img loading="lazy" decoding="async" src={imgUrl(store.logo, { w: 160 })} alt={`${store.name} logo`} width={64} height={64} className="w-full h-full object-cover" />
-                : <span className="text-[15px] font-bold tracking-wide" style={{ color: tone.ink }}>{initialsOf(store.name)}</span>}
+                ? <img loading="lazy" decoding="async" src={imgUrl(store.logo, { w: 120 })} alt={`${store.name} logo`} width={40} height={40} className="h-full w-full object-cover" />
+                : <span className="text-[13px] font-bold tracking-wide" style={{ color: tone.ink }}>{initialsOf(store.name)}</span>}
             </div>
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-[5px]">
+              <p className="truncate text-[14px] font-semibold leading-tight text-carbon">
+                {/* A real link (crawlable, new-tab friendly); the rest of the card still opens the store on click. */}
+                <Link to={`/shop/${store.slug}`} onClick={e => e.stopPropagation()} className="text-inherit no-underline hover:underline">{store.name}</Link>
+              </p>
+              {isVerified && <BadgeCheck size={14} className="shrink-0 fill-info/15 text-info" />}
+            </div>
+            {tagline && <p className="mt-[2px] line-clamp-1 text-[12px] leading-snug text-slate">{tagline}</p>}
           </div>
           <button
             type="button"
@@ -116,26 +126,16 @@ export function StoreFeatureCard({ store, onClick, className }: {
             aria-label={following ? 'Following' : 'Follow'}
             title={following ? 'Following' : 'Follow'}
             className={clsx(
-              'inline-flex h-8 w-8 items-center justify-center rounded-full border cursor-pointer transition-all duration-150 mt-[26px]',
+              'inline-flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full border transition-all duration-150',
               following
-                ? 'bg-carbon/5 border-bone text-charcoal'
-                : 'bg-white border-carbon/20 text-carbon hover:bg-carbon hover:text-white hover:border-carbon',
-              followBusy && 'opacity-60 cursor-wait',
+                ? 'border-bone bg-carbon/5 text-charcoal'
+                : 'border-carbon/20 bg-white text-carbon hover:border-carbon hover:bg-carbon hover:text-white',
+              followBusy && 'cursor-wait opacity-60',
             )}
           >
             {following ? <UserCheck size={14} /> : <UserPlus size={14} />}
           </button>
         </div>
-
-        <div className="flex items-center gap-[5px] mb-[3px]">
-          <p className="text-[14px] font-semibold text-carbon leading-tight truncate">
-            {/* A real link (crawlable, new-tab friendly); the rest of the card still opens the store on click. */}
-            <Link to={`/shop/${store.slug}`} onClick={e => e.stopPropagation()} className="text-inherit no-underline hover:underline">{store.name}</Link>
-          </p>
-          {isVerified && <BadgeCheck size={14} className="text-info fill-info/15 shrink-0" />}
-        </div>
-        {/* The tagline only exists when there is something real to say - never an empty gap. */}
-        {tagline ? <p className="text-[12px] text-slate leading-snug line-clamp-1 mb-[10px]">{tagline}</p> : <div className="mb-[10px]" />}
 
         <div className="flex items-center gap-3 pt-[10px] border-t border-bone text-[12px] text-slate">
           {showRating && (
