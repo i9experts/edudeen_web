@@ -5,6 +5,7 @@ import { ListingReviewModal } from '@/features/admin/components/ListingReviewMod
 import { apiGetListingReviewCount, apiApproveListing, apiRejectListing } from '@/api/services/marketplace/adminMarketplace';
 import { ExportCsvButton } from '@/features/admin/components/ExportCsvButton';
 import { BulkDecisionModal } from '@/features/admin/components/BulkDecisionModal';
+import { FeaturedSellersPanel } from '@/features/admin/components/FeaturedSellersPanel';
 import { useBulkRunner } from '@/hooks/admin/useBulkRunner';
 import { useBusyAction } from '@/hooks/useBusyAction';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -309,6 +310,8 @@ export function AdminMarketplace() {
           />
         )}
       </div>
+
+      <FeaturedSellersPanel />
 
       {reviewing && (
         <ListingReviewModal

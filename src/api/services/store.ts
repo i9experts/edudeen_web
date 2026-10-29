@@ -346,6 +346,10 @@ export interface PublicStoreListItem {
   sellerType:     SellerType | null;
   badges:         string[];
   productCount?:  number;
+  /** Home Featured sellers rail only: best-selling products (up to 3) with a photo. */
+  topProducts?:   Array<{ id: string; name: string; image: string; coverStyle: 'book' | 'flat' | null }>;
+  soldCount?:     number;
+  categoryName?:  string | null;
 }
 
 export interface ListPublicStoresParams {

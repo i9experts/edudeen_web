@@ -2,13 +2,11 @@ import { useState } from 'react';
 import { imgUrl } from '@/utils/cloudinaryImage';
 import { clsx } from 'clsx';
 import { Link } from 'react-router-dom';
-import { Star, Users, TrendingUp, BadgeCheck, PackageCheck, UserPlus, UserCheck } from 'lucide-react';
+import { Star, TrendingUp, BadgeCheck, UserPlus, UserCheck, ArrowRight } from 'lucide-react';
 import { apiFollowStore, type PublicStoreListItem } from '@/api/services/store';
 import { useAuthGate } from '@/contexts/AuthGateContext';
-import { CoverImage } from './CoverImage';
 
-// Calm, brand-tinted palettes for stores without their own cover/logo — picked per store name so a row of
-// new stores doesn't look like the same loud gradient repeated.
+// Calm, brand-tinted palettes for stores without a logo / product photos — picked per store name.
 const STORE_TONES = [
   { cover: 'linear-gradient(135deg,#174771 0%,#2b6a8f 100%)', tile: '#e6eef5', ink: '#174771' },
   { cover: 'linear-gradient(135deg,#1f5d4a 0%,#3a8a6c 100%)', tile: '#e5f2ec', ink: '#1f5d4a' },
@@ -25,7 +23,17 @@ function initialsOf(name: string) {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() || 'S';
 }
 
-// ── Featured seller card — cover, avatar, badges, rating/followers/products, follow ──
+const MIN_REVIEWS_FOR_RATING = 3;
+const MIN_SOLD_TO_SHOW = 10;
+
+/** What the seller sells: a real bio line when it is meaningful, else the main category. */
+function taglineOf(store: PublicStoreListItem): string | null {
+  const bio = store.description?.trim() ?? '';
+  if (bio.length >= 30) return bio;
+  return store.categoryName?.trim() || null;
+}
+
+// ── Featured seller card — the seller's best-selling products up top, logo, trust numbers, Visit store ──
 export function StoreFeatureCard({ store, onClick, className }: {
   store: PublicStoreListItem;
   onClick: (slug: string) => void;
@@ -37,6 +45,10 @@ export function StoreFeatureCard({ store, onClick, className }: {
   const isVerified = store.badges?.includes('verified');
   const isTopSeller = store.badges?.includes('top_seller');
   const tone = toneFor(store.name || store.slug || '');
+  const photos = (store.topProducts ?? []).filter(p => !!p.image).slice(0, 3);
+  const tagline = taglineOf(store);
+  const showRating = store.averageRating > 0 && (store.reviewCount ?? 0) >= MIN_REVIEWS_FOR_RATING;
+  const showSold = (store.soldCount ?? 0) >= MIN_SOLD_TO_SHOW;
 
   const handleFollow = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -62,22 +74,30 @@ export function StoreFeatureCard({ store, onClick, className }: {
         className,
       )}
     >
-      {/* Cover */}
-      <CoverImage
-        src={store.coverImage}
-        alt={`${store.name} cover`}
-        imgClassName="transition-transform duration-500 group-hover:scale-105"
-        className="h-[76px]"
-        // No cover photo → a calm single-hue gradient (per store), not the loud default one.
-        fallbackClassName=""
-        fallbackStyle={{ background: tone.cover }}
-      >
+      {/* What this seller actually sells: up to 3 best-selling product photos */}
+      <div className="relative h-[104px] bg-[#f1f3f5]" style={photos.length === 0 ? { background: tone.cover } : undefined}>
+        {photos.length > 0 && (
+          <div className="grid h-full gap-px bg-bone" style={{ gridTemplateColumns: `repeat(${photos.length}, minmax(0, 1fr))` }}>
+            {photos.map(p => (
+              <img
+                key={p.id}
+                loading="lazy"
+                decoding="async"
+                src={imgUrl(p.image, { w: 220 })}
+                alt={p.name}
+                width={88}
+                height={104}
+                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              />
+            ))}
+          </div>
+        )}
         {isTopSeller && (
           <span className="absolute top-[8px] end-[8px] inline-flex items-center gap-[3px] px-[7px] py-[3px] rounded-full bg-carbon/80 backdrop-blur-sm text-white text-[12px] font-bold">
             <TrendingUp size={9} /> Top Seller
           </span>
         )}
-      </CoverImage>
+      </div>
 
       {/* Body */}
       <div className="relative px-4 pb-4 -mt-6">
@@ -90,18 +110,20 @@ export function StoreFeatureCard({ store, onClick, className }: {
             </div>
           </div>
           <button
+            type="button"
             onClick={handleFollow}
             disabled={followBusy}
+            aria-label={following ? 'Following' : 'Follow'}
+            title={following ? 'Following' : 'Follow'}
             className={clsx(
-              'inline-flex items-center gap-[5px] px-[11px] py-[5px] rounded-full text-[12px] font-semibold border cursor-pointer transition-all duration-150 mb-[2px] mt-[26px]',
+              'inline-flex h-8 w-8 items-center justify-center rounded-full border cursor-pointer transition-all duration-150 mt-[26px]',
               following
                 ? 'bg-carbon/5 border-bone text-charcoal'
                 : 'bg-white border-carbon/20 text-carbon hover:bg-carbon hover:text-white hover:border-carbon',
               followBusy && 'opacity-60 cursor-wait',
             )}
           >
-            {following ? <UserCheck size={11} /> : <UserPlus size={11} />}
-            {following ? 'Following' : 'Follow'}
+            {following ? <UserCheck size={14} /> : <UserPlus size={14} />}
           </button>
         </div>
 
@@ -112,30 +134,36 @@ export function StoreFeatureCard({ store, onClick, className }: {
           </p>
           {isVerified && <BadgeCheck size={14} className="text-info fill-info/15 shrink-0" />}
         </div>
-        {/* The bio line only exists when the store wrote one - never an empty gap. */}
-        {store.description?.trim() ? <p className="text-[12px] text-slate leading-snug line-clamp-1 mb-[10px]">{store.description.trim()}</p> : <div className="mb-[10px]" />}
+        {/* The tagline only exists when there is something real to say - never an empty gap. */}
+        {tagline ? <p className="text-[12px] text-slate leading-snug line-clamp-1 mb-[10px]">{tagline}</p> : <div className="mb-[10px]" />}
 
-        <div className="flex items-center gap-3 pt-[10px] border-t border-bone">
-          <span className="flex items-center gap-[4px] text-[12px] text-charcoal font-medium">
-            {store.averageRating > 0
-              ? <><Star size={11} className="text-brand-orange fill-brand-orange" />{store.averageRating.toFixed(1)}</>
-              : <span className="px-[6px] py-[1px] rounded-full bg-success-bg text-success text-[12px] font-semibold">New</span>}
-          </span>
-          {store.followersCount > 0 && (
-            <>
-              <span className="w-px h-3 bg-bone" />
-              <span className="flex items-center gap-[4px] text-[12px] text-slate">
-                <Users size={11} />
-                {store.followersCount.toLocaleString()}
-              </span>
-            </>
+        <div className="flex items-center gap-3 pt-[10px] border-t border-bone text-[12px] text-slate">
+          {showRating && (
+            <span className="flex items-center gap-[4px] text-charcoal font-medium">
+              <Star size={11} className="text-brand-orange fill-brand-orange" />
+              <span>{store.averageRating.toFixed(1)}</span>
+              <span className="text-slate font-normal">({store.reviewCount})</span>
+            </span>
           )}
-          <span className="w-px h-3 bg-bone" />
-          <span className="flex items-center gap-[4px] text-[12px] text-slate">
-            <PackageCheck size={11} />
-            {store.productCount != null ? `${store.productCount} items` : 'Shop'}
-          </span>
+          {showSold && (
+            <span className="flex items-center gap-[4px]">
+              <span>{(store.soldCount ?? 0).toLocaleString()}</span> <span>sold</span>
+            </span>
+          )}
+          {store.productCount != null && (
+            <span className="flex items-center gap-[4px]">
+              <span>{store.productCount}</span> <span>items</span>
+            </span>
+          )}
         </div>
+
+        <Link
+          to={`/shop/${store.slug}`}
+          onClick={e => e.stopPropagation()}
+          className="mt-3 inline-flex w-full items-center justify-center gap-[6px] rounded-full bg-carbon px-4 py-[8px] text-[13px] font-semibold text-white no-underline transition-colors hover:bg-carbon/90"
+        >
+          Visit store <ArrowRight size={13} className="rtl:rotate-180" />
+        </Link>
       </div>
     </div>
   );

@@ -220,6 +220,24 @@ export function apiSetStoreBadge(storeId: string, badge: GrantableStoreBadge, gr
   );
 }
 
+export interface FeaturedStoreRow {
+  storeId: string; name: string; slug: string; logo: string | null;
+  score: number; featuredRank: number | null; qualityOk: boolean;
+  publishedProducts: number; soldCount: number; averageRating: number; reviewCount: number; followersCount: number;
+}
+
+/** GET /api/admin/marketplace/stores/featured — active stores ordered like the home Featured sellers rail. */
+export function apiGetFeaturedStores() {
+  return client.get<never, ApiResponse<{ stores: FeaturedStoreRow[] }>>(ENDPOINTS.MARKETPLACE.ADMIN.FEATURED_STORES);
+}
+
+/** PATCH /api/admin/marketplace/stores/:id/featured — rank 1 = first on the rail, null = unpin. */
+export function apiSetStoreFeaturedRank(storeId: string, rank: number | null) {
+  return client.patch<never, ApiResponse<{ featuredRank: number | null }>>(
+    ENDPOINTS.MARKETPLACE.ADMIN.SET_STORE_FEATURED(storeId), { rank },
+  );
+}
+
 /** PATCH /api/admin/marketplace/stores/:id/fulfillment-mode — new orders only. */
 export function apiSetStoreFulfillmentMode(storeId: string, fulfillmentMode: 'seller' | 'platform') {
   return client.patch<never, ApiResponse<{ fulfillmentMode: string }>>(

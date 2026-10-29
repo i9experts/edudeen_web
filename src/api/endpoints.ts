@@ -448,6 +448,8 @@ export const ENDPOINTS = {
       REMOVE:   (id: string) => `/api/admin/marketplace/listings/${id}/remove`,
       SET_STORE_BADGE: (storeId: string) => `/api/admin/marketplace/stores/${storeId}/badge`,
       SET_STORE_FULFILLMENT: (storeId: string) => `/api/admin/marketplace/stores/${storeId}/fulfillment-mode`,
+      FEATURED_STORES:      '/api/admin/marketplace/stores/featured',
+      SET_STORE_FEATURED:   (storeId: string) => `/api/admin/marketplace/stores/${storeId}/featured`,
       LEADS:            '/api/admin/marketplace/leads',
       LEAD_DETAIL:      (id: string) => `/api/admin/marketplace/leads/${id}`,
       APPROVE_LEAD:     (id: string) => `/api/admin/marketplace/leads/${id}/approve`,
