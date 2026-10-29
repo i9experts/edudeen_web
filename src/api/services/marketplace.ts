@@ -124,7 +124,9 @@ export interface MarketplaceProduct {
   coverStyle?:       'book' | 'flat' | null;
   deliveryFormat?:   'download' | 'course' | 'live_class';
   /** Live classes only — the meeting link is never public. */
-  liveSession?:      { startsAt: string; durationMinutes: number; platform: string; capacity: number | null; notes: string } | null;
+  liveSession?:      { startsAt: string; durationMinutes: number; platform: string; capacity: number | null; notes: string; registrationDeadline?: string | null; status?: 'scheduled' | 'cancelled' } | null;
+  /** Online courses: lesson count and total minutes. */
+  courseSummary?:    { lessonCount: number; totalMinutes: number } | null;
   digital?:          DigitalProduct | null;
   viewCount:         number;
   wishlistCount:     number;

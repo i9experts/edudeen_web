@@ -12,7 +12,7 @@ import {
   apiGetMyOrders, apiCancelOrder, apiRequestReturn,
   type OrderSummary, type OrderStatus, type OrderLineItem,
 } from '@/api/services/orders';
-import { DigitalFileDownloads } from '@/features/buyer/components/DigitalFileDownloads';
+import { DigitalItemAccess, BoughtFormatBadge, useDeliveryFormat } from '@/features/buyer/components/DigitalItemAccess';
 import { formatPrice } from '@/utils/formatPrice';
 import { formatAddress, formatPhone } from '@/utils/formatAddress';
 import { ProductCoverFallback } from '@/components/comman/marketplace/ProductCoverFallback';
@@ -165,6 +165,8 @@ const REVIEWABLE_STATUSES = ['delivered', 'completed'];
 
 function OrderItemRow({ item, orderId, orderStatus, currency }: { item: OrderLineItem; orderId: string; orderStatus: OrderStatus; currency: string }) {
   const isDigital = item.type === 'digital';
+  const { format: boughtFormat } = useDeliveryFormat(isDigital ? item.productId : '');
+  const learnFormat = boughtFormat === 'course' || boughtFormat === 'live_class';
   // Backend only accepts a verified review once the item is delivered/completed
   // (RatingService.checkVerifiedPurchase).
   const canReview = item.canReview ?? (!!item.productId && item.status !== 'cancelled'
@@ -184,9 +186,9 @@ function OrderItemRow({ item, orderId, orderStatus, currency }: { item: OrderLin
             ) : (
               <p className="text-[12px] font-semibold text-charcoal truncate">{item.name}</p>
             )}
-            {isDigital && (
+            {isDigital && (learnFormat ? <BoughtFormatBadge productId={item.productId} /> : (
               <span className="shrink-0 text-[12px] font-bold px-1.5 py-[1px] rounded-full bg-[#eef0ff] text-[#3851d1]">Digital</span>
-            )}
+            ))}
             {item.status === 'cancelled' && (
               <span className="shrink-0 text-[12px] font-bold px-1.5 py-[1px] rounded-full bg-[#fff0f0] text-error">Cancelled</span>
             )}
@@ -202,7 +204,7 @@ function OrderItemRow({ item, orderId, orderStatus, currency }: { item: OrderLin
       <div className="flex flex-col items-end gap-1.5 shrink-0">
         <p className="text-[12px] font-bold text-charcoal">{formatPrice(item.totalPrice, currency)}</p>
         {isDigital && item.productId && (
-          <DigitalFileDownloads orderId={orderId} productId={item.productId} />
+          <DigitalItemAccess orderId={orderId} productId={item.productId} />
         )}
         {canReview && (
           <Link

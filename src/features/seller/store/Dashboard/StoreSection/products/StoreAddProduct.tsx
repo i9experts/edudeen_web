@@ -157,14 +157,15 @@ export default function StoreAddProduct() {
       if (wErr) out.push({ step: 2, message: wErr, fieldId: 'ap-weight' });
     }
     if (isDigitalFamily) { const tErr = tiersError(dig.tiers); if (tErr) out.push({ step: 2, message: tErr, fieldId: 'fld-tiers' }); }
-    if (pType === 'educational' && !dig.educationLevel) out.push({ step: 3, message: 'Choose an education level', fieldId: 'fld-level' });
-    else if (pType === 'educational' && dig.educationLevel === 'other' && !dig.customLevel.trim()) out.push({ step: 3, message: 'Describe the custom education level', fieldId: 'fld-level' });
+    const learnFormat = isDigitalFamily && delivery.format !== 'download';
+    if (pType === 'educational' && !learnFormat && !dig.educationLevel) out.push({ step: 3, message: 'Choose an education level', fieldId: 'fld-level' });
+    else if (pType === 'educational' && !learnFormat && dig.educationLevel === 'other' && !dig.customLevel.trim()) out.push({ step: 3, message: 'Describe the custom education level', fieldId: 'fld-level' });
     const lErr = learningError(learning);
     if (lErr) out.push({ step: 3, message: lErr, fieldId: 'fld-learning' });
     // Digital / educational listings need a class range to go live (drafts may stay incomplete).
     const cErr = finalStatus === 'active' || finalStatus === 'scheduled' ? classRangeError(pType, learning.classFrom, learning.classTo) : null;
     if (cErr) out.push({ step: 3, message: cErr, fieldId: 'fld-learning', publishOnly: true });
-    if (!learning.coverStyle) out.push({ step: 3, message: 'Choose the product card style (Book or Toy / item)', fieldId: 'fld-cover', publishOnly: true });
+    if (!learning.coverStyle && !learnFormat) out.push({ step: 3, message: 'Choose the product card style (Book or Toy / item)', fieldId: 'fld-cover', publishOnly: true });
     const missingAttr = findMissingRequiredAttribute(attrDefs, attributeValues);
     if (missingAttr) out.push({ step: 3, message: `${missingAttr.label} is required`, fieldId: 'fld-attrs' });
     const pErr = premiumPercentError(premiumPct);
@@ -252,7 +253,8 @@ export default function StoreAddProduct() {
           isListedOnEdudeen: dig.isListedOnEdudeen, status: finalStatus, ...offersPayload({ premiumPct, premiumOptOut, campaignIds }),
           scheduledAt: finalStatus === 'scheduled' ? pktWallToIso(dig.scheduledAt) : null,
           price: Number(dig.price), compareAtPrice: dig.compareAtPrice ? Number(dig.compareAtPrice) : null,
-          ...learningPayload(learning),
+          // Card style does not apply to courses / live classes; the server still stores one, so default it.
+          ...learningPayload(delivery.format === 'download' ? learning : { ...learning, coverStyle: learning.coverStyle || 'book' }),
           ...deliveryPayload(delivery),
           licenseTiers: tiersPayload(dig.tiers.filter(t => t.license !== dig.licenseType)),
           digital: { files, downloadLimit: dig.downloadLimit, linkExpiryDays: dig.linkExpiryDays ? Number(dig.linkExpiryDays) : null, pdfStampingEnabled: dig.pdfStampingEnabled, licenseType: dig.licenseType, buyerDeliveryMessage: dig.buyerDeliveryMessage, preview: delivery.format === 'download' && files.length > 0 && dig.previewEnabled ? { enabled: true, sourceFileIndex: 0 } : { enabled: false, sourceFileIndex: 0 }, sampleFile: dig.sampleFile ? toFile(dig.sampleFile) : null },

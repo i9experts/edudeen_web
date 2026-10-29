@@ -29,6 +29,30 @@ export function pktNowWall(): string {
   return wallFromShifted(new Date(Date.now() + PKT_OFFSET_MS));
 }
 
+/**
+ * An instant in the VIEWER's timezone with the zone named, e.g. "Fri, 30 Oct, 3:00 pm GMT+4".
+ * Used for buyers (live classes are stored as UTC, entered in Pakistan time).
+ */
+export function formatLocalWithZone(iso: string | null | undefined, opts: { withDate?: boolean } = {}): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  try {
+    return new Intl.DateTimeFormat(undefined, {
+      ...(opts.withDate === false ? {} : { weekday: 'short', day: 'numeric', month: 'short' }),
+      hour: 'numeric', minute: '2-digit', timeZoneName: 'short',
+    }).format(d);
+  } catch { return d.toLocaleString(); }
+}
+
+/** The same instant as a Pakistan-time label, e.g. "3:00 pm PKT". */
+export function formatPkt(iso: string | null | undefined): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  return `${new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Karachi', hour: 'numeric', minute: '2-digit', hour12: true }).format(d)} PKT`;
+}
+
 /** Pakistan wall clock string -> readable label ("30 Oct 2026, 3:00 pm"). */
 export function pktWallLabel(wall: string): string {
   const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(wall);

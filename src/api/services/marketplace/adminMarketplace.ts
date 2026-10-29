@@ -77,6 +77,13 @@ export interface ListingReview {
   customLevel: string | null;
   classFrom?: string | null;
   classTo?: string | null;
+  /** download | course | live_class (missing = download). */
+  deliveryFormat?: 'download' | 'course' | 'live_class';
+  liveSession?: { startsAt?: string; durationMinutes?: number; platform?: string; capacity?: number | null; notes?: string; meetingUrl?: string; registrationDeadline?: string | null; status?: string } | null;
+  course?: {
+    lessonCount: number; totalMinutes: number; outcomes?: string[]; instructor?: { name: string; bio: string } | null;
+    sections: { title: string; lessons: { title: string; type: string; minutes: number | null; isPreview: boolean }[] }[];
+  } | null;
   /** Seller edit waiting for approval: the fields above are still the LIVE version. */
   pendingEdit?: {
     submittedAt: string;

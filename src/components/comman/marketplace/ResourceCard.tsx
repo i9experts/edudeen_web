@@ -7,6 +7,8 @@ import type { MarketplaceProduct } from '@/api/services/marketplace';
 import { EDUCATION_LEVELS } from '@/api/services/product';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 import { formatPrice } from '@/utils/formatPrice';
+import { formatLocalWithZone } from '@/utils/pkTime';
+import { courseSummaryText } from '@/utils/deliveryFormat';
 import { isPlainLeftClick } from '@/utils/productLink';
 import { responsiveImg } from '@/utils/cloudinaryImage';
 import { getStorePagePath } from '@/utils/storefrontUrl';
@@ -156,9 +158,10 @@ export const ResourceCard = memo(function ResourceCard({
     ? (product.educationLevel === 'other' ? product.customLevel : LEVEL_LABEL.get(product.educationLevel)) ?? null
     : null;
   const delivery = kind === 'physical' ? 'Ships to you'
-    : product.deliveryFormat === 'course' ? 'Online course'
+    : product.deliveryFormat === 'course' ? ['Online course', courseSummaryText(product.courseSummary)].filter(Boolean).join(' · ')
     : product.deliveryFormat === 'live_class'
-      ? (product.liveSession?.startsAt ? `Live class · ${(() => { const d = new Date(product.liveSession.startsAt); return d.toLocaleString('en-PK', { day: 'numeric', month: 'short', ...(d.getFullYear() !== new Date().getFullYear() ? { year: 'numeric' as const } : {}), hour: 'numeric', minute: '2-digit' }); })()}` : 'Live class')
+      ? (product.liveSession?.status === 'cancelled' ? 'Live class · Cancelled'
+        : product.liveSession?.startsAt ? `Live class · ${formatLocalWithZone(product.liveSession.startsAt)} · ${product.liveSession.durationMinutes} min${typeof (product.liveSession as { seatsLeft?: number }).seatsLeft === 'number' ? ` · ${(product.liveSession as { seatsLeft?: number }).seatsLeft} seats left` : ''}` : 'Live class')
       : 'Instant download';
   // Separate text nodes so the Urdu DOM translator can match each part ("All ages", "Ships to you").
   const meta = [classRangeLabel(product.classFrom, product.classTo) ?? ageLabel(product.ageMin, product.ageMax) ?? level ?? 'All ages', delivery]

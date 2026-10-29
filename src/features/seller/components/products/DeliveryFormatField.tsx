@@ -12,10 +12,13 @@ export interface DeliveryState {
   meetingUrl: string;
   capacity: string;
   notes: string;
+  /** Pakistan wall clock 'YYYY-MM-DDTHH:mm', '' = none. */
+  registrationDeadline: string;
+  recordingUrl: string;
 }
 
 export const EMPTY_DELIVERY: DeliveryState = {
-  format: 'download', date: '', time: '17:00', durationMinutes: '60', platform: 'zoom', meetingUrl: '', capacity: '', notes: '',
+  format: 'download', date: '', time: '17:00', durationMinutes: '60', platform: 'zoom', meetingUrl: '', capacity: '', notes: '', registrationDeadline: '', recordingUrl: '',
 };
 
 const OPTIONS: { value: DeliveryFormat; label: string; hint: string; Icon: typeof Download }[] = [
@@ -46,19 +49,29 @@ export function deliveryFromProduct(p: { deliveryFormat?: DeliveryFormat | null;
     meetingUrl: live?.meetingUrl ?? '',
     capacity: live?.capacity ? String(live.capacity) : '',
     notes: live?.notes ?? '',
+    registrationDeadline: isoToPktWall(live?.registrationDeadline),
+    recordingUrl: live?.recordingUrl ?? '',
   };
 }
 
 /** Client-side check before saving; the server re-checks everything. */
-export function deliveryError(s: DeliveryState): string | null {
+export function deliveryError(s: DeliveryState, original?: DeliveryState | null): string | null {
   if (s.format !== 'live_class') return null;
   if (!s.date || !s.time) return 'Pick the date and time of the live class.';
   const startIso = pktWallToIso(`${s.date}T${s.time}`);
-  if (!startIso || new Date(startIso).getTime() <= Date.now()) return 'Pick a future date and time for the live class.';
+  // A saved class keeps its time: only a CHANGED date/time must be in the future.
+  const unchanged = !!original && original.format === 'live_class' && original.date === s.date && original.time === s.time;
+  if (!startIso || (!unchanged && new Date(startIso).getTime() <= Date.now())) return 'Pick a future date and time for the live class.';
   const dur = Number(s.durationMinutes);
   if (!Number.isInteger(dur) || dur < 15 || dur > 600) return 'Class length should be 15–600 minutes.';
   if (!/^https:\/\/\S+$/i.test(s.meetingUrl.trim())) return 'Add the https:// meeting link.';
   if (s.capacity && (!Number.isInteger(Number(s.capacity)) || Number(s.capacity) < 1)) return 'Seats must be a whole number (or leave empty).';
+  if (s.registrationDeadline) {
+    const dl = pktWallToIso(s.registrationDeadline);
+    if (!dl) return 'The registration deadline is not a valid date.';
+    if (new Date(dl).getTime() >= new Date(startIso).getTime()) return 'The registration deadline must be before the class starts.';
+  }
+  if (s.recordingUrl.trim() && !/^https:\/\/\S+$/i.test(s.recordingUrl.trim())) return 'The recording link must start with https://';
   return null;
 }
 
@@ -73,6 +86,8 @@ export function deliveryPayload(s: DeliveryState): { deliveryFormat: DeliveryFor
       meetingUrl: s.meetingUrl.trim(),
       capacity: s.capacity ? Number(s.capacity) : null,
       notes: s.notes.trim(),
+      registrationDeadline: pktWallToIso(s.registrationDeadline),
+      recordingUrl: s.recordingUrl.trim() || null,
     },
   };
 }
@@ -135,7 +150,15 @@ export function DeliveryFormatField({ value, onChange }: { value: DeliveryState;
             <label htmlFor="live-notes" className={lbl}>Notes for students <span className="text-[12px] font-normal text-slate">(optional)</span></label>
             <textarea id="live-notes" rows={2} maxLength={1000} className={`${inp} resize-y`} value={value.notes} onChange={e => set('notes', e.target.value)} placeholder="Passcode, what to bring, how to prepare…" />
           </div>
-          <p className="sm:col-span-2 text-[12px] text-slate m-0">Only buyers see the link — in My Library and on their order. Sales stop when the class ends or the seats are full.</p>
+          <div>
+            <label htmlFor="live-deadline" className={lbl}>Registration closes <span className="text-[12px] font-normal text-slate">(optional, Pakistan time)</span></label>
+            <input id="live-deadline" type="datetime-local" max={value.date && value.time ? `${value.date}T${value.time}` : undefined} className={inp} value={value.registrationDeadline} onChange={e => set('registrationDeadline', e.target.value)} />
+          </div>
+          <div>
+            <label htmlFor="live-recording" className={lbl}>Recording link <span className="text-[12px] font-normal text-slate">(optional, add after the class)</span></label>
+            <input id="live-recording" type="url" className={inp} value={value.recordingUrl} onChange={e => set('recordingUrl', e.target.value)} placeholder="https://…" />
+          </div>
+          <p className="sm:col-span-2 text-[12px] text-slate m-0">Changing the date or time later notifies every buyer automatically. Only buyers see the link — in My Library and on their order. Sales stop when the class ends or the seats are full.</p>
         </div>
       )}
     </div>

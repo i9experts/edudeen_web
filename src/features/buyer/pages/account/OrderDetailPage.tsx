@@ -13,7 +13,7 @@ import { CANCEL_PRESETS } from '../../utils/cancelReasons';
 import { getStorePagePath } from '@/utils/storefrontUrl';
 import { money, discountLines } from './orderFormat';
 import { LICENSE_LABEL } from '@/constants/learning';
-import { DigitalFileDownloads } from '@/features/buyer/components/DigitalFileDownloads';
+import { DigitalItemAccess, BoughtFormatBadge } from '@/features/buyer/components/DigitalItemAccess';
 import { RefundRequestPanel } from '@/features/buyer/components/RefundRequestPanel';
 import { OrderNextStep, OrderProgressTrack, buildOrderProgress } from './orderProgress';
 import { formatAddressLine, formatPhone } from '@/utils/formatAddress';
@@ -171,6 +171,7 @@ export function OrderDetailPage() {
                 {it.image ? <img src={it.image} alt="" className="w-12 h-12 rounded-lg object-cover border border-bone shrink-0" /> : <ProductCoverFallback name={it.name} size="xs" className="w-12 h-12 rounded-lg shrink-0" />}
                 <div className="flex-1 min-w-0">
                   <Link to={`/product/${it.productId}`} className="text-[13px] font-semibold text-carbon no-underline hover:text-brand-orange truncate block">{it.name}</Link>
+                  {it.type === 'digital' && <span className="inline-block mb-0.5"><BoughtFormatBadge productId={it.productId} /></span>}
                   <p className="text-[12px] text-slate">
                     {it.quantity} × {money(it.price, order.currency)}
                     {it.licenseType ? ` · ${LICENSE_LABEL[it.licenseType] ?? it.licenseType}` : ''}
@@ -179,7 +180,7 @@ export function OrderDetailPage() {
                 </div>
                 <span className="text-[13px] font-semibold text-carbon tabular-nums">{money(it.totalPrice, order.currency)}</span>
                 {it.type === 'digital' && order.isPaid && it.status !== 'cancelled' && (
-                  <div className="w-full sm:w-auto"><DigitalFileDownloads orderId={order._id} productId={it.productId} /></div>
+                  <div className="w-full sm:w-auto"><DigitalItemAccess orderId={order._id} productId={it.productId} /></div>
                 )}
               </li>
             ))}

@@ -303,6 +303,8 @@ export interface LibraryItem {
   fileCount:      number;
   deliveryFormat?: 'download' | 'course' | 'live_class';
   liveStartsAt?:  string | null;
+  liveEndsAt?:    string | null;
+  liveStatus?:    'upcoming' | 'completed' | 'cancelled';
   /** File extensions (lowercase) and combined size in bytes of the product's files. */
   fileTypes?:     string[];
   totalSize?:     number;

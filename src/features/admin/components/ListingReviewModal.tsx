@@ -11,6 +11,9 @@ import { AiModerationPanel } from './AiModerationPanel';
 import { TrustBadgesEditor } from './TrustBadgesEditor';
 import { ageLabel } from '@/constants/learning';
 import { classRangeLabel } from '@/constants/classLevels';
+import { DeliveryFormatBadge } from '@/components/comman/ui/DeliveryFormatBadge';
+import { deliveryFormatLabel, normalizeDeliveryFormat, PLATFORM_LABEL, courseSummaryText } from '@/utils/deliveryFormat';
+import { formatPkt } from '@/utils/pkTime';
 
 const LICENSE: Record<string, string> = {
   personal: 'Personal use', single_classroom: 'One classroom', school: 'Whole school', commercial: 'Commercial',
@@ -71,6 +74,7 @@ export function ListingReviewModal({ listingId, onClose, onDone }: { listingId: 
   const range = data ? classRangeLabel(data.classFrom, data.classTo) : null;
   const grade = [range, level].filter(Boolean).join(' · ') || null;
   const price = data?.variants.find(v => v.isDefault) ?? data?.variants[0];
+  const format = normalizeDeliveryFormat(data?.deliveryFormat);
 
   return (
     <Modal
@@ -118,7 +122,10 @@ export function ListingReviewModal({ listingId, onClose, onDone }: { listingId: 
                 {data.store && <> · <a href={getStorePagePath(data.store.slug)} target="_blank" rel="noreferrer" className="text-brand-orange inline-flex items-center gap-1">{data.store.name} <ExternalLink size={11} /></a></>}
               </p>
             </div>
-            <StatusBadge status={data.status} size="sm" />
+            <div className="flex items-center gap-2 flex-wrap">
+              {data.type === 'digital' && <DeliveryFormatBadge format={format} />}
+              <StatusBadge status={data.status} size="sm" />
+            </div>
           </div>
 
           {data.pendingEdit && (
@@ -174,7 +181,7 @@ export function ListingReviewModal({ listingId, onClose, onDone }: { listingId: 
 
           <dl className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2 rounded-lg border border-bone bg-cream/50 px-3 py-3">
             {[
-              ['Type', data.productType],
+              ['Type', data.type === 'digital' ? `${data.productType} · ${deliveryFormatLabel(format)}` : data.productType],
               ['Category', [data.category, data.subCategory].filter(Boolean).join(' › ') || '—'],
               ['Grade', grade ?? '—'],
               ['Price', price ? `${price.currency} ${price.price.toLocaleString()}${price.compareAtPrice ? ` (was ${price.compareAtPrice.toLocaleString()})` : ''}` : '—'],
@@ -193,7 +200,46 @@ export function ListingReviewModal({ listingId, onClose, onDone }: { listingId: 
             <p className="text-charcoal whitespace-pre-line max-h-[180px] overflow-y-auto leading-relaxed">{data.description || '—'}</p>
           </div>
 
-          {data.digital && (
+          {format === 'course' && (
+            <div className="rounded-lg border border-bone px-3 py-3">
+              <p className="text-[12px] uppercase tracking-[0.06em] text-slate font-semibold mb-1">Online course</p>
+              {!data.course || data.course.lessonCount === 0 ? <p className="text-error m-0">No lessons added yet.</p> : (
+                <>
+                  <p className="text-charcoal m-0 mb-2">{courseSummaryText({ lessonCount: data.course.lessonCount, totalMinutes: data.course.totalMinutes })}{data.course.instructor?.name ? ` · Instructor: ${data.course.instructor.name}` : ''}</p>
+                  {(data.course.outcomes ?? []).length > 0 && (
+                    <ul className="list-disc ps-4 text-charcoal mb-2">{(data.course.outcomes ?? []).map((o, i) => <li key={i}>{o}</li>)}</ul>
+                  )}
+                  <div className="flex flex-col gap-2 max-h-[220px] overflow-y-auto">
+                    {data.course.sections.map((s, si) => (
+                      <div key={si}>
+                        <p className="font-semibold text-carbon m-0">{s.title}</p>
+                        <ul className="list-none p-0 m-0 text-charcoal">
+                          {s.lessons.map((l, li) => <li key={li} className="break-words">{l.title} <span className="text-slate">· {l.type}{l.minutes ? ` · ${l.minutes} min` : ''}{l.isPreview ? ' · free preview' : ''}</span></li>)}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {format === 'live_class' && (
+            <div className="rounded-lg border border-bone px-3 py-3">
+              <p className="text-[12px] uppercase tracking-[0.06em] text-slate font-semibold mb-1">Live class</p>
+              {!data.liveSession?.startsAt ? <p className="text-error m-0">No schedule set.</p> : (
+                <ul className="list-none p-0 m-0 text-charcoal flex flex-col gap-0.5">
+                  <li>Starts: {new Date(data.liveSession.startsAt).toLocaleDateString('en-PK', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Karachi' })}, {formatPkt(data.liveSession.startsAt)}</li>
+                  <li>Length: {data.liveSession.durationMinutes} min · Platform: {PLATFORM_LABEL[data.liveSession.platform ?? ''] ?? 'Online'} · Seats: {data.liveSession.capacity ?? 'no limit'}</li>
+                  {data.liveSession.registrationDeadline && <li>Registration closes: {new Date(data.liveSession.registrationDeadline).toLocaleString('en-PK', { timeZone: 'Asia/Karachi' })} PKT</li>}
+                  {data.liveSession.status === 'cancelled' && <li className="text-error">Cancelled by the seller</li>}
+                  {data.liveSession.meetingUrl && <li className="break-all">Meeting link: {data.liveSession.meetingUrl}</li>}
+                </ul>
+              )}
+            </div>
+          )}
+
+          {data.digital && format === 'download' && (
             <div>
               <p className="text-[12px] uppercase tracking-[0.06em] text-slate font-semibold mb-1">Files buyers get</p>
               {data.digital.files.length === 0 ? <p className="text-error">No files uploaded.</p> : (

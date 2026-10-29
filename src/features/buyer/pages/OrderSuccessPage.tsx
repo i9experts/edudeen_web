@@ -8,7 +8,7 @@ import {
   ArrowRight, Box, Star, ClipboardList,
 } from 'lucide-react';
 import type { PlacedOrder, OrderItem, OrderDeliveryAddress } from '@/api/services/payment';
-import { DigitalFileDownloads } from '@/features/buyer/components/DigitalFileDownloads';
+import { DigitalItemAccess, BoughtFormatBadge, useDeliveryFormat } from '@/features/buyer/components/DigitalItemAccess';
 import { NextUpRail } from '@/features/buyer/components/NextUpRail';
 import { clsx } from 'clsx';
 import { Button } from '@/components/comman/ui/Button';
@@ -22,6 +22,8 @@ import { buildOrderProgress, OrderProgressTrack, OrderNextStep } from './account
 // ─────────────────────────────────────────────────────────────────────────────
 function OrderItemRow({ item, orderId, currency, canReview }: { item: OrderItem; orderId: string; currency: string; canReview: boolean }) {
   const isDigital = item.type === 'digital';
+  const { format } = useDeliveryFormat(isDigital ? (item.productId ?? '') : '');
+  const learnFormat = format === 'course' || format === 'live_class';
   return (
     <div className="flex items-center justify-between gap-3 py-3 border-b border-bone last:border-0">
       <div className="flex items-center gap-3 min-w-0">
@@ -37,11 +39,11 @@ function OrderItemRow({ item, orderId, currency, canReview }: { item: OrderItem;
         <div className="min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap mb-[2px]">
             <p className="text-[13px] font-semibold text-charcoal leading-tight truncate">{item.name}</p>
-            {isDigital && (
+            {isDigital && (learnFormat ? <BoughtFormatBadge productId={item.productId ?? ''} /> : (
               <span className="shrink-0 text-[12px] font-bold px-1.5 py-[1px] rounded-full bg-[#eef0ff] text-[#3851d1] uppercase tracking-wide">
                 Digital
               </span>
-            )}
+            ))}
           </div>
           <p className="text-[12px] text-slate">
             SKU: {item.sku} · Qty: {item.quantity}
@@ -51,7 +53,7 @@ function OrderItemRow({ item, orderId, currency, canReview }: { item: OrderItem;
       <div className="flex flex-col items-end gap-1.5 shrink-0">
         <p className="text-[13px] font-bold text-charcoal">{formatPrice(item.totalPrice, currency)}</p>
         {isDigital && item.productId && (
-          <DigitalFileDownloads orderId={orderId} productId={item.productId} />
+          <DigitalItemAccess orderId={orderId} productId={item.productId} />
         )}
         {isDigital && canReview && item.productId && (
           <Link
@@ -248,9 +250,9 @@ function SuccessHero({ orders }: { orders: PlacedOrder[] }) {
       </h1>
       <p className="text-[13px] text-slate leading-[1.7] max-w-[360px] mb-5">
         {hasPhysical && hasDigital
-          ? "Your physical items will be shipped and digital products are ready to download."
+          ? "Your physical items will be shipped and digital products are ready to use."
           : hasDigital
-          ? "Your digital products are ready — download them from the cards below."
+          ? "Your digital products are ready — open them from the cards below (download files, start a course or join a class)."
           : "We'll notify you once your order is packed and on its way."
         }
       </p>
@@ -276,7 +278,7 @@ function SuccessHero({ orders }: { orders: PlacedOrder[] }) {
         {hasDigital && (
           <div className="flex items-center gap-1.5 px-4 py-[7px] bg-[#eef0ff] rounded-[8px] border border-[#c7ceff]">
             <Download size={11} className="text-[#3851d1]" />
-            <span className="text-[12px] font-semibold text-[#3851d1]">Ready to download</span>
+            <span className="text-[12px] font-semibold text-[#3851d1]">Ready to use</span>
           </div>
         )}
       </div>

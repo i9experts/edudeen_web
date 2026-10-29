@@ -346,6 +346,8 @@ export function ProductFormSteps(p: ProductFormStepsProps) {
           />
         </Block>
 
+        {/* Card style and education level do not apply to online courses and live classes. */}
+        {(!isDigitalFamily || p.delivery.format === 'download') && (
         <Block id="fld-cover" title="Product card style" need="required" hint="Choose how your product appears on Edudeen. Books and printed material use the book-cover look; toys and other items use a plain photo.">
           <CoverStyleField
             value={p.learning.coverStyle ?? ''}
@@ -353,8 +355,9 @@ export function ProductFormSteps(p: ProductFormStepsProps) {
             categoryNames={[p.category.rootName, p.category.subcategories.find(c => c._id === cur.subCategoryId)?.name]}
           />
         </Block>
+        )}
 
-        {pType === 'educational' && (
+        {pType === 'educational' && p.delivery.format === 'download' && (
           <Block id="fld-level" title="Education level" need="required" hint="Helps parents and teachers find resources for the right stage.">
             <div className="flex flex-col gap-4">
               <div role="radiogroup" aria-label="Education level" className="flex gap-2 flex-wrap">

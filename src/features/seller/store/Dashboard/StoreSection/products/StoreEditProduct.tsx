@@ -17,7 +17,7 @@ import {
   EMPTY_LEARNING, learningPayload, learningError, type LearningValue,
   EMPTY_TIERS, tiersPayload, tiersError, type LicenseTierValue,
 } from '@/features/seller/components/products/LearningFields';
-import { EMPTY_DELIVERY, deliveryPayload, deliveryError, deliveryFromProduct } from '@/features/seller/components/products/DeliveryFormatField';
+import { EMPTY_DELIVERY, deliveryPayload, deliveryError, deliveryFromProduct, type DeliveryState } from '@/features/seller/components/products/DeliveryFormatField';
 import { currencySymbol as symbolForCurrency } from '@/utils/currency';
 import { isoToPktWall, pktWallToIso } from '@/utils/pkTime';
 import { offersPayload, PREMIUM_BLANK_MESSAGE, OFFER_CONFLICT_MESSAGE, type OfferFlags } from './ProductOffersCard';
@@ -144,6 +144,13 @@ export default function StoreEditProduct() {
   // Old products may have no weight: it is only required once the product has one (or the seller types one), so they stay editable.
   const hadWeight = useRef(false);
   const originalName = useRef('');
+  // Facts about the product AS SAVED, so old/live products are not held to rules that only apply when going live or changing a field.
+  const originalStatus = useRef<string | null>(null);
+  const originalDelivery = useRef<DeliveryState | null>(null);
+  const originalLearning = useRef<{ classFrom: string; classTo: string } | null>(null);
+  const hadSample = useRef(false);
+  // No "required" issues are computed until the fresh product read has arrived (until then the delivery format is a guess).
+  const [loaded, setLoaded] = useState(false);
   // The attribute list as loaded from the server (null = never loaded): an unchanged list is not sent again on save.
   const savedAttrs = useRef<string | null>(null);
   const sp = <K extends keyof PhysForm>(k: K, v: PhysForm[K]) => setPhys(f => ({ ...f, [k]: v }));
@@ -163,24 +170,28 @@ export default function StoreEditProduct() {
   useEffect(() => {
     const stateEntry = state?.entry;
     // A cached/router entry without its variant would show price 0 (or crash) - then read the product fresh instead.
-    if (stateEntry?.variant?._id) { init(stateEntry.product, stateEntry.variant); setFetching(false); return; }
     const cached = getCachedProducts(storeId).find(e => e.product._id === productId);
-    if (cached?.variant?._id) { init(cached.product, cached.variant); setFetching(false); return; }
-    apiGetMyProductById(productId)
-      .then(res => {
-        // No variant found: leave the price blank (never a made-up 0 that a save would write over the real price).
-        const fallback = { _id: '', productId, sku: '', price: '', compareAtPrice: null, options: [], stock: 0, unlimitedStock: false, shippingWeight: null, images: [], isDefault: true, status: 'active', isDelete: false, createdAt: '', updatedAt: '' } as unknown as ProductVariant;
-        const variant = res.data.defaultVariant ?? res.data.variants?.[0] ?? fallback;
-        init(res.data.product, variant);
-      })
-      .catch(() => navigate(`/store/${storeId}/products`, { replace: true }))
-      .finally(() => setFetching(false));
+    const ready = stateEntry?.variant?._id ? stateEntry : cached?.variant?._id ? cached : null;
+    if (ready) { init(ready.product, ready.variant); setFetching(false); }
+    else {
+      apiGetMyProductById(productId)
+        .then(res => {
+          // No variant found: leave the price blank (never a made-up 0 that a save would write over the real price).
+          const fallback = { _id: '', productId, sku: '', price: '', compareAtPrice: null, options: [], stock: 0, unlimitedStock: false, shippingWeight: null, images: [], isDefault: true, status: 'active', isDelete: false, createdAt: '', updatedAt: '' } as unknown as ProductVariant;
+          const variant = res.data.defaultVariant ?? res.data.variants?.[0] ?? fallback;
+          init(res.data.product, variant);
+        })
+        .catch(() => navigate(`/store/${storeId}/products`, { replace: true }))
+        .finally(() => setFetching(false));
+    }
 
-    // The list cache has no extra license variants or full file list — always
-    // read those fresh, without touching what the seller is typing.
+    // The list cache has no extra license variants, delivery format or full file list — ALWAYS
+    // read those fresh (also when the form opened from the list cache), without touching what the seller is typing.
     apiGetMyProductById(productId)
       .then(res => {
         const p = res.data.product;
+        originalStatus.current = p.status;
+        originalLearning.current = { classFrom: p.classFrom ?? '', classTo: p.classTo ?? '' };
         const variants = res.data.variants ?? [];
         setCampaignIds([...(p.campaignIds ?? [])]);
         setPremiumPct(p.premiumDiscountPercent != null ? String(p.premiumDiscountPercent) : '');
@@ -202,10 +213,13 @@ export default function StoreEditProduct() {
           setDig(f => (f.tags.length ? f : { ...f, tags: freshTags }));
         }
         if (p.type === 'digital') {
-          setDelivery(deliveryFromProduct(p));
+          const d = deliveryFromProduct(p);
+          originalDelivery.current = d;
+          setDelivery(d);
           setSavedFormat(p.deliveryFormat ?? 'download');
           const priceFor = (label: string) => variants.find(v => !v.isDefault && v.options?.some(o => o.name === 'License' && o.value === label));
           const fresh = digFromEntry(p, res.data.defaultVariant ?? variants[0]);
+          hadSample.current = !!fresh.sampleFile;
           setDig(f => ({
             ...f,
             files: fresh.files,
@@ -216,8 +230,9 @@ export default function StoreEditProduct() {
             }),
           }));
         }
+        setLoaded(true);
       })
-      .catch(() => {});
+      .catch(() => { originalStatus.current = originalStatus.current ?? 'unknown'; setLoaded(true); });
 
     apiGetProductAttributes(productId)
       .then(res => {
@@ -257,11 +272,15 @@ export default function StoreEditProduct() {
   // Every rule the form enforces, grouped by the step it belongs to.
   const issues = useMemo<WizardIssue[]>(() => {
     const out: WizardIssue[] = [];
+    if (!loaded) return out;
+    const isLearnFormat = delivery.format === 'course' || delivery.format === 'live_class';
+    const wasLive = originalStatus.current === 'active' || originalStatus.current === 'scheduled';
+    const publishing = cur.status === 'active' || cur.status === 'scheduled';
     // Only a title the seller changed must meet the minimum (old short titles stay editable).
     const tErr0 = !cur.name.trim() ? 'Add a product title' : cur.name.trim() !== originalName.current.trim() ? titleFormError(cur.name) : null;
     if (tErr0) out.push({ step: 0, message: tErr0, fieldId: 'ap-name' });
-    if (isDigitalFamily) { const dErr = deliveryError(delivery); if (dErr) out.push({ step: 1, message: dErr, fieldId: 'fld-delivery' }); }
-    if (isDigitalFamily && delivery.format === 'download' && cur.status !== 'draft' && !dig.sampleFile) out.push({ step: 1, message: 'Upload a free sample', fieldId: 'fld-sample' });
+    if (isDigitalFamily) { const dErr = deliveryError(delivery, originalDelivery.current); if (dErr) out.push({ step: 1, message: dErr, fieldId: 'fld-delivery' }); }
+    if (isDigitalFamily && delivery.format === 'download' && cur.status !== 'draft' && !dig.sampleFile && (!wasLive || hadSample.current)) out.push({ step: 1, message: 'Upload a free sample', fieldId: 'fld-sample' });
     const descErr = descriptionError(cur.description);
     if (descErr) out.push({ step: 0, message: descErr, fieldId: 'ap-desc' });
     const priceCheck = validatePrices({ price: cur.price, compareAt: cur.compareAtPrice, currency: store?.baseCurrency, free: true });
@@ -273,13 +292,16 @@ export default function StoreEditProduct() {
       if (hadWeight.current || phys.shippingWeight.trim()) { const wErr = weightTextError(phys.shippingWeight); if (wErr) out.push({ step: 2, message: wErr, fieldId: 'ap-weight' }); }
     }
     if (isDigitalFamily) { const tErr = tiersError(dig.tiers); if (tErr) out.push({ step: 2, message: tErr, fieldId: 'fld-tiers' }); }
-    if (pType === 'educational' && !dig.educationLevel) out.push({ step: 3, message: 'Choose an education level', fieldId: 'fld-level' });
-    else if (pType === 'educational' && dig.educationLevel === 'other' && !dig.customLevel.trim()) out.push({ step: 3, message: 'Describe the custom education level', fieldId: 'fld-level' });
+    if (pType === 'educational' && !isLearnFormat && !dig.educationLevel) out.push({ step: 3, message: 'Choose an education level', fieldId: 'fld-level' });
+    else if (pType === 'educational' && !isLearnFormat && dig.educationLevel === 'other' && !dig.customLevel.trim()) out.push({ step: 3, message: 'Describe the custom education level', fieldId: 'fld-level' });
     const lErr = learningError(learning);
     if (lErr) out.push({ step: 3, message: lErr, fieldId: 'fld-learning' });
-    const cErr = cur.status === 'active' || cur.status === 'scheduled' ? classRangeError(pType, learning.classFrom, learning.classTo) : null;
+    // Class range: when going live, or when the seller changed it on a live product.
+    const rangeChanged = !originalLearning.current || originalLearning.current.classFrom !== learning.classFrom || originalLearning.current.classTo !== learning.classTo;
+    const cErr = publishing && (!wasLive || rangeChanged) ? classRangeError(pType, learning.classFrom, learning.classTo) : null;
     if (cErr) out.push({ step: 3, message: cErr, fieldId: 'fld-learning', publishOnly: true });
-    if (!learning.coverStyle) out.push({ step: 3, message: 'Choose the product card style (Book or Toy / item)', fieldId: 'fld-cover', publishOnly: true });
+    // Card style: not for courses / live classes, and not for a product that is already live without one.
+    if (!learning.coverStyle && !isLearnFormat && publishing && !wasLive) out.push({ step: 3, message: 'Choose the product card style (Book or Toy / item)', fieldId: 'fld-cover', publishOnly: true });
     const missingAttr = findMissingRequiredAttribute(attrDefs, attributeValues);
     if (missingAttr) out.push({ step: 3, message: `${missingAttr.label} is required`, fieldId: 'fld-attrs' });
     const pErr = premiumPercentError(premiumPct ?? '');
@@ -291,7 +313,7 @@ export default function StoreEditProduct() {
     if (offerFlags.conflict) out.push({ step: 4, message: OFFER_CONFLICT_MESSAGE, fieldId: 'fld-offers' });
     return out;
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cur, pType, phys.stock, phys.shippingWeight, store?.baseCurrency, dig.sampleFile, dig.tiers, dig.educationLevel, dig.customLevel, delivery, learning, attrDefs, attributeValues, premiumPct, premiumOptOut, campaignIds, premiumTerms, storePremiumPct, offerFlags]);
+  }, [loaded, cur, pType, phys.stock, phys.shippingWeight, store?.baseCurrency, dig.sampleFile, dig.tiers, dig.educationLevel, dig.customLevel, delivery, learning, attrDefs, attributeValues, premiumPct, premiumOptOut, campaignIds, premiumTerms, storePremiumPct, offerFlags]);
 
   const wiz = useWizard(issues, 'Edit', [0, 1, 2, 3, 4, 5]);
   // A banner raised by a failed Save/Publish check disappears as soon as that problem is fixed.
@@ -352,7 +374,8 @@ export default function StoreEditProduct() {
           scheduledAt: finalStatus === 'scheduled' ? pktWallToIso(dig.scheduledAt) : null,
           price: Number(dig.price),
           compareAtPrice: dig.compareAtPrice ? Number(dig.compareAtPrice) : null,
-          ...learningPayload(learning),
+          // Card style does not apply to courses / live classes; the server still stores one, so default it.
+          ...learningPayload(delivery.format === 'download' ? learning : { ...learning, coverStyle: learning.coverStyle || 'book' }),
           ...deliveryPayload(delivery),
           licenseTiers: pType === 'educational' && dig.licenseType !== 'commercial' ? tiersPayload(dig.tiers.filter(t => t.license !== dig.licenseType)) : [],
           digital: { files, downloadLimit: dig.downloadLimit, linkExpiryDays: dig.linkExpiryDays ? Number(dig.linkExpiryDays) : null, pdfStampingEnabled: dig.pdfStampingEnabled, licenseType: dig.licenseType, buyerDeliveryMessage: dig.buyerDeliveryMessage, preview: { enabled: delivery.format === 'download' && files.length > 0 && dig.previewEnabled, sourceFileIndex: 0 }, sampleFile: dig.sampleFile ? toFile(dig.sampleFile) : null },

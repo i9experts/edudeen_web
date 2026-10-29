@@ -53,7 +53,8 @@ import { SaveToListDialog } from '@/features/buyer/components/SaveToListDialog';
 import { QuoteRequestDialog } from '@/features/buyer/components/QuoteRequestDialog';
 import { ProductQuestions } from '@/features/buyer/components/ProductQuestions';
 import { BundleOffer } from '@/features/buyer/components/BundleOffer';
-import { CourseOrLiveInfo } from '@/features/buyer/components/CourseOrLiveInfo';
+import { CourseOrLiveInfo, useLiveSale } from '@/features/buyer/components/CourseOrLiveInfo';
+import { normalizeDeliveryFormat } from '@/utils/deliveryFormat';
 import { PlacementBanner } from '@/components/comman/marketplace/PlacementBanner';
 import { ShippingZonesSummary } from '@/features/buyer/components/ShippingZonesSummary';
 import { syncRecentlyViewed } from '@/utils/recentlyViewedSync';
@@ -485,6 +486,12 @@ export function ProductDetail() {
   const pType = product?.productType ?? product?.type ?? 'physical';
   const isPhysical = pType === 'physical';
   const isDigital  = !isPhysical;
+  // Online course / live class are digital, but are learned or attended, not downloaded.
+  const format = normalizeDeliveryFormat(product?.deliveryFormat);
+  const isCourse = isDigital && format === 'course';
+  const isLive = isDigital && format === 'live_class';
+  const liveSale = useLiveSale(product);
+  const liveBlocked = isLive && liveSale.state !== 'ok';
   const [showPolicy, setShowPolicy] = useState(false);
   const policySummary = returnSummary(storeData?.returnPolicy, isDigital);
   const typeLabel  = isPhysical ? 'Physical' : pType === 'educational' ? 'Educational' : 'Digital';
@@ -661,7 +668,7 @@ export function ProductDetail() {
   }
 
   async function handleAddToCart(buyNow: boolean) {
-    if (!product || !activeVariant || pendingAction) return;
+    if (!product || !activeVariant || pendingAction || liveBlocked) return;
     setPendingAction(buyNow ? 'buy' : 'cart');
     try {
     // Buy Now checks out only this product and quantity and never touches the cart: the checkout page
@@ -684,7 +691,7 @@ export function ProductDetail() {
   // lands on the order-success page, which has the Download button. The seller only sees who availed it.
   const isFreeAvail = !!product && isDigital && displayPrice === 0;
   function handleAvail() {
-    if (!product || !activeVariant || pendingAction) return;
+    if (!product || !activeVariant || pendingAction || liveBlocked) return;
     requireAuth(async () => {
       setPendingAction('buy');
       try {
@@ -885,7 +892,7 @@ export function ProductDetail() {
                       : 'border-[#cfeeda] bg-success-bg text-success',
                   )}>
                     <CheckCircle size={13} />
-                    {stock <= 0 ? 'Out of stock' : isDigital ? t('Available — instant delivery') : stock <= 5 ? `Only ${stock} left in stock` : 'In stock'}
+                    {stock <= 0 ? 'Out of stock' : liveBlocked ? liveSale.message : isCourse ? 'Available — start learning right after enrolling' : isLive ? 'Seats open — join from My Library' : isDigital ? t('Available — instant delivery') : stock <= 5 ? `Only ${stock} left in stock` : 'In stock'}
                   </div>
 
                   {isDigital && product.digital?.previewAvailable && (
@@ -902,7 +909,7 @@ export function ProductDetail() {
                   )}
 
                   {/* What you get — the one place digital files / format / license / download facts are shown above the fold. */}
-                  {isDigital && (fileDetails.length > 0 || (product.digital?.fileFormats?.length ?? 0) > 0) && (() => {
+                  {isDigital && format === 'download' && (fileDetails.length > 0 || (product.digital?.fileFormats?.length ?? 0) > 0) && (() => {
                     const formats = product.digital?.fileFormats ?? [];
                     const printable = formats.some(f => PRINTABLE_FORMATS.includes(f));
                     const fileCount = product.digital?.fileCount ?? 0;
@@ -957,15 +964,15 @@ export function ProductDetail() {
                   <div className="flex flex-col gap-[10px] mb-6">
                     <Button
                       variant="primary" size="lg" fullWidth className="justify-center"
-                      disabled={stock <= 0 || !!pendingAction} loading={pendingAction === 'buy'}
+                      disabled={stock <= 0 || !!pendingAction || liveBlocked} loading={pendingAction === 'buy'}
                       onClick={() => (isFreeAvail ? handleAvail() : handleAddToCart(true))}
                     >
-                      {stock <= 0 ? t('Out of Stock') : isFreeAvail ? <><Download size={14} className="inline align-middle me-[6px]" />{t('Avail for free')}</> : <>{t('Buy Now')} <ArrowRight size={14} className="inline align-middle ms-[6px]" />{(memberShown ?? displayPrice) != null ? ` ${formatPrice(((memberShown ?? displayPrice)! * qty), displayCurrency)}` : ''}</>}
+                      {liveBlocked ? liveSale.message : stock <= 0 ? t('Out of Stock') : isFreeAvail && (isCourse || isLive) ? <>{isCourse ? 'Enroll for free' : 'Book your seat for free'}</> : isFreeAvail ? <><Download size={14} className="inline align-middle me-[6px]" />{t('Avail for free')}</> : <>{isCourse ? 'Enroll now' : isLive ? 'Book your seat' : t('Buy Now')} <ArrowRight size={14} className="inline align-middle ms-[6px]" />{(memberShown ?? displayPrice) != null ? ` ${formatPrice(((memberShown ?? displayPrice)! * qty), displayCurrency)}` : ''}</>}
                     </Button>
                     <div className="flex gap-2">
                       <Button
                         variant="secondary" size="md" fullWidth className="justify-center flex-1"
-                        disabled={stock <= 0 || !!pendingAction} loading={pendingAction === 'cart'}
+                        disabled={stock <= 0 || !!pendingAction || liveBlocked} loading={pendingAction === 'cart'}
                         onClick={() => handleAddToCart(false)}
                       >
                         {stock <= 0 ? t('Out of Stock') : addedFeedback ? t('Added ✓ · View cart') : <><ShoppingCart size={14} /> {t('Add to Cart')}</>}
@@ -1044,8 +1051,8 @@ export function ProductDetail() {
                         <Truck size={14} className="text-brand-orange" />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-[12px] font-semibold text-charcoal leading-tight">{isDigital ? t('Instant delivery') : t('Shipped by the seller')}</p>
-                        <p className="text-[12px] text-slate mt-[1px] leading-snug">{isDigital ? t('Download right after purchase') : t('Track it from My Orders')}</p>
+                        <p className="text-[12px] font-semibold text-charcoal leading-tight">{isCourse ? 'Learn online' : isLive ? 'Live online class' : isDigital ? t('Instant delivery') : t('Shipped by the seller')}</p>
+                        <p className="text-[12px] text-slate mt-[1px] leading-snug">{isCourse ? 'Start from My Library right after payment' : isLive ? 'Join from My Library when the class opens' : isDigital ? t('Download right after purchase') : t('Track it from My Orders')}</p>
                       </div>
                     </div>
                   </div>
@@ -1054,7 +1061,7 @@ export function ProductDetail() {
             </div>
           </div>
 
-          {product && <CourseOrLiveInfo product={product} />}
+          {product && <CourseOrLiveInfo product={product} sale={liveSale} />}
           {product && <BundleOffer productId={product._id} />}
 
           {/* ── Description / Specifications / Seller / Shipping tabs ──────────── */}
@@ -1209,7 +1216,9 @@ export function ProductDetail() {
                     {!isDigital && <ShippingZonesSummary sellerName={storeData?.name ?? product.storeName ?? product.sellerName} />}
                     {[
                       ...(isDigital
-                        ? [{ Icon: Download, label: 'Instant Digital Delivery', value: 'Download link available immediately after purchase' }]
+                        ? [isCourse ? { Icon: Download, label: 'Online access', value: 'Start learning from My Library right after payment. No shipping.' }
+                          : isLive ? { Icon: Download, label: 'Live online class', value: 'The joining link appears in My Library 30 minutes before the class. No shipping.' }
+                          : { Icon: Download, label: 'Instant Digital Delivery', value: 'Download link available immediately after purchase' }]
                         : []),
                       { Icon: Package, label: 'Seller Fulfilled', value: `Sold and shipped by ${storeData?.name ?? product.storeName ?? product.sellerName ?? 'the store'}` },
                       { Icon: ClipboardList, label: 'SKU', value: activeVariant?.sku ?? '—' },
@@ -1317,18 +1326,18 @@ export function ProductDetail() {
           </div>
           <Button
             variant="secondary" size="md" className="justify-center flex-1 max-w-[170px]"
-            disabled={stock <= 0 || !!pendingAction} loading={pendingAction === 'cart'}
+            disabled={stock <= 0 || !!pendingAction || liveBlocked} loading={pendingAction === 'cart'}
             onClick={() => handleAddToCart(false)}
           >
-            {stock <= 0 ? t('Out of Stock') : addedFeedback ? t('Added ✓ · View cart') : <><ShoppingCart size={14} /> {t('Add to Cart')}</>}
+            {liveBlocked ? liveSale.message : stock <= 0 ? t('Out of Stock') : addedFeedback ? t('Added ✓ · View cart') : <><ShoppingCart size={14} /> {t('Add to Cart')}</>}
           </Button>
           {stock > 0 && (
             <Button
               variant="primary" size="md" className="justify-center flex-1 max-w-[140px]"
-              disabled={!!pendingAction} loading={pendingAction === 'buy'}
+              disabled={!!pendingAction || liveBlocked} loading={pendingAction === 'buy'}
               onClick={() => (isFreeAvail ? handleAvail() : handleAddToCart(true))}
             >
-              {isFreeAvail ? t('Avail') : t('Buy Now')}
+              {isFreeAvail ? t('Avail') : isCourse ? 'Enroll now' : isLive ? 'Book seat' : t('Buy Now')}
             </Button>
           )}
         </div>

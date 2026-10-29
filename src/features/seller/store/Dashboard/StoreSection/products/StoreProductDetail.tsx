@@ -1,14 +1,20 @@
 import { useState, useEffect } from 'react';
 import { formatPrice } from '@/utils/formatPrice';
-import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { useNavigate, useParams, useLocation, useSearchParams } from 'react-router-dom';
 import {
   Edit2, Package, Download, Tag, Globe,
-  Calendar, CheckCircle, XCircle, Hash,
+  Calendar, CheckCircle, XCircle, Hash, MonitorPlay, Video, Users, Ban, BookOpen,
 } from 'lucide-react';
 import { useStoreWorkspace } from '@/components/layouts/StoreLayout';
 import { apiGetMyProductById } from '@/api/services/product';
+import { apiGetCategoryTree, type CategoryNode } from '@/api/services/categories';
+import { apiGetCourseBuilder, apiCancelLiveClass, type CourseBuilderData } from '@/api/services/classroom';
+import { DeliveryFormatBadge } from '@/components/comman/ui/DeliveryFormatBadge';
+import { normalizeDeliveryFormat, deliveryFormatLabel, PLATFORM_LABEL } from '@/utils/deliveryFormat';
+import { formatPkt } from '@/utils/pkTime';
+import { useToast } from '@/contexts/ToastContext';
 import { getCachedProducts, type ProductEntry } from './_cache';
-import { SkeletonBox, StatusBadge, InfoRow, Card } from '@/components/comman/ui';
+import { SkeletonBox, StatusBadge, InfoRow, Card, Modal, Button, Textarea } from '@/components/comman/ui';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function formatDate(iso: string) {
@@ -33,6 +39,16 @@ function SectionCard({ title, icon: Icon, children }: { title: string; icon?: Re
   );
 }
 
+function findCategoryName(nodes: CategoryNode[], id?: string | null): string | null {
+  if (!id) return null;
+  for (const n of nodes) {
+    if (n._id === id) return n.name;
+    const hit = findCategoryName(n.children ?? [], id);
+    if (hit) return hit;
+  }
+  return null;
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 export default function StoreProductDetail() {
   const navigate           = useNavigate();
@@ -42,21 +58,55 @@ export default function StoreProductDetail() {
 
   const [entry,    setEntry]    = useState<ProductEntry | null>(state?.entry ?? null);
   const [fetching, setFetching] = useState(!state?.entry);
+  const toast = useToast();
+  const [params, setParams] = useSearchParams();
+  const [names, setNames] = useState<{ category: string | null; sub: string | null }>({ category: null, sub: null });
+  const [course, setCourse] = useState<CourseBuilderData | null>(null);
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
+  const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
-    if (state?.entry) return;
-    const cached = getCachedProducts(storeId).find(e => e.product._id === productId);
-    if (cached) { setEntry(cached); setFetching(false); return; }
+    let alive = true;
+    const cached = state?.entry ?? getCachedProducts(storeId).find(e => e.product._id === productId) ?? null;
+    if (cached) { setEntry(cached); setFetching(false); }
+    // Always read the fresh product too: the list cache has no live-session / category names.
     apiGetMyProductById(productId)
-      .then(res => setEntry({
-        product: res.data.product,
-        // The real default variant (never a made-up price 0, which the Edit form would then inherit).
-        variant: res.data.defaultVariant ?? res.data.variants?.[0] ?? { _id: '', productId, sku: '—', price: 0, compareAtPrice: null, options: [], stock: 0, unlimitedStock: false, shippingWeight: null, images: [], isDefault: true, status: 'active', isDelete: false, createdAt: '', updatedAt: '' },
-      }))
-      .catch(() => navigate(`/store/${storeId}/products`, { replace: true }))
-      .finally(() => setFetching(false));
+      .then(async res => {
+        if (!alive) return;
+        setEntry({
+          product: res.data.product,
+          // The real default variant (never a made-up price 0, which the Edit form would then inherit).
+          variant: res.data.defaultVariant ?? res.data.variants?.[0] ?? cached?.variant ?? { _id: '', productId, sku: '—', price: 0, compareAtPrice: null, options: [], stock: 0, unlimitedStock: false, shippingWeight: null, images: [], isDefault: true, status: 'active', isDelete: false, createdAt: '', updatedAt: '' },
+        });
+        let category = res.data.categoryName ?? null;
+        let sub = res.data.subCategoryName ?? null;
+        // Older API: resolve the names from the category tree instead of printing ids.
+        if ((!category && res.data.product.categoryId) || (!sub && res.data.product.subCategoryId)) {
+          try {
+            const tree = (await apiGetCategoryTree()).data ?? [];
+            category = category ?? findCategoryName(tree, res.data.product.categoryId);
+            sub = sub ?? findCategoryName(tree, res.data.product.subCategoryId);
+          } catch { /* shows a dash */ }
+        }
+        if (alive) setNames({ category, sub });
+      })
+      .catch(() => { if (alive && !cached) navigate(`/store/${storeId}/products`, { replace: true }); })
+      .finally(() => { if (alive) setFetching(false); });
+    return () => { alive = false; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [productId]);
+
+  const format = normalizeDeliveryFormat(entry?.product.deliveryFormat);
+  useEffect(() => {
+    if (format !== 'course') return;
+    apiGetCourseBuilder(storeId, productId).then(res => setCourse(res.data)).catch(() => {});
+  }, [format, storeId, productId]);
+
+  // Opened from the product list menu (?cancel=1).
+  useEffect(() => {
+    if (params.get('cancel') === '1' && format === 'live_class') setCancelOpen(true);
+  }, [params, format]);
 
   if (fetching) {
     return (
@@ -177,7 +227,7 @@ export default function StoreProductDetail() {
                     <StatusBadge status={p.status} />
                     <span className="text-[12px] text-slate flex items-center gap-1">
                       {isDigital ? <Download size={11} /> : <Package size={11} />}
-                      {typeLabel} Product
+                      {isDigital ? `${typeLabel} · ${deliveryFormatLabel(format)}` : `${typeLabel} Product`}
                     </span>
                   </div>
                 </div>
@@ -231,13 +281,17 @@ export default function StoreProductDetail() {
             <SectionCard title="Basic Information" icon={Package}>
               <InfoRow label="Product Name" value={<strong>{p.name}</strong>} />
               <InfoRow label="Product Type" value={
-                <span className="flex items-center gap-1.5 justify-end">
-                  {isDigital ? <Download size={12} className="text-brand-orange" /> : <Package size={12} className="text-brand-orange" />}
-                  {typeLabel}{isPhysical ? ' Product' : ' Download'}
-                </span>
+                isPhysical ? (
+                  <span className="flex items-center gap-1.5 justify-end"><Package size={12} className="text-brand-orange" /> Physical Product</span>
+                ) : (
+                  <span className="flex items-center gap-2 justify-end flex-wrap">
+                    <DeliveryFormatBadge format={format} />
+                    {p.productType === 'educational' && <span className="text-slate">Educational</span>}
+                  </span>
+                )
               } />
-              <InfoRow label="Category"    value={p.categoryId || '—'} />
-              <InfoRow label="Sub-Category" value={p.subCategoryId || '—'} />
+              <InfoRow label="Category"    value={names.category || '—'} />
+              <InfoRow label="Sub-Category" value={names.sub || '—'} />
               {p.description && (
                 <div className="py-3">
                   <p className="text-[12px] text-slate mb-1.5">Description</p>
@@ -275,8 +329,62 @@ export default function StoreProductDetail() {
               </SectionCard>
             )}
 
-            {/* Digital delivery */}
-            {isDigital && p.digital && (
+            {/* Online course: curriculum summary */}
+            {isDigital && format === 'course' && (
+              <SectionCard title="Online course" icon={MonitorPlay}>
+                {(() => {
+                  const sections = course?.sections ?? [];
+                  const lessons = sections.reduce((n, s) => n + s.lessons.length, 0);
+                  const minutes = sections.reduce((n, s) => n + s.lessons.reduce((m, l) => m + (l.durationMinutes ?? 0), 0), 0);
+                  const byType = (t: string) => sections.reduce((n, s) => n + s.lessons.filter(l => l.type === t).length, 0);
+                  return (
+                    <>
+                      <InfoRow label="Sections" value={course ? sections.length : '…'} />
+                      <InfoRow label="Lessons" value={course ? `${lessons} (${byType('video')} video, ${byType('pdf')} PDF, ${byType('text')} text, ${byType('quiz')} quiz)` : '…'} />
+                      <InfoRow label="Total length" value={course ? (minutes ? `${minutes} min` : '—') : '…'} />
+                      <InfoRow label="Free previews" value={course ? sections.reduce((n, s) => n + s.lessons.filter(l => l.isPreview).length, 0) : '…'} />
+                      <InfoRow label="Certificate" value={course ? (course.certificateEnabled ? 'Yes' : 'No') : '…'} />
+                      <InfoRow label="Access" value={course ? (course.accessDays ? `${course.accessDays} days` : 'Lifetime') : '…'} />
+                      <InfoRow label="Students" value={course ? course.learners : '…'} />
+                      <div className="py-3 flex gap-2 flex-wrap">
+                        <Button size="sm" variant="primary" to={`/store/${storeId}/products/${p._id}/course`}><BookOpen size={13} /> Edit / build course</Button>
+                        <Button size="sm" variant="outline" to={`/store/${storeId}/products/${p._id}/course/students`}><Users size={13} /> Students & progress</Button>
+                      </div>
+                    </>
+                  );
+                })()}
+              </SectionCard>
+            )}
+
+            {/* Live class: session info */}
+            {isDigital && format === 'live_class' && (
+              <SectionCard title="Live class" icon={Video}>
+                {p.liveSession?.startsAt ? (
+                  <>
+                    <InfoRow label="Status" value={p.liveSession.status === 'cancelled' ? <span className="text-error font-semibold">Cancelled</span> : new Date(p.liveSession.startsAt).getTime() + (p.liveSession.durationMinutes ?? 0) * 60000 < Date.now() ? 'Completed' : 'Scheduled'} />
+                    <InfoRow label="Starts" value={`${new Date(p.liveSession.startsAt).toLocaleDateString('en-PK', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Karachi' })}, ${formatPkt(p.liveSession.startsAt)}`} />
+                    <InfoRow label="Length" value={`${p.liveSession.durationMinutes} min`} />
+                    <InfoRow label="Seats" value={p.liveSession.capacity ? `${p.liveSession.capacity}` : 'No limit'} />
+                    <InfoRow label="Platform" value={PLATFORM_LABEL[p.liveSession.platform] ?? 'Online'} />
+                    {p.liveSession.registrationDeadline && <InfoRow label="Registration closes" value={`${new Date(p.liveSession.registrationDeadline).toLocaleDateString('en-PK', { day: 'numeric', month: 'short', timeZone: 'Asia/Karachi' })}, ${formatPkt(p.liveSession.registrationDeadline)}`} />}
+                    {p.liveSession.recordingUrl && <InfoRow label="Recording" value={<span className="break-all">{p.liveSession.recordingUrl}</span>} />}
+                    {p.liveSession.status === 'cancelled' && p.liveSession.cancelReason && <InfoRow label="Cancel reason" value={p.liveSession.cancelReason} />}
+                    <div className="py-3 flex flex-col gap-2">
+                      <p className="text-[12px] text-slate m-0">Reschedule by editing the class: buyers are notified of the new time automatically.</p>
+                      <div className="flex gap-2 flex-wrap">
+                        <Button size="sm" variant="primary" to={`/store/${storeId}/products/edit/${p._id}`}>Edit / reschedule</Button>
+                        {p.liveSession.status !== 'cancelled' && p.status !== 'draft' && (
+                          <Button size="sm" variant="outline" onClick={() => setCancelOpen(true)}><Ban size={13} /> Cancel class</Button>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                ) : <InfoRow label="Schedule" value="Not set yet" />}
+              </SectionCard>
+            )}
+
+            {/* Digital delivery (file downloads only) */}
+            {isDigital && format === 'download' && p.digital && (
               <SectionCard title="Digital Delivery" icon={Download}>
                 {(p.digital.files ?? []).length > 0 ? (
                   <div className="py-3 border-b border-bone">
@@ -372,6 +480,27 @@ export default function StoreProductDetail() {
           </div>
         </div>
       </div>
+      {cancelOpen && (
+        <Modal title="Cancel this live class?" onClose={() => { if (!cancelling) { setCancelOpen(false); if (params.get('cancel')) setParams({}, { replace: true }); } }} width={480} mobileSheet>
+          <div className="p-5 flex flex-col gap-3">
+            <p className="text-[13px] text-charcoal m-0">Buyers who already paid are notified. Refunds are handled by Edudeen support, so please keep your reason clear.</p>
+            <Textarea label="Reason (shown to buyers)" rows={3} maxLength={500} value={cancelReason} onChange={e => setCancelReason(e.target.value)} placeholder="e.g. The teacher is unwell. We will announce a new date." />
+            <div className="flex justify-end gap-2">
+              <Button variant="ghost" disabled={cancelling} onClick={() => { setCancelOpen(false); if (params.get('cancel')) setParams({}, { replace: true }); }}>Keep class</Button>
+              <Button variant="primary" loading={cancelling} onClick={async () => {
+                setCancelling(true);
+                try {
+                  await apiCancelLiveClass(storeId, p._id, cancelReason.trim() || undefined);
+                  toast.success('Class cancelled. Buyers have been notified.');
+                  setEntry(e => e && e.product.liveSession ? { ...e, product: { ...e.product, liveSession: { ...e.product.liveSession, status: 'cancelled', cancelReason: cancelReason.trim() || null } } } : e);
+                  setCancelOpen(false); setParams({}, { replace: true });
+                } catch (err) { toast.error(err instanceof Error ? err.message : 'Could not cancel the class.'); }
+                finally { setCancelling(false); }
+              }}>Cancel class</Button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }

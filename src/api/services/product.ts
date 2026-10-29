@@ -65,7 +65,18 @@ export interface LiveSessionInput {
   meetingUrl:      string;
   capacity:        number | null;
   notes:           string;
+  /** Optional: sales stop after this instant (before the start). */
+  registrationDeadline?: string | null;
+  /** Optional replay link, shown only to buyers. */
+  recordingUrl?:   string | null;
 }
+/** Read-side extras the API adds to a saved live session. */
+export interface LiveSessionView extends Partial<LiveSessionInput> {
+  status?: 'scheduled' | 'cancelled';
+  cancelledAt?: string | null;
+  cancelReason?: string | null;
+}
+export interface CourseSummary { lessonCount: number; totalMinutes: number }
 
 /** Extra licenses at their own price (digital only). */
 export interface LicenseTierInput { license: 'single_classroom' | 'school' | 'commercial'; price: number; compareAtPrice?: number | null }
@@ -137,7 +148,7 @@ export interface StoreProduct {
   /** Admin-assigned trust badges (listing review). */
   trust?:            { scholarReviewed: boolean; ageAppropriateMin: number | null; ageAppropriateMax: number | null } | null;
   deliveryFormat?:   DeliveryFormat;
-  liveSession?:      LiveSessionInput | null;
+  liveSession?:      (LiveSessionInput & LiveSessionView) | null;
   digital:           DigitalMeta | null;
   status:            'draft' | 'active' | 'archived' | 'scheduled' | 'inactive' | 'pending_review' | 'rejected';
   scheduledAt:       string | null;
@@ -284,6 +295,9 @@ export interface GetProductData {
   product:        StoreProduct;
   variants:       ProductVariant[];
   defaultVariant: ProductVariant | null;
+  /** Resolved server-side so screens never print a raw id. */
+  categoryName?:    string | null;
+  subCategoryName?: string | null;
 }
 
 
@@ -295,6 +309,8 @@ export interface InventoryProduct {
   type:         'physical' | 'digital';
   productType?: 'physical' | 'digital' | 'educational';
   deliveryFormat?: DeliveryFormat;
+  courseSummary?: CourseSummary | null;
+  liveSession?:   LiveSessionView | null;
   stock:        number | string;
   stockStatus:  string;
   status:       'active' | 'draft' | 'archived' | 'inactive' | 'scheduled' | 'pending_review' | 'rejected';

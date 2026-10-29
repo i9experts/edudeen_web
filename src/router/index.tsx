@@ -128,6 +128,7 @@ const StoreBulkUpload   = lazy(() => import('@/features/seller/store/Dashboard/S
 const StoreEditProduct   = lazy(() => import('@/features/seller/store/Dashboard/StoreSection/products/StoreEditProduct'));
 const StoreProductDetail = lazy(() => import('@/features/seller/store/Dashboard/StoreSection/products/StoreProductDetail'));
 const CourseBuilder      = lazy(() => import('@/features/seller/store/Dashboard/StoreSection/products/CourseBuilder'));
+const CourseStudents     = lazy(() => import('@/features/seller/store/Dashboard/StoreSection/products/CourseStudents'));
 const StoreNotifications = lazy(() => import('@/features/seller/store/Dashboard/Manage/StoreNotifications').then(m => ({ default: m.StoreNotifications })));
 const StoreCustomerList  = lazy(() => import('@/features/seller/store/Dashboard/StoreSection/customer/CustomerList'));
 const StoreSettings      = lazy(() => import('@/features/seller/store/Dashboard/Manage/StoreSettings'));
@@ -408,6 +409,7 @@ const mainRouter = createBrowserRouter([
           { path: 'products/edit/:productId',         element: <StoreEditProduct /> },
           { path: 'products/detail/:productId',       element: <StoreProductDetail /> },
           { path: 'products/:productId/course',       element: <CourseBuilder /> },
+          { path: 'products/:productId/course/students', element: <CourseStudents /> },
           { path: 'customer/list',                    element: <StoreCustomerList /> },
           { path: 'analytics',                        element: <StoreAnalytics /> },
           { path: 'settings',                         element: <StoreSettings /> },

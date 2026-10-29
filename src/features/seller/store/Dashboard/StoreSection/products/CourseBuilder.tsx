@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { Plus, Trash2, ChevronUp, ChevronDown, Video, FileText, AlignLeft, ListChecks, Loader2, Award, Eye, ArrowLeft } from 'lucide-react';
+import { Plus, Trash2, ChevronUp, ChevronDown, Video, FileText, AlignLeft, ListChecks, Loader2, Award, Eye, ArrowLeft, Users } from 'lucide-react';
+import { isAllowedExternalVideo } from '@/utils/externalVideo';
 import { clsx } from 'clsx';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useStoreWorkspace, StorePageHeader } from '@/components/layouts/StoreLayout';
@@ -20,7 +21,7 @@ const TYPES: { value: LessonType; label: string; Icon: typeof Video }[] = [
 ];
 
 const newLesson = (type: LessonType = 'video'): CourseLessonInput => ({
-  title: '', type, file: null, text: '', durationMinutes: null, isPreview: false,
+  title: '', type, file: null, videoUrl: null, text: '', durationMinutes: null, isPreview: false,
   quiz: type === 'quiz' ? { passPercent: 60, questions: [{ question: '', options: ['', ''], answerIndex: 0 }] } : null,
 });
 
@@ -34,6 +35,42 @@ function move<T>(list: T[], i: number, d: -1 | 1) {
 
 const toUpload = (f: CourseLessonInput['file']): PrivateUploadData | null =>
   f ? { publicId: f.url, fileName: f.name, fileSize: f.size ?? 0, mimeType: f.mimeType ?? '', resourceType: 'raw' } : null;
+
+/** Video lesson source: upload an MP4, or paste a YouTube / Vimeo (incl. unlisted) link. */
+function VideoSource({ lesson, onChange }: { lesson: CourseLessonInput; onChange: (l: CourseLessonInput) => void }) {
+  const [mode, setMode] = useState<'upload' | 'link'>(lesson.videoUrl ? 'link' : 'upload');
+  const url = lesson.videoUrl ?? '';
+  const bad = mode === 'link' && url.trim() !== '' && !isAllowedExternalVideo(url);
+  const pick = (m: 'upload' | 'link') => {
+    setMode(m);
+    onChange(m === 'link' ? { ...lesson, file: null } : { ...lesson, videoUrl: null });
+  };
+  return (
+    <div className="flex flex-col gap-2">
+      <div role="radiogroup" aria-label="Video source" className="inline-flex rounded-lg border border-bone overflow-hidden self-start">
+        {([['upload', 'Upload MP4'], ['link', 'Paste YouTube / Vimeo link']] as const).map(([m, label]) => (
+          <button key={m} type="button" role="radio" aria-checked={mode === m} onClick={() => pick(m)}
+            className={clsx('px-3 py-1.5 text-[12.5px] border-none cursor-pointer', mode === m ? 'bg-carbon text-white' : 'bg-white text-graphite hover:bg-cream')}>{label}</button>
+        ))}
+      </div>
+      {mode === 'upload' ? (
+        <FileUpload
+          value={toUpload(lesson.file)} accept="video/mp4,video/*" label="Upload the video (MP4)"
+          onChange={d => onChange({ ...lesson, videoUrl: null, file: d ? { url: d.publicId, name: d.fileName, size: d.fileSize, mimeType: d.mimeType } : null })}
+        />
+      ) : (
+        <>
+          <Input
+            label="Video link" type="url" value={url} maxLength={300} placeholder="https://www.youtube.com/watch?v=…  or  https://vimeo.com/…"
+            error={bad ? 'Use a https:// YouTube or Vimeo link (unlisted links work too).' : undefined}
+            onChange={e => onChange({ ...lesson, file: null, videoUrl: e.target.value })}
+          />
+          <p className="text-[12px] text-slate m-0">Anyone with the link can still watch on YouTube/Vimeo, so use an unlisted video and Edudeen only shows it to enrolled students.</p>
+        </>
+      )}
+    </div>
+  );
+}
 
 function QuizEditor({ quiz, onChange }: { quiz: NonNullable<CourseLessonInput['quiz']>; onChange: (q: NonNullable<CourseLessonInput['quiz']>) => void }) {
   const setQ = (i: number, patch: Partial<(typeof quiz.questions)[number]>) =>
@@ -73,7 +110,7 @@ function LessonEditor({ lesson, index, count, onChange, onMove, onRemove }: {
   onChange: (l: CourseLessonInput) => void; onMove: (d: -1 | 1) => void; onRemove: () => void;
 }) {
   const set = <K extends keyof CourseLessonInput>(k: K, v: CourseLessonInput[K]) => onChange({ ...lesson, [k]: v });
-  const setType = (type: LessonType) => onChange({ ...lesson, type, file: type === 'video' || type === 'pdf' ? lesson.file : null, quiz: type === 'quiz' ? lesson.quiz ?? newLesson('quiz').quiz : null, isPreview: type === 'quiz' ? false : lesson.isPreview });
+  const setType = (type: LessonType) => onChange({ ...lesson, type, videoUrl: type === 'video' ? lesson.videoUrl : null, file: type === 'video' || type === 'pdf' ? lesson.file : null, quiz: type === 'quiz' ? lesson.quiz ?? newLesson('quiz').quiz : null, isPreview: type === 'quiz' ? false : lesson.isPreview });
   return (
     <div className="rounded-xl border border-bone bg-white p-3 md:p-4 flex flex-col gap-3">
       <div className="flex items-center gap-2 flex-wrap">
@@ -94,11 +131,14 @@ function LessonEditor({ lesson, index, count, onChange, onMove, onRemove }: {
         </div>
       </div>
 
-      {(lesson.type === 'video' || lesson.type === 'pdf') && (
+      {lesson.type === 'video' && (
+        <VideoSource lesson={lesson} onChange={onChange} />
+      )}
+      {lesson.type === 'pdf' && (
         <FileUpload
           value={toUpload(lesson.file)}
-          accept={lesson.type === 'video' ? 'video/*' : 'application/pdf'}
-          label={lesson.type === 'video' ? 'Upload the video (MP4)' : 'Upload the PDF'}
+          accept="application/pdf"
+          label="Upload the PDF"
           onChange={d => set('file', d ? { url: d.publicId, name: d.fileName, size: d.fileSize, mimeType: d.mimeType } : null)}
         />
       )}
@@ -133,6 +173,10 @@ export default function CourseBuilder() {
   const [data, setData] = useState<CourseBuilderData | null>(null);
   const [sections, setSections] = useState<CourseSectionInput[]>([]);
   const [certificate, setCertificate] = useState(true);
+  const [outcomes, setOutcomes] = useState<string[]>([]);
+  const [instructor, setInstructor] = useState({ name: '', bio: '' });
+  const [accessMode, setAccessMode] = useState<'lifetime' | 'days'>('lifetime');
+  const [accessDays, setAccessDays] = useState('365');
   const [saving, setSaving] = useState<'save' | 'publish' | null>(null);
   const [dirty, setDirty] = useState(false);
   usePageTitle(data ? `Course: ${data.product.name}` : 'Course builder');
@@ -143,6 +187,9 @@ export default function CourseBuilder() {
         setData(res.data);
         setSections(res.data.sections.length ? res.data.sections : [{ title: 'Getting started', lessons: [newLesson('video')] }]);
         setCertificate(res.data.certificateEnabled);
+        setOutcomes(res.data.outcomes ?? []);
+        setInstructor({ name: res.data.instructor?.name ?? '', bio: res.data.instructor?.bio ?? '' });
+        if (res.data.accessDays) { setAccessMode('days'); setAccessDays(String(res.data.accessDays)); }
       })
       .catch(err => { toast.error(err instanceof Error ? err.message : 'Could not open the course.'); navigate(`/store/${storeId}/products`); });
   }, [storeId, productId]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -162,10 +209,23 @@ export default function CourseBuilder() {
   const lessonCount = sections.reduce((n, s) => n + s.lessons.length, 0);
   const minutes = sections.reduce((n, s) => n + s.lessons.reduce((m, l) => m + (l.durationMinutes ?? 0), 0), 0);
 
+  const daysNum = Number(accessDays);
+  const daysBad = accessMode === 'days' && (!Number.isInteger(daysNum) || daysNum < 1 || daysNum > 3650);
+  const badVideo = sections.some(s => s.lessons.some(l => l.type === 'video' && !!l.videoUrl?.trim() && !isAllowedExternalVideo(l.videoUrl)));
+
   const save = async (publish: boolean) => {
+    if (badVideo) { toast.error('One of the video links is not a valid https YouTube or Vimeo link.'); return; }
+    if (daysBad) { toast.error('Access days must be a whole number from 1 to 3650.'); return; }
     setSaving(publish ? 'publish' : 'save');
     try {
-      const res = await apiSaveCourse(storeId, productId, { sections, certificateEnabled: certificate });
+      const cleanOutcomes = outcomes.map(o => o.trim()).filter(Boolean);
+      const res = await apiSaveCourse(storeId, productId, {
+        sections: sections.map(s => ({ ...s, lessons: s.lessons.map(l => ({ ...l, videoUrl: l.type === 'video' && l.videoUrl?.trim() ? l.videoUrl.trim() : null })) })),
+        certificateEnabled: certificate,
+        outcomes: cleanOutcomes,
+        instructor: instructor.name.trim() ? { name: instructor.name.trim(), bio: instructor.bio.trim() } : null,
+        accessDays: accessMode === 'days' ? daysNum : null,
+      });
       setSections(res.data.sections);
       setDirty(false);
       if (publish) {
@@ -194,7 +254,8 @@ export default function CourseBuilder() {
         title="Course builder"
         subtitle={`${data.product.name} · ${lessonCount} ${lessonCount === 1 ? 'lesson' : 'lessons'}${minutes ? ` · ${Math.round(minutes / 6) / 10} h` : ''}${data.learners ? ` · ${data.learners} learners` : ''}`}
         actions={
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
+            <Button variant="ghost" size="sm" to={`/store/${storeId}/products/${productId}/course/students`}><Users size={13} /> Students</Button>
             <Button variant="outline" size="sm" loading={saving === 'save'} onClick={() => save(false)}>{dirty ? 'Save changes' : 'Saved'}</Button>
             {isDraft && <Button variant="primary" size="sm" loading={saving === 'publish'} disabled={!lessonCount} onClick={() => save(true)}>Save & publish</Button>}
           </div>
@@ -234,6 +295,46 @@ export default function CourseBuilder() {
           </Card>
         ))}
         <Button variant="outline" size="md" onClick={() => edit([...sections, { title: `Section ${sections.length + 1}`, lessons: [] }])}><Plus size={14} /> Add section</Button>
+
+        <Card>
+          <h2 className="text-[14px] font-bold text-carbon m-0 mb-1">About this course</h2>
+          <p className="text-[12.5px] text-slate m-0 mb-3">Shown on the course page to help buyers decide.</p>
+          <div className="flex flex-col gap-4">
+            <div>
+              <p className="text-[13px] font-bold text-carbon m-0 mb-1.5">What students will learn <span className="font-normal text-slate">(up to 10)</span></p>
+              <div className="flex flex-col gap-2">
+                {outcomes.map((o, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <div className="flex-1"><Input aria-label={`Outcome ${i + 1}`} value={o} maxLength={200} placeholder="e.g. Read the Quran with correct Tajweed" onChange={e => { setOutcomes(outcomes.map((x, k) => k === i ? e.target.value : x)); setDirty(true); }} /></div>
+                    <button type="button" aria-label="Remove outcome" onClick={() => { setOutcomes(outcomes.filter((_, k) => k !== i)); setDirty(true); }} className="p-1 bg-transparent border-none cursor-pointer text-slate hover:text-error"><Trash2 size={14} /></button>
+                  </div>
+                ))}
+                {outcomes.length < 10 && <Button variant="ghost" size="sm" className="self-start" onClick={() => { setOutcomes([...outcomes, '']); setDirty(true); }}><Plus size={13} /> Add outcome</Button>}
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <Input label="Instructor name" value={instructor.name} maxLength={100} onChange={e => { setInstructor({ ...instructor, name: e.target.value }); setDirty(true); }} />
+              <div className="md:col-span-2">
+                <Textarea label="Instructor bio" rows={3} maxLength={1000} value={instructor.bio} onChange={e => { setInstructor({ ...instructor, bio: e.target.value }); setDirty(true); }} placeholder="Qualifications, experience, teaching style…" />
+              </div>
+            </div>
+            <div>
+              <p className="text-[13px] font-bold text-carbon m-0 mb-1.5">How long do students keep access?</p>
+              <div className="flex items-center gap-3 flex-wrap">
+                <div role="radiogroup" aria-label="Access duration" className="inline-flex rounded-lg border border-bone overflow-hidden">
+                  {([['lifetime', 'Lifetime'], ['days', 'Limited days']] as const).map(([m, label]) => (
+                    <button key={m} type="button" role="radio" aria-checked={accessMode === m} onClick={() => { setAccessMode(m); setDirty(true); }}
+                      className={clsx('px-3 py-1.5 text-[12.5px] border-none cursor-pointer', accessMode === m ? 'bg-carbon text-white' : 'bg-white text-graphite hover:bg-cream')}>{label}</button>
+                  ))}
+                </div>
+                {accessMode === 'days' && (
+                  <div className="w-[140px]"><Input aria-label="Access days" type="number" min={1} max={3650} value={accessDays} error={daysBad ? '1–3650 days' : undefined} onChange={e => { setAccessDays(e.target.value); setDirty(true); }} /></div>
+                )}
+              </div>
+              <p className="text-[12px] text-slate m-0 mt-1.5">Counted from the day the student pays. Changing it later applies to new and existing students.</p>
+            </div>
+          </div>
+        </Card>
 
         <Card>
           <label className="flex items-start gap-3 cursor-pointer">

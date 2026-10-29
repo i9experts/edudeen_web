@@ -5,6 +5,8 @@ import { clsx } from 'clsx';
 import { ProductCoverFallback } from '@/components/comman/marketplace/ProductCoverFallback';
 import { Card, EmptyState, SkeletonBox, PageHeader, Button } from '@/components/comman/ui';
 import { apiGetMyLibrary, apiResendDownloadLink, type LibraryItem } from '@/api/services/orders';
+import { apiGetMyCourses, type MyCourse } from '@/api/services/classroom';
+import { normalizeDeliveryFormat } from '@/utils/deliveryFormat';
 import { EDUCATION_LEVELS } from '@/api/services/product';
 import { CURRICULUM_LABEL, LICENSE_LABEL } from '@/constants/learning';
 import { DigitalFileDownloads } from '@/features/buyer/components/DigitalFileDownloads';
@@ -57,6 +59,49 @@ function ItemImg({ src, name }: { src: string | null; name: string }) {
   return <img loading="lazy" decoding="async" src={src} alt="" width={64} height={64} onError={() => setErr(true)} className="w-[64px] h-[64px] rounded-[10px] object-cover shrink-0 border border-[#edebe2]" />;
 }
 
+type FormatTab = 'all' | 'download' | 'course' | 'live_class';
+const FORMAT_TABS: { id: FormatTab; label: string }[] = [
+  { id: 'all', label: 'All' }, { id: 'download', label: 'Files' }, { id: 'course', label: 'Courses' }, { id: 'live_class', label: 'Live classes' },
+];
+const fmtDate = (iso: string) => new Date(iso).toLocaleDateString('en-PK', { day: 'numeric', month: 'short', year: 'numeric' });
+
+/** Progress, resume, certificate and access end date for a purchased course. */
+function CourseActions({ item, course }: { item: LibraryItem; course?: MyCourse }) {
+  const slug = item.slug ?? item.productId;
+  const total = course?.lessons ?? 0;
+  const done = course?.completed ?? 0;
+  const pct = course?.percent ?? (total ? Math.round((done / total) * 100) : 0);
+  const [now] = useState(() => Date.now());
+  const expiresAt = course?.accessExpiresAt ?? null;
+  const ended = !!expiresAt && new Date(expiresAt).getTime() < now;
+  if (ended) {
+    return (
+      <div className="max-w-[240px] rounded-[9px] bg-[#fff4dc] px-3 py-2 text-[12px] text-[#b36200]">
+        <p className="flex items-center gap-1.5 font-semibold"><CalendarX2 size={12} /> Access ended</p>
+        <p className="mt-1 text-graphite">Your access to this course ended on {fmtDate(expiresAt!)}. Message the seller to ask for access again.</p>
+      </div>
+    );
+  }
+  const started = done > 0 || !!course?.lastLessonId;
+  return (
+    <div className="flex flex-col items-start gap-1.5 min-w-[180px]">
+      {course && total > 0 && (
+        <div className="w-full" aria-label={`Progress ${pct}%`}>
+          <div className="h-1.5 rounded-full bg-fog overflow-hidden"><div className="h-full bg-brand-royal" style={{ width: `${Math.min(100, pct)}%` }} /></div>
+          <p className="text-[12px] text-slate mt-1 m-0">{done} of {total} lessons · {pct}%</p>
+        </div>
+      )}
+      <Link to={`/course/${slug}`} className="inline-flex items-center gap-1.5 rounded-lg bg-brand-royal text-white px-3 py-[7px] text-[12.5px] font-bold no-underline">
+        <PlayCircle size={13} /> {pct >= 100 ? 'Review course' : started ? 'Resume learning' : 'Start learning'}
+      </Link>
+      {course?.certificateCode && (
+        <Link to={`/certificates/${course.certificateCode}`} className="text-[12px] font-semibold text-brand-orange hover:underline">View certificate</Link>
+      )}
+      {expiresAt && <p className="text-[12px] text-slate m-0">Access until {fmtDate(expiresAt)}</p>}
+    </div>
+  );
+}
+
 const subjectOf = (i: LibraryItem) => i.subCategory ?? i.category ?? 'Other';
 const gradeOf = (i: LibraryItem) => (i.educationLevel === 'other' ? i.customLevel : i.educationLevel ? GRADE_LABEL.get(i.educationLevel) : null) ?? 'Any age';
 
@@ -73,16 +118,31 @@ export function Downloads() {
   const [type, setType] = useState('');
   const [sort, setSort] = useState<Sort>('recent');
   const [recentOnly, setRecentOnly] = useState(false);
+  const [tab, setTab] = useState<FormatTab>('all');
+  const [courses, setCourses] = useState<Map<string, MyCourse>>(new Map());
 
   useEffect(() => {
     let alive = true;
     setLoading(true); setError('');
     apiGetMyLibrary()
       .then(res => { if (alive) setItems(res.data.items ?? []); })
-      .catch(err => { if (alive) setError(err instanceof Error ? err.message : 'Could not load your library.'); })
+      .catch(err => {
+        if (!alive) return;
+        const msg = err instanceof Error ? err.message : '';
+        // A seller / admin session that the API still refuses: say what to do instead of a raw role error.
+        setError(/role|denied|forbidden|403/i.test(msg) ? 'Please sign in with your buyer account to see your purchases.' : msg || 'Could not load your library.');
+      })
       .finally(() => { if (alive) setLoading(false); });
+    // Course progress is extra: a failure here only hides the progress bars.
+    apiGetMyCourses().then(res => { if (alive) setCourses(new Map((res.data ?? []).map(c => [c.productId, c]))); }).catch(() => {});
     return () => { alive = false; };
   }, [reload]);
+
+  const tabCount = useMemo(() => {
+    const n: Record<FormatTab, number> = { all: items.length, download: 0, course: 0, live_class: 0 };
+    for (const i of items) n[normalizeDeliveryFormat(i.deliveryFormat)] += 1;
+    return n;
+  }, [items]);
 
   const subjects = useMemo(() => [...new Set(items.map(subjectOf))].sort(), [items]);
   const grades = useMemo(() => [...new Set(items.map(gradeOf))].sort(), [items]);
@@ -96,12 +156,13 @@ export function Downloads() {
       (!term || i.name.toLowerCase().includes(term) || (i.storeName ?? '').toLowerCase().includes(term))
       && (!subject || subjectOf(i) === subject)
       && (!grade || gradeOf(i) === grade)
+      && (tab === 'all' || normalizeDeliveryFormat(i.deliveryFormat) === tab)
       && (!type || typesOf(i).includes(type))
       && (!recentOnly || new Date(i.purchasedAt).getTime() >= since));
     return sort === 'name'
       ? [...list].sort((a, b) => a.name.localeCompare(b.name))
       : [...list].sort((a, b) => new Date(b.purchasedAt).getTime() - new Date(a.purchasedAt).getTime());
-  }, [items, q, subject, grade, type, recentOnly, sort]);
+  }, [items, q, subject, grade, type, recentOnly, sort, tab]);
 
   const groups = useMemo(() => {
     if (groupBy === 'none') return [['All resources', filtered] as const];
@@ -120,10 +181,20 @@ export function Downloads() {
           <PageHeader
             eyebrow="Account"
             title="My Library"
-            description={loading ? 'Your digital resources' : `${ready} resource${ready !== 1 ? 's' : ''} ready to download, any time`}
+            description={loading ? 'Your files, courses and live classes' : `${ready} item${ready !== 1 ? 's' : ''} ready to use, any time`}
           />
         </div>
 
+        {!loading && !error && items.length > 0 && (
+          <div role="tablist" aria-label="Library sections" className="px-4 md:px-5 pt-3 flex gap-1 overflow-x-auto border-b border-bone">
+            {FORMAT_TABS.map(t => (
+              <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)}
+                className={clsx('shrink-0 px-3 py-2 text-[13px] font-semibold bg-transparent border-0 border-b-2 cursor-pointer', tab === t.id ? 'border-brand-royal text-brand-royal' : 'border-transparent text-slate hover:text-carbon')}>
+                {t.label} <span className="text-[12px] font-normal">({tabCount[t.id]})</span>
+              </button>
+            ))}
+          </div>
+        )}
         {!loading && !error && items.length > 0 && (
           <div className="px-4 md:px-5 py-3 border-b border-bone flex flex-wrap items-center gap-2">
             <label className="relative flex-1 min-w-[200px] max-w-[320px]">
@@ -177,7 +248,7 @@ export function Downloads() {
           <EmptyState
             icon={<LibraryBig size={28} className="text-brand-orange opacity-55" />}
             title="Your library is empty"
-            description="Worksheets, e-books, courses and other digital resources you buy will appear here, ready to download any time."
+            description="Worksheets, e-books, courses and live classes you buy will appear here, ready to use any time."
             action={{ label: 'Browse resources', onClick: () => navigate('/') }}
             className="py-12"
           />
@@ -231,12 +302,8 @@ export function Downloads() {
                           </div>
                         ) : item.isPaid ? (
                           <div className="flex flex-col items-start gap-2">
-                            {item.deliveryFormat === 'course' && (
-                              <Link to={`/course/${item.slug ?? item.productId}`} className="inline-flex items-center gap-1.5 rounded-lg bg-brand-royal text-white px-3 py-[7px] text-[12.5px] font-bold no-underline">
-                                <PlayCircle size={13} /> Start learning
-                              </Link>
-                            )}
-                            {item.deliveryFormat === 'live_class' && <JoinLiveClassButton productId={item.productId} startsAt={item.liveStartsAt} />}
+                            {item.deliveryFormat === 'course' && <CourseActions item={item} course={courses.get(item.productId)} />}
+                            {item.deliveryFormat === 'live_class' && <JoinLiveClassButton productId={item.productId} startsAt={item.liveStartsAt} endsAt={item.liveEndsAt} status={item.liveStatus} />}
                             {(item.deliveryFormat === 'download' || !item.deliveryFormat || item.fileCount > 0) && <DigitalFileDownloads orderId={item.orderId} productId={item.productId} />}
                             <ResendLink orderId={item.orderId} productId={item.productId} />
                           </div>
@@ -263,7 +330,7 @@ export function Downloads() {
         </div>
       )}
       {!loading && items.length > 0 && (
-        <p className="text-[12px] text-slate mt-3 inline-flex items-center gap-1.5"><Download size={12} /> Files stay here for good — download them again whenever you need.</p>
+        <p className="text-[12px] text-slate mt-3 inline-flex items-center gap-1.5"><Download size={12} /> Files stay here — download them again whenever you need.</p>
       )}
     </div>
   );

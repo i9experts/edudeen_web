@@ -6,6 +6,7 @@ import { Button, ProgressBar } from '@/components/comman/ui';
 import { EdudeenLogo } from '@/components/comman/ui/EdudeenLogo';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useToast } from '@/contexts/ToastContext';
+import { LessonVideo } from '@/features/buyer/components/LessonVideo';
 import {
   apiGetLearnView, apiGetLesson, apiCompleteLesson, apiSubmitQuiz,
   type LearnView, type LessonContent, type LessonType, type QuizResult,
@@ -117,8 +118,11 @@ export function CoursePlayerPage() {
   if (error) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-3 p-6 text-center bg-cream">
-        <p className="text-[15px] text-carbon font-semibold">{error}</p>
-        <Button variant="primary" size="md" to={`/product/${slug}`}>Go to the course page</Button>
+        <p className="text-[15px] text-carbon font-semibold">{/ended/i.test(error) ? 'Your access to this course has ended. Message the seller to ask for access again.' : error}</p>
+        <div className="flex gap-2 flex-wrap justify-center">
+          <Button variant="primary" size="md" to={`/product/${slug}`}>Go to the course page</Button>
+          <Button variant="outline" size="md" to="/account/downloads">My Library</Button>
+        </div>
       </div>
     );
   }
@@ -185,8 +189,11 @@ export function CoursePlayerPage() {
           ) : (
             <article className="flex flex-col gap-4">
               <h1 className="text-[22px] md:text-[26px] font-bold text-carbon m-0">{lesson.title}</h1>
-              {lesson.type === 'video' && lesson.file && (
-                <video key={lesson._id} src={lesson.file.url} controls controlsList="nodownload" className="w-full rounded-xl bg-black aspect-video" />
+              {lesson.type === 'video' && (lesson.file || lesson.videoUrl) && (
+                <LessonVideo key={lesson._id} file={lesson.file} videoUrl={lesson.videoUrl} title={lesson.title} />
+              )}
+              {lesson.type === 'video' && !lesson.file && !lesson.videoUrl && (
+                <p className="text-[13px] text-slate m-0">The video for this lesson is not available yet.</p>
               )}
               {lesson.type === 'pdf' && lesson.file && (
                 <div className="flex flex-col gap-2">
