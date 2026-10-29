@@ -404,12 +404,17 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
         categories={showCategoryFilter ? tree : []}
         selectedCategory={showCategoryFilter ? state.cat : ''}
         onCategoryChange={id => update({ cat: id || undefined })}
-        extraActiveCount={(state.grade ? 1 : 0) + (state.cls ? 1 : 0) + (state.free ? 1 : 0) + (state.board ? 1 : 0) + (state.age != null ? 1 : 0)}
+        extraActiveCount={(state.format ? 1 : 0) + (state.grade ? 1 : 0) + (state.cls ? 1 : 0) + (state.free ? 1 : 0) + (state.board ? 1 : 0) + (state.age != null ? 1 : 0)}
       >
         <Section title="Sort by">
           {SORTS.map(s => (
             <RadioRow key={s.value || 'newest'} name="f-sort" label={s.value === '' && state.q ? 'Relevance' : s.label} checked={state.sort === s.value} onChange={() => update({ sort: s.value || undefined })} />
           ))}
+        </Section>
+        <Section title="Format">
+          <RadioRow name="f-format" label="All formats" checked={!state.format} onChange={() => update({ format: undefined })} />
+          <RadioRow name="f-format" label="Online courses" checked={state.format === 'course'} onChange={() => update({ format: 'course' })} />
+          <RadioRow name="f-format" label="Live classes" checked={state.format === 'live_class'} onChange={() => update({ format: 'live_class' })} />
         </Section>
         <Section title="Exam board" hint="Resources that follow your child's syllabus">
           <RadioRow name="f-board" label="Any board" checked={!state.board} onChange={() => update({ board: undefined })} />

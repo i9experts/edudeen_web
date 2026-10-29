@@ -261,11 +261,12 @@ function HomeLanding() {
   const [language, setLanguage] = useState('');
   const [sort, setSort]         = useState<SortFilter>('featured');
   const [freeOnly, setFreeOnly] = useState(false);
+  const [format, setFormat]     = useState<'course' | 'live_class' | ''>('');
   const [filters, setFilters]   = useState<MarketplaceFilters>(EMPTY_FILTERS);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [limit, setLimit]       = useState(PAGE_SIZE);
 
-  useEffect(() => { setLimit(PAGE_SIZE); }, [subject, level, language, sort, freeOnly, filters, searchQ]);
+  useEffect(() => { setLimit(PAGE_SIZE); }, [subject, level, language, sort, freeOnly, format, filters, searchQ]);
 
   const allCategories = useMemo(() => flattenCategories(categories), [categories]);
   // Subject tabs come straight from the admin's categories (Admin → Categories).
@@ -322,6 +323,7 @@ function HomeLanding() {
     filters.minRating ?? undefined,
     SORT_TO_API[sort],
     !searchQ,
+    format || undefined,
   );
 
   const narrowed = useMemo(() => {
@@ -339,6 +341,7 @@ function HomeLanding() {
         // The browse API already applied these; search results need them here.
         const price = defaultVariant(p)?.price ?? 0;
         const kind = p.productType ?? p.type;
+        if (format && p.deliveryFormat !== format) return false;
         if (level && p.educationLevel !== level) return false;
         if (itemType && kind !== itemType) return false;
         if (freeOnly ? price > 0 : (price < minP || price > maxP)) return false;
@@ -354,18 +357,18 @@ function HomeLanding() {
         : b.purchaseCount - a.purchaseCount);
     }
     return list;
-  }, [clientSide, browsed, searchPool, searchQ, subjectTab, languageDef, filters, level, itemType, freeOnly, minP, maxP, sort]);
+  }, [clientSide, browsed, searchPool, searchQ, subjectTab, languageDef, filters, level, itemType, freeOnly, format, minP, maxP, sort]);
 
   const loading = searchQ ? searchLoading : browseLoading;
   const products = clientSide ? narrowed.slice(0, limit) : narrowed;
   const total = clientSide ? narrowed.length : serverTotal;
 
   const resetFilters = () => {
-    setSubject(null); setLevel(''); setLanguage(''); setSort('featured'); setFreeOnly(false); setFilters(EMPTY_FILTERS);
+    setSubject(null); setLevel(''); setLanguage(''); setSort('featured'); setFreeOnly(false); setFormat(''); setFilters(EMPTY_FILTERS);
     if (searchQ) clearSearch();
     if (campaignId) clearCampaign();
   };
-  const pageFilterCount = (subject ? 1 : 0) + (level ? 1 : 0) + (language ? 1 : 0) + (freeOnly ? 1 : 0) + (sort !== 'featured' ? 1 : 0);
+  const pageFilterCount = (subject ? 1 : 0) + (level ? 1 : 0) + (language ? 1 : 0) + (freeOnly ? 1 : 0) + (format ? 1 : 0) + (sort !== 'featured' ? 1 : 0);
   const drawerFilterCount =
     (sameRange(filters.priceRange, EMPTY_FILTERS.priceRange) ? 0 : 1) + filters.type.length + (filters.minRating ? 1 : 0) + (filters.onSale ? 1 : 0);
   const hasFilters = pageFilterCount + drawerFilterCount > 0 || !!campaignId;
@@ -678,6 +681,12 @@ function HomeLanding() {
               {shopTabs.map(t => (
                 <RadioRow key={t.id} name="f-subject" label={t.label} checked={subject === t.id} onChange={() => setSubject(t.id)} />
               ))}
+            </Section>
+
+            <Section title="Format">
+              <RadioRow name="f-format" label="All formats" checked={!format} onChange={() => setFormat('')} />
+              <RadioRow name="f-format" label="Online courses" checked={format === 'course'} onChange={() => setFormat('course')} />
+              <RadioRow name="f-format" label="Live classes" checked={format === 'live_class'} onChange={() => setFormat('live_class')} />
             </Section>
 
             <Section title="Age & grade">

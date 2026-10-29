@@ -193,8 +193,10 @@ export function apiGetAllProducts(
   educationLevel?: string, normalizedCustomLevel?: string,
   campaignId?: string,
   minPrice?: number, maxPrice?: number, minRating?: number, sortBy?: MarketplaceSortBy,
+  format?: 'course' | 'live_class',
 ) {
   const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+  if (format) params.set('format', format);
   if (categoryId) params.set('id', categoryId);
   if (productType) params.set('productType', productType);
   if (educationLevel) params.set('educationLevel', educationLevel);

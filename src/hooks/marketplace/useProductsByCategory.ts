@@ -12,6 +12,7 @@ export function useProductsByCategory(
   // stays in a loading state, instead of firing once unfiltered and again
   // a moment later once the real filter value is known.
   enabled = true,
+  format?: 'course' | 'live_class',
 ) {
   const [products, setProducts] = useState<MarketplaceProduct[]>([]);
   const [total,    setTotal]    = useState(0);
@@ -26,7 +27,7 @@ export function useProductsByCategory(
     let cancelled = false;
     setLoading(true);
     setError('');
-    apiGetAllProducts(page, limit, categoryId, productType, educationLevel, normalizedCustomLevel, campaignId, minPrice, maxPrice, minRating, sortBy)
+    apiGetAllProducts(page, limit, categoryId, productType, educationLevel, normalizedCustomLevel, campaignId, minPrice, maxPrice, minRating, sortBy, format)
       .then(res => {
         if (!cancelled) {
           setProducts(res.data?.products ?? []);
@@ -39,7 +40,7 @@ export function useProductsByCategory(
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, limit, categoryId, productType, educationLevel, normalizedCustomLevel, campaignId, minPrice, maxPrice, minRating, sortBy, enabled, reloadKey]);
+  }, [page, limit, categoryId, productType, educationLevel, normalizedCustomLevel, campaignId, minPrice, maxPrice, minRating, sortBy, enabled, format, reloadKey]);
 
   return { products, total, loading, error, refetch };
 }
