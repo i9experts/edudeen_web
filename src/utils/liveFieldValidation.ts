@@ -52,12 +52,30 @@ function messageFor(el: Control, blurred: boolean): string {
   return '';
 }
 
+const ERR_CLASS = /\btext-(error|red-\d+)\b/;
+
 function ownErrorShown(el: Control): boolean {
   if (el.getAttribute('aria-invalid') === 'true') return true;
   const next = (el.parentElement?.nextElementSibling ?? null) as HTMLElement | null;
   const sib = el.nextElementSibling as HTMLElement | null;
-  const isOther = (n: HTMLElement | null) => !!n && n.getAttribute('role') === 'alert' && !n.hasAttribute(ERR_ATTR);
-  return isOther(sib) || isOther(next);
+  const isOther = (n: HTMLElement | null) =>
+    !!n && !n.hasAttribute(ERR_ATTR) && (n.getAttribute('role') === 'alert' || ERR_CLASS.test(n.className?.toString() ?? ''));
+  if (isOther(sib) || isOther(next)) return true;
+  // error text linked through aria-describedby (Field)
+  const ids = (el.getAttribute('aria-describedby') ?? '').split(/\s+/).filter(Boolean);
+  return ids.some(id => {
+    const n = document.getElementById(id);
+    return !!n && !n.hasAttribute(ERR_ATTR) && ERR_CLASS.test(n.className?.toString() ?? '');
+  });
+}
+
+// A form may show its own error AFTER ours was already placed (e.g. on submit): drop ours then.
+function dropDuplicates() {
+  document.querySelectorAll<HTMLElement>(`[${ERR_ATTR}]`).forEach(p => {
+    const prev = p.previousElementSibling as HTMLElement | null;
+    const ctl = prev && (isControl(prev) ? prev : prev.querySelector<Control>('input,textarea,select'));
+    if (ctl && ownErrorShown(ctl)) { p.remove(); ctl.removeAttribute('data-live-invalid'); }
+  });
 }
 
 function slotFor(el: Control): Element {
@@ -106,6 +124,11 @@ let installed = false;
 export function installLiveFieldValidation() {
   if (installed || typeof document === 'undefined') return;
   installed = true;
+  let raf = 0;
+  new MutationObserver(() => {
+    if (raf) return;
+    raf = requestAnimationFrame(() => { raf = 0; dropDuplicates(); });
+  }).observe(document.body, { childList: true, subtree: true });
   document.addEventListener('input', e => run(e.target, false), true);
   document.addEventListener('change', e => run(e.target, true), true);
   document.addEventListener('focusout', e => run(e.target, true), true);

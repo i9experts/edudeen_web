@@ -3,7 +3,7 @@
  * filters); with none it shows the landing sections (hero, shelves, ...). Kept here (not in HomeBrowse) so small
  * pieces such as the top-bar ticker can ask "is the landing page showing?" without importing the whole page.
  */
-export const BROWSE_KEYS = ['category', 'search', 'q', 'cat', 'grade', 'class', 'type', 'min', 'max', 'rating', 'free', 'board', 'age', 'sort', 'page', 'exact', 'browse'];
+export const BROWSE_KEYS = ['category', 'search', 'q', 'cat', 'grade', 'class', 'type', 'min', 'max', 'rating', 'free', 'board', 'age', 'sort', 'page', 'exact', 'browse', 'format'];
 
 export function isBrowseMode(params: URLSearchParams): boolean {
   return BROWSE_KEYS.some(k => params.has(k));

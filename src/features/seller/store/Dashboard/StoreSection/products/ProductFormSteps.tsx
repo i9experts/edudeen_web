@@ -262,7 +262,7 @@ export function ProductFormSteps(p: ProductFormStepsProps) {
           </Block>
         )}
 
-        {isDigitalFamily && (
+        {isDigitalFamily && p.delivery.format === 'download' && (
           <Block title="Licence" need="optional" hint="Personal licence is the default. Educational resources can also sell classroom and school licences.">
             <div className="flex flex-col gap-4">
               <F label="Licence type">

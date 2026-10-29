@@ -230,6 +230,8 @@ export interface BrowseParams {
   classValue?:    string;
   /** Only listings an admin has featured. */
   featured?:      boolean;
+  /** Online course or live class listings only. */
+  format?:        'course' | 'live_class';
   page?:          number;
   /** Server caps this at 50. */
   limit?:         number;
@@ -255,6 +257,7 @@ export function apiBrowseProducts(p: BrowseParams) {
   if (p.age != null) params.set('age', String(p.age));
   if (p.classValue) params.set('class', p.classValue);
   if (p.featured) params.set('featured', '1');
+  if (p.format) params.set('format', p.format);
   if (p.exact) params.set('exact', '1');
   return client.get<never, ProductsByCategoryResponse>(
     `${ENDPOINTS.MARKETPLACE.PRODUCTS_BY_CATEGORY}?${params.toString()}`,

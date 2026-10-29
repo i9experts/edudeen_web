@@ -161,7 +161,7 @@ export const ResourceCard = memo(function ResourceCard({
     : product.deliveryFormat === 'course' ? ['Online course', courseSummaryText(product.courseSummary)].filter(Boolean).join(' · ')
     : product.deliveryFormat === 'live_class'
       ? (product.liveSession?.status === 'cancelled' ? 'Live class · Cancelled'
-        : product.liveSession?.startsAt ? `Live class · ${formatLocalWithZone(product.liveSession.startsAt)} · ${product.liveSession.durationMinutes} min${typeof (product.liveSession as { seatsLeft?: number }).seatsLeft === 'number' ? ` · ${(product.liveSession as { seatsLeft?: number }).seatsLeft} seats left` : ''}` : 'Live class')
+        : product.liveSession?.startsAt ? `Live class · ${formatLocalWithZone(product.liveSession.startsAt)}${product.liveSession.durationMinutes ? ` · ${product.liveSession.durationMinutes} min` : ''}${typeof (product.liveSession as { seatsLeft?: number }).seatsLeft === 'number' ? ` · ${(product.liveSession as { seatsLeft?: number }).seatsLeft} seats left` : ''}` : 'Live class')
       : 'Instant download';
   // Separate text nodes so the Urdu DOM translator can match each part ("All ages", "Ships to you").
   const meta = [classRangeLabel(product.classFrom, product.classTo) ?? ageLabel(product.ageMin, product.ageMax) ?? level ?? 'All ages', delivery]

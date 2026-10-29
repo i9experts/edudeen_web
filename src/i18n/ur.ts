@@ -118,6 +118,7 @@ export const UR: Record<string, string> = {
   'All Categories': 'تمام زمرے',
   'Resource categories': 'وسائل کے زمرے',
   'Learn by grade': 'جماعت کے لحاظ سے',
+  'Online courses': 'آن لائن کورسز',
   'Verified Sellers': 'تصدیق شدہ فروخت کنندگان',
   'Verified Stores': 'تصدیق شدہ اسٹور',
   'Track Order': 'آرڈر ٹریک کریں',

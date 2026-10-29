@@ -18,9 +18,10 @@ export function Field({ label, required, hint, error, className, children }: Fie
   const finalId    = existingId ?? generatedId;
 
   const control = isValidElement(children)
-    ? cloneElement(children as ReactElement<{ id?: string; 'aria-describedby'?: string }>, {
+    ? cloneElement(children as ReactElement<{ id?: string; 'aria-describedby'?: string; 'aria-invalid'?: boolean }>, {
         id: finalId,
         ...(hasDescription ? { 'aria-describedby': descId } : {}),
+        ...(error ? { 'aria-invalid': true } : {}),
       })
     : children;
 

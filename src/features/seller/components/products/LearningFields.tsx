@@ -83,7 +83,7 @@ export function LearningFields({ value, onChange, classRequired = false, classWa
               <button
                 key={c.value} type="button" aria-pressed={on} onClick={() => toggle(c.value)}
                 className={clsx('px-3 py-[7px] rounded-full text-[12.5px] border cursor-pointer transition-colors', on ? 'border-brand-orange bg-brand-pale-orange text-brand-orange font-bold' : 'border-bone bg-white text-graphite hover:bg-cream')}
-              >{c.label}</button>
+              >{on ? '✓ ' : ''}{c.label}</button>
             );
           })}
         </div>

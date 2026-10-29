@@ -14,6 +14,7 @@ import {
 import { EMPTY_DELIVERY, deliveryPayload, deliveryError } from '@/features/seller/components/products/DeliveryFormatField';
 import { currencySymbol as symbolForCurrency } from '@/utils/currency';
 import { pktWallToIso } from '@/utils/pkTime';
+import { CLASS_LEVELS } from '@/constants/classLevels';
 import { offersPayload, PREMIUM_BLANK_MESSAGE, OFFER_CONFLICT_MESSAGE, type OfferFlags } from './ProductOffersCard';
 import { premiumPercentError } from './PremiumPriceField';
 import { effectiveSellerPercent, premiumGapMessage, usePremiumTerms } from './PremiumEarningsCalculator';
@@ -190,7 +191,7 @@ export default function StoreAddProduct() {
   // ── Autosave to this device (never publishes) ───────────────────────────────
   const snapshot = useMemo<DraftSnapshot>(() => ({ pType, phys, dig, learning, delivery, campaignIds, premiumPct, premiumOptOut, attributeValues, categoryChoice }),
     [pType, phys, dig, learning, delivery, campaignIds, premiumPct, premiumOptOut, attributeValues, categoryChoice]);
-  const hasContent = touched && !!(cur.name || cur.price || cur.description || cur.images.length || dig.files.length);
+  const hasContent = touched && !!(cur.name || cur.price || cur.description || cur.images.length || dig.files.length || learning.curricula.length || learning.classFrom || learning.classTo);
   // useDraftAutosave already pauses writing while `restorable` (the Continue / Start fresh banner) is unanswered, so the old draft is never overwritten.
   const draft = useDraftAutosave<DraftSnapshot>(`edudeen:add-product:${storeId}`, snapshot, hasContent, true);
   const guard = useLeaveGuard(touched && !saving);
@@ -299,7 +300,16 @@ export default function StoreAddProduct() {
     { label: 'Price', value: cur.price === '' ? 'Missing' : `${currencySymbol} ${cur.price}${cur.compareAtPrice ? ` (was ${currencySymbol} ${cur.compareAtPrice})` : ''}`, step: 2, ok: cur.price !== '' },
     ...(pType === 'physical' ? [{ label: 'Stock', value: phys.stock === '' ? 'Missing' : phys.stock, step: 2, ok: phys.stock !== '' }] : []),
     { label: 'Category', value: [rootCategory?.name, subName].filter(Boolean).join(' › ') || 'Not chosen', step: 3 },
-    ...(pType === 'educational' ? [{ label: 'Education level', value: (dig.educationLevel === 'other' ? dig.customLevel : EDUCATION_LEVELS.find(l => l.value === dig.educationLevel)?.label) || 'Missing', step: 3, ok: !!dig.educationLevel }] : []),
+    ...(pType === 'educational' && delivery.format === 'download' ? [{ label: 'Education level', value: (dig.educationLevel === 'other' ? dig.customLevel : EDUCATION_LEVELS.find(l => l.value === dig.educationLevel)?.label) || 'Missing', step: 3, ok: !!dig.educationLevel }] : []),
+    ...(isDigitalFamily && (learning.classFrom || learning.classTo) ? [{ label: 'Classes', value: [learning.classFrom, learning.classTo].filter((c, i, a) => c && a.indexOf(c) === i).map(c => CLASS_LEVELS.find(l => l.value === c)?.label ?? c).join(' – '), step: 3 }] : []),
+    ...(isDigitalFamily && delivery.format === 'live_class' ? [
+      { label: 'Date + time (PKT)', value: delivery.date && delivery.time ? `${delivery.date} ${delivery.time}` : 'Missing', step: 0, ok: !!(delivery.date && delivery.time) },
+      { label: 'Length', value: delivery.durationMinutes ? `${delivery.durationMinutes} min` : 'Missing', step: 0, ok: !!delivery.durationMinutes },
+      { label: 'Seats', value: delivery.capacity ? delivery.capacity : 'No limit', step: 0 },
+      { label: 'Platform', value: delivery.platform ? delivery.platform.replace(/_/g, ' ') : 'Missing', step: 0 },
+      { label: 'Meeting link', value: delivery.meetingUrl ? (delivery.meetingUrl.length > 36 ? `${delivery.meetingUrl.slice(0, 33)}…` : delivery.meetingUrl) : 'Not added', step: 0 },
+    ] : []),
+    ...(isDigitalFamily && delivery.format === 'course' ? [{ label: 'Course', value: 'Lessons are added in the course builder after you save', step: 0 }] : []),
     { label: 'Offers', value: campaignIds.length ? 'In a platform sale' : effectiveSellerPercent(premiumPct, storePremiumPct, premiumOptOut) > 0 ? `Premium discount ${effectiveSellerPercent(premiumPct, storePremiumPct, premiumOptOut)}%` : 'None', step: 4 },
     { label: 'Status', value: cur.status === 'active' ? 'Publish now' : cur.status === 'scheduled' ? 'Scheduled' : 'Draft', step: 5 },
   ];
@@ -384,7 +394,8 @@ export default function StoreAddProduct() {
       productType: pType, deliveryFormat: delivery.format, educationLevel: dig.educationLevel, customLevel: dig.customLevel,
       premiumPercent: campaignIds.length ? 0 : effectiveSellerPercent(premiumPct, storePremiumPct, premiumOptOut),
       ageMin: learning.ageMin, ageMax: learning.ageMax, classFrom: learning.classFrom, classTo: learning.classTo, coverStyle: learning.coverStyle || undefined, storeName: store?.name,
-      liveStartsAt: delivery.format === 'live_class' && delivery.date && delivery.time ? new Date(`${delivery.date}T${delivery.time}:00`).toISOString() : null,
+      liveStartsAt: delivery.format === 'live_class' && delivery.date && delivery.time ? pktWallToIso(`${delivery.date}T${delivery.time}`) : null,
+      liveDurationMinutes: delivery.durationMinutes,
     };
   }
 }

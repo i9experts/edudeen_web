@@ -8,7 +8,7 @@ import { categoryPath } from '@/hooks/marketplace/useCategoryTree';
 import { TokenStorage } from '@/api/services/auth';
 import { ProductImage } from '@/components/comman/marketplace/ProductCard';
 import {
-  Star, ChevronRight, ShieldCheck, BadgeCheck, ChevronDown, Store, Sparkles, Flame, GraduationCap, Crown,
+  Star, ChevronRight, ShieldCheck, BadgeCheck, ChevronDown, Store, Sparkles, Flame, GraduationCap, Crown, PlayCircle, Video,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { MarketplaceProduct } from '@/api/services/marketplace';
@@ -753,6 +753,22 @@ export function MegaMenuBar({
             <GraduationCap size={13} className={clsx('shrink-0 text-slate group-hover:text-brand-orange', compact && 'md:hidden')} />
             {t('Learn by grade')}
           </Link>
+          {([['/?format=course', 'Online courses', PlayCircle], ['/?format=live_class', 'Live classes', Video]] as const).map(([to, label, Icon]) => (
+            <Link
+              key={to}
+              to={to}
+              onClick={e => { if (isPlainLeftClick(e)) { e.preventDefault(); onNavigate(to); } }}
+              className={clsx(
+                'no-underline',
+                'group flex items-center whitespace-nowrap shrink-0 border-none cursor-pointer transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange',
+                'gap-[6px] py-[7px] px-[11px] min-h-11 md:min-h-10 rounded-full text-[12.5px] font-semibold text-charcoal hover:bg-cream bg-transparent',
+                compact && 'md:gap-1 md:py-1 md:px-0 md:min-h-0 md:rounded-none md:text-[12px] md:font-medium md:hover:bg-transparent md:text-slate md:hover:text-brand-orange',
+              )}
+            >
+              <Icon size={13} className={clsx('shrink-0 text-slate group-hover:text-brand-orange', compact && 'md:hidden')} />
+              {t(label)}
+            </Link>
+          ))}
           </ScrollRow>
 
           {/* Utility links — desktop only. On mobile this row is already a

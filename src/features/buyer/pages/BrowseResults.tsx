@@ -54,6 +54,7 @@ function useBrowseState() {
     grade: params.get('grade') ?? '',
     cls: isClassValue(params.get('class')) ? (params.get('class') as string) : '',
     type: params.get('type') ?? '',
+    format: (['course', 'live_class'].includes(params.get('format') ?? '') ? params.get('format') : '') as 'course' | 'live_class' | '',
     min: num(params.get('min')),
     max: num(params.get('max')),
     rating: num(params.get('rating')),
@@ -148,6 +149,7 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
       curriculum: state.board || undefined,
       age: state.age,
       classValue: state.cls || undefined,
+      format: state.format || undefined,
       exact: state.exact,
       page: state.page,
       limit: PAGE_SIZE,
@@ -161,7 +163,7 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
       .catch(err => { if (!cancelled) setError(err instanceof Error ? err.message : 'Could not load resources.'); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [state.q, effectiveCategory, state.type, state.grade, state.min, maxPrice, state.free, state.rating, state.sort, state.board, state.age, state.cls, state.exact, state.page, reload, fixedGrade]);
+  }, [state.q, effectiveCategory, state.type, state.grade, state.min, maxPrice, state.free, state.rating, state.sort, state.board, state.age, state.cls, state.format, state.exact, state.page, reload, fixedGrade]);
 
   // Back to the top of the results when the page number changes.
   useEffect(() => { window.document.getElementById('browse-top')?.scrollIntoView({ block: 'start' }); }, [state.page]);
@@ -179,7 +181,7 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
     type: f.type[0] ? TYPE_TO_PARAM[f.type[0]] : undefined,
     rating: f.minRating ?? undefined,
   });
-  const clearAll = () => update({ board: undefined, age: undefined, class: undefined, cat: undefined, grade: undefined, type: undefined, min: undefined, max: undefined, rating: undefined, free: undefined, sort: undefined });
+  const clearAll = () => update({ format: undefined, board: undefined, age: undefined, class: undefined, cat: undefined, grade: undefined, type: undefined, min: undefined, max: undefined, rating: undefined, free: undefined, sort: undefined });
 
   const catName = state.cat ? tree.flatMap(c => [c, ...(c.children ?? [])]).find(c => c._id === state.cat)?.name : null;
   const chips: { key: string; label: string; clear: () => void }[] = [
@@ -188,6 +190,7 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
     ...(state.age != null ? [{ key: 'age', label: `For age ${state.age}`, clear: () => update({ age: undefined }) }] : []),
     ...(state.cls ? [{ key: 'class', label: activeChild && state.cls === canonicalClass(activeChild.gradeLabel) ? `${t('For')} ${activeChild.name} (${classLabel(state.cls)})` : classLabel(state.cls), clear: () => update({ class: undefined }) }] : []),
     ...(state.grade && !fixedGrade ? [{ key: 'grade', label: activeChild && state.grade === activeChild.educationLevel ? `${t('For')} ${activeChild.name} (${childLevelLabel(activeChild)})` : GRADE_LABEL.get(state.grade) ?? state.grade, clear: () => update({ grade: undefined }) }] : []),
+    ...(state.format ? [{ key: 'format', label: state.format === 'course' ? 'Online courses' : 'Live classes', clear: () => update({ format: undefined }) }] : []),
     ...(state.type ? [{ key: 'type', label: PARAM_TO_TYPE[state.type] ?? state.type, clear: () => update({ type: undefined }) }] : []),
     ...(state.free ? [{ key: 'free', label: 'Free only', clear: () => update({ free: undefined }) }] : []),
     ...(!state.free && (state.min != null || state.max != null)
@@ -273,6 +276,17 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
             <input type="checkbox" id="browse-free" checked={state.free} onChange={e => update({ free: e.target.checked || undefined })} className="w-4 h-4 accent-brand-orange" />
             Free only
           </label>
+          {([['course', 'Online courses'], ['live_class', 'Live classes']] as const).map(([val, label]) => (
+            <button
+              key={val}
+              type="button"
+              aria-pressed={state.format === val}
+              onClick={() => update({ format: state.format === val ? undefined : val })}
+              className={clsx('rounded-full border px-4 py-[7px] min-h-11 text-[13.5px] font-medium cursor-pointer transition-colors', state.format === val ? 'border-brand-royal bg-brand-royal text-white' : 'border-bone bg-white text-carbon hover:border-brand-orange hover:text-brand-orange')}
+            >
+              {label}
+            </button>
+          ))}
           <p className="ms-auto text-[13.5px] text-slate tabular-nums" aria-live="polite">
             {loading ? 'Searching…' : total === 0 ? 'No results' : `${from.toLocaleString()}–${to.toLocaleString()} of ${total.toLocaleString()} results`}
           </p>
