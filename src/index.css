@@ -744,3 +744,5 @@
 /* language switch: no sliding while direction/font flip */
 html.lang-switching *, html.lang-switching *::before, html.lang-switching *::after { transition: none !important; animation-duration: 0s !important; scroll-behavior: auto !important; }
 
+
+[data-live-invalid="true"] { border-color: var(--color-error) !important; }

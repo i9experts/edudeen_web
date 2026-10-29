@@ -15,7 +15,10 @@ import { InstallAppPrompt } from '@/components/InstallAppPrompt';
 import { ErrorBoundary } from '@/components/comman/ErrorBoundary';
 import { AppCrashScreen } from '@/components/comman/AppCrashScreen';
 import { reloadOnceForStaleChunk, armChunkReloadGuardReset } from '@/utils/lazyWithRetry';
+import { installLiveFieldValidation } from '@/utils/liveFieldValidation';
 import './index.css';
+
+installLiveFieldValidation();
 
 // Stale chunk after a deploy: Vite fires this when a preload fails; reload once (guarded in sessionStorage).
 window.addEventListener('vite:preloadError', (e) => { if (reloadOnceForStaleChunk()) e.preventDefault(); });

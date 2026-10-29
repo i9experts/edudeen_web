@@ -75,6 +75,7 @@ const NEED_STYLE: Record<StepNeed, string> = {
 
 /** A titled block inside a step: serif heading, optional required/optional tag and a one-line hint. `id` lets issue links scroll to it. */
 export function Block({ title, need, hint, id, children }: { title: string; need?: StepNeed; hint?: string; id?: string; children: ReactNode }) {
+  const blockError = useContext(FieldErrorsContext)[id ?? ''];
   return (
     <section id={id} className="bg-white border border-bone rounded-xl px-5 py-5 sm:px-[27px] sm:py-[24px] scroll-mt-32">
       <div className="mb-4">
@@ -85,6 +86,7 @@ export function Block({ title, need, hint, id, children }: { title: string; need
         {hint && <p className="text-[13px] text-slate mt-1 leading-relaxed">{hint}</p>}
       </div>
       <div>{children}</div>
+      {blockError && <p role="alert" className="text-[12px] text-error mt-3">{blockError}</p>}
     </section>
   );
 }

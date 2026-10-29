@@ -89,8 +89,10 @@ export function ProductFormSteps(p: ProductFormStepsProps) {
   // A field shows its red error as soon as the seller has typed in it / left it, or after a blocked Next.
   const [touched, setTouched] = useState<Set<string>>(() => new Set());
   const markTouched = (e: { target: EventTarget }) => {
-    const id = (e.target as HTMLElement | null)?.id;
-    if (id) setTouched(prev => (prev.has(id) ? prev : new Set(prev).add(id)));
+    const el = e.target as HTMLElement | null;
+    // a control inside a block / wrapper (files, level, offers, tiers...) marks that wrapper's id
+    const ids = [el?.id, el?.closest?.('[id^="fld-"]')?.id].filter((x): x is string => !!x);
+    if (ids.length) setTouched(prev => (ids.every(x => prev.has(x)) ? prev : new Set([...prev, ...ids])));
   };
   const fieldErrors: Record<string, string> = {};
   for (const i of p.issues) if (i.fieldId && touched.has(i.fieldId) && !i.publishOnly && !fieldErrors[i.fieldId]) fieldErrors[i.fieldId] = i.message;
