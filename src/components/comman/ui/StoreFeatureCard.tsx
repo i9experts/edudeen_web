@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { imgUrl } from '@/utils/cloudinaryImage';
 import { clsx } from 'clsx';
 import { Link } from 'react-router-dom';
-import { Star, TrendingUp, BadgeCheck, UserPlus, UserCheck, ArrowRight } from 'lucide-react';
+import { Star, Users, TrendingUp, BadgeCheck, UserPlus, UserCheck, ArrowRight } from 'lucide-react';
 import { apiFollowStore, type PublicStoreListItem } from '@/api/services/store';
 import { useAuthGate } from '@/contexts/AuthGateContext';
 
@@ -23,7 +23,6 @@ function initialsOf(name: string) {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() || 'S';
 }
 
-const MIN_REVIEWS_FOR_RATING = 3;
 const MIN_SOLD_TO_SHOW = 10;
 
 /** What the seller sells: a real bio line when it is meaningful, else the main category. */
@@ -41,13 +40,16 @@ export function StoreFeatureCard({ store, onClick, className }: {
 }) {
   const [following, setFollowing] = useState(false);
   const [followBusy, setFollowBusy] = useState(false);
+  // Live follower count: the API number plus what this visitor just did.
+  const [followDelta, setFollowDelta] = useState(0);
+  const followers = Math.max(0, (store.followersCount ?? 0) + followDelta);
   const { requireAuth } = useAuthGate();
   const isVerified = store.badges?.includes('verified');
   const isTopSeller = store.badges?.includes('top_seller');
   const tone = toneFor(store.name || store.slug || '');
   const photos = (store.topProducts ?? []).filter(p => !!p.image).slice(0, 3);
   const tagline = taglineOf(store);
-  const showRating = store.averageRating > 0 && (store.reviewCount ?? 0) >= MIN_REVIEWS_FOR_RATING;
+  const showRating = store.averageRating > 0 && (store.reviewCount ?? 0) >= 1;
   const showSold = (store.soldCount ?? 0) >= MIN_SOLD_TO_SHOW;
 
   const handleFollow = (e: React.MouseEvent) => {
@@ -57,6 +59,7 @@ export function StoreFeatureCard({ store, onClick, className }: {
       setFollowBusy(true);
       try {
         const res = await apiFollowStore(store.storeId);
+        if (res.data.following !== following) setFollowDelta(d => d + (res.data.following ? 1 : -1));
         setFollowing(res.data.following);
       } catch { /* non-critical — button just stays in prior state */ }
       finally { setFollowBusy(false); }
@@ -137,26 +140,31 @@ export function StoreFeatureCard({ store, onClick, className }: {
           </button>
         </div>
 
-        <div className="flex items-center gap-3 pt-[10px] border-t border-bone text-[12px] text-slate">
-          {showRating && (
-            <span className="flex items-center gap-[4px] text-charcoal font-medium">
-              <Star size={11} className="text-brand-orange fill-brand-orange" />
+        <div className="flex items-center justify-between gap-3 border-t border-bone pt-[10px] text-[12px] text-slate">
+          {showRating ? (
+            <span className="flex items-center gap-[4px] font-medium text-charcoal" title="Average of all buyer ratings">
+              <Star size={12} className="fill-brand-orange text-brand-orange" />
               <span>{store.averageRating.toFixed(1)}</span>
-              <span className="text-slate font-normal">({store.reviewCount})</span>
+              <span className="font-normal text-slate">({store.reviewCount})</span>
             </span>
+          ) : (
+            <span className="text-slate">No ratings yet</span>
           )}
-          {showSold && (
-            <span className="flex items-center gap-[4px]">
-              <span>{(store.soldCount ?? 0).toLocaleString()}</span> <span>sold</span>
-            </span>
-          )}
-          {store.productCount != null && (
-            <span className="flex items-center gap-[4px]">
-              <span>{store.productCount}</span> <span>items</span>
-            </span>
-          )}
+          <span className="flex items-center gap-[4px]">
+            <Users size={12} />
+            <span>{followers.toLocaleString()}</span> <span>Followers</span>
+          </span>
         </div>
-
+        {(showSold || store.productCount != null) && (
+          <div className="mt-[6px] flex items-center gap-3 text-[12px] text-slate">
+            {store.productCount != null && (
+              <span className="flex items-center gap-[4px]"><span>{store.productCount}</span> <span>items</span></span>
+            )}
+            {showSold && (
+              <span className="flex items-center gap-[4px]"><span>{(store.soldCount ?? 0).toLocaleString()}</span> <span>sold</span></span>
+            )}
+          </div>
+        )}
         <Link
           to={`/shop/${store.slug}`}
           onClick={e => e.stopPropagation()}

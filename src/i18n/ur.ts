@@ -459,6 +459,8 @@ export const UR: Record<string, string> = {
   'Follow': 'فالو کریں',
   'Following': 'فالو کر رہے ہیں',
   'Followers': 'فالوورز',
+  'No ratings yet': 'ابھی کوئی ریٹنگ نہیں',
+  'Average of all buyer ratings': 'تمام خریداروں کی ریٹنگ کا اوسط',
   'Joined': 'شمولیت',
   'Meet the teacher': 'استاد سے ملیں',
   'Verified Educator': 'تصدیق شدہ استاد',
