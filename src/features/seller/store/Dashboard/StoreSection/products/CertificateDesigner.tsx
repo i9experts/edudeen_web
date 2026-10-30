@@ -105,25 +105,77 @@ async function removeBackground(file: Blob): Promise<Blob> {
   const ctx = c.getContext('2d');
   if (!ctx) throw new Error('Could not process the image.');
   ctx.drawImage(bmp, 0, 0, w, h);
-  const img = ctx.getImageData(0, 0, w, h);
-  const d = img.data;
-  // Background colour = average of the four corner patches.
-  let r = 0, g = 0, b = 0, n = 0;
-  const patch = Math.max(2, Math.min(12, Math.floor(Math.min(w, h) / 10)));
-  for (const [x0, y0] of [[0, 0], [w - patch, 0], [0, h - patch], [w - patch, h - patch]]) {
-    for (let y = y0; y < y0 + patch; y++) for (let x = x0; x < x0 + patch; x++) {
-      const i = (y * w + x) * 4; r += d[i]; g += d[i + 1]; b += d[i + 2]; n++;
+  const d = ctx.getImageData(0, 0, w, h).data;
+  const lum = (i: number) => 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+
+  // Local paper brightness = heavily blurred copy (handles shadows / uneven light); fallback: brightest 90% of the photo.
+  const bgLum = new Float32Array(w * h);
+  const bc = document.createElement('canvas');
+  bc.width = w; bc.height = h;
+  const bctx = bc.getContext('2d');
+  let blurred: Uint8ClampedArray | null = null;
+  if (bctx && 'filter' in bctx) {
+    bctx.filter = `blur(${Math.max(6, Math.round(Math.max(w, h) / 25))}px)`;
+    bctx.drawImage(c, 0, 0);
+    blurred = bctx.getImageData(0, 0, w, h).data;
+  }
+  if (blurred) {
+    for (let p = 0; p < w * h; p++) bgLum[p] = 0.299 * blurred[p * 4] + 0.587 * blurred[p * 4 + 1] + 0.114 * blurred[p * 4 + 2];
+  } else {
+    const all: number[] = [];
+    for (let p = 0; p < w * h; p += 7) all.push(lum(p * 4));
+    all.sort((x, y) => x - y);
+    bgLum.fill(all[Math.floor(all.length * 0.9)] ?? 255);
+  }
+
+  // Only pen strokes (clearly darker than the paper around them) stay; everything else becomes transparent.
+  const lo = 28, hi = 70;
+  let minX = w, minY = h, maxX = -1, maxY = -1;
+  for (let p = 0; p < w * h; p++) {
+    const i = p * 4;
+    const a = Math.max(0, Math.min(1, (Math.max(bgLum[p], 120) - lum(i) - lo) / (hi - lo)));
+    if (a > 0) {
+      // keep the pen colour but make it solid and dark
+      d[i] = d[i] * 0.45; d[i + 1] = d[i + 1] * 0.45; d[i + 2] = d[i + 2] * 0.45;
+    }
+    d[i + 3] = Math.round(a * 255);
+    if (a > 0.5) {
+      const x = p % w, y = (p - x) / w;
+      if (x < minX) minX = x; if (x > maxX) maxX = x; if (y < minY) minY = y; if (y > maxY) maxY = y;
     }
   }
-  r /= n; g /= n; b /= n;
-  const lo = 40, hi = 110;
-  for (let i = 0; i < d.length; i += 4) {
-    const dist = Math.sqrt((d[i] - r) ** 2 + (d[i + 1] - g) ** 2 + (d[i + 2] - b) ** 2);
-    const a = Math.max(0, Math.min(1, (dist - lo) / (hi - lo)));
-    d[i + 3] = Math.round(a * d[i + 3]);
+  if (maxX < 0) throw new Error('Could not find a signature in the picture. Use dark ink on plain paper.');
+  const out = document.createElement('canvas');
+  const pad = 6;
+  const sx = Math.max(0, minX - pad), sy = Math.max(0, minY - pad);
+  const sw = Math.min(w, maxX + pad) - sx, sh = Math.min(h, maxY + pad) - sy;
+  out.width = sw; out.height = sh;
+  const octx = out.getContext('2d');
+  if (!octx) throw new Error('Could not process the image.');
+  const full = ctx.createImageData(w, h);
+  full.data.set(d);
+  ctx.putImageData(full, 0, 0);
+  octx.drawImage(c, sx, sy, sw, sh, 0, 0, sw, sh);
+  return new Promise((res, rej) => out.toBlob(bl => (bl ? res(bl) : rej(new Error('Could not process the image.'))), 'image/png'));
+}
+
+/** Crops a transparent canvas to the drawn strokes so the signature fills its space. */
+function cropToInk(src: HTMLCanvasElement): Promise<Blob> {
+  const ctx = src.getContext('2d')!;
+  const { width: w, height: h } = src;
+  const d = ctx.getImageData(0, 0, w, h).data;
+  let minX = w, minY = h, maxX = -1, maxY = -1;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    if (d[(y * w + x) * 4 + 3] > 20) { if (x < minX) minX = x; if (x > maxX) maxX = x; if (y < minY) minY = y; if (y > maxY) maxY = y; }
   }
-  ctx.putImageData(img, 0, 0);
-  return new Promise((res, rej) => c.toBlob(bl => (bl ? res(bl) : rej(new Error('Could not process the image.'))), 'image/png'));
+  if (maxX < 0) return Promise.reject(new Error('Draw your signature first.'));
+  const pad = 6;
+  const sx = Math.max(0, minX - pad), sy = Math.max(0, minY - pad);
+  const sw = Math.min(w, maxX + pad) - sx, sh = Math.min(h, maxY + pad) - sy;
+  const out = document.createElement('canvas');
+  out.width = sw; out.height = sh;
+  out.getContext('2d')!.drawImage(src, sx, sy, sw, sh, 0, 0, sw, sh);
+  return new Promise((res, rej) => out.toBlob(bl => (bl ? res(bl) : rej(new Error('Could not save the signature.'))), 'image/png'));
 }
 
 function SignatureField({ value, onChange }: { value: string; onChange: (url: string) => void }) {
@@ -181,8 +233,7 @@ function SignatureField({ value, onChange }: { value: string; onChange: (url: st
     const el = canvas.current; if (!el || !hasInk) return;
     setBusy(true); setError('');
     try {
-      const blob = await new Promise<Blob>((res, rej) => el.toBlob(bl => (bl ? res(bl) : rej(new Error('Could not save the signature.'))), 'image/png'));
-      await send(blob);
+      await send(await cropToInk(el));
       clear();
     } catch (err) { setError(err instanceof Error ? err.message : 'Upload failed. Try again.'); }
     finally { setBusy(false); }

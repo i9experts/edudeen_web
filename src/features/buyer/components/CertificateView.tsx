@@ -128,7 +128,7 @@ export function CertificateView({ data, config, sample, printable }: Props) {
             </div>
             <div className="text-end">
               <div className="ms-auto w-[230px] border-t border-carbon/60 pt-1 relative">
-                {signatureImg && <img src={signatureImg} alt="Signature" style={{ position: 'absolute', bottom: '100%', insetInlineEnd: 0, marginBottom: 2, maxWidth: 220, maxHeight: 70, objectFit: 'contain' }} />}
+                {signatureImg && <img src={signatureImg} alt="Signature" style={{ position: 'absolute', bottom: '100%', insetInlineStart: 0, width: '100%', height: 84, marginBottom: 2, objectFit: 'contain', objectPosition: 'center bottom' }} />}
                 <p className="m-0 font-semibold text-carbon text-[16px]">{config?.signatureName?.trim() || issuer || ''}</p>
                 <p className="m-0">{config?.signatureTitle?.trim() || (config?.signatureName ? '' : 'Instructor')}</p>
               </div>
