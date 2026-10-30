@@ -1,15 +1,14 @@
-import { Download, MonitorPlay, Video } from 'lucide-react';
+import { Download, MonitorPlay } from 'lucide-react';
 import { clsx } from 'clsx';
 import { deliveryFormatLabel, normalizeDeliveryFormat } from '@/utils/deliveryFormat';
 
 const STYLE = {
   download: 'bg-[#eef0ff] text-[#3851d1]',
   course: 'bg-[#e8f6ee] text-[#1d7a46]',
-  live_class: 'bg-[#fdeeee] text-[#b3261e]',
 } as const;
-const ICON = { download: Download, course: MonitorPlay, live_class: Video } as const;
+const ICON = { download: Download, course: MonitorPlay } as const;
 
-/** Small pill naming how a digital product is delivered: File download / Online course / Live class. */
+/** Small pill naming how a digital product is delivered: File download / Online course. */
 export function DeliveryFormatBadge({ format, className, showIcon = true }: { format: unknown; className?: string; showIcon?: boolean }) {
   const f = normalizeDeliveryFormat(format);
   const Icon = ICON[f];

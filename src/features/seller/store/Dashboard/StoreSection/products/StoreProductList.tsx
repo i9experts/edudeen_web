@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   ShoppingBag, Plus,
   RefreshCw, TrendingUp,
-  Eye, Pencil, Trash2, ArrowRight, Crown, Flame, UploadCloud, Users, Ban,
+  Eye, Pencil, Trash2, ArrowRight, Crown, Flame, UploadCloud, Users,
 } from 'lucide-react';
 import { DeliveryFormatBadge } from '@/components/comman/ui/DeliveryFormatBadge';
 import { courseSummaryText } from '@/utils/deliveryFormat';
@@ -217,7 +217,6 @@ export default function StoreProductList() {
       render: p => p.type === 'digital' ? (
         <div className="flex flex-col items-start gap-1">
           <DeliveryFormatBadge format={p.deliveryFormat} />
-          {p.productType === 'educational' && <span className="text-[12px] text-slate">Educational</span>}
         </div>
       ) : <Badge color="orange">Physical</Badge>,
     },
@@ -247,16 +246,6 @@ export default function StoreProductList() {
         if (p.deliveryFormat === 'course') {
           const t = courseSummaryText(p.courseSummary);
           return <span className="text-[13px] text-carbon">{t || 'Online course'}</span>;
-        }
-        if (p.deliveryFormat === 'live_class') {
-          const ls = p.liveSession;
-          if (!ls?.startsAt) return <span className="text-[13px] text-carbon">Live class</span>;
-          return (
-            <div className="text-[12px] text-carbon leading-snug">
-              <p className="m-0">{ls.status === 'cancelled' ? 'Cancelled' : new Date(ls.startsAt).toLocaleString('en-PK', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Karachi' })}</p>
-              <p className="m-0 text-slate">{ls.capacity ? `${ls.capacity} seats` : 'No seat limit'}</p>
-            </div>
-          );
         }
         return (
           <span className="text-[13px] text-carbon">
@@ -313,7 +302,6 @@ export default function StoreProductList() {
                 { label: 'Edit / build course', onClick: () => navigate(`/store/${storeId}/products/${p.productId}/course`), icon: <Pencil size={13} /> },
                 { label: 'Students & progress', onClick: () => navigate(`/store/${storeId}/products/${p.productId}/course/students`), icon: <Users size={13} /> },
               ] : []),
-              ...(p.deliveryFormat === 'live_class' && p.liveSession?.status !== 'cancelled' && p.status !== 'draft' ? [{ label: 'Cancel live class…', onClick: () => navigate(`/store/${storeId}/products/detail/${p.productId}?cancel=1`), icon: <Ban size={13} />, danger: true }] : []),
               { label: 'Add to Premium offer…',        onClick: () => openOffer('premium_on', [p.productId]),        icon: <Crown size={13} /> },
               { label: 'Remove from Premium offer',    onClick: () => openOffer('premium_off', [p.productId]),       icon: <Crown size={13} /> },
               { label: 'Add to platform sale…',        onClick: () => openOffer('campaign_add', [p.productId]),      icon: <Flame size={13} /> },

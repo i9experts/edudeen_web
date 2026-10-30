@@ -5,15 +5,13 @@ import { Modal, Button, Textarea, SkeletonBox, StatusBadge } from '@/components/
 import {
   apiGetListingForReview, apiApproveListing, apiRejectListing, type ListingReview,
 } from '@/api/services/marketplace/adminMarketplace';
-import { EDUCATION_LEVELS } from '@/api/services/product';
 import { getStorePagePath } from '@/utils/storefrontUrl';
 import { AiModerationPanel } from './AiModerationPanel';
 import { TrustBadgesEditor } from './TrustBadgesEditor';
 import { ageLabel } from '@/constants/learning';
 import { classRangeLabel } from '@/constants/classLevels';
 import { DeliveryFormatBadge } from '@/components/comman/ui/DeliveryFormatBadge';
-import { deliveryFormatLabel, normalizeDeliveryFormat, PLATFORM_LABEL, courseSummaryText } from '@/utils/deliveryFormat';
-import { formatPkt } from '@/utils/pkTime';
+import { deliveryFormatLabel, normalizeDeliveryFormat, courseSummaryText } from '@/utils/deliveryFormat';
 
 const LICENSE: Record<string, string> = {
   personal: 'Personal use', single_classroom: 'One classroom', school: 'Whole school', commercial: 'Commercial',
@@ -68,11 +66,8 @@ export function ListingReviewModal({ listingId, onClose, onDone }: { listingId: 
     finally { setBusy(false); }
   }
 
-  const level = data?.educationLevel
-    ? data.educationLevel === 'other' ? data.customLevel : EDUCATION_LEVELS.find(l => l.value === data.educationLevel)?.label
-    : null;
   const range = data ? classRangeLabel(data.classFrom, data.classTo) : null;
-  const grade = [range, level].filter(Boolean).join(' · ') || null;
+  const grade = range || null;
   const price = data?.variants.find(v => v.isDefault) ?? data?.variants[0];
   const format = normalizeDeliveryFormat(data?.deliveryFormat);
 
@@ -220,21 +215,6 @@ export function ListingReviewModal({ listingId, onClose, onDone }: { listingId: 
                     ))}
                   </div>
                 </>
-              )}
-            </div>
-          )}
-
-          {format === 'live_class' && (
-            <div className="rounded-lg border border-bone px-3 py-3">
-              <p className="text-[12px] uppercase tracking-[0.06em] text-slate font-semibold mb-1">Live class</p>
-              {!data.liveSession?.startsAt ? <p className="text-error m-0">No schedule set.</p> : (
-                <ul className="list-none p-0 m-0 text-charcoal flex flex-col gap-0.5">
-                  <li>Starts: {new Date(data.liveSession.startsAt).toLocaleDateString('en-PK', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Karachi' })}, {formatPkt(data.liveSession.startsAt)}</li>
-                  <li>Length: {data.liveSession.durationMinutes} min · Platform: {PLATFORM_LABEL[data.liveSession.platform ?? ''] ?? 'Online'} · Seats: {data.liveSession.capacity ?? 'no limit'}</li>
-                  {data.liveSession.registrationDeadline && <li>Registration closes: {new Date(data.liveSession.registrationDeadline).toLocaleString('en-PK', { timeZone: 'Asia/Karachi' })} PKT</li>}
-                  {data.liveSession.status === 'cancelled' && <li className="text-error">Cancelled by the seller</li>}
-                  {data.liveSession.meetingUrl && <li className="break-all">Meeting link: {data.liveSession.meetingUrl}</li>}
-                </ul>
               )}
             </div>
           )}

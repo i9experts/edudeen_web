@@ -6,7 +6,6 @@ export interface LinkTarget { kind: LinkKind; value: string }
 
 export const LINK_TYPES = [
   { value: 'digital', label: 'Digital downloads' },
-  { value: 'educational', label: 'Educational resources' },
   { value: 'physical', label: 'Physical products' },
 ] as const;
 
@@ -35,7 +34,7 @@ export function parseLink(link: string | null | undefined): LinkTarget {
       const v = p.get(k) ?? '';
       if (k === 'category' && v) return { kind: 'category', value: v };
       if (k === 'campaign' && v) return { kind: 'campaign', value: v };
-      if (k === 'type' && v) return { kind: 'type', value: v };
+      if (k === 'type' && v) return { kind: 'type', value: v === 'educational' ? 'digital' : v };
       if (k === 'class' && v) return { kind: 'class', value: v };
       if (k === 'free' && v === '1') return { kind: 'free', value: '' };
     }

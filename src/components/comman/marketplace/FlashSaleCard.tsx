@@ -51,7 +51,7 @@ export function FlashSaleCard({ product, onClick, onAddToCart, isAdding, addToCa
   const pType      = product.productType ?? product.type ?? 'physical';
   const isPhysical = pType === 'physical';
   const isDigital  = !isPhysical;
-  const typeLabel  = isPhysical ? 'Physical' : pType === 'educational' ? 'Educational' : 'Digital';
+  const typeLabel  = isPhysical ? 'Physical' : 'Digital';
 
   const variants        = product.variants ?? [];
   const defaultVariant = variants.find(v => v.isDefault) ?? variants[0];
@@ -82,7 +82,7 @@ export function FlashSaleCard({ product, onClick, onAddToCart, isAdding, addToCa
   const savings = compareAt != null && displayPrice != null && compareAt > displayPrice
     ? compareAt - displayPrice
     : null;
-  // Stock tracking only applies to physical goods with tracking enabled — digital/educational
+  // Stock tracking only applies to physical goods with tracking enabled — digital
   // products, and any physical variant marked unlimitedStock, are always available.
   const stock = isDigital || defaultVariant?.unlimitedStock ? Infinity : (defaultVariant?.stock ?? 0);
 

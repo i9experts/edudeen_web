@@ -3,7 +3,7 @@
  * Pure (no imports) so `npm run test:rules` can run it with plain node. The API mirrors it in
  * edudeen_api/src/products/product-quality.util.ts and contact-info.util.ts (those are the authority) - keep in step.
  *
- * Class range: REQUIRED for digital + educational products (to publish), optional for physical goods and drafts.
+ * Class range: REQUIRED for digital products (to publish), optional for physical goods and drafts.
  */
 
 export const MIN_TITLE_LENGTH = 10;

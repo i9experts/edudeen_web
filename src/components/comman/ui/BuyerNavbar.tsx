@@ -498,10 +498,10 @@ export function SearchBox({
 
   const typeLabel = (p: MarketplaceProduct) => {
     const t = p.productType ?? p.type ?? 'physical';
-    return t === 'physical' ? 'Physical' : t === 'educational' ? 'Educational' : 'Digital';
+    return t === 'physical' ? 'Physical' : 'Digital';
   };
   // Real category name when the host page has the list (Marketplace) —
-  // falls back to the product type (Physical/Digital/Educational) where it
+  // falls back to the product type (Physical/Digital) where it
   // doesn't (Education Marketplace, Seller Store), so the row never shows a
   // raw id or goes blank.
   const categoryNameFor = (p: MarketplaceProduct) => categories?.find(c => c.id === p.categoryId)?.name ?? typeLabel(p);

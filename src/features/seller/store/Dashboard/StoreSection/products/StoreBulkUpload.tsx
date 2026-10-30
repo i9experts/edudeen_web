@@ -6,7 +6,7 @@ import {
 import { useStoreWorkspace, StorePageHeader } from '@/components/layouts/StoreLayout';
 import { Modal } from '@/components/comman/ui';
 import { normalizeTitle, POLICY_LINE } from './productQuality';
-import { apiCreateDigitalProduct, apiCreatePhysicalProduct, EDUCATION_LEVELS, type EducationLevel } from '@/api/services/product';
+import { apiCreateDigitalProduct, apiCreatePhysicalProduct } from '@/api/services/product';
 import { apiUploadPrivateFile, apiUploadPublicFile } from '@/api/upload';
 import { useSellerCategories } from '@/hooks/store/useSellerCategories';
 import type { CategoryNode } from '@/api/services/categories';
@@ -22,7 +22,7 @@ import { timeAgo, useDraftAutosave, useLeaveGuard } from './ProductWizard';
 import { inp } from './ProductFormKit';
 import {
   DOC_EXTENSIONS, MAX_BULK_FILES, MAX_BULK_PHOTOS, MAX_DOC_BYTES, MAX_PHOTO_BYTES, MAX_ROW_PHOTOS, PHOTO_EXTENSIONS,
-  baseOf, blankRow, rowWarnings, duplicateTitles, effectiveLevel, extOf, filledGroups, findPhotoMatches, groupsFor, isDocName, isPhotoName, newId, normalizeRow, rowIssue, rowPremiumConflict,
+  baseOf, blankRow, rowWarnings, duplicateTitles, extOf, filledGroups, findPhotoMatches, groupsFor, isDocName, isPhotoName, newId, normalizeRow, rowIssue, rowPremiumConflict,
   titleFromFileName,
   type RowContext, type BulkRow, type BulkType, type DetailGroup, type TrayPhoto,
 } from './bulkUtils';
@@ -34,7 +34,7 @@ const lab = 'block text-[12px] font-semibold text-graphite mb-1';
 interface Saved { type: BulkType; rows: BulkRow[]; tray: TrayPhoto[] }
 interface RunSummary { created: number; published: number; inReview: number; drafts: number; failed: number; skipped: number }
 
-const TYPE_LABEL: Record<BulkType, string> = { digital: 'Digital downloads', educational: 'Educational resources', physical: 'Physical products' };
+const TYPE_LABEL: Record<BulkType, string> = { digital: 'Digital downloads', physical: 'Physical products' };
 
 // ── Compact category cascade (same data + rules as the Add Product form) ─────────────────────
 function pathTo(nodes: CategoryNode[], id: string): CategoryNode[] {
@@ -117,8 +117,6 @@ function ClassRange({ from, to, onChange, idPrefix, disabled }: { from: string; 
   );
 }
 
-const LEVEL_OPTIONS = EDUCATION_LEVELS.filter(l => l.value !== 'other');
-
 export default function StoreBulkUpload() {
   const navigate = useNavigate();
   const { storeId, store } = useStoreWorkspace();
@@ -147,8 +145,8 @@ export default function StoreBulkUpload() {
   const productTypes = store?.productTypes ?? [];
   // Same availability rules as the single Add Product form.
   const canType: Record<BulkType, boolean> = {
-    digital: !store || productTypes.includes('digital_downloads'),
-    educational: !store || productTypes.includes('educational_resources'),
+    // Old stores set up for 'educational resources' now sell digital products.
+    digital: !store || productTypes.includes('digital_downloads') || productTypes.includes('educational_resources'),
     physical: !store || productTypes.includes('physical_products'),
   };
   const defaultCategoryId = store?.categoryId ?? '';
@@ -162,7 +160,7 @@ export default function StoreBulkUpload() {
     const want = pendingType.current; pendingType.current = null;
     if (want && canType[want]) { if (want !== type) setType(want); return; }
     if (!canType[type]) {
-      const first = (['digital', 'educational', 'physical'] as const).find(t => canType[t]);
+      const first = (['digital', 'physical'] as const).find(t => canType[t]);
       if (first) setType(first);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -319,7 +317,7 @@ export default function StoreBulkUpload() {
       return base.uploadState === 'done' || base.uploadState === 'none' ? base
         : { ...base, uploadState: 'failed', uploadError: 'This file was not finished uploading. Choose the file again.' };
     });
-    setType(d.type === 'educational' || d.type === 'physical' ? d.type : 'digital');
+    setType(d.type === 'physical' ? 'physical' : 'digital');
     setRows(restored);
     setTray((d.tray ?? []).filter(t => t.state === 'done'));
     draft.accept();
@@ -386,9 +384,9 @@ export default function StoreBulkUpload() {
   const dropPhoto = (id: string) => { queue.current = queue.current.filter(j => j.id !== id); filesRef.current.delete(id); setTray(prev => prev.filter(t => t.id !== id)); };
 
   // ── Apply to selected ────────────────────────────────────────────────────────────────────────
-  const [ap, setAp] = useState({ categoryId: '', subCategoryId: '', classFrom: '', classTo: '', level: '', price: '', compareAt: '', stock: '', weight: '', weightUnit: 'kg' as WeightUnit, unlimited: false, savedStock: '', description: '', mode: 'replace' as 'replace' | 'append' });
+  const [ap, setAp] = useState({ categoryId: '', subCategoryId: '', classFrom: '', classTo: '', price: '', compareAt: '', stock: '', weight: '', weightUnit: 'kg' as WeightUnit, unlimited: false, savedStock: '', description: '', mode: 'replace' as 'replace' | 'append' });
   const [apOpen, setApOpen] = useState(true);
-  const apFilled = !!(ap.categoryId || ap.classFrom || ap.classTo || ap.level || ap.price.trim() || ap.compareAt.trim() || ap.stock.trim() || ap.weight.trim() || ap.unlimited || ap.description.trim());
+  const apFilled = !!(ap.categoryId || ap.classFrom || ap.classTo || ap.price.trim() || ap.compareAt.trim() || ap.stock.trim() || ap.weight.trim() || ap.unlimited || ap.description.trim());
   const selectedRows = editable.filter(r => selected.has(r.id));
   const applyToSelected = () => {
     if (!selectedRows.length || !apFilled) return;
@@ -399,7 +397,6 @@ export default function StoreBulkUpload() {
       const n = { ...r };
       if (ap.categoryId) { n.categoryId = ap.categoryId; n.subCategoryId = ap.subCategoryId; }
       if (ap.classFrom || ap.classTo) { n.classFrom = ap.classFrom; n.classTo = ap.classTo; }
-      if (ap.level) n.educationLevel = ap.level;
       if (ap.price.trim()) { n.price = ap.price.trim(); n.free = false; }
       if (ap.compareAt.trim()) n.compareAt = ap.compareAt.trim();
       if (ap.stock.trim()) { n.stock = ap.stock.trim(); n.unlimitedStock = false; n.zeroStockOk = false; }
@@ -446,8 +443,6 @@ export default function StoreBulkUpload() {
         res = await apiCreateDigitalProduct({
           ...common,
           productType: type,
-          educationLevel: type === 'educational' ? (effectiveLevel(r) as EducationLevel) : null,
-          customLevel: null,
           price: r.free ? 0 : Number(r.price), compareAtPrice: r.compareAt.trim() ? Number(r.compareAt) : null,
           ...deliveryPayload(EMPTY_DELIVERY),
           licenseTiers: [],
@@ -521,14 +516,14 @@ export default function StoreBulkUpload() {
   const failedCount = rows.filter(r => r.createState === 'failed').length;
   const createdRows = rows.filter(r => r.createState === 'created');
   const pendingPhotos = tray.length;
-  const noTypes = !!store && !canType.digital && !canType.educational && !canType.physical;
+  const noTypes = !!store && !canType.digital && !canType.physical;
   const detailRow = detail ? rows.find(r => r.id === detail.rowId) : undefined;
 
   return (
     <div className="min-h-full tap-safe">
       <StorePageHeader
         title="Bulk upload"
-        subtitle="Add many products at once - digital, educational or physical."
+        subtitle="Add many products at once - digital or physical."
         actions={<Link to={`/store/${storeId}/products/add`} className="text-[13px] font-bold text-brand-royal no-underline hover:underline">Add product</Link>}
       />
       {guard.dialog}
@@ -596,7 +591,7 @@ export default function StoreBulkUpload() {
             <div className="flex flex-wrap items-center gap-3">
               <span className="text-[13px] font-bold text-carbon">These are:</span>
               <div role="radiogroup" aria-label="Product type" className="inline-flex flex-wrap gap-2">
-                {(['digital', 'educational', 'physical'] as const).map(t => (
+                {(['digital', 'physical'] as const).map(t => (
                   <button key={t} type="button" role="radio" aria-checked={type === t} disabled={rows.length > 0 && type !== t} aria-disabled={!canType[t] || undefined}
                     onClick={() => { if (!canType[t]) { setLockedType(t); return; } setLockedType(null); if (!store) pendingType.current = t; setType(t); }}
                     className={`px-3 py-1.5 rounded-full text-[13px] font-bold border cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${!canType[t] ? 'opacity-60' : ''} ${type === t ? 'bg-brand-royal text-white border-brand-royal' : 'bg-white text-graphite border-bone hover:bg-cream'}`}>
@@ -723,15 +718,6 @@ export default function StoreBulkUpload() {
                           <input id="ap-weight" type="number" min={0} step="any" inputMode="decimal" className={inp} value={ap.weight} placeholder="e.g. 0.5" onChange={e => setAp(a => ({ ...a, weight: e.target.value }))} />
                           <select aria-label="Weight unit" id="ap-weight-unit" className={` !w-[72px] shrink-0`} value={ap.weightUnit} onChange={e => setAp(a => ({ ...a, weightUnit: e.target.value as WeightUnit }))}><option value="kg">kg</option><option value="g">g</option></select>
                         </div>
-                      </div>
-                    )}
-                    {type === 'educational' && (
-                      <div>
-                        <label htmlFor="ap-level" className={lab}>Education level</label>
-                        <select id="ap-level" className={sel} value={ap.level} onChange={e => setAp(a => ({ ...a, level: e.target.value }))}>
-                          <option value="">Leave as is</option>
-                          {LEVEL_OPTIONS.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
-                        </select>
                       </div>
                     )}
                   </div>
@@ -1152,15 +1138,6 @@ function RowCard({ row: r, index, issue, conflict, currencyCode, dupOf, currency
                   <option value="kg">kg</option><option value="g">g</option>
                 </select>
               </div>
-            </div>
-          )}
-          {type === 'educational' && (
-            <div className="col-span-6 lg:col-span-3">
-              <label htmlFor={`l-${r.id}`} className={lab}>Education level</label>
-              <select id={`l-${r.id}`} className={sel} disabled={lock} value={effectiveLevel(r)} onChange={e => onChange({ educationLevel: e.target.value })}>
-                <option value="">Choose…</option>
-                {LEVEL_OPTIONS.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
-              </select>
             </div>
           )}
           <div className="col-span-12">

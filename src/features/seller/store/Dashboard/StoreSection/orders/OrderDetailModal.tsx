@@ -101,7 +101,7 @@ export function OrderDetailModal({ order, storeId, onClose, onUpdated }: Props) 
     run('paid', () => apiMarkOrderPaid(order.orderId), { isPaid: true, status: 'completed' });
 
   const typeLabel = order.type === 'digital'
-    ? (order.productType === 'educational' ? 'Educational (digital)' : 'Digital')
+    ? 'Digital'
     : order.type === 'mixed' ? 'Physical + digital' : 'Physical';
 
   return (

@@ -28,8 +28,8 @@ export interface CartItem {
   /** Original list price a member sees struck through (never the seller's normal sale price). */
   listPrice?:              number;
   type?:           'physical' | 'digital';
-  /** Digital items: file download, online course or live class (when the API sends it). */
-  deliveryFormat?: 'download' | 'course' | 'live_class';
+  /** Digital items: file download, online course (when the API sends it). */
+  deliveryFormat?: 'download' | 'course';
   /** Set on the main marketplace site, where one view spans several stores' carts. */
   storeId?:         string;
   storeName?:       string;

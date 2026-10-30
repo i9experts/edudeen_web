@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { Plus, Trash2, ChevronUp, ChevronDown, Video, FileText, AlignLeft, ListChecks, Loader2, Award, Eye, ArrowLeft, Users } from 'lucide-react';
+import { Plus, Trash2, ChevronUp, ChevronDown, Video, Loader2, Award, Eye, ArrowLeft, Users } from 'lucide-react';
 import { isAllowedExternalVideo } from '@/utils/externalVideo';
 import { clsx } from 'clsx';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -14,11 +14,9 @@ import {
   type CourseBuilderData, type CourseLessonInput, type CourseSectionInput, type LessonType,
 } from '@/api/services/classroom';
 
+// New lessons are video only; PDF / text / quiz lessons that already exist keep working (their editor still renders).
 const TYPES: { value: LessonType; label: string; Icon: typeof Video }[] = [
   { value: 'video', label: 'Video', Icon: Video },
-  { value: 'pdf', label: 'PDF', Icon: FileText },
-  { value: 'text', label: 'Text', Icon: AlignLeft },
-  { value: 'quiz', label: 'Quiz', Icon: ListChecks },
 ];
 
 const newLesson = (type: LessonType = 'video'): CourseLessonInput => ({
@@ -111,20 +109,12 @@ function LessonEditor({ lesson, index, count, onChange, onMove, onRemove }: {
   onChange: (l: CourseLessonInput) => void; onMove: (d: -1 | 1) => void; onRemove: () => void;
 }) {
   const set = <K extends keyof CourseLessonInput>(k: K, v: CourseLessonInput[K]) => onChange({ ...lesson, [k]: v });
-  const setType = (type: LessonType) => onChange({ ...lesson, type, videoUrl: type === 'video' ? lesson.videoUrl : null, file: type === 'video' || type === 'pdf' ? lesson.file : null, quiz: type === 'quiz' ? lesson.quiz ?? newLesson('quiz').quiz : null, isPreview: type === 'quiz' ? false : lesson.isPreview });
   return (
     <div className="rounded-xl border border-bone bg-white p-3 md:p-4 flex flex-col gap-3">
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-[12px] font-bold text-slate w-6">{index + 1}.</span>
         <div className="flex-1 min-w-[180px]"><Input aria-label="Lesson title" value={lesson.title} maxLength={150} onChange={e => set('title', e.target.value)} placeholder="Lesson title" /></div>
-        <div role="radiogroup" aria-label="Lesson type" className="flex gap-1">
-          {TYPES.map(t => (
-            <button key={t.value} type="button" role="radio" aria-checked={lesson.type === t.value} onClick={() => setType(t.value)} title={t.label}
-              className={clsx('inline-flex items-center gap-1 rounded-md border px-2 py-1.5 text-[12px] cursor-pointer', lesson.type === t.value ? 'border-brand-royal bg-brand-pale-orange/50 text-brand-royal font-semibold' : 'border-bone bg-white text-slate')}>
-              <t.Icon size={13} /> {t.label}
-            </button>
-          ))}
-        </div>
+        {lesson.type !== 'video' && <span className="rounded-md border border-bone bg-fog px-2 py-1.5 text-[12px] text-slate capitalize">{lesson.type}</span>}
         <div className="flex">
           <button type="button" aria-label="Move lesson up" disabled={index === 0} onClick={() => onMove(-1)} className="p-1 bg-transparent border-none cursor-pointer text-slate disabled:opacity-30"><ChevronUp size={15} /></button>
           <button type="button" aria-label="Move lesson down" disabled={index === count - 1} onClick={() => onMove(1)} className="p-1 bg-transparent border-none cursor-pointer text-slate disabled:opacity-30"><ChevronDown size={15} /></button>

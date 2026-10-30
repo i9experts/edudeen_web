@@ -263,8 +263,8 @@ export interface PublicStoreProductsParams {
   limit?:        number;
   sort?:         'newest' | 'price_asc' | 'price_desc' | 'best_rated';
   type?:         'all' | 'physical' | 'digital';
-  /** Buyer-facing kind: physical | digital downloads | online course | live class. */
-  kind?:         'physical' | 'digital' | 'course' | 'live_class';
+  /** Buyer-facing kind: physical | digital downloads | online course. */
+  kind?:         'physical' | 'digital' | 'course';
   categoryId?:   string;
   collectionId?: string;
   tag?:          string;
@@ -278,7 +278,7 @@ export interface PublicStoreProduct {
   name:        string;
   images?:     string[];
   type?:       'physical' | 'digital';
-  productType?: 'physical' | 'digital' | 'educational';
+  productType?: 'physical' | 'digital';
   tags?:       string[];
   averageRating?: number;
   defaultVariantPrice: number | null;

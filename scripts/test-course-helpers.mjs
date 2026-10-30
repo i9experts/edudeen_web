@@ -1,4 +1,4 @@
-﻿// Run: npm run test:rules
+// Run: npm run test:rules
 import assert from 'node:assert/strict';
 import { externalVideoEmbed, isAllowedExternalVideo } from '../src/utils/externalVideo.ts';
 import { courseSummaryText, normalizeDeliveryFormat } from '../src/utils/deliveryFormat.ts';
@@ -25,6 +25,6 @@ t('course summary text and format fallback', () => {
   assert.equal(courseSummaryText({ lessonCount: 1, totalMinutes: 120 }), '1 lesson · 2 h');
   assert.equal(courseSummaryText({ lessonCount: 0, totalMinutes: 5 }), '');
   assert.equal(normalizeDeliveryFormat(undefined), 'download');
-  assert.equal(normalizeDeliveryFormat('live_class'), 'live_class');
+  assert.equal(normalizeDeliveryFormat('live_class'), 'download'); // retired type: old API data maps safely
 });
 console.log(`${n} course helper checks passed`);

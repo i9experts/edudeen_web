@@ -18,7 +18,7 @@ import { formatMoney } from '@/utils/currency';
  * (the server re-checks everything; this only hides actions that would fail):
  *   - item not already refunded / cancelled
  *   - digital item: order paid AND the file never downloaded
- *   - physical/educational item: its seller order is delivered or completed
+ *   - physical item: its seller order is delivered or completed
  *   - no pending request already covering the item
  */
 export interface RefundRequestPanelProps {

@@ -27,7 +27,6 @@ const KIND_OPTIONS: { value: 'all' | NonNullable<PublicStoreProductsParams['kind
   { value: 'digital',   label: 'Digital' },
   { value: 'physical',  label: 'Physical' },
   { value: 'course',    label: 'Online courses' },
-  { value: 'live_class', label: 'Live classes' },
 ];
 
 // No photo (or a broken one) → the same designed name cover the homepage
@@ -177,7 +176,7 @@ export function ProductCatalogSection({ settings }: { settings: ProductCatalogSe
             {products.map(p => {
               const pType = p.productType ?? p.type ?? 'physical';
               const isPhysical = pType === 'physical';
-              const typeLabel = isPhysical ? 'Physical' : pType === 'educational' ? 'Educational' : 'Digital';
+              const typeLabel = isPhysical ? 'Physical' : 'Digital';
               const vId = p.variantId ?? '';
               return (
                 <ProductCardShell key={p._id} onClick={() => toMain(`/product/${p.slug}`)}>

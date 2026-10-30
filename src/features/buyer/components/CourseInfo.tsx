@@ -1,46 +1,17 @@
 import { useEffect, useState } from 'react';
-import { Video, FileText, AlignLeft, ListChecks, Award, PlayCircle, CalendarClock, Users, Lock, CheckCircle2, Infinity as InfinityIcon, GraduationCap } from 'lucide-react';
+import { Video, FileText, AlignLeft, ListChecks, Award, PlayCircle, Lock, CheckCircle2, Infinity as InfinityIcon, GraduationCap } from 'lucide-react';
 import { Modal } from '@/components/comman/ui';
 import {
-  apiGetCourseOutline, apiGetPreviewLesson, apiGetLiveSeats,
-  type CourseOutline, type LessonContent, type LessonType, type LiveSeats,
+  apiGetCourseOutline, apiGetPreviewLesson,
+  type CourseOutline, type LessonContent, type LessonType,
 } from '@/api/services/classroom';
 import type { MarketplaceProduct } from '@/api/services/marketplace';
-import { formatLocalWithZone, formatPkt } from '@/utils/pkTime';
-import { PLATFORM_LABEL } from '@/utils/deliveryFormat';
 import { LessonVideo } from './LessonVideo';
 
 const ICON: Record<LessonType, typeof Video> = { video: Video, pdf: FileText, text: AlignLeft, quiz: ListChecks };
 const TYPE_LABEL: Record<LessonType, string> = { video: 'Video', pdf: 'PDF', text: 'Reading', quiz: 'Quiz' };
 
 const hours = (m: number) => (m >= 60 ? `${Math.floor(m / 60)}h${m % 60 ? ` ${m % 60}m` : ''}` : `${m}m`);
-
-export type LiveSaleState = 'ok' | 'cancelled' | 'ended' | 'closed' | 'full';
-export interface LiveSale { state: LiveSaleState; message: string; seats: LiveSeats | null }
-
-/** Can this live class still be bought? Drives the product-page button and the info card. */
-export function useLiveSale(product: MarketplaceProduct | null | undefined): LiveSale {
-  const [seats, setSeats] = useState<LiveSeats | null>(null);
-  const [now] = useState(() => Date.now());
-  const isLive = product?.deliveryFormat === 'live_class';
-  const slug = product?.slug;
-  useEffect(() => {
-    if (!isLive || !slug) return;
-    let alive = true;
-    apiGetLiveSeats(slug).then(res => { if (alive) setSeats(res.data); }).catch(() => {});
-    return () => { alive = false; };
-  }, [isLive, slug]);
-  const live = product?.liveSession;
-  if (!isLive || !live) return { state: 'ok', message: '', seats };
-  const status = seats?.status ?? live.status;
-  const end = new Date(live.startsAt).getTime() + live.durationMinutes * 60000;
-  const deadline = seats?.deadline ?? live.registrationDeadline ?? null;
-  if (status === 'cancelled') return { state: 'cancelled', message: 'This class was cancelled', seats };
-  if (end < now) return { state: 'ended', message: 'This class has ended', seats };
-  if (seats?.registrationOpen === false || (deadline && new Date(deadline).getTime() < now)) return { state: 'closed', message: 'Registration is closed', seats };
-  if (seats?.capacity && seats.left === 0) return { state: 'full', message: 'Class full', seats };
-  return { state: 'ok', message: '', seats };
-}
 
 /** Udemy-style course page: instructor, outcomes, curriculum with free-preview lessons, certificate and access terms. */
 function CourseContent({ product }: { product: MarketplaceProduct }) {
@@ -149,43 +120,8 @@ function CourseContent({ product }: { product: MarketplaceProduct }) {
   );
 }
 
-/** Date, time (buyer's timezone + Pakistan time), length, seats and sale state of a live class. */
-function LiveClassInfo({ product, sale }: { product: MarketplaceProduct; sale: LiveSale }) {
-  const live = product.liveSession;
-  if (!live) return null;
-  const start = new Date(live.startsAt);
-  const end = new Date(start.getTime() + live.durationMinutes * 60000);
-  const seats = sale.seats;
-  const deadline = seats?.deadline ?? live.registrationDeadline ?? null;
-  const badge = sale.state === 'cancelled' ? 'bg-red-50 text-error' : sale.state === 'ok' ? '' : 'bg-fog text-slate';
-  return (
-    <section className="bg-white rounded-2xl border-2 border-brand-royal/20 p-5 md:p-6 mb-6 flex flex-col md:flex-row md:items-center gap-4 min-w-0" aria-label="Live class">
-      <div className="size-12 rounded-xl bg-brand-pale-orange text-brand-royal flex items-center justify-center shrink-0"><CalendarClock size={22} /></div>
-      <div className="flex-1 min-w-0">
-        <p className="text-[12px] font-bold uppercase tracking-[0.1em] text-brand-royal m-0">Live class · {PLATFORM_LABEL[live.platform] ?? 'Online'}</p>
-        <p className="text-[17px] font-bold text-carbon m-0 mt-0.5 break-words">
-          {formatLocalWithZone(live.startsAt)} – {formatLocalWithZone(end.toISOString(), { withDate: false })}
-        </p>
-        <p className="text-[12.5px] text-slate m-0 mt-0.5">
-          That is {formatPkt(live.startsAt)} in Pakistan · {hours(live.durationMinutes)}. You get reminders before the class and the joining link opens in My Library 30 minutes before the start{live.notes ? ` · ${live.notes}` : ''}
-        </p>
-        {deadline && sale.state === 'ok' && <p className="text-[12.5px] text-slate m-0 mt-0.5">Register before {formatLocalWithZone(deadline)}</p>}
-        {sale.state === 'cancelled' && <p className="text-[12.5px] text-error m-0 mt-0.5">The seller cancelled this class. If you already paid, contact Edudeen support about a refund.</p>}
-      </div>
-      {sale.state !== 'ok' ? (
-        <span className={`rounded-full px-3 py-1 text-[12.5px] font-semibold ${badge}`}>{sale.message}</span>
-      ) : seats?.capacity ? (
-        <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-[12.5px] font-semibold ${seats.left ? 'bg-amber-50 text-amber-700' : 'bg-red-50 text-error'}`}>
-          <Users size={13} /> {seats.left ? `${seats.left} of ${seats.capacity} seats left` : 'Class full'}
-        </span>
-      ) : null}
-    </section>
-  );
-}
-
-/** Extra section on a product page for course and live-class listings. */
-export function CourseOrLiveInfo({ product, sale }: { product: MarketplaceProduct; sale?: LiveSale }) {
+/** Extra section on a product page for course listings. */
+export function CourseInfo({ product }: { product: MarketplaceProduct }) {
   if (product.deliveryFormat === 'course') return <CourseContent product={product} />;
-  if (product.deliveryFormat === 'live_class') return <LiveClassInfo product={product} sale={sale ?? { state: 'ok', message: '', seats: null }} />;
   return null;
 }

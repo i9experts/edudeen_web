@@ -35,7 +35,7 @@ export interface WishlistProduct {
   // .select() the product, so these ride along already; they were just never
   // declared on this type, which is what let Wishlist.tsx hardcode 'physical'
   // below instead of reading the product's real type.
-  productType?:     'physical' | 'digital' | 'educational';
+  productType?:     'physical' | 'digital';
   type?:            'physical' | 'digital';
   categoryId:       string;
   subCategoryId:    string | null;

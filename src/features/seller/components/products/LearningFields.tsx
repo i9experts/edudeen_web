@@ -66,7 +66,7 @@ export function learningError(v: LearningValue): string | null {
   return null;
 }
 
-export function LearningFields({ value, onChange, classRequired = false, classWarning = null }: { value: LearningValue; onChange: (v: LearningValue) => void; /** Digital / educational products need a class range to be published. */ classRequired?: boolean; /** Non-blocking message when the title and the class range disagree. */ classWarning?: string | null }) {
+export function LearningFields({ value, onChange, classRequired = false, classWarning = null }: { value: LearningValue; onChange: (v: LearningValue) => void; /** Digital products need a class range to be published. */ classRequired?: boolean; /** Non-blocking message when the title and the class range disagree. */ classWarning?: string | null }) {
   const toggle = (c: string) => onChange({
     ...value,
     curricula: value.curricula.includes(c) ? value.curricula.filter(x => x !== c) : [...value.curricula, c],

@@ -11,7 +11,6 @@ import { normalizeDeliveryFormat } from '@/utils/deliveryFormat';
 import { EDUCATION_LEVELS } from '@/api/services/product';
 import { CURRICULUM_LABEL, LICENSE_LABEL } from '@/constants/learning';
 import { DigitalFileDownloads } from '@/features/buyer/components/DigitalFileDownloads';
-import { JoinLiveClassButton } from '@/features/buyer/components/JoinLiveClassButton';
 import { NextUpRail } from '@/features/buyer/components/NextUpRail';
 
 // "My Library" — every digital resource the buyer owns, findable by subject,
@@ -24,7 +23,6 @@ const RECENT_DAYS = 30;
 
 const typesOf = (i: LibraryItem): string[] => {
   if (i.deliveryFormat === 'course') return ['Course'];
-  if (i.deliveryFormat === 'live_class') return ['Live class'];
   return (i.fileTypes ?? []).map(e => e.toUpperCase());
 };
 function formatSize(bytes?: number) {
@@ -60,9 +58,9 @@ function ItemImg({ src, name }: { src: string | null; name: string }) {
   return <img loading="lazy" decoding="async" src={src} alt="" width={64} height={64} onError={() => setErr(true)} className="w-[64px] h-[64px] rounded-[10px] object-cover shrink-0 border border-[#edebe2]" />;
 }
 
-type FormatTab = 'all' | 'download' | 'course' | 'live_class';
+type FormatTab = 'all' | 'download' | 'course';
 const FORMAT_TABS: { id: FormatTab; label: string }[] = [
-  { id: 'all', label: 'All' }, { id: 'download', label: 'Files' }, { id: 'course', label: 'Courses' }, { id: 'live_class', label: 'Live classes' },
+  { id: 'all', label: 'All' }, { id: 'download', label: 'Files' }, { id: 'course', label: 'Courses' },
 ];
 const fmtDate = (iso: string) => new Date(iso).toLocaleDateString('en-PK', { day: 'numeric', month: 'short', year: 'numeric' });
 
@@ -104,7 +102,7 @@ function CourseActions({ item, course }: { item: LibraryItem; course?: MyCourse 
 }
 
 const subjectOf = (i: LibraryItem) => i.subCategory ?? i.category ?? 'Other';
-const gradeOf = (i: LibraryItem) => (i.educationLevel === 'other' ? i.customLevel : i.educationLevel ? GRADE_LABEL.get(i.educationLevel) : null) ?? 'Any age';
+const gradeOf = (i: LibraryItem) => (i.educationLevel ? GRADE_LABEL.get(i.educationLevel) : null) ?? 'Any age';
 
 export function Downloads() {
   const navigate = useNavigate();
@@ -146,7 +144,7 @@ export function Downloads() {
   }, [reload]);
 
   const tabCount = useMemo(() => {
-    const n: Record<FormatTab, number> = { all: items.length, download: 0, course: 0, live_class: 0 };
+    const n: Record<FormatTab, number> = { all: items.length, download: 0, course: 0 };
     for (const i of items) n[normalizeDeliveryFormat(i.deliveryFormat)] += 1;
     return n;
   }, [items]);
@@ -188,7 +186,7 @@ export function Downloads() {
           <PageHeader
             eyebrow="Account"
             title="My Library"
-            description={loading ? 'Your files, courses and live classes' : `${ready} item${ready !== 1 ? 's' : ''} ready to use, any time`}
+            description={loading ? 'Your files and courses' : `${ready} item${ready !== 1 ? 's' : ''} ready to use, any time`}
           />
         </div>
 
@@ -255,7 +253,7 @@ export function Downloads() {
           <EmptyState
             icon={<LibraryBig size={28} className="text-brand-orange opacity-55" />}
             title="Your library is empty"
-            description="Worksheets, e-books, courses and live classes you buy will appear here, ready to use any time."
+            description="Worksheets, e-books and courses you buy will appear here, ready to use any time."
             action={{ label: 'Browse resources', onClick: () => navigate('/') }}
             className="py-12"
           />
@@ -310,7 +308,6 @@ export function Downloads() {
                         ) : item.isPaid ? (
                           <div className="flex flex-col items-start gap-2">
                             {item.deliveryFormat === 'course' && <CourseActions item={item} course={courses.get(item.productId)} />}
-                            {item.deliveryFormat === 'live_class' && <JoinLiveClassButton productId={item.productId} startsAt={item.liveStartsAt} endsAt={item.liveEndsAt} status={item.liveStatus} />}
                             {(item.deliveryFormat === 'download' || !item.deliveryFormat || item.fileCount > 0) && <DigitalFileDownloads orderId={item.orderId} productId={item.productId} />}
                             <ResendLink orderId={item.orderId} productId={item.productId} />
                           </div>

@@ -73,11 +73,11 @@ export const DEFAULT_CHATBOT: ChatbotConfig = {
     {
       "id": "seller-add-product",
       "q": "How do I add a product?",
-      "a": "Open your dashboard, go to **Products > Add product** ([Products](/seller/products)). Pick the type (physical, digital, educational or course), the category and sub-category, then add the title, images or files, description and price.\nTo give Premium members a discount, switch on **Premium discount** in the form. Listings may be reviewed by Edudeen before they go live.",
+      "a": "Open your dashboard, go to **Products > Add product** ([Products](/seller/products)). Pick the type (physical, digital or course), the category and sub-category, then add the title, images or files, description and price.\nTo give Premium members a discount, switch on **Premium discount** in the form. Listings may be reviewed by Edudeen before they go live.",
       "qUr": "میں پروڈکٹ کیسے شامل کروں؟",
       "aUr": "اپنا ڈیش بورڈ کھولیں اور **Products > Add product** پر جائیں ([پروڈکٹس](/seller/products))۔ قسم (فزیکل، ڈیجیٹل، ایجوکیشنل یا کورس)، کیٹیگری اور سب کیٹیگری چنیں، پھر عنوان، تصاویر یا فائلیں، تفصیل اور قیمت شامل کریں۔\nپریمیم ممبرز کو رعایت دینے کے لیے فارم میں **Premium discount** آن کریں۔ لسٹنگ لائیو ہونے سے پہلے ایڈودین اس کا جائزہ لے سکتا ہے۔",
       "qRu": "Main product kaise add karoon?",
-      "aRu": "Apna dashboard kholein aur **Products > Add product** par jayen ([Products](/seller/products)). Qism (physical, digital, educational ya course), category aur sub-category chunein, phir title, images ya files, tafseel aur qeemat add karein.\nPremium members ko riayat dene ke liye form mein **Premium discount** on karein. Listing live hone se pehle Edudeen us ka jaiza le sakta hai."
+      "aRu": "Apna dashboard kholein aur **Products > Add product** par jayen ([Products](/seller/products)). Qism (physical, digital ya course), category aur sub-category chunein, phir title, images ya files, tafseel aur qeemat add karein.\nPremium members ko riayat dene ke liye form mein **Premium discount** on karein. Listing live hone se pehle Edudeen us ka jaiza le sakta hai."
     },
     {
       "id": "seller-payout",
@@ -91,11 +91,11 @@ export const DEFAULT_CHATBOT: ChatbotConfig = {
     {
       "id": "seller-fees",
       "q": "What are the platform fees?",
-      "a": "Platform fees are set by Edudeen per product type (digital, educational and course items vs physical), as a percentage or a fixed amount per item. They apply to the item price only, never to shipping.\nSales to Premium members use their own Premium fee rate. The product form has a **Your earnings** calculator that shows exactly what you will receive.",
+      "a": "Platform fees are set by Edudeen per product type (digital and course items vs physical), as a percentage or a fixed amount per item. They apply to the item price only, never to shipping.\nSales to Premium members use their own Premium fee rate. The product form has a **Your earnings** calculator that shows exactly what you will receive.",
       "qUr": "پلیٹ فارم فیس کتنی ہے؟",
       "aUr": "پلیٹ فارم فیس ایڈودین پروڈکٹ کی قسم (ڈیجیٹل، ایجوکیشنل اور کورس بمقابلہ فزیکل) کے مطابق فیصد یا فی آئٹم مقررہ رقم کی صورت میں طے کرتا ہے۔ یہ صرف آئٹم کی قیمت پر لگتی ہے، شپنگ پر کبھی نہیں۔\nپریمیم ممبرز کو فروخت پر ان کا اپنا پریمیم فیس ریٹ لگتا ہے۔ پروڈکٹ فارم میں **Your earnings** کیلکولیٹر دکھاتا ہے کہ آپ کو بالکل کتنی رقم ملے گی۔",
       "qRu": "Platform fees kitni hain?",
-      "aRu": "Platform fee Edudeen product ki qism (digital, educational aur course versus physical) ke mutabiq percentage ya per item muqarrar raqam ki surat mein tay karta hai. Yeh sirf item ki qeemat par lagti hai, shipping par kabhi nahi.\nPremium members ko sales par un ka apna Premium fee rate lagta hai. Product form mein **Your earnings** calculator batata hai ke aapko bilkul kitni raqam milegi."
+      "aRu": "Platform fee Edudeen product ki qism (digital aur course versus physical) ke mutabiq percentage ya per item muqarrar raqam ki surat mein tay karta hai. Yeh sirf item ki qeemat par lagti hai, shipping par kabhi nahi.\nPremium members ko sales par un ka apna Premium fee rate lagta hai. Product form mein **Your earnings** calculator batata hai ke aapko bilkul kitni raqam milegi."
     },
     {
       "id": "seller-sale",

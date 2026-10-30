@@ -17,7 +17,7 @@ export interface MarketplaceFilters {
 
 export const EMPTY_FILTERS: MarketplaceFilters = { priceRange: [0, PRICE_NO_MAX], type: [], minRating: null, onSale: false };
 
-const ITEM_TYPES = ['Physical', 'Digital', 'Educational'];
+const ITEM_TYPES = ['Physical', 'Digital'];
 
 // Price filters are stored in the catalogue's currency (PKR) - that is what the API compares against - but
 // every label, preset and custom input is shown in the currency the buyer picked (PKR or USD).

@@ -102,13 +102,11 @@ export interface MarketplaceProduct {
   /** Urdu copy (AI-translated and seller-reviewed); shown when the visitor browses in Urdu. */
   nameUr?:           string | null;
   descriptionUr?:    string | null;
-  productType?:      'physical' | 'digital' | 'educational';
+  productType?:      'physical' | 'digital';
   type?:             'physical' | 'digital';
   categoryId:        string;
   subCategoryId?:    string | null;
   educationLevel?:   string | null;
-  customLevel?:      string | null;
-  normalizedCustomLevel?: string | null;
   images:            string[];
   tags?:             string[];
   /** Exam boards it follows — see constants/learning.ts. */
@@ -122,9 +120,7 @@ export interface MarketplaceProduct {
   classTo?:          string | null;
   /** 'flat' = plain photo card (toys etc.); anything else = book-cover look. */
   coverStyle?:       'book' | 'flat' | null;
-  deliveryFormat?:   'download' | 'course' | 'live_class';
-  /** Live classes only — the meeting link is never public. */
-  liveSession?:      { startsAt: string; durationMinutes: number; platform: string; capacity: number | null; notes: string; registrationDeadline?: string | null; status?: 'scheduled' | 'cancelled' } | null;
+  deliveryFormat?:   'download' | 'course';
   /** Online courses: lesson count and total minutes. */
   courseSummary?:    { lessonCount: number; totalMinutes: number } | null;
   digital?:          DigitalProduct | null;
@@ -189,18 +185,17 @@ export type MarketplaceSortBy = 'newest' | 'price_asc' | 'price_desc' | 'rating'
 
 export function apiGetAllProducts(
   page = 1, limit = 10, categoryId?: string,
-  productType?: 'physical' | 'digital' | 'educational',
-  educationLevel?: string, normalizedCustomLevel?: string,
+  productType?: 'physical' | 'digital',
+  educationLevel?: string,
   campaignId?: string,
   minPrice?: number, maxPrice?: number, minRating?: number, sortBy?: MarketplaceSortBy,
-  format?: 'course' | 'live_class',
+  format?: 'course',
 ) {
   const params = new URLSearchParams({ page: String(page), limit: String(limit) });
   if (format) params.set('format', format);
   if (categoryId) params.set('id', categoryId);
   if (productType) params.set('productType', productType);
   if (educationLevel) params.set('educationLevel', educationLevel);
-  if (normalizedCustomLevel) params.set('normalizedCustomLevel', normalizedCustomLevel);
   if (campaignId) params.set('campaignId', campaignId);
   if (minPrice != null) params.set('minPrice', String(minPrice));
   if (maxPrice != null) params.set('maxPrice', String(maxPrice));
@@ -217,7 +212,7 @@ export interface BrowseParams {
   exact?:         boolean;
   q?:             string;
   categoryId?:    string;
-  productType?:   'physical' | 'digital' | 'educational';
+  productType?:   'physical' | 'digital';
   educationLevel?: string;
   campaignId?:    string;
   minPrice?:      number;
@@ -232,8 +227,8 @@ export interface BrowseParams {
   classValue?:    string;
   /** Only listings an admin has featured. */
   featured?:      boolean;
-  /** Online course or live class listings only. */
-  format?:        'course' | 'live_class';
+  /** Online course listings only. */
+  format?:        'course';
   page?:          number;
   /** Server caps this at 50. */
   limit?:         number;

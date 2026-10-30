@@ -8,7 +8,7 @@ import { categoryPath } from '@/hooks/marketplace/useCategoryTree';
 import { TokenStorage } from '@/api/services/auth';
 import { ProductImage } from '@/components/comman/marketplace/ProductCard';
 import {
-  Star, ChevronRight, ShieldCheck, BadgeCheck, ChevronDown, Store, Sparkles, Flame, GraduationCap, Crown, PlayCircle, Video,
+  Star, ChevronRight, ShieldCheck, BadgeCheck, ChevronDown, Store, Sparkles, Flame, GraduationCap, Crown, PlayCircle,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { MarketplaceProduct } from '@/api/services/marketplace';
@@ -753,7 +753,7 @@ export function MegaMenuBar({
             <GraduationCap size={13} className={clsx('shrink-0 text-slate group-hover:text-brand-orange', compact && 'md:hidden')} />
             {t('Learn by grade')}
           </Link>
-          {([['/?format=course', 'Online courses', PlayCircle], ['/?format=live_class', 'Live classes', Video]] as const).map(([to, label, Icon]) => (
+          {([['/?format=course', 'Online courses', PlayCircle]] as const).map(([to, label, Icon]) => (
             <Link
               key={to}
               to={to}

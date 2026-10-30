@@ -422,7 +422,6 @@ export const ENDPOINTS = {
     GET_MY_ALL_PRODUCT: (id: string) => `/api/inventory/getStoreInventory/${id}`,
     GET_MY_PRODUCT_BY_ID: (id: string) => `/api/products/get-my-product/${id}`,
     EDUCATION_FACETS: '/api/products/education/facets',
-    EDUCATION_CUSTOM_LEVEL_SUGGESTIONS: '/api/products/education/custom-level-suggestions',
     STORE_PINNED:        (storeId: string) => `/api/products/store/${storeId}/pinned`,
     STORE_NEW_ARRIVALS:  (storeId: string) => `/api/products/store/${storeId}/new-arrivals`,
     STORE_BEST_SELLERS:  (storeId: string) => `/api/products/store/${storeId}/best-sellers`,

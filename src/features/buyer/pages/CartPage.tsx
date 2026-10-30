@@ -245,7 +245,7 @@ export function CartPage() {
                 (token downloads, platform checkout, buyer return requests). */}
             <div className="flex items-center justify-center gap-5 sm:gap-8 flex-wrap text-[12px] text-slate">
               <Link to="/faq" className="flex items-center gap-[6px] no-underline text-inherit hover:text-brand-orange transition-colors">
-                <ShieldCheck size={14} className="text-success" /> {items.some(i => i.deliveryFormat === 'course' || i.deliveryFormat === 'live_class') ? 'Instant access to digital items' : 'Instant Digital Downloads'}
+                <ShieldCheck size={14} className="text-success" /> {items.some(i => i.deliveryFormat === 'course') ? 'Instant access to digital items' : 'Instant Digital Downloads'}
               </Link>
               <Link to="/faq" className="flex items-center gap-[6px] no-underline text-inherit hover:text-brand-orange transition-colors">
                 <Lock size={14} className="text-success" /> Secure Checkout
@@ -336,7 +336,7 @@ export function CartPage() {
                             Physical
                           </span>
                         )}
-                        {item.type === 'digital' && (item.deliveryFormat === 'course' || item.deliveryFormat === 'live_class' ? (
+                        {item.type === 'digital' && (item.deliveryFormat === 'course' ? (
                           <DeliveryFormatBadge format={item.deliveryFormat} className="shrink-0" />
                         ) : (
                           <span className="shrink-0 flex items-center gap-[3px] px-2 py-[2px] rounded-full text-[12px] font-semibold bg-[#eef0ff] text-[#3851d1]">

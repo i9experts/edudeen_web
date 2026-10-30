@@ -79,7 +79,7 @@ let popularCache: MarketplaceProduct[] | null = null;
 let popularInflight: Promise<MarketplaceProduct[]> | null = null;
 function loadPopular() {
   if (popularCache) return Promise.resolve(popularCache);
-  popularInflight ??= apiGetAllProducts(1, 3, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, 'popularity')
+  popularInflight ??= apiGetAllProducts(1, 3, undefined, undefined, undefined, undefined, undefined, undefined, undefined, 'popularity')
     .then(r => (popularCache = r.data?.products ?? []))
     .catch(() => (popularCache = []));
   return popularInflight;

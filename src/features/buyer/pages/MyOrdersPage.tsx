@@ -167,7 +167,7 @@ const REVIEWABLE_STATUSES = ['delivered', 'completed'];
 function OrderItemRow({ item, orderId, orderStatus, currency }: { item: OrderLineItem; orderId: string; orderStatus: OrderStatus; currency: string }) {
   const isDigital = item.type === 'digital';
   const { format: boughtFormat } = useDeliveryFormat(isDigital ? item.productId : '');
-  const learnFormat = boughtFormat === 'course' || boughtFormat === 'live_class';
+  const learnFormat = boughtFormat === 'course';
   // Backend only accepts a verified review once the item is delivered/completed
   // (RatingService.checkVerifiedPurchase).
   const canReview = item.canReview ?? (!!item.productId && item.status !== 'cancelled'

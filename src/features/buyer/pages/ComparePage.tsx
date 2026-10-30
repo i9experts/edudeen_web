@@ -6,6 +6,7 @@ import { BuyerNavbar, Breadcrumb, Footer, EmptyState } from '@/components/comman
 import { RatingLine } from '@/components/comman/marketplace/ResourceCard';
 import { apiCompareProducts, type MarketplaceProduct } from '@/api/services/marketplace';
 import { EDUCATION_LEVELS } from '@/api/services/product';
+import { normalizeProductType } from '@/utils/productType';
 import { CURRICULUM_LABEL, ageLabel } from '@/constants/learning';
 import { useCategoryTree } from '@/hooks/marketplace/useCategoryTree';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
@@ -17,9 +18,9 @@ import { getStorePagePath } from '@/utils/storefrontUrl';
 import { useT } from '@/contexts/languageCtx';
 
 const LEVEL_LABEL = new Map<string, string>(EDUCATION_LEVELS.map(l => [l.value, l.label]));
-const DELIVERY_FORMAT: Record<string, string> = { download: 'Instant download', course: 'Online course', live_class: 'Live class' };
+const DELIVERY_FORMAT: Record<string, string> = { download: 'Instant download', course: 'Online course' };
 
-const kindOf = (p: MarketplaceProduct) => p.productType ?? p.type ?? 'physical';
+const kindOf = (p: MarketplaceProduct): 'physical' | 'digital' => normalizeProductType(p.productType ?? p.type) ?? 'physical';
 const defaultVariant = (p: MarketplaceProduct) => (p.variants ?? []).find(v => v.isDefault) ?? p.variants?.[0];
 
 /** `/compare?ids=a,b,c` — side-by-side table of up to 4 products. Selection lives in localStorage (works logged out). */
@@ -88,11 +89,11 @@ export function ComparePage() {
       return <strong className="text-[15px] text-carbon">{raw === 0 ? t('Free') : formatMoney(convert(eff, v?.currency), currency)}</strong>;
     } },
     { label: 'Rating', cell: p => p.totalRatings ? <RatingLine rating={p.averageRating} count={p.totalRatings} /> : <span className="text-slate">{t('No reviews yet')}</span> },
-    { label: 'Grade / level', cell: p => (p.educationLevel ? (p.educationLevel === 'other' ? p.customLevel : LEVEL_LABEL.get(p.educationLevel)) : null) ?? '—' },
+    { label: 'Grade / level', cell: p => (p.educationLevel ? LEVEL_LABEL.get(p.educationLevel) : null) ?? '—' },
     { label: 'Age', cell: p => ageLabel(p.ageMin, p.ageMax) ?? '—' },
     { label: 'Subject / category', cell: p => byId.get(p.subCategoryId ?? '')?.node.name ?? byId.get(p.categoryId)?.node.name ?? '—' },
     { label: 'Exam board', cell: p => (p.curricula?.length ? p.curricula.map(c => CURRICULUM_LABEL[c] ?? c).join(', ') : '—') },
-    { label: 'Type', cell: p => ({ physical: t('Physical'), digital: t('Digital'), educational: t('Educational') }[kindOf(p)] ?? kindOf(p)) },
+    { label: 'Type', cell: p => ({ physical: t('Physical'), digital: t('Digital') }[kindOf(p)]) },
     { label: 'Format', cell: p => {
       if (kindOf(p) === 'physical') return t('Printed / physical');
       const n = p.digital?.fileCount ?? p.digital?.files?.length;
@@ -102,7 +103,7 @@ export function ComparePage() {
       return n ? `${t(fmt)} · ${n} ${n === 1 ? t('file') : t('files')}${pages}` : `${t(fmt)}${pages}`;
     } },
     { label: 'License', cell: p => (p.digital?.licenseType ? p.digital.licenseType.replace(/_/g, ' ') : '—') },
-    { label: 'Delivery', cell: p => kindOf(p) === 'physical' ? t('Ships to you') : p.deliveryFormat === 'course' ? t('Online course') : p.deliveryFormat === 'live_class' ? t('Live class') : t('Instant download') },
+    { label: 'Delivery', cell: p => kindOf(p) === 'physical' ? t('Ships to you') : p.deliveryFormat === 'course' ? t('Online course') : t('Instant download') },
     { label: 'Preview available', cell: p => (kindOf(p) === 'physical' ? <span className="text-slate">—</span> : yes(!!p.digital?.previewAvailable)) },
     { label: 'Seller', cell: p => {
       const name = p.storeName ?? p.sellerName;

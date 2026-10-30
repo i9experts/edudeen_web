@@ -1,20 +1,18 @@
 import { useState, useEffect } from 'react';
 import { formatPrice } from '@/utils/formatPrice';
-import { useNavigate, useParams, useLocation, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import {
   Edit2, Package, Download, Tag, Globe,
-  Calendar, CheckCircle, XCircle, Hash, MonitorPlay, Video, Users, Ban, BookOpen,
+  Calendar, CheckCircle, XCircle, Hash, MonitorPlay, Users, BookOpen,
 } from 'lucide-react';
 import { useStoreWorkspace } from '@/components/layouts/StoreLayout';
 import { apiGetMyProductById } from '@/api/services/product';
 import { apiGetCategoryTree, type CategoryNode } from '@/api/services/categories';
-import { apiGetCourseBuilder, apiCancelLiveClass, type CourseBuilderData } from '@/api/services/classroom';
+import { apiGetCourseBuilder, type CourseBuilderData } from '@/api/services/classroom';
 import { DeliveryFormatBadge } from '@/components/comman/ui/DeliveryFormatBadge';
-import { normalizeDeliveryFormat, deliveryFormatLabel, PLATFORM_LABEL } from '@/utils/deliveryFormat';
-import { formatPkt } from '@/utils/pkTime';
-import { useToast } from '@/contexts/ToastContext';
+import { normalizeDeliveryFormat, deliveryFormatLabel } from '@/utils/deliveryFormat';
 import { getCachedProducts, type ProductEntry } from './_cache';
-import { SkeletonBox, StatusBadge, InfoRow, Card, Modal, Button, Textarea } from '@/components/comman/ui';
+import { SkeletonBox, StatusBadge, InfoRow, Card, Button } from '@/components/comman/ui';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function formatDate(iso: string) {
@@ -58,19 +56,14 @@ export default function StoreProductDetail() {
 
   const [entry,    setEntry]    = useState<ProductEntry | null>(state?.entry ?? null);
   const [fetching, setFetching] = useState(!state?.entry);
-  const toast = useToast();
-  const [params, setParams] = useSearchParams();
   const [names, setNames] = useState<{ category: string | null; sub: string | null }>({ category: null, sub: null });
   const [course, setCourse] = useState<CourseBuilderData | null>(null);
-  const [cancelOpen, setCancelOpen] = useState(false);
-  const [cancelReason, setCancelReason] = useState('');
-  const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
     let alive = true;
     const cached = state?.entry ?? getCachedProducts(storeId).find(e => e.product._id === productId) ?? null;
     if (cached) { setEntry(cached); setFetching(false); }
-    // Always read the fresh product too: the list cache has no live-session / category names.
+    // Always read the fresh product too: the list cache has no category names.
     apiGetMyProductById(productId)
       .then(async res => {
         if (!alive) return;
@@ -102,11 +95,6 @@ export default function StoreProductDetail() {
     if (format !== 'course') return;
     apiGetCourseBuilder(storeId, productId).then(res => setCourse(res.data)).catch(() => {});
   }, [format, storeId, productId]);
-
-  // Opened from the product list menu (?cancel=1).
-  useEffect(() => {
-    if (params.get('cancel') === '1' && format === 'live_class') setCancelOpen(true);
-  }, [params, format]);
 
   if (fetching) {
     return (
@@ -174,7 +162,7 @@ export default function StoreProductDetail() {
   const { product: p, variant: v } = entry;
   const isPhysical = p.productType === 'physical';
   const isDigital  = !isPhysical;
-  const typeLabel  = isPhysical ? 'Physical' : p.productType === 'educational' ? 'Educational' : 'Digital';
+  const typeLabel  = isPhysical ? 'Physical' : 'Digital';
   const discountPct = v.compareAtPrice != null && v.compareAtPrice > v.price
     ? Math.round(((v.compareAtPrice - v.price) / v.compareAtPrice) * 100)
     : null;
@@ -286,7 +274,6 @@ export default function StoreProductDetail() {
                 ) : (
                   <span className="flex items-center gap-2 justify-end flex-wrap">
                     <DeliveryFormatBadge format={format} />
-                    {p.productType === 'educational' && <span className="text-slate">Educational</span>}
                   </span>
                 )
               } />
@@ -353,33 +340,6 @@ export default function StoreProductDetail() {
                     </>
                   );
                 })()}
-              </SectionCard>
-            )}
-
-            {/* Live class: session info */}
-            {isDigital && format === 'live_class' && (
-              <SectionCard title="Live class" icon={Video}>
-                {p.liveSession?.startsAt ? (
-                  <>
-                    <InfoRow label="Status" value={p.liveSession.status === 'cancelled' ? <span className="text-error font-semibold">Cancelled</span> : new Date(p.liveSession.startsAt).getTime() + (p.liveSession.durationMinutes ?? 0) * 60000 < Date.now() ? 'Completed' : 'Scheduled'} />
-                    <InfoRow label="Starts" value={`${new Date(p.liveSession.startsAt).toLocaleDateString('en-PK', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Karachi' })}, ${formatPkt(p.liveSession.startsAt)}`} />
-                    <InfoRow label="Length" value={`${p.liveSession.durationMinutes} min`} />
-                    <InfoRow label="Seats" value={p.liveSession.capacity ? `${p.liveSession.capacity}` : 'No limit'} />
-                    <InfoRow label="Platform" value={PLATFORM_LABEL[p.liveSession.platform] ?? 'Online'} />
-                    {p.liveSession.registrationDeadline && <InfoRow label="Registration closes" value={`${new Date(p.liveSession.registrationDeadline).toLocaleDateString('en-PK', { day: 'numeric', month: 'short', timeZone: 'Asia/Karachi' })}, ${formatPkt(p.liveSession.registrationDeadline)}`} />}
-                    {p.liveSession.recordingUrl && <InfoRow label="Recording" value={<span className="break-all">{p.liveSession.recordingUrl}</span>} />}
-                    {p.liveSession.status === 'cancelled' && p.liveSession.cancelReason && <InfoRow label="Cancel reason" value={p.liveSession.cancelReason} />}
-                    <div className="py-3 flex flex-col gap-2">
-                      <p className="text-[12px] text-slate m-0">Reschedule by editing the class: buyers are notified of the new time automatically.</p>
-                      <div className="flex gap-2 flex-wrap">
-                        <Button size="sm" variant="primary" to={`/store/${storeId}/products/edit/${p._id}`}>Edit / reschedule</Button>
-                        {p.liveSession.status !== 'cancelled' && p.status !== 'draft' && (
-                          <Button size="sm" variant="outline" onClick={() => setCancelOpen(true)}><Ban size={13} /> Cancel class</Button>
-                        )}
-                      </div>
-                    </div>
-                  </>
-                ) : <InfoRow label="Schedule" value="Not set yet" />}
               </SectionCard>
             )}
 
@@ -480,27 +440,6 @@ export default function StoreProductDetail() {
           </div>
         </div>
       </div>
-      {cancelOpen && (
-        <Modal title="Cancel this live class?" onClose={() => { if (!cancelling) { setCancelOpen(false); if (params.get('cancel')) setParams({}, { replace: true }); } }} width={480} mobileSheet>
-          <div className="p-5 flex flex-col gap-3">
-            <p className="text-[13px] text-charcoal m-0">Buyers who already paid are notified. Refunds are handled by Edudeen support, so please keep your reason clear.</p>
-            <Textarea label="Reason (shown to buyers)" rows={3} maxLength={500} value={cancelReason} onChange={e => setCancelReason(e.target.value)} placeholder="e.g. The teacher is unwell. We will announce a new date." />
-            <div className="flex justify-end gap-2">
-              <Button variant="ghost" disabled={cancelling} onClick={() => { setCancelOpen(false); if (params.get('cancel')) setParams({}, { replace: true }); }}>Keep class</Button>
-              <Button variant="primary" loading={cancelling} onClick={async () => {
-                setCancelling(true);
-                try {
-                  await apiCancelLiveClass(storeId, p._id, cancelReason.trim() || undefined);
-                  toast.success('Class cancelled. Buyers have been notified.');
-                  setEntry(e => e && e.product.liveSession ? { ...e, product: { ...e.product, liveSession: { ...e.product.liveSession, status: 'cancelled', cancelReason: cancelReason.trim() || null } } } : e);
-                  setCancelOpen(false); setParams({}, { replace: true });
-                } catch (err) { toast.error(err instanceof Error ? err.message : 'Could not cancel the class.'); }
-                finally { setCancelling(false); }
-              }}>Cancel class</Button>
-            </div>
-          </div>
-        </Modal>
-      )}
     </div>
   );
 }

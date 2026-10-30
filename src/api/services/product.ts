@@ -52,30 +52,11 @@ export interface LearningMetaInput {
   classFrom?: string | null;
   classTo?:   string | null;
   coverStyle?: 'book' | 'flat' | null;
-  /** Digital only: files, an online course, or a scheduled live class. */
+  /** Digital only: files or an online course. */
   deliveryFormat?: DeliveryFormat;
-  liveSession?:    LiveSessionInput | null;
 }
 
-export type DeliveryFormat = 'download' | 'course' | 'live_class';
-export interface LiveSessionInput {
-  startsAt:        string;
-  durationMinutes: number;
-  platform:        'zoom' | 'google_meet' | 'teams' | 'other';
-  meetingUrl:      string;
-  capacity:        number | null;
-  notes:           string;
-  /** Optional: sales stop after this instant (before the start). */
-  registrationDeadline?: string | null;
-  /** Optional replay link, shown only to buyers. */
-  recordingUrl?:   string | null;
-}
-/** Read-side extras the API adds to a saved live session. */
-export interface LiveSessionView extends Partial<LiveSessionInput> {
-  status?: 'scheduled' | 'cancelled';
-  cancelledAt?: string | null;
-  cancelReason?: string | null;
-}
+export type DeliveryFormat = 'download' | 'course';
 export interface CourseSummary { lessonCount: number; totalMinutes: number }
 
 /** Extra licenses at their own price (digital only). */
@@ -130,13 +111,11 @@ export interface StoreProduct {
   name:              string;
   slug:              string;
   description:       string;
-  productType:       'physical' | 'digital' | 'educational';
+  productType:       'physical' | 'digital';
   type:              'physical' | 'digital';
   categoryId:        string;
   subCategoryId:     string | null;
   educationLevel:    EducationLevel | null;
-  customLevel:       string | null;
-  normalizedCustomLevel: string | null;
   images:            string[];
   tags:              string[];
   curricula?:        string[];
@@ -148,7 +127,6 @@ export interface StoreProduct {
   /** Admin-assigned trust badges (listing review). */
   trust?:            { scholarReviewed: boolean; ageAppropriateMin: number | null; ageAppropriateMax: number | null } | null;
   deliveryFormat?:   DeliveryFormat;
-  liveSession?:      (LiveSessionInput & LiveSessionView) | null;
   digital:           DigitalMeta | null;
   status:            'draft' | 'active' | 'archived' | 'scheduled' | 'inactive' | 'pending_review' | 'rejected';
   scheduledAt:       string | null;
@@ -198,11 +176,9 @@ export interface CreateDigitalPayload extends LearningMetaInput {
   storeId:           string;
   name:              string;
   description:       string;
-  productType:       'digital' | 'educational';
+  productType:       'digital';
   categoryId?:       string;
   subCategoryId:     string | null;
-  educationLevel?:   EducationLevel | null;
-  customLevel?:      string | null;
   images:            string[];
   tags:              string[];
   isListedOnEdudeen: boolean;
@@ -254,8 +230,6 @@ export interface EditDigitalPayload extends LearningMetaInput {
   images?:        string[];
   tags?:          string[];
   isListedOnEdudeen?: boolean;
-  educationLevel?: EducationLevel | null;
-  customLevel?:   string | null;
   status:         'draft' | 'active' | 'scheduled';
   scheduledAt?:   string | null;
   /** Admin sales this product joins. Omit to leave unchanged. */
@@ -307,10 +281,9 @@ export interface InventoryProduct {
   name:         string;
   image:        string | null;
   type:         'physical' | 'digital';
-  productType?: 'physical' | 'digital' | 'educational';
+  productType?: 'physical' | 'digital';
   deliveryFormat?: DeliveryFormat;
   courseSummary?: CourseSummary | null;
-  liveSession?:   LiveSessionView | null;
   stock:        number | string;
   stockStatus:  string;
   status:       'active' | 'draft' | 'archived' | 'inactive' | 'scheduled' | 'pending_review' | 'rejected';
@@ -480,7 +453,7 @@ export interface SellerOrder {
   product:     string;
   /** sellerOrder.fulfillmentType — 'mixed' when the store's part of the order has both kinds. */
   type:        'physical' | 'digital' | 'mixed';
-  productType?: 'physical' | 'digital' | 'educational';
+  productType?: 'physical' | 'digital';
   date:        string;
   amount:      number;
   /** Currency `amount` is denominated in (the order's own currency, fixed per store). */
@@ -616,12 +589,6 @@ export function apiGetMySellerOrders(page = 1, limit = 10) {
   );
 }
 
-/** GET /api/products/education/custom-level-suggestions?q= — seller-only autocomplete for the "Other" custom level input. */
-export function apiGetCustomLevelSuggestions(q: string) {
-  return client.get<never, ApiResponse<string[]>>(
-    `${ENDPOINTS.PRODUCT.EDUCATION_CUSTOM_LEVEL_SUGGESTIONS}?q=${encodeURIComponent(q)}`,
-  );
-}
 
 // ── Storefront promotion sections (public) ─────────────────────────────────────
 interface StorefrontProductsData { products: PublicStoreProduct[] }

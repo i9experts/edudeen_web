@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { PlayCircle } from 'lucide-react';
 import { apiGetMyLibrary, type LibraryItem } from '@/api/services/orders';
 import { DigitalFileDownloads } from './DigitalFileDownloads';
-import { JoinLiveClassButton } from './JoinLiveClassButton';
 import { DeliveryFormatBadge } from '@/components/comman/ui/DeliveryFormatBadge';
 
 // One shared library read per page load (order pages show several items); a failure falls back to the plain download button.
@@ -16,7 +15,7 @@ function loadLibrary(): Promise<Map<string, LibraryItem>> {
   return promise;
 }
 
-/** How this bought item is delivered (file / course / live class), read from My Library; undefined while loading or unknown. */
+/** How this bought item is delivered (file / course), read from My Library; undefined while loading or unknown. */
 export function useDeliveryFormat(productId: string): { format: LibraryItem['deliveryFormat'] | undefined; item: LibraryItem | null; loading: boolean } {
   const [item, setItem] = useState<LibraryItem | null>(null);
   const [loading, setLoading] = useState(true);
@@ -32,12 +31,12 @@ export function useDeliveryFormat(productId: string): { format: LibraryItem['del
 /** Small format pill for a bought item; nothing for plain file downloads or while unknown. */
 export function BoughtFormatBadge({ productId }: { productId: string }) {
   const { format } = useDeliveryFormat(productId);
-  return format === 'course' || format === 'live_class' ? <DeliveryFormatBadge format={format} /> : null;
+  return format === 'course' ? <DeliveryFormatBadge format={format} /> : null;
 }
 
 /**
  * The action for a bought digital item: files -> download buttons, online course -> Start learning,
- * live class -> Join (inside the join window) / time info. Falls back to downloads when unknown.
+ * Falls back to downloads when unknown.
  */
 export function DigitalItemAccess({ orderId, productId }: { orderId: string; productId: string }) {
   const { format, item, loading } = useDeliveryFormat(productId);
@@ -48,9 +47,6 @@ export function DigitalItemAccess({ orderId, productId }: { orderId: string; pro
         <PlayCircle size={13} /> Start learning
       </Link>
     );
-  }
-  if (format === 'live_class') {
-    return <JoinLiveClassButton productId={productId} startsAt={item?.liveStartsAt} endsAt={item?.liveEndsAt} status={item?.liveStatus} />;
   }
   return <DigitalFileDownloads orderId={orderId} productId={productId} />;
 }

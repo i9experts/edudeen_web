@@ -50,7 +50,7 @@ const SECTIONS: LegalSection[] = [
     id: 'returns',
     title: 'Returns, Refunds & Cancellations',
     body: [
-      'Return and refund eligibility depends on the specific store\'s policy and the product type (physical, digital, or educational) — check the listing or store page for details.',
+      'Return and refund eligibility depends on the specific store\'s policy and the product type (physical or digital) — check the listing or store page for details.',
       'Digital products are generally non-refundable once accessed or downloaded, except where required by law or expressly stated otherwise.',
     ],
     callout: { type: 'warning', text: 'Digital products are generally non-refundable once accessed or downloaded, except where required by law or expressly stated otherwise.' },

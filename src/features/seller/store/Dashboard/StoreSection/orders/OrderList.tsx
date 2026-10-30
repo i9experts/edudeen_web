@@ -152,7 +152,7 @@ export function StoreOrderList() {
         <div className="max-w-[180px]">
           <span className="text-[13px] text-carbon truncate block" title={o.product}>{o.product}</span>
           <span className="text-[12px] text-slate block">
-            {o.type === 'digital' ? (o.productType === 'educational' ? 'Educational' : 'Digital') : o.type === 'mixed' ? 'Mixed' : 'Physical'}
+            {o.type === 'digital' ? 'Digital' : o.type === 'mixed' ? 'Mixed' : 'Physical'}
           </span>
         </div>
       ),

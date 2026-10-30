@@ -1,7 +1,6 @@
 import { WeightField } from './WeightField';
 import { useState, type ReactNode } from 'react';
-import { Download, GraduationCap, CalendarClock, Check, Truck, FileDown } from 'lucide-react';
-import { EDUCATION_LEVELS } from '@/api/services/product';
+import { CalendarClock, Check, Truck, FileDown } from 'lucide-react';
 import { pktWallLabel } from '@/utils/pkTime';
 import type { CategoryNode } from '@/api/services/categories';
 import type { StoreData } from '@/api/services/store';
@@ -13,7 +12,6 @@ import {
 } from '@/features/seller/components/products/LearningFields';
 import { DeliveryFormatField, type DeliveryState } from '@/features/seller/components/products/DeliveryFormatField';
 import { SubcategoryField } from './SubcategoryField';
-import { CustomLevelInput } from './CustomLevelInput';
 import { DynamicAttributeFields } from './DynamicAttributeFields';
 import type { AttributeValuesState } from './attributeFormUtils';
 import { ProductOffersCard, type OfferFlags } from './ProductOffersCard';
@@ -39,7 +37,7 @@ export interface ProductFormStepsProps {
 
   pType: ProductType;
   setPType: (t: ProductType) => void;
-  supports: { physical: boolean; digital: boolean; educational: boolean };
+  supports: { physical: boolean; digital: boolean };
   phys: PhysForm; dig: DigForm;
   sp: <K extends keyof PhysForm>(k: K, v: PhysForm[K]) => void;
   sd: <K extends keyof DigForm>(k: K, v: DigForm[K]) => void;
@@ -78,7 +76,7 @@ export function ProductFormSteps(p: ProductFormStepsProps) {
   const set = <K extends 'name' | 'description' | 'price' | 'compareAtPrice' | 'subCategoryId' | 'status' | 'isListedOnEdudeen' | 'scheduledAt' | 'tagInput' | 'tags' | 'images'>(k: K, v: PhysForm[K]) => {
     if (pType === 'physical') sp(k, v); else sd(k, v as unknown as DigForm[K]);
   };
-  const digitalAvailable = p.supports.digital || p.supports.educational;
+  const digitalAvailable = p.supports.digital;
   const discountPct = (() => {
     const pr = Number(cur.price), c = Number(cur.compareAtPrice);
     return pr > 0 && c > pr ? Math.round((1 - pr / c) * 100) : null;
@@ -118,7 +116,7 @@ export function ProductFormSteps(p: ProductFormStepsProps) {
                     onClick={() => {
                       if (!enabled) return;
                       if (key === 'physical') p.setPType('physical');
-                      else if (!isDigitalFamily) p.setPType(p.supports.digital ? 'digital' : 'educational');
+                      else if (!isDigitalFamily) p.setPType('digital');
                     }}
                     className={`flex items-start gap-4 p-5 rounded-xl text-start border-2 transition-colors ${
                       !enabled ? 'opacity-50 cursor-not-allowed border-bone bg-cream'
@@ -141,37 +139,10 @@ export function ProductFormSteps(p: ProductFormStepsProps) {
               })}
             </div>
 
-            {isDigitalFamily && (
-              <div className="mt-4">
-                <p className="text-[13px] font-bold text-carbon mb-2">What kind of digital product?</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3" role="radiogroup" aria-label="Digital product kind">
-                  {([
-                    { t: 'digital'     as const, Icon: Download,      label: 'Digital download',     desc: 'Any instant downloadable file', enabled: p.supports.digital     },
-                    { t: 'educational' as const, Icon: GraduationCap, label: 'Educational resource', desc: 'Worksheets, lessons, curricula — with an education level', enabled: p.supports.educational },
-                  ]).map(({ t, Icon: TIcon, label, desc, enabled }) => {
-                    const sel = pType === t;
-                    return (
-                      <button key={t} type="button" role="radio" aria-checked={sel}
-                        onClick={() => enabled && p.setPType(t)} disabled={!enabled}
-                        className={`flex items-center gap-3 px-4 py-3 rounded-lg text-start border transition-colors ${
-                          !enabled ? 'opacity-50 cursor-not-allowed border-bone'
-                          : sel ? 'border-brand-orange bg-brand-pale-orange cursor-pointer'
-                          : 'border-bone bg-white hover:bg-cream cursor-pointer'}`}>
-                        <TIcon size={18} className={sel ? 'text-brand-orange' : 'text-slate'} />
-                        <span className="min-w-0">
-                          <span className={`block text-[13.5px] font-bold ${sel ? 'text-brand-orange' : 'text-carbon'}`}>{label}</span>
-                          <span className="block text-[12px] text-slate">{enabled ? desc : 'Not available in your plan'}</span>
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
           </Block>
         ) : (
           <p className="text-[13px] text-slate m-0">
-            Product type: <b className="text-carbon">{pType === 'physical' ? 'Physical product' : pType === 'educational' ? 'Educational resource' : 'Digital download'}</b> (can't be changed).
+            Product type: <b className="text-carbon">{pType === 'physical' ? 'Physical product' : 'Digital download'}</b> (can't be changed).
           </p>
         )}
 
@@ -205,14 +176,14 @@ export function ProductFormSteps(p: ProductFormStepsProps) {
         </Block>
 
         {isDigitalFamily && (
-          <Block id="fld-delivery" title="How buyers get it" need="required" hint="Downloadable files, an online course with lessons, or a live class at a set time.">
+          <Block id="fld-delivery" title="How buyers get it" need="required" hint="Downloadable files or an online course with video lessons.">
             <DeliveryFormatField value={p.delivery} onChange={p.setDelivery} />
             {p.deliveryExtra}
           </Block>
         )}
 
         {isDigitalFamily && (
-          <Block id="fld-files" title={p.delivery.format === 'download' ? (pType === 'educational' ? 'Resource file' : 'Digital file') : 'Extra files'}
+          <Block id="fld-files" title={p.delivery.format === 'download' ? 'Digital file' : 'Extra files'}
             need={p.delivery.format === 'download' ? 'required' : 'optional'}
             hint={p.delivery.format === 'download' ? 'The file buyers receive instantly after purchase. Required to publish — drafts can be saved without it.' : 'Worksheets, slides or notes buyers can download alongside the ' + (p.delivery.format === 'course' ? 'course.' : 'class.')}>
             <DeliverableFilesField files={dig.files} onChange={v => sd('files', v)} />
@@ -263,14 +234,11 @@ export function ProductFormSteps(p: ProductFormStepsProps) {
         )}
 
         {isDigitalFamily && p.delivery.format === 'download' && (
-          <Block title="Licence" need="optional" hint="Personal licence is the default. Educational resources can also sell classroom and school licences.">
+          <Block title="Licence" need="optional" hint="Personal licence is the default. You can also sell classroom and school licences.">
             <div className="flex flex-col gap-4">
               <F label="Licence type">
                 <div role="radiogroup" aria-label="Licence type" className="flex gap-2 mt-0.5 flex-wrap">
-                  {(pType === 'educational'
-                    ? (['personal', 'single_classroom', 'school', 'commercial'] as const)
-                    : (['personal', 'commercial'] as const)
-                  ).map(l => {
+                  {(['personal', 'single_classroom', 'school', 'commercial'] as const).map(l => {
                     const sel = dig.licenseType === l;
                     return (
                       <button key={l} type="button" role="radio" aria-checked={sel} onClick={() => sd('licenseType', l)}
@@ -281,7 +249,7 @@ export function ProductFormSteps(p: ProductFormStepsProps) {
                   })}
                 </div>
               </F>
-              {pType === 'educational' && dig.licenseType !== 'commercial' && (
+              {dig.licenseType !== 'commercial' && (
                 <div id="fld-tiers">
                   <F label="Classroom & school licenses">
                     <LicenseTiersField baseLicense={dig.licenseType} tiers={dig.tiers} onChange={v => sd('tiers', v)} currencySymbol={currencySymbol} />
@@ -346,7 +314,7 @@ export function ProductFormSteps(p: ProductFormStepsProps) {
           />
         </Block>
 
-        {/* Card style and education level do not apply to online courses and live classes. */}
+        {/* Card style does not apply to online courses. */}
         {(!isDigitalFamily || p.delivery.format === 'download') && (
         <Block id="fld-cover" title="Product card style" need="required" hint="Choose how your product appears on Edudeen. Books and printed material use the book-cover look; toys and other items use a plain photo.">
           <CoverStyleField
@@ -355,29 +323,6 @@ export function ProductFormSteps(p: ProductFormStepsProps) {
             categoryNames={[p.category.rootName, p.category.subcategories.find(c => c._id === cur.subCategoryId)?.name]}
           />
         </Block>
-        )}
-
-        {pType === 'educational' && p.delivery.format === 'download' && (
-          <Block id="fld-level" title="Education level" need="required" hint="Helps parents and teachers find resources for the right stage.">
-            <div className="flex flex-col gap-4">
-              <div role="radiogroup" aria-label="Education level" className="flex gap-2 flex-wrap">
-                {EDUCATION_LEVELS.map(l => {
-                  const sel = dig.educationLevel === l.value;
-                  return (
-                    <button key={l.value} type="button" role="radio" aria-checked={sel} onClick={() => sd('educationLevel', l.value)}
-                      className={`px-[14px] py-[8px] rounded-full cursor-pointer text-[13px] font-medium border transition-colors ${sel ? 'border-brand-orange bg-brand-pale-orange text-brand-orange font-bold' : 'border-bone bg-white text-graphite hover:bg-cream'}`}>
-                      {l.label}
-                    </button>
-                  );
-                })}
-              </div>
-              {dig.educationLevel === 'other' && (
-                <F label="Custom education level" req>
-                  <CustomLevelInput value={dig.customLevel} onChange={v => sd('customLevel', v)} />
-                </F>
-              )}
-            </div>
-          </Block>
         )}
 
         <Block id="fld-learning" title="Who it's for" need={classRangeRequired(isDigitalFamily ? 'digital' : 'physical') ? 'required' : 'optional'} hint="Boards, ages and class range help the right buyers find this.">

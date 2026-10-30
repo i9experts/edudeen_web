@@ -5,9 +5,9 @@ import { clsx } from 'clsx';
 import { Heart, Star } from 'lucide-react';
 import type { MarketplaceProduct } from '@/api/services/marketplace';
 import { EDUCATION_LEVELS } from '@/api/services/product';
+import { normalizeProductType } from '@/utils/productType';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 import { formatPrice } from '@/utils/formatPrice';
-import { formatLocalWithZone } from '@/utils/pkTime';
 import { courseSummaryText } from '@/utils/deliveryFormat';
 import { isPlainLeftClick } from '@/utils/productLink';
 import { responsiveImg } from '@/utils/cloudinaryImage';
@@ -25,7 +25,7 @@ import { PremiumChip, PremiumTeaser, memberPriceOf, usePremiumView } from './Pre
 const paletteFor = coverPaletteFor;
 
 const LEVEL_LABEL = new Map<string, string>(EDUCATION_LEVELS.map(l => [l.value, l.label]));
-const TYPE_LABEL: Record<string, string> = { physical: 'Physical', digital: 'Digital', educational: 'Educational' };
+const TYPE_LABEL: Record<string, string> = { physical: 'Physical', digital: 'Digital' };
 
 export interface ResourceCardProps {
   product:          MarketplaceProduct;
@@ -148,21 +148,18 @@ export const ResourceCard = memo(function ResourceCard({
     ? campaign.discountType === 'percentage' ? `${campaign.discountValue}% off` : `${formatPrice(campaign.discountValue, campaign.currency ?? 'USD')} off`
     : null;
   const fmt = (n: number) => formatPrice(n, displayCurrency);
-  const kind = product.productType ?? product.type ?? 'physical';
+  const kind = normalizeProductType(product.productType ?? product.type) ?? 'physical';
   const href = `/product/${product.slug}`;
   const go = (e: React.MouseEvent) => { if (isPlainLeftClick(e)) { e.preventDefault(); onClick(product.slug); } };
   // Show the STORE (links to the store page), falling back to the person's name only when the API sent no store name.
   const shopName = product.storeName ?? product.sellerName;
 
   const level = product.educationLevel
-    ? (product.educationLevel === 'other' ? product.customLevel : LEVEL_LABEL.get(product.educationLevel)) ?? null
+    ? LEVEL_LABEL.get(product.educationLevel) ?? null
     : null;
   const delivery = kind === 'physical' ? 'Ships to you'
     : product.deliveryFormat === 'course' ? ['Online course', courseSummaryText(product.courseSummary)].filter(Boolean).join(' · ')
-    : product.deliveryFormat === 'live_class'
-      ? (product.liveSession?.status === 'cancelled' ? 'Live class · Cancelled'
-        : product.liveSession?.startsAt ? `Live class · ${formatLocalWithZone(product.liveSession.startsAt)}${product.liveSession.durationMinutes ? ` · ${product.liveSession.durationMinutes} min` : ''}${typeof (product.liveSession as { seatsLeft?: number }).seatsLeft === 'number' ? ` · ${(product.liveSession as { seatsLeft?: number }).seatsLeft} seats left` : ''}` : 'Live class')
-      : 'Instant download';
+    : 'Instant download';
   // Separate text nodes so the Urdu DOM translator can match each part ("All ages", "Ships to you").
   const meta = [classRangeLabel(product.classFrom, product.classTo) ?? ageLabel(product.ageMin, product.ageMax) ?? level ?? 'All ages', delivery]
     .map((part, i) => <span key={i}>{i > 0 ? ' · ' : ''}<span>{part}</span></span>);

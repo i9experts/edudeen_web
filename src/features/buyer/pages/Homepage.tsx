@@ -43,6 +43,7 @@ import { apiGetTopStores, type PublicStoreListItem } from '@/api/services/store'
 import { PlatformStatsSection } from '@/features/buyer/components/PlatformStatsSection';
 import { apiGetCategoryTree, type CategoryNode } from '@/api/services/categories';
 import { EDUCATION_LEVELS } from '@/api/services/product';
+import { normalizeProductType } from '@/utils/productType';
 import { type MarketplaceProduct, type MarketplaceSortBy } from '@/api/services/marketplace';
 import { productSalePct, soonestSaleEnd } from '@/utils/saleMath';
 import { apiGetHomeShelves, type CuratedShelf } from '@/api/services/classroom';
@@ -64,7 +65,7 @@ import { dedupeInOrder, soldLabel, railSize } from '@/features/buyer/components/
 
 // Text lives in admin-edit/homeDefaults.ts (shared with the inline editor).
 
-type TypeFilter = '' | 'physical' | 'digital' | 'educational';
+type TypeFilter = '' | 'physical' | 'digital';
 type SortFilter = 'featured' | 'popular' | 'low' | 'high';
 
 const SORT_TO_API: Record<SortFilter, MarketplaceSortBy | undefined> = {
@@ -261,7 +262,7 @@ function HomeLanding() {
   const [language, setLanguage] = useState('');
   const [sort, setSort]         = useState<SortFilter>('featured');
   const [freeOnly, setFreeOnly] = useState(false);
-  const [format, setFormat]     = useState<'course' | 'live_class' | ''>('');
+  const [format, setFormat]     = useState<'course' | ''>('');
   const [filters, setFilters]   = useState<MarketplaceFilters>(EMPTY_FILTERS);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [limit, setLimit]       = useState(PAGE_SIZE);
@@ -316,8 +317,8 @@ function HomeLanding() {
 
   const { products: browsed, total: serverTotal, loading: browseLoading } = useProductsByCategory(
     1, clientSide ? CLIENT_POOL : limit, subjectTab?.categoryId,
-    level ? 'educational' : (itemType || undefined),
-    level || undefined, undefined, campaignId || undefined,
+    itemType || undefined,
+    level || undefined, campaignId || undefined,
     freeOnly ? undefined : (minP > 0 ? minP : undefined),
     freeOnly ? 0 : (maxP < PRICE_NO_MAX ? maxP : undefined),
     filters.minRating ?? undefined,
@@ -340,7 +341,7 @@ function HomeLanding() {
       if (searchQ) {
         // The browse API already applied these; search results need them here.
         const price = defaultVariant(p)?.price ?? 0;
-        const kind = p.productType ?? p.type;
+        const kind = normalizeProductType(p.productType ?? p.type);
         if (format && p.deliveryFormat !== format) return false;
         if (level && p.educationLevel !== level) return false;
         if (itemType && kind !== itemType) return false;
@@ -686,7 +687,7 @@ function HomeLanding() {
             <Section title="Format">
               <RadioRow name="f-format" label="All formats" checked={!format} onChange={() => setFormat('')} />
               <RadioRow name="f-format" label="Online courses" checked={format === 'course'} onChange={() => setFormat('course')} />
-              <RadioRow name="f-format" label="Live classes" checked={format === 'live_class'} onChange={() => setFormat('live_class')} />
+
             </Section>
 
             <Section title="Age & grade">

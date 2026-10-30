@@ -37,10 +37,10 @@ const SORTS: { value: MarketplaceSortBy | ''; label: string }[] = [
   { value: 'price_asc',  label: 'Price: low to high' },
   { value: 'price_desc', label: 'Price: high to low' },
 ];
-const TYPE_TO_PARAM: Record<string, 'physical' | 'digital' | 'educational'> = {
-  Physical: 'physical', Digital: 'digital', Educational: 'educational',
+const TYPE_TO_PARAM: Record<string, 'physical' | 'digital'> = {
+  Physical: 'physical', Digital: 'digital',
 };
-const PARAM_TO_TYPE: Record<string, string> = { physical: 'Physical', digital: 'Digital', educational: 'Educational' };
+const PARAM_TO_TYPE: Record<string, string> = { physical: 'Physical', digital: 'Digital', educational: 'Digital' /* old links */ };
 const GRADE_LABEL = new Map<string, string>(EDUCATION_LEVELS.map(l => [l.value, l.label]));
 
 const num = (v: string | null) => (v != null && v !== '' && Number.isFinite(Number(v)) ? Number(v) : undefined);
@@ -54,7 +54,7 @@ function useBrowseState() {
     grade: params.get('grade') ?? '',
     cls: isClassValue(params.get('class')) ? (params.get('class') as string) : '',
     type: params.get('type') ?? '',
-    format: (['course', 'live_class'].includes(params.get('format') ?? '') ? params.get('format') : '') as 'course' | 'live_class' | '',
+    format: (params.get('format') === 'course' ? 'course' : '') as 'course' | '',
     min: num(params.get('min')),
     max: num(params.get('max')),
     rating: num(params.get('rating')),
@@ -190,7 +190,7 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
     ...(state.age != null ? [{ key: 'age', label: `For age ${state.age}`, clear: () => update({ age: undefined }) }] : []),
     ...(state.cls ? [{ key: 'class', label: activeChild && state.cls === canonicalClass(activeChild.gradeLabel) ? `${t('For')} ${activeChild.name} (${classLabel(state.cls)})` : classLabel(state.cls), clear: () => update({ class: undefined }) }] : []),
     ...(state.grade && !fixedGrade ? [{ key: 'grade', label: activeChild && state.grade === activeChild.educationLevel ? `${t('For')} ${activeChild.name} (${childLevelLabel(activeChild)})` : GRADE_LABEL.get(state.grade) ?? state.grade, clear: () => update({ grade: undefined }) }] : []),
-    ...(state.format ? [{ key: 'format', label: state.format === 'course' ? 'Online courses' : 'Live classes', clear: () => update({ format: undefined }) }] : []),
+    ...(state.format ? [{ key: 'format', label: 'Online courses', clear: () => update({ format: undefined }) }] : []),
     ...(state.type ? [{ key: 'type', label: PARAM_TO_TYPE[state.type] ?? state.type, clear: () => update({ type: undefined }) }] : []),
     ...(state.free ? [{ key: 'free', label: 'Free only', clear: () => update({ free: undefined }) }] : []),
     ...(!state.free && (state.min != null || state.max != null)
@@ -276,7 +276,7 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
             <input type="checkbox" id="browse-free" checked={state.free} onChange={e => update({ free: e.target.checked || undefined })} className="w-4 h-4 accent-brand-orange" />
             Free only
           </label>
-          {([['course', 'Online courses'], ['live_class', 'Live classes']] as const).map(([val, label]) => (
+          {([['course', 'Online courses']] as const).map(([val, label]) => (
             <button
               key={val}
               type="button"
@@ -414,7 +414,7 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
         <Section title="Format">
           <RadioRow name="f-format" label="All formats" checked={!state.format} onChange={() => update({ format: undefined })} />
           <RadioRow name="f-format" label="Online courses" checked={state.format === 'course'} onChange={() => update({ format: 'course' })} />
-          <RadioRow name="f-format" label="Live classes" checked={state.format === 'live_class'} onChange={() => update({ format: 'live_class' })} />
+
         </Section>
         <Section title="Exam board" hint="Resources that follow your child's syllabus">
           <RadioRow name="f-board" label="Any board" checked={!state.board} onChange={() => update({ board: undefined })} />

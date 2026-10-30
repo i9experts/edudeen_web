@@ -1,13 +1,13 @@
-export type DeliveryFormatValue = 'download' | 'course' | 'live_class';
+export type DeliveryFormatValue = 'download' | 'course';
 
 /** Normalises whatever the API sent (missing = a normal file download). */
 export function normalizeDeliveryFormat(v: unknown): DeliveryFormatValue {
-  return v === 'course' || v === 'live_class' ? v : 'download';
+  return v === 'course' ? 'course' : 'download';
 }
 
 export function deliveryFormatLabel(v: unknown): string {
   const f = normalizeDeliveryFormat(v);
-  return f === 'course' ? 'Online course' : f === 'live_class' ? 'Live class' : 'File download';
+  return f === 'course' ? 'Online course' : 'File download';
 }
 
 /** "12 lessons · 3.5 h" / "12 lessons · 45 min"; '' when there is nothing to say. */
@@ -19,4 +19,3 @@ export function courseSummaryText(s?: { lessonCount?: number; totalMinutes?: num
   return `${n} · ${m >= 90 ? `${Math.round(m / 6) / 10} h` : `${m} min`}`;
 }
 
-export const PLATFORM_LABEL: Record<string, string> = { zoom: 'Zoom', google_meet: 'Google Meet', teams: 'Microsoft Teams', other: 'Online' };

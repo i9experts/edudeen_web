@@ -4,8 +4,8 @@ import { apiGetAllProducts, type MarketplaceProduct, type MarketplaceSortBy } fr
 
 export function useProductsByCategory(
   page = 1, limit = 10, categoryId?: string,
-  productType?: 'physical' | 'digital' | 'educational',
-  educationLevel?: string, normalizedCustomLevel?: string,
+  productType?: 'physical' | 'digital',
+  educationLevel?: string,
   campaignId?: string,
   minPrice?: number, maxPrice?: number, minRating?: number, sortBy?: MarketplaceSortBy,
   // False while a caller is still resolving something the fetch depends on
@@ -13,7 +13,7 @@ export function useProductsByCategory(
   // stays in a loading state, instead of firing once unfiltered and again
   // a moment later once the real filter value is known.
   enabled = true,
-  format?: 'course' | 'live_class',
+  format?: 'course',
 ) {
   const [products, setProducts] = useState<MarketplaceProduct[]>([]);
   const [total,    setTotal]    = useState(0);
@@ -33,7 +33,7 @@ export function useProductsByCategory(
     quietRef.current = false;
     if (!quiet) setLoading(true);
     setError('');
-    apiGetAllProducts(page, limit, categoryId, productType, educationLevel, normalizedCustomLevel, campaignId, minPrice, maxPrice, minRating, sortBy, format)
+    apiGetAllProducts(page, limit, categoryId, productType, educationLevel, campaignId, minPrice, maxPrice, minRating, sortBy, format)
       .then(res => {
         if (!cancelled) {
           setProducts(res.data?.products ?? []);
@@ -46,7 +46,7 @@ export function useProductsByCategory(
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, limit, categoryId, productType, educationLevel, normalizedCustomLevel, campaignId, minPrice, maxPrice, minRating, sortBy, enabled, format, reloadKey]);
+  }, [page, limit, categoryId, productType, educationLevel, campaignId, minPrice, maxPrice, minRating, sortBy, enabled, format, reloadKey]);
 
   return { products, total, loading, error, refetch };
 }

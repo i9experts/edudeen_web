@@ -320,7 +320,7 @@ function ProductShelf({ products, total, currency, storeId }: {
         <div className="rounded-xl bg-cream border border-bone px-6 py-10 text-center">
           <p className="font-serif text-[20px] text-carbon mb-1.5">Your shelf is empty — for now.</p>
           <p className="text-[13.5px] text-slate mb-5 max-w-[440px] mx-auto">
-            Add a physical item, a digital download or an educational resource. It takes a few minutes.
+            Add a physical item or a digital download. It takes a few minutes.
           </p>
           <Button onClick={goAdd} icon={<Plus size={15} />}>Add your first product</Button>
         </div>
@@ -337,7 +337,7 @@ function ProductShelf({ products, total, currency, storeId }: {
         >
           {products.map(p => {
             const pill = STATUS_PILL[p.status] ?? { tone: 'gray' as const, label: statusLabel(p.status) };
-            const kind = p.type === 'digital' ? (p.productType === 'educational' ? 'Educational' : 'Digital') : 'Physical';
+            const kind = p.type === 'digital' ? 'Digital' : 'Physical';
             return (
               <tr key={p.productId}>
                 <td>

@@ -1,7 +1,7 @@
 import { FieldErrorsContext } from './fieldErrorsContext';
 import { useState, useEffect, useContext, isValidElement, cloneElement, type ReactNode } from 'react';
 import { ChevronDown, Plus, X } from 'lucide-react';
-import type { VariantOption, EducationLevel } from '@/api/services/product';
+import type { VariantOption } from '@/api/services/product';
 import type { PrivateUploadData } from '@/components/comman/ui';
 import type { LicenseTierValue } from '@/features/seller/components/products/LearningFields';
 
@@ -10,7 +10,7 @@ import type { LicenseTierValue } from '@/features/seller/components/products/Lea
 export const inp = 'w-full px-3 py-[10px] text-[14px] border border-bone rounded-lg text-carbon bg-white placeholder:text-[#9aa6ad] outline-none focus:border-brand-royal focus:ring-2 focus:ring-brand-royal/15 transition-[border-color,box-shadow]';
 export const ta  = `${inp} resize-y min-h-[110px]`;
 
-export type ProductType = 'physical' | 'digital' | 'educational';
+export type ProductType = 'physical' | 'digital';
 export type ProductStatus = 'draft' | 'active' | 'scheduled';
 export type LicenseType = 'personal' | 'single_classroom' | 'school' | 'commercial';
 export interface PhysForm {
@@ -25,9 +25,9 @@ export interface DigForm {
   scheduledAt: string; tagInput: string; tags: string[]; images: string[];
   files: PrivateUploadData[]; sampleFile: PrivateUploadData | null; tiers: LicenseTierValue[];
   downloadLimit: string; linkExpiryDays: string; pdfStampingEnabled: boolean; licenseType: LicenseType;
-  buyerDeliveryMessage: string; educationLevel: EducationLevel | ''; customLevel: string; previewEnabled: boolean;
+  buyerDeliveryMessage: string; previewEnabled: boolean;
 }
-export const isDigitalFamilyType = (t: ProductType) => t === 'digital' || t === 'educational';
+export const isDigitalFamilyType = (t: ProductType) => t === 'digital';
 
 export function L({ children, req, htmlFor }: { children: ReactNode; req?: boolean; htmlFor?: string }) {
   return (

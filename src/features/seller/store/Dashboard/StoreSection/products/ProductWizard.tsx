@@ -214,10 +214,9 @@ export function ActionBar({ saving, primaryLabel, onPrimary, onDraft, onCancel, 
 // ── Live preview ─────────────────────────────────────────────────────────────
 export interface PreviewData {
   name: string; images: string[]; price: string; compareAtPrice: string; currency?: string | null;
-  productType: 'physical' | 'digital' | 'educational'; deliveryFormat?: 'download' | 'course' | 'live_class';
-  premiumPercent: number; educationLevel?: string | null; customLevel?: string | null;
+  productType: 'physical' | 'digital'; deliveryFormat?: 'download' | 'course';
+  premiumPercent: number;
   ageMin?: string; ageMax?: string; classFrom?: string; classTo?: string; coverStyle?: 'book' | 'flat'; storeName?: string | null;
-  liveStartsAt?: string | null; liveDurationMinutes?: string;
 }
 
 function PreviewCard({ d }: { d: PreviewData }) {
@@ -228,8 +227,6 @@ function PreviewCard({ d }: { d: PreviewData }) {
       _id: 'preview', slug: 'preview', name: d.name.trim() || 'Your product title',
       images: d.images, productType: d.productType, type: d.productType === 'physical' ? 'physical' : 'digital',
       deliveryFormat: d.productType === 'physical' ? undefined : d.deliveryFormat,
-      liveSession: d.productType !== 'physical' && d.deliveryFormat === 'live_class' && d.liveStartsAt ? { startsAt: d.liveStartsAt, durationMinutes: Number(d.liveDurationMinutes) || undefined } : undefined,
-      educationLevel: d.productType === 'educational' ? d.educationLevel || null : null, customLevel: d.customLevel ?? null,
       ageMin: d.ageMin ? Number(d.ageMin) : null, ageMax: d.ageMax ? Number(d.ageMax) : null,
       classFrom: d.classFrom || d.classTo || null, classTo: d.classTo || d.classFrom || null,
       coverStyle: d.coverStyle, storeName: d.storeName ?? null, premiumPercent: d.premiumPercent > 0 ? d.premiumPercent : undefined,

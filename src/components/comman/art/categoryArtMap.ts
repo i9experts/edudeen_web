@@ -68,7 +68,7 @@ export function resolveProductArt(opts: {
 }): ArtId {
   const byType: ArtId =
     opts.productType === 'physical' ? 'books'
-    : opts.productType === 'digital' ? 'worksheet'
+    : opts.productType ? 'worksheet'
     : 'default';
   return matchArt(opts.categoryName) ?? matchArt(opts.name) ?? matchArt((opts.tags ?? []).join(' ')) ?? byType;
 }

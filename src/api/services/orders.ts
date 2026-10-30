@@ -30,7 +30,7 @@ export interface OrderLineItem {
   image:      string | null;
   sku:        string;
   type:       'physical' | 'digital';
-  productType?: 'physical' | 'digital' | 'educational';
+  productType?: 'physical' | 'digital';
   quantity:   number;
   price:      number;
   totalPrice: number;
@@ -298,13 +298,9 @@ export interface LibraryItem {
   category:       string | null;
   subCategory:    string | null;
   educationLevel: string | null;
-  customLevel:    string | null;
   curricula:      string[];
   fileCount:      number;
-  deliveryFormat?: 'download' | 'course' | 'live_class';
-  liveStartsAt?:  string | null;
-  liveEndsAt?:    string | null;
-  liveStatus?:    'upcoming' | 'completed' | 'cancelled';
+  deliveryFormat?: 'download' | 'course';
   /** File extensions (lowercase) and combined size in bytes of the product's files. */
   fileTypes?:     string[];
   totalSize?:     number;

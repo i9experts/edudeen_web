@@ -117,7 +117,6 @@ export const SELLER_TYPES = [
 export const PRODUCT_TYPES = [
   { id: 'physical',       icon: 'package',   label: 'Books & School Supplies', desc: 'Ship books, stationery and kits' },
   { id: 'digital',        icon: 'download',  label: 'Digital Learning Resources', desc: 'eBooks, PDFs, audio, video'   },
-  { id: 'educational',    icon: 'book-open', label: 'Educational Resources', desc: 'Worksheets, lesson plans'    },
   { id: 'subscriptions',  icon: 'repeat',    label: 'Learning Subscriptions', desc: 'Recurring course or membership access' },
 ] as const;
 

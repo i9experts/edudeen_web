@@ -253,7 +253,7 @@ export const apiAdminDeleteShelf = (id: string) => client.delete<never, Ok<unkno
 export const apiAdminSearchProducts = (q: string) =>
   client.get<never, Ok<{ _id: string; name: string; slug: string; image: string | null }[]>>(`/api/admin/curated-collections/product-search?q=${encodeURIComponent(q)}`);
 
-// ── Courses & live classes ───────────────────────────────────────────────────
+// ── Courses ───────────────────────────────────────────────────
 
 export type LessonType = 'video' | 'pdf' | 'text' | 'quiz';
 export interface CourseFileRef { url: string; name: string; size?: number | null; mimeType?: string | null }
@@ -372,19 +372,15 @@ export interface MyCourse {
   name: string;
   slug: string;
   image: string | null;
-  deliveryFormat: 'course' | 'live_class';
+  deliveryFormat: 'course';
   lessons: number;
   completed: number;
   completedAt: string | null;
   certificateCode: string | null;
-  liveSession: { startsAt: string; durationMinutes: number; platform: string } | null;
   accessExpiresAt?: string | null;
   percent?: number;
   lastLessonId?: string | null;
-  liveStatus?: 'upcoming' | 'completed' | 'cancelled';
 }
-
-export interface LiveAccess { name: string; startsAt: string; endsAt: string; durationMinutes: number; platform: string; meetingUrl: string | null; notes: string; ended: boolean; opensAt?: string; joinOpen?: boolean; status?: 'scheduled' | 'cancelled'; recordingUrl?: string | null }
 
 export const apiGetCourseBuilder = (storeId: string, productId: string) => client.get<never, Ok<CourseBuilderData>>(`/api/courses/seller/${storeId}/${productId}`);
 export const apiSaveCourse = (storeId: string, productId: string, body: { sections: CourseSectionInput[]; certificateEnabled: boolean; certificateConfig?: CertificateConfig | null; outcomes?: string[]; instructor?: CourseInstructor | null; accessDays?: number | null }) =>
@@ -401,15 +397,10 @@ export const apiSubmitQuiz = (idOrSlug: string, lessonId: string, answers: numbe
   client.post<never, Ok<QuizResult>>(`/api/courses/learn/${idOrSlug}/lessons/${lessonId}/quiz`, { answers });
 export const apiVerifyCertificate = (code: string) => client.get<never, Ok<CertificateData>>(`/api/courses/certificates/${encodeURIComponent(code)}`);
 export const apiGetMyCourses = () => client.get<never, Ok<MyCourse[]>>('/api/courses/mine');
-export const apiGetLiveAccess = (idOrSlug: string) => client.get<never, Ok<LiveAccess>>(`/api/courses/live/${idOrSlug}`);
-export interface LiveSeats { capacity: number | null; left: number | null; registrationOpen?: boolean; deadline?: string | null; status?: 'scheduled' | 'cancelled' }
-export const apiGetLiveSeats = (idOrSlug: string) => client.get<never, Ok<LiveSeats>>(`/api/courses/live-seats/${idOrSlug}`);
 
 export interface CourseStudent { userId: string; name: string; email: string; enrolledAt: string | null; completedLessons: number; totalLessons: number; percent: number; lastActiveAt: string | null; completedAt: string | null; certificateCode: string | null }
 export const apiGetCourseStudents = (storeId: string, productId: string, page = 1, limit = 20) =>
   client.get<never, Ok<{ total: number; students: CourseStudent[] }>>(`/api/courses/seller/${storeId}/${productId}/students?page=${page}&limit=${limit}`);
-export const apiCancelLiveClass = (storeId: string, productId: string, reason?: string) =>
-  client.post<never, Ok<unknown>>(`/api/courses/seller/${storeId}/${productId}/live/cancel`, { reason });
 
 /** Active bundles for the home shelf (live products only). */
 export const apiGetPublicBundles = (limit = 6) => client.get<never, Ok<PublicBundle[]>>(`/api/bundles/public?limit=${limit}`);

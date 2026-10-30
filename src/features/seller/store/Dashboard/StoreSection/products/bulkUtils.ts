@@ -1,5 +1,5 @@
 import type { PrivateUploadData } from '@/api/upload';
-import { classIndex, levelForClass } from '@/constants/classLevels';
+import { classIndex } from '@/constants/classLevels';
 import { titleError, classRangeError, qualityWarnings, contactWarning } from './productQuality';
 import { descriptionError, premiumConflict, stockError, validatePrices, weightError, type PremiumConflict, type WeightUnit } from './priceRules';
 
@@ -16,7 +16,8 @@ export const DOC_EXTENSIONS = ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx
 // Same types the product photo uploader accepts.
 export const PHOTO_EXTENSIONS = ['png', 'jpg', 'jpeg', 'webp'];
 
-export type BulkType = 'digital' | 'educational' | 'physical';
+
+export type BulkType = 'digital' | 'physical';
 /** 'none' = a row without a file (manual row, or a physical product). */
 export type UploadState = 'none' | 'queued' | 'uploading' | 'done' | 'failed';
 export type CreateState = 'idle' | 'creating' | 'created' | 'failed';
@@ -45,7 +46,6 @@ export interface BulkRow {
   subCategoryId: string;
   classFrom: string;
   classTo: string;
-  educationLevel: string;
   images: string[];
   // Physical
   stock: string;
@@ -56,7 +56,7 @@ export interface BulkRow {
   weightUnit: WeightUnit;
   /** Seller confirmed a stock of 0 on purpose (the product will show as out of stock). */
   zeroStockOk: boolean;
-  // Digital / educational
+  // Digital
   downloadLimit: string;
   linkExpiryDays: string;
   buyerMessage: string;
@@ -117,7 +117,7 @@ export function blankRow(file?: { name: string; size: number }, hasFile = true):
     id: newId(), fileName: file?.name ?? '', fileSize: file?.size ?? 0, upload: null,
     uploadState: file && hasFile ? 'queued' : 'none', uploadPct: 0, uploadError: '',
     title: file ? titleFromFileName(file.name) : '', description: '', price: '', free: false, savedPrice: '', savedStock: '', compareAt: '', categoryId: '', subCategoryId: '',
-    classFrom: '', classTo: '', educationLevel: '', images: [],
+    classFrom: '', classTo: '', images: [],
     stock: '', unlimitedStock: false, sku: '', weight: '', weightUnit: 'kg', zeroStockOk: false,
     downloadLimit: 'unlimited', linkExpiryDays: '', buyerMessage: '', tags: [],
     createState: 'idle', createError: '', productId: '', createdStatus: '',
@@ -127,13 +127,6 @@ export function blankRow(file?: { name: string; size: number }, hasFile = true):
 /** Old saved batches lack newer fields; fill them with defaults. */
 export function normalizeRow(r: Partial<BulkRow>): BulkRow {
   return { ...blankRow(), ...r } as BulkRow;
-}
-
-/** Education level the API needs for educational products: the chosen one, else derived from the class. */
-export function effectiveLevel(row: Pick<BulkRow, 'educationLevel' | 'classFrom' | 'classTo'>): string {
-  if (row.educationLevel && row.educationLevel !== 'other') return row.educationLevel;
-  const c = row.classFrom || row.classTo;
-  return (c ? levelForClass(c) : null) ?? '';
 }
 
 export interface RowContext {
@@ -181,7 +174,6 @@ export function rowIssue(row: BulkRow, ctx: RowContext): string | null {
   if (row.classFrom && row.classTo && classIndex(row.classFrom) > classIndex(row.classTo)) return '"From class" comes after "To class"';
   const cErr = classRangeError(ctx.type, row.classFrom, row.classTo);
   if (cErr) return cErr;
-  if (ctx.type === 'educational' && !effectiveLevel(row)) return 'Choose an education level';
   if (row.linkExpiryDays.trim() !== '' && (!Number.isInteger(Number(row.linkExpiryDays)) || Number(row.linkExpiryDays) < 1)) return 'Link expiry must be a whole number of days';
   const pr = rowPremiumConflict(row, ctx);
   if (pr) return pr.short;

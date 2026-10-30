@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useStoreWorkspace, StorePageHeader } from '@/components/layouts/StoreLayout';
-import { apiCreatePhysicalProduct, apiCreateDigitalProduct, EDUCATION_LEVELS, type VariantOption } from '@/api/services/product';
+import { apiCreatePhysicalProduct, apiCreateDigitalProduct, type VariantOption } from '@/api/services/product';
 import { apiSetProductAttributes } from '@/api/services/attributes';
 import { addCachedProduct } from './_cache';
 import { toAttributeInputs, findMissingRequiredAttribute, type AttributeValuesState } from './attributeFormUtils';
@@ -11,7 +11,7 @@ import { type PrivateUploadData, DateTimePickerModal } from '@/components/comman
 import {
   EMPTY_LEARNING, learningPayload, learningError, tiersPayload, tiersError, EMPTY_TIERS,
 } from '@/features/seller/components/products/LearningFields';
-import { EMPTY_DELIVERY, deliveryPayload, deliveryError } from '@/features/seller/components/products/DeliveryFormatField';
+import { EMPTY_DELIVERY, deliveryPayload } from '@/features/seller/components/products/DeliveryFormatField';
 import { currencySymbol as symbolForCurrency } from '@/utils/currency';
 import { pktWallToIso } from '@/utils/pkTime';
 import { CLASS_LEVELS } from '@/constants/classLevels';
@@ -49,7 +49,7 @@ const initDig: DigForm = {
   tiers: EMPTY_TIERS,
   downloadLimit: 'unlimited', linkExpiryDays: '',
   pdfStampingEnabled: true, licenseType: 'personal',
-  buyerDeliveryMessage: '', educationLevel: '', customLevel: '',
+  buyerDeliveryMessage: '',
   previewEnabled: true,
 };
 
@@ -66,8 +66,8 @@ export default function StoreAddProduct() {
   const currencySymbol = symbolForCurrency(store?.baseCurrency);
 
   const supportsPhysical    = !store || (store.productTypes ?? []).includes('physical_products');
-  const supportsDigital     = !store || (store.productTypes ?? []).includes('digital_downloads');
-  const supportsEducational = !store || (store.productTypes ?? []).includes('educational_resources');
+  // Old stores that were set up for 'educational resources' now sell digital products.
+  const supportsDigital     = !store || (store.productTypes ?? []).some(t => t === 'digital_downloads' || t === 'educational_resources');
 
   const { categories, loading: catLoading, error: catError, refetch: refetchCats } = useSellerCategories();
   // Main category chosen for THIS product; defaults to the store's own category.
@@ -96,12 +96,11 @@ export default function StoreAddProduct() {
   // Once the store loads, never leave the form on a type this store can't sell.
   useEffect(() => {
     if (!store) return;
-    const ok = pType === 'physical' ? supportsPhysical : pType === 'digital' ? supportsDigital : supportsEducational;
+    const ok = pType === 'physical' ? supportsPhysical : supportsDigital;
     if (ok) return;
     if (supportsPhysical) setPType('physical');
     else if (supportsDigital) setPType('digital');
-    else if (supportsEducational) setPType('educational');
-  }, [store, pType, supportsPhysical, supportsDigital, supportsEducational]);
+  }, [store, pType, supportsPhysical, supportsDigital]);
 
   useEffect(() => { const t = window.setInterval(() => setNow(Date.now()), 30000); return () => window.clearInterval(t); }, []);
 
@@ -140,8 +139,6 @@ export default function StoreAddProduct() {
     const descErr = descriptionError(cur.description);
     if (descErr) out.push({ step: 0, message: descErr, fieldId: 'ap-desc' });
     if (isDigitalFamily) {
-      const dErr = deliveryError(delivery);
-      if (dErr) out.push({ step: 1, message: dErr, fieldId: 'fld-delivery' });
       if (delivery.format === 'download' && finalStatus !== 'draft' && dig.files.length === 0)
         out.push({ step: 1, message: 'Upload the file buyers will receive (or save as draft)', fieldId: 'fld-files', publishOnly: true });
       if (delivery.format === 'download' && finalStatus !== 'draft' && !dig.sampleFile)
@@ -159,11 +156,9 @@ export default function StoreAddProduct() {
     }
     if (isDigitalFamily) { const tErr = tiersError(dig.tiers); if (tErr) out.push({ step: 2, message: tErr, fieldId: 'fld-tiers' }); }
     const learnFormat = isDigitalFamily && delivery.format !== 'download';
-    if (pType === 'educational' && !learnFormat && !dig.educationLevel) out.push({ step: 3, message: 'Choose an education level', fieldId: 'fld-level' });
-    else if (pType === 'educational' && !learnFormat && dig.educationLevel === 'other' && !dig.customLevel.trim()) out.push({ step: 3, message: 'Describe the custom education level', fieldId: 'fld-level' });
     const lErr = learningError(learning);
     if (lErr) out.push({ step: 3, message: lErr, fieldId: 'fld-learning' });
-    // Digital / educational listings need a class range to go live (drafts may stay incomplete).
+    // Digital listings need a class range to go live (drafts may stay incomplete).
     const cErr = finalStatus === 'active' || finalStatus === 'scheduled' ? classRangeError(pType, learning.classFrom, learning.classTo) : null;
     if (cErr) out.push({ step: 3, message: cErr, fieldId: 'fld-learning', publishOnly: true });
     if (!learning.coverStyle && !learnFormat) out.push({ step: 3, message: 'Choose the product card style (Book or Toy / item)', fieldId: 'fld-cover', publishOnly: true });
@@ -200,7 +195,7 @@ export default function StoreAddProduct() {
     const r = draft.restorable?.data;
     if (!r) return;
     setPType(r.pType); setPhys({ ...initPhys, ...r.phys }); setDig({ ...initDig, ...r.dig });
-    setLearning({ ...EMPTY_LEARNING, ...r.learning }); setDelivery({ ...EMPTY_DELIVERY, ...r.delivery });
+    setLearning({ ...EMPTY_LEARNING, ...r.learning }); setDelivery({ format: r.delivery?.format === 'course' ? 'course' : 'download' });
     setCampaignIds(r.campaignIds ?? []); setPremiumPct(r.premiumPct ?? ''); setPremiumOptOut(!!r.premiumOptOut);
     setAttributeValues(r.attributeValues ?? {}); setCategoryChoice(r.categoryChoice ?? null);
     setTouched(true); wiz.markAllVisited(); draft.accept();
@@ -247,14 +242,12 @@ export default function StoreAddProduct() {
         const files = dig.files.map(toFile);
         const res = await apiCreateDigitalProduct({
           storeId, name: dig.name, description: dig.description,
-          productType: pType === 'educational' ? 'educational' : 'digital',
+          productType: 'digital',
           categoryId: categoryId || undefined, subCategoryId: dig.subCategoryId || null, images: dig.images, tags: withPendingTags(dig.tags, dig.tagInput),
-          educationLevel: pType === 'educational' ? (dig.educationLevel || null) : null,
-          customLevel: pType === 'educational' && dig.educationLevel === 'other' ? dig.customLevel : null,
           isListedOnEdudeen: dig.isListedOnEdudeen, status: finalStatus, ...offersPayload({ premiumPct, premiumOptOut, campaignIds }),
           scheduledAt: finalStatus === 'scheduled' ? pktWallToIso(dig.scheduledAt) : null,
           price: Number(dig.price), compareAtPrice: dig.compareAtPrice ? Number(dig.compareAtPrice) : null,
-          // Card style does not apply to courses / live classes; the server still stores one, so default it.
+          // Card style does not apply to courses; the server still stores one, so default it.
           ...learningPayload(delivery.format === 'download' ? learning : { ...learning, coverStyle: learning.coverStyle || 'book' }),
           ...deliveryPayload(delivery),
           licenseTiers: tiersPayload(dig.tiers.filter(t => t.license !== dig.licenseType)),
@@ -292,7 +285,7 @@ export default function StoreAddProduct() {
 
   const subName = findCategoryName(categories, cur.subCategoryId);
   const summaryRows = [
-    { label: 'Type', value: pType === 'physical' ? 'Physical product' : pType === 'educational' ? 'Educational resource' : 'Digital download', step: 0 },
+    { label: 'Type', value: pType === 'physical' ? 'Physical product' : 'Digital download', step: 0 },
     { label: 'Title', value: cur.name || 'Missing', step: 0, ok: !!cur.name },
     { label: 'Description', value: cur.description ? `${cur.description.length} characters` : 'Missing', step: 0, ok: !!cur.description.trim() },
     { label: 'Photos', value: cur.images.length ? `${cur.images.length} added` : 'None yet (recommended)', step: 1 },
@@ -300,15 +293,7 @@ export default function StoreAddProduct() {
     { label: 'Price', value: cur.price === '' ? 'Missing' : `${currencySymbol} ${cur.price}${cur.compareAtPrice ? ` (was ${currencySymbol} ${cur.compareAtPrice})` : ''}`, step: 2, ok: cur.price !== '' },
     ...(pType === 'physical' ? [{ label: 'Stock', value: phys.stock === '' ? 'Missing' : phys.stock, step: 2, ok: phys.stock !== '' }] : []),
     { label: 'Category', value: [rootCategory?.name, subName].filter(Boolean).join(' › ') || 'Not chosen', step: 3 },
-    ...(pType === 'educational' && delivery.format === 'download' ? [{ label: 'Education level', value: (dig.educationLevel === 'other' ? dig.customLevel : EDUCATION_LEVELS.find(l => l.value === dig.educationLevel)?.label) || 'Missing', step: 3, ok: !!dig.educationLevel }] : []),
     ...(isDigitalFamily && (learning.classFrom || learning.classTo) ? [{ label: 'Classes', value: [learning.classFrom, learning.classTo].filter((c, i, a) => c && a.indexOf(c) === i).map(c => CLASS_LEVELS.find(l => l.value === c)?.label ?? c).join(' – '), step: 3 }] : []),
-    ...(isDigitalFamily && delivery.format === 'live_class' ? [
-      { label: 'Date + time (PKT)', value: delivery.date && delivery.time ? `${delivery.date} ${delivery.time}` : 'Missing', step: 0, ok: !!(delivery.date && delivery.time) },
-      { label: 'Length', value: delivery.durationMinutes ? `${delivery.durationMinutes} min` : 'Missing', step: 0, ok: !!delivery.durationMinutes },
-      { label: 'Seats', value: delivery.capacity ? delivery.capacity : 'No limit', step: 0 },
-      { label: 'Platform', value: delivery.platform ? delivery.platform.replace(/_/g, ' ') : 'Missing', step: 0 },
-      { label: 'Meeting link', value: delivery.meetingUrl ? (delivery.meetingUrl.length > 36 ? `${delivery.meetingUrl.slice(0, 33)}…` : delivery.meetingUrl) : 'Not added', step: 0 },
-    ] : []),
     ...(isDigitalFamily && delivery.format === 'course' ? [{ label: 'Course', value: 'Lessons are added in the course builder after you save', step: 0 }] : []),
     { label: 'Offers', value: campaignIds.length ? 'In a platform sale' : effectiveSellerPercent(premiumPct, storePremiumPct, premiumOptOut) > 0 ? `Premium discount ${effectiveSellerPercent(premiumPct, storePremiumPct, premiumOptOut)}%` : 'None', step: 4 },
     { label: 'Status', value: cur.status === 'active' ? 'Publish now' : cur.status === 'scheduled' ? 'Scheduled' : 'Draft', step: 5 },
@@ -352,7 +337,7 @@ export default function StoreAddProduct() {
             <ProductFormSteps
               mode="add" step={wiz.step} go={wiz.go} blockedStep={wiz.blockedStep} stepIssues={wiz.stepIssues} issues={issues}
               storeId={storeId} store={store} currencySymbol={currencySymbol}
-              pType={pType} setPType={setPType} supports={{ physical: supportsPhysical, digital: supportsDigital, educational: supportsEducational }}
+              pType={pType} setPType={setPType} supports={{ physical: supportsPhysical, digital: supportsDigital }}
               phys={phys} dig={dig} sp={sp} sd={sd}
               delivery={delivery} setDelivery={setDelivery} learning={learning} setLearning={setLearning}
               offers={{ storePremiumPct, premiumPct, setPremiumPct, premiumOptOut, setPremiumOptOut, campaignIds, setCampaignIds: v => setCampaignIds(v), onFlags: setOfferFlags }}
@@ -391,11 +376,9 @@ export default function StoreAddProduct() {
   function previewData() {
     return {
       name: cur.name, images: cur.images, price: cur.price, compareAtPrice: cur.compareAtPrice, currency: store?.baseCurrency,
-      productType: pType, deliveryFormat: delivery.format, educationLevel: dig.educationLevel, customLevel: dig.customLevel,
+      productType: pType, deliveryFormat: delivery.format,
       premiumPercent: campaignIds.length ? 0 : effectiveSellerPercent(premiumPct, storePremiumPct, premiumOptOut),
       ageMin: learning.ageMin, ageMax: learning.ageMax, classFrom: learning.classFrom, classTo: learning.classTo, coverStyle: learning.coverStyle || undefined, storeName: store?.name,
-      liveStartsAt: delivery.format === 'live_class' && delivery.date && delivery.time ? pktWallToIso(`${delivery.date}T${delivery.time}`) : null,
-      liveDurationMinutes: delivery.durationMinutes,
     };
   }
 }

@@ -118,8 +118,8 @@ export function Wishlist() {
           const p = item.product;
           const variant = item.variants?.[0];
           // Same domain-wide rule used by ProductCard/ProductDetail/SellerStorefront/etc.:
-          // productType can be 'educational' (which still counts as non-physical for
-          // cart/shipping purposes), so check it before the stricter `type` field.
+          // productType is physical or digital (a legacy 'educational' value counts as
+          // non-physical), so check it before the stricter `type` field.
           const pType = p.productType ?? p.type ?? 'physical';
           const isPhysical = pType === 'physical';
           const isRemoving = removingId === variant?._id || wishlisting === variant?._id;

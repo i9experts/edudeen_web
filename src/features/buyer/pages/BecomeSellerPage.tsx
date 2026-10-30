@@ -61,7 +61,7 @@ export function BecomeSellerPage() {
       .catch(() => { if (!cancelled) { setPlans([]); setError('Could not load plans. Please refresh and try again.'); } });
     apiGetPlatformStats().then(res => { if (!cancelled) setStats(res.data); }).catch(() => { if (!cancelled) setStatsFailed(true); });
     // Real popular resources for the store preview; the preview falls back to sample cards without them.
-    apiGetAllProducts(1, 3, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, 'popularity')
+    apiGetAllProducts(1, 3, undefined, undefined, undefined, undefined, undefined, undefined, undefined, 'popularity')
       .then(res => { if (!cancelled) setTopProducts(res.data?.products ?? []); }).catch(() => {});
     return () => { cancelled = true; };
   }, []);

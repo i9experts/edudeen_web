@@ -1,4 +1,4 @@
-import { ShoppingBag, Package, Download, MonitorPlay, Video, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
+import { ShoppingBag, Package, Download, MonitorPlay, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
 import { MetricCard } from '@/components/comman/ui';
 import type { InventoryProduct } from '@/api/services/product';
 
@@ -17,9 +17,7 @@ export function ProductCell({ p }: { p: InventoryProduct }) {
           ? <img loading="lazy" decoding="async" src={p.image} alt="" className="w-full h-full object-cover" />
           : p.deliveryFormat === 'course'
             ? <MonitorPlay size={14} className="text-brand-orange" />
-            : p.deliveryFormat === 'live_class'
-              ? <Video size={14} className="text-brand-orange" />
-              : p.type === 'digital'
+            : p.type === 'digital'
             ? <Download size={14} className="text-brand-orange" />
             : <Package  size={14} className="text-brand-orange" />}
       </div>

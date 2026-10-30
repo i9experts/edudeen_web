@@ -33,7 +33,7 @@ function load(): Promise<TopBarDeals> {
   if (cache && Date.now() - cache.at < TTL_MS) return Promise.resolve(cache.data);
   if (inflight) return inflight;
   const fetchProducts = (campaignId?: string) =>
-    apiGetAllProducts(1, 50, undefined, undefined, undefined, undefined, campaignId, undefined, undefined, undefined, 'popularity')
+    apiGetAllProducts(1, 50, undefined, undefined, undefined, campaignId, undefined, undefined, undefined, 'popularity')
       .then(r => r.data?.products ?? []).catch(() => [] as MarketplaceProduct[]);
   inflight = apiGetPublicActiveCampaigns().then(r => r.data ?? []).catch(() => [] as PublicCampaign[]).then(async campaigns => {
     // No full-catalogue prefetch: one page of popular products + each live campaign's own products (bounded).

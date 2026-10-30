@@ -23,7 +23,7 @@ import { buildOrderProgress, OrderProgressTrack, OrderNextStep } from './account
 function OrderItemRow({ item, orderId, currency, canReview }: { item: OrderItem; orderId: string; currency: string; canReview: boolean }) {
   const isDigital = item.type === 'digital';
   const { format } = useDeliveryFormat(isDigital ? (item.productId ?? '') : '');
-  const learnFormat = format === 'course' || format === 'live_class';
+  const learnFormat = format === 'course';
   return (
     <div className="flex items-center justify-between gap-3 py-3 border-b border-bone last:border-0">
       <div className="flex items-center gap-3 min-w-0">

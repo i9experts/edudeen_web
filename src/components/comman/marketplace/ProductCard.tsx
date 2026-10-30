@@ -153,9 +153,8 @@ export const ProductCard = memo(function ProductCard({ product: rawProduct, onCl
   const isList       = layout === 'list';
   const pType        = product.productType ?? product.type ?? 'physical';
   const isPhysical   = pType === 'physical';
-  const isEducational = pType === 'educational';
   const isDigital    = !isPhysical;
-  const typeLabel    = isPhysical ? 'Physical' : isEducational ? 'Educational' : 'Digital';
+  const typeLabel    = isPhysical ? 'Physical' : 'Digital';
 
   const [previewOpen, setPreviewOpen] = useState(false);
   const { data: previewData, loading: previewLoading, error: previewError, load: loadPreview, reset: resetPreview } = useProductPreview(product._id);
@@ -237,7 +236,7 @@ export const ProductCard = memo(function ProductCard({ product: rawProduct, onCl
     ? Math.round((1 - lowestPrice / compareAt) * 100)
     : null;
   // Stock tracking only applies to physical goods with tracking enabled —
-  // digital/educational products, and any physical variant the seller marked
+  // digital products, and any physical variant the seller marked
   // unlimitedStock, are always available. Previously this fell through to
   // `?? 0`, which read an untracked (unlimitedStock) variant's stock as 0 and
   // incorrectly showed it as out of stock / disabled Add to Cart.
@@ -324,11 +323,9 @@ export const ProductCard = memo(function ProductCard({ product: rawProduct, onCl
         <div className="absolute top-2 start-2 flex flex-col items-start gap-1">
           <span className={clsx(
             'px-[6px] py-[2px] rounded-md text-[12px] font-bold tracking-[0.01em] border',
-            isEducational
-              ? 'bg-info-bg text-info border-info/25'
-              : isDigital
-                ? 'bg-[#ede9fe] text-[#7c3aed] border-[#ddd6fe]'
-                : 'bg-[#edf5e7] text-[#3b6720] border-[#c7e0b5]',
+            isDigital
+              ? 'bg-[#ede9fe] text-[#7c3aed] border-[#ddd6fe]'
+              : 'bg-[#edf5e7] text-[#3b6720] border-[#c7e0b5]',
           )}>
             {typeLabel}
           </span>
@@ -368,7 +365,7 @@ export const ProductCard = memo(function ProductCard({ product: rawProduct, onCl
 
         <CompareToggle product={product} className="absolute top-[44px] end-2 !rounded-lg" />
 
-        {/* Preview — digital/educational only, same size/position language as wishlist */}
+        {/* Preview — digital only, same size/position language as wishlist */}
         {isDigital && product.digital?.previewAvailable && (
           <button
             onClick={openPreview}

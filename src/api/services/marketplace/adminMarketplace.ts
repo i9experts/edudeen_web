@@ -72,14 +72,12 @@ export interface ListingReview {
   images: string[];
   tags: string[];
   type: 'physical' | 'digital';
-  productType: 'physical' | 'digital' | 'educational';
+  productType: 'physical' | 'digital';
   educationLevel: string | null;
-  customLevel: string | null;
   classFrom?: string | null;
   classTo?: string | null;
-  /** download | course | live_class (missing = download). */
-  deliveryFormat?: 'download' | 'course' | 'live_class';
-  liveSession?: { startsAt?: string; durationMinutes?: number; platform?: string; capacity?: number | null; notes?: string; meetingUrl?: string; registrationDeadline?: string | null; status?: string } | null;
+  /** download | course (missing = download). */
+  deliveryFormat?: 'download' | 'course';
   course?: {
     lessonCount: number; totalMinutes: number; outcomes?: string[]; instructor?: { name: string; bio: string } | null;
     sections: { title: string; lessons: { title: string; type: string; minutes: number | null; isPreview: boolean }[] }[];
