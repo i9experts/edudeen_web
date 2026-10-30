@@ -52,15 +52,19 @@ function messageFor(el: Control, blurred: boolean): string {
   return '';
 }
 
-const ERR_CLASS = /\btext-(error|red-\d+)\b/;
+const ERR_CLASS = /\b(?:text|border)-(?:error|danger|red-\d+|rose-\d+)\b|text-\[#(?:c13030|dc2626|ef4444|b91c1c)\]/i;
+const msgs = new WeakMap<Control, HTMLElement>();
 
 function ownErrorShown(el: Control): boolean {
   if (el.getAttribute('aria-invalid') === 'true') return true;
-  const next = (el.parentElement?.nextElementSibling ?? null) as HTMLElement | null;
-  const sib = el.nextElementSibling as HTMLElement | null;
+  if (!el.hasAttribute('data-live-invalid') && ERR_CLASS.test(el.className?.toString() ?? '')) return true;
   const isOther = (n: HTMLElement | null) =>
     !!n && !n.hasAttribute(ERR_ATTR) && (n.getAttribute('role') === 'alert' || ERR_CLASS.test(n.className?.toString() ?? ''));
-  if (isOther(sib) || isOther(next)) return true;
+  // the form's own message may sit after the control or after any of its (up to 3) wrappers
+  let node: HTMLElement | null = el;
+  for (let i = 0; i < 4 && node && node.tagName !== 'FORM' && node.tagName !== 'SECTION'; i++, node = node.parentElement) {
+    if (isOther(node.nextElementSibling as HTMLElement | null)) return true;
+  }
   // error text linked through aria-describedby (Field)
   const ids = (el.getAttribute('aria-describedby') ?? '').split(/\s+/).filter(Boolean);
   return ids.some(id => {
@@ -89,9 +93,10 @@ function slotFor(el: Control): Element {
 }
 
 function findError(el: Control): HTMLElement | null {
-  const slot = slotFor(el);
-  const n = slot.nextElementSibling as HTMLElement | null;
-  return n && n.hasAttribute(ERR_ATTR) && n.dataset.for === (el.id || el.name || '') ? n : null;
+  const n = msgs.get(el);
+  if (n && n.isConnected) return n;
+  msgs.delete(el);
+  return null;
 }
 
 function show(el: Control, message: string) {
@@ -110,6 +115,7 @@ function show(el: Control, message: string) {
   p.dataset.for = el.id || el.name || '';
   p.className = 'text-[12px] text-error mt-1';
   p.textContent = message;
+  msgs.set(el, p);
   slotFor(el).after(p);
 }
 
