@@ -16,7 +16,8 @@ import { SkipLink } from '@/components/seo/SkipLink';
 // Non-critical overlays: own chunks, mounted once the browser is idle so they never delay first paint.
 const MaintenanceNotice = lazy(() => import('@/components/comman/ui/MaintenanceNotice').then(m => ({ default: m.MaintenanceNotice })));
 const GoogleOneTapPrompt = lazy(() => import('@/components/comman/ui/GoogleOneTapPrompt').then(m => ({ default: m.GoogleOneTapPrompt })));
-const AiAssistantWidget = lazy(() => import('@/components/ai/AiAssistantWidget').then(m => ({ default: m.AiAssistantWidget })));
+const CourseResumePopup = lazy(() => import('@/components/comman/ui/CourseResumePopup').then(m => ({ default: m.CourseResumePopup })));
+const AiAssistantWidget =lazy(() => import('@/components/ai/AiAssistantWidget').then(m => ({ default: m.AiAssistantWidget })));
 
 function WhenIdle({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
@@ -95,6 +96,7 @@ export function RootLayout() {
       <Silent resetKey={pathname}><LanguageRouteSync /></Silent>
       <Silent resetKey={pathname}><WhenIdle><AiAssistantWidget /></WhenIdle></Silent>
       <Silent resetKey={pathname}><ChatWidgetGate /></Silent>
+      <Silent resetKey={pathname}><WhenIdle><CourseResumePopup /></WhenIdle></Silent>
       <ScrollRestoration />
       <Silent resetKey={pathname}><ScrollToTopOnNavigate /></Silent>
       {/* resetKey (not key) â€” a new path clears a caught error, but the layouts
