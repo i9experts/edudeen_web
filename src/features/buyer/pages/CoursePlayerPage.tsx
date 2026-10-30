@@ -98,6 +98,8 @@ export function CoursePlayerPage() {
   const currentId = params.get('lesson') ?? view?.progress.lastLessonId ?? flat.find(l => !done.has(l._id))?._id ?? flat[0]?._id ?? null;
   const idx = flat.findIndex(l => l._id === currentId);
 
+  // A video lesson must be watched to the end (not skipped) before the learner can move on.
+  const [watchedId, setWatchedId] = useState<string | null>(null);
   const open = useCallback((id: string) => { setParams({ lesson: id }, { replace: false }); setMenuOpen(false); }, [setParams]);
 
   useEffect(() => {
@@ -156,6 +158,13 @@ export function CoursePlayerPage() {
   const isDone = lesson ? done.has(lesson._id) : false;
   // The shown lesson lags the URL until the new one arrives.
   const loadingLesson = !lesson || lesson._id !== currentId;
+  const hasVideo = !!lesson && lesson.type === 'video' && !!(lesson.file || lesson.videoUrl);
+  const mustWatch = hasVideo && !isDone && watchedId !== lesson?._id;
+  const goTo = (id: string) => {
+    const target = flat.findIndex(l => l._id === id);
+    if (mustWatch && target > idx) { toast.error('Finish watching this video to continue.'); return; }
+    open(id);
+  };
 
   const outline = (
     <nav aria-label="Course content" className="flex flex-col gap-4">
@@ -168,7 +177,7 @@ export function CoursePlayerPage() {
               const active = l._id === currentId;
               return (
                 <li key={l._id}>
-                  <button type="button" onClick={() => open(l._id)} aria-current={active ? 'true' : undefined}
+                  <button type="button" onClick={() => goTo(l._id)} aria-current={active ? 'true' : undefined}
                     className={clsx('w-full flex items-center gap-2 rounded-lg px-2 py-2 text-start text-[13px] border-none cursor-pointer', active ? 'bg-brand-pale-orange text-carbon font-semibold' : 'bg-transparent text-charcoal hover:bg-fog')}>
                     {done.has(l._id) ? <CheckCircle2 size={15} className="text-success shrink-0" /> : <Circle size={15} className="text-bone shrink-0" />}
                     <Icon size={13} className="text-slate shrink-0" />
@@ -224,7 +233,8 @@ export function CoursePlayerPage() {
             <article className="flex flex-col gap-4">
               <h1 className="text-[22px] md:text-[26px] font-bold text-carbon m-0">{lesson.title}</h1>
               {lesson.type === 'video' && (lesson.file || lesson.videoUrl) && (
-                <LessonVideo key={lesson._id} file={lesson.file} videoUrl={lesson.videoUrl} title={lesson.title} />
+                <LessonVideo key={lesson._id} file={lesson.file} videoUrl={lesson.videoUrl} title={lesson.title}
+                  guard lockSeek={!isDone} onFinished={() => setWatchedId(lesson._id)} />
               )}
               {lesson.type === 'video' && !lesson.file && !lesson.videoUrl && (
                 <p className="text-[13px] text-slate m-0">The video for this lesson is not available yet.</p>
@@ -246,9 +256,10 @@ export function CoursePlayerPage() {
                 {lesson.type !== 'quiz' && (
                   isDone
                     ? <span className="inline-flex items-center gap-1 text-[13px] text-success font-semibold"><CheckCircle2 size={15} /> Completed</span>
-                    : <Button variant="primary" size="sm" loading={marking} onClick={markDone}>Mark complete{idx < flat.length - 1 ? ' & next' : ''}</Button>
+                    : <Button variant="primary" size="sm" loading={marking} disabled={mustWatch} onClick={markDone}>Mark complete{idx < flat.length - 1 ? ' & next' : ''}</Button>
                 )}
-                <Button variant="ghost" size="sm" className="ms-auto" disabled={idx < 0 || idx >= flat.length - 1} onClick={() => open(flat[idx + 1]._id)}>Next <ChevronRight size={14} /></Button>
+                {mustWatch && <span role="status" className="text-[12.5px] text-slate">Watch the full video to unlock the next lesson.</span>}
+                <Button variant="ghost" size="sm" className="ms-auto" disabled={mustWatch || idx < 0 || idx >= flat.length - 1} onClick={() => open(flat[idx + 1]._id)}>Next <ChevronRight size={14} /></Button>
               </div>
             </article>
           )}
