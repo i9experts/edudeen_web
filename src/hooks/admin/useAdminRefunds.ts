@@ -6,7 +6,7 @@ import {
 } from '@/api/services/adminRefundRequests';
 
 export function useAdminPendingRefunds(page: number, limit = 20) {
-  return useAnalyticsQuery(apiAdminListPendingRefunds, { page, limit });
+  return useAnalyticsQuery(apiAdminListPendingRefunds, { page, limit }, ['refunds', 'orders', 'returns']);
 }
 
 export function useAdminRefundActions() {

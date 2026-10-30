@@ -43,23 +43,23 @@ import { useAnalyticsQuery } from '@/hooks/useAnalyticsQuery';
 // ── A. Dashboard overview ───────────────────────────────────────────────────────
 
 export function useAdminFinanceOverview(params: AdminFinanceParams) {
-  return useAnalyticsQuery(apiAdminFinanceOverview, params);
+  return useAnalyticsQuery(apiAdminFinanceOverview, params, ['orders', 'finance', 'refunds', 'payouts']);
 }
 
 // ── B. Revenue / commission trends ──────────────────────────────────────────────
 
 export function useAdminFinanceRevenueOverTime(params: AdminFinanceParams) {
-  return useAnalyticsQuery(apiAdminFinanceRevenueOverTime, params);
+  return useAnalyticsQuery(apiAdminFinanceRevenueOverTime, params, ['orders', 'finance', 'refunds', 'payouts']);
 }
 
 export function useAdminFinanceCommissionOverTime(params: AdminFinanceParams) {
-  return useAnalyticsQuery(apiAdminFinanceCommissionOverTime, params);
+  return useAnalyticsQuery(apiAdminFinanceCommissionOverTime, params, ['orders', 'finance', 'refunds', 'payouts']);
 }
 
 // ── C/D. Sellers ──────────────────────────────────────────────────────────────────
 
 export function useAdminSellerBalances(params: SellerBalancesParams) {
-  return useAnalyticsQuery(apiAdminSellerBalances, params);
+  return useAnalyticsQuery(apiAdminSellerBalances, params, ['orders', 'finance', 'refunds', 'payouts']);
 }
 
 export function useAdminSellerFinancialDetails(storeId: string) {
@@ -79,13 +79,13 @@ export function useAdminSellerTransactions(storeId: string, params: AdminTransac
 // ── E. Platform transactions ──────────────────────────────────────────────────────
 
 export function useAdminPlatformTransactions(params: AdminTransactionsParams) {
-  return useAnalyticsQuery(apiAdminPlatformTransactions, params);
+  return useAnalyticsQuery(apiAdminPlatformTransactions, params, ['orders', 'finance', 'refunds', 'payouts']);
 }
 
 // ── F. Payout queue & lifecycle ───────────────────────────────────────────────────
 
 export function useAdminPayoutQueue(params: PayoutQueueParams) {
-  return useAnalyticsQuery(apiAdminPayoutQueue, params);
+  return useAnalyticsQuery(apiAdminPayoutQueue, params, ['orders', 'finance', 'refunds', 'payouts']);
 }
 
 /** Mutation hook for the approve/reject/retry payout actions — caller calls `refetch()` on the queue hook after a successful action. */

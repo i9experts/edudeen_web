@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { MessageCircleQuestion, EyeOff, Eye } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { useLiveRefresh } from '@/hooks/useLiveRefresh';
 import { useStoreWorkspace, StorePageHeader } from '@/components/layouts/StoreLayout';
 import { Card, Button, Textarea, SkeletonBox, EmptyState } from '@/components/comman/ui';
 import { TabBar } from '@/components/comman/ui/TabBar';
@@ -83,6 +84,13 @@ export function StoreQuestions() {
       .then(res => { setRows(res.data.questions); setUnanswered(res.data.unanswered); })
       .catch(() => setRows([]));
   }, [storeId, filter]);
+
+  // A buyer asked a new question: quiet re-read (a failed re-read keeps the list on screen).
+  useLiveRefresh(['product-questions'], () => {
+    apiGetSellerQuestions(storeId, filter)
+      .then(res => { setRows(res.data.questions); setUnanswered(res.data.unanswered); })
+      .catch(() => {});
+  }, !!storeId);
 
   return (
     <>

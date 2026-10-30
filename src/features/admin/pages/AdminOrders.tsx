@@ -1,5 +1,6 @@
 import { safeHttpUrl } from '@/utils/safeRedirect';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useLiveRefresh } from '@/hooks/useLiveRefresh';
 import { StaffNotes } from '@/features/admin/components/StaffNotes';
 import { ExportCsvButton } from '@/features/admin/components/ExportCsvButton';
 import { useSearchParams } from 'react-router-dom';
@@ -201,14 +202,19 @@ export function AdminOrders() {
     limit: PER_PAGE,
   }), [search, status, paymentStatus, paymentType, from, to, page]);
 
+  const quietRef = useRef(false);
+  useLiveRefresh(['orders'], () => { quietRef.current = true; setReload(r => r + 1); });
+
   useEffect(() => {
     let alive = true;
-    setLoading(true); setError('');
+    const quiet = quietRef.current;
+    quietRef.current = false;
+    if (!quiet) { setLoading(true); setError(''); }
     // Small delay so typing in the search box doesn't fire a request per key.
     const t = setTimeout(() => {
       apiAdminListOrders(query)
         .then(res => { if (alive) { setRows(res.data.items); setTotal(res.data.total); } })
-        .catch(err => { if (alive) setError(err instanceof Error ? err.message : 'Could not load orders.'); })
+        .catch(err => { if (alive && !quiet) setError(err instanceof Error ? err.message : 'Could not load orders.'); })
         .finally(() => { if (alive) setLoading(false); });
     }, 250);
     return () => { alive = false; clearTimeout(t); };

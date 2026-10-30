@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useLiveRefresh } from '@/hooks/useLiveRefresh';
 import { formatMoney } from '@/utils/currency';
 import { useSearchParams } from 'react-router-dom';
 import { ListingReviewModal } from '@/features/admin/components/ListingReviewModal';
@@ -77,6 +78,8 @@ export function AdminMarketplace() {
   const [removeReason, setRemoveReason] = useState('');
 
   function refreshAll() { refetchStats(); refetch(); loadPending(); }
+  // A seller submitted / edited a listing, an order changed stock...: the queue (useAnalyticsQuery, quiet) and the pending badge update by themselves.
+  useLiveRefresh(['catalog', 'marketplace'], loadPending);
 
   // Bulk publish: each approval is its own atomic call, so one failure never blocks the rest.
   const [selected, setSelected] = useState<Set<string | number>>(new Set());

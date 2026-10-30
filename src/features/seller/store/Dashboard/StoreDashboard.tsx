@@ -1,4 +1,6 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import { useLiveRefresh } from '@/hooks/useLiveRefresh';
+import { invalidateCache } from '@/api/services/requestCache';
 import { useNavigate } from 'react-router-dom';
 import {
   TrendingUp, TrendingDown, ShoppingBag, Package,
@@ -45,12 +47,16 @@ function useStoreDashboardMetrics(storeId: string) {
   const [reloadKey, setReloadKey] = useState(0);
 
   const refetch = useCallback(() => setReloadKey(k => k + 1), []);
+  // New order / sale / stock change: the numbers refresh quietly (no skeleton).
+  const quietRef = useRef(false);
+  useLiveRefresh(['orders', 'catalog', 'finance', 'reviews'], () => { invalidateCache(`dash-summary:${storeId}`); quietRef.current = true; setReloadKey(k => k + 1); }, !!storeId);
 
   useEffect(() => {
     if (!storeId) return;
     let cancelled = false;
-    setLoading(true);
-    setError('');
+    const quiet = quietRef.current;
+    quietRef.current = false;
+    if (!quiet) { setLoading(true); setError(''); }
     // One aggregate call (was five parallel requests).
     apiStoreDashboardSummary(storeId)
       .then(res => {
@@ -68,7 +74,7 @@ function useStoreDashboardMetrics(storeId: string) {
           premium: d.premium,
         });
       })
-      .catch(err => { if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load store metrics.'); })
+      .catch(err => { if (!cancelled && !quiet) setError(err instanceof Error ? err.message : 'Failed to load store metrics.'); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, [storeId, reloadKey]);

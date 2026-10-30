@@ -6,6 +6,7 @@ import { statusLabel } from '@/constants/statusLabels';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useStoreCampaigns } from '@/hooks/store/useStoreCampaigns';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { useLiveRefresh } from '@/hooks/useLiveRefresh';
 import { Tag as TagIcon, Mail, ShoppingCart, Handshake, Gift, Megaphone, Building2, User, Image as ImageIcon, Pause, Play, Trash2, Plus, Star, Bell, ArrowUp, ArrowDown, Rocket, X, Percent, type LucideIcon } from 'lucide-react';
 import { StorePageHeader, useStoreWorkspace } from '@/components/layouts/StoreLayout';
 import { EmptyState, SkeletonBox, Modal, Button, Input, FileDropSelect } from '@/components/comman/ui';
@@ -578,6 +579,17 @@ export function StoreMarketing() {
     refetchPromotionRequests();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storeId, tab]);
+
+  // Admin approved / rejected a banner or promotion request, a schedule went live or ended: quiet re-read
+  // (a failed re-read keeps the lists on screen; no skeleton).
+  useLiveRefresh(['promotions', 'banners', 'store', 'marketing'], () => {
+    if (!storeId) return;
+    if (tab === 'banners') apiGetStoreBanners(storeId).then(res => setStoreBanners(res.data ?? [])).catch(() => {});
+    if (tab === 'promotions') {
+      apiListPromotionRequests(storeId).then(res => setPromotionRequests(res.data ?? [])).catch(() => {});
+      apiGetSellerPromotionAnalytics(storeId).then(res => setPromotionAnalytics(res.data)).catch(() => {});
+    }
+  }, !!storeId && (tab === 'banners' || tab === 'promotions'));
 
   const [promotionAnalytics, setPromotionAnalytics] = useState<PromotionAnalyticsData | null>(null);
 

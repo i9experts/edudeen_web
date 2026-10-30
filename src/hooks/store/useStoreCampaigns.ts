@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useLiveRefresh } from '@/hooks/useLiveRefresh';
 import { apiGetJoinableCampaigns, apiJoinCampaign, apiLeaveCampaign, type JoinableCampaign } from '@/api/services/marketing';
 
 // Admin-created sale campaigns as seen by one store. Shared by the store
@@ -48,6 +49,12 @@ export function useStoreCampaigns(storeId: string | undefined) {
     window.addEventListener(CHANGED, onChanged);
     return () => { cancelled = true; window.removeEventListener(CHANGED, onChanged); };
   }, [storeId]);
+
+  // Admin started / edited / ended a sale, or products were added to one: re-read quietly (a failure keeps what is shown).
+  useLiveRefresh(['campaigns', 'marketing', 'catalog'], () => {
+    if (!storeId) return;
+    load(storeId, true).then(data => { setCampaigns(data); setError(''); }).catch(() => {});
+  }, !!storeId);
 
   const toggle = useCallback(async (campaign: JoinableCampaign) => {
     if (!storeId) return;

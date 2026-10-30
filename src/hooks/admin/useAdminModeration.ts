@@ -10,11 +10,11 @@ import {
 } from '@/api/services/moderation/adminModeration';
 
 export function useModerationStats() {
-  return useAnalyticsQuery(() => apiGetModerationStats(), {});
+  return useAnalyticsQuery(() => apiGetModerationStats(), {}, ['reviews', 'messaging', 'messages']);
 }
 
 export function useModerationQueue(query: ModerationQuery) {
-  return useAnalyticsQuery(apiGetModerationQueue, query);
+  return useAnalyticsQuery(apiGetModerationQueue, query, ['reviews', 'messaging', 'messages']);
 }
 
 export function useModerationActions() {

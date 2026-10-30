@@ -5,6 +5,7 @@ import { apiAdminPremiumStats } from '@/api/services/adminPremium';
 import { apiAdminChatStats } from '@/api/services/adminChat';
 import { apiGetPendingCounts } from '@/api/services/adminExports';
 import { navAllowed } from '@/hooks/admin/useAdminAccess';
+import { subscribeLive } from '@/api/realtime';
 
 // ONE shared poller for the sidebar badges: a request per badge at most every 60 s,
 // not on every navigation, and paused while the tab is hidden.
@@ -51,14 +52,21 @@ async function refresh(force = false) {
   }
 }
 
+let unsubLive: (() => void) | null = null;
 function start() {
   if (timer) return;
   void refresh(true);
   timer = setInterval(() => { void refresh(); }, REFRESH_MS);
   document.addEventListener('visibilitychange', onVisible);
+  // A new order / payment proof / payout request / listing / chat arrived: badges update at once (the 60 s poll stays as a backstop).
+  unsubLive = subscribeLive(
+    ['orders', 'finance', 'catalog', 'marketplace', 'payment', 'manual-payments', 'refunds', 'promotions', 'premium', 'chat', 'chatbot', 'staff', 'collaboration', 'contact', 'returns'],
+    () => { void refresh(true); },
+  );
 }
 function stop() {
   if (timer) { clearInterval(timer); timer = null; }
+  if (unsubLive) { unsubLive(); unsubLive = null; }
   document.removeEventListener('visibilitychange', onVisible);
 }
 function onVisible() { if (!document.hidden) void refresh(); }

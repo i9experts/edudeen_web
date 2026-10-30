@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { apiGetCategoryTree, type CategoryNode } from '@/api/services/categories';
+import { subscribeLive } from '@/api/realtime';
 
 // The marketplace category tree changes rarely — fetched once per page load
 // and shared by the breadcrumb, category pages and search filters.
@@ -24,6 +25,9 @@ export function refreshCategoryTree(): Promise<void> {
   inflight = null;
   return loadTree().then(t => { listeners.forEach(l => l(t)); }).catch(() => {});
 }
+
+// Categories added / renamed / reordered / given new products: menus and tiles update on their own.
+if (typeof window !== 'undefined') subscribeLive(['categories', 'catalog'], () => { if (listeners.size) void refreshCategoryTree(); });
 
 export interface CategoryEntry {
   node: CategoryNode;

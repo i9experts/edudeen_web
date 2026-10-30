@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useLiveRefresh } from '@/hooks/useLiveRefresh';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useStoreWorkspace, StorePageHeader } from '@/components/layouts/StoreLayout';
 import {
@@ -44,10 +45,15 @@ export function StoreReviews() {
   const [deletingReview, setDeletingReview] = useState<StoreReviewEntry | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
 
+  // A buyer left / edited a review: it shows up here by itself (quiet re-read).
+  const quietRef = useRef(false);
+  useLiveRefresh(['reviews', 'orders'], () => { quietRef.current = true; setRefreshKey(k => k + 1); });
+
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
-    setError('');
+    const quiet = quietRef.current;
+    quietRef.current = false;
+    if (!quiet) { setLoading(true); setError(''); }
     apiGetStoreReviews(storeId, {
       page,
       rating: ratingFilter ? parseInt(ratingFilter) : undefined,
@@ -60,7 +66,7 @@ export function StoreReviews() {
         setStats(res.data.stats);
         setTotal(res.data.pagination.total);
       })
-      .catch(err => { if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load reviews.'); })
+      .catch(err => { if (!cancelled && !quiet) setError(err instanceof Error ? err.message : 'Failed to load reviews.'); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, [storeId, page, ratingFilter, sortFilter, refreshKey]);

@@ -18,7 +18,7 @@ import {
 } from '@/api/services/marketing/adminMarketing';
 
 export function useCampaigns(status?: CampaignStatus) {
-  return useAnalyticsQuery((p: { status?: CampaignStatus }) => apiListCampaigns(p.status), { status });
+  return useAnalyticsQuery((p: { status?: CampaignStatus }) => apiListCampaigns(p.status), { status }, ['campaigns', 'marketing']);
 }
 
 export function useCampaignActions() {
@@ -85,7 +85,7 @@ export function useCampaignActions() {
 }
 
 export function usePlatformCoupons() {
-  return useAnalyticsQuery(() => apiListPlatformCoupons(), {});
+  return useAnalyticsQuery(() => apiListPlatformCoupons(), {}, ['campaigns', 'marketing']);
 }
 
 export function usePlatformCouponActions() {

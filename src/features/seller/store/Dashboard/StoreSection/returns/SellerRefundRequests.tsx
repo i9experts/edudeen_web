@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useLiveRefresh } from '@/hooks/useLiveRefresh';
 import { clsx } from 'clsx';
 import { statusLabel } from '@/constants/statusLabels';
 import { Check, X, Loader2 } from 'lucide-react';
@@ -35,6 +36,8 @@ export function SellerRefundRequests({ storeId }: { storeId: string }) {
       .catch(err => { setError(err instanceof Error ? err.message : 'Could not load refund requests.'); setRows([]); });
   }, [storeId, page]);
   useEffect(() => { load(); }, [load]);
+  // A buyer filed a refund request: it shows up here by itself.
+  useLiveRefresh(['refunds', 'returns', 'orders'], load);
 
   const approve = async (r: RefundRequest) => {
     if (!window.confirm('Approve this refund? The buyer is refunded for these items.')) return;

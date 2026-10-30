@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { FileSpreadsheet, FileText, Phone } from 'lucide-react';
 import { clsx } from 'clsx';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { useLiveRefresh } from '@/hooks/useLiveRefresh';
 import { useStoreWorkspace, StorePageHeader } from '@/components/layouts/StoreLayout';
 import { Card, Button, Input, Textarea, Modal, SkeletonBox, EmptyState } from '@/components/comman/ui';
 import { TabBar } from '@/components/comman/ui/TabBar';
@@ -81,6 +82,12 @@ export function StoreQuotes() {
     .then(res => { setRows(res.data.quotes); setPending(res.data.pending); })
     .catch(() => setRows([]));
   useEffect(() => { setRows(null); void load(); }, [storeId, filter]); // eslint-disable-line react-hooks/exhaustive-deps
+  // A school asked for / accepted a quote: quiet re-read (a failed re-read keeps the list on screen).
+  useLiveRefresh(['quotes', 'orders'], () => {
+    apiGetSellerQuotes(storeId, filter || undefined)
+      .then(res => { setRows(res.data.quotes); setPending(res.data.pending); })
+      .catch(() => {});
+  }, !!storeId);
 
   const decline = async (q: QuoteRequest) => {
     const reason = window.prompt('Tell the buyer why (optional) — e.g. "Can only supply up to 50 copies"', '');

@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useLiveRefresh } from '@/hooks/useLiveRefresh';
 import { formatPrice } from '@/utils/formatPrice';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -129,10 +130,16 @@ export function StoreReturnList() {
   const q = useDebouncedValue(search.trim(), 300);
   useEffect(() => { setPage(1); }, [q, status]);
 
+  // Buyer asked for a return / refund: it appears here by itself (quiet re-read).
+  const quietRef = useRef(false);
+  useLiveRefresh(['returns', 'refunds', 'orders'], () => { quietRef.current = true; setRefreshKey(k => k + 1); });
+
   useEffect(() => {
     if (!storeId) return;
     let cancelled = false;
-    setLoading(true);
+    const quiet = quietRef.current;
+    quietRef.current = false;
+    if (!quiet) setLoading(true);
     apiGetSellerReturns({ storeId, status: status || undefined, page, q: q || undefined })
       .then(res => {
         if (cancelled) return;
@@ -140,7 +147,7 @@ export function StoreReturnList() {
         setStats(res.data.stats);
         setTotal(res.data.pagination?.total ?? 0);
       })
-      .catch((err: unknown) => { if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load returns.'); })
+      .catch((err: unknown) => { if (!cancelled && !quiet) setError(err instanceof Error ? err.message : 'Failed to load returns.'); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, [storeId, status, refreshKey, page, q]);

@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useLiveRefresh } from '@/hooks/useLiveRefresh';
 import { formatPrice } from '@/utils/formatPrice';
 import { clsx } from 'clsx';
 import { Download, Plus, X, Star, AlertTriangle, CalendarCheck } from 'lucide-react';
@@ -314,9 +315,12 @@ export function StoreFinance() {
   // separately below, once the active wallet is actually known — a
   // wallet-scoped fetch fired before we know which currency is selected
   // would silently always return the USD one (the backend's own default).
+  const quietRef = useRef(false);
   const loadCore = useCallback(() => {
     if (!storeId) return;
-    setLoading(true); setError('');
+    const quiet = quietRef.current;
+    quietRef.current = false;
+    if (!quiet) { setLoading(true); setError(''); }
     Promise.all([
       apiGetFinanceDashboard(storeId),
       apiGetPayoutMethods(storeId),
@@ -326,7 +330,7 @@ export function StoreFinance() {
         setActiveCurrency(prev => prev && (d.wallets ?? []).some(w => w.currency === prev) ? prev : (d.wallets?.find(w => w.currency === baseCurrency)?.currency ?? d.wallets?.[0]?.currency ?? null));
         setMethods(m ?? []);
       })
-      .catch(err => setError(err instanceof Error ? err.message : 'Failed to load finance data.'))
+      .catch(err => { if (!quiet) setError(err instanceof Error ? err.message : 'Failed to load finance data.'); })
       .finally(() => setLoading(false));
   }, [storeId, baseCurrency]);
 
@@ -347,6 +351,8 @@ export function StoreFinance() {
   useEffect(loadCore, [loadCore]);
   useEffect(loadWalletScoped, [loadWalletScoped]);
   useEffect(loadTransactions, [loadTransactions]);
+  // A sale was credited / a payout was approved or sent: balances, payouts and transactions update by themselves.
+  useLiveRefresh(['finance', 'orders', 'payouts'], () => { quietRef.current = true; loadCore(); loadWalletScoped(); loadTransactions(); }, !!storeId);
 
   async function handleExport() {
     setExporting(true);

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useLiveRefresh } from '@/hooks/useLiveRefresh';
 import { useAiStudioCredits } from '@/hooks/seller/useAiStudio';
 import { currencySymbol } from '@/utils/currency';
 import { statusLabel } from '@/constants/statusLabels';
@@ -304,6 +305,8 @@ function DomainWhiteLabelCard({ storeId, store, refetch }: {
   useEffect(() => {
     apiGetStoreEntitlements(storeId).then(res => setEntitlements(res.data)).catch(() => {});
   }, [storeId]);
+  // Plan changed (admin gift / expiry / upgrade): only the read-only plan gating refreshes; the form fields below are never touched.
+  useLiveRefresh(['plans', 'subscriptions'], () => { apiGetStoreEntitlements(storeId).then(res => setEntitlements(res.data)).catch(() => {}); }, !!storeId);
 
   useEffect(() => { setDomain(store?.customDomain ?? ''); setVerifyResult(null); }, [store?.customDomain]);
 

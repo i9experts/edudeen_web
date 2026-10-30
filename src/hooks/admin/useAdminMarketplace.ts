@@ -19,11 +19,11 @@ import {
 } from '@/api/services/marketplace/adminMarketplace';
 
 export function useMarketplaceStats() {
-  return useAnalyticsQuery(() => apiGetMarketplaceStats(), {});
+  return useAnalyticsQuery(() => apiGetMarketplaceStats(), {}, ['catalog', 'marketplace', 'users']);
 }
 
 export function useMarketplaceListings(query: MarketplaceListingQuery) {
-  return useAnalyticsQuery(apiGetMarketplaceListings, query);
+  return useAnalyticsQuery(apiGetMarketplaceListings, query, ['catalog', 'marketplace', 'users']);
 }
 
 export function useMarketplaceListingActions() {
@@ -104,7 +104,7 @@ export function useMarketplaceListingActions() {
 }
 
 export function useLeads(query: LeadsQuery) {
-  return useAnalyticsQuery(apiGetLeads, query);
+  return useAnalyticsQuery(apiGetLeads, query, ['catalog', 'marketplace', 'users', 'store', 'leads']);
 }
 
 /** Lazily fetched — only call `refetch` once a lead's detail view (e.g. a

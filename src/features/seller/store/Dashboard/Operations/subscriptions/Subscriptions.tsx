@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
+import { useLiveRefresh } from '@/hooks/useLiveRefresh';
 import { useUsdMoney } from '@/hooks/useUsdMoney';
 import { statusLabel } from '@/constants/statusLabels';
 import {
@@ -296,11 +297,15 @@ function SubscriberDetailModal({ storeId, subId, onClose }: { storeId: string; s
   const [confirmingRefund, setConfirmingRefund] = useState<SubscriptionInvoice | null>(null);
   const [refundError, setRefundError] = useState('');
 
+  const quietRef = useRef(false);
   const load = useCallback(() => {
-    setLoading(true);
-    apiGetStoreSubscriberById(storeId, subId).then(res => setData(res.data)).finally(() => setLoading(false));
+    const quiet = quietRef.current;
+    quietRef.current = false;
+    if (!quiet) setLoading(true);
+    apiGetStoreSubscriberById(storeId, subId).then(res => setData(res.data)).catch(() => {}).finally(() => setLoading(false));
   }, [storeId, subId]);
   useEffect(load, [load]);
+  useLiveRefresh(['subscriptions', 'orders'], () => { quietRef.current = true; load(); });
 
   async function confirmRefund() {
     if (!confirmingRefund) return;
@@ -411,10 +416,12 @@ export function StoreSubscriptions() {
   const [viewingSubId, setViewingSubId] = useState<string | null>(null);
   const [advanced, setAdvanced] = useState<AdvancedSellerAnalytics | null>(null);
 
+  const quietRef = useRef(false);
   const load = useCallback(() => {
     if (!storeId) return;
-    setLoading(true);
-    setError('');
+    const quiet = quietRef.current;
+    quietRef.current = false;
+    if (!quiet) { setLoading(true); setError(''); }
     Promise.all([
       apiGetSubscriptionDashboard(storeId),
       apiListPlans(storeId),
@@ -426,11 +433,13 @@ export function StoreSubscriptions() {
         setSubs(subsRes.data.subscriptions ?? []);
         setSubsTotal(subsRes.data.pagination.total);
       })
-      .catch(err => setError(err instanceof Error ? err.message : 'Failed to load subscriptions.'))
+      .catch(err => { if (!quiet) setError(err instanceof Error ? err.message : 'Failed to load subscriptions.'); })
       .finally(() => setLoading(false));
   }, [storeId, page, statusTab]);
 
   useEffect(load, [load]);
+  // A buyer subscribed / renewed / cancelled: dashboard, plans and subscribers update quietly (a failure keeps what is shown).
+  useLiveRefresh(['subscriptions', 'orders', 'plans'], () => { quietRef.current = true; load(); }, !!storeId);
 
   useEffect(() => {
     if (!storeId) return;

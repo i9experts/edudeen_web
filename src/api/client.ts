@@ -7,6 +7,7 @@ import axios, { type AxiosResponse, type InternalAxiosRequestConfig } from 'axio
 import { getAuthCookie, setAuthCookie, deleteAuthCookie } from '@/utils/authCookie';
 import { API_BASE_URL, API_URL_MISSING } from './apiBase';
 import { promptReauth, rememberedReauth, forgetReauth } from './reauthPrompt';
+import { noteLocalWrite } from './realtime';
 
 // Endpoints where a 401 means "this specific attempt was rejected" (wrong
 // password, invalid/expired OTP, invalid reset token, invalid social token)
@@ -125,6 +126,7 @@ client.interceptors.response.use(
         status: res.status,
       });
     }
+    try { noteLocalWrite(res.config?.url, res.config?.method); } catch { /* ignore */ }
     // A staff member's sensitive action was turned into an approval request instead of running.
     try {
       const d = res.data as { approvalRequired?: boolean; message?: string };

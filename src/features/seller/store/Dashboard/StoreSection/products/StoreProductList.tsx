@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useLiveRefresh } from '@/hooks/useLiveRefresh';
 import { formatPrice } from '@/utils/formatPrice';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -78,9 +79,15 @@ export default function StoreProductList() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search]);
 
+  // Admin approved / removed a listing, an order changed stock, a sale started: the list updates quietly.
+  const quietRef = useRef(false);
+  useLiveRefresh(['catalog', 'orders', 'campaigns'], () => { quietRef.current = true; setRefreshKey(k => k + 1); });
+
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
+    const quiet = quietRef.current;
+    quietRef.current = false;
+    if (!quiet) setLoading(true);
     apiGetStoreInventory(storeId, page, LIMIT, { q: debouncedSearch })
       .then(res => {
         if (cancelled) return;
@@ -89,7 +96,7 @@ export default function StoreProductList() {
         setTotalProducts(res.data.pagination.totalProducts);
       })
       .catch((err: unknown) => {
-        if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load products.');
+        if (!cancelled && !quiet) setError(err instanceof Error ? err.message : 'Failed to load products.');
       })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useLiveRefresh } from '@/hooks/useLiveRefresh';
 import {
   apiGetAdminBanners, apiGetBannerCount, SELECTABLE_PROMOTION_PLACEMENTS, type Banner, type BannerCountData,
 } from '@/api/services/banner';
@@ -8,15 +9,18 @@ export function useAdminBanners() {
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState('');
 
-  const refetch = useCallback(() => {
-    setLoading(true);
+  const load = useCallback((quiet: boolean) => {
+    if (!quiet) setLoading(true);
     return apiGetAdminBanners()
       .then(res => setBanners(res.data ?? []))
-      .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Failed to load banners.'))
-      .finally(() => setLoading(false));
+      .catch((err: unknown) => { if (!quiet) setError(err instanceof Error ? err.message : 'Failed to load banners.'); })
+      .finally(() => { if (!quiet) setLoading(false); });
   }, []);
+  const refetch = useCallback(() => load(false), [load]);
 
   useEffect(() => { refetch(); }, [refetch]);
+  // A schedule went live / expired, a seller promotion started: the list updates by itself (list only; open forms are untouched).
+  useLiveRefresh(['banners', 'promotions'], () => { void load(true); });
 
   return { banners, loading, error, refetch };
 }

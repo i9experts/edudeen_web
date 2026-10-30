@@ -4,6 +4,7 @@ import { ProductCoverFallback } from '@/components/comman/marketplace/ProductCov
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, FileText, Truck, Package, Download, MapPin, CreditCard, MessageSquare, RotateCcw, Ban } from 'lucide-react';
 import { Card, SkeletonBox, Button, StatusBadge } from '@/components/comman/ui';
+import { useLiveRefresh } from '@/hooks/useLiveRefresh';
 import { apiGetOrderById, apiCancelOrder, type OrderDetail, type OrderLineItem } from '@/api/services/orders';
 import { apiStartConversation } from '@/api/services/messaging';
 import { apiAddToCart } from '@/api/services/cart';
@@ -44,6 +45,9 @@ export function OrderDetailPage() {
   const [busy, setBusy] = useState<'contact' | 'again' | null>(null);
   const toast = useToast();
   const navigate = useNavigate();
+
+  // Seller shipped / marked delivered / refunded: the tracker and status update without a refresh.
+  useLiveRefresh(['orders'], () => setReloadKey(k => k + 1));
 
   useEffect(() => {
     let alive = true;

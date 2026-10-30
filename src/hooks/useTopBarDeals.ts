@@ -3,6 +3,7 @@ import { apiGetPublicActiveCampaigns, type PublicCampaign } from '@/api/services
 import { apiGetAllProducts, type MarketplaceProduct } from '@/api/services/marketplace';
 import { productSalePct, platformSalePct, maxSalePct } from '@/utils/saleMath';
 import { timeLeftText } from '@/utils/countdown';
+import { subscribeLive } from '@/api/realtime';
 
 export interface TopBarFlashDeal {
   product: MarketplaceProduct;
@@ -77,8 +78,11 @@ export function useTopBarDeals(): TopBarDeals | null {
     // An admin edited a campaign inline: drop the cache and refetch so the top strip updates at once.
     const onChanged = () => { cache = null; load().then(d => { if (!cancelled) setData(d); }); };
     window.addEventListener('edudeen:campaigns-changed', onChanged);
+    // Any campaign / price / product change anywhere: re-read the live sales.
+    const unsubLive = subscribeLive(['campaigns', 'catalog'], onChanged);
     return () => {
       cancelled = true;
+      unsubLive();
       window.removeEventListener('edudeen:campaigns-changed', onChanged);
       window.removeEventListener('edudeen:auth-login', onAuth);
       window.removeEventListener('edudeen:auth-logout', onAuth);

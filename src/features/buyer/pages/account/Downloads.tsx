@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useLiveRefresh } from '@/hooks/useLiveRefresh';
 import { Link, useNavigate } from 'react-router-dom';
 import { Download, Clock, Star, Search, LibraryBig, PlayCircle, Mail, Loader2, Ban, CalendarX2 } from 'lucide-react';
 import { clsx } from 'clsx';
@@ -121,13 +122,19 @@ export function Downloads() {
   const [tab, setTab] = useState<FormatTab>('all');
   const [courses, setCourses] = useState<Map<string, MyCourse>>(new Map());
 
+  // A purchase was paid / approved / refunded, or a seller changed a file: the library updates quietly (no skeleton).
+  const quietRef = useRef(false);
+  useLiveRefresh(['orders', 'catalog'], () => { quietRef.current = true; setReload(r => r + 1); });
+
   useEffect(() => {
     let alive = true;
-    setLoading(true); setError('');
+    const quiet = quietRef.current;
+    quietRef.current = false;
+    if (!quiet) { setLoading(true); setError(''); }
     apiGetMyLibrary()
-      .then(res => { if (alive) setItems(res.data.items ?? []); })
+      .then(res => { if (alive) { setItems(res.data.items ?? []); if (quiet) setError(''); } })
       .catch(err => {
-        if (!alive) return;
+        if (!alive || quiet) return;
         const msg = err instanceof Error ? err.message : '';
         // A seller / admin session that the API still refuses: say what to do instead of a raw role error.
         setError(/role|denied|forbidden|403/i.test(msg) ? 'Please sign in with your buyer account to see your purchases.' : msg || 'Could not load your library.');

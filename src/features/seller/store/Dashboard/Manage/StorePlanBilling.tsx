@@ -1,4 +1,5 @@
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
+import { useLiveRefresh } from '@/hooks/useLiveRefresh';
 import { statusLabel } from '@/constants/statusLabels';
 import { formatPrice } from '@/utils/formatPrice';
 import {
@@ -109,17 +110,22 @@ export default function StorePlanBilling() {
       ? `${ADDON_LABELS[type]} (+${creditsPerUnit.toLocaleString()})`
       : ADDON_LABELS[type];
 
+  const quietRef = useRef(false);
   const load = useCallback(() => {
     if (!storeId) return;
-    setLoading(true); setError('');
+    const quiet = quietRef.current;
+    quietRef.current = false;
+    if (!quiet) { setLoading(true); setError(''); }
     Promise.all([apiBrowsePlatformPlans(), apiGetStorePlatformPlan(storeId), apiGetStoreEntitlements(storeId), apiListStoreAddons(storeId), apiGetStoreInvoices(storeId)])
       .then(([plansRes, curRes, entRes, addonRes, invRes]) => {
         setPlans(plansRes.data); setCurrent(curRes.data); setEntitlements(entRes.data); setAddons(addonRes.data); setInvoices(invRes.data.invoices);
       })
-      .catch(err => setError(err instanceof Error ? err.message : 'Failed to load plan & billing.'))
+      .catch(err => { if (!quiet) setError(err instanceof Error ? err.message : 'Failed to load plan & billing.'); })
       .finally(() => setLoading(false));
   }, [storeId]);
   useEffect(load, [load]);
+  // Admin changed plans / granted free access, a renewal or invoice landed: quiet re-read (a failure keeps what is shown).
+  useLiveRefresh(['plans', 'subscriptions', 'finance'], () => { quietRef.current = true; load(); }, !!storeId);
 
   // ── Confirm-plan-change modal — fetch the exact proration preview the moment it opens ──
   useEffect(() => {

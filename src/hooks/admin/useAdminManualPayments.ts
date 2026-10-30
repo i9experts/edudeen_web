@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useLiveRefresh } from '@/hooks/useLiveRefresh';
 import {
   apiAdminListManualPayments, apiAdminApproveManualPayment, apiAdminRejectManualPayment,
   type AdminManualPaymentProof, type ManualPaymentProofStatus,
@@ -9,15 +10,18 @@ export function useAdminManualPayments(status?: ManualPaymentProofStatus) {
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState('');
 
-  const refetch = useCallback(() => {
-    setLoading(true);
+  const load = useCallback((quiet: boolean) => {
+    if (!quiet) setLoading(true);
     return apiAdminListManualPayments(status)
       .then(res => setProofs(res.data.proofs ?? []))
-      .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Failed to load manual payments.'))
-      .finally(() => setLoading(false));
+      .catch((err: unknown) => { if (!quiet) setError(err instanceof Error ? err.message : 'Failed to load manual payments.'); })
+      .finally(() => { if (!quiet) setLoading(false); });
   }, [status]);
+  const refetch = useCallback(() => load(false), [load]);
 
   useEffect(() => { refetch(); }, [refetch]);
+  // A buyer just uploaded a payment proof: it shows up in the queue straight away.
+  useLiveRefresh(['manual-payments', 'payment', 'orders'], () => { void load(true); });
 
   return { proofs, loading, error, refetch };
 }

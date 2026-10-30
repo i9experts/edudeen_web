@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useLiveRefresh } from '@/hooks/useLiveRefresh';
 import { apiGetAllProducts, type MarketplaceProduct, type MarketplaceSortBy } from '@/api/services/marketplace';
 
 export function useProductsByCategory(
@@ -21,11 +22,16 @@ export function useProductsByCategory(
   const [reloadKey, setReloadKey] = useState(0);
 
   const refetch = useCallback(() => setReloadKey(k => k + 1), []);
+  // Live updates re-read quietly: the grid stays on screen (no skeleton flash) and swaps when the new data lands.
+  const quietRef = useRef(false);
+  useLiveRefresh(['catalog', 'campaigns', 'reviews'], () => { quietRef.current = true; setReloadKey(k => k + 1); }, enabled);
 
   useEffect(() => {
     if (!enabled) { setLoading(true); return; }
     let cancelled = false;
-    setLoading(true);
+    const quiet = quietRef.current;
+    quietRef.current = false;
+    if (!quiet) setLoading(true);
     setError('');
     apiGetAllProducts(page, limit, categoryId, productType, educationLevel, normalizedCustomLevel, campaignId, minPrice, maxPrice, minRating, sortBy, format)
       .then(res => {
@@ -35,7 +41,7 @@ export function useProductsByCategory(
         }
       })
       .catch((err: unknown) => {
-        if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load products.');
+        if (!cancelled && !quiet) setError(err instanceof Error ? err.message : 'Failed to load products.');
       })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };

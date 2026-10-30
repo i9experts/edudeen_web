@@ -4,6 +4,7 @@ import { EDUCATION_LEVELS } from '@/api/services/product';
 import { childClassLabel } from '@/constants/classLevels';
 import { isBuyerSession } from '@/hooks/auth/useIsBuyer';
 import { TokenStorage } from '@/api/services/auth';
+import { subscribeLive, wroteRecently } from '@/api/realtime';
 
 // One shared store for "My children" + the "Shopping for" selection, so the
 // switcher, Home rail, Browse and Account pages all agree without a provider.
@@ -42,6 +43,17 @@ export function refreshChildren(): Promise<void> {
     .catch(err => setState({ error: err instanceof Error ? err.message : 'Could not load your children.', loaded: true, loading: false }))
     .finally(() => { inflight = null; });
   return inflight;
+}
+
+// Children added/edited/removed on another device or tab: one quiet re-read for every consumer (own write's echo skipped).
+if (typeof window !== 'undefined') {
+  subscribeLive(['children'], () => {
+    if (!state.loaded || inflight || !isBuyerSession() || wroteRecently('children')) return;
+    inflight = apiGetChildren()
+      .then(res => setState({ children: res.data ?? [] }))
+      .catch(() => { /* keep the current list */ })
+      .finally(() => { inflight = null; });
+  });
 }
 
 export function selectChild(id: string) {

@@ -2,6 +2,7 @@ import { useEffect, useSyncExternalStore } from 'react';
 import { apiGetPremiumMe, type PremiumMe } from '@/api/services/premium';
 import { isBuyerSession } from '@/hooks/auth/useIsBuyer';
 import { TokenStorage } from '@/api/services/auth';
+import { subscribeLive, wroteRecently } from '@/api/realtime';
 
 // One shared store for the buyer's Edudeen Premium status (GET /api/premium/me), so cards, cart,
 // checkout, account and the header all agree without a provider. Skipped for guests / sellers / admins.
@@ -28,6 +29,18 @@ export function refreshPremium(): Promise<void> {
     .catch(err => setState({ error: err instanceof Error ? err.message : 'Could not load your Premium status.', loaded: true, loading: false }))
     .finally(() => { inflight = null; });
   return inflight;
+}
+
+// Admin approved / revoked / expired a membership, plans or prices changed: ONE quiet re-read for every consumer.
+// Only once the status has been loaded; our own write's echo is skipped; a failure keeps what is on screen.
+if (typeof window !== 'undefined') {
+  subscribeLive(['premium', 'plans', 'config'], () => {
+    if (!state.loaded || inflight || !isBuyerSession() || wroteRecently('premium')) return;
+    inflight = apiGetPremiumMe()
+      .then(res => setState({ me: res.data ?? null }))
+      .catch(() => { /* keep the current status */ })
+      .finally(() => { inflight = null; });
+  });
 }
 
 if (typeof window !== 'undefined') {

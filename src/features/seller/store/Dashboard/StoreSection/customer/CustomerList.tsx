@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useLiveRefresh } from '@/hooks/useLiveRefresh';
 import { Users, ShoppingBag, DollarSign } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useStoreWorkspace, StorePageHeader } from '@/components/layouts/StoreLayout';
@@ -52,11 +53,17 @@ export default function StoreCustomerList() {
   const debouncedSearch = useDebouncedValue(search.trim(), 300);
   useEffect(() => { setPage(1); }, [debouncedSearch]);
 
+  // A new buyer ordered / followed: the list and totals refresh by themselves (quiet re-read).
+  const [liveKey, setLiveKey] = useState(0);
+  const quietRef = useRef(false);
+  useLiveRefresh(['orders', 'customers'], () => { quietRef.current = true; setLiveKey(k => k + 1); }, !!storeId && activeTab === 'customers');
+
   useEffect(() => {
     if (!storeId || activeTab !== 'customers') return;
     let cancelled = false;
-    setLoading(true);
-    setError('');
+    const quiet = quietRef.current;
+    quietRef.current = false;
+    if (!quiet) { setLoading(true); setError(''); }
     apiGetStoreCustomers(storeId, page, PER_PAGE, debouncedSearch)
       .then(res => {
         if (cancelled) return;
@@ -66,10 +73,10 @@ export default function StoreCustomerList() {
         if (!debouncedSearch) setStoreTotal(res.data.pagination.total);
         setSummary(res.data.summary);
       })
-      .catch(err => { if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load customers.'); })
+      .catch(err => { if (!cancelled && !quiet) setError(err instanceof Error ? err.message : 'Failed to load customers.'); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [storeId, page, activeTab, debouncedSearch]);
+  }, [storeId, page, activeTab, debouncedSearch, liveKey]);
 
   function select(c: StoreCustomer) {
     setSel(c);

@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useLiveRefresh } from '@/hooks/useLiveRefresh';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Package, Truck, CheckCircle2, Clock, XCircle,
@@ -506,9 +507,15 @@ export function OrdersTab() {
 
   const refetch = useCallback(() => { setPage(1); setRefreshKey(k => k + 1); }, []);
 
+  // Order placed / paid / shipped / delivered anywhere: re-read quietly (list stays on screen, no skeleton).
+  const quietRef = useRef(false);
+  useLiveRefresh(['orders'], () => { quietRef.current = true; setRefreshKey(k => k + 1); });
+
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
+    const quiet = quietRef.current;
+    quietRef.current = false;
+    if (!quiet) setLoading(true);
     apiGetMyOrders({ page: 1, limit: ORDERS_PAGE_SIZE })
       .then(res => {
         if (cancelled) return;
@@ -516,7 +523,7 @@ export function OrdersTab() {
         setTotalOrders(res.data.pagination?.total ?? (res.data.orders ?? []).length);
         setPage(1);
       })
-      .catch((err: unknown) => { if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load orders.'); })
+      .catch((err: unknown) => { if (!cancelled && !quiet) setError(err instanceof Error ? err.message : 'Failed to load orders.'); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, [refreshKey]);

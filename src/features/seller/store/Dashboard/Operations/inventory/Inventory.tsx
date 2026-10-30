@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useLiveRefresh } from '@/hooks/useLiveRefresh';
 import { formatPrice } from '@/utils/formatPrice';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -103,6 +104,9 @@ export function StoreInventory() {
     setLoading(true);
     setError('');
   }
+
+  // Stock sold, admin changed a listing...: numbers refresh by themselves (this effect does not show a skeleton on a key bump).
+  useLiveRefresh(['catalog', 'orders'], () => setRefreshKey(k => k + 1));
 
   useEffect(() => {
     if (!storeId) return;

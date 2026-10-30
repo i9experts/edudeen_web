@@ -1,5 +1,6 @@
 import { apiGetPublicPlatformConfig, type PublicPlatformConfig } from '@/api/services/publicPlatformConfig';
 import { createSharedResource } from '@/hooks/createSharedResource';
+import { useLiveRefresh } from '@/hooks/useLiveRefresh';
 
 // Stale-while-revalidate: the last config the visitor saw is kept in localStorage and used straight away on the
 // next visit (so the hero / footer never wait on the network or flash default text), while ONE fresh request
@@ -29,6 +30,8 @@ const resource = createSharedResource<PublicPlatformConfig | null>(() =>
 
 export function usePublicPlatformConfig() {
   const { data, loading, refetch } = resource.useSharedResource();
+  // Admin changed hero text, social links, payment info, fees... -> every open page picks it up (shared: one request).
+  useLiveRefresh(['config'], refetch);
   // Until the fresh copy arrives (or if the request fails) fall back to the cached one; only a first-ever visit waits.
   const config = data ?? cachedAtStart;
   /** Re-fetches the shared config so every consumer updates without a reload (used after an inline admin edit). */

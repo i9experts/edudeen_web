@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useLiveRefresh } from '@/hooks/useLiveRefresh';
 import { apiGetProductById, type MarketplaceProduct, type ProductVariant } from '@/api/services/marketplace';
 
 interface ProductDetail {
@@ -17,15 +18,22 @@ export function useProductById(id: string) {
   const loadedIdRef = useRef(id);
 
   const refetch = useCallback(() => setReloadKey(k => k + 1), []);
+  // Price / stock / sale / reviews changed (or the listing was removed): re-read quietly, the page stays as it is meanwhile.
+  const quietRef = useRef(false);
+  useLiveRefresh(['catalog', 'campaigns', 'reviews'], () => { quietRef.current = true; setReloadKey(k => k + 1); }, !!id);
 
   useEffect(() => {
     if (!id) return;
     let cancelled = false;
+    const quiet = quietRef.current && loadedIdRef.current === id;
+    quietRef.current = false;
     // Different product: drop the previous one so the page never shows (or canonicalises to) stale data.
     if (loadedIdRef.current !== id) { setDetail(null); loadedIdRef.current = id; }
-    setLoading(true);
-    setError('');
-    setNotFound(false);
+    if (!quiet) {
+      setLoading(true);
+      setError('');
+      setNotFound(false);
+    }
     apiGetProductById(id)
       .then(res => {
         if (cancelled) return;
@@ -36,7 +44,7 @@ export function useProductById(id: string) {
       .catch((err: unknown) => {
         if (cancelled) return;
         if ((err as { response?: { status?: number } })?.response?.status === 404) { setDetail(null); setNotFound(true); return; }
-        setError(err instanceof Error ? err.message : 'Failed to load product.');
+        if (!quiet) setError(err instanceof Error ? err.message : 'Failed to load product.');
       })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };

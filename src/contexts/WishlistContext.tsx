@@ -6,6 +6,8 @@ import {
   type WishlistListItem,
 } from '@/api/services/wishlist';
 import { TokenStorage } from '@/api/services/auth';
+import { useLiveRefresh } from '@/hooks/useLiveRefresh';
+import { wroteRecently } from '@/api/realtime';
 import { useAuthGate } from '@/contexts/AuthGateContext';
 import { useToast } from '@/contexts/ToastContext';
 
@@ -93,6 +95,22 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
       window.removeEventListener('edudeen:auth-logout', resetWishlist);
     };
   }, [fetchWishlist, resetWishlist]);
+
+  // Saved / removed on another device or tab: refresh quietly (own change's echo is skipped).
+  useLiveRefresh(['wishlist'], () => {
+    if (!TokenStorage.isLoggedIn() || TokenStorage.isStaffSession() || wroteRecently('wishlist')) return;
+    const seq = ++fetchSeq.current;
+    apiGetWishlist()
+      .then(res => {
+        if (seq !== fetchSeq.current) return;
+        const items = res.data ?? [];
+        setWishlistItems(items);
+        const keys = new Set<string>();
+        items.forEach(item => (item.variants ?? []).forEach(v => keys.add(wKey(item.product._id, v._id))));
+        setWishlistedKeys(keys);
+      })
+      .catch(() => {});
+  });
 
   const isWishlisted = useCallback(
     (productId: string, variantId: string) => wishlistedKeys.has(wKey(productId, variantId)),

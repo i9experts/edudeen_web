@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useLiveRefresh } from '@/hooks/useLiveRefresh';
 import { apiGetBestsellers, type MarketplaceProduct } from '@/api/services/marketplace';
 import { apiGetPublicBundles, type PublicBundle } from '@/api/services/classroom';
 
@@ -7,15 +8,18 @@ export type FreeProduct = MarketplaceProduct & { freeKind?: 'free' | 'sample' };
 
 function useShelf<T>(load: () => Promise<T[]>): Shelf<T> {
   const [state, setState] = useState<Shelf<T>>({ items: [], loading: true });
+  const [tick, setTick] = useState(0);
+  useLiveRefresh(['catalog', 'campaigns'], () => setTick(t => t + 1));
   useEffect(() => {
     let cancelled = false;
     load()
       .then(items => { if (!cancelled) setState({ items, loading: false }); })
       // A failed shelf is simply not shown (same as "no data"); nothing else on the page depends on it.
-      .catch(() => { if (!cancelled) setState({ items: [], loading: false }); });
+      // (On a live re-read a failure keeps what is already on screen.)
+      .catch(() => { if (!cancelled) setState(s => (tick > 0 ? s : { items: [], loading: false })); });
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [tick]);
   return state;
 }
 

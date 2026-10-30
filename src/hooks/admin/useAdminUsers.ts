@@ -12,11 +12,11 @@ import {
 } from '@/api/services/users/adminUsers';
 
 export function useAdminUsersStats() {
-  return useAnalyticsQuery(() => apiGetAdminUsersStats(), {});
+  return useAnalyticsQuery(() => apiGetAdminUsersStats(), {}, ['users', 'orders']);
 }
 
 export function useAdminUsersList(query: AdminUsersQuery) {
-  return useAnalyticsQuery(apiListAdminUsers, query);
+  return useAnalyticsQuery(apiListAdminUsers, query, ['users', 'orders']);
 }
 
 /** Full account document for the detail modal (the list row is only a summary). */

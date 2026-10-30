@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useLiveRefresh } from '@/hooks/useLiveRefresh';
 import { clsx } from 'clsx';
 import { ChevronLeft, ChevronRight, Info, RefreshCw, Receipt } from 'lucide-react';
 import { MetricCard, Button } from '@/components/comman/ui';
@@ -83,11 +84,15 @@ export function EarningsStatement({ storeId, currencies, defaultCurrency }: Prop
 
   const reload = useCallback(() => setReloadKey(k => k + 1), []);
 
+  const quietRef = useRef(false);
+  useLiveRefresh(['finance', 'orders'], () => { quietRef.current = true; setReloadKey(k => k + 1); }, !!storeId);
+
   useEffect(() => {
     if (!storeId) return;
     let cancelled = false;
-    setLoading(true);
-    setError(null);
+    const quiet = quietRef.current;
+    quietRef.current = false;
+    if (!quiet) { setLoading(true); setError(null); }
     apiGetMonthlyStatement(storeId, month, currency)
       .then(res => {
         if (cancelled) return;
@@ -99,7 +104,7 @@ export function EarningsStatement({ storeId, currencies, defaultCurrency }: Prop
         setStatement(res);
       })
       .catch((err: unknown) => {
-        if (cancelled) return;
+        if (cancelled || quiet) return;
         const status = (err as { status?: number })?.status;
         setStatement(null);
         setError(

@@ -1,5 +1,6 @@
 import type { BannerCarouselItem } from '@/components/comman/marketplace/BannerCarousel';
 import { apiGetBanners, type PromotionPlacement } from '@/api/services/banner';
+import { subscribeLive } from '@/api/realtime';
 
 // Banners change rarely; one fetch per placement per few minutes is plenty.
 const TTL_MS = 60 * 1000;
@@ -31,3 +32,6 @@ export function invalidatePlacementBanners() {
   inflight.clear();
   window.dispatchEvent(new Event(BANNERS_CHANGED_EVENT));
 }
+
+// Admin published / paused / scheduled / deleted a banner (or a schedule tick flipped one): every open page updates.
+if (typeof window !== 'undefined') subscribeLive(['banners', 'spotlight', 'home-cards'], invalidatePlacementBanners);

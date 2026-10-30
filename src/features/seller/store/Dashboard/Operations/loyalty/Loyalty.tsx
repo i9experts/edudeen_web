@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { useLiveRefresh } from '@/hooks/useLiveRefresh';
 import { StorePageHeader, useStoreWorkspace } from '@/components/layouts/StoreLayout';
 import { Modal } from '@/components/comman/ui/Modal';
 import { EmptyState, SkeletonBox, Table, type TableColumn } from '@/components/comman/ui';
@@ -131,6 +132,8 @@ function OverviewTab({ storeId }: { storeId: string }) {
     if (!storeId) return;
     apiGetLoyaltyOverview(storeId).then(res => setData(res.data)).finally(() => setLoading(false));
   }, [storeId]);
+  // Points earned / redeemed: numbers update quietly (a failed re-read keeps what is shown).
+  useLiveRefresh(['loyalty', 'orders'], () => { apiGetLoyaltyOverview(storeId).then(res => setData(res.data)).catch(() => {}); }, !!storeId);
 
   if (loading) return (
     <div className="flex flex-col gap-5">
@@ -290,6 +293,7 @@ function RewardsTab({ storeId, showCreate, onCloseCreate }: { storeId: string; s
     if (!storeId) return;
     apiGetRewardsForManagement(storeId).then(res => setRewards(res.data ?? [])).finally(() => setLoading(false));
   }, [storeId]);
+  useLiveRefresh(['loyalty'], () => { apiGetRewardsForManagement(storeId).then(res => setRewards(res.data ?? [])).catch(() => {}); }, !!storeId);
 
   async function handleCreate() {
     if (!form.name || !form.pointsCost) return;
@@ -424,6 +428,9 @@ function MembersTab({ storeId, onAward }: { storeId: string; onAward: (m: Loyalt
     if (!storeId) return;
     apiGetLoyaltyMembers(storeId).then(res => { setMembers(res.data.members ?? []); setTotal(res.data.pagination.total); }).finally(() => setLoading(false));
   }, [storeId]);
+  useLiveRefresh(['loyalty', 'orders'], () => {
+    apiGetLoyaltyMembers(storeId).then(res => { setMembers(res.data.members ?? []); setTotal(res.data.pagination.total); }).catch(() => {});
+  }, !!storeId);
 
   const columns: TableColumn<LoyaltyMember>[] = [
     {

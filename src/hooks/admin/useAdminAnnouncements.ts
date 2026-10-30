@@ -13,7 +13,7 @@ import {
 } from '@/api/services/announcements/adminAnnouncements';
 
 export function useAdminAnnouncements(query: AnnouncementQuery) {
-  return useAnalyticsQuery(apiListAnnouncements, query);
+  return useAnalyticsQuery(apiListAnnouncements, query, ['announcements']);
 }
 
 export function useAnnouncementActions() {

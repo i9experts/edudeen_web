@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useLiveRefresh } from '@/hooks/useLiveRefresh';
 import { clsx } from 'clsx';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import {
@@ -951,13 +952,16 @@ function PromotionsTab() {
   };
   useEffect(() => { loadAnalytics(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  function refetch() {
-    setLoading(true);
+  function load(quiet: boolean) {
+    if (!quiet) setLoading(true);
     apiAdminListPromotionRequests(statusFilter || undefined)
       .then((res) => setRequests(res.data ?? []))
-      .catch((err) => setError(err instanceof Error ? err.message : 'Failed to load promotion requests.'))
-      .finally(() => setLoading(false));
+      .catch((err) => { if (!quiet) setError(err instanceof Error ? err.message : 'Failed to load promotion requests.'); })
+      .finally(() => { if (!quiet) setLoading(false); });
   }
+  const refetch = () => load(false);
+  // A seller bought / cancelled a promotion: the queue and numbers update by themselves (modals keep their own state).
+  useLiveRefresh(['promotions', 'marketing'], () => { load(true); apiGetAdminPromotionAnalytics().then((res) => setAnalytics(res.data)).catch(() => {}); });
 
   useEffect(() => {
     refetch();

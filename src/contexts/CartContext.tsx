@@ -5,6 +5,8 @@ import {
 } from '@/api/services/cart';
 import { apiGetProductById, type MarketplaceProduct, type ProductVariant } from '@/api/services/marketplace';
 import { TokenStorage } from '@/api/services/auth';
+import { useLiveRefresh } from '@/hooks/useLiveRefresh';
+import { wroteRecently } from '@/api/realtime';
 import {
   getGuestCartItems, addGuestCartItem, updateGuestCartQty, removeGuestCartItem, clearGuestCart,
 } from '@/utils/guestCart';
@@ -207,6 +209,14 @@ export function CartProvider({ storeId, children }: { storeId?: string; children
   );
 
   useEffect(() => { fetchCart(); }, [fetchCart]);
+
+  // The same account changed its cart on another device/tab (or an order just emptied it): update quietly.
+  // Our own change's echo is skipped so it can never overwrite a newer click.
+  useLiveRefresh(['cart'], () => {
+    if (!TokenStorage.isLoggedIn() || TokenStorage.isStaffSession() || wroteRecently('cart')) return;
+    if (!storeId) { void fetchMyCarts(); return; }
+    apiGetCart(storeId).then(res => setCart(mergeTypes(res.data))).catch(() => {});
+  });
 
   // Merges a guest's local cart into their real server cart the instant they
   // log in (any surface — full-page LoginPage, the inline AuthGateModal,

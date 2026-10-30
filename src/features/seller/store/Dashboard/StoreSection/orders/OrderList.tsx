@@ -24,6 +24,7 @@ import {
   type SellerOrderFilters,
 } from '@/api/services/product';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { useLiveRefresh } from '@/hooks/useLiveRefresh';
 import { FreeClaimsCard } from './FreeClaimsCard';
 import { formatMoney } from '@/utils/currency';
 import {
@@ -70,6 +71,8 @@ export function StoreOrderList() {
   const [selected,      setSelected]      = useState<SellerOrder | null>(null);
 
   const LIMIT = 10;
+  // A buyer just checked out / paid / cancelled: the new order appears here without a refresh (quiet re-read, no skeleton).
+  useLiveRefresh(['orders'], () => setRefreshKey(k => k + 1));
   // Status/type filters and search (?q= — order number, buyer name/email,
   // item name) all run server-side, so pagination stays intact while searching.
 
