@@ -15,10 +15,12 @@ export interface CertDesign {
   signatureName: string;
   signatureTitle: string;
   signatureImageUrl: string;
+  /** Header logo override; empty = the store's logo (then Edudeen's). */
+  logoImageUrl: string;
   issuerName: string;
 }
 
-export const EMPTY_DESIGN: CertDesign = { watermarkMode: 'none', watermarkText: '', watermarkImageUrl: '', stampImageUrl: '', signatureName: '', signatureTitle: '', signatureImageUrl: '', issuerName: '' };
+export const EMPTY_DESIGN: CertDesign = { watermarkMode: 'none', watermarkText: '', watermarkImageUrl: '', stampImageUrl: '', signatureName: '', signatureTitle: '', signatureImageUrl: '', logoImageUrl: '', issuerName: '' };
 
 export function designFromConfig(c?: CertificateConfig | null): CertDesign {
   if (!c) return EMPTY_DESIGN;
@@ -30,6 +32,7 @@ export function designFromConfig(c?: CertificateConfig | null): CertDesign {
     signatureName: c.signatureName ?? '',
     signatureTitle: c.signatureTitle ?? '',
     signatureImageUrl: c.signatureImageUrl ?? '',
+    logoImageUrl: c.logoImageUrl ?? '',
     issuerName: c.issuerName ?? '',
   };
 }
@@ -44,6 +47,7 @@ export function configFromDesign(d: CertDesign): CertificateConfig {
     signatureName: v(d.signatureName),
     signatureTitle: v(d.signatureTitle),
     signatureImageUrl: v(d.signatureImageUrl),
+    logoImageUrl: v(d.logoImageUrl),
     issuerName: v(d.issuerName),
   };
 }
@@ -291,12 +295,14 @@ interface Props {
   courseTitle: string;
   instructorName: string;
   storeName: string;
+  /** The store's own logo: used in the certificate header unless the seller picks another one here. */
+  storeLogo?: string | null;
 }
 
 /** Seller's certificate design: watermark, stamp, signature, plus a live preview with sample learner details. */
-export function CertificateDesigner({ value, onChange, courseTitle, instructorName, storeName }: Props) {
+export function CertificateDesigner({ value, onChange, courseTitle, instructorName, storeName, storeLogo }: Props) {
   const set = (patch: Partial<CertDesign>) => onChange({ ...value, ...patch });
-  const modes: { id: CertDesign['watermarkMode']; label: string }[] = [{ id: 'none', label: 'None' }, { id: 'text', label: 'Text' }, { id: 'image', label: 'Image' }];
+  const modes: { id: CertDesign['watermarkMode']; label: string }[] = [{ id: 'none', label: 'Edudeen logo' }, { id: 'text', label: 'Text' }, { id: 'image', label: 'Image' }];
 
   return (
     <div className="flex flex-col gap-4 mt-4 pt-4 border-t border-bone">
@@ -305,8 +311,10 @@ export function CertificateDesigner({ value, onChange, courseTitle, instructorNa
         <p className="text-[12.5px] text-slate m-0 mt-0.5">Add your watermark and stamp. They appear on every certificate learners print or download. Learners add their own name and details.</p>
       </div>
 
+      <ImageSlot label="Certificate logo" hint={storeLogo ? 'Your store logo is used by default. Upload another picture to change it. JPG, PNG or WebP, up to 2 MB.' : 'You have no store logo yet, so the Edudeen logo is used. Upload your own logo here. JPG, PNG or WebP, up to 2 MB.'} value={value.logoImageUrl || storeLogo || ''} onChange={url => set({ logoImageUrl: url === storeLogo ? '' : url })} />
+
       <div className="flex flex-col gap-2">
-        <span className="text-[13px] font-semibold text-carbon">Watermark</span>
+        <span className="text-[13px] font-semibold text-carbon">Watermark <span className="font-normal text-slate">(Edudeen logo if you add none)</span></span>
         <div role="radiogroup" aria-label="Watermark type" className="inline-flex rounded-lg border border-bone overflow-hidden self-start">
           {modes.map(m => (
             <button key={m.id} type="button" role="radio" aria-checked={value.watermarkMode === m.id} onClick={() => set({ watermarkMode: m.id })}
@@ -352,6 +360,7 @@ export function CertificateDesigner({ value, onChange, courseTitle, instructorNa
               country: 'Country',
               instructorName: instructorName || null,
               storeName: storeName || null,
+              storeLogoUrl: storeLogo || null,
             }}
           />
         </div>

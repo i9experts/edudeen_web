@@ -69,6 +69,7 @@ export function CertificatePage() {
             country: cert.country,
             instructorName: teacher,
             storeName,
+            storeLogoUrl: cert.storeLogoUrl ?? null,
           }}
         />
       </div>

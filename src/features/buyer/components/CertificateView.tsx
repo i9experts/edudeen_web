@@ -19,7 +19,11 @@ export interface CertificateViewData {
   country?: string | null;
   instructorName?: string | null;
   storeName?: string | null;
+  /** The store's own logo, used in the header when the seller did not pick another one. */
+  storeLogoUrl?: string | null;
 }
+
+const EDUDEEN_LOGO = '/edudeen-logo-640.png';
 
 interface Props {
   data: CertificateViewData;
@@ -39,8 +43,8 @@ function formatDate(iso: string | null) {
 function Watermark({ text, image }: { text?: string | null; image?: string | null }) {
   if (image) {
     return (
-      <div aria-hidden className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <img src={image} alt="" style={{ width: '58%', maxHeight: '70%', objectFit: 'contain', opacity: 0.08 }} />
+      <div aria-hidden className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
+        <img src={image} alt="" style={{ width: '58%', maxHeight: '70%', objectFit: 'contain', opacity: 0.14, transform: 'rotate(-28deg)' }} />
       </div>
     );
   }
@@ -53,7 +57,7 @@ function Watermark({ text, image }: { text?: string | null; image?: string | nul
         {rows.map((_, r) => (
           <div key={r} style={{ display: 'flex', justifyContent: 'space-around', paddingLeft: r % 2 ? 120 : 0 }}>
             {cols.map((__, c) => (
-              <span key={c} style={{ fontSize: 34, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#0F3354', opacity: 0.07, whiteSpace: 'nowrap' }}>{text}</span>
+              <span key={c} style={{ fontSize: 34, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#0F3354', opacity: 0.12, whiteSpace: 'nowrap' }}>{text}</span>
             ))}
           </div>
         ))}
@@ -81,10 +85,14 @@ export function CertificateView({ data, config, sample, printable }: Props) {
     return () => ro.disconnect();
   }, []);
 
-  const watermarkImage = safeHttpUrl(config?.watermarkImageUrl ?? '') || null;
+  const logo = safeHttpUrl(config?.logoImageUrl ?? '') || safeHttpUrl(data.storeLogoUrl ?? '') || null;
+  const ownWatermarkImage = safeHttpUrl(config?.watermarkImageUrl ?? '') || null;
+  const ownWatermarkText = config?.watermarkText?.trim() || null;
+  // No watermark set by the seller: Edudeen's logo is the watermark.
+  const watermarkImage = ownWatermarkImage || (ownWatermarkText ? null : EDUDEEN_LOGO);
   const stamp = safeHttpUrl(config?.stampImageUrl ?? '') || null;
   const signatureImg = safeHttpUrl(config?.signatureImageUrl ?? '') || null;
-  const watermarkText = watermarkImage ? null : (config?.watermarkText?.trim() || null);
+  const watermarkText = watermarkImage ? null : ownWatermarkText;
   const issuer = config?.issuerName?.trim() || data.storeName || null;
   const details = [data.institute, [data.city, data.country].filter(Boolean).join(', ')].filter(Boolean) as string[];
   const verifyUrl = `${typeof window !== 'undefined' ? window.location.origin : 'https://edudeen.com'}/certificates/${data.code}`;
@@ -102,7 +110,9 @@ export function CertificateView({ data, config, sample, printable }: Props) {
         <Watermark text={watermarkText} image={watermarkImage} />
 
         <div className="relative h-full flex flex-col items-center px-[110px] pt-[70px] pb-[64px]">
-          <EdudeenLogo size={40} />
+          {logo
+            ? <img src={logo} alt={data.storeName ?? 'Logo'} style={{ height: 64, maxWidth: 260, objectFit: 'contain' }} />
+            : <EdudeenLogo size={40} />}
           <p className="text-[15px] font-bold tracking-[0.34em] uppercase text-brand-royal mt-7 mb-1">Certificate of completion</p>
           <p className="text-[17px] text-slate m-0 mt-5">This certifies that</p>
           <h1 className="font-serif font-normal text-[58px] text-carbon mt-3 mb-1 leading-tight break-words max-w-full">{data.learnerName}</h1>

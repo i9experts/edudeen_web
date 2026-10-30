@@ -281,6 +281,8 @@ export interface CertificateConfig {
   signatureName?: string | null;
   signatureTitle?: string | null;
   signatureImageUrl?: string | null;
+  /** Header logo override; empty = the store's logo, then Edudeen's. */
+  logoImageUrl?: string | null;
   issuerName?: string | null;
 }
 
@@ -356,6 +358,7 @@ export interface CertificateData {
   courseTitle?: string;
   instructorName?: string | null;
   storeName?: string | null;
+  storeLogoUrl?: string | null;
   issuedAt?: string;
   guardianName?: string | null;
   institute?: string | null;

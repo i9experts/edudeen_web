@@ -170,7 +170,7 @@ export default function CourseBuilder() {
   const { productId = '' } = useParams();
   const navigate = useNavigate();
   const toast = useToast();
-  const { storeId } = useStoreWorkspace();
+  const { storeId, store } = useStoreWorkspace();
   const [data, setData] = useState<CourseBuilderData | null>(null);
   const [sections, setSections] = useState<CourseSectionInput[]>([]);
   const [certificate, setCertificate] = useState(true);
@@ -358,6 +358,7 @@ export default function CourseBuilder() {
               courseTitle={data?.product.name ?? ''}
               instructorName={instructor.name.trim()}
               storeName={design.issuerName.trim()}
+              storeLogo={store?.logo ?? null}
             />
           )}
         </Card>
