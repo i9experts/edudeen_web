@@ -280,6 +280,7 @@ export interface CertificateConfig {
   stampImageUrl?: string | null;
   signatureName?: string | null;
   signatureTitle?: string | null;
+  signatureImageUrl?: string | null;
   issuerName?: string | null;
 }
 

@@ -83,6 +83,7 @@ export function CertificateView({ data, config, sample, printable }: Props) {
 
   const watermarkImage = safeHttpUrl(config?.watermarkImageUrl ?? '') || null;
   const stamp = safeHttpUrl(config?.stampImageUrl ?? '') || null;
+  const signatureImg = safeHttpUrl(config?.signatureImageUrl ?? '') || null;
   const watermarkText = watermarkImage ? null : (config?.watermarkText?.trim() || null);
   const issuer = config?.issuerName?.trim() || data.storeName || null;
   const details = [data.institute, [data.city, data.country].filter(Boolean).join(', ')].filter(Boolean) as string[];
@@ -126,7 +127,8 @@ export function CertificateView({ data, config, sample, printable }: Props) {
               <p className="m-0 text-[12px]">Verify at {verifyUrl.replace(/^https?:\/\//, '')}</p>
             </div>
             <div className="text-end">
-              <div className="ms-auto w-[230px] border-t border-carbon/60 pt-1">
+              <div className="ms-auto w-[230px] border-t border-carbon/60 pt-1 relative">
+                {signatureImg && <img src={signatureImg} alt="Signature" style={{ position: 'absolute', bottom: '100%', insetInlineEnd: 0, marginBottom: 2, maxWidth: 220, maxHeight: 70, objectFit: 'contain' }} />}
                 <p className="m-0 font-semibold text-carbon text-[16px]">{config?.signatureName?.trim() || issuer || ''}</p>
                 <p className="m-0">{config?.signatureTitle?.trim() || (config?.signatureName ? '' : 'Instructor')}</p>
               </div>
