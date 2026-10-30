@@ -227,6 +227,11 @@ export function apiSwitchToBuyer() {
   return client.post<never, ApiResponse<LoginData>>(ENDPOINTS.AUTH.SWITCH_TO_BUYER);
 }
 
+/** POST /auth/create-buyer-account — a signed-in seller opens a buyer account on the same email and signs into it */
+export function apiCreateBuyerAccount() {
+  return client.post<never, ApiResponse<LoginData>>(ENDPOINTS.AUTH.CREATE_BUYER_ACCOUNT);
+}
+
 /** POST /auth/verifyOtp — verifies OTP after register, returns tokens */
 export function apiVerifyOtp(payload: VerifyOtpPayload) {
   return client.post<never, ApiResponse<VerifyOtpData>>(ENDPOINTS.AUTH.VERIFY_OTP, payload);

@@ -1,6 +1,6 @@
 ﻿import { useEffect, useState, useCallback } from 'react';
 import type { NavigateFunction } from 'react-router-dom';
-import { TokenStorage, apiBecomeSeller, apiSwitchToBuyer, type AppRole } from '@/api/services/auth';
+import { TokenStorage, apiBecomeSeller, apiSwitchToBuyer, apiCreateBuyerAccount, type AppRole } from '@/api/services/auth';
 import { apiFreeTrialEligibility } from '@/api/services/platformPlans';
 import { invalidateProfileCache } from '@/hooks/auth/useGetProfile';
 import { resolveSellerDestinationRemote } from '@/utils/sellerRouting';
@@ -35,10 +35,11 @@ export function useHasBuyerAccount(): boolean | null {
 export function useSwitchToBuyer(navigate: NavigateFunction) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const switchToBuyer = useCallback(async () => {
+  /** `create` = the seller has no buyer account yet: open one on the same email first. */
+  const switchToBuyer = useCallback(async (create = false) => {
     setBusy(true); setError('');
     try {
-      const res = await apiSwitchToBuyer();
+      const res = await (create ? apiCreateBuyerAccount() : apiSwitchToBuyer());
       TokenStorage.save(res.data.token.accessToken, res.data.token.refreshToken);
       TokenStorage.saveUser(res.data.user);
       invalidateProfileCache();

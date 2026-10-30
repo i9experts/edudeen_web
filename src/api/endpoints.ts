@@ -124,6 +124,7 @@ export const ENDPOINTS = {
     LOGIN: '/api/auth/login',
     BECOME_SELLER: '/api/auth/become-seller',
     SWITCH_TO_BUYER: '/api/auth/switch-to-buyer',
+    CREATE_BUYER_ACCOUNT: '/api/auth/create-buyer-account',
     SOCIAL_LOGIN: '/api/auth/social-login',
     VERIFY_OTP: '/api/auth/verifyOtp',
     FORGOT_PASSWORD: '/api/auth/forgot-password',

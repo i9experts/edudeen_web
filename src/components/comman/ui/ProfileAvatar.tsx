@@ -180,7 +180,7 @@ function MenuItem({
 function DropdownMenu({
   hasBuyer, hasDash, isAdmin, canSell, hasSellerAccount, hasBuyerAccount, isPremium, onSwitchStore, onSwitchBuyer, onNavigate, onLogout,
 }: {
-  hasBuyer: boolean; hasDash: boolean; isAdmin: boolean; canSell: boolean; hasSellerAccount: boolean; hasBuyerAccount: boolean; isPremium: boolean; onSwitchStore: () => void; onSwitchBuyer: () => void;
+  hasBuyer: boolean; hasDash: boolean; isAdmin: boolean; canSell: boolean; hasSellerAccount: boolean; hasBuyerAccount: boolean | null; isPremium: boolean; onSwitchStore: () => void; onSwitchBuyer: (create: boolean) => void;
   onNavigate: (path: string) => void; onLogout: () => void;
 }) {
   return (
@@ -208,9 +208,9 @@ function DropdownMenu({
         {canSell && (hasSellerAccount
           ? <MenuItem icon={Store} label="Switch to your store" sublabel="Open your seller account" onClick={onSwitchStore} />
           : <MenuItem icon={Store} label="Sell on Edudeen" sublabel="Open your own store" to={'/become-a-seller'} onClick={() => onNavigate('/become-a-seller')} />)}
-        {hasDash && !isAdmin && hasBuyerAccount && (
-          <MenuItem icon={ShoppingBag} label="Switch to shopping" sublabel="Open your buyer account" onClick={onSwitchBuyer} />
-        )}
+        {hasDash && !isAdmin && hasBuyerAccount !== null && (hasBuyerAccount
+          ? <MenuItem icon={ShoppingBag} label="Switch to shopping" sublabel="Open your buyer account" onClick={() => onSwitchBuyer(false)} />
+          : <MenuItem icon={ShoppingBag} label="Create buyer account" sublabel="Shop with the same email" onClick={() => onSwitchBuyer(true)} />)}
         {hasDash && (
           <MenuItem
             icon={isAdmin ? Shield : LayoutDashboard}
@@ -261,7 +261,7 @@ function ProfileDropdown({
   profile, initials, onNavigate, onLogout, withNotifications, maxHeight, hasSellerAccount, onSwitchStore, hasBuyerAccount, onSwitchBuyer,
 }: {
   hasBuyerAccount: boolean | null;
-  onSwitchBuyer: () => void;
+  onSwitchBuyer: (create: boolean) => void;
   profile: ReturnType<typeof useGetProfile>['profile'];
   initials: string;
   onNavigate: (path: string) => void;
@@ -309,7 +309,7 @@ function ProfileDropdown({
         hasSellerAccount={hasSellerAccount === true}
         isPremium={isPremium}
         onSwitchStore={onSwitchStore}
-        hasBuyerAccount={hasBuyerAccount === true}
+        hasBuyerAccount={hasBuyerAccount}
         onSwitchBuyer={onSwitchBuyer}
         hasDash={hasDash}
         isAdmin={isAdmin}
@@ -464,7 +464,7 @@ export function ProfileAvatar({ withNotifications = false, compact = false }: { 
             hasSellerAccount={hasSellerAccount}
             onSwitchStore={() => { setOpen(false); void switchToStore(); }}
             hasBuyerAccount={hasBuyerAccount}
-            onSwitchBuyer={() => { setOpen(false); void switchToBuyer(); }}
+            onSwitchBuyer={(create) => { setOpen(false); void switchToBuyer(create); }}
           />
         </div>,
         document.body,
