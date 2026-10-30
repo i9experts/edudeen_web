@@ -16,7 +16,7 @@ import { type CategoryNode } from '@/api/services/categories';
 import { isBuyerSession } from '@/hooks/auth/useIsBuyer';
 import { type PublicStoreListItem } from '@/api/services/store';
 import { RealAppQr, AppleGlyph, GooglePlayGlyph, useGooglePlayUrl, useAppStoreUrl } from '@/components/comman/ui/AppPromoParts';
-import { CategoryArt } from '@/components/comman/art/CategoryArt';
+import { CategoryIcon } from '@/components/comman/art/CategoryIcon';
 import { StoreFeatureCard, useCompactOnScroll, CountdownUnit, ActionMenu } from '@/components/comman/ui';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 import { formatPrice } from '@/utils/formatPrice';
@@ -90,11 +90,11 @@ export function RailCard({ product, onClick, badge, rank, size = 'md', stockLabe
   );
 }
 
-// ── Category bar icon — reuses each category's real uploaded image, falls back to a tag glyph ──
+// ── Category bar icon — simple line icon matched to the category name ──
 export function CategoryBarIcon({ category, parentName }: { category: CategoryNode; parentName?: string | null }) {
   return (
-    <span className="w-[24px] h-[24px] rounded-lg overflow-hidden flex items-center justify-center shrink-0">
-      <CategoryArt name={category.name || category.slug} parentName={parentName} />
+    <span className="w-[24px] h-[24px] flex items-center justify-center shrink-0 text-brand-royal">
+      <CategoryIcon name={category.name || category.slug} parentName={parentName} className="w-[18px] h-[18px]" />
     </span>
   );
 }
@@ -218,7 +218,7 @@ export function CategoriesMegaContent({
                 className="flex flex-col items-center no-underline gap-[7px] text-center bg-transparent border-none cursor-pointer p-0 shrink-0 w-[64px] lg:w-auto group focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange"
               >
                 <span className="w-14 h-14 rounded-full overflow-hidden bg-cream border border-bone flex items-center justify-center shrink-0 transition-transform duration-150 group-hover:-translate-y-[2px] group-hover:border-brand-orange/40">
-                  <CategoryArt name={sub.name || sub.slug} parentName={active.name} />
+                  <CategoryIcon name={sub.name || sub.slug} parentName={active.name} className="w-6 h-6 text-brand-royal" />
                 </span>
                 <span className="text-[12px] font-medium text-charcoal leading-tight line-clamp-2 group-hover:text-brand-orange transition-colors">
                   {sub.name}
