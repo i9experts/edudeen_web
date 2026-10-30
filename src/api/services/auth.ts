@@ -222,6 +222,11 @@ export function apiBecomeSeller() {
   return client.post<never, ApiResponse<LoginData>>(ENDPOINTS.AUTH.BECOME_SELLER);
 }
 
+/** POST /auth/switch-to-buyer — a signed-in seller opens the buyer account that already exists on the same email */
+export function apiSwitchToBuyer() {
+  return client.post<never, ApiResponse<LoginData>>(ENDPOINTS.AUTH.SWITCH_TO_BUYER);
+}
+
 /** POST /auth/verifyOtp — verifies OTP after register, returns tokens */
 export function apiVerifyOtp(payload: VerifyOtpPayload) {
   return client.post<never, ApiResponse<VerifyOtpData>>(ENDPOINTS.AUTH.VERIFY_OTP, payload);

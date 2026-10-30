@@ -79,7 +79,7 @@ interface ApiResponse<T> { success: boolean; message?: string; data: T }
 /** Can this signed-in account still start the one-time free trial? */
 export function apiFreeTrialEligibility() {
   return cachedRequest('free-trial-eligibility', 5000, () =>
-    client.get<never, ApiResponse<{ eligible: boolean; hasSellerAccount?: boolean }>>(`${BASE}/free-trial-eligibility`));
+    client.get<never, ApiResponse<{ eligible: boolean; hasSellerAccount?: boolean; hasBuyerAccount?: boolean }>>(`${BASE}/free-trial-eligibility`));
 }
 
 export function apiBrowsePlatformPlans() {

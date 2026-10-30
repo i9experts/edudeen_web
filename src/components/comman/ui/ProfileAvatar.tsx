@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
-import { useHasSellerAccount, useSwitchToStore } from '@/hooks/auth/useSellerAccount';
+import { useHasSellerAccount, useSwitchToStore, useHasBuyerAccount, useSwitchToBuyer } from '@/hooks/auth/useSellerAccount';
 import { createPortal } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
 import { isPlainLeftClick } from '@/utils/productLink';
@@ -178,9 +178,9 @@ function MenuItem({
 // DropdownMenu
 // ─────────────────────────────────────────────────────────────────────────────
 function DropdownMenu({
-  hasBuyer, hasDash, isAdmin, canSell, hasSellerAccount, isPremium, onSwitchStore, onNavigate, onLogout,
+  hasBuyer, hasDash, isAdmin, canSell, hasSellerAccount, hasBuyerAccount, isPremium, onSwitchStore, onSwitchBuyer, onNavigate, onLogout,
 }: {
-  hasBuyer: boolean; hasDash: boolean; isAdmin: boolean; canSell: boolean; hasSellerAccount: boolean; isPremium: boolean; onSwitchStore: () => void;
+  hasBuyer: boolean; hasDash: boolean; isAdmin: boolean; canSell: boolean; hasSellerAccount: boolean; hasBuyerAccount: boolean; isPremium: boolean; onSwitchStore: () => void; onSwitchBuyer: () => void;
   onNavigate: (path: string) => void; onLogout: () => void;
 }) {
   return (
@@ -208,6 +208,9 @@ function DropdownMenu({
         {canSell && (hasSellerAccount
           ? <MenuItem icon={Store} label="Switch to your store" sublabel="Open your seller account" onClick={onSwitchStore} />
           : <MenuItem icon={Store} label="Sell on Edudeen" sublabel="Open your own store" to={'/become-a-seller'} onClick={() => onNavigate('/become-a-seller')} />)}
+        {hasDash && !isAdmin && hasBuyerAccount && (
+          <MenuItem icon={ShoppingBag} label="Switch to shopping" sublabel="Open your buyer account" onClick={onSwitchBuyer} />
+        )}
         {hasDash && (
           <MenuItem
             icon={isAdmin ? Shield : LayoutDashboard}
@@ -255,8 +258,10 @@ const SHOW_BUYER_FEATURES = false;
 // ProfileDropdown
 // ─────────────────────────────────────────────────────────────────────────────
 function ProfileDropdown({
-  profile, initials, onNavigate, onLogout, withNotifications, maxHeight, hasSellerAccount, onSwitchStore,
+  profile, initials, onNavigate, onLogout, withNotifications, maxHeight, hasSellerAccount, onSwitchStore, hasBuyerAccount, onSwitchBuyer,
 }: {
+  hasBuyerAccount: boolean | null;
+  onSwitchBuyer: () => void;
   profile: ReturnType<typeof useGetProfile>['profile'];
   initials: string;
   onNavigate: (path: string) => void;
@@ -304,6 +309,8 @@ function ProfileDropdown({
         hasSellerAccount={hasSellerAccount === true}
         isPremium={isPremium}
         onSwitchStore={onSwitchStore}
+        hasBuyerAccount={hasBuyerAccount === true}
+        onSwitchBuyer={onSwitchBuyer}
         hasDash={hasDash}
         isAdmin={isAdmin}
         onNavigate={onNavigate}
@@ -342,6 +349,8 @@ export function ProfileAvatar({ withNotifications = false, compact = false }: { 
   const { profile, loading } = useGetProfile();
   const hasSellerAccount = useHasSellerAccount();
   const { switchToStore } = useSwitchToStore(navigate);
+  const hasBuyerAccount = useHasBuyerAccount();
+  const { switchToBuyer } = useSwitchToBuyer(navigate);
 
   const clearCloseTimer = () => { if (closeTimer.current) { clearTimeout(closeTimer.current); closeTimer.current = null; } };
   const scheduleClose = () => { clearCloseTimer(); closeTimer.current = setTimeout(() => setOpen(false), CLOSE_DELAY_MS); };
@@ -454,6 +463,8 @@ export function ProfileAvatar({ withNotifications = false, compact = false }: { 
             maxHeight={maxHeight}
             hasSellerAccount={hasSellerAccount}
             onSwitchStore={() => { setOpen(false); void switchToStore(); }}
+            hasBuyerAccount={hasBuyerAccount}
+            onSwitchBuyer={() => { setOpen(false); void switchToBuyer(); }}
           />
         </div>,
         document.body,

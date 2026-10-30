@@ -1,6 +1,6 @@
 ﻿import { useEffect, useState, useCallback } from 'react';
 import type { NavigateFunction } from 'react-router-dom';
-import { TokenStorage, apiBecomeSeller, type AppRole } from '@/api/services/auth';
+import { TokenStorage, apiBecomeSeller, apiSwitchToBuyer, type AppRole } from '@/api/services/auth';
 import { apiFreeTrialEligibility } from '@/api/services/platformPlans';
 import { invalidateProfileCache } from '@/hooks/auth/useGetProfile';
 import { resolveSellerDestinationRemote } from '@/utils/sellerRouting';
@@ -16,6 +16,40 @@ export function useHasSellerAccount(): boolean | null {
     return () => { cancelled = true; };
   }, []);
   return has;
+}
+
+/** For a signed-in SELLER: does this email also own a buyer account? (null = unknown / not a seller session). */
+export function useHasBuyerAccount(): boolean | null {
+  const [has, setHas] = useState<boolean | null>(null);
+  useEffect(() => {
+    const role = TokenStorage.getUser<{ role?: AppRole }>()?.role;
+    if (!TokenStorage.isLoggedIn() || role !== 'seller') { setHas(null); return; }
+    let cancelled = false;
+    apiFreeTrialEligibility().then(r => { if (!cancelled) setHas(!!r.data.hasBuyerAccount); }).catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+  return has;
+}
+
+/** Signs the seller into the buyer account that already exists on the same email and opens the shop. */
+export function useSwitchToBuyer(navigate: NavigateFunction) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const switchToBuyer = useCallback(async () => {
+    setBusy(true); setError('');
+    try {
+      const res = await apiSwitchToBuyer();
+      TokenStorage.save(res.data.token.accessToken, res.data.token.refreshToken);
+      TokenStorage.saveUser(res.data.user);
+      invalidateProfileCache();
+      navigate('/', { replace: true });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not open your buyer account.');
+    } finally {
+      setBusy(false);
+    }
+  }, [navigate]);
+  return { switchToBuyer, busy, error };
 }
 
 /** Signs the buyer into their EXISTING seller account (same email + password, no new sign-up) and opens the store. */

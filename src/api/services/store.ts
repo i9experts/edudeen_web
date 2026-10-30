@@ -263,6 +263,8 @@ export interface PublicStoreProductsParams {
   limit?:        number;
   sort?:         'newest' | 'price_asc' | 'price_desc' | 'best_rated';
   type?:         'all' | 'physical' | 'digital';
+  /** Buyer-facing kind: physical | digital downloads | online course | live class. */
+  kind?:         'physical' | 'digital' | 'course' | 'live_class';
   categoryId?:   string;
   collectionId?: string;
   tag?:          string;
@@ -312,9 +314,10 @@ export function apiGetPublicStoreProducts(storeId: string, params?: PublicStoreP
   if (params?.limit)      query.set('limit',      String(params.limit));
   if (params?.sort)       query.set('sort',        params.sort);
   if (params?.type)       query.set('type',        params.type);
+  if (params?.kind)         query.set('kind',         params.kind);
   if (params?.categoryId)   query.set('categoryId',   params.categoryId);
   if (params?.collectionId) query.set('collectionId', params.collectionId);
-  if (params?.tag)          query.set('tag',          params.tag);
+  if (params?.tag)         query.set('tag',          params.tag);
   if (params?.search)       query.set('search',       params.search);
   if (params?.onSale)       query.set('onSale',       'true');
   const qs = query.toString();

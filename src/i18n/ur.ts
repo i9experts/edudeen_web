@@ -25,6 +25,8 @@ export const UR: Record<string, string> = {
   'You already have a seller account': 'آپ کا سیلر اکاؤنٹ پہلے سے موجود ہے',
   'Go straight to your store — no new plan or sign-up needed.': 'سیدھا اپنے اسٹور پر جائیں — نیا پلان یا سائن اپ درکار نہیں۔',
   'Switch to your store': 'اپنے اسٹور پر جائیں',
+  'Switch to shopping': 'خریداری پر جائیں',
+  'Open your buyer account': 'اپنا خریدار اکاؤنٹ کھولیں',
   // ── AI features (Phase 5 follow-ups) ──
   'Search by voice': 'آواز سے تلاش کریں',
   'Listening... tap to stop': 'سن رہا ہے... روکنے کے لیے دبائیں',

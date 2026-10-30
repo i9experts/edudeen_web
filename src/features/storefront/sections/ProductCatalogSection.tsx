@@ -22,6 +22,14 @@ const SORT_OPTIONS = [
   { value: 'best_rated', label: 'Best Rated'      },
 ];
 
+const KIND_OPTIONS: { value: 'all' | NonNullable<PublicStoreProductsParams['kind']>; label: string }[] = [
+  { value: 'all',       label: 'All' },
+  { value: 'digital',   label: 'Digital' },
+  { value: 'physical',  label: 'Physical' },
+  { value: 'course',    label: 'Online courses' },
+  { value: 'live_class', label: 'Live classes' },
+];
+
 // No photo (or a broken one) → the same designed name cover the homepage
 // cards use, instead of a bare box icon.
 function ProductImage({ src, alt }: { src: string; alt: string }) {
@@ -79,6 +87,7 @@ export function ProductCatalogSection({ settings }: { settings: ProductCatalogSe
   const [tags, setTags] = useState<string[]>([]);
   const [activeTag, setActiveTag] = useState('all');
   const [loading, setLoading] = useState(true);
+  const [kind, setKind] = useState<'all' | NonNullable<PublicStoreProductsParams['kind']>>('all');
 
   useEffect(() => {
     apiGetPublicStoreFilters(store.storeId).then(r => setTags(r.data.tags ?? [])).catch(() => {});
@@ -88,6 +97,7 @@ export function ProductCatalogSection({ settings }: { settings: ProductCatalogSe
     setLoading(true);
     apiGetPublicStoreProducts(store.storeId, {
       page, limit: 12, sort: sortBy, tag: activeTag !== 'all' ? activeTag : undefined,
+      kind: kind !== 'all' ? kind : undefined,
       categoryId: settings.categoryId, collectionId: settings.collectionId, search: settings.search,
     })
       .then(res => {
@@ -97,7 +107,7 @@ export function ProductCatalogSection({ settings }: { settings: ProductCatalogSe
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [store.storeId, page, sortBy, activeTag, settings.categoryId, settings.collectionId, settings.search]);
+  }, [store.storeId, page, sortBy, activeTag, kind, settings.categoryId, settings.collectionId, settings.search]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -113,6 +123,22 @@ export function ProductCatalogSection({ settings }: { settings: ProductCatalogSe
   return (
     <div className="px-4 sm:px-6 lg:px-10" style={{ paddingTop: 24 * cfg.sectionSpacingScale, paddingBottom: 24 * cfg.sectionSpacingScale }}>
       {settings.heading && <h2 className="font-bold mb-4" style={{ color: cfg.textColor, fontSize: Math.round(20 * cfg.typeScaleFactor) }}>{settings.heading}</h2>}
+
+      {settings.showFilters !== false && !settings.search && (
+        <div role="group" aria-label="Product type" className="flex items-center gap-2 overflow-x-auto scrollbar-none mb-3">
+          {KIND_OPTIONS.map(o => {
+            const active = kind === o.value;
+            return (
+              <button key={o.value} type="button" aria-pressed={active}
+                onClick={() => { setKind(o.value); setPage(1); }}
+                className="shrink-0 px-3 py-[6px] rounded-full text-[13px] font-semibold border cursor-pointer whitespace-nowrap transition-colors"
+                style={active ? { background: cfg.primaryColor, color: '#fff', borderColor: cfg.primaryColor } : { background: 'transparent', color: cfg.textColor, borderColor: '#D9D7CF' }}>
+                {o.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {settings.showFilters !== false && tags.length > 0 && (
         <div className="flex items-center gap-5 overflow-x-auto scrollbar-none mb-3 border-b border-bone">

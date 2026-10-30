@@ -123,6 +123,7 @@ export const ENDPOINTS = {
     REGISTER: '/api/auth/register',
     LOGIN: '/api/auth/login',
     BECOME_SELLER: '/api/auth/become-seller',
+    SWITCH_TO_BUYER: '/api/auth/switch-to-buyer',
     SOCIAL_LOGIN: '/api/auth/social-login',
     VERIFY_OTP: '/api/auth/verifyOtp',
     FORGOT_PASSWORD: '/api/auth/forgot-password',
