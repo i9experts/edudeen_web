@@ -1,8 +1,8 @@
-import { memo, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import { SaleBadge } from '@/components/comman/ui/SaleBadge';
 import { Link } from 'react-router-dom';
 import { clsx } from 'clsx';
-import { Heart, Star } from 'lucide-react';
+import { AlertCircle, Check, Heart, Loader2, ShoppingCart, Star } from 'lucide-react';
 import type { MarketplaceProduct } from '@/api/services/marketplace';
 import { EDUCATION_LEVELS } from '@/api/services/product';
 import { normalizeProductType } from '@/utils/productType';
@@ -37,6 +37,44 @@ export interface ResourceCardProps {
   onToggleWishlist?: (e: React.MouseEvent, id: string, variantId: string) => void;
   /** `list` lays the card out as a full-width row (browse page list view). */
   layout?:          'grid' | 'list';
+  /** When given, the card shows the same round cart button as the Flash Sale cards. */
+  onAddToCart?:     (e: React.MouseEvent, id: string, variantId: string, type: 'physical' | 'digital') => void;
+  isAdding?:        boolean;
+  addToCartFailed?: boolean;
+}
+
+function CartButton({ onClick, isAdding, failed, disabled, label }: { onClick: (e: React.MouseEvent) => void; isAdding: boolean; failed: boolean; disabled: boolean; label: string }) {
+  const [justAdded, setJustAdded] = useState(false);
+  const wasAdding = useRef(false);
+  useEffect(() => {
+    if (wasAdding.current && !isAdding && !failed) {
+      setJustAdded(true);
+      const t = setTimeout(() => setJustAdded(false), 1500);
+      wasAdding.current = isAdding;
+      return () => clearTimeout(t);
+    }
+    wasAdding.current = isAdding;
+  }, [isAdding, failed]);
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={disabled ? 'Out of stock' : label}
+      className={clsx(
+        'relative before:absolute before:-inset-[5px] before:rounded-full shrink-0 flex items-center justify-center w-8 h-8 rounded-full border transition-all duration-200',
+        disabled
+          ? 'bg-bone text-slate border-bone cursor-not-allowed'
+          : failed
+            ? 'bg-error text-white border-error'
+            : justAdded
+              ? 'bg-success text-white border-success'
+              : 'bg-white text-brand-orange border-brand-orange hover:bg-brand-orange hover:text-white active:scale-[0.95] cursor-pointer',
+      )}
+    >
+      {isAdding ? <Loader2 size={14} className="animate-spin" /> : failed ? <AlertCircle size={14} /> : justAdded ? <Check size={14} /> : <ShoppingCart size={14} />}
+    </button>
+  );
 }
 
 function ListCover({ product }: { product: MarketplaceProduct }) {
@@ -125,6 +163,7 @@ export function RatingLine({ rating, count, className }: { rating?: number; coun
 
 export const ResourceCard = memo(function ResourceCard({
   product: rawProduct, onClick, isWishlisted = false, isWishlisting = false, onToggleWishlist, layout = 'grid',
+  onAddToCart, isAdding = false, addToCartFailed = false,
 }: ResourceCardProps) {
   const product = useLocalizedProduct(rawProduct);
   const { currency: displayCurrency, convert } = useCurrencyPreference();
@@ -163,6 +202,18 @@ export const ResourceCard = memo(function ResourceCard({
   // Separate text nodes so the Urdu DOM translator can match each part ("All ages", "Ships to you").
   const meta = [classRangeLabel(product.classFrom, product.classTo) ?? ageLabel(product.ageMin, product.ageMax) ?? level ?? 'All ages', delivery]
     .map((part, i) => <span key={i}>{i > 0 ? ' · ' : ''}<span>{part}</span></span>);
+
+  const vVariant = variant;
+  const physicalStock = kind === 'physical' && !vVariant?.unlimitedStock ? (vVariant?.stock ?? 0) : Infinity;
+  const cartButton = onAddToCart && variantId ? (
+    <CartButton
+      onClick={e => onAddToCart(e, product._id, variantId, kind === 'physical' ? 'physical' : 'digital')}
+      isAdding={isAdding}
+      failed={addToCartFailed}
+      disabled={physicalStock <= 0}
+      label={`Add ${product.name} to cart`}
+    />
+  ) : null;
 
   const badge = member ? null : (campaignOff || percentOff > 0) ? (campaign && campaignOff ? `${campaign.name} · ${campaignOff}` : `-${percentOff}%`) : null;
   const wishlistButton = onToggleWishlist && variantId ? (
@@ -221,6 +272,7 @@ export const ResourceCard = memo(function ResourceCard({
             {member ? <PremiumChip percent={member.percent} /> : <PremiumTeaser percent={product.premiumPercent} />}
             {badge && <SaleBadge label={badge} />}
             <span className="ms-auto text-[12px] border border-[#dde5e8] px-[7px] py-[3px] rounded text-[#566773] shrink-0">{TYPE_LABEL[kind] ?? kind}</span>
+            {cartButton}
           </div>
         </div>
       </article>
@@ -295,8 +347,11 @@ export const ResourceCard = memo(function ResourceCard({
             <s className="text-[12px] text-slate" aria-label={`Was ${fmt(was)}`}>{fmt(was)}</s>
           )}
         </span>
-        <span className="text-[12px] sm:text-[12px] border border-[#dde5e8] px-[7px] py-[3px] rounded text-[#566773] shrink-0">
-          {TYPE_LABEL[kind] ?? kind}
+        <span className="flex items-center gap-1.5 shrink-0">
+          <span className="text-[12px] sm:text-[12px] border border-[#dde5e8] px-[7px] py-[3px] rounded text-[#566773] shrink-0">
+            {TYPE_LABEL[kind] ?? kind}
+          </span>
+          {cartButton}
         </span>
       </div>
       {member ? <PremiumChip percent={member.percent} className="mt-1" /> : <PremiumTeaser percent={product.premiumPercent} className="mt-1" />}

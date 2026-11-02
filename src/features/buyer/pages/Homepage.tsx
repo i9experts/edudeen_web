@@ -456,6 +456,9 @@ function HomeLanding() {
         isWishlisted={isWishlisted(p._id, vId)}
         isWishlisting={wishlisting === vId}
         onToggleWishlist={handleToggleWishlist}
+        onAddToCart={handleAddToCart}
+        isAdding={!!vId && adding === vId}
+        addToCartFailed={!!vId && addToCartFailedId === vId}
       />
     );
   };
