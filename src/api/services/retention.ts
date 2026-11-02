@@ -59,8 +59,6 @@ export interface LearningPathAdmin {
 export const apiListLearningPaths = (level?: string) =>
   client.get<never, Ok<LearningPathSummary[]>>(`/api/learning-paths${level ? `?level=${encodeURIComponent(level)}` : ''}`);
 export const apiGetLearningPath = (slug: string) => client.get<never, Ok<LearningPathDetail>>(`/api/learning-paths/${encodeURIComponent(slug)}`);
-export const apiSaveLearningPathToList = (slug: string) =>
-  client.post<never, Ok<{ listId: string; slug: string; added: number }>>(`/api/learning-paths/${encodeURIComponent(slug)}/save-to-list`);
 export const apiAdminListLearningPaths = () => client.get<never, Ok<LearningPathAdmin[]>>('/api/admin/learning-paths');
 export const apiAdminGetLearningPath = (id: string) => client.get<never, Ok<LearningPathAdmin & { productNames?: Record<string, string> }>>(`/api/admin/learning-paths/${id}`);
 export const apiAdminCreateLearningPath = (body: Partial<LearningPathAdmin>) => client.post<never, Ok<LearningPathAdmin>>('/api/admin/learning-paths', body);

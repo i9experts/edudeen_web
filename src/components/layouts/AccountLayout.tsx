@@ -6,7 +6,7 @@ import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
 import {
   LayoutDashboard, ShoppingBag, Heart, Star, Baby,
-  MessageSquare, Landmark, Download, ListChecks, FileSpreadsheet,
+  MessageSquare, Landmark, Download,
   User, Shield, MapPin, Bell, RefreshCw, Crown, Undo2, Gift,
   ChevronLeft, PanelLeftClose, PanelLeftOpen, type LucideIcon,
 } from 'lucide-react';
@@ -66,8 +66,6 @@ export function useNavGroups(): NavGroup[] {
         { id: 'returns',  label: t('Returns'),  Icon: Undo2,       path: 'returns' },
         { id: 'downloads', label: t('My Library'), Icon: Download,  path: 'downloads' },
         { id: 'wishlist', label: t('Saved'), Icon: Heart,       path: 'wishlist', badge: wishlistCount },
-        { id: 'lists',    label: t('My Lists'), Icon: ListChecks,  path: 'lists' },
-        { id: 'quotes',   label: t('School Quotes'), Icon: FileSpreadsheet, path: 'quotes' },
         { id: 'reviews',  label: t('Reviews'),  Icon: Star,        path: 'reviews' },
         ...(bankTransferOn ? [{ id: 'payments', label: t('Bank Transfers'), Icon: Landmark, path: 'payments' }] : []),
       ],

@@ -91,15 +91,10 @@ const AccountOrderDetail   = lazy(() => named(import('@/features/buyer/pages/acc
 const OrderInvoice         = lazy(() => named(import('@/features/buyer/pages/account/InvoicePage'),            'InvoicePage'));
 const LearnHubPage         = lazy(() => named(import('@/features/buyer/pages/LearnPages'),                     'LearnHubPage'));
 const LearnLevelPage       = lazy(() => named(import('@/features/buyer/pages/LearnPages'),                     'LearnLevelPage'));
-const AccountLists         = lazy(() => named(import('@/features/buyer/pages/account/ListsPage'),              'ListsPage'));
 const AccountPremium       = lazy(() => named(import('@/features/buyer/pages/account/PremiumAccount'),          'PremiumAccount'));
 const PremiumLanding        = lazy(() => named(import('@/features/buyer/pages/PremiumPage'),                     'PremiumPage'));
 const AccountChildren      = lazy(() => named(import('@/features/buyer/pages/account/MyChildren'),             'MyChildren'));
-const AccountQuotes        = lazy(() => named(import('@/features/buyer/pages/account/QuotesPage'),             'QuotesPage'));
-const QuotationPrint       = lazy(() => named(import('@/features/buyer/pages/account/QuotationPage'),          'QuotationPage'));
-const PublicListPage       = lazy(() => named(import('@/features/buyer/pages/ListPage'),                       'ListPage'));
 const StoreQuestions     = lazy(() => named(import('@/features/seller/store/Dashboard/Operations/questions/StoreQuestions'), 'StoreQuestions'));
-const StoreQuotes        = lazy(() => named(import('@/features/seller/store/Dashboard/Operations/quotes/StoreQuotes'),       'StoreQuotes'));
 const AccountDownloads     = lazy(() => named(import('@/features/buyer/pages/account/Downloads'),                'Downloads'));
 const AccountWishlist      = lazy(() => named(import('@/features/buyer/pages/account/Wishlist'),                 'Wishlist'));
 const AccountReferrals     = lazy(() => named(import('@/features/buyer/pages/account/Referrals'),                'Referrals'));
@@ -288,10 +283,8 @@ const mainRouter = createBrowserRouter([
               { path: 'returns',       element: <FeatureMaintenance feature="orders"><AccountReturns /></FeatureMaintenance> },
               { path: 'referrals',     element: <AccountReferrals /> },
               { path: 'downloads',     element: <AccountDownloads /> },
-              { path: 'lists',         element: <AccountLists /> },
               { path: 'children',      element: <AccountChildren /> },
               { path: 'premium',       element: <AccountPremium /> },
-              { path: 'quotes',        element: <AccountQuotes /> },
               { path: 'wishlist',      element: <FeatureMaintenance feature="cart"><AccountWishlist /></FeatureMaintenance> },
               { path: 'reviews',       element: <FeatureMaintenance feature="reviews"><AccountReviews /></FeatureMaintenance> },
               { path: 'payments',      element: <AccountPayments /> },
@@ -324,7 +317,6 @@ const mainRouter = createBrowserRouter([
           // Grade and subject landing pages (/learn/primary-school/mathematics).
           { path: 'learn',           element: <FeatureMaintenance feature="learn" variant="page"><LearnHubPage /></FeatureMaintenance> },
           { path: 'learn/:level/:subject?', element: <FeatureMaintenance feature="learn" variant="page"><LearnLevelPage /></FeatureMaintenance> },
-          { path: 'lists/:slug', element: <PublicListPage /> },
           { path: 'wishlist/shared/:token', element: <SharedWishlistPage /> },
           { path: 'learning-paths', element: <FeatureMaintenance feature="learn" variant="page"><LearningPathsIndexPage /></FeatureMaintenance> },
           { path: 'learning-paths/:slug', element: <FeatureMaintenance feature="learn" variant="page"><LearningPathPage /></FeatureMaintenance> },
@@ -356,7 +348,6 @@ const mainRouter = createBrowserRouter([
 
       // Printable invoice — no app chrome, so printing gives a clean page.
       { path: '/account/orders/:orderId/invoice', element: <OrderInvoice /> },
-      { path: '/quotes/:quoteId/print', element: <QuotationPrint /> },
       { path: '/course/:slug', element: <CoursePlayerPage /> },
       { path: '/certificates/:code', element: <CertificatePage /> },
       { path: '/seo/integrations/callback', element: <SellerSeoCallback /> },
@@ -428,7 +419,6 @@ const mainRouter = createBrowserRouter([
           { path: 'ai/studio',                        element: <StoreAIStudio /> },
           { path: 'reviews',                          element: <StorePathTabs tabs={FEEDBACK_TABS} /> },
           { path: 'questions',                        element: <StorePathTabs tabs={FEEDBACK_TABS} /> },
-          { path: 'quotes',                           element: <StoreQuotes /> },
           { path: 'finance',                          element: <StoreFinance /> },
           { path: 'inventory',                        element: <StoreInventory /> },
           { path: 'marketing',                        element: <StoreMarketing /> },

@@ -45,12 +45,10 @@ import {
   ArrowRight, Package, Download, ClipboardList, CheckCircle, Minus, Plus,
   ShoppingCart, Star, Link2, Share2, Heart, ShieldCheck, Truck,
   UserPlus, UserCheck, Tag, ZoomIn, ZoomOut, ChevronLeft, ChevronRight, Users, Calendar, Award, Sparkles, Flame,
-  FileText, Store as StoreIcon, Eye, Loader2, Zap, MessageCircle, ListPlus, School, MessageCircleQuestion, Clock, RotateCcw,
+  FileText, Store as StoreIcon, Eye, Loader2, Zap, MessageCircle, MessageCircleQuestion, Clock, RotateCcw,
 } from 'lucide-react';
 import { responseTimeLabel, returnSummary } from '@/utils/sellerTrust';
 import { ProductReviewsSection } from './ProductReviews';
-import { SaveToListDialog } from '@/features/buyer/components/SaveToListDialog';
-import { QuoteRequestDialog } from '@/features/buyer/components/QuoteRequestDialog';
 import { ProductQuestions } from '@/features/buyer/components/ProductQuestions';
 import { BundleOffer } from '@/features/buyer/components/BundleOffer';
 import { CourseInfo } from '@/features/buyer/components/CourseInfo';
@@ -428,8 +426,6 @@ export function ProductDetail() {
   const [relatedProducts, setRelatedProducts] = useState<MarketplaceProduct[]>([]);
   const [storeData, setStoreData] = useState<PublicStoreData | null>(null);
   const [activeTab, setActiveTab] = useState('description');
-  const [listOpen, setListOpen] = useState(false);
-  const [quoteOpen, setQuoteOpen] = useState(false);
   const [answeredCount, setAnsweredCount] = useState<number | null>(null);
 
   const product = detail?.product ?? null;
@@ -993,16 +989,6 @@ export function ProductDetail() {
                           </button>
                         );
                       })()}
-                      {product && (
-                        <button
-                          onClick={() => requireAuth(() => setListOpen(true), 'Sign in to save this to a list.')}
-                          title="Save to a list"
-                          aria-label="Save to a list"
-                          className="w-10 flex-shrink-0 rounded-[10px] flex items-center justify-center border-[1.5px] border-bone bg-white cursor-pointer text-slate hover:text-brand-orange hover:border-brand-orange/40 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange"
-                        >
-                          <ListPlus size={16} />
-                        </button>
-                      )}
                       <button
                         onClick={handleShare}
                         title="Share this listing"
@@ -1020,14 +1006,6 @@ export function ProductDetail() {
                       >
                         {askSellerBusy ? <Loader2 size={13} className="animate-spin" /> : <MessageCircle size={13} />}
                         {t('Ask the seller a question')}
-                      </button>
-                    )}
-                    {storeId && (
-                      <button
-                        onClick={() => requireAuth(() => setQuoteOpen(true), 'Sign in to request a school price.')}
-                        className="flex items-center justify-center gap-[6px] rounded-[10px] border border-dashed border-brand-orange/40 bg-brand-pale-orange/30 py-2 text-[12.5px] font-semibold text-brand-orange hover:bg-brand-pale-orange/60 transition-colors cursor-pointer"
-                      >
-                        <School size={14} /> {t('Buying for a school? Get a bulk price')}
                       </button>
                     )}
                   </div>
@@ -1340,8 +1318,6 @@ export function ProductDetail() {
       )}
 
 
-      {listOpen && product && <SaveToListDialog productId={product._id} productName={product.name} onClose={() => setListOpen(false)} />}
-      {quoteOpen && product && <QuoteRequestDialog productId={product._id} productName={product.name} onClose={() => setQuoteOpen(false)} />}
 
       {previewOpen && (
         <Modal title="Preview" onClose={() => { setPreviewOpen(false); resetPreview(); }} width={760} mobileSheet>

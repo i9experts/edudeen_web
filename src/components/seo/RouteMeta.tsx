@@ -7,7 +7,7 @@ import { SITE_URL } from '@/utils/seo';
 const NOINDEX_PREFIXES = [
   '/account', '/cart', '/checkout', '/order-success', '/login', '/register', '/forgot-password', '/verify-otp',
   '/new-password', '/onboard', '/admin', '/store/', '/seller', '/payment', '/maintenance', '/compare',
-  '/wishlist/shared', '/quotes', '/certificates', '/course/', '/seo/', '/delete-account',
+  '/wishlist/shared', '/certificates', '/course/', '/seo/', '/delete-account',
 ];
 
 /** Title + description for the static public pages (the bot prerender serves the same text). */

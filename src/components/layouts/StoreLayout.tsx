@@ -7,7 +7,7 @@ import type { LucideIcon } from 'lucide-react';
 import {
   LayoutDashboard, Package, ShoppingBag, Users, BarChart2,
   Settings, Sparkles, ChevronLeft, ChevronRight, Store,
-  Megaphone, Star, Search, Wallet, FileSpreadsheet, Truck, Boxes, Gift,
+  Megaphone, Star, Search, Wallet, Truck, Boxes, Gift,
   MessageSquare, FolderTree, RefreshCw, Undo2, CreditCard,
   ChevronDown, Lock, MoreHorizontal, PanelLeftClose, Loader2, PanelLeftOpen, AlertTriangle, AlertCircle, XCircle, Clock, LogOut, UserRound, Bell,
 } from 'lucide-react';
@@ -50,7 +50,6 @@ export const NAV: { group: string; items: NavItem[] }[] = [
       { id: 'orders',   Icon: ShoppingBag,  label: 'Orders',       path: 'orders'  },
       { id: 'returns',  Icon: Undo2,    label: 'Returns',       path: 'returns' },
       { id: 'shipping', Icon: Truck,    label: 'Shipping',      path: 'shipping' },
-      { id: 'quotes',   Icon: FileSpreadsheet, label: 'School Quotes', path: 'quotes' },
     ],
   },
   {

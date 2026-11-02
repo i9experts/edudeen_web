@@ -1,14 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { Route as RouteIcon, BookmarkPlus, ArrowRight } from 'lucide-react';
-import { BuyerNavbar, Breadcrumb, Footer, Button, EmptyState } from '@/components/comman/ui';
+import { Route as RouteIcon, ArrowRight } from 'lucide-react';
+import { BuyerNavbar, Breadcrumb, Footer, EmptyState } from '@/components/comman/ui';
 import { ResourceCard } from '@/components/comman/marketplace/ResourceCard';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { usePageMeta } from '@/hooks/usePageMeta';
-import { useToast } from '@/contexts/ToastContext';
-import { TokenStorage } from '@/api/services/auth';
 import { EDUCATION_LEVELS } from '@/api/services/product';
-import { apiGetLearningPath, apiListLearningPaths, apiSaveLearningPathToList, type LearningPathDetail, type LearningPathSummary } from '@/api/services/retention';
+import { apiGetLearningPath, apiListLearningPaths, type LearningPathDetail, type LearningPathSummary } from '@/api/services/retention';
 
 const levelLabel = (v: string | null) => EDUCATION_LEVELS.find(l => l.value === v)?.label ?? null;
 
@@ -66,25 +64,12 @@ export function LearningPathsIndexPage() {
 export function LearningPathPage() {
   const { slug = '' } = useParams();
   const navigate = useNavigate();
-  const toast = useToast();
   const [path, setPath] = useState<LearningPathDetail | null>(null);
   const [error, setError] = useState(false);
-  const [saving, setSaving] = useState(false);
 
   usePageTitle(path?.title ?? 'Learning path');
   usePageMeta(path ? `${path.title} - a step-by-step learning path on Edudeen.` : null);
   useEffect(() => { setPath(null); setError(false); apiGetLearningPath(slug).then(r => setPath(r.data)).catch(() => setError(true)); }, [slug]);
-
-  const save = async () => {
-    if (!TokenStorage.isLoggedIn()) { try { sessionStorage.setItem('afterAuthPath', `/learning-paths/${slug}`); } catch { /* ignore */ } navigate('/login'); return; }
-    setSaving(true);
-    try {
-      const r = await apiSaveLearningPathToList(slug);
-      toast.success(`Saved ${r.data.added} resource${r.data.added === 1 ? '' : 's'} to your reading list`);
-      navigate('/account/lists');
-    } catch (err) { toast.error(err instanceof Error ? err.message : 'Could not save this path.'); }
-    finally { setSaving(false); }
-  };
 
   return (
     <div className="bg-white min-h-full">
@@ -104,7 +89,6 @@ export function LearningPathPage() {
                 {path.subtitle && <p className="text-[14.5px] text-graphite mt-2 max-w-[70ch]">{path.subtitle}</p>}
                 {path.description && <p className="text-[13.5px] text-slate mt-1 max-w-[70ch]">{path.description}</p>}
               </div>
-              <Button variant="primary" size="sm" icon={<BookmarkPlus size={14} />} loading={saving} onClick={save}>Save as my reading list</Button>
             </header>
             <ol className="list-none p-0 m-0 flex flex-col gap-10">
               {path.steps.map((s, i) => (

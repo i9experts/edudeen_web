@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link, useLocation } from 'react-router-dom';
 import {
   ChevronUp, Flame, LayoutGrid, History, UserRound, Star, GraduationCap, ArrowRight,
-  Package, LibraryBig, Heart, MessageSquare, FileSpreadsheet, HelpCircle, Trash2,
+  Package, LibraryBig, Heart, MessageSquare, HelpCircle, Trash2,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { clsx } from 'clsx';
@@ -174,7 +174,6 @@ function AccountPanel({ close }: { close: () => void }) {
     { to: '/account/downloads', label: 'My Library', Icon: LibraryBig },
     { to: '/account/wishlist', label: 'Saved', Icon: Heart },
     { to: '/account/messages', label: 'Messages', Icon: MessageSquare },
-    { to: '/account/quotes', label: 'School Quotes', Icon: FileSpreadsheet },
     { to: '/faq', label: 'Help Center', Icon: HelpCircle },
   ];
   return (
