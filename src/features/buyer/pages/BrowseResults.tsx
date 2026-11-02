@@ -8,6 +8,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { clsx } from 'clsx';
 import { SearchX, X, ChevronLeft, ChevronRight, ChevronDown, Check, List, LayoutGrid } from 'lucide-react';
 import { useWishlistContext } from '@/contexts/WishlistContext';
+import { useCartContext } from '@/contexts/CartContext';
 import { useCategoryTree, categoryPath } from '@/hooks/marketplace/useCategoryTree';
 import { apiBrowseProducts, type MarketplaceProduct, type MarketplaceSortBy } from '@/api/services/marketplace';
 import { apiGetTrendingSearches } from '@/api/services/search';
@@ -109,6 +110,23 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
   const activeRootId = categoryId ? (byId.get(categoryId)?.ancestors[0]?._id ?? categoryId) : '';
   const pillBase = 'shrink-0 rounded-full border px-4 py-[7px] min-h-11 inline-flex items-center text-[13.5px] font-medium no-underline transition-colors';
   const { isWishlisted, wishlisting, toggleWishlist } = useWishlistContext();
+  const { addToCart, adding, error: cartError, clearError: clearCartError } = useCartContext();
+  const [addToCartFailedId, setAddToCartFailedId] = useState<string | null>(null);
+  const lastAddAttemptRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!cartError || !lastAddAttemptRef.current) return;
+    const failedId = lastAddAttemptRef.current;
+    setAddToCartFailedId(failedId);
+    const t = setTimeout(() => { setAddToCartFailedId(id => id === failedId ? null : id); clearCartError(); }, 2600);
+    return () => clearTimeout(t);
+  }, [cartError, clearCartError]);
+  const handleAddToCart = useCallback((e: React.MouseEvent, id: string, variantId: string, type: 'physical' | 'digital') => {
+    e.stopPropagation();
+    if (!variantId) return;
+    lastAddAttemptRef.current = variantId;
+    setAddToCartFailedId(prev => prev === variantId ? null : prev);
+    addToCart(id, variantId, type);
+  }, [addToCart]);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [products, setProducts] = useState<MarketplaceProduct[]>([]);
   const [total, setTotal] = useState(0);
@@ -357,6 +375,9 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
                   isWishlisted={isWishlisted(p._id, vId)}
                   isWishlisting={wishlisting === vId}
                   onToggleWishlist={(e, id, variantId) => { e.stopPropagation(); if (variantId) toggleWishlist(id, variantId); }}
+                  onAddToCart={handleAddToCart}
+                  isAdding={!!vId && adding === vId}
+                  addToCartFailed={!!vId && addToCartFailedId === vId}
                 />
               );
             })}
