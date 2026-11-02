@@ -16,7 +16,7 @@ import { type CategoryNode } from '@/api/services/categories';
 import { isBuyerSession } from '@/hooks/auth/useIsBuyer';
 import { type PublicStoreListItem } from '@/api/services/store';
 import { RealAppQr, AppleGlyph, GooglePlayGlyph, useGooglePlayUrl, useAppStoreUrl } from '@/components/comman/ui/AppPromoParts';
-import { CategoryIcon } from '@/components/comman/art/CategoryIcon';
+import { CategoryIcon, assignCategoryIcons } from '@/components/comman/art/CategoryIcon';
 import { StoreFeatureCard, useCompactOnScroll, CountdownUnit, ActionMenu } from '@/components/comman/ui';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 import { formatPrice } from '@/utils/formatPrice';
@@ -91,10 +91,10 @@ export function RailCard({ product, onClick, badge, rank, size = 'md', stockLabe
 }
 
 // ── Category bar icon — simple line icon matched to the category name ──
-export function CategoryBarIcon({ category, parentName }: { category: CategoryNode; parentName?: string | null }) {
+export function CategoryBarIcon({ category, parentName, icon }: { category: CategoryNode; parentName?: string | null; icon?: LucideIcon }) {
   return (
     <span className="w-[24px] h-[24px] flex items-center justify-center shrink-0 text-brand-royal">
-      <CategoryIcon name={category.name || category.slug} parentName={parentName} className="w-[18px] h-[18px]" />
+      <CategoryIcon name={category.name || category.slug} parentName={parentName} icon={icon} className="w-[18px] h-[18px]" />
     </span>
   );
 }
@@ -157,6 +157,10 @@ export function CategoriesMegaContent({
 
   if (categories.length === 0) return <p className="text-[13px] text-slate">No categories yet.</p>;
 
+  // One unique icon per sibling, so no two rows/circles in a list look the same.
+  const mainIcons = assignCategoryIcons(categories.map(c => c.name || c.slug));
+  const subIcons = assignCategoryIcons((active?.children ?? []).map(s => s.name || s.slug), active?.name);
+
   // Fixed height is applied via a CSS custom property + a static `lg:h-` arbitrary-value utility
   // class — never a plain inline `height`, and never gated below `lg` — so
   // that below `lg` both columns flow naturally with the page's own single
@@ -180,7 +184,7 @@ export function CategoriesMegaContent({
       <div className={clsx('w-full lg:w-[220px] shrink-0 flex flex-col border-b lg:border-b-0 lg:border-e border-bone pb-4 lg:pb-0 pe-0 lg:pe-6', colHeightCls)} style={colVars}>
         <MegaSectionLabel>Categories</MegaSectionLabel>
         <div className={clsx('flex flex-col gap-[2px] pe-1 -me-1', colInnerCls)}>
-          {categories.map(cat => (
+          {categories.map((cat, idx) => (
             <Link
               key={cat._id}
               to={categoryPath(cat)}
@@ -192,7 +196,7 @@ export function CategoriesMegaContent({
                 activeId === cat._id ? 'bg-brand-pale-orange text-brand-orange' : 'text-charcoal hover:bg-cream',
               )}
             >
-              <CategoryBarIcon category={cat} />
+              <CategoryBarIcon category={cat} icon={mainIcons[idx]} />
               <span className="flex-1 text-[12.5px] font-medium truncate">{cat.name}</span>
               <ChevronRight size={13} className={clsx('shrink-0 transition-transform', activeId === cat._id ? 'text-brand-orange translate-x-[2px]' : 'text-slate/50')} />
             </Link>
@@ -210,7 +214,7 @@ export function CategoriesMegaContent({
           // instead of a static 3-column grid that only ever grew taller
           // with more items. `lg:` and up switches to that original grid.
           <div className="flex gap-3 overflow-x-auto scrollbar-hide -mx-4 px-4 pb-1 mb-5 lg:mx-0 lg:px-0 lg:pb-0 lg:mb-6 lg:grid lg:grid-cols-4 xl:grid-cols-5 lg:gap-x-3 lg:gap-y-4 lg:overflow-visible">
-            {active.children.map(sub => (
+            {active.children.map((sub, idx) => (
               <Link
                 key={sub._id}
                 to={categoryPath(sub)}
@@ -218,7 +222,7 @@ export function CategoriesMegaContent({
                 className="flex flex-col items-center no-underline gap-[7px] text-center bg-transparent border-none cursor-pointer p-0 shrink-0 w-[64px] lg:w-auto group focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange"
               >
                 <span className="w-14 h-14 rounded-full overflow-hidden bg-cream border border-bone flex items-center justify-center shrink-0 transition-transform duration-150 group-hover:-translate-y-[2px] group-hover:border-brand-orange/40">
-                  <CategoryIcon name={sub.name || sub.slug} parentName={active.name} className="w-6 h-6 text-brand-royal" />
+                  <CategoryIcon name={sub.name || sub.slug} parentName={active.name} icon={subIcons[idx]} className="w-6 h-6 text-brand-royal" />
                 </span>
                 <span className="text-[12px] font-medium text-charcoal leading-tight line-clamp-2 group-hover:text-brand-orange transition-colors">
                   {sub.name}
