@@ -147,6 +147,7 @@ export const ENDPOINTS = {
     MARK_ALL_READ: '/api/notifications/read-all',
     MARK_READ: (id: string) => `/api/notifications/${id}/read`,
     REMOVE: (id: string) => `/api/notifications/${id}`,
+    CLEAR_READ: '/api/notifications/clear-read',
   },
 
   // ── CATEGORIES ────────────────────────────────────────────────────────────

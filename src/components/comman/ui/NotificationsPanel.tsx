@@ -6,8 +6,9 @@ import { EmptyState } from './EmptyState';
 import { SkeletonBox } from './SkeletonBox';
 import {
   Bell, Mail, Smartphone, Check, Trash2,
-  Clock, Package, MessageSquare, Star, Sparkles, Filter, Tag
+  Clock, Package, MessageSquare, Star, Sparkles, Filter, Tag, Wallet
 } from 'lucide-react';
+import { TokenStorage } from '@/api/services/auth';
 import { clsx } from 'clsx';
 import { getNotificationIcon } from './notificationIcon';
 import { useNavigate } from 'react-router-dom';
@@ -35,6 +36,8 @@ export function NotificationsPanel() {
     notifications,
     unreadCount,
     notificationsLoading,
+    listError,
+    clearRead,
     preferences,
     fetchNotifications,
     hasMoreNotifications,
@@ -50,6 +53,20 @@ export function NotificationsPanel() {
 
   const [unreadOnly, setUnreadOnly] = useState(false);
   const toast = useToast();
+  // Sellers get no WhatsApp/SMS or loyalty switches (those channels/topics are buyer-only) but do get payouts.
+  const isSeller = TokenStorage.getUser<{ role?: string }>()?.role === 'seller';
+  const hasRead = notifications.some(n => n.isRead);
+  // WhatsApp/SMS need paid provider accounts: shown to buyers but locked until those are set up.
+  const CHANNELS_COMING_SOON = true;
+
+  const handleClearRead = async () => {
+    try {
+      await clearRead();
+      toast.success('Read notifications cleared');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not clear notifications');
+    }
+  };
   const [prefsLoaded, setPrefsLoaded] = useState(false);
 
   useEffect(() => {
@@ -149,14 +166,15 @@ export function NotificationsPanel() {
                   />
                 </div>
 
-                {/* Opt-in order messages on WhatsApp / SMS (only sent when the store admin has enabled the channel). */}
+                {/* Opt-in order messages on WhatsApp / SMS (only sent when the store admin has enabled the channel). Buyers only. */}
+                {!isSeller && (<>
                 <div className="flex justify-between items-start gap-4 pt-2">
                   <div className="flex gap-3">
                     <div className="size-8 rounded-lg bg-bone flex items-center justify-center shrink-0">
                       <MessageSquare size={15} className="text-slate" />
                     </div>
                     <div>
-                      <p className="text-[13px] font-semibold text-charcoal leading-none">WhatsApp order updates</p>
+                      <p className="text-[13px] font-semibold text-charcoal leading-none">WhatsApp order updates{CHANNELS_COMING_SOON && <span className="ms-2 px-1.5 py-[1px] rounded bg-bone text-slate text-[12px] font-semibold">Coming soon</span>}</p>
                       <p className="text-[12px] text-slate mt-1 leading-normal">
                         Order confirmation, shipping and delivery messages on WhatsApp. Uses the phone number on your profile.
                       </p>
@@ -166,6 +184,7 @@ export function NotificationsPanel() {
                     label="WhatsApp order updates"
                     checked={preferences?.whatsappEnabled ?? false}
                     onChange={(v) => handleTogglePref('whatsappEnabled', v)}
+                    disabled={CHANNELS_COMING_SOON}
                   />
                 </div>
 
@@ -175,7 +194,7 @@ export function NotificationsPanel() {
                       <Smartphone size={15} className="text-slate" />
                     </div>
                     <div>
-                      <p className="text-[13px] font-semibold text-charcoal leading-none">SMS order updates</p>
+                      <p className="text-[13px] font-semibold text-charcoal leading-none">SMS order updates{CHANNELS_COMING_SOON && <span className="ms-2 px-1.5 py-[1px] rounded bg-bone text-slate text-[12px] font-semibold">Coming soon</span>}</p>
                       <p className="text-[12px] text-slate mt-1 leading-normal">Text messages for order updates (used when WhatsApp is off).</p>
                     </div>
                   </div>
@@ -183,6 +202,7 @@ export function NotificationsPanel() {
                     label="SMS order updates"
                     checked={preferences?.smsEnabled ?? false}
                     onChange={(v) => handleTogglePref('smsEnabled', v)}
+                    disabled={CHANNELS_COMING_SOON}
                   />
                 </div>
 
@@ -194,16 +214,19 @@ export function NotificationsPanel() {
                     <div>
                       <p className="text-[13px] font-semibold text-charcoal leading-none">Reminders and price alerts on WhatsApp/SMS</p>
                       <p className="text-[12px] text-slate mt-1 leading-normal">Cart reminders, back-in-stock and price-drop alerts for saved items, and referral rewards. Needs WhatsApp or SMS turned on above and the Promotions topic enabled.</p>
-                      {remindersLocked && <p className="text-[12px] text-slate mt-1 font-medium">Turn on WhatsApp or SMS first</p>}
+                      {CHANNELS_COMING_SOON
+                        ? <p className="text-[12px] text-slate mt-1 font-medium">Coming soon</p>
+                        : remindersLocked && <p className="text-[12px] text-slate mt-1 font-medium">Turn on WhatsApp or SMS first</p>}
                     </div>
                   </div>
                   <Toggle
                     label="Reminders and price alerts on WhatsApp or SMS"
                     checked={(preferences?.retentionChannelsEnabled ?? false) && !remindersLocked}
                     onChange={(v) => handleTogglePref('retentionChannelsEnabled', v)}
-                    disabled={remindersLocked}
+                    disabled={remindersLocked || CHANNELS_COMING_SOON}
                   />
                 </div>
+                </>)}
               </div>
 
               {/* Notification Category Filters */}
@@ -246,6 +269,27 @@ export function NotificationsPanel() {
                   />
                 </div>
 
+                {isSeller && (
+                <div className="flex justify-between items-center gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="size-7 rounded bg-[#eefaf0] flex items-center justify-center shrink-0">
+                      <Wallet size={13} className="text-brand-green" />
+                    </div>
+                    <div>
+                      <p className="text-[12.5px] font-medium text-charcoal">Payouts & Earnings</p>
+                      <p className="text-[12px] text-slate leading-normal">Payout requests, completed or rejected payouts and wallet changes.</p>
+                    </div>
+                  </div>
+                  <Toggle
+                    size="sm"
+                    label="Payouts and earnings"
+                    checked={preferences?.prefs?.finance ?? true}
+                    onChange={(v) => handleTogglePref('finance', v)}
+                  />
+                </div>
+                )}
+
+                {!isSeller && (
                 <div className="flex justify-between items-center gap-4">
                   <div className="flex items-center gap-3">
                     <div className="size-7 rounded bg-[#fff8e7] flex items-center justify-center shrink-0">
@@ -263,6 +307,7 @@ export function NotificationsPanel() {
                     onChange={(v) => handleTogglePref('loyalty', v)}
                   />
                 </div>
+                )}
 
                 <div className="flex justify-between items-center gap-4">
                   <div className="flex items-center gap-3">
@@ -326,6 +371,15 @@ export function NotificationsPanel() {
               <Filter size={12} />
               <span>Unread Only</span>
             </button>
+            {hasRead && (
+              <button
+                type="button"
+                onClick={() => { void handleClearRead(); }}
+                className="px-[10px] py-[6px] rounded-lg border border-bone bg-white text-slate text-xs font-semibold flex items-center gap-1.5 cursor-pointer hover:bg-cream transition-colors"
+              >
+                <Trash2 size={12} /> Clear read
+              </button>
+            )}
             {unreadCount > 0 && (
               <button
                 onClick={markAllAsRead}
@@ -414,6 +468,13 @@ export function NotificationsPanel() {
                 </div>
               </div>
             ))
+          ) : listError ? (
+            <EmptyState
+              icon={<Bell size={28} className="text-slate/40" />}
+              title="Could not load notifications"
+              description="Check your connection and try again."
+              action={{ label: 'Try again', onClick: () => { void fetchNotifications(unreadOnly); } }}
+            />
           ) : (
             <EmptyState
               icon={<Bell size={28} className="text-slate/40" />}

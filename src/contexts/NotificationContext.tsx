@@ -10,6 +10,7 @@ import {
   apiMarkAllNotificationsRead,
   apiMarkNotificationRead,
   apiDeleteNotification,
+  apiClearReadNotifications,
   type NotificationItem,
   type NotificationPreferenceData,
   type NotificationPreferenceFlags,
@@ -21,6 +22,10 @@ interface NotificationContextValue {
   /** @deprecated use notificationsLoading */
   loading:       boolean;
   notificationsLoading: boolean;
+  /** The last list request failed (cleared by the next successful one). */
+  listError:     boolean;
+  /** Deletes every already-read notification. */
+  clearRead:     () => Promise<void>;
   preferences:   NotificationPreferenceData | null;
   fetchNotifications: (unreadOnly?: boolean) => Promise<void>;
   /** Older notifications exist beyond what is loaded (page-based "Load more"). */
@@ -48,7 +53,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unreadCount,   setUnreadCount]   = useState(0);
   const [notificationsLoading, setNotificationsLoading] = useState(false);
-  const [preferences,   setPreferences]   = useState<NotificationPreferenceData | null>(null);
+  const [listError, setListError] = useState(false);
+  const [preferences,  setPreferences]   = useState<NotificationPreferenceData | null>(null);
   const [toast,         setToast]         = useState<NotificationItem | null>(null);
   const [notificationsTotal, setNotificationsTotal] = useState(0);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -79,8 +85,9 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       setNotifications(res.data?.items ?? []);
       setNotificationsTotal(res.data?.total ?? 0);
       setUnreadCount(res.data?.unreadCount ?? 0);
+      setListError(false);
     } catch {
-      // Ignore list fetch errors
+      setListError(true);
     } finally {
       setNotificationsLoading(false);
     }
@@ -144,6 +151,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const deleteNotification = useCallback(async (id: string) => {
     try {
       await apiDeleteNotification(id);
+      setNotificationsTotal(t => Math.max(0, t - 1));   // keeps "Load more" honest
       setNotifications(prev => {
         const item = prev.find(i => i._id === id);
         if (item && !item.isRead) {
@@ -154,6 +162,12 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     } catch {
       // Ignore errors
     }
+  }, []);
+
+  const clearRead = useCallback(async () => {
+    await apiClearReadNotifications();   // throws on failure so the caller can toast
+    setNotifications(prev => prev.filter(i => !i.isRead));
+    fetchNotificationsRef.current(listState.current.unreadOnly);
   }, []);
 
   const updatePrefs = useCallback(async (dto: Partial<NotificationPreferenceFlags> & { pushEnabled?: boolean; emailEnabled?: boolean; whatsappEnabled?: boolean; smsEnabled?: boolean; retentionChannelsEnabled?: boolean; language?: 'en' | 'ur' }) => {
@@ -176,7 +190,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         if (v !== undefined) nx[k] = v;
       }
 
-      (['orders', 'messages', 'promotions', 'loyalty', 'subscriptions'] as const).forEach(key => {
+      (['orders', 'messages', 'promotions', 'loyalty', 'subscriptions', 'finance'] as const).forEach(key => {
         if (dto[key] !== undefined) next.prefs[key] = dto[key]!;
       });
 
@@ -306,6 +320,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         unreadCount,
         loading: notificationsLoading,
         notificationsLoading,
+        listError,
+        clearRead,
         preferences,
         fetchNotifications,
         hasMoreNotifications: notifications.length < notificationsTotal,

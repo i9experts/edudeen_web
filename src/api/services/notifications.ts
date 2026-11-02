@@ -37,6 +37,8 @@ export interface NotificationPreferenceFlags {
   promotions:    boolean;
   loyalty:       boolean;
   subscriptions: boolean;
+  /** Payouts and money movement (sellers). */
+  finance?:      boolean;
 }
 
 export interface NotificationPreferenceData {
@@ -100,6 +102,10 @@ export function apiMarkAllNotificationsRead() {
 
 export function apiMarkNotificationRead(id: string) {
   return client.patch<never, ApiResponse<NotificationItem>>(ENDPOINTS.NOTIFICATIONS.MARK_READ(id));
+}
+
+export function apiClearReadNotifications() {
+  return client.delete<never, ApiResponse<{ deleted: number }>>(ENDPOINTS.NOTIFICATIONS.CLEAR_READ);
 }
 
 export function apiDeleteNotification(id: string) {
