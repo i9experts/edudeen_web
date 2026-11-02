@@ -265,7 +265,11 @@ export default function StoreProductList() {
     },
     {
       key: 'status', header: 'Status',
-      render: p => p.status === 'pending_review' ? (
+      render: p => p.pausedByPlan ? (
+        <span title="Hidden from buyers because your plan ended. Choose a plan and it goes live again automatically.">
+          <Badge color="yellow">Paused - plan ended</Badge>
+        </span>
+      ) : p.status === 'pending_review' ? (
         <span title="Edudeen checks new listings before they go live — usually within a day.">
           <Badge color="blue">In review</Badge>
         </span>

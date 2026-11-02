@@ -148,6 +148,7 @@ const AdminLearningPaths = lazy(() => named(import('@/features/admin/pages/Admin
 const SharedWishlistPage = lazy(() => named(import('@/features/buyer/pages/SharedWishlistPage'), 'SharedWishlistPage'));
 const LearningPathsIndexPage = lazy(() => named(import('@/features/buyer/pages/LearningPathPages'), 'LearningPathsIndexPage'));
 const LearningPathPage   = lazy(() => named(import('@/features/buyer/pages/LearningPathPages'), 'LearningPathPage'));
+const StorePlanExpired   = lazy(() => import('@/features/seller/store/Dashboard/Manage/StorePlanExpired'));
 const StorePlanBilling   = lazy(() => import('@/features/seller/store/Dashboard/Manage/StorePlanBilling'));
 const StoreOrderList     = lazy(() => named(import('@/features/seller/store/Dashboard/StoreSection/orders/OrderList'),        'StoreOrderList'));
 const StoreReturnList    = lazy(() => named(import('@/features/seller/store/Dashboard/StoreSection/returns/ReturnList'),      'StoreReturnList'));
@@ -419,6 +420,7 @@ const mainRouter = createBrowserRouter([
           { path: 'collections',                      element: <StorePathTabs tabs={CATALOG_TABS} /> },
           { path: 'bundles',                          element: <StorePathTabs tabs={CATALOG_TABS} /> },
           { path: 'plan-billing',                     element: <StorePlanBilling /> },
+          { path: 'plan-expired',                     element: <StorePlanExpired /> },
           { path: 'verification',                     element: <Navigate to="../dashboard" replace /> }, // old links (business verification was removed)
           { path: 'storebuilder',                     element: <StorePageOverview /> },
           { path: 'returns',                          element: <StoreReturnList /> },

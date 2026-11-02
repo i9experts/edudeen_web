@@ -291,6 +291,7 @@ export interface InventoryProduct {
   reviewNote?:  string | null;
   /** An edit to this live listing is waiting for admin approval / was declined (reason). */
   hasPendingEdit?: boolean;
+  pausedByPlan?: boolean;
   editRejection?: string | null;
   price:        number;
   allTimeSales: number;

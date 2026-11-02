@@ -709,6 +709,21 @@ function PlatformBillingBanner() {
   const navigate = useNavigate();
   const { storeId } = useStoreWorkspace();
   const { sub } = useStorePlan(storeId);
+  const { pathname } = useLocation();
+  const expired = sub?.status === 'expired' || sub?.status === 'past_due';
+
+  // Already signed in when the plan ended: show the "plan ended" screen once per session,
+  // then let the seller look around (banner stays).
+  useEffect(() => {
+    if (!expired || !storeId) return;
+    if (/\/(plan-billing|plan-expired)$/.test(pathname)) return;
+    const key = `plan-expired-shown:${storeId}`;
+    try {
+      if (sessionStorage.getItem(key)) return;
+      sessionStorage.setItem(key, '1');
+    } catch { return; }
+    navigate(`/store/${storeId}/plan-expired`, { replace: true });
+  }, [expired, storeId, pathname, navigate]);
 
   if (!sub) return null;
   const goToBilling = () => navigate(`/store/${storeId}/plan-billing`);
@@ -717,7 +732,7 @@ function PlatformBillingBanner() {
     return (
       <button onClick={goToBilling} className="flex w-full items-center justify-center gap-2 px-4 py-2 text-[12.5px] font-medium text-error bg-error-bg border-b border-error-border cursor-pointer">
         <AlertTriangle size={14} className="shrink-0" />
-        Your free trial has ended — choose a plan to keep adding products and selling.
+        Your plan has ended — your products are hidden from buyers. Choose a plan to take them live again.
         <span className="underline font-semibold">Choose a plan</span>
       </button>
     );
@@ -726,7 +741,7 @@ function PlatformBillingBanner() {
     return (
       <button onClick={goToBilling} className="flex w-full items-center justify-center gap-2 px-4 py-2 text-[12.5px] font-medium text-error bg-error-bg border-b border-error-border cursor-pointer">
         <AlertTriangle size={14} className="shrink-0" />
-        Your plan payment failed (attempt {sub.failedPaymentAttempts}) — update your payment method to avoid losing access.
+        Your plan payment failed (attempt {sub.failedPaymentAttempts}) — your products are hidden until it is fixed.
         <span className="underline font-semibold">Fix now</span>
       </button>
     );

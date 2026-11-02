@@ -1,4 +1,5 @@
 import { apiGetMyStores, type MyStoreItem } from '@/api/services/store';
+import { apiGetStorePlatformPlan } from '@/api/services/platformPlans';
 
 /** Where an authenticated seller actually belongs, based on their REAL
  *  backend store state — never a hardcoded "/onboard". Used by OTP-verify,
@@ -31,10 +32,21 @@ export function resolveSellerDestination(stores: MyStoreItem[]): string {
  *  — the network failure fallback is `/onboard`, since a seller with no
  *  reachable store list has nowhere else safe to land. */
 export async function resolveSellerDestinationRemote(): Promise<string> {
+  let dest: string;
   try {
     const res = await apiGetMyStores();
-    return resolveSellerDestination(res.data ?? []);
+    dest = resolveSellerDestination(res.data ?? []);
   } catch {
     return '/onboard';
   }
+  // Plan ended (expired trial): land on the "plan ended" screen instead of the dashboard.
+  // Any failure here keeps the normal destination - never trap a seller on a lookup error.
+  const m = dest.match(/^\/store\/([^/]+)\/dashboard$/);
+  if (m) {
+    try {
+      const sub = await apiGetStorePlatformPlan(m[1]);
+      if (sub.data?.status === 'expired' || sub.data?.status === 'past_due') return `/store/${m[1]}/plan-expired`;
+    } catch { /* keep dashboard */ }
+  }
+  return dest;
 }
