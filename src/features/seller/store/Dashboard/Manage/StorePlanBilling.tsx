@@ -125,7 +125,7 @@ export default function StorePlanBilling() {
   }, [storeId]);
   useEffect(load, [load]);
   // Admin changed plans / granted free access, a renewal or invoice landed: quiet re-read (a failure keeps what is shown).
-  useLiveRefresh(['plans', 'subscriptions', 'finance'], () => { quietRef.current = true; load(); }, !!storeId);
+  useLiveRefresh(['plans', 'finance'], () => { quietRef.current = true; load(); }, !!storeId);
 
   // ── Confirm-plan-change modal — fetch the exact proration preview the moment it opens ──
   useEffect(() => {

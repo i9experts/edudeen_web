@@ -133,7 +133,7 @@ const PRODUCT_TYPE_LABELS: Record<ProductType, string> = {
 const ALL_PRODUCT_TYPES: ProductType[] = [
   // services_bookings (Classes / Tutoring) is not offered — there is no
   // product/booking flow behind it yet; the label above stays for legacy stores.
-  'physical_products', 'digital_downloads', 'educational_resources', 'subscriptions',
+  'physical_products', 'digital_downloads', 'educational_resources',
 ];
 
 // ── Skeleton ──────────────────────────────────────────────────────────────────
@@ -306,7 +306,7 @@ function DomainWhiteLabelCard({ storeId, store, refetch }: {
     apiGetStoreEntitlements(storeId).then(res => setEntitlements(res.data)).catch(() => {});
   }, [storeId]);
   // Plan changed (admin gift / expiry / upgrade): only the read-only plan gating refreshes; the form fields below are never touched.
-  useLiveRefresh(['plans', 'subscriptions'], () => { apiGetStoreEntitlements(storeId).then(res => setEntitlements(res.data)).catch(() => {}); }, !!storeId);
+  useLiveRefresh(['plans'], () => { apiGetStoreEntitlements(storeId).then(res => setEntitlements(res.data)).catch(() => {}); }, !!storeId);
 
   useEffect(() => { setDomain(store?.customDomain ?? ''); setVerifyResult(null); }, [store?.customDomain]);
 

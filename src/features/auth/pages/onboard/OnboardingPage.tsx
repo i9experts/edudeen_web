@@ -8,7 +8,7 @@ import { TokenStorage, getRoleRedirect, type AppRole } from '@/api/services/auth
 import { Button } from '@/components/comman/ui/Button';
 import {
   Camera, Palette, BookOpen, Store, Briefcase, Monitor, Globe,
-  Package, Download, Repeat,
+  Package, Download,
   Sparkles, ArrowRight, ArrowLeft, Check, AlertTriangle, Loader2,
   ShieldCheck, Clock,
 } from 'lucide-react';
@@ -64,7 +64,6 @@ const PRODUCT_TYPES: { id: ProductType; Icon: React.ElementType; title: string; 
   { id: 'physical_products', Icon: Package,           title: 'Books & School Supplies', desc: 'Ship books, stationery and learning kits' },
   { id: 'digital_downloads', Icon: Download,          title: 'Digital Learning Resources', desc: 'eBooks, PDFs, audio and video lessons' },
   { id: 'educational_resources', Icon: BookOpen,      title: 'Educational Resources', desc: 'Worksheets, lesson plans' },
-  { id: 'subscriptions',     Icon: Repeat,            title: 'Learning Subscriptions', desc: 'Recurring course or membership access' },
 ];
 
 interface StoreForm {

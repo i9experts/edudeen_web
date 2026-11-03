@@ -7,7 +7,7 @@ export interface PlatformPlanLimits {
   maxProducts?: number; maxStaffAccounts?: number; maxPosLocations?: number;
   aiCreditsPerMonth?: number; transactionFeeRate?: number;
   customDomainAllowed?: boolean; whiteLabelAllowed?: boolean; loyaltyProgramAllowed?: boolean;
-  subscriptionProductsAllowed?: boolean; advancedAnalyticsAllowed?: boolean;
+  advancedAnalyticsAllowed?: boolean;
   abandonedCartRecoveryAllowed?: boolean; emailCampaignsAllowed?: boolean; apiWebhooksAllowed?: boolean;
   dedicatedAccountManager?: boolean; prioritySupport?: boolean; marketplaceFeaturedBadge?: boolean;
   slaUptimePercent?: number;

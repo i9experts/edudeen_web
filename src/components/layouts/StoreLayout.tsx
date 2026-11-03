@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Package, ShoppingBag, Users, BarChart2,
   Settings, Sparkles, ChevronLeft, ChevronRight, Store,
   Megaphone, Star, Search, Wallet, Truck, Boxes, Gift,
-  MessageSquare, FolderTree, RefreshCw, Undo2, CreditCard,
+  MessageSquare, FolderTree, Undo2, CreditCard,
   ChevronDown, Lock, MoreHorizontal, PanelLeftClose, Loader2, PanelLeftOpen, AlertTriangle, AlertCircle, XCircle, Clock, LogOut, UserRound, Bell,
 } from 'lucide-react';
 import { EdudeenIcon, EdudeenLogo } from '@/components/comman/ui/EdudeenLogo';
@@ -73,7 +73,6 @@ export const NAV: { group: string; items: NavItem[] }[] = [
     group: 'Growth',
     items: [
       { id: 'marketing',     Icon: Megaphone, label: 'Marketing',     path: 'marketing'     },
-      { id: 'subscriptions', Icon: RefreshCw, label: 'Subscriptions', path: 'subscriptions' },
       { id: 'loyalty',       Icon: Gift,      label: 'Loyalty',       path: 'loyalty'       },
       { id: 'seo',           Icon: Search,    label: 'SEO',           path: 'seo'           },
       { id: 'ai',            Icon: Sparkles,  label: 'AI Studio',     path: 'ai/studio'     },
@@ -99,11 +98,10 @@ export const NAV: { group: string; items: NavItem[] }[] = [
 ];
 
 // Sidebar: these Growth items fold into a "Growth tools" section (open by default once a store has this many orders).
-const GROWTH_TOOL_IDS = ['subscriptions', 'loyalty', 'seo', 'ai'];
+const GROWTH_TOOL_IDS = ['loyalty', 'seo', 'ai'];
 const GROWTH_TOOLS_OPEN_AFTER_ORDERS = 5;
 // Nav item -> plan entitlement flag; a `false` flag shows a small lock instead of hiding the item.
 const LOCK_KEY: Record<string, string> = {
-  subscriptions: 'subscriptionProductsAllowed',
   loyalty: 'loyaltyProgramAllowed',
   seo: 'advancedSeoToolsAllowed',
 };

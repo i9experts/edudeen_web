@@ -133,10 +133,6 @@ export interface RemoveGiftCardData {
 }
 interface RemoveGiftCardResponse { success: boolean; message: string; data: RemoveGiftCardData }
 
-export interface SubscriptionSavingsHint {
-  storeId: string; storeName: string; storeSlug: string; planId: string; planName: string; potentialSavingsUSD: number;
-}
-
 export interface CreateCheckoutPayload {
   addressId?:      string;
   shippingZoneId?: string;
@@ -176,7 +172,6 @@ interface CreateCheckoutResponse {
     checkout:               Checkout;
     allowedPaymentMethods:  string[];
     summary:                CheckoutSummary;
-    subscriptionSavingsHints: SubscriptionSavingsHint[];
     appliedCampaigns:       AppliedCampaign[];
   };
 }

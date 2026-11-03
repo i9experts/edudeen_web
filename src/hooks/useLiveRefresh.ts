@@ -4,7 +4,7 @@ import { subscribeLive } from '@/api/realtime';
 /**
  * Re-run `refetch` whenever data under one of `topics` changes anywhere on the platform.
  * Topics: orders, finance, products, catalog, campaigns, banners, config, categories, reviews,
- * plans, premium, subscriptions, notifications, messaging ... (the first API path segment, see
+ * plans, premium, notifications, messaging ... (the first API path segment, see
  * the API's realtime.service.ts). `refetch` should update state quietly (no full-page skeleton).
  */
 export function useLiveRefresh(topics: readonly string[], refetch: () => void, enabled = true) {

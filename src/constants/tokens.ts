@@ -117,7 +117,6 @@ export const SELLER_TYPES = [
 export const PRODUCT_TYPES = [
   { id: 'physical',       icon: 'package',   label: 'Books & School Supplies', desc: 'Ship books, stationery and kits' },
   { id: 'digital',        icon: 'download',  label: 'Digital Learning Resources', desc: 'eBooks, PDFs, audio, video'   },
-  { id: 'subscriptions',  icon: 'repeat',    label: 'Learning Subscriptions', desc: 'Recurring course or membership access' },
 ] as const;
 
 // ── Pricing Plans ────────────────────────────────────────────────────────────
@@ -145,7 +144,7 @@ export const PRICING_PLANS = [
     transactionFee: '1%',
     features: [
       'Unlimited products', 'Custom domain (.com)', 'Full Store Builder',
-      'Course & subscription products', 'Advanced analytics', 'AI Studio — 1,000 credits / mo',
+      'Course products', 'Advanced analytics', 'AI Studio — 1,000 credits / mo',
       '5 staff accounts', 'Email campaigns', 'Abandoned cart recovery',
       'Priority support', '1% transaction fee', 'Marketplace featured badge',
     ],
@@ -161,7 +160,7 @@ export const PRICING_PLANS = [
     features: [
       'Everything in Professional', 'Unlimited staff accounts',
       'AI Studio — 5,000 credits / mo', 'Loyalty & Rewards program',
-      'Subscription products', 'Advanced shipping rules',
+      'Advanced shipping rules',
       'API access & webhooks', 'Dedicated account manager',
       '0.5% transaction fee', 'White-label store option', 'SLA — 99.9% uptime',
     ],

@@ -21,7 +21,6 @@ export function RevenueTab({ params, compareToPreviousPeriod }: { params: BaseAn
   const b = breakdown.data;
   const comparisonRows: ComparisonRow[] = b?.previousPeriod ? [
     { metric: 'One-Time Order Revenue', current: formatCurrency(b.oneTimeOrderRevenue), previous: formatCurrency(b.previousPeriod.oneTimeOrderRevenue) },
-    { metric: 'Subscription Revenue', current: formatCurrency(b.recurringSubscriptionRevenue), previous: formatCurrency(b.previousPeriod.recurringSubscriptionRevenue) },
     { metric: 'Platform Commission', current: formatCurrency(b.platformCommissionRevenue), previous: formatCurrency(b.previousPeriod.platformCommissionRevenue) },
     { metric: 'Payment Processing Fees', current: formatCurrency(b.paymentProcessingFees), previous: formatCurrency(b.previousPeriod.paymentProcessingFees) },
     { metric: 'Total Platform Revenue', current: formatCurrency(b.totalPlatformRevenue), previous: formatCurrency(b.previousPeriod.totalPlatformRevenue) },
@@ -63,19 +62,18 @@ export function RevenueTab({ params, compareToPreviousPeriod }: { params: BaseAn
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <DonutChart
             title="Platform Revenue Composition"
-            subtitle="Commission, subscriptions & processing fees"
+            subtitle="Commission & processing fees"
             centerLabel="Platform"
             data={[
               { label: 'Platform Commission', value: breakdown.data.platformCommissionRevenue },
-              { label: 'Subscription Revenue', value: breakdown.data.recurringSubscriptionRevenue },
               { label: 'Payment Processing Fees', value: breakdown.data.paymentProcessingFees },
             ]}
           />
 
           <div className="grid grid-cols-1 gap-3">
             <MetricCard label="One-Time Order Revenue" value={formatCurrency(breakdown.data.oneTimeOrderRevenue)} sub="Belongs to sellers, not the platform" />
-            <MetricCard to="/admin/finance?tab=revenue" label="Total Platform Revenue" value={formatCurrency(breakdown.data.totalPlatformRevenue)} sub="Commission + subscriptions" />
-            <MetricCard to="/admin/orders" label="Total Marketplace Revenue" value={formatCurrency(breakdown.data.totalMarketplaceRevenue)} sub="Order revenue + subscriptions" />
+            <MetricCard to="/admin/finance?tab=revenue" label="Total Platform Revenue" value={formatCurrency(breakdown.data.totalPlatformRevenue)} sub="Commission + fees" />
+            <MetricCard to="/admin/orders" label="Total Marketplace Revenue" value={formatCurrency(breakdown.data.totalMarketplaceRevenue)} sub="Order revenue" />
           </div>
         </div>
       ) : null}

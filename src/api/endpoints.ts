@@ -276,65 +276,6 @@ export const ENDPOINTS = {
     EXPORT: '/api/admin/activity-log/export',
   },
 
-  // ── SUBSCRIPTIONS ─────────────────────────────────────────────────────────
-  SUBSCRIPTIONS: {
-    // Buyer
-    BROWSE_PLANS: (storeId: string) => `/api/subscriptions/public/${storeId}/plans`,
-    SUBSCRIBE:    '/api/subscriptions/subscribe',
-    MY:           '/api/subscriptions/my',
-    MY_BY_ID:     (id: string) => `/api/subscriptions/my/${id}`,
-    MY_PAUSE:     (id: string) => `/api/subscriptions/my/${id}/pause`,
-    MY_RESUME:    (id: string) => `/api/subscriptions/my/${id}/resume`,
-    MY_CANCEL:    (id: string) => `/api/subscriptions/my/${id}/cancel`,
-    MY_CHANGE_PLAN: (id: string) => `/api/subscriptions/my/${id}/change-plan`,
-    MY_TIMELINE:  (id: string) => `/api/subscriptions/my/${id}/timeline`,
-    MY_SETUP_INTENT: '/api/subscriptions/my/setup-intent',
-    MY_BILLING_PORTAL: '/api/subscriptions/my/billing-portal',
-    MY_BENEFITS:  (storeId: string) => `/api/subscriptions/my/benefits/${storeId}`,
-    MY_CREDITS:   '/api/subscriptions/my/credits',
-    MY_CREDITS_SPEND: (storeId: string) => `/api/subscriptions/my/credits/${storeId}/spend`,
-    MY_NOTIFICATION_PREFS: '/api/subscriptions/my/notification-preferences',
-
-    // Seller (store-scoped)
-    PLANS: {
-      CREATE:    (storeId: string) => `/api/subscriptions/${storeId}/plans`,
-      LIST:      (storeId: string) => `/api/subscriptions/${storeId}/plans`,
-      GET_BY_ID: (storeId: string, id: string) => `/api/subscriptions/${storeId}/plans/${id}`,
-      UPDATE:    (storeId: string, id: string) => `/api/subscriptions/${storeId}/plans/${id}`,
-      ARCHIVE:   (storeId: string, id: string) => `/api/subscriptions/${storeId}/plans/${id}`,
-      ESTIMATE_HEALTH: (storeId: string) => `/api/subscriptions/${storeId}/plans/estimate-health`,
-    },
-    DASHBOARD:   (storeId: string) => `/api/subscriptions/${storeId}/dashboard`,
-    EXPORT:      (storeId: string) => `/api/subscriptions/${storeId}/export`,
-    ANALYTICS_ADVANCED: (storeId: string) => `/api/subscriptions/${storeId}/analytics/advanced`,
-    SUBSCRIBERS: {
-      LIST:      (storeId: string) => `/api/subscriptions/${storeId}/subscribers`,
-      GET_BY_ID: (storeId: string, id: string) => `/api/subscriptions/${storeId}/subscribers/${id}`,
-      PAUSE:     (storeId: string, id: string) => `/api/subscriptions/${storeId}/subscribers/${id}/pause`,
-      RESUME:    (storeId: string, id: string) => `/api/subscriptions/${storeId}/subscribers/${id}/resume`,
-      CANCEL:    (storeId: string, id: string) => `/api/subscriptions/${storeId}/subscribers/${id}/cancel`,
-      REFUND_INVOICE: (storeId: string, id: string, invoiceId: string) => `/api/subscriptions/${storeId}/subscribers/${id}/invoices/${invoiceId}/refund`,
-    },
-
-    // Admin
-    ADMIN: {
-      OVERVIEW:          '/api/subscriptions/admin/overview',
-      STORES:            '/api/subscriptions/admin/stores',
-      STORE_DETAIL:      (storeId: string) => `/api/subscriptions/admin/stores/${storeId}`,
-      SUSPEND_PLAN:      (id: string) => `/api/subscriptions/admin/plans/${id}/suspend`,
-      UNSUSPEND_PLAN:    (id: string) => `/api/subscriptions/admin/plans/${id}/unsuspend`,
-      PAYMENT_FAILURES:  '/api/subscriptions/admin/payment-failures',
-      SUB_DETAIL:        (id: string) => `/api/subscriptions/admin/subscriptions/${id}`,
-      SUB_PAYMENT_ATTEMPTS: (id: string) => `/api/subscriptions/admin/subscriptions/${id}/payment-attempts`,
-      LTV:               '/api/subscriptions/admin/ltv',
-      REVENUE_BREAKDOWN: '/api/subscriptions/admin/revenue-breakdown',
-      CHURN_COHORTS:     '/api/subscriptions/admin/churn-cohorts',
-      INVOICE_REFUND:    (invoiceId: string) => `/api/subscriptions/admin/invoices/${invoiceId}/refund`,
-      WEBHOOKS:          '/api/subscriptions/admin/webhooks',
-      WEBHOOK_RETRY:     (id: string) => `/api/subscriptions/admin/webhooks/${id}/retry`,
-    },
-  },
-
   // ── MARKETING ─────────────────────────────────────────────────────────────
   MARKETING: {
     COUPONS: {

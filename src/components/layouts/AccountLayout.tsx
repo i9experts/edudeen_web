@@ -7,7 +7,7 @@ import { clsx } from 'clsx';
 import {
   LayoutDashboard, ShoppingBag, Heart, Star, Baby,
   MessageSquare, Landmark, Download,
-  User, Shield, MapPin, Bell, RefreshCw, Crown, Undo2, Gift,
+  User, Shield, MapPin, Bell, Crown, Undo2, Gift,
   ChevronLeft, PanelLeftClose, PanelLeftOpen, type LucideIcon,
 } from 'lucide-react';
 import { useWishlistContext } from '@/contexts/WishlistContext';
@@ -86,7 +86,6 @@ export function useNavGroups(): NavGroup[] {
         { id: 'children',      label: t('My Children'),    Icon: Baby,      path: 'children' },
         { id: 'premium',       label: t('Premium'),        Icon: Crown,     path: 'premium' },
         ...(referralsOn ? [{ id: 'referrals', label: t('Refer & Earn'), Icon: Gift, path: 'referrals' }] : []),
-        { id: 'subscriptions', label: t('Subscriptions'),  Icon: RefreshCw, path: 'subscriptions' },
       ],
     },
   ];

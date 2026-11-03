@@ -23,7 +23,7 @@ const ADDON_LABELS: Record<string, string> = {
 
 const DEFAULT_LIMITS: PlatformPlanLimits = {
   maxProducts: 25, maxStaffAccounts: 1, maxPosLocations: 1, aiCreditsPerMonth: 0, transactionFeeRate: 0,
-  customDomainAllowed: false, whiteLabelAllowed: false, loyaltyProgramAllowed: false, subscriptionProductsAllowed: false,
+  customDomainAllowed: false, whiteLabelAllowed: false, loyaltyProgramAllowed: false,
   advancedAnalyticsAllowed: false, abandonedCartRecoveryAllowed: false, emailCampaignsAllowed: false,
   apiWebhooksAllowed: false, dedicatedAccountManager: false, prioritySupport: false, marketplaceFeaturedBadge: false,
   advancedSeoToolsAllowed: false, seoAiSuggestionsAllowed: false, searchConsoleIntegrationAllowed: false, customRedirectsAllowed: false,
@@ -39,7 +39,6 @@ type BooleanKeys<T> = { [K in keyof T]-?: NonNullable<T[K]> extends boolean ? K 
 // saved `plan.limits` object and sent back as-is, so their values survive.
 const BOOL_FLAGS: { key: BooleanKeys<PlatformPlanLimits>; label: string }[] = [
   { key: 'loyaltyProgramAllowed', label: 'Loyalty program' },
-  { key: 'subscriptionProductsAllowed', label: 'Store subscriptions' },
   { key: 'advancedAnalyticsAllowed', label: 'Advanced analytics' },
   { key: 'emailCampaignsAllowed', label: 'Email campaigns' },
   { key: 'dedicatedAccountManager', label: 'Dedicated account manager' },
@@ -75,7 +74,7 @@ const PLAN_TEMPLATES: PlanTemplate[] = [
     description: 'Premium tools to grow your store and reach more learners.',
     bullets: ['Everything in Basic', 'Advanced analytics and SEO tools', 'AI SEO suggestions', 'Email campaigns and loyalty program', 'Priority support', 'Featured badge on the marketplace'],
     limits: {
-      aiCreditsPerMonth: 500, maxActiveStoreBanners: -1, maxActivePromotions: -1, loyaltyProgramAllowed: true, subscriptionProductsAllowed: true,
+      aiCreditsPerMonth: 500, maxActiveStoreBanners: -1, maxActivePromotions: -1, loyaltyProgramAllowed: true,
       advancedAnalyticsAllowed: true, emailCampaignsAllowed: true, prioritySupport: true, marketplaceFeaturedBadge: true,
       advancedSeoToolsAllowed: true, seoAiSuggestionsAllowed: true, searchConsoleIntegrationAllowed: true, customRedirectsAllowed: true,
     },

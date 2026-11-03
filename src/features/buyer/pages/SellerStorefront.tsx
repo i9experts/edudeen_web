@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { SITE_URL } from '@/utils/seo';
 import { usePageMeta } from '@/hooks/usePageMeta';
-import { useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
 import { CoverImage } from '@/components/comman/ui';
 import { BannerCarousel } from '@/components/comman/marketplace/BannerCarousel';
@@ -9,7 +8,7 @@ import { useStoreBanners } from '@/hooks/useStoreBanners';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 import { useAuthGate } from '@/contexts/AuthGateContext';
 import {
-  Star, Users, Loader2, MessageCircle, BadgeCheck, Award, Gift, RefreshCw, Check, Store, CreditCard,
+  Star, Users, Loader2, MessageCircle, BadgeCheck, Award, Gift, Check, Store, CreditCard,
 } from 'lucide-react';
 import { apiFollowStore, apiGetFollowStatus } from '@/api/services/store';
 import { useToast } from '@/contexts/ToastContext';
@@ -17,7 +16,6 @@ import { apiStartConversation } from '@/api/services/messaging';
 import { apiGetMyBalance, apiGetRewards, apiRedeemReward, type LoyaltyBalance, type Reward } from '@/api/services/loyalty';
 import { apiGetGiftCardPublicSettings, apiCreateGiftCardPurchaseIntent, type GiftCardPublicSettings } from '@/api/services/giftCards';
 import { StripeCardPayment, isStripeConfigured } from '@/features/buyer/components/StripeCardPayment';
-import { apiBrowseStorePlans, apiSubscribeToPlan, type BuyerPlan, type BillingInterval, type PlanBenefit } from '@/api/services/subscriptions';
 import { apiGetPublicStoreProducts } from '@/api/services/store';
 import { Modal } from '@/components/comman/ui/Modal';
 import { TokenStorage } from '@/api/services/auth';
@@ -71,14 +69,12 @@ const SHOW_RETIRED_EXTRAS = false;
 // A store's page inside Edudeen: identity banner (logo, name, description,
 // follow/message, membership), then every product the store sells.
 export function SellerStorefront() {
-  const navigate = useNavigate();
   const { store, cfg, theme } = useStorefront();
-  const { toMain, basePath } = useStorefrontPaths();
+  const { toMain } = useStorefrontPaths();
   const identityBanner = theme?.identityBanner;
   const showFollow     = identityBanner?.showFollowButton     !== false;
   const showMessage    = identityBanner?.showMessageButton    !== false;
   const showLoyaltyBtn = identityBanner?.showLoyaltyButton    !== false;
-  const showMembership = identityBanner?.showMembershipButton !== false;
   const bannerLayout      = identityBanner?.layout ?? 'standard';
   const showBadges        = identityBanner?.showBadges        !== false;
   const showFollowerCount = identityBanner?.showFollowerCount !== false;
@@ -113,11 +109,6 @@ export function SellerStorefront() {
   const [giftCardBusy, setGiftCardBusy] = useState(false);
   const [giftCardError, setGiftCardError] = useState('');
   const [giftCardPaid, setGiftCardPaid] = useState(false);
-  const [plans, setPlans] = useState<BuyerPlan[]>([]);
-  const [billingInterval, setBillingInterval] = useState<BillingInterval>('monthly');
-  const [subscribingId, setSubscribingId] = useState<string | null>(null);
-  const [subscribeError, setSubscribeError] = useState('');
-  const [subscribedMsg, setSubscribedMsg] = useState('');
 
   const { banners: storeBanners } = useStoreBanners(store.storeId);
 
@@ -144,10 +135,6 @@ export function SellerStorefront() {
     if (!isLoggedIn) return;
     apiGetMyBalance(store.storeId).then(res => setLoyalty(res.data)).catch(() => {});
   }, [store.storeId, isLoggedIn]);
-
-  useEffect(() => {
-    apiBrowseStorePlans(store.storeId).then(res => setPlans(res.data ?? [])).catch(() => {});
-  }, [store.storeId]);
 
   useEffect(() => {
     apiGetGiftCardPublicSettings(store.storeId).then(res => setGiftCardSettings(res.data)).catch(() => {});
@@ -180,44 +167,6 @@ export function SellerStorefront() {
     setGiftCardClientSecret(null);
     setGiftCardError('');
     setGiftCardPaid(false);
-  };
-
-  const handleSubscribe = async (plan: BuyerPlan, interval: BillingInterval) => {
-    if (!isLoggedIn) { if (basePath) toMain('/login'); else navigate('/login'); return; }
-    setSubscribingId(plan._id);
-    setSubscribeError('');
-    setSubscribedMsg('');
-    try {
-      await apiSubscribeToPlan(plan._id, interval);
-      setSubscribedMsg(`You're in! Welcome to ${plan.name} — member pricing is already live across the store.`);
-    } catch (err) {
-      setSubscribeError(err instanceof Error ? err.message : 'Failed to subscribe.');
-    } finally {
-      setSubscribingId(null);
-    }
-  };
-
-  const benefitLabel = (b: PlanBenefit): string | null => {
-    switch (b.type) {
-      case 'discount': {
-        const scope = b.scope === 'store' ? 'storewide' : b.scope === 'category' ? 'on select categories' : 'on select products';
-        return `${b.discountPercent}% off ${scope}`;
-      }
-      case 'shipping':
-        return b.shippingType === 'free' ? 'Free shipping' : `${b.shippingDiscountPercent}% off shipping`;
-      case 'early_access':
-        return `Early access to new arrivals (${b.earlyAccessHours}h head start)`;
-      case 'loyalty_multiplier':
-        return `${b.multiplier}x loyalty points`;
-      case 'credits':
-        return `${b.creditsPerCycle} ${b.creditType === 'service' ? 'service' : 'download'} credits every cycle`;
-      case 'priority_support':
-        return 'Priority customer support';
-      case 'priority_booking':
-        return 'Priority booking slots';
-      default:
-        return b.label ?? null;
-    }
   };
 
   const openRewards = () => {
@@ -342,13 +291,6 @@ export function SellerStorefront() {
             </div>
 
             <div className={clsx('flex flex-wrap gap-2 items-center justify-center shrink-0', bannerLayout === 'immersive' ? 'sm:flex-row' : 'sm:flex-col sm:items-end')}>
-              {showMembership && plans.length > 0 && (
-                <button onClick={() => document.getElementById('store-membership')?.scrollIntoView({ behavior: 'smooth' })}
-                  style={{ borderRadius: cfg.buttonRadiusPx }}
-                  className="flex items-center gap-[6px] px-[14px] py-[7px] text-[13px] font-medium cursor-pointer transition-colors bg-white text-charcoal border border-white hover:bg-[rgba(255,255,255,0.9)] whitespace-nowrap">
-                  <RefreshCw size={13} style={{ color: cfg.primaryColor }} /> Membership
-                </button>
-              )}
               {SHOW_RETIRED_EXTRAS && showLoyaltyBtn && isLoggedIn && loyalty && (
                 <button onClick={openRewards}
                   style={{ borderRadius: cfg.buttonRadiusPx }}
@@ -402,72 +344,6 @@ export function SellerStorefront() {
       {/* Seller-picked highlights (up to 8) — hidden when nothing is pinned. */}
       <FeaturedProductsSection settings={{ heading: 'Featured', source: 'pinned', limit: 8 }} />
       <ProductCatalogSection settings={{ heading: `All products from ${store.name}`, showFilters: true, defaultSort: 'newest' }} />
-
-      {/* ── Store Membership ───────────────────────────────────────────────── */}
-      {showMembership && plans.length > 0 && (
-        <div id="store-membership" className="border-t border-bone py-10 px-4 sm:px-6 lg:px-10" style={{ background: cfg.bgColor }}>
-          <div className="max-w-[900px] mx-auto text-center mb-8">
-            <span className="inline-block text-[12px] font-bold uppercase tracking-[0.12em] rounded-full px-3 py-1 mb-3" style={{ color: cfg.primaryColor, background: `${cfg.primaryColor}18` }}>
-              Store Membership
-            </span>
-            <h2 className="text-[22px] sm:text-[26px] font-bold mb-2" style={{ color: cfg.textColor }}>Shop {store.name} for less, every time</h2>
-            <p className="text-[13px] text-slate max-w-[520px] mx-auto">Join once and member pricing applies automatically on every visit — no codes to remember. Cancel anytime.</p>
-
-            {plans.some(p => p.yearlyPriceUSD != null) && (
-              <div className="inline-flex items-center gap-1 mt-5 bg-white rounded-full p-1 border border-bone">
-                {(['monthly', 'yearly'] as const).map(iv => (
-                  <button key={iv} onClick={() => setBillingInterval(iv)}
-                    className="px-4 py-[7px] rounded-full text-[12px] font-semibold cursor-pointer border-none capitalize transition-colors"
-                    style={{ background: billingInterval === iv ? cfg.primaryColor : 'transparent', color: billingInterval === iv ? '#fff' : cfg.textColor }}>
-                    {iv}{iv === 'yearly' && ' · save more'}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {subscribedMsg && <div className="max-w-[520px] mx-auto mb-6 px-4 py-3 rounded-lg bg-success-bg text-success text-[13px] font-medium text-center">{subscribedMsg}</div>}
-          {subscribeError && <div className="max-w-[520px] mx-auto mb-6 px-4 py-3 rounded-lg bg-error-bg text-error text-[13px] font-medium text-center">{subscribeError}</div>}
-
-          <div className={clsx('grid gap-5 max-w-[960px] mx-auto', plans.length === 1 ? 'grid-cols-1 max-w-[380px]' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3')}>
-            {plans.map((plan, idx) => {
-              const price = billingInterval === 'yearly' && plan.displayYearlyPrice != null ? plan.displayYearlyPrice : plan.displayMonthlyPrice;
-              const bullets = (plan.benefits ?? []).map(benefitLabel).filter(Boolean) as string[];
-              const isPopular = idx === Math.min(1, plans.length - 1) && plans.length > 1;
-              return (
-                <div key={plan._id} className="relative bg-white rounded-2xl p-6 flex flex-col" style={{ border: isPopular ? `2px solid ${cfg.primaryColor}` : '1px solid #E8E6DC' }}>
-                  {isPopular && (
-                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[12px] font-bold uppercase tracking-wide text-white" style={{ background: cfg.primaryColor }}>
-                      Most Popular
-                    </span>
-                  )}
-                  <p className="text-[16px] font-bold text-carbon mb-1">{plan.name}</p>
-                  {plan.description && <p className="text-[12px] text-slate mb-4">{plan.description}</p>}
-                  <div className="mb-4">
-                    <span className="text-[32px] font-bold" style={{ color: cfg.textColor }}>{formatPrice(convert(price, plan.displayCurrency), displayCurrency)}</span>
-                    <span className="text-[12px] text-slate">/{billingInterval === 'yearly' ? 'yr' : 'mo'}</span>
-                  </div>
-                  <ul className="flex flex-col gap-2 mb-6 p-0 list-none flex-1">
-                    {(bullets.length > 0 ? bullets : plan.features ?? []).map(b => (
-                      <li key={b} className="flex items-start gap-2 text-[12.5px] text-graphite">
-                        <Check size={13} className="mt-[2px] shrink-0" style={{ color: cfg.primaryColor }} />{b}
-                      </li>
-                    ))}
-                  </ul>
-                  <button
-                    onClick={() => handleSubscribe(plan, billingInterval === 'yearly' && plan.yearlyPriceUSD != null ? 'yearly' : 'monthly')}
-                    disabled={subscribingId === plan._id}
-                    className="w-full py-[11px] rounded-xl text-[13px] font-bold text-white border-none cursor-pointer disabled:opacity-50 transition-opacity"
-                    style={{ background: cfg.primaryColor }}>
-                    {subscribingId === plan._id ? 'Subscribing…' : 'Become a Member'}
-                  </button>
-                  <p className="text-[12px] text-slate text-center mt-2">Cancel anytime — no long-term commitment</p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
 
       {showRewards && (
         <Modal title="Rewards Catalog" onClose={() => { setShowRewards(false); setRedeemedVoucher(null); }}>

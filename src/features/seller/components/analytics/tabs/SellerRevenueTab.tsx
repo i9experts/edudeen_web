@@ -46,16 +46,14 @@ export function SellerRevenueTab({ params, currency }: { params: SellerAnalytics
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <DonutChart
             title="Revenue Composition"
-            subtitle="One-time orders vs. recurring subscriptions"
+            subtitle="Order revenue"
             centerLabel="Revenue"
             data={[
-              { label: 'One-Time Orders', value: breakdown.data.oneTimeOrderRevenue },
-              { label: 'Subscriptions', value: breakdown.data.recurringSubscriptionRevenue },
+              { label: 'Orders', value: breakdown.data.oneTimeOrderRevenue },
             ]}
           />
           <div className="grid grid-cols-1 gap-3">
             <MetricCard label="One-Time Order Revenue" value={formatMoneyCompact(breakdown.data.oneTimeOrderRevenue, currency)} />
-            <MetricCard label="Recurring Subscription Revenue" value={formatMoneyCompact(breakdown.data.recurringSubscriptionRevenue, currency)} />
             <MetricCard label="Total Revenue" value={formatMoneyCompact(breakdown.data.totalRevenue, currency)} />
           </div>
         </div>

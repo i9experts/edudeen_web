@@ -50,7 +50,7 @@ const NAV_PERMISSION: Record<string, string | null> = {
   overview: null, settings: null, collaboration: 'staff.view', analytics: 'analytics.view', 'activity-log': 'activity.view',
   users: 'users.view', leads: 'marketplace.view', moderation: 'moderation.view', messages: 'support.view',
   orders: 'orders.view', refunds: 'orders.view', 'shipping-zones': 'config.view', marketplace: 'marketplace.view', categories: 'categories.manage',
-  subscriptions: 'plans.view', 'platform-plans': 'plans.view', premium: 'plans.view', marketing: 'marketing.view', picks: 'marketing.view',
+  'platform-plans': 'plans.view', premium: 'plans.view', marketing: 'marketing.view', picks: 'marketing.view',
   finance: 'finance.view', 'monthly-payouts': 'finance.view', 'manual-payments': 'payments.view', 'fx-settings': 'finance.view',
   seo: 'seo.view', 'ai-studio': 'ai.manage', banners: 'content.view', 'home-cards': 'content.view', faqs: 'content.view', testimonials: 'content.view', announcements: 'content.view',
   'app-slides': 'content.view', config: 'config.view',

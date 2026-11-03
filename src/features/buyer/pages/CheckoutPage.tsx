@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { usePageTitle } from '@/hooks/usePageTitle';
-import { getStorePagePath } from '@/utils/storefrontUrl';
 import { useCartContext } from '@/contexts/CartContext';
 import { useBuyNowCart } from '@/hooks/useBuyNowCart';
 import { apiAddToCart } from '@/api/services/cart';
@@ -28,7 +27,7 @@ const dedupeAddressParts = (parts: (string | null | undefined)[]) => {
 };
 const zonePrice = (z: ShippingZone) => (z.shippingPrice > 0 ? formatPrice(z.shippingPrice, 'PKR') : 'Free');
 import { apiGetMyAddresses, type Address, type AddressPayload } from '@/api/services/address';
-import { apiCreateCheckout, apiApplyCoupon, apiRemoveCoupon, apiApplyGiftCard, apiRemoveGiftCard, type Checkout, type CheckoutSummary, type SubscriptionSavingsHint } from '@/api/services/checkout';
+import { apiCreateCheckout, apiApplyCoupon, apiRemoveCoupon, apiApplyGiftCard, apiRemoveGiftCard, type Checkout, type CheckoutSummary } from '@/api/services/checkout';
 import { apiPlaceCodOrder, apiPlaceFreeOrder, apiInitiatePayment, apiGetPaymentStatus } from '@/api/services/payment';
 import {
   apiGetManualPaymentBankDetails, apiSubmitManualPayment,
@@ -512,7 +511,6 @@ export function CheckoutPage() {
   const checkoutCur = checkout?.currency ?? displayCurrency;
   const [summary, setSummary] = useState<CheckoutSummary | null>(null);
   const [allowedMethods, setAllowedMethods] = useState<string[]>([]);
-  const [savingsHints, setSavingsHints] = useState<SubscriptionSavingsHint[]>([]);
 
   // Payment
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
@@ -622,7 +620,6 @@ export function CheckoutPage() {
         if (cancelled) return;
         setCheckout(res.data.checkout);
         setSummary(res.data.summary);
-        setSavingsHints(res.data.subscriptionSavingsHints ?? []);
         // Digital carts: card, or manual bank transfer when an admin has it
         // enabled (the backend accepts it for digital items — it's a
         // Stripe-equivalent pay-up-front rail, see
@@ -928,7 +925,6 @@ export function CheckoutPage() {
       setChargeAmount(null);
       setCheckout(res.data.checkout);
       setSummary(res.data.summary);
-      setSavingsHints(res.data.subscriptionSavingsHints ?? []);
       // Temporary: for physical/mixed checkout, Stripe only works on a USD
       // checkout (see PaymentService.confirmCardPayment) — a PKR checkout
       // has no working card rail yet, so Cash on Delivery is kept as the
@@ -1925,25 +1921,6 @@ export function CheckoutPage() {
                   </p>
                 )}
                 <p className="m-0 mt-1">Prices in your currency are for reference. Payment is charged in USD.</p>
-              </div>
-            )}
-
-            {savingsHints.length > 0 && (
-              <div className="mt-4 flex flex-col gap-2">
-                {savingsHints.map(hint => (
-                  <button
-                    key={hint.storeId}
-                    onClick={() => hint.storeSlug && (navigate(getStorePagePath(hint.storeSlug)))}
-                    className="w-full text-start px-3.5 py-3 rounded-lg bg-brand-pale-orange border border-brand-orange/20 cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange"
-                  >
-                    <p className="text-[12.5px] font-semibold text-brand-deep-orange">
-                      {`You could save ${formatPrice(hint.potentialSavingsUSD, 'USD')} on this order`}
-                    </p>
-                    <p className="text-[11px] text-brand-orange/80 mt-0.5">
-                      Join {hint.storeName}'s {hint.planName} membership before checking out →
-                    </p>
-                  </button>
-                ))}
               </div>
             )}
           </div>

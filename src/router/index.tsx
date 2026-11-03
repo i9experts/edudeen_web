@@ -107,7 +107,6 @@ const AccountProfile       = lazy(() => named(import('@/features/buyer/pages/acc
 const AccountSecurity      = lazy(() => named(import('@/features/buyer/pages/account/Security'),                 'Security'));
 const AccountAddresses     = lazy(() => named(import('@/features/buyer/pages/account/Addresses'),                'Addresses'));
 const AccountNotifications = lazy(() => named(import('@/features/buyer/pages/account/Notifications'),            'Notifications'));
-const AccountSubscriptions = lazy(() => named(import('@/features/buyer/pages/MySubscriptionsPage'),              'SubscriptionsTab'));
 
 // ── Seller ────────────────────────────────────────────────────────────────────
 const SellerSettings      = lazy(() => named(import('@/features/seller/dashboard/settings/SellerSettings'),   'SellerSettings'));
@@ -156,7 +155,6 @@ const StoreInventory     = lazy(() => named(import('@/features/seller/store/Dash
 const StoreSaleApply     = lazy(() => named(import('@/features/seller/store/Dashboard/Operations/marketing/StoreSaleApply'), 'StoreSaleApply'));
 const StoreMarketing     = lazy(() => named(import('@/features/seller/store/Dashboard/Operations/marketing/Marketing'),      'StoreMarketing'));
 const StoreLoyalty       = lazy(() => named(import('@/features/seller/store/Dashboard/Operations/loyalty/Loyalty'),          'StoreLoyalty'));
-const StoreSubscriptions = lazy(() => named(import('@/features/seller/store/Dashboard/Operations/subscriptions/Subscriptions'), 'StoreSubscriptions'));
 
 // ── Admin ─────────────────────────────────────────────────────────────────────
 const AdminOverview      = lazy(() => named(import('@/features/admin/pages/AdminOverview'),                     'AdminOverview'));
@@ -171,7 +169,6 @@ const AdminRefunds       = lazy(() => named(import('@/features/admin/pages/Admin
 const AdminShippingZones = lazy(() => named(import('@/features/admin/pages/AdminShippingZones'),                'AdminShippingZones'));
 const AdminOrders        = lazy(() => named(import('@/features/admin/pages/AdminOrders'),                       'AdminOrders'));
 const AdminCategories    = lazy(() => named(import('@/features/admin/pages/AdminCategories'),                    'AdminCategories'));
-const AdminSubscriptions = lazy(() => named(import('@/features/admin/pages/AdminSubscriptions'),                 'AdminSubscriptions'));
 const AdminPlatformPlans = lazy(() => named(import('@/features/admin/pages/AdminPlatformPlans'),                 'AdminPlatformPlans'));
 const AdminFinance       = lazy(() => named(import('@/features/admin/pages/AdminFinance'),                      'AdminFinance'));
 const AdminAnnouncements = lazy(() => named(import('@/features/admin/pages/AdminAnnouncements'),                'AdminAnnouncements'));
@@ -292,7 +289,6 @@ const mainRouter = createBrowserRouter([
               { path: 'security',      element: <AccountSecurity /> },
               { path: 'addresses',     element: <AccountAddresses /> },
               { path: 'notifications', element: <AccountNotifications /> },
-              { path: 'subscriptions', element: <AccountSubscriptions /> },
               // Settings merged into Profile — old bookmarks/links still land somewhere real.
               { path: 'settings',      element: <Navigate to="/account/profile" replace /> },
               { path: 'messages',      element: <FeatureMaintenance feature="messaging"><AccountMessages /></FeatureMaintenance> },
@@ -424,7 +420,6 @@ const mainRouter = createBrowserRouter([
           { path: 'marketing',                        element: <StoreMarketing /> },
           { path: 'marketing/sale/:campaignId',       element: <StoreSaleApply /> },
           { path: 'loyalty',                          element: <StoreLoyalty /> },
-          { path: 'subscriptions',                    element: <StoreSubscriptions /> },
           // Retired: the page only showed placeholder "connected apps".
           { path: 'integrations',                     element: <Navigate to="../dashboard" replace /> },
           { path: 'activity',                         element: <Navigate to="../settings" replace /> },
@@ -454,7 +449,6 @@ const mainRouter = createBrowserRouter([
           { path: 'orders',       element: <RequireRole role="admin"><AdminOrders /></RequireRole> },
           { path: 'marketplace',  element: <RequirePermission nav="marketplace"><RequireRole role="admin"><AdminMarketplace /></RequireRole></RequirePermission> },
           { path: 'categories',   element: <RequirePermission nav="categories"><AdminCategories /></RequirePermission> },
-          { path: 'subscriptions',element: <AdminSubscriptions /> },
           { path: 'platform-plans',element: <RequirePermission nav="platform-plans"><AdminPlatformPlans /></RequirePermission> },
           { path: 'finance',      element: <RequireRole role="admin"><AdminFinance /></RequireRole> },
           { path: 'premium', element: <RequireRole role="admin"><AdminPremium /></RequireRole> },
