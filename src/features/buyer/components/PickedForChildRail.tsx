@@ -6,6 +6,7 @@ import { apiBrowseProducts, type MarketplaceProduct } from '@/api/services/marke
 import { useChildren, childLevelLabel } from '@/hooks/useChildren';
 import { canonicalClass } from '@/constants/classLevels';
 import { useT } from '@/contexts/languageCtx';
+import { useCategoryTree } from '@/hooks/marketplace/useCategoryTree';
 
 /** Subject-interest matches first (name/tags/description), the rest keep API order. */
 function rankBySubjects(list: MarketplaceProduct[], subjects: string[]) {
@@ -27,6 +28,7 @@ export function PickedForChildRail({ renderCard }: { renderCard: (p: Marketplace
   const t = useT();
   const navigate = useNavigate();
   const { selected } = useChildren();
+  const { bySlug } = useCategoryTree();
   const [products, setProducts] = useState<MarketplaceProduct[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -55,6 +57,17 @@ export function PickedForChildRail({ renderCard }: { renderCard: (p: Marketplace
 
   const params = classValue ? new URLSearchParams({ class: classValue }) : new URLSearchParams({ grade: selected.educationLevel });
   if (!classValue && selected.age != null) params.set('age', String(selected.age));
+  // Subject of interest: open the matching category when there is one, else a text search for it.
+  const subjectList = (selected.subjects ?? []).map(s => s.trim()).filter(Boolean);
+  if (subjectList.length) {
+    let catSlug: string | null = null;
+    for (const s of subjectList) {
+      const hit = [...bySlug.values()].find(e => e.node.name.trim().toLowerCase() === s.toLowerCase());
+      if (hit?.node.slug) { catSlug = hit.node.slug; break; }
+    }
+    if (catSlug) params.set('category', catSlug);
+    else params.set('search', subjectList[0]);
+  }
 
   return (
     <section className="mb-12">
