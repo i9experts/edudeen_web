@@ -116,7 +116,7 @@ export function AppOpenFab() {
       )}
     >
       <EdudeenIcon size={15} />
-      <span className="hidden min-[480px]:inline text-[12px] font-bold uppercase tracking-[0.04em]">
+      <span className="inline text-[12px] font-bold uppercase tracking-[0.04em]">
         Open
       </span>
     </button>

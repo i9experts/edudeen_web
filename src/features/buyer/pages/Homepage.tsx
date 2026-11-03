@@ -588,6 +588,8 @@ function HomeLanding() {
           items={unique.bestsellers.slice(0, railSize(unique.bestsellers.length))} loading={homeShelves.bestsellers.loading} renderCard={renderResourceCard}
           note={p => { const s = soldLabel(p.purchaseCount); return s ? <p className="text-[12px] text-slate mt-1 mb-0">{s}</p> : null; }}
         />
+        {/* ── Picked for the active child (My children): right under Bestsellers ── */}
+        <PickedForChildRail renderCard={renderResourceCard} />
         {/* ── Browse everything: category tabs + filters + 12 per page with "Show more". Sits right under Bestsellers. ── */}
         <section ref={resourcesRef} id="browse" className="scroll-mt-[150px] mb-12">
           <SectionHead
@@ -720,9 +722,6 @@ function HomeLanding() {
         </section>
 
         <BundlesShelf bundles={homeShelves.bundles.items} loading={homeShelves.bundles.loading} />
-
-        {/* ── Picked for the active child (My children) ── */}
-        <PickedForChildRail renderCard={renderResourceCard} />
 
         {/* ── Featured by Edudeen (admin-featured listings) ── */}
         {unique.featured.length >= 2 && (
