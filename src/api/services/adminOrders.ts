@@ -1,7 +1,7 @@
 import client from '../client';
 
 export type AdminOrderStatus = 'pending' | 'processing' | 'partially_shipped' | 'completed' | 'cancelled';
-export type AdminPaymentStatus = 'unpaid' | 'pending_verification' | 'paid' | 'failed' | 'refunded';
+export type AdminPaymentStatus = 'unpaid' | 'partially_paid' | 'pending_verification' | 'paid' | 'failed' | 'refunded';
 export type AdminPaymentType = 'cash_on_delivery' | 'stripe' | 'manual_bank_transfer';
 
 export interface AdminOrdersQuery {
@@ -63,6 +63,12 @@ export interface AdminSellerOrder {
   deliveredAt?: string | null;
   cancelledAt?: string | null;
   cancelReason?: string | null;
+  /** Multi-seller Cash on Delivery: this seller package's own cash state. */
+  packageIsPaid?: boolean;
+  codAmount?: number;
+  /** Who collects this COD package's cash ('platform' = Edudeen's courier). Old orders: fall back to fulfillmentMode. */
+  codCollector?: 'seller' | 'platform' | null;
+  fulfillmentMode?: 'seller' | 'platform' | null;
 }
 
 export interface AdminOrderDetail {

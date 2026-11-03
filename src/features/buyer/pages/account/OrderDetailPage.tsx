@@ -16,7 +16,7 @@ import { money, discountLines } from './orderFormat';
 import { LICENSE_LABEL } from '@/constants/learning';
 import { DigitalItemAccess, BoughtFormatBadge } from '@/features/buyer/components/DigitalItemAccess';
 import { RefundRequestPanel } from '@/features/buyer/components/RefundRequestPanel';
-import { OrderNextStep, OrderProgressTrack, buildOrderProgress } from './orderProgress';
+import { OrderNextStep, OrderProgressTrack, buildOrderProgress, isMultiPackageCod, PackagePayBadge } from './orderProgress';
 import { formatAddressLine, formatPhone } from '@/utils/formatAddress';
 
 const PAYMENT_LABEL: Record<string, string> = {
@@ -30,7 +30,7 @@ function Timeline({ order, so }: { order: OrderDetail; so: OrderDetail['sellerOr
   if (so.status === 'cancelled') return <p className="text-[12.5px] text-error">This part of the order was cancelled.</p>;
   // Same step config as the orders list (account/orderProgress), scoped to this store's part of the order.
   const steps = buildOrderProgress({
-    orderStatus: order.orderStatus, isPaid: order.isPaid, paymentType: order.paymentType, paymentStatus: order.paymentStatus,
+    orderStatus: order.orderStatus, isPaid: order.isPaid || so.packageIsPaid === true, paymentType: order.paymentType, paymentStatus: order.paymentStatus,
     createdAt: order.createdAt, paidAt: order.paidAt ?? null, stores: [so],
   });
   return steps ? <OrderProgressTrack steps={steps} /> : null;
@@ -139,6 +139,7 @@ export function OrderDetailPage() {
             {order.isFreeClaim && so.status !== 'cancelled'
               ? <span className="inline-flex items-center gap-1 px-2.5 py-[3px] rounded-full text-[12px] font-bold bg-[#e3f4ea] text-[#1a6b35] border border-[#a3d9b5]">Availed</span>
               : <StatusBadge status={so.status} size="sm" />}
+            {isMultiPackageCod({ paymentType: order.paymentType, stores: order.sellerOrders }) && <PackagePayBadge store={so} currency={order.currency} />}
             {so.tracking?.trackingNumber && (
               <span className="ms-auto inline-flex items-center gap-1 text-[12px] text-slate">
                 <Truck size={12} /> {so.tracking.carrier} {so.tracking.trackingNumber}
@@ -152,7 +153,7 @@ export function OrderDetailPage() {
             ) : (
               <>
                 <Timeline order={order} so={so} />
-                <OrderNextStep input={{ orderStatus: so.status === 'cancelled' ? 'cancelled' : order.orderStatus, isPaid: order.isPaid, paymentType: order.paymentType, paymentStatus: order.paymentStatus, stores: [so], shippingEstimate: order.shippingEstimate ?? null }} />
+                <OrderNextStep input={{ orderStatus: so.status === 'cancelled' ? 'cancelled' : order.orderStatus, isPaid: order.isPaid || so.packageIsPaid === true, paymentType: order.paymentType, paymentStatus: order.paymentStatus, stores: [so], shippingEstimate: order.shippingEstimate ?? null }} />
               </>
             )}
             {Array.isArray((so as any).trackingEvents) && (so as any).trackingEvents.length > 0 && (

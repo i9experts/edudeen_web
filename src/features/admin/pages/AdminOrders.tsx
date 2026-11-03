@@ -29,6 +29,7 @@ const ORDER_STATUS: { value: AdminOrderStatus; label: string }[] = [
 const PAYMENT_STATUS: { value: AdminPaymentStatus; label: string }[] = [
   { value: 'paid', label: 'Paid' },
   { value: 'unpaid', label: 'Unpaid' },
+  { value: 'partially_paid', label: 'Partially paid' },
   { value: 'pending_verification', label: 'Awaiting bank-transfer check' },
   { value: 'failed', label: 'Failed' },
   { value: 'refunded', label: 'Refunded' },
@@ -54,9 +55,11 @@ function OrderDetailModal({ id, onClose, onChanged }: { id: string; onClose: () 
   }, [id]);
   useEffect(load, [load]);
 
-  async function markPaid() {
+  // Cash on Delivery from several sellers: every seller package is paid in cash on its own.
+  const multiPackageCod = !!order && order.paymentType === 'cash_on_delivery' && order.sellerOrders.filter(s => s.fulfillmentType !== 'digital' && s.status !== 'cancelled').length > 1;
+  async function markPaid(storeId?: string) {
     setMarking(true);
-    try { await apiMarkOrderPaid(id); setConfirmPaid(false); load(); onChanged(); }
+    try { await apiMarkOrderPaid(id, storeId); setConfirmPaid(false); load(); onChanged(); }
     catch (err) { setError(err instanceof Error ? err.message : 'Could not mark as paid.'); }
     finally { setMarking(false); }
   }
@@ -68,7 +71,7 @@ function OrderDetailModal({ id, onClose, onChanged }: { id: string; onClose: () 
     ['Store discount', order.autoDiscountTotal],
     ['Member price', order.subscriberDiscountTotal],
   ].filter(([, v]) => (v as number) > 0) as [string, number][] : [];
-  const canMarkPaid = order && !order.isPaid && order.orderStatus !== 'cancelled' && order.paymentType !== 'stripe';
+  const canMarkPaid = order && !order.isPaid && order.orderStatus !== 'cancelled' && order.paymentType !== 'stripe' && !multiPackageCod;
 
   return (
     <Modal title={order ? `Order ${order.orderNumber}` : 'Order'} onClose={onClose} width={760} mobileSheet
@@ -77,7 +80,7 @@ function OrderDetailModal({ id, onClose, onChanged }: { id: string; onClose: () 
         {confirmPaid && <>
           <span className="text-[12.5px] text-charcoal mr-auto">Cash or transfer received for the full amount?</span>
           <Button variant="ghost" onClick={() => setConfirmPaid(false)} disabled={marking}>No</Button>
-          <Button variant="primary" onClick={markPaid} loading={marking}>Yes, mark paid</Button>
+          <Button variant="primary" onClick={() => void markPaid()} loading={marking}>Yes, mark paid</Button>
         </>}
         {!confirmPaid && <Button variant="ghost" onClick={onClose}>Close</Button>}
       </>}
@@ -119,6 +122,17 @@ function OrderDetailModal({ id, onClose, onChanged }: { id: string; onClose: () 
                 </a>
                 <StatusBadge status={so.status} size="sm" />
                 <span className="text-slate capitalize">{so.fulfillmentType}</span>
+                {order.paymentType === 'cash_on_delivery' && so.fulfillmentType === 'physical' && (
+                  <span className="text-[12px] text-slate">
+                    {`Collected by: ${(so.codCollector ?? so.fulfillmentMode) === 'platform' ? 'Edudeen courier' : 'Seller'}`}
+                  </span>
+                )}
+                {multiPackageCod && so.status !== 'cancelled' && so.fulfillmentType !== 'digital' && (so.packageIsPaid
+                  ? <span className="text-[12px] font-semibold text-success">Paid</span>
+                  : <>
+                      {(so.codAmount ?? 0) > 0 && <span className="text-[12px] text-slate">Cash due {money(so.codAmount, order.currency)}</span>}
+                      <Button variant="outline" size="xs" onClick={() => void markPaid(so.storeId)} loading={marking} disabled={marking || order.orderStatus === 'cancelled'}>Mark package paid</Button>
+                    </>)}
                 {so.tracking?.trackingNumber && (
                   <span className="ml-auto inline-flex items-center gap-1 text-slate">
                     <Truck size={12} /> {so.tracking.carrier} {so.tracking.trackingNumber}

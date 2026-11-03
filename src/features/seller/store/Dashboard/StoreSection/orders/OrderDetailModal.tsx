@@ -16,7 +16,13 @@ export type SellerOrderStatus = 'processing' | 'shipped' | 'delivered' | 'comple
 // processing → shipped → delivered → completed, never on a cancelled order,
 // "shipped" needs tracking, "completed" needs the order to be paid.
 export const canMarkPaid = (o: SellerOrder) =>
-  !o.isPaid && o.paymentType === 'cash_on_delivery' && (o.status === 'shipped' || o.status === 'delivered');
+  !o.isPaid && o.paymentType === 'cash_on_delivery' && !edudeenCollects(o) && (o.status === 'shipped' || o.status === 'delivered');
+
+/** COD cash of this package goes to Edudeen (its courier delivers), so only Edudeen confirms it. */
+export const edudeenCollects = (o: { codCollector?: string | null; fulfillmentMode?: string | null }) =>
+  (o.codCollector ?? o.fulfillmentMode) === 'platform';
+
+export const EDUDEEN_COD_NOTE = "Cash collected by Edudeen's courier - you are credited after Edudeen receives it";
 
 export const needsShipping = (o: SellerOrder) => o.type === 'physical' || o.type === 'mixed';
 
@@ -97,8 +103,8 @@ export function OrderDetailModal({ order, storeId, onClose, onUpdated }: Props) 
   };
 
   const markPaid = () =>
-    // Backend markPaid also completes the order.
-    run('paid', () => apiMarkOrderPaid(order.orderId), { isPaid: true, status: 'completed' });
+    // Marks only THIS store's package paid (the API needs storeId for multi-seller Cash on Delivery orders).
+    run('paid', () => apiMarkOrderPaid(order.orderId, storeId), { isPaid: true });
 
   const typeLabel = order.type === 'digital'
     ? 'Digital'
@@ -138,6 +144,12 @@ export function OrderDetailModal({ order, storeId, onClose, onUpdated }: Props) 
               ? <span className="font-semibold text-success">Paid</span>
               : <span className="font-semibold text-[#b36200]">Unpaid</span>}
           </Row>
+          {!order.isPaid && order.paymentType === 'cash_on_delivery' && !edudeenCollects(order) && (detail?.codAmount ?? order.codAmount ?? 0) > 0 && (
+            <Row label="Cash to collect"><span className="font-bold">{money((detail?.codAmount ?? order.codAmount) as number)}</span></Row>
+          )}
+          {!order.isPaid && order.paymentType === 'cash_on_delivery' && edudeenCollects(order) && (
+            <p className="text-[12px] text-slate mt-2">{EDUDEEN_COD_NOTE}</p>
+          )}
           {order.paymentType === 'cash_on_delivery' && <CodRiskBadge storeId={storeId} orderId={order.orderId} />}
           {!order.isPaid && order.paymentType !== 'cash_on_delivery' && (
             <p className="text-[12px] text-slate mt-2">
@@ -229,6 +241,7 @@ export function OrderDetailModal({ order, storeId, onClose, onUpdated }: Props) 
                 orderId={order.orderId}
                 storeId={storeId}
                 existing={detail?.shipment}
+                quoted={detail?.shippingCourier}
                 onBooked={s => { setTrackingNumber(s.trackingNumber); setCarrier(s.carrier); setTrackingUrl(s.trackingUrl ?? ''); }}
               />
               <Input label="Tracking number *" value={trackingNumber} onChange={e => setTrackingNumber(e.target.value)} placeholder="e.g. LE123456789PK" />

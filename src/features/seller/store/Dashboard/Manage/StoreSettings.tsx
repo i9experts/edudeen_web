@@ -811,7 +811,7 @@ export default function StoreSettings() {
 
             {storeId && <ReturnPolicyCard storeId={storeId} policy={store?.returnPolicy} refetch={refetch} />}
 
-            {storeId && <DeliveryGiftCard storeId={storeId} delivery={store?.deliverySettings} giftWrap={store?.giftWrap} currency={store?.baseCurrency} refetch={refetch} />}
+            {storeId && <DeliveryGiftCard storeId={storeId} delivery={store?.deliverySettings} giftWrap={store?.giftWrap} shipFrom={store?.shipFrom} deliveryMethod={store?.deliveryMethod} currency={store?.baseCurrency} refetch={refetch} />}
 
             {storeId && <PremiumDiscountCard storeId={storeId} discount={store?.premiumDiscount} currency={store?.baseCurrency} refetch={refetch} />}
           </div>

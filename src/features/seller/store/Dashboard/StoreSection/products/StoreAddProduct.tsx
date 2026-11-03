@@ -23,7 +23,7 @@ import { reviewNoticeText } from './reviewNotice';
 import { useToast } from '@/contexts/ToastContext';
 import { descriptionError, validatePrices, weightTextError, parseWeightKg, stockError } from './priceRules';
 import {
-  isDigitalFamilyType, findCategoryName, withPendingTags,
+  isDigitalFamilyType, findCategoryName, withPendingTags, packageSizeError, packageCmPayload,
   type DigForm, type PhysForm, type ProductStatus, type ProductType,
 } from './ProductFormKit';
 import {
@@ -36,6 +36,7 @@ import { AlertCircle } from 'lucide-react';
 const initPhys: PhysForm = {
   name: '', description: '', price: '', compareAtPrice: '',
   stock: '', options: [] as VariantOption[], shippingWeight: '', subCategoryId: '',
+  parcelType: 'standard', pkgL: '', pkgW: '', pkgH: '',
   // Sensible default: the primary button publishes; "Save as draft" is always one click away.
   status: 'active', isListedOnEdudeen: true,
   scheduledAt: '', tagInput: '', tags: [], images: [],
@@ -153,6 +154,8 @@ export default function StoreAddProduct() {
       if (sErr) out.push({ step: 2, message: sErr, fieldId: 'ap-stock' });
       const wErr = weightTextError(phys.shippingWeight);
       if (wErr) out.push({ step: 2, message: wErr, fieldId: 'ap-weight' });
+      const pkErr = packageSizeError(phys.pkgL, phys.pkgW, phys.pkgH);
+      if (pkErr) out.push({ step: 2, message: pkErr, fieldId: 'ap-pkg-l' });
     }
     if (isDigitalFamily) { const tErr = tiersError(dig.tiers); if (tErr) out.push({ step: 2, message: tErr, fieldId: 'fld-tiers' }); }
     const learnFormat = isDigitalFamily && delivery.format !== 'download';
@@ -224,6 +227,7 @@ export default function StoreAddProduct() {
           categoryId: categoryId || undefined, subCategoryId: phys.subCategoryId || null, images: phys.images, tags: withPendingTags(phys.tags, phys.tagInput),
           isListedOnEdudeen: phys.isListedOnEdudeen, status: finalStatus, ...offersPayload({ premiumPct, premiumOptOut, campaignIds }),
           scheduledAt: finalStatus === 'scheduled' ? pktWallToIso(phys.scheduledAt) : null,
+          parcelType: phys.parcelType, packageCm: packageCmPayload(phys.pkgL, phys.pkgW, phys.pkgH),
           ...learningPayload(learning),
           variants: [{
             price: Number(phys.price),

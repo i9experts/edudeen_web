@@ -18,7 +18,8 @@ import { formatPrice } from '@/utils/formatPrice';
 import { formatAddress, formatPhone } from '@/utils/formatAddress';
 import { ProductCoverFallback } from '@/components/comman/marketplace/ProductCoverFallback';
 import { useToast } from '@/contexts/ToastContext';
-import { buildOrderProgress, OrderProgressTrack, OrderNextStep } from './account/orderProgress';
+import { buildOrderProgress, OrderProgressTrack, OrderNextStep, isMultiPackageCod, PackagePayBadge } from './account/orderProgress';
+import { statusLabel } from '@/constants/statusLabels';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Status config
@@ -301,6 +302,8 @@ function OrderCard({ order, onChanged }: { order: OrderSummary; onChanged: () =>
                 <StatusBadge status={order.orderStatus} />
                 {order.isPaid
                   ? <span className="px-2 py-[3px] rounded-full text-[12px] font-bold bg-[#e3f4ea] text-[#1a6b35] border border-[#a3d9b5]">Paid</span>
+                  : order.paymentStatus === 'partially_paid'
+                  ? <span className="px-2 py-[3px] rounded-full text-[12px] font-bold bg-[#fff4dc] text-[#b36200] border border-[#f1d9a3]">{statusLabel('partially_paid')}</span>
                   : <span className="px-2 py-[3px] rounded-full text-[12px] font-bold bg-[#fff0f0] text-error border border-[#f5bcbc]">Unpaid</span>}
               </>
             )}
@@ -343,6 +346,21 @@ function OrderCard({ order, onChanged }: { order: OrderSummary; onChanged: () =>
               <OrderItemRow key={item.itemId ?? i} item={item} orderId={order.orderId} orderStatus={order.orderStatus} currency={order.currency} />
             ))}
           </div>
+
+          {/* Multi-seller Cash on Delivery: each package is paid in cash on its own */}
+          {isMultiPackageCod(order) && order.orderStatus !== 'cancelled' && (
+            <div className="px-4 md:px-5 pb-4 pt-3 border-t border-bone">
+              <p className="text-[12px] font-bold text-slate uppercase tracking-[0.07em] mb-2">Payment per package</p>
+              <div className="flex flex-col gap-1.5">
+                {order.stores.filter(s => typeof s.packageIsPaid === 'boolean' && s.status !== 'cancelled').map((s, i, arr) => (
+                  <div key={s.storeId} className="flex items-center justify-between gap-3 text-[12px]">
+                    <span className="text-slate">{`Package ${i + 1} of ${arr.length}`}</span>
+                    <PackagePayBadge store={s} currency={order.currency} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Delivery address */}
           {!allDigital && addr && (

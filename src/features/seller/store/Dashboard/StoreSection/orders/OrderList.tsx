@@ -28,7 +28,7 @@ import { useLiveRefresh } from '@/hooks/useLiveRefresh';
 import { FreeClaimsCard } from './FreeClaimsCard';
 import { formatMoney } from '@/utils/currency';
 import {
-  OrderDetailModal, canMarkPaid, canComplete, canProcess, canShip, paymentLabel,
+  OrderDetailModal, edudeenCollects, EDUDEEN_COD_NOTE, canMarkPaid, canComplete, canProcess, canShip, paymentLabel,
 } from './OrderDetailModal';
 
 // ── Customer cell ──────────────────────────────────────────────────────────────
@@ -182,6 +182,12 @@ export function StoreOrderList() {
             ? <span className="text-[12px] font-semibold text-success">Paid</span>
             : <span className="text-[12px] font-semibold text-[#b36200]">Unpaid</span>
           }
+          {!o.isPaid && o.paymentType === 'cash_on_delivery' && edudeenCollects(o) && (
+            <span className="text-[12px] text-slate max-w-[200px]">{EDUDEEN_COD_NOTE}</span>
+          )}
+          {!o.isPaid && o.paymentType === 'cash_on_delivery' && !edudeenCollects(o) && (o.codAmount ?? 0) > 0 && (
+            <span className="text-[12px] text-slate whitespace-nowrap">Cash to collect: {formatPrice(o.codAmount!, o.currency ?? store?.baseCurrency)}</span>
+          )}
         </div>
       ),
     },
@@ -194,11 +200,11 @@ export function StoreOrderList() {
       render: o => {
         const busy = busyId === o.orderId;
 
-        const run = (fn: () => Promise<unknown>, patch: Partial<SellerOrder>) => {
+        const run = (fn: () => Promise<unknown>, patch: Partial<SellerOrder>, refresh = false) => {
           if (busy) return;
           setBusyId(o.orderId);
           fn()
-            .then(() => patchOrder(o.orderId, patch))
+            .then(() => { patchOrder(o.orderId, patch); if (refresh) setRefreshKey(k => k + 1); })
             .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Action failed.'))
             .finally(() => setBusyId(null));
         };
@@ -212,7 +218,7 @@ export function StoreOrderList() {
           : canProcess(o)
             ? { label: 'Process', icon: <RefreshCw size={12} />, onClick: () => run(() => apiUpdateOrderStatus({ orderId: o.orderId, storeId, status: 'processing' }), { status: 'processing' }) }
           : canMarkPaid(o) && (o.type === 'digital' || o.status === 'shipped' || o.status === 'delivered')
-            ? { label: 'Mark Paid', icon: <CheckCheck size={12} />, onClick: () => run(() => apiMarkOrderPaid(o.orderId), { isPaid: true, status: 'completed' }) }
+            ? { label: 'Mark Paid', icon: <CheckCheck size={12} />, onClick: () => run(() => apiMarkOrderPaid(o.orderId, storeId), { isPaid: true }, true) }
           : canComplete(o)
             ? { label: 'Complete', icon: <CheckCheck size={12} />, onClick: () => run(() => apiUpdateOrderStatus({ orderId: o.orderId, storeId, status: 'completed' }), { status: 'completed' }) }
           : null;

@@ -124,6 +124,9 @@ export interface StoreProduct {
   coverStyle?:       'book' | 'flat' | null;
   classFrom?:        string | null;
   classTo?:          string | null;
+  /** Physical: parcel kind + packed size (cm) used for the delivery charge. */
+  parcelType?:       'document' | 'standard' | 'fragile' | 'bulky';
+  packageCm?:        { l: number; w: number; h: number } | null;
   /** Admin-assigned trust badges (listing review). */
   trust?:            { scholarReviewed: boolean; ageAppropriateMin: number | null; ageAppropriateMax: number | null } | null;
   deliveryFormat?:   DeliveryFormat;
@@ -167,6 +170,8 @@ export interface CreatePhysicalPayload extends LearningMetaInput {
   /** The seller turned Premium OFF for this product (also beats a store-wide default). A product has a Premium offer OR a platform sale, never both. */
   premiumOptOut?: boolean;
   campaignIds?:      string[];
+  parcelType?:       'document' | 'standard' | 'fragile' | 'bulky';
+  packageCm?:        { l: number; w: number; h: number } | null;
   // At least one variant is required — every variant must share the same
   // set of attribute names (e.g. all "Color"+"Size", not a mix).
   variants:          VariantInput[];
@@ -217,6 +222,8 @@ export interface EditPhysicalPayload extends LearningMetaInput {
   /** The seller turned Premium OFF for this product (also beats a store-wide default). A product has a Premium offer OR a platform sale, never both. */
   premiumOptOut?: boolean;
   campaignIds?:      string[];
+  parcelType?:       'document' | 'standard' | 'fragile' | 'bulky';
+  packageCm?:        { l: number; w: number; h: number } | null;
 }
 
 export interface EditDigitalPayload extends LearningMetaInput {
@@ -462,6 +469,12 @@ export interface SellerOrder {
   status:      string;
   isPaid:      boolean;
   paymentType: string;
+  /** Cash to collect for THIS store's package (Cash on Delivery, incl. its own shipping); 0 otherwise. */
+  codAmount?:  number;
+  /** Who collects this COD package's cash: 'platform' = Edudeen's courier, 'seller' = the seller's own rider. Absent on old orders. */
+  codCollector?: 'seller' | 'platform' | null;
+  /** Who ships it (admin per-store setting); old orders without codCollector fall back to this for the cash side. */
+  fulfillmentMode?: 'seller' | 'platform' | null;
 }
 
 export interface SellerOrderStats {
@@ -542,6 +555,8 @@ export interface SellerOrderDetail {
   currency:        string;
   isPaid:          boolean;
   paymentType:     string;
+  codAmount?:      number;
+  codCollector?:   'seller' | 'platform' | null;
   customer:        SellerOrderCustomer & { phone: string | null };
   shippingAddress: SellerOrderShippingAddress | null;
   status:          string;
@@ -552,6 +567,8 @@ export interface SellerOrderDetail {
   tracking:       { carrier: string | null; trackingNumber: string | null; trackingUrl: string | null } | null;
   /** Set when the shipment was booked through a courier integration. */
   shipment?:       { courier: string | null; trackingNumber: string | null; labelUrl: string | null; bookedAt: string | null } | null;
+  /** How the delivery charge was priced at checkout; booking is locked to this courier. */
+  shippingCourier?: { courier: string | null; service: string | null; etaDays: number | null; source: 'live' | 'slab' | 'zone' | 'self' } | null;
   giftMessage?:    string | null;
   giftWrap?:       boolean;
   trackingEvents?: Array<{ status: string | null; description: string | null; location: string | null; at: string | null; source: string }>;

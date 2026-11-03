@@ -50,6 +50,12 @@ export interface OrderStoreGroup {
   tracking?:       { carrier: string; trackingNumber: string; trackingUrl: string } | null;
   shippedAt?:      string | null;
   deliveredAt?:    string | null;
+  /** Multi-seller Cash on Delivery: each seller package is paid in cash separately. Absent on legacy orders. */
+  packageIsPaid?:  boolean;
+  packagePaidAt?:  string | null;
+  codAmount?:      number;
+  /** 'platform' = Edudeen's courier collects the cash; 'seller' = the seller's rider. */
+  codCollector?:   'seller' | 'platform' | null;
 }
 
 export interface OrderSummary {
@@ -171,8 +177,9 @@ interface DownloadLinkResponse {
 
 // ── API ───────────────────────────────────────────────────────────────────────
 
-export function apiMarkOrderPaid(orderId: string) {
-  return client.put<never, OrderActionResponse>(ENDPOINTS.ORDERS.MARK_PAID(orderId));
+/** storeId = the seller package being marked paid (required by the API for multi-seller Cash on Delivery orders). */
+export function apiMarkOrderPaid(orderId: string, storeId?: string) {
+  return client.put<never, OrderActionResponse>(ENDPOINTS.ORDERS.MARK_PAID(orderId), storeId ? { storeId } : undefined);
 }
 
 export function apiUpdateOrderStatus(payload: UpdateStatusPayload) {

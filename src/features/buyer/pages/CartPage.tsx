@@ -48,7 +48,6 @@ export function CartPage() {
   const [clearing,   setClearing]   = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
-  const [pickStore, setPickStore] = useState(false);
 
   // "You might also like" — a real, unfiltered catalog pool (same source
   // Marketplace.tsx's/Homepage's own rails draw from), minus whatever's
@@ -137,8 +136,6 @@ export function CartPage() {
   // bills on its own, so each gets its own checkout.
   const storeCarts = cart?.stores ?? [];
   const isMultiStore = storeCarts.length > 1;
-  // Cash on Delivery needs all physical items from one store; with more, offer the one-store-at-a-time route.
-  const physicalStoreCount = new Set(items.filter(i => i.type === 'physical').map(i => i.storeId)).size;
 
   // Real, honest recall — the shopper's own recently-viewed products
   // (client-tracked from ProductDetail, same source the navbar's search
@@ -526,15 +523,6 @@ export function CartPage() {
                         <ChevronRight size={13} />
                       </span>
                     </Button>
-                    {isMultiStore && physicalStoreCount > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => setPickStore(true)}
-                        className="bg-transparent border-none cursor-pointer text-[12px] text-slate hover:text-carbon underline underline-offset-2 text-center"
-                      >
-                        Want Cash on Delivery? Check out one store at a time
-                      </button>
-                    )}
                   </>
                 )}
               </div>
@@ -594,28 +582,6 @@ export function CartPage() {
           >
             Checkout <ChevronRight size={14} />
           </Button>
-        </div>
-      )}
-
-      {/* Multi-store carts: the sticky Checkout opens a store picker (each store checks out separately). */}
-      {pickStore && isMultiStore && (
-        <div className="fixed inset-0 z-[80]" role="dialog" aria-modal="true" aria-label="Choose a store to check out">
-          <button type="button" aria-label="Close" className="absolute inset-0 bg-black/40 border-0 cursor-default" onClick={() => setPickStore(false)} />
-          <div className="absolute inset-x-0 bottom-0 bg-white rounded-t-2xl p-4 pb-[calc(16px+env(safe-area-inset-bottom,0px))] max-h-[80dvh] overflow-y-auto">
-            <p className="text-[15px] font-bold text-carbon mb-1">Choose a store to check out (Cash on Delivery)</p>
-            <p className="text-[12px] text-slate mb-3">Cash on Delivery works for one store at a time.</p>
-            <div className="flex flex-col gap-2">
-              {storeCarts.map(sc => (
-                <Button
-                  key={sc.storeId} variant="primary" fullWidth className="justify-between! h-auto! py-[11px]! text-start"
-                  onClick={() => { setPickStore(false); navigate(`/checkout?store=${encodeURIComponent(sc.storeId)}`); }}
-                >
-                  <span className="line-clamp-2 break-words leading-tight">{sc.store.name}</span>
-                  <span className="text-[12px] opacity-80 shrink-0">{sc.totalItems} item{sc.totalItems === 1 ? '' : 's'}</span>
-                </Button>
-              ))}
-            </div>
-          </div>
         </div>
       )}
 

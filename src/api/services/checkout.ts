@@ -46,6 +46,8 @@ export interface Checkout {
   paymentMethodId:   string | null;
   subtotal:          number;
   shippingFee:       number;
+  /** Delivery charge per seller (one shipment each) in the checkout currency. */
+  shippingByStore?:  { storeId: string; fee?: number; shippingFee?: number; courier?: string | null; service?: string | null; etaDays?: number | null; source?: 'live' | 'slab' | 'zone' | 'self' }[];
   taxAmount:         number;
   subscriberSavingsUSD?: number;
   couponCode?:       string | null;
@@ -165,11 +167,26 @@ function getCurrencyPreference(): string | undefined {
   return undefined;
 }
 
+/** Cash on Delivery guard rails for a checkout (amounts in the checkout currency). Present for physical carts only. */
+export interface CheckoutCodInfo {
+  available:     boolean;
+  /** Why COD is not offered (over the admin's per-package limit, a seller that does not accept it...). */
+  reason:        string | null;
+  maxPerPackage: number | null;
+  feePerPackage: number;
+  packageCount:  number;
+  /** feePerPackage x packageCount, added to the cash due when COD is chosen. */
+  feeTotal:      number;
+  /** storeId -> COD fee for the packages that carry one (only packages Edudeen's courier collects). Missing = old API: every package. */
+  feeByStore?:   Record<string, number>;
+}
+
 interface CreateCheckoutResponse {
   success: boolean;
   message: string;
   data: {
     checkout:               Checkout;
+    cod?:                   CheckoutCodInfo;
     allowedPaymentMethods:  string[];
     summary:                CheckoutSummary;
     appliedCampaigns:       AppliedCampaign[];

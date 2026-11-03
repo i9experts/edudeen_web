@@ -14,11 +14,12 @@ import {
   useUpdateManualPaymentConfig,
 } from '@/hooks/admin/useAdminConfig';
 import type { PlatformConfig, AiConfig, EmailConfig, ManualPaymentConfig, PlatformFees, PlatformFeeRule, PlatformFeeMode } from '@/api/services/config/adminConfig';
-import { apiGetPlatformFees, apiUpdatePlatformFees } from '@/api/services/config/adminConfig';
+import { apiGetPlatformFees, apiUpdatePlatformFees, apiGetCodConfig, apiUpdateCodConfig } from '@/api/services/config/adminConfig';
+import type { CodConfig } from '@/api/services/config/adminConfig';
 import { Toggle, Input, Textarea, Select, Button, SkeletonBox, Accordion } from '@/components/comman/ui';
 import { AdminStudioHeader } from '@/features/admin/components/studio';
 import { AnalyticsErrorState } from '@/components/comman/analytics/AnalyticsErrorState';
-import { CheckCircle2, Wrench, Sparkles, Mail, Landmark, Percent, Home, Gift, Share2, Store, MessageCircle } from 'lucide-react';
+import { CheckCircle2, Wrench, Sparkles, Mail, Landmark, Banknote, Percent, Home, Gift, Share2, Store, MessageCircle } from 'lucide-react';
 import { AiFeatureSwitches } from '@/features/admin/components/AiFeatureSwitches';
 
 const AI_MODELS = ['claude-sonnet-5', 'claude-haiku-4-5', 'claude-opus-4-8'];
@@ -249,6 +250,82 @@ function PlatformFeesCard() {
   );
 }
 
+// ── Cash on Delivery card ─────────────────────────────────────────────────────
+function CodConfigCard() {
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [current, setCurrent] = useState<CodConfig | null>(null);
+  const [max, setMax] = useState('');
+  const [fee, setFee] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const { saved, flash } = useSavedFlash();
+
+  const load = useCallback(() => {
+    setLoading(true); setLoadError('');
+    apiGetCodConfig()
+      .then((res) => {
+        const c = res.data.cod;
+        setCurrent(c);
+        setMax(c.maxPerPackagePKR != null ? String(c.maxPerPackagePKR) : '');
+        setFee(c.feePerPackagePKR > 0 ? String(c.feePerPackagePKR) : '');
+      })
+      .catch((e: unknown) => setLoadError(e instanceof Error ? e.message : 'Could not load Cash on Delivery settings.'))
+      .finally(() => setLoading(false));
+  }, []);
+  useEffect(() => { load(); }, [load]);
+
+  async function save() {
+    const maxN = max.trim() === '' ? null : Number(max);
+    const feeN = fee.trim() === '' ? 0 : Number(fee);
+    if (maxN !== null && (!Number.isFinite(maxN) || maxN < 1)) { setError('Maximum per package: enter an amount of at least Rs 1, or leave it empty for no limit.'); return; }
+    if (!Number.isFinite(feeN) || feeN < 0) { setError('Fee per package: enter 0 or more.'); return; }
+    setSubmitting(true); setError('');
+    try {
+      await apiUpdateCodConfig({ maxPerPackagePKR: maxN, feePerPackagePKR: feeN });
+      flash(); load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not save Cash on Delivery settings.');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  if (loading && !current) return <SkeletonBox height={160} rounded="10px" />;
+  if (loadError && !current) return <AnalyticsErrorState message={loadError} onRetry={load} />;
+
+  return (
+    <div className="bg-white border border-bone rounded-xl px-[22px] py-5">
+      <p className="font-serif font-normal text-[19px] sm:text-[21px] text-carbon leading-[1.25] mb-1">Cash on Delivery</p>
+      <p className="text-[12px] text-slate mb-4">
+        Each seller's package (its items plus its delivery charge) is collected in cash by its own rider. Amounts are in Rs and
+        are converted for buyers paying in another currency. Both fields are optional.
+      </p>
+      <div className="flex flex-col gap-[14px]">
+        <Input
+          label="Maximum Cash on Delivery per package (Rs)" type="number" min={1} step="1"
+          value={max} onChange={(e) => setMax(e.target.value)} placeholder="Empty = no limit"
+        />
+        <p className="text-[11.5px] text-slate -mt-2">
+          Current: {current?.maxPerPackagePKR != null ? `Rs ${current.maxPerPackagePKR.toLocaleString()} per package` : 'no limit'}. If any package in an order is above this, Cash on Delivery is not offered for that order.
+        </p>
+        <Input
+          label="Cash on Delivery fee per package (Rs)" type="number" min={0} step="1"
+          value={fee} onChange={(e) => setFee(e.target.value)} placeholder="Empty or 0 = no fee"
+        />
+        <p className="text-[11.5px] text-slate -mt-2">
+          Current: {current && current.feePerPackagePKR > 0 ? `Rs ${current.feePerPackagePKR.toLocaleString()} per package` : 'no fee'}. Added to each package when the buyer chooses Cash on Delivery. The seller is not credited with it.
+        </p>
+        {error && <p className="text-[12px] text-error">{error}</p>}
+        <div className="flex items-center gap-3">
+          <Button onClick={save} loading={submitting} size="sm" className="self-start">Save Cash on Delivery settings</Button>
+          <SavedHint show={saved} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Platform payment account card (where buyers pay) ──────────────────────────
 function ManualPaymentConfigCard({ config, onSaved }: { config: PlatformConfig; onSaved: (c: PlatformConfig) => void }) {
   const { update, submitting, error } = useUpdateManualPaymentConfig();
@@ -372,6 +449,8 @@ export function AdminConfig() {
               content: <MaintenanceCard config={config} onSaved={setConfig} /> },
             { id: 'platform-fees', title: 'Platform fees', description: 'Fee Edudeen keeps on each sale, per product type', icon: <Percent size={16} />,
               content: <PlatformFeesCard /> },
+            { id: 'cod', title: 'Cash on Delivery', description: 'Maximum amount and optional fee per package', icon: <Banknote size={16} />,
+              content: <CodConfigCard /> },
             { id: 'manual-payment', title: 'Platform payment account', description: 'Bank / JazzCash / Easypaisa account buyers pay into', icon: <Landmark size={16} />,
               content: <ManualPaymentConfigCard config={config} onSaved={setConfig} /> },
             { id: 'ai', title: 'AI settings', description: 'Model, monthly credits and which AI features are on', icon: <Sparkles size={16} />,

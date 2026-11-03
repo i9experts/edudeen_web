@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Truck, Plus, Pencil, Trash2 } from 'lucide-react';
 import { clsx } from 'clsx';
+import { Accordion } from '@/components/comman/ui/CollapsibleSection';
+import { ShippingRatesCard } from './ShippingRatesCard';
+import { CouriersCard } from './CouriersCard';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { Button, Modal, EmptyState, SkeletonBox } from '@/components/comman/ui';
 import { AdminStudioHeader, ADMIN_GUTTER } from '@/features/admin/components/studio';
@@ -208,6 +211,19 @@ export function AdminShippingZones() {
             </div>
           )}
         </div>
+
+        <Accordion items={[{
+          id: 'rates',
+          title: 'Weight-based delivery rates',
+          description: 'Optional. Work out delivery per seller from parcel weight and route instead of the flat zone fee.',
+          content: <ShippingRatesCard />,
+        }]} />
+        <Accordion items={[{
+          id: 'couriers',
+          title: 'Couriers',
+          description: 'Which couriers sellers can choose, live rates and markup.',
+          content: <CouriersCard />,
+        }]} />
       </div>
 
       {editing && (

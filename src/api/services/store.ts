@@ -34,6 +34,9 @@ export interface EducatorProfile {
 export interface StorePremiumDiscount { enabled: boolean; percent: number }
 export interface StoreDeliverySettings { enabled: boolean; fee: number; freeOverAmount: number | null }
 export interface StoreGiftWrap { enabled: boolean; fee: number }
+export interface StoreShipFrom { city: string; province?: string | null }
+/** How the store delivers: own flat fee, one Edudeen courier, or the cheapest available courier. null = platform default. */
+export type StoreDeliveryMethod = 'self' | 'tcs' | 'leopards' | 'postex' | 'auto';
 
 export interface UpdateStorePayload {
   storeId:      string;
@@ -51,6 +54,9 @@ export interface UpdateStorePayload {
   deliverySettings?: StoreDeliverySettings | null;
   /** Gift wrap charge (store currency); null = free. */
   giftWrap?: StoreGiftWrap | null;
+  /** Dispatch city (+ province) used to classify delivery routes; null clears. */
+  shipFrom?: StoreShipFrom | null;
+  deliveryMethod?: StoreDeliveryMethod | null;
   contactEmail?: string;
   contactPhone?: string;
   productTypes?: ProductType[];
@@ -73,6 +79,8 @@ export interface StoreData {
   premiumDiscount?: StorePremiumDiscount | null;
   deliverySettings?: StoreDeliverySettings | null;
   giftWrap?: StoreGiftWrap | null;
+  shipFrom?: StoreShipFrom | null;
+  deliveryMethod?: StoreDeliveryMethod | null;
   contactEmail: string | null;
   contactPhone: string | null;
   sellerType:   SellerType;

@@ -27,7 +27,7 @@ const dedupeAddressParts = (parts: (string | null | undefined)[]) => {
 };
 const zonePrice = (z: ShippingZone) => (z.shippingPrice > 0 ? formatPrice(z.shippingPrice, 'PKR') : 'Free');
 import { apiGetMyAddresses, type Address, type AddressPayload } from '@/api/services/address';
-import { apiCreateCheckout, apiApplyCoupon, apiRemoveCoupon, apiApplyGiftCard, apiRemoveGiftCard, type Checkout, type CheckoutSummary } from '@/api/services/checkout';
+import { apiCreateCheckout, apiApplyCoupon, apiRemoveCoupon, apiApplyGiftCard, apiRemoveGiftCard, type Checkout, type CheckoutSummary, type CheckoutCodInfo } from '@/api/services/checkout';
 import { apiPlaceCodOrder, apiPlaceFreeOrder, apiInitiatePayment, apiGetPaymentStatus } from '@/api/services/payment';
 import {
   apiGetManualPaymentBankDetails, apiSubmitManualPayment,
@@ -297,6 +297,32 @@ function ManualBankTransferSlot({
   );
 }
 
+const COURIER_LABEL: Record<string, string> = { tcs: 'TCS', leopards: 'Leopards', postex: 'PostEx' };
+
+/** 'Delivery by TCS · Overnight · about 2 days' for a package priced by an Edudeen courier; nothing otherwise. */
+function DeliveryVia({ line, block }: { line: { courier?: string | null; service?: string | null; etaDays?: number | null }; block?: boolean }) {
+  const name = line.courier ? COURIER_LABEL[line.courier] ?? line.courier : null;
+  const eta = typeof line.etaDays === 'number' && line.etaDays > 0 ? line.etaDays : null;
+  if (!name && !eta) return null;
+  return (
+    <span className={`${block ? 'block ' : ''}text-[12px] text-slate font-normal`}>
+      {name && <><span>Delivery by</span> {name}</>}
+      {line.service && <> · {line.service}</>}
+      {eta && <> · <span>about</span> {eta} <span>{eta === 1 ? 'day' : 'days'}</span></>}
+    </span>
+  );
+}
+
+// Cash due for one seller's package: that store's item totals + its own shipping (null when unknown).
+function packageTotal(
+  checkout: { items: { storeId?: string; totalPrice: number }[] },
+  line: { storeId: string; fee?: number; shippingFee?: number },
+): number | null {
+  const mine = checkout.items.filter(i => i.storeId === line.storeId);
+  if (mine.length === 0) return null;
+  return mine.reduce((s, i) => s + (i.totalPrice || 0), 0) + (line.fee ?? line.shippingFee ?? 0);
+}
+
 // ── Payment method labels ─────────────────────────────────────────────────────
 const PAYMENT_LABELS: Record<string, { label: string; desc: string; Icon: React.ElementType }> = {
   free:             { label: 'Free order',           desc: 'Nothing to pay — just confirm',   Icon: PackageCheck },
@@ -511,6 +537,8 @@ export function CheckoutPage() {
   const checkoutCur = checkout?.currency ?? displayCurrency;
   const [summary, setSummary] = useState<CheckoutSummary | null>(null);
   const [allowedMethods, setAllowedMethods] = useState<string[]>([]);
+  // Admin's Cash on Delivery limit / fee per package (checkout currency), from createCheckout.
+  const [codInfo, setCodInfo] = useState<CheckoutCodInfo | null>(null);
 
   // Payment
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
@@ -686,6 +714,7 @@ export function CheckoutPage() {
     if (checkoutStoreId) next.set('store', checkoutStoreId);
     setCheckout(null);
     setSummary(null);
+    setCodInfo(null);
     setAllowedMethods([]);
     setSelectedMethod(null);
     setClientSecret(null);
@@ -796,6 +825,12 @@ export function CheckoutPage() {
     : Math.max(0, estimate.subtotal);
   // Symbol for every sidebar amount: the checkout's own currency once it exists, else the display currency.
   const summaryCur = checkout ? checkout.currency : displayCurrency;
+  // Admin's Cash on Delivery fee (per package): only added to what is due when the buyer chooses COD.
+  const codFee = checkout && selectedMethod === 'cash_on_delivery' && codInfo && codInfo.feeTotal > 0 ? codInfo.feeTotal : 0;
+  const totalDue = total + codFee;
+  // The COD fee sits only on packages Edudeen's courier collects (feeByStore); an older API without it charged every package.
+  const codFeeFor = (storeId: string) => (codInfo?.feeByStore ? (codInfo.feeByStore[storeId] ?? 0) : (codInfo?.feePerPackage ?? 0));
+  const codFeePackages = codInfo?.feeByStore ? Object.keys(codInfo.feeByStore).length : (codInfo?.packageCount ?? 0);
 
   // ── Handlers ─────────────────────────────────────────────────────────────
   async function handleApplyCoupon() {
@@ -870,6 +905,7 @@ export function CheckoutPage() {
     if (selectedAddr?._id !== addr._id) {
       setCheckout(null);
       setSummary(null);
+      setCodInfo(null);
       setAllowedMethods([]);
       setSelectedMethod(null);
       setClientSecret(null);
@@ -925,6 +961,7 @@ export function CheckoutPage() {
       setChargeAmount(null);
       setCheckout(res.data.checkout);
       setSummary(res.data.summary);
+      setCodInfo(res.data.cod ?? null);
       // Temporary: for physical/mixed checkout, Stripe only works on a USD
       // checkout (see PaymentService.confirmCardPayment) — a PKR checkout
       // has no working card rail yet, so Cash on Delivery is kept as the
@@ -1554,10 +1591,34 @@ export function CheckoutPage() {
                       No payment method is available for this order right now. Please try again shortly or contact support.
                     </div>
                   )}
-                  {!checkoutStoreId && new Set(cartItems.filter(i => i.type !== 'digital').map(i => i.storeId)).size > 1 && !allowedMethods.includes('cash_on_delivery') && (
-                    <p className="text-[12px] text-slate mb-3">
-                      Cash on Delivery is only available when your physical items are from one store. To use it, go back to the cart and check out one store at a time.
-                    </p>
+                  {!digitalPaymentBlocked && codInfo && !codInfo.available && codInfo.reason && (
+                    <div className="flex items-start gap-2 text-[12px] text-slate bg-cream border border-bone rounded-[8px] px-3 py-2.5 mb-3">
+                      <AlertCircle size={13} className="mt-[1px] flex-shrink-0" />
+                      <span>{codInfo.reason}</span>
+                    </div>
+                  )}
+                  {selectedMethod === 'cash_on_delivery' && codInfo && codInfo.feePerPackage > 0 && codInfo.feeTotal > 0 && (
+                    <div className="text-[12px] text-slate bg-cream border border-bone rounded-[8px] px-3 py-2.5 mb-3 flex flex-col gap-1">
+                      <p>
+                        {codInfo.packageCount > 1 && codFeePackages > 1
+                          ? `Cash on Delivery adds a ${formatPrice(codInfo.feePerPackage, checkoutCur)} fee on ${codFeePackages} packages (${formatPrice(codInfo.feeTotal, checkoutCur)}).`
+                          : `Cash on Delivery adds a ${formatPrice(codInfo.feePerPackage, checkoutCur)} fee.`}
+                      </p>
+                      <p className="font-medium text-carbon">{`Total to pay on delivery: ${formatPrice(totalDue, checkoutCur)}`}</p>
+                    </div>
+                  )}
+                  {selectedMethod === 'cash_on_delivery' && (checkout?.shippingByStore?.length ?? 0) > 1 && (
+                    <div className="text-[12px] text-slate bg-cream border border-bone rounded-[8px] px-3 py-2.5 mb-3 flex flex-col gap-1">
+                      <p>Each seller delivers separately, so you will pay each package in cash when it arrives. Keep the amount for every package ready.</p>
+                      {checkout!.shippingByStore!.map((line, idx) => {
+                        const amt = packageTotal(checkout!, line);
+                        return amt == null ? null : (
+                          <p key={line.storeId} className="font-medium text-carbon">
+                            {`Package ${idx + 1}: ${formatPrice(amt + codFeeFor(line.storeId), checkoutCur)}`}
+                          </p>
+                        );
+                      })}
+                    </div>
                   )}
                   <div className={clsx('mb-4', digitalPaymentBlocked && 'hidden')}>
                     <PaymentMethodOptions
@@ -1588,7 +1649,7 @@ export function CheckoutPage() {
                   {selectedMethod === 'split' && summary?.digitalSubtotal != null && summary?.physicalSubtotal != null ? (
                     <> {' — '}{formatPrice(summary.digitalSubtotal, checkoutCur)} now, {formatPrice(summary.physicalSubtotal, checkoutCur)} on delivery</>
                   ) : (
-                    <> {' — '}{formatPrice((chargeAmount ?? total), checkoutCur)}</>
+                    <> {' — '}{formatPrice(selectedMethod === 'cash_on_delivery' ? totalDue : (chargeAmount ?? total), checkoutCur)}</>
                   )}
                 </div>
               )}
@@ -1618,14 +1679,28 @@ export function CheckoutPage() {
                       <span className="text-slate flex-shrink-0">Shipping</span>
                       <span className="font-medium text-carbon text-end">
                         {selectedZone ? `${zoneTitle(selectedZone)} · ${checkout ? (checkout.shippingFee > 0 ? formatPrice(checkout.shippingFee, checkoutCur) : 'Free') : zonePrice(selectedZone)}` : '—'}
+                        {(checkout?.shippingByStore?.length ?? 0) === 1 && <DeliveryVia line={checkout!.shippingByStore![0]} block />}
                       </span>
                     </div>
+                    {checkout && (checkout.shippingByStore?.length ?? 0) > 1 && checkout.shippingByStore!.map((line, idx, arr) => {
+                      const storeName = checkout.items.find(i => i.storeId === line.storeId)?.sellerName || `Seller ${idx + 1}`;
+                      const pkgTotal = packageTotal(checkout, line);
+                      return (
+                        <div key={line.storeId} className="flex flex-col gap-0.5">
+                        <div className="flex justify-between gap-3 text-[12.5px]">
+                          <span className="text-slate flex-shrink-0">{`Package ${idx + 1} of ${arr.length} - ${storeName}`}</span>
+                          <span className="font-medium text-carbon text-end">{pkgTotal != null ? formatPrice(pkgTotal + (selectedMethod === 'cash_on_delivery' ? codFeeFor(line.storeId) : 0), checkoutCur) : ((line.fee ?? line.shippingFee ?? 0) > 0 ? formatPrice(line.fee ?? line.shippingFee ?? 0, checkoutCur) : 'Free')}</span>
+                        </div>
+                        <DeliveryVia line={line} />
+                        </div>
+                      );
+                    })}
                     <div className="flex justify-between gap-3 text-[12.5px]">
                       <span className="text-slate flex-shrink-0">Payment</span>
                       <span className="font-medium text-carbon text-end">
                         {!selectedMethod ? '—' : selectedMethod === 'split' && summary?.digitalSubtotal != null && summary?.physicalSubtotal != null
                           ? `${PAYMENT_LABELS.split.label} · ${formatPrice(summary.digitalSubtotal, checkoutCur)} now, ${formatPrice(summary.physicalSubtotal, checkoutCur)} on delivery`
-                          : `${PAYMENT_LABELS[selectedMethod]?.label ?? selectedMethod} · ${formatPrice((chargeAmount ?? total), checkoutCur)}`}
+                          : `${PAYMENT_LABELS[selectedMethod]?.label ?? selectedMethod} · ${formatPrice(selectedMethod === 'cash_on_delivery' ? totalDue : (chargeAmount ?? total), checkoutCur)}`}
                       </span>
                     </div>
                   </div>
@@ -1762,6 +1837,12 @@ export function CheckoutPage() {
                     ? <span className="font-semibold text-carbon">{shipping > 0 ? formatPrice(shipping, checkoutCur) : 'Free'}</span>
                     : <span className="text-slate font-medium">Calculated next</span>
                   }
+                </div>
+              )}
+              {codFee > 0 && (
+                <div className="flex justify-between text-[13px]">
+                  <span className="text-slate">Cash on Delivery fee</span>
+                  <span className="font-semibold text-carbon">{formatPrice(codFee, checkoutCur)}</span>
                 </div>
               )}
               {tax > 0 && (
@@ -1909,7 +1990,7 @@ export function CheckoutPage() {
 
             <div className="flex justify-between text-[16px] font-bold">
               <span className="text-carbon">Total</span>
-              <span className="text-carbon">{formatPrice(total, summaryCur)}</span>
+              <span className="text-carbon">{formatPrice(totalDue, summaryCur)}</span>
             </div>
             {/* A local display currency (AED, GBP...) is for reference only: the order is charged in USD. */}
             {displayCurrency !== 'USD' && displayCurrency !== 'PKR' && (
@@ -1917,7 +1998,7 @@ export function CheckoutPage() {
                 {checkout && (
                   <p className="m-0 flex justify-between">
                     <span>Approx. in your currency</span>
-                    <span>{formatPrice(convertToDisplay(total, summaryCur), displayCurrency)}</span>
+                    <span>{formatPrice(convertToDisplay(totalDue, summaryCur), displayCurrency)}</span>
                   </p>
                 )}
                 <p className="m-0 mt-1">Prices in your currency are for reference. Payment is charged in USD.</p>

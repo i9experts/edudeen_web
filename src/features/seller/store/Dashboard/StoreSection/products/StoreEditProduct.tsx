@@ -28,7 +28,7 @@ import { reviewNoticeText } from './reviewNotice';
 import { useToast } from '@/contexts/ToastContext';
 import { descriptionError, validatePrices, weightTextError, parseWeightKg, stockError } from './priceRules';
 import { type VariantOption } from '@/api/services/product';
-import { findCategoryName, withPendingTags, type DigForm, type LicenseType, type PhysForm, type ProductStatus } from './ProductFormKit';
+import { findCategoryName, withPendingTags, packageSizeError, packageCmPayload, type DigForm, type LicenseType, type PhysForm, type ProductStatus } from './ProductFormKit';
 import {
   ActionBar, ProductPreview, StepRail, WizardNav, WIZARD_STEPS, dirtyCapture,
   useLeaveGuard, useWizard, type WizardIssue,
@@ -37,6 +37,7 @@ import { ProductFormSteps } from './ProductFormSteps';
 const blankPhys: PhysForm = {
   name: '', description: '', price: '', compareAtPrice: '',
   stock: '', options: [] as VariantOption[], shippingWeight: '', subCategoryId: '',
+  parcelType: 'standard', pkgL: '', pkgW: '', pkgH: '',
   status: 'draft' as ProductStatus, isListedOnEdudeen: false,
   scheduledAt: '', tagInput: '', tags: [] as string[], images: [] as string[],
 };
@@ -70,6 +71,8 @@ function physFromEntry(p: StoreProduct, v: ProductVariant): PhysForm {
     price: String(v.price), compareAtPrice: v.compareAtPrice != null ? String(v.compareAtPrice) : '',
     stock: String(v.stock), options: [...(v.options ?? [])], shippingWeight: v.shippingWeight ?? '',
     subCategoryId: p.subCategoryId ?? '',
+    parcelType: p.parcelType ?? 'standard',
+    pkgL: p.packageCm ? String(p.packageCm.l) : '', pkgW: p.packageCm ? String(p.packageCm.w) : '', pkgH: p.packageCm ? String(p.packageCm.h) : '',
     status: formStatus(p.status, p.scheduledAt), isListedOnEdudeen: p.isListedOnEdudeen,
     scheduledAt: scheduledWall(p), tags: [...(p.tags ?? [])], tagInput: '', images: [...(p.images ?? [])],
   };
@@ -198,6 +201,14 @@ export default function StoreEditProduct() {
         setLearning({ curricula: [...(p.curricula ?? [])], ageMin: p.ageMin != null ? String(p.ageMin) : '', ageMax: p.ageMax != null ? String(p.ageMax) : '', classFrom: p.classFrom ?? '', classTo: p.classTo ?? '', coverStyle: p.coverStyle ?? '' });
         // The list cache can lack tags: fill them from the fresh read (never over tags the seller already typed).
         // The list cache can also lack the go-live date: fill it (and the scheduled choice) from the fresh read.
+        // The list cache can lack the parcel fields: fill them from the fresh read (never over what the seller already typed).
+        if (p.productType === 'physical' && (p.parcelType || p.packageCm)) {
+          setPhys(f => ({
+            ...f,
+            parcelType: f.parcelType === 'standard' && p.parcelType ? p.parcelType : f.parcelType,
+            ...(!f.pkgL && !f.pkgW && !f.pkgH && p.packageCm ? { pkgL: String(p.packageCm.l), pkgW: String(p.packageCm.w), pkgH: String(p.packageCm.h) } : {}),
+          }));
+        }
         const freshWall = scheduledWall(p);
         if (freshWall) {
           const freshStatus = formStatus(p.status, p.scheduledAt);
@@ -285,6 +296,8 @@ export default function StoreEditProduct() {
       const sErr = stockError(phys.stock, false);
       if (sErr) out.push({ step: 2, message: sErr, fieldId: 'ap-stock' });
       if (hadWeight.current || phys.shippingWeight.trim()) { const wErr = weightTextError(phys.shippingWeight); if (wErr) out.push({ step: 2, message: wErr, fieldId: 'ap-weight' }); }
+      const pkErr = packageSizeError(phys.pkgL, phys.pkgW, phys.pkgH);
+      if (pkErr) out.push({ step: 2, message: pkErr, fieldId: 'ap-pkg-l' });
     }
     if (isDigitalFamily) { const tErr = tiersError(dig.tiers); if (tErr) out.push({ step: 2, message: tErr, fieldId: 'fld-tiers' }); }
     const lErr = learningError(learning);
@@ -306,7 +319,7 @@ export default function StoreEditProduct() {
     if (offerFlags.conflict) out.push({ step: 4, message: OFFER_CONFLICT_MESSAGE, fieldId: 'fld-offers' });
     return out;
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loaded, cur, pType, phys.stock, phys.shippingWeight, store?.baseCurrency, dig.sampleFile, dig.tiers, delivery, learning, attrDefs, attributeValues, premiumPct, premiumOptOut, campaignIds, premiumTerms, storePremiumPct, offerFlags]);
+  }, [loaded, cur, pType, phys.stock, phys.shippingWeight, phys.pkgL, phys.pkgW, phys.pkgH,store?.baseCurrency, dig.sampleFile, dig.tiers, delivery, learning, attrDefs, attributeValues, premiumPct, premiumOptOut, campaignIds, premiumTerms, storePremiumPct, offerFlags]);
 
   const wiz = useWizard(issues, 'Edit', [0, 1, 2, 3, 4, 5]);
   // A banner raised by a failed Save/Publish check disappears as soon as that problem is fixed.
@@ -335,6 +348,7 @@ export default function StoreEditProduct() {
           isListedOnEdudeen: phys.isListedOnEdudeen, status: finalStatus,
           ...offersPayload({ premiumPct, premiumOptOut, campaignIds }),
           scheduledAt: finalStatus === 'scheduled' ? pktWallToIso(phys.scheduledAt) : null,
+          parcelType: phys.parcelType, packageCm: packageCmPayload(phys.pkgL, phys.pkgW, phys.pkgH),
           ...learningPayload(learning),
         });
         const note = reviewNoticeText(res); if (note) toast.info(note);

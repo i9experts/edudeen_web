@@ -81,6 +81,47 @@ export function apiAdminDeleteShippingZone(id: string) {
   return client.delete<never, { success: boolean }>(`${ADMIN_ZONES}/${id}`);
 }
 
+// ── Admin weight-based rate table (all PKR) ─────────────────────────────────
+
+export interface RateSlab { upToKg: number; feePKR: number }
+export interface RouteRates { slabs: RateSlab[]; extraPerKgPKR: number }
+export type RouteKey = 'sameCity' | 'sameProvince' | 'national';
+export interface ShippingRateTable {
+  enabled: boolean;
+  routes: Record<RouteKey, RouteRates>;
+  fragileSurchargePKR: number;
+  fuelSurchargePct: number;
+  taxPct: number;
+  volumetricDivisor: number;
+}
+
+const ADMIN_RATES = '/api/checkout/admin/shipping-rates';
+
+export function apiAdminGetShippingRates() {
+  return client.get<never, { success: boolean; data: ShippingRateTable }>(ADMIN_RATES);
+}
+
+export function apiAdminSaveShippingRates(table: ShippingRateTable) {
+  return client.put<never, { success: boolean; data: ShippingRateTable }>(ADMIN_RATES, table);
+}
+
+// ── Admin courier settings ──────────────────────────────────────────────────
+
+export interface CourierSettings {
+  enabled: { tcs: boolean; leopards: boolean; postex: boolean };
+  useLiveRates: boolean;
+  markupPct: number;
+  handlingFeePKR: number;
+}
+
+export function apiAdminGetCourierSettings() {
+  return client.get<never, { success: boolean; data: CourierSettings }>(`${ADMIN_RATES}/couriers`);
+}
+
+export function apiAdminSaveCourierSettings(settings: CourierSettings) {
+  return client.put<never, { success: boolean; data: CourierSettings }>(`${ADMIN_RATES}/couriers`, settings);
+}
+
 /** POST /api/checkout/admin/shipping-zones/seed-defaults: adds the starter Pakistan zones that do not exist yet (idempotent). */
 export function apiAdminSeedDefaultShippingZones() {
   return client.post<never, { success: boolean; message: string; data: { added: number; skipped: number } }>('/api/checkout/admin/shipping-zones/seed-defaults', {});

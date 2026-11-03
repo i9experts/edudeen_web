@@ -16,7 +16,7 @@ import { DynamicAttributeFields } from './DynamicAttributeFields';
 import type { AttributeValuesState } from './attributeFormUtils';
 import { ProductOffersCard, type OfferFlags } from './ProductOffersCard';
 import {
-  Block, F, MoreOptions, Toggle, TagInput, VariantOptionsField, inp, ta, isDigitalFamilyType,
+  Block, F, MoreOptions, Toggle, TagInput, VariantOptionsField, inp, ta, isDigitalFamilyType, packageSizeError,
   type DigForm, type PhysForm, type ProductStatus, type ProductType,
 } from './ProductFormKit';
 import { IssueLinks, StepPanel, SummaryRows, type WizardIssue } from './ProductWizard';
@@ -223,8 +223,27 @@ export function ProductFormSteps(p: ProductFormStepsProps) {
               <F label="Stock quantity" req htmlFor="ap-stock">
                 <input id="ap-stock" type="number" min="0" inputMode="numeric" value={phys.stock} onChange={e => sp('stock', e.target.value)} placeholder="0" className={`${inp} sm:max-w-[240px]`} />
               </F>
-              <F label="Shipping weight" req htmlFor="ap-weight" hint="Required. Used to estimate delivery cost (minimum 1 g, maximum 50 kg).">
+              <F label="Shipping weight" req htmlFor="ap-weight" hint="Required. Used to work out the delivery charge (minimum 1 g, maximum 50 kg).">
                 <WeightField id="ap-weight" value={phys.shippingWeight} onChange={v => sp('shippingWeight', v)} />
+              </F>
+              <F label="Parcel type" htmlFor="ap-parcel" hint="Used to work out the delivery charge.">
+                <select id="ap-parcel" value={phys.parcelType} onChange={e => sp('parcelType', e.target.value as typeof phys.parcelType)} className={`${inp} sm:max-w-[240px] cursor-pointer`}>
+                  <option value="document">Documents / books</option>
+                  <option value="standard">Standard</option>
+                  <option value="fragile">Fragile</option>
+                  <option value="bulky">Bulky</option>
+                </select>
+              </F>
+              <F label="Packed size (cm)" htmlFor="ap-pkg-l" hint="Optional. Length x width x height of the packed parcel. Fill all three or leave empty.">
+                <div className="flex items-center gap-2 sm:max-w-[360px]">
+                  {([['pkgL', 'ap-pkg-l', 'Length'], ['pkgW', 'ap-pkg-w', 'Width'], ['pkgH', 'ap-pkg-h', 'Height']] as const).map(([k, id, ph], i) => (
+                    <span key={k} className="flex items-center gap-2 flex-1 min-w-0">
+                      {i > 0 && <span aria-hidden className="text-slate">x</span>}
+                      <input id={id} type="number" min="1" max="200" inputMode="decimal" aria-label={`${ph} (cm)`} placeholder={ph} value={phys[k]} onChange={e => sp(k, e.target.value)} className={inp} />
+                    </span>
+                  ))}
+                </div>
+                {packageSizeError(phys.pkgL, phys.pkgW, phys.pkgH) && <p role="alert" className="text-[12px] text-error mt-1.5">{packageSizeError(phys.pkgL, phys.pkgW, phys.pkgH)}</p>}
               </F>
               <F label="Variant attributes">
                 <VariantOptionsField options={phys.options} onChange={v => sp('options', v)} />

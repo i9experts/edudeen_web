@@ -15,7 +15,8 @@ import { Button } from '@/components/comman/ui/Button';
 import { BuyerNavbar, Footer } from '@/components/comman/ui';
 import { formatMoney } from '@/utils/currency';
 import { formatPrice } from '@/utils/formatPrice';
-import { buildOrderProgress, OrderProgressTrack, OrderNextStep } from './account/orderProgress';
+import { buildOrderProgress, OrderProgressTrack, OrderNextStep, isMultiPackageCod, PackagePayBadge, type ProgressStoreInput } from './account/orderProgress';
+import { statusLabel } from '@/constants/statusLabels';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // OrderItemRow
@@ -123,6 +124,7 @@ function OrderTimeline({ order }: { order: PlacedOrder }) {
     orderStatus: order.orderStatus,
     isPaid:      order.isPaid,
     paymentType: order.paymentMethod,
+    paymentStatus: order.paymentStatus,
     createdAt:   order.orderDate,
     paidAt:      order.paymentDate,
     shippingEstimate: order.shippingEstimate ?? null,
@@ -178,6 +180,11 @@ function OrderCard({ order }: { order: PlacedOrder }) {
               Paid
             </span>
           )}
+          {!order.isPaid && order.paymentStatus === 'partially_paid' && (
+            <span className="px-3 py-1 rounded-full text-[12px] font-bold bg-[#fff4dc] text-[#b36200]">
+              {statusLabel('partially_paid')}
+            </span>
+          )}
         </div>
       </header>
 
@@ -190,6 +197,20 @@ function OrderCard({ order }: { order: PlacedOrder }) {
           items={order.items} orderId={order.orderId} currency={order.currency}
           canReview={order.isPaid && order.orderStatus === 'completed'}
         />
+        {isMultiPackageCod({ paymentType: order.paymentMethod, stores: order.packages as ProgressStoreInput[] | undefined }) && (
+          <section className="pt-4 mt-1 border-t border-bone">
+            <h3 className="text-[12px] font-bold text-slate uppercase tracking-[0.07em] mb-2">Payment per package</h3>
+            <p className="text-[12px] text-slate mb-2">Each seller delivers separately, so you will pay each package in cash when it arrives. Keep the amount for every package ready.</p>
+            <div className="flex flex-col gap-1.5">
+              {order.packages!.filter(p => typeof p.packageIsPaid === 'boolean' && p.status !== 'cancelled').map((p, i, arr) => (
+                <div key={p.storeId} className="flex items-center justify-between gap-3 text-[12px]">
+                  <span className="text-slate">{`Package ${i + 1} of ${arr.length}`}</span>
+                  <PackagePayBadge store={p as ProgressStoreInput} currency={order.currency} />
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
         {!allDigital && order.deliveryAddress && <AddressSection addr={order.deliveryAddress} />}
         {!allDigital && <OrderTimeline order={order} />}
       </div>
@@ -374,6 +395,8 @@ function toPlacedOrder(o: MyOrderSummary): PlacedOrder {
     orderId: o.orderId, orderNumber: o.orderNumber, orderDate: o.createdAt, paymentDate: o.paidAt ?? null,
     paymentMethod: o.paymentType, isPaid: o.isPaid, orderStatus: o.orderStatus, currency: o.currency,
     shippingEstimate: o.shippingEstimate ?? null,
+    paymentStatus: o.paymentStatus,
+    packages: o.stores.map(s => ({ storeId: s.storeId, status: s.status, packageIsPaid: s.packageIsPaid, codAmount: s.codAmount })),
     deliveryAddress: {
       recipientName: a.recipientName ?? '', phoneNumber: a.phoneNumber ?? '', addressLine1: a.addressLine1 ?? '',
       addressLine2: a.addressLine2 ?? null, city: a.city ?? '', state: a.state ?? '', zipCode: a.zipCode ?? '',

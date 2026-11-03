@@ -35,6 +35,7 @@ export const STATUS_LABELS: Record<string, string> = {
   approved: 'Approved',
   rejected: 'Rejected',
   paid: 'Paid',
+  partially_paid: 'Partially paid',
   unpaid: 'Unpaid',
   refunded: 'Refunded',
 };
@@ -42,6 +43,7 @@ export const STATUS_LABELS: Record<string, string> = {
 /** Extra colours that make the seven headline statuses identical everywhere. */
 const EXTRA_COLORS: Record<string, StatusTone> = {
   pending: 'yellow',
+  partially_paid: 'yellow',
   processing: 'blue',
   shipped: 'blue',
   delivered: 'green',

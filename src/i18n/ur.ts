@@ -2043,6 +2043,18 @@ export const UR: Record<string, string> = {
   'Course complete! Add your details to get your certificate.': 'کورس مکمل! سرٹیفکیٹ حاصل کرنے کے لیے اپنی تفصیلات درج کریں۔',
   'has successfully completed the course': 'نے کورس کامیابی سے مکمل کر لیا ہے',
   'Date of completion': 'تکمیل کی تاریخ',
+  'Cash on Delivery is available when all physical items come from one seller, because each seller delivers and collects cash separately.': 'کیش آن ڈیلیوری تب دستیاب ہے جب تمام فزیکل اشیاء ایک ہی سیلر سے ہوں، کیونکہ ہر سیلر الگ سے ڈیلیور کرتا اور رقم وصول کرتا ہے۔',
+  'Cash on Delivery is available when all physical items come from one seller, because each seller delivers and collects cash separately. You can pay by card or bank transfer for this cart, or check out one seller at a time to use Cash on Delivery.': 'کیش آن ڈیلیوری تب دستیاب ہے جب تمام فزیکل اشیاء ایک ہی سیلر سے ہوں، کیونکہ ہر سیلر الگ سے ڈیلیور کرتا اور رقم وصول کرتا ہے۔ آپ اس کارٹ کے لیے کارڈ یا بینک ٹرانسفر سے ادائیگی کر سکتے ہیں، یا کیش آن ڈیلیوری کے لیے ایک وقت میں ایک سیلر کا چیک آؤٹ کریں۔',
+  'Each seller delivers and collects cash separately, so Cash on Delivery works for one seller at a time.': 'ہر سیلر الگ سے ڈیلیور کرتا اور رقم وصول کرتا ہے، اس لیے کیش آن ڈیلیوری ایک وقت میں ایک سیلر کے لیے کام کرتی ہے۔',
+  'Each seller delivers separately, so you will pay each package in cash when it arrives. Keep the amount for every package ready.': 'ہر سیلر الگ سے ڈیلیور کرتا ہے، اس لیے آپ ہر پیکج کی رقم پیکج پہنچنے پر نقد ادا کریں گے۔ ہر پیکج کی رقم تیار رکھیں۔',
+  'Payment per package': 'ہر پیکج کی ادائیگی',
+  'Cash on Delivery fee': 'کیش آن ڈیلیوری فیس',
+  'Partially paid': 'جزوی ادا شدہ',
+  'Partially paid - balance due on delivery': 'جزوی ادا شدہ - باقی رقم ڈیلیوری پر',
+  'Pay on delivery': 'ڈیلیوری پر ادائیگی',
+  'Delivery by': 'ڈیلیوری بذریعہ',
+  'about': 'تقریباً',
+  'day': 'دن',
 };
 
 const MONTHS: Record<string, string> = {
@@ -2057,6 +2069,7 @@ const urOr = (s: string) => UR[s] ?? s;
 
 /** Strings with numbers or names in them — `m` is the RegExp match. */
 export const UR_PATTERNS: [RegExp, (m: RegExpMatchArray) => string][] = [
+  [/^Shipment (\d+) of (\d+) - (.+)$/, m => `شپمنٹ ${m[1]} از ${m[2]} - ${m[3]}`],
   // Relative times (reviews, notifications, wishlist) — ur-PK wording, Latin digits.
   [/^(\d+) (?:min|mins|minutes?) ago$/, m => `${m[1]} منٹ پہلے`],
   [/^(\d+) (?:hrs?|hours?) ago$/, m => `${m[1]} گھنٹے پہلے`],
@@ -2171,6 +2184,13 @@ export const UR_PATTERNS: [RegExp, (m: RegExpMatchArray) => string][] = [
   [/^Your membership will not renew\. You keep all benefits until (.+)\.$/, m => `آپ کی ممبرشپ کی تجدید نہیں ہوگی۔ ${m[1]} تک آپ کے تمام فوائد برقرار رہیں گے۔`],
   [/^(\d+) items? in your cart$/, m => `آپ کے کارٹ میں ${m[1]} اشیاء`],
   [/^(.+) each$/, m => `${m[1]} فی عدد`],
+  [/^Package (\d+) of (\d+)(?: - (.+))?$/, m => `پیکج ${m[1]} از ${m[2]}${m[3] ? ` - ${m[3]}` : ''}`],
+  [/^Cash on Delivery adds a (.+) fee per package \((\d+) packages = (.+)\)\.$/, m => `کیش آن ڈیلیوری ہر پیکج پر ${m[1]} فیس لگاتی ہے (${m[2]} پیکج = ${m[3]})۔`],
+  [/^Cash on Delivery adds a (.+) fee on (\d+) packages \((.+)\)\.$/, m => `کیش آن ڈیلیوری ${m[2]} پیکجز پر ${m[1]} فیس لگاتی ہے (${m[3]})۔`],
+  [/^Cash on Delivery adds a (.+) fee\.$/, m => `کیش آن ڈیلیوری پر ${m[1]} فیس لگتی ہے۔`],
+  [/^Total to pay on delivery: (.+)$/, m => `ڈیلیوری پر کل ادائیگی: ${m[1]}`],
+  [/^Package (\d+): (.+)$/, m => `پیکج ${m[1]}: ${m[2]}`],
+  [/^Pay (.+) on delivery$/, m => `ڈیلیوری پر ${m[1]} ادا کریں`],
   [new RegExp(`^${M} (\\d{4})$`, 'i'), m => `${MONTHS[m[1]]} ${m[2]}`],
   [new RegExp(`^${M} (\\d{1,2}), (\\d{4}), (\\d{1,2}:\\d{2}) (am|pm)$`, 'i'), m => `${m[2]} ${MONTHS[m[1]]} ${m[3]}، ${ampm(m[5])} ${m[4]}`],
   [/^\s*(?:·\s*)?in (\d+[dhms](?: \d+[dhms])*)$/, m => `${m[1].replace(/(\d+)d/, '$1 دن').replace(/(\d+)h/, '$1 گھنٹے').replace(/(\d+)m/, '$1 منٹ').replace(/(\d+)s/, '$1 سیکنڈ')} میں`],

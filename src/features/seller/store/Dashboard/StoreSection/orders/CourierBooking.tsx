@@ -8,6 +8,8 @@ interface Props {
   storeId: string;
   /** Already booked through a courier (from the order detail). */
   existing?: { courier: string | null; trackingNumber: string | null; labelUrl: string | null } | null;
+  /** Courier/service/ETA the buyer was charged for (set at checkout). A courier here locks the choice. */
+  quoted?: { courier: string | null; service: string | null; etaDays: number | null; source: string } | null;
   onBooked: (s: BookedShipment) => void;
 }
 
@@ -16,7 +18,8 @@ interface Props {
  * tracking (the default) is unchanged. After booking, the tracking number is handed back so the
  * seller can press "Mark as shipped" as usual.
  */
-export function CourierBooking({ orderId, storeId, existing, onBooked }: Props) {
+export function CourierBooking({ orderId, storeId, existing, quoted, onBooked }: Props) {
+  const locked = quoted?.courier ?? null;
   const [couriers, setCouriers] = useState<CourierOption[] | null>(null);
   const [courier, setCourier] = useState('');
   const [weight, setWeight] = useState('0.5');
@@ -31,11 +34,12 @@ export function CourierBooking({ orderId, storeId, existing, onBooked }: Props) 
         if (cancelled) return;
         const ok = (res.data ?? []).filter(c => c.configured);
         setCouriers(ok);
-        if (ok[0]) setCourier(ok[0].id);
+        if (locked && ok.some(c => c.id === locked)) setCourier(locked);
+        else if (ok[0]) setCourier(ok[0].id);
       })
       .catch(() => { if (!cancelled) setCouriers([]); });
     return () => { cancelled = true; };
-  }, []);
+  }, [locked]);
 
   if (!couriers || couriers.length === 0) return null;
 
@@ -68,7 +72,7 @@ export function CourierBooking({ orderId, storeId, existing, onBooked }: Props) 
         <div className="flex flex-wrap items-end gap-2">
           <label className="text-[12px] text-slate flex flex-col gap-1">
             Courier
-            <select value={courier} onChange={e => setCourier(e.target.value)} className="py-[8px] px-2 text-[13px] border border-bone rounded-lg bg-white text-charcoal">
+            <select value={courier} disabled={!!locked} onChange={e => setCourier(e.target.value)} className="py-[8px] px-2 text-[13px] border border-bone rounded-lg bg-white text-charcoal disabled:opacity-70">
               {couriers.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
             </select>
           </label>
@@ -78,6 +82,11 @@ export function CourierBooking({ orderId, storeId, existing, onBooked }: Props) 
           </label>
           <Button variant="outline" size="sm" onClick={book} loading={busy} icon={<PackagePlus size={13} />}>Book shipment</Button>
         </div>
+      )}
+      {locked && !tracking && (
+        <p className="text-[12px] text-slate">
+          The buyer was charged for this courier{quoted?.service ? ` (${quoted.service}` : ''}{quoted?.service && quoted?.etaDays ? `, about ${quoted.etaDays} days` : ''}{quoted?.service ? ')' : ''}, so it can't be changed.
+        </p>
       )}
       {error && <p role="alert" className="text-[12px] text-error">{error}</p>}
       <p className="text-[12px] text-slate">Or skip this and enter your own tracking number below.</p>

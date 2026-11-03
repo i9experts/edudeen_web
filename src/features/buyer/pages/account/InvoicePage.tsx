@@ -60,7 +60,7 @@ export function InvoicePage() {
             {invoiceNo && <p className="font-mono mt-1">Invoice no. {invoiceNo}</p>}
             <p className={invoiceNo ? 'font-mono text-slate' : 'font-mono mt-1'}>{invoiceNo ? 'Order ' : ''}{order.orderNumber}</p>
             <p className="text-slate">Date: {new Date(order.createdAt).toLocaleDateString('en-PK', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-            <p className="mt-1 font-semibold">{order.isPaid ? `Paid${order.paidAt ? ` on ${new Date(order.paidAt).toLocaleDateString('en-PK')}` : ''}` : 'Payment due'}</p>
+            <p className="mt-1 font-semibold">{order.isPaid ? `Paid${order.paidAt ? ` on ${new Date(order.paidAt).toLocaleDateString('en-PK')}` : ''}` : order.paymentStatus === 'partially_paid' ? 'Partially paid - balance due on delivery' : 'Payment due'}</p>
           </div>
         </header>
 

@@ -429,6 +429,7 @@ export default function StoreBulkUpload() {
       if (type === 'physical') {
         res = await apiCreatePhysicalProduct({
           ...common,
+          parcelType: 'standard',
           variants: [{
             price: Number(r.price),
             compareAtPrice: r.compareAt.trim() ? Number(r.compareAt) : null,

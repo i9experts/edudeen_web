@@ -159,6 +159,17 @@ export function apiUpdatePlatformFees(payload: Partial<PlatformFees>) {
   return client.put<never, ApiResponse<unknown>>(ENDPOINTS.PLATFORM_CONFIG.PLATFORM_FEES, payload);
 }
 
+/** Cash on Delivery guard rails, PKR per package (null max = no limit, 0 fee = none). */
+export interface CodConfig { maxPerPackagePKR: number | null; feePerPackagePKR: number }
+
+export function apiGetCodConfig() {
+  return client.get<never, ApiResponse<{ cod: CodConfig }>>(ENDPOINTS.PLATFORM_CONFIG.COD);
+}
+
+export function apiUpdateCodConfig(payload: Partial<CodConfig>) {
+  return client.put<never, ApiResponse<{ cod: CodConfig }>>(ENDPOINTS.PLATFORM_CONFIG.COD, payload);
+}
+
 export function apiUpdatePayoutConfig(payload: Partial<PayoutConfig>) {
   return client.put<never, ApiResponse<PlatformConfig>>(ENDPOINTS.PLATFORM_CONFIG.UPDATE_PAYOUT, payload);
 }

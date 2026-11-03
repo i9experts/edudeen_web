@@ -16,7 +16,20 @@ export function apiListCouriers() {
   return client.get<never, { success: boolean; data: CourierOption[] }>('/api/couriers');
 }
 
+export interface DeliveryOptionState { available: boolean; reason: string | null }
+export interface DeliveryOptions {
+  self: DeliveryOptionState;
+  couriers: (DeliveryOptionState & { id: 'tcs' | 'leopards' | 'postex'; label: string })[];
+  auto: DeliveryOptionState;
+  useLiveRates: boolean;
+}
+
+/** GET /api/couriers/options: which delivery methods this seller may choose (and why not). */
+export function apiGetDeliveryOptions() {
+  return client.get<never, { success: boolean; data: DeliveryOptions }>('/api/couriers/options');
+}
+
 /** POST /api/couriers/shipments: books the shipment and stores the tracking number. */
-export function apiBookCourierShipment(payload: { orderId: string; storeId: string; courier: string; weightKg?: number }) {
+export function apiBookCourierShipment(payload: { orderId: string; storeId: string; courier?: string; weightKg?: number }) {
   return client.post<never, { success: boolean; data: BookedShipment }>('/api/couriers/shipments', payload);
 }

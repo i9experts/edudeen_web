@@ -16,8 +16,22 @@ export type LicenseType = 'personal' | 'single_classroom' | 'school' | 'commerci
 export interface PhysForm {
   name: string; description: string; price: string; compareAtPrice: string;
   stock: string; options: VariantOption[]; shippingWeight: string; subCategoryId: string;
+  parcelType: ParcelType; pkgL: string; pkgW: string; pkgH: string;
   status: ProductStatus; isListedOnEdudeen: boolean;
   scheduledAt: string; tagInput: string; tags: string[]; images: string[];
+}
+export type ParcelType = 'document' | 'standard' | 'fragile' | 'bulky';
+/** Packed size (cm): all three or none, each 1-200. Returns an error text, or null when fine. */
+export function packageSizeError(l: string, w: string, h: string): string | null {
+  const vals = [l, w, h].map(v => v.trim());
+  if (vals.every(v => v === '')) return null;
+  if (vals.some(v => v === '')) return 'Fill length, width and height, or leave all three empty.';
+  if (vals.some(v => !Number.isFinite(Number(v)) || Number(v) < 1 || Number(v) > 200)) return 'Each size must be between 1 and 200 cm.';
+  return null;
+}
+export function packageCmPayload(l: string, w: string, h: string): { l: number; w: number; h: number } | null {
+  if (packageSizeError(l, w, h) || l.trim() === '') return null;
+  return { l: Number(l), w: Number(w), h: Number(h) };
 }
 export interface DigForm {
   name: string; description: string; price: string; compareAtPrice: string; subCategoryId: string;

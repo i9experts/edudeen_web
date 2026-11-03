@@ -1,5 +1,6 @@
 import { clsx } from 'clsx';
 import { BadgeCheck, Box, Truck, CheckCircle2, Clock, ClipboardCheck, type LucideIcon } from 'lucide-react';
+import { formatPrice } from '@/utils/formatPrice';
 
 // Real order progress, derived only from what the order actually records:
 //   Placed → Paid / Confirmed (COD) / Awaiting payment → Processing → Shipped → Delivered
@@ -11,6 +12,8 @@ export interface ProgressStoreInput {
   status:       string;
   fulfillmentType?: string;
   items?:       { type?: string }[];
+  packageIsPaid?: boolean;
+  codAmount?:   number;
   shippedAt?:   string | null;
   deliveredAt?: string | null;
 }
@@ -62,6 +65,8 @@ export function buildOrderProgress(o: ProgressInput): ProgressStep[] | null {
   const paymentDone = o.isPaid || (isCod && !isPending);
   const paymentStep: ProgressStep = o.isPaid
     ? { key: 'payment', label: 'Paid', icon: BadgeCheck, date: o.paidAt ?? null, state: 'done' }
+    : isCod && o.paymentStatus === 'partially_paid'
+      ? { key: 'payment', label: 'Partially paid', icon: BadgeCheck, date: null, hint: 'Pay each package on delivery', state: 'done' }
     : isCod
       ? { key: 'payment', label: 'Confirmed', icon: BadgeCheck, date: null, hint: 'Pay on delivery', state: isPending ? 'todo' : 'done' }
       : o.paymentStatus === 'pending_verification'
@@ -135,6 +140,21 @@ export function OrderNextStep({ input }: { input: ProgressInput }) {
   );
 }
 
+/** True for a Cash on Delivery order whose physical packages (2+ sellers) are each paid in cash separately. */
+export function isMultiPackageCod(o: { paymentType?: string | null; stores?: ProgressStoreInput[] }): boolean {
+  const pk = (o.stores ?? []).filter(s => typeof s.packageIsPaid === 'boolean');
+  return o.paymentType === 'cash_on_delivery' && pk.length > 1;
+}
+
+/** Small per-package badge: 'Pay Rs X on delivery' while due, 'Paid' once the seller marked it paid. */
+export function PackagePayBadge({ store, currency }: { store: ProgressStoreInput; currency: string }) {
+  if (typeof store.packageIsPaid !== 'boolean' || store.status === 'cancelled') return null;
+  return store.packageIsPaid
+    ? <span className="inline-flex px-2 py-[3px] rounded-full text-[12px] font-bold bg-[#e3f4ea] text-[#1a6b35] border border-[#a3d9b5]">Paid</span>
+    : <span className="inline-flex px-2 py-[3px] rounded-full text-[12px] font-bold bg-[#fff4dc] text-[#b36200] border border-[#f1d9a3]">
+        {store.codAmount && store.codAmount > 0 ? `Pay ${formatPrice(store.codAmount, currency)} on delivery` : 'Pay on delivery'}
+      </span>;
+}
 function fmt(d: string | null) {
   if (!d) return null;
   const date = new Date(d);

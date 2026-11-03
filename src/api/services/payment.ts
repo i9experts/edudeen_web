@@ -51,6 +51,10 @@ export interface PlacedOrder {
   shippingEstimate?: string | null;
   items:           OrderItem[];
   summary:         OrderSummary;
+  /** 'unpaid' | 'partially_paid' | 'paid' ... (partially_paid = multi-seller COD with some packages paid). */
+  paymentStatus?:  string;
+  /** Multi-seller Cash on Delivery: one entry per seller package. Absent on legacy / single-seller orders. */
+  packages?:       { storeId: string; status?: string; packageIsPaid?: boolean; packagePaidAt?: string | null; codAmount?: number }[];
 }
 
 interface CodPaymentResponse {
