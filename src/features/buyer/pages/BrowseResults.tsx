@@ -176,18 +176,19 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
     };
     const request = subjects.length >= 2
       // One search per subject, then the results are interleaved (A1 B1 C1 A2 ...), duplicates dropped.
-      ? Promise.all(subjects.map(s => apiBrowseProducts({ ...base, q: s, limit: Math.ceil(PAGE_SIZE / subjects.length) }))).then(list => {
+      // Each subject's first 48 matches are fetched once; paging happens here so every page mixes all subjects.
+      ? Promise.all(subjects.map(s => apiBrowseProducts({ ...base, page: 1, q: s, limit: 48 }).catch(() => null))).then(list => {
           const seen = new Set<string>();
           const merged: MarketplaceProduct[] = [];
-          const longest = Math.max(0, ...list.map(r => r.data?.products?.length ?? 0));
+          const longest = Math.max(0, ...list.map(r => r?.data?.products?.length ?? 0));
           for (let i = 0; i < longest; i++) {
             for (const r of list) {
-              const p = r.data?.products?.[i];
+              const p = r?.data?.products?.[i];
               if (p && !seen.has(p._id)) { seen.add(p._id); merged.push(p); }
             }
           }
-          const sum = list.reduce((n, r) => n + (r.data?.total ?? 0), 0);
-          return { data: { products: merged, total: sum }, correctedQuery: undefined, originalQuery: undefined, didYouMean: undefined };
+          const start = (state.page - 1) * PAGE_SIZE;
+          return { data: { products: merged.slice(start, start + PAGE_SIZE), total: merged.length }, correctedQuery: undefined, originalQuery: undefined, didYouMean: undefined };
         })
       : apiBrowseProducts({ ...base, q: subjects[0] || state.q || undefined, limit: PAGE_SIZE });
     request
