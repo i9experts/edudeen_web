@@ -6,8 +6,6 @@ import { apiBrowseProducts, type MarketplaceProduct } from '@/api/services/marke
 import { useChildren, childLevelLabel } from '@/hooks/useChildren';
 import { canonicalClass } from '@/constants/classLevels';
 import { useT } from '@/contexts/languageCtx';
-import { useCategoryTree } from '@/hooks/marketplace/useCategoryTree';
-
 /** Subject-interest matches first (name/tags/description), the rest keep API order. */
 function rankBySubjects(list: MarketplaceProduct[], subjects: string[]) {
   const subs = subjects.map(s => s.toLowerCase());
@@ -28,7 +26,6 @@ export function PickedForChildRail({ renderCard }: { renderCard: (p: Marketplace
   const t = useT();
   const navigate = useNavigate();
   const { selected } = useChildren();
-  const { bySlug } = useCategoryTree();
   const [products, setProducts] = useState<MarketplaceProduct[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -44,9 +41,26 @@ export function PickedForChildRail({ renderCard }: { renderCard: (p: Marketplace
     let cancelled = false;
     setLoading(true);
     const subjects = subjectsKey ? subjectsKey.split('|') : [];
-    (classValue ? apiBrowseProducts({ classValue, limit: 20 }) : apiBrowseProducts({ educationLevel: level, age, limit: 20 }))
+    const levelFilter = classValue ? { classValue } : { educationLevel: level, age };
+    const generic = () => (classValue ? apiBrowseProducts({ classValue, limit: 20 }) : apiBrowseProducts({ educationLevel: level, age, limit: 20 }))
       .then(res => (res.data?.products?.length || classValue ? res : age == null ? res : apiBrowseProducts({ educationLevel: level, limit: 20 })))
-      .then(res => { if (!cancelled) setProducts(rankBySubjects(res.data?.products ?? [], subjects).slice(0, 5)); })
+      .then(res => rankBySubjects(res.data?.products ?? [], subjects));
+    // Every subject the parent picked gets a turn: A1 B1 C1 A2 B2 ... (class filter kept, whole platform).
+    const bySubject = () => Promise.all(subjects.map(s => apiBrowseProducts({ ...levelFilter, q: s, limit: 6 }).catch(() => null)))
+      .then(list => {
+        const seen = new Set<string>();
+        const merged: MarketplaceProduct[] = [];
+        const longest = Math.max(0, ...list.map(r => r?.data?.products?.length ?? 0));
+        for (let i = 0; i < longest; i++) {
+          for (const r of list) {
+            const p = r?.data?.products?.[i];
+            if (p && !seen.has(p._id)) { seen.add(p._id); merged.push(p); }
+          }
+        }
+        return merged.length ? merged : generic();
+      });
+    (subjects.length ? bySubject() : generic())
+      .then(list => { if (!cancelled) setProducts(list.slice(0, subjects.length > 5 ? subjects.length : 5)); })
       .catch(() => { if (!cancelled) setProducts([]); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
@@ -57,17 +71,9 @@ export function PickedForChildRail({ renderCard }: { renderCard: (p: Marketplace
 
   const params = classValue ? new URLSearchParams({ class: classValue }) : new URLSearchParams({ grade: selected.educationLevel });
   if (!classValue && selected.age != null) params.set('age', String(selected.age));
-  // Subject of interest: open the matching category when there is one, else a text search for it.
+  // All the subjects the parent picked: the shop shows results for each of them together.
   const subjectList = (selected.subjects ?? []).map(s => s.trim()).filter(Boolean);
-  if (subjectList.length) {
-    let catSlug: string | null = null;
-    for (const s of subjectList) {
-      const hit = [...bySlug.values()].find(e => e.node.name.trim().toLowerCase() === s.toLowerCase());
-      if (hit?.node.slug) { catSlug = hit.node.slug; break; }
-    }
-    if (catSlug) params.set('category', catSlug);
-    else params.set('search', subjectList[0]);
-  }
+  if (subjectList.length) params.set('subjects', subjectList.join(','));
 
   return (
     <section className="mb-12">

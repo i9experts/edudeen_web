@@ -65,6 +65,8 @@ function useBrowseState() {
     age: num(params.get('age')),
     sort: (params.get('sort') ?? '') as MarketplaceSortBy | '',
     page: Math.min(1000, Math.max(1, Math.floor(num(params.get('page')) ?? 1))),
+    /** Several subjects at once (a child's interests): results from all of them, interleaved. */
+    subjects: (params.get('subjects') ?? '').split(',').map(s => s.trim()).filter(Boolean).slice(0, 6),
   };
   const update = useCallback((patch: Record<string, string | number | boolean | undefined | null>, keepPage = false, replace = false) => {
     setParams(prev => {
@@ -150,13 +152,14 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
 
   const effectiveCategory = categoryId ?? (state.cat || undefined);
   const maxPrice = state.free ? 0 : state.max;
+  const subjectsKey = state.subjects.join('\n');
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setError('');
-    apiBrowseProducts({
-      q: state.q || undefined,
+    const subjects = subjectsKey ? subjectsKey.split('\n') : [];
+    const base = {
       categoryId: effectiveCategory,
       productType: TYPE_TO_PARAM[PARAM_TO_TYPE[state.type] ?? ''],
       educationLevel: fixedGrade ?? (state.grade || undefined),
@@ -170,8 +173,24 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
       format: state.format || undefined,
       exact: state.exact,
       page: state.page,
-      limit: PAGE_SIZE,
-    })
+    };
+    const request = subjects.length >= 2
+      // One search per subject, then the results are interleaved (A1 B1 C1 A2 ...), duplicates dropped.
+      ? Promise.all(subjects.map(s => apiBrowseProducts({ ...base, q: s, limit: Math.ceil(PAGE_SIZE / subjects.length) }))).then(list => {
+          const seen = new Set<string>();
+          const merged: MarketplaceProduct[] = [];
+          const longest = Math.max(0, ...list.map(r => r.data?.products?.length ?? 0));
+          for (let i = 0; i < longest; i++) {
+            for (const r of list) {
+              const p = r.data?.products?.[i];
+              if (p && !seen.has(p._id)) { seen.add(p._id); merged.push(p); }
+            }
+          }
+          const sum = list.reduce((n, r) => n + (r.data?.total ?? 0), 0);
+          return { data: { products: merged, total: sum }, correctedQuery: undefined, originalQuery: undefined, didYouMean: undefined };
+        })
+      : apiBrowseProducts({ ...base, q: subjects[0] || state.q || undefined, limit: PAGE_SIZE });
+    request
       .then(res => {
         if (cancelled) return;
         setProducts(res.data?.products ?? []);
@@ -181,7 +200,7 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
       .catch(err => { if (!cancelled) setError(err instanceof Error ? err.message : 'Could not load resources.'); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [state.q, effectiveCategory, state.type, state.grade, state.min, maxPrice, state.free, state.rating, state.sort, state.board, state.age, state.cls, state.format, state.exact, state.page, reload, fixedGrade]);
+  }, [state.q, effectiveCategory, state.type, state.grade, state.min, maxPrice, state.free, state.rating, state.sort, state.board, state.age, state.cls, state.format, state.exact, state.page, reload, fixedGrade, subjectsKey]);
 
   // Back to the top of the results when the page number changes.
   useEffect(() => { window.document.getElementById('browse-top')?.scrollIntoView({ block: 'start' }); }, [state.page]);
@@ -199,7 +218,7 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
     type: f.type[0] ? TYPE_TO_PARAM[f.type[0]] : undefined,
     rating: f.minRating ?? undefined,
   });
-  const clearAll = () => update({ format: undefined, board: undefined, age: undefined, class: undefined, cat: undefined, grade: undefined, type: undefined, min: undefined, max: undefined, rating: undefined, free: undefined, sort: undefined });
+  const clearAll = () => update({ subjects: undefined, format: undefined, board: undefined, age: undefined, class: undefined, cat: undefined, grade: undefined, type: undefined, min: undefined, max: undefined, rating: undefined, free: undefined, sort: undefined });
 
   const catName = state.cat ? tree.flatMap(c => [c, ...(c.children ?? [])]).find(c => c._id === state.cat)?.name : null;
   const chips: { key: string; label: string; clear: () => void }[] = [
@@ -208,6 +227,7 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
     ...(state.age != null ? [{ key: 'age', label: `For age ${state.age}`, clear: () => update({ age: undefined }) }] : []),
     ...(state.cls ? [{ key: 'class', label: activeChild && state.cls === canonicalClass(activeChild.gradeLabel) ? `${t('For')} ${activeChild.name} (${classLabel(state.cls)})` : classLabel(state.cls), clear: () => update({ class: undefined }) }] : []),
     ...(state.grade && !fixedGrade ? [{ key: 'grade', label: activeChild && state.grade === activeChild.educationLevel ? `${t('For')} ${activeChild.name} (${childLevelLabel(activeChild)})` : GRADE_LABEL.get(state.grade) ?? state.grade, clear: () => update({ grade: undefined }) }] : []),
+    ...(state.subjects.length ? [{ key: 'subjects', label: state.subjects.join(', '), clear: () => update({ subjects: undefined }) }] : []),
     ...(state.format ? [{ key: 'format', label: 'Online courses', clear: () => update({ format: undefined }) }] : []),
     ...(state.type ? [{ key: 'type', label: PARAM_TO_TYPE[state.type] ?? state.type, clear: () => update({ type: undefined }) }] : []),
     ...(state.free ? [{ key: 'free', label: 'Free only', clear: () => update({ free: undefined }) }] : []),
