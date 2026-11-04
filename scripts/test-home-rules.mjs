@@ -1,6 +1,6 @@
 // Run: npm run test:rules  (Node 22.6+/24 strips the TypeScript types itself; no test runner needed)
 import assert from 'node:assert/strict';
-import { soldLabel, dedupeInOrder, paymentTrust, paymentTrustSub, railSize, whatsappLink, GRADE_TILES, learnLevelPath } from '../src/features/buyer/components/home/homeRules.ts';
+import { soldLabel, dedupeInOrder, paymentTrust, paymentTrustSub, railSize, isValidRailProduct, MIN_RAIL_ITEMS, whatsappLink, GRADE_TILES, learnLevelPath } from '../src/features/buyer/components/home/homeRules.ts';
 
 let n = 0;
 const t = (name, fn) => { fn(); n += 1; console.log('ok  ', name); };
@@ -13,6 +13,16 @@ t('"X sold" only from 10 sales', () => {
   assert.equal(soldLabel(1234), '1234 sold');
   assert.equal(soldLabel(undefined), null);
   assert.equal(soldLabel(NaN), null);
+});
+
+t('rail guard: no Rs 0 with a strike price, free items stay', () => {
+  const v = (x) => ({ variants: [{ isDefault: true, ...x }] });
+  assert.equal(isValidRailProduct(v({ price: 500, compareAtPrice: 800 })), true);
+  assert.equal(isValidRailProduct(v({ price: 0 })), true);
+  assert.equal(isValidRailProduct(v({ price: 0, compareAtPrice: 500 })), false);
+  assert.equal(isValidRailProduct(v({ price: 500, campaignPrice: 0 })), false);
+  assert.equal(isValidRailProduct({ variants: [] }), false);
+  assert.equal(MIN_RAIL_ITEMS, 4);
 });
 
 t('rails show 8, 4 or all - never 5', () => {

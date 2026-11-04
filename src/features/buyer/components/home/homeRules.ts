@@ -37,6 +37,24 @@ export function dedupeInOrder<K extends string, T extends HasId>(
   return out;
 }
 
+/** A home rail (Flash, Bestsellers, Featured, curated, sellers) is hidden when fewer than this many valid items remain. */
+export const MIN_RAIL_ITEMS = 4;
+
+interface RailVariant { price?: number; compareAtPrice?: number | null; campaignPrice?: number | null; isDefault?: boolean }
+
+/** Mirror of the API's `isValidRailProduct`: price > 0, or price 0 with NO strike price (a genuine free item) - never "Rs 0, -100%". */
+export function isValidRailProduct(p: { variants?: RailVariant[] } | null | undefined): boolean {
+  const variants = p?.variants ?? [];
+  const v = variants.find(x => x?.isDefault) ?? variants[0];
+  if (!v) return false;
+  const price = typeof v.price === 'number' ? v.price : NaN;
+  if (!Number.isFinite(price) || price < 0) return false;
+  const campaign = typeof v.campaignPrice === 'number' && v.campaignPrice >= 0 && v.campaignPrice < price ? v.campaignPrice : null;
+  const shown = campaign ?? price;
+  const strike = campaign != null ? price : typeof v.compareAtPrice === 'number' && v.compareAtPrice > price ? v.compareAtPrice : null;
+  return shown > 0 || strike == null;
+}
+
 /** A rail shows a full row: 8 items when there are 8+, else 4 when there are 4+, else whatever exists (never an odd 5). */
 export function railSize(available: number): number {
   return available >= 8 ? 8 : available >= 4 ? 4 : Math.max(0, available);

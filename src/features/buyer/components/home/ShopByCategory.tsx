@@ -18,13 +18,15 @@ function flattenSubs(n: CategoryNode): CategoryNode[] {
 }
 
 function Tile({ node }: { node: CategoryNode }) {
-  const [broken, setBroken] = useState(false);
+  // `brokenSrc` (not a boolean): a new photo URL after a live refresh gets a fresh try.
+  const [brokenSrc, setBrokenSrc] = useState('');
   const src = photoOf(node);
+  const broken = brokenSrc === src;
   return (
     <Link to={categoryUrl(node.slug || node._id)} className="group block min-w-0 no-underline" aria-label={node.name}>
       <div className="aspect-square rounded-lg overflow-hidden bg-[#eaf2f8]">
         {src && !broken
-          ? <img src={cloudinaryUrl(src, 400)} alt={node.name} loading="lazy" decoding="async" onError={() => setBroken(true)} className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]" />
+          ? <img src={cloudinaryUrl(src, 400)} alt={node.name} loading="lazy" decoding="async" onError={() => setBrokenSrc(src)} onLoad={e => { if (e.currentTarget.naturalWidth < 2) setBrokenSrc(src); }} className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]" />
           : <CategoryArt name={node.name} className="w-full h-full" />}
       </div>
       <p className="text-[13px] sm:text-sm text-carbon mt-1.5 mb-0 line-clamp-2 leading-snug group-hover:text-brand-royal group-hover:underline underline-offset-2">{node.name}</p>

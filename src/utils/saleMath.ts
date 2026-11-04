@@ -14,7 +14,8 @@ export function variantSalePct(v: SaleVariant | null | undefined): number {
   const campaign = typeof v.campaignPrice === 'number' && v.campaignPrice >= 0 && v.campaignPrice < price ? v.campaignPrice : null;
   const effective = campaign ?? price;
   const was = campaign != null ? price : (typeof v.compareAtPrice === 'number' ? v.compareAtPrice : null);
-  if (was == null || !(was > effective) || was <= 0) return 0;
+  // A price of 0 with a strike price would read "-100%": that is bad data, not a deal.
+  if (was == null || !(was > effective) || was <= 0 || effective <= 0) return 0;
   return Math.round((1 - effective / was) * 100);
 }
 
@@ -28,7 +29,7 @@ export function platformSalePct(p: Pick<MarketplaceProduct, 'variants'>): number
   const variants = (p.variants ?? []) as SaleVariant[];
   const v = variants.find(x => x.isDefault) ?? variants[0];
   if (!v || typeof v.price !== 'number' || v.price <= 0) return 0;
-  if (typeof v.campaignPrice !== 'number' || !(v.campaignPrice >= 0 && v.campaignPrice < v.price)) return 0;
+  if (typeof v.campaignPrice !== 'number' || !(v.campaignPrice > 0 && v.campaignPrice < v.price)) return 0;
   return Math.round((1 - v.campaignPrice / v.price) * 100);
 }
 

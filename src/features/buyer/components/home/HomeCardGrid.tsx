@@ -19,17 +19,18 @@ function SmartLink({ to, className, children, label }: { to: string; className?:
 
 function TileView({ tile }: { tile: HomeCardTile }) {
   const { bySlug } = useCategoryTree();
-  const [broken, setBroken] = useState(false);
+  const [brokenSrc, setBrokenSrc] = useState('');
   const slug = categorySlugOf(tile.link);
   const cat = slug ? bySlug.get(slug)?.node : undefined;
   // Admin photo first, then the linked category's real product photo / image, then the brand illustration.
   const src = tile.imageUrl || cat?.coverImage || cat?.image || '';
+  const broken = brokenSrc === src;
   const label = tile.label || cat?.name || '';
   return (
     <SmartLink to={tile.link} className="group block min-w-0 no-underline" label={label || undefined}>
       <div className="aspect-square rounded-lg overflow-hidden bg-[#eaf2f8]">
         {src && !broken
-          ? <img src={cloudinaryUrl(src, 400)} alt={label} loading="lazy" decoding="async" onError={() => setBroken(true)} className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]" />
+          ? <img src={cloudinaryUrl(src, 400)} alt={label} loading="lazy" decoding="async" onError={() => setBrokenSrc(src)} onLoad={e => { if (e.currentTarget.naturalWidth < 2) setBrokenSrc(src); }} className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]" />
           : <CategoryArt name={label || 'Resources'} className="w-full h-full" />}
       </div>
       {label && <p className="text-[13px] sm:text-sm text-carbon mt-1.5 mb-0 line-clamp-2 leading-snug group-hover:text-brand-royal group-hover:underline underline-offset-2">{label}</p>}
@@ -39,6 +40,7 @@ function TileView({ tile }: { tile: HomeCardTile }) {
 
 function CardView({ card }: { card: HomeCard }) {
   const t = useT();
+  const [brokenCover, setBrokenCover] = useState('');
   const cta = card.ctaLabel || 'See more';
   const chevron = (
     <svg aria-hidden viewBox="0 0 24 24" className="w-5 h-5 rtl:rotate-180" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 5 7 7-7 7" /></svg>
@@ -55,8 +57,8 @@ function CardView({ card }: { card: HomeCard }) {
         ? (
           <SmartLink to={card.link} className="group block flex-1 no-underline" label={card.title}>
             <div className="aspect-[4/3] rounded-lg overflow-hidden bg-[#eaf2f8]">
-              {card.imageUrl
-                ? <img src={cloudinaryUrl(card.imageUrl, 640)} alt={card.title} loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]" />
+              {card.imageUrl && brokenCover !== card.imageUrl
+                ? <img src={cloudinaryUrl(card.imageUrl, 640)} alt={card.title} loading="lazy" decoding="async" onError={() => setBrokenCover(card.imageUrl)} onLoad={e => { if (e.currentTarget.naturalWidth < 2) setBrokenCover(card.imageUrl); }} className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]" />
                 : <CategoryArt name={card.title} className="w-full h-full" />}
             </div>
           </SmartLink>

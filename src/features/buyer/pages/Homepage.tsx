@@ -61,7 +61,7 @@ import { ProductShelf } from '@/features/buyer/components/home/ProductShelf';
 import { BundlesShelf } from '@/features/buyer/components/home/BundlesShelf';
 import { HomeNewsletter } from '@/features/buyer/components/home/HomeNewsletter';
 import { useHomeShelves } from '@/features/buyer/components/home/useHomeShelves';
-import { dedupeInOrder, soldLabel, railSize } from '@/features/buyer/components/home/homeRules';
+import { dedupeInOrder, soldLabel, railSize, isValidRailProduct, MIN_RAIL_ITEMS } from '@/features/buyer/components/home/homeRules';
 
 // Text lives in admin-edit/homeDefaults.ts (shared with the inline editor).
 
@@ -218,11 +218,14 @@ function HomeLanding() {
   // Deals are ranked over a much bigger slice of the catalogue than the first page. The ranking is shared with
   // the top-bar ticker (useTopBarDeals: one fetch, one maths helper), so every "Up to X% off" agrees.
   const normalFlashDeals = (topBarDeals?.allDeals.length ? topBarDeals.allDeals : featuredPool.map(p => ({ product: p, pct: productSalePct(p) })).filter(x => x.pct > 0).sort((a, b) => b.pct - a.pct))
-    .filter(x => !!x.product.name?.trim() && (x.product.variants ?? []).length > 0)
+    .filter(x => !!x.product.name?.trim() && isValidRailProduct(x.product))
     .slice(0, 10);
   // Premium members: the same slot shows the biggest member discounts (Premium Deals) instead of the seller / platform flash sale.
   const { deals: premiumDeals } = usePremiumDeals();
-  const flashDeals = premiumDeals ?? normalFlashDeals;
+  // A rail needs MIN_RAIL_ITEMS valid items, otherwise it is hidden (no empty state on the home page).
+  const validPremium = premiumDeals?.filter(d => isValidRailProduct(d.product)) ?? null;
+  const dealsAll = validPremium ?? normalFlashDeals;
+  const flashDeals = dealsAll.length >= MIN_RAIL_ITEMS ? dealsAll : [];
   const topPicks = [...featuredPool]
     .sort((a, b) => (b.purchaseCount + b.averageRating * 10) - (a.purchaseCount + a.averageRating * 10))
     .slice(0, 10);
@@ -249,9 +252,9 @@ function HomeLanding() {
     ['flash', 'bestsellers', 'featured', ...shelves.map(s => `shelf-${s._id}`)],
     {
       flash: flashDeals.map(d => d.product),
-      bestsellers: homeShelves.bestsellers.items,
-      featured,
-      ...Object.fromEntries(shelves.map(s => [`shelf-${s._id}`, s.products])),
+      bestsellers: homeShelves.bestsellers.items.filter(isValidRailProduct),
+      featured: featured.filter(isValidRailProduct),
+      ...Object.fromEntries(shelves.map(s => [`shelf-${s._id}`, s.products.filter(isValidRailProduct)])),
     },
     { bestsellers: 8, featured: 5, ...Object.fromEntries(shelves.map(s => [`shelf-${s._id}`, 5])) },
   );
@@ -490,7 +493,7 @@ function HomeLanding() {
           categories={menuCategories}
           topPicks={topPicks}
           bestRated={bestRated}
-          flashDeals={flashDeals}
+          flashDeals={dealsAll}
           topStores={topStores}
           countdown={countdown}
           onShopCategory={handleShopCategory}
@@ -585,7 +588,7 @@ function HomeLanding() {
         <ProductShelf
           eyebrow="What parents and teachers buy" title="Bestsellers"
           action={{ label: 'View all', onClick: () => navigate('/?sort=popularity') }}
-          items={unique.bestsellers.slice(0, railSize(unique.bestsellers.length))} loading={homeShelves.bestsellers.loading} renderCard={renderResourceCard}
+          items={unique.bestsellers.length >= MIN_RAIL_ITEMS ? unique.bestsellers.slice(0, railSize(unique.bestsellers.length)) : []} loading={homeShelves.bestsellers.loading} renderCard={renderResourceCard}
           note={p => { const s = soldLabel(p.purchaseCount); return s ? <p className="text-[12px] text-slate mt-1 mb-0">{s}</p> : null; }}
         />
         {/* ── Picked for the active child (My children): right under Bestsellers ── */}
@@ -724,7 +727,7 @@ function HomeLanding() {
         <BundlesShelf bundles={homeShelves.bundles.items} loading={homeShelves.bundles.loading} />
 
         {/* ── Featured by Edudeen (admin-featured listings) ── */}
-        {unique.featured.length >= 2 && (
+        {unique.featured.length >= MIN_RAIL_ITEMS && (
           <section className="mb-12">
             <SectionHead eyebrow="Hand-picked by our team" title="Featured by Edudeen" />
             {/* fewer than 4 items: one row sized to the count, no empty grid cells */}
@@ -742,7 +745,7 @@ function HomeLanding() {
         {/* ── Edudeen picks (curated shelves) ── */}
         {shelves.map(s => {
           const items = unique[`shelf-${s._id}`] ?? [];
-          if (items.length === 0) return null;
+          if (items.length < MIN_RAIL_ITEMS) return null;
           return (
             <section key={s._id} className="mb-12">
               <SectionHead
@@ -759,7 +762,7 @@ function HomeLanding() {
         })}
 
         {/* ── Featured sellers ── */}
-        {topStores.length > 0 && (
+        {topStores.length >= MIN_RAIL_ITEMS && (
           <section className="mb-12">
             <SectionHead eyebrow="Meet the makers" title="Featured sellers" />
             <ScrollRow className="flex gap-3 pb-1 pt-1">
