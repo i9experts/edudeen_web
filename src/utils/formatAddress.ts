@@ -21,6 +21,17 @@ export function formatAddressLine(a: { addressLine1?: Part; addressLine2?: Part;
   return formatAddress([a.addressLine1, a.addressLine2, a.city, a.state, a.zipCode]);
 }
 
+/** Phone with the middle digits hidden ("+92 3•• ••••567"): first 3 and last 3 digits stay; very short numbers keep the last 2. */
+export function maskPhone(raw: Part): string {
+  const shown = formatPhone(raw);
+  const total = (shown.match(/\d/g) ?? []).length;
+  if (!total) return shown;
+  const head = total >= 8 ? 3 : 0;
+  const tail = total >= 8 ? 3 : 2;
+  let i = 0;
+  return shown.replace(/\d/g, d => (i++ < head || i > total - tail ? d : '•'));
+}
+
 /** One phone format everywhere: Pakistani numbers as "+92 300 1234567"; anything else is shown as typed. */
 export function formatPhone(raw: Part): string {
   const v = (raw ?? '').trim();

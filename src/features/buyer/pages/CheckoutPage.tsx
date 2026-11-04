@@ -55,6 +55,7 @@ import { clsx } from 'clsx';
 import { formatPrice } from '@/utils/formatPrice';
 import { computeCartTotals } from '@/utils/cartTotals';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
+import { maskPhone } from '@/utils/formatAddress';
 
 // ── Step badge ────────────────────────────────────────────────────────────────
 function StepBadge({ n, active, done }: { n: number; active: boolean; done: boolean }) {
@@ -340,9 +341,11 @@ const PAYMENT_LABELS: Record<string, { label: string; desc: string; Icon: React.
 // flow and the physical flow's step 3 (their surrounding layout differs, but
 // the list of options and how a method is selected is identical). ──────────
 function PaymentMethodOptions({
-  methods, selectedMethod, onSelect, summary, currency,
+  methods, selectedMethod, onSelect, summary, currency, moreSoon,
 }: {
   methods:        string[];
+  /** Some methods were hidden because they can't be used right now. */
+  moreSoon?:      boolean;
   selectedMethod: string | null;
   onSelect:       (m: string) => void;
   summary:        CheckoutSummary | null;
@@ -395,6 +398,7 @@ function PaymentMethodOptions({
           </label>
         );
       })}
+      {moreSoon && <p className="text-[11px] text-slate m-0">More payment options coming soon</p>}
     </div>
   );
 }
@@ -602,6 +606,8 @@ export function CheckoutPage() {
   const usableMethods = effectiveMethods.filter(m => !((m === 'stripe' || m === 'split') && !isStripeConfigured()));
   const digitalPaymentBlocked = hasDigital && !!checkout && usableMethods.length === 0;
   const physicalItemCount = cartItems.filter(i => i.type !== 'digital').length;
+  // A courier needs a number to call: a physical order can't be placed without one (digital-only orders never reach this step).
+  const phoneMissing = !isDigital && !!selectedAddr && !selectedAddr.phoneNumber?.trim();
 
   // With only one real choice (a pure-digital cart only ever gets 'stripe'),
   // select it automatically instead of making the buyer pick a "radio group"
@@ -796,6 +802,49 @@ export function CheckoutPage() {
     if (step === 2 && !selectedZoneId && matchingZones.length === 1) setSelectedZoneId(matchingZones[0]._id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step, selectedZoneId, matchingZones.length, matchingZones[0]?._id]);
+
+  // Fast track: a signed-in buyer with a physical cart, a default address, exactly one delivery option and
+  // exactly one usable payment method lands straight on Review (each section keeps its Change link). It runs
+  // the same createCheckout call as the Continue buttons, once per page load; in every other case (or if the
+  // call fails) the result is dropped and the normal 4-step flow is untouched.
+  const fastTrackTried = useRef(false);
+  const [fastTracking, setFastTracking] = useState(false);
+  useEffect(() => {
+    if (fastTrackTried.current) return;
+    if (!loggedIn || cartLoading || addrLoading || zonesLoading || zonesError || profileLoading) return;
+    if (buyNow && buyNowCart.legacy) return;
+    if (cartItems.length === 0 || hasDigital || step !== 1 || checkout) return;
+    fastTrackTried.current = true;
+    const addr = selectedAddr;
+    if (!addr || !addr.isDefault || matchingZones.length !== 1) return;
+    const zoneId = matchingZones[0]._id;
+    setFastTracking(true);
+    apiCreateCheckout({
+      addressId: addr._id,
+      ...(zoneId !== STANDARD_DELIVERY._id && { shippingZoneId: zoneId }),
+      storeId: checkoutStoreId,
+      ...(buyNow && { buyNow }),
+      ...(checkoutItemsPayload && { items: checkoutItemsPayload }),
+    })
+      .then(res => {
+        const methods = (res.data.allowedPaymentMethods ?? []).filter(m => m === 'free' || m === 'stripe' || m === 'cash_on_delivery' || m === 'manual_bank_transfer' || isHostedProvider(m));
+        const usable = methods.filter(m => !(m === 'stripe' && !isStripeConfigured()));
+        if (usable.length !== 1) return; // a real choice (or none): normal stepper
+        setClientSecret(null);
+        setClientSecretMode(null);
+        setChargeAmount(null);
+        setCheckout(res.data.checkout);
+        setSummary(res.data.summary);
+        setCodInfo(res.data.cod ?? null);
+        setAllowedMethods(methods);
+        setSelectedMethod(usable[0]);
+        setSelectedZoneId(zoneId);
+        setStep(4);
+      })
+      .catch(() => { /* quiet: the buyer continues with the stepper */ })
+      .finally(() => setFastTracking(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loggedIn, cartLoading, addrLoading, zonesLoading, zonesError, profileLoading, selectedAddr, matchingZones.length, cartItems.length, hasDigital, step, checkout]);
 
   // Once a checkout exists the server's figures are the only source of truth:
   // it converts every line into the checkout currency and has already taken
@@ -1144,7 +1193,8 @@ export function CheckoutPage() {
                     {effectiveMethods.length > 1 && (
                       <div className="mb-4">
                         <PaymentMethodOptions
-                          methods={effectiveMethods}
+                          methods={usableMethods}
+                          moreSoon={usableMethods.length > 0 && usableMethods.length < effectiveMethods.length}
                           selectedMethod={selectedMethod}
                           onSelect={setSelectedMethod}
                           summary={summary}
@@ -1189,7 +1239,12 @@ export function CheckoutPage() {
             </div>
           ) : (
             /* ── Physical: 3-step flow ──────────────────────────────────── */
-            <div className="bg-white rounded-xl border border-bone overflow-hidden">
+            <div className={clsx('bg-white rounded-xl border border-bone overflow-hidden', fastTracking && 'opacity-60 pointer-events-none')} aria-busy={fastTracking}>
+            {fastTracking && (
+              <div role="status" className="flex items-center gap-2 px-6 py-2.5 bg-cream border-b border-bone text-[12px] text-slate">
+                <Loader2 size={14} className="animate-spin" />Preparing your order…
+              </div>
+            )}
 
             {/* ── Card Header ───────────────────────────────────────────── */}
             <div className="px-6 pt-5 pb-4 border-b border-bone">
@@ -1622,7 +1677,8 @@ export function CheckoutPage() {
                   )}
                   <div className={clsx('mb-4', digitalPaymentBlocked && 'hidden')}>
                     <PaymentMethodOptions
-                      methods={effectiveMethods}
+                      methods={usableMethods}
+                      moreSoon={usableMethods.length > 0 && usableMethods.length < effectiveMethods.length}
                       selectedMethod={selectedMethod}
                       onSelect={setSelectedMethod}
                       summary={summary}
@@ -1676,6 +1732,16 @@ export function CheckoutPage() {
                       </span>
                     </div>
                     <div className="flex justify-between gap-3 text-[12.5px]">
+                      <span className="text-slate flex-shrink-0">Phone</span>
+                      <span className="font-medium text-carbon text-end" translate="no">{selectedAddr?.phoneNumber?.trim() ? maskPhone(selectedAddr.phoneNumber) : '—'}</span>
+                    </div>
+                    <div className="flex justify-between gap-3 text-[12.5px]">
+                      <span className="text-slate flex-shrink-0">Delivery</span>
+                      <span className="font-medium text-carbon text-end">
+                        {selectedZone?.estimatedDeliveryTime ? <><span>Estimated </span><span translate="no">{selectedZone.estimatedDeliveryTime}</span></> : 'Delivery arranged by the seller'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between gap-3 text-[12.5px]">
                       <span className="text-slate flex-shrink-0">Shipping</span>
                       <span className="font-medium text-carbon text-end">
                         {selectedZone ? `${zoneTitle(selectedZone)} · ${checkout ? (checkout.shippingFee > 0 ? formatPrice(checkout.shippingFee, checkoutCur) : 'Free') : zonePrice(selectedZone)}` : '—'}
@@ -1708,10 +1774,12 @@ export function CheckoutPage() {
                   {checkout && checkout.items.length > 0 && (
                     <ul className="list-none p-0 m-0 mb-4 rounded-[10px] border border-bone divide-y divide-bone">
                       {checkout.items.map(item => (
-                        <li key={item.variantId} className="flex justify-between gap-3 px-4 py-2.5 text-[12.5px]">
-                          <span className="text-carbon min-w-0">
+                        <li key={item.variantId} className="flex items-center justify-between gap-3 px-4 py-2.5 text-[12.5px]">
+                          {item.image && <img src={item.image} alt="" loading="lazy" className="w-10 h-10 rounded-[6px] object-cover bg-cream shrink-0" />}
+                          <span className="text-carbon min-w-0 flex-1">
                             {item.name}
                             <span className="text-slate ms-1">×{item.quantity}</span>
+                            {item.sellerName && <span className="block text-[11px] text-slate"><span>Sold by </span><span translate="no">{item.sellerName}</span></span>}
                           </span>
                           <span className="font-medium text-carbon shrink-0">{formatPrice(item.totalPrice, summaryCur)}</span>
                         </li>
@@ -1735,7 +1803,24 @@ export function CheckoutPage() {
                     </div>
                   )}
 
-                  {selectedMethod === 'stripe' || selectedMethod === 'split' ? (
+                  {phoneMissing && (
+                    <div role="alert" className="flex items-start gap-2 text-[12px] text-error bg-error-bg border border-error-border rounded-[8px] px-3 py-2 mb-4">
+                      <AlertCircle size={13} className="mt-[1px] flex-shrink-0" />
+                      <span>
+                        Add a phone number to your delivery address so the courier can reach you.{' '}
+                        <button type="button" onClick={() => setStep(1)} className="font-semibold underline bg-transparent border-0 p-0 cursor-pointer text-error">Edit address</button>
+                      </span>
+                    </div>
+                  )}
+
+                  <p className="text-[11.5px] text-slate mb-3 m-0">
+                    <span>By placing the order you agree to the </span>
+                    <Link to="/terms-of-service" className="underline text-brand-royal">Terms of Service</Link>
+                    <span> and </span>
+                    <Link to="/returns" className="underline text-brand-royal">Refund policy</Link>
+                  </p>
+
+                  {phoneMissing ? null : selectedMethod === 'stripe' || selectedMethod === 'split' ? (
                     <CardPaymentSlot
                       checkoutReady={!!checkout}
                       clientSecret={clientSecret}
