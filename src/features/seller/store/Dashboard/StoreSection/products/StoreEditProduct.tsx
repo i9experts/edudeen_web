@@ -162,7 +162,7 @@ export default function StoreEditProduct() {
     originalName.current = p.name ?? '';
     setReview(p.status === 'pending_review' || p.status === 'rejected' ? { status: p.status, note: p.reviewNote ?? null } : null);
     setVariantId(v._id || null);
-    setLearning({ curricula: [...(p.curricula ?? [])], ageMin: p.ageMin != null ? String(p.ageMin) : '', ageMax: p.ageMax != null ? String(p.ageMax) : '', classFrom: p.classFrom ?? '', classTo: p.classTo ?? '', coverStyle: p.coverStyle ?? '' });
+    setLearning({ curricula: [...(p.curricula ?? [])], ageMin: p.ageMin != null ? String(p.ageMin) : '', ageMax: p.ageMax != null ? String(p.ageMax) : '', classFrom: p.classFrom ?? '', classTo: p.classTo ?? '', coverStyle: p.coverStyle ?? '', language: p.language ?? '' });
     if (p.productType === 'physical') { setPhys(physFromEntry(p, v)); hadWeight.current = !!String(v?.shippingWeight ?? '').trim(); }
     else                              setDig(digFromEntry(p, v));
   }
@@ -198,7 +198,7 @@ export default function StoreEditProduct() {
         setPremiumOptOut(!!p.premiumOptOut);
         const pe = p as unknown as { pendingEditInfo?: unknown; lastEditRejection?: { reason?: string } | null };
         setEditReview({ pending: !!pe.pendingEditInfo, rejection: pe.lastEditRejection?.reason ?? null });
-        setLearning({ curricula: [...(p.curricula ?? [])], ageMin: p.ageMin != null ? String(p.ageMin) : '', ageMax: p.ageMax != null ? String(p.ageMax) : '', classFrom: p.classFrom ?? '', classTo: p.classTo ?? '', coverStyle: p.coverStyle ?? '' });
+        setLearning({ curricula: [...(p.curricula ?? [])], ageMin: p.ageMin != null ? String(p.ageMin) : '', ageMax: p.ageMax != null ? String(p.ageMax) : '', classFrom: p.classFrom ?? '', classTo: p.classTo ?? '', coverStyle: p.coverStyle ?? '', language: p.language ?? '' });
         // The list cache can lack tags: fill them from the fresh read (never over tags the seller already typed).
         // The list cache can also lack the go-live date: fill it (and the scheduled choice) from the fresh read.
         // The list cache can lack the parcel fields: fill them from the fresh read (never over what the seller already typed).

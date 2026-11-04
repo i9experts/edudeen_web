@@ -49,6 +49,7 @@ export interface LearningMetaInput {
   curricula?: string[];
   ageMin?:    number | null;
   ageMax?:    number | null;
+  language?:  'ur' | 'en' | 'ar' | 'mixed' | null;
   classFrom?: string | null;
   classTo?:   string | null;
   coverStyle?: 'book' | 'flat' | null;
@@ -121,6 +122,7 @@ export interface StoreProduct {
   curricula?:        string[];
   ageMin?:           number | null;
   ageMax?:           number | null;
+  language?:         'ur' | 'en' | 'ar' | 'mixed' | null;
   coverStyle?:       'book' | 'flat' | null;
   classFrom?:        string | null;
   classTo?:          string | null;

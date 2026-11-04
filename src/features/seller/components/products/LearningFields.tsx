@@ -1,7 +1,7 @@
 import { clsx } from 'clsx';
 import { Plus, Trash2 } from 'lucide-react';
 import { FileUpload, type PrivateUploadData } from '@/components/comman/ui';
-import { CURRICULA, LICENSE_LABEL } from '@/constants/learning';
+import { CURRICULA, LICENSE_LABEL, PRODUCT_LANGUAGES, type ProductLanguage } from '@/constants/learning';
 import { CLASS_LEVELS, classIndex } from '@/constants/classLevels';
 import { COVER_STYLES, suggestCoverStyle, type CoverStyle } from '@/constants/coverStyle';
 
@@ -12,8 +12,8 @@ import { COVER_STYLES, suggestCoverStyle, type CoverStyle } from '@/constants/co
 const inp = 'w-full px-3 py-[9px] text-[13px] border border-bone rounded-lg outline-none text-charcoal bg-white focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/10';
 const lbl = 'block text-[12.5px] font-semibold text-charcoal mb-1.5';
 
-export interface LearningValue { curricula: string[]; ageMin: string; ageMax: string; classFrom: string; classTo: string; coverStyle?: '' | CoverStyle }
-export const EMPTY_LEARNING: LearningValue = { curricula: [], ageMin: '', ageMax: '', classFrom: '', classTo: '', coverStyle: '' };
+export interface LearningValue { curricula: string[]; ageMin: string; ageMax: string; classFrom: string; classTo: string; coverStyle?: '' | CoverStyle; language?: '' | ProductLanguage }
+export const EMPTY_LEARNING: LearningValue = { curricula: [], ageMin: '', ageMax: '', classFrom: '', classTo: '', coverStyle: '', language: '' };
 
 /** Required choice: how the product card looks (book cover or plain photo). Hint follows the picked category. */
 export function CoverStyleField({ value, onChange, categoryNames }: { value: '' | CoverStyle; onChange: (v: CoverStyle) => void; categoryNames: (string | null | undefined)[] }) {
@@ -45,6 +45,7 @@ export function CoverStyleField({ value, onChange, categoryNames }: { value: '' 
 export function learningPayload(v: LearningValue) {
   return {
     coverStyle: v.coverStyle || null,
+    language: v.language || null,
     curricula: v.curricula,
     ageMin: v.ageMin === '' ? null : Number(v.ageMin),
     ageMax: v.ageMax === '' ? null : Number(v.ageMax),
@@ -113,6 +114,14 @@ export function LearningFields({ value, onChange, classRequired = false, classWa
           <span className="text-slate text-[13px] shrink-0">years</span>
         </div>
         <p className="text-[12px] text-slate mt-1.5">Leave one side empty for an open range, e.g. “from 10”.</p>
+      </div>
+      <div>
+        <label htmlFor="lf-language" className={lbl}>Language</label>
+        <select id="lf-language" value={value.language ?? ''} onChange={e => onChange({ ...value, language: e.target.value as '' | ProductLanguage })} className={clsx(inp, 'max-w-[260px]')}>
+          <option value="">Not stated</option>
+          {PRODUCT_LANGUAGES.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
+        </select>
+        <p className="text-[12px] text-slate mt-1.5">Optional. Shown to buyers on the product page.</p>
       </div>
     </div>
   );

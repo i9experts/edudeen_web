@@ -31,6 +31,7 @@ import { EDUCATION_LEVELS } from '@/api/services/product';
 import { useCategoryTree, categoryPath } from '@/hooks/marketplace/useCategoryTree';
 import { ageLabel, CURRICULUM_LABEL } from '@/constants/learning';
 import { classRangeLabel } from '@/constants/classLevels';
+import { ProductFacts } from '@/features/buyer/components/ProductFacts';
 import { EducatorCard, hasEducatorProfile } from '@/components/comman/marketplace/EducatorCard';
 import { Button } from '@/components/comman/ui/Button';
 import { NotFoundPage } from '@/features/buyer/pages/NotFoundPage';
@@ -1041,6 +1042,8 @@ export function ProductDetail() {
               </Card>
             </div>
           </div>
+
+          <ProductFacts product={product} subject={subCategory?.name ?? category?.name ?? null} />
 
           {product && <CourseInfo product={product} />}
           {product && <BundleOffer productId={product._id} />}

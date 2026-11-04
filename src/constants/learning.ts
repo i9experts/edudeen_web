@@ -27,6 +27,16 @@ export const LICENSE_LABEL: Record<string, string> = {
   commercial: 'Commercial',
 };
 
+/** Content language a seller can state (API PRODUCT_LANGUAGES). Labels are translated by the buyer UI. */
+export const PRODUCT_LANGUAGES = [
+  { value: 'ur',    label: 'Urdu' },
+  { value: 'en',    label: 'English' },
+  { value: 'ar',    label: 'Arabic' },
+  { value: 'mixed', label: 'Urdu + English' },
+] as const;
+
+export type ProductLanguage = (typeof PRODUCT_LANGUAGES)[number]['value'];
+
 /** "Ages 6–8", "Ages 10+", "Up to age 5" — null when no range is set. */
 export function ageLabel(min?: number | null, max?: number | null): string | null {
   if (min == null && max == null) return null;

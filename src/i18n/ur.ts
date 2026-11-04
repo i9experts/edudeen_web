@@ -2077,6 +2077,10 @@ export const UR: Record<string, string> = {
   'Go to Account > Orders, open the order, and choose "Request a refund" on the item. We will review it and update you in your notifications.': 'اکاؤنٹ > آرڈرز میں جائیں، آرڈر کھولیں اور آئٹم پر "ریفنڈ کی درخواست کریں" چنیں۔ ہم اسے دیکھ کر آپ کو نوٹیفکیشنز میں بتائیں گے۔',
   'Refund can be requested after delivery.': 'ریفنڈ کی درخواست ڈیلیوری کے بعد کی جا سکتی ہے۔',
   'Refund available only if you have not downloaded the file.': 'ریفنڈ صرف تب ممکن ہے جب آپ نے فائل ڈاؤن لوڈ نہ کی ہو۔',
+  'Lessons': 'اسباق',
+  'Duration': 'دورانیہ',
+  'Urdu + English': 'اردو اور انگریزی',
+  'Product facts': 'پروڈکٹ کی تفصیل',
 };
 
 const MONTHS: Record<string, string> = {

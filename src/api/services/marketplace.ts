@@ -118,6 +118,8 @@ export interface MarketplaceProduct {
   /** Optional class range (constants/classLevels.ts values). */
   classFrom?:        string | null;
   classTo?:          string | null;
+  /** Content language the seller stated (optional; old products have none). */
+  language?:         'ur' | 'en' | 'ar' | 'mixed' | null;
   /** 'flat' = plain photo card (toys etc.); anything else = book-cover look. */
   coverStyle?:       'book' | 'flat' | null;
   deliveryFormat?:   'download' | 'course';
