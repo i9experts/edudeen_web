@@ -278,6 +278,21 @@ export interface PublicStoreProductsParams {
   tag?:          string;
   search?:       string;
   onSale?:       boolean;
+  /** In-store catalog filters (all optional). `min`/`max` are in the STORE's currency. */
+  q?:            string;
+  class?:        string;
+  subject?:      string;
+  min?:          number;
+  max?:          number;
+}
+
+export interface StoreCatalogFacets {
+  total: number;
+  classes:  { value: string; label: string; count: number }[];
+  subjects: { id: string; name: string; slug: string; count: number }[];
+  kinds:    { physical: number; digital: number; course: number };
+  price:    { min: number; max: number; currency: string | null } | null;
+  collections: { id: string; name: string; slug: string; count: number }[];
 }
 
 export interface PublicStoreProduct {
@@ -289,6 +304,12 @@ export interface PublicStoreProduct {
   productType?: 'physical' | 'digital';
   tags?:       string[];
   averageRating?: number;
+  /** Review count (denormalized on the product); the star line shows only when >= 1. */
+  totalRatings?: number;
+  classFrom?:    string | null;
+  classTo?:      string | null;
+  /** Shaped variants (price, campaignPrice, compareAtPrice, currency) - the same source the cart prices from. */
+  variants?:     Array<{ _id: string; price: number; compareAtPrice?: number | null; campaignPrice?: number | null; currency?: string | null; isDefault?: boolean }>;
   defaultVariantPrice: number | null;
   // Cheapest active variant's own id/stock/compare-at — needed to drive a
   // real Add-to-Cart/wishlist action via the shared ProductCard component.
@@ -328,6 +349,11 @@ export function apiGetPublicStoreProducts(storeId: string, params?: PublicStoreP
   if (params?.tag)         query.set('tag',          params.tag);
   if (params?.search)       query.set('search',       params.search);
   if (params?.onSale)       query.set('onSale',       'true');
+  if (params?.q)            query.set('q',            params.q);
+  if (params?.class)        query.set('class',        params.class);
+  if (params?.subject)      query.set('subject',      params.subject);
+  if (params?.min != null)  query.set('min',          String(params.min));
+  if (params?.max != null)  query.set('max',          String(params.max));
   const qs = query.toString();
   return client.get<never, ApiResponse<PublicStoreProductsData>>(
     `${ENDPOINTS.STORE.PUBLIC_PRODUCTS(storeId)}${qs ? `?${qs}` : ''}`,
@@ -339,6 +365,10 @@ export function apiGetPublicStoreFilters(storeId: string) {
   return client.get<never, ApiResponse<{ tags: string[]; categories: { id: string; name: string; slug: string; count: number }[] }>>(
     ENDPOINTS.STORE.PUBLIC_FILTERS(storeId),
   );
+}
+
+export function apiGetStoreCatalogFacets(storeId: string) {
+  return client.get<never, ApiResponse<StoreCatalogFacets>>(ENDPOINTS.STORE.PUBLIC_CATALOG_FACETS(storeId));
 }
 
 // ── Public store browse / discovery ────────────────────────────────────────────

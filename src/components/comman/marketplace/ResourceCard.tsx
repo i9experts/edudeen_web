@@ -8,6 +8,7 @@ import { EDUCATION_LEVELS } from '@/api/services/product';
 import { normalizeProductType } from '@/utils/productType';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 import { formatPrice } from '@/utils/formatPrice';
+import { variantPriceView } from '@/utils/saleMath';
 import { courseSummaryText } from '@/utils/deliveryFormat';
 import { isPlainLeftClick } from '@/utils/productLink';
 import { responsiveImg } from '@/utils/cloudinaryImage';
@@ -174,12 +175,13 @@ export const ResourceCard = memo(function ResourceCard({
   // A running platform sale is part of the price shown: the SERVER computes it per variant (campaignPrice, taken from the
   // list price and only when cheaper than the seller's price), so cards, product page, cart and checkout agree.
   const campaignRaw = typeof variant?.campaignPrice === 'number' ? variant.campaignPrice : null;
-  const effectiveRaw = campaignRaw ?? rawPrice;
+  // Price, struck "was" price and % all come from utils/saleMath (same fields the cart prices from; never -100% / Rs 0 bad data).
+  const view = variantPriceView(variant);
+  const effectiveRaw = view.price;
   const price = convert(effectiveRaw, variant?.currency);
-  // The "was" price: the seller's compare-at price when higher, otherwise the list price the sale is taken from.
-  const rawWas = campaignRaw != null && rawPrice > 0 ? rawPrice : (variant?.compareAtPrice && variant.compareAtPrice > rawPrice ? variant.compareAtPrice : null);
+  const rawWas = view.was;
   const was = rawWas ? convert(rawWas, variant?.currency) : null;
-  const percentOff = rawWas ? Math.round((1 - effectiveRaw / rawWas) * 100) : 0;
+  const percentOff = view.pct;
   // Edudeen Premium: members see the member price (server-computed); everyone else a quiet teaser.
   const { isPremium } = usePremiumView();
   const member = isPremium && campaignRaw == null ? memberPriceOf(variant, convert, price) : null;

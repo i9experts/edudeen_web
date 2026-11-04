@@ -85,6 +85,10 @@ export function apiUpdateCollectionProducts(storeId: string, collectionId: strin
   return client.patch<never, ApiResponse<CollectionData>>(ENDPOINTS.COLLECTIONS.UPDATE_PRODUCTS(storeId, collectionId), { productIds });
 }
 
+export function apiReorderCollections(storeId: string, ids: string[]) {
+  return client.patch<never, ApiResponse<null>>(ENDPOINTS.COLLECTIONS.REORDER(storeId), { ids });
+}
+
 export function apiDeleteCollection(storeId: string, collectionId: string) {
   return client.delete<never, ApiResponse<null>>(ENDPOINTS.COLLECTIONS.DELETE(storeId, collectionId));
 }

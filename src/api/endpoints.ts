@@ -190,6 +190,7 @@ export const ENDPOINTS = {
     PUBLIC_BY_SLUG: (slug: string) => `/api/store/public/${slug}`,
     PUBLIC_PRODUCTS: (storeId: string) => `/api/store/public/${storeId}/products`,
     PUBLIC_FILTERS:  (storeId: string) => `/api/store/public/${storeId}/filters`,
+    PUBLIC_CATALOG_FACETS: (storeId: string) => `/api/store/public/${storeId}/catalog-facets`,
     // Public store browse/discovery — note: 'public' and 'public/top' must stay
     // registered before PUBLIC_BY_SLUG on the backend or they'd be swallowed by it.
     PUBLIC_LIST: '/api/store/public',
@@ -215,6 +216,7 @@ export const ENDPOINTS = {
     GET:             (storeId: string, collectionId: string) => `/api/collections/${storeId}/${collectionId}`,
     UPDATE:          (storeId: string, collectionId: string) => `/api/collections/${storeId}/${collectionId}`,
     UPDATE_PRODUCTS: (storeId: string, collectionId: string) => `/api/collections/${storeId}/${collectionId}/products`,
+    REORDER:         (storeId: string) => `/api/collections/${storeId}/reorder`,
     DELETE:          (storeId: string, collectionId: string) => `/api/collections/${storeId}/${collectionId}`,
     PUBLIC_LIST:     (storeId: string) => `/api/public/collections/${storeId}`,
     PUBLIC_GET:      (storeId: string, slugOrId: string) => `/api/public/collections/${storeId}/${slugOrId}`,

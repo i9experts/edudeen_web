@@ -19,6 +19,22 @@ export function variantSalePct(v: SaleVariant | null | undefined): number {
   return Math.round((1 - effective / was) * 100);
 }
 
+/** What a card shows for one variant: the price the buyer pays now (campaignPrice when a platform sale runs), the struck
+ *  "was" price (list price under a platform sale, else the seller's compare-at) and the whole-number percentage, all
+ *  from the same fields the cart uses. `was`/`pct` are null/0 when nothing is discounted or the data is bad. */
+export function variantPriceView(v: SaleVariant | null | undefined): { price: number; was: number | null; pct: number } {
+  const base = typeof v?.price === 'number' ? v.price : 0;
+  // The server's campaignPrice is what the cart charges, even when it is dearer than the seller's own sale
+  // (a platform sale replaces it), so it is always the price shown; it only counts as a DISCOUNT when cheaper.
+  const hasCampaign = typeof v?.campaignPrice === 'number' && v.campaignPrice >= 0;
+  const price = hasCampaign ? (v!.campaignPrice as number) : base;
+  if (hasCampaign && !(price < base)) return { price, was: null, pct: 0 };
+  const pct = variantSalePct(v);
+  if (pct <= 0) return { price, was: null, pct: 0 };
+  const was = hasCampaign ? base : (v?.compareAtPrice as number);
+  return { price, was, pct };
+}
+
 export function productSalePct(p: Pick<MarketplaceProduct, 'variants'>): number {
   const variants = (p.variants ?? []) as SaleVariant[];
   return variantSalePct(variants.find(v => v.isDefault) ?? variants[0]);

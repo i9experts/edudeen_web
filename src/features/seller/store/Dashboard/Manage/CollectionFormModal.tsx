@@ -6,6 +6,7 @@ import { ImageUpload } from '@/components/comman/ui';
 import { EntityPickerModal } from '@/features/seller/dashboard/storemodule/builder/EntityPickerModal';
 import { apiGetStoreInventory } from '@/api/services/product';
 import { apiGetCategoryById } from '@/api/services/categories';
+import { collectionNameError, cleanCollectionName, COLLECTION_NAME_MAX } from '@/utils/collectionName';
 import {
   apiCreateCollection, apiUpdateCollection, apiUpdateCollectionProducts,
   type CollectionData,
@@ -20,8 +21,10 @@ function slugify(name: string) {
  *  rule resolved fresh at read time). Manual product selection reuses
  *  `EntityPickerModal` (products mode); automatic's category rule reuses it
  *  too (categories mode, single-select). */
-export function CollectionFormModal({ storeId, mainCategoryId, collection, onClose, onSaved }: {
+export function CollectionFormModal({ storeId, mainCategoryId, collection, otherNames = [], onClose, onSaved }: {
   storeId: string;
+  /** Names of the store's OTHER collections, for the instant duplicate check (the API checks again). */
+  otherNames?: string[];
   mainCategoryId?: string;
   collection?: CollectionData | null;
   onClose: () => void;
@@ -65,13 +68,14 @@ export function CollectionFormModal({ storeId, mainCategoryId, collection, onClo
   }, [categoryId]);
 
   const handleSave = async () => {
-    if (!name.trim()) { setError('Name is required.'); return; }
+    const nameErr = collectionNameError(name, otherNames);
+    if (nameErr) { setError(nameErr); return; }
     if (type === 'manual' && productIds.length === 0) { setError('Add at least one product, or switch to Automatic.'); return; }
     setError('');
     setSaving(true);
     try {
       const payload = {
-        name: name.trim(),
+        name: cleanCollectionName(name),
         description: description.trim() || undefined,
         image: image || undefined,
         type,
@@ -120,7 +124,8 @@ export function CollectionFormModal({ storeId, mainCategoryId, collection, onClo
         <div className="flex flex-col gap-3">
           <div>
             <label className="text-[12px] font-medium text-charcoal block mb-1.5">Name</label>
-            <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. New Arrivals"
+            <input value={name} onChange={e => { setName(e.target.value); setError(''); }} placeholder="e.g. New Arrivals" maxLength={COLLECTION_NAME_MAX + 10}
+              aria-invalid={!!error && /name|exists/i.test(error)}
               className="w-full px-3 py-2 text-[13px] border border-bone rounded-lg outline-none text-charcoal bg-white focus:ring-2 focus:ring-brand-orange/40 focus:border-brand-orange/50" />
             {name && <p className="text-[12px] text-slate mt-1">/{slugify(name)}</p>}
           </div>

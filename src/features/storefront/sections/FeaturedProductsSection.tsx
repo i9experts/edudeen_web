@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react';
-import { ProductImage, StarRating } from '@/components/comman/marketplace/ProductCard';
+import { ProductImage } from '@/components/comman/marketplace/ProductCard';
+import { RatingLine } from '@/components/comman/marketplace/ResourceCard';
+import { classRangeLabel } from '@/constants/classLevels';
+import { storeCardPrice } from '../storeCardPrice';
 import { useStorefrontProductSection } from '@/hooks/useStorefrontProductSections';
 import { apiGetPublicStoreProducts, type PublicStoreProduct } from '@/api/services/store';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
@@ -76,12 +79,15 @@ export function FeaturedProductsSection({ settings }: { settings: FeaturedProduc
   return (
     <div className="px-4 sm:px-6 lg:px-10" style={{ paddingTop: 24 * cfg.sectionSpacingScale, paddingBottom: 24 * cfg.sectionSpacingScale }}>
       {settings.heading && <h2 className="font-bold mb-4" style={{ color: cfg.textColor, fontSize: Math.round(20 * cfg.typeScaleFactor) }}>{settings.heading}</h2>}
-      <div className="flex overflow-x-auto scrollbar-none pb-1" style={{ gap: cfg.productGridDensity === 'relaxed' ? 16 : 12 }}>
+      <div className="flex items-stretch overflow-x-auto scrollbar-none pb-1" style={{ gap: cfg.productGridDensity === 'relaxed' ? 16 : 12 }}>
         {products.map(p => {
           const pType = p.productType ?? p.type ?? 'physical';
           const isDigital = pType !== 'physical';
+          const pr = storeCardPrice(p, store.baseCurrency);
+          if (!pr.valid) return null;
+          const classLabel = classRangeLabel(p.classFrom, p.classTo);
           return (
-            <ProductCardShell key={p._id} onClick={() => toMain(`/product/${p.slug}`)} className="shrink-0 w-[160px] text-start">
+            <ProductCardShell key={p._id} onClick={() => toMain(`/product/${p.slug}`)} className="shrink-0 w-[160px] text-start flex flex-col">
               <div className="relative p-2">
                 <ProductCardImage>
                   {p.images?.[0]
@@ -92,11 +98,20 @@ export function FeaturedProductsSection({ settings }: { settings: FeaturedProduc
                   {isDigital ? 'Digital' : 'Physical'}
                 </span>
               </div>
-              <div className="px-[10px] pb-[10px]">
-                <p className="text-[12px] font-semibold text-carbon mb-[3px] line-clamp-2 leading-[1.3]">{p.name}</p>
-                <StarRating rating={p.averageRating ?? 0} />
-                {p.defaultVariantPrice != null && (
-                  <p className="text-[14px] font-bold text-carbon mt-[6px]">{formatPrice(convert(p.defaultVariantPrice, store.baseCurrency), displayCurrency)}</p>
+              <div className="px-[10px] pb-[10px] flex-1 flex flex-col min-w-0">
+                <p className="text-[12px] font-semibold text-carbon mb-[3px] line-clamp-2 min-h-[2.6em] leading-[1.3] break-words">{p.name}</p>
+                {classLabel && <p className="text-[12px] text-slate truncate">{classLabel}</p>}
+                <RatingLine rating={p.averageRating} count={p.totalRatings} />
+                {(pr.price > 0 || p.variants?.length || p.defaultVariantPrice != null) && (
+                  <p className="mt-auto pt-[6px] flex items-baseline flex-wrap gap-x-[6px]">
+                    <span className={`text-[14px] font-bold ${pr.was ? 'text-error' : 'text-carbon'}`}>
+                      {pr.price > 0 ? formatPrice(convert(pr.price, pr.currency), displayCurrency) : 'Free'}
+                    </span>
+                    {pr.was != null && pr.price > 0 && (
+                      <s className="text-[12px] text-slate" aria-label={`Was ${formatPrice(convert(pr.was, pr.currency), displayCurrency)}`}>{formatPrice(convert(pr.was, pr.currency), displayCurrency)}</s>
+                    )}
+                    {pr.pct > 0 && <span className="text-[12px] font-bold text-error">-{pr.pct}%</span>}
+                  </p>
                 )}
               </div>
             </ProductCardShell>
