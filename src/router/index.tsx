@@ -38,6 +38,7 @@ import { NewPasswordPage }    from '@/features/auth/pages/NewPasswordPage';
 // Public marketing pages — eagerly imported (no lazy/Suspense split) per
 // explicit instruction.
 import { Homepage }             from '@/features/buyer/pages/Homepage';
+import { BrowsePathPage }       from '@/features/buyer/pages/BrowsePathPage';
 import { NotFoundPage }         from '@/features/buyer/pages/NotFoundPage';
 
 // ── Lazy helpers ──────────────────────────────────────────────────────────────
@@ -312,6 +313,8 @@ const mainRouter = createBrowserRouter([
           { path: 'search',          element: <SearchRedirect /> },
           { path: 'compare',         element: <FeatureMaintenance feature="product_page" variant="page"><ComparePage /></FeatureMaintenance> },
           { path: 'c/:slug',         element: <CategoryRedirect /> },
+          // Shareable class x subject listings (/browse/class-5/math): the same shop view as /?class=&category=.
+          { path: 'browse/:class/:subject?', element: <BrowsePathPage /> },
           // Grade and subject landing pages (/learn/primary-school/mathematics).
           { path: 'learn',           element: <FeatureMaintenance feature="learn" variant="page"><LearnHubPage /></FeatureMaintenance> },
           { path: 'learn/:level/:subject?', element: <FeatureMaintenance feature="learn" variant="page"><LearnLevelPage /></FeatureMaintenance> },

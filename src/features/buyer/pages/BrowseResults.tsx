@@ -16,6 +16,8 @@ import { useT } from '@/contexts/languageCtx';
 import { EDUCATION_LEVELS } from '@/api/services/product';
 import { CURRICULA, CURRICULUM_LABEL } from '@/constants/learning';
 import { CLASS_LEVELS, canonicalClass, classLabel, isClassValue } from '@/constants/classLevels';
+import { useBrowsePath } from './browsePathCtx';
+import { browsePath } from '@/utils/browsePath';
 import { ShoppingForBar } from '@/features/buyer/components/ShoppingForBar';
 import { useChildren, childLevelLabel } from '@/hooks/useChildren';
 import type { CategoryNode } from '@/api/services/categories';
@@ -49,11 +51,13 @@ const num = (v: string | null) => (v != null && v !== '' && Number.isFinite(Numb
 /** URL ⇄ filter state. */
 function useBrowseState() {
   const [params, setParams] = useSearchParams();
+  const navigate = useNavigate();
+  const pretty = useBrowsePath(); // /browse/:class/:subject? : the class (and category) live in the path
   const state = {
     q: (params.get('search') ?? params.get('q') ?? '').trim(),
     cat: params.get('cat') ?? '',
     grade: params.get('grade') ?? '',
-    cls: isClassValue(params.get('class')) ? (params.get('class') as string) : '',
+    cls: pretty ? pretty.cls : isClassValue(params.get('class')) ? (params.get('class') as string) : '',
     type: params.get('type') ?? '',
     format: (params.get('format') === 'course' ? 'course' : '') as 'course' | '',
     min: num(params.get('min')),
@@ -69,6 +73,22 @@ function useBrowseState() {
     subjects: (params.get('subjects') ?? '').split(',').map(s => s.trim()).filter(Boolean).slice(0, 6),
   };
   const update = useCallback((patch: Record<string, string | number | boolean | undefined | null>, keepPage = false, replace = false) => {
+    if (pretty && 'class' in patch) {
+      // Changing / clearing the class leaves the pretty path: another class -> its own pretty URL, none -> the plain category view.
+      const next = new URLSearchParams(params);
+      for (const [k, v] of Object.entries(patch)) {
+        if (k === 'class') continue;
+        if (v === undefined || v === null || v === '' || v === false) next.delete(k);
+        else next.set(k, v === true ? '1' : String(v));
+      }
+      if (!keepPage) next.delete('page');
+      const newCls = typeof patch.class === 'string' && isClassValue(patch.class) ? patch.class : '';
+      if (!newCls && pretty.subject) next.set('category', pretty.subject);
+      const qs = next.toString();
+      const base = newCls ? browsePath(newCls, pretty.subject) : '/';
+      navigate(`${base}${qs ? `?${qs}` : (!newCls && !pretty.subject ? '?browse=1' : '')}`, replace ? { replace: true } : undefined);
+      return;
+    }
     setParams(prev => {
       const next = new URLSearchParams(prev);
       for (const [k, v] of Object.entries(patch)) {
@@ -78,7 +98,7 @@ function useBrowseState() {
       if (!keepPage) next.delete('page');
       return next;
     }, replace ? { replace: true } : undefined);
-  }, [setParams]);
+  }, [setParams, pretty, params, navigate]);
   return { state, update, params };
 }
 
@@ -102,6 +122,7 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
   const navigate = useNavigate();
   const t = useT();
   const { state, update } = useBrowseState();
+  const prettyPath = useBrowsePath();
   const { currency: prefCurrency, convertBetween, ratesLoaded } = useCurrencyPreference();
   // The price filter lives in PKR (catalogue currency); the chip shows it in the currency the buyer picked.
   const chipCur = ratesLoaded ? prefCurrency : 'PKR';
@@ -260,7 +281,7 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
         {mainCategories.length > 0 && (
           <nav aria-label="Main categories" className="mb-3"><ScrollRow className="flex gap-2 pb-2">
             <Link
-              to="/?browse=1"
+              to={prettyPath ? browsePath(prettyPath.cls) : '/?browse=1'}
               aria-current={!activeRootId ? 'page' : undefined}
               className={clsx(pillBase, !activeRootId ? 'border-brand-royal bg-brand-royal text-white' : 'border-bone bg-white text-carbon hover:border-brand-orange hover:text-brand-orange')}
             >
@@ -269,7 +290,7 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
             {mainCategories.map(c => (
               <Link
                 key={c._id}
-                to={categoryPath(c)}
+                to={prettyPath && c.slug ? browsePath(prettyPath.cls, c.slug) : categoryPath(c)}
                 aria-current={c._id === activeRootId ? 'page' : undefined}
                 className={clsx(pillBase, c._id === activeRootId ? 'border-brand-royal bg-brand-royal text-white' : 'border-bone bg-white text-carbon hover:border-brand-orange hover:text-brand-orange')}
               >

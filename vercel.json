@@ -47,6 +47,28 @@
                                  ]
                      },
                      {
+                         "source":  "/browse/:cls/:subject",
+                         "destination":  "https://api.edudeen.com/seo-render/browse/:cls/:subject",
+                         "has":  [
+                                     {
+                                         "type":  "header",
+                                         "key":  "user-agent",
+                                         "value":  ".*(Googlebot|Google-InspectionTool|AdsBot-Google|bingbot|BingPreview|DuckDuckBot|YandexBot|Baiduspider|Applebot|facebookexternalhit|Twitterbot|LinkedInBot|Slackbot|WhatsApp|TelegramBot|Pinterestbot).*"
+                                     }
+                                 ]
+                     },
+                     {
+                         "source":  "/browse/:cls",
+                         "destination":  "https://api.edudeen.com/seo-render/browse/:cls",
+                         "has":  [
+                                     {
+                                         "type":  "header",
+                                         "key":  "user-agent",
+                                         "value":  ".*(Googlebot|Google-InspectionTool|AdsBot-Google|bingbot|BingPreview|DuckDuckBot|YandexBot|Baiduspider|Applebot|facebookexternalhit|Twitterbot|LinkedInBot|Slackbot|WhatsApp|TelegramBot|Pinterestbot).*"
+                                     }
+                                 ]
+                     },
+                     {
                          "source":  "/shop/:slug",
                          "destination":  "https://api.edudeen.com/seo-render/store/:slug",
                          "has":  [

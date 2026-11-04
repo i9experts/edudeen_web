@@ -10,6 +10,9 @@ import { useCategoryTree, categoryPath } from '@/hooks/marketplace/useCategoryTr
 import { useT } from '@/contexts/languageCtx';
 import { BrowseResults } from './BrowseResults';
 import { isBrowseMode } from '@/utils/homeMode';
+import { classLabel } from '@/constants/classLevels';
+import { browsePath } from '@/utils/browsePath';
+import { useBrowsePath } from './browsePathCtx';
 
 /**
  * The homepage IS the shop. When the URL carries a category / search / filter
@@ -23,15 +26,30 @@ export { isBrowseMode };
 export function HomeBrowse() {
   const t = useT();
   const [params] = useSearchParams();
-  const slug = (params.get('category') ?? '').trim();
+  const pretty = useBrowsePath(); // /browse/:class/:subject? -> class + category come from the path
+  const slug = pretty ? pretty.subject : (params.get('category') ?? '').trim();
+  const prettyClass = pretty ? classLabel(pretty.cls) : '';
   const q = (params.get('search') ?? params.get('q') ?? '').trim();
   const { bySlug, byId, loading } = useCategoryTree();
   const entry = slug ? (bySlug.get(slug.toLowerCase()) ?? byId.get(slug) ?? null) : null;
 
   const pageTitle = entry ? entry.node.name : q ? `“${q}” — ${t('Search')}` : t('All resources');
   // Category pages are indexable (canonical /c/<slug>, the same URL the bot prerender serves); search / filtered lists are not.
-  const isFiltered = ['sort', 'class', 'type', 'min', 'max', 'rating', 'free', 'board', 'age', 'grade', 'page', 'exact', 'cat'].some(k => params.has(k));
-  usePageMeta(entry ? {
+  const isFiltered = ['sort', ...(pretty ? [] : ['class']), 'type', 'min', 'max', 'rating', 'free', 'board', 'age', 'grade', 'page', 'exact', 'cat'].some(k => params.has(k));
+  const prettyUrl = pretty ? browsePath(pretty.cls, pretty.subject) : '';
+  const prettyName = entry ? `${prettyClass} ${entry.node.name}` : prettyClass;
+  usePageMeta(pretty ? {
+    // Same title / description as the bot prerender (API seo-prerender `browse`); canonical = the pretty URL.
+    title: `${prettyName} - worksheets, books & courses`,
+    description: `Browse ${prettyName} resources on Edudeen: worksheets, books, digital downloads and courses from trusted sellers.`,
+    canonical: prettyUrl,
+    noindex: isFiltered || !!q || (params.has('page') && params.get('page') !== '1'),
+    jsonLd: breadcrumbJsonLd([
+      { name: 'Home', url: `${SITE_URL}/` },
+      { name: prettyClass, url: `${SITE_URL}${browsePath(pretty.cls)}` },
+      ...(entry ? [{ name: entry.node.name, url: `${SITE_URL}${prettyUrl}` }] : []),
+    ]),
+  } : entry ? {
     title: `${entry.node.name} - worksheets, books & courses`,
     description: (entry.node.description ?? '').replace(/\s+/g, ' ').trim().slice(0, 155) || `Browse ${entry.node.name} resources on Edudeen: worksheets, books, digital downloads and courses from trusted sellers.`,
     canonical: `/c/${entry.node.slug ?? slug}`,
@@ -45,6 +63,12 @@ export function HomeBrowse() {
   } : { title: pageTitle, canonical: '/', noindex: !!q || isFiltered });
 
   const crumbs = useMemo(() => {
+    if (pretty) {
+      return [
+        { label: 'Home', path: '/' },
+        ...(entry ? [{ label: prettyClass, path: browsePath(pretty.cls) }, ...entry.ancestors.map(a => ({ label: a.name, path: browsePath(pretty.cls, a.slug) })), { label: entry.node.name }] : [{ label: prettyClass }]),
+      ];
+    }
     if (entry) {
       return [
         { label: 'Home', path: '/' },
@@ -53,10 +77,11 @@ export function HomeBrowse() {
       ];
     }
     return [{ label: 'Home', path: '/' }, { label: q ? `Search: ${q}` : 'All resources' }];
-  }, [entry, q]);
+  }, [entry, q, pretty, prettyClass]);
 
   // Unknown category slug: fall back to a text search for the slug words, keeping the other filters.
-  if (slug && !loading && !entry) {
+  // (Not on a /browse/ path: BrowsePathPage already shows the 404 page for those.)
+  if (slug && !pretty && !loading && !entry) {
     const next = new URLSearchParams(params);
     next.delete('category');
     if (!q) next.set('search', slug.replace(/-/g, ' '));
@@ -91,6 +116,7 @@ export function HomeBrowse() {
           breadcrumb={crumbs}
           categoryId={entry.node._id}
           subcategories={subs.filter(s => s._id !== entry.node._id)}
+          subcategoryHref={pretty ? (n => browsePath(pretty.cls, n.slug)) : undefined}
           showCategoryFilter={false}
           showMainCategories
           bannerPlacement="categoryHero"
@@ -103,8 +129,8 @@ export function HomeBrowse() {
   return (
     <FeatureMaintenance feature="search" variant="page">
       <BrowseResults
-        title={q ? `Results for “${q}”` : 'All resources'}
-        eyebrow={q ? 'Search' : undefined}
+        title={pretty ? `${prettyClass} resources` : q ? `Results for “${q}”` : 'All resources'}
+        eyebrow={pretty ? 'Class' : q ? 'Search' : undefined}
         breadcrumb={crumbs}
         showCategoryFilter
         showMainCategories
