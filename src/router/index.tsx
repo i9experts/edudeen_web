@@ -20,6 +20,7 @@ import { FeatureMaintenance } from '@/components/comman/ui/FeatureMaintenance';
 // storefront flow (home → login/register → product → cart → checkout)
 // never shows a route-level Suspense spinner.
 import { ProductDetail } from '@/features/buyer/pages/ProductDetail';
+import { prefetchProduct } from '@/hooks/marketplace/useProductById';
 import { CartPage }     from '@/features/buyer/pages/CartPage';
 import { LoginPage }    from '@/features/auth/pages/LoginPage';
 import { RegisterPage } from '@/features/auth/pages/RegisterPage';
@@ -309,7 +310,7 @@ const mainRouter = createBrowserRouter([
           { path: 'checkout',        element: <CheckoutPage /> },
           { path: 'order-success',   element: <OrderSuccessPage /> },
           { path: 'payment/pk-return', element: <PkPaymentReturnPage /> },
-          { path: 'product/:slug',   element: <FeatureMaintenance feature="product_page" variant="page"><ProductDetail /></FeatureMaintenance> },
+          { path: 'product/:slug',   loader: ({ params }) => { prefetchProduct(params.slug); return null; }, element:<FeatureMaintenance feature="product_page" variant="page"><ProductDetail /></FeatureMaintenance> },
           { path: 'search',          element: <SearchRedirect /> },
           { path: 'compare',         element: <FeatureMaintenance feature="product_page" variant="page"><ComparePage /></FeatureMaintenance> },
           { path: 'c/:slug',         element: <CategoryRedirect /> },

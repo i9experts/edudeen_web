@@ -2,7 +2,9 @@ import { EarlyAccessChip } from '@/components/comman/ui/EarlyAccessChip';
 import { ScrollRow } from '@/components/comman/ui/ScrollRow';
 import { responsiveImg, imgUrl } from '@/utils/cloudinaryImage';
 import { PremiumChip, PremiumTeaser, usePremiumView } from '@/components/comman/marketplace/PremiumBits';
-import { useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
+import { useInView } from '@/hooks/useInView';
+import { lazyWithRetry } from '@/utils/lazyWithRetry';
 import { getScrollTop } from '@/utils/scrollRoot';
 import { clsx } from 'clsx';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
@@ -18,7 +20,7 @@ import { useWishlistContext } from '@/contexts/WishlistContext';
 import { useAuthGate } from '@/contexts/AuthGateContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useT, useLanguage } from '@/contexts/languageCtx';
-import { AiReviewSummary } from '@/components/ai/AiReviewSummary';
+const AiReviewSummary = lazyWithRetry(() => import('@/components/ai/AiReviewSummary').then(m => ({ default: m.AiReviewSummary })));
 import { TokenStorage } from '@/api/services/auth';
 import { apiGetAllProducts, apiGetAlsoBought, type MarketplaceProduct, type ProductVariant } from '@/api/services/marketplace';
 import { apiStartConversation, apiSendMessage } from '@/api/services/messaging';
@@ -49,7 +51,7 @@ import {
   FileText, Store as StoreIcon, Eye, Loader2, Zap, MessageCircle, MessageCircleQuestion, Clock, RotateCcw,
 } from 'lucide-react';
 import { responseTimeLabel, returnSummary } from '@/utils/sellerTrust';
-import { ProductReviewsSection } from './ProductReviews';
+const ProductReviewsSection = lazyWithRetry(() => import('./ProductReviews').then(m => ({ default: m.ProductReviewsSection })));
 import { ProductQuestions } from '@/features/buyer/components/ProductQuestions';
 import { BundleOffer } from '@/features/buyer/components/BundleOffer';
 import { CourseInfo } from '@/features/buyer/components/CourseInfo';
@@ -431,6 +433,8 @@ export function ProductDetail() {
   const [answeredCount, setAnsweredCount] = useState<number | null>(null);
 
   const product = detail?.product ?? null;
+  // Reviews and the "More for this level" / related rails sit below the fold: load them when the reviews block is near the screen.
+  const [belowFold, belowRef] = useInView('700px');
 
   // The mobile sticky price/CTA bar only appears once the inline purchase panel has scrolled away (no duplicate CTAs on screen).
   const [showStickyBar, setShowStickyBar] = useState(false);
@@ -564,13 +568,13 @@ export function ProductDetail() {
   }, [product?.storeSlug]);
 
   useEffect(() => {
-    if (!product?.categoryId) return;
+    if (!product?.categoryId || !belowFold) return;
     let cancelled = false;
     apiGetAllProducts(1, 8, product.categoryId)
       .then(res => { if (!cancelled) setRelatedProducts((res.data?.products ?? []).filter(p => p._id !== product._id)); })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, [product?.categoryId, product?._id]);
+  }, [product?.categoryId, product?._id, belowFold]);
 
   // Category names for the breadcrumb and "Subject area".
   const { byId: categoriesById } = useCategoryTree();
@@ -608,13 +612,13 @@ export function ProductDetail() {
   const sellerRail = sellerProducts.filter(p => !alsoBought.products.some(x => x._id === p._id));
   const relatedRail = relatedProducts.filter(p => !alsoBought.products.some(x => x._id === p._id) && !sellerProducts.some(x => x._id === p._id));
   useEffect(() => {
-    if (!product?._id) return;
+    if (!product?._id || !belowFold) return;
     let cancelled = false;
     apiGetAlsoBought(product._id, 8)
       .then(res => { if (!cancelled) setAlsoBought(res.data ?? { basis: 'similar', products: [] }); })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, [product?._id]);
+  }, [product?._id, belowFold]);
 
   // Seller-filled category fields (subject, format, language, …).
   const [attributes, setAttributes] = useState<ProductAttributeValue[]>([]);
@@ -1224,9 +1228,13 @@ export function ProductDetail() {
             </div>
 
           {/* ── Reviews ────────────────────────────────────────────────────────── */}
-          <div id="reviews" className="bg-white rounded-2xl border border-bone p-6 mb-6 scroll-mt-24">
-            <AiReviewSummary productId={product._id} />
-            <ProductReviewsSection productId={product._id} storeName={storeData?.name ?? product.storeName ?? product.sellerName} canReview={product.canReview} />
+          <div id="reviews" ref={belowRef} className="bg-white rounded-2xl border border-bone p-6 mb-6 scroll-mt-24 min-h-[320px]">
+            {belowFold && (
+              <Suspense fallback={<div className="h-[260px] rounded-xl bg-bone/40 animate-pulse" aria-hidden="true" />}>
+                <AiReviewSummary productId={product._id} />
+                <ProductReviewsSection productId={product._id} storeName={storeData?.name ?? product.storeName ?? product.sellerName} canReview={product.canReview} />
+              </Suspense>
+            )}
           </div>
 
           {/* ── Bought together ──────────────────────────────────────────────── */}
