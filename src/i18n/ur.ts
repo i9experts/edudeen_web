@@ -2094,6 +2094,12 @@ export const UR: Record<string, string> = {
   'Duration': 'دورانیہ',
   'Urdu + English': 'اردو اور انگریزی',
   'Product facts': 'پروڈکٹ کی تفصیل',
+  // Delivery info (buy box, cart, shipping tab)
+  'Instant download after purchase': 'خریداری کے فوراً بعد ڈاؤن لوڈ',
+  'Instant access after purchase': 'خریداری کے فوراً بعد رسائی',
+  'Cash on Delivery available': 'کیش آن ڈیلیوری دستیاب ہے',
+  'Delivery info unavailable': 'ڈیلیوری کی معلومات دستیاب نہیں',
+  'Returns': 'واپسی',
 };
 
 const MONTHS: Record<string, string> = {

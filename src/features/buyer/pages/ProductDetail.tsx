@@ -58,6 +58,7 @@ import { CourseInfo } from '@/features/buyer/components/CourseInfo';
 import { normalizeDeliveryFormat } from '@/utils/deliveryFormat';
 import { PlacementBanner } from '@/components/comman/marketplace/PlacementBanner';
 import { ShippingZonesSummary } from '@/features/buyer/components/ShippingZonesSummary';
+import { DeliveryBuyBox } from '@/features/buyer/components/DeliveryBuyBox';
 import { syncRecentlyViewed } from '@/utils/recentlyViewedSync';
 import { formatMoney } from '@/utils/currency';
 import { formatPrice } from '@/utils/formatPrice';
@@ -900,6 +901,8 @@ export function ProductDetail() {
                     <CheckCircle size={13} />
                     {stock <= 0 ? 'Out of stock' : isCourse ? 'Available — start learning right after enrolling' : isDigital ? t('Available — instant delivery') : stock <= 5 ? `Only ${stock} left in stock` : 'In stock'}
                   </div>
+
+                  <DeliveryBuyBox productId={product._id} variantId={activeVariant?._id} quantity={qty} isPhysical={isPhysical} isCourse={isCourse} />
 
                   {isDigital && product.digital?.previewAvailable && (
                     <div className="flex gap-2 mb-3">

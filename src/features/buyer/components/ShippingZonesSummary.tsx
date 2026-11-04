@@ -1,4 +1,5 @@
 import { Truck } from 'lucide-react';
+import { SkeletonBox } from '@/components/comman/ui/SkeletonBox';
 import { formatPrice } from '@/utils/formatPrice';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 import { useShippingZones } from '@/hooks/shipping/useShippingZones';
@@ -17,8 +18,12 @@ export function ShippingZonesSummary({ sellerName }: { sellerName?: string | nul
   const live = zones.filter(z => !z.isDelete && z.status !== 'inactive');
 
   let body: React.ReactNode;
-  if (loading) body = <span className="text-slate">Loading delivery options…</span>;
-  else if (error) body = <span className="text-slate">Delivery cost is shown at checkout.</span>;
+  if (loading) body = (
+    <span className="flex flex-col gap-2 py-1" aria-hidden="true">
+      <SkeletonBox width="70%" height={12} /><SkeletonBox width="55%" height={12} /><SkeletonBox width="62%" height={12} />
+    </span>
+  );
+  else if (error) body = <span className="text-slate">Delivery info unavailable</span>;
   else if (!live.length) body = <span>Delivery is arranged by {sellerName ?? 'the seller'} after you order.</span>;
   else {
     const cheapest = Math.min(...live.map(z => z.shippingPrice));

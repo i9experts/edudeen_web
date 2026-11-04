@@ -17,6 +17,7 @@ import {
 import { ProductCoverFallback } from '@/components/comman/marketplace/ProductCoverFallback';
 import { clsx } from 'clsx';
 import { formatPrice } from '@/utils/formatPrice';
+import { useDeliveryInfo } from '@/hooks/shipping/useDeliveryInfo';
 import { computeCartTotals } from '@/utils/cartTotals';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 
@@ -131,6 +132,16 @@ export function CartPage() {
   const digitalCount  = items.filter(i => i.type === 'digital').reduce((s, i) => s + i.quantity, 0);
 
   const isEmpty = !loading && !items.length;
+
+  // Shipping is per store parcel, so it is only quoted here when the whole cart is ONE physical line
+  // (same endpoint/fee code as checkout); anything else keeps "Calculated at checkout".
+  const physicalLines = items.filter(i => i.type === 'physical');
+  const soloLine = physicalLines.length === 1 ? physicalLines[0] : null;
+  const soloDelivery = useDeliveryInfo(
+    soloLine ? { productId: soloLine.productId, variantId: soloLine.productVariantId, quantity: soloLine.quantity } : null,
+    !!soloLine && !loading,
+  );
+  const soloFee = soloDelivery.info?.kind === 'physical' && soloDelivery.info.fee != null ? soloDelivery.info : null;
 
   // Main site: the cart can hold several stores' items. Each store ships and
   // bills on its own, so each gets its own checkout.
@@ -483,7 +494,8 @@ export function CartPage() {
                   <span className="text-slate">{hasPhysical ? 'Shipping' : 'Delivery'}</span>
                   {loading ? <SkeletonBox width={90} height={12} /> : !typeKnown ? <span className="text-slate text-[12px]">—</span> : (
                     <span className="text-charcoal font-medium text-[12px]">
-                      {hasPhysical ? 'Calculated at checkout' : 'Instant'}
+                      {soloFee ? (soloFee.fee === 0 ? 'Free' : formatPrice(soloFee.fee as number, soloFee.currency))
+                        : hasPhysical ? 'Calculated at checkout' : 'Instant'}
                     </span>
                   )}
                 </div>
