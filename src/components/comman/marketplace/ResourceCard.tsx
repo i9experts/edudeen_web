@@ -104,7 +104,7 @@ function Cover({ product }: { product: MarketplaceProduct }) {
   // Toys, stationery and other non-book items: plain rounded photo, no book shape.
   if (product.coverStyle === 'flat') {
     return (
-      <div className="h-[178px] sm:h-[194px] lg:h-[205px] rounded-lg overflow-hidden flex items-center justify-center bg-[#f4f6f7]">
+      <div className="h-[150px] min-[400px]:h-[165px] sm:h-[194px] lg:h-[205px] rounded-lg overflow-hidden flex items-center justify-center bg-[#f4f6f7]">
         {imgProps ? (
           <img {...imgProps} alt={product.name} loading="lazy" decoding="async" onError={() => setImgFailed(true)} className="w-full h-full object-contain" />
         ) : (
@@ -116,7 +116,7 @@ function Cover({ product }: { product: MarketplaceProduct }) {
 
   // Front-facing book drawn in SVG: the seller's image (or the title) fills the WHOLE cover; pages show as a thin edge behind it.
   return (
-    <div className="h-[178px] sm:h-[194px] lg:h-[205px] rounded-lg overflow-hidden">
+    <div className="h-[150px] min-[400px]:h-[165px] sm:h-[194px] lg:h-[205px] rounded-lg overflow-hidden">
       <svg viewBox="0 0 210 198" className="w-full h-full" role="img" aria-label={product.name} preserveAspectRatio="xMidYMid meet">
         <defs>
           <clipPath id={clipId}><rect x="30" y="8" width="148" height="172" rx="3" /></clipPath>
@@ -291,7 +291,7 @@ export const ResourceCard = memo(function ResourceCard({
       </Link>
 
       {(campaignOff || percentOff > 0) && (
-        <span className="absolute start-[7px] top-[7px] sm:start-3 sm:top-3 max-w-[70%] truncate text-[12px] sm:text-[12px] font-bold px-2 py-[3px] rounded-full bg-error text-white shadow-sm">
+        <span className="absolute start-[7px] top-[7px] sm:start-3 sm:top-3 max-w-[58%] sm:max-w-[70%] truncate text-[12px] sm:text-[12px] font-bold px-2 py-[3px] rounded-full bg-error text-white shadow-sm">
           {campaign && campaignOff ? `${campaign.name} · ${campaignOff}` : `-${percentOff}%`}
         </span>
       )}
@@ -303,7 +303,7 @@ export const ResourceCard = memo(function ResourceCard({
           aria-pressed={isWishlisted}
           aria-label={`${isWishlisted ? 'Unsave' : 'Save'} ${product.name}`}
           className={clsx(
-            'absolute end-[7px] top-[7px] sm:end-3 sm:top-3 w-8 h-8 sm:w-9 sm:h-9 rounded-full border flex items-center justify-center cursor-pointer transition-colors after:absolute after:-inset-1',
+            'absolute end-[6px] top-[6px] sm:end-3 sm:top-3 w-8 h-8 sm:w-9 sm:h-9 rounded-full border flex items-center justify-center cursor-pointer transition-colors after:absolute after:-inset-1',
             isWishlisted ? 'bg-brand-orange border-brand-orange text-white' : 'bg-white border-[#dfe5e6] text-brand-orange hover:bg-brand-pale-orange',
             isWishlisting && 'opacity-60',
           )}
@@ -337,8 +337,9 @@ export const ResourceCard = memo(function ResourceCard({
       )}
       <RatingLine rating={product.averageRating} count={product.totalRatings} className="block mb-1" />
       <TrustBadges trust={product.trust} className="mt-1" />
-      <div className="flex items-center justify-between gap-2 mt-2">
-        <span className="flex items-baseline gap-1.5 min-w-0 flex-wrap">
+      {/* Phones (2 narrow columns): price on its own line, then type chip + cart button; sm+: one row. */}
+      <div className="flex flex-col gap-1.5 mt-2 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
+        <span className="flex items-baseline gap-x-1.5 min-w-0 flex-wrap">
           <strong className={clsx('num text-[14px] sm:text-[15px]', member ? 'text-[#8a6100]' : was ? 'text-error' : 'text-carbon')}>
             {rawPrice === 0 ? 'Free' : fmt(member ? member.price : price)}
           </strong>
@@ -347,7 +348,7 @@ export const ResourceCard = memo(function ResourceCard({
             <s className="text-[12px] text-slate" aria-label={`Was ${fmt(was)}`}>{fmt(was)}</s>
           )}
         </span>
-        <span className="flex items-center gap-1.5 shrink-0">
+        <span className="flex items-center justify-between gap-1.5 sm:justify-end sm:shrink-0">
           <span className="text-[12px] sm:text-[12px] border border-[#dde5e8] px-[7px] py-[3px] rounded text-[#566773] shrink-0">
             {TYPE_LABEL[kind] ?? kind}
           </span>
@@ -363,7 +364,7 @@ export const ResourceCard = memo(function ResourceCard({
 export function ResourceCardSkeleton() {
   return (
     <div className="min-w-0 animate-pulse rounded-xl border border-[#e6ecee] p-2">
-      <div className="h-[178px] sm:h-[194px] lg:h-[205px] rounded-lg bg-bone" />
+      <div className="h-[150px] min-[400px]:h-[165px] sm:h-[194px] lg:h-[205px] rounded-lg bg-bone" />
       <div className="h-3 w-1/2 bg-bone rounded mt-4" />
       <div className="h-4 w-4/5 bg-bone rounded mt-3" />
       <div className="h-3 w-1/3 bg-bone rounded mt-3" />
