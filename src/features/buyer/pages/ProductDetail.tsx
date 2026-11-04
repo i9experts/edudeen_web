@@ -2,7 +2,7 @@ import { EarlyAccessChip } from '@/components/comman/ui/EarlyAccessChip';
 import { ScrollRow } from '@/components/comman/ui/ScrollRow';
 import { responsiveImg, imgUrl } from '@/utils/cloudinaryImage';
 import { PremiumChip, PremiumTeaser, usePremiumView } from '@/components/comman/marketplace/PremiumBits';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { getScrollTop } from '@/utils/scrollRoot';
 import { clsx } from 'clsx';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
@@ -404,6 +404,7 @@ export function ProductDetail() {
   const { addToCart } = useCartContext();
   // Own loading state per button: Add to Cart and Buy Now never spin together.
   const [pendingAction, setPendingAction] = useState<'cart' | 'buy' | null>(null);
+  const pendingActionRef = useRef(false);
   const { isWishlisted, wishlisting, toggleWishlist } = useWishlistContext();
   const { requireAuth } = useAuthGate();
   const toast = useToast();
@@ -662,7 +663,8 @@ export function ProductDetail() {
   }
 
   async function handleAddToCart(buyNow: boolean) {
-    if (!product || !activeVariant || pendingAction) return;
+    if (!product || !activeVariant || pendingActionRef.current) return;
+    pendingActionRef.current = true;
     setPendingAction(buyNow ? 'buy' : 'cart');
     try {
     // Buy Now checks out only this product and quantity and never touches the cart: the checkout page
@@ -675,10 +677,10 @@ export function ProductDetail() {
     // Add to Cart sends the selected quantity (the API merges it into an existing line).
     // Within 3 s of adding, the same button reads "Added ✓ · View cart" and opens the cart.
     if (addedFeedback) { navigate('/cart'); return; }
+    // addToCart shows the one "Added to cart" toast itself.
     await addToCart(product._id, activeVariant._id, isPhysical ? 'physical' : 'digital', qty);
-    toast.success('Added to cart');
     setAddedFeedback(true); setTimeout(() => setAddedFeedback(false), 3000);
-    } finally { setPendingAction(null); }
+    } finally { pendingActionRef.current = false; setPendingAction(null); }
   }
 
   // Free digital resource: "Avail" gets it straight into the library (free order, no payment step) and

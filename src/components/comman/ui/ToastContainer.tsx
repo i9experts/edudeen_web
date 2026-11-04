@@ -5,7 +5,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { clsx } from 'clsx';
-import { useToastList, TOAST_DURATION_MS, type ToastVariant } from '@/contexts/ToastContext';
+import { useToastList, type ToastVariant } from '@/contexts/ToastContext';
 
 interface ToastStyle {
   icon:   LucideIcon;
@@ -90,6 +90,15 @@ export function ToastContainer() {
               <Icon size={16} />
             </span>
             <p className="text-[12.5px] font-medium text-charcoal leading-snug flex-1 min-w-0 pt-[3px]">{t.message}</p>
+            {t.action && (
+              <button
+                type="button"
+                onClick={() => { t.action?.onClick(); dismiss(t.id); }}
+                className="shrink-0 mt-[1px] px-2.5 py-1 rounded-md bg-transparent border border-bone text-[12px] font-semibold text-brand-royal cursor-pointer hover:bg-fog transition-colors"
+              >
+                {t.action.label}
+              </button>
+            )}
             <button
               onClick={() => dismiss(t.id)}
               aria-label="Dismiss"
@@ -100,7 +109,7 @@ export function ToastContainer() {
             <span className="absolute start-0 end-0 bottom-0 h-[2.5px] bg-bone/70">
               <span
                 className={clsx('toast-progress block h-full', style.accent)}
-                style={{ animationDuration: `${TOAST_DURATION_MS}ms`, animationPlayState: t.paused ? 'paused' : 'running' }}
+                style={{ animationDuration: `${t.durationMs}ms`, animationPlayState: t.paused ? 'paused' : 'running' }}
               />
             </span>
           </div>

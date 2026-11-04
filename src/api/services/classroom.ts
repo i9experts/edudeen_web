@@ -250,6 +250,8 @@ export interface MyCourse {
   accessExpiresAt?: string | null;
   percent?: number;
   lastLessonId?: string | null;
+  /** False for draft / deleted / test courses (older API builds omit it). */
+  isPublished?: boolean;
 }
 
 export const apiGetCourseBuilder = (storeId: string, productId: string) => client.get<never, Ok<CourseBuilderData>>(`/api/courses/seller/${storeId}/${productId}`);

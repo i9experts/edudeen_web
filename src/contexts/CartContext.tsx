@@ -271,25 +271,29 @@ export function CartProvider({ storeId, children }: { storeId?: string; children
     try { return Number(sessionStorage.getItem(countKey)) || 0; } catch { return 0; }
   })();
 
+  // Variants with an add request in flight: a second click before the first answer is ignored,
+  // so a rapid double click adds the quantity once (state alone is too slow to block it).
+  const addingRef = useRef<Set<string>>(new Set());
+
   const addToCart = useCallback(async (
     productId: string,
     productVariantId: string,
     type?: 'physical' | 'digital',
     quantity = 1,
   ) => {
+    if (addingRef.current.has(productVariantId)) return;
+    addingRef.current.add(productVariantId);
     if (type) storeType(productVariantId, type);
     setError(null);
     setAdding(productVariantId);
 
-    if (!TokenStorage.isLoggedIn()) {
-      addGuestCartItem(productId, productVariantId, type, quantity);
-      await refreshGuestCartDisplay();
-      setAdding(null);
-      toast.success('Added to cart');
-      return;
-    }
-
     try {
+      if (!TokenStorage.isLoggedIn()) {
+        addGuestCartItem(productId, productVariantId, type, quantity);
+        await refreshGuestCartDisplay();
+        toast.success('Added to cart');
+        return;
+      }
       const res = await apiAddToCart(productId, productVariantId, storeId, quantity);
       if (storeId) setCart(mergeTypes(res.data));
       else await fetchMyCarts();
@@ -299,9 +303,14 @@ export function CartProvider({ storeId, children }: { storeId?: string; children
       setError(message);
       toast.error(message);
     } finally {
+      addingRef.current.delete(productVariantId);
       setAdding(null);
     }
   }, [refreshGuestCartDisplay, fetchMyCarts, toast, storeId]);
+
+  // Lets the Undo button (created later, clicked later) call the latest addToCart.
+  const addToCartRef = useRef(addToCart);
+  addToCartRef.current = addToCart;
 
   const updateQty = useCallback(async (
     productId: string, productVariantId: string, action: 'increase' | 'decrease',
@@ -339,13 +348,24 @@ export function CartProvider({ storeId, children }: { storeId?: string; children
     }
   }, [refreshGuestCartDisplay, fetchMyCarts, storeIdFor, toast, storeId]);
 
+  // 5 s Undo: puts back the SAME product + variant + quantity through the normal add path.
+  const removedToast = useCallback((removed: CartItem | undefined, productId: string, productVariantId: string) => {
+    const qty = removed?.quantity ?? 1;
+    const type = removed?.type === 'physical' || removed?.type === 'digital' ? removed.type : undefined;
+    toast.success('Removed from cart', {
+      durationMs: 5000,
+      action: { label: 'Undo', onClick: () => { void addToCartRef.current(productId, productVariantId, type, qty); } },
+    });
+  }, [toast]);
+
   const removeItem = useCallback(async (productId: string, productVariantId: string) => {
+    const removed = cart?.items.find(i => i.productVariantId === productVariantId);
     removeType(productVariantId);
 
     if (!TokenStorage.isLoggedIn()) {
       removeGuestCartItem(productVariantId);
       await refreshGuestCartDisplay();
-      toast.success('Removed from cart');
+      removedToast(removed, productId, productVariantId);
       return;
     }
 
@@ -361,7 +381,7 @@ export function CartProvider({ storeId, children }: { storeId?: string; children
     setError(null);
     try {
       await apiRemoveCartItem(productId, productVariantId, itemStoreId);
-      toast.success('Removed from cart');
+      removedToast(removed, productId, productVariantId);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to remove item.';
       setError(message);
@@ -370,7 +390,7 @@ export function CartProvider({ storeId, children }: { storeId?: string; children
       if (storeId) syncCart(storeId, c => setCart(c));
       else fetchMyCarts();
     }
-  }, [refreshGuestCartDisplay, fetchMyCarts, storeIdFor, toast, storeId]);
+  }, [cart, refreshGuestCartDisplay, fetchMyCarts, storeIdFor, toast, storeId, removedToast]);
 
   const clearCart = useCallback(async (onlyStoreId?: string) => {
     if (!TokenStorage.isLoggedIn()) {

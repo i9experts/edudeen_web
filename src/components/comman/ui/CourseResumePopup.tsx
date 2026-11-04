@@ -7,10 +7,16 @@ import { ProgressBar } from '@/components/comman/ui';
 
 const SNOOZE_KEY = 'edudeen_course_resume_snooze';
 const SNOOZE_MS = 30 * 60_000;
-// Pages where the reminder would get in the way (the course itself, payment, other dashboards).
-const HIDDEN = /^\/(course|checkout|admin|store|seller|onboarding|maintenance|account\/messages|certificates)(\/|$)|\/invoice\/?$/;
+// The reminder only appears on the home page and in My Courses (the library); nowhere else.
+const SHOW_ON = /^\/?$|^\/account\/downloads\/?$/;
 
-const readSnooze = () => { try { return Number(sessionStorage.getItem(SNOOZE_KEY)) || 0; } catch { return 0; } };
+// Dismissals are stored per course: { [productId]: snoozed-until timestamp }.
+const readSnoozed = (): Record<string, number> => {
+  try {
+    const v = JSON.parse(sessionStorage.getItem(SNOOZE_KEY) ?? '{}');
+    return v && typeof v === 'object' ? v : {};
+  } catch { return {}; }
+};
 
 /**
  * Buyer started an online course but has not finished it: a small card keeps
@@ -22,7 +28,7 @@ export function CourseResumePopup() {
   const inCourse = /^\/course(\/|$)/.test(pathname);
   const [session, setSession] = useState(0);
   const [pending, setPending] = useState<MyCourse[]>([]);
-  const [snoozedUntil, setSnoozedUntil] = useState(readSnooze);
+  const [snoozed, setSnoozed] = useState<Record<string, number>>(readSnoozed);
 
   useEffect(() => {
     const bump = () => setSession(n => n + 1);
@@ -41,26 +47,30 @@ export function CourseResumePopup() {
         if (!alive) return;
         setPending((res.data ?? []).filter(c =>
           c.deliveryFormat === 'course' && !c.completedAt && !(c as MyCourse & { accessExpired?: boolean }).accessExpired
+          && c.isPublished !== false
           && c.lessons > 0 && (c.completed > 0 || !!c.lastLessonId)));
       })
       .catch(() => undefined);
     return () => { alive = false; };
   }, [inCourse, session]);
 
-  // Wake up again once the snooze is over.
+  // Wake up again once the soonest snooze is over.
   useEffect(() => {
-    if (snoozedUntil <= Date.now()) return;
-    const t = window.setTimeout(() => setSnoozedUntil(0), snoozedUntil - Date.now() + 500);
+    const next = Math.min(...Object.values(snoozed).filter(u => u > Date.now()), Infinity);
+    if (next === Infinity) return;
+    const t = window.setTimeout(() => setSnoozed(s => ({ ...s })), next - Date.now() + 500);
     return () => window.clearTimeout(t);
-  }, [snoozedUntil]);
+  }, [snoozed]);
 
-  if (!pending.length || HIDDEN.test(pathname) || snoozedUntil > Date.now()) return null;
-  const c = pending[0];
+  // Only on the home page and My Courses (library); never on product, cart, checkout or anywhere else.
+  const visible = pending.filter(p => (snoozed[p.productId] ?? 0) <= Date.now());
+  if (!visible.length || !SHOW_ON.test(pathname)) return null;
+  const c = visible[0];
   const pct = c.percent ?? Math.round((c.completed / c.lessons) * 100);
   const snooze = () => {
-    const until = Date.now() + SNOOZE_MS;
-    try { sessionStorage.setItem(SNOOZE_KEY, String(until)); } catch { /* private mode */ }
-    setSnoozedUntil(until);
+    const next = { ...readSnoozed(), [c.productId]: Date.now() + SNOOZE_MS };
+    try { sessionStorage.setItem(SNOOZE_KEY, JSON.stringify(next)); } catch { /* private mode */ }
+    setSnoozed(next);
   };
 
   return (
@@ -74,7 +84,7 @@ export function CourseResumePopup() {
       <Link to={`/course/${c.slug}`} className="mt-3 inline-flex items-center justify-center gap-1.5 w-full rounded-lg bg-brand-royal text-white px-3 py-2 text-[13px] font-semibold no-underline">
         <PlayCircle size={15} /> Continue
       </Link>
-      {pending.length > 1 && <Link to="/account/downloads" className="block mt-2 text-center text-[12px] text-brand-royal font-semibold">{pending.length - 1} more unfinished {pending.length - 1 === 1 ? 'course' : 'courses'}</Link>}
+      {visible.length > 1 && <Link to="/account/downloads" className="block mt-2 text-center text-[12px] text-brand-royal font-semibold">{visible.length - 1} more unfinished {visible.length - 1 === 1 ? 'course' : 'courses'}</Link>}
     </div>
   );
 }

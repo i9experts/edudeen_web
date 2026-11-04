@@ -2,17 +2,25 @@ import { createContext, useContext, useCallback, useState, useRef, type ReactNod
 
 export type ToastVariant = 'success' | 'error' | 'info';
 
+export interface ToastOptions {
+  /** Button shown inside the toast (e.g. Undo). Clicking it runs onClick and closes the toast. */
+  action?:     { label: string; onClick: () => void };
+  durationMs?: number;
+}
+
 interface ToastEntry {
   id:      number;
   variant: ToastVariant;
   message: string;
   leaving: boolean;
   paused:  boolean;
+  action?: ToastOptions['action'];
+  durationMs: number;
 }
 
 interface ToastContextValue {
   toasts:  ToastEntry[];
-  show:    (variant: ToastVariant, message: string) => void;
+  show:    (variant: ToastVariant, message: string, options?: ToastOptions) => void;
   dismiss: (id: number) => void;
   pause:   (id: number) => void;
   resume:  (id: number) => void;
@@ -64,10 +72,11 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     setToasts(prev => prev.map(t => (t.id === id ? { ...t, paused: false } : t)));
   }, [schedule]);
 
-  const show = useCallback((variant: ToastVariant, message: string) => {
+  const show = useCallback((variant: ToastVariant, message: string, options?: ToastOptions) => {
     const id = nextId.current++;
-    setToasts(prev => [...prev, { id, variant, message, leaving: false, paused: false }].slice(-MAX_VISIBLE));
-    schedule(id, TOAST_DURATION_MS);
+    const durationMs = options?.durationMs ?? TOAST_DURATION_MS;
+    setToasts(prev => [...prev, { id, variant, message, leaving: false, paused: false, action: options?.action, durationMs }].slice(-MAX_VISIBLE));
+    schedule(id, durationMs);
   }, [schedule]);
 
   return (
@@ -85,7 +94,7 @@ export function useToast() {
   const ctx = useContext(ToastCtx);
   if (!ctx) throw new Error('useToast must be used inside ToastProvider');
   return {
-    success: (message: string) => ctx.show('success', message),
+    success: (message: string, options?: ToastOptions) => ctx.show('success', message, options),
     error:   (message: string) => ctx.show('error', message),
     info:    (message: string) => ctx.show('info', message),
   };

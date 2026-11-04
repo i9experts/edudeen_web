@@ -324,6 +324,11 @@ export function CartPage() {
                     <CartItemImage images={imgs} name={item.name} />
 
                     <div className="flex-1 min-w-0">
+                      {item.storeName && (
+                        <p className="m-0 mb-[2px] text-[12px] text-slate">
+                          Sold by <span translate="no" className="font-medium text-charcoal">{item.storeName}</span>
+                        </p>
+                      )}
                       <div className="flex items-start gap-2 mb-[3px] flex-wrap">
                         <p className="font-semibold text-[14px] text-carbon leading-[1.35]">
                           {item.name}
