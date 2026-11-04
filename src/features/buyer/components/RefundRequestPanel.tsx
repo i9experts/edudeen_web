@@ -5,9 +5,17 @@ import type { OrderDetail } from '@/api/services/orders';
 import {
   apiCreateRefundRequest,
   apiListRefundRequestsForOrder,
+  REFUND_REASON_OPTIONS,
+  type RefundReasonCode,
   type RefundRequest,
   type RefundRequestStatus,
 } from '@/api/services/refundRequests';
+import { apiUploadPublicFile } from '@/api/upload';
+import { RefundEvidence } from '@/components/refunds/RefundEvidence';
+
+const MAX_PHOTOS = 3;
+const NOTE_MIN = 20;
+const NOTE_MAX = 1000;
 import { formatMoney } from '@/utils/currency';
 
 /**
@@ -54,6 +62,7 @@ type RawItem = {
 interface EligibleItem {
   sellerOrderId: string;
   itemId:        string;
+  isDigital:     boolean;
   name:          string;
   storeName:     string | null;
   totalPrice:    number | null;
@@ -72,8 +81,11 @@ export function RefundRequestPanel({ order, onRequested, className }: RefundRequ
 
   const [open, setOpen]         = useState(false);
   const [selected, setSelected] = useState('');      // `${sellerOrderId}:${itemId}`
-  const [reason, setReason]     = useState(REASONS[0]);
+  const [reasonCode, setReasonCode] = useState<RefundReasonCode>('damaged');
   const [note, setNote]         = useState('');
+  const [photos, setPhotos]     = useState<string[]>([]);
+  const [uploading, setUploading] = useState(0);
+  const [photoError, setPhotoError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
 
@@ -119,7 +131,7 @@ export function RefundRequestPanel({ order, onRequested, className }: RefundRequ
           continue;
         }
         out.push({
-          sellerOrderId, itemId, name: raw.name,
+          sellerOrderId, itemId, isDigital: raw.type === 'digital', name: raw.name,
           storeName: so.storeName ?? null,
           totalPrice: typeof raw.totalPrice === 'number' ? raw.totalPrice : null,
         });
@@ -128,20 +140,58 @@ export function RefundRequestPanel({ order, onRequested, className }: RefundRequ
     return out;
   }, [order.sellerOrders, order.isPaid, requests]);
 
+  const targetItem = eligible.find(e => `${e.sellerOrderId}:${e.itemId}` === selected);
+  const isDigital = !!targetItem?.isDigital;
+  const reasonOptions = REFUND_REASON_OPTIONS.filter(o =>
+    isDigital ? (o.code === 'cant_access_file' || o.code === 'not_as_described') : o.code !== 'cant_access_file');
+
   const openDialog = () => {
-    setSelected(eligible[0] ? `${eligible[0].sellerOrderId}:${eligible[0].itemId}` : '');
-    setReason(REASONS[0]);
+    const first = eligible[0];
+    setSelected(first ? `${first.sellerOrderId}:${first.itemId}` : '');
+    setReasonCode(first?.isDigital ? 'cant_access_file' : 'damaged');
     setNote('');
+    setPhotos([]);
+    setPhotoError('');
     setSubmitError('');
     setOpen(true);
   };
 
+  const pickItem = (value: string) => {
+    setSelected(value);
+    const t = eligible.find(e => `${e.sellerOrderId}:${e.itemId}` === value);
+    setReasonCode(t?.isDigital ? 'cant_access_file' : 'damaged');
+    if (t?.isDigital) setPhotos([]);
+  };
+
+  const addPhotos = async (files: FileList | null) => {
+    if (!files) return;
+    setPhotoError('');
+    const room = MAX_PHOTOS - photos.length;
+    const list = Array.from(files).slice(0, room);
+    if (files.length > room) setPhotoError(`You can add up to ${MAX_PHOTOS} photos.`);
+    for (const f of list) {
+      if (!/^image\/(jpeg|png|webp)$/.test(f.type)) { setPhotoError('Only JPG, PNG or WebP photos can be added.'); continue; }
+      if (f.size > 8 * 1024 * 1024) { setPhotoError('Each photo must be under 8 MB.'); continue; }
+      setUploading(n => n + 1);
+      try {
+        const res = await apiUploadPublicFile(f);
+        setPhotos(p => (p.length < MAX_PHOTOS ? [...p, res.data.url] : p));
+      } catch (err) {
+        setPhotoError(err instanceof Error ? err.message : 'Photo upload failed. Try again.');
+      } finally {
+        setUploading(n => n - 1);
+      }
+    }
+  };
+
+  const noteLen = note.trim().length;
+  const noteOk = noteLen >= NOTE_MIN && noteLen <= NOTE_MAX;
+
   const submit = async () => {
-    const target = eligible.find(e => `${e.sellerOrderId}:${e.itemId}` === selected);
+    const target = targetItem;
     if (!target) { setSubmitError('Please choose an item.'); return; }
-    const fullReason = (note.trim() ? `${reason} — ${note.trim()}` : reason).slice(0, 500);
-    if (fullReason.trim().length < 3) { setSubmitError('Please describe the problem.'); return; }
-    if (reason === 'Other' && !note.trim()) { setSubmitError('Please add a short note explaining the problem.'); return; }
+    if (!noteOk) { setSubmitError(`Please describe the problem in ${NOTE_MIN}-${NOTE_MAX} characters.`); return; }
+    if (uploading > 0) { setSubmitError('Please wait for the photos to finish uploading.'); return; }
 
     setSubmitting(true);
     setSubmitError('');
@@ -150,7 +200,9 @@ export function RefundRequestPanel({ order, onRequested, className }: RefundRequ
         orderId: order._id,
         sellerOrderId: target.sellerOrderId,
         itemIds: [target.itemId],
-        reason: fullReason,
+        reasonCode,
+        note: note.trim(),
+        ...(photos.length && !target.isDigital ? { evidenceImages: photos } : {}),
       });
       setOpen(false);
       onRequested?.(res.data);
@@ -204,6 +256,7 @@ export function RefundRequestPanel({ order, onRequested, className }: RefundRequ
                     <Badge color={badge.color} size="sm">{badge.label}</Badge>
                   </div>
                   <p className="text-[12px] text-slate mt-1 break-words">{r.reason}</p>
+                  <RefundEvidence request={r} />
                   <p className="text-[12px] text-slate mt-1">
                     Requested {fmtDate(r.createdAt)}
                     {r.reviewedAt ? ` · Reviewed ${fmtDate(r.reviewedAt)}` : ''}
@@ -231,14 +284,14 @@ export function RefundRequestPanel({ order, onRequested, className }: RefundRequ
           footer={
             <>
               <Button variant="ghost" onClick={() => setOpen(false)} disabled={submitting}>Cancel</Button>
-              <Button variant="primary" onClick={submit} loading={submitting} disabled={submitting || !selected}>
+              <Button variant="primary" onClick={submit} loading={submitting} disabled={submitting || !selected || uploading > 0}>
                 Submit request
               </Button>
             </>
           }
         >
           <div className="flex flex-col gap-4">
-            <Select label="Item" value={selected} onChange={e => setSelected(e.target.value)}>
+            <Select label="Item" value={selected} onChange={e => pickItem(e.target.value)}>
               {eligible.map(e => (
                 <option key={`${e.sellerOrderId}:${e.itemId}`} value={`${e.sellerOrderId}:${e.itemId}`}>
                   {e.name}
@@ -247,17 +300,43 @@ export function RefundRequestPanel({ order, onRequested, className }: RefundRequ
                 </option>
               ))}
             </Select>
-            <Select label="Reason" value={reason} onChange={e => setReason(e.target.value)}>
-              {REASONS.map(r => <option key={r} value={r}>{r}</option>)}
+            <Select label="Reason" value={reasonCode} onChange={e => setReasonCode(e.target.value as RefundReasonCode)}>
+              {reasonOptions.map(o => <option key={o.code} value={o.code}>{o.label}</option>)}
             </Select>
-            <Textarea
-              label={reason === 'Other' ? 'Note' : 'Note (optional)'}
-              value={note}
-              onChange={e => setNote(e.target.value)}
-              rows={3}
-              maxLength={400}
-              placeholder="Add any details that will help the seller review your request."
-            />
+            <div>
+              <Textarea
+                label="Note"
+                value={note}
+                onChange={e => setNote(e.target.value)}
+                rows={4}
+                maxLength={NOTE_MAX}
+                placeholder="Describe what is wrong so the seller can review your request."
+              />
+              <p className={`text-[12px] mt-1 ${noteLen > 0 && !noteOk ? 'text-error' : 'text-slate'}`}>{noteLen}/{NOTE_MAX} (at least {NOTE_MIN} characters)</p>
+            </div>
+            {!isDigital && (
+              <div>
+                <p className="text-[12px] font-semibold text-charcoal mb-1.5">Photos (optional, up to {MAX_PHOTOS})</p>
+                <div className="flex flex-wrap gap-2 items-center">
+                  {photos.map((u, i) => (
+                    <div key={u} className="relative w-[64px] h-[64px] rounded-[8px] overflow-hidden border border-bone">
+                      <img src={u} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
+                      <button type="button" aria-label="Remove photo" onClick={() => setPhotos(p => p.filter(x => x !== u))}
+                        className="absolute top-0 end-0 w-6 h-6 bg-black/60 text-white text-[14px] leading-none border-none cursor-pointer">×</button>
+                    </div>
+                  ))}
+                  {uploading > 0 && <span className="w-[64px] h-[64px] rounded-[8px] border border-dashed border-bone flex items-center justify-center text-[12px] text-slate">…</span>}
+                  {photos.length + uploading < MAX_PHOTOS && (
+                    <label className="w-[64px] h-[64px] rounded-[8px] border border-dashed border-bone flex items-center justify-center text-[12px] text-brand-orange font-semibold cursor-pointer">
+                      Add
+                      <input type="file" accept="image/jpeg,image/png,image/webp" multiple className="sr-only"
+                        onChange={e => { void addPhotos(e.target.files); e.target.value = ''; }} />
+                    </label>
+                  )}
+                </div>
+                {photoError && <p className="text-[12px] text-error mt-1">{photoError}</p>}
+              </div>
+            )}
             <p className="text-[12px] text-slate leading-relaxed">
               Each request is reviewed before any refund is issued. You'll see the outcome — and the refunded amount, if approved — on this order.
             </p>

@@ -15,6 +15,9 @@ export interface RefundRequestRow {
   requestedBy: string;
   requestedByRole: 'user' | 'seller' | 'admin';
   reason: string;
+  reasonCode?: string | null;
+  note?: string | null;
+  evidenceImages?: string[];
   status: RefundRequestStatus;
   /** Filled in only once the request is approved (computed from the order's own item totals). */
   buyerRefundAmount: number | null;

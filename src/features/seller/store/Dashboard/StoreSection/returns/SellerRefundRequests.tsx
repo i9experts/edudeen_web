@@ -9,6 +9,8 @@ import {
   apiGetSellerRefundRequests, apiApproveRefundRequest, apiRejectRefundRequest, type RefundRequest,
 } from '@/api/services/refundRequests';
 
+import { RefundEvidence } from '@/components/refunds/RefundEvidence';
+
 const TONE: Record<RefundRequest['status'], string> = {
   pending: 'bg-amber-50 text-amber-700', approved: 'bg-green-50 text-success', rejected: 'bg-red-50 text-error',
 };
@@ -79,6 +81,7 @@ export function SellerRefundRequests({ storeId }: { storeId: string }) {
                   <span className="text-[12px] text-slate">{new Date(r.createdAt).toLocaleDateString()}</span>
                 </div>
                 <p className="text-[13px] text-carbon mt-1 mb-0">{r.reason}</p>
+                <RefundEvidence request={r} />
                 <p className="text-[12px] text-slate mt-0.5 mb-0">{r.itemIds.length} item{r.itemIds.length === 1 ? '' : 's'}{r.buyerRefundAmount != null ? ` · refunded ${r.buyerRefundCurrency ?? ''} ${r.buyerRefundAmount.toLocaleString()}` : ''}{r.resolutionNotes ? ` · ${r.resolutionNotes}` : ''}</p>
               </div>
               {r.status === 'pending' && (

@@ -18,6 +18,10 @@ export interface RefundRequest {
   requestedBy:         string;
   requestedByRole:     'user' | 'seller' | 'admin';
   reason:              string;
+  /** Present only on requests made with a fixed reason + evidence. */
+  reasonCode?:         string | null;
+  note?:               string | null;
+  evidenceImages?:     string[];
   status:              RefundRequestStatus;
   /** Set only once approved — in the buyer's order currency. */
   buyerRefundAmount:   number | null;
@@ -34,9 +38,24 @@ export interface CreateRefundRequestPayload {
   orderId:       string;
   sellerOrderId: string;
   itemIds:       string[];
-  /** 3–500 characters (backend-validated). */
-  reason:        string;
+  /** 3–500 characters (backend-validated); optional when reasonCode is sent. */
+  reason?:       string;
+  reasonCode?:   RefundReasonCode;
+  /** 20–1000 characters, required with reasonCode. */
+  note?:         string;
+  /** Up to 3 uploaded image URLs, physical items only. */
+  evidenceImages?: string[];
 }
+
+export const REFUND_REASON_OPTIONS = [
+  { code: 'damaged',          label: 'Item arrived damaged' },
+  { code: 'wrong_item',       label: 'Wrong item received' },
+  { code: 'incomplete',       label: 'Incomplete (missing parts or pages)' },
+  { code: 'not_as_described', label: 'Not as described' },
+  { code: 'cant_access_file', label: "Can't access the digital file" },
+] as const;
+export type RefundReasonCode = typeof REFUND_REASON_OPTIONS[number]['code'];
+export const refundReasonLabel = (code?: string | null) => REFUND_REASON_OPTIONS.find(o => o.code === code)?.label ?? null;
 
 interface ApiResponse<T> { success: boolean; message?: string; data: T }
 

@@ -9,6 +9,8 @@ import { apiGetAdminUserById } from '@/api/services/users/adminUsers';
 import { Button, Modal, Textarea, Table, CopyIconButton, type TableColumn } from '@/components/comman/ui';
 import { AdminStudioHeader } from '@/features/admin/components/studio';
 
+import { RefundEvidence } from '@/components/refunds/RefundEvidence';
+
 const PER_PAGE = 20;
 
 const ROLE_LABEL: Record<RefundRequestRow['requestedByRole'], string> = {
@@ -117,6 +119,7 @@ function ReviewModal({ request, onClose, onDone }: { request: RefundRequestRow; 
         <div>
           <p className="text-[12px] font-semibold text-slate uppercase tracking-[0.08em] mb-1">Reason</p>
           <p className="text-[13px] text-charcoal leading-[1.6] whitespace-pre-wrap">{request.reason}</p>
+          <RefundEvidence request={request} />
         </div>
 
         {mode === 'approve' && !result && (
