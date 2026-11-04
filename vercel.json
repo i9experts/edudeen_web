@@ -58,7 +58,7 @@
                                  ]
                      },
                      {
-                         "source":  "/:page(about|faq|contact-us|learn|premium|become-a-seller|privacy-policy|terms-of-service|cookie-policy)",
+                         "source":  "/:page(about|faq|contact-us|learn|premium|become-a-seller|privacy-policy|terms-of-service|cookie-policy|returns)",
                          "destination":  "https://api.edudeen.com/seo-render/page/:page",
                          "has":  [
                                      {

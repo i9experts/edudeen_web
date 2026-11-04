@@ -7,6 +7,7 @@ import { Reveal } from '@/components/comman/motion/Reveal';
 import { MagneticButton } from '@/components/comman/motion/MagneticButton';
 import { PremiumCard } from '@/components/comman/motion/PremiumCard';
 import { usePublicPlatformConfig } from '@/hooks/usePublicPlatformConfig';
+import { useLanguage } from '@/contexts/languageCtx';
 import { EditableHomeSection } from '@/components/admin-edit/EditableHomeSection';
 
 const SERIF = "Georgia, 'Times New Roman', serif";
@@ -117,8 +118,11 @@ function useRevealOnScroll<T extends HTMLElement>(id: string, revealed: Set<stri
  *  content array. */
 export function LegalPageLayout({ title, subtitle, lastUpdated: lastUpdatedProp, sections: sectionsProp, relatedPages = [], pageKey }: LegalPageLayoutProps) {
   const { config } = usePublicPlatformConfig();
+  const { lang } = useLanguage();
   const override = pageKey ? config?.homeContent?.legalPages?.[pageKey] : undefined;
-  const parsed = override?.text ? parseLegalText(override.text) : [];
+  // Urdu mode: the admin's Urdu text when written, else the English text (the built-in default is translated by ur.ts).
+  const overrideText = (lang === 'ur' && override?.textUr?.trim()) || override?.text;
+  const parsed = overrideText ? parseLegalText(overrideText) : [];
   const sections = parsed.length ? parsed : sectionsProp;
   const lastUpdated = (parsed.length && override?.lastUpdated) || lastUpdatedProp;
   const [activeId, setActiveIdState] = useState(sections[0]?.id ?? '');

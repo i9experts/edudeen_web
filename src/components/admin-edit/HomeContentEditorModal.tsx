@@ -22,7 +22,7 @@ type Pillar = { title: string; desc: string };
 
 type EditorProps = {
   section: HomeSection;
-  /** For 'legal': privacy-policy | terms-of-service | cookie-policy */
+  /** For 'legal': privacy-policy | terms-of-service | cookie-policy | returns */
   legalKey?: string;
   /** For 'legal': the built-in text to start from when the admin has not written any yet. */
   legalInitialText?: string;
@@ -60,6 +60,7 @@ function HomeContentForm({ section, legalKey, legalInitialText, defaults, stored
   const [c, setC] = useState<HomeContent>(() => ({ ...init }));
   const [about, setAbout] = useState<AboutContent>(() => ({ ...initAbout }));
   const [legalText, setLegalText] = useState(() => (legalKey && hc.legalPages?.[legalKey]?.text) || legalInitialText || '');
+  const [legalTextUr, setLegalTextUr] = useState(() => (legalKey && hc.legalPages?.[legalKey]?.textUr) || '');
   const [legalDate, setLegalDate] = useState(() => (legalKey && hc.legalPages?.[legalKey]?.lastUpdated) || '');
   const [promise, setPromise] = useState(() => init.promiseItems.join('\n'));
   const [urState, setUrState] = useState<NonNullable<HomeContent['ur']>>(() => ({ ...(hc.ur ?? {}) }));
@@ -121,10 +122,10 @@ function HomeContentForm({ section, legalKey, legalInitialText, defaults, stored
         const next = { ...about, pillars: pillars.slice(0, 4) };
         return JSON.stringify(next) === JSON.stringify({ ...initAbout, pillars: initAbout.pillars.slice(0, 4) }) ? {} : { about: next };
       }
-      case 'legal': return { legalPages: { [legalKey ?? '']: { text: legalText, lastUpdated: legalDate } } };
+      case 'legal': return { legalPages: { [legalKey ?? '']: { text: legalText, textUr: legalTextUr, lastUpdated: legalDate } } };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [section, c, promise, trust, about, pillars, legalKey, legalText, legalDate, init, initAbout]);
+  }, [section, c, promise, trust, about, pillars, legalKey, legalText, legalTextUr, legalDate, init, initAbout]);
   const payload = useMemo((): HomeContent => {
     if (!urChanged) return textPayload;
     const merged = { ...(hc.ur ?? {}) } as Record<string, string>;
@@ -274,6 +275,12 @@ function HomeContentForm({ section, legalKey, legalInitialText, defaults, stored
         {section === 'legal' && (<>
           <Input label="Last updated" placeholder="October 7, 2026" value={legalDate} maxLength={40} onChange={e => setLegalDate(e.target.value)} />
           <Textarea label={'Text (start a section with "## Title", blank line between paragraphs)'} rows={14} value={legalText} maxLength={40000} onChange={e => setLegalText(e.target.value)} />
+          <details className="rounded-lg border border-bone px-3 py-2">
+            <summary className="cursor-pointer text-[12.5px] font-semibold text-carbon">Urdu version (optional)</summary>
+            <div className="mt-3">
+              <Textarea label={'Urdu text (same format; blank = Edudeen\'s built-in Urdu / English)'} rows={10} dir="rtl" value={legalTextUr} maxLength={40000} onChange={e => setLegalTextUr(e.target.value)} />
+            </div>
+          </details>
         </>)}
         {error && <p className="text-[12px] text-error" role="alert">{error}</p>}
       </div>

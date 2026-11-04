@@ -2055,6 +2055,28 @@ export const UR: Record<string, string> = {
   'Delivery by': 'ڈیلیوری بذریعہ',
   'about': 'تقریباً',
   'day': 'دن',
+  // Returns policy
+  'Returns policy': 'واپسی کی پالیسی',
+  'When you can ask for a refund on Edudeen.': 'ایڈودین پر آپ ریفنڈ کب مانگ سکتے ہیں۔',
+  'Edudeen handles returns and refunds through a refund request on your order. Whether you can ask for one depends on what you bought.': 'ایڈودین میں واپسی اور ریفنڈ آپ کے آرڈر پر ریفنڈ کی درخواست کے ذریعے ہوتے ہیں۔ درخواست کی اجازت اس پر منحصر ہے کہ آپ نے کیا خریدا ہے۔',
+  'Each seller may also state their own return policy on their store and product page. It is shown there for your information.': 'ہر سیلر اپنے سٹور اور پروڈکٹ پیج پر اپنی واپسی کی پالیسی بھی بتا سکتا ہے۔ وہ آپ کی معلومات کے لیے وہیں دکھائی جاتی ہے۔',
+  'Digital downloads and courses': 'ڈیجیٹل ڈاؤن لوڈز اور کورسز',
+  'You can request a refund for a digital item only if you have not downloaded the file yet. Once a file has been downloaded, it can no longer be refunded.': 'ڈیجیٹل آئٹم کے ریفنڈ کی درخواست صرف اسی صورت میں ہو سکتی ہے جب آپ نے فائل ابھی ڈاؤن لوڈ نہ کی ہو۔ فائل ڈاؤن لوڈ ہونے کے بعد ریفنڈ نہیں ہو سکتا۔',
+  'You can request a refund for a digital item only if you have not downloaded the file yet.': 'ڈیجیٹل آئٹم کے ریفنڈ کی درخواست صرف اسی صورت میں ہو سکتی ہے جب آپ نے فائل ابھی ڈاؤن لوڈ نہ کی ہو۔',
+  'Physical products': 'فزیکل پروڈکٹس',
+  'You can request a refund for a physical item after it has been delivered. Open the order in your account and choose the item you want a refund for.': 'فزیکل آئٹم کے ریفنڈ کی درخواست ڈیلیوری کے بعد ہو سکتی ہے۔ اپنے اکاؤنٹ میں آرڈر کھولیں اور وہ آئٹم چنیں جس کا ریفنڈ چاہیے۔',
+  'Reasons you can choose': 'وجوہات جو آپ چن سکتے ہیں',
+  'When you request a refund, you pick one of these reasons and can add a short note:': 'ریفنڈ مانگتے وقت آپ ان میں سے ایک وجہ چنتے ہیں اور مختصر نوٹ بھی لکھ سکتے ہیں:',
+  'Item arrived damaged or defective': 'آئٹم خراب یا ناقص پہنچا',
+  'Item not as described': 'آئٹم بیان کے مطابق نہیں',
+  'Wrong item received': 'غلط آئٹم موصول ہوا',
+  'Missing parts or pages': 'پرزے یا صفحات غائب ہیں',
+  'File is broken or will not open': 'فائل خراب ہے یا کھلتی نہیں',
+  'Purchased by mistake': 'غلطی سے خرید لیا',
+  'How to request a refund': 'ریفنڈ کی درخواست کیسے کریں',
+  'Go to Account > Orders, open the order, and choose "Request a refund" on the item. We will review it and update you in your notifications.': 'اکاؤنٹ > آرڈرز میں جائیں، آرڈر کھولیں اور آئٹم پر "ریفنڈ کی درخواست کریں" چنیں۔ ہم اسے دیکھ کر آپ کو نوٹیفکیشنز میں بتائیں گے۔',
+  'Refund can be requested after delivery.': 'ریفنڈ کی درخواست ڈیلیوری کے بعد کی جا سکتی ہے۔',
+  'Refund available only if you have not downloaded the file.': 'ریفنڈ صرف تب ممکن ہے جب آپ نے فائل ڈاؤن لوڈ نہ کی ہو۔',
 };
 
 const MONTHS: Record<string, string> = {

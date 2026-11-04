@@ -22,6 +22,7 @@ const PAGES: { label: string; to: string }[] = [
   { label: 'Privacy policy', to: '/privacy-policy' },
   { label: 'Terms of service', to: '/terms-of-service' },
   { label: 'Cookie policy', to: '/cookie-policy' },
+  { label: 'Returns policy', to: '/returns' },
 ];
 
 /** Friendly page name from the route. */

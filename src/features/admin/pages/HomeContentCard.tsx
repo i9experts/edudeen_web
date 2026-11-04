@@ -28,7 +28,7 @@ export function HomeContentCard() {
   const pillars = about.pillars ?? [];
   const setPillar = (i: number, patch: { title?: string; desc?: string }) => { const t = [...pillars]; while (t.length <= i) t.push({ title: '', desc: '' }); t[i] = { ...t[i], ...patch }; setAbout({ pillars: t }); };
   const legal = c.legalPages ?? {};
-  const setLegal = (key: string, patch: { text?: string; lastUpdated?: string }) => { setSaved(false); setC(p => ({ ...p, legalPages: { ...(p.legalPages ?? {}), [key]: { ...(p.legalPages?.[key] ?? {}), ...patch } } })); };
+  const setLegal = (key: string, patch: { text?: string; textUr?: string; lastUpdated?: string }) => { setSaved(false); setC(p => ({ ...p, legalPages: { ...(p.legalPages ?? {}), [key]: { ...(p.legalPages?.[key] ?? {}), ...patch } } })); };
   const uploadHero = async (file?: File, key: 'heroImageUrl' | 'heroImageMobileUrl' = 'heroImageUrl') => {
     if (!file) return;
     setError(''); setUploading(true);
@@ -186,13 +186,14 @@ export function HomeContentCard() {
         <Input label="Bottom banner button" value={about.ctaButton ?? ''} disabled={!loaded} onChange={e => setAbout({ ctaButton: e.target.value })} />
       </div>      <p className="text-[12px] font-semibold text-carbon mt-5 mb-1">Legal pages</p>
       <p className="text-[12px] text-slate mb-2">Leave blank to keep the built-in text. Start a section with a line like "## Section title", separate paragraphs with a blank line.</p>
-      {([['privacy-policy', 'Privacy Policy'], ['terms-of-service', 'Terms of Service'], ['cookie-policy', 'Cookie Policy']] as const).map(([key, label]) => (
+      {([['privacy-policy', 'Privacy Policy'], ['terms-of-service', 'Terms of Service'], ['cookie-policy', 'Cookie Policy'], ['returns', 'Returns policy']] as const).map(([key, label]) => (
         <div key={key} className="mb-3">
           <div className="grid grid-cols-1 sm:grid-cols-[1fr_180px] gap-[10px] items-end">
             <span className="text-[12px] font-medium text-charcoal">{label}</span>
             <Input label="Last updated" placeholder="October 7, 2026" value={legal[key]?.lastUpdated ?? ''} disabled={!loaded} onChange={e => setLegal(key, { lastUpdated: e.target.value })} />
           </div>
           <Textarea rows={5} value={legal[key]?.text ?? ''} disabled={!loaded} onChange={e => setLegal(key, { text: e.target.value })} />
+          <Textarea label="Urdu version (optional)" rows={4} dir="rtl" value={legal[key]?.textUr ?? ''} disabled={!loaded} onChange={e => setLegal(key, { textUr: e.target.value })} />
         </div>
       ))}
       {error && <p className="text-[12px] text-error mt-3" role="alert">{error}</p>}

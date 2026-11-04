@@ -28,7 +28,7 @@ export interface RefundRequestPanelProps {
   className?: string;
 }
 
-const REASONS = [
+export const REASONS = [
   'Item arrived damaged or defective',
   'Item not as described',
   'Wrong item received',

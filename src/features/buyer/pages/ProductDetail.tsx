@@ -871,6 +871,12 @@ export function ProductDetail() {
                       <PremiumTeaser percent={product.premiumPercent} seller={product.premiumSellerPercent} platform={product.premiumPlatformPercent} link className="mb-2" />
                     </>
                   )}
+                  {displayPrice !== 0 && (
+                    <p className="text-[12px] text-slate mb-2 mt-0">
+                      {isPhysical ? 'Refund can be requested after delivery.' : 'Refund available only if you have not downloaded the file.'}{' '}
+                      <Link to="/returns" className="font-semibold text-brand-royal underline">Returns policy</Link>
+                    </p>
+                  )}
                   {activeVariant?.subscriberPrice != null && (
                     <p className="text-[12px] font-semibold text-brand-orange mb-2">
                       Members pay {formatPrice(convert(activeVariant.subscriberPrice, activeVariant.currency), displayCurrency)} — save {activeVariant.discountPercent}%

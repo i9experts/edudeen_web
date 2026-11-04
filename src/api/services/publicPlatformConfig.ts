@@ -40,7 +40,7 @@ export interface HomeContent {
   ur?: Partial<Record<'heroEyebrow' | 'heroTitle' | 'heroHighlight' | 'heroText' | 'heroPrimaryLabel' | 'heroSecondaryLabel' | 'heroBadge' | 'featureEyebrow' | 'featureHeading' | 'featureText' | 'featureLinkLabel' | 'creatorEyebrow' | 'creatorHeading' | 'creatorText' | 'creatorLinkLabel', string>>;
   about?: AboutContent;
   /** Admin-written legal pages, keyed by route (privacy-policy, terms-of-service, cookie-policy). */
-  legalPages?: Record<string, { text?: string; lastUpdated?: string }>;
+  legalPages?: Record<string, { text?: string; textUr?: string; lastUpdated?: string }>;
 }
 
 /** Admin-editable /become-a-seller page. Missing/blank = built-in default (components/seller-page/sellerPageDefaults.ts). */
