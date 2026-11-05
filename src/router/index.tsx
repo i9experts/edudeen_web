@@ -57,6 +57,7 @@ const FaqPage = lazy(() => import('@/features/buyer/pages/FaqPage').then(m => ({
 const PrivacyPolicyPage = lazy(() => import('@/features/buyer/pages/PrivacyPolicyPage').then(m => ({ default: m.PrivacyPolicyPage })));
 const DeleteAccountPage = lazy(() => import('@/features/buyer/pages/DeleteAccountPage').then(m => ({ default: m.DeleteAccountPage })));
 const TermsOfServicePage = lazy(() => import('@/features/buyer/pages/TermsOfServicePage').then(m => ({ default: m.TermsOfServicePage })));
+const SitemapPage = lazy(() => import('@/features/buyer/pages/SitemapPage').then(m => ({ default: m.SitemapPage })));
 const ReturnsPolicyPage = lazy(() => import('@/features/buyer/pages/ReturnsPolicyPage').then(m => ({ default: m.ReturnsPolicyPage })));
 const CookiePolicyPage = lazy(() => import('@/features/buyer/pages/CookiePolicyPage').then(m => ({ default: m.CookiePolicyPage })));
 const ContactUsPage = lazy(() => import('@/features/buyer/pages/ContactUsPage').then(m => ({ default: m.ContactUsPage })));
@@ -269,6 +270,7 @@ const mainRouter = createBrowserRouter([
               { path: 'terms-of-service', element: <TermsOfServicePage /> },
               { path: 'cookie-policy',   element: <CookiePolicyPage /> },
               { path: 'returns',         element: <ReturnsPolicyPage /> },
+              { path: 'sitemap',         element: <SitemapPage /> },
               { path: 'contact-us',      element: <ContactUsPage /> },
               { path: 'contact',         element: <Navigate to="/contact-us" replace /> },
               { path: 'about',           element: <AboutPage /> },

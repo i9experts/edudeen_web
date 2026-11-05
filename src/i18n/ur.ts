@@ -2087,6 +2087,13 @@ export const UR: Record<string, string> = {
   'Delivery by': 'ڈیلیوری بذریعہ',
   'about': 'تقریباً',
   'day': 'دن',
+  // Sitemap
+  'Sitemap': 'سائٹ میپ',
+  'Every page on Edudeen in one place. Pick a class or a subject to start shopping.': 'ایڈودین کے تمام صفحات ایک جگہ۔ خریداری شروع کرنے کے لیے جماعت یا مضمون چنیں۔',
+  'Shop by class': 'جماعت کے لحاظ سے خریداری',
+  'Shop by subject': 'مضمون کے لحاظ سے خریداری',
+  'Subjects will appear here soon.': 'مضامین جلد یہاں نظر آئیں گے۔',
+  'Edudeen': 'ایڈودین',
   // Returns policy
   'Returns policy': 'واپسی کی پالیسی',
   'When you can ask for a refund on Edudeen.': 'ایڈودین پر آپ ریفنڈ کب مانگ سکتے ہیں۔',
