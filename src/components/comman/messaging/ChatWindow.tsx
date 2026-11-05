@@ -48,6 +48,8 @@ interface ChatWindowProps {
 
   /** Present only when the conversation has a browsable store catalog — enables "Share Product". */
   storeId?:        string;
+  /** Public store slug — used by "View Store" (/shop/<slug>). */
+  storeSlug?:      string;
 }
 
 function payloadFromMessage(m: OptimisticMessage): SendMessagePayload | null {
@@ -67,7 +69,7 @@ export function ChatWindow({
   open, headerName, headerImage, headerVerified, subtitleOverride, menuItems, onBack, shortcuts,
   messages, msgLoading, currentUserId, otherPartyId, hasMore, loadingMore, onLoadMore,
   sending, uploading, onSend, onUpload, onEditMessage, onDeleteMessage, onRetry,
-  otherOnline, otherTyping, onTyping, conversationId, storeId, error,
+  otherOnline, otherTyping, onTyping, conversationId, storeId, storeSlug, error,
 }: ChatWindowProps) {
   const [text,      setText]      = useState('');
   const [replyTo,   setReplyTo]   = useState<Message | null>(null);
@@ -132,7 +134,8 @@ export function ChatWindow({
   }
 
   const headerShortcuts: ChatHeaderShortcut[] = [
-    ...(storeId ? [{ icon: <StoreIcon size={17} />, label: 'View Store', onClick: () => window.open(`/store/${storeId}`, '_blank') }] : []),
+    // Public storefront is /shop/<slug>. /store/<id> is the SELLER dashboard — a buyer landing there loops/hangs.
+    ...(storeSlug ? [{ icon: <StoreIcon size={17} />, label: 'View Store', onClick: () => window.open(`/shop/${encodeURIComponent(storeSlug)}`, '_blank', 'noopener') }] : []),
     ...(shortcuts ?? []),
   ];
 

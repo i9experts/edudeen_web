@@ -60,6 +60,9 @@ export function isCustomDomainCandidate(): boolean {
 
 function baseDomain(): string {
   const { hostname } = window.location;
+  // A seller's connected custom domain is NOT the platform: always point back at the real apex,
+  // otherwise "forward to /shop/<slug>" re-lands on the same domain and reloads forever.
+  if (isCustomDomainCandidate()) return PLATFORM_APEX_DOMAINS[0];
   return hostname === 'localhost' || hostname.endsWith('.localhost')
     ? 'localhost'
     : hostname.split('.').slice(-2).join('.');

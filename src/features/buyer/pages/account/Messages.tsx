@@ -226,6 +226,7 @@ export function Messages() {
             onTyping={sendTyping}
             conversationId={activeId}
             storeId={active?.storeId}
+            storeSlug={active?.store?.slug}
             error={msgError}
           />
         </div>

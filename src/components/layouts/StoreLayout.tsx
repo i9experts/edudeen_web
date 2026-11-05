@@ -12,7 +12,7 @@ import {
   ChevronDown, Lock, MoreHorizontal, PanelLeftClose, Loader2, PanelLeftOpen, AlertTriangle, AlertCircle, XCircle, Clock, LogOut, UserRound, Bell,
 } from 'lucide-react';
 import { EdudeenIcon, EdudeenLogo } from '@/components/comman/ui/EdudeenLogo';
-import { apiGetStoreById, type StoreData } from '@/api/services/store';
+import { apiGetStoreById, apiGetMyStores, type StoreData } from '@/api/services/store';
 import { apiGetAiStudioCredits } from '@/api/services/aiStudio';
 import { apiGetStoreEntitlements } from '@/api/services/platformPlans';
 import { apiStoreDashboardSummaryCached } from '@/api/services/storeDashboard';
@@ -617,6 +617,28 @@ export function StorePageHeader({ title, subtitle, actions, eyebrow }: StorePage
   );
 }
 
+// A seller opening someone else's /store/:id goes to their own dashboard; a buyer / guest
+// (who has no workspace at all) goes to the public storefront instead of bouncing through onboarding.
+function NotYourStoreRedirect({ publicSlug }: { publicSlug: string }) {
+  const [owns, setOwns] = useState<boolean | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    apiGetMyStores()
+      .then(r => { if (!cancelled) setOwns((r.data ?? []).length > 0); })
+      .catch(() => { if (!cancelled) setOwns(false); });
+    return () => { cancelled = true; };
+  }, []);
+  if (owns === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 size={22} className="text-brand-orange animate-spin" role="status" aria-label="Loading" />
+      </div>
+    );
+  }
+  if (owns) return <SellerStoreRedirect to="dashboard" />;
+  return <Navigate to={publicSlug ? `/shop/${encodeURIComponent(publicSlug)}` : '/'} replace />;
+}
+
 // ── Provider ──────────────────────────────────────────────────────────────────
 function StoreWorkspaceProvider({ children }: { children: ReactNode }) {
   const { storeId = '' } = useParams<{ storeId: string }>();
@@ -627,6 +649,7 @@ function StoreWorkspaceProvider({ children }: { children: ReactNode }) {
   // Store this provider last resolved for — the shell (and every store-scoped call in it) waits for it.
   const [resolvedFor, setResolvedFor] = useState('');
   const [denied, setDenied] = useState(false);
+  const [publicSlug, setPublicSlug] = useState('');
 
   useEffect(() => {
     if (!storeId) return;
@@ -639,7 +662,10 @@ function StoreWorkspaceProvider({ children }: { children: ReactNode }) {
         const res = await apiGetStoreById(storeId);
         // The API hands non-owners the public storefront shape (no order/product counts): not this seller's store.
         const owned = typeof (res.data as { orderCount?: unknown } | null)?.orderCount === 'number';
-        if (!cancelled) { setDenied(!owned); setStore(owned ? res.data : null); }
+        if (!cancelled) {
+          setDenied(!owned); setStore(owned ? res.data : null);
+          setPublicSlug((res.data as { slug?: string } | null)?.slug ?? '');
+        }
       } catch (err: unknown) {
         if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load store.');
       } finally {
@@ -656,7 +682,7 @@ function StoreWorkspaceProvider({ children }: { children: ReactNode }) {
   const value = useMemo(() => ({ store, storeId, loading, error, refetch }), [store, storeId, loading, error, refetch]);
 
   // Not this seller's store: send them to their own — the shell never mounts, so no store-scoped API is called.
-  if (resolvedFor === storeId && denied) return <SellerStoreRedirect to="dashboard" />;
+  if (resolvedFor === storeId && denied) return <NotYourStoreRedirect publicSlug={publicSlug} />;
   if (resolvedFor !== storeId || (error && !store)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
