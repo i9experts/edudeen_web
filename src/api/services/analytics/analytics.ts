@@ -192,6 +192,8 @@ export interface SellerTodaySummaryData {
   revenueChangePercent: number;
   ordersCount:          number;
   avgOrderValue:        number;
+  /** Free-product claims today (not counted in orders/revenue). Absent on older APIs. */
+  freeClaims?:          number;
 }
 
 export function apiSellerAnalyticsToday(storeId: string) {

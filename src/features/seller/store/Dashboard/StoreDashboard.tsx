@@ -286,8 +286,16 @@ function TodaySnapshot({ today, currency }: { today: SellerTodaySummaryData; cur
 
       <div className="flex items-center gap-2">
         <span className="text-[13px] text-slate">Avg. Order Value</span>
-        <span className="font-serif text-[18px] text-carbon">{formatMoneyCompact(today.avgOrderValue, currency)}</span>
+        <span className="font-serif text-[18px] text-carbon">
+          {today.ordersCount > 0 ? formatMoneyCompact(today.avgOrderValue, currency) : '—'}
+        </span>
       </div>
+
+      {(today.freeClaims ?? 0) > 0 && (
+        <span className="text-[12px] text-slate">
+          {formatNumber(today.freeClaims ?? 0)} free {today.freeClaims === 1 ? 'claim' : 'claims'}
+        </span>
+      )}
 
       <span className="text-[12px] text-slate ml-auto shrink-0">vs. this time yesterday</span>
     </section>

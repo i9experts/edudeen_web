@@ -21,6 +21,34 @@ export function planLabel(sub: StorePlatformSubscription | null | undefined): st
   return sub?.plan?.name ? `${sub.plan.name}${left != null ? ` (trial: ${left}d left)` : ''}` : NO_PLAN_LABEL;
 }
 
+const ENDED_STATUSES = ['expired', 'past_due', 'canceled'];
+
+/**
+ * Sidebar plan line. Cases:
+ *  - plan ended (expired / past_due / canceled -> listings hidden): "Plan ended" -> plan-expired screen
+ *  - free plan (not a trial): "Free plan" + Upgrade -> Plan & Billing
+ *  - paid / trial plan: its name (+ trial countdown), no CTA
+ *  - no subscription row at all: entitlements' plan name if it has one, else "No plan" -> Plan & Billing
+ */
+export function sidebarPlanInfo(
+  sub: StorePlatformSubscription | null | undefined,
+  storeId: string,
+  entitlementsPlanName?: string | null,
+): { text: string; cta: string | null; to: string | null } {
+  const billing = `/store/${storeId}/plan-billing`;
+  if (sub && ENDED_STATUSES.includes(sub.status)) {
+    return { text: 'Plan ended', cta: 'Choose a plan', to: `/store/${storeId}/plan-expired` };
+  }
+  if (sub?.plan?.name) {
+    if (sub.plan.isFree && sub.status !== 'trialing') return { text: 'Free plan', cta: 'Upgrade', to: billing };
+    return { text: planLabel(sub), cta: null, to: null };
+  }
+  if (entitlementsPlanName && !/^(none|no plan)/i.test(entitlementsPlanName)) {
+    return { text: entitlementsPlanName, cta: null, to: null };
+  }
+  return { text: 'No plan', cta: 'Choose a plan', to: billing };
+}
+
 export function useStorePlan(storeId: string | undefined) {
   const [sub, setSub] = useState<StorePlatformSubscription | null>(null);
   const [loaded, setLoaded] = useState(false);

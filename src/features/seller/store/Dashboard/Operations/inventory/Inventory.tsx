@@ -111,10 +111,18 @@ export function StoreInventory() {
   useEffect(() => {
     if (!storeId) return;
     let cancelled = false;
+    // Safety net: whatever happens to the request (hung socket, swallowed promise), the page never
+    // shows "Loading…" for more than 25 s - it falls back to the error box with Retry.
+    const guard = window.setTimeout(() => {
+      if (cancelled) return;
+      setError('Loading inventory is taking too long. Please try again.');
+      setLoading(false);
+    }, 25_000);
 
     apiGetStoreInventory(storeId, page, LIMIT, { q: appliedQ })
       .then(res => {
         if (cancelled) return;
+        setError('');
         setProducts(res.data.products ?? []);
         // Stats cards describe the whole store, not just search matches.
         if (!appliedQ) setStats(res.data.stats);
@@ -123,9 +131,9 @@ export function StoreInventory() {
       .catch((err: unknown) => {
         if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load inventory.');
       })
-      .finally(() => { if (!cancelled) setLoading(false); });
+      .finally(() => { window.clearTimeout(guard); if (!cancelled) setLoading(false); });
 
-    return () => { cancelled = true; };
+    return () => { cancelled = true; window.clearTimeout(guard); };
   }, [storeId, page, refreshKey, appliedQ]);
 
   // Low-stock detail list — independent of pagination, only re-runs on store/refresh.

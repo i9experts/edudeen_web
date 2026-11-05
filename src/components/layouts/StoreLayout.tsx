@@ -25,7 +25,7 @@ import { useLockPageScroll } from '@/hooks/useLockPageScroll';
 import { CommandPalette, type CommandPaletteItem } from '@/components/comman/ui/CommandPalette';
 import { StoreWorkspaceCtx, useStoreWorkspace } from './StoreWorkspaceContext';
 import { SellerStoreRedirect } from '@/router/SellerStoreRedirect';
-import { useStorePlan } from '@/hooks/store/useStorePlan';
+import { useStorePlan, sidebarPlanInfo } from '@/hooks/store/useStorePlan';
 import { useStoreCampaigns } from '@/hooks/store/useStoreCampaigns';
 
 // ── Store Workspace Context ───────────────────────────────────────────────────
@@ -290,7 +290,7 @@ function StoreSidebar({ open, onToggle }: StoreSidebarProps) {
   const navigate     = useNavigate();
   const { pathname, search } = useLocation();
   const { store, storeId, loading } = useStoreWorkspace();
-  const { label: planText, loaded: planLoaded, hasPlan } = useStorePlan(storeId);
+  const { sub: planSub, loaded: planLoaded } = useStorePlan(storeId);
   const { open: paletteOpen, setOpen: setPaletteOpen } = useCommandPalette();
   const paletteItems = buildPaletteItems(navigate, storeId);
   const logout = useLogout();
@@ -317,13 +317,19 @@ function StoreSidebar({ open, onToggle }: StoreSidebarProps) {
   // Real plan allowance from entitlements (monthlyAllowance: -1 = unlimited,
   // 0/unknown = no fixed max) — never a made-up ceiling.
   const [aiCredits, setAiCredits] = useState<{ monthlyAllowance: number; balance: number } | null>(null);
+  const [creditsState, setCreditsState] = useState<'loading' | 'ready' | 'error'>('loading');
   useEffect(() => {
     if (!storeId) return;
     let cancelled = false;
+    setCreditsState('loading');
     // Same wallet AI Studio and Store Settings read (one source of truth).
     apiGetAiStudioCredits(storeId)
-      .then(res => { if (!cancelled) setAiCredits(res.data ? { monthlyAllowance: res.data.monthlyAllowance, balance: res.data.balance } : null); })
-      .catch(() => {});
+      .then(res => {
+        if (cancelled) return;
+        setAiCredits(res.data ? { monthlyAllowance: res.data.monthlyAllowance, balance: res.data.balance } : null);
+        setCreditsState(res.data ? 'ready' : 'error');
+      })
+      .catch(() => { if (!cancelled) setCreditsState('error'); });
     return () => { cancelled = true; };
   }, [storeId]);
   // Plan features (lock badges) + order count (Growth tools start collapsed for young stores).
@@ -339,6 +345,7 @@ function StoreSidebar({ open, onToggle }: StoreSidebarProps) {
       .catch(() => {});
     return () => { cancelled = true; };
   }, [storeId]);
+  const planInfo = sidebarPlanInfo(planSub, storeId, typeof entitlements?.currentPlanName === 'string' ? entitlements.currentPlanName : null);
   const toolsExpanded = growthOpen ?? (orderCount ?? 0) >= GROWTH_TOOLS_OPEN_AFTER_ORDERS;
   const credits    = aiCredits?.balance ?? 0;
   const maxCredits = aiCredits && aiCredits.monthlyAllowance > 0 ? aiCredits.monthlyAllowance : null;
@@ -398,8 +405,12 @@ function StoreSidebar({ open, onToggle }: StoreSidebarProps) {
                 ) : (
                   <>
                     <p className="text-[13px] font-bold text-carbon leading-[1.3] truncate">{store?.name ?? 'Loading…'}</p>
-                    <p className="text-[12px] text-slate leading-[1.3] truncate capitalize">
-                      {hasPlan || planLoaded ? planText : ''}{store?.slug ? ` · /${store.slug}` : ''}
+                    <p className="text-[12px] text-slate leading-[1.3] truncate">
+                      {planLoaded ? planInfo.text : ''}
+                      {planLoaded && planInfo.to && planInfo.cta && (
+                        <> · <Link to={planInfo.to} className="font-semibold text-brand-royal underline">{planInfo.cta}</Link></>
+                      )}
+                      {!(planLoaded && planInfo.to) && store?.slug ? ` · /${store.slug}` : ''}
                     </p>
                   </>
                 )}
@@ -509,11 +520,15 @@ function StoreSidebar({ open, onToggle }: StoreSidebarProps) {
                   <Sparkles size={12} className="text-brand-royal" />
                   <span className="text-[12px] text-graphite">AI Credits</span>
                 </div>
-                <span className="text-[12px] font-bold text-brand-orange">
-                  {unlimited ? 'Unlimited' : maxCredits ? `${credits}/${maxCredits}` : credits}
-                </span>
+                {creditsState === 'loading' ? (
+                  <span className="animate-pulse w-10 h-3 rounded-[3px] bg-bone" aria-label="Loading AI credits" role="status" />
+                ) : (
+                  <span className="text-[12px] font-bold text-brand-orange">
+                    {creditsState === 'error' ? '—' : unlimited ? 'Unlimited' : maxCredits ? `${credits}/${maxCredits}` : credits}
+                  </span>
+                )}
               </div>
-              {maxCredits && (
+              {creditsState === 'ready' && maxCredits && (
                 <div className="h-[5px] bg-bone rounded-full" role="progressbar" aria-valuenow={credits} aria-valuemin={0} aria-valuemax={maxCredits} aria-label="AI credits remaining">
                   <div
                     className="h-full bg-brand-orange rounded-full transition-[width] duration-300"
@@ -822,11 +837,24 @@ function GatedOutlet() {
   if (!loading && error) return <StoreWorkspaceError error={error} onRetry={refetch} />;
   // Own boundary: a page chunk still downloading never blanks the sidebar
   // with RootLayout's full-screen spinner.
-  // The fallback is a small centred spinner (not blank) so a page chunk that is still downloading reads as loading, not broken.
+  // The fallback is a page skeleton (not blank) so a page chunk that is still downloading reads as loading, not broken.
   return (
-    <Suspense fallback={<div className="flex items-center justify-center py-24" role="status" aria-label="Loading"><Loader2 size={22} className="text-brand-orange animate-spin" /></div>}>
+    <Suspense fallback={<StorePageSkeleton />}>
       <Outlet />
     </Suspense>
+  );
+}
+
+function StorePageSkeleton() {
+  return (
+    <div className="px-4 sm:px-6 py-6 animate-pulse" role="status" aria-label="Loading page">
+      <div className="h-7 w-48 rounded-lg bg-bone mb-2" />
+      <div className="h-4 w-72 max-w-full rounded bg-bone mb-6" />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+        {[0, 1, 2, 3].map(i => <div key={i} className="h-24 rounded-2xl bg-bone" />)}
+      </div>
+      <div className="h-64 rounded-2xl bg-bone" />
+    </div>
   );
 }
 
