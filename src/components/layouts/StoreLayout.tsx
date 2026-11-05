@@ -9,7 +9,7 @@ import {
   Settings, Sparkles, ChevronLeft, ChevronRight,
   Megaphone, Star, Search, Wallet, Truck, Boxes, Palette,
   MessageSquare, FolderTree, Undo2, CreditCard,
-  Lock, MoreHorizontal, PanelLeftClose, Loader2, PanelLeftOpen, AlertTriangle, AlertCircle, XCircle, Clock, LogOut,
+  HeartPulse, Lock, MoreHorizontal, PanelLeftClose, Loader2, PanelLeftOpen, AlertTriangle, AlertCircle, XCircle, Clock, LogOut,
 } from 'lucide-react';
 import { EdudeenIcon, EdudeenLogo } from '@/components/comman/ui/EdudeenLogo';
 import { apiGetStoreById, apiGetMyStores, type StoreData } from '@/api/services/store';
@@ -52,6 +52,7 @@ export const NAV: { group: string; items: NavItem[] }[] = [
     items: [
       { id: 'dashboard', Icon: LayoutDashboard, label: 'Dashboard', path: 'dashboard', phone: true },
       { id: 'analytics', Icon: BarChart2,       label: 'Analytics', path: 'analytics' },
+      { id: 'health',    Icon: HeartPulse,      label: 'Store Health', path: 'health' },
     ],
   },
   {

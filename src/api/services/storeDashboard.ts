@@ -67,3 +67,30 @@ export function apiStoreDashboardSummary(storeId: string) {
     `/api/store/${encodeURIComponent(storeId)}/dashboard-summary`,
   );
 }
+
+export type StoreHealthStatus = 'good' | 'attention' | 'insufficient' | 'unavailable';
+export interface StoreHealthMetric {
+  id: 'dispatch' | 'cancellation' | 'returns' | 'responseRate' | 'replyTime' | 'rating' | 'sentBack';
+  label: string;
+  value: number | null;
+  unit: 'percent' | 'minutes' | 'stars' | 'count';
+  sample: number;
+  target: string;
+  status: StoreHealthStatus;
+  hint: string;
+}
+export interface StoreHealth {
+  range: 30 | 90;
+  metrics: StoreHealthMetric[];
+  isNew: boolean;
+  minSamples: number;
+  generatedAt: string;
+}
+
+/** Read-only Store Health numbers (API caches them for 15 minutes). */
+export function apiStoreHealth(storeId: string, range: 30 | 90) {
+  return client.get<never, { success: boolean; data: StoreHealth }>(
+    `/api/store/${encodeURIComponent(storeId)}/health`,
+    { params: { range } },
+  );
+}

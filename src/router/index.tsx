@@ -127,6 +127,7 @@ const StoreProductDetail = lazy(() => import('@/features/seller/store/Dashboard/
 const CourseBuilder      = lazy(() => import('@/features/seller/store/Dashboard/StoreSection/products/CourseBuilder'));
 const CourseStudents     = lazy(() => import('@/features/seller/store/Dashboard/StoreSection/products/CourseStudents'));
 const StoreNotifications = lazy(() => import('@/features/seller/store/Dashboard/Manage/StoreNotifications').then(m => ({ default: m.StoreNotifications })));
+const StoreHealthPage    = lazy(() => import('@/features/seller/store/Dashboard/Manage/StoreHealth').then(m => ({ default: m.StoreHealthPage })));
 const StoreCustomerList  = lazy(() => import('@/features/seller/store/Dashboard/StoreSection/customer/CustomerList'));
 const StoreSettings      = lazy(() => import('@/features/seller/store/Dashboard/Manage/StoreSettings'));
 const StoreCategories    = lazy(() => import('@/features/seller/store/Dashboard/Manage/StoreCategories'));
@@ -413,6 +414,7 @@ const mainRouter = createBrowserRouter([
           { path: 'settings',                         element: <StoreSettings /> },
           { path: 'account',                          element: <SellerSettings /> },
           { path: 'notifications',                    element: <StoreNotifications /> },
+          { path: 'health',                           element: <StoreHealthPage /> },
           { path: 'categories',                       element: <StorePathTabs tabs={CATALOG_TABS} /> },
           { path: 'collections',                      element: <StorePathTabs tabs={CATALOG_TABS} /> },
           { path: 'bundles',                          element: <StorePathTabs tabs={CATALOG_TABS} /> },
