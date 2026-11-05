@@ -42,8 +42,7 @@ export function EdudeenLogo({ size = 32, showWordmark = true, className, variant
       <div className={clsx('flex items-center gap-2', className)}>
         <EdudeenIcon size={size} />
         <div className="flex items-center tracking-wide" style={{ fontSize: textSize }}>
-          <span className="font-normal text-white">EDU</span>
-          <span className="font-extrabold text-white">DEEN</span>
+          <span className="font-bold text-white">EDUDEEN</span>
         </div>
       </div>
     );
