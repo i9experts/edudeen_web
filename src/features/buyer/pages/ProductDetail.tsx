@@ -2,7 +2,7 @@ import { EarlyAccessChip } from '@/components/comman/ui/EarlyAccessChip';
 import { ScrollRow } from '@/components/comman/ui/ScrollRow';
 import { responsiveImg, imgUrl } from '@/utils/cloudinaryImage';
 import { PremiumChip, PremiumTeaser, usePremiumView } from '@/components/comman/marketplace/PremiumBits';
-import { Suspense, useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useRef, useState, useSyncExternalStore, type Ref } from 'react';
 import { useInView } from '@/hooks/useInView';
 import { lazyWithRetry } from '@/utils/lazyWithRetry';
 import { getScrollTop } from '@/utils/scrollRoot';
@@ -136,6 +136,44 @@ function ZoomViewer({ pages, alt, start = 0 }: { pages: string[]; alt: string; s
 }
 
 // ── Image gallery — vertical thumbnail rail (desktop); click opens the zoom viewer ──
+const MAX_THUMBS = 6;
+
+function useIsDesktop() {
+  return useSyncExternalStore(
+    cb => { const m = window.matchMedia('(min-width: 1024px)'); m.addEventListener('change', cb); return () => m.removeEventListener('change', cb); },
+    () => window.matchMedia('(min-width: 1024px)').matches,
+    () => false,
+  );
+}
+
+function ReviewsCard({ innerRef, show, productId, storeName, canReview, className = '' }: {
+  innerRef: Ref<HTMLDivElement>; show: boolean; productId: string; storeName?: string; canReview?: boolean; className?: string;
+}) {
+  return (
+    <div id="reviews" ref={innerRef} className={`bg-white rounded-2xl border border-bone p-6 scroll-mt-24 min-w-0 ${className}`}>
+      {show ? (
+        <Suspense fallback={<ReviewsPlaceholder />}>
+          <AiReviewSummary productId={productId} />
+          <ProductReviewsSection productId={productId} storeName={storeName} canReview={canReview} />
+        </Suspense>
+      ) : (
+        <ReviewsPlaceholder />
+      )}
+    </div>
+  );
+}
+
+// Shown until the reviews block scrolls into view / loads, so the card is never an empty white box.
+function ReviewsPlaceholder() {
+  return (
+    <div aria-busy="true">
+      <h2 className="text-[20px] font-bold text-carbon">Ratings & Reviews</h2>
+      <p className="text-[12px] text-slate mt-1 mb-5">Verified customer feedback and product experiences</p>
+      <div className="h-[72px] rounded-xl bg-bone/40 animate-pulse" aria-hidden="true" />
+    </div>
+  );
+}
+
 function ImageGallery({ images, name }: { images: string[]; name: string }) {
   const [selected, setSelected] = useState(0);
   const [errored, setErrored] = useState<Record<number, boolean>>({});
@@ -154,7 +192,7 @@ function ImageGallery({ images, name }: { images: string[]; name: string }) {
               {...responsiveImg(src, '(min-width: 1024px) 520px, 100vw', [480, 720, 960, 1280], 960)} alt={name} width={960} height={960}
               loading={selected === 0 ? 'eager' : 'lazy'} fetchPriority={selected === 0 ? 'high' : undefined} decoding="async"
               onError={() => setErrored(e => ({ ...e, [selected]: true }))}
-              className="w-full h-full object-contain"
+              className="w-full h-full object-contain p-3"
             />
             <button
               type="button" onClick={() => setViewer(true)} aria-label="Enlarge image"
@@ -173,23 +211,29 @@ function ImageGallery({ images, name }: { images: string[]; name: string }) {
 
       {/* Thumbnails — vertical rail on desktop, horizontal scroll on mobile */}
       {images.length > 1 && (
-        <div className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-y-auto lg:max-h-[460px] scrollbar-hide shrink-0">
-          {images.slice(0, 8).map((img, i) => (
-            <button
-              key={i}
-              onClick={() => setSelected(i)}
-              aria-label={`View image ${i + 1} of ${images.length}`}
-              aria-pressed={selected === i}
-              className={clsx(
-                'w-14 h-14 md:w-16 md:h-16 rounded-[10px] overflow-hidden shrink-0 bg-brand-pale-orange flex items-center justify-center border-2 cursor-pointer transition-all duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange',
-                selected === i ? 'border-brand-orange' : 'border-transparent opacity-70 hover:opacity-100',
-              )}
-            >
-              {!errored[i] && img
-                ? <img loading="lazy" decoding="async" src={imgUrl(img, { w: 128 })} alt="" width={64} height={64} onError={() => setErrored(e => ({ ...e, [i]: true }))} className="w-full h-full object-cover" />
-                : <ProductCoverFallback name={name} size="xs" className="w-full h-full" />}
-            </button>
-          ))}
+        <div className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-visible scrollbar-hide shrink-0">
+          {images.slice(0, MAX_THUMBS).map((img, i) => {
+            const isLast = i === MAX_THUMBS - 1 && images.length > MAX_THUMBS;
+            return (
+              <button
+                key={i}
+                onClick={() => (isLast ? (setSelected(i), setViewer(true)) : setSelected(i))}
+                aria-label={isLast ? `View all ${images.length} images` : `View image ${i + 1} of ${images.length}`}
+                aria-pressed={selected === i}
+                className={clsx(
+                  'relative w-14 h-14 lg:w-[60px] lg:h-[60px] rounded-[10px] overflow-hidden shrink-0 bg-white flex items-center justify-center border-2 cursor-pointer transition-all duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange',
+                  selected === i ? 'border-brand-orange' : 'border-bone opacity-80 hover:opacity-100',
+                )}
+              >
+                {!errored[i] && img
+                  ? <img loading="lazy" decoding="async" src={imgUrl(img, { w: 128 })} alt="" width={64} height={64} onError={() => setErrored(e => ({ ...e, [i]: true }))} className="w-full h-full object-cover" />
+                  : <ProductCoverFallback name={name} size="xs" className="w-full h-full" />}
+                {isLast && (
+                  <span className="absolute inset-0 flex items-center justify-center bg-black/55 text-white text-[13px] font-bold">+{images.length - MAX_THUMBS + 1}</span>
+                )}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
@@ -436,6 +480,7 @@ export function ProductDetail() {
   const product = detail?.product ?? null;
   // Reviews and the "More for this level" / related rails sit below the fold: load them when the reviews block is near the screen.
   const [belowFold, belowRef] = useInView('700px');
+  const isDesktop = useIsDesktop();
 
   // The mobile sticky price/CTA bar only appears once the inline purchase panel has scrolled away (no duplicate CTAs on screen).
   const [showStickyBar, setShowStickyBar] = useState(false);
@@ -734,6 +779,8 @@ export function ProductDetail() {
     ...(!isDigital ? [{ label: 'Delivery', value: 'Shipped by the seller' }] : []),
   ] : [];
 
+  const descriptionExtras = learningDetails.filter(d => !['Suitable for', 'Subject area', 'Delivery'].includes(d.label));
+
   // The license the buyer has picked, if the seller offers several.
   const licenseValue = product?.digital?.licenseType
     ? (activeVariant?.options?.find(o => o.name === 'License')?.value ?? LICENSE_LABEL[product.digital.licenseType] ?? product.digital.licenseType)
@@ -785,7 +832,16 @@ export function ProductDetail() {
 
           {/* ── Gallery + Purchase panel ─────────────────────────────────────── */}
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-6 items-start min-w-0 mb-8">
-            <ImageGallery images={allImages} name={product.name} />
+            <div className="min-w-0 flex flex-col gap-4">
+              <ImageGallery images={allImages} name={product.name} />
+              {/* Desktop: facts sit under the image (fills the column next to the buy panel). Phones get the full-width row below. */}
+              <div className="hidden lg:block">
+                <ProductFacts product={product} subject={subCategory?.name ?? category?.name ?? null} className="" />
+              </div>
+              {isDesktop && (
+                <ReviewsCard innerRef={belowRef} show={belowFold} productId={product._id} storeName={storeData?.name ?? product.storeName ?? product.sellerName} canReview={product.canReview} />
+              )}
+            </div>
 
             {/* Sticky wrapper's "stick range" is bounded by its own parent —
                 that parent must be exactly this grid row (matched in height
@@ -821,10 +877,10 @@ export function ProductDetail() {
                       {product.activeCampaign?.earlyAccess && <EarlyAccessChip startDate={product.activeCampaign.startDate} />}
                     </div>
                   </div>
-                  <h1 className="text-[20px] font-bold text-carbon mb-[6px] leading-[1.35] break-words">
+                  <h1 className="text-[22px] font-bold text-carbon mb-2 leading-[1.3] break-words">
                     {lang === 'ur' && product.nameUr ? product.nameUr : product.name}
                   </h1>
-                  <p className="text-[12px] text-slate mb-4 flex items-center gap-1 flex-wrap">
+                  <p className="text-[13px] text-slate mb-4 flex items-center gap-x-2 gap-y-1 flex-wrap">
                     {/* "Sold by" prefers the store/brand name (what a buyer is
                         actually shopping from) over the individual seller's
                         personal account name — falls back to sellerName only
@@ -848,6 +904,7 @@ export function ProductDetail() {
                   </p>
 
                   {/* Price */}
+                  <div className="rounded-xl border border-bone bg-cream/60 px-4 py-3 mb-4">
                   {memberShown != null && displayPrice != null ? (
                     <>
                       <div className="flex items-baseline gap-[10px] mb-1">
@@ -880,7 +937,7 @@ export function ProductDetail() {
                     </>
                   )}
                   {displayPrice !== 0 && (
-                    <p className="text-[12px] text-slate mb-2 mt-0">
+                    <p className="text-[12px] text-slate mb-0 mt-2 pt-2 border-t border-bone">
                       {isPhysical ? 'Refund can be requested after delivery.' : 'Refund available only if you have not downloaded the file.'}{' '}
                       <Link to="/returns" className="font-semibold text-brand-royal underline">Returns policy</Link>
                     </p>
@@ -890,6 +947,7 @@ export function ProductDetail() {
                       Members pay {formatPrice(convert(activeVariant.subscriberPrice, activeVariant.currency), displayCurrency)} — save {activeVariant.discountPercent}%
                     </p>
                   )}
+                  </div>
 
                   {/* Stock / delivery status */}
                   <div className={clsx(
@@ -1052,7 +1110,9 @@ export function ProductDetail() {
             </div>
           </div>
 
-          <ProductFacts product={product} subject={subCategory?.name ?? category?.name ?? null} />
+          <div className="lg:hidden">
+            <ProductFacts product={product} subject={subCategory?.name ?? category?.name ?? null} />
+          </div>
 
           {product && <CourseInfo product={product} />}
           {product && <BundleOffer productId={product._id} />}
@@ -1076,9 +1136,10 @@ export function ProductDetail() {
               <div className="p-6">
                 {activeTab === 'description' && (
                   <div>
-                    {learningDetails.length > 1 && (
+                    {/* Class / Subject / Delivery are already in the facts row and buy box — not repeated here. */}
+                    {descriptionExtras.length > 0 && (
                       <dl className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-3 rounded-xl border border-bone bg-cream/60 px-4 py-3 mb-5">
-                        {learningDetails.map(d => (
+                        {descriptionExtras.map(d => (
                           <div key={d.label} className="min-w-0">
                             <dt className="text-[12px] font-semibold uppercase tracking-[0.06em] text-slate">{t(d.label)}</dt>
                             <dd className="text-[13px] font-semibold text-carbon mt-[2px] break-words">{d.value}</dd>
@@ -1086,7 +1147,7 @@ export function ProductDetail() {
                         ))}
                       </dl>
                     )}
-                    <p className="text-[13px] text-slate leading-[1.8] mb-4 whitespace-pre-line">{(lang === 'ur' && product.descriptionUr) || product.description || 'No description available.'}</p>
+                    <p className="text-[14px] text-charcoal/80 leading-[1.8] mb-4 whitespace-pre-line max-w-[72ch]">{(lang === 'ur' && product.descriptionUr) || product.description || 'No description available.'}</p>
                     {(product.tags?.length ?? 0) > 0 && (
                       <div className="flex flex-wrap gap-[6px]">
                         {product.tags!.map(tag => (
@@ -1231,14 +1292,10 @@ export function ProductDetail() {
             </div>
 
           {/* ── Reviews ────────────────────────────────────────────────────────── */}
-          <div id="reviews" ref={belowRef} className="bg-white rounded-2xl border border-bone p-6 mb-6 scroll-mt-24 min-h-[320px]">
-            {belowFold && (
-              <Suspense fallback={<div className="h-[260px] rounded-xl bg-bone/40 animate-pulse" aria-hidden="true" />}>
-                <AiReviewSummary productId={product._id} />
-                <ProductReviewsSection productId={product._id} storeName={storeData?.name ?? product.storeName ?? product.sellerName} canReview={product.canReview} />
-              </Suspense>
-            )}
-          </div>
+          {/* Desktop: the reviews card lives under the gallery (above). Phones/tablets: here, after the tabs. */}
+          {!isDesktop && (
+            <ReviewsCard innerRef={belowRef} show={belowFold} productId={product._id} storeName={storeData?.name ?? product.storeName ?? product.sellerName} canReview={product.canReview} className="mb-6" />
+          )}
 
           {/* ── Bought together ──────────────────────────────────────────────── */}
           {alsoBought.products.length > 0 && (

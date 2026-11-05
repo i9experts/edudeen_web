@@ -16,7 +16,7 @@ function durationText(totalMinutes: number): string {
   return h ? `${h}h` : `${m}m`;
 }
 
-export function ProductFacts({ product, subject }: { product: Pick<MarketplaceProduct, 'classFrom' | 'classTo' | 'language' | 'digital' | 'courseSummary' | 'deliveryFormat' | 'type'>; subject?: string | null }) {
+export function ProductFacts({ product, subject, className = 'mb-6' }: { product: Pick<MarketplaceProduct, 'classFrom' | 'classTo' | 'language' | 'digital' | 'courseSummary' | 'deliveryFormat' | 'type'>; subject?: string | null; className?: string }) {
   const t = useT();
   const isDigital = product.type === 'digital';
   const isCourse = isDigital && product.deliveryFormat === 'course';
@@ -46,7 +46,7 @@ export function ProductFacts({ product, subject }: { product: Pick<MarketplacePr
   return (
     <dl
       aria-label={t('Product facts')}
-      className="grid grid-cols-2 sm:grid-cols-[repeat(auto-fit,minmax(130px,1fr))] gap-px overflow-hidden rounded-2xl border border-bone bg-bone mb-6 min-w-0"
+      className={`grid grid-cols-2 sm:grid-cols-[repeat(auto-fit,minmax(130px,1fr))] gap-px overflow-hidden rounded-2xl border border-bone bg-bone min-w-0 ${className}`}
     >
       {facts.map(f => (
         <div key={f.label} className="bg-white px-4 py-3 min-w-0">

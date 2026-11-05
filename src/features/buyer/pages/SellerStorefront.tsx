@@ -247,9 +247,9 @@ export function SellerStorefront() {
       <CoverImage
         className={clsx(
           'flex',
-          bannerLayout === 'compact' ? 'min-h-[180px] sm:min-h-[220px] items-end' :
-          bannerLayout === 'immersive' ? 'min-h-[420px] sm:min-h-[520px] lg:min-h-[620px] items-center' :
-          'min-h-[300px] sm:min-h-[360px] lg:min-h-[420px] items-end',
+          bannerLayout === 'compact' ? 'min-h-[150px] sm:min-h-[180px] items-end' :
+          bannerLayout === 'immersive' ? 'min-h-[320px] sm:min-h-[380px] lg:min-h-[440px] items-center' :
+          'min-h-[210px] sm:min-h-[240px] lg:min-h-[270px] items-end',
         )}
         src={store.coverImage}
         loading="eager"
@@ -261,14 +261,14 @@ export function SellerStorefront() {
           ? <BannerCarousel entityType="store_banner" banners={storeBanners.map(b => ({ _id: b._id, order: b.order, imageUrl: b.imageUrl, linkUrl: b.linkTarget, mobileImageUrl: b.mobileImageUrl }))} />
           : undefined}
       >
-        <div className={clsx('px-4 sm:px-6 lg:px-10 w-full', bannerLayout === 'compact' ? 'py-4 sm:py-5' : 'py-7 sm:py-9')}>
+        <div className={clsx('px-4 sm:px-6 lg:px-10 w-full max-w-[1480px] mx-auto', bannerLayout === 'compact' ? 'py-3 sm:py-4' : 'py-4 sm:py-5')}>
           <div className={clsx(
             'flex gap-5 sm:gap-6',
             bannerLayout === 'immersive' ? 'flex-col items-center text-center' : 'flex-col sm:flex-row items-start sm:items-center',
           )}>
             <div className={clsx(
               'rounded-[18px] bg-white flex items-center justify-center shrink-0 outline outline-2 outline-white/40',
-              bannerLayout === 'compact' ? 'w-[52px] h-[52px]' : bannerLayout === 'immersive' ? 'w-[96px] h-[96px] sm:w-[108px] sm:h-[108px]' : 'w-[72px] h-[72px] sm:w-[84px] sm:h-[84px]',
+              bannerLayout === 'compact' ? 'w-[52px] h-[52px]' : bannerLayout === 'immersive' ? 'w-[96px] h-[96px] sm:w-[108px] sm:h-[108px]' : 'w-[60px] h-[60px] sm:w-[72px] sm:h-[72px]',
             )}>
               {store.logo
                 ? <img loading="lazy" decoding="async" src={store.logo} alt={store.name} className="w-full h-full rounded-[18px] object-cover" />
@@ -276,13 +276,13 @@ export function SellerStorefront() {
             </div>
 
             <div className={clsx('flex-1 min-w-0', bannerLayout === 'immersive' && 'flex-none max-w-2xl')}>
-              <h1 className={clsx('font-bold text-white mb-[4px] leading-tight', bannerLayout === 'compact' ? 'text-[17px]' : bannerLayout === 'immersive' ? 'text-[28px] sm:text-[34px]' : 'text-[22px] sm:text-[26px]')}>{store.name}</h1>
+              <h1 className={clsx('font-bold text-white mb-[4px] leading-tight', bannerLayout === 'compact' ? 'text-[17px]' : bannerLayout === 'immersive' ? 'text-[28px] sm:text-[34px]' : 'text-[19px] sm:text-[22px]')}>{store.name}</h1>
               {store.tagline && bannerLayout !== 'compact' && (
                 <p className="text-[12.5px] sm:text-[13.5px] text-[rgba(255,255,255,0.85)] font-medium -mt-[2px] mb-[4px]">{store.tagline}</p>
               )}
               {showBadges && <div className={clsx(bannerLayout === 'immersive' && 'flex justify-center')}><StoreBadges badges={store.badges} sellerType={store.sellerType} /></div>}
               {store.description && bannerLayout !== 'compact' && (
-                <p className={clsx('text-[12px] sm:text-[13px] text-[rgba(255,255,255,0.75)] mt-[8px] mb-[10px]', descriptionClampCls || 'line-clamp-2')}>{store.description}</p>
+                <p className={clsx('text-[12px] sm:text-[13px] text-[rgba(255,255,255,0.8)] mt-[6px] mb-[4px] max-w-2xl', descriptionClampCls || 'line-clamp-1')}>{store.description}</p>
               )}
               <div className={clsx('flex items-center gap-[5px] text-[12px] text-[rgba(255,255,255,0.7)] mt-[6px]', bannerLayout === 'immersive' && 'justify-center')}>
                 {showRating && (store.reviewCount ?? 0) >= TRUST_MIN_SAMPLES && (
@@ -307,7 +307,7 @@ export function SellerStorefront() {
               </div>
             </div>
 
-            <div className={clsx('flex flex-wrap gap-2 items-center justify-center shrink-0', bannerLayout === 'immersive' ? 'sm:flex-row' : 'sm:flex-col sm:items-end')}>
+            <div className={clsx('flex flex-wrap gap-2 items-center justify-center shrink-0', 'sm:flex-row')}>
               {SHOW_RETIRED_EXTRAS && showLoyaltyBtn && isLoggedIn && loyalty && (
                 <button onClick={openRewards}
                   style={{ borderRadius: cfg.buttonRadiusPx }}

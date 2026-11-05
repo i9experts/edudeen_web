@@ -19,9 +19,9 @@ interface Props {
 
 interface FieldValues { cls: string; subject: string; minS: string; maxS: string }
 
-function Fields({ v, set, facets, filters, error, onCommit }: {
+function Fields({ v, set, facets, filters, error, onCommit, compact }: {
   v: FieldValues; set: (p: Partial<FieldValues>) => void; facets: StoreCatalogFacets | null;
-  filters: CatalogFilters; error: string | null; onCommit?: (p: Partial<FieldValues>) => void;
+  filters: CatalogFilters; error: string | null; onCommit?: (p: Partial<FieldValues>) => void; compact?: boolean;
 }) {
   const { currency } = useCurrencyPreference();
   // The selected option stays visible even if the facet list no longer has it (old link).
@@ -32,33 +32,33 @@ function Fields({ v, set, facets, filters, error, onCommit }: {
   return (
     <>
       {(classes.length > 0 || filters.cls) && (
-        <Select label="Class" value={v.cls} onChange={e => pick({ cls: e.target.value })}>
+        <Select aria-label="Class" className={compact ? 'h-9! text-[13px]!' : undefined} value={v.cls} onChange={e => pick({ cls: e.target.value })}>
           <option value="">All classes</option>
           {classes.map(c => <option key={c.value} value={c.value}>{c.label} ({c.count})</option>)}
           {filters.cls && !classes.some(c => c.value === filters.cls) && <option value={filters.cls}>{filters.cls}</option>}
         </Select>
       )}
       {(subjects.length > 0 || filters.subject) && (
-        <Select label="Subject" value={v.subject} onChange={e => pick({ subject: e.target.value })}>
+        <Select aria-label="Subject" className={compact ? 'h-9! text-[13px]!' : undefined} value={v.subject} onChange={e => pick({ subject: e.target.value })}>
           <option value="">All subjects</option>
           {subjects.map(s => <option key={s.id} value={s.id}>{s.name} ({s.count})</option>)}
           {filters.subject && !subjects.some(s => s.id === filters.subject) && <option value={filters.subject}>{filters.subject}</option>}
         </Select>
       )}
       <fieldset className="w-full">
-        <legend className="block text-[12px] font-medium text-charcoal mb-1.5">Price <span translate="no">({currency})</span></legend>
+        <legend className={compact ? 'sr-only' : 'block text-[12px] font-medium text-charcoal mb-1.5'}>Price <span translate="no">({currency})</span></legend>
         <div className="flex items-center gap-2">
           <input type="number" inputMode="decimal" min={0} aria-label="Min price" placeholder={priceHint ? `Min ${priceHint.split(' – ')[0]}` : 'Min price'}
             value={v.minS} data-no-live-validate
             onChange={e => set({ minS: e.target.value })} onBlur={() => onCommit?.({})}
             onKeyDown={e => { if (e.key === 'Enter') onCommit?.({}); }}
-            className="w-full h-10 px-3 rounded-lg border border-bone bg-white text-[13px]" />
+            className={compact ? 'w-full h-9 px-3 rounded-lg border border-bone bg-white text-[13px]' : 'w-full h-10 px-3 rounded-lg border border-bone bg-white text-[13px]'} />
           <span aria-hidden className="text-slate">–</span>
           <input type="number" inputMode="decimal" min={0} aria-label="Max price" placeholder={priceHint ? `Max ${priceHint.split(' – ')[1]}` : 'Max price'}
             value={v.maxS} data-no-live-validate
             onChange={e => set({ maxS: e.target.value })} onBlur={() => onCommit?.({})}
             onKeyDown={e => { if (e.key === 'Enter') onCommit?.({}); }}
-            className="w-full h-10 px-3 rounded-lg border border-bone bg-white text-[13px]" />
+            className={compact ? 'w-full h-9 px-3 rounded-lg border border-bone bg-white text-[13px]' : 'w-full h-10 px-3 rounded-lg border border-bone bg-white text-[13px]'} />
         </div>
         {error && <p role="alert" className="text-[12px] text-error mt-1">{error}</p>}
       </fieldset>
@@ -108,13 +108,13 @@ export function StoreCatalogFilterBar({ filters, facets, onChange }: Props) {
   const count = sheetFilterCount(filters);
 
   return (
-    <div className="mb-3 flex flex-col gap-3">
-      <div className="flex items-center gap-2">
+    <div className="mb-3 flex flex-col gap-2 md:flex-row md:items-start md:gap-2">
+      <div className="flex items-center gap-2 md:flex-1 md:min-w-0">
         <div className="relative flex-1 min-w-0">
           <Search size={15} aria-hidden className="absolute start-3 top-1/2 -translate-y-1/2 text-slate pointer-events-none" />
           <input type="search" value={qInput} onChange={e => setQInput(e.target.value)} maxLength={100}
-            aria-label="Search this store" placeholder="Search this store" data-no-live-validate
-            className="w-full h-10 ps-9 pe-8 rounded-lg border border-bone bg-white text-[13px]" />
+            aria-label="Search this store" placeholder="Search in this store" data-no-live-validate
+            className="w-full h-9 ps-9 pe-8 rounded-lg border border-bone bg-white text-[13px]" />
           {qInput && (
             <button type="button" aria-label="Clear search" onClick={() => { setQInput(''); onChange({ q: '' }); }}
               className="absolute end-2 top-1/2 -translate-y-1/2 p-1 text-slate bg-transparent border-none cursor-pointer"><X size={14} /></button>
@@ -122,15 +122,15 @@ export function StoreCatalogFilterBar({ filters, facets, onChange }: Props) {
         </div>
         <button type="button" onClick={() => { setDraft(fromFilters()); setSheetOpen(true); }}
           aria-label={count ? `Filters (${count} applied)` : 'Filters'}
-          className="md:hidden relative shrink-0 inline-flex items-center gap-1.5 h-10 px-3 rounded-lg border border-bone bg-white text-[13px] font-semibold cursor-pointer"
+          className="md:hidden relative shrink-0 inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-bone bg-white text-[13px] font-semibold cursor-pointer"
           style={{ color: cfg.textColor }}>
           <SlidersHorizontal size={15} aria-hidden /> Filters
           {count > 0 && <span className="min-w-[18px] h-[18px] px-1 rounded-full text-[12px] leading-[18px] text-white text-center" style={{ background: cfg.primaryColor }}>{count}</span>}
         </button>
       </div>
 
-      <div className="hidden md:grid grid-cols-[repeat(3,minmax(0,1fr))] gap-3 items-start">
-        <Fields v={inline} set={p => setInline(s => ({ ...s, ...p }))} facets={facets} filters={filters} error={inlineErr}
+      <div className="hidden md:grid md:grid-cols-[150px_170px_210px] gap-2 items-start shrink-0">
+        <Fields compact v={inline} set={p => setInline(s => ({ ...s, ...p }))} facets={facets} filters={filters} error={inlineErr}
           onCommit={p => commit({ ...inline, ...p })} />
       </div>
 

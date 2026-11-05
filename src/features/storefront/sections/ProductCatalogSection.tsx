@@ -155,31 +155,25 @@ export function ProductCatalogSection({ settings }: { settings: ProductCatalogSe
   const filtered = anyFilterActive(filters) || activeTag !== 'all' || !!collection;
   const kindOptions = KIND_OPTIONS.filter(o => o.value === 'all' || !facets || facets.kinds[o.value] > 0 || kind === o.value);
 
-  const colClass = { 2: 'grid-cols-2', 3: 'grid-cols-2 md:grid-cols-3', 4: 'grid-cols-2 md:grid-cols-3 xl:grid-cols-4' }[settings.columns ?? 3];
-  const gapClass = cfg.productGridDensity === 'relaxed' ? 'gap-4 sm:gap-5 lg:gap-6' : 'gap-[10px] sm:gap-3 lg:gap-[14px]';
+  // Marketplace-style density: 2 on phones up to 5-6 on wide screens (cards stay small instead of stretching).
+  const colClass = { 2: 'grid-cols-2', 3: 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6', 4: 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6' }[settings.columns ?? 3];
+  const gapClass = cfg.productGridDensity === 'relaxed' ? 'gap-3 sm:gap-4 lg:gap-5' : 'gap-2.5 sm:gap-3';
+
+  // Seller tags, de-duplicated ("HURRY UP!", "Hurry Up", "Hurry Up !" are one tag) and capped so the row stays tidy.
+  const seen = new Set<string>();
+  const cleanTags = tags.filter(t => {
+    const key = t.toLowerCase().replace(/[^a-z0-9؀-ۿ]/g, '');
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  }).slice(0, 10);
 
   return (
-    <div className="px-4 sm:px-6 lg:px-10" style={{ paddingTop: 24 * cfg.sectionSpacingScale, paddingBottom: 24 * cfg.sectionSpacingScale }}>
-      {settings.heading && <h2 className="font-bold mb-4" style={{ color: cfg.textColor, fontSize: Math.round(20 * cfg.typeScaleFactor) }}>{settings.heading}</h2>}
+    <div className="px-4 sm:px-6 lg:px-10 max-w-[1480px] mx-auto w-full" style={{ paddingTop: 20 * cfg.sectionSpacingScale, paddingBottom: 24 * cfg.sectionSpacingScale }}>
+      {settings.heading && <h2 className="font-bold mb-3" style={{ color: cfg.textColor, fontSize: Math.round(18 * cfg.typeScaleFactor) }}>{settings.heading}</h2>}
 
       {urlMode && settings.showFilters !== false && (
         <StoreCatalogFilterBar filters={filters} facets={facets} onChange={setFilters} />
-      )}
-
-      {settings.showFilters !== false && !settings.search && (
-        <div role="group" aria-label="Product type" className="flex items-center gap-2 overflow-x-auto scrollbar-none mb-3">
-          {kindOptions.map(o => {
-            const active = kind === o.value;
-            return (
-              <button key={o.value} type="button" aria-pressed={active}
-                onClick={() => setFilters({ kind: o.value })}
-                className="shrink-0 px-3 py-[6px] rounded-full text-[13px] font-semibold border cursor-pointer whitespace-nowrap transition-colors"
-                style={active ? { background: cfg.primaryColor, color: '#fff', borderColor: cfg.primaryColor } : { background: 'transparent', color: cfg.textColor, borderColor: '#D9D7CF' }}>
-                {o.label}
-              </button>
-            );
-          })}
-        </div>
       )}
 
       {urlMode && settings.showFilters !== false && (facetsLoading || facetsError || collectionTabs.length > 0) && (
@@ -189,31 +183,49 @@ export function ProductCatalogSection({ settings }: { settings: ProductCatalogSe
           primaryColor={cfg.primaryColor} textColor={cfg.textColor} />
       )}
 
-      {settings.showFilters !== false && tags.length > 0 && !(urlMode && collectionTabs.length > 0) && !(urlMode && facetsLoading && !facets) && (
-        <div className="flex items-center gap-5 overflow-x-auto scrollbar-none mb-3 border-b border-bone">
-          {['all', ...tags].map(tag => {
+      {settings.showFilters !== false && cleanTags.length > 0 && !(urlMode && collectionTabs.length > 0) && !(urlMode && facetsLoading && !facets) && (
+        <div role="group" aria-label="Tags" className="flex items-center gap-1.5 overflow-x-auto scrollbar-none mb-3">
+          {['all', ...cleanTags].map(tag => {
             const active = activeTag === tag;
             return (
-              <button key={tag} onClick={() => { setActiveTag(tag); setFilters({}); }}
-                className="relative shrink-0 py-[10px] text-[13px] font-semibold bg-transparent border-none cursor-pointer whitespace-nowrap"
-                style={{ color: active ? cfg.primaryColor : '#8C8A82' }}>
-                {tag === 'all' ? 'All Products' : tag}
-                <span className="absolute start-0 end-0 -bottom-[1px] h-[2px] rounded-full origin-left transition-transform duration-200"
-                  style={{ background: cfg.primaryColor, transform: active ? 'scaleX(1)' : 'scaleX(0)' }} />
+              <button key={tag} type="button" aria-pressed={active} onClick={() => { setActiveTag(tag); setFilters({}); }}
+                className="shrink-0 px-2.5 py-1 rounded-md text-[12px] font-medium border cursor-pointer whitespace-nowrap transition-colors"
+                style={active ? { background: cfg.primaryColor + '14', color: cfg.primaryColor, borderColor: cfg.primaryColor } : { background: '#fff', color: '#5F5D56', borderColor: '#E5E3DB' }}>
+                {tag === 'all' ? 'All' : tag}
               </button>
             );
           })}
         </div>
       )}
 
-      <div className="flex items-center justify-between mb-4">
-        <span className="text-[13px]" style={{ color: cfg.textColor + '99' }}>{total} Products</span>
-        <FilterDropdown options={SORT_OPTIONS} value={sortBy} onChange={v => setFilters({ sort: v as typeof sortBy })} />
+      {/* One toolbar row: product-type pills on the left, count + sort on the right. */}
+      <div className="flex items-center justify-between gap-3 mb-3 pb-3 border-b border-bone">
+        <div className="flex items-center gap-1.5 min-w-0 overflow-x-auto scrollbar-none">
+          {settings.showFilters !== false && !settings.search && (
+            <div role="group" aria-label="Product type" className="flex items-center gap-1.5">
+              {kindOptions.map(o => {
+                const active = kind === o.value;
+                return (
+                  <button key={o.value} type="button" aria-pressed={active}
+                    onClick={() => setFilters({ kind: o.value })}
+                    className="shrink-0 px-3 py-1 rounded-full text-[13px] font-semibold border cursor-pointer whitespace-nowrap transition-colors"
+                    style={active ? { background: cfg.primaryColor, color: '#fff', borderColor: cfg.primaryColor } : { background: 'transparent', color: cfg.textColor, borderColor: '#D9D7CF' }}>
+                    {o.label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+        <div className="flex items-center gap-3 shrink-0">
+          <span className="hidden sm:inline text-[13px] whitespace-nowrap" style={{ color: cfg.textColor + '99' }}>{total} {total === 1 ? 'result' : 'results'}</span>
+          <FilterDropdown options={SORT_OPTIONS} value={sortBy} onChange={v => setFilters({ sort: v as typeof sortBy })} />
+        </div>
       </div>
 
       {loading ? (
         <div className={clsx('grid', gapClass, colClass)}>
-          {[1, 2, 3, 4, 5, 6, 7, 8].map(i => <SkeletonBox key={i} height={170} rounded="10px" />)}
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(i => <SkeletonBox key={i} height={250} rounded="10px" />)}
         </div>
       ) : error ? (
         <div role="alert" className="flex flex-col items-center py-16 gap-3">
@@ -230,7 +242,7 @@ export function ProductCatalogSection({ settings }: { settings: ProductCatalogSe
         </div>
       ) : (
         <>
-          <div className={clsx('grid gap-[10px] sm:gap-3 lg:gap-[14px]', colClass)}>
+          <div className={clsx('grid', gapClass, colClass)}>
             {products.map(p => {
               const pType = p.productType ?? p.type ?? 'physical';
               const isPhysical = pType === 'physical';
@@ -273,7 +285,7 @@ export function ProductCatalogSection({ settings }: { settings: ProductCatalogSe
                       </div>
                     )}
                   </ProductCardImage>
-                  <div className="flex-1 flex flex-col px-2 pt-2 pb-2 sm:px-3 sm:pt-[10px] sm:pb-3 min-w-0">
+                  <div className="flex-1 flex flex-col px-2.5 pt-2 pb-2.5 min-w-0">
                     {/* Title always reserves 2 lines so cards in a row line up; rating and class lines only take room when present. */}
                     <p className="font-bold text-[12px] sm:text-[13px] mb-[3px] leading-[1.4] line-clamp-2 min-h-[2.8em] break-words" style={{ color: cfg.textColor }}>{p.name}</p>
                     {classLabel && <p className="text-[12px] text-slate truncate mb-[2px]">{classLabel}</p>}
@@ -300,11 +312,16 @@ export function ProductCatalogSection({ settings }: { settings: ProductCatalogSe
                           </s>
                         )}
                       </span>
-                      <Button variant="secondary" size="sm" className="inline-flex" disabled={!vId || adding === vId} title={!vId ? 'Currently unavailable' : undefined}
-                        onClick={e => { e.stopPropagation(); if (vId) addToCart(p._id, vId, isPhysical ? 'physical' : 'digital'); }}>
-                        {adding === vId ? <Loader2 size={11} className="animate-spin" /> : <ShoppingCart size={11} />}
-                        <span className="hidden lg:inline">{!vId ? 'Unavailable' : adding === vId ? 'Adding…' : 'Add to Cart'}</span>
-                      </Button>
+                      <button type="button" disabled={!vId || adding === vId}
+                        aria-label={!vId ? 'Currently unavailable' : `Add ${p.name} to cart`}
+                        title={!vId ? 'Currently unavailable' : 'Add to cart'}
+                        onClick={e => { e.stopPropagation(); if (vId) addToCart(p._id, vId, isPhysical ? 'physical' : 'digital'); }}
+                        className="shrink-0 w-8 h-8 rounded-full inline-flex items-center justify-center border cursor-pointer transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                        style={{ color: cfg.primaryColor, borderColor: cfg.primaryColor, background: '#fff' }}
+                        onMouseEnter={e => { if (!e.currentTarget.disabled) { e.currentTarget.style.background = cfg.primaryColor; e.currentTarget.style.color = '#fff'; } }}
+                        onMouseLeave={e => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.color = cfg.primaryColor; }}>
+                        {adding === vId ? <Loader2 size={14} className="animate-spin" /> : <ShoppingCart size={14} />}
+                      </button>
                     </div>
                   </div>
                 </ProductCardShell>

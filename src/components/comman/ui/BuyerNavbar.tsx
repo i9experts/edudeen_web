@@ -404,7 +404,7 @@ export function SearchBox({
     let cancelled = false;
     setPoolLoading(true);
     const id = setTimeout(() => {
-      apiSearchProducts(query, 1, 4, { suggest: true })
+      apiSearchProducts(query, 1, 8, { suggest: true })
         .then(res => { if (!cancelled) setProductMatches(res.data?.products ?? []); })
         .catch(() => { if (!cancelled) setProductMatches([]); })
         .finally(() => { if (!cancelled) setPoolLoading(false); });
@@ -494,6 +494,26 @@ export function SearchBox({
   // Typing state — grouped, deliberately capped small (this is a preview,
   // not a results page; "View all results" is what a shopper wants for more).
   const matchingProducts = isTyping ? productMatches.slice(0, 4) : [];
+  // Hints from the seller's own product tags: a tag that contains what the buyer typed, with the product that carries
+  // it (one hint per tag, max 4). Clicking a hint opens that product.
+  const tagHints = (() => {
+    if (!isTyping) return [] as { tag: string; slug: string; name: string }[];
+    const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9؀-ۿ]/g, '');
+    const q = norm(value);
+    if (q.length < 2) return [];
+    const seenTags = new Set<string>();
+    const out: { tag: string; slug: string; name: string }[] = [];
+    for (const p of productMatches) {
+      for (const t of p.tags ?? []) {
+        const k = norm(t);
+        if (!k || seenTags.has(k) || !k.includes(q)) continue;
+        seenTags.add(k);
+        out.push({ tag: t.trim(), slug: p.slug, name: p.name });
+        if (out.length >= 4) return out;
+      }
+    }
+    return out;
+  })();
   const matchingCategories = isTyping ? (categories ?? []).filter(c => c.name.toLowerCase().includes(query)).slice(0, 5) : [];
 
   const typeLabel = (p: MarketplaceProduct) => {
@@ -774,6 +794,22 @@ export function SearchBox({
             ) : (
               <>
                 {/* ── Typing state: grouped Products / Stores / Categories, then "View all results" ── */}
+                {tagHints.length > 0 && (
+                  <div className="px-3 py-3 border-b border-bone">
+                    <div className="px-1"><SearchSectionLabel icon={<Tag size={10} />}>Suggested tags</SearchSectionLabel></div>
+                    <div className="flex flex-col gap-[2px]">
+                      {tagHints.map(h => (
+                        <button key={h.tag} type="button" onClick={() => goToProduct(h.slug)}
+                          className="flex items-center gap-2 w-full px-2 py-2 rounded-lg text-start bg-transparent border-none cursor-pointer hover:bg-cream">
+                          <Tag size={13} className="text-brand-royal shrink-0" aria-hidden />
+                          <span className="text-[13px] font-semibold text-carbon shrink-0" translate="no">{h.tag}</span>
+                          <span className="text-[12px] text-slate truncate min-w-0">· {h.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {(matchingProducts.length > 0 || poolLoading) && (
                   <div className="px-3 py-3 border-b border-bone">
                     <div className="px-1"><SearchSectionLabel icon={<Sparkles size={10} />}>Products</SearchSectionLabel></div>
