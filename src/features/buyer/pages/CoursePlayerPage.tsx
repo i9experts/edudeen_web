@@ -196,7 +196,7 @@ export function CoursePlayerPage() {
   return (
     <div className="min-h-screen bg-white flex flex-col">
       <header className="sticky top-0 z-30 bg-carbon text-white px-4 md:px-6 h-[56px] flex items-center gap-3">
-        <Link to="/" className="shrink-0" aria-label="Edudeen home"><EdudeenLogo size={22} /></Link>
+        <Link to="/" className="shrink-0" aria-label="Edudeen home"><EdudeenLogo size={26} variant="light" /></Link>
         <span className="hidden sm:block w-px h-5 bg-white/20" />
         <Link to={`/product/${view.product.slug}`} className="text-[13.5px] font-semibold text-white no-underline truncate">{view.product.name}</Link>
         <div className="ms-auto flex items-center gap-3">
