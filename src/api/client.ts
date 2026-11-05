@@ -120,7 +120,9 @@ client.interceptors.response.use(
     // frontend/backend pair), surface a readable error here instead of
     // letting every call site's `const { x } = res.data` throw a raw
     // "Cannot destructure property 'x' of 'res.data' as it is undefined".
-    if (res.data === null || res.data === undefined || typeof res.data !== 'object') {
+    // CSV / file downloads (responseType 'text' | 'blob' | 'arraybuffer') legitimately return a string/blob body.
+    const wantsRaw = ['text', 'blob', 'arraybuffer'].includes(String(res.config?.responseType ?? ''));
+    if (!wantsRaw && (res.data === null || res.data === undefined || typeof res.data !== 'object')) {
       throw Object.assign(new Error('Unexpected response from server. Please try again.'), {
         isNetworkError: false,
         status: res.status,

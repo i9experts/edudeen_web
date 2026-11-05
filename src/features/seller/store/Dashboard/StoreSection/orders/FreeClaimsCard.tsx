@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Gift } from 'lucide-react';
 import { Card, Avatar, Button, InlineError } from '@/components/comman/ui';
 import { apiGetSellerFreeClaims, type FreeClaim } from '@/api/services/product';
+import { useLiveRefresh } from '@/hooks/useLiveRefresh';
 
 const PAGE = 10;
 
@@ -22,6 +23,9 @@ export function FreeClaimsCard({ storeId }: { storeId: string }) {
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, [storeId, page, retry]);
+
+  // A new free claim arrives as an order write: re-read quietly (no loading flash).
+  useLiveRefresh(['orders'], () => setRetry(n => n + 1));
 
   if (!loading && !error && total === 0) return null;
 

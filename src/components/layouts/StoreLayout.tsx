@@ -148,8 +148,9 @@ function StoreNavProvider({ children }: { children: ReactNode }) {
   const value = useMemo<StoreNavState>(() => {
     const types = (store as { productTypes?: string[] } | null)?.productTypes;
     // Unknown product types -> show it (never hide a tool because data has not loaded).
-    const hasPhysical = !types || types.length === 0 || types.includes('physical');
-    const hasDigital = !types || types.length === 0 || types.some(t => t !== 'physical');
+    // Stored store.productTypes values are 'physical_products' / 'digital_downloads' / 'educational_resources' (not 'physical').
+    const hasPhysical = !types || types.length === 0 || types.includes('physical_products');
+    const hasDigital = !types || types.length === 0 || types.some(t => t === 'digital_downloads' || t === 'educational_resources');
     return {
       entitlements,
       isLocked: item => !!item.lockedBy && entitlements?.[item.lockedBy] === false,
@@ -234,10 +235,11 @@ function StoreBottomNav() {
   const goToTab = (path: string) => navigate(`/store/${storeId}/${path}`);
   const [moreOpen, setMoreOpen] = useState(false);
   // 5th tab: every tool, grouped as in the desktop sidebar (same config, same visibility/lock rules).
-  const groups = NAV.filter(g => g.group !== 'Overview').map(g => ({
+  // Dashboard is already a bottom-bar tab, but Analytics + Store Health (same group) must stay reachable on phones.
+  const groups = NAV.map(g => ({
     label: g.group,
     items: g.items
-      .filter(i => nav.isVisible(i, isActive(i.path)))
+      .filter(i => i.id !== 'dashboard' && nav.isVisible(i, isActive(i.path)))
       .map(i => ({
         id: i.id, label: i.label, Icon: i.Icon,
         active: isActive(i.path),
