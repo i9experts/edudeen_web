@@ -24,6 +24,11 @@ import { useStorefront, useStorefrontPaths, storeCoverGradient } from '@/feature
 import { StorefrontHighlights } from '@/features/storefront/sections/StorefrontHighlights';
 import { EducatorCard, hasEducatorProfile } from '@/components/comman/marketplace/EducatorCard';
 import { ProductCatalogSection } from '@/features/storefront/sections/ProductCatalogSection';
+import { StoreTrustStrip } from '@/features/storefront/sections/StoreTrustStrip';
+import { StoreAboutTab } from '@/features/storefront/sections/StoreAboutTab';
+import { StoreReviewsTab } from '@/features/storefront/sections/StoreReviewsTab';
+import { Link, useSearchParams } from 'react-router-dom';
+import { TRUST_MIN_SAMPLES } from '@/utils/sellerTrust';
 
 // ── Badge config ──────────────────────────────────────────────────────────────
 const SELLER_TYPE_LABEL: Record<string, string> = {
@@ -65,12 +70,24 @@ function StoreBadges({ badges, sellerType }: { badges: string[]; sellerType: str
 // buttons stay off here too (flip to bring them back).
 const SHOW_RETIRED_EXTRAS = false;
 
+const STORE_TABS = [
+  { id: 'products', label: 'Products' },
+  { id: 'about', label: 'About' },
+  { id: 'reviews', label: 'Reviews' },
+] as const;
+type StoreTab = (typeof STORE_TABS)[number]['id'];
+
 // ── Store page ─────────────────────────────────────────────────────────────────
 // A store's page inside Edudeen: identity banner (logo, name, description,
 // follow/message, membership), then every product the store sells.
 export function SellerStorefront() {
   const { store, cfg, theme } = useStorefront();
   const { toMain } = useStorefrontPaths();
+  // ?tab=about|reviews; anything else (or no value) = Products. The Products tab keeps the catalogue's own filters.
+  const [searchParams] = useSearchParams();
+  const rawTab = searchParams.get('tab');
+  const tab: StoreTab = rawTab === 'about' || rawTab === 'reviews' ? rawTab : 'products';
+  const productsSearch = (() => { const p = new URLSearchParams(searchParams); p.delete('tab'); const s = p.toString(); return s ? `?${s}` : ''; })();
   const identityBanner = theme?.identityBanner;
   const showFollow     = identityBanner?.showFollowButton     !== false;
   const showMessage    = identityBanner?.showMessageButton    !== false;
@@ -268,7 +285,7 @@ export function SellerStorefront() {
                 <p className={clsx('text-[12px] sm:text-[13px] text-[rgba(255,255,255,0.75)] mt-[8px] mb-[10px]', descriptionClampCls || 'line-clamp-2')}>{store.description}</p>
               )}
               <div className={clsx('flex items-center gap-[5px] text-[12px] text-[rgba(255,255,255,0.7)] mt-[6px]', bannerLayout === 'immersive' && 'justify-center')}>
-                {showRating && (store.reviewCount ?? 0) > 0 && (
+                {showRating && (store.reviewCount ?? 0) >= TRUST_MIN_SAMPLES && (
                   <>
                     <Star size={13} className="fill-current" style={{ color: cfg.primaryColor }} />
                     <span>{(store.averageRating ?? 0).toFixed(1)} ({(store.reviewCount ?? 0).toLocaleString()} reviews)</span>
@@ -332,18 +349,54 @@ export function SellerStorefront() {
         </div>
       </CoverImage>
 
-      {/* ── Every product this store sells — the store page is a normal
-         Edudeen page now, not a seller-designed site, so it's always the
-         full catalogue (no custom builder sections). ── */}
-      {hasEducatorProfile(store.educatorProfile) && (
-        <div className="px-4 sm:px-6 lg:px-10 pt-6 max-w-[1480px] mx-auto w-full">
-          <EducatorCard profile={store.educatorProfile} verified={(store.badges ?? []).includes('verified_educator')} name={store.name} />
+      <StoreTrustStrip store={store} />
+
+      <nav aria-label="Store sections" className="border-b border-bone bg-white">
+        <div role="tablist" className="px-4 sm:px-6 lg:px-10 max-w-[1480px] mx-auto w-full flex gap-1 overflow-x-auto">
+          {STORE_TABS.map(t => (
+            <Link
+              key={t.id}
+              role="tab"
+              aria-selected={tab === t.id}
+              to={t.id === 'products' ? { search: productsSearch } : { search: `?tab=${t.id}` }}
+              replace={false}
+              className={clsx('px-4 py-3 text-[14px] font-semibold whitespace-nowrap border-b-2 -mb-px',
+                tab === t.id ? 'border-brand-royal text-brand-royal' : 'border-transparent text-slate hover:text-carbon')}
+            >
+              {t.label}
+            </Link>
+          ))}
         </div>
+      </nav>
+
+      {tab === 'about' && (
+        <StoreAboutTab store={{
+          name: store.name,
+          aboutBio: store.aboutBio,
+          educatorProfile: store.educatorProfile,
+          returnPolicy: store.returnPolicy,
+          verifiedEducator: (store.badges ?? []).includes('verified_educator'),
+        }} />
       )}
 
-      {/* Published highlight rows (Featured / New arrivals / Best sellers) — each hidden below 2 products. */}
-      <StorefrontHighlights />
-      <ProductCatalogSection settings={{ heading: `All products from ${store.name}`, showFilters: true, defaultSort: 'newest' }} />
+      {tab === 'reviews' && <StoreReviewsTab storeId={store.storeId} />}
+
+      {tab === 'products' && (
+        <>
+          {/* ── Every product this store sells — the store page is a normal
+             Edudeen page now, not a seller-designed site, so it's always the
+             full catalogue (no custom builder sections). ── */}
+          {hasEducatorProfile(store.educatorProfile) && (
+            <div className="px-4 sm:px-6 lg:px-10 pt-6 max-w-[1480px] mx-auto w-full">
+              <EducatorCard profile={store.educatorProfile} verified={(store.badges ?? []).includes('verified_educator')} name={store.name} />
+            </div>
+          )}
+
+          {/* Published highlight rows (Featured / New arrivals / Best sellers) — each hidden below 2 products. */}
+          <StorefrontHighlights />
+          <ProductCatalogSection settings={{ heading: `All products from ${store.name}`, showFilters: true, defaultSort: 'newest' }} />
+        </>
+      )}
 
       {showRewards && (
         <Modal title="Rewards Catalog" onClose={() => { setShowRewards(false); setRedeemedVoucher(null); }}>

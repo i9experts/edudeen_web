@@ -16,6 +16,7 @@ import { Button } from '@/components/comman/ui/Button';
 import { TabBar, type Tab } from '@/components/comman/ui/TabBar';
 import { ActivityLogTab } from './tabs/ActivityLogTab';
 import { ReturnPolicyCard } from './ReturnPolicyCard';
+import { StoreAboutCard } from './StoreAboutCard';
 import { DeliveryGiftCard } from './DeliveryGiftCard';
 import { PremiumDiscountCard } from './PremiumDiscountCard';
 
@@ -808,6 +809,8 @@ export default function StoreSettings() {
                 add or change where you get paid under <a href={`/store/${storeId}/finance?tab=earnings`} className="text-brand-orange font-semibold">Earnings</a>.
               </p>
             </div>
+
+            {storeId && <StoreAboutCard storeId={storeId} name={store?.name ?? 'Your store'} bio={store?.aboutBio} educatorProfile={store?.educatorProfile} returnPolicy={store?.returnPolicy} refetch={refetch} />}
 
             {storeId && <ReturnPolicyCard storeId={storeId} policy={store?.returnPolicy} refetch={refetch} />}
 

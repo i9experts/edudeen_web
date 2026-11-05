@@ -14,6 +14,7 @@ export function ReturnPolicyCard({ storeId, policy, refetch }: {
   const [accepted, setAccepted] = useState(policy?.returnsAccepted ?? true);
   const [days, setDays] = useState(String(policy?.windowDays || 7));
   const [note, setNote] = useState(policy?.note ?? '');
+  const [digitalNote, setDigitalNote] = useState(policy?.digitalNote ?? '');
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
@@ -21,19 +22,21 @@ export function ReturnPolicyCard({ storeId, policy, refetch }: {
     setAccepted(policy?.returnsAccepted ?? true);
     setDays(String(policy?.windowDays || 7));
     setNote(policy?.note ?? '');
-  }, [policy?.returnsAccepted, policy?.windowDays, policy?.note]);
+    setDigitalNote(policy?.digitalNote ?? '');
+  }, [policy?.returnsAccepted, policy?.windowDays, policy?.note, policy?.digitalNote]);
 
   const n = Number(days);
   const daysError = accepted && (!Number.isInteger(n) || n < 1 || n > 90) ? 'Enter a whole number from 1 to 90.' : null;
   const noteError = note.length > 300 ? 'Keep the note to 300 characters.' : null;
+  const digitalNoteError = digitalNote.length > 300 ? 'Keep the note to 300 characters.' : null;
 
   async function save() {
-    if (daysError || noteError) return;
+    if (daysError || noteError || digitalNoteError) return;
     setSaving(true); setMsg(null);
     try {
       await apiUpdateStore({
         storeId,
-        returnPolicy: { returnsAccepted: accepted, windowDays: accepted ? n : 0, note: note.trim() || null },
+        returnPolicy: { returnsAccepted: accepted, windowDays: accepted ? n : 0, note: note.trim() || null, digitalNote: digitalNote.trim() || null },
       });
       refetch();
       setMsg({ ok: true, text: 'Return policy saved.' });
@@ -63,13 +66,19 @@ export function ReturnPolicyCard({ storeId, policy, refetch }: {
         </div>
       )}
       <div className="mb-4">
-        <label htmlFor="return-note" className="text-[12px] font-semibold text-charcoal block mb-1.5">Note for buyers (optional)</label>
+        <label htmlFor="return-note" className="text-[12px] font-semibold text-charcoal block mb-1.5">Note for buyers of physical items (optional)</label>
         <textarea id="return-note" rows={3} maxLength={300} value={note} onChange={e => setNote(e.target.value)} className={inputCls} placeholder="e.g. Items must be unused and in original packaging." />
         <p className="text-[12px] text-slate mt-1">{note.length}/300</p>
         {noteError && <p className="text-[12px] text-red-600 mt-1">{noteError}</p>}
       </div>
+      <div className="mb-4">
+        <label htmlFor="return-digital-note" className="text-[12px] font-semibold text-charcoal block mb-1.5">Note for buyers of digital downloads (optional)</label>
+        <textarea id="return-digital-note" rows={3} maxLength={300} value={digitalNote} onChange={e => setDigitalNote(e.target.value)} className={inputCls} placeholder="e.g. Write to us if a file will not open and we will fix or replace it." />
+        <p className="text-[12px] text-slate mt-1">{digitalNote.length}/300 · Text only: the refund rule for digital files does not change.</p>
+        {digitalNoteError && <p className="text-[12px] text-red-600 mt-1">{digitalNoteError}</p>}
+      </div>
       <div className="flex items-center gap-3">
-        <Button size="sm" loading={saving} disabled={!!daysError || !!noteError} onClick={save}>Save return policy</Button>
+        <Button size="sm" loading={saving} disabled={!!daysError || !!noteError || !!digitalNoteError} onClick={save}>Save return policy</Button>
         {msg && <span className={`text-[12px] ${msg.ok ? 'text-green-700' : 'text-red-600'}`}>{msg.text}</span>}
       </div>
     </div>

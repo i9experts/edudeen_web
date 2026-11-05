@@ -2,7 +2,7 @@ import client from '../client';
 import { cachedRequest, invalidateCache } from './requestCache';
 import { ENDPOINTS } from '../endpoints';
 import type { ActiveCampaignBadge } from './marketplace';
-import type { StoreReturnPolicy, StoreResponseStats } from '@/utils/sellerTrust';
+import type { StoreReturnPolicy, StoreResponseStats, StoreTrust } from '@/utils/sellerTrust';
 
 export type SellerType  = 'creator' | 'educator' | 'retailer' | 'brand_business' | 'freelancer' | 'mix';
 export type ProductType = 'physical_products' | 'digital_downloads' | 'educational_resources' | 'services_bookings' | 'subscriptions' | 'in_person_pos';
@@ -48,6 +48,8 @@ export interface UpdateStorePayload {
   tagline?:      string;
   educatorProfile?: EducatorProfile | null;
   returnPolicy?: StoreReturnPolicy | null;
+  /** About-tab text (max 1500); null/'' clears it. */
+  aboutBio?: string | null;
   /** Seller-funded Edudeen Premium member discount; null clears it. */
   premiumDiscount?: StorePremiumDiscount | null;
   /** Seller's own delivery charge (store currency); null/disabled = platform zone fee. */
@@ -76,6 +78,7 @@ export interface StoreData {
   tagline:      string | null;
   educatorProfile?: EducatorProfile | null;
   returnPolicy?: StoreReturnPolicy | null;
+  aboutBio?: string | null;
   premiumDiscount?: StorePremiumDiscount | null;
   deliverySettings?: StoreDeliverySettings | null;
   giftWrap?: StoreGiftWrap | null;
@@ -246,6 +249,10 @@ export interface PublicStoreData {
   educatorProfile?: EducatorProfile | null;
   returnPolicy?:  StoreReturnPolicy | null;
   responseStats?: StoreResponseStats | null;
+  /** Cached response rate / dispatch on time / city; numbers are null below the minimum sample. */
+  trust?:         StoreTrust | null;
+  /** Seller's About text (max 1500). */
+  aboutBio?:      string | null;
   contactEmail:   string | null;
   contactPhone:   string | null;
   /** The store's single fixed root category — needed to resolve its own

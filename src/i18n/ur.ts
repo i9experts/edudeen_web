@@ -2122,6 +2122,24 @@ export const UR: Record<string, string> = {
   // Store page highlight rows
   'New arrivals': 'نئی آمد',
   'Best sellers': 'سب سے زیادہ بکنے والی',
+  // Store trust strip + About / Reviews tabs
+  'Not enough data': 'کافی ڈیٹا نہیں',
+  'Replies within 24h': '24 گھنٹے میں جواب',
+  'Dispatched within 48h': '48 گھنٹے میں روانہ',
+  'Based in': 'مقام',
+  'Store sections': 'اسٹور کے حصے',
+  'Store trust': 'اسٹور پر اعتماد',
+  'This seller has not added an About text yet.': 'اس سیلر نے ابھی تعارف نہیں لکھا۔',
+  'Physical items': 'فزیکل اشیاء',
+  'Digital downloads': 'ڈیجیٹل ڈاؤن لوڈز',
+  'Seller-stated policy. Every request is reviewed; digital items can be refunded only before they are downloaded.': 'یہ سیلر کی بیان کردہ پالیسی ہے۔ ہر درخواست کا جائزہ لیا جاتا ہے؛ ڈیجیٹل اشیاء صرف ڈاؤن لوڈ سے پہلے واپس ہو سکتی ہیں۔',
+  'Could not load reviews.': 'جائزے لوڈ نہیں ہو سکے۔',
+  'Verified purchase': 'تصدیق شدہ خریداری',
+  'Seller reply': 'سیلر کا جواب',
+  'Used at home': 'گھر پر استعمال',
+  'Used in class': 'کلاس میں استعمال',
+  'Used in school': 'اسکول میں استعمال',
+  'Reviews pages': 'جائزوں کے صفحات',
 };
 
 const MONTHS: Record<string, string> = {
