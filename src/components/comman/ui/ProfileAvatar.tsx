@@ -7,7 +7,7 @@ import { clsx } from 'clsx';
 import { titleCaseName } from '@/utils/formatName';
 import {
   User, LayoutDashboard, LogOut, ShoppingBag,
-  ChevronRight, Shield, Store, Package, Wallet, CreditCard, Crown, type LucideIcon,
+  ChevronRight, Shield, Store, Package, Wallet, Crown, type LucideIcon,
 } from 'lucide-react';
 import { useGetProfile } from '@/hooks/auth/useGetProfile';
 import { TokenStorage, apiLogout } from '@/api/services/auth';
@@ -224,7 +224,6 @@ function DropdownMenu({
             <MenuItem icon={Package} label="Products" sublabel="Add and manage your listings" to={'/seller/products'} onClick={() => onNavigate('/seller/products')} />
             <MenuItem icon={ShoppingBag} label="Orders" sublabel="Sales and fulfilment" to={'/seller/orders'} onClick={() => onNavigate('/seller/orders')} />
             <MenuItem icon={Wallet} label="Finance" sublabel="Earnings and payouts" to={'/seller/finance'} onClick={() => onNavigate('/seller/finance')} />
-            <MenuItem icon={CreditCard} label="Plan & Billing" sublabel="Your Edudeen plan" to={'/seller/plan-billing'} onClick={() => onNavigate('/seller/plan-billing')} />
           </>
         )}
         {hasDash && !isAdmin && (

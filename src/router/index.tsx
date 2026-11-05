@@ -232,6 +232,10 @@ const CATALOG_TABS = [
   { id: 'collections', label: 'Collections', element: <StoreCollections /> },
   { id: 'bundles',     label: 'Bundles',     element: <StoreBundles /> },
 ];
+const MARKETING_TABS = [
+  { id: 'marketing', label: 'Marketing', element: <StoreMarketing /> },
+  { id: 'loyalty',   label: 'Loyalty',   element: <StoreLoyalty /> },
+];
 const FEEDBACK_TABS = [
   { id: 'reviews',   label: 'Reviews',   element: <StoreReviews /> },
   { id: 'questions', label: 'Questions', element: <StoreQuestions /> },
@@ -423,9 +427,9 @@ const mainRouter = createBrowserRouter([
           { path: 'questions',                        element: <StorePathTabs tabs={FEEDBACK_TABS} /> },
           { path: 'finance',                          element: <StoreFinance /> },
           { path: 'inventory',                        element: <StoreInventory /> },
-          { path: 'marketing',                        element: <StoreMarketing /> },
+          { path: 'marketing',                        element: <StorePathTabs tabs={MARKETING_TABS} /> },
           { path: 'marketing/sale/:campaignId',       element: <StoreSaleApply /> },
-          { path: 'loyalty',                          element: <StoreLoyalty /> },
+          { path: 'loyalty',                          element: <StorePathTabs tabs={MARKETING_TABS} /> },
           // Retired: the page only showed placeholder "connected apps".
           { path: 'integrations',                     element: <Navigate to="../dashboard" replace /> },
           { path: 'activity',                         element: <Navigate to="../settings" replace /> },

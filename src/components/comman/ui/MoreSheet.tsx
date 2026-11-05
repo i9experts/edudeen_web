@@ -1,5 +1,5 @@
 import { useEffect, type ComponentType } from 'react';
-import { X } from 'lucide-react';
+import { X, Lock } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useT } from '@/contexts/languageCtx';
 
@@ -8,6 +8,10 @@ export interface MoreSheetItem {
   label: string;
   Icon: ComponentType<{ size?: number; className?: string }>;
   active?: boolean;
+  /** Not in the seller's plan: small lock on the tile. */
+  locked?: boolean;
+  /** Unread/new count dot. */
+  badge?: number;
   onSelect: () => void;
 }
 export interface MoreSheetGroup { label: string; items: MoreSheetItem[] }
@@ -45,12 +49,15 @@ export function MoreSheet({ open, onClose, groups, title = 'All tools' }: {
                     type="button"
                     onClick={() => { onClose(); it.onSelect(); }}
                     aria-current={it.active ? 'page' : undefined}
+                    aria-label={`${t(it.label)}${it.locked ? ', not in your plan' : ''}${it.badge ? `, ${it.badge} unread` : ''}`}
                     className={clsx(
-                      'flex flex-col items-center justify-start gap-1.5 rounded-xl border px-1.5 py-3 min-h-[76px] cursor-pointer text-center transition-colors',
+                      'relative focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-royal flex flex-col items-center justify-start gap-1.5 rounded-xl border px-1.5 py-3 min-h-[76px] cursor-pointer text-center transition-colors',
                       it.active ? 'bg-brand-pale-orange border-brand-orange/30' : 'bg-white border-bone hover:bg-cream',
                     )}
                   >
                     <it.Icon size={20} className={it.active ? 'text-brand-orange' : 'text-brand-royal'} />
+                    {it.locked && <Lock size={12} className="absolute top-1.5 end-1.5 text-slate" aria-hidden="true" />}
+                    {!!it.badge && <span className="absolute top-1.5 end-1.5 min-w-[16px] h-4 px-1 rounded-full bg-brand-green text-white text-[12px] font-bold leading-4" aria-hidden="true">{it.badge > 9 ? '9+' : it.badge}</span>}
                     <span className="text-[12px] leading-[1.25] font-medium text-charcoal">{t(it.label)}</span>
                   </button>
                 ))}

@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect, useContext, useRef, useMemo, useCallback, type ReactNode, Suspense } from 'react';
+import { useState, useEffect, useLayoutEffect, useContext, createContext, useRef, useMemo, useCallback, type ReactNode, Suspense } from 'react';
 import { PageTabsCtx } from './PageTabsContext';
 import { Outlet, Navigate, Link, useNavigate, useLocation, useParams } from 'react-router-dom';
 import { TokenStorage, type AppRole } from '@/api/services/auth';
@@ -6,16 +6,16 @@ import { clsx } from 'clsx';
 import type { LucideIcon } from 'lucide-react';
 import {
   LayoutDashboard, Package, ShoppingBag, Users, BarChart2,
-  Settings, Sparkles, ChevronLeft, ChevronRight, Store,
-  Megaphone, Star, Search, Wallet, Truck, Boxes, Gift,
+  Settings, Sparkles, ChevronLeft, ChevronRight,
+  Megaphone, Star, Search, Wallet, Truck, Boxes, Palette,
   MessageSquare, FolderTree, Undo2, CreditCard,
-  ChevronDown, Lock, MoreHorizontal, PanelLeftClose, Loader2, PanelLeftOpen, AlertTriangle, AlertCircle, XCircle, Clock, LogOut, UserRound, Bell,
+  Lock, MoreHorizontal, PanelLeftClose, Loader2, PanelLeftOpen, AlertTriangle, AlertCircle, XCircle, Clock, LogOut,
 } from 'lucide-react';
 import { EdudeenIcon, EdudeenLogo } from '@/components/comman/ui/EdudeenLogo';
 import { apiGetStoreById, apiGetMyStores, type StoreData } from '@/api/services/store';
 import { apiGetAiStudioCredits } from '@/api/services/aiStudio';
 import { apiGetStoreEntitlements } from '@/api/services/platformPlans';
-import { apiStoreDashboardSummaryCached } from '@/api/services/storeDashboard';
+import { useConversations } from '@/hooks/messaging/useConversations';
 import { useCommandPalette } from '@/hooks/useCommandPalette';
 import { useLogout } from '@/hooks/auth/useLogout';
 import { AnnouncementBanner, Modal, Button } from '@/components/comman/ui';
@@ -34,48 +34,61 @@ import { useStoreCampaigns } from '@/hooks/store/useStoreCampaigns';
 export { useStoreWorkspace };
 
 // ── Sidebar Nav ───────────────────────────────────────────────────────────────
-export interface NavItem { id: string; Icon: LucideIcon; label: string; path: string }
+export interface NavItem {
+  id: string; Icon: LucideIcon; label: string; path: string;
+  /** Item only shows when the store has this kind of product (the route itself always stays reachable). */
+  visibleIf?: 'physical';
+  /** Plan entitlement flag; a `false` flag shows a small lock instead of hiding the item. */
+  lockedBy?: string;
+  /** One of the phone bottom-bar tabs (everything else lives in "More"). */
+  phone?: boolean;
+}
 
+// ONE config: desktop sidebar, collapsed rail, phone "More" sheet, phone bottom bar and Ctrl+K all read this.
 export const NAV: { group: string; items: NavItem[] }[] = [
   {
     group: 'Overview',
     items: [
-      { id: 'dashboard', Icon: LayoutDashboard, label: 'Dashboard', path: 'dashboard' },
+      { id: 'dashboard', Icon: LayoutDashboard, label: 'Dashboard', path: 'dashboard', phone: true },
       { id: 'analytics', Icon: BarChart2,       label: 'Analytics', path: 'analytics' },
     ],
   },
   {
-    group: 'Sales',
+    group: 'Orders',
     items: [
-      { id: 'orders',   Icon: ShoppingBag,  label: 'Orders',       path: 'orders'  },
-      { id: 'returns',  Icon: Undo2,    label: 'Returns',       path: 'returns' },
-      { id: 'shipping', Icon: Truck,    label: 'Shipping',      path: 'shipping' },
+      { id: 'orders',   Icon: ShoppingBag, label: 'Orders',   path: 'orders', phone: true },
+      { id: 'returns',  Icon: Undo2,       label: 'Returns',  path: 'returns' },
+      { id: 'shipping', Icon: Truck,       label: 'Shipping', path: 'shipping' },
     ],
   },
   {
-    group: 'Catalog',
+    group: 'Products',
     items: [
-      { id: 'products',      Icon: Package,   label: 'Products',      path: 'products'     },
-      { id: 'inventory',     Icon: Boxes,         label: 'Inventory',     path: 'inventory'    },
-      { id: 'categories',    Icon: FolderTree,    label: 'Categories & Bundles', path: 'categories' },
-      { id: 'store-builder', Icon: Store,         label: 'Customize Store', path: 'storebuilder' },
+      { id: 'products',   Icon: Package,    label: 'Products',             path: 'products', phone: true },
+      { id: 'inventory',  Icon: Boxes,      label: 'Inventory',            path: 'inventory', visibleIf: 'physical' },
+      { id: 'categories', Icon: FolderTree, label: 'Categories & Bundles', path: 'categories' },
     ],
   },
   {
     group: 'Customers',
     items: [
-      { id: 'customers', Icon: Users,          label: 'Customers', path: 'customer/list' },
-      { id: 'reviews',   Icon: Star,           label: 'Reviews & Questions', path: 'reviews'        },
-      { id: 'messages',  Icon: MessageSquare,  label: 'Messages',  path: 'messages'       },
+      { id: 'customers', Icon: Users,         label: 'Customers',           path: 'customer/list' },
+      { id: 'reviews',   Icon: Star,          label: 'Reviews & Questions', path: 'reviews' },
+      { id: 'messages',  Icon: MessageSquare, label: 'Messages',            path: 'messages', phone: true },
     ],
   },
   {
-    group: 'Growth',
+    group: 'Marketing',
     items: [
-      { id: 'marketing',     Icon: Megaphone, label: 'Marketing',     path: 'marketing'     },
-      { id: 'loyalty',       Icon: Gift,      label: 'Loyalty',       path: 'loyalty'       },
-      { id: 'seo',           Icon: Search,    label: 'SEO',           path: 'seo'           },
-      { id: 'ai',            Icon: Sparkles,  label: 'AI Studio',     path: 'ai/studio'     },
+      { id: 'marketing', Icon: Megaphone, label: 'Marketing', path: 'marketing' },
+      { id: 'seo',       Icon: Search,    label: 'SEO',       path: 'seo', lockedBy: 'advancedSeoToolsAllowed' },
+      { id: 'ai',        Icon: Sparkles,  label: 'AI Studio', path: 'ai/studio' },
+    ],
+  },
+  {
+    group: 'Storefront',
+    items: [
+      { id: 'store-builder', Icon: Palette, label: 'Customize Store', path: 'storebuilder' },
     ],
   },
   {
@@ -90,21 +103,52 @@ export const NAV: { group: string; items: NavItem[] }[] = [
   {
     group: 'Settings',
     items: [
-      { id: 'settings',      Icon: Settings,    label: 'Store Settings',        path: 'settings'      },
-      { id: 'notifications', Icon: Bell,        label: 'Notifications',         path: 'notifications' },
-      { id: 'account',       Icon: UserRound,   label: 'Account',               path: 'account'       },
+      { id: 'settings', Icon: Settings, label: 'Store Settings', path: 'settings' },
     ],
   },
 ];
 
-// Sidebar: these Growth items fold into a "Growth tools" section (open by default once a store has this many orders).
-const GROWTH_TOOL_IDS = ['loyalty', 'seo', 'ai'];
-const GROWTH_TOOLS_OPEN_AFTER_ORDERS = 5;
-// Nav item -> plan entitlement flag; a `false` flag shows a small lock instead of hiding the item.
-const LOCK_KEY: Record<string, string> = {
-  loyalty: 'loyaltyProgramAllowed',
-  seo: 'advancedSeoToolsAllowed',
-};
+// ── Shared nav state (one fetch for sidebar + phone bars): plan locks, product-type visibility, badges. ──
+interface StoreNavState {
+  entitlements: Record<string, unknown> | null;
+  isLocked: (item: NavItem) => boolean;
+  isVisible: (item: NavItem, active: boolean) => boolean;
+  /** Item id -> count. Orders/Returns are left empty on purpose (filled by a later phase). */
+  badges: Record<string, number>;
+}
+const StoreNavCtx = createContext<StoreNavState | null>(null);
+function useStoreNav(): StoreNavState {
+  const v = useContext(StoreNavCtx);
+  if (!v) throw new Error('useStoreNav outside StoreNavProvider');
+  return v;
+}
+
+function StoreNavProvider({ children }: { children: ReactNode }) {
+  const { store, storeId } = useStoreWorkspace();
+  const [entitlements, setEntitlements] = useState<Record<string, unknown> | null>(null);
+  useEffect(() => {
+    if (!storeId) return;
+    let cancelled = false;
+    apiGetStoreEntitlements(storeId).then(res => { if (!cancelled) setEntitlements(res.data ?? null); }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [storeId]);
+  // Same source as the Messages inbox (live via its socket); a seller conversation counts when sellerUnread > 0.
+  const { conversations } = useConversations({ storeId });
+  const unreadChats = conversations.filter(c => (c.sellerUnread ?? 0) > 0).length;
+
+  const value = useMemo<StoreNavState>(() => {
+    const types = (store as { productTypes?: string[] } | null)?.productTypes;
+    // Unknown product types -> show it (never hide a tool because data has not loaded).
+    const hasPhysical = !types || types.length === 0 || types.includes('physical');
+    return {
+      entitlements,
+      isLocked: item => !!item.lockedBy && entitlements?.[item.lockedBy] === false,
+      isVisible: (item, active) => item.visibleIf !== 'physical' || hasPhysical || active,
+      badges: { messages: unreadChats },
+    };
+  }, [store, entitlements, unreadChats]);
+  return <StoreNavCtx.Provider value={value}>{children}</StoreNavCtx.Provider>;
+}
 
 // ── Shared grouped nav menu — the mobile "account hub" content for a store
 // workspace, reused wherever the full list of store sections needs to be
@@ -120,12 +164,13 @@ export function StoreNavMenu({ storeId, onNavigate, excludeGroups = [], excludeI
   excludeGroups?: string[]; excludeItemIds?: string[];
 }) {
   const navigate = useNavigate();
+  const nav = useStoreNav();
   const hiddenGroups = new Set(['Overview', ...excludeGroups]);
   const hiddenItems = new Set(excludeItemIds);
   return (
     <div className="flex flex-col gap-4">
       {NAV.filter(section => !hiddenGroups.has(section.group))
-        .map(section => ({ ...section, items: section.items.filter(item => !hiddenItems.has(item.id)) }))
+        .map(section => ({ ...section, items: section.items.filter(item => !hiddenItems.has(item.id) && nav.isVisible(item, false)) }))
         .filter(section => section.items.length > 0)
         .map(section => (
         <div key={section.group} className="bg-white border border-bone rounded-2xl overflow-hidden">
@@ -165,31 +210,31 @@ export function StoreNavMenu({ storeId, onNavigate, excludeGroups = [], excludeI
 // Growth/Finance) via StoreSettings'
 // own mobile menu — Dashboard itself stays a pure metrics page, it doesn't
 // double as a menu of everything.
-const STORE_TABS: { id: string; Icon: LucideIcon; label: string; path: string }[] = [
-  { id: 'dashboard', Icon: LayoutDashboard, label: 'Dashboard', path: 'dashboard' },
-  { id: 'orders',    Icon: ShoppingBag,     label: 'Orders',    path: 'orders'    },
-  { id: 'products',  Icon: Package,         label: 'Products',  path: 'products'  },
-  { id: 'messages',  Icon: MessageSquare,   label: 'Messages',  path: 'messages'  },
-];
+const STORE_TABS: NavItem[] = NAV.flatMap(g => g.items).filter(i => i.phone);
 
 function StoreBottomNav() {
   const navigate = useNavigate();
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
   const { storeId } = useStoreWorkspace();
+  const nav = useStoreNav();
 
-  const isActive = (path: string) => pathname === `/store/${storeId}/${path}`;
+  const isActive = (path: string) => isNavItemActive(path, pathname, search, storeId);
 
   const goToTab = (path: string) => navigate(`/store/${storeId}/${path}`);
   const [moreOpen, setMoreOpen] = useState(false);
-  // 5th tab: every tool, grouped as in the desktop sidebar (Sales/Catalog/Customers/Growth/Finance/Settings).
+  // 5th tab: every tool, grouped as in the desktop sidebar (same config, same visibility/lock rules).
   const groups = NAV.filter(g => g.group !== 'Overview').map(g => ({
     label: g.group,
-    items: g.items.map(i => ({
-      id: i.id, label: i.label, Icon: i.Icon,
-      active: pathname.startsWith(`/store/${storeId}/${i.path.split('?')[0]}`),
-      onSelect: () => navigate(`/store/${storeId}/${i.path}`),
-    })),
-  }));
+    items: g.items
+      .filter(i => nav.isVisible(i, isActive(i.path)))
+      .map(i => ({
+        id: i.id, label: i.label, Icon: i.Icon,
+        active: isActive(i.path),
+        locked: nav.isLocked(i),
+        badge: nav.badges[i.id] ?? 0,
+        onSelect: () => navigate(`/store/${storeId}/${i.path}`),
+      })),
+  })).filter(g => g.items.length > 0);
   const moreActive = !STORE_TABS.some(t => isActive(t.path)) && pathname.startsWith(`/store/${storeId}/`);
 
   return (
@@ -197,19 +242,23 @@ function StoreBottomNav() {
       <div className="flex items-stretch">
         {STORE_TABS.map(tab => {
           const active = isActive(tab.path);
+          const badge = nav.badges[tab.id] ?? 0;
           return (
             <button
               key={tab.id}
               onClick={() => goToTab(tab.path)}
               aria-current={active ? 'page' : undefined}
-              aria-label={tab.label}
-              className="flex-1 flex flex-col items-center justify-center py-[8px] gap-[4px] cursor-pointer bg-transparent border-none"
+              aria-label={badge > 0 ? `${tab.label}, ${badge} unread` : tab.label}
+              className="relative flex-1 flex flex-col items-center justify-center py-[8px] gap-[4px] cursor-pointer bg-transparent border-none focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand-royal"
             >
-              <tab.Icon
-                size={21}
-                strokeWidth={active ? 2.2 : 1.8}
-                className={clsx('transition-colors duration-150', active ? 'text-brand-orange' : 'text-slate')}
-              />
+              <span className="relative">
+                <tab.Icon
+                  size={21}
+                  strokeWidth={active ? 2.2 : 1.8}
+                  className={clsx('transition-colors duration-150', active ? 'text-brand-orange' : 'text-slate')}
+                />
+                {badge > 0 && <span className="absolute -top-1 -end-2 min-w-[16px] h-4 px-1 rounded-full bg-brand-green text-white text-[12px] font-bold leading-4 text-center" aria-hidden>{badge > 9 ? '9+' : badge}</span>}
+              </span>
               <span className={clsx('text-[12px] leading-none font-medium', active ? 'text-brand-orange' : 'text-slate')}>{tab.label}</span>
             </button>
           );
@@ -219,7 +268,7 @@ function StoreBottomNav() {
           onClick={() => setMoreOpen(true)}
           aria-haspopup="dialog"
           aria-label="More tools"
-          className="flex-1 flex flex-col items-center justify-center py-[8px] gap-[4px] cursor-pointer bg-transparent border-none"
+          className="flex-1 flex flex-col items-center justify-center py-[8px] gap-[4px] cursor-pointer bg-transparent border-none focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand-royal"
         >
           <MoreHorizontal size={21} strokeWidth={moreActive ? 2.2 : 1.8} className={clsx('transition-colors duration-150', moreActive ? 'text-brand-orange' : 'text-slate')} />
           <span className={clsx('text-[12px] leading-none font-medium', moreActive ? 'text-brand-orange' : 'text-slate')}>More</span>
@@ -265,7 +314,7 @@ function isNavItemActive(path: string, pathname: string, search: string, storeId
   if (path.startsWith('/')) return pathname === path || pathname.startsWith(path + '/');
   const [seg, query] = path.split('?');
   // Merged pages (e.g. Questions lives under Reviews) keep their parent entry highlighted.
-  const MERGED: Record<string, string> = { questions: 'reviews', collections: 'categories', bundles: 'categories' };
+  const MERGED: Record<string, string> = { questions: 'reviews', collections: 'categories', bundles: 'categories', loyalty: 'marketing' };
   const base = `/store/${storeId}/`;
   // Multi-segment routes (e.g. 'ai/studio') compare as many segments as the nav path has.
   const cur = pathname.startsWith(base) ? pathname.slice(base.length).split('/').slice(0, seg.split('/').length).join('/') : '';
@@ -332,21 +381,9 @@ function StoreSidebar({ open, onToggle }: StoreSidebarProps) {
       .catch(() => { if (!cancelled) setCreditsState('error'); });
     return () => { cancelled = true; };
   }, [storeId]);
-  // Plan features (lock badges) + order count (Growth tools start collapsed for young stores).
-  const [entitlements, setEntitlements] = useState<Record<string, unknown> | null>(null);
-  const [orderCount, setOrderCount] = useState<number | null>(null);
-  const [growthOpen, setGrowthOpen] = useState<boolean | null>(null);
-  useEffect(() => {
-    if (!storeId) return;
-    let cancelled = false;
-    apiGetStoreEntitlements(storeId).then(res => { if (!cancelled) setEntitlements(res.data ?? null); }).catch(() => {});
-    apiStoreDashboardSummaryCached(storeId)
-      .then(res => { if (!cancelled) setOrderCount(res.data?.overview?.totalOrders ?? 0); })
-      .catch(() => {});
-    return () => { cancelled = true; };
-  }, [storeId]);
+  const nav = useStoreNav();
+  const entitlements = nav.entitlements;
   const planInfo = sidebarPlanInfo(planSub, storeId, typeof entitlements?.currentPlanName === 'string' ? entitlements.currentPlanName : null);
-  const toolsExpanded = growthOpen ?? (orderCount ?? 0) >= GROWTH_TOOLS_OPEN_AFTER_ORDERS;
   const credits    = aiCredits?.balance ?? 0;
   const maxCredits = aiCredits && aiCredits.monthlyAllowance > 0 ? aiCredits.monthlyAllowance : null;
   const unlimited  = aiCredits?.monthlyAllowance === -1;
@@ -431,30 +468,26 @@ function StoreSidebar({ open, onToggle }: StoreSidebarProps) {
         {/* Nav */}
         <nav aria-label="Store workspace" className={clsx('flex-1 overflow-y-auto', open ? 'px-3 pt-1' : 'px-[12px] pt-1')}>
           {NAV.map(section => {
-            const isGrowth = section.group === 'Growth';
-            const mainItems = isGrowth ? section.items.filter(i => !GROWTH_TOOL_IDS.includes(i.id)) : section.items;
-            const toolItems = isGrowth ? section.items.filter(i => GROWTH_TOOL_IDS.includes(i.id)) : [];
-            const toolActive = toolItems.some(i => isActive(i.path));
-            // Icon-only rail always lists every item; the expanded rail folds the tools away for young stores.
-            const toolsVisible = !open || toolsExpanded || toolActive;
+            const mainItems = section.items.filter(i => nav.isVisible(i, isActive(i.path)));
+            if (mainItems.length === 0) return null;
 
-            const renderItem = (item: NavItem, nested = false) => {
+            const renderItem = (item: NavItem) => {
               const active = isActive(item.path);
+              const unread = nav.badges[item.id] ?? 0;
               const badge = item.id === 'marketing' ? campaignsToJoin : 0;
-              const locked = !!LOCK_KEY[item.id] && entitlements?.[LOCK_KEY[item.id]] === false;
+              const locked = nav.isLocked(item);
               const label = locked ? `${item.label} (not in your plan)` : item.label;
               return (
                 <Link
                   key={item.id}
                   to={itemTarget(item)}
                   title={!open ? (badge ? `${label} — ${badge} sale${badge > 1 ? 's' : ''} to join` : label) : undefined}
-                  aria-label={badge ? `${item.label}, ${badge} sale${badge > 1 ? 's' : ''} to join` : label}
+                  aria-label={badge ? `${item.label}, ${badge} sale${badge > 1 ? 's' : ''} to join` : unread ? `${label}, ${unread} unread` : label}
                   aria-current={active ? 'page' : undefined}
                   className={clsx(
                     'relative flex items-center gap-[10px] py-[8px] px-3 rounded-lg mb-0.5 no-underline',
-                    'transition-colors duration-150',
+                    'transition-colors duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand-royal',
                     !open && 'lg:justify-center lg:px-0',
-                    open && nested && 'ms-3',
                     active ? 'bg-brand-orange shadow-[0_2px_8px_rgba(23,71,113,0.28)]' : 'bg-transparent hover:bg-[#e3ecf3]',
                   )}
                 >
@@ -468,6 +501,16 @@ function StoreSidebar({ open, onToggle }: StoreSidebarProps) {
                     </span>
                   )}
                   {locked && open && <Lock size={12} className={clsx('shrink-0', active ? 'text-white' : 'text-slate')} aria-hidden />}
+                  {unread > 0 && (open ? (
+                    <span className={clsx(
+                      'text-[12px] font-bold px-[6px] py-[1px] rounded-full leading-[14px] shrink-0',
+                      active ? 'bg-white text-brand-orange' : 'bg-brand-green text-white',
+                    )} aria-hidden>
+                      {unread > 99 ? '99+' : unread}
+                    </span>
+                  ) : (
+                    <span className="absolute top-1 right-1 size-2 rounded-full bg-brand-green" aria-hidden />
+                  ))}
                   {badge > 0 && (open ? (
                     <span className={clsx(
                       'text-[12px] font-bold px-[6px] py-[1px] rounded-full leading-[14px] shrink-0',
@@ -484,28 +527,11 @@ function StoreSidebar({ open, onToggle }: StoreSidebarProps) {
 
             return (
               <div key={section.group} className="mb-3">
-                {open
+                {open && section.group !== 'Settings'
                   ? <p className="text-[12px] font-bold text-graphite px-3 py-1 uppercase tracking-[0.12em] mb-0.5">{section.group}</p>
                   : <div className="h-px bg-bone mx-1 mb-2" />
                 }
                 {mainItems.map(item => renderItem(item))}
-                {toolItems.length > 0 && (
-                  <>
-                    {open && (
-                      <button
-                        type="button"
-                        onClick={() => setGrowthOpen(!(toolsExpanded || toolActive))}
-                        aria-expanded={toolsVisible}
-                        aria-controls="growth-tools"
-                        className="w-full flex items-center gap-[10px] py-[8px] px-3 rounded-lg mb-0.5 bg-transparent border-0 cursor-pointer text-start hover:bg-[#e3ecf3]"
-                      >
-                        <ChevronDown size={16} className={clsx('shrink-0 text-charcoal transition-transform', !toolsVisible && '-rotate-90 rtl:rotate-90')} />
-                        <span className="text-[13.5px] flex-1 font-medium text-carbon">Growth tools</span>
-                      </button>
-                    )}
-                    {toolsVisible && <div id="growth-tools">{toolItems.map(item => renderItem(item, true))}</div>}
-                  </>
-                )}
               </div>
             );
           })}
@@ -911,6 +937,7 @@ export function StoreLayout() {
 
   return (
     <StoreWorkspaceProvider>
+     <StoreNavProvider>
       <StoreDocumentTitle />
       <div className={clsx('flex bg-white overflow-hidden', 'h-screen')}>
         <StoreSidebar open={sidebarOpen} onToggle={toggle} />
@@ -929,6 +956,7 @@ export function StoreLayout() {
         </div>
       </div>
       <StoreBottomNav />
+     </StoreNavProvider>
     </StoreWorkspaceProvider>
   );
 }
