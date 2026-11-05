@@ -271,6 +271,17 @@ export const apiVerifyCertificate = (code: string) => client.get<never, Ok<Certi
 export const apiGetMyCourses = () => client.get<never, Ok<MyCourse[]>>('/api/courses/mine');
 
 export interface CourseStudent { userId: string; name: string; email: string; enrolledAt: string | null; completedLessons: number; totalLessons: number; percent: number; lastActiveAt: string | null; completedAt: string | null; certificateCode: string | null }
+export interface RosterRow { userId: string; name: string; email: string | null; productId: string; productName: string; kind: 'course' | 'file'; enrolledAt: string; isFree: boolean; percent: number | null; completedLessons: number | null; totalLessons: number | null; downloads: number | null; lastActivityAt: string | null; accessEnded: boolean }
+export interface RosterPage { total: number; page: number; limit: number; totalPages: number; rows: RosterRow[]; products: { id: string; name: string }[] }
+export interface RosterFilters { productId?: string; q?: string }
+const rosterParams = (f: RosterFilters) => ({ ...(f.productId ? { productId: f.productId } : {}), ...(f.q ? { q: f.q } : {}) });
+/** Store-level students & downloads (courses + files, paid and free claims). */
+export const apiGetStoreRoster = (storeId: string, f: RosterFilters, page = 1, limit = 20) =>
+  client.get<never, Ok<RosterPage>>(`/api/courses/seller/${storeId}/roster`, { params: { ...rosterParams(f), page, limit } });
+/** CSV text of the current filter (newest 5000 rows). */
+export const apiExportStoreRoster = (storeId: string, f: RosterFilters) =>
+  client.get<never, string>(`/api/courses/seller/${storeId}/roster/export`, { params: rosterParams(f), responseType: 'text' });
+
 export const apiGetCourseStudents = (storeId: string, productId: string, page = 1, limit = 20) =>
   client.get<never, Ok<{ total: number; students: CourseStudent[] }>>(`/api/courses/seller/${storeId}/${productId}/students?page=${page}&limit=${limit}`);
 

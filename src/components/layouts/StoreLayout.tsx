@@ -9,7 +9,7 @@ import {
   Settings, Sparkles, ChevronLeft, ChevronRight,
   Megaphone, Star, Search, Wallet, Truck, Boxes, Palette,
   MessageSquare, FolderTree, Undo2, CreditCard,
-  HeartPulse, Lock, MoreHorizontal, PanelLeftClose, Loader2, PanelLeftOpen, AlertTriangle, AlertCircle, XCircle, Clock, LogOut,
+  HeartPulse, GraduationCap, Lock, MoreHorizontal, PanelLeftClose, Loader2, PanelLeftOpen, AlertTriangle, AlertCircle, XCircle, Clock, LogOut,
 } from 'lucide-react';
 import { EdudeenIcon, EdudeenLogo } from '@/components/comman/ui/EdudeenLogo';
 import { apiGetStoreById, apiGetMyStores, type StoreData } from '@/api/services/store';
@@ -38,7 +38,7 @@ export { useStoreWorkspace };
 export interface NavItem {
   id: string; Icon: LucideIcon; label: string; path: string;
   /** Item only shows when the store has this kind of product (the route itself always stays reachable). */
-  visibleIf?: 'physical';
+  visibleIf?: 'physical' | 'digital';
   /** Plan entitlement flag; a `false` flag shows a small lock instead of hiding the item. */
   lockedBy?: string;
   /** One of the phone bottom-bar tabs (everything else lives in "More"). */
@@ -75,7 +75,8 @@ export const NAV: { group: string; items: NavItem[] }[] = [
     group: 'Customers',
     items: [
       { id: 'customers', Icon: Users,         label: 'Customers',           path: 'customer/list' },
-      { id: 'reviews',   Icon: Star,          label: 'Reviews & Questions', path: 'reviews' },
+      { id: 'students',  Icon: GraduationCap, label: 'Students',            path: 'students', visibleIf: 'digital' },
+      { id: 'reviews',   Icon: Star,         label: 'Reviews & Questions', path: 'reviews' },
       { id: 'messages',  Icon: MessageSquare, label: 'Messages',            path: 'messages', phone: true },
     ],
   },
@@ -148,10 +149,12 @@ function StoreNavProvider({ children }: { children: ReactNode }) {
     const types = (store as { productTypes?: string[] } | null)?.productTypes;
     // Unknown product types -> show it (never hide a tool because data has not loaded).
     const hasPhysical = !types || types.length === 0 || types.includes('physical');
+    const hasDigital = !types || types.length === 0 || types.some(t => t !== 'physical');
     return {
       entitlements,
       isLocked: item => !!item.lockedBy && entitlements?.[item.lockedBy] === false,
-      isVisible: (item, active) => item.visibleIf !== 'physical' || hasPhysical || active,
+      isVisible: (item, active) => active
+        || (item.visibleIf === 'physical' ? hasPhysical : item.visibleIf === 'digital' ? hasDigital : true),
       badges: { orders: toShip, returns: returnsPending, messages: unreadMessages },
     };
   }, [store, entitlements, toShip, returnsPending, unreadMessages]);
