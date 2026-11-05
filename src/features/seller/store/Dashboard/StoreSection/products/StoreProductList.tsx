@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLiveRefresh } from '@/hooks/useLiveRefresh';
 import { formatPrice } from '@/utils/formatPrice';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ShoppingBag, Plus,
   RefreshCw, TrendingUp,
@@ -62,6 +62,12 @@ export default function StoreProductList() {
 
   const [sort, setSort] = useState<TableSort | null>(null);
 
+  // Dashboard 'Action required' links: ?status=pending_review | rejected (the inventory API already filters on status).
+  const [searchParams, setSearchParams] = useSearchParams();
+  const rawStatus = searchParams.get('status');
+  const statusF: 'pending_review' | 'rejected' | '' = rawStatus === 'pending_review' || rawStatus === 'rejected' ? rawStatus : '';
+  const clearStatus = () => { setPage(1); setSearchParams(prev => { const n = new URLSearchParams(prev); n.delete('status'); return n; }, { replace: true }); };
+
   const handleSortChange = (key: string) => {
     setSort(prev => (prev && prev.key === key)
       ? { key, direction: prev.direction === 'asc' ? 'desc' : 'asc' }
@@ -88,7 +94,7 @@ export default function StoreProductList() {
     const quiet = quietRef.current;
     quietRef.current = false;
     if (!quiet) setLoading(true);
-    apiGetStoreInventory(storeId, page, LIMIT, { q: debouncedSearch })
+    apiGetStoreInventory(storeId, page, LIMIT, { q: debouncedSearch, status: statusF || undefined })
       .then(res => {
         if (cancelled) return;
         setProducts(res.data.products ?? []);
@@ -100,7 +106,7 @@ export default function StoreProductList() {
       })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [storeId, page, refreshKey, debouncedSearch]);
+  }, [storeId, page, refreshKey, debouncedSearch, statusF]);
 
   const goAdd    = () => navigate(`/store/${storeId}/products/add`);
   const goEdit   = (p: InventoryProduct) => navigate(`/store/${storeId}/products/edit/${p.productId}`);
@@ -345,6 +351,12 @@ export default function StoreProductList() {
             {/* Toolbar */}
             <div className="px-5 sm:px-6 pt-5 pb-4 flex items-center justify-between gap-3 flex-wrap">
               <h2 className="font-serif font-normal text-[21px] text-carbon shrink-0">Your product shelf</h2>
+              {statusF && (
+                <p className="m-0 basis-full text-[12.5px] text-slate">
+                  Showing {statusF === 'rejected' ? 'products not approved' : 'products waiting for review'}.{' '}
+                  <button type="button" className="font-semibold underline bg-transparent border-0 p-0 cursor-pointer text-brand-royal" onClick={clearStatus}>Show all products</button>
+                </p>
+              )}
               <div className="flex items-center gap-2 ml-auto">
                 <SearchInput
                   value={search}

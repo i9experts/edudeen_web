@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { formatPrice } from '@/utils/formatPrice';
 import {
   ShoppingCart, RefreshCw,
@@ -63,6 +64,11 @@ export function StoreOrderList() {
   const [search,      setSearch]      = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [statusF,     setStatusF]     = useState('');
+  // Dashboard 'Action required' links: ?action=toship|overdue (same predicate the dashboard counts use).
+  const [searchParams, setSearchParams] = useSearchParams();
+  const rawAction = searchParams.get('action');
+  const actionF: 'toship' | 'overdue' | '' = rawAction === 'toship' || rawAction === 'overdue' ? rawAction : '';
+  const clearAction = () => setSearchParams(prev => { const n = new URLSearchParams(prev); n.delete('action'); return n; }, { replace: true });
   const [typeF,       setTypeF]       = useState<SellerOrderFilters['type']>('');
   const [loading,       setLoading]       = useState(true);
   const [error,         setError]         = useState('');
@@ -95,7 +101,7 @@ export function StoreOrderList() {
     if (!storeId) return;
     let cancelled = false;
 
-    apiGetSellerOrders(storeId, page, LIMIT, { status: statusF, type: typeF, q })
+    apiGetSellerOrders(storeId, page, LIMIT, { status: statusF, type: typeF, q, action: actionF })
       .then(res => {
         if (cancelled) return;
         setOrders(res.data.orders ?? []);
@@ -108,7 +114,7 @@ export function StoreOrderList() {
       .finally(() => { if (!cancelled) setLoading(false); });
 
     return () => { cancelled = true; };
-  }, [storeId, page, refreshKey, q, statusF, typeF]);
+  }, [storeId, page, refreshKey, q, statusF, typeF, actionF]);
 
   const handlePageChange = (p: number) => {
     setLoading(true);
@@ -239,7 +245,7 @@ export function StoreOrderList() {
     },
   ];
 
-  const hasFilters = !!(search || statusF || typeF);
+  const hasFilters = !!(search || statusF || typeF || actionF);
 
   return (
     <>
@@ -293,7 +299,13 @@ export function StoreOrderList() {
         {!error && (
           <Card padding="none">
             <div className="px-4 sm:px-5 pt-4 pb-3 flex flex-col gap-2.5">
-              <p className="text-[14px] font-bold text-charcoal shrink-0">All Orders</p>
+              <p className="text-[14px] font-bold text-charcoal shrink-0">{actionF === 'overdue' ? 'Overdue orders' : actionF === 'toship' ? 'Orders to ship' : 'All Orders'}</p>
+              {actionF && (
+                <p className="m-0 text-[12.5px] text-slate">
+                  {actionF === 'overdue' ? 'Paid or cash-on-delivery physical orders not shipped within 48 hours.' : 'Paid or cash-on-delivery physical orders waiting for you to ship.'}{' '}
+                  <button type="button" className="font-semibold underline bg-transparent border-0 p-0 cursor-pointer text-brand-royal" onClick={() => changeFilter(clearAction)}>Show all orders</button>
+                </p>
+              )}
               <SearchInput
                 value={search}
                 onChange={setSearch}
@@ -315,7 +327,7 @@ export function StoreOrderList() {
                   options={TYPE_OPTIONS}
                   className="shrink-0"
                 />
-                <Button variant="outline" size="xs" onClick={() => changeFilter(() => { setSearch(''); setStatusF(''); setTypeF(''); })}>Clear</Button>
+                <Button variant="outline" size="xs" onClick={() => changeFilter(() => { setSearch(''); setStatusF(''); setTypeF(''); if (actionF) clearAction(); })}>Clear</Button>
                 <Button
                   variant="outline" size="xs" onClick={handleRetry} icon={<RefreshCw size={11} />}
                 >

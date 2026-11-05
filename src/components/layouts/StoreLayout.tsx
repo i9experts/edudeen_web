@@ -27,6 +27,7 @@ import { StoreWorkspaceCtx, useStoreWorkspace } from './StoreWorkspaceContext';
 import { SellerStoreRedirect } from '@/router/SellerStoreRedirect';
 import { useStorePlan, sidebarPlanInfo } from '@/hooks/store/useStorePlan';
 import { useStoreCampaigns } from '@/hooks/store/useStoreCampaigns';
+import { useStoreActionItems } from '@/hooks/store/useStoreDashboardSummary';
 
 // ── Store Workspace Context ───────────────────────────────────────────────────
 // Defined in ./StoreWorkspaceContext (see the note there); re-exported so every
@@ -113,7 +114,7 @@ interface StoreNavState {
   entitlements: Record<string, unknown> | null;
   isLocked: (item: NavItem) => boolean;
   isVisible: (item: NavItem, active: boolean) => boolean;
-  /** Item id -> count. Orders/Returns are left empty on purpose (filled by a later phase). */
+  /** Item id -> count (orders = to ship, returns = pending requests, messages = unread chats). */
   badges: Record<string, number>;
 }
 const StoreNavCtx = createContext<StoreNavState | null>(null);
@@ -135,6 +136,12 @@ function StoreNavProvider({ children }: { children: ReactNode }) {
   // Same source as the Messages inbox (live via its socket); a seller conversation counts when sellerUnread > 0.
   const { conversations } = useConversations({ storeId });
   const unreadChats = conversations.filter(c => (c.sellerUnread ?? 0) > 0).length;
+  // Orders / Returns / Messages badges come from the shared dashboard summary (the dashboard's Action-required card reads
+  // the same copy: one request, no extra call). Messages falls back to the inbox count until it has loaded.
+  const { items: actionItems } = useStoreActionItems(storeId);
+  const toShip = actionItems?.ordersToShip ?? 0;
+  const returnsPending = actionItems?.returnsPending ?? 0;
+  const unreadMessages = actionItems ? actionItems.unreadMessages : unreadChats;
 
   const value = useMemo<StoreNavState>(() => {
     const types = (store as { productTypes?: string[] } | null)?.productTypes;
@@ -144,9 +151,9 @@ function StoreNavProvider({ children }: { children: ReactNode }) {
       entitlements,
       isLocked: item => !!item.lockedBy && entitlements?.[item.lockedBy] === false,
       isVisible: (item, active) => item.visibleIf !== 'physical' || hasPhysical || active,
-      badges: { messages: unreadChats },
+      badges: { orders: toShip, returns: returnsPending, messages: unreadMessages },
     };
-  }, [store, entitlements, unreadChats]);
+  }, [store, entitlements, toShip, returnsPending, unreadMessages]);
   return <StoreNavCtx.Provider value={value}>{children}</StoreNavCtx.Provider>;
 }
 
@@ -248,7 +255,7 @@ function StoreBottomNav() {
               key={tab.id}
               onClick={() => goToTab(tab.path)}
               aria-current={active ? 'page' : undefined}
-              aria-label={badge > 0 ? `${tab.label}, ${badge} unread` : tab.label}
+              aria-label={badge > 0 ? `${tab.label}, ${badge} waiting` : tab.label}
               className="relative flex-1 flex flex-col items-center justify-center py-[8px] gap-[4px] cursor-pointer bg-transparent border-none focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand-royal"
             >
               <span className="relative">
@@ -482,7 +489,7 @@ function StoreSidebar({ open, onToggle }: StoreSidebarProps) {
                   key={item.id}
                   to={itemTarget(item)}
                   title={!open ? (badge ? `${label} — ${badge} sale${badge > 1 ? 's' : ''} to join` : label) : undefined}
-                  aria-label={badge ? `${item.label}, ${badge} sale${badge > 1 ? 's' : ''} to join` : unread ? `${label}, ${unread} unread` : label}
+                  aria-label={badge ? `${item.label}, ${badge} sale${badge > 1 ? 's' : ''} to join` : unread ? `${label}, ${unread} waiting` : label}
                   aria-current={active ? 'page' : undefined}
                   className={clsx(
                     'relative flex items-center gap-[10px] py-[8px] px-3 rounded-lg mb-0.5 no-underline',

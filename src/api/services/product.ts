@@ -431,7 +431,7 @@ export function apiDeleteVariant(productId: string, variantId: string) {
 
 export function apiGetStoreInventory(
   storeId: string, page = 1, limit = 10,
-  filters: { status?: 'active' | 'draft' | 'archived'; q?: string } = {},
+  filters: { status?: 'active' | 'draft' | 'archived' | 'pending_review' | 'rejected'; q?: string } = {},
 ) {
   // Backend supports ?status= and ?q= (name/SKU, case-insensitive) and counts
   // stats.totalProducts on the same filter. `limit` is capped at 100 server-side.
@@ -510,6 +510,8 @@ export interface SellerOrderFilters {
   type?:   'physical' | 'digital' | 'mixed' | '';
   time?:   'today' | 'week' | 'month' | '';
   q?:      string;
+  /** Dashboard 'Action required' lists. */
+  action?: 'toship' | 'overdue' | '';
 }
 
 export function apiGetSellerOrders(storeId: string, page = 1, limit = 10, filters: SellerOrderFilters = {}) {
@@ -517,6 +519,7 @@ export function apiGetSellerOrders(storeId: string, page = 1, limit = 10, filter
   if (filters.status) params.set('status', filters.status);
   if (filters.type)   params.set('type', filters.type);
   if (filters.time)   params.set('time', filters.time);
+  if (filters.action) params.set('action', filters.action);
   if (filters.q?.trim()) params.set('q', filters.q.trim());
   return client.get<never, ApiResponse<GetSellerOrdersData>>(
     `${ENDPOINTS.SELLER_ACCOUNT.GET_SELLER_ORDERS(storeId)}?${params.toString()}`,

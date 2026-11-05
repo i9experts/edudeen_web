@@ -24,7 +24,22 @@ export interface ProfileCheckItem { key: 'logo' | 'banner' | 'bio' | 'products';
 /** Same four rules the home page 'Featured sellers' rail uses. */
 export interface ProfileCompleteness { percent: number; complete: boolean; items: ProfileCheckItem[] }
 
+/** Counts behind the dashboard "Action required" card and the sidebar badges (each equals its target page's list). */
+export interface ActionItems {
+  ordersToShip: number;
+  ordersOverdue: number;
+  returnsPending: number;
+  unreadMessages: number;
+  unansweredQuestions: number;
+  pendingReview: number;
+  rejected: number;
+  /** 1 when there is no payout method / bank details yet, else 0. */
+  payoutMissing: number;
+}
+
 export interface StoreDashboardSummary {
+  /** null = the API could not compute it this time. Missing on an older API. */
+  actionItems?: ActionItems | null;
   overview: SellerOverviewData;
   revenueSeries: RevenuePoint[];
   today: SellerTodaySummaryData;

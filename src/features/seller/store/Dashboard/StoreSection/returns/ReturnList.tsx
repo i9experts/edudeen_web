@@ -119,7 +119,11 @@ export function StoreReturnList() {
   const [error, setError]     = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
   const [search, setSearch]   = useState('');
-  const [status, setStatus]   = useState('');
+  // Dashboard 'Action required' link: /returns?status=requested opens already filtered.
+  const [status, setStatus]   = useState(() => {
+    const s = new URLSearchParams(window.location.search).get('status') ?? '';
+    return STATUS_OPTIONS.some(o => o.value === s) ? s : '';
+  });
   const [reviewing, setReviewing] = useState<SellerReturnItem | null>(null);
   const [page, setPage]       = useState(1);
   const [total, setTotal]     = useState(0);
