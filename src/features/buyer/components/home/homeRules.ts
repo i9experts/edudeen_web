@@ -37,6 +37,25 @@ export function dedupeInOrder<K extends string, T extends HasId>(
   return out;
 }
 
+/** A store-page highlight row (Featured / New arrivals / Best sellers) is hidden below this many products. */
+export const MIN_STORE_HIGHLIGHT_ITEMS = 2;
+export const MAX_STORE_HIGHLIGHT_ITEMS = 8;
+
+/**
+ * Store page rows: one product per row (Featured first, then New arrivals, then Best sellers), max 8 each, a row with
+ * fewer than 2 products is hidden. A hidden row does NOT free its products for later rows (they were already claimed).
+ */
+export function storeHighlightRows<T extends HasId>(data: {
+  featured?: T[]; newArrivals?: T[]; bestSellers?: T[];
+}): { key: 'featured' | 'newArrivals' | 'bestSellers'; products: T[] }[] {
+  const order = ['featured', 'newArrivals', 'bestSellers'] as const;
+  const deduped = dedupeInOrder<(typeof order)[number], T>(
+    order, data,
+    { featured: MAX_STORE_HIGHLIGHT_ITEMS, newArrivals: MAX_STORE_HIGHLIGHT_ITEMS, bestSellers: MAX_STORE_HIGHLIGHT_ITEMS },
+  );
+  return order.map(key => ({ key, products: deduped[key] })).filter(r => r.products.length >= MIN_STORE_HIGHLIGHT_ITEMS);
+}
+
 /** A home rail (Flash, Bestsellers, Featured, curated, sellers) is hidden when fewer than this many valid items remain. */
 export const MIN_RAIL_ITEMS = 4;
 

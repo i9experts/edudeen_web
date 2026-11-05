@@ -627,6 +627,25 @@ export function apiGetBestSellers(storeId: string, limit = 12) {
   return client.get<never, ApiResponse<StorefrontProductsData>>(ENDPOINTS.PRODUCT.STORE_BEST_SELLERS(storeId), { params: { limit } });
 }
 
+export interface StorefrontHighlightRows {
+  featured: PublicStoreProduct[];
+  newArrivals: PublicStoreProduct[];
+  bestSellers: PublicStoreProduct[];
+  config: { showNewArrivals: boolean; showBestSellers: boolean };
+}
+
+/** Published highlight rows for a store page (Featured / New arrivals / Best sellers). Never the seller's draft. */
+export function apiGetStorefrontHighlights(storeId: string) {
+  return client.get<never, ApiResponse<StorefrontHighlightRows>>(ENDPOINTS.PRODUCT.STORE_HIGHLIGHTS(storeId));
+}
+
+/** Seller preview of the editor's unsaved choices (own store only). */
+export function apiPreviewStorefrontHighlights(storeId: string, draft: { featuredProductIds: string[]; showNewArrivals: boolean; showBestSellers: boolean }) {
+  return client.get<never, ApiResponse<StorefrontHighlightRows>>(ENDPOINTS.PRODUCT.STORE_HIGHLIGHTS_PREVIEW(storeId), {
+    params: { ids: draft.featuredProductIds.join(','), newArrivals: draft.showNewArrivals ? '1' : '0', bestSellers: draft.showBestSellers ? '1' : '0' },
+  });
+}
+
 /** Same leaderboard narrowed to the last 7 days. */
 export function apiGetTrendingProducts(storeId: string, limit = 12) {
   return client.get<never, ApiResponse<StorefrontProductsData>>(ENDPOINTS.PRODUCT.STORE_TRENDING(storeId), { params: { limit } });

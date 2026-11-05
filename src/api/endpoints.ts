@@ -232,6 +232,7 @@ export const ENDPOINTS = {
     UPDATE_HEADER:  (storeId: string) => `/api/store-theme/${storeId}/header`,
     UPDATE_FOOTER:  (storeId: string) => `/api/store-theme/${storeId}/footer`,
     UPDATE_IDENTITY_BANNER: (storeId: string) => `/api/store-theme/${storeId}/identity-banner`,
+    UPDATE_STOREFRONT: (storeId: string) => `/api/store-theme/${storeId}/storefront`,
     PUBLIC:         (storeId: string) => `/api/public/store-theme/${storeId}`,
   },
 
@@ -368,6 +369,8 @@ export const ENDPOINTS = {
     GET_MY_PRODUCT_BY_ID: (id: string) => `/api/products/get-my-product/${id}`,
     EDUCATION_FACETS: '/api/products/education/facets',
     STORE_PINNED:        (storeId: string) => `/api/products/store/${storeId}/pinned`,
+    STORE_HIGHLIGHTS:         (storeId: string) => `/api/products/store/${storeId}/storefront-sections`,
+    STORE_HIGHLIGHTS_PREVIEW: (storeId: string) => `/api/products/store/${storeId}/storefront-sections/preview`,
     STORE_NEW_ARRIVALS:  (storeId: string) => `/api/products/store/${storeId}/new-arrivals`,
     STORE_BEST_SELLERS:  (storeId: string) => `/api/products/store/${storeId}/best-sellers`,
     STORE_TRENDING:      (storeId: string) => `/api/products/store/${storeId}/trending`,

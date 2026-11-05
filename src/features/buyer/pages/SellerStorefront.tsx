@@ -21,7 +21,7 @@ import { Modal } from '@/components/comman/ui/Modal';
 import { TokenStorage } from '@/api/services/auth';
 import { formatPrice } from '@/utils/formatPrice';
 import { useStorefront, useStorefrontPaths, storeCoverGradient } from '@/features/storefront/StorefrontContext';
-import { FeaturedProductsSection } from '@/features/storefront/sections/FeaturedProductsSection';
+import { StorefrontHighlights } from '@/features/storefront/sections/StorefrontHighlights';
 import { EducatorCard, hasEducatorProfile } from '@/components/comman/marketplace/EducatorCard';
 import { ProductCatalogSection } from '@/features/storefront/sections/ProductCatalogSection';
 
@@ -341,8 +341,8 @@ export function SellerStorefront() {
         </div>
       )}
 
-      {/* Seller-picked highlights (up to 8) — hidden when nothing is pinned. */}
-      <FeaturedProductsSection settings={{ heading: 'Featured', source: 'pinned', limit: 8 }} />
+      {/* Published highlight rows (Featured / New arrivals / Best sellers) — each hidden below 2 products. */}
+      <StorefrontHighlights />
       <ProductCatalogSection settings={{ heading: `All products from ${store.name}`, showFilters: true, defaultSort: 'newest' }} />
 
       {showRewards && (

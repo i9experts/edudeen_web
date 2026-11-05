@@ -83,6 +83,13 @@ export interface IdentityBanner {
   descriptionMaxLines:  number | null;
 }
 
+/** Highlight rows above "All products": seller-picked Featured (max 8, ordered) + two automatic rows. */
+export interface StorefrontHighlights {
+  featuredProductIds: string[];
+  showNewArrivals:    boolean;
+  showBestSellers:    boolean;
+}
+
 export interface StoreThemeData {
   _id:            string;
   storeId:        string;
@@ -118,7 +125,14 @@ export interface StoreThemeDraftData {
   footer:         StorefrontFooter;
   identityBanner: IdentityBanner;
   baseThemeId:    string | null;
+  /** Highlights draft, and what buyers see right now. */
+  storefront:          StorefrontHighlights;
+  publishedStorefront: StorefrontHighlights;
   lastPublishedAt: string | null;
+}
+
+export function apiUpdateStorefrontHighlights(storeId: string, payload: Partial<StorefrontHighlights>) {
+  return client.patch<never, ApiResponse<{ storefront: StorefrontHighlights }>>(ENDPOINTS.STORE_THEME.UPDATE_STOREFRONT(storeId), payload);
 }
 
 export function apiGetStoreTheme(storeId: string) {

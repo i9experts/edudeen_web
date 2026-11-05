@@ -1,6 +1,6 @@
 // Run: npm run test:rules  (Node 22.6+/24 strips the TypeScript types itself; no test runner needed)
 import assert from 'node:assert/strict';
-import { soldLabel, dedupeInOrder, paymentTrust, paymentTrustSub, railSize, isValidRailProduct, MIN_RAIL_ITEMS, whatsappLink, GRADE_TILES, learnLevelPath } from '../src/features/buyer/components/home/homeRules.ts';
+import { soldLabel, dedupeInOrder, paymentTrust, paymentTrustSub, railSize, isValidRailProduct, MIN_RAIL_ITEMS, whatsappLink, GRADE_TILES, learnLevelPath, storeHighlightRows } from '../src/features/buyer/components/home/homeRules.ts';
 
 let n = 0;
 const t = (name, fn) => { fn(); n += 1; console.log('ok  ', name); };
@@ -76,4 +76,12 @@ t('grade tiles cover Nursery..Class 9-10 and Teachers, learn paths use dashes', 
   assert.equal(learnLevelPath('primary_school'), '/learn/primary-school');
 });
 
+t('store highlights: one product per row, order kept, <2 hidden', () => {
+  const rows = storeHighlightRows({ featured: P('a', 'b'), newArrivals: P('b', 'c', 'd'), bestSellers: P('a', 'd') });
+  assert.deepEqual(rows.map(r => [r.key, r.products.map(p => p._id)]), [['featured', ['a', 'b']], ['newArrivals', ['c', 'd']]]);
+  assert.deepEqual(storeHighlightRows({ featured: P('a') }), []);
+  const many = Array.from({ length: 12 }, (_, i) => ({ _id: 'p' + i }));
+  assert.equal(storeHighlightRows({ newArrivals: many })[0].products.length, 8);
+  assert.deepEqual(storeHighlightRows({ featured: P('x', 'y', 'z') })[0].products.map(p => p._id), ['x', 'y', 'z']);
+});
 console.log(`\n${n} home rule checks passed`);

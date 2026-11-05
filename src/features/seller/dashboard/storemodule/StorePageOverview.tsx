@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState, type ReactNode } from 'react';
 import { clsx } from 'clsx';
 import {
   ExternalLink, Copy, Check, Store as StoreIcon, ShieldCheck, ShoppingCart, Loader2, Star, Megaphone, Palette, Image as ImageIcon, Type, LayoutTemplate, GraduationCap,
@@ -8,19 +7,17 @@ import { Button, Input, Textarea, Select, Toggle, ImageUpload } from '@/componen
 import { StorePageHeader, useStoreWorkspace } from '@/components/layouts/StoreLayout';
 import { useToast } from '@/contexts/ToastContext';
 import {
-  apiUpdateStore, apiUpdatePinnedProducts, apiUpdateAnnouncementBar, apiGetPublicStoreProducts,
+  apiUpdateStore, apiUpdateAnnouncementBar, apiGetPublicStoreProducts,
   type PublicStoreProduct, type StoreAnnouncementType,
 } from '@/api/services/store';
 import { BannerUpload } from '@/components/comman/ui/BannerUpload';
 import { apiGetStoreTheme, apiUpdateStoreThemeColors, apiUpdateIdentityBanner, apiPublishStoreTheme } from '@/api/services/storeTheme';
 import { getStorePagePath, getStorefrontUrl } from '@/utils/storefrontUrl';
 import { STORE_ACCENT_SWATCHES, storeCoverGradient } from '@/features/storefront/StorefrontContext';
-import { ProductCoverFallback } from '@/components/comman/marketplace/ProductCoverFallback';
 import { apiGetFinanceDashboard } from '@/api/services/finance';
-import { useDebouncedValue } from '@/hooks/seller/useInventorySearch';
+import { StoreHighlightsEditor } from './StoreHighlightsEditor';
 import { commissionPctFromFee, formatPct } from '@/features/seller/store/Dashboard/Operations/finance/commissionCopy';
 
-const MAX_FEATURED = 8;
 const ANNOUNCEMENT_TYPES: { value: StoreAnnouncementType; label: string }[] = [
   { value: 'info',     label: 'News' },
   { value: 'sale',     label: 'Sale' },
@@ -44,7 +41,6 @@ interface Draft {
   announcementType: StoreAnnouncementType;
   announcementCtaLabel: string;
   announcementCtaLink: string;
-  featured: string[];
   // Teacher profile (one item per line for the lists)
   eduHeadline: string;
   eduQualifications: string;
@@ -78,7 +74,6 @@ function Section({ icon, title, hint, children }: { icon: ReactNode; title: stri
  * products. The page itself always keeps Edudeen's design, cart and checkout.
  */
 export function StorePageOverview() {
-  const navigate = useNavigate();
   const toast = useToast();
   const { store, storeId, refetch } = useStoreWorkspace();
 
@@ -116,7 +111,6 @@ export function StorePageOverview() {
           announcementType: (a?.type as StoreAnnouncementType) ?? 'info',
           announcementCtaLabel: a?.ctaLabel ?? '',
           announcementCtaLink: a?.ctaLink ?? '',
-          featured: store.pinnedProductIds ?? [],
           eduHeadline: store.educatorProfile?.headline ?? '',
           eduQualifications: (store.educatorProfile?.qualifications ?? []).join('\n'),
           eduExperience: store.educatorProfile?.experienceYears != null ? String(store.educatorProfile.experienceYears) : '',
@@ -130,31 +124,16 @@ export function StorePageOverview() {
     return () => { cancelled = true; };
   }, [store, storeId]);
 
-  // Featured-product picker: first 50 listed products, then server-side search
-  // as the seller types so any listed product can be featured. `knownProducts`
-  // remembers everything seen so picked items still preview after a new search.
-  const [productQuery, setProductQuery] = useState('');
-  const debouncedProductQuery = useDebouncedValue(productQuery.trim(), 300);
-  const [productsLoading, setProductsLoading] = useState(true);
+  // Listed-product count for the preview header (the highlights picker has its own product search).
   const [listedTotal, setListedTotal] = useState<number | null>(null);
-  const [knownProducts, setKnownProducts] = useState<Record<string, PublicStoreProduct>>({});
   useEffect(() => {
     if (!storeId) return;
     let cancelled = false;
-    setProductsLoading(true);
-    apiGetPublicStoreProducts(storeId, { page: 1, limit: 50, search: debouncedProductQuery || undefined })
-      .then(res => {
-        if (cancelled) return;
-        const list = res.data?.products ?? [];
-        setProducts(list);
-        setKnownProducts(prev => ({ ...prev, ...Object.fromEntries(list.map(p => [p._id, p])) }));
-        if (!debouncedProductQuery) setListedTotal(res.data?.pagination?.total ?? list.length);
-      })
-      .catch(() => { if (!cancelled) setProducts([]); })
-      .finally(() => { if (!cancelled) setProductsLoading(false); });
+    apiGetPublicStoreProducts(storeId, { page: 1, limit: 1 })
+      .then(res => { if (!cancelled) { setProducts(res.data?.products ?? []); setListedTotal(res.data?.pagination?.total ?? null); } })
+      .catch(() => { if (!cancelled) setProducts([]); });
     return () => { cancelled = true; };
-  }, [storeId, debouncedProductQuery]);
-
+  }, [storeId]);
   // Real commission rate for the "earnings" line (0 → "No commission").
   const [commissionPct, setCommissionPct] = useState<number | null>(null);
   useEffect(() => {
@@ -173,13 +152,6 @@ export function StorePageOverview() {
 
   const slug = store?.slug ?? '';
   const pageUrl = slug ? getStorefrontUrl(slug) : '';
-
-  const toggleFeatured = (id: string) => {
-    if (!draft) return;
-    if (draft.featured.includes(id)) set('featured', draft.featured.filter(x => x !== id));
-    else if (draft.featured.length < MAX_FEATURED) set('featured', [...draft.featured, id]);
-    else toast.error(`You can feature up to ${MAX_FEATURED} products.`);
-  };
 
   const save = async () => {
     if (!draft || !storeId) return;
@@ -212,7 +184,6 @@ export function StorePageOverview() {
           ctaLink: draft.announcementCtaLink.trim() || null,
         }));
       }
-      if (changed(['featured'])) jobs.push(apiUpdatePinnedProducts(storeId, draft.featured));
       if (changed(['eduHeadline', 'eduQualifications', 'eduExperience', 'eduSubjects', 'eduInstitutions', 'eduLevels'])) {
         const years = draft.eduExperience.trim() === '' ? null : Number(draft.eduExperience);
         if (years != null && (!Number.isInteger(years) || years < 0 || years > 70)) throw new Error('Years teaching must be a whole number from 0 to 70.');
@@ -243,11 +214,6 @@ export function StorePageOverview() {
     if (!pageUrl) return;
     navigator.clipboard.writeText(pageUrl).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1800); }).catch(() => {});
   };
-
-  const featuredProducts = useMemo(
-    () => (draft?.featured ?? []).map(id => knownProducts[id]).filter(Boolean) as PublicStoreProduct[],
-    [draft?.featured, knownProducts],
-  );
 
   const actions = (
     <div className="flex items-center gap-2">
@@ -365,49 +331,8 @@ export function StorePageOverview() {
               )}
             </Section>
 
-            <Section icon={<Star size={15} />} title={`Featured products (${draft.featured.length}/${MAX_FEATURED})`} hint="Pick your best sellers — they show in a row above all your products, in the order you pick them.">
-              {(listedCount > products.length || productQuery) && (
-                <Input
-                  placeholder="Search your listed products…"
-                  value={productQuery}
-                  onChange={e => setProductQuery(e.target.value)}
-                  className="mb-3"
-                />
-              )}
-              {productsLoading && products.length === 0 ? (
-                <p className="text-[12.5px] text-slate flex items-center gap-1.5"><Loader2 size={13} className="animate-spin" /> Loading products…</p>
-              ) : products.length === 0 && debouncedProductQuery ? (
-                <p className="text-[12.5px] text-slate">No listed products match “{debouncedProductQuery}”.</p>
-              ) : products.length === 0 ? (
-                <p className="text-[12.5px] text-slate">
-                  No listed products yet. <button onClick={() => navigate(`/store/${storeId}/products/add`)} className="bg-transparent border-none p-0 text-brand-orange font-semibold underline cursor-pointer">Add a product</button> — make sure "List on Edudeen" is on.
-                </p>
-              ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 max-h-[420px] overflow-y-auto pr-1">
-                  {products.map(p => {
-                    const order = draft.featured.indexOf(p._id);
-                    const picked = order >= 0;
-                    return (
-                      <button
-                        key={p._id}
-                        type="button"
-                        onClick={() => toggleFeatured(p._id)}
-                        className={clsx('relative text-left rounded-xl border overflow-hidden bg-white cursor-pointer transition-colors', picked ? 'border-brand-orange ring-2 ring-brand-orange/25' : 'border-bone hover:border-slate')}
-                      >
-                        <span className="block aspect-square bg-cream">
-                          {p.images?.[0]
-                            ? <img src={p.images[0]} alt="" className="w-full h-full object-cover" loading="lazy" />
-                            : <ProductCoverFallback name={p.name} size="xs" className="w-full h-full" />}
-                        </span>
-                        <span className="block px-2 py-1.5 text-[12px] font-medium text-charcoal line-clamp-2">{p.name}</span>
-                        {picked && (
-                          <span className="absolute top-1.5 right-1.5 size-6 rounded-full bg-brand-orange text-white text-[12px] font-bold flex items-center justify-center">{order + 1}</span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
+            <Section icon={<Star size={15} />} title="Store highlights" hint="Rows above all your products: Featured, New arrivals and Best sellers. Changes stay a draft until you publish.">
+              {storeId && <StoreHighlightsEditor storeId={storeId} store={store} />}
             </Section>
           </div>
 
@@ -436,20 +361,6 @@ export function StorePageOverview() {
                   </span>
                 </div>
               </div>
-              {featuredProducts.length > 0 && (
-                <div className="px-3 py-3 border-t border-bone">
-                  <p className="text-[12px] font-bold text-carbon mb-2">Featured</p>
-                  <div className="flex gap-2 overflow-hidden">
-                    {featuredProducts.slice(0, 4).map(p => (
-                      <span key={p._id} className="w-[72px] shrink-0">
-                        <span className="block aspect-square rounded-md overflow-hidden bg-cream">
-                          {p.images?.[0] ? <img src={p.images[0]} alt="" className="w-full h-full object-cover" /> : <ProductCoverFallback name={p.name} size="xs" className="w-full h-full" />}
-                        </span>
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
               <div className="px-3 py-3 border-t border-bone">
                 <p className="text-[12px] font-bold text-carbon">All products</p>
                 <p className="text-[12px] text-slate">{listedCount} listed · Edudeen cart & checkout</p>

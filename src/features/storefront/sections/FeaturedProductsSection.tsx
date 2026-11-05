@@ -69,16 +69,21 @@ function useCuratedProducts(storeId: string | undefined, settings: FeaturedProdu
 // showed), a specific category, or a hand-picked list. Distinct from
 // `ProductCatalogSection`, which is the full paginated browse grid.
 export function FeaturedProductsSection({ settings }: { settings: FeaturedProductsSectionSettings }) {
+  const { store } = useStorefront();
+  const { products, loading } = useCuratedProducts(store.storeId, settings);
+  if (!loading && products.length === 0) return null;
+  return <ProductStrip heading={settings.heading} products={products} />;
+}
+
+/** The horizontal product row itself (scrolls sideways on phones). Shared by the store page highlight rows and the seller's preview of them. */
+export function ProductStrip({ heading, products }: { heading?: string; products: PublicStoreProduct[] }) {
   const { store, cfg } = useStorefront();
   const { toMain } = useStorefrontPaths();
   const { currency: displayCurrency, convert } = useCurrencyPreference();
-  const { products, loading } = useCuratedProducts(store.storeId, settings);
-
-  if (!loading && products.length === 0) return null;
 
   return (
     <div className="px-4 sm:px-6 lg:px-10" style={{ paddingTop: 24 * cfg.sectionSpacingScale, paddingBottom: 24 * cfg.sectionSpacingScale }}>
-      {settings.heading && <h2 className="font-bold mb-4" style={{ color: cfg.textColor, fontSize: Math.round(20 * cfg.typeScaleFactor) }}>{settings.heading}</h2>}
+      {heading && <h2 className="font-bold mb-4" style={{ color: cfg.textColor, fontSize: Math.round(20 * cfg.typeScaleFactor) }}>{heading}</h2>}
       <div className="flex items-stretch overflow-x-auto scrollbar-none pb-1" style={{ gap: cfg.productGridDensity === 'relaxed' ? 16 : 12 }}>
         {products.map(p => {
           const pType = p.productType ?? p.type ?? 'physical';

@@ -2119,6 +2119,9 @@ export const UR: Record<string, string> = {
   'Cash on Delivery available': 'کیش آن ڈیلیوری دستیاب ہے',
   'Delivery info unavailable': 'ڈیلیوری کی معلومات دستیاب نہیں',
   'Returns': 'واپسی',
+  // Store page highlight rows
+  'New arrivals': 'نئی آمد',
+  'Best sellers': 'سب سے زیادہ بکنے والی',
 };
 
 const MONTHS: Record<string, string> = {
