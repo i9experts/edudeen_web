@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { addressLines } from '@/utils/address';
 import { Truck, CheckCheck, RefreshCw } from 'lucide-react';
 import { Modal, Button, Badge, StatusBadge, Input, SkeletonBox } from '@/components/comman/ui';
-import { apiMarkOrderPaid, apiUpdateOrderStatus } from '@/api/services/orders';
+import { apiMarkOrderPaid, apiSellerCancelOrder, apiUpdateOrderStatus } from '@/api/services/orders';
 import { apiGetSellerOrderDetail, type SellerOrder, type SellerOrderDetail } from '@/api/services/product';
 import { formatPrice } from '@/utils/formatPrice';
 import { CodRiskBadge } from '@/components/ai/CodRiskBadge';
@@ -34,7 +34,11 @@ export const canShip = (o: SellerOrder) =>
 export const canComplete = (o: SellerOrder) =>
   !isClosed(o) && o.isPaid && (!needsShipping(o) || o.status === 'shipped' || o.status === 'delivered');
 
-export const canProcess = (o: SellerOrder) => o.status === 'pending';
+/** Seller can cancel a package that has not shipped (not when Edudeen fulfils it). Cancels count in Store Health. */
+export const canCancel = (o: SellerOrder) =>
+  needsShipping(o) && (o.status === 'pending' || o.status === 'processing') && (o.fulfillmentMode ?? 'seller') !== 'platform';
+
+export const canProcess =(o: SellerOrder) => o.status === 'pending';
 
 export const paymentLabel = (t: string) =>
   t === 'cash_on_delivery' ? 'Cash on delivery' : t === 'stripe' ? 'Card' : t.replace(/_/g, ' ');
@@ -62,6 +66,8 @@ export function OrderDetailModal({ order, storeId, onClose, onUpdated }: Props) 
   const [carrier, setCarrier]               = useState('');
   const [trackingNumber, setTrackingNumber] = useState('');
   const [trackingUrl, setTrackingUrl]       = useState('');
+  const [cancelling, setCancelling]         = useState(false);
+  const [cancelReason, setCancelReason]     = useState('');
 
   const money = (n: number) => formatPrice(n, order.currency ?? undefined);
 
@@ -105,6 +111,11 @@ export function OrderDetailModal({ order, storeId, onClose, onUpdated }: Props) 
   const markPaid = () =>
     // Marks only THIS store's package paid (the API needs storeId for multi-seller Cash on Delivery orders).
     run('paid', () => apiMarkOrderPaid(order.orderId, storeId), { isPaid: true });
+
+  const confirmCancel = () => {
+    if (cancelReason.trim().length < 5) { setError('Give the buyer a short reason (at least 5 characters).'); return; }
+    run('cancel', () => apiSellerCancelOrder(order.orderId, storeId, cancelReason.trim()), { status: 'cancelled' });
+  };
 
   const typeLabel = order.type === 'digital'
     ? 'Digital'
@@ -272,7 +283,22 @@ export function OrderDetailModal({ order, storeId, onClose, onUpdated }: Props) 
 
         {error && <p role="alert" className="text-[12.5px] text-error font-medium">{error}</p>}
 
+        {cancelling && canCancel(order) && (
+          <section className="rounded-xl border border-bone p-3 flex flex-col gap-2">
+            <p className="text-[13px] font-semibold text-carbon">Cancel this order?</p>
+            <p className="text-[12px] text-slate">The buyer is told and refunded. Cancellations by the seller count in your Store Health.</p>
+            <Input label="Reason for the buyer" value={cancelReason} onChange={e => setCancelReason(e.target.value)} maxLength={200} />
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" size="sm" onClick={() => { setCancelling(false); setError(''); }} disabled={!!busy}>Keep order</Button>
+              <Button variant="danger" size="sm" onClick={confirmCancel} loading={busy === 'cancel'} disabled={!!busy}>Yes, cancel order</Button>
+            </div>
+          </section>
+        )}
+
         <div className="flex flex-wrap gap-2 justify-end">
+          {canCancel(order) && !cancelling && (
+            <Button variant="outline" size="sm" onClick={() => setCancelling(true)} disabled={!!busy}>Cancel order</Button>
+          )}
           {canProcess(order) && (
             <Button variant="outline" size="sm" onClick={() => changeStatus('processing')} loading={busy === 'processing'} disabled={!!busy} icon={<RefreshCw size={13} />}>
               Mark processing

@@ -78,6 +78,7 @@ export interface StoreHealthMetric {
   target: string;
   status: StoreHealthStatus;
   hint: string;
+  countedFrom?: string;
 }
 export interface StoreHealth {
   range: 30 | 90;

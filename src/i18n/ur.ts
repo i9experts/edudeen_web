@@ -2430,6 +2430,7 @@ const urOr = (s: string) => UR[s] ?? s;
 /** Strings with numbers or names in them — `m` is the RegExp match. */
 export const UR_PATTERNS: [RegExp, (m: RegExpMatchArray) => string][] = [
   [/^Shipment (\d+) of (\d+) - (.+)$/, m => `شپمنٹ ${m[1]} از ${m[2]} - ${m[3]}`],
+  [/^Counted from (.+)$/, m => `${m[1]} سے شمار کیا گیا`],
   // Relative times (reviews, notifications, wishlist) — ur-PK wording, Latin digits.
   [/^(\d+) (?:min|mins|minutes?) ago$/, m => `${m[1]} منٹ پہلے`],
   [/^(\d+) (?:hrs?|hours?) ago$/, m => `${m[1]} گھنٹے پہلے`],

@@ -186,6 +186,11 @@ export function apiUpdateOrderStatus(payload: UpdateStatusPayload) {
   return client.put<never, OrderActionResponse>(ENDPOINTS.ORDERS.UPDATE_STATUS, payload);
 }
 
+/** Seller cancels THIS store's items of an order that has not shipped (refund handled by the API like a buyer cancel). */
+export function apiSellerCancelOrder(orderId: string, storeId: string, reason: string) {
+  return client.post<never, OrderActionResponse>(ENDPOINTS.ORDERS.SELLER_CANCEL(orderId), { storeId, reason });
+}
+
 export interface DigitalDownloadFile {
   index:     number;
   fileName:  string;

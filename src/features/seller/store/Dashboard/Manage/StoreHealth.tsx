@@ -40,6 +40,11 @@ function MetricTile({ m }: { m: StoreHealthMetric }) {
       <p className="text-[28px] leading-none font-bold text-carbon tabular-nums">{formatValue(m)}</p>
       <p className="text-[12px] text-slate">Target: <span className="font-semibold text-carbon">{m.target}</span></p>
       <p className="text-[12px] text-slate leading-[1.5]">{m.hint}</p>
+      {m.countedFrom && (
+        <p className="text-[12px] text-slate">
+          {`Counted from ${new Date(m.countedFrom).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Karachi' })}`}
+        </p>
+      )}
     </Card>
   );
 }

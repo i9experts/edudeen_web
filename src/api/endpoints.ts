@@ -488,7 +488,8 @@ export const ENDPOINTS = {
   ORDERS: {
     MARK_PAID:     (id: string) => `/api/orders/mark-paid/${id}`,
     UPDATE_STATUS: '/api/orders/update-status',
-    DOWNLOAD_URL:  '/api/orders/download-url',
+    SELLER_CANCEL: (id: string) => `/api/orders/seller-cancel/${id}`,
+    DOWNLOAD_URL: '/api/orders/download-url',
 
     MY_ORDERS:       '/api/orders/my-orders',
     BY_CHECKOUT:     (checkoutId: string) => `/api/orders/by-checkout/${checkoutId}`,
