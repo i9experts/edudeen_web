@@ -481,6 +481,8 @@ export interface SellerOrder {
   fulfillmentMode?: 'seller' | 'platform' | null;
   /** Ship-by time (payment, or order creation for COD, + 48 h); null when nothing is waiting to ship. */
   shipBy?: string | null;
+  /** Same buyer + product set within 24 h (computed, advisory). */
+  possibleDuplicate?: { orderId: string; orderNumber: string } | null;
 }
 
 export type SellerOrderTab = 'needs_action' | 'shipped' | 'delivered' | 'completed' | 'cancelled' | 'all';
@@ -557,6 +559,10 @@ export interface SellerOrderDetailItem {
   totalPrice:  number;
   status:      string | null;
   cancelReason?: string | null;
+  returnStatus?: 'none' | 'requested' | 'approved' | 'rejected' | string;
+  returnReason?: string | null;
+  returnRequestedAt?: string | null;
+  returnRejectReason?: string | null;
 }
 
 export interface SellerOrderShippingAddress {
@@ -592,6 +598,9 @@ export interface SellerOrderDetail {
   shippingCourier?: { courier: string | null; service: string | null; etaDays: number | null; source: 'live' | 'slab' | 'zone' | 'self' } | null;
   giftMessage?:    string | null;
   giftWrap?:       boolean;
+  /** Computed on read, advisory only. */
+  warnings?:       { possibleDuplicate: { orderId: string; orderNumber: string } | null; address: { code: string; text: string }[] };
+  returnStatus?:   string;
   trackingEvents?: Array<{ status: string | null; description: string | null; location: string | null; at: string | null; source: string }>;
   shippedAt:       string | null;
   deliveredAt:     string | null;

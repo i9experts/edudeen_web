@@ -32,6 +32,7 @@ import { useLiveRefresh } from '@/hooks/useLiveRefresh';
 import { FreeClaimsCard } from './FreeClaimsCard';
 import { orderAgeText, shipByBadge } from './shipByBadge';
 import { OrderIdCopy } from './OrderIdCopy';
+import { DuplicateChip } from './DuplicateChip';
 import { formatMoney } from '@/utils/currency';
 import {
   OrderDetailModal, edudeenCollects, EDUDEEN_COD_NOTE, canMarkPaid, canComplete, canProcess, canShip, paymentLabel,
@@ -239,7 +240,12 @@ export function StoreOrderList() {
   const columns: TableColumn<SellerOrder>[] = [
     {
       key: 'orderNumber', header: 'Order',
-      render: o => <OrderIdCopy orderNumber={o.orderNumber} />,
+      render: o => (
+        <div className="flex flex-col items-start gap-1">
+          <OrderIdCopy orderNumber={o.orderNumber} />
+          <DuplicateChip other={o.possibleDuplicate} />
+        </div>
+      ),
     },
     {
       key: 'customer', header: 'Customer',
@@ -311,6 +317,7 @@ export function StoreOrderList() {
           <OrderIdCopy orderNumber={o.orderNumber} />
           <span className="text-[12px] text-slate whitespace-nowrap">{dateText(o)}</span>
         </div>
+        {o.possibleDuplicate && <DuplicateChip other={o.possibleDuplicate} />}
         <div className="flex items-center gap-2.5 min-w-0">
           <Avatar name={o.customer.name} size={30} />
           <p className="m-0 text-[14px] font-semibold text-charcoal truncate">{o.customer.name}</p>
@@ -475,6 +482,14 @@ export function StoreOrderList() {
           storeId={storeId}
           onClose={() => setSelected(null)}
           onUpdated={patchOrder}
+          onOpenOrder={(id, number) => {
+            const other = orders.find(x => x.orderId === id);
+            if (other) { setSelected(other); return; }
+            // Not on this page: close and search for it by order number.
+            setSelected(null);
+            setTab('all');
+            setSearch(number);
+          }}
         />
       )}
     </>

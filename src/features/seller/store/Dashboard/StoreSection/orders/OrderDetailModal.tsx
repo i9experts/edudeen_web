@@ -50,6 +50,54 @@ interface Props {
   onClose:   () => void;
   /** Called with the fields that changed after a successful action. */
   onUpdated: (orderId: string, patch: Partial<SellerOrder>) => void;
+  /** Opens another order (the possible-duplicate link). */
+  onOpenOrder?: (orderId: string, orderNumber: string) => void;
+}
+
+const RETURN_LABEL: Record<string, string> = { requested: 'Return requested', approved: 'Return approved', rejected: 'Return declined' };
+
+/** Advisory checks (duplicate, address) + return flags. Hidden silently if the detail failed; skeleton while loading. */
+function OrderChecks({ detail, loading, failed, onOpenOrder }: {
+  detail: SellerOrderDetail | null; loading: boolean; failed: boolean;
+  onOpenOrder?: (orderId: string, orderNumber: string) => void;
+}) {
+  if (failed) return null;
+  if (loading) return <SkeletonBox height={44} rounded="8px" />;
+  if (!detail) return null;
+  const dup = detail.warnings?.possibleDuplicate ?? null;
+  const addr = detail.warnings?.address ?? [];
+  const returned = detail.items.filter(i => i.returnStatus && i.returnStatus !== 'none');
+  if (!dup && addr.length === 0 && returned.length === 0) return null;
+  return (
+    <section role="note" className="rounded-lg border border-warning/30 bg-warning-bg/40 px-3 py-2 flex flex-col gap-2">
+      <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-warning">Check before you ship</p>
+      {dup && (
+        <p className="text-[13px] text-carbon">
+          Possible duplicate: same buyer ordered the same products within 24 hours.{' '}
+          {onOpenOrder && (
+            <button type="button" onClick={() => onOpenOrder(dup.orderId, dup.orderNumber)} className="font-semibold text-brand-royal underline cursor-pointer bg-transparent border-none p-0">
+              View order {dup.orderNumber}
+            </button>
+          )}
+        </p>
+      )}
+      {addr.length > 0 && (
+        <ul className="list-disc ps-4 text-[13px] text-carbon">
+          {addr.map(w => <li key={w.code}>{w.text}</li>)}
+        </ul>
+      )}
+      {returned.length > 0 && (
+        <ul className="text-[13px] text-carbon">
+          {returned.map((i, k) => (
+            <li key={`${i.productId}-${k}`}>
+              <span className="font-semibold">{RETURN_LABEL[i.returnStatus as string] ?? 'Return'}</span>: {i.name}
+              {i.returnReason ? ` — ${i.returnReason}` : ''}
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
 }
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
@@ -61,7 +109,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
   );
 }
 
-export function OrderDetailModal({ order, storeId, onClose, onUpdated }: Props) {
+export function OrderDetailModal({ order, storeId, onClose, onUpdated, onOpenOrder }: Props) {
   const [busy, setBusy]   = useState<string | null>(null);
   const [error, setError] = useState('');
   const [carrier, setCarrier]               = useState('');
@@ -129,6 +177,8 @@ export function OrderDetailModal({ order, storeId, onClose, onUpdated }: Props) 
           <span className="text-[12px] text-slate shrink-0">Order ID</span>
           <OrderIdCopy orderNumber={order.orderNumber} full />
         </div>
+        <OrderChecks detail={detail} loading={detailLoading} failed={!!detailError} onOpenOrder={onOpenOrder} />
+
         <section>
           <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-slate mb-1">Buyer</p>
           <Row label="Name">{order.customer.name}</Row>
