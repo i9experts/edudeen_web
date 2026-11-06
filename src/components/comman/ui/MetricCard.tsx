@@ -1,6 +1,6 @@
 import { lazy, Suspense, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { TrendingUp, TrendingDown, ArrowUpRight } from 'lucide-react';
+import { TrendingUp, TrendingDown, ArrowUpRight, Info } from 'lucide-react';
 import { Card } from './Card';
 import { SkeletonBox } from './SkeletonBox';
 // recharts is large: it loads only when a card actually shows a sparkline (admin/seller dashboards).
@@ -22,9 +22,11 @@ interface MetricCardProps {
   compact?: boolean;
   /** Makes the whole card a link to the page/list this number comes from. */
   to?: string;
+  /** Short explanation shown from a small info icon next to the label (hover, focus or tap). */
+  info?: string;
 }
 
-export function MetricCard({ label, value, trend, trendUp, sub, icon, loading, color, sparkline, compact, to }: MetricCardProps) {
+export function MetricCard({ label, value, trend, trendUp, sub, icon, loading, color, sparkline, compact, to, info }: MetricCardProps) {
   if (loading) {
     return (
       <Card className="flex-1 min-w-[140px]">
@@ -84,8 +86,13 @@ export function MetricCard({ label, value, trend, trendUp, sub, icon, loading, c
             </div>
           )}
         </div>
-        <p className="text-[13px] sm:text-[14px] text-carbon mb-2">
-          {label}
+        <p className="text-[13px] sm:text-[14px] text-carbon mb-2 flex items-center gap-1.5">
+          <span>{label}</span>
+          {info && (
+            <span tabIndex={0} role="img" aria-label={info} title={info} className="inline-flex text-slate cursor-help shrink-0">
+              <Info size={13} aria-hidden />
+            </span>
+          )}
         </p>
         <p className="num font-serif text-[clamp(20px,2.3vw,32px)] font-normal text-carbon leading-[1.1] whitespace-nowrap" title={typeof value === 'string' ? value : undefined}>
           {value}

@@ -50,26 +50,36 @@ export type RepeatBuyerTrend = 'improving' | 'declining' | 'flat';
 
 export interface SellerOverviewPreviousPeriod {
   period: AnalyticsPeriod;
-  grossRevenue: number;
-  totalRevenue: number;
+  /** Booked order value: non-cancelled, free claims excluded. */
+  bookedValue: number;
+  /** Collected: paid orders/packages only (net of refunds on them). */
+  collected: number;
   totalOrders: number;
+  freeClaims: number;
   avgOrderValue: number;
   repeatBuyerPercent: number;
   totalRefunds: number;
   cancelledOrders: number;
+  newCustomersCount: number;
+  returningCustomersCount: number;
 }
 
 export interface SellerOverviewData {
   period: AnalyticsPeriod;
+  /** Always 'Asia/Karachi' - ranges are Pakistan calendar days. */
+  timezone?: string;
+  bookedValue: number;
+  collected: number;
+  /** Legacy (seller dashboard card): booked value, and booked value net of refunds. */
   grossRevenue: number;
   totalRevenue: number;
-  totalRevenueChangePercent: number | null;
   totalOrders: number;
-  totalOrdersChange: number;
+  /** Free claims (counted apart; never part of orders/AOV/customers). */
+  freeClaims: number;
   avgOrderValue: number;
-  avgOrderValueChangePercent: number | null;
   repeatBuyerPercent: number;
-  repeatBuyerTrend: RepeatBuyerTrend;
+  /** Only present when compare is on. */
+  repeatBuyerTrend?: RepeatBuyerTrend;
   totalRefunds: number;
   refundRatePercent: number;
   cancelledOrders: number;

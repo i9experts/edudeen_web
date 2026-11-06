@@ -23,13 +23,17 @@ interface AnalyticsFilterBarProps<T extends BaseAnalyticsUIFilters> {
   onCsvSectionChange: (v: string) => void;
   /** Hide the PDF/CSV export controls entirely — for views export doesn't support yet (e.g. the seller's cross-store "All Stores" view). Defaults to shown. */
   showExport?: boolean;
+  /** Latest selectable date (yyyy-mm-dd) for the custom From/To inputs. */
+  dateMax?: string;
+  /** Inline message shown under the custom date inputs (not the page error card). */
+  dateError?: string;
 }
 
 export function AnalyticsFilterBar<T extends BaseAnalyticsUIFilters>({
   filters, onChange, onExportPdf, onExportCsv, exporting, advanced,
   granularityOptions, granularity, onGranularityChange,
-  csvSections, csvSection, onCsvSectionChange, showExport = true,
-}: AnalyticsFilterBarProps<T>) {
+  csvSections, csvSection, onCsvSectionChange, showExport = true, dateMax, dateError,
+}:AnalyticsFilterBarProps<T>) {
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   const patch = (partial: Partial<T>) => onChange({ ...filters, ...partial });
@@ -44,19 +48,22 @@ export function AnalyticsFilterBar<T extends BaseAnalyticsUIFilters>({
         />
 
         {filters.range === 'custom' && (
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex flex-col sm:flex-row sm:items-end gap-2 w-full sm:w-auto">
             <Input
               type="date"
+              label="From"
               value={filters.from}
+              max={dateMax}
               onChange={e => patch({ from: e.target.value } as Partial<T>)}
-              className="w-[140px]"
+              className="w-full sm:w-[150px]"
             />
-            <span className="text-slate text-[12px]">to</span>
             <Input
               type="date"
+              label="To"
               value={filters.to}
+              max={dateMax}
               onChange={e => patch({ to: e.target.value } as Partial<T>)}
-              className="w-[140px]"
+              className="w-full sm:w-[150px]"
             />
           </div>
         )}
@@ -105,6 +112,10 @@ export function AnalyticsFilterBar<T extends BaseAnalyticsUIFilters>({
           </>
         )}
       </div>
+
+      {filters.range === 'custom' && dateError && (
+        <p role="alert" className="text-[12px] text-error -mt-1">{dateError}</p>
+      )}
 
       {advanced && showAdvanced && (
         <div className="flex flex-wrap items-end gap-3 pt-3 border-t border-bone">

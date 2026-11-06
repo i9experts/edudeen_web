@@ -17,9 +17,10 @@ interface MultiTooltipProps {
   label?:   string;
   valuePrefix?: string;
   valueSuffix?: string;
+  valueFormatter?: (v: number) => string;
 }
 
-function ChartTooltip({ active, payload, label, valuePrefix = '', valueSuffix = '' }: MultiTooltipProps) {
+function ChartTooltip({ active, payload, label, valuePrefix = '', valueSuffix = '', valueFormatter }: MultiTooltipProps) {
   if (!active || !payload?.length) return null;
   return (
     <div className="bg-white border border-bone rounded-lg px-3 py-2 text-xs min-w-[120px]">
@@ -30,7 +31,7 @@ function ChartTooltip({ active, payload, label, valuePrefix = '', valueSuffix = 
             <span className="w-2 h-2 rounded-full shrink-0" style={{ background: p.color }} />
             <span className="text-graphite">{p.name}</span>
           </span>
-          <span className="font-bold text-charcoal">{valuePrefix}{p.value.toLocaleString()}{valueSuffix}</span>
+          <span className="font-bold text-charcoal">{valueFormatter ? valueFormatter(p.value) : `${valuePrefix}${p.value.toLocaleString()}${valueSuffix}`}</span>
         </div>
       ))}
     </div>
@@ -47,6 +48,8 @@ export interface LineChartProps {
   valuePrefix?: string;
   valueSuffix?: string;
   yTickFormatter?: (v: number) => string;
+  /** Full-precision value in the tooltip (e.g. "Rs 30,530") while the axis stays compact. */
+  tooltipFormatter?: (v: number) => string;
   showLegend?:  boolean;
 }
 
@@ -60,6 +63,7 @@ export function LineChart({
   valuePrefix = '',
   valueSuffix = '',
   yTickFormatter,
+  tooltipFormatter,
   showLegend = true,
 }: LineChartProps) {
   const defaultYFmt = (v: number) =>
@@ -97,9 +101,9 @@ export function LineChart({
         <RechartsLine data={data} margin={{ top: 4, right: 20, left: 0, bottom: showLegend ? 0 : 4 }}>
           <CartesianGrid {...CHART_GRID} vertical={false} />
           <XAxis dataKey={xKey} tick={CHART_TICK} axisLine={false} tickLine={false} />
-          {/* 10% headroom so the line never clips above the plot */}
-          <YAxis tick={CHART_TICK} axisLine={false} tickLine={false} tickFormatter={yFmt} width={46} domain={[0, (max: number) => Math.ceil(max * 1.1)]} />
-          <Tooltip content={<ChartTooltip valuePrefix={valuePrefix} valueSuffix={valueSuffix} />} />
+          {/* 'auto' upper bound = recharts "nice" round ticks (0, 10K, 20K...), which also leaves headroom */}
+          <YAxis tick={CHART_TICK} axisLine={false} tickLine={false} tickFormatter={yFmt} width={yTickFormatter ? 60 : 46} domain={[0, 'auto']} />
+          <Tooltip content={<ChartTooltip valuePrefix={valuePrefix} valueSuffix={valueSuffix} valueFormatter={tooltipFormatter} />} />
           {showLegend && (
             <Legend
               iconType="circle"

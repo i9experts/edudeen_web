@@ -20,12 +20,13 @@ export function formatPercent(n: number | null | undefined, opts?: { signed?: bo
   return `${sign}${n.toFixed(1).replace(/\.0$/, '')}%`;
 }
 
-export function formatBucketLabel(dateStr: string, granularity: AnalyticsGranularity): string {
+/** `timeZone` (e.g. 'Asia/Karachi'): label the bucket in that zone instead of the viewer's. */
+export function formatBucketLabel(dateStr: string, granularity: AnalyticsGranularity, timeZone?: string): string {
   const d = new Date(dateStr);
-  if (granularity === 'month') return d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  if (granularity === 'month') return d.toLocaleDateString('en-US', { month: 'short', year: '2-digit', timeZone });
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone });
 }
 
-export function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+export function formatDate(dateStr: string, timeZone?: string): string {
+  return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone });
 }
