@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Pin, PinOff, Bell, BellOff, Archive, ArchiveRestore, Ban, Flag, Trash2, Package } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { StorePageHeader } from '@/components/layouts/StoreLayout';
@@ -52,7 +52,9 @@ export function SellerMessages() {
   const navigate = useNavigate();
   const { profile } = useGetProfile();
 
-  const [filter, setFilter] = useState<FilterId>('all');
+  const [searchParams] = useSearchParams();
+  // `?filter=unread` lets Store Health link straight to the chats waiting for a reply.
+  const [filter, setFilter] = useState<FilterId>(() => (searchParams.get('filter') === 'unread' ? 'unread' : 'all'));
   // "All" hides archived (matches WhatsApp/Telegram convention); "Archived" shows only those.
   const { conversations, loading: listLoading, error: listError, refetch: refetchList } =
     useConversations(storeId ? { storeId, isArchived: filter === 'archived' } : undefined);

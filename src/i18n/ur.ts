@@ -2415,6 +2415,29 @@ export const UR: Record<string, string> = {
   'The team checks receipts manually, usually within a day. Re-upload a clearer receipt if it was rejected.': 'ٹیم رسیدیں دستی طور پر دیکھتی ہے، عموماً ایک دن میں۔ اگر مسترد ہو جائے تو زیادہ صاف رسید دوبارہ اپ لوڈ کریں۔',
   'My download link stopped working.': 'میرا ڈاؤن لوڈ لنک کام نہیں کر رہا۔',
   'Open My Library and press Re-send download link.': 'میری لائبریری کھولیں اور "ڈاؤن لوڈ لنک دوبارہ بھیجیں" دبائیں۔',
+  // Store Health: actions, status banner, checklist
+  'All good': 'سب ٹھیک ہے',
+  'Building history': 'ریکارڈ بن رہا ہے',
+  'Just now': 'ابھی ابھی',
+  'How to improve': 'بہتر کیسے کریں',
+  'View overdue orders': 'تاخیر والے آرڈرز دیکھیں',
+  'View return requests': 'واپسی کی درخواستیں دیکھیں',
+  'View chats waiting for a reply': 'جواب کے منتظر چیٹس دیکھیں',
+  'View reviews': 'ریویوز دیکھیں',
+  'View listings sent back': 'واپس بھیجی گئی لسٹنگز دیکھیں',
+  'View all sent-back listings': 'واپس بھیجی گئی تمام لسٹنگز دیکھیں',
+  'Get started: how to build your health numbers': 'شروع کریں: اپنے ہیلتھ اعداد کیسے بنائیں',
+  'Add products to your store': 'اپنے اسٹور میں پروڈکٹس شامل کریں',
+  'Set up shipping': 'شپنگ سیٹ کریں',
+  'Reply to buyers within 24 hours': 'خریداروں کو 24 گھنٹوں میں جواب دیں',
+  'Ask happy buyers for reviews': 'خوش خریداروں سے ریویو مانگیں',
+  'Ship within 48 hours of payment. Add tracking right away and mark each parcel shipped.': 'ادائیگی کے 48 گھنٹوں میں روانہ کریں۔ فوراً ٹریکنگ لکھیں اور ہر پارسل کو روانہ شدہ نشان زد کریں۔',
+  'Only cancel when you truly cannot ship. Keep stock counts up to date so orders can be fulfilled.': 'صرف تب منسوخ کریں جب واقعی روانہ نہ کر سکیں۔ آرڈر پورے ہو سکیں اس لیے اسٹاک درست رکھیں۔',
+  'Describe items clearly with real photos and sizes, and pack them well to avoid damage.': 'آئٹمز کو واضح تصاویر اور سائز کے ساتھ بیان کریں اور نقصان سے بچنے کے لیے اچھی پیکنگ کریں۔',
+  'Answer buyer chats within 24 hours. Open the unread chats first.': 'خریداروں کی چیٹس کا 24 گھنٹوں میں جواب دیں۔ پہلے نہ پڑھی چیٹس کھولیں۔',
+  'Reply early in the day. Even a short answer starts the clock in your favour.': 'دن کے شروع میں جواب دیں۔ مختصر جواب بھی آپ کے حق میں وقت شروع کر دیتا ہے۔',
+  'Ask buyers for a review after delivery and answer feedback politely.': 'ڈیلیوری کے بعد خریداروں سے ریویو مانگیں اور رائے کا شائستگی سے جواب دیں۔',
+  'Open each sent-back listing, fix what the note asks for, then publish again.': 'ہر واپس بھیجی گئی لسٹنگ کھولیں، نوٹ کے مطابق درست کریں، پھر دوبارہ شائع کریں۔',
 };
 
 const MONTHS: Record<string, string> = {
@@ -2431,6 +2454,11 @@ const urOr = (s: string) => UR[s] ?? s;
 export const UR_PATTERNS: [RegExp, (m: RegExpMatchArray) => string][] = [
   [/^Shipment (\d+) of (\d+) - (.+)$/, m => `شپمنٹ ${m[1]} از ${m[2]} - ${m[3]}`],
   [/^Counted from (.+)$/, m => `${m[1]} سے شمار کیا گیا`],
+  [/^(\d+) need attention$/, m => `${m[1]} پر توجہ درکار ہے`],
+  [/^(\d+) of (\d+) (orders|chats|items|reviews)$/, m => `${m[2]} میں سے ${m[1]} ${({ orders: 'آرڈرز', chats: 'چیٹس', items: 'آئٹمز', reviews: 'ریویوز' } as Record<string, string>)[m[3]]}`],
+  [/^\+(\d+) more$/, m => `+${m[1]} مزید`],
+  [/^Last updated (.+)$/, m => `آخری اپ ڈیٹ ${m[1]}`],
+  [/^Showing the last (\d+) days$/, m => `پچھلے ${m[1]} دن دکھائے جا رہے ہیں`],
   // Relative times (reviews, notifications, wishlist) — ur-PK wording, Latin digits.
   [/^(\d+) (?:min|mins|minutes?) ago$/, m => `${m[1]} منٹ پہلے`],
   [/^(\d+) (?:hrs?|hours?) ago$/, m => `${m[1]} گھنٹے پہلے`],

@@ -79,10 +79,15 @@ export interface StoreHealthMetric {
   status: StoreHealthStatus;
   hint: string;
   countedFrom?: string;
+  /** Additive (same number as `sample`) and the minimum before a number is shown (0 = none). */
+  sampleSize?: number;
+  minSample?: number;
 }
+export interface StoreHealthSentBackItem { id: string; title: string; note: string | null }
 export interface StoreHealth {
   range: 30 | 90;
   metrics: StoreHealthMetric[];
+  sentBackItems?: StoreHealthSentBackItem[];
   isNew: boolean;
   minSamples: number;
   generatedAt: string;
