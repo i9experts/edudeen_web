@@ -227,7 +227,7 @@ function ImageGallery({ images, name }: { images: string[]; name: string }) {
                 )}
               >
                 {!errored[i] && img
-                  ? <img loading="lazy" decoding="async" src={imgUrl(img, { w: 128 })} alt="" width={64} height={64} onError={() => setErrored(e => ({ ...e, [i]: true }))} className="w-full h-full object-cover" />
+                  ? <img loading="lazy" decoding="async" src={imgUrl(img, { w: 128 })} alt="" width={64} height={64} onError={() => setErrored(e => ({ ...e, [i]: true }))} className="w-full h-full object-contain bg-white" />
                   : <ProductCoverFallback name={name} size="xs" className="w-full h-full" />}
                 {isLast && (
                   <span className="absolute inset-0 flex items-center justify-center bg-black/55 text-white text-[13px] font-bold">+{images.length - MAX_THUMBS + 1}</span>
@@ -374,7 +374,7 @@ function RelatedCard({ id, name, image, price: nativePrice, compareAtPrice: nati
     >
       <div className="relative h-[110px] bg-brand-pale-orange flex items-center justify-center overflow-hidden">
         {image && !errored
-          ? <img loading="lazy" decoding="async" src={imgUrl(image, { w: 300 })} alt={name} width={150} height={110} onError={() => setErrored(true)} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+          ? <img loading="lazy" decoding="async" src={imgUrl(image, { w: 300 })} alt={name} width={150} height={110} onError={() => setErrored(true)} className="w-full h-full object-contain bg-white transition-transform duration-300 group-hover:scale-105" />
           : <ProductCoverFallback name={name} size="sm" className="w-full h-full" />}
 
         {/* Badges */}

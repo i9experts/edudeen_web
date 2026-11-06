@@ -85,7 +85,7 @@ function ListCover({ product }: { product: MarketplaceProduct }) {
   return (
     <div className="w-[112px] sm:w-[168px] aspect-square rounded-xl overflow-hidden flex items-center justify-center shrink-0" style={{ background: bg }}>
       {image ? (
-        <img {...responsiveImg(image, '168px', [168, 336], 336)} alt={product.name} width={168} height={168} loading="lazy" decoding="async" onError={() => setImgFailed(true)} className="w-full h-full object-cover" />
+        <img {...responsiveImg(image, '168px', [168, 336], 336)} alt={product.name} width={168} height={168} loading="lazy" decoding="async" onError={() => setImgFailed(true)} className="w-full h-full object-contain" />
       ) : (
         <strong className="font-serif font-normal text-[15px] sm:text-[18px] leading-[1.1] text-center px-3 line-clamp-4" style={{ color: accent }}>
           {product.name}
@@ -101,6 +101,8 @@ function Cover({ product }: { product: MarketplaceProduct }) {
   const image = !imgFailed ? product.images?.[0] : undefined;
   const imgProps = image ? responsiveImg(image, '(min-width: 1024px) 14vw, (min-width: 640px) 22vw, 36vw', [200, 320, 480, 640], 480) : null;
   const clipId = `bk-${product._id}`;
+  // Every book is the same size; the whole picture is stretched to fill it (no bars, nothing cut off).
+  const cx = 30, cy = 8, cw = 148, ch = 172;
 
   // Toys, stationery and other non-book items: plain rounded photo, no book shape.
   if (product.coverStyle === 'flat') {
@@ -120,18 +122,18 @@ function Cover({ product }: { product: MarketplaceProduct }) {
     <div className="h-[150px] min-[400px]:h-[165px] sm:h-[194px] lg:h-[205px] rounded-lg overflow-hidden">
       <svg viewBox="0 0 210 198" className="w-full h-full" role="img" aria-label={product.name} preserveAspectRatio="xMidYMid meet">
         <defs>
-          <clipPath id={clipId}><rect x="30" y="8" width="148" height="172" rx="3" /></clipPath>
+          <clipPath id={clipId}><rect x={cx} y={cy} width={cw} height={ch} rx="3" /></clipPath>
         </defs>
         <g transform="rotate(-3 106 99)">
-        <ellipse cx="106" cy="188" rx="76" ry="5" fill="#000" fillOpacity="0.10" />
+        <ellipse cx={cx + cw / 2 + 5} cy="188" rx={Math.max(40, cw / 2)} ry="5" fill="#000" fillOpacity="0.10" />
         {/* pages */}
-        <rect x="35" y="13" width="148" height="172" rx="3" fill="#fff" stroke="#9aa3aa" strokeWidth="1" />
-        <path d="M181 17v164M183 19v160" stroke="#c9d0d5" strokeWidth="0.8" />
+        <rect x={cx + 5} y={cy + 5} width={cw} height={ch} rx="3" fill="#fff" stroke="#9aa3aa" strokeWidth="1" />
+        <path d={`M${cx + cw + 3} ${cy + 9}v${ch - 8}M${cx + cw + 5} ${cy + 11}v${ch - 12}`} stroke="#c9d0d5" strokeWidth="0.8" />
         {/* cover */}
         <g clipPath={`url(#${clipId})`}>
-          <rect x="30" y="8" width="148" height="172" fill="#fff" />
+          <rect x={cx} y={cy} width={cw} height={ch} fill="#fff" />
           {imgProps ? (
-            <image href={imgProps.src} x="30" y="8" width="148" height="172" preserveAspectRatio="xMidYMid slice" onError={() => setImgFailed(true)} />
+            <image href={imgProps.src} x={cx} y={cy} width={cw} height={ch} preserveAspectRatio="none" onError={() => setImgFailed(true)} />
           ) : (
             <foreignObject x="30" y="8" width="148" height="172">
               <div className="w-full h-full flex flex-col items-center justify-center text-center px-3" style={{ color: accent }}>
@@ -141,10 +143,10 @@ function Cover({ product }: { product: MarketplaceProduct }) {
             </foreignObject>
           )}
           {/* spine shading */}
-          <rect x="30" y="8" width="9" height="172" fill="#000" fillOpacity="0.16" />
-          <rect x="39" y="8" width="1.2" height="172" fill="#000" fillOpacity="0.12" />
+          <rect x={cx} y={cy} width="9" height={ch} fill="#000" fillOpacity="0.16" />
+          <rect x={cx + 9} y={cy} width="1.2" height={ch} fill="#000" fillOpacity="0.12" />
         </g>
-        <rect x="30" y="8" width="148" height="172" rx="3" fill="none" stroke="#7d868d" strokeWidth="1.2" />
+        <rect x={cx} y={cy} width={cw} height={ch} rx="3" fill="none" stroke="#7d868d" strokeWidth="1.2" />
       </g>
       </svg>
     </div>
