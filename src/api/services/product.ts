@@ -477,6 +477,16 @@ export interface SellerOrder {
   codCollector?: 'seller' | 'platform' | null;
   /** Who ships it (admin per-store setting); old orders without codCollector fall back to this for the cash side. */
   fulfillmentMode?: 'seller' | 'platform' | null;
+  /** Ship-by time (payment, or order creation for COD, + 48 h); null when nothing is waiting to ship. */
+  shipBy?: string | null;
+}
+
+export type SellerOrderTab = 'needs_action' | 'shipped' | 'delivered' | 'completed' | 'cancelled' | 'all';
+
+/** Per-tab counts (same scope as the list) + the dashboard's 'orders to ship' / 'overdue' numbers. */
+export interface SellerOrderCounts {
+  needs_action: number; shipped: number; delivered: number; completed: number; cancelled: number; all: number;
+  toShip: number; overdue: number;
 }
 
 export interface SellerOrderStats {
@@ -497,6 +507,7 @@ export interface SellerOrderPagination {
 
 export interface GetSellerOrdersData {
   stats:      SellerOrderStats;
+  counts?:    SellerOrderCounts;
   pagination: SellerOrderPagination;
   orders:     SellerOrder[];
 }
@@ -507,6 +518,8 @@ export interface GetSellerOrdersData {
  *  buyer name or email / this store's item names. The backend caps `limit` at 50. */
 export interface SellerOrderFilters {
   status?: string;
+  /** Orders page tab (package status of this store); needs_action is sorted by ship-by. */
+  tab?:    SellerOrderTab;
   type?:   'physical' | 'digital' | 'mixed' | '';
   time?:   'today' | 'week' | 'month' | '';
   q?:      string;
@@ -517,6 +530,7 @@ export interface SellerOrderFilters {
 export function apiGetSellerOrders(storeId: string, page = 1, limit = 10, filters: SellerOrderFilters = {}) {
   const params = new URLSearchParams({ page: String(page), limit: String(limit) });
   if (filters.status) params.set('status', filters.status);
+  if (filters.tab)    params.set('tab', filters.tab);
   if (filters.type)   params.set('type', filters.type);
   if (filters.time)   params.set('time', filters.time);
   if (filters.action) params.set('action', filters.action);

@@ -625,11 +625,13 @@ export interface StorePageHeaderProps {
   actions?:  ReactNode;
   /** Small royal-blue label above the title. Defaults to the store's name. Pass '' to hide. */
   eyebrow?:  string;
+  /** Tab bar rendered inside the sticky header (stays under the title while the page scrolls). */
+  tabs?:     ReactNode;
 }
 
 // Studio-style sticky page bar: blue letter-spaced eyebrow (store name),
 // serif title, muted sub-line, actions on the right.
-export function StorePageHeader({ title, subtitle, actions, eyebrow }: StorePageHeaderProps) {
+export function StorePageHeader({ title, subtitle, actions, eyebrow, tabs }: StorePageHeaderProps) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const { storeId, store } = useStoreWorkspace();
@@ -667,6 +669,7 @@ export function StorePageHeader({ title, subtitle, actions, eyebrow }: StorePage
       {actions && <div className="flex items-center gap-[10px] shrink-0">{actions}</div>}
     </div>
     {tabsCtx && <div className="px-4 md:px-8">{tabsCtx.tabBar}</div>}
+    {!tabsCtx && tabs && <div className="px-4 md:px-8">{tabs}</div>}
     </div>
   );
 }

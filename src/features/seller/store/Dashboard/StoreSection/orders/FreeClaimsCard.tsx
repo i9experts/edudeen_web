@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Gift } from 'lucide-react';
+import { ChevronDown, Gift } from 'lucide-react';
 import { Card, Avatar, Button, InlineError } from '@/components/comman/ui';
 import { apiGetSellerFreeClaims, type FreeClaim } from '@/api/services/product';
 import { useLiveRefresh } from '@/hooks/useLiveRefresh';
@@ -14,6 +14,7 @@ export function FreeClaimsCard({ storeId }: { storeId: string }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [retry, setRetry] = useState(0);
+  const [open, setOpen] = useState(false); // collapsed by default: free claims are not orders
 
   useEffect(() => {
     let cancelled = false;
@@ -31,12 +32,18 @@ export function FreeClaimsCard({ storeId }: { storeId: string }) {
 
   return (
     <Card padding="none">
-      <div className="px-4 sm:px-5 pt-4 pb-3 flex items-center gap-2">
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen(o => !o)}
+        className="w-full px-4 sm:px-5 py-3 flex items-center gap-2 bg-transparent border-0 cursor-pointer text-start"
+      >
         <Gift size={16} className="text-brand-orange" />
-        <p className="text-[14px] font-bold text-charcoal">Free resource claims</p>
+        <span className="text-[14px] font-bold text-charcoal">Free resource claims</span>
         <span className="text-[12px] text-slate ms-auto">{total} total</span>
-      </div>
-      {error ? (
+        <ChevronDown size={16} className={`text-slate transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden />
+      </button>
+      {!open ? null : error ? (
         <div className="px-4 sm:px-5 pb-4"><InlineError message={error} onRetry={() => { setLoading(true); setRetry(n => n + 1); }} /></div>
       ) : loading ? (
         <p className="px-5 pb-4 text-[13px] text-slate">Loading…</p>
@@ -54,7 +61,7 @@ export function FreeClaimsCard({ storeId }: { storeId: string }) {
           ))}
         </ul>
       )}
-      {total > PAGE && (
+      {open && total > PAGE && (
         <div className="px-4 sm:px-5 py-3 flex justify-end gap-2">
           <Button variant="outline" size="xs" disabled={page <= 1 || loading} onClick={() => { setLoading(true); setPage(p => p - 1); }}>Previous</Button>
           <Button variant="outline" size="xs" disabled={page * PAGE >= total || loading} onClick={() => { setLoading(true); setPage(p => p + 1); }}>Next</Button>

@@ -17,9 +17,12 @@ import {
   FilterDropdown,
   Button,
   InlineError,
+  TabBar,
 } from '@/components/comman/ui';
 import {
   apiGetSellerOrders,
+  type SellerOrderTab,
+  type SellerOrderCounts,
   type SellerOrder,
   type SellerOrderStats,
   type SellerOrderFilters,
@@ -27,6 +30,7 @@ import {
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useLiveRefresh } from '@/hooks/useLiveRefresh';
 import { FreeClaimsCard } from './FreeClaimsCard';
+import { orderAgeText, shipByBadge } from './shipByBadge';
 import { formatMoney } from '@/utils/currency';
 import {
   OrderDetailModal, edudeenCollects, EDUDEEN_COD_NOTE, canMarkPaid, canComplete, canProcess, canShip, paymentLabel,
@@ -45,7 +49,20 @@ function CustomerCell({ name, email }: { name: string; email: string }) {
   );
 }
 
-const STATUS_OPTIONS = ['pending', 'processing', 'shipped', 'delivered', 'completed', 'cancelled'];
+const TABS: { id: SellerOrderTab; label: string }[] = [
+  { id: 'needs_action', label: 'Needs action' },
+  { id: 'shipped',      label: 'Shipped' },
+  { id: 'delivered',    label: 'Delivered' },
+  { id: 'completed',    label: 'Completed' },
+  { id: 'cancelled',    label: 'Cancelled' },
+  { id: 'all',          label: 'All' },
+];
+const DEFAULT_TAB: SellerOrderTab = 'needs_action';
+const BADGE_CLASS = {
+  grey:  'bg-cream text-slate',
+  amber: 'bg-[#fff4e0] text-[#8a4b00]',
+  red:   'bg-error-bg text-error',
+} as const;
 const TYPE_OPTIONS: { value: NonNullable<SellerOrderFilters['type']>; label: string }[] = [
   { value: 'physical', label: 'Physical' },
   { value: 'digital',  label: 'Digital' },
@@ -63,12 +80,28 @@ export function StoreOrderList() {
   const [page,        setPage]        = useState(1);
   const [search,      setSearch]      = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [statusF,     setStatusF]     = useState('');
-  // Dashboard 'Action required' links: ?action=toship|overdue (same predicate the dashboard counts use).
+  // Tab lives in the URL (?tab=), so a refresh or a shared link keeps it; default = Needs action.
   const [searchParams, setSearchParams] = useSearchParams();
+  const rawTab = searchParams.get('tab');
+  const tab: SellerOrderTab = TABS.some(t => t.id === rawTab) ? (rawTab as SellerOrderTab) : DEFAULT_TAB;
+  const [counts, setCounts] = useState<SellerOrderCounts | null>(null);
+  // Dashboard 'Action required' links: ?action=toship|overdue (same predicate the dashboard counts use).
   const rawAction = searchParams.get('action');
   const actionF: 'toship' | 'overdue' | '' = rawAction === 'toship' || rawAction === 'overdue' ? rawAction : '';
   const clearAction = () => setSearchParams(prev => { const n = new URLSearchParams(prev); n.delete('action'); return n; }, { replace: true });
+  const setTab = (id: string) => {
+    setLoading(true); setError(''); setPage(1);
+    setSearchParams(prev => {
+      const n = new URLSearchParams(prev);
+      n.delete('action');
+      if (id === DEFAULT_TAB) n.delete('tab'); else n.set('tab', id);
+      return n;
+    });
+  };
+  // Stat cards / links change ?tab= from outside: restart at page 1.
+  useEffect(() => { setPage(1); }, [tab, actionF]);
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => { const id = setInterval(() => setNow(Date.now()), 60_000); return () => clearInterval(id); }, []);
   const [typeF,       setTypeF]       = useState<SellerOrderFilters['type']>('');
   const [loading,       setLoading]       = useState(true);
   const [error,         setError]         = useState('');
@@ -101,11 +134,13 @@ export function StoreOrderList() {
     if (!storeId) return;
     let cancelled = false;
 
-    apiGetSellerOrders(storeId, page, LIMIT, { status: statusF, type: typeF, q, action: actionF })
+    apiGetSellerOrders(storeId, page, LIMIT, { tab, type: typeF, q, action: actionF })
       .then(res => {
         if (cancelled) return;
         setOrders(res.data.orders ?? []);
         setStats(res.data.stats);
+        if (res.data.counts) setCounts(res.data.counts);
+        setError('');
         setTotalOrders(res.data.pagination.totalOrders);
       })
       .catch((err: unknown) => {
@@ -114,7 +149,7 @@ export function StoreOrderList() {
       .finally(() => { if (!cancelled) setLoading(false); });
 
     return () => { cancelled = true; };
-  }, [storeId, page, refreshKey, q, statusF, typeF, actionF]);
+  }, [storeId, page, refreshKey, q, tab, typeF, actionF]);
 
   const handlePageChange = (p: number) => {
     setLoading(true);
@@ -165,11 +200,26 @@ export function StoreOrderList() {
     },
     {
       key: 'date', header: 'Date',
-      render: o => (
-        <span className="text-[12px] text-slate whitespace-nowrap">
-          {new Date(o.date).toLocaleDateString('en-PK', { year: 'numeric', month: 'short', day: 'numeric' })}
-        </span>
-      ),
+      render: o => {
+        // Age + ship-by only for physical packages that are still waiting to ship.
+        const waiting = o.type !== 'digital' && (o.status === 'pending' || o.status === 'processing');
+        const sb = waiting ? shipByBadge(o.shipBy, now) : null;
+        return (
+          <div className="flex flex-col items-start gap-1">
+            <span className="text-[12px] text-slate whitespace-nowrap">
+              {new Date(o.date).toLocaleDateString('en-PK', { year: 'numeric', month: 'short', day: 'numeric' })}
+            </span>
+            {waiting && (
+              <span className="text-[12px] text-slate whitespace-nowrap">{orderAgeText(o.date, now)}</span>
+            )}
+            {sb && (
+              <span className={`text-[12px] font-semibold px-2 py-[2px] rounded-full whitespace-nowrap ${BADGE_CLASS[sb.tone]}`}>
+                {sb.label}
+              </span>
+            )}
+          </div>
+        );
+      },
     },
     {
       key: 'amount', header: 'Amount', align: 'right',
@@ -245,13 +295,22 @@ export function StoreOrderList() {
     },
   ];
 
-  const hasFilters = !!(search || statusF || typeF || actionF);
+  const hasFilters = !!(search || typeF || actionF);
+  const tabLabel = TABS.find(t => t.id === tab)?.label ?? 'Orders';
 
   return (
     <>
       <StorePageHeader
         title="Orders"
         subtitle={loading ? 'Loading…' : `${totalOrders} order${totalOrders !== 1 ? 's' : ''}`}
+        tabs={
+          <TabBar
+            dense
+            active={tab}
+            onChange={setTab}
+            tabs={TABS.map(t => ({ id: t.id, label: t.label, count: counts ? counts[t.id] : undefined }))}
+          />
+        }
       />
 
       <div className="px-4 lg:px-7 py-5 flex flex-col gap-5">
@@ -260,7 +319,8 @@ export function StoreOrderList() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
           <MetricCard
             label="Total Orders"
-            value={stats?.totalOrders ?? 0}
+            to="?tab=all"
+            value={counts?.all ?? stats?.totalOrders ?? 0}
             icon={<ShoppingCart size={16} />}
             loading={loading && !stats}
           />
@@ -278,7 +338,8 @@ export function StoreOrderList() {
           />
           <MetricCard
             label="Pending"
-            value={stats?.pending ?? 0}
+            to="?tab=needs_action"
+            value={counts?.needs_action ?? stats?.pending ?? 0}
             icon={<Clock size={16} />}
             loading={loading && !stats}
           />
@@ -290,8 +351,6 @@ export function StoreOrderList() {
           />
         </div>
 
-        {storeId && <FreeClaimsCard storeId={storeId} />}
-
         {/* Error */}
         {error && <InlineError message={error} onRetry={handleRetry} />}
 
@@ -299,7 +358,12 @@ export function StoreOrderList() {
         {!error && (
           <Card padding="none">
             <div className="px-4 sm:px-5 pt-4 pb-3 flex flex-col gap-2.5">
-              <p className="text-[14px] font-bold text-charcoal shrink-0">{actionF === 'overdue' ? 'Overdue orders' : actionF === 'toship' ? 'Orders to ship' : 'All Orders'}</p>
+              <p className="text-[14px] font-bold text-charcoal shrink-0">{actionF === 'overdue' ? 'Overdue orders' : actionF === 'toship' ? 'Orders to ship' : `${tabLabel} orders`}</p>
+              {tab === 'needs_action' && !actionF && counts && (counts.toShip > 0 || counts.overdue > 0) && (
+                <p className="m-0 text-[12.5px] text-slate">
+                  {counts.toShip} to ship{counts.overdue > 0 && <> · <span className="font-semibold text-error">{counts.overdue} overdue</span></>} · most urgent first
+                </p>
+              )}
               {actionF && (
                 <p className="m-0 text-[12.5px] text-slate">
                   {actionF === 'overdue' ? 'Paid or cash-on-delivery physical orders not shipped within 48 hours.' : 'Paid or cash-on-delivery physical orders waiting for you to ship.'}{' '}
@@ -314,20 +378,13 @@ export function StoreOrderList() {
               />
               <div className="flex items-center gap-2 overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap sm:justify-end">
                 <FilterDropdown
-                  value={statusF}
-                  onChange={v => changeFilter(() => setStatusF(v))}
-                  placeholder="All Status"
-                  options={STATUS_OPTIONS.map(o => ({ value: o, label: o.charAt(0).toUpperCase() + o.slice(1) }))}
-                  className="shrink-0"
-                />
-                <FilterDropdown
                   value={typeF ?? ''}
                   onChange={v => changeFilter(() => setTypeF(v as SellerOrderFilters['type']))}
                   placeholder="All Types"
                   options={TYPE_OPTIONS}
                   className="shrink-0"
                 />
-                <Button variant="outline" size="xs" onClick={() => changeFilter(() => { setSearch(''); setStatusF(''); setTypeF(''); if (actionF) clearAction(); })}>Clear</Button>
+                <Button variant="outline" size="xs" onClick={() => changeFilter(() => { setSearch(''); setTypeF(''); if (actionF) clearAction(); })}>Clear</Button>
                 <Button
                   variant="outline" size="xs" onClick={handleRetry} icon={<RefreshCw size={11} />}
                 >
@@ -361,6 +418,9 @@ export function StoreOrderList() {
             />
           </Card>
         )}
+
+        {/* Free claims are not orders: collapsed, below the table */}
+        {storeId && <FreeClaimsCard storeId={storeId} />}
 
       </div>
 
