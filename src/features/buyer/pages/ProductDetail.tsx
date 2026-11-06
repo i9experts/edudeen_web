@@ -5,6 +5,7 @@ import { PremiumChip, PremiumTeaser, usePremiumView } from '@/components/comman/
 import { Suspense, useEffect, useRef, useState, useSyncExternalStore, type Ref } from 'react';
 import { useInView } from '@/hooks/useInView';
 import { lazyWithRetry } from '@/utils/lazyWithRetry';
+import { useTrackView } from '@/utils/visitTracking';
 import { getScrollTop } from '@/utils/scrollRoot';
 import { clsx } from 'clsx';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
@@ -478,6 +479,7 @@ export function ProductDetail() {
   const [answeredCount, setAnsweredCount] = useState<number | null>(null);
 
   const product = detail?.product ?? null;
+  useTrackView('product', product?._id);
   // Reviews and the "More for this level" / related rails sit below the fold: load them when the reviews block is near the screen.
   const [belowFold, belowRef] = useInView('700px');
   const isDesktop = useIsDesktop();

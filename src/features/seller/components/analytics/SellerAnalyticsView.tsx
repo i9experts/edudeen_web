@@ -19,6 +19,7 @@ import {
   toSellerAnalyticsParams,
 } from './sellerAnalyticsFilters';
 import { SellerOverviewTab } from './tabs/SellerOverviewTab';
+import { SellerVisitsCard } from './tabs/SellerVisitsCard';
 import { SellerRevenueTab } from './tabs/SellerRevenueTab';
 import { SellerProductsTab } from './tabs/SellerProductsTab';
 import { SellerCustomersTab } from './tabs/SellerCustomersTab';
@@ -135,6 +136,7 @@ export function SellerAnalyticsView({ storeId, currency }: SellerAnalyticsViewPr
 
           {rangeReady && (
             <>
+              {storeId && (planLocked || activeTab === 'overview') && <SellerVisitsCard params={params} storeId={storeId} />}
               {(planLocked || activeTab === 'overview') && <SellerOverviewTab params={params} compareToPreviousPeriod={filters.compareToPreviousPeriod} currency={currency} storeId={storeId} />}
               {!planLocked && activeTab === 'revenue'   && <SellerRevenueTab params={params} currency={currency} />}
               {!planLocked && activeTab === 'products'  && <SellerProductsTab params={params} currency={currency} />}

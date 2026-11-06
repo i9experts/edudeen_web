@@ -10,6 +10,7 @@ import type { SellerAnalyticsParams, ProductPerformanceRow, TopProductRow } from
 import { AnalyticsErrorState } from '@/components/comman/analytics/AnalyticsErrorState';
 import { TableCardSkeleton } from '@/components/comman/analytics/AnalyticsSkeletons';
 import { formatMoneyCompact } from '@/utils/currency';
+import { SellerProductTableCard } from './SellerProductTableCard';
 
 const SORT_OPTIONS = [
   { value: 'revenue', label: 'Sort by revenue' },
@@ -17,6 +18,7 @@ const SORT_OPTIONS = [
 ];
 
 export function SellerProductsTab({ params, currency }: { params: SellerAnalyticsParams; currency?: string | null }) {
+  const storeId = typeof params.storeId === 'string' ? params.storeId : '';
   const [sort, setSort] = useState<'revenue' | 'units_sold'>('revenue');
   const [page, setPage] = useState(1);
 
@@ -46,6 +48,7 @@ export function SellerProductsTab({ params, currency }: { params: SellerAnalytic
 
   return (
     <div className="flex flex-col gap-4">
+      {storeId && <SellerProductTableCard params={params} storeId={storeId} currency={currency} />}
       <div className="bg-white border border-bone rounded-[10px]">
         <div className="px-5 pt-4 pb-3 flex flex-wrap items-center justify-between gap-3">
           <p className="text-[14px] font-bold text-charcoal">Top Products</p>

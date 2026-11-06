@@ -12,6 +12,7 @@ import { ReauthProvider } from '@/contexts/ReauthProvider';
 import { AdminEditToolbar } from '@/components/admin-edit/AdminEditToolbar';
 import { RouteMeta } from '@/components/seo/RouteMeta';
 import { SkipLink } from '@/components/seo/SkipLink';
+import { VisitNavTracker } from '@/components/seo/VisitNavTracker';
 
 // Non-critical overlays: own chunks, mounted once the browser is idle so they never delay first paint.
 const MaintenanceNotice = lazy(() => import('@/components/comman/ui/MaintenanceNotice').then(m => ({ default: m.MaintenanceNotice })));
@@ -87,7 +88,7 @@ export function RootLayout() {
       <SkipLink />
       {/* Add-ons each get their own silent boundary: if one crashes it disappears (until the next navigation) instead of
          white-screening the whole page, and the others keep working. */}
-      <Silent resetKey={pathname}><RouteMeta /></Silent>
+      <Silent resetKey={pathname}><RouteMeta /></Silent><Silent resetKey={pathname}><VisitNavTracker /></Silent>
       <Silent resetKey={pathname}><TopProgressBar /></Silent>
       <Silent resetKey={pathname}><WhenIdle><MaintenanceNotice /></WhenIdle></Silent>
       <Silent resetKey={pathname}><AuthGateModal /></Silent>

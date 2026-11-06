@@ -212,6 +212,25 @@ export function apiSellerAnalyticsToday(storeId: string) {
 
 // ── A. Overview ──────────────────────────────────────────────────────────────────
 
+export interface SellerVisitsData {
+  range: { from: string; to: string };
+  /** First PKT day we counted visits for this store; null = nothing collected yet. */
+  trackingSince: string | null;
+  visits: number;
+  paidOrders: number;
+  /** Paid non-free orders / visits in %, null when there are no visits. */
+  conversionRate: number | null;
+  pro: {
+    allowed: boolean;
+    sources?: { source: 'edudeen_search' | 'category' | 'direct' | 'social' | 'external'; visits: number; percent: number }[];
+    terms?: { term: string; visits: number }[];
+  };
+}
+
+export function apiSellerAnalyticsVisits(params: SellerAnalyticsParams) {
+  return client.get<never, ApiResponse<SellerVisitsData>>(`${ENDPOINTS.ANALYTICS.SELLER.VISITS}${qs(params)}`);
+}
+
 export function apiSellerAnalyticsOverview(params: SellerAnalyticsParams) {
   return client.get<never, ApiResponse<SellerOverviewData>>(`${ENDPOINTS.ANALYTICS.SELLER.OVERVIEW}${qs(params)}`);
 }
@@ -250,6 +269,70 @@ export function apiSellerAnalyticsCustomers(params: SellerAnalyticsParams) {
 
 export function apiSellerAnalyticsProductPerformance(params: SellerProductPerformanceParams) {
   return client.get<never, ApiResponse<SellerProductPerformanceData>>(`${ENDPOINTS.ANALYTICS.SELLER.PRODUCTS_PERFORMANCE}${qs(params)}`);
+}
+
+// ── F2b. Product table + Free -> Paid (one store, Advanced analytics) ─────────────
+
+export type ProductTableSort = 'revenue' | 'orders' | 'views' | 'conversion' | 'claims' | 'name';
+
+export interface SellerProductTableParams extends SellerAnalyticsParams {
+  storeId: string;
+  q?: string;
+  sort?: ProductTableSort;
+  page?: number;
+  limit?: number;
+}
+
+export interface ProductTableRow {
+  productId: string;
+  name: string;
+  type: 'physical' | 'digital' | 'course';
+  /** null = visits are not tracked for this store yet. */
+  views: number | null;
+  orders: number;
+  revenue: number;
+  conversionPercent: number | null;
+  freeClaims: number;
+}
+
+export interface SellerProductTableData {
+  trackingSince: string | null;
+  viewsAvailable: boolean;
+  /** Equals Overview "Order value (booked)" for the same dates (covers every product, not only this page). */
+  totalRevenue: number;
+  pagination: Pagination;
+  products: ProductTableRow[];
+}
+
+export function apiSellerAnalyticsProductTable(params: SellerProductTableParams) {
+  return client.get<never, ApiResponse<SellerProductTableData>>(`${ENDPOINTS.ANALYTICS.SELLER.PRODUCT_TABLE}${qs(params)}`);
+}
+
+export async function apiSellerAnalyticsProductTableExport(params: SellerProductTableParams) {
+  const blob = await client.get<never, Blob>(`${ENDPOINTS.ANALYTICS.SELLER.PRODUCT_TABLE_EXPORT}${qs({ ...params, page: undefined, limit: undefined })}`, { responseType: 'blob' } as never);
+  const objUrl = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = objUrl;
+  a.download = 'seller-product-performance.csv';
+  a.click();
+  URL.revokeObjectURL(objUrl);
+}
+
+export interface SellerFreeToPaidParams extends SellerAnalyticsParams { storeId: string; days?: 7 | 30 | 90 }
+
+export interface SellerFreeToPaidData {
+  days: number;
+  /** Buyers whose first free claim in this store fell inside the dates. */
+  claimers: number;
+  /** Of those, how many had the whole window available (only they are in the %). */
+  matured: number;
+  pending: number;
+  converted: number;
+  percent: number | null;
+}
+
+export function apiSellerAnalyticsFreeToPaid(params: SellerFreeToPaidParams) {
+  return client.get<never, ApiResponse<SellerFreeToPaidData>>(`${ENDPOINTS.ANALYTICS.SELLER.FREE_TO_PAID}${qs(params)}`);
 }
 
 // ── F3. Inventory insights ────────────────────────────────────────────────────────

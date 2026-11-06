@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import {
+  apiSellerAnalyticsVisits,
   apiSellerAnalyticsOverview,
   apiSellerAnalyticsRevenueOverTime,
   apiSellerAnalyticsOrdersOverTime,
@@ -8,6 +9,8 @@ import {
   apiSellerAnalyticsCustomers,
   apiSellerAnalyticsProductPerformance,
   apiSellerAnalyticsInventoryInsights,
+  apiSellerAnalyticsProductTable,
+  apiSellerAnalyticsFreeToPaid,
   apiSellerAnalyticsPaymentMethods,
   apiSellerAnalyticsRevenueBreakdown,
   apiSellerAnalyticsExport,
@@ -15,6 +18,8 @@ import {
   type SellerTopProductsParams,
   type SellerProductPerformanceParams,
   type SellerExportParams,
+  type SellerProductTableParams,
+  type SellerFreeToPaidParams,
 } from '@/api/services/analytics/analytics';
 import { useAnalyticsQuery } from '@/hooks/useAnalyticsQuery';
 
@@ -22,6 +27,11 @@ import { useAnalyticsQuery } from '@/hooks/useAnalyticsQuery';
 
 export function useSellerAnalyticsOverview(params: SellerAnalyticsParams) {
   return useAnalyticsQuery(apiSellerAnalyticsOverview, params, ['orders', 'analytics', 'customers', 'reviews']);
+}
+
+/** Visits + conversion (+ Pro: sources, search terms). Quiet re-read when orders change (conversion). */
+export function useSellerAnalyticsVisits(params: SellerAnalyticsParams) {
+  return useAnalyticsQuery(apiSellerAnalyticsVisits, params, ['orders']);
 }
 
 // ── B. Revenue over time ─────────────────────────────────────────────────────────
@@ -58,6 +68,14 @@ export function useSellerAnalyticsCustomers(params: SellerAnalyticsParams) {
 
 export function useSellerAnalyticsProductPerformance(params: SellerProductPerformanceParams) {
   return useAnalyticsQuery(apiSellerAnalyticsProductPerformance, params, ['orders', 'analytics', 'customers', 'reviews']);
+}
+
+export function useSellerAnalyticsProductTable(params: SellerProductTableParams) {
+  return useAnalyticsQuery(apiSellerAnalyticsProductTable, params, ['orders', 'analytics']);
+}
+
+export function useSellerAnalyticsFreeToPaid(params: SellerFreeToPaidParams) {
+  return useAnalyticsQuery(apiSellerAnalyticsFreeToPaid, params, ['orders']);
 }
 
 // ── F3. Inventory insights ────────────────────────────────────────────────────────

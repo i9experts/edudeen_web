@@ -21,6 +21,7 @@ import { Modal } from '@/components/comman/ui/Modal';
 import { TokenStorage } from '@/api/services/auth';
 import { formatPrice } from '@/utils/formatPrice';
 import { useStorefront, useStorefrontPaths, storeCoverGradient } from '@/features/storefront/StorefrontContext';
+import { useTrackView } from '@/utils/visitTracking';
 import { StorefrontHighlights } from '@/features/storefront/sections/StorefrontHighlights';
 import { EducatorCard, hasEducatorProfile } from '@/components/comman/marketplace/EducatorCard';
 import { ProductCatalogSection } from '@/features/storefront/sections/ProductCatalogSection';
@@ -83,6 +84,7 @@ type StoreTab = (typeof STORE_TABS)[number]['id'];
 export function SellerStorefront() {
   const { store, cfg, theme } = useStorefront();
   const { toMain } = useStorefrontPaths();
+  useTrackView('store', store.storeId);
   // ?tab=about|reviews; anything else (or no value) = Products. The Products tab keeps the catalogue's own filters.
   const [searchParams] = useSearchParams();
   const rawTab = searchParams.get('tab');
