@@ -461,6 +461,8 @@ export interface SellerOrder {
   orderNumber: string;
   customer:    SellerOrderCustomer;
   product:     string;
+  /** Number of lines in this package; the "×N" suffix shows only when the API sends it (> 1). */
+  itemCount?:  number;
   /** sellerOrder.fulfillmentType — 'mixed' when the store's part of the order has both kinds. */
   type:        'physical' | 'digital' | 'mixed';
   productType?: 'physical' | 'digital';

@@ -7,6 +7,7 @@ import { apiGetSellerOrderDetail, type SellerOrder, type SellerOrderDetail } fro
 import { formatPrice } from '@/utils/formatPrice';
 import { CodRiskBadge } from '@/components/ai/CodRiskBadge';
 import { CourierBooking } from './CourierBooking';
+import { OrderIdCopy } from './OrderIdCopy';
 
 export type SellerOrderStatus = 'processing' | 'shipped' | 'delivered' | 'completed';
 
@@ -124,6 +125,10 @@ export function OrderDetailModal({ order, storeId, onClose, onUpdated }: Props) 
   return (
     <Modal title={`Order ${order.orderNumber}`} onClose={onClose} width={520} mobileSheet>
       <div className="flex flex-col gap-5">
+        <div className="flex items-center gap-2 -mb-2 min-w-0">
+          <span className="text-[12px] text-slate shrink-0">Order ID</span>
+          <OrderIdCopy orderNumber={order.orderNumber} full />
+        </div>
         <section>
           <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-slate mb-1">Buyer</p>
           <Row label="Name">{order.customer.name}</Row>

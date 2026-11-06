@@ -12,6 +12,10 @@ export interface TableColumn<T = Record<string, unknown>> {
   align?:    'left' | 'center' | 'right';
   width?:    string;
   sortable?: boolean;
+  /** Hide this column (header + cells) below the xl breakpoint (1280px). */
+  hideBelowXl?: boolean;
+  /** Pin this column to the logical end (flips in RTL) so it stays visible when the table scrolls. */
+  sticky?: boolean;
 }
 
 export interface TablePagination {
@@ -57,8 +61,20 @@ interface TableProps<T = Record<string, unknown>> {
    */
   emptyState?:       EmptyStateConfig | false;
   /** Width below which rows turn into cards. Default sm (640px); lg = under 1024px (use for wide tables like Products/Orders/Users). */
-  cardsBelow?:       'sm' | 'lg';
+  cardsBelow?:       'sm' | 'md' | 'lg';
+  /** Custom card for the below-breakpoint layout (replaces the stacked label/value rows). */
+  renderCard?:       (row: T, index: number) => ReactNode;
+  /** Tighter horizontal cell padding for wide tables. */
+  compact?:          boolean;
+  /** Fixed row height in px (table rows + skeleton rows) so loading does not shift the layout. */
+  rowHeight?:        number;
 }
+
+const BP = {
+  sm: { table: 'sm:block', cards: 'sm:hidden' },
+  md: { table: 'md:block', cards: 'md:hidden' },
+  lg: { table: 'lg:block', cards: 'lg:hidden' },
+} as const;
 
 /** Single-line cell text with ellipsis and a tooltip - use for IDs/names inside ender. */
 export function CellText({ children, max = 220, className }: { children: ReactNode; max?: number; className?: string }) {
@@ -73,8 +89,17 @@ export function Table<T = Record<string, unknown>>({
   columns, data, keyExtractor, onRowClick, pagination, className,
   sort, onSortChange, selectable, selectedKeys, onSelectionChange, bulkActions,
   loading = false, loadingRows = 5, emptyState, cardsBelow = 'sm',
+  renderCard, compact = false, rowHeight,
 }: TableProps<T>) {
   const wide = cardsBelow === 'lg';
+  const px = compact ? 'px-3' : 'px-5';
+  const colCls = (col: TableColumn<T>, head: boolean) => clsx(
+    col.hideBelowXl && 'hidden xl:table-cell',
+    col.sticky && (head
+      ? 'sticky end-0 z-[2] bg-[#f5f8fa] border-s border-bone'
+      : 'sticky end-0 z-[1] bg-white group-hover:bg-cream border-s border-bone'),
+  );
+  const rowStyle = rowHeight ? { height: rowHeight } : undefined;
   const perPage    = pagination?.perPage ?? 10;
   const start      = pagination ? (pagination.page - 1) * perPage + 1 : 1;
   const end        = pagination ? Math.min(pagination.page * perPage, pagination.total) : data.length;
@@ -132,7 +157,7 @@ export function Table<T = Record<string, unknown>>({
       ) : (
         <>
           {/* ── Desktop / tablet — full table ── */}
-          <div className={clsx('hidden overflow-x-auto', wide ? 'lg:block' : 'sm:block')}>
+          <div className={clsx('hidden overflow-x-auto', BP[cardsBelow].table)}>
             <table className="w-full border-collapse text-[13px]">
               <thead className="sticky top-0 z-[1]">
                 <tr className="border-b border-bone bg-[#f5f8fa]">
@@ -155,7 +180,7 @@ export function Table<T = Record<string, unknown>>({
                     return (
                       <th
                         key={col.key}
-                        className={clsx(TH, col.align === 'right' && 'text-end', col.align === 'center' && 'text-center')}
+                        className={clsx(TH, compact && '!px-3', colCls(col, true), col.align === 'right' && 'text-end', col.align === 'center' && 'text-center')}
                         style={col.width ? { width: col.width } : undefined}
                         aria-sort={col.sortable ? ariaSort : undefined}
                       >
@@ -186,12 +211,12 @@ export function Table<T = Record<string, unknown>>({
               <tbody>
                 {loading ? (
                   Array.from({ length: loadingRows }).map((_, i) => (
-                    <tr key={`skeleton-${i}`} className={clsx(i < loadingRows - 1 && 'border-b border-bone')}>
+                    <tr key={`skeleton-${i}`} style={rowStyle} className={clsx(i < loadingRows - 1 && 'border-b border-bone')}>
                       {selectable && (
                         <td className="px-5 py-[14px]"><SkeletonBox width={16} height={16} rounded="4px" /></td>
                       )}
                       {columns.map(col => (
-                        <td key={col.key} className="px-5 py-[14px]">
+                        <td key={col.key} className={clsx(px, 'py-[14px]', col.hideBelowXl && 'hidden xl:table-cell', col.sticky && 'sticky end-0 bg-white')}>
                           <SkeletonBox height={14} rounded="4px" className="w-full max-w-[160px]" />
                         </td>
                       ))}
@@ -203,7 +228,9 @@ export function Table<T = Record<string, unknown>>({
                   return (
                     <tr
                       key={rowKey}
+                      style={rowStyle}
                       className={clsx(
+                        'group',
                         i < data.length - 1 && 'border-b border-bone',
                         onRowClick && 'cursor-pointer',
                         'transition-colors duration-150 hover:bg-cream',
@@ -225,7 +252,7 @@ export function Table<T = Record<string, unknown>>({
                         <td
                           key={col.key}
                           className={clsx(
-                            'px-5 py-[14px] text-carbon',
+                            px, 'py-[14px] text-carbon', colCls(col, false),
                             col.align === 'right'  && 'text-end',
                             col.align === 'center' && 'text-center',
                           )}
@@ -244,10 +271,10 @@ export function Table<T = Record<string, unknown>>({
           </div>
 
           {/* ── Mobile — one card per row, columns stacked as label/value ── */}
-          <div className={clsx('divide-y divide-[#f0eee6]', wide ? 'lg:hidden' : 'sm:hidden')}>
+          <div className={clsx('divide-y divide-[#f0eee6]', BP[cardsBelow].cards)}>
             {loading ? (
               Array.from({ length: loadingRows }).map((_, i) => (
-                <div key={`skeleton-${i}`} className="px-4 py-3 flex flex-col gap-2">
+                <div key={`skeleton-${i}`} className="px-4 py-3 flex flex-col gap-2" style={renderCard ? { minHeight: rowHeight ?? 168 } : undefined}>
                   <SkeletonBox height={13} width="60%" rounded="4px" />
                   <SkeletonBox height={12} width="40%" rounded="4px" />
                 </div>
@@ -255,6 +282,13 @@ export function Table<T = Record<string, unknown>>({
             ) : (
               data.map((row, i) => {
                 const rowKey = keyExtractor(row, i);
+                if (renderCard) {
+                  return (
+                    <div key={rowKey} className={clsx('px-4 py-3', onRowClick && 'cursor-pointer active:bg-cream')} onClick={() => onRowClick?.(row)}>
+                      {renderCard(row, i)}
+                    </div>
+                  );
+                }
                 return (
                   <div
                     key={rowKey}

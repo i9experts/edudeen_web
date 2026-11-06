@@ -31,6 +31,7 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { useLiveRefresh } from '@/hooks/useLiveRefresh';
 import { FreeClaimsCard } from './FreeClaimsCard';
 import { orderAgeText, shipByBadge } from './shipByBadge';
+import { OrderIdCopy } from './OrderIdCopy';
 import { formatMoney } from '@/utils/currency';
 import {
   OrderDetailModal, edudeenCollects, EDUDEEN_COD_NOTE, canMarkPaid, canComplete, canProcess, canShip, paymentLabel,
@@ -41,9 +42,10 @@ function CustomerCell({ name, email }: { name: string; email: string }) {
   return (
     <div className="flex items-center gap-2.5">
       <Avatar name={name} size={30} />
-      <div>
-        <p className="text-[13px] font-medium text-charcoal mb-[1px]">{name}</p>
-        <p className="text-[12px] text-slate">{email}</p>
+      <div className="min-w-0 max-w-[170px]">
+        <p className="text-[13px] font-medium text-charcoal mb-[1px] truncate" title={name}>{name}</p>
+        {/* Email shows from 1280px; below that it is in the order modal */}
+        <p className="hidden xl:block text-[12px] text-slate truncate" title={email}>{email}</p>
       </div>
     </div>
   );
@@ -170,18 +172,74 @@ export function StoreOrderList() {
     setSelected(prev => prev && prev.orderId === orderId ? { ...prev, ...patch } : prev);
   };
 
+  // ── Shared row pieces (table + phone card) ──────────────────────────────────
+  const money = (o: SellerOrder, n: number) => formatPrice(n, o.currency ?? store?.baseCurrency);
+  const typeLabel = (o: SellerOrder) => o.type === 'digital' ? 'Digital' : o.type === 'mixed' ? 'Mixed' : 'Physical';
+  const itemsSuffix = (o: SellerOrder) => (o.itemCount && o.itemCount > 1 ? ` ×${o.itemCount}` : '');
+  // Age + ship-by only for physical packages that are still waiting to ship.
+  const shipInfo = (o: SellerOrder) => {
+    const waiting = o.type !== 'digital' && (o.status === 'pending' || o.status === 'processing');
+    return { waiting, sb: waiting ? shipByBadge(o.shipBy, now) : null };
+  };
+  const dateText = (o: SellerOrder, withYear = true) =>
+    new Date(o.date).toLocaleDateString('en-PK', { ...(withYear ? { year: 'numeric' as const } : {}), month: 'short', day: 'numeric' });
+
+  // One inline "next step" that the backend will actually accept (see OrderDetailModal's can* helpers).
+  // Shipping needs a tracking number, so "Ship" opens the detail view instead of firing blind.
+  const rowActions = (o: SellerOrder, big: boolean) => {
+    const busy = busyId === o.orderId;
+    const run = (fn: () => Promise<unknown>, patch: Partial<SellerOrder>, refresh = false) => {
+      if (busy) return;
+      setBusyId(o.orderId);
+      fn()
+        .then(() => { patchOrder(o.orderId, patch); if (refresh) setRefreshKey(k => k + 1); })
+        .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Action failed.'))
+        .finally(() => setBusyId(null));
+    };
+    const sz = big ? 14 : 12;
+    const primary =
+      canShip(o) && o.status === 'processing'
+        ? { label: 'Ship', icon: <Truck size={sz} />, onClick: () => setSelected(o) }
+      : canProcess(o)
+        ? { label: 'Process', icon: <RefreshCw size={sz} />, onClick: () => run(() => apiUpdateOrderStatus({ orderId: o.orderId, storeId, status: 'processing' }), { status: 'processing' }) }
+      : canMarkPaid(o) && (o.type === 'digital' || o.status === 'shipped' || o.status === 'delivered')
+        ? { label: 'Mark Paid', icon: <CheckCheck size={sz} />, onClick: () => run(() => apiMarkOrderPaid(o.orderId, storeId), { isPaid: true }, true) }
+      : canComplete(o)
+        ? { label: 'Complete', icon: <CheckCheck size={sz} />, onClick: () => run(() => apiUpdateOrderStatus({ orderId: o.orderId, storeId, status: 'completed' }), { status: 'completed' }) }
+      : null;
+    const cls = big ? 'min-h-[44px] flex-1' : 'whitespace-nowrap';
+    return (
+      <div className={big ? 'flex items-stretch gap-2' : 'flex items-center justify-center gap-1'} onClick={e => e.stopPropagation()}>
+        {primary && (
+          <Button variant={big ? 'primary' : 'ghost'} size={big ? 'sm' : 'xs'} className={cls} disabled={busy} loading={busy} onClick={primary.onClick} icon={!busy && primary.icon}>
+            {primary.label}
+          </Button>
+        )}
+        <Button variant={big ? 'outline' : 'ghost'} size={big ? 'sm' : 'xs'} className={cls} onClick={() => setSelected(o)} icon={<Eye size={sz} />} aria-label={`View order ${o.orderNumber}`}>
+          View
+        </Button>
+      </div>
+    );
+  };
+
+  const payChips = (o: SellerOrder) => (
+    <>
+      <span className="text-[12px] text-slate capitalize">{paymentLabel(o.paymentType)}</span>
+      <span className={`text-[12px] font-semibold ${o.isPaid ? 'text-success' : 'text-[#b36200]'}`}>{o.isPaid ? 'Paid' : 'Unpaid'}</span>
+    </>
+  );
+  const codInfo = (o: SellerOrder) => {
+    if (o.isPaid || o.paymentType !== 'cash_on_delivery') return null;
+    if (edudeenCollects(o)) return EDUDEEN_COD_NOTE;
+    return (o.codAmount ?? 0) > 0 ? `Cash to collect: ${money(o, o.codAmount!)}` : null;
+  };
+
   // ── Columns ──────────────────────────────────────────────────────────────────
+  // ≥1280: every column. 768-1279: email + Status columns drop (status joins the Payment cell). <768: cards.
   const columns: TableColumn<SellerOrder>[] = [
     {
       key: 'orderNumber', header: 'Order',
-      render: o => (
-        <span
-          className="text-[12px] font-bold text-brand-deep-orange font-mono whitespace-nowrap"
-          title={o.orderNumber}
-        >
-          {o.orderNumber.length > 10 ? `…${o.orderNumber.slice(-6)}` : o.orderNumber}
-        </span>
-      ),
+      render: o => <OrderIdCopy orderNumber={o.orderNumber} />,
     },
     {
       key: 'customer', header: 'Customer',
@@ -190,110 +248,94 @@ export function StoreOrderList() {
     {
       key: 'product', header: 'Product',
       render: o => (
-        <div className="max-w-[180px]">
-          <span className="text-[13px] text-carbon truncate block" title={o.product}>{o.product}</span>
-          <span className="text-[12px] text-slate block">
-            {o.type === 'digital' ? 'Digital' : o.type === 'mixed' ? 'Mixed' : 'Physical'}
-          </span>
+        <div className="max-w-[150px] xl:max-w-[170px]">
+          <span className="text-[13px] text-carbon truncate block" title={o.product}>{o.product}{itemsSuffix(o)}</span>
+          <span className="text-[12px] text-slate block">{typeLabel(o)}</span>
         </div>
       ),
     },
     {
       key: 'date', header: 'Date',
       render: o => {
-        // Age + ship-by only for physical packages that are still waiting to ship.
-        const waiting = o.type !== 'digital' && (o.status === 'pending' || o.status === 'processing');
-        const sb = waiting ? shipByBadge(o.shipBy, now) : null;
+        const { waiting, sb } = shipInfo(o);
         return (
           <div className="flex flex-col items-start gap-1">
+            {/* 1280-1535: no year, so the 8 columns fit without sideways scroll */}
             <span className="text-[12px] text-slate whitespace-nowrap">
-              {new Date(o.date).toLocaleDateString('en-PK', { year: 'numeric', month: 'short', day: 'numeric' })}
+              <span className="2xl:hidden">{dateText(o, false)}</span>
+              <span className="hidden 2xl:inline">{dateText(o)}</span>
             </span>
-            {waiting && (
+            {sb ? (
+              <span className={`text-[12px] font-semibold px-2 py-[2px] rounded-full whitespace-nowrap ${BADGE_CLASS[sb.tone]}`}>{sb.label}</span>
+            ) : waiting ? (
               <span className="text-[12px] text-slate whitespace-nowrap">{orderAgeText(o.date, now)}</span>
-            )}
-            {sb && (
-              <span className={`text-[12px] font-semibold px-2 py-[2px] rounded-full whitespace-nowrap ${BADGE_CLASS[sb.tone]}`}>
-                {sb.label}
-              </span>
-            )}
+            ) : null}
           </div>
         );
       },
     },
     {
       key: 'amount', header: 'Amount', align: 'right',
-      render: o => (
-        <span className="text-[13px] font-bold text-charcoal whitespace-nowrap">
-          {formatPrice(o.amount, o.currency ?? store?.baseCurrency)}
-        </span>
-      ),
+      render: o => <span className="text-[13px] font-bold text-charcoal whitespace-nowrap">{money(o, o.amount)}</span>,
     },
     {
       key: 'paymentType', header: 'Payment',
-      render: o => (
-        <div className="flex flex-col gap-[2px]">
-          <span className="text-[12px] text-slate capitalize">{paymentLabel(o.paymentType)}</span>
-          {o.isPaid
-            ? <span className="text-[12px] font-semibold text-success">Paid</span>
-            : <span className="text-[12px] font-semibold text-[#b36200]">Unpaid</span>
-          }
-          {!o.isPaid && o.paymentType === 'cash_on_delivery' && edudeenCollects(o) && (
-            <span className="text-[12px] text-slate max-w-[200px]">{EDUDEEN_COD_NOTE}</span>
-          )}
-          {!o.isPaid && o.paymentType === 'cash_on_delivery' && !edudeenCollects(o) && (o.codAmount ?? 0) > 0 && (
-            <span className="text-[12px] text-slate whitespace-nowrap">Cash to collect: {formatPrice(o.codAmount!, o.currency ?? store?.baseCurrency)}</span>
-          )}
-        </div>
-      ),
-    },
-    {
-      key: 'status', header: 'Status',
-      render: o => <StatusBadge status={o.status} />,
-    },
-    {
-      key: 'actions', header: '', align: 'center', width: '170px',
       render: o => {
-        const busy = busyId === o.orderId;
-
-        const run = (fn: () => Promise<unknown>, patch: Partial<SellerOrder>, refresh = false) => {
-          if (busy) return;
-          setBusyId(o.orderId);
-          fn()
-            .then(() => { patchOrder(o.orderId, patch); if (refresh) setRefreshKey(k => k + 1); })
-            .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Action failed.'))
-            .finally(() => setBusyId(null));
-        };
-
-        // One inline "next step" that the backend will actually accept
-        // (see OrderDetailModal's can* helpers). Shipping needs a tracking
-        // number, so "Ship" opens the detail view instead of firing blind.
-        const primary =
-          canShip(o) && o.status === 'processing'
-            ? { label: 'Ship', icon: <Truck size={12} />, onClick: () => setSelected(o) }
-          : canProcess(o)
-            ? { label: 'Process', icon: <RefreshCw size={12} />, onClick: () => run(() => apiUpdateOrderStatus({ orderId: o.orderId, storeId, status: 'processing' }), { status: 'processing' }) }
-          : canMarkPaid(o) && (o.type === 'digital' || o.status === 'shipped' || o.status === 'delivered')
-            ? { label: 'Mark Paid', icon: <CheckCheck size={12} />, onClick: () => run(() => apiMarkOrderPaid(o.orderId, storeId), { isPaid: true }, true) }
-          : canComplete(o)
-            ? { label: 'Complete', icon: <CheckCheck size={12} />, onClick: () => run(() => apiUpdateOrderStatus({ orderId: o.orderId, storeId, status: 'completed' }), { status: 'completed' }) }
-          : null;
-
+        const cod = codInfo(o);
         return (
-          <div className="flex items-center justify-center gap-1" onClick={e => e.stopPropagation()}>
-            {primary && (
-              <Button variant="ghost" size="xs" disabled={busy} loading={busy} onClick={primary.onClick} icon={!busy && primary.icon}>
-                {primary.label}
-              </Button>
-            )}
-            <Button variant="ghost" size="xs" onClick={() => setSelected(o)} icon={<Eye size={12} />} aria-label={`View order ${o.orderNumber}`}>
-              View
-            </Button>
+          <div className="flex flex-col items-start gap-1 max-w-[190px]">
+            <span className="flex items-center gap-1.5 whitespace-nowrap">{payChips(o)}</span>
+            {/* 768-1279: status is merged here (its own column only shows from 1280) */}
+            <span className="xl:hidden"><StatusBadge status={o.status} /></span>
+            {cod && <span className="hidden xl:block text-[12px] text-slate truncate max-w-full" title={cod}>{cod}</span>}
           </div>
         );
       },
     },
+    {
+      key: 'status', header: 'Status', hideBelowXl: true,
+      render: o => <StatusBadge status={o.status} />,
+    },
+    {
+      key: 'actions', header: '', align: 'center', width: '150px', sticky: true,
+      render: o => rowActions(o, false),
+    },
   ];
+
+  const orderCard = (o: SellerOrder) => {
+    const { waiting, sb } = shipInfo(o);
+    const cod = codInfo(o);
+    return (
+      <div className="flex flex-col gap-2.5">
+        <div className="flex items-center justify-between gap-2">
+          <OrderIdCopy orderNumber={o.orderNumber} />
+          <span className="text-[12px] text-slate whitespace-nowrap">{dateText(o)}</span>
+        </div>
+        <div className="flex items-center gap-2.5 min-w-0">
+          <Avatar name={o.customer.name} size={30} />
+          <p className="m-0 text-[14px] font-semibold text-charcoal truncate">{o.customer.name}</p>
+        </div>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="m-0 text-[13px] text-carbon truncate" title={o.product}>{o.product}{itemsSuffix(o)}</p>
+            <p className="m-0 text-[12px] text-slate">{typeLabel(o)}</p>
+          </div>
+          <span className="text-[14px] font-bold text-charcoal whitespace-nowrap">{money(o, o.amount)}</span>
+        </div>
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          {payChips(o)}
+          <StatusBadge status={o.status} />
+          {sb ? (
+            <span className={`text-[12px] font-semibold px-2 py-[2px] rounded-full whitespace-nowrap ${BADGE_CLASS[sb.tone]}`}>{sb.label}</span>
+          ) : waiting ? (
+            <span className="text-[12px] text-slate">{orderAgeText(o.date, now)}</span>
+          ) : null}
+        </div>
+        {cod && <p className="m-0 text-[12px] text-slate">{cod}</p>}
+        {rowActions(o, true)}
+      </div>
+    );
+  };
 
   const hasFilters = !!(search || typeF || actionF);
   const tabLabel = TABS.find(t => t.id === tab)?.label ?? 'Orders';
@@ -394,7 +436,10 @@ export function StoreOrderList() {
             </div>
 
             <Table
-              cardsBelow="lg"
+              cardsBelow="md"
+              compact
+              rowHeight={72}
+              renderCard={orderCard}
               columns={columns}
               data={orders}
               keyExtractor={o => o.orderId}
