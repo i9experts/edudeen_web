@@ -11,6 +11,7 @@ import type { SocialNetwork } from '@/api/services/publicPlatformConfig';
 import { apiSubscribeNewsletter } from '../../../api/services/newsletter';
 import { useSellEntry } from '@/hooks/auth/useSellEntry';
 import { isBuyerSession } from '@/hooks/auth/useIsBuyer';
+import { TokenStorage } from '@/api/services/auth';
 import { EditableHomeSection } from '@/components/admin-edit/EditableHomeSection';
 import { EditableSocialLinks } from '@/components/admin-edit/EditableInline';
 import { useAdminEdit } from '@/contexts/adminEditCtx';
@@ -276,11 +277,15 @@ export function Footer({ showNewsletter = false }: { showNewsletter?: boolean })
   // A signed-in buyer can't open a store — drop the seller-recruitment
   // columns and links (store-builder products, solutions, pricing, for sellers).
   const buyer = isBuyerSession();
+  const seller = TokenStorage.isLoggedIn() && TokenStorage.getUser<{ role?: string }>()?.role === 'seller';
   const footerColumns = buyer
     ? FOOTER_COLUMNS
         .filter(col => !SELLER_ONLY_COLUMNS.has(col.heading))
         .map(col => ({ ...col, links: col.links.filter(l => !l.path || !SELLER_ONLY_PATHS.has(l.path)) }))
-    : FOOTER_COLUMNS;
+    : seller
+      // A seller account has no Edudeen Premium (buyer-only) and already has its own store builder.
+      ? FOOTER_COLUMNS.map(col => ({ ...col, links: col.links.filter(l => l.path !== '/premium' && l.path !== '/products/store-builder') }))
+      : FOOTER_COLUMNS;
 
   return (
     <footer className="bg-white border-t border-bone text-slate">
