@@ -1,4 +1,6 @@
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
+import { GuideView } from './guide/GuideView';
+import { BUYER_SECTIONS, SELLER_SECTIONS } from './guide/guideData';
 import { useT } from '@/contexts/languageCtx';
 import { usePageMeta } from '@/hooks/usePageMeta';
 import { useCategoryTree, categoryPath } from '@/hooks/marketplace/useCategoryTree';
@@ -67,12 +69,22 @@ function CategoryBranch({ nodes, depth }: { nodes: CategoryNode[]; depth: number
   );
 }
 
+type Tab = 'buyer' | 'seller' | 'pages';
+const TABS: { id: Tab; label: string }[] = [
+  { id: 'buyer', label: 'Buyer guide' },
+  { id: 'seller', label: 'Seller guide' },
+  { id: 'pages', label: 'All pages' },
+];
+
 export function SitemapPage() {
   const t = useT();
-  const { tree, loading } = useCategoryTree();
+  const [params, setParams] = useSearchParams();
+  const raw = params.get('tab');
+  const tab: Tab = raw === 'seller' || raw === 'pages' ? raw : 'buyer';
+  const setTab = (next: Tab) => setParams(next === 'buyer' ? {} : { tab: next }, { replace: true });
   usePageMeta({
-    title: 'Sitemap',
-    description: 'Every page on Edudeen in one place: shop by class and subject, courses, free resources, help, policies and your account.',
+    title: tab === 'seller' ? 'Seller guide: open a store and upload products' : tab === 'pages' ? 'Sitemap' : 'Buyer guide: how to shop on Edudeen',
+    description: 'Step-by-step guides with screenshots for buyers and sellers, plus every page on Edudeen: shop by class and subject, courses, help, policies and your account.',
   });
 
   return (
@@ -83,10 +95,38 @@ export function SitemapPage() {
           <span className="mx-2" aria-hidden>/</span>
           <span className="text-carbon">{t('Sitemap')}</span>
         </nav>
-        <h1 className="font-serif text-[30px] sm:text-[38px] text-carbon leading-tight m-0">{t('Sitemap')}</h1>
-        <p className="text-[14px] text-slate mt-2 mb-10 max-w-[620px]">{t('Every page on Edudeen in one place. Pick a class or a subject to start shopping.')}</p>
+        <h1 className="font-serif text-[30px] sm:text-[38px] text-carbon leading-tight m-0">{t('Sitemap & guides')}</h1>
+        <p className="text-[14px] text-slate mt-2 mb-6 max-w-[620px]">{t('Learn how Edudeen works, step by step, or jump to any page.')}</p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-10">
+        <div role="tablist" aria-label={t('Guide sections')} className="flex gap-1 border-b border-bone mb-8 overflow-x-auto">
+          {TABS.map(x => (
+            <button
+              key={x.id}
+              role="tab"
+              type="button"
+              aria-selected={tab === x.id}
+              onClick={() => setTab(x.id)}
+              className={`shrink-0 px-4 min-h-11 text-[14px] font-semibold border-b-2 -mb-px bg-transparent cursor-pointer ${tab === x.id ? 'border-brand-royal text-brand-royal' : 'border-transparent text-slate hover:text-carbon'}`}
+            >
+              {t(x.label)}
+            </button>
+          ))}
+        </div>
+
+        {tab === 'buyer' ? <GuideView sections={BUYER_SECTIONS} audience="buyer" cta={{ label: 'Start shopping', to: '/?browse=1' }} /> : null}
+        {tab === 'seller' ? <GuideView sections={SELLER_SECTIONS} audience="seller" cta={{ label: 'Open my store', to: '/become-a-seller' }} /> : null}
+        {tab === 'pages' ? <AllPages /> : null}
+      </div>
+    </main>
+  );
+}
+
+function AllPages() {
+  const t = useT();
+  const { tree, loading } = useCategoryTree();
+  return (
+    <div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-10">
           <section aria-labelledby="sm-class">
             <div id="sm-class"><Heading>{t('Shop by class')}</Heading></div>
             <ul className="m-0 p-0 list-none flex flex-col">
@@ -137,8 +177,7 @@ export function SitemapPage() {
               </div>
             )}
           </section>
-        </div>
       </div>
-    </main>
+    </div>
   );
 }
