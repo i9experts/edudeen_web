@@ -22,7 +22,7 @@ export interface AdminOrderRow {
   orderNumber: string;
   createdAt: string;
   buyer: { id: string; name: string; email: string } | null;
-  stores: { id: string; name: string; status: string }[];
+  stores: { id: string; name: string; status: string; possibleDuplicate: { orderId: string; orderNumber: string } | null }[];
   itemCount: number;
   totalAmount: number;
   currency: string;
@@ -69,6 +69,8 @@ export interface AdminSellerOrder {
   /** Who collects this COD package's cash ('platform' = Edudeen's courier). Old orders: fall back to fulfillmentMode. */
   codCollector?: 'seller' | 'platform' | null;
   fulfillmentMode?: 'seller' | 'platform' | null;
+  /** Same buyer + same products in another live order on this store, within 24h — advisory only. */
+  possibleDuplicate?: { orderId: string; orderNumber: string } | null;
 }
 
 export interface AdminOrderDetail {
@@ -97,6 +99,8 @@ export interface AdminOrderDetail {
   isPaid: boolean;
   paidAt: string | null;
   orderStatus: AdminOrderStatus;
+  /** Only set when at least one package needs a street address (physical/mixed fulfillment). */
+  addressWarnings?: { code: string; text: string }[];
 }
 
 interface ApiResponse<T> { success: boolean; message?: string; data: T }

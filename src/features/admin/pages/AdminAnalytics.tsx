@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  LayoutDashboard, DollarSign, Store, Users, Package, ShoppingCart, CreditCard, TrendingUp,
+  LayoutDashboard, DollarSign, Store, Users, Package, ShoppingCart, CreditCard, TrendingUp, Eye,
 } from 'lucide-react';
 import { Button, TabBar, type Tab } from '@/components/comman/ui';
 import { AdminStudioHeader } from '@/features/admin/components/studio';
@@ -26,6 +26,7 @@ import { ProductsTab } from './analytics/ProductsTab';
 import { OrdersTab } from './analytics/OrdersTab';
 import { PaymentsTab } from './analytics/PaymentsTab';
 import { PlatformTab } from './analytics/PlatformTab';
+import { VisitsTab } from './analytics/VisitsTab';
 
 async function searchSellersByName(query: string): Promise<EntityOption[]> {
   const res = await apiListAdminUsers({ role: 'seller', search: query, limit: 8 });
@@ -41,6 +42,7 @@ const TABS: Tab[] = [
   { id: 'orders',    label: 'Orders',    icon: <ShoppingCart size={14} /> },
   { id: 'payments',  label: 'Payments',  icon: <CreditCard size={14} /> },
   { id: 'platform',  label: 'Platform',  icon: <TrendingUp size={14} /> },
+  { id: 'visits',    label: 'Visits',    icon: <Eye size={14} /> },
 ];
 
 /**
@@ -119,6 +121,7 @@ export function AdminAnalytics() {
       {activeTab === 'orders'    && <OrdersTab params={params} />}
       {activeTab === 'payments'  && <PaymentsTab params={params} />}
       {activeTab === 'platform'  && <PlatformTab params={params} />}
+      {activeTab === 'visits'    && <VisitsTab params={params} />}
     </div>
   );
 }

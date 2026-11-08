@@ -746,6 +746,7 @@ export const ENDPOINTS = {
       ORDERS_STATUS_BREAKDOWN:     '/api/admin/analytics/orders/status-breakdown',
       PAYMENTS_BREAKDOWN:          '/api/admin/analytics/payments/breakdown',
       PLATFORM_METRICS:            '/api/admin/analytics/platform-metrics',
+      VISITS:                      '/api/admin/analytics/visits',
       EXPORT:                      '/api/admin/analytics/export',
     },
   },

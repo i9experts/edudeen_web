@@ -263,6 +263,19 @@ export interface AdminPlatformMetricsData {
   };
 }
 
+export interface AdminVisitsData {
+  range: { from: string; to: string };
+  /** First PKT day any store was tracked; null = nothing collected platform-wide yet. */
+  trackingSince: string | null;
+  visits: number;
+  paidOrders: number;
+  /** Paid non-free orders / visits in %, null when there are no visits. */
+  conversionRate: number | null;
+  sources: { source: 'edudeen_search' | 'category' | 'direct' | 'social' | 'external'; visits: number; percent: number }[];
+  byDay: { date: string; visits: number }[];
+  topStores: { storeId: string; name: string; slug: string | null; visits: number }[];
+}
+
 // ── Query-string helper (mirrors the convention in services/subscriptions.ts) ──
 
 function qs(query: Record<string, unknown> = {}) {
@@ -348,6 +361,12 @@ export function apiAdminAnalyticsPaymentBreakdown(params: BaseAnalyticsParams = 
 
 export function apiAdminAnalyticsPlatformMetrics(params: BaseAnalyticsParams = {}) {
   return client.get<never, ApiResponse<AdminPlatformMetricsData>>(`${ENDPOINTS.ANALYTICS.ADMIN.PLATFORM_METRICS}${qs(params)}`);
+}
+
+// ── H.1 Visit/traffic analytics (platform-wide, every store) ───────────────────
+
+export function apiAdminAnalyticsVisits(params: BaseAnalyticsParams = {}) {
+  return client.get<never, ApiResponse<AdminVisitsData>>(`${ENDPOINTS.ANALYTICS.ADMIN.VISITS}${qs(params)}`);
 }
 
 // ── I. Export ────────────────────────────────────────────────────────────────────

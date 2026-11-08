@@ -6,7 +6,7 @@ import { ExportCsvButton } from '@/features/admin/components/ExportCsvButton';
 import { useSearchParams } from 'react-router-dom';
 import { ShoppingBag, RefreshCw, ExternalLink, Truck, CheckCircle2 } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
-import { Table, StatusBadge, Button, Modal, SkeletonBox, SearchInput, FilterDropdown, CopyIconButton, type TableColumn } from '@/components/comman/ui';
+import { Table, StatusBadge, Button, Modal, SkeletonBox, SearchInput, FilterDropdown, CopyIconButton, DuplicateChip, type TableColumn } from '@/components/comman/ui';
 import { DateField } from '@/components/comman/ui/DateField';
 import { AdminStudioHeader, ADMIN_GUTTER } from '@/features/admin/components/studio';
 import {
@@ -111,6 +111,13 @@ function OrderDetailModal({ id, onClose, onChanged }: { id: string; onClose: () 
                   {[order.shippingAddress.addressLine1, order.shippingAddress.addressLine2, order.shippingAddress.city, order.shippingAddress.state, order.shippingAddress.zipCode].filter(Boolean).join(', ')}
                 </p>
               ) : <p className="text-slate">Digital order — nothing to ship</p>}
+              {!!order.addressWarnings?.length && (
+                <ul className="mt-1.5 flex flex-col gap-0.5">
+                  {order.addressWarnings.map(w => (
+                    <li key={w.code} className="text-[11.5px] text-warning">⚠ {w.text}</li>
+                  ))}
+                </ul>
+              )}
             </div>
           </div>
 
@@ -122,6 +129,7 @@ function OrderDetailModal({ id, onClose, onChanged }: { id: string; onClose: () 
                 </a>
                 <StatusBadge status={so.status} size="sm" />
                 <span className="text-slate capitalize">{so.fulfillmentType}</span>
+                <DuplicateChip other={so.possibleDuplicate} />
                 {order.paymentType === 'cash_on_delivery' && so.fulfillmentType === 'physical' && (
                   <span className="text-[12px] text-slate">
                     {`Collected by: ${(so.codCollector ?? so.fulfillmentMode) === 'platform' ? 'Edudeen courier' : 'Seller'}`}
@@ -240,7 +248,12 @@ export function AdminOrders() {
     { key: 'orderNumber', header: 'Order', render: r => <span className="text-[13px] font-semibold text-carbon whitespace-nowrap">{r.orderNumber}</span> },
     { key: 'createdAt', header: 'Placed', render: r => <span className="text-[12.5px] text-slate whitespace-nowrap">{when(r.createdAt)}</span> },
     { key: 'buyer', header: 'Buyer', render: r => r.buyer ? <div className="min-w-0"><p className="text-[13px] text-carbon truncate max-w-[180px]">{r.buyer.name}</p><p className="text-[12px] text-slate truncate max-w-[180px]">{r.buyer.email}</p></div> : <span className="text-slate">—</span> },
-    { key: 'stores', header: 'Store', render: r => <span className="text-[13px] text-graphite truncate max-w-[160px] inline-block">{r.stores.map(s => s.name).join(', ')}</span> },
+    { key: 'stores', header: 'Store', render: r => (
+      <div className="flex flex-col gap-1">
+        <span className="text-[13px] text-graphite truncate max-w-[160px] inline-block">{r.stores.map(s => s.name).join(', ')}</span>
+        {r.stores.filter(s => s.possibleDuplicate).map(s => <DuplicateChip key={s.id} other={s.possibleDuplicate} />)}
+      </div>
+    ) },
     { key: 'itemCount', header: 'Items', align: 'right', render: r => <span className="text-[13px] tabular-nums">{r.itemCount}</span> },
     { key: 'totalAmount', header: 'Total', align: 'right', render: r => <span className="text-[13px] font-semibold text-charcoal tabular-nums whitespace-nowrap">{money(r.totalAmount, r.currency)}</span> },
     { key: 'payment', header: 'Payment', render: r => <div className="flex flex-col items-start gap-0.5"><StatusBadge status={r.paymentStatus} size="sm" /><span className="text-[12px] text-slate">{PAYMENT_TYPE_LABEL[r.paymentType] ?? r.paymentType}</span></div> },
