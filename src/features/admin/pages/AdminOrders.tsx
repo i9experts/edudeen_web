@@ -4,16 +4,16 @@ import { useLiveRefresh } from '@/hooks/useLiveRefresh';
 import { StaffNotes } from '@/features/admin/components/StaffNotes';
 import { ExportCsvButton } from '@/features/admin/components/ExportCsvButton';
 import { useSearchParams } from 'react-router-dom';
-import { ShoppingBag, RefreshCw, ExternalLink, Truck, CheckCircle2 } from 'lucide-react';
+import { ShoppingBag, RefreshCw, ExternalLink, Truck, CheckCircle2, XCircle } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
-import { Table, StatusBadge, Button, Modal, SkeletonBox, SearchInput, FilterDropdown, CopyIconButton, DuplicateChip, type TableColumn } from '@/components/comman/ui';
+import { Table, StatusBadge, Button, Modal, Input, SkeletonBox, SearchInput, FilterDropdown, CopyIconButton, DuplicateChip, type TableColumn } from '@/components/comman/ui';
 import { DateField } from '@/components/comman/ui/DateField';
 import { AdminStudioHeader, ADMIN_GUTTER } from '@/features/admin/components/studio';
 import {
   apiAdminListOrders, apiAdminGetOrder,
-  type AdminOrderRow, type AdminOrderDetail, type AdminOrdersQuery, type AdminOrderStatus, type AdminPaymentStatus, type AdminPaymentType,
+  type AdminOrderRow, type AdminOrderDetail, type AdminSellerOrder, type AdminOrdersQuery, type AdminOrderStatus, type AdminPaymentStatus, type AdminPaymentType,
 } from '@/api/services/adminOrders';
-import { apiMarkOrderPaid } from '@/api/services/orders';
+import { apiMarkOrderPaid, apiAdminCancelOrder, apiUpdateOrderStatus } from '@/api/services/orders';
 import { currencySymbol } from '@/utils/currency';
 import { getStorePagePath } from '@/utils/storefrontUrl';
 
@@ -44,11 +44,22 @@ const PAYMENT_TYPE_LABEL = Object.fromEntries(PAYMENT_TYPE.map(p => [p.value, p.
 const money = (n: number | undefined, currency: string) => `${currencySymbol(currency)} ${(n ?? 0).toLocaleString(undefined, { maximumFractionDigits: currency === 'PKR' ? 0 : 2 })}`;
 const when = (iso: string) => new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 
+// Only packages Edudeen itself fulfils (fulfillmentMode 'platform') may have their shipping
+// status moved by an admin — mirrors orders.service.ts's updateSellerOrderStatus restriction.
+const isAdminManaged = (so: AdminSellerOrder) =>
+  so.fulfillmentType === 'physical' && so.fulfillmentMode === 'platform' && so.status !== 'cancelled' && so.status !== 'completed';
+
 function OrderDetailModal({ id, onClose, onChanged }: { id: string; onClose: () => void; onChanged: () => void }) {
   const [order, setOrder] = useState<AdminOrderDetail | null>(null);
   const [error, setError] = useState('');
   const [marking, setMarking] = useState(false);
   const [confirmPaid, setConfirmPaid] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
+  const [cancelBusy, setCancelBusy] = useState(false);
+  const [statusBusy, setStatusBusy] = useState<string | null>(null);
+  const [shippingPkg, setShippingPkg] = useState<string | null>(null);
+  const [trackingDraft, setTrackingDraft] = useState({ carrier: '', trackingNumber: '', trackingUrl: '' });
 
   const load = useCallback(() => {
     apiAdminGetOrder(id).then(res => setOrder(res.data)).catch(err => setError(err instanceof Error ? err.message : 'Could not load this order.'));
@@ -64,6 +75,35 @@ function OrderDetailModal({ id, onClose, onChanged }: { id: string; onClose: () 
     finally { setMarking(false); }
   }
 
+  const canCancelOrder = !!order && order.orderStatus !== 'cancelled' && order.orderStatus !== 'completed';
+  async function confirmCancelOrder() {
+    if (cancelReason.trim().length < 5) { setError('Give a short reason (at least 5 characters).'); return; }
+    setCancelBusy(true); setError('');
+    try { await apiAdminCancelOrder(id, cancelReason.trim()); setCancelling(false); load(); onChanged(); }
+    catch (err) { setError(err instanceof Error ? err.message : 'Could not cancel this order.'); }
+    finally { setCancelBusy(false); }
+  }
+
+  async function changePackageStatus(so: AdminSellerOrder, status: 'processing' | 'delivered' | 'completed') {
+    setStatusBusy(so.id); setError('');
+    try { await apiUpdateOrderStatus({ orderId: id, storeId: so.storeId, status }); load(); onChanged(); }
+    catch (err) { setError(err instanceof Error ? err.message : 'Could not update status.'); }
+    finally { setStatusBusy(null); }
+  }
+
+  async function shipPackage(so: AdminSellerOrder) {
+    if (!trackingDraft.trackingNumber.trim()) { setError('Enter a tracking number to mark this package shipped.'); return; }
+    setStatusBusy(so.id); setError('');
+    try {
+      await apiUpdateOrderStatus({
+        orderId: id, storeId: so.storeId, status: 'shipped',
+        tracking: { carrier: trackingDraft.carrier.trim(), trackingNumber: trackingDraft.trackingNumber.trim(), trackingUrl: trackingDraft.trackingUrl.trim() },
+      });
+      setShippingPkg(null); load(); onChanged();
+    } catch (err) { setError(err instanceof Error ? err.message : 'Could not mark this package shipped.'); }
+    finally { setStatusBusy(null); }
+  }
+
   const discounts = order ? [
     ['Coupon' + (order.couponCode ? ` (${order.couponCode})` : ''), order.couponDiscountTotal],
     ['Gift card', order.giftCardDiscountTotal],
@@ -76,13 +116,16 @@ function OrderDetailModal({ id, onClose, onChanged }: { id: string; onClose: () 
   return (
     <Modal title={order ? `Order ${order.orderNumber}` : 'Order'} onClose={onClose} width={760} mobileSheet
       footer={<>
-        {canMarkPaid && !confirmPaid && <Button variant="outline" icon={<CheckCircle2 size={14} />} onClick={() => setConfirmPaid(true)}>Mark as paid</Button>}
+        {!cancelling && canMarkPaid && !confirmPaid && <Button variant="outline" icon={<CheckCircle2 size={14} />} onClick={() => setConfirmPaid(true)}>Mark as paid</Button>}
         {confirmPaid && <>
           <span className="text-[12.5px] text-charcoal mr-auto">Cash or transfer received for the full amount?</span>
           <Button variant="ghost" onClick={() => setConfirmPaid(false)} disabled={marking}>No</Button>
           <Button variant="primary" onClick={() => void markPaid()} loading={marking}>Yes, mark paid</Button>
         </>}
-        {!confirmPaid && <Button variant="ghost" onClick={onClose}>Close</Button>}
+        {!cancelling && !confirmPaid && canCancelOrder && (
+          <Button variant="outline" icon={<XCircle size={14} />} onClick={() => { setCancelling(true); setCancelReason(''); setError(''); }}>Cancel order</Button>
+        )}
+        {!confirmPaid && !cancelling && <Button variant="ghost" onClick={onClose}>Close</Button>}
       </>}
     >
       {error && <p role="alert" className="text-[13px] text-error mb-3">{error}</p>}
@@ -120,6 +163,18 @@ function OrderDetailModal({ id, onClose, onChanged }: { id: string; onClose: () 
               )}
             </div>
           </div>
+
+          {cancelling && (
+            <section className="rounded-lg border border-error/30 bg-error/5 px-3 py-3 flex flex-col gap-2">
+              <p className="font-semibold text-carbon">Cancel this order?</p>
+              <p className="text-[12px] text-slate">Every store's remaining items are cancelled and the buyer refunded where applicable. This can't be undone.</p>
+              <Input label="Reason (shown to the buyer)" value={cancelReason} onChange={e => setCancelReason(e.target.value)} maxLength={200} />
+              <div className="flex gap-2 justify-end">
+                <Button variant="outline" size="sm" onClick={() => setCancelling(false)} disabled={cancelBusy}>Keep order</Button>
+                <Button variant="danger" size="sm" onClick={() => void confirmCancelOrder()} loading={cancelBusy} disabled={cancelBusy}>Yes, cancel order</Button>
+              </div>
+            </section>
+          )}
 
           {order.sellerOrders.map(so => (
             <div key={so.id} className="rounded-lg border border-bone overflow-hidden">
@@ -166,6 +221,39 @@ function OrderDetailModal({ id, onClose, onChanged }: { id: string; onClose: () 
                 ))}
               </ul>
               {so.cancelReason && <p className="px-3 py-2 text-[12px] text-error border-t border-bone">Cancelled: {so.cancelReason}</p>}
+              {isAdminManaged(so) && (
+                <div className="flex flex-wrap items-center gap-2 px-3 py-2 border-t border-bone bg-cream/40">
+                  {shippingPkg === so.id ? (
+                    <div className="flex flex-col gap-2 w-full">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <Input label="Tracking number *" value={trackingDraft.trackingNumber} onChange={e => setTrackingDraft(d => ({ ...d, trackingNumber: e.target.value }))} placeholder="e.g. LE123456789PK" />
+                        <Input label="Carrier" value={trackingDraft.carrier} onChange={e => setTrackingDraft(d => ({ ...d, carrier: e.target.value }))} placeholder="e.g. TCS, Leopards" />
+                        <Input label="Tracking link" value={trackingDraft.trackingUrl} onChange={e => setTrackingDraft(d => ({ ...d, trackingUrl: e.target.value }))} placeholder="https://…" />
+                      </div>
+                      <div className="flex gap-2 justify-end">
+                        <Button variant="outline" size="xs" onClick={() => setShippingPkg(null)} disabled={!!statusBusy}>Cancel</Button>
+                        <Button variant="primary" size="xs" onClick={() => void shipPackage(so)} loading={statusBusy === so.id} disabled={!!statusBusy} icon={<Truck size={13} />}>Mark shipped</Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <span className="text-[11px] text-slate uppercase tracking-[0.06em] font-semibold mr-auto">Edudeen-fulfilled</span>
+                      {so.status === 'pending' && (
+                        <Button variant="outline" size="xs" onClick={() => void changePackageStatus(so, 'processing')} loading={statusBusy === so.id} disabled={!!statusBusy}>Mark processing</Button>
+                      )}
+                      {(so.status === 'pending' || so.status === 'processing') && (
+                        <Button variant="outline" size="xs" onClick={() => { setShippingPkg(so.id); setTrackingDraft({ carrier: '', trackingNumber: '', trackingUrl: '' }); setError(''); }} disabled={!!statusBusy} icon={<Truck size={13} />}>Mark shipped</Button>
+                      )}
+                      {so.status === 'shipped' && (
+                        <Button variant="outline" size="xs" onClick={() => void changePackageStatus(so, 'delivered')} loading={statusBusy === so.id} disabled={!!statusBusy}>Mark delivered</Button>
+                      )}
+                      {(so.status === 'shipped' || so.status === 'delivered') && (order.isPaid || so.packageIsPaid) && (
+                        <Button variant="primary" size="xs" onClick={() => void changePackageStatus(so, 'completed')} loading={statusBusy === so.id} disabled={!!statusBusy} icon={<CheckCircle2 size={13} />}>Mark completed</Button>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
             </div>
           ))}
 
