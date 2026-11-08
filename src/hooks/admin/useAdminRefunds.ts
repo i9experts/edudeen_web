@@ -1,12 +1,12 @@
 import { useCallback, useState } from 'react';
 import { useAnalyticsQuery } from '@/hooks/useAnalyticsQuery';
 import {
-  apiAdminListPendingRefunds, apiAdminApproveRefund, apiAdminRejectRefund,
-  type RefundApprovalResult,
+  apiAdminListRefunds, apiAdminApproveRefund, apiAdminRejectRefund,
+  type AdminRefundsQuery, type RefundApprovalResult,
 } from '@/api/services/adminRefundRequests';
 
-export function useAdminPendingRefunds(page: number, limit = 20) {
-  return useAnalyticsQuery(apiAdminListPendingRefunds, { page, limit }, ['refunds', 'orders', 'returns']);
+export function useAdminRefunds(query: AdminRefundsQuery) {
+  return useAnalyticsQuery(apiAdminListRefunds, query, ['refunds', 'orders', 'returns']);
 }
 
 export function useAdminRefundActions() {

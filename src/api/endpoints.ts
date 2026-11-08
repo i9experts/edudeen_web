@@ -75,7 +75,7 @@ export const ENDPOINTS = {
 
   // ── REFUND REQUESTS (item-level refunds; admin reviews the platform queue) ─
   REFUND_REQUEST: {
-    ADMIN_PENDING: '/api/refund-request/admin/pending',
+    ADMIN_LIST:    '/api/refund-request/admin',
     FOR_ORDER:     (orderId: string) => `/api/refund-request/order/${orderId}`,
     APPROVE:       (id: string) => `/api/refund-request/${id}/approve`,
     REJECT:        (id: string) => `/api/refund-request/${id}/reject`,
