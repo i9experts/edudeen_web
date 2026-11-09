@@ -133,7 +133,9 @@ function Cover({ product }: { product: MarketplaceProduct }) {
         <g clipPath={`url(#${clipId})`}>
           <rect x={cx} y={cy} width={cw} height={ch} fill="#fff" />
           {imgProps ? (
-            <image href={imgProps.src} x={cx} y={cy} width={cw} height={ch} preserveAspectRatio="none" onError={() => setImgFailed(true)} />
+            // Crops to fill the book shape (like CSS object-fit: cover) instead of stretching — a
+            // portrait, landscape or square upload all read as a clean, undistorted book cover.
+            <image href={imgProps.src} x={cx} y={cy} width={cw} height={ch} preserveAspectRatio="xMidYMid slice" onError={() => setImgFailed(true)} />
           ) : (
             <foreignObject x="30" y="8" width="148" height="172">
               <div className="w-full h-full flex flex-col items-center justify-center text-center px-3" style={{ color: accent }}>
@@ -161,6 +163,60 @@ export function RatingLine({ rating, count, className }: { rating?: number; coun
       <b className="font-semibold">{rating.toFixed(1)}</b>
       <span className="text-slate">({count.toLocaleString()})</span>
     </span>
+  );
+}
+
+function QuickViewCover({ product }: { product: MarketplaceProduct }) {
+  const { accent } = paletteFor(product.name || product._id);
+  const [imgFailed, setImgFailed] = useState(false);
+  const image = !imgFailed ? product.images?.[0] : undefined;
+  const imgProps = image ? responsiveImg(image, '88px', [120, 184, 240], 240) : null;
+  return (
+    <div className="w-[88px] h-[108px] shrink-0 rounded-lg overflow-hidden bg-[#f4f6f7] flex items-center justify-center">
+      {imgProps ? (
+        <img {...imgProps} alt="" loading="lazy" decoding="async" onError={() => setImgFailed(true)} className="w-full h-full object-contain" />
+      ) : (
+        <strong className="font-serif font-normal text-[11px] leading-[1.15] text-center px-1.5 line-clamp-5" style={{ color: accent }}>{product.name}</strong>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Hover-only quick view (desktop pointers that can truly hover — see the
+ * `.quick-view`/`.quick-view-trigger` rules in index.css). Shows a BIGGER,
+ * undistorted photo (object-contain, regardless of whether the small
+ * thumbnail crops it to a book shape) plus the full title, store and
+ * description, so a buyer can tell what something is without leaving the
+ * grid. Everything "below" the card (price, badges, cart) is unchanged and
+ * lives outside this — this only adds to the cover/title area.
+ */
+function QuickView({ product, kind, metaText, shopName, flip, href, onNavigate }: {
+  product: MarketplaceProduct; kind: string; metaText: string; shopName?: string | null;
+  flip: boolean; href: string; onNavigate: (e: React.MouseEvent) => void;
+}) {
+  return (
+    <Link
+      to={href}
+      onClick={onNavigate}
+      aria-hidden="true"
+      tabIndex={-1}
+      className={clsx(
+        'quick-view absolute top-0 w-[300px] max-w-[88vw] grid grid-cols-[88px_1fr] gap-3',
+        'rounded-2xl border border-[#e6ecee] bg-white p-3.5 text-start no-underline',
+        'shadow-[0_18px_40px_rgba(15,51,84,0.18)]',
+        flip ? 'end-0' : 'start-0',
+      )}
+    >
+      <QuickViewCover product={product} />
+      <div className="min-w-0">
+        <p className="font-bold text-[14px] leading-snug text-carbon line-clamp-2">{product.name}</p>
+        {shopName && <p className="text-[11.5px] font-bold text-brand-orange mt-0.5 truncate">{shopName}</p>}
+        <p className="text-[11px] text-slate mt-1.5">{TYPE_LABEL[kind] ?? kind} · {metaText}</p>
+        <p className="text-[12px] text-slate leading-relaxed line-clamp-3 mt-1.5">{product.description}</p>
+        <span className="inline-block text-[12px] font-bold text-brand-orange mt-2">View details &rarr;</span>
+      </div>
+    </Link>
   );
 }
 
@@ -203,9 +259,21 @@ export const ResourceCard = memo(function ResourceCard({
   const delivery = kind === 'physical' ? 'Ships to you'
     : product.deliveryFormat === 'course' ? ['Online course', courseSummaryText(product.courseSummary)].filter(Boolean).join(' · ')
     : 'Instant download';
+  const metaParts = [classRangeLabel(product.classFrom, product.classTo) ?? ageLabel(product.ageMin, product.ageMax) ?? level ?? 'All ages', delivery];
   // Separate text nodes so the Urdu DOM translator can match each part ("All ages", "Ships to you").
-  const meta = [classRangeLabel(product.classFrom, product.classTo) ?? ageLabel(product.ageMin, product.ageMax) ?? level ?? 'All ages', delivery]
-    .map((part, i) => <span key={i}>{i > 0 ? ' · ' : ''}<span>{part}</span></span>);
+  const meta = metaParts.map((part, i) => <span key={i}>{i > 0 ? ' · ' : ''}<span>{part}</span></span>);
+  const metaText = metaParts.join(' · ');
+
+  // Which side the hover quick view opens toward, so it never runs off the
+  // right edge of the viewport for cards in the last column.
+  const [flip, setFlip] = useState(false);
+  const coverSlotRef = useRef<HTMLDivElement>(null);
+  const checkFlip = () => {
+    const el = coverSlotRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    setFlip(rect.left + 300 > window.innerWidth - 12);
+  };
 
   const vVariant = variant;
   const physicalStock = kind === 'physical' && !vVariant?.unlimitedStock ? (vVariant?.stock ?? 0) : Infinity;
@@ -284,15 +352,18 @@ export const ResourceCard = memo(function ResourceCard({
   }
 
   return (
-    <article className="group relative min-w-0 overflow-hidden rounded-xl border border-[#e6ecee] bg-white p-2 transition-all duration-200 hover:shadow-[0_6px_18px_rgba(15,51,84,0.10)] hover:border-[#cfdadf]">
-      <Link
-        to={href}
-        onClick={go}
-        aria-label={`View ${product.name}`}
-        className="block w-full p-0 cursor-pointer text-start"
-      >
-        <Cover product={product} />
-      </Link>
+    <article className="group relative min-w-0 rounded-xl border border-[#e6ecee] bg-white p-2 transition-all duration-200 hover:shadow-[0_6px_18px_rgba(15,51,84,0.10)] hover:border-[#cfdadf]">
+      <div ref={coverSlotRef} onMouseEnter={checkFlip} onFocus={checkFlip} className="relative quick-view-trigger">
+        <Link
+          to={href}
+          onClick={go}
+          aria-label={`View ${product.name}`}
+          className="block w-full p-0 cursor-pointer text-start"
+        >
+          <Cover product={product} />
+        </Link>
+        <QuickView product={product} kind={kind} metaText={metaText} shopName={shopName} flip={flip} href={href} onNavigate={go} />
+      </div>
 
       {(campaignOff || percentOff > 0) && (
         <span className="absolute start-[7px] top-[7px] sm:start-3 sm:top-3 max-w-[58%] sm:max-w-[70%] truncate text-[12px] sm:text-[12px] font-bold px-2 py-[3px] rounded-full bg-error text-white shadow-sm">
