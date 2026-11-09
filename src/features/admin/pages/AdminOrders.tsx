@@ -4,12 +4,13 @@ import { useLiveRefresh } from '@/hooks/useLiveRefresh';
 import { StaffNotes } from '@/features/admin/components/StaffNotes';
 import { ExportCsvButton } from '@/features/admin/components/ExportCsvButton';
 import { useSearchParams } from 'react-router-dom';
-import { ShoppingBag, RefreshCw, ExternalLink, Truck, CheckCircle2, XCircle } from 'lucide-react';
+import { ShoppingBag, RefreshCw, ExternalLink, Truck, CheckCircle2, XCircle, Plus } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { Table, StatusBadge, Button, Modal, Input, SkeletonBox, SearchInput, FilterDropdown, CopyIconButton, DuplicateChip, type TableColumn } from '@/components/comman/ui';
 import { DateField } from '@/components/comman/ui/DateField';
 import { AdminStudioHeader, ADMIN_GUTTER } from '@/features/admin/components/studio';
 import { BulkDecisionModal } from '@/features/admin/components/BulkDecisionModal';
+import { CreateManualOrderModal } from '@/features/admin/components/CreateManualOrderModal';
 import { useBulkRunner } from '@/hooks/admin/useBulkRunner';
 import {
   apiAdminListOrders, apiAdminGetOrder,
@@ -289,6 +290,7 @@ export function AdminOrders() {
   const [error, setError] = useState('');
   const [openId, setOpenId] = useState<string | null>(params.get('order'));
   const [reload, setReload] = useState(0);
+  const [creating, setCreating] = useState(false);
 
   // Bulk cancel / mark-paid: one request per order through the same single-order
   // API the row-detail modal uses, so every order passes the same gates.
@@ -382,6 +384,7 @@ export function AdminOrders() {
         actions={<div className="flex items-center gap-2 flex-wrap justify-end">
           <ExportCsvButton kind="orders" params={{ status, paymentStatus, paymentType, from, to }} />
           <Button variant="outline" size="sm" icon={<RefreshCw size={13} />} onClick={() => setReload(n => n + 1)}>Refresh</Button>
+          <Button variant="primary" size="sm" icon={<Plus size={13} />} onClick={() => setCreating(true)}>New order</Button>
         </div>}
       />
       <div className={`${ADMIN_GUTTER} pt-6 pb-8 flex flex-col gap-4`}>
@@ -434,6 +437,13 @@ export function AdminOrders() {
       </div>
 
       {openId && <OrderDetailModal id={openId} onClose={() => setOpenId(null)} onChanged={() => setReload(n => n + 1)} />}
+
+      {creating && (
+        <CreateManualOrderModal
+          onClose={() => setCreating(false)}
+          onCreated={orderId => { setCreating(false); setReload(n => n + 1); setOpenId(orderId); }}
+        />
+      )}
 
       {bulkMode && (
         <BulkDecisionModal
