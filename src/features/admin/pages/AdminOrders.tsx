@@ -9,6 +9,8 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { Table, StatusBadge, Button, Modal, Input, SkeletonBox, SearchInput, FilterDropdown, CopyIconButton, DuplicateChip, type TableColumn } from '@/components/comman/ui';
 import { DateField } from '@/components/comman/ui/DateField';
 import { AdminStudioHeader, ADMIN_GUTTER } from '@/features/admin/components/studio';
+import { BulkDecisionModal } from '@/features/admin/components/BulkDecisionModal';
+import { useBulkRunner } from '@/hooks/admin/useBulkRunner';
 import {
   apiAdminListOrders, apiAdminGetOrder,
   type AdminOrderRow, type AdminOrderDetail, type AdminSellerOrder, type AdminOrdersQuery, type AdminOrderStatus, type AdminPaymentStatus, type AdminPaymentType,
@@ -288,6 +290,26 @@ export function AdminOrders() {
   const [openId, setOpenId] = useState<string | null>(params.get('order'));
   const [reload, setReload] = useState(0);
 
+  // Bulk cancel / mark-paid: one request per order through the same single-order
+  // API the row-detail modal uses, so every order passes the same gates.
+  const [selected, setSelected] = useState<Set<string | number>>(new Set());
+  const [bulkMode, setBulkMode] = useState<'cancel' | 'markPaid' | null>(null);
+  const bulk = useBulkRunner<AdminOrderRow>(r => r.orderNumber);
+  const cancelEligible = rows.filter(r => selected.has(r.id) && r.orderStatus !== 'cancelled' && r.orderStatus !== 'completed');
+  // Single-store only — a multi-seller Cash on Delivery order pays off one package at a time (see "Mark package paid" in the detail modal).
+  const markPaidEligible = rows.filter(r => selected.has(r.id) && r.paymentStatus === 'unpaid' && r.paymentType !== 'stripe' && r.stores.length === 1);
+
+  async function runBulkDecision(reason: string) {
+    const mode = bulkMode;
+    if (!mode) return;
+    const res = mode === 'cancel'
+      ? await bulk.run(cancelEligible, r => apiAdminCancelOrder(r.id, reason), 'cancelled')
+      : await bulk.run(markPaidEligible, r => apiMarkOrderPaid(r.id), 'marked paid');
+    setBulkMode(null);
+    setSelected(new Set());
+    if (res) setReload(n => n + 1);
+  }
+
   // Filters are kept in the URL so a view can be shared with a teammate.
   useEffect(() => {
     const next = new URLSearchParams();
@@ -330,7 +352,8 @@ export function AdminOrders() {
     return () => { alive = false; clearTimeout(t); };
   }, [query, reload]);
 
-  const reset = (fn: () => void) => { fn(); setPage(1); };
+  // A selection only makes sense for the page of rows it was made on.
+  const reset = (fn: () => void) => { fn(); setPage(1); setSelected(new Set()); };
 
   const columns: TableColumn<AdminOrderRow>[] = [
     { key: 'orderNumber', header: 'Order', render: r => <span className="text-[13px] font-semibold text-carbon whitespace-nowrap">{r.orderNumber}</span> },
@@ -362,6 +385,7 @@ export function AdminOrders() {
         </div>}
       />
       <div className={`${ADMIN_GUTTER} pt-6 pb-8 flex flex-col gap-4`}>
+        {bulk.message && <div role="status" className="bg-info-bg border border-info/30 rounded-lg px-4 py-2.5 text-[12.5px] text-carbon">{bulk.message}</div>}
         <div className="bg-white border border-bone rounded-xl overflow-hidden">
           <div className="flex items-center gap-[10px] px-5 py-[14px] border-b border-bone flex-wrap">
             <SearchInput value={search} onChange={v => reset(() => setSearch(v))} placeholder="Order no., buyer, email or phone" className="flex-1 min-w-[260px] max-w-[420px]" />
@@ -389,18 +413,47 @@ export function AdminOrders() {
               keyExtractor={r => r.id}
               loading={loading}
               onRowClick={r => setOpenId(r.id)}
+              selectable
+              selectedKeys={selected}
+              onSelectionChange={setSelected}
+              bulkActions={() => (
+                <>
+                  <Button size="xs" variant="outline" icon={<CheckCircle2 size={11} />} loading={bulk.busy} onClick={() => setBulkMode('markPaid')} disabled={markPaidEligible.length === 0}>Mark paid ({markPaidEligible.length})</Button>
+                  <Button size="xs" variant="outline" icon={<XCircle size={11} />} loading={bulk.busy} onClick={() => setBulkMode('cancel')} disabled={cancelEligible.length === 0}>Cancel ({cancelEligible.length})</Button>
+                </>
+              )}
               emptyState={{
                 icon: <ShoppingBag size={28} className="text-slate/50" />,
                 title: anyFilter ? 'No orders match these filters' : 'No orders yet',
                 description: anyFilter ? 'Try a different search or clear the filters.' : 'Orders show up here as soon as buyers check out.',
               }}
-              pagination={{ page, total, perPage: PER_PAGE, onChange: setPage, label: 'orders' }}
+              pagination={{ page, total, perPage: PER_PAGE, onChange: p => { setPage(p); setSelected(new Set()); }, label: 'orders' }}
             />
           )}
         </div>
       </div>
 
       {openId && <OrderDetailModal id={openId} onClose={() => setOpenId(null)} onChanged={() => setReload(n => n + 1)} />}
+
+      {bulkMode && (
+        <BulkDecisionModal
+          title={bulkMode === 'cancel'
+            ? `Cancel ${cancelEligible.length} order${cancelEligible.length === 1 ? '' : 's'}?`
+            : `Mark ${markPaidEligible.length} order${markPaidEligible.length === 1 ? '' : 's'} paid?`}
+          message={bulkMode === 'cancel'
+            ? "Each order is cancelled on its own, exactly like the single Cancel order action — items are refunded where the order was already paid. Orders already cancelled or completed were left out automatically."
+            : 'Each order is marked paid on its own, exactly like the single Mark as paid action. Only single-store, non-card orders that are still unpaid were included — a multi-seller Cash on Delivery order needs its packages marked individually from the order detail.'}
+          items={(bulkMode === 'cancel' ? cancelEligible : markPaidEligible).map(r => `${r.orderNumber} — ${money(r.totalAmount, r.currency)}`)}
+          requireReason={bulkMode === 'cancel'}
+          reasonLabel="Reason (shown to every buyer)"
+          confirmLabel={bulkMode === 'cancel' ? 'Cancel all' : 'Mark all paid'}
+          danger={bulkMode === 'cancel'}
+          busy={bulk.busy}
+          progress={bulk.progress}
+          onConfirm={reason => { void runBulkDecision(reason); }}
+          onClose={() => setBulkMode(null)}
+        />
+      )}
     </>
   );
 }
