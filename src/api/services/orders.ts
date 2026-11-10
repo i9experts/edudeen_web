@@ -15,8 +15,10 @@ export interface UpdateStatusPayload {
   status:  'pending' | 'processing' | 'shipped' | 'delivered' | 'completed' | 'cancelled';
   tracking?: {
     carrier:        string;
-    trackingNumber: string;
-    trackingUrl:    string;
+    trackingNumber?: string;
+    trackingUrl?:    string;
+    expectedDeliveryDate?: string;
+    note?: string;
   };
 }
 
@@ -47,7 +49,7 @@ export interface OrderStoreGroup {
   subtotal:        number;
   itemCount:       number;
   items:           OrderLineItem[];
-  tracking?:       { carrier: string; trackingNumber: string; trackingUrl: string } | null;
+  tracking?:       { carrier: string; trackingNumber?: string | null; trackingUrl?: string | null; expectedDeliveryDate?: string | null; note?: string | null } | null;
   shippedAt?:      string | null;
   deliveredAt?:    string | null;
   /** Multi-seller Cash on Delivery: each seller package is paid in cash separately. Absent on legacy orders. */

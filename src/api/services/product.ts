@@ -128,6 +128,8 @@ export interface StoreProduct {
   classTo?:          string | null;
   /** Physical: parcel kind + packed size (cm) used for the delivery charge. */
   parcelType?:       'document' | 'standard' | 'fragile' | 'bulky';
+  /** Per-product dispatch time in working days (1-7); null/absent = the store's. */
+  dispatchDaysOverride?: number | null;
   packageCm?:        { l: number; w: number; h: number } | null;
   /** Admin-assigned trust badges (listing review). */
   trust?:            { scholarReviewed: boolean; ageAppropriateMin: number | null; ageAppropriateMax: number | null } | null;
@@ -173,6 +175,8 @@ export interface CreatePhysicalPayload extends LearningMetaInput {
   premiumOptOut?: boolean;
   campaignIds?:      string[];
   parcelType?:       'document' | 'standard' | 'fragile' | 'bulky';
+  /** Per-product dispatch time in working days (1-7); null/absent = the store's. */
+  dispatchDaysOverride?: number | null;
   packageCm?:        { l: number; w: number; h: number } | null;
   // At least one variant is required — every variant must share the same
   // set of attribute names (e.g. all "Color"+"Size", not a mix).
@@ -225,6 +229,8 @@ export interface EditPhysicalPayload extends LearningMetaInput {
   premiumOptOut?: boolean;
   campaignIds?:      string[];
   parcelType?:       'document' | 'standard' | 'fragile' | 'bulky';
+  /** Per-product dispatch time in working days (1-7); null/absent = the store's. */
+  dispatchDaysOverride?: number | null;
   packageCm?:        { l: number; w: number; h: number } | null;
 }
 
@@ -591,7 +597,9 @@ export interface SellerOrderDetail {
   cancelledAt?:    string | null;
   type:            'physical' | 'digital' | 'mixed';
   subtotal:        number;
-  tracking:       { carrier: string | null; trackingNumber: string | null; trackingUrl: string | null } | null;
+  tracking:       { carrier: string | null; trackingNumber: string | null; trackingUrl: string | null; expectedDeliveryDate?: string | null; note?: string | null } | null;
+  /** Stored money breakdown for this package (API never recalculates). */
+  amounts?:        { pricesHidden: boolean; currency: string; itemsSubtotal?: number; deliveryCharge?: number; buyerPays?: number; earnings?: { amount: number; currency: string } | null };
   /** Set when the shipment was booked through a courier integration. */
   shipment?:       { courier: string | null; trackingNumber: string | null; labelUrl: string | null; bookedAt: string | null } | null;
   /** How the delivery charge was priced at checkout; booking is locked to this courier. */

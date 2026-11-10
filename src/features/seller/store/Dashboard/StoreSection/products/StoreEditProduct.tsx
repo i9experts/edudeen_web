@@ -28,7 +28,7 @@ import { reviewNoticeText } from './reviewNotice';
 import { useToast } from '@/contexts/ToastContext';
 import { descriptionError, validatePrices, weightTextError, parseWeightKg, stockError } from './priceRules';
 import { type VariantOption } from '@/api/services/product';
-import { findCategoryName, withPendingTags, packageSizeError, packageCmPayload, type DigForm, type LicenseType, type PhysForm, type ProductStatus } from './ProductFormKit';
+import { findCategoryName, withPendingTags, packageSizeError, packageCmPayload, dispatchOverrideError, dispatchOverridePayload, type DigForm, type LicenseType, type PhysForm, type ProductStatus } from './ProductFormKit';
 import {
   ActionBar, ProductPreview, StepRail, WizardNav, WIZARD_STEPS, dirtyCapture,
   useLeaveGuard, useWizard, type WizardIssue,
@@ -37,7 +37,7 @@ import { ProductFormSteps } from './ProductFormSteps';
 const blankPhys: PhysForm = {
   name: '', description: '', price: '', compareAtPrice: '',
   stock: '', options: [] as VariantOption[], shippingWeight: '', subCategoryId: '',
-  parcelType: 'standard', pkgL: '', pkgW: '', pkgH: '',
+  parcelType: 'standard', pkgL: '', pkgW: '', pkgH: '', dispatchDays: '',
   status: 'draft' as ProductStatus, isListedOnEdudeen: false,
   scheduledAt: '', tagInput: '', tags: [] as string[], images: [] as string[],
 };
@@ -72,6 +72,7 @@ function physFromEntry(p: StoreProduct, v: ProductVariant): PhysForm {
     stock: String(v.stock), options: [...(v.options ?? [])], shippingWeight: v.shippingWeight ?? '',
     subCategoryId: p.subCategoryId ?? '',
     parcelType: p.parcelType ?? 'standard',
+    dispatchDays: p.dispatchDaysOverride ? String(p.dispatchDaysOverride) : '',
     pkgL: p.packageCm ? String(p.packageCm.l) : '', pkgW: p.packageCm ? String(p.packageCm.w) : '', pkgH: p.packageCm ? String(p.packageCm.h) : '',
     status: formStatus(p.status, p.scheduledAt), isListedOnEdudeen: p.isListedOnEdudeen,
     scheduledAt: scheduledWall(p), tags: [...(p.tags ?? [])], tagInput: '', images: [...(p.images ?? [])],
@@ -298,6 +299,8 @@ export default function StoreEditProduct() {
       if (hadWeight.current || phys.shippingWeight.trim()) { const wErr = weightTextError(phys.shippingWeight); if (wErr) out.push({ step: 2, message: wErr, fieldId: 'ap-weight' }); }
       const pkErr = packageSizeError(phys.pkgL, phys.pkgW, phys.pkgH);
       if (pkErr) out.push({ step: 2, message: pkErr, fieldId: 'ap-pkg-l' });
+      const ddErr = dispatchOverrideError(phys.dispatchDays);
+      if (ddErr) out.push({ step: 2, message: ddErr, fieldId: 'ap-dispatch' });
     }
     if (isDigitalFamily) { const tErr = tiersError(dig.tiers); if (tErr) out.push({ step: 2, message: tErr, fieldId: 'fld-tiers' }); }
     const lErr = learningError(learning);
@@ -348,7 +351,7 @@ export default function StoreEditProduct() {
           isListedOnEdudeen: phys.isListedOnEdudeen, status: finalStatus,
           ...offersPayload({ premiumPct, premiumOptOut, campaignIds }),
           scheduledAt: finalStatus === 'scheduled' ? pktWallToIso(phys.scheduledAt) : null,
-          parcelType: phys.parcelType, packageCm: packageCmPayload(phys.pkgL, phys.pkgW, phys.pkgH),
+          parcelType: phys.parcelType, packageCm: packageCmPayload(phys.pkgL, phys.pkgW, phys.pkgH), dispatchDaysOverride: dispatchOverridePayload(phys.dispatchDays),
           ...learningPayload(learning),
         });
         const note = reviewNoticeText(res); if (note) toast.info(note);

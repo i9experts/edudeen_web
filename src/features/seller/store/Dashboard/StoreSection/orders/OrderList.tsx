@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { BulkShipModal } from './BulkShipModal';
 import { useSearchParams } from 'react-router-dom';
 import { formatPrice } from '@/utils/formatPrice';
 import {
@@ -240,9 +241,17 @@ export function StoreOrderList() {
   // ── Print selection (kept across pages, max 50) ─────────────────────────────
   const [picked, setPicked] = useState<Set<string>>(() => new Set());
   const MAX_PRINT = 50;
+  // Remember the order object of every ticked row (selection survives paging) so bulk shipping can check each one.
+  const pickedOrders = useRef<Map<string, SellerOrder>>(new Map());
+  const [bulkShipOpen, setBulkShipOpen] = useState(false);
   const togglePick = (id: string) => setPicked(prev => {
     const n = new Set(prev);
-    if (n.has(id)) n.delete(id); else if (n.size < MAX_PRINT) n.add(id);
+    if (n.has(id)) { n.delete(id); pickedOrders.current.delete(id); }
+    else if (n.size < MAX_PRINT) {
+      n.add(id);
+      const o = orders.find(x => x.orderId === id);
+      if (o) pickedOrders.current.set(id, o);
+    }
     return n;
   });
   const pickBox = (o: SellerOrder) => (
@@ -302,7 +311,10 @@ export function StoreOrderList() {
               <span className="hidden 2xl:inline">{dateText(o)}</span>
             </span>
             {sb ? (
-              <span className={`text-[12px] font-semibold px-2 py-[2px] rounded-full whitespace-nowrap ${BADGE_CLASS[sb.tone]}`}>{sb.label}</span>
+              <>
+                <span className={`text-[12px] font-semibold px-2 py-[2px] rounded-full whitespace-nowrap ${BADGE_CLASS[sb.tone]}`}>{sb.label}</span>
+                {sb.secondary && <span className="text-[12px] font-semibold text-error whitespace-nowrap">{sb.secondary}</span>}
+              </>
             ) : waiting ? (
               <span className="text-[12px] text-slate whitespace-nowrap">{orderAgeText(o.date, now)}</span>
             ) : null}
@@ -363,7 +375,10 @@ export function StoreOrderList() {
           {payChips(o)}
           <StatusBadge status={o.status} />
           {sb ? (
-            <span className={`text-[12px] font-semibold px-2 py-[2px] rounded-full whitespace-nowrap ${BADGE_CLASS[sb.tone]}`}>{sb.label}</span>
+            <>
+              <span className={`text-[12px] font-semibold px-2 py-[2px] rounded-full whitespace-nowrap ${BADGE_CLASS[sb.tone]}`}>{sb.label}</span>
+              {sb.secondary && <span className="text-[12px] font-semibold text-error whitespace-nowrap">{sb.secondary}</span>}
+            </>
           ) : waiting ? (
             <span className="text-[12px] text-slate">{orderAgeText(o.date, now)}</span>
           ) : null}
@@ -475,8 +490,13 @@ export function StoreOrderList() {
                 >
                   Print selected{picked.size > 0 ? ` (${picked.size})` : ''}
                 </Button>
+                <Button
+                  variant="outline" size="xs" onClick={() => setBulkShipOpen(true)} disabled={picked.size === 0} icon={<Truck size={11} />}
+                >
+                  Mark shipped{picked.size > 0 ? ` (${picked.size})` : ''}
+                </Button>
                 {picked.size > 0 && (
-                  <Button variant="ghost" size="xs" onClick={() => setPicked(new Set())}>Clear selection</Button>
+                  <Button variant="ghost" size="xs" onClick={() => { setPicked(new Set()); pickedOrders.current.clear(); }}>Clear selection</Button>
                 )}
               </div>
             </div>
@@ -514,6 +534,19 @@ export function StoreOrderList() {
         {storeId && <FreeClaimsCard storeId={storeId} />}
 
       </div>
+
+      {bulkShipOpen && (
+        <BulkShipModal
+          orders={Array.from(picked).map(id => pickedOrders.current.get(id)).filter((o): o is SellerOrder => !!o)}
+          storeId={storeId}
+          onClose={() => setBulkShipOpen(false)}
+          onShipped={ids => {
+            ids.forEach(id => patchOrder(id, { status: 'shipped' }));
+            setPicked(prev => { const n = new Set(prev); ids.forEach(id => { n.delete(id); pickedOrders.current.delete(id); }); return n; });
+            setRefreshKey(k => k + 1);
+          }}
+        />
+      )}
 
       {selected && (
         <OrderDetailModal

@@ -1,3 +1,4 @@
+import { trackingLine } from '@/utils/carriers';
 import { safeHttpUrl } from '@/utils/safeRedirect';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLiveRefresh } from '@/hooks/useLiveRefresh';
@@ -199,10 +200,10 @@ function OrderDetailModal({ id, onClose, onChanged }: { id: string; onClose: () 
                       {(so.codAmount ?? 0) > 0 && <span className="text-[12px] text-slate">Cash due {money(so.codAmount, order.currency)}</span>}
                       <Button variant="outline" size="xs" onClick={() => void markPaid(so.storeId)} loading={marking} disabled={marking || order.orderStatus === 'cancelled'}>Mark package paid</Button>
                     </>)}
-                {so.tracking?.trackingNumber && (
+                {trackingLine(so.tracking) && (
                   <span className="ml-auto inline-flex items-center gap-1 text-slate">
-                    <Truck size={12} /> {so.tracking.carrier} {so.tracking.trackingNumber}
-                    {safeHttpUrl(so.tracking.trackingUrl) && <a href={safeHttpUrl(so.tracking.trackingUrl)} target="_blank" rel="noreferrer" className="text-brand-orange">track</a>}
+                    <Truck size={12} /> {trackingLine(so.tracking)}
+                    {safeHttpUrl(so.tracking?.trackingUrl) && <a href={safeHttpUrl(so.tracking?.trackingUrl)} target="_blank" rel="noreferrer" className="text-brand-orange">track</a>}
                   </span>
                 )}
               </div>

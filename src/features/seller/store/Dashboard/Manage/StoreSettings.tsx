@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useLiveRefresh } from '@/hooks/useLiveRefresh';
 import { useAiStudioCredits } from '@/hooks/seller/useAiStudio';
 import { currencySymbol } from '@/utils/currency';
@@ -17,7 +18,6 @@ import { TabBar, type Tab } from '@/components/comman/ui/TabBar';
 import { ActivityLogTab } from './tabs/ActivityLogTab';
 import { ReturnPolicyCard } from './ReturnPolicyCard';
 import { StoreAboutCard } from './StoreAboutCard';
-import { DeliveryGiftCard } from './DeliveryGiftCard';
 import { PremiumDiscountCard } from './PremiumDiscountCard';
 
 const TABS: Tab[] = [
@@ -814,7 +814,15 @@ export default function StoreSettings() {
 
             {storeId && <ReturnPolicyCard storeId={storeId} policy={store?.returnPolicy} refetch={refetch} />}
 
-            {storeId && <DeliveryGiftCard storeId={storeId} delivery={store?.deliverySettings} giftWrap={store?.giftWrap} shipFrom={store?.shipFrom} deliveryMethod={store?.deliveryMethod} currency={store?.baseCurrency} refetch={refetch} />}
+            {storeId && (
+              <div className="rounded-xl border border-bone bg-white p-5 flex flex-wrap items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-[13.5px] font-semibold text-charcoal">Shipping &amp; gift wrap</p>
+                  <p className="text-[12.5px] text-slate">Delivery method, charges and gift wrap now live on the Shipping page.</p>
+                </div>
+                <Link to={`/store/${storeId}/shipping`} className="text-[13px] font-semibold text-brand-royal whitespace-nowrap">Manage shipping →</Link>
+              </div>
+            )}
 
             {storeId && <PremiumDiscountCard storeId={storeId} discount={store?.premiumDiscount} currency={store?.baseCurrency} refetch={refetch} />}
           </div>
