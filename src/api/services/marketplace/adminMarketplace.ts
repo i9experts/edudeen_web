@@ -266,3 +266,8 @@ export function apiApproveLead(id: string) {
 export function apiRejectLead(id: string, reason: string) {
   return client.patch<never, ApiResponse<null>>(ENDPOINTS.MARKETPLACE.ADMIN.REJECT_LEAD(id), { reason });
 }
+
+/** Deletes the store AND every one of its products (soft-delete, reversible only by support). `reason` is mandatory. */
+export function apiDeleteStore(id: string, reason: string) {
+  return client.delete<never, ApiResponse<{ deletedProducts: number }>>(ENDPOINTS.MARKETPLACE.ADMIN.DELETE_STORE(id), { data: { reason } });
+}
