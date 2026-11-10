@@ -471,6 +471,8 @@ export const ENDPOINTS = {
   INVENTORY: {
     GET_STORE_INVENTORY: (id: string) => `/api/inventory/getStoreInventory/${id}`,
     LOW_STOCK_SUMMARY: (storeId: string) => `/api/inventory/low-stock-summary/${storeId}`,
+    STOCK_HISTORY: (storeId: string, productId: string) => `/api/inventory/stock-history/${storeId}/${productId}`,
+    LOW_STOCK_THRESHOLD: (storeId: string, productId: string) => `/api/inventory/low-stock-threshold/${storeId}/${productId}`,
   },
 
   SELLER_ACCOUNT: {

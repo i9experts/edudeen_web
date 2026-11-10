@@ -327,6 +327,23 @@ export interface InventoryProduct {
   campaignIds?:      string[];
   premiumDiscountPercent?: number | null;
   premiumOptOut?:    boolean;
+  /** Why an "In review" listing is waiting (display only). */
+  reviewReason?:     string | null;
+  /** Seller's "running low" line (default 10) and whether they set their own. */
+  lowStockThreshold?: number;
+  hasCustomThreshold?: boolean;
+}
+
+export interface StockHistoryItem { id: string; old: number; new: number; source: 'manual' | 'bulk'; createdAt: string }
+/** GET /api/inventory/stock-history/:storeId/:productId - last 20 stock changes (seller only). */
+export function apiGetStockHistory(storeId: string, productId: string) {
+  return client.get<never, ApiResponse<{ items: StockHistoryItem[] }>>(ENDPOINTS.INVENTORY.STOCK_HISTORY(storeId, productId));
+}
+/** PATCH /api/inventory/low-stock-threshold/:storeId/:productId - whole 0..1000, null = back to the default (10). */
+export function apiSetLowStockThreshold(storeId: string, productId: string, threshold: number | null) {
+  return client.patch<never, ApiResponse<{ productId: string; lowStockThreshold: number; hasCustomThreshold: boolean }>>(
+    ENDPOINTS.INVENTORY.LOW_STOCK_THRESHOLD(storeId, productId), { threshold },
+  );
 }
 
 export type BulkOfferAction = 'premium_on' | 'premium_off' | 'campaign_add' | 'campaign_remove';
@@ -357,6 +374,16 @@ export function apiBulkUpdateStock(storeId: string, updates: { variantId: string
   return client.patch<never, ApiResponse<{ updated: number; skipped: { variantId: string; reason: string }[] }>>(
     ENDPOINTS.PRODUCT.BULK_STOCK, { storeId, updates },
   );
+}
+
+export type StockAdjustMode = 'set' | 'add' | 'subtract';
+export interface StockAdjustResult {
+  updated: { id: string; name: string; from: number; to: number }[];
+  skipped: { id: string; name: string; reason: string; code: 'digital' | 'unlimited' | 'variants' | 'range' | 'unchanged' | 'changed' }[];
+}
+/** PATCH /api/products/stock/bulk (product-level) - seller only, max 100 products. Digital/unlimited are skipped with a reason. */
+export function apiBulkAdjustStock(storeId: string, ids: string[], mode: StockAdjustMode, value: number) {
+  return client.patch<never, ApiResponse<StockAdjustResult>>(ENDPOINTS.PRODUCT.BULK_STOCK, { storeId, ids, mode, value });
 }
 
 export interface InventoryStats {
@@ -486,6 +513,11 @@ export function apiGetStoreInventory(
     sort?: 'views' | 'sales';
     /** 'low' = only listings with a quality score under 60. */
     quality?: 'low';
+    /** Inventory page: only products in this stock bucket (same buckets as the stat cards). */
+    stockState?: 'low' | 'out' | 'in' | 'unlimited';
+    /** Inventory page: store-wide sort (all pages). */
+    sortBy?: 'name' | 'price' | 'stock' | 'status';
+    order?: 'asc' | 'desc';
   } = {},
 ) {
   // Backend supports ?status= and ?q= (name/SKU, case-insensitive) and counts
@@ -498,6 +530,9 @@ export function apiGetStoreInventory(
   if (filters.categoryId) params.set('categoryId', filters.categoryId);
   if (filters.sort) params.set('sort', filters.sort);
   if (filters.quality) params.set('quality', filters.quality);
+  if (filters.stockState) params.set('stockState', filters.stockState);
+  if (filters.sortBy) params.set('sortBy', filters.sortBy);
+  if (filters.order) params.set('order', filters.order);
   const url = `${ENDPOINTS.INVENTORY.GET_STORE_INVENTORY(storeId)}?${params.toString()}`;
   return dedupeGet(url, () => client.get<never, ApiResponse<GetInventoryData>>(url));
 }
