@@ -518,7 +518,11 @@ export function apiGetStoreInventory(
     /** Inventory page: store-wide sort (all pages). */
     sortBy?: 'name' | 'price' | 'stock' | 'status';
     order?: 'asc' | 'desc';
+    /** Seller Categories page: only products that have no sub-category. */
+    noSubcategory?: boolean;
   } = {},
+  /** Optional: cancel this request (skips the shared in-flight dedupe) and cap it at 15 s. */
+  signal?: AbortSignal,
 ) {
   // Backend supports ?status= and ?q= (name/SKU, case-insensitive) and counts
   // stats.totalProducts on the same filter. `limit` is capped at 100 server-side.
@@ -533,7 +537,10 @@ export function apiGetStoreInventory(
   if (filters.stockState) params.set('stockState', filters.stockState);
   if (filters.sortBy) params.set('sortBy', filters.sortBy);
   if (filters.order) params.set('order', filters.order);
+  if (filters.noSubcategory) params.set('noSubcategory', '1');
   const url = `${ENDPOINTS.INVENTORY.GET_STORE_INVENTORY(storeId)}?${params.toString()}`;
+  // `_retriedSlow` opts out of client.ts's one extra 30 s retry, so the caller sees the failure after 15 s.
+  if (signal) return client.get<never, ApiResponse<GetInventoryData>>(url, { signal, timeout: 15000, _retriedSlow: true } as object);
   return dedupeGet(url, () => client.get<never, ApiResponse<GetInventoryData>>(url));
 }
 

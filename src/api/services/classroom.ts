@@ -45,6 +45,8 @@ export const apiSetQuestionHidden = (storeId: string, id: string, hidden: boolea
 export interface PublicBundle {
   _id: string;
   name: string;
+  nameUr?: string | null;
+  coverImage?: string | null;
   slug: string;
   description: string;
   discountPercent: number;
@@ -66,10 +68,24 @@ export interface SellerBundle {
   discountPercent: number;
   productIds: string[];
   isActive: boolean;
-  products: { _id: string; name: string; image: string | null; status: string }[];
+  nameUr?: string | null;
+  coverImage?: string | null;
+  products: { _id: string; name: string; image: string | null; status: string; isDelete?: boolean }[];
+  /** Read-time values from the API (same arithmetic as the cart). */
+  validCount?: number;
+  displayStatus?: 'active' | 'incomplete' | 'draft';
+  currency?: string | null;
+  totalPrice?: number;
+  bundlePrice?: number;
+  savings?: number;
 }
 
+export interface BundleQuote { currency: string | null; itemCount: number; totalPrice: number; bundlePrice: number; savings: number }
+export interface BundleSuggestion { _id: string; name: string; image: string | null; reason: string }
+
 export interface BundleInput {
+  nameUr?: string | null;
+  coverImage?: string | null;
   name: string;
   description?: string;
   productIds: string[];
@@ -83,6 +99,13 @@ export const apiGetSellerBundles = (storeId: string) => client.get<never, Ok<Sel
 export const apiCreateBundle = (storeId: string, body: BundleInput) => client.post<never, Ok<SellerBundle>>(`/api/bundles/seller/${storeId}`, body);
 export const apiUpdateBundle = (storeId: string, id: string, body: Partial<BundleInput>) => client.patch<never, Ok<SellerBundle>>(`/api/bundles/seller/${storeId}/${id}`, body);
 export const apiDeleteBundle = (storeId: string, id: string) => client.delete<never, Ok<unknown>>(`/api/bundles/seller/${storeId}/${id}`);
+export const apiDuplicateBundle = (storeId: string, id: string) => client.post<never, Ok<SellerBundle>>(`/api/bundles/seller/${storeId}/${id}/duplicate`, {});
+export const apiQuoteBundle = (storeId: string, productIds: string[], discountPercent: number, signal?: AbortSignal) =>
+  client.post<never, Ok<BundleQuote>>(`/api/bundles/seller/${storeId}/quote`, { productIds, discountPercent }, { signal });
+export const apiBundleSuggestions = (storeId: string, productIds: string[], signal?: AbortSignal) =>
+  client.post<never, Ok<BundleSuggestion[]>>(`/api/bundles/seller/${storeId}/suggestions`, { productIds }, { signal });
+/** A store's live bundles for its public page. */
+export const apiGetStoreBundles = (storeId: string) => client.get<never, Ok<PublicBundle[]>>(`/api/bundles/store/${storeId}`);
 
 // ── Curated shelves (Edudeen picks) ──────────────────────────────────────────
 

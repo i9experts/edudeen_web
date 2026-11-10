@@ -740,6 +740,7 @@ export const UR: Record<string, string> = {
   'Skills, certifications and teacher-training resources.': 'ہنر، سرٹیفیکیشن اور اساتذہ کی تربیت کے وسائل۔',
   'Quran, Tajweed, Seerah, Arabic and Tarbiyyah for every age.': 'ہر عمر کے لیے قرآن، تجوید، سیرت، عربی اور تربیت۔',
   'Exam ki tayyari': 'امتحان کی تیاری',
+  'Bundle deals': 'بنڈل ڈیلز',
   'Add all to cart': 'سب کارٹ میں ڈالیں',
 
   // ── Footer ────────────────────────────────────────────────────────────────
@@ -1630,6 +1631,7 @@ export const UR: Record<string, string> = {
   'Undo': 'واپس کریں',
   'Removed from cart': 'کارٹ سے ہٹا دیا گیا',
   'Added to cart': 'کارٹ میں شامل کر دیا گیا',
+  'Nothing could be added — these items may be unavailable.': 'کچھ شامل نہیں ہو سکا — یہ اشیاء دستیاب نہیں ہو سکتیں۔',
   "Child's name": 'بچے کا نام',
   'e.g. Ayesha': 'مثلاً عائشہ',
   'Level': 'سطح',
@@ -2531,7 +2533,7 @@ export const UR_PATTERNS: [RegExp, (m: RegExpMatchArray) => string][] = [
   [/^(\d+)m$/, m => `${m[1]} منٹ`],
   [/^ending now$/, () => 'ختم ہو رہی ہے'],
   // Top-bar sale ticker: "Up to 20% off · ends in 2d 23h", "Rs500 off · ends in 5h 3m"
-  [/^(?:Up to (\d+)% off|(.+) off)(?: · ends in (.+))?$/, m => {
+  [/^(?:Up to (\d+)% off|((?!\d+ items? · ).+) off)(?: · ends in (.+))?$/, m => {
     const off = m[1] ? `${m[1]}% تک رعایت` : `${m[2]} رعایت`;
     if (!m[3]) return off;
     const t = m[3].replace(/(\d+)d/, '$1 دن').replace(/(\d+)h/, '$1 گھنٹے').replace(/(\d+)m/, '$1 منٹ').replace('ending now', 'ختم ہو رہی ہے');
@@ -2588,6 +2590,11 @@ export const UR_PATTERNS: [RegExp, (m: RegExpMatchArray) => string][] = [
   [/^Cash on Delivery adds a (.+) fee on (\d+) packages \((.+)\)\.$/, m => `کیش آن ڈیلیوری ${m[2]} پیکجز پر ${m[1]} فیس لگاتی ہے (${m[3]})۔`],
   [/^Cash on Delivery adds a (.+) fee\.$/, m => `کیش آن ڈیلیوری پر ${m[1]} فیس لگتی ہے۔`],
   [/^Total to pay on delivery: (.+)$/, m => `ڈیلیوری پر کل ادائیگی: ${m[1]}`],
+  [/^(\d+) items · (\d+)% off$/, m => `${m[1]} اشیاء · ${m[2]}% رعایت`],
+  [/^Save (.+)$/, m => `بچت ${m[1]}`],
+  [/^Add all (\d+) to cart$/, m => `تمام ${m[1]} کارٹ میں ڈالیں`],
+  [/^Bundle added — (\d+)% comes off at checkout$/, m => `بنڈل شامل ہو گیا — چیک آؤٹ پر ${m[1]}% رعایت ملے گی`],
+  [/^Added (\d+) of (\d+) to your cart$/, m => `${m[2]} میں سے ${m[1]} آپ کے کارٹ میں شامل ہوئے`],
   [/^Package (\d+): (.+)$/, m => `پیکج ${m[1]}: ${m[2]}`],
   [/^Pay (.+) on delivery$/, m => `ڈیلیوری پر ${m[1]} ادا کریں`],
   [new RegExp(`^${M} (\\d{4})$`, 'i'), m => `${MONTHS[m[1]]} ${m[2]}`],

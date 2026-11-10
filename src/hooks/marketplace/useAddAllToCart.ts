@@ -19,7 +19,7 @@ export function useAddAllToCart() {
     for (const product of products) {
       const v = (product.variants ?? []).find(x => x.isDefault) ?? product.variants?.[0];
       if (!v) continue;
-      try { await addToCart(product._id, v._id, product.type === 'physical' ? 'physical' : 'digital'); ok += 1; } catch { /* skip unavailable */ }
+      try { if (await addToCart(product._id, v._id, product.type === 'physical' ? 'physical' : 'digital', 1, { silent: true })) ok += 1; } catch { /* skip unavailable */ }
     }
     setAdding(false);
     if (!ok) toast.error('Nothing could be added — these items may be unavailable.');

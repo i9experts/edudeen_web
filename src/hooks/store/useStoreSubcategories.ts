@@ -6,17 +6,19 @@ import { apiGetCategoryTree, type CategoryNode } from '@/api/services/categories
 export function useStoreSubcategories(mainCategoryId: string | undefined) {
   const [mainCategory, setMainCategory] = useState<CategoryNode | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   const load = useCallback(() => {
     if (!mainCategoryId) { setMainCategory(null); setLoading(false); return; }
     setLoading(true);
+    setError(false);
     apiGetCategoryTree(mainCategoryId)
       .then(res => setMainCategory(res.data))
-      .catch(() => setMainCategory(null))
+      .catch(() => { setMainCategory(null); setError(true); })
       .finally(() => setLoading(false));
   }, [mainCategoryId]);
 
   useEffect(load, [load]);
 
-  return { mainCategory, subcategories: mainCategory?.children ?? [], loading, refetch: load };
+  return { mainCategory, subcategories: mainCategory?.children ?? [], loading, error, refetch: load };
 }

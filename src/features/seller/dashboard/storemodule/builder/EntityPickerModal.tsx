@@ -23,6 +23,11 @@ const MODE_LABEL: Record<EntityPickerMode, string> = {
   categories:  'Categories',
   collections: 'Collections',
 };
+const MODE_TITLE: Record<EntityPickerMode, string> = {
+  products:    'Products',
+  categories:  'category',
+  collections: 'Collections',
+};
 const MODE_ICON: Record<EntityPickerMode, typeof Package> = {
   products: Package, categories: FolderTree, collections: Layers,
 };
@@ -125,7 +130,7 @@ export function EntityPickerModal({
 
   return (
     <Modal
-      title={title ?? `Select ${MODE_LABEL[mode]}`}
+      title={title ?? `Select ${MODE_TITLE[mode]}`}
       width={520}
       onClose={onClose}
       mobileSheet
@@ -152,7 +157,10 @@ export function EntityPickerModal({
           {listLoading ? (
             Array.from({ length: 5 }).map((_, i) => <SkeletonBox key={i} height={44} rounded="8px" />)
           ) : listError ? (
-            <p className="text-[12.5px] text-error py-4 text-center">{listError}</p>
+            <div role="alert" className="flex flex-col items-center gap-2 py-4">
+              <p className="text-[12.5px] text-error text-center">{listError}</p>
+              {isProducts && <Button size="sm" variant="outline" onClick={inventory.retry}>Retry</Button>}
+            </div>
           ) : filtered.length === 0 ? (
             <div className="flex flex-col items-center gap-2 py-8 text-slate">
               <Icon size={22} />

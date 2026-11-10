@@ -23,6 +23,7 @@ import { formatPrice } from '@/utils/formatPrice';
 import { useStorefront, useStorefrontPaths, storeCoverGradient } from '@/features/storefront/StorefrontContext';
 import { useTrackView } from '@/utils/visitTracking';
 import { StorefrontHighlights } from '@/features/storefront/sections/StorefrontHighlights';
+import { StoreBundlesStrip } from '@/features/storefront/sections/StoreBundlesStrip';
 import { EducatorCard, hasEducatorProfile } from '@/components/comman/marketplace/EducatorCard';
 import { ProductCatalogSection } from '@/features/storefront/sections/ProductCatalogSection';
 import { StoreTrustStrip } from '@/features/storefront/sections/StoreTrustStrip';
@@ -396,6 +397,7 @@ export function SellerStorefront() {
 
           {/* Published highlight rows (Featured / New arrivals / Best sellers) — each hidden below 2 products. */}
           <StorefrontHighlights />
+          <StoreBundlesStrip />
           <ProductCatalogSection settings={{ heading: `All products from ${store.name}`, showFilters: true, defaultSort: 'newest' }} />
         </>
       )}

@@ -71,7 +71,7 @@ interface CartContextValue {
   adding:        string | null;
   error:         string | null;
   clearError:    () => void;
-  addToCart:     (productId: string, productVariantId: string, type?: 'physical' | 'digital', quantity?: number) => Promise<void>;
+  addToCart:     (productId: string, productVariantId: string, type?: 'physical' | 'digital', quantity?: number, opts?: { silent?: boolean }) => Promise<boolean>;
   updateQty:     (productId: string, productVariantId: string, action: 'increase' | 'decrease') => Promise<void>;
   removeItem:    (productId: string, productVariantId: string) => Promise<void>;
   /** Main site: pass a storeId to clear just that store's cart (e.g. after
@@ -280,8 +280,9 @@ export function CartProvider({ storeId, children }: { storeId?: string; children
     productVariantId: string,
     type?: 'physical' | 'digital',
     quantity = 1,
-  ) => {
-    if (addingRef.current.has(productVariantId)) return;
+    opts?: { silent?: boolean },
+  ): Promise<boolean> => {
+    if (addingRef.current.has(productVariantId)) return false;
     addingRef.current.add(productVariantId);
     if (type) storeType(productVariantId, type);
     setError(null);
@@ -291,17 +292,19 @@ export function CartProvider({ storeId, children }: { storeId?: string; children
       if (!TokenStorage.isLoggedIn()) {
         addGuestCartItem(productId, productVariantId, type, quantity);
         await refreshGuestCartDisplay();
-        toast.success('Added to cart');
-        return;
+        if (!opts?.silent) toast.success('Added to cart');
+        return true;
       }
       const res = await apiAddToCart(productId, productVariantId, storeId, quantity);
       if (storeId) setCart(mergeTypes(res.data));
       else await fetchMyCarts();
-      toast.success('Added to cart');
+      if (!opts?.silent) toast.success('Added to cart');
+      return true;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to add item to cart.';
       setError(message);
-      toast.error(message);
+      if (!opts?.silent) toast.error(message);
+      return false;
     } finally {
       addingRef.current.delete(productVariantId);
       setAdding(null);

@@ -303,7 +303,7 @@ export interface StoreCatalogFacets {
   subjects: { id: string; name: string; slug: string; count: number }[];
   kinds:    { physical: number; digital: number; course: number };
   price:    { min: number; max: number; currency: string | null } | null;
-  collections: { id: string; name: string; slug: string; count: number }[];
+  collections: { id: string; name: string; nameUr?: string | null; slug: string; count: number }[];
 }
 
 export interface PublicStoreProduct {

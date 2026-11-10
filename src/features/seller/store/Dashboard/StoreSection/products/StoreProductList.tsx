@@ -170,6 +170,8 @@ export default function StoreProductList() {
   const [rawType, setRawType] = useUrlParam('type');
   const [rawCategory, setRawCategory] = useUrlParam('category');
   const [rawSort, setRawSort] = useUrlParam('sort');
+  const [rawNoSub, setRawNoSub] = useUrlParam('nosub'); // from Categories: products with no subcategory
+  const noSub = rawNoSub === '1';
   const [rawQuality, setRawQuality] = useUrlParam('quality');
   const serverSort: 'views' | 'sales' | undefined = rawSort === 'views' ? 'views' : rawSort === 'sales' ? 'sales' : undefined;
   const lowQuality = rawQuality === 'low';
@@ -188,14 +190,15 @@ export default function StoreProductList() {
       type: typeF === 'physical' ? 'physical' as const : typeF ? 'digital' as const : undefined,
       deliveryFormat: typeF === 'download' ? 'download' as const : typeF === 'course' ? 'course' as const : undefined,
       categoryId: categoryF || undefined,
+      noSubcategory: noSub || undefined,
       sort: serverSort,
       quality: lowQuality ? 'low' as const : undefined,
     };
   })();
-  const filtersActive = !!(debouncedSearch || typeF || categoryF || lowQuality);
+  const filtersActive = !!(debouncedSearch || typeF || categoryF || lowQuality || noSub);
   const anyActive = filtersActive || statusTab !== 'all';
   const setStatusTab = (key: string) => { setPage(1); setSelectedKeys(new Set()); setRawStatus(key === 'all' ? '' : key); };
-  const clearFilters = () => { setSearch(''); setDebouncedSearch(''); setPage(1); setRawType(''); setRawCategory(''); setRawQuality(''); };
+  const clearFilters = () => { setSearch(''); setDebouncedSearch(''); setPage(1); setRawType(''); setRawCategory(''); setRawQuality(''); setRawNoSub(''); };
 
   const handleSortChange = (key: string) => {
     setSort(prev => (prev && prev.key === key)
@@ -239,7 +242,7 @@ export default function StoreProductList() {
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [storeId, page, refreshKey, debouncedSearch, statusTab, typeF, categoryF, serverSort, lowQuality]);
+  }, [storeId, page, refreshKey, debouncedSearch, statusTab, typeF, categoryF, serverSort, lowQuality, noSub]);
 
   const goAdd    = () => navigate(`/store/${storeId}/products/add`);
   const goEdit   = (p: InventoryProduct) => navigate(`/store/${storeId}/products/edit/${p.productId}`);

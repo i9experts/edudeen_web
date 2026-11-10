@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { SkeletonBox } from '@/components/comman/ui';
 import { Button } from '@/components/comman/ui/Button';
+import { useLanguage } from '@/contexts/languageCtx';
 
-export interface CollectionTab { id: string; name: string; count: number }
+export interface CollectionTab { id: string; name: string; nameUr?: string | null; count: number }
 
 const VISIBLE_ON_DESKTOP = 8;
 
@@ -23,6 +24,9 @@ interface Props {
 // dropped by the API, the seller's order is kept. Phones: one horizontally scrolling row. Desktop: up to 8 tabs,
 // the rest in a "More" dropdown.
 export function StoreCollectionTabs({ collections, total, activeId, onSelect, loading, error, onRetry, primaryColor, textColor }: Props) {
+  const { lang } = useLanguage();
+  // Seller's own Urdu name, only in Urdu mode (translate="no" keeps the DOM translator off seller-written text).
+  const label = (c: CollectionTab) => (lang === 'ur' && c.nameUr ? c.nameUr : c.name);
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
 
@@ -80,13 +84,13 @@ export function StoreCollectionTabs({ collections, total, activeId, onSelect, lo
       {/* Phones (and desktop when 8 or fewer): everything in one scrolling row */}
       <div role="tablist" aria-label="Collections" className={`flex items-center gap-5 overflow-x-auto scrollbar-none ${useMore ? 'md:hidden' : ''}`}>
         {tab('', 'All Products', total)}
-        {collections.map(c => tab(c.id, c.name, c.count))}
+        {collections.map(c => tab(c.id, label(c), c.count))}
       </div>
 
       {useMore && (
         <div role="tablist" aria-label="Collections" className="hidden md:flex items-center gap-5">
           {tab('', 'All Products', total)}
-          {head.map(c => tab(c.id, c.name, c.count))}
+          {head.map(c => tab(c.id, label(c), c.count))}
           <div ref={moreRef} className="relative shrink-0">
             <button type="button" aria-haspopup="menu" aria-expanded={moreOpen} onClick={() => setMoreOpen(o => !o)}
               className={`${tabClass} inline-flex items-center gap-1`} style={{ color: activeInRest ? primaryColor : '#8C8A82' }}>
@@ -100,7 +104,7 @@ export function StoreCollectionTabs({ collections, total, activeId, onSelect, lo
                     <button type="button" role="menuitem" onClick={() => { onSelect(c.id); setMoreOpen(false); }}
                       className="w-full flex items-center justify-between gap-3 px-3 py-2 text-start text-[13px] bg-transparent border-none cursor-pointer hover:bg-cream text-charcoal"
                       style={c.id === activeId ? { color: primaryColor, fontWeight: 700 } : undefined}>
-                      <span className="truncate">{c.name}</span>
+                      <span className="truncate">{label(c)}</span>
                       <span className="text-slate shrink-0">({c.count})</span>
                     </button>
                   </li>

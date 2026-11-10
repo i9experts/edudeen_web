@@ -65,6 +65,37 @@ export function apiAddCategory(payload: CategoryPayload, config?: import('axios'
   return client.post<never, CategoryCreateResponse>(ENDPOINTS.CATEGORIES.ADD, payload, config).finally(() => invalidateCache('categories:'));
 }
 
+// ── Seller: category usage + requests ─────────────────────────────────────────
+
+export interface CategoryUsage { active: number; draft: number; total: number }
+export interface StoreCategoryUsage { counts: Record<string, CategoryUsage>; noSubcategory: number }
+
+export type CategoryRequestType = 'subcategory' | 'main_change';
+export type CategoryRequestStatus = 'pending' | 'approved' | 'rejected';
+export interface CategoryRequest {
+  _id: string; storeId: string; type: CategoryRequestType; name: string; reason: string; exampleProduct: string;
+  status: CategoryRequestStatus; adminNote: string | null; reviewedAt: string | null; createdAt: string;
+  storeName?: string | null; mainCategoryName?: string | null;
+}
+
+/** This store's product counts per category (same rule as the Products page ?category= filter). */
+export function apiGetStoreCategoryUsage(storeId: string) {
+  return client.get<never, { success: boolean; data: StoreCategoryUsage }>(`/api/categories/store-usage/${storeId}`);
+}
+export function apiGetCategoryRequests(storeId: string) {
+  return client.get<never, { success: boolean; data: CategoryRequest[]; pendingLimit: number }>('/api/categories/requests', { params: { storeId } });
+}
+export function apiCreateCategoryRequest(payload: { storeId: string; type: CategoryRequestType; name: string; reason: string; exampleProduct: string }) {
+  return client.post<never, { success: boolean; data: CategoryRequest }>('/api/categories/requests', payload);
+}
+export function apiAdminGetCategoryRequests(status?: CategoryRequestStatus) {
+  return client.get<never, { success: boolean; pendingCount: number; data: CategoryRequest[] }>(
+    '/api/categories/admin/requests', { params: { ...(status ? { status } : {}), limit: 50 } });
+}
+export function apiAdminDecideCategoryRequest(id: string, status: 'approved' | 'rejected', note?: string) {
+  return client.patch<never, { success: boolean; data: CategoryRequest }>(`/api/categories/admin/requests/${id}/decision`, { status, note });
+}
+
 // ── Admin taxonomy management ─────────────────────────────────────────────────
 
 const ADMIN_CATEGORY_ENDPOINTS = {
