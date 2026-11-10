@@ -32,7 +32,7 @@ import { useLiveRefresh } from '@/hooks/useLiveRefresh';
 import { FreeClaimsCard } from './FreeClaimsCard';
 import { orderAgeText, shipByBadge } from './shipByBadge';
 import { OrderIdCopy } from './OrderIdCopy';
-import { DuplicateChip } from './DuplicateChip';
+import { DuplicateChip } from '@/components/comman/ui/DuplicateChip';
 import { formatMoney } from '@/utils/currency';
 import {
   OrderDetailModal, edudeenCollects, EDUDEEN_COD_NOTE, canMarkPaid, canComplete, canProcess, canShip, paymentLabel,

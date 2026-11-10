@@ -15,6 +15,7 @@ import {
   apiAdminAnalyticsOrderStatusBreakdown,
   apiAdminAnalyticsPaymentBreakdown,
   apiAdminAnalyticsPlatformMetrics,
+  apiAdminAnalyticsVisits,
   apiAdminAnalyticsExport,
   type BaseAnalyticsParams,
   type TopSellersParams,
@@ -100,6 +101,12 @@ export function useAdminAnalyticsPaymentBreakdown(params: BaseAnalyticsParams) {
 
 export function useAdminAnalyticsPlatformMetrics(params: BaseAnalyticsParams) {
   return useAdminAnalyticsQuery(apiAdminAnalyticsPlatformMetrics, params);
+}
+
+// ── H.1 Visit/traffic analytics ─────────────────────────────────────────────────
+
+export function useAdminAnalyticsVisits(params: BaseAnalyticsParams) {
+  return useAdminAnalyticsQuery(apiAdminAnalyticsVisits, params);
 }
 
 // ── I. Export ────────────────────────────────────────────────────────────────────

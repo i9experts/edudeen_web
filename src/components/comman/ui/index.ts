@@ -127,3 +127,4 @@ export { StoreFeatureCard }                   from './StoreFeatureCard';
 export { CoverImage }                         from './CoverImage';
 export { StatCard, StatStrip }                from './MetricCard';
 export { SaleBadge }                         from './SaleBadge';
+export { DuplicateChip }                     from './DuplicateChip';

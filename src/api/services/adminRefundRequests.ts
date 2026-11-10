@@ -30,6 +30,20 @@ export interface RefundRequestRow {
   resolutionNotes: string | null;
   createdAt: string;
   updatedAt: string;
+  /** Resolved server-side by the admin list endpoint only — null if the order/requester couldn't be found. */
+  orderNumber: string | null;
+  storeName: string | null;
+  requester: { name: string; email: string } | null;
+}
+
+export interface AdminRefundsQuery {
+  status?: RefundRequestStatus;
+  storeId?: string;
+  q?: string;
+  from?: string;
+  to?: string;
+  page?: number;
+  limit?: number;
 }
 
 export interface RefundRequestPage {
@@ -52,9 +66,10 @@ interface ApiResponse<T> { success: boolean; message?: string; data: T }
 // ─────────────────────────────────────────────────────────────────────────────
 // ADMIN API
 // ─────────────────────────────────────────────────────────────────────────────
-export function apiAdminListPendingRefunds(params: { page?: number; limit?: number } = {}) {
-  return client.get<never, ApiResponse<RefundRequestPage>>(ENDPOINTS.REFUND_REQUEST.ADMIN_PENDING, {
-    params: { page: params.page ?? 1, limit: params.limit ?? 20 },
+/** Every status unless `status` narrows it, filterable by store/date/search. */
+export function apiAdminListRefunds(params: AdminRefundsQuery = {}) {
+  return client.get<never, ApiResponse<RefundRequestPage>>(ENDPOINTS.REFUND_REQUEST.ADMIN_LIST, {
+    params: { page: params.page ?? 1, limit: params.limit ?? 20, status: params.status, storeId: params.storeId, q: params.q, from: params.from, to: params.to },
   });
 }
 

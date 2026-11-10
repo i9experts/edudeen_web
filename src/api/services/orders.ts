@@ -191,6 +191,11 @@ export function apiSellerCancelOrder(orderId: string, storeId: string, reason: s
   return client.post<never, OrderActionResponse>(ENDPOINTS.ORDERS.SELLER_CANCEL(orderId), { storeId, reason });
 }
 
+/** Admin cancels an order (every store's remaining items, or just `itemIds`) — no store ownership check, unlike the seller cancel above. */
+export function apiAdminCancelOrder(orderId: string, reason: string, itemIds?: string[]) {
+  return client.post<never, OrderActionResponse>(ENDPOINTS.ORDERS.SELLER_CANCEL(orderId), { reason, itemIds });
+}
+
 export interface DigitalDownloadFile {
   index:     number;
   fileName:  string;

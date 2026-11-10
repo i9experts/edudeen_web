@@ -1,4 +1,5 @@
 import client from '../client';
+import type { AddressPayload } from './address';
 
 export type AdminOrderStatus = 'pending' | 'processing' | 'partially_shipped' | 'completed' | 'cancelled';
 export type AdminPaymentStatus = 'unpaid' | 'partially_paid' | 'pending_verification' | 'paid' | 'failed' | 'refunded';
@@ -22,7 +23,7 @@ export interface AdminOrderRow {
   orderNumber: string;
   createdAt: string;
   buyer: { id: string; name: string; email: string } | null;
-  stores: { id: string; name: string; status: string }[];
+  stores: { id: string; name: string; status: string; possibleDuplicate: { orderId: string; orderNumber: string } | null }[];
   itemCount: number;
   totalAmount: number;
   currency: string;
@@ -69,6 +70,8 @@ export interface AdminSellerOrder {
   /** Who collects this COD package's cash ('platform' = Edudeen's courier). Old orders: fall back to fulfillmentMode. */
   codCollector?: 'seller' | 'platform' | null;
   fulfillmentMode?: 'seller' | 'platform' | null;
+  /** Same buyer + same products in another live order on this store, within 24h — advisory only. */
+  possibleDuplicate?: { orderId: string; orderNumber: string } | null;
 }
 
 export interface AdminOrderDetail {
@@ -97,6 +100,8 @@ export interface AdminOrderDetail {
   isPaid: boolean;
   paidAt: string | null;
   orderStatus: AdminOrderStatus;
+  /** Only set when at least one package needs a street address (physical/mixed fulfillment). */
+  addressWarnings?: { code: string; text: string }[];
 }
 
 interface ApiResponse<T> { success: boolean; message?: string; data: T }
@@ -109,4 +114,47 @@ export function apiAdminListOrders(query: AdminOrdersQuery = {}) {
 
 export function apiAdminGetOrder(id: string) {
   return client.get<never, ApiResponse<AdminOrderDetail>>(`/api/admin/orders/${id}`);
+}
+
+// ── Manual order creation (admin places an order on a buyer's behalf) ─────────
+
+export interface ManualOrderVariant {
+  id: string;
+  price: number;
+  currency: string;
+  stock: number;
+  unlimitedStock: boolean;
+  options: { name: string; value: string }[];
+  sku: string | null;
+  isDefault: boolean;
+}
+
+export interface ManualOrderProduct {
+  id: string;
+  name: string;
+  image: string | null;
+  type: 'physical' | 'digital';
+  storeId: string;
+  storeName: string;
+  variants: ManualOrderVariant[];
+}
+
+export interface CreateManualOrderPayload {
+  buyerId: string;
+  productId: string;
+  variantId: string;
+  quantity: number;
+  /** A fresh address for this order — saved to the buyer's account (`AddressService.addAddress`), same as the buyer's own checkout form. */
+  address?: AddressPayload;
+  shippingZoneId?: string;
+  reason: string;
+}
+
+/** `q` must be at least 2 characters — shorter queries return no results without hitting the database. */
+export function apiAdminSearchManualOrderProducts(q: string) {
+  return client.get<never, ApiResponse<{ items: ManualOrderProduct[] }>>('/api/admin/orders/manual/products', { params: { q } });
+}
+
+export function apiAdminCreateManualOrder(payload: CreateManualOrderPayload) {
+  return client.post<never, ApiResponse<{ orderId: string; orderNumber: string }>>('/api/admin/orders/manual', payload);
 }
