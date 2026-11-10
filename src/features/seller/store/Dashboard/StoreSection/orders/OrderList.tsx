@@ -81,8 +81,10 @@ export function StoreOrderList() {
   const [totalOrders, setTotalOrders] = useState(0);
   const [stats,       setStats]       = useState<SellerOrderStats | null>(null);
   const [page,        setPage]        = useState(1);
-  const [search,      setSearch]      = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+  // Returns page links here with ?q=<order number>&tab=all.
+  const initialQ = (() => { try { return (new URLSearchParams(window.location.search).get('q') ?? '').slice(0, 60); } catch { return ''; } })();
+  const [search,      setSearch]      = useState(initialQ);
+  const [debouncedSearch, setDebouncedSearch] = useState(initialQ);
   // Tab lives in the URL (?tab=), so a refresh or a shared link keeps it; default = Needs action.
   const [searchParams, setSearchParams] = useSearchParams();
   const rawTab = searchParams.get('tab');

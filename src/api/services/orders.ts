@@ -124,7 +124,11 @@ interface CancelOrderResponse {
   data: { orderId: string; cancelledItems: number; refundProcessed: boolean };
 }
 
-export interface ReturnRequestPayload { reason: string; itemIds?: string[] }
+export interface ReturnRequestPayload {
+  reason?: string; itemIds?: string[];
+  /** Optional structured reason + note (20-1000) + up to 4 photos: same rules as refund requests. */
+  reasonCode?: string; note?: string; evidenceImages?: string[];
+}
 interface ReturnRequestResponse {
   success: boolean;
   message: string;
@@ -268,6 +272,94 @@ export function apiRequestReturn(orderId: string, payload: ReturnRequestPayload)
 /** GET /api/orders/returns — seller's paginated return requests across their store(s) */
 export function apiGetSellerReturns(params?: SellerReturnsParams) {
   return client.get<never, SellerReturnsResponse>(ENDPOINTS.ORDERS.SELLER_RETURNS, { params });
+}
+
+/** One row of the merged seller returns list (item return OR item refund request). */
+export interface SellerReturnRow {
+  source:      'return' | 'refund';
+  /** return: "<orderId>:<itemId>"; refund: the refund request id. */
+  requestId:   string;
+  itemIds:     string[];
+  orderId:     string;
+  orderNumber: string;
+  storeId:     string;
+  item:        string;
+  buyer:       string;
+  type:        'Return' | 'Refund only';
+  reason:      string;
+  status:      'open' | 'approved' | 'rejected';
+  requestedAt: string | null;
+  /** requestedAt + 48 h, only while open. Display only. */
+  respondBy:   string | null;
+  isOverdue:   boolean;
+  amount:      number;
+  note?:       string | null;
+  evidenceImages?: string[];
+  /** Tracking-only step after approval. */
+  followUp?:   'item_received' | 'replacement_sent' | null;
+  reasonLabel?: string;
+}
+
+/** Drawer detail (GET /api/orders/seller-returns-all/:storeId/:source/:requestId). */
+export interface SellerReturnDetail {
+  source: 'return' | 'refund';
+  requestId: string;
+  orderId: string;
+  orderNumber: string;
+  storeId: string;
+  type: 'Return' | 'Refund only';
+  status: 'open' | 'approved' | 'rejected';
+  followUp: 'item_received' | 'replacement_sent' | null;
+  followUpNote: string | null;
+  buyer: string;
+  currency: string;
+  items: { id: string; name: string; type: 'physical' | 'digital'; quantity: number; totalPrice: number; refundedAmount: number; downloadCount: number | null }[];
+  reasonCode: string | null;
+  reasonLabel: string;
+  reason: string;
+  note: string | null;
+  evidenceImages: string[];
+  rejectReason: string | null;
+  amount: number;
+  refundedAmount: number;
+  /** Derived from the items' stored refundedAmount (> 0). */
+  refunded: boolean;
+  requestedAt: string | null;
+  respondBy: string | null;
+  isOverdue: boolean;
+  timeline: { status: string; label: string; at: string | null; byRole: string | null; note: string | null }[];
+  actions: { canReview: boolean; canMarkReceived: boolean; canMarkReplacementSent: boolean };
+}
+
+/** GET detail of one return / refund request (own store only). */
+export function apiGetSellerReturnDetail(storeId: string, source: 'return' | 'refund', requestId: string) {
+  return client.get<never, { success: boolean; data: SellerReturnDetail }>(
+    `/api/orders/seller-returns-all/${storeId}/${source}/${encodeURIComponent(requestId)}`,
+  );
+}
+
+/** PATCH /api/orders/return-follow-up/:orderId — tracking only (item received back / replacement sent). */
+export function apiReturnFollowUp(orderId: string, payload: { storeId: string; itemId: string; step: 'item_received' | 'replacement_sent'; note?: string }) {
+  return client.patch<never, { success: boolean }>(`/api/orders/return-follow-up/${orderId}`, payload);
+}
+export interface SellerReturnsAllStats {
+  open: number; overdue: number;
+  returnRate30d: { pct: number | null; returns: number; orders: number };
+  refunded30d: number;
+}
+export interface SellerReturnsAllParams { status?: string; q?: string; page?: number }
+interface SellerReturnsAllResponse {
+  success: boolean;
+  data: {
+    stats: SellerReturnsAllStats;
+    pagination: { page: number; limit: number; total: number; totalPages: number };
+    items: SellerReturnRow[];
+  };
+}
+
+/** GET /api/orders/seller-returns-all/:storeId — returns + refund requests in one list, open first by respond-by. */
+export function apiGetSellerReturnsAll(storeId: string, params?: SellerReturnsAllParams) {
+  return client.get<never, SellerReturnsAllResponse>(`/api/orders/seller-returns-all/${storeId}`, { params });
 }
 
 /** PUT /api/orders/return-action/:orderId — seller approves/rejects a return request */

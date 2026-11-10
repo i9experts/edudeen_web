@@ -48,7 +48,7 @@ export function ReturnPolicyCard({ storeId, policy, refetch }: {
   }
 
   return (
-    <div className="rounded-xl border border-bone bg-white p-5">
+    <div id="returns" className="rounded-xl border border-bone bg-white p-5 scroll-mt-24">
       <p className="text-[13.5px] font-semibold text-charcoal mb-1">Return policy</p>
       <p className="text-[12.5px] text-slate leading-relaxed mb-4">
         Shown to buyers on your product pages for physical items. Digital downloads can be refunded only before they are downloaded, whatever you set here.
