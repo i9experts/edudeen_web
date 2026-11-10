@@ -643,7 +643,7 @@ export function StorePageHeader({ title, subtitle, actions, eyebrow, tabs }: Sto
   useLayoutEffect(() => claimTabs?.(), [claimTabs]);
 
   return (
-    <div className="bg-white/95 backdrop-blur-md border-b border-bone sticky top-0 z-10 shrink-0">
+    <div className="bg-white border-b border-bone sticky top-0 z-20 shrink-0">
     <div className="px-4 md:px-8 py-[14px] flex items-center justify-between gap-3">
       <div className="flex items-center gap-3 min-w-0">
         {/* Mobile only, and only away from the dashboard "menu" screen —

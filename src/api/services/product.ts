@@ -295,6 +295,7 @@ export interface InventoryProduct {
   sku:          string;
   name:         string;
   image:        string | null;
+  slug?:        string | null;
   type:         'physical' | 'digital';
   productType?: 'physical' | 'digital';
   deliveryFormat?: DeliveryFormat;
@@ -310,6 +311,15 @@ export interface InventoryProduct {
   editRejection?: string | null;
   price:        number;
   allTimeSales: number;
+  /** Last 30 days (Pakistan time), same rules as Analytics. views30d null = no tracked day yet. */
+  views30d?: number | null;
+  sales30d?: number;
+  /** Pro plans only; null otherwise. */
+  conversionPct?: number | null;
+  conversionLocked?: boolean;
+  /** 0-100 listing completeness and what is missing. */
+  qualityScore?: number;
+  qualityMissing?: string[];
   /** Set for products whose stock can be edited inline (single variant). */
   defaultVariantId?: string | null;
   variantCount?:     number;
@@ -325,6 +335,23 @@ export interface BulkOffersResult { updated: string[]; skipped: { id: string; re
 export function apiBulkOffers(body: { storeId: string; productIds: string[]; action: BulkOfferAction; percent?: number; campaignId?: string }) {
   return client.patch<never, ApiResponse<BulkOffersResult>>('/api/products/bulk-offers', body);
 }
+export interface BulkStatusResult {
+  updated: { id: string; name: string; status: string }[];
+  skipped: { id: string; name: string; reason: string }[];
+  changedMeanwhile: number;
+}
+/** PATCH /api/products/bulk-status - seller only (max 100). A product that cannot change is skipped with a reason. */
+export function apiBulkStatus(ids: string[], active: boolean) {
+  return client.patch<never, ApiResponse<BulkStatusResult>>('/api/products/bulk-status', { ids, active });
+}
+
+export interface BulkPriceItem { id: string; name: string; from: number | null; to: number | null; ok: boolean; unchanged?: boolean; reason?: string }
+export interface BulkPriceResult { dryRun: boolean; canApply?: boolean; items: BulkPriceItem[] }
+/** PATCH /api/products/bulk-price - all-or-nothing (max 100). `dryRun` returns the old -> new preview. */
+export function apiBulkPrice(body: { ids: string[]; mode: 'set' | 'percent'; value: number; dryRun?: boolean }) {
+  return client.patch<never, ApiResponse<BulkPriceResult>>('/api/products/bulk-price', body);
+}
+
 /** PATCH /api/products/stock/bulk — seller only; sets absolute stock per variant. */
 export function apiBulkUpdateStock(storeId: string, updates: { variantId: string; stock: number }[]) {
   return client.patch<never, ApiResponse<{ updated: number; skipped: { variantId: string; reason: string }[] }>>(
@@ -338,6 +365,8 @@ export interface InventoryStats {
   lowStock:      number;
   outOfStock:    number;
   unlimited?:    number;
+  /** Store-wide product count per status (draft, pending_review, active, scheduled, inactive, rejected). */
+  statusCounts?: Record<string, number>;
 }
 
 export interface InventoryPagination {
@@ -408,6 +437,16 @@ export function apiGetMyProductById(id: string) {
   ));
 }
 
+/** POST /api/products/duplicate/:id - seller only; creates a DRAFT copy (new SKU/slug). */
+export function apiDuplicateProduct(id: string) {
+  return client.post<never, ApiResponse<{ productId: string; slug: string; name: string; status: string }>>(`/api/products/duplicate/${id}`);
+}
+
+/** PATCH /api/products/visibility/:id - seller only; Activate / Deactivate. `status` = where it landed (pending_review for never-approved). */
+export function apiSetProductVisibility(id: string, active: boolean) {
+  return client.patch<never, ApiResponse<{ status: string }>>(`/api/products/visibility/${id}`, { active });
+}
+
 export function apiDeleteProduct(id: string) {
   return client.delete<never, ApiResponse<null>>(
     ENDPOINTS.PRODUCT.DELETE_PRODUCT(id),
@@ -437,13 +476,28 @@ export function apiDeleteVariant(productId: string, variantId: string) {
 
 export function apiGetStoreInventory(
   storeId: string, page = 1, limit = 10,
-  filters: { status?: 'active' | 'draft' | 'archived' | 'pending_review' | 'rejected'; q?: string } = {},
+  filters: {
+    status?: 'active' | 'draft' | 'archived' | 'pending_review' | 'rejected' | 'inactive' | 'active,scheduled';
+    q?: string;
+    type?: 'physical' | 'digital';
+    deliveryFormat?: 'download' | 'course';
+    categoryId?: string;
+    /** Store-wide sort by last-30-day views / sales (default = newest). */
+    sort?: 'views' | 'sales';
+    /** 'low' = only listings with a quality score under 60. */
+    quality?: 'low';
+  } = {},
 ) {
   // Backend supports ?status= and ?q= (name/SKU, case-insensitive) and counts
   // stats.totalProducts on the same filter. `limit` is capped at 100 server-side.
   const params = new URLSearchParams({ page: String(page), limit: String(limit) });
   if (filters.status) params.set('status', filters.status);
   if (filters.q?.trim()) params.set('q', filters.q.trim());
+  if (filters.type) params.set('type', filters.type);
+  if (filters.deliveryFormat) params.set('deliveryFormat', filters.deliveryFormat);
+  if (filters.categoryId) params.set('categoryId', filters.categoryId);
+  if (filters.sort) params.set('sort', filters.sort);
+  if (filters.quality) params.set('quality', filters.quality);
   const url = `${ENDPOINTS.INVENTORY.GET_STORE_INVENTORY(storeId)}?${params.toString()}`;
   return dedupeGet(url, () => client.get<never, ApiResponse<GetInventoryData>>(url));
 }
