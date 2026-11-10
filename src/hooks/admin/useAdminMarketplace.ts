@@ -12,6 +12,7 @@ import {
   apiGetLeadDetail,
   apiApproveLead,
   apiRejectLead,
+  apiDeleteStore,
   type MarketplaceListingQuery,
   type GrantableStoreBadge,
   type LeadsQuery,
@@ -160,5 +161,19 @@ export function useLeadActions() {
     }
   }, []);
 
-  return { approve, reject, processingId, error };
+  const deleteStore = useCallback(async (id: string, reason: string) => {
+    setProcessingId(id);
+    setError('');
+    try {
+      await apiDeleteStore(id, reason);
+      return true;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete store.');
+      return false;
+    } finally {
+      setProcessingId(null);
+    }
+  }, []);
+
+  return { approve, reject, deleteStore, processingId, error };
 }

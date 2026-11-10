@@ -403,6 +403,7 @@ export const ENDPOINTS = {
       LEAD_DETAIL:      (id: string) => `/api/admin/marketplace/leads/${id}`,
       APPROVE_LEAD:     (id: string) => `/api/admin/marketplace/leads/${id}/approve`,
       REJECT_LEAD:      (id: string) => `/api/admin/marketplace/leads/${id}/reject`,
+      DELETE_STORE:     (id: string) => `/api/admin/marketplace/leads/${id}`,
     },
   },
 

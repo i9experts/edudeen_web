@@ -8,7 +8,7 @@ import { AdminStudioHeader } from '@/features/admin/components/studio';
 import type { TableColumn } from '@/components/comman/ui';
 import { AnalyticsErrorState } from '@/components/comman/analytics/AnalyticsErrorState';
 import { formatDate } from '@/components/comman/analytics/format';
-import { Store, RefreshCw, Check, X, Eye } from 'lucide-react';
+import { Store, RefreshCw, Check, X, Eye, Trash2 } from 'lucide-react';
 
 function StoreCell({ lead }: { lead: LeadRow }) {
   return (
@@ -44,11 +44,12 @@ const STATUS_OPTIONS = [
 ];
 
 // Lead detail — contact + store info only; fetched lazily when opened.
-function LeadDetailModal({ leadId, onClose, onApprove, onReject, processingId }: {
+function LeadDetailModal({ leadId, onClose, onApprove, onReject, onDelete, processingId }: {
   leadId: string;
   onClose: () => void;
   onApprove: (lead: { id: string; storeName: string }) => void;
   onReject: (lead: { id: string; storeName: string }) => void;
+  onDelete: (lead: { id: string; storeName: string }) => void;
   processingId: string | null;
 }) {
   const { data, loading, error, refetch } = useLeadDetail(leadId);
@@ -100,6 +101,9 @@ function LeadDetailModal({ leadId, onClose, onApprove, onReject, processingId }:
           )}
 
           <div className="flex items-center gap-2 pt-2 border-t border-bone">
+            <Button variant="outline" size="sm" icon={<Trash2 size={13} />} onClick={() => onDelete({ id: data.id, storeName: data.storeName })} disabled={processingId === data.id}>
+              Delete store
+            </Button>
             <div className="flex-1" />
             <Button variant="outline" size="sm" icon={<X size={13} />} onClick={() => onReject({ id: data.id, storeName: data.storeName })} disabled={data.storeStatus !== 'pending' || processingId === data.id}>
               Reject
@@ -132,14 +136,18 @@ export function AdminLeads() {
   );
 
   const { data, loading, error, refetch } = useLeads(query);
-  const { approve, reject, processingId, error: actionError } = useLeadActions();
+  const { approve, reject, deleteStore, processingId, error: actionError } = useLeadActions();
 
   const [viewingId, setViewingId] = useState<string | null>(null);
   const [rejecting, setRejecting] = useState<{ id: string; storeName: string } | null>(null);
   const [approving, setApproving] = useState<{ id: string; storeName: string } | null>(null);
+  const [deleting, setDeleting] = useState<{ id: string; storeName: string } | null>(null);
   const [reason, setReason] = useState('');
+  const [deleteReason, setDeleteReason] = useState('');
   const reasonTooShort = reason.trim().length > 0 && reason.trim().length < 10;
   const canConfirmReject = reason.trim().length >= 10;
+  const deleteReasonTooShort = deleteReason.trim().length > 0 && deleteReason.trim().length < 10;
+  const canConfirmDelete = deleteReason.trim().length >= 10;
 
   // Approving activates the store on the live marketplace — same weight as
   // Reject, which already asks for a reason before submitting. This used to
@@ -154,6 +162,12 @@ export function AdminLeads() {
     if (!rejecting || !canConfirmReject) return;
     const ok = await reject(rejecting.id, reason.trim());
     if (ok) { setRejecting(null); setReason(''); setViewingId(null); refetch(); }
+  }
+
+  async function handleDelete() {
+    if (!deleting || !canConfirmDelete) return;
+    const ok = await deleteStore(deleting.id, deleteReason.trim());
+    if (ok) { setDeleting(null); setDeleteReason(''); setViewingId(null); refetch(); }
   }
 
   const columns: TableColumn<LeadRow>[] = [
@@ -202,6 +216,14 @@ export function AdminLeads() {
           >
             Approve
           </Button>
+          <Button
+            variant="outline" size="xs"
+            icon={<Trash2 size={12} />}
+            onClick={() => setDeleting({ id: lead.id, storeName: lead.storeName })}
+            disabled={processingId === lead.id}
+          >
+            Delete
+          </Button>
         </div>
       ),
     },
@@ -248,6 +270,7 @@ export function AdminLeads() {
           onClose={() => setViewingId(null)}
           onApprove={lead => { setViewingId(null); setApproving(lead); }}
           onReject={lead => { setViewingId(null); setRejecting(lead); }}
+          onDelete={lead => { setViewingId(null); setDeleting(lead); }}
           processingId={processingId}
         />
       )}
@@ -289,6 +312,33 @@ export function AdminLeads() {
             className="w-full px-3 py-[10px] rounded-lg border border-bone text-[13px] text-charcoal outline-none bg-white resize-y transition-[border-color,box-shadow] duration-150 focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/10"
           />
           {reasonTooShort && <p className="text-[12px] text-error mt-1">Please provide a bit more detail (at least 10 characters).</p>}
+        </Modal>
+      )}
+
+      {deleting && (
+        <Modal mobileSheet
+          title="Delete this store?"
+          onClose={() => { setDeleting(null); setDeleteReason(''); }}
+          footer={<>
+            <Button variant="ghost" onClick={() => { setDeleting(null); setDeleteReason(''); }}>Cancel</Button>
+            <Button variant="danger" icon={<Trash2 size={13} />} onClick={handleDelete} disabled={!canConfirmDelete} loading={processingId === deleting.id}>Delete Store</Button>
+          </>}
+        >
+          <div className="bg-error-bg border border-error-border rounded-lg px-3 py-2.5 mb-3">
+            <p className="text-[13px] text-error leading-[1.6]">
+              This takes down "<strong>{deleting.storeName}</strong>" <strong>and every one of its products</strong> — they stop appearing anywhere on Edudeen immediately. The seller is notified with your reason. This can't be undone from this screen.
+            </p>
+          </div>
+          <label htmlFor="store-delete-reason" className="block text-[12px] font-medium text-charcoal mb-[6px]">Reason <span className="text-brand-orange">*</span> <span className="text-slate font-normal">(shown to the seller, min. 10 characters)</span></label>
+          <textarea
+            id="store-delete-reason"
+            rows={3}
+            value={deleteReason}
+            onChange={e => setDeleteReason(e.target.value)}
+            placeholder="e.g. Repeated counterfeit listings after two prior warnings"
+            className="w-full px-3 py-[10px] rounded-lg border border-bone text-[13px] text-charcoal outline-none bg-white resize-y transition-[border-color,box-shadow] duration-150 focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/10"
+          />
+          {deleteReasonTooShort && <p className="text-[12px] text-error mt-1">Please provide a bit more detail (at least 10 characters).</p>}
         </Modal>
       )}
       </div>
