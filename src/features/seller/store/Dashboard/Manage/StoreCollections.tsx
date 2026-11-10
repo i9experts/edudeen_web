@@ -112,6 +112,8 @@ export default function StoreCollections() {
     <>
       <StorePageHeader
         title="Collections"
+        eyebrow=""
+        wrapSubtitle
         subtitle="Named, curated product groupings — New Arrivals, Sale, Best Sellers. They appear as tabs on your store page in this order."
         actions={<Button icon={<Plus size={13} />} size="sm" disabled={atLimit} title={atLimit ? `Limit of ${MAX_COLLECTIONS} collections reached` : undefined} onClick={openNew}>New Collection</Button>}
       />
@@ -162,7 +164,11 @@ export default function StoreCollections() {
                       <p className="text-[13.5px] font-semibold text-charcoal truncate">{c.name}</p>
                       <div className="flex items-center flex-wrap gap-x-2 gap-y-1 mt-0.5">
                         <StatusBadge status={c.status} />
-                        <span className="text-[12px] text-slate">{c.type === 'automatic' ? 'Automatic' : `${c.productIds.length} products`}</span>
+                        {c.windowState === 'scheduled' && <span className="text-[12px] font-semibold px-[7px] py-[2px] rounded-full bg-amber-50 text-amber-700">Scheduled</span>}
+                        {c.windowState === 'ended' && <span className="text-[12px] font-semibold px-[7px] py-[2px] rounded-full bg-bone text-slate">Ended</span>}
+                        <span className="text-[12px] text-slate">
+                          {c.type === 'automatic' ? 'Automatic' : 'Manual'} · {c.productCount ?? c.productIds.length} {(c.productCount ?? c.productIds.length) === 1 ? 'product' : 'products'}
+                        </span>
                       </div>
                     </div>
                     <div className="flex items-center shrink-0">
@@ -188,6 +194,7 @@ export default function StoreCollections() {
         <CollectionFormModal
           storeId={storeId}
           mainCategoryId={store?.categoryId}
+          currency={(store as { baseCurrency?: string } | undefined)?.baseCurrency}
           collection={editing}
           otherNames={collections.filter(c => c._id !== editing?._id).map(c => c.name)}
           onClose={() => setShowForm(false)}

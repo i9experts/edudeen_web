@@ -58,6 +58,8 @@ export interface UpdateStorePayload {
   giftWrap?: StoreGiftWrap | null;
   /** Dispatch city (+ province) used to classify delivery routes; null clears. */
   shipFrom?: StoreShipFrom | null;
+  /** Working days (1-7, Sundays not counted) to mark a physical package shipped. Missing = 2. */
+  dispatchDays?: number;
   deliveryMethod?: StoreDeliveryMethod | null;
   contactEmail?: string;
   contactPhone?: string;
@@ -83,6 +85,8 @@ export interface StoreData {
   deliverySettings?: StoreDeliverySettings | null;
   giftWrap?: StoreGiftWrap | null;
   shipFrom?: StoreShipFrom | null;
+  /** Working days (1-7, Sundays not counted) to mark a physical package shipped. Missing = 2. */
+  dispatchDays?: number;
   deliveryMethod?: StoreDeliveryMethod | null;
   contactEmail: string | null;
   contactPhone: string | null;
@@ -299,7 +303,7 @@ export interface StoreCatalogFacets {
   subjects: { id: string; name: string; slug: string; count: number }[];
   kinds:    { physical: number; digital: number; course: number };
   price:    { min: number; max: number; currency: string | null } | null;
-  collections: { id: string; name: string; slug: string; count: number }[];
+  collections: { id: string; name: string; nameUr?: string | null; slug: string; count: number }[];
 }
 
 export interface PublicStoreProduct {

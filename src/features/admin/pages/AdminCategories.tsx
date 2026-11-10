@@ -10,6 +10,7 @@ import {
 import { Toggle } from '@/components/comman/ui/Toggle';
 import { useToast } from '@/contexts/ToastContext';
 import { AttributeManagerModal } from './AttributeManagerModal';
+import { AdminCategoryRequests } from './AdminCategoryRequests';
 import { useUpload } from '@/hooks/upload/useUpload';
 import { Button } from '@/components/comman/ui/Button';
 import { Modal } from '@/components/comman/ui/Modal';
@@ -581,6 +582,7 @@ export function AdminCategories() {
       />
 
       <div className="px-4 sm:px-7 pt-5 pb-8">
+        <AdminCategoryRequests />
         {!loading && !error && missingSuggestions(tree).length > 0 && (
           <div className="bg-white border border-bone rounded-xl px-4 py-3 mb-4 flex flex-wrap items-center gap-2">
             <p className="text-[12px] font-semibold text-charcoal mr-1">Suggested subjects:</p>

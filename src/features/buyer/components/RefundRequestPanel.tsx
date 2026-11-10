@@ -6,6 +6,8 @@ import {
   apiCreateRefundRequest,
   apiListRefundRequestsForOrder,
   REFUND_REASON_OPTIONS,
+  REFUND_MAX_PHOTOS,
+  FOLLOW_UP_LABEL,
   type RefundReasonCode,
   type RefundRequest,
   type RefundRequestStatus,
@@ -13,7 +15,7 @@ import {
 import { apiUploadPublicFile } from '@/api/upload';
 import { RefundEvidence } from '@/components/refunds/RefundEvidence';
 
-const MAX_PHOTOS = 3;
+const MAX_PHOTOS = REFUND_MAX_PHOTOS;
 const NOTE_MIN = 20;
 const NOTE_MAX = 1000;
 import { formatMoney } from '@/utils/currency';
@@ -142,13 +144,15 @@ export function RefundRequestPanel({ order, onRequested, className }: RefundRequ
 
   const targetItem = eligible.find(e => `${e.sellerOrderId}:${e.itemId}` === selected);
   const isDigital = !!targetItem?.isDigital;
+  // 'Digital file is not working' is digital-only; physical-only problems are hidden for digital items.
+  const DIGITAL_REASONS: RefundReasonCode[] = ['digital_not_working', 'not_as_described', 'wrong_item', 'wrong_edition_or_class', 'other'];
   const reasonOptions = REFUND_REASON_OPTIONS.filter(o =>
-    isDigital ? (o.code === 'cant_access_file' || o.code === 'not_as_described') : o.code !== 'cant_access_file');
+    isDigital ? DIGITAL_REASONS.includes(o.code) : o.code !== 'digital_not_working');
 
   const openDialog = () => {
     const first = eligible[0];
     setSelected(first ? `${first.sellerOrderId}:${first.itemId}` : '');
-    setReasonCode(first?.isDigital ? 'cant_access_file' : 'damaged');
+    setReasonCode(first?.isDigital ? 'digital_not_working' : 'damaged');
     setNote('');
     setPhotos([]);
     setPhotoError('');
@@ -159,7 +163,7 @@ export function RefundRequestPanel({ order, onRequested, className }: RefundRequ
   const pickItem = (value: string) => {
     setSelected(value);
     const t = eligible.find(e => `${e.sellerOrderId}:${e.itemId}` === value);
-    setReasonCode(t?.isDigital ? 'cant_access_file' : 'damaged');
+    setReasonCode(t?.isDigital ? 'digital_not_working' : 'damaged');
     if (t?.isDigital) setPhotos([]);
   };
 
@@ -253,7 +257,9 @@ export function RefundRequestPanel({ order, onRequested, className }: RefundRequ
                 <li key={r._id} className="rounded-[10px] border border-bone px-4 py-3">
                   <div className="flex items-start gap-2">
                     <p className="text-[12.5px] font-semibold text-charcoal flex-1 min-w-0 truncate">{names}</p>
-                    <Badge color={badge.color} size="sm">{badge.label}</Badge>
+                    <Badge color={badge.color} size="sm">
+                      {r.status === 'approved' && r.followUp ? FOLLOW_UP_LABEL[r.followUp] : badge.label}
+                    </Badge>
                   </div>
                   <p className="text-[12px] text-slate mt-1 break-words">{r.reason}</p>
                   <RefundEvidence request={r} />
@@ -316,7 +322,7 @@ export function RefundRequestPanel({ order, onRequested, className }: RefundRequ
             </div>
             {!isDigital && (
               <div>
-                <p className="text-[12px] font-semibold text-charcoal mb-1.5">Photos (optional, up to {MAX_PHOTOS})</p>
+                <p className="text-[12px] font-semibold text-charcoal mb-1.5">{`Photos (optional, up to ${MAX_PHOTOS})`}</p>
                 <div className="flex flex-wrap gap-2 items-center">
                   {photos.map((u, i) => (
                     <div key={u} className="relative w-[64px] h-[64px] rounded-[8px] overflow-hidden border border-bone">

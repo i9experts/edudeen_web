@@ -625,13 +625,15 @@ export interface StorePageHeaderProps {
   actions?:  ReactNode;
   /** Small royal-blue label above the title. Defaults to the store's name. Pass '' to hide. */
   eyebrow?:  string;
+  /** Let a long sub-line wrap onto 2 lines instead of ending in "...". */
+  wrapSubtitle?: boolean;
   /** Tab bar rendered inside the sticky header (stays under the title while the page scrolls). */
   tabs?:     ReactNode;
 }
 
 // Studio-style sticky page bar: blue letter-spaced eyebrow (store name),
 // serif title, muted sub-line, actions on the right.
-export function StorePageHeader({ title, subtitle, actions, eyebrow, tabs }: StorePageHeaderProps) {
+export function StorePageHeader({ title, subtitle, actions, eyebrow, tabs, wrapSubtitle }: StorePageHeaderProps) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const { storeId, store } = useStoreWorkspace();
@@ -643,7 +645,7 @@ export function StorePageHeader({ title, subtitle, actions, eyebrow, tabs }: Sto
   useLayoutEffect(() => claimTabs?.(), [claimTabs]);
 
   return (
-    <div className="bg-white/95 backdrop-blur-md border-b border-bone sticky top-0 z-10 shrink-0">
+    <div className="bg-white border-b border-bone sticky top-0 z-20 shrink-0">
     <div className="px-4 md:px-8 py-[14px] flex items-center justify-between gap-3">
       <div className="flex items-center gap-3 min-w-0">
         {/* Mobile only, and only away from the dashboard "menu" screen —
@@ -663,7 +665,7 @@ export function StorePageHeader({ title, subtitle, actions, eyebrow, tabs }: Sto
             <p className="hidden sm:block text-[12px] font-bold text-brand-royal uppercase tracking-[0.15em] mb-[3px] truncate">{eyebrowText}</p>
           )}
           <h1 className="font-serif font-normal text-[21px] md:text-[25px] text-carbon leading-[1.2] tracking-[-0.3px] truncate">{title}</h1>
-          {subtitle && <p className="text-[12.5px] text-slate mt-0.5 truncate">{subtitle}</p>}
+          {subtitle && <p className={clsx('text-[12.5px] text-slate mt-0.5', wrapSubtitle ? 'max-w-[720px]' : 'truncate')}>{subtitle}</p>}
         </div>
       </div>
       {actions && <div className="flex items-center gap-[10px] shrink-0">{actions}</div>}

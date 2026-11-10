@@ -1,3 +1,4 @@
+import { trackingLine, isSelfCarrier } from '@/utils/carriers';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useLiveRefresh } from '@/hooks/useLiveRefresh';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
@@ -388,18 +389,18 @@ function OrderCard({ order, onChanged }: { order: OrderSummary; onChanged: () =>
           )}
 
           {/* Shipment tracking — one entry per store that has shipped */}
-          {order.stores?.some(s => s.tracking?.trackingNumber) && (
+          {order.stores?.some(s => trackingLine(s.tracking)) && (
             <div className="px-4 md:px-5 pb-4 pt-3 border-t border-bone">
               <div className="flex items-center gap-1.5 mb-3">
                 <Truck size={11} className="text-slate" />
                 <p className="text-[12px] font-bold text-slate uppercase tracking-[0.07em]">Tracking</p>
               </div>
               <div className="flex flex-col gap-2">
-                {order.stores.filter(s => s.tracking?.trackingNumber).map(s => (
+                {order.stores.filter(s => trackingLine(s.tracking)).map(s => (
                   <div key={s.storeId} className="bg-cream rounded-[9px] px-3 md:px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
                     <div className="min-w-0">
-                      <p className="text-[12px] font-semibold text-charcoal">{s.tracking!.carrier || 'Courier'}</p>
-                      <p className="text-[12px] text-slate font-mono break-all">{s.tracking!.trackingNumber}</p>
+                      <p className="text-[12px] font-semibold text-charcoal">{isSelfCarrier(s.tracking!.carrier) ? 'Delivered by the seller' : (s.tracking!.carrier || 'Courier')}</p>
+                      <p className="text-[12px] text-slate break-all">{[s.tracking!.trackingNumber, s.tracking!.expectedDeliveryDate ? `Expected by ${new Date(s.tracking!.expectedDeliveryDate).toLocaleDateString('en-PK', { dateStyle: 'medium' })}` : ''].filter(Boolean).join(' · ')}</p>
                     </div>
                     {s.tracking!.trackingUrl && /^https?:\/\//i.test(s.tracking!.trackingUrl) && (
                       <a

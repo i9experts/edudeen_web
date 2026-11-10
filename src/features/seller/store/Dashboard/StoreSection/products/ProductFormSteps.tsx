@@ -16,7 +16,7 @@ import { DynamicAttributeFields } from './DynamicAttributeFields';
 import type { AttributeValuesState } from './attributeFormUtils';
 import { ProductOffersCard, type OfferFlags } from './ProductOffersCard';
 import {
-  Block, F, MoreOptions, Toggle, TagInput, VariantOptionsField, inp, ta, isDigitalFamilyType, packageSizeError,
+  Block, F, MoreOptions, Toggle, TagInput, VariantOptionsField, inp, ta, isDigitalFamilyType, packageSizeError, dispatchOverrideError,
   type DigForm, type PhysForm, type ProductStatus, type ProductType,
 } from './ProductFormKit';
 import { IssueLinks, StepPanel, SummaryRows, type WizardIssue } from './ProductWizard';
@@ -244,6 +244,10 @@ export function ProductFormSteps(p: ProductFormStepsProps) {
                   ))}
                 </div>
                 {packageSizeError(phys.pkgL, phys.pkgW, phys.pkgH) && <p role="alert" className="text-[12px] text-error mt-1.5">{packageSizeError(phys.pkgL, phys.pkgW, phys.pkgH)}</p>}
+              </F>
+              <F label="Dispatch time (days)" htmlFor="ap-dispatch" hint="Optional. Working days to ship this product (1-7, Sundays not counted). Leave empty to use your store's dispatch time.">
+                <input id="ap-dispatch" type="number" min="1" max="7" step="1" inputMode="numeric" value={phys.dispatchDays ?? ''} onChange={e => sp('dispatchDays', e.target.value)} placeholder="Store default" className={` sm:max-w-[240px]`} />
+                {dispatchOverrideError(phys.dispatchDays) && <p role="alert" className="text-[12px] text-error mt-1.5">{dispatchOverrideError(phys.dispatchDays)}</p>}
               </F>
               <F label="Variant attributes">
                 <VariantOptionsField options={phys.options} onChange={v => sp('options', v)} />

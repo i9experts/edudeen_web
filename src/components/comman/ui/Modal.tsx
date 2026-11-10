@@ -14,9 +14,11 @@ export interface ModalProps {
    *  normal centered modal at `sm` and up either way. Off by default so
    *  every existing Modal caller keeps its current look unchanged. */
   mobileSheet?: boolean;
+  /** With mobileSheet: fill the whole screen height on phones (detail drawers). */
+  fullHeightMobile?: boolean;
 }
 
-export function Modal({ title, onClose, children, footer, width = 440, mobileSheet = false }: ModalProps) {
+export function Modal({ title, onClose, children, footer, width = 440, mobileSheet = false, fullHeightMobile = false }: ModalProps) {
   const titleId = useId();
 
   const style: CSSProperties = mobileSheet
@@ -28,7 +30,7 @@ export function Modal({ title, onClose, children, footer, width = 440, mobileShe
       onClose={onClose}
       align={mobileSheet ? 'bottom-mobile' : 'center'}
       ariaLabelledBy={titleId}
-      className={clsx('max-h-[90vh]', mobileSheet && 'max-w-full sm:max-w-[var(--modal-w)]')}
+      className={clsx('max-h-[90vh]', mobileSheet && 'max-w-full sm:max-w-[var(--modal-w)]', mobileSheet && fullHeightMobile && 'max-sm:h-[100dvh] max-sm:max-h-[100dvh]')}
       style={style}
     >
       <div className="flex items-center justify-between px-5 py-4 border-b border-bone shrink-0">

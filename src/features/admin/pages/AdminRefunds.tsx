@@ -5,6 +5,7 @@ import { Undo2, CheckCircle2, XCircle, ExternalLink } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useAdminRefunds, useAdminRefundActions } from '@/hooks/admin/useAdminRefunds';
 import type { RefundApprovalResult, RefundRequestRow, RefundRequestStatus } from '@/api/services/adminRefundRequests';
+import { REJECT_REASON_MIN } from '@/api/services/refundRequests';
 import { StaffNotes } from '@/features/admin/components/StaffNotes';
 import { EntitySearchSelect } from '@/features/admin/components/analytics/EntitySearchSelect';
 import { searchStoresByName } from '@/api/services/adminStoreLookup';
@@ -51,7 +52,7 @@ function ReviewModal({ request, onClose, onDone }: { request: RefundRequestRow; 
   const [result, setResult] = useState<RefundApprovalResult | null>(null);
 
   const isPending = request.status === 'pending';
-  const notesValid = notes.trim().length >= 3 && notes.trim().length <= 500;
+  const notesValid = notes.trim().length >= REJECT_REASON_MIN && notes.trim().length <= 500;
 
   async function handleApprove() {
     const res = await approve(request._id);
@@ -142,7 +143,7 @@ function ReviewModal({ request, onClose, onDone }: { request: RefundRequestRow; 
 
         {mode === 'reject' && (
           <Textarea
-            label="Reason for rejecting (shown to the requester)"
+            label={`Reason for rejecting (shown to the requester, at least ${REJECT_REASON_MIN} characters)`}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="e.g. The return window for this item has closed"

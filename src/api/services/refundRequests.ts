@@ -23,6 +23,8 @@ export interface RefundRequest {
   note?:               string | null;
   evidenceImages?:     string[];
   status:              RefundRequestStatus;
+  /** Tracking-only step after approval. */
+  followUp?:           FollowUpStep | null;
   /** Set only once approved — in the buyer's order currency. */
   buyerRefundAmount:   number | null;
   buyerRefundCurrency: string | null;
@@ -43,19 +45,38 @@ export interface CreateRefundRequestPayload {
   reasonCode?:   RefundReasonCode;
   /** 20–1000 characters, required with reasonCode. */
   note?:         string;
-  /** Up to 3 uploaded image URLs, physical items only. */
+  /** Up to 4 uploaded image URLs, physical items only. */
   evidenceImages?: string[];
 }
 
+/** The ONE reason list (mirror of the API's REFUND_REASON_CODES, refund-evidence.util.ts). */
 export const REFUND_REASON_OPTIONS = [
-  { code: 'damaged',          label: 'Item arrived damaged' },
-  { code: 'wrong_item',       label: 'Wrong item received' },
-  { code: 'incomplete',       label: 'Incomplete (missing parts or pages)' },
-  { code: 'not_as_described', label: 'Not as described' },
-  { code: 'cant_access_file', label: "Can't access the digital file" },
+  { code: 'damaged',                label: 'Item arrived damaged' },
+  { code: 'missing_pages',          label: 'Missing pages or parts' },
+  { code: 'printing_error',         label: 'Printing error' },
+  { code: 'wrong_item',             label: 'Wrong item received' },
+  { code: 'wrong_edition_or_class', label: 'Wrong edition or class' },
+  { code: 'not_as_described',       label: 'Not as described' },
+  { code: 'digital_not_working',    label: 'Digital file is not working' },
+  { code: 'other',                  label: 'Other' },
 ] as const;
 export type RefundReasonCode = typeof REFUND_REASON_OPTIONS[number]['code'];
-export const refundReasonLabel = (code?: string | null) => REFUND_REASON_OPTIONS.find(o => o.code === code)?.label ?? null;
+/** Codes stored by earlier versions: still shown as written, never offered. */
+const LEGACY_REASON_LABELS: Record<string, string> = {
+  incomplete: 'Incomplete (missing parts or pages)',
+  cant_access_file: "Can't access the digital file",
+};
+export const refundReasonLabel = (code?: string | null) =>
+  REFUND_REASON_OPTIONS.find(o => o.code === code)?.label ?? (code ? LEGACY_REASON_LABELS[code] ?? null : null);
+export const REFUND_MAX_PHOTOS = 4;
+export const REJECT_REASON_MIN = 10;
+
+/** Tracking-only steps after approval (no money). */
+export type FollowUpStep = 'item_received' | 'replacement_sent';
+export const FOLLOW_UP_LABEL: Record<FollowUpStep, string> = {
+  item_received: 'Item received back',
+  replacement_sent: 'Replacement sent',
+};
 
 interface ApiResponse<T> { success: boolean; message?: string; data: T }
 
@@ -93,6 +114,12 @@ export function apiApproveRefundRequest(id: string, idempotencyKey = newIdempote
   return client.patch<never, ApiResponse<RefundRequest>>(ENDPOINTS.REFUND_REQUEST.APPROVE(id), {}, { headers: { 'Idempotency-Key': idempotencyKey } });
 }
 
+/** notes: at least REJECT_REASON_MIN characters (the buyer sees them). */
 export function apiRejectRefundRequest(id: string, notes: string) {
   return client.patch<never, ApiResponse<RefundRequest>>(ENDPOINTS.REFUND_REQUEST.REJECT(id), { notes });
+}
+
+/** PATCH /api/refund-request/:id/follow-up — tracking only, no money. */
+export function apiFollowUpRefundRequest(id: string, step: FollowUpStep, note?: string) {
+  return client.patch<never, ApiResponse<{ followUp: FollowUpStep }>>(`/api/refund-request/${id}/follow-up`, { step, ...(note?.trim() ? { note: note.trim() } : {}) });
 }

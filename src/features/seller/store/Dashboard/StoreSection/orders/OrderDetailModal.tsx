@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { addressLines } from '@/utils/address';
-import { Truck, CheckCheck, RefreshCw } from 'lucide-react';
+import { Truck, CheckCheck, RefreshCw, Printer } from 'lucide-react';
 import { Modal, Button, Badge, StatusBadge, Input, SkeletonBox } from '@/components/comman/ui';
 import { apiMarkOrderPaid, apiSellerCancelOrder, apiUpdateOrderStatus } from '@/api/services/orders';
 import { apiGetSellerOrderDetail, type SellerOrder, type SellerOrderDetail } from '@/api/services/product';
@@ -8,6 +8,8 @@ import { formatPrice } from '@/utils/formatPrice';
 import { CodRiskBadge } from '@/components/ai/CodRiskBadge';
 import { CourierBooking } from './CourierBooking';
 import { OrderIdCopy } from './OrderIdCopy';
+import { ShipFields, EMPTY_SHIP_FORM, nextShipForm } from './ShipFields';
+import { buildTrackingPayload, carrierChoiceFor, OTHER_CARRIER, shipFormErrors, trackingLine, type ShipForm } from '@/utils/carriers';
 
 export type SellerOrderStatus = 'processing' | 'shipped' | 'delivered' | 'completed';
 
@@ -112,11 +114,17 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 export function OrderDetailModal({ order, storeId, onClose, onUpdated, onOpenOrder }: Props) {
   const [busy, setBusy]   = useState<string | null>(null);
   const [error, setError] = useState('');
-  const [carrier, setCarrier]               = useState('');
-  const [trackingNumber, setTrackingNumber] = useState('');
-  const [trackingUrl, setTrackingUrl]       = useState('');
+  const [shipForm, setShipForm]             = useState<ShipForm>(EMPTY_SHIP_FORM);
+  const [shipErrors, setShipErrors]         = useState<Partial<Record<keyof ShipForm, string>>>({});
+  const [urlTouched, setUrlTouched]         = useState(false);
+  const editShip = (patch: Partial<ShipForm>) => {
+    if ('url' in patch) setUrlTouched(true);
+    setShipForm(prev => nextShipForm(prev, patch, 'url' in patch ? true : urlTouched));
+    setShipErrors({});
+  };
   const [cancelling, setCancelling]         = useState(false);
   const [cancelReason, setCancelReason]     = useState('');
+  const [printOpen, setPrintOpen]           = useState(false);
 
   const money = (n: number) => formatPrice(n, order.currency ?? undefined);
 
@@ -150,10 +158,11 @@ export function OrderDetailModal({ order, storeId, onClose, onUpdated, onOpenOrd
     run(status, () => apiUpdateOrderStatus({ orderId: order.orderId, storeId, status }), { status });
 
   const ship = () => {
-    if (!trackingNumber.trim()) { setError('Enter a tracking number to mark this order shipped.'); return; }
+    const errs = shipFormErrors(shipForm);
+    if (Object.keys(errs).length) { setShipErrors(errs); return; }
     run('shipped', () => apiUpdateOrderStatus({
       orderId: order.orderId, storeId, status: 'shipped',
-      tracking: { carrier: carrier.trim(), trackingNumber: trackingNumber.trim(), trackingUrl: trackingUrl.trim() },
+      tracking: buildTrackingPayload(shipForm),
     }), { status: 'shipped' });
   };
 
@@ -191,7 +200,23 @@ export function OrderDetailModal({ order, storeId, onClose, onUpdated, onOpenOrd
           <Row label="Placed">{new Date(order.date).toLocaleString('en-PK', { dateStyle: 'medium', timeStyle: 'short' })}</Row>
           <Row label="Type"><Badge color={order.type === 'digital' ? 'blue' : 'orange'}>{typeLabel}</Badge></Row>
           <Row label="Status"><StatusBadge status={order.status} /></Row>
-          <Row label="Your subtotal"><span className="font-bold">{money(order.amount)}</span></Row>
+          {detail?.amounts && !detail.amounts.pricesHidden ? (
+            <>
+              <Row label="Items subtotal">{money(detail.amounts.itemsSubtotal ?? 0)}</Row>
+              <Row label="Delivery charge">{(detail.amounts.deliveryCharge ?? 0) > 0 ? money(detail.amounts.deliveryCharge as number) : 'Free / none'}</Row>
+              <Row label="Buyer pays"><span className="font-bold">{money(detail.amounts.buyerPays ?? 0)}</span></Row>
+              {detail.amounts.earnings && (
+                <Row label="Your earnings">
+                  <span className="font-bold">{formatPrice(detail.amounts.earnings.amount, detail.amounts.earnings.currency)}</span>
+                  <span className="block text-slate">After Edudeen&apos;s platform fee</span>
+                </Row>
+              )}
+            </>
+          ) : detail?.amounts?.pricesHidden ? (
+            <Row label="Prices"><span className="text-slate">Hidden for gift orders and free claims</span></Row>
+          ) : (
+            <Row label="Your subtotal"><span className="font-bold">{money(order.amount)}</span></Row>
+          )}
         </section>
 
         {(detail?.giftWrap || detail?.giftMessage) && (
@@ -288,12 +313,12 @@ export function OrderDetailModal({ order, storeId, onClose, onUpdated, onOpenOrd
             ) : (
               <p className="text-[12.5px] text-slate py-1">No shipping address on this order — contact the buyer through Messages.</p>
             )}
-            {detail?.tracking?.trackingNumber && (
+            {trackingLine(detail?.tracking) && (
               <Row label="Tracking">
-                {detail.tracking.carrier ? `${detail.tracking.carrier} · ` : ''}
-                {detail.tracking.trackingUrl && /^https?:\/\//i.test(detail.tracking.trackingUrl)
-                  ? <a href={detail.tracking.trackingUrl} target="_blank" rel="noopener noreferrer" className="text-brand-orange underline">{detail.tracking.trackingNumber}</a>
-                  : detail.tracking.trackingNumber}
+                {detail?.tracking?.trackingNumber && detail.tracking.trackingUrl && /^https?:\/\//i.test(detail.tracking.trackingUrl)
+                  ? <a href={detail.tracking.trackingUrl} target="_blank" rel="noopener noreferrer" className="text-brand-orange underline">{trackingLine(detail.tracking)}</a>
+                  : trackingLine(detail?.tracking)}
+                {detail?.tracking?.note ? <span className="block text-slate">{detail.tracking.note}</span> : null}
               </Row>
             )}
           </section>
@@ -308,13 +333,15 @@ export function OrderDetailModal({ order, storeId, onClose, onUpdated, onOpenOrd
                 storeId={storeId}
                 existing={detail?.shipment}
                 quoted={detail?.shippingCourier}
-                onBooked={s => { setTrackingNumber(s.trackingNumber); setCarrier(s.carrier); setTrackingUrl(s.trackingUrl ?? ''); }}
+                onBooked={s => {
+                  const choice = carrierChoiceFor(s.carrier);
+                  setUrlTouched(true);
+                  setShipErrors({});
+                  setShipForm({ ...EMPTY_SHIP_FORM, carrier: choice, otherName: choice === OTHER_CARRIER ? s.carrier : '', number: s.trackingNumber, url: s.trackingUrl ?? '' });
+                }}
               />
-              <Input label="Tracking number *" value={trackingNumber} onChange={e => setTrackingNumber(e.target.value)} placeholder="e.g. LE123456789PK" />
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                <Input label="Carrier" value={carrier} onChange={e => setCarrier(e.target.value)} placeholder="e.g. TCS, Leopards" />
-                <Input label="Tracking link" value={trackingUrl} onChange={e => setTrackingUrl(e.target.value)} placeholder="https://…" />
-              </div>
+              <ShipFields form={shipForm} errors={shipErrors} onChange={editShip} />
+              {/* Booked/stored tracking info the buyer will see */}
               <Button variant="primary" size="sm" onClick={ship} loading={busy === 'shipped'} disabled={!!busy} icon={<Truck size={13} />}>
                 Mark as shipped
               </Button>
@@ -351,6 +378,24 @@ export function OrderDetailModal({ order, storeId, onClose, onUpdated, onOpenOrd
         )}
 
         <div className="flex flex-wrap gap-2 justify-end">
+          <div className="relative">
+            <Button variant="outline" size="sm" onClick={() => setPrintOpen(o => !o)} icon={<Printer size={13} />} aria-haspopup="menu" aria-expanded={printOpen}>
+              Print
+            </Button>
+            {printOpen && (
+              <div role="menu" className="absolute bottom-full mb-1 end-0 z-10 min-w-[160px] rounded-lg border border-bone bg-white shadow-lg py-1">
+                {([['slip', 'Packing slip'], ['invoice', 'Invoice']] as const).map(([mode, label]) => (
+                  <button
+                    key={mode} type="button" role="menuitem"
+                    className="block w-full text-start px-3 py-2 min-h-[44px] text-[13px] text-carbon bg-transparent border-0 cursor-pointer hover:bg-cream"
+                    onClick={() => { setPrintOpen(false); window.open(`/store/${storeId}/orders/print?ids=${order.orderId}&mode=${mode}`, '_blank', 'noopener'); }}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           {canCancel(order) && !cancelling && (
             <Button variant="outline" size="sm" onClick={() => setCancelling(true)} disabled={!!busy}>Cancel order</Button>
           )}

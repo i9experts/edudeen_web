@@ -22,6 +22,8 @@ export interface DeliveryOptions {
   couriers: (DeliveryOptionState & { id: 'tcs' | 'leopards' | 'postex'; label: string })[];
   auto: DeliveryOptionState;
   useLiveRates: boolean;
+  /** Admin's weight-based delivery table is switched on (older API: undefined = off). */
+  weightBasedRates?: boolean;
 }
 
 /** GET /api/couriers/options: which delivery methods this seller may choose (and why not). */

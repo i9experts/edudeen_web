@@ -23,7 +23,20 @@ export interface CollectionRules {
   categoryId: string | null;
   tags: string[];
   matchType: 'all' | 'any';
+  // Smart rules (all optional; absent on old collections).
+  priceMin?: number | null;
+  priceMax?: number | null;
+  createdWithinDays?: number | null;
+  minRating?: number | null;
+  hasDiscount?: boolean;
+  bestSellersTopN?: number | null;
+  language?: string | null;
+  classFrom?: string | null;
+  classTo?: string | null;
 }
+
+export type CollectionSort = 'manual' | 'newest' | 'price_asc' | 'price_desc' | 'best_selling' | 'rating';
+export type CollectionWindowState = 'live' | 'scheduled' | 'ended';
 
 export interface CollectionData {
   _id: string;
@@ -38,11 +51,21 @@ export interface CollectionData {
   status: 'active' | 'draft';
   sortOrder: number;
   seo: CollectionSeo;
+  sortBy?: CollectionSort | null;
+  startAt?: string | null;
+  endAt?: string | null;
+  nameUr?: string | null;
+  descriptionUr?: string | null;
+  /** Seller list only: products that currently match (same evaluator as the store tab). */
+  productCount?: number;
+  windowState?: CollectionWindowState;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface PublicCollectionSummary {
+  nameUr?: string | null;
+  descriptionUr?: string | null;
   _id: string;
   name: string;
   slug: string;
@@ -59,7 +82,14 @@ export interface CreateCollectionPayload {
   type: 'manual' | 'automatic';
   productIds?: string[];
   rules?: Partial<CollectionRules>;
+  sortBy?: CollectionSort;
+  startAt?: string | null;
+  endAt?: string | null;
+  nameUr?: string | null;
+  descriptionUr?: string | null;
 }
+
+export interface CollectionPreview { count: number; products: { _id: string; name: string; image: string | null }[] }
 
 export type UpdateCollectionPayload = Partial<CreateCollectionPayload> & { status?: 'active' | 'draft' };
 
@@ -83,6 +113,15 @@ export function apiUpdateCollection(storeId: string, collectionId: string, paylo
 
 export function apiUpdateCollectionProducts(storeId: string, collectionId: string, productIds: string[]) {
   return client.patch<never, ApiResponse<CollectionData>>(ENDPOINTS.COLLECTIONS.UPDATE_PRODUCTS(storeId, collectionId), { productIds });
+}
+
+/** Live preview for the modal — nothing is saved; same evaluator as the store tab. */
+export function apiPreviewCollection(
+  storeId: string,
+  body: { type: 'manual' | 'automatic'; productIds?: string[]; rules?: Partial<CollectionRules>; sortBy?: CollectionSort },
+  signal?: AbortSignal,
+) {
+  return client.post<never, ApiResponse<CollectionPreview>>(`/api/collections/${storeId}/preview`, body, { signal });
 }
 
 export function apiReorderCollections(storeId: string, ids: string[]) {

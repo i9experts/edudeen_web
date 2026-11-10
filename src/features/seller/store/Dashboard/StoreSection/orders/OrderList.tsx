@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { BulkShipModal } from './BulkShipModal';
 import { useSearchParams } from 'react-router-dom';
 import { formatPrice } from '@/utils/formatPrice';
 import {
   ShoppingCart, RefreshCw,
-  DollarSign, Clock, TrendingUp, CheckCheck, Truck, Eye,
+  DollarSign, Clock, TrendingUp, CheckCheck, Truck, Eye, Printer,
 } from 'lucide-react';
 import { apiMarkOrderPaid, apiUpdateOrderStatus } from '@/api/services/orders';
 import { useStoreWorkspace, StorePageHeader } from '@/components/layouts/StoreLayout';
@@ -81,8 +82,10 @@ export function StoreOrderList() {
   const [totalOrders, setTotalOrders] = useState(0);
   const [stats,       setStats]       = useState<SellerOrderStats | null>(null);
   const [page,        setPage]        = useState(1);
-  const [search,      setSearch]      = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+  // Returns page links here with ?q=<order number>&tab=all.
+  const initialQ = (() => { try { return (new URLSearchParams(window.location.search).get('q') ?? '').slice(0, 60); } catch { return ''; } })();
+  const [search,      setSearch]      = useState(initialQ);
+  const [debouncedSearch, setDebouncedSearch] = useState(initialQ);
   // Tab lives in the URL (?tab=), so a refresh or a shared link keeps it; default = Needs action.
   const [searchParams, setSearchParams] = useSearchParams();
   const rawTab = searchParams.get('tab');
@@ -235,9 +238,45 @@ export function StoreOrderList() {
     return (o.codAmount ?? 0) > 0 ? `Cash to collect: ${money(o, o.codAmount!)}` : null;
   };
 
+  // ── Print selection (kept across pages, max 50) ─────────────────────────────
+  const [picked, setPicked] = useState<Set<string>>(() => new Set());
+  const MAX_PRINT = 50;
+  // Remember the order object of every ticked row (selection survives paging) so bulk shipping can check each one.
+  const pickedOrders = useRef<Map<string, SellerOrder>>(new Map());
+  const [bulkShipOpen, setBulkShipOpen] = useState(false);
+  const togglePick = (id: string) => setPicked(prev => {
+    const n = new Set(prev);
+    if (n.has(id)) { n.delete(id); pickedOrders.current.delete(id); }
+    else if (n.size < MAX_PRINT) {
+      n.add(id);
+      const o = orders.find(x => x.orderId === id);
+      if (o) pickedOrders.current.set(id, o);
+    }
+    return n;
+  });
+  const pickBox = (o: SellerOrder) => (
+    <input
+      type="checkbox"
+      className="size-4 cursor-pointer"
+      checked={picked.has(o.orderId)}
+      disabled={!picked.has(o.orderId) && picked.size >= MAX_PRINT}
+      onChange={() => togglePick(o.orderId)}
+      onClick={e => e.stopPropagation()}
+      aria-label={`Select order ${o.orderNumber} for printing`}
+    />
+  );
+  const printSelected = () => {
+    if (picked.size === 0) return;
+    window.open(`/store/${storeId}/orders/print?ids=${Array.from(picked).join(',')}&mode=slip`, '_blank', 'noopener');
+  };
+
   // ── Columns ──────────────────────────────────────────────────────────────────
   // ≥1280: every column. 768-1279: email + Status columns drop (status joins the Payment cell). <768: cards.
   const columns: TableColumn<SellerOrder>[] = [
+    {
+      key: 'pick', header: '', width: '40px',
+      render: o => pickBox(o),
+    },
     {
       key: 'orderNumber', header: 'Order',
       render: o => (
@@ -272,7 +311,10 @@ export function StoreOrderList() {
               <span className="hidden 2xl:inline">{dateText(o)}</span>
             </span>
             {sb ? (
-              <span className={`text-[12px] font-semibold px-2 py-[2px] rounded-full whitespace-nowrap ${BADGE_CLASS[sb.tone]}`}>{sb.label}</span>
+              <>
+                <span className={`text-[12px] font-semibold px-2 py-[2px] rounded-full whitespace-nowrap ${BADGE_CLASS[sb.tone]}`}>{sb.label}</span>
+                {sb.secondary && <span className="text-[12px] font-semibold text-error whitespace-nowrap">{sb.secondary}</span>}
+              </>
             ) : waiting ? (
               <span className="text-[12px] text-slate whitespace-nowrap">{orderAgeText(o.date, now)}</span>
             ) : null}
@@ -314,7 +356,7 @@ export function StoreOrderList() {
     return (
       <div className="flex flex-col gap-2.5">
         <div className="flex items-center justify-between gap-2">
-          <OrderIdCopy orderNumber={o.orderNumber} />
+          <span className="flex items-center gap-2">{pickBox(o)}<OrderIdCopy orderNumber={o.orderNumber} /></span>
           <span className="text-[12px] text-slate whitespace-nowrap">{dateText(o)}</span>
         </div>
         {o.possibleDuplicate && <DuplicateChip other={o.possibleDuplicate} />}
@@ -333,7 +375,10 @@ export function StoreOrderList() {
           {payChips(o)}
           <StatusBadge status={o.status} />
           {sb ? (
-            <span className={`text-[12px] font-semibold px-2 py-[2px] rounded-full whitespace-nowrap ${BADGE_CLASS[sb.tone]}`}>{sb.label}</span>
+            <>
+              <span className={`text-[12px] font-semibold px-2 py-[2px] rounded-full whitespace-nowrap ${BADGE_CLASS[sb.tone]}`}>{sb.label}</span>
+              {sb.secondary && <span className="text-[12px] font-semibold text-error whitespace-nowrap">{sb.secondary}</span>}
+            </>
           ) : waiting ? (
             <span className="text-[12px] text-slate">{orderAgeText(o.date, now)}</span>
           ) : null}
@@ -439,6 +484,20 @@ export function StoreOrderList() {
                 >
                   Refresh
                 </Button>
+                <Button
+                  variant="outline" size="xs" onClick={printSelected} disabled={picked.size === 0} icon={<Printer size={11} />}
+                  title={picked.size >= MAX_PRINT ? 'Maximum 50 orders per print' : undefined}
+                >
+                  Print selected{picked.size > 0 ? ` (${picked.size})` : ''}
+                </Button>
+                <Button
+                  variant="outline" size="xs" onClick={() => setBulkShipOpen(true)} disabled={picked.size === 0} icon={<Truck size={11} />}
+                >
+                  Mark shipped{picked.size > 0 ? ` (${picked.size})` : ''}
+                </Button>
+                {picked.size > 0 && (
+                  <Button variant="ghost" size="xs" onClick={() => { setPicked(new Set()); pickedOrders.current.clear(); }}>Clear selection</Button>
+                )}
               </div>
             </div>
 
@@ -475,6 +534,19 @@ export function StoreOrderList() {
         {storeId && <FreeClaimsCard storeId={storeId} />}
 
       </div>
+
+      {bulkShipOpen && (
+        <BulkShipModal
+          orders={Array.from(picked).map(id => pickedOrders.current.get(id)).filter((o): o is SellerOrder => !!o)}
+          storeId={storeId}
+          onClose={() => setBulkShipOpen(false)}
+          onShipped={ids => {
+            ids.forEach(id => patchOrder(id, { status: 'shipped' }));
+            setPicked(prev => { const n = new Set(prev); ids.forEach(id => { n.delete(id); pickedOrders.current.delete(id); }); return n; });
+            setRefreshKey(k => k + 1);
+          }}
+        />
+      )}
 
       {selected && (
         <OrderDetailModal

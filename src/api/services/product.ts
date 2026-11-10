@@ -128,6 +128,8 @@ export interface StoreProduct {
   classTo?:          string | null;
   /** Physical: parcel kind + packed size (cm) used for the delivery charge. */
   parcelType?:       'document' | 'standard' | 'fragile' | 'bulky';
+  /** Per-product dispatch time in working days (1-7); null/absent = the store's. */
+  dispatchDaysOverride?: number | null;
   packageCm?:        { l: number; w: number; h: number } | null;
   /** Admin-assigned trust badges (listing review). */
   trust?:            { scholarReviewed: boolean; ageAppropriateMin: number | null; ageAppropriateMax: number | null } | null;
@@ -173,6 +175,8 @@ export interface CreatePhysicalPayload extends LearningMetaInput {
   premiumOptOut?: boolean;
   campaignIds?:      string[];
   parcelType?:       'document' | 'standard' | 'fragile' | 'bulky';
+  /** Per-product dispatch time in working days (1-7); null/absent = the store's. */
+  dispatchDaysOverride?: number | null;
   packageCm?:        { l: number; w: number; h: number } | null;
   // At least one variant is required — every variant must share the same
   // set of attribute names (e.g. all "Color"+"Size", not a mix).
@@ -225,6 +229,8 @@ export interface EditPhysicalPayload extends LearningMetaInput {
   premiumOptOut?: boolean;
   campaignIds?:      string[];
   parcelType?:       'document' | 'standard' | 'fragile' | 'bulky';
+  /** Per-product dispatch time in working days (1-7); null/absent = the store's. */
+  dispatchDaysOverride?: number | null;
   packageCm?:        { l: number; w: number; h: number } | null;
 }
 
@@ -289,6 +295,7 @@ export interface InventoryProduct {
   sku:          string;
   name:         string;
   image:        string | null;
+  slug?:        string | null;
   type:         'physical' | 'digital';
   productType?: 'physical' | 'digital';
   deliveryFormat?: DeliveryFormat;
@@ -304,6 +311,15 @@ export interface InventoryProduct {
   editRejection?: string | null;
   price:        number;
   allTimeSales: number;
+  /** Last 30 days (Pakistan time), same rules as Analytics. views30d null = no tracked day yet. */
+  views30d?: number | null;
+  sales30d?: number;
+  /** Pro plans only; null otherwise. */
+  conversionPct?: number | null;
+  conversionLocked?: boolean;
+  /** 0-100 listing completeness and what is missing. */
+  qualityScore?: number;
+  qualityMissing?: string[];
   /** Set for products whose stock can be edited inline (single variant). */
   defaultVariantId?: string | null;
   variantCount?:     number;
@@ -311,6 +327,23 @@ export interface InventoryProduct {
   campaignIds?:      string[];
   premiumDiscountPercent?: number | null;
   premiumOptOut?:    boolean;
+  /** Why an "In review" listing is waiting (display only). */
+  reviewReason?:     string | null;
+  /** Seller's "running low" line (default 10) and whether they set their own. */
+  lowStockThreshold?: number;
+  hasCustomThreshold?: boolean;
+}
+
+export interface StockHistoryItem { id: string; old: number; new: number; source: 'manual' | 'bulk'; createdAt: string }
+/** GET /api/inventory/stock-history/:storeId/:productId - last 20 stock changes (seller only). */
+export function apiGetStockHistory(storeId: string, productId: string) {
+  return client.get<never, ApiResponse<{ items: StockHistoryItem[] }>>(ENDPOINTS.INVENTORY.STOCK_HISTORY(storeId, productId));
+}
+/** PATCH /api/inventory/low-stock-threshold/:storeId/:productId - whole 0..1000, null = back to the default (10). */
+export function apiSetLowStockThreshold(storeId: string, productId: string, threshold: number | null) {
+  return client.patch<never, ApiResponse<{ productId: string; lowStockThreshold: number; hasCustomThreshold: boolean }>>(
+    ENDPOINTS.INVENTORY.LOW_STOCK_THRESHOLD(storeId, productId), { threshold },
+  );
 }
 
 export type BulkOfferAction = 'premium_on' | 'premium_off' | 'campaign_add' | 'campaign_remove';
@@ -319,11 +352,38 @@ export interface BulkOffersResult { updated: string[]; skipped: { id: string; re
 export function apiBulkOffers(body: { storeId: string; productIds: string[]; action: BulkOfferAction; percent?: number; campaignId?: string }) {
   return client.patch<never, ApiResponse<BulkOffersResult>>('/api/products/bulk-offers', body);
 }
+export interface BulkStatusResult {
+  updated: { id: string; name: string; status: string }[];
+  skipped: { id: string; name: string; reason: string }[];
+  changedMeanwhile: number;
+}
+/** PATCH /api/products/bulk-status - seller only (max 100). A product that cannot change is skipped with a reason. */
+export function apiBulkStatus(ids: string[], active: boolean) {
+  return client.patch<never, ApiResponse<BulkStatusResult>>('/api/products/bulk-status', { ids, active });
+}
+
+export interface BulkPriceItem { id: string; name: string; from: number | null; to: number | null; ok: boolean; unchanged?: boolean; reason?: string }
+export interface BulkPriceResult { dryRun: boolean; canApply?: boolean; items: BulkPriceItem[] }
+/** PATCH /api/products/bulk-price - all-or-nothing (max 100). `dryRun` returns the old -> new preview. */
+export function apiBulkPrice(body: { ids: string[]; mode: 'set' | 'percent'; value: number; dryRun?: boolean }) {
+  return client.patch<never, ApiResponse<BulkPriceResult>>('/api/products/bulk-price', body);
+}
+
 /** PATCH /api/products/stock/bulk — seller only; sets absolute stock per variant. */
 export function apiBulkUpdateStock(storeId: string, updates: { variantId: string; stock: number }[]) {
   return client.patch<never, ApiResponse<{ updated: number; skipped: { variantId: string; reason: string }[] }>>(
     ENDPOINTS.PRODUCT.BULK_STOCK, { storeId, updates },
   );
+}
+
+export type StockAdjustMode = 'set' | 'add' | 'subtract';
+export interface StockAdjustResult {
+  updated: { id: string; name: string; from: number; to: number }[];
+  skipped: { id: string; name: string; reason: string; code: 'digital' | 'unlimited' | 'variants' | 'range' | 'unchanged' | 'changed' }[];
+}
+/** PATCH /api/products/stock/bulk (product-level) - seller only, max 100 products. Digital/unlimited are skipped with a reason. */
+export function apiBulkAdjustStock(storeId: string, ids: string[], mode: StockAdjustMode, value: number) {
+  return client.patch<never, ApiResponse<StockAdjustResult>>(ENDPOINTS.PRODUCT.BULK_STOCK, { storeId, ids, mode, value });
 }
 
 export interface InventoryStats {
@@ -332,6 +392,8 @@ export interface InventoryStats {
   lowStock:      number;
   outOfStock:    number;
   unlimited?:    number;
+  /** Store-wide product count per status (draft, pending_review, active, scheduled, inactive, rejected). */
+  statusCounts?: Record<string, number>;
 }
 
 export interface InventoryPagination {
@@ -402,6 +464,16 @@ export function apiGetMyProductById(id: string) {
   ));
 }
 
+/** POST /api/products/duplicate/:id - seller only; creates a DRAFT copy (new SKU/slug). */
+export function apiDuplicateProduct(id: string) {
+  return client.post<never, ApiResponse<{ productId: string; slug: string; name: string; status: string }>>(`/api/products/duplicate/${id}`);
+}
+
+/** PATCH /api/products/visibility/:id - seller only; Activate / Deactivate. `status` = where it landed (pending_review for never-approved). */
+export function apiSetProductVisibility(id: string, active: boolean) {
+  return client.patch<never, ApiResponse<{ status: string }>>(`/api/products/visibility/${id}`, { active });
+}
+
 export function apiDeleteProduct(id: string) {
   return client.delete<never, ApiResponse<null>>(
     ENDPOINTS.PRODUCT.DELETE_PRODUCT(id),
@@ -431,14 +503,44 @@ export function apiDeleteVariant(productId: string, variantId: string) {
 
 export function apiGetStoreInventory(
   storeId: string, page = 1, limit = 10,
-  filters: { status?: 'active' | 'draft' | 'archived' | 'pending_review' | 'rejected'; q?: string } = {},
+  filters: {
+    status?: 'active' | 'draft' | 'archived' | 'pending_review' | 'rejected' | 'inactive' | 'active,scheduled';
+    q?: string;
+    type?: 'physical' | 'digital';
+    deliveryFormat?: 'download' | 'course';
+    categoryId?: string;
+    /** Store-wide sort by last-30-day views / sales (default = newest). */
+    sort?: 'views' | 'sales';
+    /** 'low' = only listings with a quality score under 60. */
+    quality?: 'low';
+    /** Inventory page: only products in this stock bucket (same buckets as the stat cards). */
+    stockState?: 'low' | 'out' | 'in' | 'unlimited';
+    /** Inventory page: store-wide sort (all pages). */
+    sortBy?: 'name' | 'price' | 'stock' | 'status';
+    order?: 'asc' | 'desc';
+    /** Seller Categories page: only products that have no sub-category. */
+    noSubcategory?: boolean;
+  } = {},
+  /** Optional: cancel this request (skips the shared in-flight dedupe) and cap it at 15 s. */
+  signal?: AbortSignal,
 ) {
   // Backend supports ?status= and ?q= (name/SKU, case-insensitive) and counts
   // stats.totalProducts on the same filter. `limit` is capped at 100 server-side.
   const params = new URLSearchParams({ page: String(page), limit: String(limit) });
   if (filters.status) params.set('status', filters.status);
   if (filters.q?.trim()) params.set('q', filters.q.trim());
+  if (filters.type) params.set('type', filters.type);
+  if (filters.deliveryFormat) params.set('deliveryFormat', filters.deliveryFormat);
+  if (filters.categoryId) params.set('categoryId', filters.categoryId);
+  if (filters.sort) params.set('sort', filters.sort);
+  if (filters.quality) params.set('quality', filters.quality);
+  if (filters.stockState) params.set('stockState', filters.stockState);
+  if (filters.sortBy) params.set('sortBy', filters.sortBy);
+  if (filters.order) params.set('order', filters.order);
+  if (filters.noSubcategory) params.set('noSubcategory', '1');
   const url = `${ENDPOINTS.INVENTORY.GET_STORE_INVENTORY(storeId)}?${params.toString()}`;
+  // `_retriedSlow` opts out of client.ts's one extra 30 s retry, so the caller sees the failure after 15 s.
+  if (signal) return client.get<never, ApiResponse<GetInventoryData>>(url, { signal, timeout: 15000, _retriedSlow: true } as object);
   return dedupeGet(url, () => client.get<never, ApiResponse<GetInventoryData>>(url));
 }
 
@@ -591,7 +693,9 @@ export interface SellerOrderDetail {
   cancelledAt?:    string | null;
   type:            'physical' | 'digital' | 'mixed';
   subtotal:        number;
-  tracking:       { carrier: string | null; trackingNumber: string | null; trackingUrl: string | null } | null;
+  tracking:       { carrier: string | null; trackingNumber: string | null; trackingUrl: string | null; expectedDeliveryDate?: string | null; note?: string | null } | null;
+  /** Stored money breakdown for this package (API never recalculates). */
+  amounts?:        { pricesHidden: boolean; currency: string; itemsSubtotal?: number; deliveryCharge?: number; buyerPays?: number; earnings?: { amount: number; currency: string } | null };
   /** Set when the shipment was booked through a courier integration. */
   shipment?:       { courier: string | null; trackingNumber: string | null; labelUrl: string | null; bookedAt: string | null } | null;
   /** How the delivery charge was priced at checkout; booking is locked to this courier. */
@@ -611,6 +715,25 @@ export interface SellerOrderDetail {
 export function apiGetSellerOrderDetail(storeId: string, orderId: string) {
   return client.get<never, ApiResponse<SellerOrderDetail>>(
     `${ENDPOINTS.SELLER_ACCOUNT.GET_SELLER_ORDERS(storeId)}/${orderId}`,
+  );
+}
+
+export interface SellerPrintOrder {
+  orderId: string; orderNumber: string; date: string; currency: string;
+  type: 'physical' | 'digital' | 'mixed'; status: string;
+  isGift: boolean; pricesHidden: boolean; giftMessage: string | null; giftWrap: boolean;
+  paymentType: string; isPaid: boolean;
+  codAmount: number | null; subtotal: number | null; shippingFee: number | null;
+  customer: { name: string; phone: string | null };
+  shippingAddress: SellerOrderShippingAddress | null;
+  items: { name: string; sku: string | null; type: string; options: { name: string; value: string }[]; licenseType: string | null; quantity: number; price: number | null; totalPrice: number | null; status: string | null }[];
+}
+
+/** GET /api/orders/seller-orders/:storeId/print?ids=a,b — up to 50 of this store's orders for printing. */
+export function apiGetSellerOrdersForPrint(storeId: string, ids: string[]) {
+  return client.get<never, ApiResponse<{ store: { name: string; logo: string | null }; orders: SellerPrintOrder[] }>>(
+    `${ENDPOINTS.SELLER_ACCOUNT.GET_SELLER_ORDERS(storeId)}/print`,
+    { params: { ids: ids.join(',') } },
   );
 }
 

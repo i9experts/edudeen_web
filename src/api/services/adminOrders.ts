@@ -59,7 +59,7 @@ export interface AdminSellerOrder {
   status: string;
   subtotal: number;
   items: AdminOrderItem[];
-  tracking?: { carrier?: string | null; trackingNumber?: string | null; trackingUrl?: string | null } | null;
+  tracking?: { carrier?: string | null; trackingNumber?: string | null; trackingUrl?: string | null; expectedDeliveryDate?: string | null; note?: string | null } | null;
   shippedAt?: string | null;
   deliveredAt?: string | null;
   cancelledAt?: string | null;

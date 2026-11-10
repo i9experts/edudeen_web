@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { buildShippingPayload, dispatchDaysError, DISPATCH_DAYS_DEFAULT } from '@/features/seller/dashboard/shippingRules';
 import { apiUpdateStore, type StoreDeliveryMethod, type StoreDeliverySettings, type StoreGiftWrap, type StoreShipFrom } from '@/api/services/store';
 import { apiGetDeliveryOptions, type DeliveryOptions } from '@/api/services/couriers';
 import { Toggle } from '@/components/comman/ui';
@@ -12,8 +13,9 @@ const badMoney = (s: string) => { const n = toNum(s); return !Number.isFinite(n)
 interface MethodChoice { value: StoreDeliveryMethod | null; label: string; hint: string; available: boolean; reason: string | null }
 
 /** Seller picks how they deliver, and sets their own delivery charge and gift-wrap charge (store currency). */
-export function DeliveryGiftCard({ storeId, delivery, giftWrap, shipFrom, deliveryMethod, currency, refetch }: {
+export function DeliveryGiftCard({ storeId, delivery, giftWrap, shipFrom, deliveryMethod, dispatchDays, currency, refetch }: {
   storeId: string;
+  dispatchDays?: number;
   deliveryMethod?: StoreDeliveryMethod | null;
   delivery: StoreDeliverySettings | null | undefined;
   giftWrap: StoreGiftWrap | null | undefined;
@@ -28,34 +30,36 @@ export function DeliveryGiftCard({ storeId, delivery, giftWrap, shipFrom, delive
   const [freeOver, setFreeOver] = useState(delivery?.freeOverAmount != null ? String(delivery.freeOverAmount) : '');
   const [wrapOn, setWrapOn] = useState(giftWrap?.enabled ?? true);
   const [wrapFee, setWrapFee] = useState(String(giftWrap?.fee ?? 0));
+  const [dispatch, setDispatch] = useState(String(dispatchDays ?? DISPATCH_DAYS_DEFAULT));
+  useEffect(() => { setDispatch(String(dispatchDays ?? DISPATCH_DAYS_DEFAULT)); }, [dispatchDays]);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [method, setMethod] = useState<StoreDeliveryMethod | null>(deliveryMethod ?? null);
   const [options, setOptions] = useState<DeliveryOptions | null>(null);
-  const [optionsError, setOptionsError] = useState(false);
 
   useEffect(() => { setMethod(deliveryMethod ?? null); }, [deliveryMethod]);
   useEffect(() => {
     let alive = true;
     apiGetDeliveryOptions()
       .then(res => { if (alive) setOptions(res.data); })
-      .catch(() => { if (alive) setOptionsError(true); });
+      .catch(() => { /* options stay hidden; standard + self-delivery always work */ });
     return () => { alive = false; };
   }, []);
 
-  // A courier the seller already saved stays selectable (so the form shows the truth) but is marked when it is not available.
-  const courierChoices: MethodChoice[] = (['tcs', 'leopards', 'postex'] as const).map(id => {
+  // Courier options are only listed when they can really be used (hidden while couriers are switched off).
+  const courierChoices: MethodChoice[] = (['tcs', 'leopards', 'postex'] as const).flatMap(id => {
     const o = options?.couriers.find(c => c.id === id);
-    const label = o?.label ?? { tcs: 'TCS', leopards: 'Leopards', postex: 'PostEx' }[id];
-    return { value: id, label: `Edudeen books ${label}`, hint: `Buyers pay ${label}'s delivery charge. Edudeen books and tracks the parcel.`, available: !!o?.available, reason: o ? o.reason : 'Checking…' };
+    if (!o?.available) return [];
+    return [{ value: id, label: `Edudeen books ${o.label}`, hint: `Buyers pay ${o.label}'s delivery charge. Edudeen books and tracks the parcel.`, available: true, reason: null } as MethodChoice];
   });
   const methodChoices: MethodChoice[] = [
     { value: null, label: 'Edudeen standard delivery', hint: 'Buyers pay the standard Edudeen delivery fee for their city.', available: true, reason: null },
-    { value: 'self', label: 'I deliver myself', hint: 'Buyers pay your own charge. You arrange the delivery.', available: true, reason: null },
+    { value: 'self', label: 'I deliver myself', hint: 'You arrange the delivery yourself. Edudeen does not book a courier.', available: true, reason: null },
     ...courierChoices,
-    { value: 'auto', label: 'Cheapest available courier', hint: 'Edudeen uses whichever courier is cheapest for each order.', available: !!options?.auto.available, reason: options ? options.auto.reason : 'Checking…' },
+    ...(options?.auto.available ? [{ value: 'auto', label: 'Cheapest available courier', hint: 'Edudeen uses whichever courier is cheapest for each order.', available: true, reason: null } as MethodChoice] : []),
   ];
   const showFlat = method === null || method === 'self';
+  const weightBased = options?.weightBasedRates === true;
 
   useEffect(() => {
     setDelOn(delivery?.enabled ?? false);
@@ -70,19 +74,14 @@ export function DeliveryGiftCard({ storeId, delivery, giftWrap, shipFrom, delive
   const feeError = delOn && badMoney(fee) ? 'Enter the delivery charge (0 or more).' : null;
   const freeError = delOn && freeOver.trim() !== '' && badMoney(freeOver) ? 'Enter an amount (0 or more) or leave it empty.' : null;
   const wrapError = wrapOn && badMoney(wrapFee) ? 'Enter the gift wrap charge (0 or more).' : null;
+  const dispatchError = dispatchDaysError(dispatch);
   const cur = currency ?? '';
 
   async function save() {
-    if (feeError || freeError || wrapError) return;
+    if (feeError || freeError || wrapError || dispatchError) return;
     setSaving(true); setMsg(null);
     try {
-      await apiUpdateStore({
-        storeId,
-        deliverySettings: { enabled: delOn, fee: delOn ? toNum(fee) : 0, freeOverAmount: delOn && freeOver.trim() !== '' ? toNum(freeOver) : null },
-        giftWrap: { enabled: wrapOn, fee: wrapOn ? toNum(wrapFee) : 0 },
-        shipFrom: fromCity.trim() ? { city: fromCity.trim(), province: fromProvince.trim() || null } : null,
-        deliveryMethod: method,
-      });
+      await apiUpdateStore(buildShippingPayload(storeId, { fromCity, fromProvince, delOn, fee, freeOver, wrapOn, wrapFee, method, dispatchDays: dispatch }));
       refetch();
       setMsg({ ok: true, text: 'Saved.' });
     } catch (err) {
@@ -112,8 +111,15 @@ export function DeliveryGiftCard({ storeId, delivery, giftWrap, shipFrom, delive
         </div>
       </div>
 
+      <p className="text-[13px] font-medium text-charcoal mb-1">Dispatch time</p>
+      <div className="mb-4 sm:max-w-[50%]">
+        <label htmlFor="dispatch-days" className="text-[12px] font-semibold text-charcoal block mb-1.5">Ship within (working days)</label>
+        <input id="dispatch-days" type="number" inputMode="numeric" min={1} max={7} step={1} value={dispatch} onChange={e => setDispatch(e.target.value)} className={inputCls} aria-invalid={!!dispatchError} />
+        <p className="text-[12px] text-slate mt-1">Sundays are not counted. Applies to new orders only; orders you already have keep their ship-by date.</p>
+        {dispatchError && <p role="alert" className="text-[12px] text-red-600 mt-1">{dispatchError}</p>}
+      </div>
+
       <p className="text-[13px] font-medium text-charcoal mb-1">How do you deliver?</p>
-      <p className="text-[12px] text-slate mb-2">Edudeen books and tracks courier parcels for you; the buyer pays the courier charge at checkout.</p>
       <div role="radiogroup" aria-label="How do you deliver?" className="flex flex-col gap-2 mb-4">
         {methodChoices.map(c => {
           const disabled = !c.available;
@@ -128,14 +134,13 @@ export function DeliveryGiftCard({ storeId, delivery, giftWrap, shipFrom, delive
           );
         })}
       </div>
-      {optionsError && <p className="text-[12px] text-slate mb-3">Could not check which couriers are available, so only the first two options can be chosen right now.</p>}
 
       {showFlat && (<>
       <div className="flex items-center justify-between gap-3 px-[14px] py-3 rounded-[9px] border border-bone bg-cream mb-3">
         <p className="text-[13px] font-medium text-charcoal">Set my own delivery charge</p>
         <Toggle label="Set my own delivery charge" checked={delOn} onChange={setDelOn} />
       </div>
-      <p className="text-[12px] text-slate mb-3">{method === 'self' ? 'Buyers pay your charge, and you arrange the delivery yourself. Edudeen does not book a courier.' : 'If Edudeen weight-based delivery rates are active, they replace this flat fee; your free-delivery amount still applies.'}</p>
+      {weightBased && !delOn && <p className="text-[12px] text-slate mb-3">Edudeen’s standard rate depends on parcel weight and distance.</p>}
       {delOn ? (
         <div className="grid gap-3 sm:grid-cols-2 mb-4">
           <div>
@@ -150,7 +155,7 @@ export function DeliveryGiftCard({ storeId, delivery, giftWrap, shipFrom, delive
           </div>
         </div>
       ) : (
-        <p className="text-[12px] text-slate mb-4">Off: buyers pay the standard Edudeen delivery fee for their city.</p>
+        <p className="text-[12px] text-slate mb-4">Off: buyers pay Edudeen’s standard delivery fee for their city.</p>
       )}
       </>)}
 
@@ -167,7 +172,7 @@ export function DeliveryGiftCard({ storeId, delivery, giftWrap, shipFrom, delive
       )}
 
       <div className="flex items-center gap-3">
-        <Button size="sm" loading={saving} disabled={!!feeError || !!freeError || !!wrapError} onClick={save}>Save charges</Button>
+        <Button size="sm" loading={saving} disabled={!!feeError || !!freeError || !!wrapError || !!dispatchError} onClick={save}>Save charges</Button>
         {msg && <span className={`text-[12px] ${msg.ok ? 'text-green-700' : 'text-red-600'}`}>{msg.text}</span>}
       </div>
     </div>

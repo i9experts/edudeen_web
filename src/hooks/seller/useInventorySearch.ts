@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { apiGetStoreInventory, type InventoryProduct } from '@/api/services/product';
 
 /** Returns `value` once it has stopped changing for `delay` ms. */
@@ -32,23 +32,30 @@ export function useInventorySearch(storeId: string | undefined, { limit = 50, st
   const [error, setError]       = useState('');
   const debounced = useDebouncedValue(query.trim(), 300);
   const requestId = useRef(0);
+  const [attempt, setAttempt] = useState(0);
+  const retry = useCallback(() => setAttempt(n => n + 1), []);
 
   useEffect(() => {
     if (!storeId || !enabled) return;
     const thisRequest = ++requestId.current;
+    // Aborts the previous request when the query changes (cleanup) and gives up after 15 s.
+    const ctrl = new AbortController();
     setLoading(true);
     setError('');
-    apiGetStoreInventory(storeId, 1, limit, { status, q: debounced })
+    apiGetStoreInventory(storeId, 1, limit, { status, q: debounced }, ctrl.signal)
       .then(res => {
         if (requestId.current !== thisRequest) return;
         setProducts(res.data?.products ?? []);
         setTotal(res.data?.pagination?.totalProducts ?? 0);
       })
-      .catch((err: unknown) => {
-        if (requestId.current === thisRequest) setError(err instanceof Error ? err.message : 'Failed to load products.');
+      .catch(() => {
+        if (ctrl.signal.aborted || requestId.current !== thisRequest) return; // superseded, not a failure
+        setProducts([]);
+        setError("Couldn't load your products");
       })
       .finally(() => { if (requestId.current === thisRequest) setLoading(false); });
-  }, [storeId, limit, status, enabled, debounced]);
+    return () => ctrl.abort();
+  }, [storeId, limit, status, enabled, debounced, attempt]);
 
-  return { query, setQuery, products, total, loading, error, searching: debounced.length > 0 };
+  return { query, setQuery, products, total, loading, error, retry, searching: debounced.length > 0 };
 }

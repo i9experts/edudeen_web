@@ -1,288 +1,265 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { useLiveRefresh } from '@/hooks/useLiveRefresh';
-import { formatPrice } from '@/utils/formatPrice';
+import { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
+import { clsx } from 'clsx';
 import { AlertCircle, RefreshCw } from 'lucide-react';
+import { useLiveRefresh } from '@/hooks/useLiveRefresh';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useStoreWorkspace, StorePageHeader } from '@/components/layouts/StoreLayout';
-import { Modal, Textarea, Button, Table, type TableColumn } from '@/components/comman/ui';
+import { Button, Table, MetricCard, type TableColumn } from '@/components/comman/ui';
 import {
-  apiGetSellerReturns, apiReturnAction,
-  type SellerReturnItem, type ReturnStatus,
+  apiGetSellerReturnsAll,
+  type SellerReturnRow, type SellerReturnsAllStats,
 } from '@/api/services/orders';
-import { formatMoney } from '@/utils/currency';
+import { FOLLOW_UP_LABEL } from '@/api/services/refundRequests';
+import { ReturnDrawer } from './ReturnDrawer';
+import { formatPrice } from '@/utils/formatPrice';
 import { returnSummary } from '@/utils/sellerTrust';
 import { useDebouncedValue } from '@/hooks/seller/useInventorySearch';
-import { SellerRefundRequests } from './SellerRefundRequests';
 
-// Fixed server-side page size of GET /orders/returns.
-const RETURNS_PER_PAGE = 10;
+const PER_PAGE = 10;
+const HOUR = 3_600_000;
 
-const statusStyle: Record<string, { bg: string; color: string }> = {
-  requested:          { bg: '#FFF4DC', color: '#B36200' },
-  partial_requested:  { bg: '#FFF4DC', color: '#B36200' },
-  approved:           { bg: '#E3F4EA', color: '#1E7A3C' },
-  rejected:           { bg: '#FDECEA', color: '#C0392B' },
-};
-
-const STATUS_OPTIONS: { value: string; label: string }[] = [
-  { value: '',          label: 'All Status' },
-  { value: 'requested', label: 'Requested'  },
-  { value: 'approved',  label: 'Approved'   },
-  { value: 'rejected',  label: 'Rejected'   },
+const STATUS_OPTIONS = [
+  { value: '',         label: 'All status' },
+  { value: 'open',     label: 'Open' },
+  { value: 'approved', label: 'Approved' },
+  { value: 'rejected', label: 'Rejected' },
+  { value: 'item_received',    label: FOLLOW_UP_LABEL.item_received },
+  { value: 'replacement_sent', label: FOLLOW_UP_LABEL.replacement_sent },
 ];
 
-// ── Approve/Reject modal ─────────────────────────────────────────────────────
-function ReturnActionModal({
-  item, onClose, onDone, currency,
-}: {
-  item: SellerReturnItem;
-  onClose: () => void;
-  onDone: () => void;
-  currency?: string | null;
-}) {
-  const [action, setAction] = useState<'approve' | 'reject' | null>(null);
-  const [rejectReason, setRejectReason] = useState('');
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
+const STATUS_STYLE: Record<SellerReturnRow['status'], string> = {
+  open:     'bg-amber-50 text-amber-700',
+  approved: 'bg-green-50 text-success',
+  rejected: 'bg-red-50 text-error',
+};
 
-  const submit = async (chosen: 'approve' | 'reject') => {
-    if (chosen === 'reject' && !rejectReason.trim()) { setAction('reject'); setError('Please provide a rejection reason.'); return; }
-    setError('');
-    setSaving(true);
-    try {
-      await apiReturnAction(item.orderId, {
-        storeId: item.storeId,
-        itemIds: [item.itemId],
-        action: chosen,
-        rejectReason: chosen === 'reject' ? rejectReason.trim() : undefined,
-      });
-      onDone();
-      onClose();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to process return.');
-    } finally {
-      setSaving(false);
-    }
+/** 'Overdue 3h' / '9h left' / '1d 4h left'. Tone: red overdue, amber under 12 h, neutral otherwise. Display only: nothing happens automatically. */
+function respondInfo(r: SellerReturnRow, now: number): { text: string; tone: 'red' | 'amber' | 'plain' } | null {
+  if (r.status !== 'open' || !r.respondBy) return null;
+  const diff = new Date(r.respondBy).getTime() - now;
+  const span = (ms: number) => {
+    const h = Math.max(1, Math.floor(ms / HOUR));
+    return h >= 24 ? `${Math.floor(h / 24)}d ${h % 24}h` : `${h}h`;
   };
+  if (diff < 0) return { text: `Overdue ${span(-diff)}`, tone: 'red' };
+  if (diff < 12 * HOUR) return { text: `${Math.max(1, Math.ceil(diff / 60_000)) < 60 ? `${Math.max(1, Math.ceil(diff / 60_000))}m` : span(diff)} left`, tone: 'amber' };
+  return { text: `${span(diff)} left`, tone: 'plain' };
+}
 
+function RespondBy({ row, now }: { row: SellerReturnRow; now: number }) {
+  const info = respondInfo(row, now);
+  if (!info) {
+    const label = row.status === 'approved' && row.followUp ? FOLLOW_UP_LABEL[row.followUp] : row.status === 'open' ? 'Open' : row.status === 'approved' ? 'Approved' : 'Rejected';
+    return <span className={clsx('inline-block rounded-full px-2.5 py-[3px] text-[12px] font-semibold whitespace-nowrap', STATUS_STYLE[row.status])}>{label}</span>;
+  }
   return (
-    <Modal
-      title={`Review Return — ${item.orderNumber}`}
-      onClose={onClose}
-      footer={
-        <>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          {action === 'reject' ? (
-            <Button variant="danger" onClick={() => submit('reject')} loading={saving}>Confirm Reject</Button>
-          ) : (
-            <>
-              <Button variant="danger" onClick={() => setAction('reject')} disabled={saving}>Reject</Button>
-              <Button onClick={() => submit('approve')} loading={saving}>Approve</Button>
-            </>
-          )}
-        </>
-      }
-    >
-      <div className="flex flex-col gap-3">
-        <div>
-          <p className="text-[13px] font-semibold text-charcoal">{item.productName}</p>
-          <p className="text-[12px] text-slate mt-[2px]">Customer: {item.customer.name}</p>
-          <p className="text-[12px] text-slate">Amount: {formatPrice(item.amount, currency)}</p>
-        </div>
-        <div className="bg-cream rounded-[9px] px-3 py-[10px]">
-          <p className="text-[12px] font-semibold text-slate uppercase tracking-[0.05em] mb-1">Customer's Reason</p>
-          <p className="text-[13px] text-charcoal">{item.returnReason}</p>
-        </div>
-        {action === 'reject' && (
-          <Textarea
-            label="Rejection reason"
-            rows={3}
-            placeholder="Explain why this return is being rejected…"
-            value={rejectReason}
-            onChange={e => setRejectReason(e.target.value)}
-          />
-        )}
-        {error && <p className="text-[12px] text-error">{error}</p>}
-      </div>
-    </Modal>
+    <span className={clsx('inline-block rounded-full px-2.5 py-[3px] text-[12px] font-semibold whitespace-nowrap',
+      info.tone === 'red' ? 'bg-red-50 text-error' : info.tone === 'amber' ? 'bg-amber-50 text-amber-700' : 'bg-cream text-graphite')}>
+      {info.text}
+    </span>
   );
 }
 
-// ── Component ─────────────────────────────────────────────────────────────────
+function TypeBadge({ type }: { type: SellerReturnRow['type'] }) {
+  return (
+    <span className={clsx('inline-block rounded-[5px] px-2 py-[2px] text-[12px] font-semibold whitespace-nowrap', type === 'Return' ? 'bg-[#EAF1F8] text-[#174771]' : 'bg-cream text-graphite')}>
+      {type}
+    </span>
+  );
+}
+
+// ── Page ──────────────────────────────────────────────────────────────────────
 export function StoreReturnList() {
   usePageTitle('Returns');
   const { storeId, store } = useStoreWorkspace();
+  const currency = store?.baseCurrency;
 
-  const [returns, setReturns] = useState<SellerReturnItem[]>([]);
-  const [stats, setStats]     = useState<{ openRequests: number; returnRate: string; totalRefunded: number } | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [rows, setRows]       = useState<SellerReturnRow[] | null>(null); // null = first load
+  const [stats, setStats]     = useState<SellerReturnsAllStats | null>(null);
+  const [total, setTotal]     = useState(0);
   const [error, setError]     = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
   const [search, setSearch]   = useState('');
-  // Dashboard 'Action required' link: /returns?status=requested opens already filtered.
+  // Dashboard 'Action required' link uses ?status=requested (= open).
   const [status, setStatus]   = useState(() => {
     const s = new URLSearchParams(window.location.search).get('status') ?? '';
-    return STATUS_OPTIONS.some(o => o.value === s) ? s : '';
+    const mapped = s === 'requested' ? 'open' : s;
+    return STATUS_OPTIONS.some(o => o.value === mapped) ? mapped : '';
   });
-  const [reviewing, setReviewing] = useState<SellerReturnItem | null>(null);
   const [page, setPage]       = useState(1);
-  const [total, setTotal]     = useState(0);
+  const [reviewing, setReviewing] = useState<SellerReturnRow | null>(null);
+  const [now, setNow]         = useState(() => Date.now());
 
-  const refetch = useCallback(() => { setError(''); setRefreshKey(k => k + 1); }, []);
+  useEffect(() => { const id = setInterval(() => setNow(Date.now()), 60_000); return () => clearInterval(id); }, []);
 
-  // Search runs server-side (?q=), debounced; a new term or status restarts at page 1.
   const q = useDebouncedValue(search.trim(), 300);
   useEffect(() => { setPage(1); }, [q, status]);
 
-  // Buyer asked for a return / refund: it appears here by itself (quiet re-read).
-  const quietRef = useRef(false);
-  useLiveRefresh(['returns', 'refunds', 'orders'], () => { quietRef.current = true; setRefreshKey(k => k + 1); });
+  const refetch = useCallback(() => { setError(''); setRefreshKey(k => k + 1); }, []);
+  useLiveRefresh(['returns', 'refunds', 'orders'], () => setRefreshKey(k => k + 1));
 
+  // Old rows stay on screen while a new filter/page loads (no skeleton flash after the first load).
   useEffect(() => {
     if (!storeId) return;
     let cancelled = false;
-    const quiet = quietRef.current;
-    quietRef.current = false;
-    if (!quiet) setLoading(true);
-    apiGetSellerReturns({ storeId, status: status || undefined, page, q: q || undefined })
+    apiGetSellerReturnsAll(storeId, { status: status || undefined, q: q || undefined, page })
       .then(res => {
         if (cancelled) return;
-        setReturns(res.data.returns ?? []);
+        setRows(res.data.items ?? []);
         setStats(res.data.stats);
         setTotal(res.data.pagination?.total ?? 0);
+        setError('');
       })
-      .catch((err: unknown) => { if (!cancelled && !quiet) setError(err instanceof Error ? err.message : 'Failed to load returns.'); })
-      .finally(() => { if (!cancelled) setLoading(false); });
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setError(err instanceof Error ? err.message : 'Could not load returns.');
+        setRows(prev => prev ?? []);
+      });
     return () => { cancelled = true; };
-  }, [storeId, status, refreshKey, page, q]);
+  }, [storeId, status, q, page, refreshKey]);
 
-  const columns: TableColumn<SellerReturnItem>[] = [
-    { key: 'orderNumber', header: 'Order', render: r => <span className="font-bold text-brand-deep-orange whitespace-nowrap">{r.orderNumber}</span> },
-    { key: 'customer', header: 'Customer', render: r => <span className="text-graphite whitespace-nowrap">{r.customer.name}</span> },
-    { key: 'productName', header: 'Product', render: r => <span className="text-graphite max-w-[180px] truncate block">{r.productName}</span> },
-    { key: 'returnReason', header: 'Reason', render: r => <span className="text-slate max-w-[180px] truncate block">{r.returnReason}</span> },
-    { key: 'amount', header: 'Amount', render: r => <span className="font-semibold text-carbon whitespace-nowrap">{formatPrice(r.amount, store?.baseCurrency)}</span> },
+  const firstLoad = rows === null;
+  const settingsLink = `/store/${storeId}/settings#returns`;
+
+  const columns: TableColumn<SellerReturnRow>[] = [
     {
-      key: 'returnStatus', header: 'Status',
-      render: r => {
-        const st = statusStyle[r.returnStatus] ?? { bg: '#F0EEE6', color: '#5A5852' };
-        return (
-          <span className="inline-block px-[10px] py-[3px] rounded-[5px] text-[12px] font-semibold whitespace-nowrap capitalize" style={{ background: st.bg, color: st.color }}>
-            {r.returnStatus.replace('_', ' ')}
-          </span>
-        );
-      },
-    },
-    { key: 'returnRequestedAt', header: 'Requested', render: r => <span className="text-xs text-slate whitespace-nowrap">{new Date(r.returnRequestedAt).toLocaleDateString('en-PK', { month: 'short', day: 'numeric' })}</span> },
-    {
-      key: 'actions', header: 'Actions',
+      key: 'item', header: 'Request',
       render: r => (
-        <button
-          onClick={() => setReviewing(r)}
-          disabled={r.returnStatus !== 'requested' && r.returnStatus !== ('partial_requested' as ReturnStatus)}
-          className="px-[14px] py-1 bg-white border border-bone rounded-[6px] text-xs text-graphite cursor-pointer whitespace-nowrap transition-colors duration-150 hover:bg-cream disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/50"
-        >
-          Review
-        </button>
+        <div className="min-w-[160px] max-w-[240px]">
+          <div className="flex items-center gap-2 mb-[2px]"><TypeBadge type={r.type} /></div>
+          <p className="text-[13px] font-medium text-carbon m-0 truncate">{r.item}</p>
+          <p className="text-[12px] text-slate m-0 truncate">{r.buyer}</p>
+        </div>
+      ),
+    },
+    {
+      key: 'orderNumber', header: 'Order',
+      render: r => (
+        <Link to={`/store/${storeId}/orders?tab=all&q=${encodeURIComponent(r.orderNumber)}`} className="font-bold text-brand-deep-orange whitespace-nowrap hover:underline inline-flex items-center min-h-[44px]">
+          {r.orderNumber}
+        </Link>
+      ),
+    },
+    { key: 'reason', header: 'Reason', hideBelowXl: true, render: r => <span className="text-slate max-w-[200px] truncate block">{r.reasonLabel || r.reason || '—'}</span> },
+    { key: 'amount', header: 'Amount', hideBelowXl: true, render: r => <span className="font-semibold text-carbon whitespace-nowrap">{formatPrice(r.amount, currency)}</span> },
+    { key: 'respondBy', header: 'Respond by', render: r => <RespondBy row={r} now={now} /> },
+    {
+      key: 'actions', header: 'Actions', sticky: true,
+      render: r => (
+        <Button variant={r.status === 'open' ? 'outline' : 'ghost'} size="sm" className="min-h-[44px]" onClick={() => setReviewing(r)}>
+          {r.status === 'open' ? 'Review' : 'View'}
+        </Button>
       ),
     },
   ];
+
+  const renderCard = (r: SellerReturnRow) => (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <TypeBadge type={r.type} />
+          <p className="text-[13px] font-medium text-carbon mt-1 mb-0 truncate">{r.item}</p>
+          <p className="text-[12px] text-slate m-0">{r.buyer} · {formatPrice(r.amount, currency)}</p>
+        </div>
+        <RespondBy row={r} now={now} />
+      </div>
+      {(r.reasonLabel || r.reason) && <p className="text-[12px] text-slate m-0 line-clamp-2">{r.reasonLabel || r.reason}</p>}
+      <div className="flex items-center justify-between gap-2">
+        <Link to={`/store/${storeId}/orders?tab=all&q=${encodeURIComponent(r.orderNumber)}`} className="font-bold text-brand-deep-orange text-[13px] hover:underline inline-flex items-center min-h-[44px]">{r.orderNumber}</Link>
+        <Button variant={r.status === 'open' ? 'outline' : 'ghost'} size="sm" className="min-h-[44px]" onClick={() => setReviewing(r)}>{r.status === 'open' ? 'Review' : 'View'}</Button>
+      </div>
+    </div>
+  );
+
+  const ratePct = stats?.returnRate30d.pct;
+  const filtered = !!(q || status);
 
   return (
     <>
       <StorePageHeader
         title="Returns & Refunds"
-        subtitle="Process return requests, issue refunds, and send replacements."
+        subtitle="Review return and refund requests from your buyers. Aim to respond within 48 hours."
       />
 
       <div className="px-4 lg:px-7 pb-8 pt-5 flex flex-col gap-5">
-
-        {/* ── Metrics row ── */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {[
-            { label: 'Open Requests',  value: stats?.openRequests ?? 0 },
-            { label: 'Return Rate',    value: stats?.returnRate ?? '—' },
-            { label: 'Total Refunded (30d)', value: stats ? `${formatMoney(stats.totalRefunded, store?.baseCurrency)}` : '—' },
-          ].map(m => (
-            <div key={m.label} className="bg-white border border-bone rounded-[10px] px-5 py-4">
-              <p className="text-[12px] font-medium text-slate uppercase tracking-[0.06em] mb-1">{m.label}</p>
-              <p className="text-[28px] font-bold text-carbon leading-[1.15]">{loading ? '—' : m.value}</p>
-            </div>
-          ))}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <MetricCard label="Open requests" value={stats?.open ?? 0} loading={firstLoad && !error} />
+          <MetricCard label="Overdue" value={stats?.overdue ?? 0} loading={firstLoad && !error}
+            info="Open requests older than 48 hours. This is a reminder only: nothing is approved or rejected for you." />
+          <MetricCard
+            label="Return rate (30d)"
+            value={ratePct == null ? 'Not enough data' : `${ratePct}%`}
+            sub={stats ? (ratePct == null ? `Needs 10 shipped orders (${stats.returnRate30d.orders} so far)` : `${stats.returnRate30d.returns} of ${stats.returnRate30d.orders} orders`) : undefined}
+            loading={firstLoad && !error}
+          />
+          <MetricCard label="Refunded (30d)" value={stats ? formatPrice(stats.refunded30d, currency) : '—'} loading={firstLoad && !error} />
         </div>
 
-        <SellerRefundRequests storeId={storeId} />
-
-        {/* ── Return Policy Summary ── */}
         <div className="bg-white border border-bone rounded-[10px] px-[22px] py-[18px]">
-          <p className="text-[14px] font-semibold text-carbon mb-1.5">Return Policy Summary</p>
-          <p className="text-[13px] text-slate leading-[1.6]">
+          <p className="text-[14px] font-semibold text-carbon mb-1.5 mt-0">Return policy summary</p>
+          <p className="text-[13px] text-slate leading-[1.6] m-0">
             Physical: {returnSummary(store?.returnPolicy, false).line}. Digital: {returnSummary(store?.returnPolicy, true).detail[0]}
           </p>
           {store?.returnPolicy?.note?.trim() && (
-            <p className="text-[12px] text-slate mt-1.5">Your note: {store.returnPolicy.note.trim()}</p>
+            <p className="text-[12px] text-slate mt-1.5 mb-0">Your note: {store.returnPolicy.note.trim()}</p>
           )}
-          <p className="text-[12px] text-slate mt-1.5">Change your policy in Store Settings.</p>
+          <p className="text-[12px] text-slate mt-1.5 mb-0">
+            Change your policy in <Link to={settingsLink} className="text-brand-orange font-semibold hover:underline">Store Settings</Link>.
+          </p>
         </div>
 
-        {/* Error */}
         {error && (
-          <div className="bg-error-bg border border-error-border rounded-[10px] px-4 py-3 flex items-center gap-3">
+          <div className="bg-error-bg border border-error-border rounded-[10px] px-4 py-3 flex items-center gap-3" role="alert">
             <AlertCircle size={16} className="text-error shrink-0" />
             <span className="text-[13px] text-error flex-1">{error}</span>
-            <button onClick={refetch} className="flex items-center gap-1 text-[12px] text-error font-semibold cursor-pointer">
+            <button type="button" onClick={refetch} className="flex items-center gap-1 text-[12px] text-error font-semibold cursor-pointer min-h-[44px] px-2">
               <RefreshCw size={12} /> Retry
             </button>
           </div>
         )}
 
-        {/* ── Table card ── */}
-        {!error && (
-          <div className="bg-white border border-bone rounded-[10px] overflow-hidden">
-
-            {/* Filters */}
-            <div className="flex items-center gap-[10px] px-5 py-[14px] border-b border-bone flex-wrap">
-              <div className="flex items-center gap-1.5 border border-bone rounded-lg px-3 bg-white transition-colors duration-150 focus-within:ring-2 focus-within:ring-brand-orange/40 focus-within:border-brand-orange/50">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8C8A82" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-                </svg>
-                <input
-                  placeholder="Search order or customer..."
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                  className="border-none outline-none text-[13px] py-2 w-[220px] text-charcoal"
-                />
-              </div>
-
-              <select
-                value={status}
-                onChange={e => setStatus(e.target.value)}
-                className="text-[13px] px-3 py-2 rounded-lg border border-bone bg-white text-charcoal outline-none cursor-pointer transition-colors duration-150 focus:ring-2 focus:ring-brand-orange/40 focus:border-brand-orange/50"
-              >
-                {STATUS_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
-
-              <button onClick={refetch} className="flex items-center gap-1 text-[12px] text-slate cursor-pointer border border-bone rounded-[6px] px-2 py-[7px] transition-colors duration-150 hover:bg-bone shrink-0 ml-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/50">
-                <RefreshCw size={11} /> Refresh
-              </button>
+        <div className="bg-white border border-bone rounded-[10px] overflow-hidden">
+          <div className="flex items-center gap-[10px] px-5 py-[14px] border-b border-bone flex-wrap">
+            <div className="flex items-center gap-1.5 border border-bone rounded-lg px-3 bg-white focus-within:ring-2 focus-within:ring-brand-orange/40 focus-within:border-brand-orange/50 min-h-[44px] flex-1 sm:flex-none">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8C8A82" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+              </svg>
+              <input
+                aria-label="Search returns"
+                placeholder="Search order, item or customer..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="border-none outline-none text-[13px] py-2 w-full sm:w-[240px] text-charcoal bg-transparent"
+              />
             </div>
-
-            {/* Table */}
-            <Table
-              columns={columns}
-              data={returns}
-              keyExtractor={r => r.itemId}
-              loading={loading}
-              emptyState={{ title: q || status ? 'No return requests match your filters.' : 'No return requests yet.' }}
-              pagination={{ page, total, perPage: RETURNS_PER_PAGE, onChange: setPage, label: 'return requests' }}
-            />
+            <select
+              aria-label="Filter by status"
+              value={status}
+              onChange={e => setStatus(e.target.value)}
+              className="text-[13px] px-3 min-h-[44px] rounded-lg border border-bone bg-white text-charcoal outline-none cursor-pointer focus:ring-2 focus:ring-brand-orange/40 focus:border-brand-orange/50"
+            >
+              {STATUS_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
           </div>
-        )}
+
+          <Table
+            columns={columns}
+            data={rows ?? []}
+            keyExtractor={r => `${r.source}:${r.requestId}`}
+            loading={firstLoad && !error}
+            cardsBelow="md"
+            renderCard={renderCard}
+            emptyState={{
+              title: filtered ? 'No requests match your filters.' : 'No return or refund requests yet.',
+              description: filtered ? undefined : 'When a buyer asks for a return or refund, it appears here.',
+            }}
+            pagination={{ page, total, perPage: PER_PAGE, onChange: setPage, label: 'requests' }}
+          />
+        </div>
       </div>
 
-      {reviewing && (
-        <ReturnActionModal item={reviewing} onClose={() => setReviewing(null)} onDone={refetch} currency={store?.baseCurrency} />
-      )}
+      {reviewing && <ReturnDrawer row={reviewing} storeId={storeId} currency={currency} onClose={() => setReviewing(null)} onChanged={refetch} />}
     </>
   );
 }

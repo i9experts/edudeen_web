@@ -1,3 +1,4 @@
+import { dispatchDaysError } from '@/features/seller/dashboard/shippingRules';
 import { FieldErrorsContext } from './fieldErrorsContext';
 import { useState, useEffect, useContext, isValidElement, cloneElement, type ReactNode } from 'react';
 import { ChevronDown, Plus, X } from 'lucide-react';
@@ -17,8 +18,19 @@ export interface PhysForm {
   name: string; description: string; price: string; compareAtPrice: string;
   stock: string; options: VariantOption[]; shippingWeight: string; subCategoryId: string;
   parcelType: ParcelType; pkgL: string; pkgW: string; pkgH: string;
+  /** Optional per-product dispatch time in working days (1-7). '' = use the store's. */
+  dispatchDays?: string;
   status: ProductStatus; isListedOnEdudeen: boolean;
   scheduledAt: string; tagInput: string; tags: string[]; images: string[];
+}
+/** Error for the optional per-product dispatch days box ('' is fine = store value). */
+export function dispatchOverrideError(s: string | undefined): string | null {
+  return (s ?? '').trim() === '' ? null : dispatchDaysError(s as string);
+}
+/** API value: whole days, or null to use the store's. */
+export function dispatchOverridePayload(s: string | undefined): number | null {
+  const t = (s ?? '').trim();
+  return t === '' ? null : Number(t);
 }
 export type ParcelType = 'document' | 'standard' | 'fragile' | 'bulky';
 /** Packed size (cm): all three or none, each 1-200. Returns an error text, or null when fine. */

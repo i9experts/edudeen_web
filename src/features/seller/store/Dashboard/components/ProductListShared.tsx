@@ -9,7 +9,7 @@ import type { InventoryProduct } from '@/api/services/product';
 // between them and belong in exactly one place.
 
 // ── Product thumbnail cell ────────────────────────────────────────────────────
-export function ProductCell({ p }: { p: InventoryProduct }) {
+export function ProductCell({ p, fluid = false }: { p: InventoryProduct; fluid?: boolean }) {
   return (
     <div className="flex items-center gap-2.5">
       <div className="w-9 h-9 rounded-lg shrink-0 bg-brand-pale-orange border border-[#edebe2] flex items-center justify-center overflow-hidden">
@@ -21,7 +21,7 @@ export function ProductCell({ p }: { p: InventoryProduct }) {
             ? <Download size={14} className="text-brand-orange" />
             : <Package  size={14} className="text-brand-orange" />}
       </div>
-      <div className="min-w-[200px] max-w-[340px]">
+      <div className={fluid ? 'min-w-0 max-w-[340px]' : 'min-w-[200px] max-w-[340px]'}>
         <p className="text-[13px] font-medium text-charcoal mb-[1px] line-clamp-2 break-words" title={p.name}>{p.name}</p>
         {p.sku && <p className="text-[12px] text-slate truncate" title={p.sku}>{p.sku}</p>}
       </div>

@@ -1,3 +1,4 @@
+import { trackingLine } from '@/utils/carriers';
 import { useEffect, useState } from 'react';
 import { safeHttpUrl } from '@/utils/safeRedirect';
 import { ProductCoverFallback } from '@/components/comman/marketplace/ProductCoverFallback';
@@ -140,10 +141,10 @@ export function OrderDetailPage() {
               ? <span className="inline-flex items-center gap-1 px-2.5 py-[3px] rounded-full text-[12px] font-bold bg-[#e3f4ea] text-[#1a6b35] border border-[#a3d9b5]">Availed</span>
               : <StatusBadge status={so.status} size="sm" />}
             {isMultiPackageCod({ paymentType: order.paymentType, stores: order.sellerOrders }) && <PackagePayBadge store={so} currency={order.currency} />}
-            {so.tracking?.trackingNumber && (
+            {trackingLine(so.tracking) && (
               <span className="ms-auto inline-flex items-center gap-1 text-[12px] text-slate">
-                <Truck size={12} /> {so.tracking.carrier} {so.tracking.trackingNumber}
-                {safeHttpUrl(so.tracking.trackingUrl) && <a href={safeHttpUrl(so.tracking.trackingUrl)} target="_blank" rel="noreferrer" className="text-brand-orange font-semibold ms-1">Track package</a>}
+                <Truck size={12} /> {trackingLine(so.tracking)}
+                {safeHttpUrl(so.tracking?.trackingUrl) && <a href={safeHttpUrl(so.tracking?.trackingUrl)} target="_blank" rel="noreferrer" className="text-brand-orange font-semibold ms-1">Track package</a>}
               </span>
             )}
           </div>
