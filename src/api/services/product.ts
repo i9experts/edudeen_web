@@ -614,6 +614,25 @@ export function apiGetSellerOrderDetail(storeId: string, orderId: string) {
   );
 }
 
+export interface SellerPrintOrder {
+  orderId: string; orderNumber: string; date: string; currency: string;
+  type: 'physical' | 'digital' | 'mixed'; status: string;
+  isGift: boolean; pricesHidden: boolean; giftMessage: string | null; giftWrap: boolean;
+  paymentType: string; isPaid: boolean;
+  codAmount: number | null; subtotal: number | null; shippingFee: number | null;
+  customer: { name: string; phone: string | null };
+  shippingAddress: SellerOrderShippingAddress | null;
+  items: { name: string; sku: string | null; type: string; options: { name: string; value: string }[]; licenseType: string | null; quantity: number; price: number | null; totalPrice: number | null; status: string | null }[];
+}
+
+/** GET /api/orders/seller-orders/:storeId/print?ids=a,b — up to 50 of this store's orders for printing. */
+export function apiGetSellerOrdersForPrint(storeId: string, ids: string[]) {
+  return client.get<never, ApiResponse<{ store: { name: string; logo: string | null }; orders: SellerPrintOrder[] }>>(
+    `${ENDPOINTS.SELLER_ACCOUNT.GET_SELLER_ORDERS(storeId)}/print`,
+    { params: { ids: ids.join(',') } },
+  );
+}
+
 export interface FreeClaim {
   orderId:     string;
   productId:   string | null;

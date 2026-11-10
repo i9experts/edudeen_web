@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { formatPrice } from '@/utils/formatPrice';
 import {
   ShoppingCart, RefreshCw,
-  DollarSign, Clock, TrendingUp, CheckCheck, Truck, Eye,
+  DollarSign, Clock, TrendingUp, CheckCheck, Truck, Eye, Printer,
 } from 'lucide-react';
 import { apiMarkOrderPaid, apiUpdateOrderStatus } from '@/api/services/orders';
 import { useStoreWorkspace, StorePageHeader } from '@/components/layouts/StoreLayout';
@@ -235,9 +235,37 @@ export function StoreOrderList() {
     return (o.codAmount ?? 0) > 0 ? `Cash to collect: ${money(o, o.codAmount!)}` : null;
   };
 
+  // ── Print selection (kept across pages, max 50) ─────────────────────────────
+  const [picked, setPicked] = useState<Set<string>>(() => new Set());
+  const MAX_PRINT = 50;
+  const togglePick = (id: string) => setPicked(prev => {
+    const n = new Set(prev);
+    if (n.has(id)) n.delete(id); else if (n.size < MAX_PRINT) n.add(id);
+    return n;
+  });
+  const pickBox = (o: SellerOrder) => (
+    <input
+      type="checkbox"
+      className="size-4 cursor-pointer"
+      checked={picked.has(o.orderId)}
+      disabled={!picked.has(o.orderId) && picked.size >= MAX_PRINT}
+      onChange={() => togglePick(o.orderId)}
+      onClick={e => e.stopPropagation()}
+      aria-label={`Select order ${o.orderNumber} for printing`}
+    />
+  );
+  const printSelected = () => {
+    if (picked.size === 0) return;
+    window.open(`/store/${storeId}/orders/print?ids=${Array.from(picked).join(',')}&mode=slip`, '_blank', 'noopener');
+  };
+
   // ── Columns ──────────────────────────────────────────────────────────────────
   // ≥1280: every column. 768-1279: email + Status columns drop (status joins the Payment cell). <768: cards.
   const columns: TableColumn<SellerOrder>[] = [
+    {
+      key: 'pick', header: '', width: '40px',
+      render: o => pickBox(o),
+    },
     {
       key: 'orderNumber', header: 'Order',
       render: o => (
@@ -314,7 +342,7 @@ export function StoreOrderList() {
     return (
       <div className="flex flex-col gap-2.5">
         <div className="flex items-center justify-between gap-2">
-          <OrderIdCopy orderNumber={o.orderNumber} />
+          <span className="flex items-center gap-2">{pickBox(o)}<OrderIdCopy orderNumber={o.orderNumber} /></span>
           <span className="text-[12px] text-slate whitespace-nowrap">{dateText(o)}</span>
         </div>
         {o.possibleDuplicate && <DuplicateChip other={o.possibleDuplicate} />}
@@ -439,6 +467,15 @@ export function StoreOrderList() {
                 >
                   Refresh
                 </Button>
+                <Button
+                  variant="outline" size="xs" onClick={printSelected} disabled={picked.size === 0} icon={<Printer size={11} />}
+                  title={picked.size >= MAX_PRINT ? 'Maximum 50 orders per print' : undefined}
+                >
+                  Print selected{picked.size > 0 ? ` (${picked.size})` : ''}
+                </Button>
+                {picked.size > 0 && (
+                  <Button variant="ghost" size="xs" onClick={() => setPicked(new Set())}>Clear selection</Button>
+                )}
               </div>
             </div>
 

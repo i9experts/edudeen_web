@@ -92,6 +92,7 @@ const MaintenancePage      = lazy(() => named(import('@/features/buyer/pages/Mai
 const AccountDashboard     = lazy(() => named(import('@/features/buyer/pages/account/AccountDashboard'),        'AccountDashboard'));
 const AccountOrders        = lazy(() => named(import('@/features/buyer/pages/MyOrdersPage'),                     'OrdersTab'));
 const AccountOrderDetail   = lazy(() => named(import('@/features/buyer/pages/account/OrderDetailPage'),        'OrderDetailPage'));
+const OrderPrint           = lazy(() => named(import('@/features/seller/store/Dashboard/StoreSection/orders/OrderPrintPage'), 'OrderPrintPage'));
 const OrderInvoice         = lazy(() => named(import('@/features/buyer/pages/account/InvoicePage'),            'InvoicePage'));
 const LearnHubPage         = lazy(() => named(import('@/features/buyer/pages/LearnPages'),                     'LearnHubPage'));
 const LearnLevelPage       = lazy(() => named(import('@/features/buyer/pages/LearnPages'),                     'LearnLevelPage'));
@@ -358,6 +359,8 @@ const mainRouter = createBrowserRouter([
 
       // Printable invoice — no app chrome, so printing gives a clean page.
       { path: '/account/orders/:orderId/invoice', element: <OrderInvoice /> },
+      // Seller packing slips / invoices — outside StoreLayout so the sidebar never prints.
+      { path: '/store/:storeId/orders/print', element: <OrderPrint /> },
       { path: '/course/:slug', element: <CoursePlayerPage /> },
       { path: '/certificates/:code', element: <CertificatePage /> },
       { path: '/seo/integrations/callback', element: <SellerSeoCallback /> },

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { addressLines } from '@/utils/address';
-import { Truck, CheckCheck, RefreshCw } from 'lucide-react';
+import { Truck, CheckCheck, RefreshCw, Printer } from 'lucide-react';
 import { Modal, Button, Badge, StatusBadge, Input, SkeletonBox } from '@/components/comman/ui';
 import { apiMarkOrderPaid, apiSellerCancelOrder, apiUpdateOrderStatus } from '@/api/services/orders';
 import { apiGetSellerOrderDetail, type SellerOrder, type SellerOrderDetail } from '@/api/services/product';
@@ -117,6 +117,7 @@ export function OrderDetailModal({ order, storeId, onClose, onUpdated, onOpenOrd
   const [trackingUrl, setTrackingUrl]       = useState('');
   const [cancelling, setCancelling]         = useState(false);
   const [cancelReason, setCancelReason]     = useState('');
+  const [printOpen, setPrintOpen]           = useState(false);
 
   const money = (n: number) => formatPrice(n, order.currency ?? undefined);
 
@@ -351,6 +352,24 @@ export function OrderDetailModal({ order, storeId, onClose, onUpdated, onOpenOrd
         )}
 
         <div className="flex flex-wrap gap-2 justify-end">
+          <div className="relative">
+            <Button variant="outline" size="sm" onClick={() => setPrintOpen(o => !o)} icon={<Printer size={13} />} aria-haspopup="menu" aria-expanded={printOpen}>
+              Print
+            </Button>
+            {printOpen && (
+              <div role="menu" className="absolute bottom-full mb-1 end-0 z-10 min-w-[160px] rounded-lg border border-bone bg-white shadow-lg py-1">
+                {([['slip', 'Packing slip'], ['invoice', 'Invoice']] as const).map(([mode, label]) => (
+                  <button
+                    key={mode} type="button" role="menuitem"
+                    className="block w-full text-start px-3 py-2 min-h-[44px] text-[13px] text-carbon bg-transparent border-0 cursor-pointer hover:bg-cream"
+                    onClick={() => { setPrintOpen(false); window.open(`/store/${storeId}/orders/print?ids=${order.orderId}&mode=${mode}`, '_blank', 'noopener'); }}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           {canCancel(order) && !cancelling && (
             <Button variant="outline" size="sm" onClick={() => setCancelling(true)} disabled={!!busy}>Cancel order</Button>
           )}
