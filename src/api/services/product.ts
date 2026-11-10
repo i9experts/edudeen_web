@@ -631,6 +631,8 @@ export interface SellerOrderFilters {
   q?:      string;
   /** Dashboard 'Action required' lists. */
   action?: 'toship' | 'overdue' | '';
+  /** Customers panel: only this buyer's orders in this store. */
+  buyer?: string;
 }
 
 export function apiGetSellerOrders(storeId: string, page = 1, limit = 10, filters: SellerOrderFilters = {}) {
@@ -641,6 +643,7 @@ export function apiGetSellerOrders(storeId: string, page = 1, limit = 10, filter
   if (filters.time)   params.set('time', filters.time);
   if (filters.action) params.set('action', filters.action);
   if (filters.q?.trim()) params.set('q', filters.q.trim());
+  if (filters.buyer) params.set('buyer', filters.buyer);
   return client.get<never, ApiResponse<GetSellerOrdersData>>(
     `${ENDPOINTS.SELLER_ACCOUNT.GET_SELLER_ORDERS(storeId)}?${params.toString()}`,
   );

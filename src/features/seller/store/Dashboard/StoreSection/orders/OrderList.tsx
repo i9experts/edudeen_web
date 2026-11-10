@@ -94,6 +94,10 @@ export function StoreOrderList() {
   // Dashboard 'Action required' links: ?action=toship|overdue (same predicate the dashboard counts use).
   const rawAction = searchParams.get('action');
   const actionF: 'toship' | 'overdue' | '' = rawAction === 'toship' || rawAction === 'overdue' ? rawAction : '';
+  // Customers panel 'View all': ?buyer=<userId> narrows the list to one buyer (store-scoped on the server).
+  const rawBuyer = searchParams.get('buyer');
+  const buyerF = rawBuyer && /^[a-f0-9]{24}$/i.test(rawBuyer) ? rawBuyer : '';
+  const clearBuyer = () => setSearchParams(prev => { const n = new URLSearchParams(prev); n.delete('buyer'); return n; }, { replace: true });
   const clearAction = () => setSearchParams(prev => { const n = new URLSearchParams(prev); n.delete('action'); return n; }, { replace: true });
   const setTab = (id: string) => {
     setLoading(true); setError(''); setPage(1);
@@ -105,7 +109,7 @@ export function StoreOrderList() {
     });
   };
   // Stat cards / links change ?tab= from outside: restart at page 1.
-  useEffect(() => { setPage(1); }, [tab, actionF]);
+  useEffect(() => { setPage(1); }, [tab, actionF, buyerF]);
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => { const id = setInterval(() => setNow(Date.now()), 60_000); return () => clearInterval(id); }, []);
   const [typeF,       setTypeF]       = useState<SellerOrderFilters['type']>('');
@@ -140,7 +144,7 @@ export function StoreOrderList() {
     if (!storeId) return;
     let cancelled = false;
 
-    apiGetSellerOrders(storeId, page, LIMIT, { tab, type: typeF, q, action: actionF })
+    apiGetSellerOrders(storeId, page, LIMIT, { tab, type: typeF, q, action: actionF, buyer: buyerF })
       .then(res => {
         if (cancelled) return;
         setOrders(res.data.orders ?? []);
@@ -155,7 +159,7 @@ export function StoreOrderList() {
       .finally(() => { if (!cancelled) setLoading(false); });
 
     return () => { cancelled = true; };
-  }, [storeId, page, refreshKey, q, tab, typeF, actionF]);
+  }, [storeId, page, refreshKey, q, tab, typeF, actionF, buyerF]);
 
   const handlePageChange = (p: number) => {
     setLoading(true);
@@ -462,6 +466,12 @@ export function StoreOrderList() {
                 <p className="m-0 text-[12.5px] text-slate">
                   {actionF === 'overdue' ? 'Paid or cash-on-delivery physical orders not shipped within 48 hours.' : 'Paid or cash-on-delivery physical orders waiting for you to ship.'}{' '}
                   <button type="button" className="font-semibold underline bg-transparent border-0 p-0 cursor-pointer text-brand-royal" onClick={() => changeFilter(clearAction)}>Show all orders</button>
+                </p>
+              )}
+              {buyerF && (
+                <p className="m-0 text-[12.5px] text-slate">
+                  Showing orders from one customer.{' '}
+                  <button type="button" className="font-semibold underline bg-transparent border-0 p-0 cursor-pointer text-brand-royal" onClick={() => changeFilter(clearBuyer)}>Show all orders</button>
                 </p>
               )}
               <SearchInput

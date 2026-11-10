@@ -88,7 +88,11 @@ export function SellerMessages() {
   const buyerIds = useMemo(() => conversations.map(c => c.buyerId), [conversations]);
   const online = usePresence(buyerIds);
 
-  const [activeId, setActiveId] = useState<string | null>(null);
+  // `?conv=<id>` (Customers panel "Message buyer") opens that existing thread straight away.
+  const [activeId, setActiveId] = useState<string | null>(() => {
+    const c = searchParams.get('conv');
+    return c && /^[a-f0-9]{24}$/i.test(c) ? c : null;
+  });
   const { conversation, pin, mute, archive, restore, remove } = useConversation(activeId);
   const {
     messages, loading: msgLoading, loadingMore, sending, send, retry, edit, remove: removeMessage, markSeen, hasMore, loadMore,

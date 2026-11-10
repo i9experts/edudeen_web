@@ -43,8 +43,8 @@ export const canCancel = (o: SellerOrder) =>
 
 export const canProcess =(o: SellerOrder) => o.status === 'pending';
 
-export const paymentLabel = (t: string) =>
-  t === 'cash_on_delivery' ? 'Cash on delivery' : t === 'stripe' ? 'Card' : t.replace(/_/g, ' ');
+export const paymentLabel = (t: string | null | undefined) =>
+  !t ? '—' : t === 'cash_on_delivery' ? 'Cash on delivery' : t === 'stripe' ? 'Card' : t.replace(/_/g, ' ');
 
 interface Props {
   order:     SellerOrder;
