@@ -2471,7 +2471,6 @@ export const UR: Record<string, string> = {
   'Variables are filled in when you use the reply. Tap to add:': 'جواب استعمال کرتے وقت متغیرات خود بھر جاتے ہیں۔ شامل کرنے کے لیے ٹیپ کریں:',
   'Download help': 'ڈاؤن لوڈ میں مدد',
   'Order status': 'آرڈر کی صورتحال',
-  'Refund policy': 'ریفنڈ پالیسی',
   'Course access': 'کورس تک رسائی',
   'Hi {buyer_name}, thanks for buying from {store_name}. Your files are in Account > My Library, where you can download them again. If a file does not open, tell me which one and your device and I will help.': 'السلام علیکم {buyer_name}، {store_name} سے خریداری کا شکریہ۔ آپ کی فائلیں اکاؤنٹ > میری لائبریری میں ہیں جہاں سے دوبارہ ڈاؤن لوڈ کر سکتے ہیں۔ اگر کوئی فائل نہ کھلے تو مجھے فائل اور اپنا ڈیوائس بتائیں، میں مدد کروں گا۔',
   'Hi {buyer_name}, thank you for your order from {store_name}. I am checking it now and will update you shortly. You can also follow it under Account > My Orders.': 'السلام علیکم {buyer_name}، {store_name} سے آرڈر کا شکریہ۔ میں اسے ابھی دیکھ رہا ہوں اور جلد آپ کو اپڈیٹ دوں گا۔ آپ اکاؤنٹ > میرے آرڈرز میں بھی اسے دیکھ سکتے ہیں۔',

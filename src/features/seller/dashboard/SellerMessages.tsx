@@ -161,7 +161,9 @@ export function SellerMessages() {
   const markedRef = useRef('');
   useEffect(() => {
     if (!activeId || !storeId || msgLoading || !profile?._id) return;
-    const incoming = [...messages].reverse().find(m => !m._tempId && m.senderId !== profile._id);
+    // Only messages of THIS chat: right after switching chats the list can still hold the previous chat's messages,
+    // and the API answers 400 "Message does not belong to this conversation" (so the unread count never cleared).
+    const incoming = [...messages].reverse().find(m => !m._tempId && m.conversationId === activeId && m.senderId !== profile._id);
     if (!incoming) return;
     const key = `${activeId}:${incoming._id}`;
     if (markedRef.current === key) return;

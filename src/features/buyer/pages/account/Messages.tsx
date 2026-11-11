@@ -96,7 +96,7 @@ export function Messages() {
   useEffect(() => {
     if (!activeId || messages.length === 0) return;
     const last = messages[messages.length - 1];
-    if (last.senderId !== profile?._id) {
+    if (last.conversationId === activeId && last.senderId !== profile?._id) {
       // Don't rely solely on the 'conversation:update' socket echo to clear
       // this conversation's unread badge — refetch directly so it's correct
       // even if that event was missed (e.g. a socket reconnect gap).
