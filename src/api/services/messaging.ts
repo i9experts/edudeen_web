@@ -221,11 +221,11 @@ export function apiRestoreConversation(id: string) {
 }
 
 export function apiPinConversation(id: string, pin = true) {
-  return client.patch<never, { isPinned: boolean }>(ENDPOINTS.MESSAGING.CONVERSATIONS.PIN(id), null, { params: { pin } });
+  return client.patch<never, { isPinned: boolean }>(ENDPOINTS.MESSAGING.CONVERSATIONS.PIN(id), {}, { params: { pin } });
 }
 
 export function apiMuteConversation(id: string, mute = true) {
-  return client.patch<never, { isMuted: boolean }>(ENDPOINTS.MESSAGING.CONVERSATIONS.MUTE(id), null, { params: { mute } });
+  return client.patch<never, { isMuted: boolean }>(ENDPOINTS.MESSAGING.CONVERSATIONS.MUTE(id), {}, { params: { mute } });
 }
 
 export function apiDeleteConversation(id: string) {
@@ -267,7 +267,7 @@ export function apiDeleteMessage(messageId: string) {
 }
 
 export function apiMarkMessageSeen(messageId: string, conversationId: string) {
-  return client.post<never, { seen: boolean }>(ENDPOINTS.MESSAGING.MESSAGES.MARK_SEEN(messageId), null, { params: { conversationId } });
+  return client.post<never, { seen: boolean }>(ENDPOINTS.MESSAGING.MESSAGES.MARK_SEEN(messageId), {}, { params: { conversationId } });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
