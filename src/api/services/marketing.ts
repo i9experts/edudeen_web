@@ -15,9 +15,18 @@ export interface Coupon {
   expiresAt:      string | null;
   isActive:       boolean;
   /** Computed by the API: expired > paused > active. */
-  status?:        'active' | 'paused' | 'expired';
+  status?:        'active' | 'paused' | 'expired' | 'scheduled';
   createdAt:      string;
+  // Optional: old coupons lack them (= whole store, no start date, unlimited per buyer, private).
+  appliesTo?:         CouponScope;
+  targetIds?:         string[];
+  startsAt?:          string | null;
+  perCustomerLimit?:  number | null;
+  firstOrderOnly?:    boolean;
+  visibility?:        'public' | 'private';
 }
+
+export type CouponScope = 'store' | 'categories' | 'products';
 
 export interface CreateCouponPayload {
   code:            string;
@@ -26,6 +35,12 @@ export interface CreateCouponPayload {
   minOrderAmount?: number;
   usageLimit?:     number;
   expiresAt?:      string;
+  appliesTo?:         CouponScope;
+  targetIds?:         string[];
+  startsAt?:          string | null;
+  perCustomerLimit?:  number | null;
+  firstOrderOnly?:    boolean;
+  visibility?:        'public' | 'private';
 }
 
 export type UpdateCouponPayload = Partial<CreateCouponPayload> & { isActive?: boolean };
@@ -86,6 +101,37 @@ export function apiGetJoinableCampaigns(storeId: string) {
 /** POST /api/marketing/:storeId/campaigns/:campaignId/join */
 export function apiJoinCampaign(storeId: string, campaignId: string) {
   return client.post<never, ApiResponse<null>>(ENDPOINTS.MARKETING.CAMPAIGNS.JOIN(storeId, campaignId));
+}
+
+export interface MarketingKpis {
+  /** Store currency the money figures are labelled with. */
+  currency:            string;
+  rangeDays:           number;
+  activePromotions:    { total: number; coupons: number; discounts: number; platformSales: number };
+  ordersWithPromotion: number;
+  discountGiven:       number;
+  promotedRevenue:     number;
+}
+
+/** GET /api/seller/marketing/kpis?storeId= — last 30 Pakistan days, read-only. */
+export function apiGetMarketingKpis(storeId: string) {
+  return client.get<never, ApiResponse<MarketingKpis>>(ENDPOINTS.MARKETING.KPIS(storeId));
+}
+
+export type PromotionStatsRange = '7d' | '30d' | '90d';
+export interface PromotionStatRow {
+  kind:     'coupon' | 'discount' | 'sale';
+  id:       string;
+  uses:     number;
+  orders:   number;
+  discount: number;
+  revenue:  number;
+}
+export interface PromotionStats { currency: string; range: PromotionStatsRange; items: PromotionStatRow[] }
+
+/** GET /api/seller/promotions/stats?storeId=&range= — per coupon / automatic discount / platform sale, read-only. */
+export function apiGetPromotionStats(storeId: string, range: PromotionStatsRange) {
+  return client.get<never, ApiResponse<PromotionStats>>(ENDPOINTS.MARKETING.PROMOTION_STATS(storeId, range));
 }
 
 /** DELETE /api/marketing/:storeId/campaigns/:campaignId/leave */

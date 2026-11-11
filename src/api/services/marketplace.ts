@@ -155,6 +155,8 @@ export interface MarketplaceProduct {
   /** Breakdown of premiumPercent: the seller's part and the Edudeen-funded part. */
   premiumSellerPercent?:   number;
   premiumPlatformPercent?: number;
+  /** Product page only: best PUBLIC seller coupon that applies to this product right now. */
+  publicCoupon?: { code: string; percent: number } | null;
 }
 
 export interface ProductsByCategoryResponse {

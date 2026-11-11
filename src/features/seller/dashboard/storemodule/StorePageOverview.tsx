@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
+import { Link } from 'react-router-dom';
 import { clsx } from 'clsx';
 import {
   ExternalLink, Copy, Check, Store as StoreIcon, ShieldCheck, ShoppingCart, Loader2, Star, Megaphone, Palette, Image as ImageIcon, Type, LayoutTemplate, GraduationCap,
@@ -333,6 +334,12 @@ export function StorePageOverview() {
 
             <Section icon={<Star size={15} />} title="Store highlights" hint="Rows above all your products: Featured, New arrivals and Best sellers. Changes stay a draft until you publish.">
               {storeId && <StoreHighlightsEditor storeId={storeId} store={store} />}
+              {storeId && (
+                <p className="text-[12.5px] text-slate mt-3">
+                  Store banners, the announcement bar and pinned products are managed in{' '}
+                  <Link to={`/store/${storeId}/marketing?group=storefront`} className="font-semibold text-brand-royal hover:underline">Marketing → Storefront</Link>.
+                </p>
+              )}
             </Section>
           </div>
 

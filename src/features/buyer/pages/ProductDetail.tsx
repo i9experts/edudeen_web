@@ -936,6 +936,11 @@ export function ProductDetail() {
                         )}
                       </div>
                       <PremiumTeaser percent={product.premiumPercent} seller={product.premiumSellerPercent} platform={product.premiumPlatformPercent} link className="mb-2" />
+                      {product.publicCoupon && (
+                        <p className="mb-2 inline-flex items-center rounded-md bg-[#E3F4EA] px-2.5 py-1 text-[12.5px] font-semibold text-[#1E7A3C]">
+                          Coupon: {product.publicCoupon.percent}% off · code {product.publicCoupon.code}
+                        </p>
+                      )}
                     </>
                   )}
                   {displayPrice !== 0 && (

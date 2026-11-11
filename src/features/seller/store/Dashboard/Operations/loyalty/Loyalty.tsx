@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useLiveRefresh } from '@/hooks/useLiveRefresh';
 import { StorePageHeader, useStoreWorkspace } from '@/components/layouts/StoreLayout';
@@ -45,8 +45,21 @@ const ACTIVITY_LABELS: Record<string, string> = {
   redeem: 'Points Redeemed',
 };
 
-export function StoreLoyalty() {
-  usePageTitle('Loyalty');
+/** Used instead of the page bar when Loyalty sits inside Marketing (which already has one). */
+function InlineHeader({ title, subtitle, actions }: { title: string; subtitle?: string; actions?: ReactNode }) {
+  return (
+    <div className="px-4 lg:px-7 pt-5 flex flex-wrap items-center justify-between gap-3">
+      <div className="min-w-0">
+        <p className="text-[15px] font-bold text-carbon">{title}</p>
+        {subtitle && <p className="text-[12.5px] text-slate mt-0.5">{subtitle}</p>}
+      </div>
+      {actions && <div className="flex items-center gap-[10px] shrink-0">{actions}</div>}
+    </div>
+  );
+}
+
+export function StoreLoyalty({ embedded = false }: { embedded?: boolean } = {}) {
+  usePageTitle(embedded ? 'Marketing' : 'Loyalty');
   const { storeId } = useStoreWorkspace();
   const [activeTab, setActiveTab] = useState<TabId>('overview');
 
@@ -60,9 +73,10 @@ export function StoreLoyalty() {
     apiGetLoyaltyProgram(storeId).then(res => setProgram(res.data)).catch(() => {});
   }, [storeId]);
 
+  const Header = embedded ? InlineHeader : StorePageHeader;
   return (
     <>
-      <StorePageHeader
+      <Header
         title="Loyalty & Rewards"
         subtitle="Build lasting customer relationships with a points-based loyalty program."
         actions={

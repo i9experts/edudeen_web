@@ -161,7 +161,6 @@ const StoreReviews       = lazy(() => named(import('@/features/seller/store/Dash
 const StoreInventory     = lazy(() => named(import('@/features/seller/store/Dashboard/Operations/inventory/Inventory'),      'StoreInventory'));
 const StoreSaleApply     = lazy(() => named(import('@/features/seller/store/Dashboard/Operations/marketing/StoreSaleApply'), 'StoreSaleApply'));
 const StoreMarketing     = lazy(() => named(import('@/features/seller/store/Dashboard/Operations/marketing/Marketing'),      'StoreMarketing'));
-const StoreLoyalty       = lazy(() => named(import('@/features/seller/store/Dashboard/Operations/loyalty/Loyalty'),          'StoreLoyalty'));
 
 // ── Admin ─────────────────────────────────────────────────────────────────────
 const AdminOverview      = lazy(() => named(import('@/features/admin/pages/AdminOverview'),                     'AdminOverview'));
@@ -235,10 +234,6 @@ const CATALOG_TABS = [
   { id: 'categories',  label: 'Categories',  element: <StoreCategories /> },
   { id: 'collections', label: 'Collections', element: <StoreCollections /> },
   { id: 'bundles',     label: 'Bundles',     element: <StoreBundles /> },
-];
-const MARKETING_TABS = [
-  { id: 'marketing', label: 'Marketing', element: <StoreMarketing /> },
-  { id: 'loyalty',   label: 'Loyalty',   element: <StoreLoyalty /> },
 ];
 const FEEDBACK_TABS = [
   { id: 'reviews',   label: 'Reviews',   element: <StoreReviews /> },
@@ -436,9 +431,9 @@ const mainRouter = createBrowserRouter([
           { path: 'questions',                        element: <StorePathTabs tabs={FEEDBACK_TABS} /> },
           { path: 'finance',                          element: <StoreFinance /> },
           { path: 'inventory',                        element: <StoreInventory /> },
-          { path: 'marketing',                        element: <StorePathTabs tabs={MARKETING_TABS} /> },
+          { path: 'marketing',                        element: <StoreMarketing /> },
           { path: 'marketing/sale/:campaignId',       element: <StoreSaleApply /> },
-          { path: 'loyalty',                          element: <StorePathTabs tabs={MARKETING_TABS} /> },
+          { path: 'loyalty',                          element: <StoreMarketing defaultView={{ group: 'advanced', tab: 'loyalty' }} /> },
           // Retired: the page only showed placeholder "connected apps".
           { path: 'integrations',                     element: <Navigate to="../dashboard" replace /> },
           { path: 'activity',                         element: <Navigate to="../settings" replace /> },

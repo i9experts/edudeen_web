@@ -289,6 +289,8 @@ export const ENDPOINTS = {
       UPDATE: (storeId: string, couponId: string) => `/api/marketing/${storeId}/coupons/${couponId}`,
       DELETE: (storeId: string, couponId: string) => `/api/marketing/${storeId}/coupons/${couponId}`,
     },
+    KPIS: (storeId: string) => `/api/seller/marketing/kpis?storeId=${storeId}`,
+    PROMOTION_STATS: (storeId: string, range: string) => `/api/seller/promotions/stats?storeId=${storeId}&range=${range}`,
     CAMPAIGNS: {
       LIST: (storeId: string) => `/api/marketing/${storeId}/campaigns`,
       JOIN: (storeId: string, campaignId: string) => `/api/marketing/${storeId}/campaigns/${campaignId}/join`,
