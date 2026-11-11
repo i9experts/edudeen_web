@@ -30,6 +30,9 @@ export interface ModerationReportRow {
   targetId: string;
   reason: string;
   details: string | null;
+  /** Review reports: the order the review belongs to (when the buyer reviewed from an order). */
+  orderId?: string | null;
+  reporterRole?: string;
   status: 'pending' | 'reviewed' | 'resolved';
   riskLevel: RiskLevel;
   itemLabel: string;
@@ -61,10 +64,10 @@ export function apiMarkReportReviewed(id: string) {
   return client.patch<never, ApiResponse<null>>(ENDPOINTS.MODERATION.REVIEW(id));
 }
 
-export function apiApproveReport(id: string) {
-  return client.patch<never, ApiResponse<null>>(ENDPOINTS.MODERATION.APPROVE(id));
+export function apiApproveReport(id: string, note?: string) {
+  return client.patch<never, ApiResponse<null>>(ENDPOINTS.MODERATION.APPROVE(id), note ? { note } : {});
 }
 
-export function apiRemoveReportTarget(id: string) {
-  return client.patch<never, ApiResponse<null>>(ENDPOINTS.MODERATION.REMOVE(id));
+export function apiRemoveReportTarget(id: string, note?: string) {
+  return client.patch<never, ApiResponse<null>>(ENDPOINTS.MODERATION.REMOVE(id), note ? { note } : {});
 }

@@ -1,5 +1,6 @@
 import { useUrlParam, useUrlPage } from '@/hooks/useUrlParam';
 import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useModerationStats, useModerationQueue, useModerationActions } from '@/hooks/admin/useAdminModeration';
 import type { ModerationReportRow, ModerationTargetType, RiskLevel } from '@/api/services/moderation/adminModeration';
@@ -40,14 +41,15 @@ function RiskBadge({ risk }: { risk: RiskLevel }) {
 
 // ── Report detail modal ───────────────────────────────────────────────────────
 function ReportDetailModal({ report, onClose, onDone, onRemove }: {
-  report: ModerationReportRow; onClose: () => void; onDone: (msg: string) => void; onRemove: () => void;
+  report: ModerationReportRow; onClose: () => void; onDone: (msg: string) => void; onRemove: (note: string) => void;
 }) {
   const { approve, markReviewed, processingId, error } = useModerationActions();
   const [busy, setBusy] = useState<'approve' | 'review' | null>(null);
+  const [note, setNote] = useState('');
 
   async function handleApprove() {
     setBusy('approve');
-    const ok = await approve(report._id);
+    const ok = await approve(report._id, note.trim() || undefined);
     setBusy(null);
     if (ok) onDone(report.targetType === 'review' ? 'Report dismissed' : 'Report approved');
   }
@@ -73,7 +75,7 @@ function ReportDetailModal({ report, onClose, onDone, onRemove }: {
         <Button variant="secondary" onClick={handleApprove} loading={busy === 'approve'} disabled={working}>
           {report.targetType === 'review' ? 'Dismiss report' : 'Approve — No Action'}
         </Button>
-        <Button variant="danger" onClick={onRemove} disabled={working}>
+        <Button variant="danger" onClick={() => onRemove(note.trim())} disabled={working}>
           {report.targetType === 'seller' ? 'Suspend' : report.targetType === 'review' ? 'Remove review' : 'Remove'}
         </Button>
       </>}
@@ -101,9 +103,20 @@ function ReportDetailModal({ report, onClose, onDone, onRemove }: {
           Reported {formatDate(report.createdAt)}{report.status === 'reviewed' ? ' · Marked reviewed' : ''}
         </p>
         {report.targetType === 'review' && (
-          <p className="text-[12px] text-slate bg-cream border border-bone rounded-md px-2.5 py-2">
-            Dismissing closes this report and keeps the review published. Removing hides the review and updates the product's and store's star rating.
-          </p>
+          <>
+            {report.orderId && (
+              <Link to={`/admin/orders?order=${report.orderId}`} target="_blank" className="text-[13px] text-brand-royal underline">View the order</Link>
+            )}
+            <p className="text-[12px] text-slate bg-cream border border-bone rounded-md px-2.5 py-2">
+              Dismissing closes this report and keeps the review published. Removing hides the review and updates the product's and store's star rating.
+              {report.reporterRole === 'seller' ? ' The seller is told your decision and note.' : ''}
+            </p>
+            <label className="flex flex-col gap-1">
+              <span className="text-[12px] font-medium text-graphite">Note (optional, shown to the seller)</span>
+              <textarea value={note} onChange={e => setNote(e.target.value.slice(0, 300))} rows={2} maxLength={300}
+                className="w-full border border-bone rounded-lg px-3 py-2 text-[13px] text-charcoal outline-none box-border resize-y" />
+            </label>
+          </>
         )}
         {error && <p className="text-[12px] text-error">{error}</p>}
       </div>
@@ -137,6 +150,7 @@ export function AdminModeration() {
 
   const [viewing, setViewing] = useState<ModerationReportRow | null>(null);
   const [removing, setRemoving] = useState<ModerationReportRow | null>(null);
+  const [removeNote, setRemoveNote] = useState('');
 
   function refreshAll() { refetchStats(); refetch(); }
 
@@ -153,9 +167,10 @@ export function AdminModeration() {
   async function handleRemove() {
     if (!removing) return;
     const target = removing.targetType;
-    const ok = await remove(removing._id);
+    const ok = await remove(removing._id, removeNote || undefined);
     if (ok) {
       setRemoving(null);
+      setRemoveNote('');
       toast.success(target === 'seller' ? 'Seller suspended' : target === 'review' ? 'Review removed' : 'Listing removed');
       refreshAll();
     }
@@ -246,7 +261,7 @@ export function AdminModeration() {
           report={viewing}
           onClose={() => setViewing(null)}
           onDone={msg => { setViewing(null); toast.success(msg); refreshAll(); }}
-          onRemove={() => { setRemoving(viewing); setViewing(null); }}
+          onRemove={note => { setRemoving(viewing); setRemoveNote(note); setViewing(null); }}
         />
       )}
 

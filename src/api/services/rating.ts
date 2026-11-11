@@ -104,6 +104,15 @@ export interface StoreReviewEntry {
   isFlagged:          boolean;
   flaggedByAdmin?:    boolean;
   createdAt:          string;
+  productTitle?:      string | null;
+  orderId?:           string | null;
+  sellerReport?:      { status: 'pending' | 'accepted' | 'rejected'; reasonCode: string; reportedAt: string; adminNote: string | null } | null;
+  canEditReply?:      boolean;
+}
+
+export interface StoreReviewCounts {
+  all: number; needsReply: number; replied: number; reported: number;
+  byRating: Record<'1' | '2' | '3' | '4' | '5', number>;
 }
 
 export interface StoreReviewStats {
@@ -111,6 +120,9 @@ export interface StoreReviewStats {
   totalReviews:     number;
   ratingBreakdown:  Record<'1' | '2' | '3' | '4' | '5', string>;
   reviewsThisMonth: number;
+  reviewsLastMonth?: number;
+  reportedReviews?: number;
+  completedOrders?: number;
   flaggedReviews:   number;
   fiveStarRate:     string;
   responseRate:     string;
@@ -122,7 +134,9 @@ export interface StoreReviewsQuery {
   rating?:    number | 'all';
   productId?: string;
   /** Seller-reply / flag filter, applied server-side. */
-  status?:    'replied' | 'unreplied' | 'flagged';
+  status?:    'replied' | 'unreplied' | 'flagged' | 'reported';
+  sort?:      'newest' | 'oldest' | 'lowest' | 'highest';
+  q?:         string;
 }
 
 interface ApiResponse<T> { success: boolean; message?: string; data: T }
@@ -194,8 +208,10 @@ export function apiGetStoreReviews(storeId: string, query: StoreReviewsQuery = {
   if (query.rating && query.rating !== 'all') params.set('rating', String(query.rating));
   if (query.productId) params.set('productId', query.productId);
   if (query.status) params.set('status', query.status);
+  if (query.sort) params.set('sort', query.sort);
+  if (query.q) params.set('q', query.q);
   const qs = params.toString();
-  return client.get<never, ApiResponse<{ stats: StoreReviewStats; pagination: Pagination; reviews: StoreReviewEntry[] }>>(
+  return client.get<never, ApiResponse<{ stats: StoreReviewStats; counts?: StoreReviewCounts; productFilter?: { productId: string; title: string; count: number }[]; pagination: Pagination; reviews: StoreReviewEntry[] }>>(
     `${ENDPOINTS.RATING.STORE_REVIEWS(storeId)}${qs ? `?${qs}` : ''}`,
   );
 }
@@ -223,4 +239,53 @@ export function apiUnflagReview(reviewId: string) {
 /** DELETE /api/rating/admin/:reviewId */
 export function apiModerateDeleteReview(reviewId: string) {
   return client.delete<never, MessageResponse>(ENDPOINTS.RATING.MODERATE_DELETE(reviewId));
+}
+
+
+// ── Seller tools: templates, review requests, report, insights ────────────────
+export interface ReplyTemplate { id: string; title: string; text: string }
+export function apiGetReplyTemplates(storeId: string) {
+  return client.get<never, ApiResponse<{ templates: ReplyTemplate[] }>>(`/api/rating/reply-templates/${storeId}`);
+}
+export function apiSaveReplyTemplates(storeId: string, templates: ReplyTemplate[]) {
+  return client.put<never, ApiResponse<{ templates: ReplyTemplate[] }>>(`/api/rating/reply-templates/${storeId}`, { templates });
+}
+
+export interface RequestableOrder {
+  orderId: string; orderNumber: string; buyerName: string; productName: string; itemCount: number;
+  date: string; requestedAt: string | null; eligible: boolean;
+  blockedReason: 'not_completed' | 'expired' | 'already_requested' | 'reviewed' | null; blockedText: string | null;
+}
+export function apiGetRequestableOrders(storeId: string) {
+  return client.get<never, ApiResponse<{ items: RequestableOrder[]; windowDays: number }>>(`/api/rating/review-requests/${storeId}`);
+}
+export function apiRequestReview(orderId: string) {
+  return client.post<never, MessageResponse>(`/api/rating/review-request/${orderId}`);
+}
+
+export const REPORT_REASONS: { code: string; label: string }[] = [
+  { code: 'abusive', label: 'Abusive language' },
+  { code: 'off_topic', label: 'Not about the product' },
+  { code: 'personal_info', label: 'Contains personal information' },
+  { code: 'spam', label: 'Spam' },
+  { code: 'wrong_product', label: 'Wrong product' },
+  { code: 'other', label: 'Other' },
+];
+export function apiReportReview(reviewId: string, reasonCode: string, text: string) {
+  return client.post<never, MessageResponse>(`/api/rating/${reviewId}/report`, { reasonCode, text });
+}
+
+export interface StoreInsights {
+  range: number; enough: boolean;
+  products: { productId: string; title: string; avgRating: number | null; count: number; lowStarCount: number }[];
+  trend: { weekStart: string; avgRating: number | null; count: number }[];
+  current: { avgRating: number | null; count: number };
+  previous: { avgRating: number | null; count: number };
+  trusted: {
+    qualifies: boolean; badgePublic: boolean;
+    items: { key: string; label: string; value: number | null; target: number; met: boolean }[];
+  };
+}
+export function apiGetStoreInsights(storeId: string, range: 30 | 90) {
+  return client.get<never, ApiResponse<StoreInsights>>(`/api/rating/store-insights/${storeId}?range=${range}`);
 }

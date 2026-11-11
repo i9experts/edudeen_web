@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { addressLines } from '@/utils/address';
-import { Truck, CheckCheck, RefreshCw, Printer } from 'lucide-react';
+import { Truck, CheckCheck, RefreshCw, Printer, Send } from 'lucide-react';
+import { apiRequestReview } from '@/api/services/rating';
 import { Modal, Button, Badge, StatusBadge, Input, SkeletonBox } from '@/components/comman/ui';
 import { apiMarkOrderPaid, apiSellerCancelOrder, apiUpdateOrderStatus } from '@/api/services/orders';
 import { apiGetSellerOrderDetail, type SellerOrder, type SellerOrderDetail } from '@/api/services/product';
@@ -396,6 +397,18 @@ export function OrderDetailModal({ order, storeId, onClose, onUpdated, onOpenOrd
               </div>
             )}
           </div>
+          {(order.status === 'delivered' || order.status === 'completed') && detail && (
+            detail.reviewRequestedAt ? (
+              <Button variant="outline" size="sm" disabled title="One request per order">
+                Review requested {new Date(detail.reviewRequestedAt).toLocaleDateString()}
+              </Button>
+            ) : (
+              <Button variant="outline" size="sm" onClick={() => run('review', () => apiRequestReview(order.orderId), {})}
+                loading={busy === 'review'} disabled={!!busy} icon={<Send size={13} />}>
+                Request review
+              </Button>
+            )
+          )}
           {canCancel(order) && !cancelling && (
             <Button variant="outline" size="sm" onClick={() => setCancelling(true)} disabled={!!busy}>Cancel order</Button>
           )}

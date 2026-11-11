@@ -681,6 +681,7 @@ export interface SellerOrderShippingAddress {
 }
 
 export interface SellerOrderDetail {
+  reviewRequestedAt?: string | null;
   orderId:         string;
   orderNumber:     string;
   date:            string;

@@ -35,11 +35,11 @@ export function useModerationActions() {
     }
   }, []);
 
-  const approve = useCallback(async (id: string) => {
+  const approve = useCallback(async (id: string, note?: string) => {
     setProcessingId(id);
     setError('');
     try {
-      await apiApproveReport(id);
+      await apiApproveReport(id, note);
       return true;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to approve report.');
@@ -49,11 +49,11 @@ export function useModerationActions() {
     }
   }, []);
 
-  const remove = useCallback(async (id: string) => {
+  const remove = useCallback(async (id: string, note?: string) => {
     setProcessingId(id);
     setError('');
     try {
-      await apiRemoveReportTarget(id);
+      await apiRemoveReportTarget(id, note);
       return true;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to remove flagged item.');
