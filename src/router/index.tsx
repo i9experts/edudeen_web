@@ -40,7 +40,7 @@ import { NewPasswordPage }    from '@/features/auth/pages/NewPasswordPage';
 // explicit instruction.
 import { Homepage }             from '@/features/buyer/pages/Homepage';
 import { BrowsePathPage }       from '@/features/buyer/pages/BrowsePathPage';
-import { NotFoundPage }         from '@/features/buyer/pages/NotFoundPage';
+import RootStoreRedirect        from './RootStoreRedirect';
 
 // ── Lazy helpers ──────────────────────────────────────────────────────────────
 // Seller-only / admin-only entry pages (heavy: Stripe wizard) stay out of the main bundle.
@@ -487,7 +487,7 @@ const mainRouter = createBrowserRouter([
       },
 
       // ── 404 ───────────────────────────────────────────────────────────
-      { path: '*', element: <NotFoundPage /> },
+      { path: '*', element: <RootStoreRedirect /> },
     ],
   },
 ]);
