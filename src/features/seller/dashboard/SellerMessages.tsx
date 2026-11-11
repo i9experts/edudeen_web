@@ -175,10 +175,11 @@ export function SellerMessages() {
     }
     markSeen(incoming._id).then(
       () => { setSharedUnreadMessages(storeId, n => n, true); },   // quiet re-read: the server stays the final word
-      () => {
-        markedRef.current = '';
+      (e: unknown) => {
+        // Keep the marker so a failing message is not retried in a loop; the server's reason is shown to help diagnose.
         if (before > 0) { inbox.patch(activeId, { sellerUnread: before }); setSharedUnreadMessages(storeId, n => n + 1, true); }
-        toast.error('Could not mark this chat as read.');
+        const why = (e as { message?: string })?.message;
+        toast.error(`Could not mark this chat as read.${why ? ` (${why})` : ''}`);
       },
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
