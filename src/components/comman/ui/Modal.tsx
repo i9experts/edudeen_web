@@ -16,21 +16,23 @@ export interface ModalProps {
   mobileSheet?: boolean;
   /** With mobileSheet: fill the whole screen height on phones (detail drawers). */
   fullHeightMobile?: boolean;
+  /** Detail drawer: full-screen sheet below sm, a right-edge panel (full height, slides in) from sm up. */
+  drawer?: boolean;
 }
 
-export function Modal({ title, onClose, children, footer, width = 440, mobileSheet = false, fullHeightMobile = false }: ModalProps) {
+export function Modal({ title, onClose, children, footer, width = 440, mobileSheet = false, fullHeightMobile = false, drawer = false }: ModalProps) {
   const titleId = useId();
 
-  const style: CSSProperties = mobileSheet
+  const style: CSSProperties = mobileSheet || drawer
     ? { '--modal-w': `${width}px` } as CSSProperties
     : { maxWidth: width };
 
   return (
     <DialogShell
       onClose={onClose}
-      align={mobileSheet ? 'bottom-mobile' : 'center'}
+      align={drawer ? 'end-mobile' : mobileSheet ? 'bottom-mobile' : 'center'}
       ariaLabelledBy={titleId}
-      className={clsx('max-h-[90vh]', mobileSheet && 'max-w-full sm:max-w-[var(--modal-w)]', mobileSheet && fullHeightMobile && 'max-sm:h-[100dvh] max-sm:max-h-[100dvh]')}
+      className={clsx(drawer ? 'max-sm:h-[100dvh] max-sm:max-h-[100dvh] sm:max-h-[100dvh] sm:max-w-[var(--modal-w)]' : 'max-h-[90vh]', mobileSheet && !drawer && 'max-w-full sm:max-w-[var(--modal-w)]', mobileSheet && fullHeightMobile && 'max-sm:h-[100dvh] max-sm:max-h-[100dvh]')}
       style={style}
     >
       <div className="flex items-center justify-between px-5 py-4 border-b border-bone shrink-0">
@@ -44,7 +46,7 @@ export function Modal({ title, onClose, children, footer, width = 440, mobileShe
         </button>
       </div>
 
-      <div className="px-5 py-4 overflow-y-auto">{children}</div>
+      <div className="px-5 py-4 overflow-y-auto min-h-0 flex-1">{children}</div>
 
       {footer && (
         <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-bone shrink-0">
