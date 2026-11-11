@@ -16,6 +16,7 @@ import { Modal, Button, Select, Textarea, type ActionMenuItem } from '@/componen
 import { useToast } from '@/contexts/ToastContext';
 import { chatListTime } from '@/utils/localeTime';
 import { setSharedUnreadMessages } from '@/hooks/store/useStoreDashboardSummary';
+import { useStoreWorkspace } from '@/components/layouts/StoreWorkspaceContext';
 import { BuyerDetailsBody, ChatContextCard, useBuyerContext } from './BuyerDetails';
 
 const TYPE_PREVIEW: Partial<Record<MessageType, string>> = {
@@ -63,6 +64,7 @@ export function SellerMessages() {
   const { storeId } = useParams<{ storeId: string }>();
   const navigate = useNavigate();
   const { profile } = useGetProfile();
+  const workspace = useStoreWorkspace();
 
   const [searchParams, setSearchParams] = useSearchParams();
   const toast = useToast();
@@ -278,6 +280,7 @@ export function SellerMessages() {
           onBack={closeChat}
           shortcuts={storeId && active ? [{ icon: <Package size={17} />, label: 'View Orders', onClick: () => navigate(`/store/${storeId}/orders?tab=all&buyer=${active.buyerId}`) }] : []}
           contextCard={storeId ? <ChatContextCard ctx={buyerCtx.data} storeId={storeId} /> : undefined}
+          quickReplies={storeId && active ? { storeId, buyerName: active.buyer?.name ?? '', storeName: workspace.store?.name ?? '' } : undefined}
           onDetailsClick={() => setDetailsOpen(o => !o)}
           detailsActive={detailsOpen}
           messages={messages}

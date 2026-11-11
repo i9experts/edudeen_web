@@ -177,6 +177,23 @@ export function apiStartConversation(payload: StartConversationPayload) {
   return client.post<never, Conversation>(ENDPOINTS.MESSAGING.CONVERSATIONS.START, payload);
 }
 
+// ── Seller quick replies (own store only) ───────────────────────────────────
+export interface QuickReply { _id: string; storeId: string; title: string; body: string; category: string; sortOrder: number; isDefault: boolean }
+export interface QuickReplyInput { title: string; body: string; category: string }
+
+export function apiListQuickReplies(storeId: string) {
+  return client.get<never, { replies: QuickReply[]; max: number }>('/api/messaging/seller/quick-replies', { params: { storeId } });
+}
+export function apiCreateQuickReply(storeId: string, input: QuickReplyInput) {
+  return client.post<never, QuickReply>('/api/messaging/seller/quick-replies', { storeId, ...input });
+}
+export function apiUpdateQuickReply(storeId: string, id: string, input: Partial<QuickReplyInput>) {
+  return client.patch<never, QuickReply>(`/api/messaging/seller/quick-replies/${id}`, { storeId, ...input });
+}
+export function apiDeleteQuickReply(storeId: string, id: string) {
+  return client.delete<never, { success: boolean }>(`/api/messaging/seller/quick-replies/${id}`, { params: { storeId } });
+}
+
 export function apiGetSellerConversationContext(id: string) {
   return client.get<never, ConversationContext>(`/api/messaging/seller/conversations/${id}/context`);
 }

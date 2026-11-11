@@ -55,6 +55,8 @@ interface ChatWindowProps {
   /** Optional "Buyer details" header button (seller side). */
   onDetailsClick?: () => void;
   detailsActive?:  boolean;
+  /** Seller inbox only: enables the Quick replies button and "/" shortcut in the composer. */
+  quickReplies?:   { storeId: string; buyerName: string; storeName: string };
 }
 
 function payloadFromMessage(m: OptimisticMessage): SendMessagePayload | null {
@@ -75,7 +77,7 @@ export function ChatWindow({
   messages, msgLoading, currentUserId, otherPartyId, hasMore, loadingMore, onLoadMore,
   sending, uploading, onSend, onUpload, onEditMessage, onDeleteMessage, onRetry,
   otherOnline, otherTyping, onTyping, conversationId, storeId, storeSlug, error,
-  contextCard, onDetailsClick, detailsActive,
+  contextCard, onDetailsClick, detailsActive, quickReplies,
 }: ChatWindowProps) {
   const [text,      setText]      = useState('');
   const [replyTo,   setReplyTo]   = useState<Message | null>(null);
@@ -235,6 +237,7 @@ export function ChatWindow({
         replyTo={replyTo}
         onCancelReply={() => setReplyTo(null)}
         onShareProduct={storeId ? () => setShowProductShare(true) : undefined}
+        quickReplies={quickReplies}
       />
 
       {showProductShare && storeId && (

@@ -4,6 +4,9 @@ import { Send, Loader2, X, Mic, MicOff } from 'lucide-react';
 import type { Message } from '@/api/services/messaging';
 import { EmojiPicker } from './EmojiPicker';
 import { AttachmentMenu } from './AttachmentMenu';
+import { QuickReplyList, QuickRepliesManager, useQuickReplies } from './QuickReplies';
+import type { QuickReply } from '@/api/services/messaging';
+import { applyQuickReplyVars, filterQuickReplies, slashQuery } from '@/utils/quickReplies';
 
 interface MessageInputProps {
   value:          string;
@@ -15,6 +18,8 @@ interface MessageInputProps {
   replyTo?:       Message | null;
   onCancelReply?: () => void;
   onShareProduct?: () => void;
+  /** Seller composer only (off by default, so the buyer composer is unchanged): quick replies + "/" shortcut. */
+  quickReplies?:  { storeId: string; buyerName: string; storeName: string };
 }
 
 const MAX_TEXTAREA_H = 120;
@@ -81,11 +86,52 @@ function useVoiceRecorder(onReady: (file: File) => void) {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 export function MessageInput({
-  value, onChange, onSend, onFileSelect, uploading, sending, replyTo, onCancelReply, onShareProduct,
+  value, onChange, onSend, onFileSelect, uploading, sending, replyTo, onCancelReply, onShareProduct, quickReplies,
 }: MessageInputProps) {
   const canSend = value.trim().length > 0 && !sending;
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [justSent, setJustSent] = useState(false);
+
+  // ── Quick replies (seller only; with no `quickReplies` prop nothing below runs or renders) ──
+  const qr = useQuickReplies(quickReplies?.storeId);
+  const [btnOpen, setBtnOpen] = useState(false);
+  const [btnQuery, setBtnQuery] = useState('');
+  const [dismissed, setDismissed] = useState(false);
+  const [qrIndex, setQrIndex] = useState(0);
+  const [managing, setManaging] = useState(false);
+  const searchRef = useRef<HTMLInputElement>(null);
+  const slash = quickReplies ? slashQuery(value) : null;
+  const slashOpen = slash !== null && !dismissed;
+  const listOpen = !!quickReplies && (btnOpen || slashOpen);
+  const qrItems = filterQuickReplies(qr.replies, btnOpen ? btnQuery : (slash ?? ''));
+
+  useEffect(() => { if (slash === null) setDismissed(false); }, [slash]);
+  useEffect(() => { setQrIndex(0); }, [btnQuery, slash, btnOpen]);
+  useEffect(() => { if (btnOpen) searchRef.current?.focus(); }, [btnOpen]);
+
+  const closeList = () => { setBtnOpen(false); setBtnQuery(''); if (slashOpen) setDismissed(true); };
+  // Inserts the text only (never sends); cursor goes to the end so the seller can edit.
+  const pickReply = (r: QuickReply) => {
+    const text = applyQuickReplyVars(r.body, { buyer_name: quickReplies?.buyerName, store_name: quickReplies?.storeName });
+    onChange(text);
+    setBtnOpen(false); setBtnQuery(''); setDismissed(true);
+    requestAnimationFrame(() => {
+      const el = textareaRef.current;
+      if (!el) return;
+      el.focus();
+      el.setSelectionRange(text.length, text.length);
+    });
+  };
+  // Arrow keys / Enter / Esc for the open list. Returns true when the key was used.
+  const listKey = (e: React.KeyboardEvent): boolean => {
+    if (!listOpen) return false;
+    if (e.key === 'Escape') { e.preventDefault(); closeList(); textareaRef.current?.focus(); return true; }
+    if (qrItems.length === 0) return false;
+    if (e.key === 'ArrowDown') { e.preventDefault(); setQrIndex(i => (i + 1) % qrItems.length); return true; }
+    if (e.key === 'ArrowUp') { e.preventDefault(); setQrIndex(i => (i - 1 + qrItems.length) % qrItems.length); return true; }
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); pickReply(qrItems[Math.min(qrIndex, qrItems.length - 1)]); return true; }
+    return false;
+  };
 
   const { recording, formattedTime, start, stop, cancel } = useVoiceRecorder(file => {
     onFileSelect(file);
@@ -105,6 +151,7 @@ export function MessageInput({
   }, [replyTo]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (listKey(e)) return;
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (canSend) handleSend(); }
     if (e.key === 'Escape' && replyTo) onCancelReply?.();
   };
@@ -147,7 +194,34 @@ export function MessageInput({
   }
 
   return (
-    <div className="border-t border-[#eeece4] bg-white px-4 py-[10px] shrink-0" style={{ paddingBottom: 'max(10px, env(safe-area-inset-bottom))' }}>
+    <div className="relative border-t border-[#eeece4] bg-white px-4 py-[10px] shrink-0" style={{ paddingBottom: 'max(10px, env(safe-area-inset-bottom))' }}>
+      {quickReplies && listOpen && (
+        <div className="absolute inset-x-4 bottom-full">
+          <QuickReplyList
+            items={qrItems} loading={qr.loading} error={qr.error} loaded={qr.loaded} activeIndex={qrIndex}
+            onPick={pickReply} onRetry={() => void qr.reload()} onHover={setQrIndex}
+            onManage={() => { closeList(); setManaging(true); }}
+            {...(btnOpen ? { searchValue: btnQuery, onSearch: setBtnQuery, searchRef, onKeyDown: listKey } : {})}
+          />
+        </div>
+      )}
+      {quickReplies && managing && (
+        <QuickRepliesManager
+          storeId={quickReplies.storeId} replies={qr.replies} loading={qr.loading} error={qr.error} loaded={qr.loaded}
+          onReload={qr.reload} onClose={() => setManaging(false)}
+        />
+      )}
+      {quickReplies && (
+        <div className="mb-[6px]">
+          <button
+            type="button" aria-haspopup="dialog" aria-expanded={btnOpen}
+            onClick={() => { setBtnOpen(o => !o); setBtnQuery(''); }}
+            className="min-h-[44px] px-3 rounded-full border border-[#eeece4] bg-cream text-[12.5px] font-semibold text-charcoal cursor-pointer"
+          >
+            Quick replies
+          </button>
+        </div>
+      )}
       {replyTo && (
         <div className="flex items-center gap-2 mb-[8px] px-3 py-[7px] bg-cream rounded-[10px] border-s-[3px] border-brand-orange transition-all duration-200 ease-out starting:opacity-0 starting:-translate-y-1">
           <div className="flex-1 min-w-0">
