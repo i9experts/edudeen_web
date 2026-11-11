@@ -493,21 +493,20 @@ export function apiGetStoreFollowers(storeId: string, page = 1, limit = 20) {
 // ── Customers (staff-facing) ──────────────────────────────────────────────────
 
 export interface StoreCustomer {
-  _id:         string;
-  name:        string;
-  email:       string;
-  phone:       string;
-  createdAt:   string | null;
-  orderCount:  number;
-  totalSpent:  number;
-  lastOrderAt: string | null;
+  _id:            string;
+  name:           string;
+  /** Masked by the server (s***5@gmail.com). */
+  email:          string;
+  /** Masked by the server (+92 3** ***0161). */
+  phone:          string;
+  createdAt:      string | null;
+  orderCount:     number;
+  totalSpent:     number;
+  freeOrderCount: number;
+  lastOrderAt:    string | null;
 }
 
-export interface UpdateStoreCustomerPayload {
-  name?:  string;
-  phone?: string;
-  email?: string;
-}
+export type CustomerSortKey = 'orderCount' | 'totalSpent' | 'lastOrderAt' | 'createdAt';
 
 interface PaginatedCustomers {
   pagination: { page: number; limit: number; total: number; totalPages: number };
@@ -515,17 +514,51 @@ interface PaginatedCustomers {
   customers:  StoreCustomer[];
 }
 
-/** GET /api/store/:storeId/customers  (seller only). `q` = case-insensitive name/email search. */
-export function apiGetStoreCustomers(storeId: string, page = 1, limit = 20, q = '') {
-  const search = q.trim() ? `&q=${encodeURIComponent(q.trim())}` : '';
-  return client.get<never, ApiResponse<PaginatedCustomers>>(
-    `${ENDPOINTS.STORE.CUSTOMERS.LIST(storeId)}?page=${page}&limit=${limit}${search}`,
-  );
+/** GET /api/store/:storeId/customers  (seller only). `q` = name / e-mail / phone search; sorted on the server before paging. */
+export function apiGetStoreCustomers(
+  storeId: string, page = 1, limit = 20, q = '',
+  sort: CustomerSortKey = 'lastOrderAt', order: 'asc' | 'desc' = 'desc',
+) {
+  const params = new URLSearchParams({ page: String(page), limit: String(limit), sort, order });
+  if (q.trim()) params.set('q', q.trim());
+  return client.get<never, ApiResponse<PaginatedCustomers>>(`${ENDPOINTS.STORE.CUSTOMERS.LIST(storeId)}?${params.toString()}`);
 }
 
-/** PATCH /api/store/:storeId/customers/:customerId  (seller only) */
-export function apiUpdateStoreCustomer(storeId: string, customerId: string, payload: UpdateStoreCustomerPayload) {
-  return client.patch<never, ApiResponse<StoreCustomer>>(
-    ENDPOINTS.STORE.CUSTOMERS.UPDATE(storeId, customerId), payload,
-  );
+export interface CustomerRecentOrder {
+  orderId:     string;
+  orderNumber: string;
+  itemCount:   number;
+  amount:      number;
+  isFree:      boolean;
+  isFreeClaim: boolean;
+  status:      string;
+  createdAt:   string;
+}
+
+export interface StoreCustomerDetail {
+  _id:            string;
+  name:           string;
+  email:          string;
+  phone:          string;
+  createdAt:      string | null;
+  orderCount:     number;
+  totalSpent:     number;
+  freeOrderCount: number;
+  firstOrderAt:   string | null;
+  lastOrderAt:    string | null;
+  isRepeat:       boolean;
+  /** Existing chat thread between this buyer and the store, or null when the buyer never wrote. */
+  conversationId: string | null;
+  recentOrders:   CustomerRecentOrder[];
+  note:           { note: string; tags: string[] };
+}
+
+/** GET /api/store/:storeId/customers/:customerId  (seller only, read-only, masked contact). */
+export function apiGetStoreCustomerDetail(storeId: string, customerId: string) {
+  return client.get<never, ApiResponse<StoreCustomerDetail>>(ENDPOINTS.STORE.CUSTOMERS.DETAIL(storeId, customerId));
+}
+
+/** PUT /api/store/:storeId/customers/:customerId/note  (seller-private note + tags). */
+export function apiSaveStoreCustomerNote(storeId: string, customerId: string, payload: { note: string; tags: string[] }) {
+  return client.put<never, ApiResponse<{ note: string; tags: string[] }>>(ENDPOINTS.STORE.CUSTOMERS.NOTE(storeId, customerId), payload);
 }

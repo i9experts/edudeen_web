@@ -59,10 +59,12 @@ export function FollowersTab() {
   const [pages,     setPages]     = useState(1);
   const [loading,   setLoading]   = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error,     setError]     = useState('');
 
   const load = useCallback(async (p: number, showRefresh = false) => {
     if (!storeId) return;
     showRefresh ? setRefreshing(true) : setLoading(true);
+    setError('');
     try {
       const res = await apiGetStoreFollowers(storeId, p, 20);
       if (res.success) {
@@ -71,6 +73,8 @@ export function FollowersTab() {
         setPages(res.data.pagination.totalPages);
         setPage(p);
       }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not load followers.');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -93,7 +97,14 @@ export function FollowersTab() {
         </button>
       </div>
 
-      {loading ? <Skeleton /> : followers.length === 0 ? (
+      {error ? (
+        <div role="alert" className="bg-white rounded-[10px] border border-bone p-6 text-center">
+          <p className="text-[13px] text-error mb-3">{error}</p>
+          <button type="button" onClick={() => load(page)} className="inline-flex items-center gap-1.5 min-h-[44px] px-4 border border-bone rounded-lg bg-white text-[13px] font-medium cursor-pointer">
+            <RefreshCw size={13} /> Retry
+          </button>
+        </div>
+      ) : loading ? <Skeleton /> : followers.length === 0 ? (
         <div className="bg-white rounded-[10px] border border-bone flex flex-col items-center justify-center py-16 gap-4">
           <div className="w-12 h-12 rounded-full bg-brand-pale-orange flex items-center justify-center">
             <UserPlus size={20} className="text-brand-orange" />

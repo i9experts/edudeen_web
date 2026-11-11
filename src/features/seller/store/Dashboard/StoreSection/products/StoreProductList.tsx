@@ -666,6 +666,15 @@ export default function StoreProductList() {
               </div>
             </div>
 
+            {noSub && (
+              <div className="mx-5 sm:mx-6 mb-4 flex items-center gap-3 rounded-[10px] border border-amber-200 bg-amber-50 px-4 py-2.5 text-[13px] text-amber-900">
+                <span className="flex-1 min-w-0">
+                  Showing only products with no subcategory. Open <strong>Edit</strong> on each one and pick a subcategory.
+                </span>
+                <button type="button" className="shrink-0 font-semibold underline bg-transparent border-0 p-0 cursor-pointer text-amber-900" onClick={() => { setPage(1); setRawNoSub(''); }}>Show all</button>
+              </div>
+            )}
+
             <Table
               cardsBelow="md"
               compact

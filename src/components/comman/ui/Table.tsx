@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react';
+import { type KeyboardEvent, type ReactNode } from 'react';
 import { clsx } from 'clsx';
 import { ChevronUp, ChevronDown, ArrowUpDown, Inbox } from 'lucide-react';
 import { Pagination } from './Pagination';
@@ -68,6 +68,10 @@ interface TableProps<T = Record<string, unknown>> {
   compact?:          boolean;
   /** Fixed row height in px (table rows + skeleton rows) so loading does not shift the layout. */
   rowHeight?:        number;
+  /** Rows (and cards) with onRowClick become keyboard-operable: focusable, Enter/Space opens, data-row-key lets callers return focus. */
+  rowsFocusable?:    boolean;
+  /** Accessible name of a focusable row. */
+  rowLabel?:         (row: T) => string;
 }
 
 const BP = {
@@ -89,8 +93,12 @@ export function Table<T = Record<string, unknown>>({
   columns, data, keyExtractor, onRowClick, pagination, className,
   sort, onSortChange, selectable, selectedKeys, onSelectionChange, bulkActions,
   loading = false, loadingRows = 5, emptyState, cardsBelow = 'sm',
-  renderCard, compact = false, rowHeight,
+  renderCard, compact = false, rowHeight, rowsFocusable = false, rowLabel,
 }: TableProps<T>) {
+  const focusProps = (row: T, rowKey: string | number) => (rowsFocusable && onRowClick ? {
+    role: 'button' as const, tabIndex: 0, 'data-row-key': String(rowKey), 'aria-label': rowLabel?.(row),
+    onKeyDown: (e: KeyboardEvent) => { if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onRowClick(row); } },
+  } : {});
   const wide = cardsBelow === 'lg';
   const px = compact ? 'px-3' : 'px-5';
   const colCls = (col: TableColumn<T>, head: boolean) => clsx(
@@ -236,6 +244,7 @@ export function Table<T = Record<string, unknown>>({
                         'transition-colors duration-150 hover:bg-cream',
                       )}
                       onClick={() => onRowClick?.(row)}
+                      {...focusProps(row, rowKey)}
                     >
                       {selectable && (
                         <td className="px-5 py-[14px]" onClick={e => e.stopPropagation()}>
@@ -284,7 +293,7 @@ export function Table<T = Record<string, unknown>>({
                 const rowKey = keyExtractor(row, i);
                 if (renderCard) {
                   return (
-                    <div key={rowKey} className={clsx('px-4 py-3', onRowClick && 'cursor-pointer active:bg-cream')} onClick={() => onRowClick?.(row)}>
+                    <div key={rowKey} className={clsx('px-4 py-3', onRowClick && 'cursor-pointer active:bg-cream')} onClick={() => onRowClick?.(row)} {...focusProps(row, rowKey)}>
                       {renderCard(row, i)}
                     </div>
                   );

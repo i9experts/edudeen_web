@@ -10,7 +10,7 @@ export interface DialogShellProps {
    *  a native-app-style action sheet anchored to the bottom edge, full-width,
    *  rounded only on top, on every screen size; 'bottom-mobile' for the same
    *  sheet treatment only below `sm` — centered like 'center' at `sm` and up. */
-  align?: 'center' | 'top' | 'bottom' | 'bottom-mobile';
+  align?: 'center' | 'top' | 'bottom' | 'bottom-mobile' | 'end-mobile';
   /** Applied to the dialog panel itself (width/max-height/etc.) — the shell only owns backdrop + positioning + focus trap. */
   className?: string;
   style?: CSSProperties;
@@ -36,6 +36,7 @@ export function DialogShell({ onClose, children, align = 'center', className, st
         'fixed inset-0 z-[9999] flex justify-center',
         align === 'bottom'        ? 'items-end p-0'
         : align === 'bottom-mobile' ? 'items-end sm:items-center p-0 sm:p-4'
+        : align === 'end-mobile'    ? 'items-end sm:items-stretch sm:justify-end p-0'
         : align === 'top'          ? 'items-start p-4 pt-[12vh]'
         :                             'items-center p-4',
       )}
@@ -57,6 +58,8 @@ export function DialogShell({ onClose, children, align = 'center', className, st
             ? 'sheet-panel-enter rounded-t-2xl border-t pb-[env(safe-area-inset-bottom)]'
             : align === 'bottom-mobile'
               ? 'sheet-panel-enter rounded-t-2xl sm:rounded-2xl border-t sm:border pb-[env(safe-area-inset-bottom)] sm:pb-0'
+              : align === 'end-mobile'
+              ? 'sheet-panel-enter rounded-t-2xl sm:rounded-none sm:rounded-s-2xl border-t sm:border-t-0 sm:border-s pb-[env(safe-area-inset-bottom)] sm:pb-0 sm:h-full'
               : 'dialog-panel-enter rounded-2xl border',
           className,
         )}

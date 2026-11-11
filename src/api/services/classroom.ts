@@ -295,11 +295,33 @@ export const apiGetMyCourses = () => client.get<never, Ok<MyCourse[]>>('/api/cou
 
 export interface CourseStudent { userId: string; name: string; email: string; enrolledAt: string | null; completedLessons: number; totalLessons: number; percent: number; lastActiveAt: string | null; completedAt: string | null; certificateCode: string | null }
 export interface RosterRow { userId: string; name: string; email: string | null; productId: string; productName: string; kind: 'course' | 'file'; enrolledAt: string; isFree: boolean; percent: number | null; completedLessons: number | null; totalLessons: number | null; downloads: number | null; lastActivityAt: string | null; accessEnded: boolean }
-export interface RosterPage { total: number; page: number; limit: number; totalPages: number; rows: RosterRow[]; products: { id: string; name: string }[] }
-export interface RosterFilters { productId?: string; q?: string }
-const rosterParams = (f: RosterFilters) => ({ ...(f.productId ? { productId: f.productId } : {}), ...(f.q ? { q: f.q } : {}) });
+export type RosterSortKey = 'enrolled' | 'progress' | 'activity' | 'name';
+export type RosterStatusKey = 'all' | 'not_started' | 'in_progress' | 'completed' | 'inactive14';
+export interface RosterStats { totalStudents: number; avgCompletionPct: number | null; active7d: number }
+export interface RosterStatusCounts { all: number; notStarted: number; inProgress: number; completed: number; inactive14: number }
+export interface RosterPage { total: number; page: number; limit: number; totalPages: number; rows: RosterRow[]; products: { id: string; name: string; count: number }[]; stats: RosterStats; statusCounts: RosterStatusCounts }
+export interface RosterFilters { productId?: string; q?: string; sort?: RosterSortKey; order?: 'asc' | 'desc'; status?: RosterStatusKey }
+const rosterParams = (f: RosterFilters) => ({
+  ...(f.productId ? { productId: f.productId } : {}), ...(f.q ? { q: f.q } : {}),
+  ...(f.sort ? { sort: f.sort } : {}), ...(f.order ? { order: f.order } : {}), ...(f.status && f.status !== 'all' ? { status: f.status } : {}),
+});
+
+export interface RosterStudentItem {
+  productId: string; productName: string; kind: 'course' | 'file'; enrolledAt: string; isFree: boolean;
+  orders: { orderNumber: string; free: boolean }[];
+  downloads: number | null; percent: number | null; completedLessons?: number; totalLessons?: number;
+  sections: { title: string; lessons: { title: string; done: boolean }[] }[];
+  lastActivityAt: string | null; accessEnded: boolean;
+}
+export interface RosterStudentDetail { userId: string; name: string; email: string | null; enrolledAt: string; lastActivityAt: string | null; items: RosterStudentItem[] }
+/** One student of this store (masked e-mail, lesson checklist / download count, order numbers). */
+export const apiGetRosterStudent = (storeId: string, userId: string) =>
+  client.get<never, Ok<RosterStudentDetail>>(`/api/courses/seller/${storeId}/roster/student/${userId}`);
+/** Finds or opens the single thread with a student (sends nothing). */
+export const apiSellerStartConversation = (storeId: string, buyerId: string) =>
+  client.post<never, { conversationId: string }>('/api/messaging/seller/start', { storeId, buyerId });
 /** Store-level students & downloads (courses + files, paid and free claims). */
-export const apiGetStoreRoster = (storeId: string, f: RosterFilters, page = 1, limit = 20) =>
+export const apiGetStoreRoster = (storeId: string, f: RosterFilters, page = 1, limit = 25) =>
   client.get<never, Ok<RosterPage>>(`/api/courses/seller/${storeId}/roster`, { params: { ...rosterParams(f), page, limit } });
 /** CSV text of the current filter (newest 5000 rows). */
 export const apiExportStoreRoster = (storeId: string, f: RosterFilters) =>
