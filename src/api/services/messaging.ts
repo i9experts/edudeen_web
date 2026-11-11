@@ -86,6 +86,7 @@ export interface ProductShareInfo {
   price?:    number;
   image?:    string;
   slug?:     string;
+  currency?: string | null;
 }
 
 export interface Message {
@@ -127,7 +128,16 @@ export interface Report {
 interface Paginated { total: number; page: number; limit: number; pages: number }
 
 // ── Payloads ──────────────────────────────────────────────────────────────────
-export interface StartConversationPayload { storeId: string }
+export interface StartConversationPayload { storeId: string; productId?: string; orderId?: string }
+
+export interface ConversationContextOrder { id: string; number: string; status: string; date: string }
+export interface ConversationContext {
+  product: { id: string; title: string; slug?: string; image: string | null; price: number; currency: string | null; isActive: boolean } | null;
+  order: ConversationContextOrder | null;
+  recentOrders: (ConversationContextOrder & { isFree?: boolean })[];
+  stats: { totalOrders: number; memberSince: string | null };
+  buyerId: string;
+}
 
 export interface ListConversationsParams   { storeId?: string; page?: number; limit?: number; isArchived?: boolean; isPinned?: boolean }
 export interface SearchConversationsParams { q: string; storeId?: string }
@@ -165,6 +175,10 @@ export interface AdminListConversationsParams {
 // ─────────────────────────────────────────────────────────────────────────────
 export function apiStartConversation(payload: StartConversationPayload) {
   return client.post<never, Conversation>(ENDPOINTS.MESSAGING.CONVERSATIONS.START, payload);
+}
+
+export function apiGetSellerConversationContext(id: string) {
+  return client.get<never, ConversationContext>(`/api/messaging/seller/conversations/${id}/context`);
 }
 
 export function apiListConversations(params?: ListConversationsParams) {

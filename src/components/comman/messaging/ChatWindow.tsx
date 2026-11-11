@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { MessageCircle, Search, X, Store as StoreIcon } from 'lucide-react';
 import type { ActionMenuItem } from '@/components/comman/ui';
 import type { Message, SendMessagePayload } from '@/api/services/messaging';
@@ -50,6 +50,11 @@ interface ChatWindowProps {
   storeId?:        string;
   /** Public store slug — used by "View Store" (/shop/<slug>). */
   storeSlug?:      string;
+  /** Optional small card under the header (seller: the product/order the buyer asked about). */
+  contextCard?:    ReactNode;
+  /** Optional "Buyer details" header button (seller side). */
+  onDetailsClick?: () => void;
+  detailsActive?:  boolean;
 }
 
 function payloadFromMessage(m: OptimisticMessage): SendMessagePayload | null {
@@ -70,6 +75,7 @@ export function ChatWindow({
   messages, msgLoading, currentUserId, otherPartyId, hasMore, loadingMore, onLoadMore,
   sending, uploading, onSend, onUpload, onEditMessage, onDeleteMessage, onRetry,
   otherOnline, otherTyping, onTyping, conversationId, storeId, storeSlug, error,
+  contextCard, onDetailsClick, detailsActive,
 }: ChatWindowProps) {
   const [text,      setText]      = useState('');
   const [replyTo,   setReplyTo]   = useState<Message | null>(null);
@@ -156,16 +162,21 @@ export function ChatWindow({
         onSearchClick={conversationId ? () => setShowSearch(s => !s) : undefined}
         searchActive={showSearch}
         shortcuts={headerShortcuts}
+        onDetailsClick={onDetailsClick}
+        detailsActive={detailsActive}
       />
+
+      {contextCard}
 
       {showSearch && conversationId && (
         <div className="border-b border-[#eeece4] bg-white px-4 py-[10px] transition-all duration-200 ease-out starting:opacity-0 starting:-translate-y-1">
           <div className="flex items-center gap-2 bg-cream rounded-full px-3.5 py-2">
             <Search size={14} className="text-slate shrink-0" />
             <input autoFocus value={query} onChange={e => handleSearchChange(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Escape') { e.stopPropagation(); setShowSearch(false); setQuery(''); } }}
               placeholder="Search messages…" aria-label="Search messages in this conversation"
               className="flex-1 bg-transparent border-none outline-none text-[13px] text-charcoal" />
-            <button onClick={() => { setShowSearch(false); setQuery(''); }} aria-label="Close search" className="bg-transparent border-none cursor-pointer text-slate shrink-0">
+            <button onClick={() => { setShowSearch(false); setQuery(''); }} aria-label="Close search" className="bg-transparent border-none cursor-pointer text-slate shrink-0 min-w-6 min-h-6 flex items-center justify-center">
               <X size={13} />
             </button>
           </div>

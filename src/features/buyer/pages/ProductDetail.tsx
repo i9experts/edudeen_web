@@ -703,7 +703,7 @@ export function ProductDetail() {
     requireAuth(async () => {
       setAskSellerBusy(true);
       try {
-        const conv = await apiStartConversation({ storeId });
+        const conv = await apiStartConversation({ storeId, productId: product._id });
         await apiSendMessage(conv._id, { type: 'product_share', productShare: { productId: product._id } });
         navigate(`/account/messages?conversation=${conv._id}`);
       } catch (err) {

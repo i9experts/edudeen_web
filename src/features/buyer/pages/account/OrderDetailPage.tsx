@@ -61,7 +61,7 @@ export function OrderDetailPage() {
   const contactSeller = async (storeId: string) => {
     setBusy('contact');
     try {
-      const conv = await apiStartConversation({ storeId });
+      const conv = await apiStartConversation({ storeId, ...(orderId ? { orderId } : {}) });
       navigate(`/account/messages?conversation=${conv._id}`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Could not open the conversation.');

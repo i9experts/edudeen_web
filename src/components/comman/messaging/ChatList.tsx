@@ -46,6 +46,10 @@ interface ChatListProps {
 
   /** Persist a user-resized width across sessions (desktop only). Omit to disable resizing. */
   resizeStorageKey?: string;
+
+  /** Optional empty-state text (no search active). Omit = the original wording (buyer inbox). Pass '' as description to hide it. */
+  emptyTitle?:       string;
+  emptyDescription?: string;
 }
 
 const MIN_W = 280;
@@ -104,7 +108,7 @@ export function ChatList({
   title, entries, activeId, onSelect, query, onQueryChange, loading, error, onNew,
   filters, activeFilter, onFilterChange,
   recentSearches, onSelectRecentSearch, onClearRecentSearches, onCommitSearch,
-  resizeStorageKey,
+  resizeStorageKey, emptyTitle, emptyDescription,
 }: ChatListProps) {
   const [searchFocused, setSearchFocused] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -231,8 +235,8 @@ export function ChatList({
           ) : entries.length === 0 ? (
             <EmptyState
               icon={<MessagesSquare size={26} className="text-brand-orange opacity-55" />}
-              title={query.trim() ? 'No matches' : 'No conversations yet'}
-              description={query.trim() ? 'Try a different search term.' : 'Start a conversation to see it here.'}
+              title={query.trim() ? 'No matches' : (emptyTitle ?? 'No conversations yet')}
+              description={query.trim() ? 'Try a different search term.' : (emptyDescription ?? 'Start a conversation to see it here.')}
               className="py-10"
             />
           ) : (

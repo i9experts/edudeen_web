@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { clsx } from 'clsx';
-import { ArrowLeft, Search } from 'lucide-react';
+import { ArrowLeft, Search, UserRound } from 'lucide-react';
 import { ActionMenu, type ActionMenuItem } from '@/components/comman/ui';
 import { ChatAvatar } from './ChatAvatar';
 
@@ -33,6 +33,9 @@ interface ChatHeaderProps {
   onSearchClick?: () => void;
   searchActive?: boolean;
   shortcuts?:    ChatHeaderShortcut[];
+  /** Optional "details" button (seller: buyer details). Visible on every width. */
+  onDetailsClick?: () => void;
+  detailsActive?: boolean;
 }
 
 // Thread header: a larger avatar + live status on the left, real quick
@@ -40,7 +43,7 @@ interface ChatHeaderProps {
 // everything else — the same information hierarchy WhatsApp/Telegram use,
 // without a fake call/video button since there's no calling backend here.
 export function ChatHeader({
-  name, image, online, typing, verified, subtitleOverride, menuItems, onBack, onSearchClick, searchActive, shortcuts,
+  name, image, online, typing, verified, subtitleOverride, menuItems, onBack, onSearchClick, searchActive, shortcuts, onDetailsClick, detailsActive,
 }: ChatHeaderProps) {
   const subtitle = subtitleOverride ?? (typing ? 'typing' : online !== undefined ? (online ? 'Online' : 'Offline') : undefined);
 
@@ -88,6 +91,20 @@ export function ChatHeader({
             )}
           >
             <Search size={17} />
+          </button>
+        )}
+        {onDetailsClick && (
+          <button
+            onClick={onDetailsClick}
+            aria-label="Buyer details"
+            title="Buyer details"
+            aria-pressed={detailsActive}
+            className={clsx(
+              'w-9 h-9 flex items-center justify-center rounded-full cursor-pointer border-none outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/40',
+              detailsActive ? 'bg-brand-pale-orange text-brand-orange' : 'hover:bg-cream bg-transparent text-slate',
+            )}
+          >
+            <UserRound size={17} />
           </button>
         )}
         <ActionMenu items={menuItems} align="right" />

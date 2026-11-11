@@ -64,6 +64,20 @@ function subscribe(storeId: string, onChange: () => void) {
   };
 }
 
+/**
+ * Set the unread-chats count in the shared summary right away (absolute value, never a decrement, so a socket echo
+ * or a repeat call cannot double-count), then re-read quietly so the server stays the final word.
+ */
+export function setSharedUnreadMessages(storeId: string, count: number | ((current: number) => number), refetchQuietly = true) {
+  const cur = states.get(storeId);
+  const raw = typeof count === 'function' ? count(cur?.data?.actionItems?.unreadMessages ?? 0) : count;
+  const n = Math.max(0, Math.floor(raw));
+  if (cur?.data?.actionItems && cur.data.actionItems.unreadMessages !== n) {
+    setState(storeId, { ...cur, data: { ...cur.data, actionItems: { ...cur.data.actionItems, unreadMessages: n } } });
+  }
+  if (refetchQuietly && states.has(storeId)) load(storeId, true);
+}
+
 export function useStoreDashboardSummary(storeId: string) {
   const snapshot = useSyncExternalStore(
     useCallback(cb => (storeId ? subscribe(storeId, cb) : () => {}), [storeId]),

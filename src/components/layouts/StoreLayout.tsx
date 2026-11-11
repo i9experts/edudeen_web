@@ -136,7 +136,7 @@ function StoreNavProvider({ children }: { children: ReactNode }) {
     return () => { cancelled = true; };
   }, [storeId]);
   // Same source as the Messages inbox (live via its socket); a seller conversation counts when sellerUnread > 0.
-  const { conversations } = useConversations({ storeId });
+  const { conversations } = useConversations({ storeId, isArchived: false, limit: 50 });
   const unreadChats = conversations.filter(c => (c.sellerUnread ?? 0) > 0).length;
   // Orders / Returns / Messages badges come from the shared dashboard summary (the dashboard's Action-required card reads
   // the same copy: one request, no extra call). Messages falls back to the inbox count until it has loaded.

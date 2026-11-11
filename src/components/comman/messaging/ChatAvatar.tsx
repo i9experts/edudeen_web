@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { BadgeCheck } from 'lucide-react';
 import { Avatar } from '@/components/comman/ui';
 
@@ -16,12 +17,17 @@ interface ChatAvatarProps {
 // admin-verified stores (mutually exclusive with the presence dot — a store
 // doesn't have online/offline presence the way a person does).
 export function ChatAvatar({ name, image, size = 40, online, verified, className }: ChatAvatarProps) {
+  // A broken URL falls back to initials; a new URL gets a fresh try.
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+  const showImage = !!image && failedSrc !== image;
   return (
     <div className={className} style={{ position: 'relative', width: size, height: size, flexShrink: 0 }}>
-      {image ? (
+      {showImage ? (
         <img loading="lazy" decoding="async"
           src={image}
-          alt={name}
+          alt=""
+          aria-hidden
+          onError={() => setFailedSrc(image ?? null)}
           className="rounded-full object-cover"
           style={{ width: size, height: size }}
         />

@@ -4,7 +4,36 @@ import {
   Check, CheckCheck, Clock, AlertCircle, FileText, Video as VideoIcon, Play, Pause,
   Reply as ReplyIcon, ChevronDown, Pencil, Trash2, X as XIcon, ShoppingBag,
 } from 'lucide-react';
-import type { Message } from '@/api/services/messaging';
+import type { Message, ProductShareInfo } from '@/api/services/messaging';
+import { formatPrice } from '@/utils/formatPrice';
+
+/** Shared-product card inside a chat bubble: a real link to the product page when the product has a slug. */
+function ProductShareCard({ share, own }: { share: ProductShareInfo | null; own: boolean }) {
+  if (!share) return null;
+  const body = (
+    <>
+      {share.image ? (
+        <img loading="lazy" decoding="async" src={share.image} alt="" className="w-11 h-11 rounded-[10px] object-cover shrink-0" />
+      ) : (
+        <div className={clsx('w-11 h-11 rounded-[10px] shrink-0 flex items-center justify-center', own ? 'bg-white/15' : 'bg-cream')}>
+          <ShoppingBag size={16} />
+        </div>
+      )}
+      <div className="min-w-0">
+        <p className="text-[13px] font-semibold truncate">{share.title ?? `Product #${share.productId.slice(-6)}`}</p>
+        {share.price != null && (
+          <p className={clsx('text-[12px]', own ? 'text-white/85' : 'text-slate')}>
+            {share.currency ? formatPrice(share.price, share.currency) : share.price}
+          </p>
+        )}
+      </div>
+    </>
+  );
+  const cls = 'flex items-center gap-[10px] min-w-[180px] text-inherit no-underline';
+  return share.slug
+    ? <a href={`/product/${encodeURIComponent(share.slug)}`} target="_blank" rel="noopener noreferrer" className={cls} aria-label={`Open ${share.title ?? 'product'}`}>{body}</a>
+    : <div className={cls}>{body}</div>;
+}
 import type { OptimisticMessage } from '@/hooks/messaging/useMessages';
 import { ChatAvatar } from './ChatAvatar';
 import { Modal } from '@/components/comman/ui/Modal';
@@ -332,21 +361,10 @@ export const MessageBubble = memo(function MessageBubble({
 
                 {/* Product share */}
                 {message.type === 'product_share' && (
-                  <div className="flex items-center gap-[10px] min-w-[180px]">
-                    {message.productShare?.image ? (
-                      <img loading="lazy" decoding="async" src={message.productShare.image} alt="" className="w-11 h-11 rounded-[10px] object-cover shrink-0" />
-                    ) : (
-                      <div className={clsx('w-11 h-11 rounded-[10px] shrink-0 flex items-center justify-center', own ? 'bg-white/15' : 'bg-cream')}>
-                        <ShoppingBag size={16} />
-                      </div>
-                    )}
-                    <div className="min-w-0">
-                      <p className="text-[13px] font-semibold truncate">{message.productShare?.title ?? `Product #${message.productShare?.productId.slice(-6)}`}</p>
-                      {message.productShare?.price != null && (
-                        <p className={clsx('text-[12px]', own ? 'text-white/85' : 'text-slate')}>${message.productShare.price}</p>
-                      )}
-                    </div>
-                  </div>
+                  <ProductShareCard
+                    share={message.productShare}
+                    own={own}
+                  />
                 )}
 
                 {/* Image */}

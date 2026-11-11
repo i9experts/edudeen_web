@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Pin, PinOff, Bell, BellOff, Archive, ArchiveRestore, Ban, Flag, Trash2, Package } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -10,9 +10,13 @@ import { useMessages } from '@/hooks/messaging/useMessages';
 import { useModeration } from '@/hooks/messaging/useModeration';
 import { usePresence } from '@/hooks/messaging/usePresence';
 import { useRecentSearches } from '@/hooks/messaging/useRecentSearches';
-import { apiUploadAttachment, apiListConversations, type Conversation, type MessageType } from '@/api/services/messaging';
+import { apiUploadAttachment, type Conversation, type MessageType } from '@/api/services/messaging';
 import { ChatList, ChatWindow, type ChatListEntry, type ChatListFilter } from '@/components/comman/messaging';
 import { Modal, Button, Select, Textarea, type ActionMenuItem } from '@/components/comman/ui';
+import { useToast } from '@/contexts/ToastContext';
+import { chatListTime } from '@/utils/localeTime';
+import { setSharedUnreadMessages } from '@/hooks/store/useStoreDashboardSummary';
+import { BuyerDetailsBody, ChatContextCard, useBuyerContext } from './BuyerDetails';
 
 const TYPE_PREVIEW: Partial<Record<MessageType, string>> = {
   voice: 'Voice note', image: 'Photo', video: 'Video', pdf: 'File', document: 'File', product_share: 'Product shared',
@@ -29,6 +33,14 @@ const REPORT_REASONS = [
 
 type FilterId = 'all' | 'unread' | 'pinned' | 'archived';
 
+// A seller cannot start a chat with a buyer (only from the Students page), so no "start a conversation" hint here.
+const EMPTY_TEXT: Record<FilterId, { title: string; description: string }> = {
+  all:      { title: 'No conversations yet',        description: 'Buyer messages will show up here.' },
+  unread:   { title: "You've read all your messages", description: '' },
+  pinned:   { title: 'No pinned chats',             description: '' },
+  archived: { title: 'No archived chats',           description: '' },
+};
+
 function toEntry(c: Conversation, online: Record<string, boolean>): ChatListEntry {
   return {
     id:          c._id,
@@ -36,7 +48,7 @@ function toEntry(c: Conversation, online: Record<string, boolean>): ChatListEntr
     image:       c.buyer?.profileImage,
     preview:     c.lastMessage ? (c.lastMessage.type === 'text' ? (c.lastMessage.text ?? '') : (TYPE_PREVIEW[c.lastMessage.type] ?? 'Message')) : 'No messages yet',
     previewType: c.lastMessage?.type,
-    time:        c.lastMessage ? new Date(c.lastMessage.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '',
+    time:        c.lastMessage ? chatListTime(c.lastMessage.sentAt) : '',
     unread:      c.sellerUnread,
     pinned:      c.isPinned,
     muted:       c.isMuted,
@@ -52,12 +64,17 @@ export function SellerMessages() {
   const navigate = useNavigate();
   const { profile } = useGetProfile();
 
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const toast = useToast();
   // `?filter=unread` lets Store Health link straight to the chats waiting for a reply.
   const [filter, setFilter] = useState<FilterId>(() => (searchParams.get('filter') === 'unread' ? 'unread' : 'all'));
   // "All" hides archived (matches WhatsApp/Telegram convention); "Archived" shows only those.
-  const { conversations, loading: listLoading, error: listError, refetch: refetchList } =
-    useConversations(storeId ? { storeId, isArchived: filter === 'archived' } : undefined);
+  // ONE definition of "unread": a non-archived chat with sellerUnread > 0. The Unread tab count and the sidebar badge
+  // (server count, same rule) both follow it. The archived list is only shown on the Archived tab.
+  const inbox = useConversations(storeId ? { storeId, isArchived: false, limit: 50 } : undefined);
+  const archivedInbox = useConversations(storeId ? { storeId, isArchived: true, limit: 50 } : undefined);
+  const { conversations, loading: listLoading, error: listError } = filter === 'archived' ? archivedInbox : inbox;
+  const unreadCount = inbox.conversations.filter(c => c.sellerUnread > 0).length;
   const { results: searchResults, search, loading: searching } = useSearchConversations();
   const { recent, commit, clear } = useRecentSearches(`seller-inbox:${storeId ?? ''}`);
   const [query, setQuery] = useState('');
@@ -68,8 +85,7 @@ export function SellerMessages() {
     : filter === 'pinned' ? baseList.filter(c => c.isPinned)
     : baseList;
 
-  const unreadCount = conversations.filter(c => c.sellerUnread > 0).length;
-  const pinnedCount = conversations.filter(c => c.isPinned).length;
+  const pinnedCount = inbox.conversations.filter(c => c.isPinned).length;
   const filters: ChatListFilter[] = [
     { id: 'all', label: 'All' },
     { id: 'unread', label: 'Unread', count: unreadCount },
@@ -88,12 +104,21 @@ export function SellerMessages() {
   const buyerIds = useMemo(() => conversations.map(c => c.buyerId), [conversations]);
   const online = usePresence(buyerIds);
 
-  // `?conv=<id>` (Customers panel "Message buyer") opens that existing thread straight away.
-  const [activeId, setActiveId] = useState<string | null>(() => {
-    const c = searchParams.get('conv');
-    return c && /^[a-f0-9]{24}$/i.test(c) ? c : null;
-  });
-  const { conversation, pin, mute, archive, restore, remove } = useConversation(activeId);
+  // The open chat lives in the URL: `?c=<id>` (`?conv=<id>` from the Customers/Students panels is the same state).
+  // Refresh / Back return to the same chat; a bad id is ignored.
+  const rawId = searchParams.get('c') ?? searchParams.get('conv');
+  const activeId = rawId && /^[a-f0-9]{24}$/i.test(rawId) ? rawId : null;
+  const selectChat = useCallback((id: string) => {
+    setSearchParams(prev => { const n = new URLSearchParams(prev); n.set('c', id); n.delete('conv'); return n; });
+  }, [setSearchParams]);
+  const closeChat = useCallback(() => {
+    setSearchParams(prev => { const n = new URLSearchParams(prev); n.delete('c'); n.delete('conv'); return n; }, { replace: true });
+  }, [setSearchParams]);
+  const { conversation, loading: convLoading, error: convError, pin, mute, archive, restore, remove } = useConversation(activeId);
+  // Unknown / not-yours id: quietly drop it and show the list.
+  useEffect(() => {
+    if (activeId && !convLoading && convError && !conversation) closeChat();
+  }, [activeId, convLoading, convError, conversation, closeChat]);
   const {
     messages, loading: msgLoading, loadingMore, sending, send, retry, edit, remove: removeMessage, markSeen, hasMore, loadMore,
     otherOnline, otherTyping, sendTyping, error: msgError,
@@ -109,36 +134,51 @@ export function SellerMessages() {
   const [reportDetails, setReportDetails] = useState('');
   const [reportDone, setReportDone]       = useState(false);
 
-  // Header badge: unread across the whole inbox (archived included), not just
-  // the currently filtered list. No dedicated count endpoint — sum the
-  // unfiltered first page (backend caps it at 50 conversations).
-  const [unreadTotal, setUnreadTotal] = useState<number | null>(null);
-  useEffect(() => {
-    if (!storeId) return;
-    let cancelled = false;
-    apiListConversations({ storeId, limit: 50 })
-      .then(res => { if (!cancelled) setUnreadTotal((res.conversations ?? []).reduce((n, c) => n + (c.sellerUnread || 0), 0)); })
-      .catch(() => { /* keep the last known value */ });
-    return () => { cancelled = true; };
-  }, [storeId, conversations]);
-
   const active = conversation ?? list.find(c => c._id === activeId) ?? null;
+
+  // Buyer details: product/order the buyer asked about + this store's orders from them. Desktop = collapsible side
+  // panel (open by default only on very wide screens so the chat keeps its width), phones = bottom sheet.
+  const buyerCtx = useBuyerContext(activeId);
+  const [detailsOpen, setDetailsOpen] = useState(() => typeof window !== 'undefined' && window.matchMedia?.('(min-width: 1536px)').matches);
+  const [isLg, setIsLg] = useState(() => typeof window !== 'undefined' && !!window.matchMedia?.('(min-width: 1024px)').matches);
+  useEffect(() => {
+    const mq = window.matchMedia?.('(min-width: 1024px)');
+    if (!mq) return;
+    const on = () => setIsLg(mq.matches);
+    mq.addEventListener('change', on);
+    return () => mq.removeEventListener('change', on);
+  }, []);
+  const buyerName = active ? (active.buyer?.name ?? `Buyer #${active.buyerId?.slice(-6).toUpperCase() ?? '——'}`) : '';
   const activeBlocked = active
     ? (blockOverrides[active.buyerId] ?? !!active.blockedBySeller)
     : false;
 
-  // Mark the latest incoming message as seen once the thread is open.
+  // Opening a chat marks everything incoming as read - once per latest incoming message (one open = one call).
+  // The list row, the Unread tab and the sidebar badge drop at once (absolute values, so the socket echo cannot
+  // double-count); on failure they are put back and a toast says so.
+  const markedRef = useRef('');
   useEffect(() => {
-    if (!activeId || messages.length === 0) return;
-    const last = messages[messages.length - 1];
-    if (last.senderId !== profile?._id) {
-      // Don't rely solely on the 'conversation:update' socket echo to clear
-      // this conversation's unread badge — refetch directly so it's correct
-      // even if that event was missed (e.g. a socket reconnect gap).
-      void markSeen(last._id).then(refetchList);
+    if (!activeId || !storeId || msgLoading || !profile?._id) return;
+    const incoming = [...messages].reverse().find(m => !m._tempId && m.senderId !== profile._id);
+    if (!incoming) return;
+    const key = `${activeId}:${incoming._id}`;
+    if (markedRef.current === key) return;
+    markedRef.current = key;
+    const before = inbox.conversations.find(c => c._id === activeId)?.sellerUnread ?? 0;
+    if (before > 0) {
+      inbox.patch(activeId, { sellerUnread: 0 });
+      setSharedUnreadMessages(storeId, n => n - 1, false);
     }
+    markSeen(incoming._id).then(
+      () => { setSharedUnreadMessages(storeId, n => n, true); },   // quiet re-read: the server stays the final word
+      () => {
+        markedRef.current = '';
+        if (before > 0) { inbox.patch(activeId, { sellerUnread: before }); setSharedUnreadMessages(storeId, n => n + 1, true); }
+        toast.error('Could not mark this chat as read.');
+      },
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeId, messages.length]);
+  }, [activeId, messages, msgLoading, profile?._id]);
 
   const handleSearch = (v: string) => setQuery(v);
 
@@ -182,8 +222,9 @@ export function SellerMessages() {
   const handleDelete = async () => {
     if (!activeId) return;
     await remove();
-    setActiveId(null);
-    refetchList();
+    closeChat();
+    void inbox.refetch(true);
+    void archivedInbox.refetch(true);
   };
 
   const menuItems: ActionMenuItem[] = active ? [
@@ -202,22 +243,17 @@ export function SellerMessages() {
       <StorePageHeader
         title="Messages"
         subtitle="Respond to buyer questions and support requests."
-        actions={
-          (unreadTotal ?? conversations.reduce((n, c) => n + c.sellerUnread, 0)) > 0 ? (
-            <span className="px-3 py-1 bg-[#fdecea] rounded-[6px] text-xs font-semibold text-[#c0392b]">
-              {unreadTotal ?? conversations.reduce((n, c) => n + c.sellerUnread, 0)} Unread
-            </span>
-          ) : undefined
-        }
       />
 
-      <div className="flex overflow-hidden" style={{ height: 'calc(100vh - 124px)' }}>
+      <div className="relative flex overflow-hidden" style={{ height: 'calc(100vh - 124px)' }}>
         <div className={activeId ? 'hidden md:flex md:w-auto md:shrink-0' : 'flex w-full md:w-auto md:shrink-0'}>
           <ChatList
             title="Chats"
             entries={list.map(c => toEntry(c, online))}
             activeId={activeId}
-            onSelect={setActiveId}
+            onSelect={selectChat}
+            emptyTitle={EMPTY_TEXT[filter].title}
+            emptyDescription={EMPTY_TEXT[filter].description}
             query={query}
             onQueryChange={handleSearch}
             loading={isSearching ? searching : listLoading}
@@ -239,8 +275,11 @@ export function SellerMessages() {
           headerImage={active?.buyer?.profileImage}
           subtitleOverride={active ? (active.isArchived ? 'Archived' : active.isMuted ? 'Muted' : undefined) : undefined}
           menuItems={menuItems}
-          onBack={() => setActiveId(null)}
-          shortcuts={storeId ? [{ icon: <Package size={17} />, label: 'View Orders', onClick: () => navigate(`/store/${storeId}/orders`) }] : []}
+          onBack={closeChat}
+          shortcuts={storeId && active ? [{ icon: <Package size={17} />, label: 'View Orders', onClick: () => navigate(`/store/${storeId}/orders?tab=all&buyer=${active.buyerId}`) }] : []}
+          contextCard={storeId ? <ChatContextCard ctx={buyerCtx.data} storeId={storeId} /> : undefined}
+          onDetailsClick={() => setDetailsOpen(o => !o)}
+          detailsActive={detailsOpen}
           messages={messages}
           msgLoading={msgLoading}
           loadingMore={loadingMore}
@@ -262,7 +301,21 @@ export function SellerMessages() {
           storeId={storeId}
           error={msgError}
         />
+
+        {/* Desktop: side panel (overlay below 2xl so the chat never drops under ~560px, inline at 2xl+). */}
+        {active && storeId && detailsOpen && (
+          <aside aria-label="Buyer details" className="hidden lg:block absolute end-0 top-0 bottom-0 z-10 w-[300px] overflow-y-auto border-s border-[#eeece4] bg-white p-4 shadow-lg 2xl:static 2xl:shadow-none 2xl:shrink-0">
+            <BuyerDetailsBody state={buyerCtx} storeId={storeId} buyerName={buyerName} />
+          </aside>
+        )}
       </div>
+
+      {/* Phones/tablets: bottom sheet */}
+      {active && storeId && detailsOpen && !isLg && (
+        <Modal title="Buyer details" onClose={() => setDetailsOpen(false)} width={420} mobileSheet>
+          <BuyerDetailsBody state={buyerCtx} storeId={storeId} buyerName={buyerName} />
+        </Modal>
+      )}
 
       {reportOpen && (
         <Modal

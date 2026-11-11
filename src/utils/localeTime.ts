@@ -12,6 +12,18 @@ export function localeDate(d: Date, opts: Intl.DateTimeFormatOptions = { month: 
   try { return d.toLocaleDateString(timeLocale() ?? [], opts); } catch { return ''; }
 }
 
+/** Chat-list time: today = clock time, yesterday = "Yesterday", this week = weekday, older = "30 Sep" (Urdu-aware). */
+export function chatListTime(iso: string | Date, now: Date = new Date()): string {
+  const d = iso instanceof Date ? iso : new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const dayStart = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const diffDays = Math.round((dayStart(now) - dayStart(d)) / 86400000);
+  if (diffDays <= 0) return localeTime(d);
+  if (diffDays === 1) return isUrduUi() ? 'کل' : 'Yesterday';
+  if (diffDays < 7) return localeDate(d, { weekday: 'long' });
+  return localeDate(d, { day: 'numeric', month: 'short' });
+}
+
 /** "5 min ago" / "منٹ پہلے" — one place for every short relative time. unit: 'min' | 'h' | 'd' */
 export function relAgo(n: number, unit: 'min' | 'h' | 'd'): string {
   if (isUrduUi()) return `${n} ${unit === 'min' ? 'منٹ' : unit === 'h' ? 'گھنٹے' : 'دن'} پہلے`;

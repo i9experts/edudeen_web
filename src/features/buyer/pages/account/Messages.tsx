@@ -100,7 +100,7 @@ export function Messages() {
       // Don't rely solely on the 'conversation:update' socket echo to clear
       // this conversation's unread badge — refetch directly so it's correct
       // even if that event was missed (e.g. a socket reconnect gap).
-      void markSeen(last._id).then(refetchList);
+      void markSeen(last._id).then(() => refetchList());
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeId, messages.length]);

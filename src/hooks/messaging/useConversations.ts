@@ -27,8 +27,10 @@ export function useConversations(params?: ListConversationsParams) {
   const storeId    = params?.storeId;
   const isArchived = params?.isArchived;
   const isPinned   = params?.isPinned;
+  const limit      = params?.limit;
 
-  const refetch = useCallback(() => {
+  // `quiet` = re-read without flashing the skeleton (old rows stay until the new ones arrive).
+  const refetch = useCallback((quiet?: boolean) => {
     // Guest: skip the call entirely — this fires unconditionally from
     // `useNavGroups` (AccountLayout, mounted for every `/account/*` route),
     // so without this a guest visiting e.g. `/account/dashboard` would 401
@@ -36,18 +38,24 @@ export function useConversations(params?: ListConversationsParams) {
     // ever seeing the page.
     if (!TokenStorage.isLoggedIn()) { setLoading(false); return Promise.resolve(); }
     const thisRequest = ++requestId.current;
-    setLoading(true);
+    if (quiet !== true) setLoading(true);
     return listShared({
       ...(storeId ? { storeId } : {}),
       ...(isArchived !== undefined ? { isArchived } : {}),
       ...(isPinned !== undefined ? { isPinned } : {}),
+      ...(limit ? { limit } : {}),
     })
-      .then(res => { if (requestId.current === thisRequest) setConversations(res.conversations ?? []); })
-      .catch((err: unknown) => { if (requestId.current === thisRequest) setError(err instanceof Error ? err.message : 'Failed to load conversations.'); })
+      .then(res => { if (requestId.current === thisRequest) { setConversations(res.conversations ?? []); setError(''); } })
+      .catch((err: unknown) => { if (requestId.current === thisRequest && quiet !== true) setError(err instanceof Error ? err.message : 'Failed to load conversations.'); })
       .finally(() => { if (requestId.current === thisRequest) setLoading(false); });
-  }, [storeId, isArchived, isPinned]);
+  }, [storeId, isArchived, isPinned, limit]);
 
   useEffect(() => { refetch(); }, [refetch]);
+
+  /** Local, immediate edit of one row (optimistic read-state etc.). Absolute values only, so a socket echo is harmless. */
+  const patch = useCallback((id: string, changes: Partial<Conversation>) => {
+    setConversations(prev => prev.map(c => (c._id === id ? { ...c, ...changes } : c)));
+  }, []);
 
   // Instant inbox updates: new message / read state bumps the conversation to
   // the top with fresh unread + lastMessage, no manual refresh needed.
@@ -76,7 +84,7 @@ export function useConversations(params?: ListConversationsParams) {
     };
   }, [storeId, isArchived]);
 
-  return { conversations, loading, error, refetch };
+  return { conversations, loading, error, refetch, patch };
 }
 
 export function useSearchConversations() {
