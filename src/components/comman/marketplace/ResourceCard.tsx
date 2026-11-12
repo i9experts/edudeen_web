@@ -187,38 +187,35 @@ function QuickViewCover({ product }: { product: MarketplaceProduct }) {
 /**
  * Hover-only quick view (desktop pointers that can truly hover — see the
  * `.quick-view`/`.quick-view-trigger` rules in index.css). Shows a BIGGER,
- * undistorted photo (object-contain, regardless of whether the small
- * thumbnail crops it to a book shape) plus the full title, store and
- * description, so a buyer can tell what something is without leaving the
- * grid. Everything "below" the card (price, badges, cart) is unchanged and
- * lives outside this — this only adds to the cover/title area.
+ * undistorted photo plus the full title, store and description.
  */
-function QuickView({ product, kind, metaText, shopName, flip, href, onNavigate }: {
+function QuickView({ product, kind, metaText, shopName, flip, href, onNavigate, actions }: {
   product: MarketplaceProduct; kind: string; metaText: string; shopName?: string | null;
-  flip: boolean; href: string; onNavigate: (e: React.MouseEvent) => void;
+  flip: boolean; href: string; onNavigate: (e: React.MouseEvent) => void; actions?: React.ReactNode;
 }) {
   return (
-    <Link
-      to={href}
-      onClick={onNavigate}
-      aria-hidden="true"
-      tabIndex={-1}
+    <div
       className={clsx(
-        'quick-view absolute top-0 w-[300px] max-w-[88vw] grid grid-cols-[88px_1fr] gap-3',
-        'rounded-2xl border border-[#e6ecee] bg-white p-3.5 text-start no-underline',
+        'quick-view absolute top-0 w-[300px] max-w-[88vw]',
+        'rounded-2xl border border-[#e6ecee] bg-white p-3.5 text-start',
         'shadow-[0_18px_40px_rgba(15,51,84,0.18)]',
         flip ? 'end-0' : 'start-0',
       )}
     >
-      <QuickViewCover product={product} />
-      <div className="min-w-0">
-        <p className="font-bold text-[14px] leading-snug text-carbon line-clamp-2">{product.name}</p>
-        {shopName && <p className="text-[11.5px] font-bold text-brand-orange mt-0.5 truncate">{shopName}</p>}
-        <p className="text-[11px] text-slate mt-1.5">{TYPE_LABEL[kind] ?? kind} · {metaText}</p>
-        <p className="text-[12px] text-slate leading-relaxed line-clamp-3 mt-1.5">{product.description}</p>
-        <span className="inline-block text-[12px] font-bold text-brand-orange mt-2">View details &rarr;</span>
+      <Link to={href} onClick={onNavigate} aria-hidden="true" tabIndex={-1} className="grid grid-cols-[88px_1fr] gap-3 no-underline">
+        <QuickViewCover product={product} />
+        <div className="min-w-0">
+          <p className="font-bold text-[14px] leading-snug text-carbon line-clamp-2">{product.name}</p>
+          {shopName && <p className="text-[11.5px] font-bold text-brand-orange mt-0.5 truncate">{shopName}</p>}
+          <p className="text-[11px] text-slate mt-1.5">{TYPE_LABEL[kind] ?? kind} · {metaText}</p>
+          <p className="text-[12px] text-slate leading-relaxed line-clamp-3 mt-1.5">{product.description}</p>
+        </div>
+      </Link>
+      <div className="flex items-center gap-2 mt-2.5">
+        <Link to={href} onClick={onNavigate} tabIndex={-1} className="text-[12px] font-bold text-brand-orange no-underline me-auto">View details &rarr;</Link>
+        {actions}
       </div>
-    </Link>
+    </div>
   );
 }
 
@@ -266,8 +263,7 @@ export const ResourceCard = memo(function ResourceCard({
   const meta = metaParts.map((part, i) => <span key={i}>{i > 0 ? ' · ' : ''}<span>{part}</span></span>);
   const metaText = metaParts.join(' · ');
 
-  // Which side the hover quick view opens toward, so it never runs off the
-  // right edge of the viewport for cards in the last column.
+  // Which side the hover quick view opens toward, so it never runs off the right edge of the viewport.
   const [flip, setFlip] = useState(false);
   const coverSlotRef = useRef<HTMLDivElement>(null);
   const checkFlip = () => {
@@ -357,7 +353,7 @@ export const ResourceCard = memo(function ResourceCard({
   }
 
   return (
-    <article className="group relative min-w-0 rounded-xl border border-[#e6ecee] bg-white p-2 transition-all duration-200 hover:shadow-[0_6px_18px_rgba(15,51,84,0.10)] hover:border-[#cfdadf]">
+    <article className="card-hover group relative min-w-0 rounded-xl border border-transparent bg-white p-2 transition-colors duration-200 hover:border-[#cfdadf] focus-within:border-[#cfdadf]">
       <div ref={coverSlotRef} onMouseEnter={checkFlip} onFocus={checkFlip} className="relative quick-view-trigger">
         <Link
           to={href}
@@ -367,7 +363,7 @@ export const ResourceCard = memo(function ResourceCard({
         >
           <Cover product={product} />
         </Link>
-        <QuickView product={product} kind={kind} metaText={metaText} shopName={shopName} flip={flip} href={href} onNavigate={go} />
+        <QuickView product={product} kind={kind} metaText={metaText} shopName={shopName} flip={flip} href={href} onNavigate={go} actions={<><span className="relative"><CompareToggle product={product} /></span>{wishlistButton && <span className="relative">{wishlistButton}</span>}</>} />
       </div>
 
       {(campaignOff || percentOff > 0) && (
@@ -403,18 +399,6 @@ export const ResourceCard = memo(function ResourceCard({
       >
         {product.name}
       </Link>
-      {shopName && (
-        product.storeSlug ? (
-          <Link
-            to={getStorePagePath(product.storeSlug)}
-            className="inline-block my-[5px] text-[13px] font-bold text-brand-orange border-b border-current pb-[2px] hover:text-brand-deep-orange truncate max-w-full"
-          >
-            {shopName}
-          </Link>
-        ) : (
-          <span className="block my-[5px] text-[13px] text-slate truncate">{shopName}</span>
-        )
-      )}
       <RatingLine rating={product.averageRating} count={product.totalRatings} className="block mb-1" />
       <TrustBadges trust={product.trust} className="mt-1" />
       {/* Phones (2 narrow columns): price on its own line, then type chip + cart button; sm+: one row. */}

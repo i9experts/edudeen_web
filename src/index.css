@@ -748,11 +748,7 @@ html.lang-switching *, html.lang-switching *::before, html.lang-switching *::aft
 [data-live-invalid="true"] { border-color: var(--color-error) !important; }
 
 /* ── ResourceCard quick view (hover preview of the cover/title area) ──────
-   Shown only on pointers that can truly hover (desktop mouse/trackpad) — a
-   touch tap must never get stuck showing it, since there is no "unhover"
-   gesture on a phone. Positioning (top/width/flip) lives on the element via
-   inline style/className in ResourceCard.tsx; this block only owns the
-   reveal itself and the stacking order while revealed. */
+   Only on pointers that can truly hover (desktop); touch never sees it. */
 @media (hover: hover) and (pointer: fine) {
   .quick-view {
     opacity: 0;
@@ -774,7 +770,6 @@ html.lang-switching *, html.lang-switching *::before, html.lang-switching *::aft
     z-index: 30;
   }
 }
-
 /* Certificate printing (CertificatePage adds html.cert-printing): one A4 landscape page, only the certificate visible. */
 @media print {
   @page { size: A4 landscape; margin: 0; }
