@@ -259,7 +259,7 @@ function PaymentGatewayCard() {
       ) : (
         <>
           <p className="text-[12.5px] text-slate mb-3">
-            Connect your own Stripe account to receive buyer payments directly — Edudeen's platform fee is deducted automatically, and the rest lands straight in your bank account via Stripe's own payout schedule, instead of waiting on a manual payout request.
+            Connect your own Stripe account to receive buyer payments directly — Edudeen's platform fee is deducted automatically, and the rest lands straight in your bank account via Stripe's own payout schedule, instead of waiting for the monthly payout.
           </p>
 
           {info && (
@@ -804,8 +804,8 @@ export default function StoreSettings() {
               <p className="text-[13.5px] font-semibold text-charcoal mb-1">Payments & your store link</p>
               <p className="text-[12.5px] text-slate leading-relaxed">
                 Your store lives at <span className="font-semibold text-charcoal">{store?.slug ? getStorefrontUrl(store.slug).replace(/^https?:\/\//, '') : 'edudeen.com/shop/…'}</span>.
-                Buyers pay through Edudeen's checkout; Edudeen credits your earnings after its platform fee and pays them out when you request a payout —
-                add or change where you get paid under <a href={`/store/${storeId}/finance?tab=earnings`} className="text-brand-orange font-semibold">Earnings</a>.
+                Buyers pay through Edudeen's checkout; Edudeen credits your earnings after its platform fee and pays them out monthly after admin approval —
+                add or change where you get paid under <a href={`/store/${storeId}/finance`} className="text-brand-orange font-semibold">Earnings</a>.
               </p>
             </div>
 

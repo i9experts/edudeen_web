@@ -70,7 +70,7 @@ export const FROM_PRICE_TOKEN = '{fromPrice}';
 export const DEFAULT_SELLER_FAQS: { q: string; a: string }[] = [
   { q: 'How do I become an Edudeen seller?', a: 'Sign up for a free Edudeen account, choose a seller plan, then add your store details and payment to open your store. You can set your own prices, upload digital or printed resources, and promote your store.' },
   { q: 'What kinds of resources can I sell?', a: 'Educational resources such as worksheets, lesson plans, printables, eBooks, courses, and Islamic and educational books and supplies. Please follow the content guidelines.' },
-  { q: 'How much can I earn?', a: 'Buyers pay Edudeen and each sale is credited to your wallet after a small platform fee set by Edudeen, then paid out via payout requests. Earnings depend on your resources, pricing and how well you promote them.' },
+  { q: 'How much can I earn?', a: 'Buyers pay Edudeen and each sale is credited to your wallet after a small platform fee set by Edudeen, then paid out monthly after admin approval. Earnings depend on your resources, pricing and how well you promote them.' },
   { q: 'Are there any fees?', a: `You pay a monthly or yearly plan fee${FROM_PRICE_TOKEN}, plus a small platform fee per sale set by Edudeen. Buyers pay Edudeen and your earnings are credited to your wallet after that fee.` },
   { q: 'How do I get paid?', a: 'Buyers can pay by bank transfer directly to the account you add in Finance. Card payments are paid out to you from your Finance page.' },
   { q: 'Can I change or cancel my plan?', a: 'Yes. You can change your plan any time from Plan & Billing in your store dashboard.' },

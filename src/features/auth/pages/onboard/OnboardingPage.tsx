@@ -290,7 +290,7 @@ function Step1StoreInfo({ form, setForm, onNext, step, maxReached, onStepClick }
 // A store needs a paid plan (monthly or yearly). The seller picks one here and saves a
 // card; the first month is charged when the store is created at the last
 // step. Buyers pay Edudeen; the seller is credited with each sale minus the
-// platform fee and paid out via payout requests.
+// platform fee and paid out monthly after admin approval.
 function Step2Payment({ form, setForm, onNext, onBack, step, maxReached, onStepClick, alreadyConfirmed, onCardSaved }: {
   form: StoreForm; setForm: (f: StoreForm) => void;
   onNext: () => void; onBack: () => void;
@@ -680,7 +680,7 @@ function Step5Review({ form, submitting, submitError, onSubmit, onBack, step, ma
         <div className="flex items-start gap-2 text-start mb-6 bg-success-bg rounded-xl px-[14px] py-[12px]">
           <ShieldCheck size={16} className="text-success shrink-0 mt-[1px]" />
           <p className="text-[12.5px] text-success leading-[1.6]">
-            {form.planPriceUSD === 0 ? 'Your free trial starts when your store opens — no payment now. Sales are credited to your wallet after the platform fee.' : `Launching charges your saved card ${formatPrice((form.billingInterval === 'yearly' ? (form.planYearlyUSD ?? form.planPriceUSD * 12) : form.planPriceUSD), 'USD')} for the first ${form.billingInterval === 'yearly' ? 'year' : 'month'}, then renews. Buyers pay Edudeen; each sale is credited to your wallet after the platform fee and paid out via payout requests.`}
+            {form.planPriceUSD === 0 ? 'Your free trial starts when your store opens — no payment now. Sales are credited to your wallet after the platform fee.' : `Launching charges your saved card ${formatPrice((form.billingInterval === 'yearly' ? (form.planYearlyUSD ?? form.planPriceUSD * 12) : form.planPriceUSD), 'USD')} for the first ${form.billingInterval === 'yearly' ? 'year' : 'month'}, then renews. Buyers pay Edudeen; each sale is credited to your wallet after the platform fee and paid out monthly after admin approval.`}
           </p>
         </div>
 

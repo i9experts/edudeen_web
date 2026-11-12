@@ -97,9 +97,8 @@ export const NAV: { group: string; items: NavItem[] }[] = [
   {
     group: 'Finance',
     items: [
-      // One entry: opens the monthly statement; the page's own tab bar still
-      // reaches the overview (transactions, payout methods).
-      { id: 'earnings',     Icon: Wallet,     label: 'Earnings',       path: 'finance?tab=earnings' },
+      // One page: balance, monthly statement, transactions, payout method.
+      { id: 'earnings',     Icon: Wallet,     label: 'Earnings',       path: 'finance' },
       { id: 'plan-billing', Icon: CreditCard, label: 'Plan & Billing', path: 'plan-billing' },
     ],
   },

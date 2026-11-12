@@ -22,5 +22,5 @@ export function formatPct(pct: number): string {
 /** One-line payout explanation. `pct` null = rate not loaded/unknown. */
 export function payoutNote(pct: number | null): string {
   void pct;
-  return 'Buyers pay Edudeen. Your earnings are credited after the platform fee and paid out via payout requests.';
+  return 'Buyers pay Edudeen. Your earnings are credited after the platform fee and paid out monthly after admin approval.';
 }

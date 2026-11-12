@@ -332,6 +332,69 @@ export async function apiGetMonthlyStatement(storeId: string, month: string, cur
   return res as MonthlyStatement;
 }
 
+// ── Earnings page (single page: hero, month statement lines, downloads) ─────
+export interface FeeRule { mode: 'percentage' | 'fixed'; value: number }
+
+export interface EarningsSummary {
+  currency: string;
+  available: number;
+  clearing: number;
+  clearingReleaseAt: string | null;
+  expected: {
+    amount: number; feeEstimate: number; orders: number; toShip: number; openOrders: number;
+    platformCollectedCod: number; sellerCollectedCod: number; skipped: number; feeEstimateOk: boolean; capped: boolean;
+  };
+  commissionOwed: number;
+  isFlaggedForReview: boolean;
+  nextPayoutDate: string | null;
+  payoutFrequency: string | null;
+  defaultMethod: { id: string; type: string; bankName: string | null; last4: string | null; status: string } | null;
+  transactionCount: number;
+  platformFees: { digital: FeeRule | null; physical: FeeRule | null } | null;
+  fallbackFeeRate: number;
+  cardProcessing: { percent: number; fixedUSD: number };
+  clearingDays: { card: number; other: number };
+  generatedAt: string;
+}
+
+export type StatementLineStatus = 'clearing' | 'available' | 'paid_out' | 'cod_debit' | 'refunded';
+
+export interface StatementLine {
+  orderId: string | null;
+  orderNumber: string | null;
+  date: string;
+  kind: 'sale' | 'cod' | 'other';
+  gross: number; platformFee: number; processingFee: number; refund: number; net: number;
+  status: StatementLineStatus;
+  statusText: string;
+  clearingUntil: string | null;
+}
+
+export interface EarningsStatementPage {
+  month: string;
+  currency: string;
+  totals: { orderCount: number; gross: number; platformFee: number; processingFee: number; refunds: number; net: number };
+  truncated: boolean;
+  total: number; page: number; limit: number; pages: number;
+  rows: StatementLine[];
+  payout: { id: string; status: string; amount: number; createdAt: string; processedAt: string | null } | null;
+}
+
+export function apiGetEarningsSummary(storeId: string, currency?: string) {
+  return client.get<never, EarningsSummary>(`${ENDPOINTS.FINANCE.SELLER.EARNINGS_SUMMARY(storeId)}${qs({ currency })}`);
+}
+
+export function apiGetEarningsStatement(storeId: string, query: { month: string; currency?: string; page?: number; limit?: number }) {
+  return client.get<never, EarningsStatementPage>(`${ENDPOINTS.FINANCE.SELLER.EARNINGS_STATEMENT(storeId)}${qs(query)}`);
+}
+
+/** CSV comes back as text; PDF as a Blob. Both are produced (and audit-logged) by the server. */
+export async function apiDownloadEarningsStatement(storeId: string, query: { month: string; currency?: string; format: 'csv' | 'pdf' }) {
+  const url = `${ENDPOINTS.FINANCE.SELLER.EARNINGS_DOWNLOAD(storeId)}${qs(query)}`;
+  if (query.format === 'pdf') return client.get<never, Blob>(url, { responseType: 'blob' });
+  return client.get<never, string>(url, { responseType: 'text' });
+}
+
 export function apiGenerateTaxReport(storeId: string, year: number, period: 'q1' | 'q2' | 'q3' | 'q4' | 'annual', currency?: string) {
   return client.post<never, TaxReport>(`${ENDPOINTS.FINANCE.SELLER.GENERATE_TAX_REPORT(storeId)}${qs({ year, period, currency })}`);
 }

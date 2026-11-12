@@ -779,6 +779,9 @@ export const ENDPOINTS = {
       GENERATE_TAX_REPORT:   (storeId: string) => `/api/finance/${storeId}/tax-reports/generate`,
       TAX_REPORTS:           (storeId: string) => `/api/finance/${storeId}/tax-reports`,
       MONTHLY_STATEMENT:     (storeId: string) => `/api/finance/${storeId}/monthly-statement`,
+      EARNINGS_SUMMARY:      (storeId: string) => `/api/finance/${storeId}/earnings-summary`,
+      EARNINGS_STATEMENT:    (storeId: string) => `/api/finance/${storeId}/earnings-statement`,
+      EARNINGS_DOWNLOAD:     (storeId: string) => `/api/finance/${storeId}/earnings-statement/download`,
     },
     ADMIN: {
       OVERVIEW:              '/api/admin/finance/overview',

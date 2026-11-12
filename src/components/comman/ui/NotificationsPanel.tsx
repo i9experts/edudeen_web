@@ -277,7 +277,7 @@ export function NotificationsPanel() {
                     </div>
                     <div>
                       <p className="text-[12.5px] font-medium text-charcoal">Payouts & Earnings</p>
-                      <p className="text-[12px] text-slate leading-normal">Payout requests, completed or rejected payouts and wallet changes.</p>
+                      <p className="text-[12px] text-slate leading-normal">Monthly payouts (approved, sent or rejected) and wallet changes.</p>
                     </div>
                   </div>
                   <Toggle

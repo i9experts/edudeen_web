@@ -1,353 +1,276 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useLiveRefresh } from '@/hooks/useLiveRefresh';
 import { clsx } from 'clsx';
-import { ChevronLeft, ChevronRight, Info, RefreshCw, Receipt } from 'lucide-react';
-import { MetricCard, Button } from '@/components/comman/ui';
-import { formatMoney } from '@/utils/currency';
+import { ChevronLeft, ChevronRight, Download, RefreshCw } from 'lucide-react';
+import { MetricCard, Button, Table, Badge, SkeletonBox, type TableColumn } from '@/components/comman/ui';
+import type { BadgeColor } from '@/types';
+import { formatPrice } from '@/utils/formatPrice';
 import {
-  apiGetMonthlyStatement, type MonthlyStatement,
+  apiGetEarningsStatement, apiDownloadEarningsStatement,
+  type EarningsStatementPage, type StatementLine,
 } from '@/api/services/finance';
-import {
-  StudioPanel, StudioWorkflow, StudioPill, StudioTable, StudioEyebrow,
-} from '@/features/seller/components/studio/Studio';
 
-// ── Month helpers (YYYY-MM, local time) ──────────────────────────────────────
+// ── Month helpers (YYYY-MM; the API groups months in UTC) ────────────────────
 function monthKey(d: Date) {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
 }
 function shiftMonth(key: string, delta: number) {
   const [y, m] = key.split('-').map(Number);
-  return monthKey(new Date(y, m - 1 + delta, 1));
+  return monthKey(new Date(Date.UTC(y, m - 1 + delta, 1)));
 }
 function monthLabel(key: string) {
   const [y, m] = key.split('-').map(Number);
-  return new Date(y, m - 1, 1).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+  return new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString(undefined, { month: 'long', year: 'numeric', timeZone: 'UTC' });
 }
-function fmtDate(iso: string | null | undefined, withYear = true) {
+export function fmtDate(iso: string | null | undefined, withYear = true) {
   if (!iso) return '—';
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '—';
   return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', ...(withYear ? { year: 'numeric' } : {}) });
-}
-/** Accepts either a percentage (10) or a fraction (0.1). */
-function formatCommissionRate(rate: number | null | undefined) {
-  if (rate == null || Number.isNaN(rate)) return '—';
-  const pct = rate > 0 && rate <= 1 ? rate * 100 : rate;
-  return `${Number.isInteger(pct) ? pct : pct.toFixed(1)}%`;
 }
 function titleCase(s: string | null | undefined) {
   if (!s) return '—';
   return s.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 }
 
-const TX_TONE: Record<string, 'green' | 'amber' | 'gray' | 'blue' | 'red'> = {
-  sale: 'green', payout: 'blue', fee: 'amber', commission: 'amber', refund: 'red', adjustment: 'gray',
+const STATUS_COLOR: Record<StatementLine['status'], BadgeColor> = {
+  clearing: 'yellow', available: 'green', paid_out: 'gray', cod_debit: 'blue', refunded: 'red',
 };
-const PAYOUT_TONE: Record<string, 'green' | 'amber' | 'gray' | 'blue' | 'red'> = {
-  pending: 'amber', processing: 'blue', completed: 'green', paid: 'green', failed: 'red', rejected: 'red',
-};
+const PAYOUT_COLOR: Record<string, BadgeColor> = { pending: 'yellow', processing: 'blue', completed: 'green', failed: 'red' };
 
-/** Fees step reflects the statement's real commission rate (pct null = unknown). */
-function howYouGetPaid(pct: number | null) {
-  void pct;
-  const fees = { title: 'Platform fee', body: 'Edudeen’s platform fee (set per product type) and any refunds are taken out of each sale; the rest is credited to your wallet.' };
-  return [
-    { tag: 'Checkout', title: 'Buyers pay Edudeen',       body: 'Card and online payments are collected securely by Edudeen on your behalf when a buyer checks out.' },
-    { tag: 'Fees',     ...fees },
-    { tag: 'Payout',   title: 'Net earnings paid monthly', body: 'Card sales become payable after a 14-day clearing hold. What remains is paid to your payout method on the 1st of the following month, after admin approval.' },
-  ];
+/** "+12%" / "0%" / "-8%" badge. Hidden when both months are 0 or the previous month has nothing to compare with. */
+function GrowthBadge({ current, previous }: { current: number; previous: number }) {
+  if (!(current > 0 || previous > 0) || !(previous > 0)) return null;
+  const pct = Math.round(((current - previous) / previous) * 100);
+  const tone = pct > 0 ? 'text-success bg-success-bg' : pct < 0 ? 'text-error bg-error-bg' : 'text-slate bg-cream';
+  return (
+    <span className={clsx('inline-flex items-center text-[12px] font-semibold px-2 py-[2px] rounded-full', tone)}>
+      {pct > 0 ? '+' : ''}{pct}% vs last month
+    </span>
+  );
+}
+
+function saveBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
 }
 
 interface Props {
   storeId: string;
-  /** Wallet currencies the seller holds (from the finance dashboard), if known. */
-  currencies: string[];
-  /** Fallback currency — the store's base currency. */
-  defaultCurrency?: string | null;
+  /** The wallet currency every amount below is shown in (parent renders a skeleton until it is known). */
+  currency: string;
+  /** Same next-payout date as the hero (one source for the whole page). */
+  nextPayoutDate: string | null;
+  /** Open orders still to ship (from the summary), for the "no earnings yet" message. */
+  toShip: number;
 }
 
-export function EarningsStatement({ storeId, currencies, defaultCurrency }: Props) {
+export function EarningsStatement({ storeId, currency, nextPayoutDate, toShip }: Props) {
   const thisMonth = monthKey(new Date());
   const [month, setMonth] = useState(thisMonth);
-  const currencyOptions = currencies.length ? currencies : (defaultCurrency ? [defaultCurrency] : []);
-  const [currency, setCurrency] = useState<string | undefined>(currencyOptions[0]);
-  const [statement, setStatement] = useState<MonthlyStatement | null>(null);
+  const [page, setPage] = useState(1);
+  const [data, setData] = useState<EarningsStatementPage | null>(null);
+  const [prevGross, setPrevGross] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<{ kind: 'unavailable' | 'failed'; message: string } | null>(null);
+  const [error, setError] = useState('');
   const [reloadKey, setReloadKey] = useState(0);
-
-  // Pick a currency once the wallet list arrives (it may load after mount).
-  const firstCurrency = currencyOptions[0];
-  useEffect(() => {
-    if (!currency && firstCurrency) setCurrency(firstCurrency);
-  }, [currency, firstCurrency]);
+  const [downloading, setDownloading] = useState<'csv' | 'pdf' | null>(null);
+  const [downloadError, setDownloadError] = useState('');
+  const quietRef = useRef(false);
 
   const reload = useCallback(() => setReloadKey(k => k + 1), []);
-
-  const quietRef = useRef(false);
   useLiveRefresh(['finance', 'orders'], () => { quietRef.current = true; setReloadKey(k => k + 1); }, !!storeId);
 
+  // Switching month or wallet starts again from page 1.
+  useEffect(() => { setPage(1); }, [month, currency]);
+
   useEffect(() => {
-    if (!storeId) return;
+    if (!storeId || !currency) return;
     let cancelled = false;
     const quiet = quietRef.current;
     quietRef.current = false;
-    if (!quiet) { setLoading(true); setError(null); }
-    apiGetMonthlyStatement(storeId, month, currency)
-      .then(res => {
-        if (cancelled) return;
-        if (!res || typeof res !== 'object' || typeof res.grossSales !== 'number') {
-          setStatement(null);
-          setError({ kind: 'unavailable', message: '' });
-          return;
-        }
-        setStatement(res);
-      })
+    if (!quiet) { setLoading(true); setError(''); }
+    apiGetEarningsStatement(storeId, { month, currency, page, limit: 25 })
+      .then(res => { if (!cancelled) setData(res); })
       .catch((err: unknown) => {
         if (cancelled || quiet) return;
-        const status = (err as { status?: number })?.status;
-        setStatement(null);
-        setError(
-          status === 404 || status === 501
-            ? { kind: 'unavailable', message: '' }
-            : { kind: 'failed', message: err instanceof Error ? err.message : 'Failed to load your statement.' },
-        );
+        setData(null);
+        setError(err instanceof Error ? err.message : 'Failed to load your statement.');
       })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
+  }, [storeId, month, currency, page, reloadKey]);
+
+  // Previous month's paid sales, only to draw the "vs last month" badge.
+  useEffect(() => {
+    if (!storeId || !currency) return;
+    let cancelled = false;
+    setPrevGross(null);
+    apiGetEarningsStatement(storeId, { month: shiftMonth(month, -1), currency, page: 1, limit: 1 })
+      .then(res => { if (!cancelled) setPrevGross(res.totals.gross); })
+      .catch(() => { /* badge simply stays hidden */ });
+    return () => { cancelled = true; };
   }, [storeId, month, currency, reloadKey]);
 
-  const cur = statement?.currency ?? currency ?? defaultCurrency ?? undefined;
-  const money = (n: number | null | undefined) => formatMoney(Number(n ?? 0), cur);
+  async function download(format: 'csv' | 'pdf') {
+    setDownloading(format); setDownloadError('');
+    try {
+      const out = await apiDownloadEarningsStatement(storeId, { month, currency, format });
+      const name = `earnings-${month}-${currency}.${format}`;
+      saveBlob(out instanceof Blob ? out : new Blob([out], { type: 'text/csv' }), name);
+    } catch (err) {
+      setDownloadError(err instanceof Error && err.message ? err.message : 'Could not download the statement. Please try again.');
+    } finally {
+      setDownloading(null);
+    }
+  }
+
+  const money = (n: number | null | undefined) => formatPrice(Number(n ?? 0), currency);
   const canGoNext = month < thisMonth;
+  const anyProcessing = (data?.rows ?? []).some(r => r.processingFee > 0);
+
+  const orderLink = (l: StatementLine) => l.orderId && l.orderNumber
+    ? <Link to={`/store/${storeId}/orders?tab=all&q=${encodeURIComponent(l.orderNumber)}`} className="text-brand-royal font-semibold no-underline hover:underline">{l.orderNumber}</Link>
+    : <span className="text-slate">—</span>;
+  const kindLabel = (l: StatementLine) => l.kind === 'cod' ? 'COD (cash collected by you)' : l.kind === 'sale' ? 'Sale' : 'Other';
+  const statusBadge = (l: StatementLine) => <Badge color={STATUS_COLOR[l.status]} size="sm">{l.statusText}</Badge>;
+  const signed = (n: number) => (n < 0 ? '−' : '') + money(Math.abs(n));
+
+  const columns: TableColumn<StatementLine>[] = [
+    { key: 'date', header: 'Date', render: l => <span className="text-slate whitespace-nowrap">{fmtDate(l.date)}</span> },
+    { key: 'order', header: 'Order', render: orderLink },
+    { key: 'kind', header: 'Type', hideBelowXl: true, render: l => <span className="text-graphite text-[12.5px]">{kindLabel(l)}</span> },
+    { key: 'gross', header: 'Gross', render: l => <span className="whitespace-nowrap">{money(l.gross)}</span> },
+    { key: 'fee', header: 'Platform fee', render: l => <span className="whitespace-nowrap text-graphite">{l.platformFee ? `− ${money(l.platformFee)}` : money(0)}</span> },
+    ...(anyProcessing ? [{ key: 'proc', header: 'Processing fee', hideBelowXl: true, render: (l: StatementLine) => <span className="whitespace-nowrap text-graphite">{l.processingFee ? `− ${money(l.processingFee)}` : money(0)}</span> } as TableColumn<StatementLine>] : []),
+    { key: 'refund', header: 'Refund', hideBelowXl: true, render: l => <span className="whitespace-nowrap text-graphite">{l.refund ? `− ${money(l.refund)}` : money(0)}</span> },
+    { key: 'net', header: 'Net', render: l => <span className={clsx('font-semibold whitespace-nowrap', l.net < 0 ? 'text-error' : 'text-carbon')}>{signed(l.net)}</span> },
+    { key: 'status', header: 'Status', render: statusBadge },
+  ];
 
   return (
-    <div className="flex flex-col gap-6">
-
-      {/* Month picker + currency */}
-      <div className="flex items-center justify-between gap-4 flex-wrap">
+    <section aria-labelledby="statement-heading" className="flex flex-col gap-4">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
-          <StudioEyebrow className="mb-1.5">Monthly statement</StudioEyebrow>
+          <p className="text-[12px] font-bold text-brand-royal uppercase tracking-[0.15em] mb-1.5">Monthly statement</p>
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setMonth(m => shiftMonth(m, -1))}
-              aria-label="Previous month"
-              className="size-9 rounded-lg border border-bone bg-white flex items-center justify-center text-brand-orange hover:bg-cream cursor-pointer transition-colors"
-            >
+            <button type="button" onClick={() => setMonth(m => shiftMonth(m, -1))} aria-label="Previous month"
+              className="size-9 rounded-lg border border-bone bg-white flex items-center justify-center text-brand-orange hover:bg-cream cursor-pointer transition-colors">
               <ChevronLeft size={17} />
             </button>
-            <h2 aria-live="polite" className="font-serif font-normal text-[24px] sm:text-[28px] text-carbon min-w-[190px] text-center leading-tight">
+            <h2 id="statement-heading" aria-live="polite" className="font-serif font-normal text-[22px] sm:text-[26px] text-carbon min-w-[170px] text-center leading-tight">
               {monthLabel(month)}
             </h2>
-            <button
-              type="button"
-              onClick={() => canGoNext && setMonth(m => shiftMonth(m, 1))}
-              disabled={!canGoNext}
-              aria-label="Next month"
-              className="size-9 rounded-lg border border-bone bg-white flex items-center justify-center text-brand-orange hover:bg-cream cursor-pointer transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-            >
+            <button type="button" onClick={() => canGoNext && setMonth(m => shiftMonth(m, 1))} disabled={!canGoNext} aria-label="Next month"
+              className="size-9 rounded-lg border border-bone bg-white flex items-center justify-center text-brand-orange hover:bg-cream cursor-pointer transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
               <ChevronRight size={17} />
             </button>
             {month !== thisMonth && (
-              <button
-                type="button"
-                onClick={() => setMonth(thisMonth)}
-                className="ml-1 bg-transparent border-0 border-b-2 border-current px-0 pb-[2px] text-[13px] font-bold text-brand-orange cursor-pointer"
-              >
+              <button type="button" onClick={() => setMonth(thisMonth)} className="ml-1 bg-transparent border-0 border-b-2 border-current px-0 pb-[2px] text-[13px] font-bold text-brand-orange cursor-pointer">
                 This month
               </button>
             )}
           </div>
         </div>
-
-        {currencyOptions.length > 1 && (
-          <div role="group" aria-label="Wallet currency" className="flex gap-2">
-            {currencyOptions.map(c => (
-              <button
-                key={c}
-                type="button"
-                onClick={() => setCurrency(c)}
-                aria-pressed={c === currency}
-                className={clsx(
-                  'px-4 py-[8px] rounded-lg text-[13px] font-bold cursor-pointer border transition-colors',
-                  c === currency ? 'bg-brand-orange text-white border-brand-orange' : 'bg-white text-brand-orange border-bone hover:bg-cream',
-                )}
-              >
-                {c}
-              </button>
-            ))}
-          </div>
-        )}
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button size="sm" variant="outline" icon={<Download size={12} />} loading={downloading === 'csv'} disabled={!!downloading || !data || data.total === 0} onClick={() => download('csv')}>Statement CSV</Button>
+          <Button size="sm" variant="outline" icon={<Download size={12} />} loading={downloading === 'pdf'} disabled={!!downloading || !data || data.total === 0} onClick={() => download('pdf')}>Statement PDF</Button>
+        </div>
       </div>
+      {downloadError && <p role="alert" className="text-[12.5px] text-error">{downloadError}</p>}
 
-      {/* Metrics */}
-      {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      {loading && !data ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" aria-busy="true">
           {[0, 1, 2, 3].map(i => <MetricCard key={i} label="" value="" loading />)}
         </div>
-      ) : error ? (
-        error.kind === 'unavailable' ? (
-          <div className="bg-cream border border-bone rounded-xl px-6 py-10 text-center">
-            <div className="size-12 rounded-full bg-white border border-bone flex items-center justify-center mx-auto mb-4">
-              <Receipt size={20} className="text-brand-orange" />
-            </div>
-            <p className="font-serif text-[21px] text-carbon mb-2">Monthly statements are almost here.</p>
-            <p className="text-[13.5px] text-slate max-w-[480px] mx-auto leading-relaxed">
-              We're finishing the monthly earnings statement for your store. Until it's ready, your balances,
-              transactions and payouts are all on the Overview tab.
-            </p>
-            <div className="mt-5">
-              <Button variant="outline" size="sm" icon={<RefreshCw size={13} />} onClick={reload}>Check again</Button>
-            </div>
-          </div>
-        ) : (
-          <div role="alert" className="bg-error-bg border border-error-border rounded-xl px-5 py-4 flex items-center justify-between gap-3 flex-wrap">
-            <p className="text-[13px] text-error">{error.message}</p>
-            <Button variant="outline" size="sm" icon={<RefreshCw size={13} />} onClick={reload}>Try again</Button>
-          </div>
-        )
-      ) : statement && (
+      ) : error && !data ? (
+        <div role="alert" className="bg-error-bg border border-error-border rounded-xl px-5 py-4 flex items-center justify-between gap-3 flex-wrap">
+          <p className="text-[13px] text-error">{error}</p>
+          <Button variant="outline" size="sm" icon={<RefreshCw size={13} />} onClick={reload}>Try again</Button>
+        </div>
+      ) : data && (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            <MetricCard
-              label="Paid sales"
-              value={money(statement.grossSales)}
-              sub={`${statement.orderCount} paid order${statement.orderCount === 1 ? '' : 's'} in ${monthLabel(statement.month || month)}`}
-            />
-            <MetricCard
-              label={`Platform commission (${statement.platformFeeText ?? formatCommissionRate(statement.platformFeeRate)})`}
-              value={money(statement.platformFee)}
-              sub="Deducted from your sales"
-            />
-            <MetricCard
-              label="Net earnings"
-              value={money(statement.netEarnings)}
-              sub="After card fees and refunds"
-            />
-            <MetricCard
-              label="Next payout date"
-              value={fmtDate(statement.nextPayoutDate, false)}
-              sub={statement.payoutFrequency ? `${titleCase(statement.payoutFrequency)} payouts, after approval` : 'Paid after admin approval'}
-            />
+          <div className={clsx('grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4', loading && 'opacity-70')}>
+            <div className="flex flex-col gap-1.5 min-w-0">
+              <MetricCard label="Paid sales" value={money(data.totals.gross)} sub={`${data.totals.orderCount} order${data.totals.orderCount === 1 ? '' : 's'} in ${monthLabel(month)}`} />
+              {prevGross !== null && <div><GrowthBadge current={data.totals.gross} previous={prevGross} /></div>}
+            </div>
+            <MetricCard label="Platform fee" value={money(data.totals.platformFee)} sub={data.totals.processingFee > 0 ? `+ ${money(data.totals.processingFee)} card processing` : 'Deducted from your sales'} />
+            <MetricCard label="Net earnings" value={money(data.totals.net)} sub="After fees and refunds" />
+            <MetricCard label="Next payout date" value={nextPayoutDate ? fmtDate(nextPayoutDate, false) : '—'} sub={nextPayoutDate ? 'Monthly, after admin approval' : 'No payout due yet'} />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-5 items-start">
-            {/* Breakdown */}
-            <StudioPanel title="Where your money went" sub={`Statement for ${monthLabel(statement.month || month)} · ${cur ?? ''}`}>
-              <dl className="flex flex-col">
-                {([
-                  ['Gross sales', statement.grossSales, 'plus'],
-                  [`Platform commission (${statement.platformFeeText ?? formatCommissionRate(statement.platformFeeRate)})`, statement.platformFee, 'minus'],
-                  ['Payment processing fees', statement.processingFees, 'minus'],
-                  ['Refunds', statement.refunds, 'minus'],
-                  ['Commission owed on cash-on-delivery orders', statement.codPlatformFeeOwed, 'minus'],
-                ] as const).map(([label, value, sign]) => (
-                  <div key={label} className="flex items-center justify-between gap-4 py-[12px] border-b border-bone">
-                    <dt className="text-[13.5px] text-graphite">{label}</dt>
-                    <dd className={clsx('text-[14px] whitespace-nowrap', sign === 'minus' && Number(value) > 0 ? 'text-error' : 'text-carbon')}>
-                      {sign === 'minus' && Number(value) > 0 ? '− ' : ''}{money(Math.abs(Number(value ?? 0)))}
-                    </dd>
-                  </div>
-                ))}
-                <div className="flex items-center justify-between gap-4 pt-[14px]">
-                  <dt className="text-[14px] font-bold text-carbon">Net earnings</dt>
-                  <dd className="font-serif text-[24px] text-carbon whitespace-nowrap">{money(statement.netEarnings)}</dd>
-                </div>
-              </dl>
-              <div className="grid grid-cols-2 gap-3 mt-5">
-                <div className="rounded-lg bg-cream border border-bone px-4 py-3">
-                  <p className="text-[12px] text-slate mb-1">Available balance</p>
-                  <p className="font-serif text-[20px] text-carbon">{money(statement.availableBalance)}</p>
-                </div>
-                <div className="rounded-lg bg-cream border border-bone px-4 py-3">
-                  <p className="text-[12px] text-slate mb-1">Pending (clearing)</p>
-                  <p className="font-serif text-[20px] text-carbon">{money(statement.pendingBalance)}</p>
-                </div>
-              </div>
-            </StudioPanel>
+          {data.payout && (
+            <div className="flex items-center justify-between gap-3 flex-wrap bg-white border border-bone rounded-xl px-4 py-3 text-[13px]">
+              <span className="text-graphite">Payout for this month: <span className="font-semibold text-carbon">{money(data.payout.amount)}</span></span>
+              <span className="flex items-center gap-2 text-slate">
+                <Badge color={PAYOUT_COLOR[data.payout.status] ?? 'gray'} size="sm">{titleCase(data.payout.status)}</Badge>
+                {data.payout.processedAt ? `Paid ${fmtDate(data.payout.processedAt)}` : `Created ${fmtDate(data.payout.createdAt)}`}
+              </span>
+            </div>
+          )}
+          {data.truncated && <p className="text-[12.5px] text-slate">This month has a very large number of ledger rows; the statement shows the newest ones only.</p>}
 
-            {/* Payout status */}
-            <StudioPanel title="Payout status">
-              {statement.payout ? (
-                <div className="flex flex-col gap-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="font-serif text-[26px] text-carbon">{money(statement.payout.amount)}</p>
-                    <StudioPill tone={PAYOUT_TONE[statement.payout.status] ?? 'gray'}>{titleCase(statement.payout.status)}</StudioPill>
-                  </div>
-                  <dl className="flex flex-col gap-2 text-[13px]">
-                    <div className="flex justify-between gap-3"><dt className="text-slate">Created</dt><dd className="text-carbon">{fmtDate(statement.payout.createdAt)}</dd></div>
-                    <div className="flex justify-between gap-3"><dt className="text-slate">Processed</dt><dd className="text-carbon">{fmtDate(statement.payout.processedAt)}</dd></div>
-                    <div className="flex justify-between gap-3"><dt className="text-slate">Reference</dt><dd className="text-carbon font-mono text-[12px] truncate max-w-[160px]">{statement.payout.id}</dd></div>
-                  </dl>
-                </div>
+          {data.total === 0 ? (
+            <div className="bg-cream border border-bone rounded-xl px-6 py-8 text-center">
+              {toShip > 0 ? (
+                <>
+                  <p className="font-serif text-[19px] text-carbon mb-1.5">You have {toShip} order{toShip === 1 ? '' : 's'} to ship</p>
+                  <p className="text-[13.5px] text-slate mb-4">Earnings appear here after delivery.</p>
+                  <Link to={`/store/${storeId}/orders?tab=needs_action`} className="text-[13px] font-bold text-brand-orange no-underline hover:underline">View orders to ship →</Link>
+                </>
               ) : (
-                <div>
-                  <p className="text-[13.5px] text-graphite leading-relaxed">
-                    No payout has been created for this month yet.
-                    {statement.nextPayoutDate && <> Your next payout is scheduled for <span className="font-bold text-carbon">{fmtDate(statement.nextPayoutDate)}</span>, once an admin approves it.</>}
-                  </p>
-                </div>
+                <p className="text-[13.5px] text-slate">No earnings in {monthLabel(month)}.</p>
               )}
-            </StudioPanel>
-          </div>
-
-          {/* Statement table */}
-          <StudioPanel
-            title="Statement"
-            sub={`${statement.transactions?.length ?? 0} transaction${(statement.transactions?.length ?? 0) === 1 ? '' : 's'} in ${monthLabel(statement.month || month)}`}
-          >
-            {(statement.transactions?.length ?? 0) === 0 ? (
-              <p className="text-[13.5px] text-slate py-6 text-center bg-cream rounded-lg border border-bone">
-                No transactions in this month.
-              </p>
-            ) : (
-              <StudioTable
-                caption={`Transactions for ${monthLabel(statement.month || month)}`}
-                head={[
-                  { label: 'Date' },
-                  { label: 'Description' },
-                  { label: 'Type' },
-                  { label: 'Status', className: 'hidden sm:table-cell' },
-                  { label: 'Amount', align: 'right' },
-                ]}
-              >
-                {statement.transactions.map(t => (
-                  <tr key={t.id}>
-                    <td className="whitespace-nowrap text-slate">{fmtDate(t.createdAt)}</td>
-                    <td>
-                      <span className="block">{t.description || '—'}</span>
-                      {t.referenceId && <span className="block text-[12px] text-slate mt-0.5 font-mono truncate max-w-[260px]">Ref {t.referenceId}</span>}
-                    </td>
-                    <td><StudioPill tone={TX_TONE[t.type] ?? 'gray'}>{titleCase(t.type)}</StudioPill></td>
-                    <td className="hidden sm:table-cell text-slate">{titleCase(t.status)}</td>
-                    <td className={clsx('text-right whitespace-nowrap font-bold', t.amount >= 0 ? 'text-success' : 'text-error')}>
-                      {t.amount >= 0 ? '+' : '−'}{money(Math.abs(t.amount))}
-                    </td>
-                  </tr>
-                ))}
-              </StudioTable>
-            )}
-          </StudioPanel>
+            </div>
+          ) : (
+            <div className={clsx('bg-white border border-bone rounded-xl overflow-hidden', loading && 'opacity-70')}>
+              <Table
+                columns={columns}
+                data={data.rows}
+                keyExtractor={l => `${l.orderId ?? 'x'}-${l.date}`}
+                compact
+                cardsBelow="md"
+                renderCard={l => (
+                  <div className="flex flex-col gap-1.5 text-[13px]">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-semibold">{orderLink(l)}</span>
+                      {statusBadge(l)}
+                    </div>
+                    <div className="flex items-center justify-between text-slate text-[12px]"><span>{fmtDate(l.date)}</span><span>{kindLabel(l)}</span></div>
+                    <dl className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-[12.5px]">
+                      <dt className="text-slate">Gross</dt><dd className="text-right">{money(l.gross)}</dd>
+                      <dt className="text-slate">Platform fee</dt><dd className="text-right">{l.platformFee ? `− ${money(l.platformFee)}` : money(0)}</dd>
+                      {l.processingFee > 0 && (<><dt className="text-slate">Processing fee</dt><dd className="text-right">− {money(l.processingFee)}</dd></>)}
+                      {l.refund > 0 && (<><dt className="text-slate">Refund</dt><dd className="text-right">− {money(l.refund)}</dd></>)}
+                      <dt className="font-semibold text-carbon">Net</dt><dd className={clsx('text-right font-semibold', l.net < 0 && 'text-error')}>{signed(l.net)}</dd>
+                    </dl>
+                  </div>
+                )}
+                pagination={{ page: data.page, total: data.total, perPage: data.limit, onChange: setPage, label: 'orders' }}
+              />
+              <div className="flex items-center justify-between gap-3 px-4 py-3 border-t border-bone bg-cream text-[13px]">
+                <span className="font-semibold text-carbon">Month total (all {data.total} lines)</span>
+                <span className={clsx('font-serif text-[18px]', data.totals.net < 0 ? 'text-error' : 'text-carbon')}>{signed(data.totals.net)}</span>
+              </div>
+            </div>
+          )}
         </>
       )}
+    </section>
+  );
+}
 
-      {/* How you get paid — always visible, even before the statement loads */}
-      <StudioPanel title="How you get paid">
-        <StudioWorkflow steps={howYouGetPaid(
-          statement?.platformFeeRate == null || Number.isNaN(statement.platformFeeRate)
-            ? null
-            // Same either-unit handling as formatCommissionRate: 0.1 or 10 → 10.
-            : statement.platformFeeRate > 0 && statement.platformFeeRate <= 1 ? statement.platformFeeRate * 100 : statement.platformFeeRate,
-        )} />
-        <div className="mt-6 flex gap-3 rounded-lg bg-[#faf0d4]/60 border border-[#f0e2b0] px-4 py-3">
-          <Info size={17} className="text-[#755600] shrink-0 mt-[2px]" />
-          <p className="text-[13.5px] text-carbon leading-relaxed">
-            <span className="font-bold">Cash-on-delivery orders:</span> you collect and keep the cash from the buyer.
-            The platform commission on those orders shows as a negative balance and is deducted from your next payout instead.
-          </p>
-        </div>
-      </StudioPanel>
+export function StatementSkeleton() {
+  return (
+    <div className="flex flex-col gap-4" aria-busy="true">
+      <SkeletonBox height={44} width={260} rounded="8px" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[0, 1, 2, 3].map(i => <MetricCard key={i} label="" value="" loading />)}
+      </div>
     </div>
   );
 }

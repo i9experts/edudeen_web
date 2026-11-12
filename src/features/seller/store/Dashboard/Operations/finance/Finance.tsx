@@ -9,28 +9,22 @@ import { Button } from '@/components/comman/ui/Button';
 import { Modal } from '@/components/comman/ui/Modal';
 import { Badge } from '@/components/comman/ui/Badge';
 import type { BadgeColor } from '@/types';
-import { MetricCard } from '@/components/comman/ui/MetricCard';
-import { SkeletonBox, Table, TabBar, type TableColumn } from '@/components/comman/ui';
+import { SkeletonBox, Table, type TableColumn } from '@/components/comman/ui';
 import { useSearchParams } from 'react-router-dom';
-import { EarningsStatement } from './EarningsStatement';
-
-type FinanceTab = 'overview' | 'earnings';
+import { EarningsStatement, StatementSkeleton } from './EarningsStatement';
+import { EarningsHero, PayoutHistory, HowFeesWork, METHOD_LABEL, VIEW_FILTER, type EarningsView } from './EarningsParts';
 import {
   apiGetFinanceDashboard, apiGetFinanceTransactions, apiExportFinanceTransactions,
-  apiGetPayouts, apiGetPayoutById,
+  apiGetPayouts, apiGetPayoutById, apiGetEarningsSummary,
   apiGetPayoutMethods, apiAddPayoutMethod, apiUpdatePayoutMethod, apiSetDefaultPayoutMethod,
   apiDeletePayoutMethod,
   type FinanceDashboard, type Transaction, type TransactionType, type PayoutMethod,
-  type PayoutMethodType, type Payout, type PayoutStatus,
+  type PayoutMethodType, type Payout, type EarningsSummary,
 } from '@/api/services/finance';
-import { payoutNote, commissionPctFromFee } from './commissionCopy';
 
-// Payout model: buyers pay Edudeen; Edudeen pays each seller once a month,
-// after commission. Sellers never request payouts or set a schedule, so the
-// old "Request Payout" / "Update Schedule" controls and the flat-rate
-// "Pending Tax" / tax-report estimates are intentionally not shown here.
-// The payout note is built from the store's real commission rate
-// (feeBreakdown.transactionFee) — see commissionCopy.ts.
+// One Earnings page: balance hero -> month statement -> transactions -> payout method
+// + history -> "How fees and payouts work". Buyers pay Edudeen; Edudeen pays each seller
+// once a month after admin approval, so there is no "request payout" control here.
 
 const TYPE_STYLE: Record<TransactionType, { color: BadgeColor; label: string }> = {
   sale:       { color: 'green',  label: 'Sale' },
@@ -40,21 +34,8 @@ const TYPE_STYLE: Record<TransactionType, { color: BadgeColor; label: string }> 
   adjustment: { color: 'blue',   label: 'Adjustment' },
 };
 
-const METHOD_LABEL: Record<PayoutMethodType, string> = {
-  bank_transfer: 'Bank Transfer', paypal: 'PayPal', stripe: 'Stripe',
-};
-
-const PAYOUT_STATUS_COLOR: Record<PayoutStatus, BadgeColor> = {
-  pending:    'yellow',
-  processing: 'blue',
-  completed:  'green',
-  failed:     'red',
-};
-
-// Every wallet/balance/transaction figure must be shown in ITS OWN currency
-// — never summed across a seller's separate PKR/USD wallets into one
-// misleading number (see FinanceDashboard.wallets, StoreFinance's wallet
-// selector).
+// Every wallet/balance/transaction figure is shown in ITS OWN currency
+// — never summed across a seller's separate PKR/USD wallets.
 function fmt(n: number, currency?: string | null) { return `${formatPrice(n, currency)}`; }
 
 // ── Payout method modal (add or edit) ────────────────────────────────────────
@@ -258,49 +239,48 @@ function PayoutDetailModal({ onClose, storeId, payoutId }: { onClose: () => void
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
+const VIEWS: EarningsView[] = ['available', 'clearing', 'owed'];
+
 export function StoreFinance() {
-  usePageTitle('Finance');
+  usePageTitle('Earnings');
   const { storeId, store } = useStoreWorkspace();
-  // Every finance tab opens in the store's own currency; another wallet is shown only when picked (and labelled).
   const baseCurrency = store?.baseCurrency;
 
-  // Tabs live in the URL (?tab=earnings) so the sidebar's "Earnings" entry
-  // and shared links can open the monthly statement directly.
   const [searchParams, setSearchParams] = useSearchParams();
-  const tab: FinanceTab = searchParams.get('tab') === 'earnings' ? 'earnings' : 'overview';
-  const setTab = (next: FinanceTab) => {
-    const params = new URLSearchParams(searchParams);
-    if (next === 'overview') params.delete('tab'); else params.set('tab', next);
-    setSearchParams(params, { replace: true });
-  };
+  // Old ?tab=overview / ?tab=earnings links land on this one page.
+  useEffect(() => {
+    if (searchParams.has('tab')) {
+      const params = new URLSearchParams(searchParams);
+      params.delete('tab');
+      setSearchParams(params, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
+  const rawView = searchParams.get('view');
+  const view = (VIEWS as string[]).includes(rawView ?? '') ? (rawView as EarningsView) : null;
+  const clearView = () => { const p = new URLSearchParams(searchParams); p.delete('view'); setSearchParams(p, { replace: true }); };
 
   const [dashboard, setDashboard] = useState<FinanceDashboard | null>(null);
-  // Which wallet/currency is currently shown — a seller can hold more than
-  // one (see FinanceDashboard.wallets); never summed into a single number.
-  const [activeCurrency, setActiveCurrency] = useState<string | null>(null);
+  const [pickedCurrency, setPickedCurrency] = useState<string | null>(null);
+  const [summary, setSummary] = useState<EarningsSummary | null>(null);
+  const [summaryError, setSummaryError] = useState('');
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [txPage, setTxPage] = useState(1);
   const [txTotal, setTxTotal] = useState(0);
   const [txType, setTxType] = useState<TransactionType | ''>('');
-  const [methods, setMethods] = useState<PayoutMethod[]>([]);
-  const [recentPayouts, setRecentPayouts] = useState<Payout[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [txLoading, setTxLoading] = useState(false);
+  const [methods, setMethods] = useState<PayoutMethod[] | null>(null);
+  const [payouts, setPayouts] = useState<Payout[]>([]);
+  const [payoutsLoading, setPayoutsLoading] = useState(true);
+  const [payoutsError, setPayoutsError] = useState('');
+  const [coreError, setCoreError] = useState('');
   const [exporting, setExporting] = useState(false);
 
-  const transactionColumns: TableColumn<Transaction>[] = [
-    { key: 'createdAt', header: 'Date', render: t => <span className="text-slate whitespace-nowrap">{new Date(t.createdAt).toLocaleDateString()}</span> },
-    { key: 'description', header: 'Description', render: t => <span className="text-graphite">{t.description}</span> },
-    {
-      key: 'type', header: 'Type',
-      render: t => <Badge color={TYPE_STYLE[t.type].color}>{TYPE_STYLE[t.type].label}</Badge>,
-    },
-    {
-      key: 'amount', header: 'Amount',
-      render: t => <span className={clsx('font-semibold whitespace-nowrap', t.amount >= 0 ? 'text-success' : 'text-error')}>{t.amount >= 0 ? '+' : ''}{fmt(t.amount, t.currency)}</span>,
-    },
-    { key: 'balanceAfter', header: 'Balance', render: t => <span className="font-medium text-carbon whitespace-nowrap">{fmt(t.balanceAfter, t.currency)}</span> },
-  ];
+  const wallets = dashboard?.wallets ?? [];
+  const currencyOptions = [...new Set([baseCurrency, ...wallets.map(w => w.currency)].filter((c): c is string => !!c))];
+  // The wallet currency never changes under the seller: their pick, else the store's own, else their first wallet.
+  const activeCurrency = (pickedCurrency && currencyOptions.includes(pickedCurrency) ? pickedCurrency : null)
+    ?? baseCurrency ?? wallets[0]?.currency ?? null;
+  const summaryForCurrency = summary && summary.currency === activeCurrency ? summary : null;
 
   const [methodModal, setMethodModal] = useState(false);
   const [editingMethod, setEditingMethod] = useState<PayoutMethod | null>(null);
@@ -308,58 +288,63 @@ export function StoreFinance() {
   const [deletingMethodId, setDeletingMethodId] = useState<string | null>(null);
   const [deleteMethodBusy, setDeleteMethodBusy] = useState(false);
   const [deleteMethodError, setDeleteMethodError] = useState('');
-
-  // Dashboard/methods/tax-reports are currency-agnostic reads (the dashboard
-  // itself returns every wallet; tax reports already list all currencies).
-  // Schedule and recent-payouts are PER-WALLET, though, so they're fetched
-  // separately below, once the active wallet is actually known — a
-  // wallet-scoped fetch fired before we know which currency is selected
-  // would silently always return the USD one (the backend's own default).
+  const txRef = useRef<HTMLDivElement>(null);
+  const methodRef = useRef<HTMLDivElement>(null);
   const quietRef = useRef(false);
+
   const loadCore = useCallback(() => {
     if (!storeId) return;
-    const quiet = quietRef.current;
     quietRef.current = false;
-    if (!quiet) { setLoading(true); setError(''); }
-    Promise.all([
-      apiGetFinanceDashboard(storeId),
-      apiGetPayoutMethods(storeId),
-    ])
-      .then(([d, m]) => {
-        setDashboard(d);
-        setActiveCurrency(prev => prev && (d.wallets ?? []).some(w => w.currency === prev) ? prev : (d.wallets?.find(w => w.currency === baseCurrency)?.currency ?? d.wallets?.[0]?.currency ?? null));
-        setMethods(m ?? []);
-      })
-      .catch(err => { if (!quiet) setError(err instanceof Error ? err.message : 'Failed to load finance data.'); })
-      .finally(() => setLoading(false));
-  }, [storeId, baseCurrency]);
+    Promise.all([apiGetFinanceDashboard(storeId), apiGetPayoutMethods(storeId)])
+      .then(([d, m]) => { setDashboard(d); setMethods(m ?? []); setCoreError(''); })
+      .catch(err => setCoreError(err instanceof Error ? err.message : 'Failed to load finance data.'));
+  }, [storeId]);
 
-  const loadWalletScoped = useCallback(() => {
+  const loadSummary = useCallback(() => {
     if (!storeId || !activeCurrency) return;
-    apiGetPayouts(storeId, { limit: 5, currency: activeCurrency })
-      .then(p => setRecentPayouts(p.payouts ?? []))
-      .catch(() => {});
+    apiGetEarningsSummary(storeId, activeCurrency)
+      .then(s => { setSummary(s); setSummaryError(''); })
+      .catch(err => setSummaryError(err instanceof Error ? err.message : 'Failed to load your earnings.'));
   }, [storeId, activeCurrency]);
 
+  const loadPayouts = useCallback(() => {
+    if (!storeId || !activeCurrency) return;
+    setPayoutsLoading(true);
+    apiGetPayouts(storeId, { limit: 12, currency: activeCurrency })
+      .then(p => { setPayouts(p.payouts ?? []); setPayoutsError(''); })
+      .catch(err => setPayoutsError(err instanceof Error ? err.message : 'Failed to load payouts.'))
+      .finally(() => setPayoutsLoading(false));
+  }, [storeId, activeCurrency]);
+
+  const filter = view ? VIEW_FILTER[view] : null;
   const loadTransactions = useCallback(() => {
-    if (!storeId) return;
-    apiGetFinanceTransactions(storeId, { page: txPage, limit: 10, type: txType || undefined, currency: activeCurrency || undefined })
+    if (!storeId || !activeCurrency) return;
+    setTxLoading(true);
+    apiGetFinanceTransactions(storeId, {
+      page: txPage, limit: 10, currency: activeCurrency,
+      type: (filter?.type ?? (txType || undefined)) as TransactionType | undefined,
+      status: filter?.status,
+    })
       .then(res => { setTransactions(res.transactions ?? []); setTxTotal(res.total); })
-      .catch(() => {});
-  }, [storeId, txPage, txType, activeCurrency]);
+      .catch(() => { /* the table keeps its last rows; the hero already shows load errors */ })
+      .finally(() => setTxLoading(false));
+  }, [storeId, activeCurrency, txPage, txType, filter?.type, filter?.status]);
 
   useEffect(loadCore, [loadCore]);
-  useEffect(loadWalletScoped, [loadWalletScoped]);
+  useEffect(loadSummary, [loadSummary]);
+  useEffect(loadPayouts, [loadPayouts]);
   useEffect(loadTransactions, [loadTransactions]);
-  // A sale was credited / a payout was approved or sent: balances, payouts and transactions update by themselves.
-  useLiveRefresh(['finance', 'orders', 'payouts'], () => { quietRef.current = true; loadCore(); loadWalletScoped(); loadTransactions(); }, !!storeId);
+  useEffect(() => { setTxPage(1); }, [view, activeCurrency]);
+  // A hero tile opened a filtered list: bring it into view.
+  useEffect(() => { if (view) txRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, [view]);
+  // A sale was credited / a payout was approved or sent: everything updates by itself.
+  useLiveRefresh(['finance', 'orders', 'payouts'], () => { loadCore(); loadSummary(); loadPayouts(); loadTransactions(); }, !!storeId);
 
   async function handleExport() {
     setExporting(true);
     try {
-      const csv = await apiExportFinanceTransactions(storeId, { type: txType || undefined });
-      const blob = new Blob([csv], { type: 'text/csv' });
-      const url = URL.createObjectURL(blob);
+      const csv = await apiExportFinanceTransactions(storeId, { type: (filter?.type ?? (txType || undefined)) as TransactionType | undefined, status: filter?.status, currency: activeCurrency ?? undefined });
+      const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
       const a = document.createElement('a');
       a.href = url; a.download = `transactions-${storeId}.csv`; a.click();
       URL.revokeObjectURL(url);
@@ -370,8 +355,8 @@ export function StoreFinance() {
 
   async function handleSetDefaultMethod(methodId: string) {
     await apiSetDefaultPayoutMethod(storeId, methodId);
-    const m = await apiGetPayoutMethods(storeId);
-    setMethods(m ?? []);
+    setMethods((await apiGetPayoutMethods(storeId)) ?? []);
+    loadSummary();
   }
 
   async function confirmDeleteMethod() {
@@ -380,9 +365,9 @@ export function StoreFinance() {
     setDeleteMethodError('');
     try {
       await apiDeletePayoutMethod(storeId, deletingMethodId);
-      const m = await apiGetPayoutMethods(storeId);
-      setMethods(m ?? []);
+      setMethods((await apiGetPayoutMethods(storeId)) ?? []);
       setDeletingMethodId(null);
+      loadSummary();
     } catch (err) {
       setDeleteMethodError(err instanceof Error ? err.message : 'Failed to delete payout method.');
     } finally {
@@ -390,87 +375,59 @@ export function StoreFinance() {
     }
   }
 
-  const activeWallet = dashboard?.wallets?.find(w => w.currency === activeCurrency) ?? dashboard?.wallets?.[0] ?? null;
-  const PAYOUT_NOTE = payoutNote(commissionPctFromFee(dashboard?.platformFeeBreakdown?.platformFee ?? dashboard?.feeBreakdown?.transactionFee));
+  const methodsKnown = methods !== null;
+  const hasDefault = (methods ?? []).some(m => m.isDefault && (!activeCurrency || m.currency === activeCurrency));
+
+  const transactionColumns: TableColumn<Transaction>[] = [
+    { key: 'createdAt', header: 'Date', render: t => <span className="text-slate whitespace-nowrap">{new Date(t.createdAt).toLocaleDateString()}</span> },
+    { key: 'description', header: 'Description', render: t => <span className="text-graphite">{t.description}</span> },
+    { key: 'type', header: 'Type', render: t => <Badge color={TYPE_STYLE[t.type]?.color ?? 'gray'}>{TYPE_STYLE[t.type]?.label ?? t.type}</Badge> },
+    { key: 'amount', header: 'Amount', render: t => <span className={clsx('font-semibold whitespace-nowrap', t.amount >= 0 ? 'text-success' : 'text-error')}>{t.amount >= 0 ? '+' : ''}{fmt(t.amount, t.currency)}</span> },
+    { key: 'balanceAfter', header: 'Balance', hideBelowXl: true, render: t => <span className="font-medium text-carbon whitespace-nowrap">{fmt(t.balanceAfter, t.currency)}</span> },
+  ];
 
   const header = (
     <>
       <StorePageHeader
         title="Earnings"
         subtitle="Your sales, fees and monthly payouts from Edudeen."
-        actions={
-          <Button size="sm" variant="outline" icon={<Plus size={13} />} onClick={() => setMethodModal(true)}>
-            <span className="hidden sm:inline">Add Payout Method</span>
-            <span className="sm:hidden">Method</span>
-          </Button>
-        }
+        actions={methodsKnown ? (
+          hasDefault ? (
+            <Button size="sm" variant="outline" onClick={() => methodRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>
+              <span className="hidden sm:inline">Manage payout method</span>
+              <span className="sm:hidden">Payout method</span>
+            </Button>
+          ) : (
+            <Button size="sm" variant="outline" icon={<Plus size={13} />} onClick={() => setMethodModal(true)}>
+              <span className="hidden sm:inline">Add Payout Method</span>
+              <span className="sm:hidden">Method</span>
+            </Button>
+          )
+        ) : undefined}
       />
-      <div className="px-4 md:px-8 pt-4 flex flex-col gap-3">
-        <div className="flex items-center gap-2 text-[12.5px] text-carbon bg-info-bg border border-[#bfdcf3] rounded-lg px-3 py-2">
-          <CalendarCheck size={14} className="shrink-0 text-brand-royal" />
-          <span>Buyer payments go to Edudeen; your earnings are credited after the platform fee and paid out via payout requests. Keep a payout method on file so we know where to send it.</span>
+      {methodsKnown && !hasDefault && (
+        <div className="px-4 md:px-8 pt-4">
+          <div className="flex items-center gap-2 text-[12.5px] text-carbon bg-info-bg border border-[#bfdcf3] rounded-lg px-3 py-2">
+            <CalendarCheck size={14} className="shrink-0 text-brand-royal" />
+            <span>Add a payout method so Edudeen knows where to send your monthly payout.</span>
+          </div>
         </div>
-        <TabBar
-          tabs={[
-            { id: 'overview', label: 'Overview' },
-            { id: 'earnings', label: 'Monthly earnings' },
-          ]}
-          active={tab}
-          onChange={id => setTab(id as FinanceTab)}
-        />
-      </div>
+      )}
     </>
   );
 
-  // Payout-method modal stays reachable from the header on every tab/state.
   const methodModalEl = methodModal && (
-    <PayoutMethodModal storeId={storeId} defaultCurrency={store?.baseCurrency ?? activeWallet?.currency ?? undefined} onClose={() => setMethodModal(false)} onSaved={() => { setMethodModal(false); loadCore(); loadWalletScoped(); }} />
+    <PayoutMethodModal storeId={storeId} defaultCurrency={activeCurrency ?? undefined} onClose={() => setMethodModal(false)} onSaved={() => { setMethodModal(false); loadCore(); loadSummary(); loadPayouts(); }} />
   );
 
-  if (tab === 'earnings') {
-    return (
-      <>
-        {header}
-        <div className="px-4 md:px-8 pt-6 pb-10">
-          <EarningsStatement
-            storeId={storeId}
-            currencies={dashboard?.wallets?.map(w => w.currency) ?? []}
-            defaultCurrency={store?.baseCurrency}
-          />
-        </div>
-        {methodModalEl}
-      </>
-    );
-  }
-
-  if (loading) {
-    return (
-      <>
-        {header}
-        <div className="px-4 md:px-8 pt-6 pb-8 flex flex-col gap-5" aria-busy="true">
-          <SkeletonBox height={110} rounded="12px" />
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            {Array.from({ length: 4 }).map((_, i) => <SkeletonBox key={i} height={90} rounded="10px" />)}
-          </div>
-          <div className="flex gap-4">
-            <SkeletonBox height={320} rounded="10px" className="flex-1" />
-            <SkeletonBox height={320} rounded="10px" width={280} />
-          </div>
-        </div>
-      </>
-    );
-  }
-
-  if (error || !dashboard) {
+  if (coreError && !dashboard) {
     return (
       <>
         {header}
         <div className="px-4 md:px-8 pt-6 pb-8">
           <div role="alert" className="flex flex-col items-center gap-3 text-center bg-white border border-bone rounded-xl px-6 py-12">
-            <div className="w-11 h-11 rounded-full bg-error-bg flex items-center justify-center">
-              <AlertTriangle size={20} className="text-error" />
-            </div>
-            <p className="text-[13px] text-charcoal max-w-sm">{error || 'Failed to load finance data.'}</p>
+            <div className="w-11 h-11 rounded-full bg-error-bg flex items-center justify-center"><AlertTriangle size={20} className="text-error" /></div>
+            <p className="text-[13px] text-charcoal max-w-sm">{coreError}</p>
             <Button size="sm" variant="outline" onClick={loadCore}>Try Again</Button>
           </div>
         </div>
@@ -479,190 +436,132 @@ export function StoreFinance() {
     );
   }
 
-  if (!activeWallet) {
-    return (
-      <>
-        {header}
-        <div className="px-4 md:px-8 pt-6 pb-8">
-          <div className="bg-cream border border-bone rounded-xl px-6 py-10 text-center">
-            <p className="font-serif text-[21px] text-carbon mb-2">No sales yet.</p>
-            <p className="text-[13.5px] text-slate">Your wallet will appear here once you make your first sale.</p>
-          </div>
-        </div>
-        {methodModalEl}
-      </>
-    );
-  }
+  // No amount is drawn until the wallet currency is known, so nothing flashes in another currency.
+  const ready = !!activeCurrency && !!dashboard;
 
   return (
     <>
       {header}
+      <div className="px-4 md:px-8 pt-6 pb-10 flex flex-col gap-6">
 
-      <div className="px-4 md:px-8 pt-6 pb-10 flex flex-col gap-5">
-
-        {/* Wallet selector — a seller can hold more than one currency
-            (e.g. a PKR wallet from bank-transfer/COD sales and a USD wallet
-            from Stripe sales); these are NEVER summed into one number. */}
-        {(dashboard.wallets?.length ?? 0) > 1 && (
-          <div className="flex gap-2">
-            {(dashboard.wallets ?? []).map(w => (
-              <button
-                key={w.currency}
-                onClick={() => setActiveCurrency(w.currency)}
-                aria-pressed={w.currency === activeWallet.currency}
-                className={
-                  w.currency === activeWallet.currency
-                    ? 'px-4 py-[8px] rounded-lg text-[13px] font-bold bg-brand-orange border border-brand-orange text-white cursor-pointer'
-                    : 'px-4 py-[8px] rounded-lg text-[13px] font-bold bg-white border border-bone text-brand-orange cursor-pointer hover:bg-cream'
-                }
-              >
-                {w.currency} Wallet
+        {ready && currencyOptions.length > 1 && (
+          <div role="group" aria-label="Wallet currency" className="flex gap-2">
+            {currencyOptions.map(c => (
+              <button key={c} type="button" onClick={() => { setPickedCurrency(c); setSummary(null); }} aria-pressed={c === activeCurrency}
+                className={c === activeCurrency
+                  ? 'px-4 py-[8px] rounded-lg text-[13px] font-bold bg-brand-orange border border-brand-orange text-white cursor-pointer'
+                  : 'px-4 py-[8px] rounded-lg text-[13px] font-bold bg-white border border-bone text-brand-orange cursor-pointer hover:bg-cream'}>
+                {c} Wallet
               </button>
             ))}
           </div>
         )}
 
-        {/* Balance Card */}
-        <div className="bg-white border border-bone rounded-xl px-5 sm:px-[27px] py-6 flex flex-wrap justify-between items-center gap-4">
-          <div>
-            <p className="text-[12px] font-bold text-brand-royal uppercase tracking-[0.15em] mb-2">Available Balance ({activeWallet.currency})</p>
-            <p className="font-serif text-[36px] font-normal text-carbon leading-[1.1] mb-3">{fmt(activeWallet.availableBalance, activeWallet.currency)}</p>
-            <div className="flex items-center gap-6 flex-wrap">
-              <span className="text-[13px] text-slate">Pending: <span className="text-carbon font-bold">{fmt(activeWallet.pendingBalance, activeWallet.currency)}</span></span>
-              {activeWallet.nextPayout.method && (
-                <span className="text-[13px] text-slate">
-                  Method: {METHOD_LABEL[activeWallet.nextPayout.method.type as PayoutMethodType] ?? activeWallet.nextPayout.method.type}
-                  {activeWallet.nextPayout.method.last4 ? ` ••${activeWallet.nextPayout.method.last4}` : ''}
-                </span>
-              )}
-            </div>
+        {/* 1. Balance hero */}
+        {summaryError && !summaryForCurrency ? (
+          <div role="alert" className="flex items-center justify-between gap-3 flex-wrap bg-error-bg border border-error-border rounded-xl px-5 py-4">
+            <p className="text-[13px] text-error">{summaryError}</p>
+            <Button size="sm" variant="outline" onClick={loadSummary}>Try again</Button>
           </div>
-          <p className="text-[12.5px] text-slate max-w-[260px]">{PAYOUT_NOTE}</p>
-        </div>
+        ) : !ready || !summaryForCurrency ? (
+          <div className="grid grid-cols-1 min-[480px]:grid-cols-2 lg:grid-cols-4 gap-4" aria-busy="true">
+            {[0, 1, 2, 3].map(i => <SkeletonBox key={i} height={104} rounded="12px" />)}
+          </div>
+        ) : (
+          <EarningsHero s={summaryForCurrency} storeId={storeId} />
+        )}
 
-        {/* Metrics */}
-        <div className="flex flex-col sm:flex-row gap-3">
-          <MetricCard
-            label="This Month Revenue"
-            value={fmt(activeWallet.summary.thisMonthRevenue, activeWallet.currency)}
-            trend={`${activeWallet.summary.revenueGrowthPercent >= 0 ? '+' : ''}${activeWallet.summary.revenueGrowthPercent}% vs last month`}
-            trendUp={activeWallet.summary.revenueGrowthPercent >= 0}
-          />
-          <MetricCard label="Platform fee" value={fmt(activeWallet.summary.platformFees, activeWallet.currency)} sub="This month" />
-          <MetricCard label="Total Paid Out" value={fmt(activeWallet.summary.totalPaidOut, activeWallet.currency)} sub="All time" />
-        </div>
+        {/* 2. Month statement */}
+        {ready && summaryForCurrency && activeCurrency ? (
+          <EarningsStatement storeId={storeId} currency={activeCurrency} nextPayoutDate={summaryForCurrency.nextPayoutDate} toShip={summaryForCurrency.expected.toShip} />
+        ) : <StatementSkeleton />}
 
-        {/* 2-col layout */}
-        <div className="flex gap-4 items-start flex-wrap lg:flex-nowrap">
-
-          {/* LEFT — Transaction History */}
-          <div className="flex-1 min-w-0 w-full bg-white border border-bone rounded-xl overflow-hidden">
-            <div className="flex items-center justify-between px-5 sm:px-6 py-4 flex-wrap gap-2.5">
-              <h2 className="font-serif font-normal text-[21px] text-carbon">Transaction History</h2>
-              <div className="flex items-center gap-2">
-                <select value={txType} onChange={e => { setTxType(e.target.value as TransactionType | ''); setTxPage(1); }}
+        {/* 3. Transactions */}
+        <section ref={txRef} id="transactions" aria-labelledby="tx-h" className="bg-white border border-bone rounded-xl overflow-hidden scroll-mt-24">
+          <div className="flex items-center justify-between px-5 sm:px-6 py-4 flex-wrap gap-2.5">
+            <h2 id="tx-h" className="font-serif font-normal text-[21px] text-carbon">Transactions</h2>
+            <div className="flex items-center gap-2 flex-wrap">
+              {filter ? (
+                <button type="button" onClick={clearView} className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-brand-royal bg-info-bg border border-[#bfdcf3] rounded-full px-3 py-1 cursor-pointer">
+                  {filter.label} <X size={12} aria-hidden /><span className="sr-only">Clear filter</span>
+                </button>
+              ) : (
+                <select value={txType} onChange={e => { setTxType(e.target.value as TransactionType | ''); setTxPage(1); }} aria-label="Transaction type"
                   className="px-3 py-[7px] text-[13px] border border-bone rounded-lg bg-white text-charcoal outline-none">
                   <option value="">All Types</option>
                   {Object.entries(TYPE_STYLE).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
                 </select>
-                <Button size="sm" variant="outline" icon={<Download size={12} />} loading={exporting} onClick={handleExport}>
-                  Export CSV
-                </Button>
-              </div>
-            </div>
-
-            <Table
-              columns={transactionColumns}
-              data={transactions}
-              keyExtractor={t => t._id}
-              emptyState={{ title: 'No transactions yet.' }}
-              pagination={{ page: txPage, total: txTotal, perPage: 10, onChange: setTxPage, label: 'transactions' }}
-            />
-          </div>
-
-          {/* RIGHT — 3 stacked cards */}
-          <div className="w-full lg:w-[280px] shrink-0 flex flex-col gap-3.5">
-
-            {/* Payout Methods */}
-            <div className="bg-white border border-bone rounded-xl px-5 py-5">
-              <div className="flex items-center justify-between mb-3">
-                <p className="font-serif text-[18px] text-carbon">Payout Methods</p>
-                <button onClick={() => setMethodModal(true)} aria-label="Add payout method" className="text-slate hover:text-brand-orange cursor-pointer bg-transparent border-none">
-                  <Plus size={14} />
-                </button>
-              </div>
-              {methods.length === 0 ? (
-                <p className="text-xs text-slate">No payout methods yet.</p>
-              ) : (
-                <div className="flex flex-col gap-2">
-                  {methods.map(m => (
-                    <div key={m._id} className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        {m.isDefault && <Star size={11} className="text-brand-orange shrink-0" fill="var(--color-brand-orange)" />}
-                        <span className="text-xs text-graphite truncate">
-                          {METHOD_LABEL[m.type]}{m.accountLast4 ? ` ••${m.accountLast4}` : ''}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        {!m.isDefault && (
-                          <button onClick={() => handleSetDefaultMethod(m._id)} className="text-[12px] text-slate hover:text-brand-orange cursor-pointer bg-transparent border-none">
-                            Set default
-                          </button>
-                        )}
-                        <button onClick={() => setEditingMethod(m)} className="text-[12px] text-slate hover:text-brand-orange cursor-pointer bg-transparent border-none">
-                          Edit
-                        </button>
-                        <button onClick={() => { setDeletingMethodId(m._id); setDeleteMethodError(''); }} aria-label="Delete payout method" className="text-slate hover:text-error cursor-pointer bg-transparent border-none">
-                          <X size={12} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
               )}
+              <Button size="sm" variant="outline" icon={<Download size={12} />} loading={exporting} onClick={handleExport}>Export CSV</Button>
             </div>
+          </div>
+          <Table
+            columns={transactionColumns}
+            data={transactions}
+            keyExtractor={t => t._id}
+            loading={txLoading && transactions.length === 0}
+            compact
+            cardsBelow="md"
+            renderCard={t => (
+              <div className="flex flex-col gap-1 text-[13px]">
+                <div className="flex items-center justify-between gap-2">
+                  <Badge color={TYPE_STYLE[t.type]?.color ?? 'gray'} size="sm">{TYPE_STYLE[t.type]?.label ?? t.type}</Badge>
+                  <span className={clsx('font-semibold', t.amount >= 0 ? 'text-success' : 'text-error')}>{t.amount >= 0 ? '+' : ''}{fmt(t.amount, t.currency)}</span>
+                </div>
+                <span className="text-graphite">{t.description}</span>
+                <span className="text-[12px] text-slate">{new Date(t.createdAt).toLocaleDateString()}</span>
+              </div>
+            )}
+            emptyState={{ title: filter ? 'Nothing matches this filter.' : 'No transactions yet.' }}
+            pagination={{ page: txPage, total: txTotal, perPage: 10, onChange: setTxPage, label: 'transactions' }}
+          />
+        </section>
 
-            {/* Fees — only the commission (the real, per-store rate) and card
-                processing; the old listing/delivery/AI-credit rows were fixed
-                strings, not store data. */}
-            <div className="bg-white border border-bone rounded-xl px-5 py-5">
-              <p className="font-serif text-[18px] text-carbon mb-3">Fees</p>
+        {/* 4. Payout method + history */}
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)] gap-5 items-start">
+          <div ref={methodRef} id="payout-method" className="bg-white border border-bone rounded-xl px-5 py-5 scroll-mt-24">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-serif text-[18px] text-carbon font-normal">Payout method</h2>
+              <button type="button" onClick={() => setMethodModal(true)} aria-label="Add payout method" className="text-slate hover:text-brand-orange cursor-pointer bg-transparent border-none">
+                <Plus size={14} />
+              </button>
+            </div>
+            {!methodsKnown ? <SkeletonBox height={44} rounded="8px" /> : methods!.length === 0 ? (
+              <p className="text-xs text-slate">No payout method yet.</p>
+            ) : (
               <div className="flex flex-col gap-2.5">
-                {[
-                  ['Edudeen platform fee', dashboard.platformFeeBreakdown?.platformFee ?? dashboard.feeBreakdown.transactionFee],
-                  ['Card processing', (dashboard.platformFeeBreakdown ?? dashboard.feeBreakdown).paymentProcessing],
-                ].map(([label, val]) => (
-                  <div key={label} className="flex justify-between items-start gap-3">
-                    <span className="text-xs text-slate shrink-0">{label}</span>
-                    <span className="text-xs font-medium text-graphite text-right">{val}</span>
+                {methods!.map(m => (
+                  <div key={m._id} className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      {m.isDefault && <Star size={11} className="text-brand-orange shrink-0" fill="var(--color-brand-orange)" aria-label="Default" />}
+                      <span className="text-xs text-graphite truncate">
+                        {METHOD_LABEL[m.type]}{m.accountLast4 ? ` ••${m.accountLast4}` : ''} · {m.currency}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {!m.isDefault && (
+                        <button type="button" onClick={() => handleSetDefaultMethod(m._id)} className="text-[12px] text-slate hover:text-brand-orange cursor-pointer bg-transparent border-none">Set default</button>
+                      )}
+                      <button type="button" onClick={() => setEditingMethod(m)} className="text-[12px] text-slate hover:text-brand-orange cursor-pointer bg-transparent border-none">Edit</button>
+                      <button type="button" onClick={() => { setDeletingMethodId(m._id); setDeleteMethodError(''); }} aria-label="Delete payout method" className="text-slate hover:text-error cursor-pointer bg-transparent border-none">
+                        <X size={12} />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
-            </div>
-
-            {/* Recent Payouts */}
-            {recentPayouts.length > 0 && (
-              <div className="bg-white border border-bone rounded-xl px-5 py-5">
-                <p className="font-serif text-[18px] text-carbon mb-3">Recent Payouts</p>
-                <div className="flex flex-col gap-2.5">
-                  {recentPayouts.map(p => (
-                    <button key={p._id} onClick={() => setSelectedPayoutId(p._id)}
-                      className="flex items-center justify-between gap-2 bg-transparent border-none p-0 cursor-pointer text-left">
-                      <span className="text-xs text-graphite">{fmt(p.amount, p.currency)}</span>
-                      <Badge color={PAYOUT_STATUS_COLOR[p.status]} size="sm">{p.status.charAt(0).toUpperCase() + p.status.slice(1)}</Badge>
-                    </button>
-                  ))}
-                </div>
-              </div>
             )}
-
           </div>
+          <PayoutHistory payouts={payouts} loading={payoutsLoading} error={payoutsError} onOpen={setSelectedPayoutId} onRetry={loadPayouts} />
         </div>
+
+        {/* 5. The only place fee rules appear */}
+        {summaryForCurrency && <HowFeesWork s={summaryForCurrency} />}
       </div>
 
       {methodModalEl}
       {editingMethod && (
-        <PayoutMethodModal storeId={storeId} editing={editingMethod} defaultCurrency={activeWallet.currency} onClose={() => setEditingMethod(null)} onSaved={() => { setEditingMethod(null); loadCore(); loadWalletScoped(); }} />
+        <PayoutMethodModal storeId={storeId} editing={editingMethod} defaultCurrency={activeCurrency ?? undefined} onClose={() => setEditingMethod(null)} onSaved={() => { setEditingMethod(null); loadCore(); loadSummary(); loadPayouts(); }} />
       )}
       {selectedPayoutId && (
         <PayoutDetailModal storeId={storeId} payoutId={selectedPayoutId} onClose={() => setSelectedPayoutId(null)} />
