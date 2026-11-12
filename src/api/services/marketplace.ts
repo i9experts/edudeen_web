@@ -106,6 +106,8 @@ export interface MarketplaceProduct {
   descriptionUr?:    string | null;
   /** Pictures the seller added inside the description (Description tab on the product page). */
   descriptionImages?: string[];
+  /** Optional product video: played in the product page gallery (cards always show a picture). */
+  video?:            { url: string; posterUrl: string | null; frontFirst: boolean } | null;
   productType?:      'physical' | 'digital';
   type?:             'physical' | 'digital';
   categoryId:        string;

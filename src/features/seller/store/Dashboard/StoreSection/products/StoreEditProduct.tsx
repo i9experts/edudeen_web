@@ -29,7 +29,7 @@ import { reviewNoticeText } from './reviewNotice';
 import { useToast } from '@/contexts/ToastContext';
 import { descriptionError, validatePrices, weightTextError, parseWeightKg, stockError } from './priceRules';
 import { type VariantOption } from '@/api/services/product';
-import { findCategoryName, withPendingTags, packageSizeError, packageCmPayload, dispatchOverrideError, dispatchOverridePayload, type DigForm, type LicenseType, type PhysForm, type ProductStatus } from './ProductFormKit';
+import { findCategoryName, withPendingTags, packageSizeError, packageCmPayload, dispatchOverrideError, dispatchOverridePayload, type DigForm, type LicenseType, type PhysForm, type ProductStatus, type ProductVideoValue } from './ProductFormKit';
 import {
   ActionBar, ProductPreview, StepRail, WizardNav, WIZARD_STEPS, dirtyCapture,
   useLeaveGuard, useWizard, type WizardIssue,
@@ -40,12 +40,12 @@ const blankPhys: PhysForm = {
   stock: '', options: [] as VariantOption[], shippingWeight: '', subCategoryId: '',
   parcelType: 'standard', pkgL: '', pkgW: '', pkgH: '', dispatchDays: '',
   status: 'draft' as ProductStatus, isListedOnEdudeen: false,
-  scheduledAt: '', tagInput: '', tags: [] as string[], images: [] as string[], descriptionImages: [] as string[],
+  scheduledAt: '', tagInput: '', tags: [] as string[], images: [] as string[], descriptionImages: [] as string[], video: null as ProductVideoValue | null,
 };
 const blankDig: DigForm = {
   name: '', description: '', price: '', compareAtPrice: '', subCategoryId: '',
   status: 'draft' as ProductStatus, isListedOnEdudeen: false,
-  scheduledAt: '', tagInput: '', tags: [] as string[], images: [] as string[], descriptionImages: [] as string[],
+  scheduledAt: '', tagInput: '', tags: [] as string[], images: [] as string[], descriptionImages: [] as string[], video: null as ProductVideoValue | null,
   files: [] as PrivateUploadData[],
   sampleFile: null as PrivateUploadData | null,
   tiers: EMPTY_TIERS as LicenseTierValue[],
@@ -76,7 +76,7 @@ function physFromEntry(p: StoreProduct, v: ProductVariant): PhysForm {
     dispatchDays: p.dispatchDaysOverride ? String(p.dispatchDaysOverride) : '',
     pkgL: p.packageCm ? String(p.packageCm.l) : '', pkgW: p.packageCm ? String(p.packageCm.w) : '', pkgH: p.packageCm ? String(p.packageCm.h) : '',
     status: formStatus(p.status, p.scheduledAt), isListedOnEdudeen: p.isListedOnEdudeen,
-    scheduledAt: scheduledWall(p), tags: [...(p.tags ?? [])], tagInput: '', images: [...(p.images ?? [])], descriptionImages: [...(((p as { descriptionImages?: string[] }).descriptionImages) ?? [])],
+    scheduledAt: scheduledWall(p), tags: [...(p.tags ?? [])], tagInput: '', images: [...(p.images ?? [])], descriptionImages: [...(((p as { descriptionImages?: string[] }).descriptionImages) ?? [])], video: ((p as { video?: ProductVideoValue | null }).video) ?? null,
   };
 }
 function digFromEntry(p: StoreProduct, v: ProductVariant): DigForm {
@@ -87,7 +87,7 @@ function digFromEntry(p: StoreProduct, v: ProductVariant): DigForm {
     price: String(v.price), compareAtPrice: v.compareAtPrice != null ? String(v.compareAtPrice) : '',
     subCategoryId: p.subCategoryId ?? '',
     status: formStatus(p.status, p.scheduledAt), isListedOnEdudeen: p.isListedOnEdudeen,
-    scheduledAt: scheduledWall(p), tags: [...(p.tags ?? [])], tagInput: '', images: [...(p.images ?? [])], descriptionImages: [...(((p as { descriptionImages?: string[] }).descriptionImages) ?? [])],
+    scheduledAt: scheduledWall(p), tags: [...(p.tags ?? [])], tagInput: '', images: [...(p.images ?? [])], descriptionImages: [...(((p as { descriptionImages?: string[] }).descriptionImages) ?? [])], video: ((p as { video?: ProductVideoValue | null }).video) ?? null,
     files: (d?.files ?? []).map(toUpload),
     sampleFile: d?.sampleFile ? toUpload(d.sampleFile) : null,
     tiers: EMPTY_TIERS,
@@ -360,7 +360,7 @@ export default function StoreEditProduct() {
       if (pType === 'physical') {
         const res = await apiEditPhysicalProduct(productId, {
           productId, name: phys.name, description: phys.description,
-          categoryId: categoryId || undefined, subCategoryId: phys.subCategoryId || null, images: phys.images, descriptionImages: phys.descriptionImages, tags: withPendingTags(phys.tags, phys.tagInput),
+          categoryId: categoryId || undefined, subCategoryId: phys.subCategoryId || null, images: phys.images, descriptionImages: phys.descriptionImages, video: phys.video, tags: withPendingTags(phys.tags, phys.tagInput),
           isListedOnEdudeen: phys.isListedOnEdudeen, status: finalStatus,
           ...offersPayload({ premiumPct, premiumOptOut, campaignIds }),
           scheduledAt: finalStatus === 'scheduled' ? pktWallToIso(phys.scheduledAt) : null,
@@ -389,7 +389,7 @@ export default function StoreEditProduct() {
           productId, variantId,
           name: dig.name, description: dig.description,
           categoryId: categoryId || undefined, subCategoryId: dig.subCategoryId || null,
-          images: dig.images, descriptionImages: dig.descriptionImages, tags: withPendingTags(dig.tags, dig.tagInput), isListedOnEdudeen: dig.isListedOnEdudeen,
+          images: dig.images, descriptionImages: dig.descriptionImages, video: dig.video, tags: withPendingTags(dig.tags, dig.tagInput), isListedOnEdudeen: dig.isListedOnEdudeen,
           status: finalStatus,
           ...offersPayload({ premiumPct, premiumOptOut, campaignIds }),
           scheduledAt: finalStatus === 'scheduled' ? pktWallToIso(dig.scheduledAt) : null,

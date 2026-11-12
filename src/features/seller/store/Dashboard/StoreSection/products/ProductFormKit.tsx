@@ -1,5 +1,8 @@
 import { dispatchDaysError } from '@/features/seller/dashboard/shippingRules';
 import { FieldErrorsContext } from './fieldErrorsContext';
+
+/** A product's optional video (see API product-video.util). frontFirst = it is the first slide of the product page gallery. */
+export interface ProductVideoValue { url: string; posterUrl: string | null; frontFirst: boolean }
 import { useState, useEffect, useContext, isValidElement, cloneElement, type ReactNode } from 'react';
 import { ChevronDown, Plus, X } from 'lucide-react';
 import type { VariantOption } from '@/api/services/product';
@@ -21,7 +24,7 @@ export interface PhysForm {
   /** Optional per-product dispatch time in working days (1-7). '' = use the store's. */
   dispatchDays?: string;
   status: ProductStatus; isListedOnEdudeen: boolean;
-  scheduledAt: string; tagInput: string; tags: string[]; images: string[]; descriptionImages: string[];
+  scheduledAt: string; tagInput: string; tags: string[]; images: string[]; descriptionImages: string[]; video: ProductVideoValue | null;
 }
 /** Error for the optional per-product dispatch days box ('' is fine = store value). */
 export function dispatchOverrideError(s: string | undefined): string | null {
@@ -48,7 +51,7 @@ export function packageCmPayload(l: string, w: string, h: string): { l: number; 
 export interface DigForm {
   name: string; description: string; price: string; compareAtPrice: string; subCategoryId: string;
   status: ProductStatus; isListedOnEdudeen: boolean;
-  scheduledAt: string; tagInput: string; tags: string[]; images: string[]; descriptionImages: string[];
+  scheduledAt: string; tagInput: string; tags: string[]; images: string[]; descriptionImages: string[]; video: ProductVideoValue | null;
   files: PrivateUploadData[]; sampleFile: PrivateUploadData | null; tiers: LicenseTierValue[];
   downloadLimit: string; linkExpiryDays: string; pdfStampingEnabled: boolean; licenseType: LicenseType;
   buyerDeliveryMessage: string; previewEnabled: boolean;

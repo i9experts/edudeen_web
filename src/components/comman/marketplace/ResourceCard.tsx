@@ -100,7 +100,7 @@ function ListCover({ product }: { product: MarketplaceProduct }) {
 function Cover({ product }: { product: MarketplaceProduct }) {
   const { accent } = paletteFor(product.name || product._id);
   const [imgFailed, setImgFailed] = useState(false);
-  const image = !imgFailed ? product.images?.[0] : undefined;
+  const image = !imgFailed ? (product.images?.[0] || product.video?.posterUrl || undefined) : undefined;
   const imgProps = image ? responsiveImg(image, '(min-width: 1024px) 14vw, (min-width: 640px) 22vw, 36vw', [200, 320, 480, 640], 480) : null;
   const clipId = `bk-${product._id}`;
   // Every book is the same size; the whole picture is stretched to fill it (no bars, nothing cut off).

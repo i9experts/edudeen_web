@@ -6,6 +6,7 @@ import type { CategoryNode } from '@/api/services/categories';
 import type { StoreData } from '@/api/services/store';
 import type { AttributeDefinition } from '@/api/services/attributes';
 import { ProductPhotosUploader } from './ProductPhotosUploader';
+import { ProductVideoField } from './ProductVideoField';
 import {
   LearningFields, CoverStyleField, LicenseTiersField, DeliverableFilesField, SampleFileField,
   type LearningValue,
@@ -73,7 +74,7 @@ export function ProductFormSteps(p: ProductFormStepsProps) {
   const { pType, phys, dig, sp, sd, currencySymbol, step, go } = p;
   const isDigitalFamily = isDigitalFamilyType(pType);
   const cur = pType === 'physical' ? phys : dig;
-  const set = <K extends 'name' | 'description' | 'price' | 'compareAtPrice' | 'subCategoryId' | 'status' | 'isListedOnEdudeen' | 'scheduledAt' | 'tagInput' | 'tags' | 'images' | 'descriptionImages'>(k: K, v: PhysForm[K]) => {
+  const set = <K extends 'name' | 'description' | 'price' | 'compareAtPrice' | 'subCategoryId' | 'status' | 'isListedOnEdudeen' | 'scheduledAt' | 'tagInput' | 'tags' | 'images' | 'descriptionImages' | 'video'>(k: K, v: PhysForm[K]) => {
     if (pType === 'physical') sp(k, v); else sd(k, v as unknown as DigForm[K]);
   };
   const digitalAvailable = p.supports.digital;
@@ -177,6 +178,10 @@ export function ProductFormSteps(p: ProductFormStepsProps) {
         <Block id="fld-photos" title="Photos" need="recommended" hint="Up to 20 images - select several at once. The first image is the cover buyers see in search and on your shelf.">
           <ProductPhotosUploader value={cur.images} onChange={urls => set('images', urls)} />
         </Block>
+        <Block id="fld-video" title="Product video" need="optional" hint="Optional. One short video (mp4, mov or webm, up to 60 MB). Buyers see a play button on the product page.">
+          <ProductVideoField value={cur.video} onChange={v => set('video', v)} />
+        </Block>
+
 
         {isDigitalFamily && (
           <Block id="fld-delivery" title="How buyers get it" need="required" hint="Downloadable files or an online course with video lessons.">

@@ -32,6 +32,13 @@ export function apiUploadPublicFile(file: File, onProgress?: UploadProgress, pur
   return client.post<never, UploadApiResponse<PublicUploadData>>(ENDPOINTS.UPLOAD.PUBLIC_FILE, fd, uploadConfig(onProgress));
 }
 
+/** Product video (seller only; mp4 / mov / webm, max 60 MB). Returns the video URL plus an auto poster frame. */
+export function apiUploadProductVideo(file: File, onProgress?: UploadProgress) {
+  const fd = new FormData();
+  fd.append('file', file);
+  return client.post<never, UploadApiResponse<PublicUploadData & { posterUrl: string | null }>>(ENDPOINTS.UPLOAD.PRODUCT_VIDEO, fd, uploadConfig(onProgress));
+}
+
 /** `purpose` scopes the private storage folder server-side (e.g. 'kyc_document'
  *  for seller-verification documents) — omit for the original digital-products
  *  upload flow, which keeps its existing default folder. */

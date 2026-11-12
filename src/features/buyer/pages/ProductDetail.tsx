@@ -50,7 +50,7 @@ import {
   ArrowRight, Package, Download, ClipboardList, CheckCircle, Minus, Plus,
   ShoppingCart, Star, Link2, Share2, Heart, ShieldCheck, Truck,
   UserPlus, UserCheck, Tag, ZoomIn, ZoomOut, ChevronLeft, ChevronRight, Users, Calendar, Award, Sparkles, Flame,
-  FileText, Store as StoreIcon, Eye, Loader2, Zap, MessageCircle, MessageCircleQuestion, Clock, RotateCcw,
+  FileText, Play, Store as StoreIcon, Eye, Loader2, Zap, MessageCircle, MessageCircleQuestion, Clock, RotateCcw,
 } from 'lucide-react';
 import { responseTimeLabel, returnSummary } from '@/utils/sellerTrust';
 const ProductReviewsSection = lazyWithRetry(() => import('./ProductReviews').then(m => ({ default: m.ProductReviewsSection })));
@@ -176,22 +176,46 @@ function ReviewsPlaceholder() {
   );
 }
 
-function ImageGallery({ images, name }: { images: string[]; name: string }) {
+type GallerySlide = { kind: 'image'; src: string } | { kind: 'video'; src: string; poster: string | null };
+
+function ImageGallery({ images, name, video = null }: { images: string[]; name: string; video?: { url: string; posterUrl: string | null; frontFirst: boolean } | null }) {
   const [selected, setSelected] = useState(0);
   const [errored, setErrored] = useState<Record<number, boolean>>({});
   const [viewer, setViewer] = useState(false);
-  const src = images[selected];
+  const [playing, setPlaying] = useState(false);
+
+  // Slides in display order: the seller decides whether the video is first or comes after the pictures.
+  const pics: GallerySlide[] = images.filter(Boolean).map(src => ({ kind: 'image', src }));
+  const vid: GallerySlide[] = video?.url ? [{ kind: 'video', src: video.url, poster: video.posterUrl ?? images[0] ?? null }] : [];
+  const slides: GallerySlide[] = video?.frontFirst ? [...vid, ...pics] : [...pics, ...vid];
+  const slide = slides[selected];
+  const imageOnly = slides.filter(s => s.kind === 'image').map(s => s.src);
+  const imageStart = slide?.kind === 'image' ? Math.max(0, imageOnly.indexOf(slide.src)) : 0;
+  const choose = (i: number) => { setSelected(i); setPlaying(false); };
 
   return (
     <div className="flex flex-col lg:flex-row-reverse gap-3 min-w-0">
-      {/* Main image — shown whole (no crop, no hover zoom) */}
+      {/* Main slide — a picture shown whole (no crop), or the video (poster + play button until clicked) */}
       <div className="relative flex-1 min-w-0 h-[300px] md:h-[400px] lg:h-[460px] max-h-[55vh] lg:max-h-none rounded-2xl overflow-hidden border border-bone bg-white">
-        {!src || errored[selected] ? (
+        {slide?.kind === 'video' ? (
+          playing ? (
+            <video src={slide.src} poster={slide.poster ?? undefined} controls autoPlay playsInline preload="auto" className="w-full h-full object-contain bg-black" />
+          ) : (
+            <button type="button" onClick={() => setPlaying(true)} aria-label="Play product video" className="group/play relative w-full h-full cursor-pointer bg-black p-0 border-0">
+              {slide.poster && <img src={slide.poster} alt={name} className="w-full h-full object-contain" />}
+              <span className="absolute inset-0 flex items-center justify-center">
+                <span className="flex items-center justify-center w-16 h-16 rounded-full bg-black/60 text-white backdrop-blur-sm transition-transform group-hover/play:scale-110">
+                  <Play size={28} className="fill-white ms-1" aria-hidden />
+                </span>
+              </span>
+            </button>
+          )
+        ) : !slide || errored[selected] ? (
           <ProductCoverFallback name={name} size="lg" className="w-full h-full" />
         ) : (
           <>
             <img
-              {...responsiveImg(src, '(min-width: 1024px) 520px, 100vw', [480, 720, 960, 1280], 960)} alt={name} width={960} height={960}
+              {...responsiveImg(slide.src, '(min-width: 1024px) 520px, 100vw', [480, 720, 960, 1280], 960)} alt={name} width={960} height={960}
               loading={selected === 0 ? 'eager' : 'lazy'} fetchPriority={selected === 0 ? 'high' : undefined} decoding="async"
               onError={() => setErrored(e => ({ ...e, [selected]: true }))}
               className="w-full h-full object-contain p-3"
@@ -207,31 +231,35 @@ function ImageGallery({ images, name }: { images: string[]; name: string }) {
       </div>
       {viewer && (
         <Modal title={name} onClose={() => setViewer(false)} width={760} mobileSheet>
-          <ZoomViewer pages={images.filter(Boolean)} alt={name} start={selected} />
+          <ZoomViewer pages={imageOnly} alt={name} start={imageStart} />
         </Modal>
       )}
 
-      {/* Thumbnails — vertical rail on desktop, horizontal scroll on mobile */}
-      {images.length > 1 && (
+      {/* Thumbnails — vertical rail on desktop, horizontal scroll on mobile (the video thumbnail has a play mark) */}
+      {slides.length > 1 && (
         <div className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-visible scrollbar-hide shrink-0">
-          {images.slice(0, MAX_THUMBS).map((img, i) => {
-            const isLast = i === MAX_THUMBS - 1 && images.length > MAX_THUMBS;
+          {slides.slice(0, MAX_THUMBS).map((sl, i) => {
+            const isLast = i === MAX_THUMBS - 1 && slides.length > MAX_THUMBS;
+            const thumbSrc = sl.kind === 'video' ? sl.poster : sl.src;
             return (
               <button
                 key={i}
-                onClick={() => (isLast ? (setSelected(i), setViewer(true)) : setSelected(i))}
-                aria-label={isLast ? `View all ${images.length} images` : `View image ${i + 1} of ${images.length}`}
+                onClick={() => (isLast ? (choose(i), sl.kind === 'image' && setViewer(true)) : choose(i))}
+                aria-label={sl.kind === 'video' ? 'Product video' : isLast ? `View all ${slides.length} items` : `View image ${i + 1} of ${slides.length}`}
                 aria-pressed={selected === i}
                 className={clsx(
                   'relative w-14 h-14 lg:w-[60px] lg:h-[60px] rounded-[10px] overflow-hidden shrink-0 bg-white flex items-center justify-center border-2 cursor-pointer transition-all duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange',
                   selected === i ? 'border-brand-orange' : 'border-bone opacity-80 hover:opacity-100',
                 )}
               >
-                {!errored[i] && img
-                  ? <img loading="lazy" decoding="async" src={imgUrl(img, { w: 128 })} alt="" width={64} height={64} onError={() => setErrored(e => ({ ...e, [i]: true }))} className="w-full h-full object-contain bg-white" />
+                {!errored[i] && thumbSrc
+                  ? <img loading="lazy" decoding="async" src={sl.kind === 'video' ? thumbSrc : imgUrl(thumbSrc, { w: 128 })} alt="" width={64} height={64} onError={() => setErrored(e => ({ ...e, [i]: true }))} className="w-full h-full object-contain bg-white" />
                   : <ProductCoverFallback name={name} size="xs" className="w-full h-full" />}
+                {sl.kind === 'video' && (
+                  <span className="absolute inset-0 flex items-center justify-center bg-black/30 text-white"><Play size={18} className="fill-white" aria-hidden /></span>
+                )}
                 {isLast && (
-                  <span className="absolute inset-0 flex items-center justify-center bg-black/55 text-white text-[13px] font-bold">+{images.length - MAX_THUMBS + 1}</span>
+                  <span className="absolute inset-0 flex items-center justify-center bg-black/55 text-white text-[13px] font-bold">+{slides.length - MAX_THUMBS + 1}</span>
                 )}
               </button>
             );
@@ -241,7 +269,6 @@ function ImageGallery({ images, name }: { images: string[]; name: string }) {
     </div>
   );
 }
-
 // ── Variant Selector ──────────────────────────────────────────────────────────
 // Generic — groups every variant's options by attribute name (Color, Size,
 // Material…) and renders one chip-row per distinct attribute, instead of
@@ -839,7 +866,7 @@ export function ProductDetail() {
           {/* ── Gallery + Purchase panel ─────────────────────────────────────── */}
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-6 items-start min-w-0 mb-8">
             <div className="min-w-0 flex flex-col gap-4">
-              <ImageGallery images={allImages} name={product.name} />
+              <ImageGallery images={allImages} name={product.name} video={product.video ?? null} />
               {/* Desktop: facts sit under the image (fills the column next to the buy panel). Phones get the full-width row below. */}
               <div className="hidden lg:block">
                 <ProductFacts product={product} subject={subCategory?.name ?? category?.name ?? null} className="" />

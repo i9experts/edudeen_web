@@ -120,6 +120,8 @@ export interface StoreProduct {
   images:            string[];
   /** Pictures the seller put inside the description (shown in the Description tab). */
   descriptionImages?: string[];
+  /** Optional product video; null removes it on edit. */
+  video?: { url: string; posterUrl: string | null; frontFirst: boolean } | null;
   tags:              string[];
   curricula?:        string[];
   ageMin?:           number | null;
@@ -169,6 +171,8 @@ export interface CreatePhysicalPayload extends LearningMetaInput {
   subCategoryId:     string | null;
   images:            string[];
   descriptionImages?: string[];
+  /** Optional product video; null removes it on edit. */
+  video?: { url: string; posterUrl: string | null; frontFirst: boolean } | null;
   tags:              string[];
   isListedOnEdudeen: boolean;
   status:            'draft' | 'active' | 'scheduled';
@@ -197,6 +201,8 @@ export interface CreateDigitalPayload extends LearningMetaInput {
   subCategoryId:     string | null;
   images:            string[];
   descriptionImages?: string[];
+  /** Optional product video; null removes it on edit. */
+  video?: { url: string; posterUrl: string | null; frontFirst: boolean } | null;
   tags:              string[];
   isListedOnEdudeen: boolean;
   status:            'draft' | 'active' | 'scheduled';
@@ -225,6 +231,8 @@ export interface EditPhysicalPayload extends LearningMetaInput {
   subCategoryId:     string | null;
   images:            string[];
   descriptionImages?: string[];
+  /** Optional product video; null removes it on edit. */
+  video?: { url: string; posterUrl: string | null; frontFirst: boolean } | null;
   tags:              string[];
   isListedOnEdudeen: boolean;
   status:            'draft' | 'active' | 'scheduled';
@@ -251,6 +259,8 @@ export interface EditDigitalPayload extends LearningMetaInput {
   /** Cover + gallery photos (max 20). Omit to leave unchanged. */
   images?:        string[];
   descriptionImages?: string[];
+  /** Optional product video; null removes it on edit. */
+  video?: { url: string; posterUrl: string | null; frontFirst: boolean } | null;
   tags?:          string[];
   isListedOnEdudeen?: boolean;
   status:         'draft' | 'active' | 'scheduled';
