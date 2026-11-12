@@ -118,6 +118,8 @@ export interface StoreProduct {
   subCategoryId:     string | null;
   educationLevel:    EducationLevel | null;
   images:            string[];
+  /** Pictures the seller put inside the description (shown in the Description tab). */
+  descriptionImages?: string[];
   tags:              string[];
   curricula?:        string[];
   ageMin?:           number | null;
@@ -166,6 +168,7 @@ export interface CreatePhysicalPayload extends LearningMetaInput {
   categoryId?:       string;
   subCategoryId:     string | null;
   images:            string[];
+  descriptionImages?: string[];
   tags:              string[];
   isListedOnEdudeen: boolean;
   status:            'draft' | 'active' | 'scheduled';
@@ -193,6 +196,7 @@ export interface CreateDigitalPayload extends LearningMetaInput {
   categoryId?:       string;
   subCategoryId:     string | null;
   images:            string[];
+  descriptionImages?: string[];
   tags:              string[];
   isListedOnEdudeen: boolean;
   status:            'draft' | 'active' | 'scheduled';
@@ -220,6 +224,7 @@ export interface EditPhysicalPayload extends LearningMetaInput {
   categoryId?:       string;
   subCategoryId:     string | null;
   images:            string[];
+  descriptionImages?: string[];
   tags:              string[];
   isListedOnEdudeen: boolean;
   status:            'draft' | 'active' | 'scheduled';
@@ -245,6 +250,7 @@ export interface EditDigitalPayload extends LearningMetaInput {
   subCategoryId:  string | null;
   /** Cover + gallery photos (max 20). Omit to leave unchanged. */
   images?:        string[];
+  descriptionImages?: string[];
   tags?:          string[];
   isListedOnEdudeen?: boolean;
   status:         'draft' | 'active' | 'scheduled';

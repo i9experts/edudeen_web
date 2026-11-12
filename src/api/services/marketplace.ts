@@ -104,6 +104,8 @@ export interface MarketplaceProduct {
   /** Urdu copy (AI-translated and seller-reviewed); shown when the visitor browses in Urdu. */
   nameUr?:           string | null;
   descriptionUr?:    string | null;
+  /** Pictures the seller added inside the description (Description tab on the product page). */
+  descriptionImages?: string[];
   productType?:      'physical' | 'digital';
   type?:             'physical' | 'digital';
   categoryId:        string;

@@ -1161,6 +1161,15 @@ export function ProductDetail() {
                       </dl>
                     )}
                     <p className="text-[14px] text-charcoal/80 leading-[1.8] mb-4 whitespace-pre-line max-w-[72ch]">{(lang === 'ur' && product.descriptionUr) || product.description || 'No description available.'}</p>
+                    {(product.descriptionImages?.length ?? 0) > 0 && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5 max-w-[760px]">
+                        {product.descriptionImages!.map((src, i) => (
+                          <a key={src + i} href={src} target="_blank" rel="noopener noreferrer" className="block rounded-xl border border-bone bg-[#f4f6f7] overflow-hidden">
+                            <img src={src} alt={`${product.name} - ${i + 1}`} loading="lazy" decoding="async" className="w-full max-h-[420px] object-contain" />
+                          </a>
+                        ))}
+                      </div>
+                    )}
                     {(product.tags?.length ?? 0) > 0 && (
                       <div className="flex flex-wrap gap-[6px]">
                         {product.tags!.map(tag => (

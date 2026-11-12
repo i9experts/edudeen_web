@@ -73,7 +73,7 @@ export function ProductFormSteps(p: ProductFormStepsProps) {
   const { pType, phys, dig, sp, sd, currencySymbol, step, go } = p;
   const isDigitalFamily = isDigitalFamilyType(pType);
   const cur = pType === 'physical' ? phys : dig;
-  const set = <K extends 'name' | 'description' | 'price' | 'compareAtPrice' | 'subCategoryId' | 'status' | 'isListedOnEdudeen' | 'scheduledAt' | 'tagInput' | 'tags' | 'images'>(k: K, v: PhysForm[K]) => {
+  const set = <K extends 'name' | 'description' | 'price' | 'compareAtPrice' | 'subCategoryId' | 'status' | 'isListedOnEdudeen' | 'scheduledAt' | 'tagInput' | 'tags' | 'images' | 'descriptionImages'>(k: K, v: PhysForm[K]) => {
     if (pType === 'physical') sp(k, v); else sd(k, v as unknown as DigForm[K]);
   };
   const digitalAvailable = p.supports.digital;
@@ -161,6 +161,9 @@ export function ProductFormSteps(p: ProductFormStepsProps) {
             <F label="Description" req htmlFor="ap-desc" hint="Required, at least 20 characters. What's included, the learning goal, and how it's used at home or in class.">
               <textarea id="ap-desc" value={cur.description} onChange={e => set('description', e.target.value)}
                 placeholder="Describe your product — what it includes, who it's for, and what makes it special…" className={ta} />
+            </F>
+            <F label="Pictures inside the description" htmlFor="ap-desc-img" hint="Optional, up to 6. Buyers see these under your description on the product page (e.g. sample pages, what is inside).">
+              <ProductPhotosUploader value={cur.descriptionImages} onChange={urls => set('descriptionImages', urls)} max={6} />
             </F>
             <p className="text-[12px] text-slate m-0">{POLICY_LINE}</p>
           </div>

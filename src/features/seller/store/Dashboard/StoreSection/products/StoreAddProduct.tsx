@@ -39,12 +39,12 @@ const initPhys: PhysForm = {
   parcelType: 'standard', pkgL: '', pkgW: '', pkgH: '', dispatchDays: '',
   // Sensible default: the primary button publishes; "Save as draft" is always one click away.
   status: 'active', isListedOnEdudeen: true,
-  scheduledAt: '', tagInput: '', tags: [], images: [],
+  scheduledAt: '', tagInput: '', tags: [], images: [], descriptionImages: [],
 };
 const initDig: DigForm = {
   name: '', description: '', price: '', compareAtPrice: '', subCategoryId: '',
   status: 'active', isListedOnEdudeen: true,
-  scheduledAt: '', tagInput: '', tags: [], images: [],
+  scheduledAt: '', tagInput: '', tags: [], images: [], descriptionImages: [],
   files: [] as PrivateUploadData[],
   sampleFile: null,
   tiers: EMPTY_TIERS,
@@ -226,7 +226,7 @@ export default function StoreAddProduct() {
       if (pType === 'physical') {
         const res = await apiCreatePhysicalProduct({
           storeId, name: phys.name, description: phys.description,
-          categoryId: categoryId || undefined, subCategoryId: phys.subCategoryId || null, images: phys.images, tags: withPendingTags(phys.tags, phys.tagInput),
+          categoryId: categoryId || undefined, subCategoryId: phys.subCategoryId || null, images: phys.images, descriptionImages: phys.descriptionImages, tags: withPendingTags(phys.tags, phys.tagInput),
           isListedOnEdudeen: phys.isListedOnEdudeen, status: finalStatus, ...offersPayload({ premiumPct, premiumOptOut, campaignIds }),
           scheduledAt: finalStatus === 'scheduled' ? pktWallToIso(phys.scheduledAt) : null,
           parcelType: phys.parcelType, packageCm: packageCmPayload(phys.pkgL, phys.pkgW, phys.pkgH), dispatchDaysOverride: dispatchOverridePayload(phys.dispatchDays),
@@ -249,7 +249,7 @@ export default function StoreAddProduct() {
         const res = await apiCreateDigitalProduct({
           storeId, name: dig.name, description: dig.description,
           productType: 'digital',
-          categoryId: categoryId || undefined, subCategoryId: dig.subCategoryId || null, images: dig.images, tags: withPendingTags(dig.tags, dig.tagInput),
+          categoryId: categoryId || undefined, subCategoryId: dig.subCategoryId || null, images: dig.images, descriptionImages: dig.descriptionImages, tags: withPendingTags(dig.tags, dig.tagInput),
           isListedOnEdudeen: dig.isListedOnEdudeen, status: finalStatus, ...offersPayload({ premiumPct, premiumOptOut, campaignIds }),
           scheduledAt: finalStatus === 'scheduled' ? pktWallToIso(dig.scheduledAt) : null,
           price: Number(dig.price), compareAtPrice: dig.compareAtPrice ? Number(dig.compareAtPrice) : null,
