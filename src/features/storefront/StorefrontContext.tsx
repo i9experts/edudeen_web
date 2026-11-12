@@ -98,22 +98,14 @@ export const STORE_ACCENT_SWATCHES: { label: string; hex: string }[] = [
   { label: 'Maroon',        hex: '#8C2F39' },
 ];
 
-/** The store's accent — only a colour from the swatch set counts; anything else (an old full theme) falls back to navy. */
-export function storeAccent(theme: StoreThemeData | null): string {
-  const c = theme?.theme?.primaryColor?.toLowerCase();
-  return STORE_ACCENT_SWATCHES.find(s => s.hex.toLowerCase() === c)?.hex ?? STORE_ACCENT_SWATCHES[0].hex;
+/** Store-page cover when there's no cover photo: always Edudeen's default gradient. */
+export function storeCoverGradient(_accent?: string): string {
+  return EDUDEEN_DEFAULT_COVER_GRADIENT;
 }
 
-/** Store-page cover when there's no cover photo: Edudeen's gradient, led by the store's accent. */
-export function storeCoverGradient(accent: string): string {
-  return accent.toLowerCase() === STORE_ACCENT_SWATCHES[0].hex.toLowerCase()
-    ? EDUDEEN_DEFAULT_COVER_GRADIENT
-    : `linear-gradient(120deg, ${accent} 0%, ${accent} 30%, #66AD36 72%, #E2C21A 92%, #F4DC4C 100%)`;
-}
-
-/** Edudeen's look for a store page, with only the seller's chosen accent applied. */
-export function resolveEdudeenStoreCfg(theme: StoreThemeData | null): StorefrontCfg {
-  return { ...resolveStorefrontCfg(null), primaryColor: storeAccent(theme) };
+/** Edudeen's look for a store page. Sellers no longer pick an accent: the stored theme colour is ignored. */
+export function resolveEdudeenStoreCfg(_theme: StoreThemeData | null): StorefrontCfg {
+  return { ...resolveStorefrontCfg(null), primaryColor: STORE_ACCENT_SWATCHES[0].hex };
 }
 
 /** True when the seller hasn't chosen theme colors — the store then uses Edudeen's default look. */

@@ -30,7 +30,10 @@ export interface EducatorProfile {
   subjects:        string[];
   institutions:    string[];
   teachingLevels:  string[];
+  /** Canonical YouTube/Vimeo watch URL (validated by the API). */
+  introVideoUrl?:  string | null;
 }
+export interface StoreFaq { q: string; a: string }
 export interface StorePremiumDiscount { enabled: boolean; percent: number }
 export interface StoreDeliverySettings { enabled: boolean; fee: number; freeOverAmount: number | null }
 export interface StoreGiftWrap { enabled: boolean; fee: number }
@@ -48,6 +51,10 @@ export interface UpdateStorePayload {
   tagline?:      string;
   educatorProfile?: EducatorProfile | null;
   returnPolicy?: StoreReturnPolicy | null;
+  /** Seller shipping text (<=500) for the public store page; null/'' clears. */
+  shippingNote?: string | null;
+  /** Seller FAQ (max 8); [] clears. */
+  faqs?: StoreFaq[];
   /** About-tab text (max 1500); null/'' clears it. */
   aboutBio?: string | null;
   /** Seller-funded Edudeen Premium member discount; null clears it. */
@@ -80,6 +87,8 @@ export interface StoreData {
   tagline:      string | null;
   educatorProfile?: EducatorProfile | null;
   returnPolicy?: StoreReturnPolicy | null;
+  shippingNote?: string | null;
+  faqs?: StoreFaq[];
   aboutBio?: string | null;
   premiumDiscount?: StorePremiumDiscount | null;
   deliverySettings?: StoreDeliverySettings | null;
@@ -252,6 +261,8 @@ export interface PublicStoreData {
   tagline:        string | null;
   educatorProfile?: EducatorProfile | null;
   returnPolicy?:  StoreReturnPolicy | null;
+  shippingNote?:  string | null;
+  faqs?:          StoreFaq[];
   responseStats?: StoreResponseStats | null;
   /** Cached response rate / dispatch on time / city; numbers are null below the minimum sample. */
   trust?:         StoreTrust | null;

@@ -13,7 +13,7 @@ export function HighlightRows({ data }: { data: Pick<StorefrontHighlightRows, 'f
   if (rows.length === 0) return null;
   return (
     <>
-      {rows.map(r => <ProductStrip key={r.key} heading={HEADINGS[r.key]} products={r.products} />)}
+      {rows.map(r => <ProductStrip key={r.key} heading={HEADINGS[r.key]} products={r.products} row={r.key} />)}
     </>
   );
 }

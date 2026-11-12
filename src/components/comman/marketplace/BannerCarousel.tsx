@@ -40,6 +40,8 @@ interface BannerCarouselProps {
   showDots?: boolean;
   /** Called with the id of the slide currently visible (admin inline editor uses it to focus that banner). */
   onActiveChange?: (id: string) => void;
+  /** Auto-advance delay in ms (default 5000). Store pages use 6000. */
+  intervalMs?: number;
 }
 
 const ROTATE_MS = 5000;
@@ -64,7 +66,7 @@ function isExternalLink(url: string) {
  *  after sliding onto a clone the track silently jumps (no animation) to the
  *  identical real slide. Auto-play moves forward only. Touch / mouse drag
  *  follows the finger and then snaps to the next or previous slide. */
-export function BannerCarousel({ banners, entityType, fit = 'cover', showDots = true, onActiveChange }: BannerCarouselProps) {
+export function BannerCarousel({ banners, entityType, fit = 'cover', showDots = true, onActiveChange, intervalMs = ROTATE_MS }: BannerCarouselProps) {
   const sorted = [...banners].sort((a, b) => a.order - b.order);
   const n = sorted.length;
   const loop = n > 1;
@@ -126,9 +128,15 @@ export function BannerCarousel({ banners, entityType, fit = 'cover', showDots = 
   // Auto-play: forward only; the timer restarts after every move so a manual click gets a full pause.
   useEffect(() => {
     if (n < 2 || paused || prefersReducedMotion) return;
-    const id = window.setTimeout(() => moveBy(1), ROTATE_MS);
+    const id = window.setTimeout(() => moveBy(1), intervalMs);
     return () => window.clearTimeout(id);
-  }, [n, paused, prefersReducedMotion, pos, moveBy]);
+  }, [n, paused, prefersReducedMotion, pos, moveBy, intervalMs]);
+
+  // A finger on the banner pauses it; it resumes a few seconds after the finger leaves (hover has no equivalent on touch).
+  const touchResume = useRef<number | undefined>(undefined);
+  const onTouchStart = () => { window.clearTimeout(touchResume.current); setPaused(true); };
+  const onTouchEnd = () => { window.clearTimeout(touchResume.current); touchResume.current = window.setTimeout(() => setPaused(false), 3000); };
+  useEffect(() => () => window.clearTimeout(touchResume.current), []);
 
   useEffect(() => {
     if (!active || impressedIds.current.has(active._id)) return;
@@ -185,6 +193,9 @@ export function BannerCarousel({ banners, entityType, fit = 'cover', showDots = 
       onPointerMove={onPointerMove}
       onPointerUp={endDrag}
       onPointerCancel={endDrag}
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+      onTouchCancel={onTouchEnd}
       onClickCapture={(e) => { if (suppressClick.current) { e.preventDefault(); e.stopPropagation(); } }}
       onDragStart={(e) => e.preventDefault()}
       role="region"

@@ -24,6 +24,8 @@ export interface StoreBanner {
   ctaLabel:        string | null;
   linkType:        StoreBannerLinkType;
   linkTarget:      string | null;
+  /** Public read only: the resolved in-site path (product / collection) or a legacy https link; null = no usable link. */
+  linkPath?:       string | null;
   order:           number;
   priority:        number;
   status:          StoreBannerStatus;
@@ -79,6 +81,15 @@ export function apiUpdateStoreBanner(storeId: string, bannerId: string, fields: 
   return client.patch<never, { success: boolean; message: string; data: StoreBanner }>(
     ENDPOINTS.STORE_BANNER.UPDATE(storeId, bannerId), fields,
   );
+}
+
+/** A store shows at most this many slides at once (active or scheduled). The server enforces it too. */
+export const MAX_STORE_SLIDES = 4;
+/** New slides may only link to the seller's own live product or collection. */
+export const SLIDE_LINK_TYPES = ['product', 'collection'] as const;
+
+export function apiReorderStoreBanners(storeId: string, ids: string[]) {
+  return client.patch<never, { success: boolean; message: string }>(ENDPOINTS.STORE_BANNER.REORDER(storeId), { ids });
 }
 
 export function apiPauseStoreBanner(storeId: string, bannerId: string) {

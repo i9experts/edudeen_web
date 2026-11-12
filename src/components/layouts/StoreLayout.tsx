@@ -367,6 +367,11 @@ function StoreSidebar({ open, onToggle }: StoreSidebarProps) {
   };
 
   const isActive = (path: string) => isNavItemActive(path, pathname, search, storeId);
+  // Keep the active item fully inside the scrolling nav when the route changes.
+  const navRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    navRef.current?.querySelector('[aria-current="page"]')?.scrollIntoView({ block: 'nearest' });
+  }, [pathname, search]);
   // Admin sale campaigns this store hasn't joined yet — shown as a badge on
   // Marketing, which then opens straight on the Platform Sales tab.
   const { needsAction: campaignsToJoin } = useStoreCampaigns(storeId);
@@ -479,7 +484,11 @@ function StoreSidebar({ open, onToggle }: StoreSidebarProps) {
         )}
 
         {/* Nav */}
-        <nav aria-label="Store workspace" className={clsx('flex-1 overflow-y-auto', open ? 'px-3 pt-1' : 'px-[12px] pt-1')}>
+        <nav
+          aria-label="Store workspace"
+          ref={navRef}
+          className={clsx('flex-1 overflow-y-auto pb-4', open ? 'px-3 pt-1' : 'px-[12px] pt-1')}
+        >
           {NAV.map(section => {
             const mainItems = section.items.filter(i => nav.isVisible(i, isActive(i.path)));
             if (mainItems.length === 0) return null;

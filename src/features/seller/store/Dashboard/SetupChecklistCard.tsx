@@ -4,7 +4,7 @@ import type { OnboardingChecklist, ProfileCompleteness } from '@/api/services/st
 import { StudioPanel, StudioWorkflow } from '@/features/seller/components/studio/Studio';
 
 /** Where each missing profile item is fixed (path relative to /store/:storeId/). */
-const PROFILE_FIX_PATH: Record<string, string> = { logo: 'settings', banner: 'settings', bio: 'settings', products: 'products/add' };
+const PROFILE_FIX_PATH: Record<string, string> = { logo: 'storebuilder#sp-logo', banner: 'storebuilder#sp-banner', bio: 'storebuilder#sp-about', products: 'products/add' };
 
 const TIPS = [
   { tag: 'Learning',     title: 'Start with an outcome', body: 'Make the age, learning goal and classroom or home use clear in your title and description.' },

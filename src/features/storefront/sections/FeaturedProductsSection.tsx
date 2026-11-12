@@ -10,6 +10,7 @@ import { formatPrice } from '@/utils/formatPrice';
 import { useStorefront, useStorefrontPaths } from '../StorefrontContext';
 import { ProductCardShell, ProductCardImage } from '../ProductCard';
 import { ProductCoverFallback } from '@/components/comman/marketplace/ProductCoverFallback';
+import { sendHighlightClick, type HighlightRow } from '@/utils/visitTracking';
 
 export interface FeaturedProductsSectionSettings {
   heading?:      string;
@@ -76,7 +77,7 @@ export function FeaturedProductsSection({ settings }: { settings: FeaturedProduc
 }
 
 /** The horizontal product row itself (scrolls sideways on phones). Shared by the store page highlight rows and the seller's preview of them. */
-export function ProductStrip({ heading, products }: { heading?: string; products: PublicStoreProduct[] }) {
+export function ProductStrip({ heading, products, row }: { heading?: string; products: PublicStoreProduct[]; row?: HighlightRow }) {
   const { store, cfg } = useStorefront();
   const { toMain } = useStorefrontPaths();
   const { currency: displayCurrency, convert } = useCurrencyPreference();
@@ -92,7 +93,7 @@ export function ProductStrip({ heading, products }: { heading?: string; products
           if (!pr.valid) return null;
           const classLabel = classRangeLabel(p.classFrom, p.classTo);
           return (
-            <ProductCardShell key={p._id} onClick={() => toMain(`/product/${p.slug}`)} className="shrink-0 w-[160px] text-start flex flex-col">
+            <ProductCardShell key={p._id} onClick={() => { if (row) sendHighlightClick(p._id, row); toMain(`/product/${p.slug}`); }} className="shrink-0 w-[160px] text-start flex flex-col">
               <div className="relative p-2">
                 <ProductCardImage>
                   {p.images?.[0]

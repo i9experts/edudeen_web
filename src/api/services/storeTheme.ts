@@ -1,6 +1,7 @@
 import client from '../client';
 import { ENDPOINTS } from '../endpoints';
 import type { Block } from './storefrontTypes';
+import type { EducatorProfile } from './store';
 
 interface ApiResponse<T> {
   success: boolean;
@@ -128,7 +129,27 @@ export interface StoreThemeDraftData {
   /** Highlights draft, and what buyers see right now. */
   storefront:          StorefrontHighlights;
   publishedStorefront: StorefrontHighlights;
+  /** Customize-store draft (name, headline, about, logo, banner photo, teacher profile) and what buyers see now. */
+  storePage:          StorePageFields;
+  publishedStorePage: StorePageFields;
+  /** When the draft was last saved; null = no saved draft (the page starts from the live values). */
+  storePageSavedAt:   string | null;
   lastPublishedAt: string | null;
+}
+
+export interface StorePageFields {
+  name:            string;
+  tagline:         string | null;
+  description:     string | null;
+  logo:            string | null;
+  coverImage:      string | null;
+  aboutBio:        string | null;
+  educatorProfile: EducatorProfile | null;
+}
+
+export function apiUpdateStorePageDraft(storeId: string, payload: Partial<StorePageFields>) {
+  return client.patch<never, ApiResponse<{ storePage: StorePageFields; publishedStorePage: StorePageFields; storePageSavedAt: string }>>(
+    ENDPOINTS.STORE_THEME.UPDATE_STORE_PAGE(storeId), payload);
 }
 
 export function apiUpdateStorefrontHighlights(storeId: string, payload: Partial<StorefrontHighlights>) {

@@ -2140,6 +2140,13 @@ export const UR: Record<string, string> = {
   'Returns': 'واپسی',
   // Store page highlight rows
   'New arrivals': 'نئی آمد',
+  'Store policies': 'اسٹور کی پالیسیاں',
+  'Store policies and FAQ': 'اسٹور کی پالیسیاں اور اکثر پوچھے گئے سوالات',
+  'Edudeen buyer protection applies.': 'ایڈیودین خریدار تحفظ لاگو ہوتا ہے۔',
+  'Returns: physical items': 'واپسی: جسمانی اشیاء',
+  'Returns: digital downloads': 'واپسی: ڈیجیٹل ڈاؤن لوڈز',
+  'Read the returns policy': 'واپسی کی پالیسی پڑھیں',
+  'Watch intro': 'تعارف دیکھیں',
   'Best sellers': 'سب سے زیادہ بکنے والی',
   // Store trust strip + About / Reviews tabs
   'Not enough data': 'کافی ڈیٹا نہیں',

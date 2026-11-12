@@ -2,13 +2,12 @@ import { useState, useEffect } from 'react';
 import { SITE_URL } from '@/utils/seo';
 import { usePageMeta } from '@/hooks/usePageMeta';
 import { clsx } from 'clsx';
-import { CoverImage } from '@/components/comman/ui';
 import { BannerCarousel } from '@/components/comman/marketplace/BannerCarousel';
 import { useStoreBanners } from '@/hooks/useStoreBanners';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 import { useAuthGate } from '@/contexts/AuthGateContext';
 import {
-  Star, Users, Loader2, MessageCircle, BadgeCheck, Award, Gift, Check, Store, CreditCard,
+  Loader2, MessageCircle, Gift, Check, CreditCard,
 } from 'lucide-react';
 import { apiFollowStore, apiGetFollowStatus } from '@/api/services/store';
 import { useToast } from '@/contexts/ToastContext';
@@ -20,53 +19,19 @@ import { apiGetPublicStoreProducts } from '@/api/services/store';
 import { Modal } from '@/components/comman/ui/Modal';
 import { TokenStorage } from '@/api/services/auth';
 import { formatPrice } from '@/utils/formatPrice';
-import { useStorefront, useStorefrontPaths, storeCoverGradient } from '@/features/storefront/StorefrontContext';
+import { useStorefront, useStorefrontPaths } from '@/features/storefront/StorefrontContext';
 import { useTrackView } from '@/utils/visitTracking';
+import { getMainAppUrl } from '@/utils/storefrontUrl';
 import { StorefrontHighlights } from '@/features/storefront/sections/StorefrontHighlights';
 import { StoreBundlesStrip } from '@/features/storefront/sections/StoreBundlesStrip';
 import { EducatorCard, hasEducatorProfile } from '@/components/comman/marketplace/EducatorCard';
 import { ProductCatalogSection } from '@/features/storefront/sections/ProductCatalogSection';
 import { StoreTrustStrip } from '@/features/storefront/sections/StoreTrustStrip';
+import { StoreIdentityBanner } from '@/features/storefront/sections/StoreIdentityBanner';
 import { StoreAboutTab } from '@/features/storefront/sections/StoreAboutTab';
+import { StorePoliciesFaq } from '@/features/storefront/sections/StorePoliciesFaq';
 import { StoreReviewsTab } from '@/features/storefront/sections/StoreReviewsTab';
 import { Link, useSearchParams } from 'react-router-dom';
-import { TRUST_MIN_SAMPLES } from '@/utils/sellerTrust';
-
-// ── Badge config ──────────────────────────────────────────────────────────────
-const SELLER_TYPE_LABEL: Record<string, string> = {
-  educator:       'Education Specialist',
-  creator:        'Content Creator',
-  retailer:       'Bookshop & Supplies',
-  brand_business: 'Brand / Business',
-  freelancer:     'Freelancer',
-};
-
-function StoreBadges({ badges, sellerType }: { badges: string[]; sellerType: string | null }) {
-  const items: { label: string; icon: React.ReactNode; cls: string }[] = [];
-  const safeBadges = badges ?? [];
-
-  if (safeBadges.includes('top_seller'))
-    items.push({ label: 'Top Seller', icon: <Award size={10} />, cls: 'bg-amber-100 text-amber-700 border-amber-200' });
-  if (safeBadges.includes('verified'))
-    items.push({ label: 'Verified', icon: <BadgeCheck size={10} />, cls: 'bg-blue-50 text-blue-600 border-blue-200' });
-  if (safeBadges.includes('featured'))
-    items.push({ label: 'Featured', icon: <Star size={10} />, cls: 'bg-purple-50 text-purple-600 border-purple-200' });
-
-  const specialistLabel = sellerType ? SELLER_TYPE_LABEL[sellerType] : null;
-  if (specialistLabel)
-    items.push({ label: specialistLabel, icon: <BadgeCheck size={10} />, cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' });
-
-  if (!items.length) return null;
-  return (
-    <div className="flex flex-wrap gap-[5px] mt-[8px]">
-      {items.map(b => (
-        <span key={b.label} className={clsx('inline-flex items-center gap-[3px] px-[7px] py-[3px] rounded-full text-[12px] font-semibold border', b.cls)}>
-          {b.icon}{b.label}
-        </span>
-      ))}
-    </div>
-  );
-}
 
 // Loyalty points and gift cards were retired from the seller panel; their
 // buttons stay off here too (flip to bring them back).
@@ -84,8 +49,16 @@ type StoreTab = (typeof STORE_TABS)[number]['id'];
 // follow/message, membership), then every product the store sells.
 export function SellerStorefront() {
   const { store, cfg, theme } = useStorefront();
-  const { toMain } = useStorefrontPaths();
+  const { toMain, basePath } = useStorefrontPaths();
   useTrackView('store', store.storeId);
+  // Slide link from the API (`/product/<slug>`, `/collections/<id>`, or a legacy https link) -> a real href for this host.
+  const slideHref = (p?: string | null): string | null => {
+    if (!p) return null;
+    if (/^https:\/\//i.test(p)) return p;
+    if (p.startsWith('/product/')) return basePath ? p : getMainAppUrl(p); // products live on the main app, not a store subdomain
+    if (p.startsWith('/collections/')) return `${basePath}${p}`;
+    return null;
+  };
   // ?tab=about|reviews; anything else (or no value) = Products. The Products tab keeps the catalogue's own filters.
   const [searchParams] = useSearchParams();
   const rawTab = searchParams.get('tab');
@@ -95,14 +68,6 @@ export function SellerStorefront() {
   const showFollow     = identityBanner?.showFollowButton     !== false;
   const showMessage    = identityBanner?.showMessageButton    !== false;
   const showLoyaltyBtn = identityBanner?.showLoyaltyButton    !== false;
-  const bannerLayout      = identityBanner?.layout ?? 'standard';
-  const showBadges        = identityBanner?.showBadges        !== false;
-  const showFollowerCount = identityBanner?.showFollowerCount !== false;
-  const showProductCount  = identityBanner?.showProductCount  !== false;
-  const showRating        = identityBanner?.showRating        !== false;
-  const descriptionClampCls = identityBanner?.descriptionMaxLines
-    ? { 1: 'line-clamp-1', 2: 'line-clamp-2', 3: 'line-clamp-3' }[Math.min(identityBanner.descriptionMaxLines, 3)]
-    : '';
   const { currency: displayCurrency, convert } = useCurrencyPreference();
   const isLoggedIn = TokenStorage.isLoggedIn();
   const { requireAuth } = useAuthGate();
@@ -243,74 +208,17 @@ export function SellerStorefront() {
 
   return (
     <div>
-      {/* ── Store identity banner — 3 real layouts (Phase 11), not just a CSS
-          tweak: 'compact' is a shorter cover for stores that want their
-          content sooner; 'immersive' is a taller, centered full-bleed hero;
-          'standard' is today's exact bottom-left composition, unchanged. ── */}
-      <CoverImage
-        className={clsx(
-          'flex',
-          bannerLayout === 'compact' ? 'min-h-[150px] sm:min-h-[180px] items-end' :
-          bannerLayout === 'immersive' ? 'min-h-[320px] sm:min-h-[380px] lg:min-h-[440px] items-center' :
-          'min-h-[210px] sm:min-h-[240px] lg:min-h-[270px] items-end',
-        )}
-        src={store.coverImage}
-        loading="eager"
-        overlay
-        overlayClassName={bannerLayout === 'immersive' ? 'bg-black/50' : 'bg-black/40'}
-        fallbackClassName=""
-        fallbackStyle={{ background: storeCoverGradient(cfg.primaryColor) }}
-        backgroundOverride={storeBanners.length > 0
-          ? <BannerCarousel entityType="store_banner" banners={storeBanners.map(b => ({ _id: b._id, order: b.order, imageUrl: b.imageUrl, linkUrl: b.linkTarget, mobileImageUrl: b.mobileImageUrl }))} />
+      {/* Identity banner: the SAME component the seller's Customize-store preview renders (StoreIdentityBanner). */}
+      <StoreIdentityBanner
+        store={store}
+        flags={identityBanner}
+        total={total}
+        primaryColor={cfg.primaryColor}
+        background={storeBanners.length > 0
+          ? <BannerCarousel entityType="store_banner" intervalMs={6000} banners={storeBanners.map(b => ({ _id: b._id, order: b.order, imageUrl: b.imageUrl, linkUrl: slideHref(b.linkPath), mobileImageUrl: b.mobileImageUrl }))} />
           : undefined}
-      >
-        <div className={clsx('px-4 sm:px-6 lg:px-10 w-full max-w-[1480px] mx-auto', bannerLayout === 'compact' ? 'py-3 sm:py-4' : 'py-4 sm:py-5')}>
-          <div className={clsx(
-            'flex gap-5 sm:gap-6',
-            bannerLayout === 'immersive' ? 'flex-col items-center text-center' : 'flex-col sm:flex-row items-start sm:items-center',
-          )}>
-            <div className={clsx(
-              'rounded-[18px] bg-white flex items-center justify-center shrink-0 outline outline-2 outline-white/40',
-              bannerLayout === 'compact' ? 'w-[52px] h-[52px]' : bannerLayout === 'immersive' ? 'w-[96px] h-[96px] sm:w-[108px] sm:h-[108px]' : 'w-[60px] h-[60px] sm:w-[72px] sm:h-[72px]',
-            )}>
-              {store.logo
-                ? <img loading="lazy" decoding="async" src={store.logo} alt={store.name} className="w-full h-full rounded-[18px] object-cover" />
-                : <Store size={bannerLayout === 'compact' ? 24 : 36} style={{ color: cfg.primaryColor }} />}
-            </div>
-
-            <div className={clsx('flex-1 min-w-0', bannerLayout === 'immersive' && 'flex-none max-w-2xl')}>
-              <h1 className={clsx('font-bold text-white mb-[4px] leading-tight', bannerLayout === 'compact' ? 'text-[17px]' : bannerLayout === 'immersive' ? 'text-[28px] sm:text-[34px]' : 'text-[19px] sm:text-[22px]')}>{store.name}</h1>
-              {store.tagline && bannerLayout !== 'compact' && (
-                <p className="text-[12.5px] sm:text-[13.5px] text-[rgba(255,255,255,0.85)] font-medium -mt-[2px] mb-[4px]">{store.tagline}</p>
-              )}
-              {showBadges && <div className={clsx(bannerLayout === 'immersive' && 'flex justify-center')}><StoreBadges badges={store.badges} sellerType={store.sellerType} /></div>}
-              {store.description && bannerLayout !== 'compact' && (
-                <p className={clsx('text-[12px] sm:text-[13px] text-[rgba(255,255,255,0.8)] mt-[6px] mb-[4px] max-w-2xl', descriptionClampCls || 'line-clamp-1')}>{store.description}</p>
-              )}
-              <div className={clsx('flex items-center gap-[5px] text-[12px] text-[rgba(255,255,255,0.7)] mt-[6px]', bannerLayout === 'immersive' && 'justify-center')}>
-                {showRating && (store.reviewCount ?? 0) >= TRUST_MIN_SAMPLES && (
-                  <>
-                    <Star size={13} className="fill-current" style={{ color: cfg.primaryColor }} />
-                    <span>{(store.averageRating ?? 0).toFixed(1)} ({(store.reviewCount ?? 0).toLocaleString()} reviews)</span>
-                    <span className="mx-1">·</span>
-                  </>
-                )}
-                {showFollowerCount && (
-                  <>
-                    <Users size={13} />
-                    <span>{(store.followersCount ?? 0).toLocaleString()} followers</span>
-                  </>
-                )}
-                {showProductCount && (
-                  <>
-                    <span className="mx-1">·</span>
-                    <span>{total} products</span>
-                  </>
-                )}
-              </div>
-            </div>
-
-            <div className={clsx('flex flex-wrap gap-2 items-center justify-center shrink-0', 'sm:flex-row')}>
+        actions={(
+          <>
               {SHOW_RETIRED_EXTRAS && showLoyaltyBtn && isLoggedIn && loyalty && (
                 <button onClick={openRewards}
                   style={{ borderRadius: cfg.buttonRadiusPx }}
@@ -347,10 +255,9 @@ export function SellerStorefront() {
                   {msgError && <p className="text-[12px] text-white bg-black/30 rounded-md px-2 py-1 max-w-[220px] text-center sm:text-end">{msgError}</p>}
                 </>
               )}
-            </div>
-          </div>
-        </div>
-      </CoverImage>
+          </>
+        )}
+      />
 
       <StoreTrustStrip store={store} />
 
@@ -399,6 +306,7 @@ export function SellerStorefront() {
           <StorefrontHighlights />
           <StoreBundlesStrip />
           <ProductCatalogSection settings={{ heading: `All products from ${store.name}`, showFilters: true, defaultSort: 'newest' }} />
+          <StorePoliciesFaq data={{ returnPolicy: store.returnPolicy, shippingNote: store.shippingNote, faqs: store.faqs }} />
         </>
       )}
 

@@ -33,7 +33,7 @@ export function filtersFromParams(p: URLSearchParams, defSort: CatalogSort = 'ne
   const kind = p.get('kind') as CatalogKind | null;
   const cls = p.get('class') ?? '';
   const subject = p.get('subject') ?? '';
-  const collection = p.get('collection') ?? '';
+  const collection = p.get('collection') ?? p.get('section') ?? ''; // ?section= is an alias; links we write always use ?collection=
   const page = Number(p.get('page'));
   let min = num(p.get('min'));
   let max = num(p.get('max'));

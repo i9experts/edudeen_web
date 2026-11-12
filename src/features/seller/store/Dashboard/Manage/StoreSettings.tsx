@@ -17,7 +17,6 @@ import { Button } from '@/components/comman/ui/Button';
 import { TabBar, type Tab } from '@/components/comman/ui/TabBar';
 import { ActivityLogTab } from './tabs/ActivityLogTab';
 import { ReturnPolicyCard } from './ReturnPolicyCard';
-import { StoreAboutCard } from './StoreAboutCard';
 import { PremiumDiscountCard } from './PremiumDiscountCard';
 
 const TABS: Tab[] = [
@@ -810,9 +809,17 @@ export default function StoreSettings() {
               </p>
             </div>
 
-            {storeId && <StoreAboutCard storeId={storeId} name={store?.name ?? 'Your store'} bio={store?.aboutBio} educatorProfile={store?.educatorProfile} returnPolicy={store?.returnPolicy} refetch={refetch} />}
+            {storeId && (
+              <div className="rounded-xl border border-bone bg-white p-5 flex flex-wrap items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-[13.5px] font-semibold text-charcoal">About text &amp; teacher profile</p>
+                  <p className="text-[12.5px] text-slate">These are edited on Customize your store, with a preview, and go live when you publish.</p>
+                </div>
+                <Link to={`/store/${storeId}/storebuilder#sp-about`} className="text-[13px] font-semibold text-brand-royal whitespace-nowrap">Customize your store →</Link>
+              </div>
+            )}
 
-            {storeId && <ReturnPolicyCard storeId={storeId} policy={store?.returnPolicy} refetch={refetch} />}
+            {storeId && <ReturnPolicyCard storeId={storeId} policy={store?.returnPolicy} shippingNote={store?.shippingNote} faqs={store?.faqs} refetch={refetch} />}
 
             {storeId && (
               <div className="rounded-xl border border-bone bg-white p-5 flex flex-wrap items-center justify-between gap-3">

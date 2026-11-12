@@ -231,6 +231,21 @@ export function apiSellerAnalyticsVisits(params: SellerAnalyticsParams) {
   return client.get<never, ApiResponse<SellerVisitsData>>(`${ENDPOINTS.ANALYTICS.SELLER.VISITS}${qs(params)}`);
 }
 
+export interface StorePageInsights {
+  days: 7 | 30;
+  range: { from: string; to: string };
+  /** First PKT day visits were counted for this store; null = nothing collected yet. */
+  trackingSince: string | null;
+  visits: number;
+  /** Net new followers (someone who unfollowed again is not counted). */
+  newFollowers: number;
+  highlightClicks: { total: number; byRow: { featured: number; newArrivals: number; bestSellers: number } };
+}
+
+export function apiStorePageInsights(storeId: string, days: 7 | 30) {
+  return client.get<never, ApiResponse<StorePageInsights>>(`${ENDPOINTS.ANALYTICS.SELLER.PAGE_INSIGHTS}${qs({ storeId, days })}`);
+}
+
 export function apiSellerAnalyticsOverview(params: SellerAnalyticsParams) {
   return client.get<never, ApiResponse<SellerOverviewData>>(`${ENDPOINTS.ANALYTICS.SELLER.OVERVIEW}${qs(params)}`);
 }

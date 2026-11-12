@@ -78,6 +78,30 @@ export function sendView(type: 'store' | 'product', id: string): void {
   }
 }
 
+export type HighlightRow = 'featured' | 'newArrivals' | 'bestSellers';
+const sentClicks = new Map<string, number>();
+
+/** A buyer opened a product from one of the store page's highlight rows. Fire-and-forget; the server dedupes per visitor. */
+export function sendHighlightClick(productId: string, row: HighlightRow): void {
+  try {
+    if (!HEX24.test(productId)) return;
+    if (/^\/(admin|store|seller|onboarding)(\/|$)/.test(window.location.pathname)) return; // the seller's own preview is not a buyer
+    const key = `${row}:${productId}`;
+    const now = Date.now();
+    const last = sentClicks.get(key);
+    if (last && now - last < DEDUPE_MS) return;
+    sentClicks.set(key, now);
+    void fetch(`${API_BASE_URL}/api/analytics/view`, {
+      method: 'POST',
+      keepalive: true,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'highlight_click', id: productId, row }),
+    }).catch(() => undefined);
+  } catch {
+    /* tracking must never affect the page */
+  }
+}
+
 /** Counts one visit for this store / product page once per mount of the id (server dedupes per visitor for 30 min). */
 export function useTrackView(type: 'store' | 'product', id: string | null | undefined): void {
   useEffect(() => {
