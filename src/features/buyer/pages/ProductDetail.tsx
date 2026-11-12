@@ -6,6 +6,7 @@ import { Suspense, useEffect, useRef, useState, useSyncExternalStore, type Ref }
 import { useInView } from '@/hooks/useInView';
 import { lazyWithRetry } from '@/utils/lazyWithRetry';
 import { useTrackView } from '@/utils/visitTracking';
+import { AwayText, holidayBlocksType, holidayLabel } from '@/utils/storeHoliday';
 import { getScrollTop } from '@/utils/scrollRoot';
 import { clsx } from 'clsx';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
@@ -738,6 +739,9 @@ export function ProductDetail() {
   // Free digital resource: "Avail" gets it straight into the library (free order, no payment step) and
   // lands on the order-success page, which has the Download button. The seller only sees who availed it.
   const isFreeAvail = !!product && isDigital && displayPrice === 0;
+  // Store on holiday: the server refuses these lines too; here the buttons just say so instead of failing.
+  const away = holidayBlocksType(product?.storeHoliday, isPhysical ? 'physical' : 'digital');
+  const awayLabel = holidayLabel(product?.storeHoliday);
   function handleAvail() {
     if (!product || !activeVariant || pendingAction) return;
     requireAuth(async () => {
@@ -1038,18 +1042,20 @@ export function ProductDetail() {
                   <div className="flex flex-col gap-[10px] mb-6">
                     <Button
                       variant="primary" size="lg" fullWidth className="justify-center"
-                      disabled={stock <= 0 || !!pendingAction} loading={pendingAction === 'buy'}
+                      disabled={stock <= 0 || away || !!pendingAction} loading={pendingAction === 'buy'}
+                      title={away ? awayLabel : undefined}
                       onClick={() => (isFreeAvail ? handleAvail() : handleAddToCart(true))}
                     >
-                      {stock <= 0 ? t('Out of Stock') : isFreeAvail && isCourse ? <>Enroll for free</> : isFreeAvail ? <><Download size={14} className="inline align-middle me-[6px]" />{t('Avail for free')}</> : <>{isCourse ? 'Enroll now' : t('Buy Now')} <ArrowRight size={14} className="inline align-middle ms-[6px]" />{(memberShown ?? displayPrice) != null ? ` ${formatPrice(((memberShown ?? displayPrice)! * qty), displayCurrency)}` : ''}</>}
+                      {away ? <AwayText holiday={product?.storeHoliday} /> : stock <= 0 ? t('Out of Stock') : isFreeAvail && isCourse ? <>Enroll for free</> : isFreeAvail ? <><Download size={14} className="inline align-middle me-[6px]" />{t('Avail for free')}</> : <>{isCourse ? 'Enroll now' : t('Buy Now')} <ArrowRight size={14} className="inline align-middle ms-[6px]" />{(memberShown ?? displayPrice) != null ? ` ${formatPrice(((memberShown ?? displayPrice)! * qty), displayCurrency)}` : ''}</>}
                     </Button>
                     <div className="flex gap-2">
                       <Button
                         variant="secondary" size="md" fullWidth className="justify-center flex-1"
-                        disabled={stock <= 0 || !!pendingAction} loading={pendingAction === 'cart'}
+                        disabled={stock <= 0 || away || !!pendingAction} loading={pendingAction === 'cart'}
+                        title={away ? awayLabel : undefined}
                         onClick={() => handleAddToCart(false)}
                       >
-                        {stock <= 0 ? t('Out of Stock') : addedFeedback ? t('Added ✓ · View cart') : <><ShoppingCart size={14} /> {t('Add to Cart')}</>}
+                        {away ? <AwayText holiday={product?.storeHoliday} /> : stock <= 0 ? t('Out of Stock') : addedFeedback ? t('Added ✓ · View cart') : <><ShoppingCart size={14} /> {t('Add to Cart')}</>}
                       </Button>
                       {product && activeVariant && (() => {
                         const wishlisted = isWishlisted(product._id, activeVariant._id);
@@ -1386,12 +1392,13 @@ export function ProductDetail() {
           </div>
           <Button
             variant="secondary" size="md" className="justify-center flex-1 max-w-[170px]"
-            disabled={stock <= 0 || !!pendingAction} loading={pendingAction === 'cart'}
+            disabled={stock <= 0 || away || !!pendingAction} loading={pendingAction === 'cart'}
+            title={away ? awayLabel : undefined}
             onClick={() => handleAddToCart(false)}
           >
-            {stock <= 0 ? t('Out of Stock') : addedFeedback ? t('Added ✓ · View cart') : <><ShoppingCart size={14} /> {t('Add to Cart')}</>}
+            {away ? <AwayText holiday={product?.storeHoliday} /> : stock <= 0 ? t('Out of Stock') : addedFeedback ? t('Added ✓ · View cart') : <><ShoppingCart size={14} /> {t('Add to Cart')}</>}
           </Button>
-          {stock > 0 && (
+          {stock > 0 && !away && (
             <Button
               variant="primary" size="md" className="justify-center flex-1 max-w-[140px]"
               disabled={!!pendingAction} loading={pendingAction === 'buy'}

@@ -3,6 +3,7 @@ import { cachedRequest, invalidateCache } from './requestCache';
 import { ENDPOINTS } from '../endpoints';
 import type { ActiveCampaignBadge } from './marketplace';
 import type { StoreReturnPolicy, StoreResponseStats, StoreTrust } from '@/utils/sellerTrust';
+import type { StoreHolidayInfo } from '@/utils/storeHoliday';
 
 export type SellerType  = 'creator' | 'educator' | 'retailer' | 'brand_business' | 'freelancer' | 'mix';
 export type ProductType = 'physical_products' | 'digital_downloads' | 'educational_resources' | 'services_bookings' | 'subscriptions' | 'in_person_pos';
@@ -86,9 +87,14 @@ export interface StoreData {
   /** Short marketing line — distinct from `description`, shown alongside the store name. */
   tagline:      string | null;
   educatorProfile?: EducatorProfile | null;
+  gradesServed?: string[];
+  subjects?: string[];
+  teachingLanguages?: string[];
   returnPolicy?: StoreReturnPolicy | null;
   shippingNote?: string | null;
   faqs?: StoreFaq[];
+  /** Holiday settings as saved (owner view). */
+  holiday?: StoreHolidayInfo | null;
   aboutBio?: string | null;
   premiumDiscount?: StorePremiumDiscount | null;
   deliverySettings?: StoreDeliverySettings | null;
@@ -213,6 +219,20 @@ export function apiUpdatePinnedProducts(storeId: string, productIds: string[]) {
   return client.patch<never, ApiResponse<{ pinnedProductIds: string[] }>>(ENDPOINTS.STORE.PINNED_PRODUCTS(storeId), { productIds });
 }
 
+export interface HolidayPayload {
+  enabled: boolean;
+  /** Pakistan calendar day the store is back, "YYYY-MM-DD"; omit/null = no end date. */
+  returnDate?: string | null;
+  message?: string | null;
+  digitalStillSells?: boolean;
+}
+
+/** PATCH /api/store/:storeId/holiday (owner only) */
+export function apiUpdateStoreHoliday(storeId: string, payload: HolidayPayload) {
+  invalidateCache('store:');
+  return client.patch<never, ApiResponse<StoreHolidayInfo>>(`/api/store/${storeId}/holiday`, payload).finally(() => invalidateCache('store:'));
+}
+
 /** PATCH /api/store/:storeId/announcement */
 export function apiUpdateAnnouncementBar(storeId: string, payload: Partial<StoreAnnouncementBar>) {
   return client.patch<never, ApiResponse<StoreAnnouncementBar>>(ENDPOINTS.STORE.ANNOUNCEMENT(storeId), payload);
@@ -260,9 +280,14 @@ export interface PublicStoreData {
   description:    string | null;
   tagline:        string | null;
   educatorProfile?: EducatorProfile | null;
+  gradesServed?:  string[];
+  subjects?:      string[];
+  teachingLanguages?: string[];
   returnPolicy?:  StoreReturnPolicy | null;
   shippingNote?:  string | null;
   faqs?:          StoreFaq[];
+  /** Present only while the store is on holiday. */
+  holiday?:       StoreHolidayInfo | null;
   responseStats?: StoreResponseStats | null;
   /** Cached response rate / dispatch on time / city; numbers are null below the minimum sample. */
   trust?:         StoreTrust | null;

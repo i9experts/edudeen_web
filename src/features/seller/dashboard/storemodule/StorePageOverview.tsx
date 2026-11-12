@@ -1,15 +1,16 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
 import {
   ExternalLink, Copy, Check, ShieldCheck, ShoppingCart, Loader2, Star, Megaphone, Image as ImageIcon, Layers, Type, LayoutTemplate,
   GraduationCap, Eye, CircleCheck, Circle, BarChart3, GalleryHorizontal,
 } from 'lucide-react';
-import { Button, Input, Textarea, Toggle, ImageUpload } from '@/components/comman/ui';
+import { Button, Input, Textarea, Toggle } from '@/components/comman/ui';
 import { StorePageHeader, useStoreWorkspace } from '@/components/layouts/StoreLayout';
 import { useToast } from '@/contexts/ToastContext';
 import { apiGetPublicStoreProducts } from '@/api/services/store';
-import { BannerUpload } from '@/components/comman/ui/BannerUpload';
+import { StoreImageField, StoreTextField } from '@/features/seller/store/StoreProfileFields';
+import { storeFieldError } from '@/utils/storeProfileRules';
 import {
   apiGetStoreTheme, apiGetStoreThemeDraft, apiPublishStoreTheme, apiUpdateIdentityBanner, apiUpdateStorePageDraft,
   apiUpdateStorefrontHighlights, type StorefrontHighlights, type StorePageFields,
@@ -23,7 +24,8 @@ import { StoreSectionsCard } from './StoreSectionsCard';
 import { StoreBannerSummary } from './StoreBannerSummary';
 import { StoreInsightsCard } from './StoreInsightsCard';
 import { StorePagePreview } from './StorePagePreview';
-import { storePageCompleteness } from './storePageCompleteness';
+import { storeSetupMeter } from './storePageCompleteness';
+import { STORE_GRADES, STORE_SUBJECTS, TEACHING_LANGUAGES, TEACHING_MAX } from '@/constants/storeTeaching';
 import { commissionPctFromFee, formatPct } from '@/features/seller/store/Dashboard/Operations/finance/commissionCopy';
 import { useLeaveGuard, timeAgo } from '@/features/seller/store/Dashboard/StoreSection/products/ProductWizard';
 
@@ -43,6 +45,10 @@ interface Form {
   eduInstitutions: string;
   eduLevels: string;
   eduVideo: string;
+  // Fixed-list chips shown in the storefront header
+  gradesServed: string[];
+  chipSubjects: string[];
+  teachingLanguages: string[];
 }
 interface Identity { bannerLayout: 'standard' | 'compact'; showFollowerCount: boolean; showProductCount: boolean }
 interface Work { form: Form; identity: Identity; highlights: StorefrontHighlights }
@@ -63,6 +69,7 @@ function formFromPage(p: StorePageFields): Form {
     eduInstitutions: (ep?.institutions ?? []).join('\n'),
     eduLevels: (ep?.teachingLevels ?? []).join('\n'),
     eduVideo: ep?.introVideoUrl ?? '',
+    gradesServed: p.gradesServed ?? [], chipSubjects: p.subjects ?? [], teachingLanguages: p.teachingLanguages ?? [],
   };
 }
 
@@ -88,6 +95,9 @@ function pageFromForm(f: Form): StorePageFields {
       teachingLevels: lines(f.eduLevels),
       introVideoUrl: parseIntroVideo(f.eduVideo)?.url ?? null,
     },
+    gradesServed: f.gradesServed,
+    subjects: f.chipSubjects,
+    teachingLanguages: f.teachingLanguages,
   };
 }
 
@@ -103,6 +113,30 @@ function Section({ id, icon, title, hint, children }: { id?: string; icon: React
       </div>
       {children}
     </section>
+  );
+}
+
+/** Fixed-list multi-select as toggle chips. At the max, unselected chips are disabled (the API refuses more than that). */
+function ChipPicker({ label, options, value, max, onChange }: {
+  label: string; options: readonly { value: string; label: string }[]; value: string[]; max: number; onChange: (v: string[]) => void;
+}) {
+  return (
+    <div role="group" aria-label={label}>
+      <p className="text-[12.5px] font-semibold text-charcoal mb-1.5">{label} <span className="font-normal text-slate">({value.length}/{max})</span></p>
+      <div className="flex flex-wrap gap-1.5">
+        {options.map(o => {
+          const on = value.includes(o.value);
+          const full = !on && value.length >= max;
+          return (
+            <button key={o.value} type="button" aria-pressed={on} disabled={full}
+              onClick={() => onChange(on ? value.filter(x => x !== o.value) : [...value, o.value])}
+              className={clsx('px-3 py-1.5 min-h-[36px] rounded-full text-[12.5px] border cursor-pointer transition-colors disabled:opacity-40 disabled:cursor-not-allowed', on ? 'bg-brand-royal text-white border-brand-royal' : 'bg-white text-charcoal border-bone hover:border-slate')}>
+              {o.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
@@ -129,6 +163,7 @@ function goTo(anchor: string) {
  */
 export function StorePageOverview() {
   const toast = useToast();
+  const navigate = useNavigate();
   const { store, storeId, refetch } = useStoreWorkspace();
 
   const [loadState, setLoadState] = useState<'loading' | 'error' | 'ready'>('loading');
@@ -204,7 +239,11 @@ export function StorePageOverview() {
 
   // Field errors (they block Save draft / Publish).
   const f = cur?.form;
-  const nameError = f && !f.name.trim() ? 'Store name is required.' : null;
+  // The fields show their own error (StoreTextField); this blocks Save draft / Publish with the same function.
+  const sv = saved?.form;
+  const nameError = f
+    ? storeFieldError('name', f.name, sv?.name ?? '') ?? storeFieldError('tagline', f.tagline, sv?.tagline ?? '') ?? storeFieldError('description', f.description, sv?.description ?? '')
+    : null;
   const videoError = f && f.eduVideo.trim() && !parseIntroVideo(f.eduVideo) ? VIDEO_URL_ERROR : null;
   const yearsRaw = f?.eduExperience.trim() ?? '';
   const yearsError = yearsRaw !== '' && (!Number.isInteger(Number(yearsRaw)) || Number(yearsRaw) < 0 || Number(yearsRaw) > 70) ? 'Years teaching must be a whole number from 0 to 70.' : null;
@@ -212,7 +251,8 @@ export function StorePageOverview() {
   const hasError = !!(nameError || videoError || yearsError || aboutError);
 
   const page = useMemo(() => (cur ? pageFromForm(cur.form) : null), [cur]);
-  const items = useMemo(() => (page && cur ? storePageCompleteness(page, cur.highlights.featuredProductIds.length) : []), [page, cur]);
+  // Page fields from the DRAFT (moves as the seller types); phone + FAQ are Store Settings values.
+  const items = useMemo(() => (page ? storeSetupMeter({ ...page, contactPhone: store?.contactPhone, faqs: store?.faqs }) : []), [page, store?.contactPhone, store?.faqs]);
   const doneCount = items.filter(i => i.done).length;
 
   /** Writes only the parts that changed since the last save; each part that succeeds counts as saved even if a later one fails. */
@@ -319,7 +359,7 @@ export function StorePageOverview() {
               <ul className="list-none p-0 m-0 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-0.5">
                 {items.map(it => (
                   <li key={it.key}>
-                    <button type="button" onClick={() => goTo(it.anchor)} className="w-full flex items-center gap-2 text-start py-2 min-h-[44px] bg-transparent border-none cursor-pointer">
+                    <button type="button" onClick={() => (it.path.startsWith('storebuilder') ? goTo(it.anchor) : navigate(`/store/${storeId}/${it.path}`))} className="w-full flex items-center gap-2 text-start py-2 min-h-[44px] bg-transparent border-none cursor-pointer">
                       {it.done ? <CircleCheck size={16} className="text-success shrink-0" /> : <Circle size={16} className="text-slate shrink-0" />}
                       <span className="min-w-0">
                         <span className={clsx('block text-[13px] font-medium', it.done ? 'text-slate line-through' : 'text-carbon')}>{it.label}</span>
@@ -340,13 +380,11 @@ export function StorePageOverview() {
             <Section id="sp-tab-banner" icon={<ImageIcon size={15} />} title="Banner & logo" hint="A wide banner (about 1600 × 400) and a square logo work best.">
               <div className="grid grid-cols-1 gap-4">
                 <div id="sp-banner" className="scroll-mt-44">
-                  <p className="text-[12px] font-medium text-charcoal mb-1.5">Banner photo</p>
-                  <BannerUpload value={f.coverImage} onChange={url => setForm('coverImage', url)} />
+                  <StoreImageField kind="cover" label="Banner photo" value={f.coverImage} onChange={url => setForm('coverImage', url)} />
                   <p className="text-[12px] text-slate mt-1">No photo? Edudeen's default gradient is used.</p>
                 </div>
                 <div id="sp-logo" className="scroll-mt-44">
-                  <p className="text-[12px] font-medium text-charcoal mb-1.5">Logo</p>
-                  <ImageUpload value={f.logo ? [f.logo] : []} onChange={urls => setForm('logo', urls[0] ?? '')} maxFiles={1} />
+                  <StoreImageField kind="logo" label="Logo" value={f.logo} onChange={url => setForm('logo', url)} />
                 </div>
               </div>
             </Section>
@@ -380,12 +418,13 @@ export function StorePageOverview() {
 
             <Section id="sp-tab-story" icon={<Type size={15} />} title="Name & story" hint="Tell buyers who you are and what you teach.">
               <div className="flex flex-col gap-3.5">
-                <Input label="Store name" value={f.name} maxLength={60} error={nameError ?? undefined} onChange={e => setForm('name', e.target.value)} />
+                <StoreTextField field="name" label="Store name" value={f.name} original={saved?.form.name ?? ''} onChange={v => setForm('name', v)} />
                 <div id="sp-headline" className="scroll-mt-44">
-                  <Input label="Headline" placeholder="e.g. Joyful Quran & Arabic resources for young learners" value={f.tagline} maxLength={90} onChange={e => setForm('tagline', e.target.value)} />
+                  <StoreTextField field="tagline" label="Headline" placeholder="e.g. Joyful Quran & Arabic resources for young learners" value={f.tagline} original={saved?.form.tagline ?? ''} onChange={v => setForm('tagline', v)} />
                 </div>
-                <Textarea label="Short intro (one line on your banner)" rows={3} maxLength={600} placeholder="What your store offers, in a sentence or two." value={f.description} onChange={e => setForm('description', e.target.value)} />
-                <p className="text-[12px] text-slate -mt-2 text-end">{f.description.length}/600</p>
+                <div id="sp-description" className="scroll-mt-44">
+                  <StoreTextField field="description" label="Description (shown on your banner)" rows={3} placeholder="What your store offers, in a sentence or two. 80+ characters helps buyers trust you." value={f.description} original={saved?.form.description ?? ''} onChange={v => setForm('description', v)} />
+                </div>
                 <div id="sp-about" className="scroll-mt-44">
                   <Textarea label="About your store (About tab)" rows={6} maxLength={1500} placeholder="Who you are, what you make and who it is for." value={f.aboutBio} error={aboutError ?? undefined} onChange={e => setForm('aboutBio', e.target.value)} />
                   <p className="text-[12px] text-slate mt-1 text-end">{f.aboutBio.length}/1500</p>
@@ -414,6 +453,12 @@ export function StorePageOverview() {
                   error={videoError ?? undefined}
                 />
                 <p className="text-[12px] text-slate -mt-2">YouTube or Vimeo link. Buyers press play to watch; nothing loads until they do.</p>
+                <div id="sp-chips" className="scroll-mt-44 flex flex-col gap-4 border-t border-bone pt-4">
+                  <p className="text-[12.5px] text-slate m-0">These show as chips in your store header after you publish. Pick only what you really offer.</p>
+                  <ChipPicker label="Grades you serve" options={STORE_GRADES} value={f.gradesServed} max={TEACHING_MAX.gradesServed} onChange={v => setForm('gradesServed', v)} />
+                  <ChipPicker label="Subjects" options={STORE_SUBJECTS} value={f.chipSubjects} max={TEACHING_MAX.subjects} onChange={v => setForm('chipSubjects', v)} />
+                  <ChipPicker label="Teaching languages" options={TEACHING_LANGUAGES} value={f.teachingLanguages} max={TEACHING_MAX.teachingLanguages} onChange={v => setForm('teachingLanguages', v)} />
+                </div>
               </div>
             </Section>
 

@@ -6,6 +6,8 @@ import { Store, ArrowLeft } from 'lucide-react';
 import { apiGetPublicStore, apiResolveStoreByDomain, type PublicStoreData } from '@/api/services/store';
 import { apiGetPublicStoreTheme, type StoreThemeData } from '@/api/services/storeTheme';
 import { getStoreSlugFromHost, getMainAppUrl, getStorePagePath } from '@/utils/storefrontUrl';
+import { useLiveRefresh } from '@/hooks/useLiveRefresh';
+import { StoreHolidayBanner } from './sections/StoreHolidayBanner';
 import {
   StorefrontProvider, resolveEdudeenStoreCfg, resolveStorefrontLink, EDUDEEN_GOLD_GRADIENT,
   type StorefrontContextValue,
@@ -52,6 +54,12 @@ export function StorefrontLayout() {
     return () => { cancelled = true; };
   }, [slug, inApp]);
 
+  // A holiday switched on/off (or ended by the daily check) refreshes an open store page without a reload: quiet re-read of the store only.
+  useLiveRefresh(['storefront'], () => {
+    if (!inApp || !slug) return;
+    apiGetPublicStore(slug).then(res => setStore(res.data)).catch(() => { /* keep what is shown */ });
+  }, inApp);
+
   // Edudeen's look; the seller only picks an accent colour from a fixed set.
   const cfg = useMemo(() => resolveEdudeenStoreCfg(theme), [theme]);
 
@@ -97,6 +105,7 @@ export function StorefrontLayout() {
           <BuyerNavbar />
         </div>
         <div aria-hidden style={{ height: 3, background: EDUDEEN_GOLD_GRADIENT }} />
+        <StoreHolidayBanner holiday={store.holiday} />
         {store.announcementBar?.message && (
           <StoreAnnouncementBar
             storeId={store.storeId}

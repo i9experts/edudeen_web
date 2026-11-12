@@ -80,6 +80,9 @@ export function StorePagePreview({ storeId, store, page, identity, highlights, l
       coverImage: page.coverImage,
       aboutBio: page.aboutBio,
       educatorProfile: page.educatorProfile,
+      gradesServed: page.gradesServed,
+      subjects: page.subjects,
+      teachingLanguages: page.teachingLanguages,
       returnPolicy: base.returnPolicy ?? store.returnPolicy ?? null,
     } as PublicStoreData;
   }, [live, store, storeId, page]);

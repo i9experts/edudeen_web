@@ -33,6 +33,10 @@ export interface CartItem {
   /** Set on the main marketplace site, where one view spans several stores' carts. */
   storeId?:         string;
   storeName?:       string;
+  /** The store is on holiday and this line cannot be bought now (server-decided; checkout re-checks). */
+  holidayBlocked?:  boolean;
+  /** "Store away until 20 Nov 2026" (English, from the server). */
+  holidayText?:     string | null;
 }
 
 export interface CartStoreInfo {
@@ -41,6 +45,8 @@ export interface CartStoreInfo {
   slug:     string;
   logo:     string | null;
   isActive: boolean;
+  /** Present only while the store is on holiday. */
+  holiday?: import('@/utils/storeHoliday').StoreHolidayInfo | null;
 }
 
 /** One store's cart, as returned by `GET /api/cart/my-carts`. */

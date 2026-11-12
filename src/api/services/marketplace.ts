@@ -97,6 +97,8 @@ export interface MarketplaceProduct {
   sellerId:          string;
   storeId?:          string;
   storeSlug?:        string | null;
+  /** Present only while the store is on holiday (4 public fields). */
+  storeHoliday?:     import('@/utils/storeHoliday').StoreHolidayInfo | null;
   slug:              string;
   description:       string;
   /** Urdu copy (AI-translated and seller-reviewed); shown when the visitor browses in Urdu. */

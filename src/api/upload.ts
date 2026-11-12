@@ -24,9 +24,11 @@ const uploadConfig = (onProgress?: UploadProgress) => ({
   ...(onProgress ? { onUploadProgress: (e: { loaded: number; total?: number }) => { if (e.total) onProgress(Math.round((e.loaded / e.total) * 100)); } } : {}),
 });
 
-export function apiUploadPublicFile(file: File, onProgress?: UploadProgress) {
+/** `purpose` ('store_logo' | 'store_cover') makes the server also check the image's type, size and dimensions. */
+export function apiUploadPublicFile(file: File, onProgress?: UploadProgress, purpose?: string) {
   const fd = new FormData();
   fd.append('file', file);
+  if (purpose) fd.append('purpose', purpose);
   return client.post<never, UploadApiResponse<PublicUploadData>>(ENDPOINTS.UPLOAD.PUBLIC_FILE, fd, uploadConfig(onProgress));
 }
 

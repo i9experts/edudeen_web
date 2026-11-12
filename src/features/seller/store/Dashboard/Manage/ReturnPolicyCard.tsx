@@ -4,6 +4,7 @@ import { apiUpdateStore, type StoreFaq } from '@/api/services/store';
 import { Toggle } from '@/components/comman/ui';
 import { Button } from '@/components/comman/ui/Button';
 import type { StoreReturnPolicy } from '@/utils/sellerTrust';
+import { useSettingsSection } from './settingsDirty';
 
 const inputCls = 'w-full px-3 py-[9px] rounded-lg text-[13px] border border-bone bg-bone text-charcoal outline-none box-border';
 const iconBtn = 'size-11 sm:size-9 inline-flex items-center justify-center rounded-lg border border-bone bg-white text-slate hover:text-carbon disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer';
@@ -31,8 +32,6 @@ export function ReturnPolicyCard({ storeId, policy, shippingNote, faqs, refetch 
   const [digitalNote, setDigitalNote] = useState(policy?.digitalNote ?? '');
   const [shipNote, setShipNote] = useState(shippingNote ?? '');
   const [rows, setRows] = useState<StoreFaq[]>(faqs ?? []);
-  const [saving, setSaving] = useState(false);
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
   const faqKey = JSON.stringify(faqs ?? []);
   useEffect(() => {
@@ -70,10 +69,27 @@ export function ReturnPolicyCard({ storeId, policy, shippingNote, faqs, refetch 
     return next;
   });
 
-  async function save() {
-    if (blocked) return;
-    setSaving(true); setMsg(null);
-    try {
+  // What would be saved, compared with what the store has now: the card is "dirty" only when they differ.
+  const snap = (acc: boolean, d: string, nt: string, dn: string, sn: string, fq: StoreFaq[]) => JSON.stringify({
+    acc, d: acc ? d.trim() : '', nt: nt.trim(), dn: dn.trim(), sn: sn.trim(),
+    fq: fq.filter(r => r.q.trim() || r.a.trim()).map(r => ({ q: r.q.trim(), a: r.a.trim() })),
+  });
+  const dirty = snap(accepted, days, note, digitalNote, shipNote, rows)
+    !== snap(policy?.returnsAccepted ?? true, String(policy?.windowDays || 7), policy?.note ?? '', policy?.digitalNote ?? '', shippingNote ?? '', faqs ?? []);
+
+  useSettingsSection('policies', {
+    label: 'Policies & FAQ',
+    dirty,
+    blocked: blocked ? 'Fix the highlighted fields in Policies & FAQ first.' : null,
+    discard: () => {
+      setAccepted(policy?.returnsAccepted ?? true);
+      setDays(String(policy?.windowDays || 7));
+      setNote(policy?.note ?? '');
+      setDigitalNote(policy?.digitalNote ?? '');
+      setShipNote(shippingNote ?? '');
+      setRows(JSON.parse(faqKey) as StoreFaq[]);
+    },
+    save: async () => {
       await apiUpdateStore({
         storeId,
         returnPolicy: { returnsAccepted: accepted, windowDays: accepted ? n : 0, note: note.trim() || null, digitalNote: digitalNote.trim() || null },
@@ -81,13 +97,8 @@ export function ReturnPolicyCard({ storeId, policy, shippingNote, faqs, refetch 
         faqs: rows.filter(r => r.q.trim() || r.a.trim()).map(r => ({ q: r.q.trim(), a: r.a.trim() })),
       });
       refetch();
-      setMsg({ ok: true, text: 'Policies & FAQ saved.' });
-    } catch (err) {
-      setMsg({ ok: false, text: err instanceof Error ? err.message : 'Could not save your policies.' });
-    } finally {
-      setSaving(false);
-    }
-  }
+    },
+  });
 
   return (
     <div id="returns" className="rounded-xl border border-bone bg-white p-5 scroll-mt-24">
@@ -130,7 +141,7 @@ export function ReturnPolicyCard({ storeId, policy, shippingNote, faqs, refetch 
         {shipError && <p className="text-[12px] text-red-600 mt-1">{shipError}</p>}
       </div>
 
-      <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-slate mb-2">FAQ</p>
+      <p id="sp-faq" className="text-[12px] font-bold uppercase tracking-[0.08em] text-slate mb-2 scroll-mt-24">FAQ</p>
       <p className="text-[12px] text-slate mb-3">Up to {MAX_FAQS} questions buyers often ask. Order them with the arrows.</p>
       <div className="flex flex-col gap-3 mb-3">
         {rows.map((r, i) => {
@@ -159,11 +170,6 @@ export function ReturnPolicyCard({ storeId, policy, shippingNote, faqs, refetch 
         <Plus size={13} className="inline align-middle me-1" /> Add question
       </Button>
       <span className="text-[12px] text-slate ms-2">{rows.length}/{MAX_FAQS}</span>
-
-      <div className="flex items-center gap-3 mt-5">
-        <Button size="sm" loading={saving} disabled={blocked} onClick={save}>Save policies &amp; FAQ</Button>
-        {msg && <span className={`text-[12px] ${msg.ok ? 'text-green-700' : 'text-red-600'}`}>{msg.text}</span>}
-      </div>
     </div>
   );
 }

@@ -87,7 +87,9 @@ function Row({ k, v, strong }: { k: string; v: string; strong?: boolean }) {
  * picked) a sale buyer pay, the platform fee on each, what lands in the seller's wallet, and the sale-vs-Premium rule alert.
  * Premium and a platform sale are exclusive per product, so only one of the two extra columns shows.
  */
-export function PremiumEarningsCalculator({ price, compareAtPrice, premiumValue, storePercent, productType, currency, storeId, premiumOptOut = false, campaign = null, availableCampaigns = [], onJoinCampaign }: {
+export function PremiumEarningsCalculator({ price, compareAtPrice, premiumValue, storePercent, productType, currency, storeId, premiumOptOut = false, campaign = null, availableCampaigns = [], onJoinCampaign, inStoreSettings = false }: {
+  /** True when shown inside Store Settings' Premium card (changes the empty-state wording). */
+  inStoreSettings?: boolean;
   price: string; compareAtPrice: string; premiumValue: string; storePercent: number; productType: string; currency?: string | null;
   storeId?: string | null; premiumOptOut?: boolean; campaign?: JoinableCampaign | null;
   /** Running / upcoming platform sales the seller could join instead of Premium: each one's result is worked out here. */
@@ -174,7 +176,7 @@ export function PremiumEarningsCalculator({ price, compareAtPrice, premiumValue,
                 <p className="text-[12px] text-slate m-0">With these prices a Premium member would not pay less than a normal buyer, so they pay {money(priceN)}. Raise your Premium discount.</p>
               )
             ) : (
-              <p className="text-[12px] text-slate m-0">{premiumOptOut ? 'Premium is off for this product.' : 'Set a Premium discount (here or in Store settings) to see what Premium members pay and what you receive.'}</p>
+              <p className="text-[12px] text-slate m-0">{premiumOptOut ? 'Premium is off for this product.' : (inStoreSettings ? 'Turn on the Premium discount above to see what Premium members pay and what you receive.' : 'Set a Premium discount for this product, or for your whole store in Store Settings, to see what Premium members pay and what you receive.')}</p>
             )}
           </div>
         )}

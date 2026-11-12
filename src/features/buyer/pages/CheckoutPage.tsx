@@ -1272,6 +1272,13 @@ export function CheckoutPage() {
                 </div>
               )}
 
+              {cartItems.some(i => i.holidayBlocked) && (
+                <div role="alert" className="flex flex-wrap items-center gap-x-2 gap-y-1 bg-[#fdecec] border border-[#f5c2c2] rounded-[8px] px-3 py-2 mb-4 text-[12px] text-[#b42318] font-medium">
+                  <span>Some items are from a store that is away, so they cannot be ordered right now.</span>
+                  <Link to="/cart" className="underline font-semibold">Back to cart</Link>
+                </div>
+              )}
+
               {/* Progress bar */}
               <div className="relative flex justify-between items-start w-full">
                 {/* background line */}

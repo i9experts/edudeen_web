@@ -232,7 +232,7 @@ export default function StoreDashboard() {
           <WeeklyDigestCard storeId={storeId} />
 
           {/* Setup checklist (real data; hidden once complete) */}
-          <SetupChecklistCard checklist={metrics?.checklist} profile={metrics?.profile} storeId={storeId} />
+          <SetupChecklistCard checklist={metrics?.checklist} profile={metrics?.profile} store={store} storeId={storeId} />
 
           {/* Metric cards */}
           <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">

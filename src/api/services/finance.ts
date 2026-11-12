@@ -380,6 +380,17 @@ export interface EarningsStatementPage {
   payout: { id: string; status: string; amount: number; createdAt: string; processedAt: string | null } | null;
 }
 
+export interface FeeEstimate {
+  currency: string; type: 'digital' | 'physical'; price: number;
+  /** null = Edudeen has not set a fee for this type (reason 'not_set') or no FX rate yet ('rate_unavailable'). */
+  fee: number | null; net: number | null; reason: 'not_set' | 'rate_unavailable' | null;
+}
+
+/** Read-only: the platform fee on one sale, from the same backend helper the real sale credit uses. */
+export function apiGetFeeEstimate(storeId: string, price: number, type: 'digital' | 'physical', currency?: string) {
+  return client.get<never, FeeEstimate>(`/api/finance/${storeId}/fee-estimate${qs({ price, type, currency })}`);
+}
+
 export function apiGetEarningsSummary(storeId: string, currency?: string) {
   return client.get<never, EarningsSummary>(`${ENDPOINTS.FINANCE.SELLER.EARNINGS_SUMMARY(storeId)}${qs({ currency })}`);
 }

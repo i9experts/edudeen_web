@@ -23,6 +23,37 @@ export function planLabel(sub: StorePlatformSubscription | null | undefined): st
 
 const ENDED_STATUSES = ['expired', 'past_due', 'canceled'];
 
+export type PlanStatusKind = 'trial' | 'trial_ended' | 'ended' | 'paid' | 'free' | 'none';
+
+/**
+ * ONE status for a store's plan - the sidebar line AND the Plan & Billing page both read it.
+ * `ended` mirrors the backend rule (plan-listing-sync: expired / past_due / canceled hide live listings and
+ * block adding products; a returning usable plan restores them). Nothing else is derived here.
+ */
+export function planStatus(sub: StorePlatformSubscription | null | undefined): {
+  kind: PlanStatusKind; ended: boolean; trialDaysLeft: number | null; endsAt: string | null;
+} {
+  if (!sub) return { kind: 'none', ended: false, trialDaysLeft: null, endsAt: null };
+  const ended = !!sub && ENDED_STATUSES.includes(sub.status);
+  if (ended) {
+    const wasTrial = !!sub?.plan?.isFree && (sub.plan.trialDays ?? 0) > 0;
+    return { kind: wasTrial ? 'trial_ended' : 'ended', ended, trialDaysLeft: null, endsAt: sub?.trialEndsAt ?? sub?.currentPeriodEnd ?? null };
+  }
+  const left = planTrialDaysLeft(sub);
+  if (sub?.status === 'trialing') return { kind: 'trial', ended, trialDaysLeft: left, endsAt: sub.trialEndsAt };
+  if (sub?.plan?.isFree) return { kind: 'free', ended, trialDaysLeft: null, endsAt: null };
+  return { kind: 'paid', ended, trialDaysLeft: null, endsAt: sub?.currentPeriodEnd ?? null };
+}
+
+/** One honest line about store visibility, from the real backend rule. */
+export function planVisibilityLine(kind: PlanStatusKind): string {
+  if (kind === 'trial_ended' || kind === 'ended') {
+    return 'Your live products are hidden from buyers and you cannot add or publish new ones. Choose a plan and they come back automatically.';
+  }
+  if (kind === 'none') return 'No plan is set on this store yet. Choose a plan to unlock its features.';
+  return 'Your store and products are visible to buyers.';
+}
+
 /**
  * Sidebar plan line. Cases:
  *  - plan ended (expired / past_due / canceled -> listings hidden): "Plan ended" -> plan-expired screen
@@ -36,7 +67,7 @@ export function sidebarPlanInfo(
   entitlementsPlanName?: string | null,
 ): { text: string; cta: string | null; to: string | null } {
   const billing = `/store/${storeId}/plan-billing`;
-  if (sub && ENDED_STATUSES.includes(sub.status)) {
+  if (planStatus(sub).ended) {
     return { text: 'Plan ended', cta: 'Choose a plan', to: `/store/${storeId}/plan-expired` };
   }
   if (sub?.plan?.name) {

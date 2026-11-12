@@ -2482,6 +2482,18 @@ export const UR: Record<string, string> = {
   'Hi {buyer_name}, thanks for buying from {store_name}. Your files are in Account > My Library, where you can download them again. If a file does not open, tell me which one and your device and I will help.': 'السلام علیکم {buyer_name}، {store_name} سے خریداری کا شکریہ۔ آپ کی فائلیں اکاؤنٹ > میری لائبریری میں ہیں جہاں سے دوبارہ ڈاؤن لوڈ کر سکتے ہیں۔ اگر کوئی فائل نہ کھلے تو مجھے فائل اور اپنا ڈیوائس بتائیں، میں مدد کروں گا۔',
   'Hi {buyer_name}, thank you for your order from {store_name}. I am checking it now and will update you shortly. You can also follow it under Account > My Orders.': 'السلام علیکم {buyer_name}، {store_name} سے آرڈر کا شکریہ۔ میں اسے ابھی دیکھ رہا ہوں اور جلد آپ کو اپڈیٹ دوں گا۔ آپ اکاؤنٹ > میرے آرڈرز میں بھی اسے دیکھ سکتے ہیں۔',
   'Hi {buyer_name}, digital files are refundable only if they have not been downloaded, and physical items only after delivery. Please see the Returns policy on Edudeen for the full rules, and you can send the request from your order page.': 'السلام علیکم {buyer_name}، ڈیجیٹل فائلیں صرف اسی صورت میں قابل ریفنڈ ہیں جب ڈاؤن لوڈ نہ کی گئی ہوں، اور فزیکل آئٹمز صرف ڈیلیوری کے بعد۔ مکمل اصول کے لیے ایڈودین کی ریٹرنز پالیسی دیکھیں، اور آپ اپنے آرڈر کے صفحے سے درخواست بھیج سکتے ہیں۔',
+  // Store on holiday
+  'Store away until': 'اسٹور چھٹی پر ہے، واپسی:',
+  'Store is away for now': 'اسٹور فی الحال چھٹی پر ہے',
+  'Digital downloads and courses are still available.': 'ڈیجیٹل ڈاؤن لوڈز اور کورسز اب بھی دستیاب ہیں۔',
+  'Orders resume when the store is back.': 'اسٹور واپس آنے پر آرڈرز دوبارہ شروع ہوں گے۔',
+  'Some items are from a store that is away. Remove them to continue.': 'کچھ آئٹمز ایسے اسٹور کے ہیں جو چھٹی پر ہے۔ جاری رکھنے کے لیے انہیں ہٹا دیں۔',
+  'Remove it to check out the rest.': 'باقی کا چیک آؤٹ کرنے کے لیے اسے ہٹا دیں۔',
+  // Store page: grades / subjects / languages chips
+  'Grades': 'جماعتیں',
+  'Languages': 'زبانیں',
+  'Exam Preparation': 'امتحانی تیاری',
+  'Art & Handwriting': 'آرٹ اور خوشخطی',
 };
 
 const MONTHS: Record<string, string> = {

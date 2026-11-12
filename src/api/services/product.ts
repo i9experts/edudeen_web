@@ -152,6 +152,8 @@ export interface StoreProduct {
   sellerName:        string | null;
   storeSlug:         string | null;
   storeName:         string | null;
+  /** Present only while the store is on holiday (4 public fields). */
+  storeHoliday?:     import('@/utils/storeHoliday').StoreHolidayInfo | null;
 }
 
 // ── Request payloads ──────────────────────────────────────────────────────────

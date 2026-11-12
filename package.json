@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "i18n:check": "node scripts/check-i18n.mjs",
-    "test:rules": "node scripts/test-price-rules.mjs && node scripts/test-home-rules.mjs && node scripts/test-bulk-run.mjs && node scripts/test-course-helpers.mjs && node scripts/test-shipping-rules.mjs",
+    "test:rules": "node scripts/test-price-rules.mjs && node scripts/test-home-rules.mjs && node scripts/test-bulk-run.mjs && node scripts/test-course-helpers.mjs && node scripts/test-shipping-rules.mjs && node scripts/test-store-profile-rules.mjs",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",

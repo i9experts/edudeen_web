@@ -20,6 +20,7 @@ import { useLocalizedProduct } from '@/hooks/useLocalizedProduct';
 import { TrustBadges } from './TrustBadges';
 import { CompareToggle } from './CompareToggle';
 import { PremiumChip, PremiumTeaser, memberPriceOf, usePremiumView } from './PremiumBits';
+import { holidayBlocksType, holidayLabel } from '@/utils/storeHoliday';
 
 // Same name-keyed palette as ProductCoverFallback, so a product keeps its
 // colours between the grid card and cart/wishlist/detail thumbnails.
@@ -44,7 +45,7 @@ export interface ResourceCardProps {
   addToCartFailed?: boolean;
 }
 
-function CartButton({ onClick, isAdding, failed, disabled, label }: { onClick: (e: React.MouseEvent) => void; isAdding: boolean; failed: boolean; disabled: boolean; label: string }) {
+function CartButton({ onClick, isAdding, failed, disabled, label, disabledLabel = 'Out of stock' }: { onClick: (e: React.MouseEvent) => void; isAdding: boolean; failed: boolean; disabled: boolean; label: string; disabledLabel?: string }) {
   const [justAdded, setJustAdded] = useState(false);
   const wasAdding = useRef(false);
   useEffect(() => {
@@ -61,7 +62,8 @@ function CartButton({ onClick, isAdding, failed, disabled, label }: { onClick: (
       type="button"
       onClick={onClick}
       disabled={disabled}
-      aria-label={disabled ? 'Out of stock' : label}
+      aria-label={disabled ? disabledLabel : label}
+      title={disabled ? disabledLabel : undefined}
       className={clsx(
         'relative before:absolute before:-inset-[5px] before:rounded-full shrink-0 flex items-center justify-center w-8 h-8 rounded-full border transition-all duration-200',
         disabled
@@ -277,12 +279,15 @@ export const ResourceCard = memo(function ResourceCard({
 
   const vVariant = variant;
   const physicalStock = kind === 'physical' && !vVariant?.unlimitedStock ? (vVariant?.stock ?? 0) : Infinity;
+  // Store on holiday: the cart button is disabled and says when the store is back (the server refuses the add as well).
+  const away = holidayBlocksType(product.storeHoliday, kind === 'physical' ? 'physical' : 'digital');
   const cartButton = onAddToCart && variantId ? (
     <CartButton
       onClick={e => onAddToCart(e, product._id, variantId, kind === 'physical' ? 'physical' : 'digital')}
       isAdding={isAdding}
       failed={addToCartFailed}
-      disabled={physicalStock <= 0}
+      disabled={away || physicalStock <= 0}
+      disabledLabel={away ? holidayLabel(product.storeHoliday) : 'Out of stock'}
       label={`Add ${product.name} to cart`}
     />
   ) : null;

@@ -4,6 +4,7 @@ import { Star, Users, BadgeCheck, Award, Store } from 'lucide-react';
 import { CoverImage } from '@/components/comman/ui';
 import { storeCoverGradient } from '../StorefrontContext';
 import { TRUST_MIN_SAMPLES } from '@/utils/sellerTrust';
+import { gradeChipLabel, subjectChipLabel, languageChipLabel } from '@/constants/storeTeaching';
 
 const SELLER_TYPE_LABEL: Record<string, string> = {
   educator:       'Education Specialist',
@@ -40,7 +41,32 @@ function StoreBadges({ badges, sellerType }: { badges: string[]; sellerType: str
   );
 }
 
+/** Grades / subjects / languages the store set in Customize store (fixed lists). Hidden when all three are empty. */
+function TeachingChips({ grades, subjects, languages, centered }: { grades: string[]; subjects: string[]; languages: string[]; centered?: boolean }) {
+  const groups = [
+    { title: 'Grades', items: grades.map(gradeChipLabel).filter((x): x is string => !!x) },
+    { title: 'Subjects', items: subjects.map(subjectChipLabel).filter((x): x is string => !!x) },
+    { title: 'Languages', items: languages.map(languageChipLabel).filter((x): x is string => !!x) },
+  ].filter(g => g.items.length);
+  if (!groups.length) return null;
+  return (
+    <div className={clsx('flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-2', centered && 'justify-center')}>
+      {groups.map(g => (
+        <div key={g.title} className="flex flex-wrap items-center gap-[5px]">
+          <span className="text-[12px] font-semibold text-[rgba(255,255,255,0.7)]">{g.title}</span>
+          {g.items.map(i => (
+            <span key={i} className="px-2 py-[2px] rounded-full text-[12px] font-medium bg-white/15 text-white border border-white/25">{i}</span>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export interface IdentityBannerStore {
+  gradesServed?: string[];
+  subjects?: string[];
+  teachingLanguages?: string[];
   name: string;
   logo: string | null;
   coverImage: string | null;
@@ -124,6 +150,9 @@ export function StoreIdentityBanner({ store, flags, total, primaryColor, backgro
             {showBadges && <div className={clsx(bannerLayout === 'immersive' && 'flex justify-center')}><StoreBadges badges={store.badges ?? []} sellerType={store.sellerType ?? null} /></div>}
             {store.description && bannerLayout !== 'compact' && (
               <p className={clsx('text-[12px] sm:text-[13px] text-[rgba(255,255,255,0.8)] mt-[6px] mb-[4px] max-w-2xl', descriptionClampCls || 'line-clamp-1')}>{store.description}</p>
+            )}
+            {bannerLayout !== 'compact' && (
+              <TeachingChips grades={store.gradesServed ?? []} subjects={store.subjects ?? []} languages={store.teachingLanguages ?? []} centered={bannerLayout === 'immersive'} />
             )}
             <div className={clsx('flex items-center gap-[5px] text-[12px] text-[rgba(255,255,255,0.7)] mt-[6px]', bannerLayout === 'immersive' && 'justify-center')}>
               {showRating && (store.reviewCount ?? 0) >= TRUST_MIN_SAMPLES && (

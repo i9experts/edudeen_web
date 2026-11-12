@@ -1,23 +1,31 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
+import { StoreSetupMeterCard } from '@/features/seller/dashboard/storemodule/StoreSetupMeterCard';
 import { useLiveRefresh } from '@/hooks/useLiveRefresh';
 import { useAiStudioCredits } from '@/hooks/seller/useAiStudio';
 import { currencySymbol } from '@/utils/currency';
 import { statusLabel } from '@/constants/statusLabels';
-import { Save, Store, Loader2, CheckCircle, AlertCircle, Globe, Lock, History, ChevronLeft, ChevronRight, Copy, Check, CreditCard } from 'lucide-react';
+import { Store, Loader2, CheckCircle, AlertCircle, Globe, Lock, History, ChevronLeft, ChevronRight, Copy, Check, CreditCard } from 'lucide-react';
 import { useStoreWorkspace, StorePageHeader, StoreNavMenu } from '@/components/layouts/StoreLayout';
+import { useStorePlan, sidebarPlanInfo } from '@/hooks/store/useStorePlan';
+import { useToast } from '@/contexts/ToastContext';
+import { useLeaveGuard } from '../StoreSection/products/ProductWizard';
+import { SettingsRegistryProvider, SettingsSaveBar, useRegisterSection, useSettingsRegistry, useSettingsSection } from './settingsDirty';
 import { getStorefrontUrl } from '@/utils/storefrontUrl';
 import { apiUpdateStore, apiSetCustomDomain, apiVerifyCustomDomain, apiSetWhiteLabel, type ProductType, type CustomDomainStatus } from '@/api/services/store';
 import { apiGetStoreEntitlements, type EntitlementsSummary } from '@/api/services/platformPlans';
 import { apiGetStripeConnectStatus, apiCreateStripeConnectOnboardingLink, apiSyncStripeConnectStatus, type StripeConnectStatus } from '@/api/services/stripeConnect';
 import { apiGetCategoryTree, type CategoryNode } from '@/api/services/categories';
 import { useMyStores } from '@/hooks/store/useMyStores';
-import { ImageUpload, Toggle } from '@/components/comman/ui';
+import { Toggle } from '@/components/comman/ui';
+import { StoreImageField, StoreTextField } from '@/features/seller/store/StoreProfileFields';
+import { STORE_PHONE_PLACEHOLDER, storeFieldError } from '@/utils/storeProfileRules';
 import { Button } from '@/components/comman/ui/Button';
 import { TabBar, type Tab } from '@/components/comman/ui/TabBar';
 import { ActivityLogTab } from './tabs/ActivityLogTab';
 import { ReturnPolicyCard } from './ReturnPolicyCard';
 import { PremiumDiscountCard } from './PremiumDiscountCard';
+import { HolidayCard } from './HolidayCard';
 
 const TABS: Tab[] = [
   { id: 'general',  label: 'General' },
@@ -177,6 +185,21 @@ const CUSTOM_DOMAIN_CNAME_TARGET = 'stores.edudeen.com';
 // Stores no longer get their own domain or payment gateway (see the note where these render).
 const SHOW_OWN_DOMAIN_AND_GATEWAY = false;
 
+/** Clipboard with a fallback for browsers/contexts where navigator.clipboard is missing or refused. */
+async function copyText(text: string): Promise<boolean> {
+  try {
+    if (navigator.clipboard?.writeText) { await navigator.clipboard.writeText(text); return true; }
+  } catch { /* fall through to the legacy path */ }
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    return ok;
+  } catch { return false; }
+}
+
 function CopyableRow({ label, value }: { label: string; value: string }) {
   const [copied, setCopied] = useState(false);
   const copy = () => {
@@ -296,7 +319,6 @@ function DomainWhiteLabelCard({ storeId, store, refetch }: {
 }) {
   const [entitlements, setEntitlements] = useState<EntitlementsSummary | null>(null);
   const [domain, setDomain] = useState('');
-  const [savingDomain, setSavingDomain] = useState(false);
   const [savingWhiteLabel, setSavingWhiteLabel] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [verifyResult, setVerifyResult] = useState<{ verified: boolean; reason: string | null } | null>(null);
@@ -313,18 +335,18 @@ function DomainWhiteLabelCard({ storeId, store, refetch }: {
   const domainFeature = entitlements?.customDomainAllowed as { allowed: boolean; requiredPlan: string | null } | undefined;
   const whiteLabelFeature = entitlements?.whiteLabelAllowed as { allowed: boolean; requiredPlan: string | null } | undefined;
 
-  async function saveDomain() {
-    setSavingDomain(true); setMsg(''); setVerifyResult(null);
-    try {
+  // Own API call kept; only the Save button is hoisted into the tab's single bar.
+  useSettingsSection('domain', {
+    label: 'Custom domain',
+    dirty: domain.trim() !== (store?.customDomain ?? ''),
+    discard: () => setDomain(store?.customDomain ?? ''),
+    save: async () => {
+      setMsg(''); setVerifyResult(null);
       await apiSetCustomDomain(storeId, domain.trim() || null);
       refetch();
       setMsg('Custom domain updated — add the DNS record below, then click Verify Domain.');
-    } catch (err) {
-      setMsg(err instanceof Error ? err.message : 'Failed to update domain.');
-    } finally {
-      setSavingDomain(false);
-    }
-  }
+    },
+  });
 
   async function verifyDomain() {
     setVerifying(true); setMsg('');
@@ -374,7 +396,6 @@ function DomainWhiteLabelCard({ storeId, store, refetch }: {
           <>
             <div className="flex gap-2">
               <input value={domain} onChange={e => setDomain(e.target.value)} placeholder="shop.yourbrand.com" className={inputCls} />
-              <Button size="sm" loading={savingDomain} onClick={saveDomain}>Save</Button>
             </div>
 
             {store?.customDomain && (
@@ -457,8 +478,25 @@ export default function StoreSettings() {
   const [codEnabled,   setCodEnabled]   = useState(true);
   const [categories,   setCategories]   = useState<CategoryNode[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
-  const [saving,       setSaving]       = useState(false);
-  const [saveMsg,      setSaveMsg]      = useState<{ ok: boolean; text: string } | null>(null);
+  const toast = useToast();
+  const { sub: planSub } = useStorePlan(storeId);
+  const planInfo = sidebarPlanInfo(planSub, storeId ?? '', null);
+  const reg = useSettingsRegistry();
+
+  // Deep links from the completeness meter (#sp-phone, #sp-faq): open the General tab, then scroll to + focus the field.
+  const { hash } = useLocation();
+  useEffect(() => {
+    if (loading || (hash !== '#sp-phone' && hash !== '#sp-faq')) return;
+    setActiveTab('general');
+    setMobileDrilledIn(true);
+    const t = setTimeout(() => {
+      const el = document.getElementById(hash.slice(1));
+      if (!el) return;
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      (el.matches('input,textarea') ? el : el.querySelector<HTMLElement>('input,textarea'))?.focus({ preventScroll: true });
+    }, 200);
+    return () => clearTimeout(t);
+  }, [loading, hash]);
 
   // Sync form when store loads
   useEffect(() => {
@@ -485,21 +523,6 @@ export default function StoreSettings() {
   const toggleType = (t: ProductType) =>
     setProductTypes(prev => prev.includes(t) ? prev.filter(p => p !== t) : [...prev, t]);
 
-  const handleSave = async () => {
-    if (!storeId || saving) return;
-    setSaving(true);
-    setSaveMsg(null);
-    try {
-      await apiUpdateStore({ storeId, name, description, tagline, contactEmail, contactPhone, productTypes, logo, coverImage, codEnabled });
-      refetch();
-      setSaveMsg({ ok: true, text: 'Store updated successfully.' });
-    } catch (err) {
-      setSaveMsg({ ok: false, text: err instanceof Error ? err.message : 'Failed to update store.' });
-    } finally {
-      setSaving(false);
-    }
-  };
-
   const isDirty =
     !!store &&
     (name !== store.name ||
@@ -513,28 +536,69 @@ export default function StoreSettings() {
         JSON.stringify((store.productTypes ?? []).slice().sort()) ||
       codEnabled !== (store.codEnabled !== false));
 
+  // Same function the fields use to show their error, so Save is blocked exactly when a field is red.
+  const nameError =
+    storeFieldError('name', name, store?.name ?? '') ??
+    storeFieldError('description', description, store?.description ?? '') ??
+    storeFieldError('tagline', tagline, store?.tagline ?? '') ??
+    storeFieldError('contactEmail', contactEmail, store?.contactEmail ?? '') ??
+    storeFieldError('contactPhone', contactPhone, store?.contactPhone ?? '');
+
+  // The store profile form is one section of the tab; Policies / Premium / Domain cards register themselves.
+  useRegisterSection(reg.registry, 'general', {
+    label: 'Store profile',
+    dirty: isDirty,
+    blocked: nameError,
+    discard: () => {
+      if (!store) return;
+      setName(store.name);
+      setDescription(store.description ?? '');
+      setTagline(store.tagline ?? '');
+      setContactEmail(store.contactEmail ?? '');
+      setContactPhone(store.contactPhone ?? '');
+      setProductTypes(store.productTypes ?? []);
+      setLogo(store.logo ?? '');
+      setCoverImage(store.coverImage ?? '');
+      setCodEnabled(store.codEnabled !== false);
+    },
+    save: async () => {
+      if (!storeId) return;
+      await apiUpdateStore({ storeId, name, description, tagline, contactEmail, contactPhone, productTypes, logo, coverImage, codEnabled });
+      refetch();
+    },
+  });
+
+  // Unsaved changes: route change + tab close use the shared guard; switching tab here would unmount the cards.
+  const { dialog: leaveDialog } = useLeaveGuard(reg.dirty);
+  const changeTab = (id: string) => {
+    if (id === activeTab) return;
+    if (reg.dirty) {
+      if (!window.confirm('You have unsaved changes. Leave this tab and discard them?')) return;
+      reg.discardAll();
+    }
+    setActiveTab(id);
+  };
+
+  const copyStoreUrl = async (url: string) => {
+    if (await copyText(url)) toast.success('Store link copied.');
+    else toast.error('Could not copy. Select the link and copy it manually.');
+  };
+  const storeUrl = store?.slug ? getStorefrontUrl(store.slug).replace(/^https?:\/\//, '') : '';
+  const statusTone = store?.status === 'active' ? 'text-success bg-success-bg' : store?.status === 'rejected' ? 'text-error bg-error-bg' : 'text-warning bg-warning-bg';
+
   return (
     <div>
       <StorePageHeader
         title="Store Settings"
         subtitle={store?.name ?? ''}
-        actions={
-          activeTab === 'general' && (isDirty || saving) ? (
-            <button
-              onClick={handleSave}
-              disabled={!isDirty || saving}
-              className="flex items-center gap-[7px] px-[18px] py-2 rounded-lg border-none text-[13px] font-semibold transition-all duration-150"
-              style={{
-                background: isDirty && !saving ? '#174771' : '#E8E6DC',
-                color: isDirty && !saving ? '#fff' : '#8C8A82',
-                cursor: isDirty && !saving ? 'pointer' : 'not-allowed',
-              }}
-            >
-              {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-              Save Changes
-            </button>
-          ) : undefined
-        }
+        actions={store?.status ? (
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-semibold ${statusTone}`}>{statusLabel(store.status)}</span>
+            {storeId && (planInfo.to
+              ? <Link to={planInfo.to} className="text-[12px] font-semibold text-brand-royal">{planInfo.text} · {planInfo.cta}</Link>
+              : <span className="text-[12px] text-slate">{planInfo.text}</span>)}
+          </div>
+        ) : undefined}
       />
 
       {/* Mobile-only account hub — hero (logo/name/status + real Products/
@@ -553,7 +617,7 @@ export default function StoreSettings() {
             aiCredits={aiCreditBalance}
             loading={loading}
           />
-          <MobileStoreMenu active={activeTab} onSelect={id => { setActiveTab(id); setMobileDrilledIn(true); }} />
+          <MobileStoreMenu active={activeTab} onSelect={id => { changeTab(id); setMobileDrilledIn(true); }} />
 
           {/* Every other store section — Sales/Catalog/Customers/Growth/
              Finance, plus Integrations from the
@@ -580,7 +644,7 @@ export default function StoreSettings() {
       )}
 
       <div className="hidden lg:block px-4 md:px-7 pt-3">
-        <TabBar tabs={TABS} active={activeTab} onChange={setActiveTab} />
+        <TabBar tabs={TABS} active={activeTab} onChange={changeTab} />
       </div>
 
       <div className={mobileDrilledIn ? 'block' : 'hidden lg:block'}>
@@ -589,26 +653,14 @@ export default function StoreSettings() {
           <ActivityLogTab />
         </div>
       ) : loading ? <SettingsSkeleton /> : (
-        <div className="px-4 lg:px-7 py-6">
-
-          {/* Status message */}
-          {saveMsg && (
-            <div
-              className="flex items-center gap-2 px-[14px] py-[10px] rounded-lg mb-[18px] text-[13px] border"
-              style={{
-                background: saveMsg.ok ? '#F0FDF4' : '#FFF1F2',
-                borderColor: saveMsg.ok ? '#BBF7D0' : '#FECDD3',
-                color: saveMsg.ok ? '#166534' : '#991B1B',
-              }}
-            >
-              {saveMsg.ok
-                ? <CheckCircle size={15} />
-                : <AlertCircle size={15} />}
-              {saveMsg.text}
-            </div>
-          )}
+        <SettingsRegistryProvider value={reg.registry}>
+        <div className="px-4 lg:px-7 py-6 min-w-0">
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 items-start">
+
+            {storeId && <StoreSetupMeterCard storeId={storeId} store={store} />}
+
+            {storeId && <HolidayCard storeId={storeId} holiday={store?.holiday} refetch={refetch} />}
 
             {/* Left column */}
             <div className="bg-white rounded-xl p-4 sm:p-6 border border-bone">
@@ -620,103 +672,41 @@ export default function StoreSettings() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-[14px]">
-                <Field label="Store Logo">
-                  <div className="flex items-center gap-3">
-                    <ImageUpload
-                      value={logo ? [logo] : []}
-                      onChange={urls => setLogo(urls[0] ?? '')}
-                      maxFiles={1}
-                    />
-                    <p className="text-[12px] text-slate">PNG, JPG or WebP</p>
-                  </div>
-                </Field>
-
-                <Field label="Cover Image">
-                  <div className="flex items-center gap-3">
-                    <ImageUpload
-                      value={coverImage ? [coverImage] : []}
-                      onChange={urls => setCoverImage(urls[0] ?? '')}
-                      maxFiles={1}
-                    />
-                    <p className="text-[12px] text-slate">PNG, JPG or WebP</p>
-                  </div>
-                </Field>
+                <div className="mb-5"><StoreImageField kind="logo" label="Store Logo" value={logo} onChange={setLogo} /></div>
+                <div className="mb-5 sm:col-span-2"><StoreImageField kind="cover" label="Cover Image" value={coverImage} onChange={setCoverImage} /></div>
               </div>
 
-              <Field label="Store Name *">
-                <input
-                  value={name}
-                  onChange={e => setName(e.target.value)}
-                  placeholder="Your store name"
-                  className={inputCls}
-                />
-              </Field>
+              <StoreTextField className="mb-5" field="name" label="Store Name *" value={name} onChange={setName} original={store?.name ?? ''} placeholder="Your store name" />
 
               <Field label="Category">
-                <input
-                  value={categoriesLoading ? 'Loading…' : (categories.find(c => c._id === categoryId)?.name ?? '—')}
-                  readOnly
-                  className={`${inputCls} text-slate cursor-default bg-[#f3f2ec]`}
-                />
-                <p className="text-[12px] text-slate mt-1">Set when your store was created. To change it, contact Edudeen support.</p>
+                <p className="text-[13px] text-charcoal m-0">
+                  {categoriesLoading ? 'Loading…' : (categories.find(c => c._id === categoryId)?.name ?? '—')}
+                </p>
+                <p className="text-[12px] text-slate mt-1">
+                  Set when your store was created.{' '}
+                  {storeId && <Link to={`/store/${storeId}/categories`} className="font-semibold text-brand-royal">Request change</Link>}
+                </p>
               </Field>
 
-              <Field label="Description">
-                <textarea
-                  value={description}
-                  onChange={e => setDescription(e.target.value)}
-                  placeholder="Describe your store…"
-                  rows={4}
-                  className={`${inputCls} resize-y min-h-[90px]`}
-                />
-              </Field>
+              <StoreTextField className="mb-5" field="description" label="Description" rows={4} value={description} onChange={setDescription} original={store?.description ?? ''} placeholder="Describe your store…" />
 
-              <Field label="Tagline">
-                <input
-                  value={tagline}
-                  onChange={e => setTagline(e.target.value)}
-                  placeholder="e.g. Trusted learning resources since 2020"
-                  maxLength={100}
-                  className={inputCls}
-                />
-                <p className="text-[12px] text-slate mt-1">A short line shown next to your store name on your storefront.</p>
-              </Field>
+              <StoreTextField className="mb-5" field="tagline" label="Tagline" value={tagline} onChange={setTagline} original={store?.tagline ?? ''} placeholder="e.g. Trusted learning resources since 2020" hint="A short line shown next to your store name on your storefront." />
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Field label="Contact Email">
-                  <input
-                    type="email"
-                    value={contactEmail}
-                    onChange={e => setContactEmail(e.target.value)}
-                    placeholder="support@yourstore.com"
-                    className={inputCls}
-                  />
-                </Field>
-                <Field label="Contact Phone">
-                  <input
-                    value={contactPhone}
-                    onChange={e => setContactPhone(e.target.value)}
-                    placeholder="+1 555 123 4567"
-                    className={inputCls}
-                  />
-                </Field>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+                <StoreTextField field="contactEmail" label="Contact Email" value={contactEmail} onChange={setContactEmail} original={store?.contactEmail ?? ''} placeholder="support@yourstore.com" />
+                <div id="sp-phone" className="scroll-mt-24">
+                  <StoreTextField field="contactPhone" label="Contact Phone" value={contactPhone} onChange={setContactPhone} original={store?.contactPhone ?? ''} placeholder={STORE_PHONE_PLACEHOLDER} />
+                </div>
               </div>
 
               <Field label="Store URL">
-                <input
-                  value={store?.slug ?? ''}
-                  readOnly
-                  className={`${inputCls} text-slate cursor-default bg-[#f3f2ec]`}
-                />
-                <p className="text-[12px] text-slate mt-1">URL slug cannot be changed.</p>
-              </Field>
-
-              <Field label="Plan">
-                <input
-                  value={store?.plan ?? ''}
-                  readOnly
-                  className={`${inputCls} text-slate cursor-default bg-[#f3f2ec]`}
-                />
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-[13px] text-charcoal truncate min-w-0">{storeUrl || '—'}</span>
+                  {storeUrl && (
+                    <Button size="xs" variant="outline" icon={<Copy size={12} />} onClick={() => void copyStoreUrl(getStorefrontUrl(store!.slug))}>Copy</Button>
+                  )}
+                </div>
+                <p className="text-[12px] text-slate mt-1">The link cannot be changed.</p>
               </Field>
             </div>
 
@@ -778,20 +768,6 @@ export default function StoreSettings() {
                 </div>
               </div>
 
-              {/* Read-only info */}
-              <div className="mt-6 border-t border-bone pt-[18px]">
-                <p className="text-[12px] font-semibold text-charcoal mb-3">Store Info</p>
-                {[
-                  { label: 'Status',   value: store?.status ? statusLabel(store.status) : '—' },
-                  { label: 'Seller',   value: store?.sellerType ? statusLabel(store.sellerType) : '—' },
-                  { label: 'AI Credits', value: aiCreditBalance == null ? '—' : String(aiCreditBalance) },
-                ].map(r => (
-                  <div key={r.label} className="flex justify-between text-[12px] py-1.5 border-b border-[#f3f2ec]">
-                    <span className="text-slate">{r.label}</span>
-                    <span className="font-semibold text-charcoal">{r.value}</span>
-                  </div>
-                ))}
-              </div>
             </div>
 
             {/* A store has one address (edudeen.com/shop/<slug>) and Edudeen collects
@@ -800,41 +776,28 @@ export default function StoreSettings() {
             {SHOW_OWN_DOMAIN_AND_GATEWAY && storeId && <DomainWhiteLabelCard storeId={storeId} store={store ? { customDomain: store.customDomain, customDomainStatus: store.customDomainStatus, whiteLabelEnabled: store.whiteLabelEnabled } : null} refetch={refetch} />}
             {SHOW_OWN_DOMAIN_AND_GATEWAY && <PaymentGatewayCard />}
 
-            <div className="rounded-xl border border-bone bg-cream/40 px-4 py-3.5">
-              <p className="text-[13.5px] font-semibold text-charcoal mb-1">Payments & your store link</p>
-              <p className="text-[12.5px] text-slate leading-relaxed">
-                Your store lives at <span className="font-semibold text-charcoal">{store?.slug ? getStorefrontUrl(store.slug).replace(/^https?:\/\//, '') : 'edudeen.com/shop/…'}</span>.
-                Buyers pay through Edudeen's checkout; Edudeen credits your earnings after its platform fee and pays them out monthly after admin approval —
-                add or change where you get paid under <a href={`/store/${storeId}/finance`} className="text-brand-orange font-semibold">Earnings</a>.
-              </p>
-            </div>
-
             {storeId && (
-              <div className="rounded-xl border border-bone bg-white p-5 flex flex-wrap items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-[13.5px] font-semibold text-charcoal">About text &amp; teacher profile</p>
-                  <p className="text-[12.5px] text-slate">These are edited on Customize your store, with a preview, and go live when you publish.</p>
+              <div className="rounded-xl border border-bone bg-white p-5 sm:col-span-2">
+                <p className="text-[13.5px] font-semibold text-charcoal mb-1">Related settings</p>
+                <p className="text-[12.5px] text-slate mb-3">These live on their own pages. Buyers pay through Edudeen's checkout, and your earnings are paid out after Edudeen's platform fee.</p>
+                <div className="flex flex-wrap gap-x-5 gap-y-1">
+                  <Link to={`/store/${storeId}/finance`} className="text-[13px] font-semibold text-brand-royal py-1.5">Payments &amp; payouts →</Link>
+                  <Link to={`/store/${storeId}/storebuilder#sp-teacher`} className="text-[13px] font-semibold text-brand-royal py-1.5">Teacher profile →</Link>
+                  <Link to={`/store/${storeId}/shipping`} className="text-[13px] font-semibold text-brand-royal py-1.5">Shipping &amp; gift wrap →</Link>
                 </div>
-                <Link to={`/store/${storeId}/storebuilder#sp-about`} className="text-[13px] font-semibold text-brand-royal whitespace-nowrap">Customize your store →</Link>
               </div>
             )}
 
             {storeId && <ReturnPolicyCard storeId={storeId} policy={store?.returnPolicy} shippingNote={store?.shippingNote} faqs={store?.faqs} refetch={refetch} />}
 
-            {storeId && (
-              <div className="rounded-xl border border-bone bg-white p-5 flex flex-wrap items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-[13.5px] font-semibold text-charcoal">Shipping &amp; gift wrap</p>
-                  <p className="text-[12.5px] text-slate">Delivery method, charges and gift wrap now live on the Shipping page.</p>
-                </div>
-                <Link to={`/store/${storeId}/shipping`} className="text-[13px] font-semibold text-brand-royal whitespace-nowrap">Manage shipping →</Link>
-              </div>
-            )}
-
             {storeId && <PremiumDiscountCard storeId={storeId} discount={store?.premiumDiscount} currency={store?.baseCurrency} refetch={refetch} />}
           </div>
+
+          <SettingsSaveBar dirty={reg.dirty} blocked={reg.blocked} saving={reg.saving} error={reg.error} onSave={() => void reg.saveAll()} onDiscard={reg.discardAll} />
         </div>
+        </SettingsRegistryProvider>
       )}
+      {leaveDialog}
       </div>
     </div>
   );

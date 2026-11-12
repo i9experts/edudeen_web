@@ -1,29 +1,49 @@
-import type { StorePageFields } from '@/api/services/storeTheme';
+import type { EducatorProfile } from '@/api/services/store';
 
 export interface CompletenessItem {
-  key: 'banner' | 'logo' | 'headline' | 'about' | 'teacher' | 'featured' | 'years';
+  key: 'logo' | 'banner' | 'headline' | 'description' | 'phone' | 'faq' | 'teacher';
   label: string;
   hint: string;
   done: boolean;
   /** DOM id of the field to scroll to / focus. */
   anchor: string;
+  /** Where that field lives, relative to /store/:storeId/ (Customize store or Store Settings). */
+  path: string;
 }
 
-/** Same bar the server's profile meter uses for a "real" About text (store/featured-stores.util PROFILE_*). */
-export const ABOUT_MIN_CHARS = 30;
-export const FEATURED_MIN = 2;
+export const DESCRIPTION_MIN_CHARS = 80;
+export const FAQ_MIN = 3;
 
-/** Seven checks for the Customize-store page, computed from the DRAFT so the score moves as the seller types. */
-export function storePageCompleteness(page: StorePageFields, featuredCount: number): CompletenessItem[] {
-  const ep = page.educatorProfile;
-  const teacher = !!(ep && (ep.headline?.trim() || ep.qualifications?.length || ep.subjects?.length || ep.institutions?.length));
+/** What the meter reads. Page fields come from the Customize-store DRAFT (or the live store elsewhere); phone + FAQ are Store Settings values. */
+export interface MeterInput {
+  logo?: string | null;
+  coverImage?: string | null;
+  tagline?: string | null;
+  description?: string | null;
+  contactPhone?: string | null;
+  faqs?: { q?: string; a?: string }[] | null;
+  educatorProfile?: EducatorProfile | null;
+  gradesServed?: string[] | null;
+  subjects?: string[] | null;
+  teachingLanguages?: string[] | null;
+}
+
+/**
+ * THE store-page meter (one list, three screens: Customize store, Store Settings, Dashboard setup card).
+ * Seven checks: logo, banner, tagline, description 80+, phone, 3+ FAQs, teaching profile.
+ */
+export function storeSetupMeter(s: MeterInput): CompletenessItem[] {
+  const ep = s.educatorProfile;
+  const teacher = !!(ep && (ep.headline?.trim() || ep.qualifications?.length || ep.subjects?.length || ep.institutions?.length))
+    || !!(s.gradesServed?.length || s.subjects?.length || s.teachingLanguages?.length);
+  const faqCount = (s.faqs ?? []).filter(f => f?.q?.trim() && f?.a?.trim()).length;
   return [
-    { key: 'banner', label: 'Banner photo', hint: 'A wide photo behind your store name', done: !!page.coverImage, anchor: 'sp-banner' },
-    { key: 'logo', label: 'Logo', hint: 'A square logo buyers recognise', done: !!page.logo, anchor: 'sp-logo' },
-    { key: 'headline', label: 'Headline', hint: 'One line on what you teach', done: !!page.tagline?.trim(), anchor: 'sp-headline' },
-    { key: 'about', label: 'About your store', hint: `At least ${ABOUT_MIN_CHARS} characters`, done: (page.aboutBio ?? '').trim().length >= ABOUT_MIN_CHARS, anchor: 'sp-about' },
-    { key: 'teacher', label: 'Teacher info', hint: 'Your one-liner, qualifications or subjects', done: teacher, anchor: 'sp-teacher' },
-    { key: 'featured', label: `${FEATURED_MIN}+ featured products`, hint: 'Shown in a row above all products', done: featuredCount >= FEATURED_MIN, anchor: 'sp-highlights' },
-    { key: 'years', label: 'Years teaching', hint: 'Builds trust with parents', done: ep?.experienceYears != null, anchor: 'sp-years' },
+    { key: 'logo', label: 'Logo', hint: 'A square logo buyers recognise', done: !!s.logo?.trim(), anchor: 'sp-logo', path: 'storebuilder#sp-logo' },
+    { key: 'banner', label: 'Banner photo', hint: 'A wide photo behind your store name', done: !!s.coverImage?.trim(), anchor: 'sp-banner', path: 'storebuilder#sp-banner' },
+    { key: 'headline', label: 'Tagline', hint: 'One line on what you teach', done: !!s.tagline?.trim(), anchor: 'sp-headline', path: 'storebuilder#sp-headline' },
+    { key: 'description', label: `Description (${DESCRIPTION_MIN_CHARS}+ characters)`, hint: `${Math.min((s.description ?? '').trim().length, DESCRIPTION_MIN_CHARS)}/${DESCRIPTION_MIN_CHARS} characters`, done: (s.description ?? '').trim().length >= DESCRIPTION_MIN_CHARS, anchor: 'sp-description', path: 'storebuilder#sp-description' },
+    { key: 'phone', label: 'Contact phone', hint: 'Buyers can reach you', done: !!s.contactPhone?.trim(), anchor: 'sp-phone', path: 'settings#sp-phone' },
+    { key: 'faq', label: `${FAQ_MIN}+ FAQs`, hint: `${Math.min(faqCount, FAQ_MIN)}/${FAQ_MIN} answered questions`, done: faqCount >= FAQ_MIN, anchor: 'sp-faq', path: 'settings#sp-faq' },
+    { key: 'teacher', label: 'Teaching profile', hint: 'Your one-liner, qualifications, grades or subjects', done: teacher, anchor: 'sp-teacher', path: 'storebuilder#sp-teacher' },
   ];
 }

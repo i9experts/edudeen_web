@@ -12,8 +12,9 @@ import { BuyerNavbar, Breadcrumb, Footer, SkeletonBox, getRecentlyViewed } from 
 import { ProductCard } from '@/components/comman/marketplace/ProductCard';
 import {
   Minus, Plus, Trash2, ShoppingBag,
-  Loader2, Package, Download, ChevronRight, ShieldCheck, RotateCcw, Lock,
+  Loader2, Package, Download, ChevronRight, ShieldCheck, RotateCcw, Lock, CalendarOff,
 } from 'lucide-react';
+import { AwayTextFromServer } from '@/utils/storeHoliday';
 import { ProductCoverFallback } from '@/components/comman/marketplace/ProductCoverFallback';
 import { clsx } from 'clsx';
 import { formatPrice } from '@/utils/formatPrice';
@@ -132,6 +133,8 @@ export function CartPage() {
   const digitalCount  = items.filter(i => i.type === 'digital').reduce((s, i) => s + i.quantity, 0);
 
   const isEmpty = !loading && !items.length;
+  // A line from a store that is on holiday cannot be checked out (the server refuses it too): the buyer removes it first.
+  const hasAwayItem = items.some(i => i.holidayBlocked);
 
   // Shipping is per store parcel, so it is only quoted here when the whole cart is ONE physical line
   // (same endpoint/fee code as checkout); anything else keeps "Calculated at checkout".
@@ -357,6 +360,12 @@ export function CartPage() {
                           </span>
                         ))}
                       </div>
+                      {item.holidayBlocked && (
+                        <p role="alert" className="mb-2 inline-flex items-center gap-1.5 rounded-md bg-[#fff7e6] border border-[#f3d9a4] px-2 py-1 text-[12px] font-semibold text-[#7a4b00]">
+                          <CalendarOff size={12} aria-hidden /> <AwayTextFromServer text={item.holidayText} />
+                          <span className="font-normal">Remove it to check out the rest.</span>
+                        </p>
+                      )}
                       <p className="text-[12px] text-slate mb-3 flex items-center gap-1.5 flex-wrap">
                         {member ? (
                           <>
@@ -526,9 +535,15 @@ export function CartPage() {
                         Items from {storeCarts.length} stores — one payment, a separate order from each store
                       </p>
                     )}
+                    {hasAwayItem && (
+                      <p role="alert" className="text-[12px] text-[#7a4b00] bg-[#fff7e6] border border-[#f3d9a4] rounded-lg px-3 py-2 text-center">
+                        Some items are from a store that is away. Remove them to continue.
+                      </p>
+                    )}
                     <Button
                       variant="primary" fullWidth
                       className="justify-between! px-5! py-[11px]! rounded-xl!"
+                      disabled={hasAwayItem}
                       onClick={() => navigate('/checkout')}
                     >
                       <span className="flex items-center gap-2">
@@ -595,6 +610,7 @@ export function CartPage() {
           </div>
           <Button
             variant="primary" size="md" className="justify-center flex-1 max-w-[220px]"
+            disabled={hasAwayItem}
             onClick={() => navigate('/checkout')}
           >
             Checkout <ChevronRight size={14} />

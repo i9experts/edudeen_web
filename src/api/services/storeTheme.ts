@@ -145,6 +145,10 @@ export interface StorePageFields {
   coverImage:      string | null;
   aboutBio:        string | null;
   educatorProfile: EducatorProfile | null;
+  /** Fixed-list chips (constants/storeTeaching.ts), shown in the storefront header after Publish. */
+  gradesServed:      string[];
+  subjects:          string[];
+  teachingLanguages: string[];
 }
 
 export function apiUpdateStorePageDraft(storeId: string, payload: Partial<StorePageFields>) {

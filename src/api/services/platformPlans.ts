@@ -64,6 +64,8 @@ export interface EntitlementsSummary {
   maxProducts: { limit: number; used: number; allowed: boolean };
   maxStaffAccounts: { limit: number; used: number; allowed: boolean };
   maxPosLocations: { limit: number; used: number; allowed: boolean };
+  /** Promotion requests in progress vs the plan's allowance (-1 = unlimited). Absent on an older API. */
+  maxActivePromotions?: { limit: number; used: number; allowed: boolean };
   aiCredits: { monthlyAllowance: number; balance: number };
   transactionFeeRate: number;
   dedicatedAccountManager: boolean;
@@ -79,7 +81,7 @@ interface ApiResponse<T> { success: boolean; message?: string; data: T }
 /** Can this signed-in account still start the one-time free trial? */
 export function apiFreeTrialEligibility() {
   return cachedRequest('free-trial-eligibility', 5000, () =>
-    client.get<never, ApiResponse<{ eligible: boolean; hasSellerAccount?: boolean; hasBuyerAccount?: boolean }>>(`${BASE}/free-trial-eligibility`));
+    client.get<never, ApiResponse<{ eligible: boolean; trialUsedAt?: string | null; hasSellerAccount?: boolean; hasBuyerAccount?: boolean }>>(`${BASE}/free-trial-eligibility`));
 }
 
 export function apiBrowsePlatformPlans() {
