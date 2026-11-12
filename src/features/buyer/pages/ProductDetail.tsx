@@ -864,29 +864,15 @@ export function ProductDetail() {
           <PlacementBanner placement="productPage" className="mb-6 sm:!aspect-[4/1] lg:!aspect-[6/1]" />
 
           {/* ── Gallery + Purchase panel ─────────────────────────────────────── */}
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-6 items-start min-w-0 mb-8">
-            <div className="min-w-0 flex flex-col gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,380px)_minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,460px)_minmax(0,1fr)_320px] gap-6 items-start min-w-0 mb-8">
+            {/* Left: pictures (sticky, Amazon style) */}
+            <div className="min-w-0 lg:sticky lg:top-20">
               <ImageGallery images={allImages} name={product.name} video={product.video ?? null} />
-              {/* Desktop: facts sit under the image (fills the column next to the buy panel). Phones get the full-width row below. */}
-              <div className="hidden lg:block">
-                <ProductFacts product={product} subject={subCategory?.name ?? category?.name ?? null} className="" />
-              </div>
-              {isDesktop && (
-                <ReviewsCard innerRef={belowRef} show={belowFold} productId={product._id} storeName={storeData?.name ?? product.storeName ?? product.sellerName} canReview={product.canReview} />
-              )}
             </div>
 
-            {/* Sticky wrapper's "stick range" is bounded by its own parent —
-                that parent must be exactly this grid row (matched in height
-                to the taller of the two columns via items-start), NOT a
-                container that also includes the tabs section below. Nesting
-                the tabs div inside the same flex-col as this previously made
-                the purchase panel stay pinned for the tabs section's entire
-                scroll range too, overlapping it (see the Buy Now button
-                rendering underneath the tabs card while scrolling). */}
-            <div className="lg:sticky lg:top-20 min-w-0">
-              <Card padding="none">
-                <div className="px-6 pt-6 pb-0">
+            {/* Centre: title, price, what you get, options, facts, reviews */}
+            <div className="min-w-0 flex flex-col gap-4">
+              <div>
                   <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
                     <Badge color="orange">{typeLabel}</Badge>
                     {/* Discount/campaign badges grouped on the opposite corner
@@ -986,33 +972,7 @@ export function ProductDetail() {
                     </p>
                   )}
                   </div>
-
-                  {/* Stock / delivery status */}
-                  <div className={clsx(
-                    'inline-flex w-fit items-center gap-[6px] rounded-full border px-3 py-[6px] mb-3 text-[12px] font-semibold',
-                    stock <= 0 ? 'border-[#fecdd3] bg-[#fff0f5] text-error'
-                      : stock <= 5 ? 'border-amber-200 bg-amber-50 text-amber-600'
-                      : 'border-[#cfeeda] bg-success-bg text-success',
-                  )}>
-                    <CheckCircle size={13} />
-                    {stock <= 0 ? 'Out of stock' : isCourse ? 'Available — start learning right after enrolling' : isDigital ? t('Available — instant delivery') : stock <= 5 ? `Only ${stock} left in stock` : 'In stock'}
-                  </div>
-
-                  <DeliveryBuyBox productId={product._id} variantId={activeVariant?._id} quantity={qty} isPhysical={isPhysical} isCourse={isCourse} />
-
-                  {isDigital && product.digital?.previewAvailable && (
-                    <div className="flex gap-2 mb-3">
-                      {product.digital?.previewAvailable && (
-                        <Button
-                          variant="outline" size="md" fullWidth className="justify-center flex-1"
-                          onClick={() => { setPreviewOpen(true); loadPreview(); }}
-                        >
-                          <Eye size={14} className="inline align-middle me-[6px]" /> {t('Preview')}
-                        </Button>
-                      )}
-                    </div>
-                  )}
-
+              </div>
                   {/* What you get — the one place digital files / format / license / download facts are shown above the fold. */}
                   {isDigital && format === 'download' && (fileDetails.length > 0 || (product.digital?.fileFormats?.length ?? 0) > 0) && (() => {
                     const formats = product.digital?.fileFormats ?? [];
@@ -1055,9 +1015,44 @@ export function ProductDetail() {
                       </div>
                     );
                   })()}
+              <VariantSelector variants={variants} selected={activeVariant} onSelect={setSelectedVariant} />
+              <div className="hidden lg:block">
+                <ProductFacts product={product} subject={subCategory?.name ?? category?.name ?? null} className="" />
+              </div>
+              {isDesktop && (
+                <ReviewsCard innerRef={belowRef} show={belowFold} productId={product._id} storeName={storeData?.name ?? product.storeName ?? product.sellerName} canReview={product.canReview} />
+              )}
+            </div>
 
-                  <VariantSelector variants={variants} selected={activeVariant} onSelect={setSelectedVariant} />
+            {/* Right: buy box (sticky) */}
+            <div className="lg:sticky lg:top-20 min-w-0">
+              <Card padding="none">
+                <div className="px-5 pt-5 pb-0">
+                  {/* Stock / delivery status */}
+                  <div className={clsx(
+                    'inline-flex w-fit items-center gap-[6px] rounded-full border px-3 py-[6px] mb-3 text-[12px] font-semibold',
+                    stock <= 0 ? 'border-[#fecdd3] bg-[#fff0f5] text-error'
+                      : stock <= 5 ? 'border-amber-200 bg-amber-50 text-amber-600'
+                      : 'border-[#cfeeda] bg-success-bg text-success',
+                  )}>
+                    <CheckCircle size={13} />
+                    {stock <= 0 ? 'Out of stock' : isCourse ? 'Available — start learning right after enrolling' : isDigital ? t('Available — instant delivery') : stock <= 5 ? `Only ${stock} left in stock` : 'In stock'}
+                  </div>
 
+                  <DeliveryBuyBox productId={product._id} variantId={activeVariant?._id} quantity={qty} isPhysical={isPhysical} isCourse={isCourse} />
+
+                  {isDigital && product.digital?.previewAvailable && (
+                    <div className="flex gap-2 mb-3">
+                      {product.digital?.previewAvailable && (
+                        <Button
+                          variant="outline" size="md" fullWidth className="justify-center flex-1"
+                          onClick={() => { setPreviewOpen(true); loadPreview(); }}
+                        >
+                          <Eye size={14} className="inline align-middle me-[6px]" /> {t('Preview')}
+                        </Button>
+                      )}
+                    </div>
+                  )}
                   {!isDigital && stock > 0 && (
                     <div className="flex items-center justify-between mb-4">
                       <span className="text-[12px] font-semibold text-charcoal">Quantity</span>
