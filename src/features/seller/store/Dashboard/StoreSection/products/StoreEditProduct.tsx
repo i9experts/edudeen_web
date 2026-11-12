@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams, useLocation } from 'react-router-dom';
 import { AlertCircle } from 'lucide-react';
 import { useStoreWorkspace, StorePageHeader } from '@/components/layouts/StoreLayout';
 import { UrduCopyCard } from '@/components/ai/UrduCopyCard';
+import { ProductSearchPreview } from './ProductSearchPreview';
 import {
   apiGetMyProductById, apiEditPhysicalProduct, apiEditDigitalProduct, apiUpdateVariant,
   type StoreProduct, type ProductVariant,
@@ -325,6 +326,18 @@ export default function StoreEditProduct() {
   }, [loaded, cur, pType, phys.stock, phys.shippingWeight, phys.pkgL, phys.pkgW, phys.pkgH,store?.baseCurrency, dig.sampleFile, dig.tiers, delivery, learning, attrDefs, attributeValues, premiumPct, premiumOptOut, campaignIds, premiumTerms, storePremiumPct, offerFlags]);
 
   const wiz = useWizard(issues, 'Edit', [0, 1, 2, 3, 4, 5]);
+
+  // Deep link from Search Visibility ("Fix"): ?step=<0-5>&field=<element id> opens that step and focuses the field, once.
+  const deepLinked = useRef(false);
+  useEffect(() => {
+    if (!loaded || deepLinked.current) return;
+    deepLinked.current = true;
+    const q = new URLSearchParams(window.location.search);
+    const stepN = Number(q.get('step'));
+    const fieldId = q.get('field') ?? undefined;
+    if (Number.isInteger(stepN) && stepN >= 0 && stepN <= 5 && /^[\w-]{1,40}$/.test(fieldId ?? 'x')) wiz.go(stepN, fieldId);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loaded]);
   // A banner raised by a failed Save/Publish check disappears as soon as that problem is fixed.
   const validationMsg = useRef('');
   useEffect(() => {
@@ -508,7 +521,18 @@ export default function StoreEditProduct() {
               addTag={addTag}
               setStatus={val => { if (pType === 'physical') sp('status', val); else sd('status', val); if (val === 'scheduled') setShowScheduleModal(true); }}
               openSchedule={() => setShowScheduleModal(true)} summaryRows={summaryRows}
-              basicsExtra={<UrduCopyCard storeId={storeId} productId={productId} />}
+              basicsExtra={<>
+                <ProductSearchPreview
+                  storeId={storeId} productId={productId} name={cur.name} description={cur.description}
+                  image={cur.images[0] ?? null} storeName={store?.name}
+                  facts={{
+                    isPhysical: pType === 'physical', imageCount: cur.images.filter(Boolean).length,
+                    classFrom: learning.classFrom, classTo: learning.classTo, hasSubject: !!cur.subCategoryId,
+                    language: learning.language, boardCount: learning.curricula.length,
+                  }}
+                />
+                <UrduCopyCard storeId={storeId} productId={productId} />
+              </>}
               deliveryExtra={delivery.format === 'course' && becomingCourse ? (
                 <p className="mt-3 mb-0 text-[12.5px] text-graphite rounded-lg bg-cream px-3 py-2">Save the changes first — it is saved as a draft and the course builder opens right after, where you add lessons and publish.</p>
               ) : delivery.format === 'course' ? (

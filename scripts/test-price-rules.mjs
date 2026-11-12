@@ -1,4 +1,4 @@
-import { normalizeTitle, titleError, vagueTitleWarning, titleClassConflict, classRangeError, findContactInfo, contactWarning } from '../src/features/seller/store/Dashboard/StoreSection/products/productQuality.ts';
+import { normalizeTitle, titleError, vagueTitleWarning, titleClassConflict, classRangeError, findContactInfo, contactWarning, searchVisibility } from '../src/features/seller/store/Dashboard/StoreSection/products/productQuality.ts';
 // Run: npm run test:rules  (Node 22.6+/24 strips the TypeScript types itself; no test runner needed)
 import assert from 'node:assert/strict';
 import { weightError, toggleRemember, weightTextError, weightToStored, weightFromStored, stockError, parseWeightKg, validatePrices, descriptionError, premiumConflict, maxCompareAtForPremium } from '../src/features/seller/store/Dashboard/StoreSection/products/priceRules.ts';
@@ -144,4 +144,16 @@ t('contact info: flags phones/emails/whatsapp, ignores ISBN, prices, years, page
   assert.match(contactWarning('x', 'Order 03001234567'), /sent to review/);
 });
 
+const sv = { name: 'Class 5 English Grammar Workbook - Complete Practice', description: 'x'.repeat(160), isPhysical: false, imageCount: 3, classFrom: 'class-5', classTo: 'class-5', hasSubject: true, language: 'en', boardCount: 1 };
+t('searchVisibility: complete = 100', () => { const r = searchVisibility(sv); assert.equal(r.score, 100); assert.deepEqual(r.missing, []); });
+t('searchVisibility: blank SEO meta uses product title, not 0', () => {
+  const r = searchVisibility({ ...sv, name: 'English vocabulary Book', seoTitle: '', seoDescription: null });
+  assert.ok(r.score > 60); assert.deepEqual(r.missing.map(m => m.key), ['title']); assert.equal(r.missing[0].fix.fieldId, 'ap-name');
+});
+t('searchVisibility: fixes map to wizard steps', () => {
+  const r = searchVisibility({ ...sv, imageCount: 1, classFrom: null, classTo: null, hasSubject: false, language: null, boardCount: 0 });
+  const by = Object.fromEntries(r.missing.map(m => [m.key, m.fix]));
+  assert.deepEqual(by.images, { step: 1, fieldId: 'fld-photos' }); assert.deepEqual(by.subject, { step: 3, fieldId: 'fld-category' }); assert.deepEqual(by.board, { step: 3, fieldId: 'fld-learning' });
+});
+t('searchVisibility: physical skips class + board', () => { assert.equal(searchVisibility({ ...sv, isPhysical: true, classFrom: null, classTo: null, boardCount: 0 }).score, 100); });
 console.log(`\n${n} checks passed`);

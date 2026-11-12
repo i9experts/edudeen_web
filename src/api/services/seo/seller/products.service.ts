@@ -100,6 +100,27 @@ export function apiSeoProductsList(storeId: string, params: SeoProductsListParam
   return client.get<never, ApiResponse<SeoProductsListData>>(`${ENDPOINTS.SEO.SELLER.PRODUCTS.LIST(storeId)}${qs(params)}`);
 }
 
+export interface SearchMissingItem { key: string; label: string; fix: { step: number; fieldId: string } }
+export interface SearchVisibilityRow { _id: string; name: string; slug: string; image: string | null; score: number; missing: SearchMissingItem[] }
+export interface SearchVisibilityData {
+  items: SearchVisibilityRow[];
+  pagination: SeoProductsPagination;
+  summary: { totalProducts: number; needFix: number; avgScore: number | null };
+}
+
+/** Products that still need something to be easier to find (lowest score first). */
+export function apiSearchVisibility(storeId: string, params: { page?: number; limit?: number } = {}) {
+  return client.get<never, ApiResponse<SearchVisibilityData>>(`${ENDPOINTS.SEO.SELLER.PRODUCTS.VISIBILITY(storeId)}${qs(params)}`);
+}
+
+/** 1 AI credit; returns a draft only (nothing saved). */
+export function apiDraftSearchText(storeId: string, productId: string, language: 'en' | 'ur') {
+  return client.post<never, ApiResponse<{ metaTitle: string; metaDescription: string; creditsCost: number }>>(
+    ENDPOINTS.SEO.SELLER.AI.PRODUCT_DRAFT(storeId), { productId, language },
+    { headers: { 'Idempotency-Key': `seo-draft:${productId}:${language}:${Date.now()}` } },
+  );
+}
+
 export function apiSeoProductGetById(storeId: string, productId: string) {
   return client.get<never, ApiResponse<ProductSeoMeta>>(ENDPOINTS.SEO.SELLER.PRODUCTS.GET_BY_ID(storeId, productId));
 }

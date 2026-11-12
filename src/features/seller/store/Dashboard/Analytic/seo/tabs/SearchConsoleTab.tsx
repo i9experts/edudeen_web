@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AnalyticsErrorState } from '@/components/comman/analytics/AnalyticsErrorState';
+import { PlanLockedCard, isPlanLockedError } from '@/components/comman/ui/PlanLockedCard';
 import { IntegrationCard, type IntegrationProvider } from '@/components/comman/seo';
 import { useSeoIntegrations, useSeoIntegrationMutations } from '@/hooks/seller/seo/useSeoIntegrations';
 import {
@@ -22,7 +23,10 @@ export function SearchConsoleTab({ storeId }: SearchConsoleTabProps) {
   const { getAuthUrl, disconnect, submitting, error: actionError } = useSeoIntegrationMutations();
   const [busyProvider, setBusyProvider] = useState<string | null>(null);
 
-  if (error) return <AnalyticsErrorState message={error} onRetry={refetch} />;
+  if (error) {
+    if (isPlanLockedError(error)) return <PlanLockedCard storeId={storeId} feature="Search Console" />;
+    return <AnalyticsErrorState message={error} onRetry={refetch} />;
+  }
 
   const rowFor = (provider: IntegrationProvider) => data?.find(r => r.provider === provider);
 

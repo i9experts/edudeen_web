@@ -916,6 +916,7 @@ export const ENDPOINTS = {
         UPDATE:             (storeId: string, productId: string) => `/api/store/${storeId}/seo/products/${productId}`,
         BULK_APPLY_TEMPLATE:(storeId: string) => `/api/store/${storeId}/seo/products/bulk-apply-template`,
         EXPORT:             (storeId: string) => `/api/store/${storeId}/seo/products/export`,
+        VISIBILITY:         (storeId: string) => `/api/store/${storeId}/seo/products/visibility`,
       },
 
       CONTENT: {
@@ -938,6 +939,7 @@ export const ENDPOINTS = {
       AI: {
         GENERATE:      (storeId: string) => `/api/store/${storeId}/seo/ai/generate`,
         GENERATE_BULK: (storeId: string) => `/api/store/${storeId}/seo/ai/generate-bulk`,
+        PRODUCT_DRAFT: (storeId: string) => `/api/store/${storeId}/seo/ai/product-draft`,
         SUGGESTIONS:   (storeId: string) => `/api/store/${storeId}/seo/ai/suggestions`,
       },
 

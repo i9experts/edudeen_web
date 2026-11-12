@@ -1,4 +1,7 @@
+import { useEffect, useState } from 'react';
 import { Play, History } from 'lucide-react';
+import { useToast } from '@/contexts/ToastContext';
+import { PlanLockedCard, isPlanLockedError } from '@/components/comman/ui/PlanLockedCard';
 import { Card } from '@/components/comman/ui/Card';
 import { Button } from '@/components/comman/ui/Button';
 import { TableCardSkeleton } from '@/components/comman/analytics/AnalyticsSkeletons';
@@ -12,12 +15,26 @@ interface AuditTabProps {
 export function AuditTab({ storeId }: AuditTabProps) {
   const { data: latest, loading, error, refetch } = useLatestSeoAudit(storeId);
   const { data: history, loading: historyLoading } = useSeoAuditHistory(storeId, { page: 1, limit: 10 });
-  const { runAudit, submitting } = useRunSeoAudit();
+  const { runAudit, submitting, error: runError } = useRunSeoAudit();
+  const toast = useToast();
+  const [locked, setLocked] = useState(false);
 
   const handleRun = async () => {
     const ok = await runAudit(storeId);
-    if (ok) setTimeout(refetch, 1500);
+    if (ok) {
+      setLocked(false);
+      setTimeout(refetch, 1500);
+    }
   };
+
+  // Surface every failed run: plan gate -> upgrade card, anything else -> toast.
+  useEffect(() => {
+    if (!runError) return;
+    if (isPlanLockedError(runError)) setLocked(true);
+    else toast.error(runError);
+  }, [runError]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (locked) return <PlanLockedCard storeId={storeId} feature="SEO Audit" />;
 
   if (error && !loading) {
     return (

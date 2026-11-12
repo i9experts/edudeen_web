@@ -37,7 +37,14 @@ function focusField(id?: string) {
     if (!el) return;
     const focusable = el.matches('input,textarea,select,button,[tabindex]') ? el : el.querySelector<HTMLElement>('input,textarea,select,button,[tabindex]');
     focusable?.focus({ preventScroll: true });
-    el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    // Tall blocks (e.g. the whole "Category & details" card) must show their TOP, below the sticky page header +
+    // step rail; centring them pushed the heading behind the sticky bars. Short fields are still centred.
+    if (el.getBoundingClientRect().height > window.innerHeight * 0.45) {
+      el.style.scrollMarginTop = '200px'; // works for whichever element is the scroll container
+      el.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    } else {
+      el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
   }, 60);
 }
 

@@ -171,7 +171,7 @@ export function ProductFormSteps(p: ProductFormStepsProps) {
       {/* ── 2. Photos & files ────────────────────────────────────────── */}
       <StepPanel active={step === 1}>
         {banner(1)}
-        <Block title="Photos" need="recommended" hint="Up to 20 images - select several at once. The first image is the cover buyers see in search and on your shelf.">
+        <Block id="fld-photos" title="Photos" need="recommended" hint="Up to 20 images - select several at once. The first image is the cover buyers see in search and on your shelf.">
           <ProductPhotosUploader value={cur.images} onChange={urls => set('images', urls)} />
         </Block>
 
@@ -321,7 +321,7 @@ export function ProductFormSteps(p: ProductFormStepsProps) {
       {/* ── 4. Category & details ────────────────────────────────────── */}
       <StepPanel active={step === 3}>
         {banner(3)}
-        <Block title="Category" hint="Choose the category your product belongs to, then (optionally) narrower subcategories to help buyers browse.">
+        <Block id="fld-category" title="Category" hint="Choose the category your product belongs to, then (optionally) narrower subcategories to help buyers browse.">
           <SubcategoryField
             mainCategoryName={p.category.rootName}
             mainCategoryId={p.category.categoryId}

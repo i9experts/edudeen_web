@@ -13,13 +13,14 @@ import type { SeoProductListItem } from '@/api/services/seo/seller/products.serv
 interface ProductsTabProps {
   storeId: string;
   storeSlug?: string;
+  storeName?: string;
 }
 
-export function ProductsTab({ storeId, storeSlug }: ProductsTabProps) {
+export function ProductsTab({ storeId, storeSlug, storeName }: ProductsTabProps) {
   const [page, setPage] = useState(1);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [bulkOpen, setBulkOpen] = useState(false);
-  const [titleTemplate, setTitleTemplate] = useState('{{productName}} | ' + (storeSlug ?? 'My Store'));
+  const [titleTemplate, setTitleTemplate] = useState('{{productName}} | ' + (storeName?.trim() || 'My Store'));
   const [descriptionTemplate, setDescriptionTemplate] = useState('');
 
   const { data, loading, error, refetch } = useSeoProducts(storeId, { page, limit: 20 });
