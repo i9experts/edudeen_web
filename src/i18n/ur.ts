@@ -1986,6 +1986,8 @@ export const UR: Record<string, string> = {
   'Browse by subject': 'مضمون کے مطابق دیکھیں',
   'Shop by category': 'زمرے کے مطابق خریداری',
   'Shop all': 'سب دیکھیں',
+  'Featured collections': 'نمایاں مجموعے',
+  'Track order': 'آرڈر ٹریک کریں',
   'Save when you buy together': 'مل کر خریدیں اور بچت کریں',
   'Bundles and course packs': 'بنڈلز اور کورس پیکس',
   'What parents and teachers buy': 'والدین اور اساتذہ کیا خریدتے ہیں',

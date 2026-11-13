@@ -23,24 +23,18 @@ interface FooterLink {
   path?: string; // omit for links to pages that don't exist yet (rendered inert)
 }
 
-const SELLER_ONLY_COLUMNS = new Set(['Products', 'Solutions']);
+const SELLER_ONLY_COLUMNS = new Set(['For Sellers', 'Solutions']);
 const SELLER_ONLY_PATHS = new Set(['/sellers', '/pricing', '/onboard']);
 
 const FOOTER_COLUMNS: { heading: string; links: FooterLink[] }[] = [
   {
     heading: 'Shop',
     links: [
-      { label: 'My Orders',   path: '/account/orders' },
-      { label: 'Saved',       path: '/account/wishlist' },
+      { label: 'Shop by grade', path: '/?class=class-5' },
+      { label: 'Flash Sale',    path: '/#deals' },
+      { label: 'Track order',   path: '/account/orders' },
+      { label: 'Saved',         path: '/account/wishlist' },
       { label: 'Edudeen Premium', path: '/premium' },
-    ],
-  },
-  {
-    heading: 'Products',
-    links: [
-      { label: 'Store Builder', path: '/products/store-builder' },
-      { label: 'Analytics',     path: '/products/analytics' },
-      { label: 'Inventory',     path: '/products/inventory' },
     ],
   },
   {
@@ -64,8 +58,14 @@ const FOOTER_COLUMNS: { heading: string; links: FooterLink[] }[] = [
     heading: 'Company',
     links: [
       { label: 'About',       path: '/about' },
-      { label: 'For Sellers', path: '/sellers' },
-      { label: 'Pricing',     path: '/pricing' },
+    ],
+  },
+  {
+    heading: 'For Sellers',
+    links: [
+      { label: 'Sell on Edudeen', path: '/sellers' },
+      { label: 'Store Builder',   path: '/products/store-builder' },
+      { label: 'Pricing',         path: '/pricing' },
     ],
   },
   {

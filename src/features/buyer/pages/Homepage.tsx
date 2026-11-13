@@ -533,7 +533,7 @@ function HomeLanding() {
         <EditableDeals className="min-h-[56px] mb-8"><DealsBanner className="!px-0 !pt-0 mb-8" /></EditableDeals>
         </FeatureMaintenance>
 
-        <HomeCardGrid cards={homeCards.cards} />
+        <HomeCardGrid cards={homeCards.cards} loading={!homeCards.loaded} />
 
         
 
