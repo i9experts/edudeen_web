@@ -4,6 +4,9 @@ import { clsx } from 'clsx';
 import { ScrollRow } from '@/components/comman/ui/ScrollRow';
 import { Link } from 'react-router-dom';
 import { isPlainLeftClick } from '@/utils/productLink';
+import aboutTeachImg from '@/assets/about/about-teach.jpg';
+import aboutEducatorImg from '@/assets/about/about-educator.jpg';
+import aboutCheckoutImg from '@/assets/about/about-3.jfif';
 import { categoryPath } from '@/hooks/marketplace/useCategoryTree';
 import { TokenStorage } from '@/api/services/auth';
 import { ProductImage } from '@/components/comman/marketplace/ProductCard';
@@ -419,10 +422,10 @@ export function FeaturedSellersMegaContent({ topStores, onStoreClick }: {
 // grow evenly when there's room, `shrink-0`+`min-w` stops them shrinking
 // below legible size on a narrow screen instead — the row scrolls sideways
 // there rather than wrapping. ──
-const ABOUT_CARDS: { Icon: LucideIcon; title: string; description: string; path: string }[] = [
-  { Icon: Sparkles,    title: 'Why Edudeen',      description: 'One platform for books, courses and learning downloads.', path: '/' },
-  { Icon: ShieldCheck, title: 'Secure Checkout',  description: 'Payments handled by Edudeen, refunds on request.',    path: '/faq' },
-  { Icon: Store,       title: 'Sell on Edudeen',  description: 'Launch your own branded store — no coding.',        path: '/sellers' },
+const ABOUT_CARDS: { Icon: LucideIcon; title: string; description: string; path: string; img: string }[] = [
+  { Icon: Sparkles,    title: 'Why Edudeen',      description: 'One platform for books, courses and learning downloads.', path: '/',        img: aboutTeachImg },
+  { Icon: ShieldCheck, title: 'Secure Checkout',  description: 'Payments handled by Edudeen, refunds on request.',    path: '/faq',     img: aboutCheckoutImg },
+  { Icon: Store,       title: 'Sell on Edudeen',  description: 'Launch your own branded store — no coding.',        path: '/sellers', img: aboutEducatorImg },
 ];
 
 function AboutMegaContent({ onNavigate }: { onNavigate: (path: string) => void }) {
@@ -435,7 +438,7 @@ function AboutMegaContent({ onNavigate }: { onNavigate: (path: string) => void }
       <MegaSectionLabel action={{ label: 'Read our story', onClick: () => onNavigate('/about') }}>About Edudeen</MegaSectionLabel>
       <div className="flex flex-col lg:flex-row items-stretch gap-4 lg:gap-5">
         <div className="flex gap-3 sm:gap-4 overflow-x-auto scrollbar-hide -mx-4 px-4 pb-2 lg:mx-0 lg:px-0 lg:pb-0 lg:flex-1 lg:min-w-0">
-          {cards.map(({ Icon, title, description, path }, i) => (
+          {cards.map(({ Icon, title, description, path, img }, i) => (
             <Link
               key={title}
               to={path === '/sellers' ? '/become-a-seller' : path}
@@ -443,9 +446,10 @@ function AboutMegaContent({ onNavigate }: { onNavigate: (path: string) => void }
               style={{ animationDelay: `${i * 60}ms` }}
               className="dash-section-enter group no-underline flex-1 min-w-[190px] shrink-0 text-start bg-white border border-bone rounded-2xl overflow-hidden p-0 cursor-pointer transition-all duration-200 hover:-translate-y-[3px] hover:border-brand-orange/30 hover:shadow-[0_14px_28px_-14px_rgba(19,57,86,0.35)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange"
             >
-              <div className="px-4 pt-4 pb-4">
-                <span className="mb-3 flex size-9 items-center justify-center rounded-full bg-brand-pale-orange text-brand-royal">
-                  <Icon size={17} />
+              <img src={img} alt="" loading="lazy" className="h-[110px] w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]" />
+              <div className="px-4 pt-3 pb-4">
+                <span className="mb-2 flex size-8 items-center justify-center rounded-full bg-brand-pale-orange text-brand-royal">
+                  <Icon size={16} />
                 </span>
                 <p className="font-serif text-[16px] text-carbon leading-snug m-0 mb-1 group-hover:text-brand-orange transition-colors">{title}</p>
                 <p className="text-[12.5px] text-slate leading-[1.5] m-0 mb-2">{description}</p>

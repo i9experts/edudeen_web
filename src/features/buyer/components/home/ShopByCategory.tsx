@@ -29,7 +29,7 @@ function Tile({ node }: { node: CategoryNode }) {
           ? <img src={cloudinaryUrl(src, 400)} alt={node.name} loading="lazy" decoding="async" onError={() => setBrokenSrc(src)} onLoad={e => { if (e.currentTarget.naturalWidth < 2) setBrokenSrc(src); }} className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]" />
           : <CategoryArt name={node.name} className="w-full h-full" />}
       </div>
-      <p className="text-[13px] sm:text-sm text-carbon mt-1.5 mb-0 line-clamp-2 leading-snug group-hover:text-brand-royal group-hover:underline underline-offset-2">{node.name}</p>
+      <p className="text-[13px] sm:text-sm text-carbon mt-1.5 mb-0 line-clamp-2 min-h-[2.75em] leading-snug group-hover:text-brand-royal group-hover:underline underline-offset-2">{node.name}</p>
     </Link>
   );
 }
@@ -51,7 +51,7 @@ function CategoryCard({ node }: { node: CategoryNode }) {
   return (
     <article className="flex flex-col bg-white rounded-2xl border border-bone p-4 min-w-0">
       <div className="flex items-start justify-between gap-2 mb-3">
-        <h3 className="text-[17px] md:text-[19px] font-extrabold text-carbon leading-tight tracking-tight m-0 line-clamp-2">{node.name}</h3>
+        <h3 className="text-[17px] md:text-[19px] font-extrabold text-carbon leading-tight tracking-tight m-0 line-clamp-2 min-h-[2.5em]">{node.name}</h3>
         <Link to={to} aria-label={node.name} className="shrink-0 text-carbon hover:text-brand-royal mt-0.5">
           <svg aria-hidden viewBox="0 0 24 24" className="w-5 h-5 rtl:rotate-180" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 5 7 7-7 7" /></svg>
         </Link>

@@ -34,7 +34,7 @@ export interface TopBarStoreIdentity {
   slug?: string | null;
 }
 
-const BAR_BG = 'bg-[linear-gradient(100deg,#1f4f78_0%,#3f8a5e_38%,#66AD36_62%,#3f8a5e_82%,#1f4f78_100%)]';
+const BAR_BG = 'bg-[linear-gradient(100deg,#0F3354_0%,#174771_45%,#2F6AA8_100%)]';
 const LINK_CLS = 'shrink-0 whitespace-nowrap bg-transparent border-none p-0 text-[12.5px] font-bold text-white cursor-pointer hover:underline underline-offset-4';
 const Divider = ({ className }: { className?: string }) => <span className={clsx('w-px h-4 bg-white/30', className)} aria-hidden />;
 

@@ -1,4 +1,3 @@
-import { useT } from '@/contexts/languageCtx';
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
@@ -29,7 +28,6 @@ function WishlistThumb({ images, name }: { images?: string[]; name: string }) {
 // when there's something in it, or a centered "wishlist is empty" illustration
 // + a single "Go to Wishlist" action when there isn't.
 export function MiniWishlist() {
-  const t = useT();
   const { currency, convert } = useCurrencyPreference();
   const navigate = useNavigate();
   const ref = useRef<HTMLDivElement>(null);
@@ -79,15 +77,9 @@ export function MiniWishlist() {
         aria-expanded={open}
         className="relative h-11 min-w-11 md:h-9 md:min-w-9 px-0 md:px-1 flex items-center justify-center gap-[5px] bg-transparent border-none cursor-pointer shrink-0 whitespace-nowrap text-[15px] text-carbon hover:text-brand-orange transition-colors outline-none rounded-md focus-visible:ring-2 focus-visible:ring-brand-orange/40"
       >
-        <Heart size={15} className={wishlistCount > 0 ? 'text-brand-orange fill-brand-orange' : 'fill-none'} />
-        <span className="hidden md:inline">{t('Saved')}</span>
+        <Heart size={24} className={wishlistCount > 0 ? 'text-brand-orange fill-brand-orange' : 'fill-none'} />
         {wishlistCount > 0 && (
-          <b className="hidden md:inline text-[12px] font-bold bg-mist rounded-full px-[6px] py-[2px] leading-none">
-            {wishlistCount > 99 ? '99+' : wishlistCount}
-          </b>
-        )}
-        {wishlistCount > 0 && (
-          <span className="md:hidden absolute top-[-2px] end-[-4px] min-w-[17px] h-[17px] rounded-[9px] bg-brand-orange text-white text-[12px] font-bold leading-[17px] text-center px-1">
+          <span className="absolute top-[-2px] end-[-4px] min-w-[17px] h-[17px] rounded-[9px] bg-brand-orange text-white text-[12px] font-bold leading-[17px] text-center px-1">
             {wishlistCount > 99 ? '99+' : wishlistCount}
           </span>
         )}

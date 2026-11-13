@@ -35,7 +35,7 @@ export function FiltersButton({ count, onClick }: { count: number; onClick: () =
       type="button"
       onClick={onClick}
       aria-haspopup="dialog"
-      className="inline-flex items-center gap-2 rounded-full bg-[#eef1f3] hover:bg-[#e3e8ec] px-5 py-[10px] text-[15px] font-semibold text-carbon border-none cursor-pointer transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange"
+      className="inline-flex items-center gap-2 rounded-full bg-[#FBF4CC] hover:bg-[#F5E9A6] px-5 py-[10px] text-[15px] font-semibold text-carbon border-none cursor-pointer transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange"
     >
       <SlidersHorizontal size={17} strokeWidth={2.2} />
       Filters
@@ -187,7 +187,7 @@ export function FiltersDrawer({
     <>
       <div
         className={clsx(
-          'fixed inset-0 z-[59] bg-[#0c1b29]/60 transition-opacity duration-300',
+          'fixed inset-0 z-[59] bg-[#0c1b29]/10 transition-opacity duration-300',
           open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none',
         )}
         onClick={onClose}
@@ -200,7 +200,7 @@ export function FiltersDrawer({
         aria-hidden={!open}
       inert={!open}
         className={clsx(
-          'fixed top-0 start-0 h-full w-[min(510px,100vw)] z-[60] bg-white shadow-2xl flex flex-col',
+          'fixed top-0 start-0 h-full w-[min(510px,100vw)] z-[60] bg-[#FBF4CC]/75 shadow-2xl flex flex-col',
           'transition-transform duration-300 ease-out',
           open ? 'translate-x-0' : '-translate-x-full rtl:translate-x-full',
         )}

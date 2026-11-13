@@ -33,7 +33,7 @@ function TileView({ tile }: { tile: HomeCardTile }) {
           ? <img src={cloudinaryUrl(src, 400)} alt={label} loading="lazy" decoding="async" onError={() => setBrokenSrc(src)} onLoad={e => { if (e.currentTarget.naturalWidth < 2) setBrokenSrc(src); }} className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]" />
           : <CategoryArt name={label || 'Resources'} className="w-full h-full" />}
       </div>
-      {label && <p className="text-[13px] sm:text-sm text-carbon mt-1.5 mb-0 line-clamp-2 leading-snug group-hover:text-brand-royal group-hover:underline underline-offset-2">{label}</p>}
+      {label && <p className="text-[13px] sm:text-sm text-carbon mt-1.5 mb-0 line-clamp-2 min-h-[2.75em] leading-snug group-hover:text-brand-royal group-hover:underline underline-offset-2">{label}</p>}
     </SmartLink>
   );
 }
@@ -48,7 +48,7 @@ function CardView({ card }: { card: HomeCard }) {
   return (
     <article className="flex flex-col bg-white rounded-2xl border border-bone p-4 min-w-0">
       <div className="flex items-start justify-between gap-2 mb-3">
-        <h2 className="text-[17px] md:text-[19px] font-extrabold text-carbon leading-tight tracking-tight m-0 line-clamp-2">{card.title}</h2>
+        <h2 className="text-[17px] md:text-[19px] font-extrabold text-carbon leading-tight tracking-tight m-0 line-clamp-2 min-h-[2.5em]">{card.title}</h2>
         {card.link && (
           <SmartLink to={card.link} className="shrink-0 text-carbon hover:text-brand-royal no-underline mt-0.5" label={t(cta)}>{chevron}</SmartLink>
         )}

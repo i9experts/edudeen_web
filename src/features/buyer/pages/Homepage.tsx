@@ -776,7 +776,7 @@ function HomeLanding() {
         {/* ── Collections ── */}
         <section className={clsx('mb-12 grid grid-cols-1 gap-[22px]', !isBuyer && 'md:grid-cols-2')}>
           <EditableHomeSection section="feature" defaults={eff} label="feature block">
-          <div className="rounded-[14px] p-7 bg-[#edf5e7]">
+          <div className="rounded-[14px] p-7 bg-[#eaf2f8]">
             <p className="text-[12px] font-bold tracking-[0.15em] uppercase text-brand-royal mb-[13px]">{eff.featureEyebrow}</p>
             <h2 className="font-serif font-normal text-[27px] leading-[1.2] text-carbon mb-[10px]">{eff.featureHeading}</h2>
             <p className="text-[14px] text-carbon max-w-[390px] mb-4">

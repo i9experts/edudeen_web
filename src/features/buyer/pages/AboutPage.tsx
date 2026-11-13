@@ -10,8 +10,8 @@ import { Reveal, RevealStagger } from '@/components/comman/motion/Reveal';
 import { MagneticButton } from '@/components/comman/motion/MagneticButton';
 import { SectionHeading } from '@/components/comman/motion/SectionHeading';
 import { PremiumCard } from '@/components/comman/motion/PremiumCard';
-import aboutImg1 from '@/assets/about/about-1.jfif';
-import aboutImg2 from '@/assets/about/about-2.jfif';
+import aboutImg1 from '@/assets/about/about-teach.jpg';
+import aboutImg2 from '@/assets/about/about-educator.jpg';
 
 const SERIF = "Georgia, 'Times New Roman', serif";
 
