@@ -2517,6 +2517,7 @@ const urOr = (s: string) => UR[s] ?? s;
 
 /** Strings with numbers or names in them — `m` is the RegExp match. */
 export const UR_PATTERNS: [RegExp, (m: RegExpMatchArray) => string][] = [
+  [/^View all (\d+) resources$/, m => `تمام ${m[1]} وسائل دیکھیں`],
   [/^Shipment (\d+) of (\d+) - (.+)$/, m => `شپمنٹ ${m[1]} از ${m[2]} - ${m[3]}`],
   [/^Counted from (.+)$/, m => `${m[1]} سے شمار کیا گیا`],
   [/^(\d+) need attention$/, m => `${m[1]} پر توجہ درکار ہے`],

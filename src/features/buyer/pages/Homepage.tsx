@@ -77,7 +77,7 @@ const SORT_TO_API: Record<SortFilter, MarketplaceSortBy | undefined> = {
   high:     'price_desc',
 };
 
-const PAGE_SIZE = 100;
+const PAGE_SIZE = 12;
 // The API caps a page at 50 — the pool used when a filter has to run in the browser.
 const CLIENT_POOL = 100;
 
@@ -371,6 +371,17 @@ function HomeLanding() {
   const products = clientSide ? narrowed.slice(0, limit) : narrowed;
   const total = clientSide ? narrowed.length : serverTotal;
 
+  // "View all N resources": the browse page with the same subject tab / search / sale / free filter.
+  const viewAllUrl = useMemo(() => {
+    const base = subjectTab?.node ? categoryPath(subjectTab.node) : '/?browse=1';
+    const extra = new URLSearchParams();
+    if (searchQ) extra.set('search', searchQ);
+    if (campaignId) extra.set('campaign', campaignId);
+    if (freeOnly) extra.set('free', '1');
+    const qs = extra.toString();
+    return qs ? `${base}${base.includes('?') ? '&' : '?'}${qs}` : base;
+  }, [subjectTab, searchQ, campaignId, freeOnly]);
+
   const resetFilters = () => {
     setSubject(null); setLevel(''); setLanguage(''); setSort('featured'); setFreeOnly(false); setFormat(''); setFilters(EMPTY_FILTERS);
     if (searchQ) clearSearch();
@@ -605,7 +616,18 @@ function HomeLanding() {
         />
         {/* ── Picked for the active child (My children): right under Bestsellers ── */}
         <PickedForChildRail renderCard={renderResourceCard} />
-        {/* ── Browse everything: category tabs + filters + 12 per page with "Show more". Sits right under Bestsellers. ── */}
+        {/* ── Featured sellers (quality filter + min 4 happen in the API / MIN_RAIL_ITEMS; no 'verified' badge exists any more) ── */}
+        {topStores.length >= MIN_RAIL_ITEMS && (
+          <section className="mb-12">
+            <SectionHead eyebrow="Meet the makers" title="Featured sellers" />
+            <ScrollRow className="flex gap-3 pb-1 pt-1">
+              {topStores.map(s => (
+                <StoreFeatureCard key={s.storeId} store={s} onClick={slug => navigate(getStorePagePath(slug))} />
+              ))}
+            </ScrollRow>
+          </section>
+        )}
+        {/* ── Browse everything: category tabs + filters, first 12, then "View all N resources". ── */}
         <section ref={resourcesRef} id="browse" className="scroll-mt-[150px] mb-12">
           <SectionHead
             eyebrow={searchQ ? 'Search results' : campaignId ? (activeCampaign?.name ?? 'Sale') : subjectTab ? subjectTab.label : 'Your next teaching moment'}
@@ -676,15 +698,15 @@ function HomeLanding() {
                 : products.map(renderResourceCard)}
           </div>
 
-          {products.length > 0 && products.length < total && (
+          {/* No load-more on the landing page: the full catalogue lives on the browse page, with the same tab / category. */}
+          {products.length > 0 && total > products.length && (
             <div className="flex justify-center mt-9">
-              <button
-                onClick={() => setLimit(l => l + PAGE_SIZE)}
-                disabled={loading}
-                className="bg-white text-brand-orange border border-[#c5d2db] rounded-lg px-5 py-[11px] text-[14px] font-bold cursor-pointer disabled:opacity-60"
+              <Link
+                to={viewAllUrl}
+                className="inline-block bg-white text-brand-orange border border-[#c5d2db] rounded-lg px-5 py-[11px] text-[14px] font-bold no-underline hover:brightness-95"
               >
-                {loading ? 'Loading…' : 'More'}
-              </button>
+                {`View all ${total} resources`}
+              </Link>
             </div>
           )}
 
@@ -772,18 +794,6 @@ function HomeLanding() {
             </section>
           );
         })}
-
-        {/* ── Featured sellers ── */}
-        {topStores.length >= MIN_RAIL_ITEMS && (
-          <section className="mb-12">
-            <SectionHead eyebrow="Meet the makers" title="Featured sellers" />
-            <ScrollRow className="flex gap-3 pb-1 pt-1">
-              {topStores.map(s => (
-                <StoreFeatureCard key={s.storeId} store={s} onClick={slug => navigate(getStorePagePath(slug))} />
-              ))}
-            </ScrollRow>
-          </section>
-        )}
 
         {/* ── Collections ── */}
         <section className={clsx('mb-12 grid grid-cols-1 gap-[22px]', !isBuyer && 'md:grid-cols-2')}>
