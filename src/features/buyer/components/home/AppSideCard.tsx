@@ -27,8 +27,9 @@ function QrTile({ href, dataUrl, className }: { href: string; dataUrl: string | 
 export function AppSideCard({ className }: { className?: string }) {
   const googlePlay = useGooglePlayUrl();
   const appStore = useAppStoreUrl();
-  // No public store link yet: the QR still works and opens the site.
-  const qrTarget = googlePlay || appStore || (typeof window !== 'undefined' ? window.location.origin : 'https://edudeen.com');
+  // The QR only exists once a PUBLIC store link does (same rule as the badges: no link = "Coming soon", never a QR to the site).
+  const qrTarget = googlePlay || appStore;
+  const hasLink = !!qrTarget;
   const qrDataUrl = useAppQrDataUrl(qrTarget);
 
   return (
@@ -43,8 +44,9 @@ export function AppSideCard({ className }: { className?: string }) {
             <StoreBadgeChip platform="ios" compact onLight />
             <StoreBadgeChip platform="android" compact onLight />
           </div>
+          {!hasLink && <p className="text-[12px] font-semibold text-[#4A6A88] mt-1.5 mb-0">Coming soon</p>}
         </div>
-        <QrTile href={qrTarget} dataUrl={qrDataUrl} className="hidden sm:block w-[92px] shrink-0" />
+        {/* The QR card is lg+ only; below lg this strip stays a one-line promo. */}
       </div>
 
       {/* ── lg+: fills the banner's height ── */}
@@ -71,8 +73,14 @@ export function AppSideCard({ className }: { className?: string }) {
 
         {/* QR takes the leftover space */}
         <div className="flex-1 min-h-0 w-full flex flex-col items-center justify-center gap-1">
-          <QrTile href={qrTarget} dataUrl={qrDataUrl} className="max-h-[calc(100%-18px)] max-w-[88%]" />
-          <p className="text-[12px] text-[#4A6A88] leading-none shrink-0">Scan to download</p>
+          {hasLink ? (
+            <>
+              <QrTile href={qrTarget} dataUrl={qrDataUrl} className="max-h-[calc(100%-18px)] max-w-[88%]" />
+              <p className="text-[12px] text-[#4A6A88] leading-none shrink-0">Scan to download</p>
+            </>
+          ) : (
+            <p className="text-[13px] font-semibold text-[#4A6A88] m-0">Mobile app coming soon</p>
+          )}
         </div>
 
         <div className="hidden [@container(min-height:250px)]:flex flex-col gap-1.5 w-full shrink-0 [&>*]:w-full [&>*>div]:justify-center">

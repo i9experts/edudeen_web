@@ -41,6 +41,8 @@ import { Star, Quote, BadgeCheck, Zap, Crown } from 'lucide-react';
 import { apiGetTestimonials, type Testimonial } from '@/api/services/testimonials';
 import { apiGetTopStores, type PublicStoreListItem } from '@/api/services/store';
 import { PlatformStatsSection } from '@/features/buyer/components/PlatformStatsSection';
+import { HomeTrustBar } from '@/features/buyer/components/home/HomeTrustBar';
+import { usePlatformTrust } from '@/hooks/usePlatformTrust';
 import { apiGetCategoryTree, type CategoryNode } from '@/api/services/categories';
 import { EDUCATION_LEVELS } from '@/api/services/product';
 import { normalizeProductType } from '@/utils/productType';
@@ -181,7 +183,9 @@ function HomeLanding() {
   // earlier made "Browse all" flip to "Explore ..." a moment later). An admin-set second button needs no category.
   const homeCards = useHomeCards();
   const heroBanners = useHasPlacementBanners('homepageHero');
-  const heroReady = (!!publicConfig || !configLoading) && (categoriesLoaded || !!hc.heroSecondaryLabel);
+  const trustStats = usePlatformTrust();
+  const statsOn = !trustStats.loading && trustStats.showNumbers && trustStats.items.length > 0;
+  const heroReady =(!!publicConfig || !configLoading) && (categoriesLoaded || !!hc.heroSecondaryLabel);
 
   useEffect(() => {
     let cancelled = false;
@@ -505,6 +509,10 @@ function HomeLanding() {
       </div>
 
       <main className="max-w-[1480px] mx-auto px-[5%] md:px-[4%] pt-5 md:pt-[30px] pb-10 md:pb-[65px]">
+        {/* Exactly one <h1> on the page: HomeHero owns it when it is shown; otherwise (banner slides, loading) this hidden site heading does. */}
+        {(!heroBanners.loaded || heroBanners.has || !heroReady) && (
+          <h1 className="sr-only">Edudeen - Islamic &amp; educational resources for homes and classrooms</h1>
+        )}
         <ShoppingForBar className="mb-4" />
 
         {/* ── Admin banners / paid promotions (Admin → Banners, homepage slot) ── */}
@@ -528,6 +536,10 @@ function HomeLanding() {
             ? <HomeHeroSkeleton />
             : <HomeHero eff={eff} onPrimary={scrollToResources} onSecondary={() => selectSubject(featuredTab?.id ?? null)} />}
         </EditableHomeSection>
+
+        {/* ── ONE compact trust row right under the hero (numbers block further down only appears past the admin's thresholds) ── */}
+        <HomeTrustBar className="mb-6" />
+
         {/* Sale banner (Mega Sale) first, then the category cards under it. */}
         <FeatureMaintenance feature="flash_sale">
         <EditableDeals className="min-h-[56px] mb-8"><DealsBanner className="!px-0 !pt-0 mb-8" /></EditableDeals>
@@ -805,10 +817,12 @@ function HomeLanding() {
 
         {/* ── Platform stats - the single stats block; real numbers only past the admin's thresholds ── */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 mb-12 items-stretch">
-          <div className="lg:col-span-8 [&>section]:h-full [&>section]:flex [&>section]:flex-col [&>section]:justify-center">
-            <PlatformStatsSection className="mb-0" />
-          </div>
-          <div className="lg:col-span-4">
+          {statsOn && (
+            <div className="lg:col-span-8 [&>section]:h-full [&>section]:flex [&>section]:flex-col [&>section]:justify-center">
+              <PlatformStatsSection className="mb-0" />
+            </div>
+          )}
+          <div className={statsOn ? 'lg:col-span-4' : 'lg:col-span-12'}>
             <HomeNewsletter embedded />
           </div>
         </div>
