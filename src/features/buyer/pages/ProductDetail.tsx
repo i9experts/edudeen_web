@@ -84,27 +84,45 @@ const PRINTABLE_FORMATS = ['PDF', 'DOCX', 'DOC'];
 
 function DetailSkeleton() {
   return (
-    <div className="px-4 md:px-6 lg:px-10 py-6 md:py-7">
-      <div className="flex gap-2 mb-6">
-        {[80, 20, 60, 20, 120].map((w, i) => <SkeletonBox key={i} width={w} height={13} rounded="4px" />)}
+    <main className="px-4 md:px-6 lg:px-10 py-6 md:py-8 pb-[92px] lg:pb-8" aria-busy="true" aria-label="Loading product">
+      {/* breadcrumb */}
+      <div className="flex gap-2 mb-4">
+        {[50, 14, 90, 14, 160].map((w, i) => <SkeletonBox key={i} width={w} height={13} rounded="4px" />)}
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-[64px_1fr_400px] gap-6 items-start min-w-0">
-        <div className="hidden lg:flex flex-col gap-2">
-          {[1, 2, 3, 4].map(i => <SkeletonBox key={i} width={64} height={64} rounded="10px" />)}
-        </div>
-        <SkeletonBox className="w-full h-[320px] md:h-[420px]" rounded="16px" />
-        <div className="bg-white rounded-xl border border-bone p-6">
-          <SkeletonBox width={60} height={20} rounded="4px" />
-          <div className="mt-3"><SkeletonBox width="80%" height={24} rounded="6px" /></div>
-          <div className="mt-2"><SkeletonBox width="50%" height={13} rounded="4px" /></div>
-          <div className="mt-4"><SkeletonBox width={100} height={32} rounded="6px" /></div>
-          <div className="mt-5 flex flex-col gap-[10px]">
-            <SkeletonBox width="100%" height={44} rounded="10px" />
-            <SkeletonBox width="100%" height={40} rounded="10px" />
+      {/* same 3-column grid as the real page: pictures | details | buy box */}
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,380px)_minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,460px)_minmax(0,1fr)_320px] gap-6 items-start min-w-0 mb-8">
+        {/* pictures */}
+        <div className="min-w-0">
+          <SkeletonBox className="w-full h-[320px] md:h-[420px] lg:h-[460px]" rounded="16px" />
+          <div className="mt-3 flex gap-2">
+            {[1, 2, 3, 4].map(i => <SkeletonBox key={i} width={56} height={56} rounded="10px" />)}
           </div>
         </div>
+        {/* centre */}
+        <div className="min-w-0 flex flex-col gap-4">
+          <SkeletonBox width={90} height={20} rounded="4px" />
+          <SkeletonBox width="85%" height={26} rounded="6px" />
+          <SkeletonBox width="45%" height={14} rounded="4px" />
+          <div className="rounded-xl bg-white border border-bone p-4 flex flex-col gap-3">
+            <SkeletonBox width={140} height={30} rounded="6px" />
+            <SkeletonBox width="60%" height={13} rounded="4px" />
+          </div>
+          <div className="rounded-xl bg-white border border-bone p-4 flex flex-col gap-3">
+            <SkeletonBox width="100%" height={13} rounded="4px" />
+            <SkeletonBox width="90%" height={13} rounded="4px" />
+            <SkeletonBox width="70%" height={13} rounded="4px" />
+          </div>
+        </div>
+        {/* buy box */}
+        <div className="bg-white rounded-xl border border-bone p-5 flex flex-col gap-3">
+          <SkeletonBox width={80} height={16} rounded="4px" />
+          <SkeletonBox width="100%" height={40} rounded="10px" />
+          <SkeletonBox width="100%" height={46} rounded="10px" />
+          <SkeletonBox width="100%" height={46} rounded="10px" />
+          <SkeletonBox width="70%" height={13} rounded="4px" />
+        </div>
       </div>
-    </div>
+    </main>
   );
 }
 
@@ -837,7 +855,7 @@ export function ProductDetail() {
 
   return (
     <div className="min-h-screen bg-cream" {...swipeHandlers}>
-      <BuyerNavbar backTo={{ label: 'Home', path: '/' }} />
+      <BuyerNavbar />
 
       {loading && <DetailSkeleton />}
 
