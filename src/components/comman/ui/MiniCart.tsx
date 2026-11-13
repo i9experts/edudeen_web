@@ -80,7 +80,7 @@ export function MiniCart({ accentColor }: { accentColor?: string }) {
       <button
         onClick={() => goTo('/cart')}
         aria-label={`Cart${cartCount > 0 ? ` (${cartCount} items)` : ''}`}
-        className="relative h-11 min-w-11 md:h-9 md:min-w-9 px-0 md:px-1 flex items-center justify-center gap-[5px] bg-transparent border-none cursor-pointer shrink-0 whitespace-nowrap text-[15px] text-carbon hover:text-brand-orange transition-colors outline-none rounded-md focus-visible:ring-2 focus-visible:ring-brand-orange/40"
+        className="relative h-11 min-w-11 px-0 md:px-1 flex items-center justify-center gap-[5px] bg-transparent border-none cursor-pointer shrink-0 whitespace-nowrap text-[15px] text-carbon hover:text-brand-orange transition-colors outline-none rounded-md focus-visible:ring-2 focus-visible:ring-brand-orange/40"
       >
         <ShoppingCart size={24} style={accentColor ? { color: accentColor } : undefined} className={clsx('shrink-0', !accentColor && 'text-carbon')} />
         {cartCount > 0 && (

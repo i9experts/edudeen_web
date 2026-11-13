@@ -29,7 +29,7 @@ export function VoiceSearchButton({ onText, className }: { onText: (text: string
         aria-pressed={listening}
         title={label}
         className={clsx(
-          'w-8 h-8 flex items-center justify-center rounded-full border-none cursor-pointer transition-colors',
+          'w-10 h-10 flex items-center justify-center rounded-full border-none cursor-pointer transition-colors',
           listening ? 'bg-brand-orange text-white animate-pulse' : 'bg-transparent text-slate hover:text-charcoal hover:bg-cream',
           className,
         )}

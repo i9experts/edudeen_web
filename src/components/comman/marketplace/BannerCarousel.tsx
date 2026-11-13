@@ -240,7 +240,7 @@ export function BannerCarousel({ banners, entityType, fit = 'cover', showDots = 
                   src={cloudinaryUrl(banner.imageUrl, 1920, hq)}
                   srcSet={cloudinarySrcSet(banner.imageUrl, undefined, hq)}
                   sizes="100vw"
-                  loading="eager"
+                  loading={i <= (loop ? 2 : 1) ? 'eager' : 'lazy'}
                   fetchPriority={i === (loop ? 1 : 0) ? 'high' : undefined}
                   decoding="async"
                   draggable={false}

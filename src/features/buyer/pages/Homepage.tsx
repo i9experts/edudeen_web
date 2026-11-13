@@ -548,13 +548,14 @@ function HomeLanding() {
             : <HomeHero eff={eff} onPrimary={scrollToResources} onSecondary={() => selectSubject(featuredTab?.id ?? null)} />}
         </EditableHomeSection>
 
-        {/* ── ONE compact trust row right under the hero (numbers block further down only appears past the admin's thresholds) ── */}
+        {/* Sale banner (Mega Sale) sits right under the slider, then the trust row, then the category cards. */}
+        <FeatureMaintenance feature="flash_sale">
+        <EditableDeals className="min-h-[56px] mb-6"><DealsBanner className="!px-0 !pt-0 mb-0" /></EditableDeals>
+        </FeatureMaintenance>
+
+        {/* ── ONE compact trust row (numbers block further down only appears past the admin's thresholds) ── */}
         <HomeTrustBar className="mb-6" />
 
-        {/* Sale banner (Mega Sale) first, then the category cards under it. */}
-        <FeatureMaintenance feature="flash_sale">
-        <EditableDeals className="min-h-[56px] mb-8"><DealsBanner className="!px-0 !pt-0 mb-8" /></EditableDeals>
-        </FeatureMaintenance>
 
         <HomeCardGrid cards={homeCards.cards} loading={!homeCards.loaded} />
 
