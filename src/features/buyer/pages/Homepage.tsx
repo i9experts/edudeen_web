@@ -799,10 +799,10 @@ function HomeLanding() {
         {/* ── Collections ── */}
         <section className={clsx('mb-12 grid grid-cols-1 gap-[22px]', !isBuyer && 'md:grid-cols-2')}>
           <EditableHomeSection section="feature" defaults={eff} label="feature block">
-          <div className="rounded-[14px] p-7 bg-[#eaf2f8]">
-            <p className="text-[12px] font-bold tracking-[0.15em] uppercase text-brand-royal mb-[13px]">{eff.featureEyebrow}</p>
-            <h2 className="font-serif font-normal text-[27px] leading-[1.2] text-carbon mb-[10px]">{eff.featureHeading}</h2>
-            <p className="text-[14px] text-carbon max-w-[390px] mb-4">
+          <div className={clsx('rounded-[14px] bg-[#eaf2f8] px-5 py-7 sm:px-8 sm:py-9', isBuyer && 'flex flex-col items-center text-center')}>
+            <p className="text-[11px] sm:text-[12px] font-bold tracking-[0.12em] sm:tracking-[0.15em] uppercase text-brand-royal mb-[13px] break-words">{eff.featureEyebrow}</p>
+            <h2 className="font-serif font-normal text-[22px] sm:text-[27px] lg:text-[30px] leading-[1.2] text-carbon mb-[10px]">{eff.featureHeading}</h2>
+            <p className={clsx('text-[13.5px] sm:text-[14px] text-carbon mb-4', isBuyer ? 'max-w-[560px]' : 'max-w-[390px]')}>
               {eff.featureText}
             </p>
             <button onClick={() => selectSubject(featuredTab?.id ?? null)} className={linkButtonClass}>
