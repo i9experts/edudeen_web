@@ -61,6 +61,7 @@ export function SellerShipping() {
               shipFrom={store?.shipFrom}
               deliveryMethod={store?.deliveryMethod}
               dispatchDays={store?.dispatchDays}
+              deliveryDays={store?.deliveryDays}
               currency={cur}
               refetch={refetch}
             />

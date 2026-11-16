@@ -1,4 +1,4 @@
-import { Truck, Download, Banknote } from 'lucide-react';
+import { Truck, Download, Banknote, Clock } from 'lucide-react';
 import { formatPrice } from '@/utils/formatPrice';
 import { useDeliveryInfo } from '@/hooks/shipping/useDeliveryInfo';
 import { SkeletonBox } from '@/components/comman/ui/SkeletonBox';
@@ -16,7 +16,7 @@ interface Props {
  * a row with no real data is hidden, an unknown fee says "Calculated at checkout".
  */
 export function DeliveryBuyBox({ productId, variantId, quantity, isPhysical, isCourse }: Props) {
-  const { info, loading, error } = useDeliveryInfo({ productId, variantId, quantity }, isPhysical && !!productId);
+  const { info, city, loading, error } = useDeliveryInfo({ productId, variantId, quantity }, isPhysical && !!productId);
 
   const Row = ({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) => (
     <div className="flex items-center gap-2 text-[12px] text-charcoal">
@@ -55,6 +55,13 @@ export function DeliveryBuyBox({ productId, variantId, quantity, isPhysical, isC
           {info.estimate ? <span className="text-slate">{` · ${info.estimate}`}</span> : null}
         </Row>
       )}
+      {/* Seller-stated: handling (1 to N working days, the same range shown above) + the seller's days for this route. Only with a real city, route and dispatch time. */}
+      {city && info.routeDays && info.dispatchDays ? (
+        <Row icon={<Clock size={14} />}>
+          <span>{'Delivery to '}</span><span translate="no">{city}</span><span>{': '}</span>
+          <span className="font-semibold">{`${1 + info.routeDays.min}-${info.dispatchDays + info.routeDays.max} days`}</span>
+        </Row>
+      ) : null}
       {info.cod && <Row icon={<Banknote size={14} />}>Cash on Delivery available</Row>}
     </div>
   );

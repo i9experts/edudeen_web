@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { buildShippingPayload, dispatchDaysError, DISPATCH_DAYS_DEFAULT } from '@/features/seller/dashboard/shippingRules';
-import { apiUpdateStore, type StoreDeliveryMethod, type StoreDeliverySettings, type StoreGiftWrap, type StoreShipFrom } from '@/api/services/store';
+import { buildShippingPayload, dispatchDaysError, DISPATCH_DAYS_DEFAULT, ROUTE_ROWS, EMPTY_DAYS, daysFromStore, deliveryDaysErrors, MAX_TRANSIT_DAYS, type DaysForm } from '@/features/seller/dashboard/shippingRules';
+import { apiUpdateStore, type StoreDeliveryDays, type StoreDeliveryMethod, type StoreDeliverySettings, type StoreGiftWrap, type StoreShipFrom } from '@/api/services/store';
 import { apiGetDeliveryOptions, type DeliveryOptions } from '@/api/services/couriers';
 import { Toggle } from '@/components/comman/ui';
 import { Button } from '@/components/comman/ui/Button';
@@ -13,9 +13,10 @@ const badMoney = (s: string) => { const n = toNum(s); return !Number.isFinite(n)
 interface MethodChoice { value: StoreDeliveryMethod | null; label: string; hint: string; available: boolean; reason: string | null }
 
 /** Seller picks how they deliver, and sets their own delivery charge and gift-wrap charge (store currency). */
-export function DeliveryGiftCard({ storeId, delivery, giftWrap, shipFrom, deliveryMethod, dispatchDays, currency, refetch }: {
+export function DeliveryGiftCard({ storeId, delivery, giftWrap, shipFrom, deliveryMethod, dispatchDays, deliveryDays, currency, refetch }: {
   storeId: string;
   dispatchDays?: number;
+  deliveryDays?: StoreDeliveryDays | null;
   deliveryMethod?: StoreDeliveryMethod | null;
   delivery: StoreDeliverySettings | null | undefined;
   giftWrap: StoreGiftWrap | null | undefined;
@@ -32,6 +33,12 @@ export function DeliveryGiftCard({ storeId, delivery, giftWrap, shipFrom, delive
   const [wrapFee, setWrapFee] = useState(String(giftWrap?.fee ?? 0));
   const [dispatch, setDispatch] = useState(String(dispatchDays ?? DISPATCH_DAYS_DEFAULT));
   useEffect(() => { setDispatch(String(dispatchDays ?? DISPATCH_DAYS_DEFAULT)); }, [dispatchDays]);
+  const [days, setDays] = useState<DaysForm>(() => daysFromStore(deliveryDays) ?? EMPTY_DAYS);
+  const daysKey = JSON.stringify(deliveryDays ?? null);
+  useEffect(() => { setDays(daysFromStore(deliveryDays)); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [daysKey]);
+  const daysErrs = deliveryDaysErrors(days);
+  const daysBad = Object.keys(daysErrs).length > 0;
+  const setDay = (k: keyof DaysForm, part: 'min' | 'max', v: string) => setDays(d => ({ ...d, [k]: { ...d[k], [part]: v } }));
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [method, setMethod] = useState<StoreDeliveryMethod | null>(deliveryMethod ?? null);
@@ -78,10 +85,10 @@ export function DeliveryGiftCard({ storeId, delivery, giftWrap, shipFrom, delive
   const cur = currency ?? '';
 
   async function save() {
-    if (feeError || freeError || wrapError || dispatchError) return;
+    if (feeError || freeError || wrapError || dispatchError || daysBad) return;
     setSaving(true); setMsg(null);
     try {
-      await apiUpdateStore(buildShippingPayload(storeId, { fromCity, fromProvince, delOn, fee, freeOver, wrapOn, wrapFee, method, dispatchDays: dispatch }));
+      await apiUpdateStore(buildShippingPayload(storeId, { fromCity, fromProvince, delOn, fee, freeOver, wrapOn, wrapFee, method, dispatchDays: dispatch, days }));
       refetch();
       setMsg({ ok: true, text: 'Saved.' });
     } catch (err) {
@@ -117,6 +124,21 @@ export function DeliveryGiftCard({ storeId, delivery, giftWrap, shipFrom, delive
         <input id="dispatch-days" type="number" inputMode="numeric" min={1} max={7} step={1} value={dispatch} onChange={e => setDispatch(e.target.value)} className={inputCls} aria-invalid={!!dispatchError} />
         <p className="text-[12px] text-slate mt-1">Sundays are not counted. Applies to new orders only; orders you already have keep their ship-by date.</p>
         {dispatchError && <p role="alert" className="text-[12px] text-red-600 mt-1">{dispatchError}</p>}
+      </div>
+
+      <p className="text-[13px] font-medium text-charcoal mb-1">Delivery days after dispatch (optional)</p>
+      <p className="text-[12px] text-slate mb-2">How many days the parcel takes once shipped. Buyers see "Delivery to &lt;city&gt;: X-Y days" (dispatch time + these days). Leave a row empty to show nothing for it.</p>
+      <div className="flex flex-col gap-2 mb-4">
+        {ROUTE_ROWS.map(r => (
+          <div key={r.key}>
+            <div className="grid grid-cols-[minmax(0,1fr)_84px_84px] items-center gap-2">
+              <span className="text-[13px] text-charcoal">{r.label}</span>
+              <input type="number" inputMode="numeric" min={0} max={MAX_TRANSIT_DAYS} step={1} aria-label={`${r.label}: minimum days`} placeholder="Min" value={days[r.key].min} onChange={e => setDay(r.key, 'min', e.target.value)} aria-invalid={!!daysErrs[r.key]} className={inputCls} />
+              <input type="number" inputMode="numeric" min={0} max={MAX_TRANSIT_DAYS} step={1} aria-label={`${r.label}: maximum days`} placeholder="Max" value={days[r.key].max} onChange={e => setDay(r.key, 'max', e.target.value)} aria-invalid={!!daysErrs[r.key]} className={inputCls} />
+            </div>
+            {daysErrs[r.key] && <p role="alert" className="text-[12px] text-red-600 mt-1">{daysErrs[r.key]}</p>}
+          </div>
+        ))}
       </div>
 
       <p className="text-[13px] font-medium text-charcoal mb-1">How do you deliver?</p>
@@ -172,7 +194,7 @@ export function DeliveryGiftCard({ storeId, delivery, giftWrap, shipFrom, delive
       )}
 
       <div className="flex items-center gap-3">
-        <Button size="sm" loading={saving} disabled={!!feeError || !!freeError || !!wrapError || !!dispatchError} onClick={save}>Save charges</Button>
+        <Button size="sm" loading={saving} disabled={!!feeError || !!freeError || !!wrapError || !!dispatchError || daysBad} onClick={save}>Save charges</Button>
         {msg && <span className={`text-[12px] ${msg.ok ? 'text-green-700' : 'text-red-600'}`}>{msg.text}</span>}
       </div>
     </div>

@@ -39,6 +39,7 @@ export interface StorePremiumDiscount { enabled: boolean; percent: number }
 export interface StoreDeliverySettings { enabled: boolean; fee: number; freeOverAmount: number | null }
 export interface StoreGiftWrap { enabled: boolean; fee: number }
 export interface StoreShipFrom { city: string; province?: string | null }
+export type StoreDeliveryDays = Partial<Record<'sameCity' | 'sameProvince' | 'national', { min: number; max: number }>>;
 /** How the store delivers: own flat fee, one Edudeen courier, or the cheapest available courier. null = platform default. */
 export type StoreDeliveryMethod = 'self' | 'tcs' | 'leopards' | 'postex' | 'auto';
 
@@ -68,6 +69,8 @@ export interface UpdateStorePayload {
   shipFrom?: StoreShipFrom | null;
   /** Working days (1-7, Sundays not counted) to mark a physical package shipped. Missing = 2. */
   dispatchDays?: number;
+  /** Optional transit days per route (display only). null clears. */
+  deliveryDays?: StoreDeliveryDays | null;
   deliveryMethod?: StoreDeliveryMethod | null;
   contactEmail?: string;
   contactPhone?: string;
@@ -102,6 +105,7 @@ export interface StoreData {
   shipFrom?: StoreShipFrom | null;
   /** Working days (1-7, Sundays not counted) to mark a physical package shipped. Missing = 2. */
   dispatchDays?: number;
+  deliveryDays?: StoreDeliveryDays | null;
   deliveryMethod?: StoreDeliveryMethod | null;
   contactEmail: string | null;
   contactPhone: string | null;

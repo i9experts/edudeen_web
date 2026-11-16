@@ -16,6 +16,7 @@ import { getStorePagePath } from '@/utils/storefrontUrl';
 import { coverPaletteFor } from './ProductCoverFallback';
 import { ageLabel } from '@/constants/learning';
 import { classRangeLabel } from '@/constants/classLevels';
+import { CURRICULUM_LABEL } from '@/constants/learning';
 import { useLocalizedProduct } from '@/hooks/useLocalizedProduct';
 import { TrustBadges } from './TrustBadges';
 import { CompareToggle } from './CompareToggle';
@@ -263,6 +264,14 @@ export const ResourceCard = memo(function ResourceCard({
   const meta = metaParts.map((part, i) => <span key={i}>{i > 0 ? ' · ' : ''}<span>{part}</span></span>);
   const metaText = metaParts.join(' · ');
 
+  // Board chip: only when the seller set curricula/board on the product (the existing field; nothing is guessed).
+  const boards = (product.curricula ?? []).map(c => CURRICULUM_LABEL[c] ?? c).filter(Boolean);
+  const boardChip = boards.length ? (
+    <span className="inline-block max-w-full truncate rounded bg-[#eef3f8] px-1.5 py-[1px] text-[11px] font-semibold text-[#2F6AA8]" title={boards.join(', ')}>
+      {boards[0]}{boards.length > 1 ? ` +${boards.length - 1}` : ''}
+    </span>
+  ) : null;
+
   // Which side the hover quick view opens toward, so it never runs off the right edge of the viewport.
   const [flip, setFlip] = useState(false);
   const coverSlotRef = useRef<HTMLDivElement>(null);
@@ -335,6 +344,7 @@ export const ResourceCard = memo(function ResourceCard({
             )
           )}
           <RatingLine rating={product.averageRating} count={product.totalRatings} className="mt-1" />
+          {boardChip && <div className="mt-1">{boardChip}</div>}
           <TrustBadges trust={product.trust} className="mt-1.5" />
           <div className="flex items-center gap-2 flex-wrap mt-auto pt-3">
             <strong className={clsx('num text-[16px] sm:text-[18px]', member ? 'text-[#8a6100]' : was ? 'text-error' : 'text-carbon')}>
@@ -401,6 +411,7 @@ export const ResourceCard = memo(function ResourceCard({
         {product.name}
       </Link>
       <RatingLine rating={product.averageRating} count={product.totalRatings} className="block mb-1" />
+      {boardChip && <div className="mb-1">{boardChip}</div>}
       <TrustBadges trust={product.trust} className="mt-1" />
       {/* Phones (2 narrow columns): price on its own line, then type chip + cart button; sm+: one row. */}
       <div className="flex flex-col gap-1.5 mt-2 sm:flex-row sm:items-center sm:justify-between sm:gap-2">

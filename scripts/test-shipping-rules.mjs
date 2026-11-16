@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { shipByBadge } from '../src/features/seller/store/Dashboard/StoreSection/orders/shipByBadge.ts';
-import { buildShippingPayload, summarizeShipping, dispatchDaysError, SHIPPING_KEYS } from '../src/features/seller/dashboard/shippingRules.ts';
+import { buildShippingPayload, summarizeShipping, dispatchDaysError, deliveryDaysErrors, SHIPPING_KEYS } from '../src/features/seller/dashboard/shippingRules.ts';
 
 import { shipFormErrors, buildTrackingPayload, trackingUrlFor, trackingLine } from '../src/utils/carriers.ts';
 
@@ -57,6 +57,20 @@ t('carrier rules: courier needs number, self does not', () => {
 t('dispatch days: 0 and 8 rejected, 1..7 accepted', () => {
   for (const bad of ['0', '8', '', '2.5', '-1', 'x']) assert.ok(dispatchDaysError(bad), bad);
   for (const ok of ['1', '2', '7', ' 3 ']) assert.equal(dispatchDaysError(ok), null, ok);
+});
+
+t('delivery days per route: whole 0-30, min<=max, empty row = not set', () => {
+  const blank = { min: '', max: '' };
+  const d = (o) => ({ sameCity: blank, sameProvince: blank, national: blank, ...o });
+  assert.deepEqual(deliveryDaysErrors(d({})), {});
+  assert.deepEqual(deliveryDaysErrors(d({ sameCity: { min: '1', max: '2' } })), {});
+  assert.ok(deliveryDaysErrors(d({ sameCity: { min: '3', max: '2' } })).sameCity);
+  assert.ok(deliveryDaysErrors(d({ national: { min: '1', max: '31' } })).national);
+  assert.ok(deliveryDaysErrors(d({ national: { min: '1.5', max: '4' } })).national);
+  assert.ok(deliveryDaysErrors(d({ sameProvince: { min: '1', max: '' } })).sameProvince);
+  const p = buildShippingPayload('s1', { ...form, days: d({ sameCity: { min: '1', max: '2' } }) });
+  assert.deepEqual(p.deliveryDays, { sameCity: { min: 1, max: 2 } });
+  assert.equal(buildShippingPayload('s1', form).deliveryDays, null);
 });
 
 t('ship-by label: date in Pakistan time, overdue gets a secondary line', () => {

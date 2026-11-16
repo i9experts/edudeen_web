@@ -1,9 +1,51 @@
 import type { StoreDeliveryMethod } from '@/api/services/store';
 
 /** The ONLY store keys the Shipping page may save. Store Settings must never send these (and vice versa). */
-export const SHIPPING_KEYS = ['deliverySettings', 'giftWrap', 'shipFrom', 'deliveryMethod', 'dispatchDays'] as const;
+export const SHIPPING_KEYS = ['deliverySettings', 'giftWrap', 'shipFrom', 'deliveryMethod', 'dispatchDays', 'deliveryDays'] as const;
 
 export const DISPATCH_DAYS_DEFAULT = 2;
+
+/** Optional transit days per route (DAYS ONLY - no fees). Whole days 0-30, min <= max; a row left empty = not set. */
+export const ROUTE_ROWS = [
+  { key: 'sameCity', label: 'Own city' },
+  { key: 'sameProvince', label: 'Same province' },
+  { key: 'national', label: 'Rest of Pakistan' },
+] as const;
+export type RouteRowKey = typeof ROUTE_ROWS[number]['key'];
+export type DaysForm = Record<RouteRowKey, { min: string; max: string }>;
+export const EMPTY_DAYS: DaysForm = { sameCity: { min: '', max: '' }, sameProvince: { min: '', max: '' }, national: { min: '', max: '' } };
+export const MAX_TRANSIT_DAYS = 30;
+
+/** Form state from the stored value. */
+export function daysFromStore(d: Partial<Record<RouteRowKey, { min: number; max: number }>> | null | undefined): DaysForm {
+  const out: DaysForm = { sameCity: { min: '', max: '' }, sameProvince: { min: '', max: '' }, national: { min: '', max: '' } };
+  for (const r of ROUTE_ROWS) { const v = d?.[r.key]; if (v) out[r.key] = { min: String(v.min), max: String(v.max) }; }
+  return out;
+}
+
+/** Per-route error text (only routes that have something typed). */
+export function deliveryDaysErrors(days: DaysForm | undefined): Partial<Record<RouteRowKey, string>> {
+  const errs: Partial<Record<RouteRowKey, string>> = {};
+  if (!days) return errs;
+  for (const r of ROUTE_ROWS) {
+    const lo = days[r.key].min.trim(), hi = days[r.key].max.trim();
+    if (!lo && !hi) continue;
+    if (!lo || !hi) { errs[r.key] = 'Enter both a minimum and a maximum, or clear both.'; continue; }
+    if (!/^\d+$/.test(lo) || !/^\d+$/.test(hi) || Number(lo) > MAX_TRANSIT_DAYS || Number(hi) > MAX_TRANSIT_DAYS) { errs[r.key] = `Use whole days from 0 to ${MAX_TRANSIT_DAYS}.`; continue; }
+    if (Number(lo) > Number(hi)) errs[r.key] = 'The minimum cannot be more than the maximum.';
+  }
+  return errs;
+}
+
+function daysPayload(days: DaysForm | undefined) {
+  if (!days) return null;
+  const out: Partial<Record<RouteRowKey, { min: number; max: number }>> = {};
+  for (const r of ROUTE_ROWS) {
+    const lo = days[r.key].min.trim(), hi = days[r.key].max.trim();
+    if (lo && hi) out[r.key] = { min: Number(lo), max: Number(hi) };
+  }
+  return Object.keys(out).length ? out : null;
+}
 
 export interface ShippingForm {
   fromCity: string; fromProvince: string;
@@ -12,6 +54,8 @@ export interface ShippingForm {
   method: StoreDeliveryMethod | null;
   /** Working days as typed (1-7). */
   dispatchDays: string;
+  /** Optional transit days per route as typed. */
+  days?: DaysForm;
 }
 
 /** Error text for the dispatch-days box, or null when it is a whole number 1-7. */
@@ -34,6 +78,7 @@ export function buildShippingPayload(storeId: string, f: ShippingForm) {
     shipFrom: f.fromCity.trim() ? { city: f.fromCity.trim(), province: f.fromProvince.trim() || null } : null,
     deliveryMethod: f.method,
     dispatchDays: Number(f.dispatchDays.trim()),
+    deliveryDays: daysPayload(f.days),
   };
 }
 
