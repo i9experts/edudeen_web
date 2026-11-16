@@ -19,7 +19,7 @@ import { classRangeLabel } from '@/constants/classLevels';
 import { useLocalizedProduct } from '@/hooks/useLocalizedProduct';
 import { TrustBadges } from './TrustBadges';
 import { CompareToggle } from './CompareToggle';
-import { PremiumChip, PremiumTeaser, memberPriceOf, usePremiumView } from './PremiumBits';
+import { PremiumChip, memberPriceOf, usePremiumView } from './PremiumBits';
 import { holidayBlocksType, holidayLabel } from '@/utils/storeHoliday';
 
 // Same name-keyed palette as ProductCoverFallback, so a product keeps its
@@ -342,7 +342,8 @@ export const ResourceCard = memo(function ResourceCard({
             </strong>
             {member && <s className="text-[12.5px] text-slate">{fmt(member.list ?? price)}</s>}
             {!member && was && rawPrice > 0 && <s className="text-[12.5px] text-slate" aria-label={`Was ${fmt(was)}`}>{fmt(was)}</s>}
-            {member ? <PremiumChip percent={member.percent} /> : <PremiumTeaser percent={product.premiumPercent} />}
+            {/* ONE % badge per card: the sale badge. The "Get Premium to save X%" teaser lives on the product page and cart only. */}
+            {member && <PremiumChip percent={member.percent} />}
             {badge && <SaleBadge label={badge} />}
             <span className="ms-auto text-[12px] border border-[#dde5e8] px-[7px] py-[3px] rounded text-[#566773] shrink-0">{TYPE_LABEL[kind] ?? kind}</span>
             {cartButton}
@@ -366,7 +367,7 @@ export const ResourceCard = memo(function ResourceCard({
         <QuickView product={product} kind={kind} metaText={metaText} shopName={shopName} flip={flip} href={href} onNavigate={go} actions={<><span className="relative"><CompareToggle product={product} /></span>{wishlistButton && <span className="relative">{wishlistButton}</span>}</>} />
       </div>
 
-      {(campaignOff || percentOff > 0) && (
+      {!member && (campaignOff || percentOff > 0) && (
         <span className="absolute start-[7px] top-[7px] sm:start-3 sm:top-3 max-w-[58%] sm:max-w-[70%] truncate text-[12px] sm:text-[12px] font-bold px-2 py-[3px] rounded-full bg-error text-white shadow-sm">
           {campaign && campaignOff ? `${campaign.name} · ${campaignOff}` : `-${percentOff}%`}
         </span>
@@ -419,7 +420,7 @@ export const ResourceCard = memo(function ResourceCard({
           {cartButton}
         </span>
       </div>
-      {member ? <PremiumChip percent={member.percent} className="mt-1" /> : <PremiumTeaser percent={product.premiumPercent} className="mt-1" />}
+      {member && <PremiumChip percent={member.percent} className="mt-1" />}
       </div>
     </article>
   );

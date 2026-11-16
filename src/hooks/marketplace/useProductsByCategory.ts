@@ -20,6 +20,7 @@ export function useProductsByCategory(
   // a moment later once the real filter value is known.
   enabled = true,
   format?: 'course',
+  classValue?: string,
 ) {
   const [products, setProducts] = useState<MarketplaceProduct[]>([]);
   const [total,    setTotal]    = useState(0);
@@ -37,7 +38,7 @@ export function useProductsByCategory(
     let cancelled = false;
     const quiet = quietRef.current;
     quietRef.current = false;
-    const key = JSON.stringify([page, limit, categoryId, productType, educationLevel, campaignId, minPrice, maxPrice, minRating, sortBy, format]);
+    const key = JSON.stringify([page, limit, categoryId, productType, educationLevel, campaignId, minPrice, maxPrice, minRating, sortBy, format, classValue]);
     const hit = answerCache.get(key);
     if (!quiet && hit && Date.now() - hit.at < CACHE_TTL_MS) {
       setProducts(hit.products);
@@ -48,7 +49,7 @@ export function useProductsByCategory(
     }
     if (!quiet) setLoading(true);
     setError('');
-    apiGetAllProducts(page, limit, categoryId, productType, educationLevel, campaignId, minPrice, maxPrice, minRating, sortBy, format)
+    apiGetAllProducts(page, limit, categoryId, productType, educationLevel, campaignId, minPrice, maxPrice, minRating, sortBy, format, classValue)
       .then(res => {
         const list = res.data?.products ?? [];
         const count = res.data?.total ?? 0;
@@ -65,7 +66,7 @@ export function useProductsByCategory(
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, limit, categoryId, productType, educationLevel, campaignId, minPrice, maxPrice, minRating, sortBy, enabled, format, reloadKey]);
+  }, [page, limit, categoryId, productType, educationLevel, campaignId, minPrice, maxPrice, minRating, sortBy, enabled, format, classValue, reloadKey]);
 
   return { products, total, loading, error, refetch };
 }

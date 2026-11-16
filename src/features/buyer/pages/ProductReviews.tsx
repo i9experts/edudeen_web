@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   ShieldCheck, Pencil, Trash2, Star, ThumbsUp, ImageIcon, ChevronLeft, ChevronRight, X, Store, AlertTriangle,
 } from 'lucide-react';
@@ -515,16 +516,19 @@ export function ProductReviewsSection({ productId, storeName, canReview }: Produ
           {[1, 2].map(i => <SkeletonBox key={i} height={90} rounded="12px" />)}
         </div>
       ) : error ? (
-        <p className="text-[13px] text-error">{error}</p>
-      ) : !hasReviews ? (
-        // Compact strip: the big centred empty state took a whole screen of white space for nothing.
-        <div className="flex items-center gap-3 rounded-xl border border-dashed border-bone bg-cream/50 px-4 py-3">
-          <span className="w-9 h-9 rounded-full bg-white border border-bone flex items-center justify-center shrink-0"><Star size={16} className="text-brand-orange opacity-70" aria-hidden /></span>
-          <div className="min-w-0">
-            <p className="text-[13.5px] font-semibold text-carbon m-0">Be the first to review this product</p>
-            <p className="text-[12.5px] text-slate m-0">Your feedback helps other customers make better decisions.</p>
-          </div>
+        <div role="alert" className="flex flex-wrap items-center gap-3 rounded-xl border border-error-border bg-error-bg px-4 py-3">
+          <p className="text-[13px] text-error m-0 flex-1 min-w-[180px]">{error}</p>
+          <Button variant="outline" size="sm" onClick={() => setRefreshKey(k => k + 1)}>Retry</Button>
         </div>
+      ) : !hasReviews ? (
+        // One short line (no grey box): the buyer knows what to do next.
+        <p className="flex items-center gap-2 text-[14px] text-slate m-0 py-1">
+          <Star size={16} className="text-brand-orange shrink-0" aria-hidden />
+          <span>
+            No reviews yet. Bought this? Review it from{' '}
+            <Link to="/account/orders" className="font-semibold text-brand-royal underline underline-offset-2">My Orders</Link>.
+          </span>
+        </p>
       ) : filteredSorted.length === 0 ? (
         <div className="flex flex-col items-center gap-2 py-4">
           <p className="text-[13px] text-slate">No reviews match your filters.</p>

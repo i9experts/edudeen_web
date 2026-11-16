@@ -9,7 +9,9 @@ import { useGooglePlayUrl } from './AppPromoParts';
 // Last-resort target (the old internal-testing listing) until the admin sets a public Play link.
 const GOOGLE_PLAY_DEFAULT = 'https://play.google.com/apps/internaltest/4699462862361720775';
 
-// Both the interstitial and the edge tab always show on phones; they open the admin's Play link, else the built-in listing.
+// The interstitial and the edge tab are OFF until the app is public: set VITE_APP_LIVE=true on the web build to turn
+// them on (default false). The app promo then only lives in the footer.
+const APP_LIVE = import.meta.env.VITE_APP_LIVE === 'true';
 
 // Single source of truth for the Play listing lives in AppPromoParts.
 
@@ -40,7 +42,7 @@ export function AppOpenPrompt() {
   const PLAY_STORE_URL = useGooglePlayUrl() || GOOGLE_PLAY_DEFAULT;
   const [dismissed, setDismissed] = useState(() => { try { return sessionStorage.getItem(DISMISS_KEY) === '1'; } catch { return false; } });
 
-  if (dismissed || isIOS()) return null;
+  if (!APP_LIVE || dismissed || isIOS()) return null;
 
   const close = () => {
     try { sessionStorage.setItem(DISMISS_KEY, '1'); } catch { /* storage blocked */ }
@@ -103,7 +105,7 @@ export function AppOpenPrompt() {
  */
 export function AppOpenFab() {
   const PLAY_STORE_URL = useGooglePlayUrl() || GOOGLE_PLAY_DEFAULT;
-  if (isIOS()) return null;
+  if (!APP_LIVE || isIOS()) return null;
   return (
     <button
       onClick={() => { window.location.href = PLAY_STORE_URL; }}

@@ -16,7 +16,7 @@ function durationText(totalMinutes: number): string {
   return h ? `${h}h` : `${m}m`;
 }
 
-export function ProductFacts({ product, subject, className = 'mb-6' }: { product: Pick<MarketplaceProduct, 'classFrom' | 'classTo' | 'language' | 'digital' | 'courseSummary' | 'deliveryFormat' | 'type'>; subject?: string | null; className?: string }) {
+export function ProductFacts({ product, subject, className = 'mb-6' }: { product: Pick<MarketplaceProduct, 'classFrom' | 'classTo' | 'language' | 'author' | 'publisher' | 'edition' | 'digital' | 'courseSummary' | 'deliveryFormat' | 'type'>; subject?: string | null; className?: string }) {
   const t = useT();
   const isDigital = product.type === 'digital';
   const isCourse = isDigital && product.deliveryFormat === 'course';
@@ -41,6 +41,10 @@ export function ProductFacts({ product, subject, className = 'mb-6' }: { product
 
   const lang = PRODUCT_LANGUAGES.find(l => l.value === product.language);
   if (lang) facts.push({ label: t('Language'), value: t(lang.label) });
+  // Optional book details: shown only when the seller filled them in.
+  if (product.author?.trim()) facts.push({ label: t('Author'), value: product.author.trim() });
+  if (product.publisher?.trim()) facts.push({ label: t('Publisher'), value: product.publisher.trim() });
+  if (product.edition?.trim()) facts.push({ label: t('Edition'), value: product.edition.trim() });
 
   if (!facts.length) return null;
   return (

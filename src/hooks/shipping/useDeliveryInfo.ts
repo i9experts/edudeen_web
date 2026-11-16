@@ -8,7 +8,7 @@ import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 /** Read-only answer from GET /api/checkout/delivery-info (same fee code checkout uses). */
 export type DeliveryInfo =
   | { kind: 'digital' }
-  | { kind: 'physical'; currency: 'PKR' | 'USD'; fee: number | null; estimate: string | null; freeShipping: boolean; cod: boolean };
+  | { kind: 'physical'; currency: 'PKR' | 'USD'; fee: number | null; estimate: string | null; freeShipping: boolean; cod: boolean; /** Seller's dispatch time in working days (null = not known; older API omits it). */ dispatchDays?: number | null };
 
 export interface DeliveryInfoState {
   info: DeliveryInfo | null;

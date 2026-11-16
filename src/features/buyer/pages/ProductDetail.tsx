@@ -24,7 +24,8 @@ import { useToast } from '@/contexts/ToastContext';
 import { useT, useLanguage } from '@/contexts/languageCtx';
 const AiReviewSummary = lazyWithRetry(() => import('@/components/ai/AiReviewSummary').then(m => ({ default: m.AiReviewSummary })));
 import { TokenStorage } from '@/api/services/auth';
-import { apiGetAllProducts, apiGetAlsoBought, type MarketplaceProduct, type ProductVariant } from '@/api/services/marketplace';
+import { isValidRailProduct } from '@/features/buyer/components/home/homeRules';
+import { apiGetAllProducts, apiGetAlsoBought, apiBrowseProducts, type MarketplaceProduct, type ProductVariant } from '@/api/services/marketplace';
 import { apiStartConversation, apiSendMessage } from '@/api/services/messaging';
 import { apiCreateCheckout } from '@/api/services/checkout';
 import { apiPlaceFreeOrder } from '@/api/services/payment';
@@ -139,6 +140,17 @@ function ZoomViewer({ pages, alt, start = 0 }: { pages: string[]; alt: string; s
   };
   const go = (n: number) => { setI((n + pages.length) % pages.length); setZoom(1); };
   const btn = 'w-11 h-11 rounded-full border border-bone bg-white flex items-center justify-center text-carbon hover:bg-bone disabled:opacity-40 cursor-pointer';
+  // Swipe between pictures when not zoomed in (zoomed = the finger scrolls the picture instead).
+  const sx = useRef<{ x: number; y: number } | null>(null);
+  const swipeStart = (e: React.TouchEvent) => { const t = e.touches[0]; sx.current = t && zoom === 1 ? { x: t.clientX, y: t.clientY } : null; };
+  const swipeEnd = (e: React.TouchEvent) => {
+    const s = sx.current; sx.current = null;
+    const t = e.changedTouches[0];
+    if (!s || !t || pages.length < 2) return;
+    const dx = t.clientX - s.x;
+    if (Math.abs(dx) < 45 || Math.abs(dx) < Math.abs(t.clientY - s.y) * 1.2) return;
+    go(i + ((document.documentElement.dir === 'rtl' ? dx > 0 : dx < 0) ? 1 : -1));
+  };
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-center gap-2">
@@ -148,7 +160,7 @@ function ZoomViewer({ pages, alt, start = 0 }: { pages: string[]; alt: string; s
         <button type="button" aria-label="Zoom in" className={btn} disabled={zoom >= 4} onClick={() => setZoom(z => Math.min(4, +(z + 0.5).toFixed(1)))}><ZoomIn size={16} /></button>
         {pages.length > 1 && <button type="button" aria-label="Next" className={btn} onClick={() => go(i + 1)}><ChevronRight size={16} /></button>}
       </div>
-      <div onMouseMove={zoom > 1 ? pan : undefined} className={clsx('overflow-auto max-h-[70vh] rounded-lg border border-bone bg-white', zoom > 1 && 'cursor-move')}>
+      <div onMouseMove={zoom > 1 ? pan : undefined} onTouchStart={swipeStart} onTouchEnd={swipeEnd} className={clsx('overflow-auto max-h-[70vh] rounded-lg border border-bone bg-white', zoom > 1 && 'cursor-move')}>
         <img src={pages[i]} alt={`${alt} ${i + 1}`} style={{ width: `${zoom * 100}%`, maxWidth: 'none' }} className="block mx-auto" />
       </div>
     </div>
@@ -210,11 +222,28 @@ function ImageGallery({ images, name, video = null }: { images: string[]; name: 
   const imageOnly = slides.filter(s => s.kind === 'image').map(s => s.src);
   const imageStart = slide?.kind === 'image' ? Math.max(0, imageOnly.indexOf(slide.src)) : 0;
   const choose = (i: number) => { setSelected(i); setPlaying(false); };
+  // Swipe on the main slide (phones/tablets): a mostly-horizontal drag of 45px+ moves to the next / previous slide.
+  // Vertical drags still scroll the page (touch-pan-y), and a swipe never opens the viewer.
+  const touchStart = useRef<{ x: number; y: number } | null>(null);
+  const onTouchStart = (e: React.TouchEvent) => { const t = e.touches[0]; touchStart.current = t ? { x: t.clientX, y: t.clientY } : null; };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    const s = touchStart.current; touchStart.current = null;
+    const t = e.changedTouches[0];
+    if (!s || !t || slides.length < 2 || playing) return;
+    const dx = t.clientX - s.x; const dy = t.clientY - s.y;
+    if (Math.abs(dx) < 45 || Math.abs(dx) < Math.abs(dy) * 1.2) return;
+    // In RTL the "next" slide is to the left, like the page itself.
+    const forward = (document.documentElement.dir === 'rtl' ? dx > 0 : dx < 0);
+    choose((selected + (forward ? 1 : -1) + slides.length) % slides.length);
+  };
 
   return (
     <div className="flex flex-col lg:flex-row-reverse gap-3 min-w-0">
       {/* Main slide — a picture shown whole (no crop), or the video (poster + play button until clicked) */}
-      <div className="relative flex-1 min-w-0 h-[300px] md:h-[400px] lg:h-[460px] max-h-[55vh] lg:max-h-none rounded-2xl overflow-hidden border border-bone bg-white">
+      <div
+        onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}
+        className="relative flex-1 min-w-0 h-[300px] md:h-[400px] lg:h-[460px] max-h-[55vh] lg:max-h-none rounded-2xl overflow-hidden border border-bone bg-white touch-pan-y"
+      >
         {slide?.kind === 'video' ? (
           playing ? (
             <video src={slide.src} poster={slide.poster ?? undefined} controls autoPlay playsInline preload="auto" className="w-full h-full object-contain bg-black" />
@@ -399,7 +428,8 @@ interface RelatedCardProps {
   onClick: (id: string) => void;
   wishlist?: { active: boolean; onToggle: () => void };
 }
-function RelatedCard({ id, name, image, price: nativePrice, compareAtPrice: nativeCompareAt, currency: nativeCurrency, premiumPrice: nativePremium, premiumPercent, premiumList: nativeList, memberPercent, premiumSeller, premiumPlatform, rating, reviewCount, sold, isNew, isBestseller, onClick, wishlist }: RelatedCardProps) {
+function RelatedCard({ id, name, image, price: nativePrice, compareAtPrice: nativeCompareAt, currency: nativeCurrency, premiumPrice: nativePremium, premiumList: nativeList, memberPercent, premiumSeller, premiumPlatform, rating, reviewCount, sold, isNew, isBestseller, onClick, wishlist }: RelatedCardProps) {
+  // `premiumPercent` is still passed by callers but the "Get Premium to save X%" teaser is not shown on cards.
   const [errored, setErrored] = useState(false);
   const { currency: displayCurrency, convert } = useCurrencyPreference();
   const price = nativePrice != null ? convert(nativePrice, nativeCurrency) : null;
@@ -466,7 +496,7 @@ function RelatedCard({ id, name, image, price: nativePrice, compareAtPrice: nati
             </span>
           )}
         </div>
-        {member != null ? <PremiumChip percent={memberPercent} seller={premiumSeller} platform={premiumPlatform} className="mt-[3px]" /> : <PremiumTeaser percent={premiumPercent} seller={premiumSeller} platform={premiumPlatform} className="mt-[3px]" />}
+        {member != null && <PremiumChip percent={memberPercent} seller={premiumSeller} platform={premiumPlatform} className="mt-[3px]" />}
         {(sold != null && sold > 0) || (reviewCount != null && reviewCount > 0) ? (
           <p className="text-[12px] text-slate mt-[2px]">
             {sold != null && sold > 0 ? `${sold} sold` : ''}
@@ -702,9 +732,41 @@ export function ProductDetail() {
   } : null);
   // What other teachers bought alongside this one.
   const [alsoBought, setAlsoBought] = useState<{ basis: 'bought_together' | 'similar'; products: MarketplaceProduct[] }>({ basis: 'similar', products: [] });
-  // A product shows in only one rail: level/bought-together first, then this seller, then related.
-  const sellerRail = sellerProducts.filter(p => !alsoBought.products.some(x => x._id === p._id));
-  const relatedRail = relatedProducts.filter(p => !alsoBought.products.some(x => x._id === p._id) && !sellerProducts.some(x => x._id === p._id));
+  // "Similar for Class N": products of the same class (and category first); only loaded once the reviews block is near.
+  const [similarRaw, setSimilarRaw] = useState<MarketplaceProduct[]>([]);
+  const simClass = product?.classFrom ?? product?.classTo ?? null;
+  useEffect(() => {
+    if (!product?._id || !simClass || !belowFold) { setSimilarRaw([]); return; }
+    let cancelled = false;
+    (async () => {
+      const sameCat = product.categoryId ? await apiBrowseProducts({ categoryId: product.categoryId, classValue: simClass, limit: 16, sortBy: 'popularity' }).catch(() => null) : null;
+      let list = sameCat?.data?.products ?? [];
+      if (list.length < 8) {
+        const anyCat = await apiBrowseProducts({ classValue: simClass, limit: 16, sortBy: 'popularity' }).catch(() => null);
+        list = [...list, ...(anyCat?.data?.products ?? [])];
+      }
+      if (!cancelled) setSimilarRaw(list);
+    })();
+    return () => { cancelled = true; };
+  }, [product?._id, product?.categoryId, simClass, belowFold]);
+
+  // A product shows in only one rail, in page order: level/bought-together, Similar for Class N, this seller, related
+  // (same one-product-per-section idea as the home page's dedupeInOrder).
+  const seenRail = new Set<string>(product ? [product._id] : []);
+  alsoBought.products.forEach(p => seenRail.add(p._id));
+  const takeRail = <T extends { _id: string }>(list: T[], keep: (p: T) => boolean = () => true): T[] => {
+    const out: T[] = [];
+    for (const p of list) { if (!p?._id || seenRail.has(p._id) || !keep(p)) continue; seenRail.add(p._id); out.push(p); }
+    return out;
+  };
+  const rangeKey = (p: { classFrom?: string | null; classTo?: string | null }) => `${p.classFrom ?? ''}|${p.classTo ?? ''}`;
+  // Same class range first, then the rest (stable: the API's popularity order is kept inside each group).
+  const similarRail = takeRail(
+    [...similarRaw].sort((a, b) => Number(rangeKey(b) === rangeKey(product ?? {})) - Number(rangeKey(a) === rangeKey(product ?? {}))),
+    isValidRailProduct,
+  ).slice(0, 8);
+  const sellerRail = takeRail(sellerProducts);
+  const relatedRail = takeRail(relatedProducts);
   useEffect(() => {
     if (!product?._id || !belowFold) return;
     let cancelled = false;
@@ -818,6 +880,10 @@ export function ProductDetail() {
   // What a teacher or parent checks first: who it's for, what subject, what format.
   const learningDetails: { label: string; value: string }[] = product ? [
     ...(gradeLabel ? [{ label: 'Grade / level', value: gradeLabel }] : []),
+    // Optional book details: a row exists only when the seller filled it in.
+    ...(product.author?.trim() ? [{ label: 'Author', value: product.author.trim() }] : []),
+    ...(product.publisher?.trim() ? [{ label: 'Publisher', value: product.publisher.trim() }] : []),
+    ...(product.edition?.trim() ? [{ label: 'Edition', value: product.edition.trim() }] : []),
     ...(classRangeLabel(product.classFrom, product.classTo) || ageLabel(product.ageMin, product.ageMax)
       ? [{ label: 'Suitable for', value: [classRangeLabel(product.classFrom, product.classTo), ageLabel(product.ageMin, product.ageMax)].filter(Boolean).join(' · ') }] : []),
     ...(product.trust?.scholarReviewed ? [{ label: 'Content review', value: 'Scholar reviewed by Edudeen' }] : []),
@@ -830,7 +896,7 @@ export function ProductDetail() {
     ...(!isDigital ? [{ label: 'Delivery', value: 'Shipped by the seller' }] : []),
   ] : [];
 
-  const descriptionExtras = learningDetails.filter(d => !['Suitable for', 'Subject area', 'Delivery'].includes(d.label));
+  const descriptionExtras = learningDetails.filter(d => !['Suitable for', 'Subject area', 'Delivery', 'Author', 'Publisher', 'Edition'].includes(d.label));
 
   // The license the buyer has picked, if the seller offers several.
   const licenseValue = product?.digital?.licenseType
@@ -849,7 +915,7 @@ export function ProductDetail() {
     ...(activeVariant?.sku ? [{ label: 'SKU', value: activeVariant.sku }] : []),
     ...(activeVariant?.options ?? []).map(o => ({ label: o.name, value: o.value })),
     ...(activeVariant?.shippingWeight ? [{ label: 'Weight', value: activeVariant.shippingWeight }] : []),
-  ] : [];
+  ].filter(r => String(r.value ?? '').trim() !== '') : []; // a spec row with no value is never shown
 
   if (notFound) return <NotFoundPage />;
 
@@ -1336,7 +1402,6 @@ export function ProductDetail() {
                           : { Icon: Download, label: 'Instant Digital Delivery', value: 'Download link available immediately after purchase' }]
                         : []),
                       { Icon: Package, label: 'Seller Fulfilled', value: `Sold and shipped by ${storeData?.name ?? product.storeName ?? product.sellerName ?? 'the store'}` },
-                      { Icon: ClipboardList, label: 'SKU', value: activeVariant?.sku ?? '—' },
                     ].map(row => (
                       <div key={row.label} className="flex gap-3 items-start">
                         <div className="w-8 h-8 rounded-lg bg-brand-pale-orange flex items-center justify-center flex-shrink-0">
@@ -1363,6 +1428,24 @@ export function ProductDetail() {
           {alsoBought.products.length > 0 && (
             <ProductRail title={alsoBought.basis === 'bought_together' ? t('Teachers who bought this also bought') : `More for ${gradeLabel ?? 'this level'}`}>
               {alsoBought.products.map(p => {
+                const dv = (p.variants ?? []).find(v => v.isDefault) ?? p.variants?.[0];
+                return (
+                  <RelatedCard
+                    key={p._id} id={p.slug} name={p.name} image={p.images?.[0] ?? null}
+                    price={dv?.price ?? null} compareAtPrice={dv?.compareAtPrice ?? null} currency={dv?.currency}
+                    premiumPrice={dv?.premiumPrice ?? null} premiumPercent={p.premiumPercent} premiumList={dv?.listPrice ?? null} memberPercent={dv?.premiumDiscountPercent} premiumSeller={p.premiumSellerPercent} premiumPlatform={p.premiumPlatformPercent}
+                    rating={p.averageRating} reviewCount={p.totalRatings} sold={p.purchaseCount}
+                    onClick={slug => navigate(`/product/${slug}`)}
+                  />
+                );
+              })}
+            </ProductRail>
+          )}
+
+          {/* ── Similar for Class N (same class / category; above More from this Seller) ── */}
+          {similarRail.length > 0 && (
+            <ProductRail title={`${t('Similar for')} ${classRangeLabel(product.classFrom, product.classTo) || t('this class')}`}>
+              {similarRail.map(p => {
                 const dv = (p.variants ?? []).find(v => v.isDefault) ?? p.variants?.[0];
                 return (
                   <RelatedCard

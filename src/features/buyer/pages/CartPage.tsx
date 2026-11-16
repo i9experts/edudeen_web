@@ -4,14 +4,18 @@ import { Link, useNavigate } from 'react-router-dom';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useCartContext } from '@/contexts/CartContext';
 import { useWishlistContext } from '@/contexts/WishlistContext';
+import { useAuthGate } from '@/contexts/AuthGateContext';
+import { useToast } from '@/contexts/ToastContext';
+import { TokenStorage } from '@/api/services/auth';
+import type { CartItem } from '@/api/services/cart';
 import { useProductsByCategory } from '@/hooks/marketplace/useProductsByCategory';
 import { apiGetAlsoBought, type MarketplaceProduct } from '@/api/services/marketplace';
 import { Button } from '@/components/comman/ui/Button';
 import { DeliveryFormatBadge } from '@/components/comman/ui/DeliveryFormatBadge';
-import { BuyerNavbar, Breadcrumb, Footer, SkeletonBox, getRecentlyViewed } from '@/components/comman/ui';
+import { BuyerNavbar, Footer, SkeletonBox, getRecentlyViewed } from '@/components/comman/ui';
 import { ProductCard } from '@/components/comman/marketplace/ProductCard';
 import {
-  Minus, Plus, Trash2, ShoppingBag,
+  Minus, Plus, Trash2, ShoppingBag, Bookmark,
   Loader2, Package, Download, ChevronRight, ShieldCheck, RotateCcw, Lock, CalendarOff,
 } from 'lucide-react';
 import { AwayTextFromServer } from '@/utils/storeHoliday';
@@ -33,6 +37,84 @@ function CartItemImage({ images, name }: { images?: string[]; name: string }) {
       src={src} alt={name} onError={() => setErrored(true)}
       className="w-[72px] h-[72px] rounded-[10px] object-cover shrink-0 block"
     />
+  );
+}
+
+/** "Saved for later": the buyer's wishlist lines that are not in the cart. Move to cart = add to cart, then drop it from the wishlist. */
+function SavedForLater({ cartHasItems, cartLoading }: { cartHasItems: boolean; cartLoading: boolean }) {
+  const { wishlistItems, loading, error, refetch, removeFromWishlist } = useWishlistContext();
+  const { cart, addToCart } = useCartContext();
+  const { convert, currency } = useCurrencyPreference();
+  const toast = useToast();
+  const movingRef = useRef<Set<string>>(new Set());
+  const [movingId, setMovingId] = useState<string | null>(null);
+  if (!TokenStorage.isLoggedIn() || cartLoading) return null;
+
+  const inCart = new Set((cart?.items ?? []).map(i => i.productVariantId));
+  const saved = wishlistItems.flatMap(w => (w.variants ?? []).filter(v => !inCart.has(v._id)).map(v => ({ product: w.product, variant: v })));
+  // Nothing to say on an empty cart with an empty list.
+  if (!loading && !error && saved.length === 0 && !cartHasItems) return null;
+
+  const move = async (productId: string, variantId: string, type?: 'physical' | 'digital') => {
+    if (movingRef.current.has(variantId)) return;
+    movingRef.current.add(variantId);
+    setMovingId(variantId);
+    try {
+      if (!(await addToCart(productId, variantId, type, 1, { silent: true }))) return; // addToCart already shows the error
+      await removeFromWishlist(productId, variantId, { silent: true });
+      toast.success('Moved to cart');
+    } finally {
+      movingRef.current.delete(variantId);
+      setMovingId(null);
+    }
+  };
+
+  return (
+    <section aria-label="Saved for later" className="mt-8">
+      <div className="flex items-baseline justify-between gap-3 mb-3">
+        <h2 className="text-[15px] font-bold text-carbon m-0">Saved for later{!loading && !error && saved.length > 0 ? ` (${saved.length})` : ''}</h2>
+        <Link to="/account/wishlist" className="text-[12px] font-semibold text-brand-royal no-underline hover:underline">View all saved</Link>
+      </div>
+      <div className="bg-white rounded-xl border border-bone overflow-hidden">
+        {loading ? (
+          <div className="divide-y divide-bone" aria-busy="true">
+            {[1, 2].map(i => (
+              <div key={i} className="flex gap-4 items-center px-5 py-4">
+                <SkeletonBox width={56} height={56} rounded="10px" className="shrink-0" />
+                <div className="flex-1 flex flex-col gap-2"><SkeletonBox height={13} width="55%" /><SkeletonBox height={11} width="25%" /></div>
+              </div>
+            ))}
+          </div>
+        ) : error ? (
+          <div role="alert" className="flex flex-wrap items-center gap-3 px-5 py-4">
+            <p className="text-[13px] text-error m-0 flex-1 min-w-[180px]">Could not load your saved items.</p>
+            <Button variant="outline" size="xs" onClick={refetch}>Retry</Button>
+          </div>
+        ) : saved.length === 0 ? (
+          <p className="text-[13px] text-slate m-0 px-5 py-4">Nothing saved for later. Use “Save for later” on an item in your cart.</p>
+        ) : (
+          <ul className="list-none m-0 p-0 divide-y divide-bone">
+            {saved.map(({ product, variant }) => {
+              const type = product.productType ?? product.type;
+              const busy = movingId === variant._id;
+              return (
+                <li key={variant._id} className="flex flex-wrap items-center gap-3 sm:gap-4 px-4 sm:px-5 py-3">
+                  <Link to={`/product/${product.slug}`} className="shrink-0"><CartItemImage images={variant.images?.length ? variant.images : product.images} name={product.name} /></Link>
+                  <div className="flex-1 min-w-[140px]">
+                    <Link to={`/product/${product.slug}`} className="block text-[14px] font-semibold text-carbon no-underline leading-[1.35] hover:underline">{product.name}</Link>
+                    <p className="text-[13px] text-slate m-0 mt-[2px]">{variant.price === 0 ? 'Free' : formatPrice(convert(variant.price, variant.currency ?? undefined), currency)}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button variant="primary" size="xs" className="min-h-10" loading={busy} disabled={busy} onClick={() => { void move(product._id, variant._id, type); }}>Move to cart</Button>
+                    <Button variant="ghost" size="xs" className="min-h-10" disabled={busy} onClick={() => { void removeFromWishlist(product._id, variant._id); }}>Remove</Button>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+    </section>
   );
 }
 
@@ -85,7 +167,39 @@ export function CartPage() {
     return () => { cancelled = true; };
   }, [cartKey]);
 
-  const { isWishlisted, wishlisting, toggleWishlist } = useWishlistContext();
+  const { isWishlisted, wishlisting, toggleWishlist, saveToWishlist, removeFromWishlist } = useWishlistContext();
+  const { requireAuth } = useAuthGate();
+  const toast = useToast();
+
+  // ── Save for later: cart line -> wishlist (remove from cart + add to wishlist, rolled back if the cart removal fails) ──
+  const savingRef = useRef<Set<string>>(new Set());
+  const [savingId, setSavingId] = useState<string | null>(null);
+  const doSaveForLater = async (item: CartItem) => {
+    const key = item.productVariantId;
+    if (savingRef.current.has(key)) return; // double tap
+    savingRef.current.add(key);
+    setSavingId(key);
+    const wasSaved = isWishlisted(item.productId, key);
+    try {
+      if (!(await saveToWishlist(item.productId, key))) {
+        toast.error('Could not save this item for later. It is still in your cart.');
+        return;
+      }
+      if (!(await removeItem(item.productId, key, { silent: true }))) {
+        // The cart still has it: undo the wishlist add so the item is not in both places.
+        if (!wasSaved) await removeFromWishlist(item.productId, key, { silent: true });
+        toast.error('Could not move this item. It is still in your cart.');
+        return;
+      }
+      toast.success('Saved for later');
+    } finally {
+      savingRef.current.delete(key);
+      setSavingId(null);
+    }
+  };
+  const handleSaveForLater = (item: CartItem) => {
+    requireAuth(() => { void doSaveForLater(item); }, 'Sign in to save items for later.');
+  };
   const [addToCartFailedId, setAddToCartFailedId] = useState<string | null>(null);
   const lastAddAttemptRef = useRef<string | null>(null);
   useEffect(() => {
@@ -186,10 +300,6 @@ export function CartPage() {
       <BuyerNavbar/>
 
       <main className={clsx('max-w-[960px] mx-auto px-4 md:px-6 py-6 md:py-8', !isEmpty && items.length > 0 && 'pb-[88px] lg:pb-8')}>
-        <Breadcrumb className="mb-4" items={[
-          { label: 'Home', path: '/' },
-          { label: 'Cart' },
-        ]} />
 
         {/* ── Error banner ── */}
         {error && (
@@ -338,7 +448,8 @@ export function CartPage() {
                     <CartItemImage images={imgs} name={item.name} />
 
                     <div className="flex-1 min-w-0">
-                      {item.storeName && (
+                      {/* Multi-store carts already name the store in the group header above. */}
+                      {item.storeName && !isMultiStore && (
                         <p className="m-0 mb-[2px] text-[12px] text-slate">
                           Sold by <span translate="no" className="font-medium text-charcoal">{item.storeName}</span>
                         </p>
@@ -416,8 +527,18 @@ export function CartPage() {
                         </button>}
 
                         <Button
-                          variant="danger" size="xs"
+                          variant="outline" size="xs"
                           className="ms-2! py-[11px]! min-h-10"
+                          onClick={() => handleSaveForLater(item)}
+                          loading={savingId === key}
+                          disabled={isRemoving || savingId === key}
+                          icon={savingId !== key && <Bookmark size={11} />}
+                        >
+                          Save for later
+                        </Button>
+                        <Button
+                          variant="danger" size="xs"
+                          className="py-[11px]! min-h-10"
                           onClick={() => handleRemove(item.productId, key)}
                           loading={isRemoving}
                           icon={!isRemoving && <Trash2 size={11} />}
@@ -517,6 +638,11 @@ export function CartPage() {
                 {loading ? <SkeletonBox width={80} height={18} /> : <span className="text-carbon">{formatPrice(payableTotal, displayCurrency)}</span>}
               </div>
 
+              {/* Coupons are applied per checkout (the existing checkout coupon box); nothing is priced here. */}
+              {!loading && payableTotal > 0 && (
+                <p className="text-[12px] text-slate -mt-2 m-0">Have a coupon? Apply it at checkout</p>
+              )}
+
               {/* ── Checkout ── One order for the whole cart, mixed physical +
                   digital included — matches Amazon/Alibaba/Shopify/Daraz, and
                   avoids the old two-button flow's double-checkout/billing bug. */}
@@ -569,6 +695,8 @@ export function CartPage() {
 
           </div>
         )}
+
+        <SavedForLater cartHasItems={items.length > 0} cartLoading={loading} />
 
         {/* ── You might also like — a real discovery rail, not shown until the
             cart itself has loaded so it never pops in above the cart card. ── */}

@@ -50,6 +50,9 @@ export interface LearningMetaInput {
   ageMin?:    number | null;
   ageMax?:    number | null;
   language?:  'ur' | 'en' | 'ar' | 'mixed' | null;
+  author?:    string | null;
+  publisher?: string | null;
+  edition?:   string | null;
   classFrom?: string | null;
   classTo?:   string | null;
   coverStyle?: 'book' | 'flat' | null;
@@ -127,6 +130,9 @@ export interface StoreProduct {
   ageMin?:           number | null;
   ageMax?:           number | null;
   language?:         'ur' | 'en' | 'ar' | 'mixed' | null;
+  author?:           string | null;
+  publisher?:        string | null;
+  edition?:          string | null;
   coverStyle?:       'book' | 'flat' | null;
   classFrom?:        string | null;
   classTo?:          string | null;

@@ -12,7 +12,7 @@ export interface MarketplaceStats {
   gmvByCurrency?: { currency: string; gmv: number }[];
 }
 
-export type ListingStatus = 'active' | 'inactive' | 'draft' | 'scheduled' | 'pending_review' | 'rejected' | 'flagged';
+export type ListingStatus = 'active' | 'inactive' | 'draft' | 'scheduled' | 'pending_review' | 'rejected' | 'flagged' | 'needs_review';
 
 export interface MarketplaceListingQuery {
   search?: string;
@@ -48,6 +48,10 @@ export interface MarketplaceListingRow {
   flags?: string[];
   /** The matched phone / email / WhatsApp text behind a contact_info flag. */
   contactMatches?: string[];
+  /** Why the quality rules flagged it 'needs_review' (title vs class, course on a Physical item, 1 image, vague title). */
+  qualityReasons?: string[];
+  /** Set when an admin already asked the seller to fix it. */
+  qualityFixRequestedAt?: string | null;
   createdAt?: string;
 }
 
@@ -216,6 +220,16 @@ export function apiApproveListing(id: string, note?: string) {
 /** `reason` (10+ characters) is shown to the seller. */
 export function apiRejectListing(id: string, reason: string) {
   return client.patch<never, ApiResponse<{ status: string }>>(`${REVIEW_BASE}/${id}/reject`, { reason });
+}
+
+/** 'Needs review' listings: Approve clears the flag (the listing's status is never changed). */
+export function apiApproveQuality(id: string) {
+  return client.patch<never, ApiResponse<unknown>>(`${REVIEW_BASE}/${id}/quality/approve`, {});
+}
+
+/** 'Needs review' listings: the note (10+ characters, required) is sent to the seller; the flag stays until it is fixed. */
+export function apiAskSellerToFix(id: string, note: string) {
+  return client.patch<never, ApiResponse<unknown>>(`${REVIEW_BASE}/${id}/quality/ask-fix`, { note });
 }
 
 /** PATCH /api/admin/marketplace/stores/:id/badge — grants/revokes a store trust badge (e.g. 'verified_educator'). */

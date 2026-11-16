@@ -126,6 +126,9 @@ export interface MarketplaceProduct {
   classTo?:          string | null;
   /** Content language the seller stated (optional; old products have none). */
   language?:         'ur' | 'en' | 'ar' | 'mixed' | null;
+  author?:           string | null;
+  publisher?:        string | null;
+  edition?:          string | null;
   /** 'flat' = plain photo card (toys etc.); anything else = book-cover look. */
   coverStyle?:       'book' | 'flat' | null;
   deliveryFormat?:   'download' | 'course';
@@ -200,9 +203,11 @@ export function apiGetAllProducts(
   campaignId?: string,
   minPrice?: number, maxPrice?: number, minRating?: number, sortBy?: MarketplaceSortBy,
   format?: 'course',
+  classValue?: string,
 ) {
   const params = new URLSearchParams({ page: String(page), limit: String(limit) });
   if (format) params.set('format', format);
+  if (classValue) params.set('class', classValue);
   if (categoryId) params.set('id', categoryId);
   if (productType) params.set('productType', productType);
   if (educationLevel) params.set('educationLevel', educationLevel);

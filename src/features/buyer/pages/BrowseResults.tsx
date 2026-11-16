@@ -230,14 +230,16 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
   // The shared drawer's shape ⇄ the URL.
   const drawerFilters: MarketplaceFilters = {
     priceRange: [state.min ?? 0, state.max ?? PRICE_NO_MAX],
-    type: state.type && PARAM_TO_TYPE[state.type] ? [PARAM_TO_TYPE[state.type]] : [],
+    // ONE Type group: the old `format=course` and `type=physical|digital` URL params both still work and show here.
+    type: state.format === 'course' ? ['Online course'] : state.type && PARAM_TO_TYPE[state.type] ? [PARAM_TO_TYPE[state.type]] : [],
     minRating: state.rating ?? null,
     onSale: false,
   };
   const applyDrawer = (f: MarketplaceFilters) => update({
     min: f.priceRange[0] > 0 ? f.priceRange[0] : undefined,
     max: f.priceRange[1] < PRICE_NO_MAX ? f.priceRange[1] : undefined,
-    type: f.type[0] ? TYPE_TO_PARAM[f.type[0]] : undefined,
+    type: f.type[0] && f.type[0] !== 'Online course' ? TYPE_TO_PARAM[f.type[0]] : undefined,
+    format: f.type[0] === 'Online course' ? 'course' : undefined,
     rating: f.minRating ?? undefined,
   });
   const clearAll = () => update({ subjects: undefined, format: undefined, board: undefined, age: undefined, class: undefined, cat: undefined, grade: undefined, type: undefined, min: undefined, max: undefined, rating: undefined, free: undefined, sort: undefined });
@@ -302,7 +304,7 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
 
         {subcategories && subcategories.length > 0 && (
           <nav aria-label={subcategoriesLabel ?? 'Subcategories'} className="mb-4"><ScrollRow className="flex gap-2 pb-2">
-            {subcategories.map(s => (
+            {subcategories.filter(s => s.productCount !== 0).map(s => (
               <Link
                 key={s._id}
                 to={subcategoryHref(s)}
@@ -467,18 +469,8 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
         categories={showCategoryFilter ? tree : []}
         selectedCategory={showCategoryFilter ? state.cat : ''}
         onCategoryChange={id => update({ cat: id || undefined })}
-        extraActiveCount={(state.format ? 1 : 0) + (state.grade ? 1 : 0) + (state.cls ? 1 : 0) + (state.free ? 1 : 0) + (state.board ? 1 : 0) + (state.age != null ? 1 : 0)}
+        extraActiveCount={(state.grade ? 1 : 0) + (state.cls ? 1 : 0) + (state.free ? 1 : 0) + (state.board ? 1 : 0) + (state.age != null ? 1 : 0)}
       >
-        <Section title="Sort by">
-          {SORTS.map(s => (
-            <RadioRow key={s.value || 'newest'} name="f-sort" label={s.value === '' && state.q ? 'Relevance' : s.label} checked={state.sort === s.value} onChange={() => update({ sort: s.value || undefined })} />
-          ))}
-        </Section>
-        <Section title="Format">
-          <RadioRow name="f-format" label="All formats" checked={!state.format} onChange={() => update({ format: undefined })} />
-          <RadioRow name="f-format" label="Online courses" checked={state.format === 'course'} onChange={() => update({ format: 'course' })} />
-
-        </Section>
         <Section title="Exam board" hint="Resources that follow your child's syllabus">
           <RadioRow name="f-board" label="Any board" checked={!state.board} onChange={() => update({ board: undefined })} />
           {CURRICULA.map(c => (
@@ -497,24 +489,8 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
             {CLASS_LEVELS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
           </select>
         </Section>
-        <Section title="Child's age">
-          <select
-            id="f-age"
-            aria-label="Child's age"
-            value={state.age ?? ''}
-            onChange={e => update({ age: e.target.value === '' ? undefined : Number(e.target.value) })}
-            className="rounded-lg border border-[#8a959d] px-4 py-3 text-[16px] text-carbon bg-white"
-          >
-            <option value="">Any age</option>
-            {Array.from({ length: 18 }, (_, i) => i + 2).map(a => <option key={a} value={a}>{a} years</option>)}
-          </select>
-        </Section>
-        {!fixedGrade && <Section title="Age & grade">
-          <RadioRow name="f-grade" label="All ages" checked={!state.grade} onChange={() => update({ grade: undefined })} />
-          {EDUCATION_LEVELS.filter(l => l.value !== 'other').map(l => (
-            <RadioRow key={l.value} name="f-grade" label={l.label} checked={state.grade === l.value} onChange={() => update({ grade: l.value })} />
-          ))}
-        </Section>}
+        {/* Old links with ?age= or ?grade= still filter the same way (shown as removable chips above the results);
+            there is no second age / grade group any more. */}
       </FiltersDrawer>
     </div>
   );

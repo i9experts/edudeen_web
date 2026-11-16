@@ -22,7 +22,7 @@ import {
 } from './ProductFormKit';
 import { IssueLinks, StepPanel, SummaryRows, type WizardIssue } from './ProductWizard';
 import { FieldErrorsContext } from './fieldErrorsContext';
-import { qualityWarnings, titleClassConflict, contactWarning, classRangeRequired, POLICY_LINE } from './productQuality';
+import { qualityWarnings, titleClassConflict, singleImageWarning, contactWarning, classRangeRequired, POLICY_LINE } from './productQuality';
 
 export interface ProductFormStepsProps {
   mode: 'add' | 'edit';
@@ -155,7 +155,7 @@ export function ProductFormSteps(p: ProductFormStepsProps) {
                 placeholder={pType === 'physical' ? 'e.g. Wooden Arabic Alphabet Puzzle (ages 3–6)' : 'e.g. My Purposeful Learning Week — printable planner'}
                 className={inp} />
               {/* Non-blocking hints: vague title / title vs class range / contact details. */}
-              {[...qualityWarnings(cur.name, p.learning.classFrom, p.learning.classTo), contactWarning(cur.name, cur.description)].filter(Boolean).map(w => (
+              {[...qualityWarnings(cur.name, p.learning.classFrom, p.learning.classTo, pType), contactWarning(cur.name, cur.description)].filter(Boolean).map(w => (
                 <p key={w} role="status" className="text-[12.5px] text-[#8a6100] bg-[#fff6d6] border border-[#f1d98a] rounded-lg px-3 py-2 mt-2 mb-0">{w}</p>
               ))}
             </F>
@@ -177,6 +177,10 @@ export function ProductFormSteps(p: ProductFormStepsProps) {
         {banner(1)}
         <Block id="fld-photos" title="Photos" need="recommended" hint="Up to 20 images - select several at once. The first image is the cover buyers see in search and on your shelf.">
           <ProductPhotosUploader value={cur.images} onChange={urls => set('images', urls)} />
+          {/* Non-blocking: one picture only. */}
+          {singleImageWarning(cur.images.length) && (
+            <p role="status" className="text-[12.5px] text-[#8a6100] bg-[#fff6d6] border border-[#f1d98a] rounded-lg px-3 py-2 mt-3 mb-0">{singleImageWarning(cur.images.length)}</p>
+          )}
         </Block>
         <Block id="fld-video" title="Product video" need="optional" hint="Optional. One short video (mp4, mov or webm, up to 60 MB). Buyers see a play button on the product page.">
           <ProductVideoField value={cur.video} onChange={v => set('video', v)} />

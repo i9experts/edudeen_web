@@ -36,14 +36,33 @@ function clearTypes() {
   try { localStorage.removeItem(TYPES_KEY); } catch { /* storage blocked */ }
 }
 
+// A digital item / course is bought once: show and price it as quantity 1 even if an older cart (or an API that is not
+// updated yet) still says 2+. Keeps the line quantity, the "xN" and the line total consistent.
+function digitalOnce(item: CartItem): CartItem {
+  if (item.type !== 'digital' || item.quantity <= 1) return item;
+  const f = 1 / item.quantity;
+  const unit = item.unitPrice ?? item.price ?? 0;
+  return {
+    ...item,
+    quantity: 1,
+    itemTotal: unit > 0 ? unit : item.itemTotal != null ? item.itemTotal * f : item.itemTotal,
+    ...(item.premiumItemTotal != null ? { premiumItemTotal: item.premiumItemTotal * f } : {}),
+  };
+}
+
 function mergeTypes(cart: Cart): Cart {
   const stored = getStoredTypes();
+  const items = (cart.items ?? []).map(item => digitalOnce({
+    ...item,
+    type: item.type ?? stored[item.productVariantId],
+  }));
+  const changed = items.some((it, n) => it !== (cart.items ?? [])[n] && it.quantity !== (cart.items ?? [])[n]?.quantity);
+  if (!changed) return { ...cart, items };
   return {
     ...cart,
-    items: (cart.items ?? []).map(item => ({
-      ...item,
-      type: item.type ?? stored[item.productVariantId],
-    })),
+    items,
+    totalItems: items.reduce((s, i) => s + i.quantity, 0),
+    totalPrice: items.reduce((s, i) => s + (i.itemTotal ?? (i.unitPrice ?? i.price ?? 0) * i.quantity), 0),
   };
 }
 
@@ -73,7 +92,8 @@ interface CartContextValue {
   clearError:    () => void;
   addToCart:     (productId: string, productVariantId: string, type?: 'physical' | 'digital', quantity?: number, opts?: { silent?: boolean }) => Promise<boolean>;
   updateQty:     (productId: string, productVariantId: string, action: 'increase' | 'decrease') => Promise<void>;
-  removeItem:    (productId: string, productVariantId: string) => Promise<void>;
+  /** Resolves true when the line is gone from the cart. silent = no 'Removed' / Undo toast (Save for later has its own). */
+  removeItem:    (productId: string, productVariantId: string, opts?: { silent?: boolean }) => Promise<boolean>;
   /** Main site: pass a storeId to clear just that store's cart (e.g. after
    *  checking it out); omit to clear every store. Ignored on a storefront. */
   clearCart:     (storeId?: string) => Promise<void>;
@@ -361,19 +381,19 @@ export function CartProvider({ storeId, children }: { storeId?: string; children
     });
   }, [toast]);
 
-  const removeItem = useCallback(async (productId: string, productVariantId: string) => {
+  const removeItem = useCallback(async (productId: string, productVariantId: string, opts?: { silent?: boolean }): Promise<boolean> => {
     const removed = cart?.items.find(i => i.productVariantId === productVariantId);
     removeType(productVariantId);
 
     if (!TokenStorage.isLoggedIn()) {
       removeGuestCartItem(productVariantId);
       await refreshGuestCartDisplay();
-      removedToast(removed, productId, productVariantId);
-      return;
+      if (!opts?.silent) removedToast(removed, productId, productVariantId);
+      return true;
     }
 
     const itemStoreId = storeIdFor(productVariantId);
-    if (!itemStoreId) return;
+    if (!itemStoreId) return false;
 
     setCart(prev => {
       if (!prev) return prev;
@@ -384,11 +404,13 @@ export function CartProvider({ storeId, children }: { storeId?: string; children
     setError(null);
     try {
       await apiRemoveCartItem(productId, productVariantId, itemStoreId);
-      removedToast(removed, productId, productVariantId);
+      if (!opts?.silent) removedToast(removed, productId, productVariantId);
+      return true;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to remove item.';
       setError(message);
-      toast.error(message);
+      if (!opts?.silent) toast.error(message);
+      return false;
     } finally {
       if (storeId) syncCart(storeId, c => setCart(c));
       else fetchMyCarts();

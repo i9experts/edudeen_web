@@ -18,7 +18,12 @@ export interface WishlistContextValue {
   wishlisting:        string | null;   // variantId currently being toggled
   isWishlisted:       (productId: string, variantId: string) => boolean;
   addToWishlist:      (productId: string, variantId: string) => Promise<void>;
-  removeFromWishlist: (productId: string, variantId: string) => Promise<void>;
+  /** Cart 'Save for later': adds without the sign-in prompt or toast and resolves true only when the server saved it (state rolls back on false). */
+  saveToWishlist:     (productId: string, variantId: string) => Promise<boolean>;
+  removeFromWishlist: (productId: string, variantId: string, opts?: { silent?: boolean }) => Promise<void>;
+  /** True when the wishlist could not be loaded (the Saved-for-later list shows Retry). */
+  error:              boolean;
+  refetch:            () => void;
   toggleWishlist:     (productId: string, variantId: string) => Promise<void>;
   clearWishlist:      () => Promise<void>;
   clearing:           boolean;
@@ -43,6 +48,7 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
   const [loading,       setLoading]       = useState(true);
   const [wishlisting,   setWishlisting]   = useState<string | null>(null);
   const [clearing,      setClearing]      = useState(false);
+  const [error,         setError]         = useState(false);
   const [wishlistedKeys, setWishlistedKeys] = useState(() => new Set<string>());
   // false until the first wishlist load finishes: the header keeps the last known count (never a 0 flash).
   const [settled, setSettled] = useState(false);
@@ -67,6 +73,7 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
     if (!TokenStorage.isLoggedIn() || TokenStorage.isStaffSession()) { resetWishlist(); return; }
     const seq = ++fetchSeq.current;
     setLoading(true);
+    setError(false);
     apiGetWishlist()
       .then(res => {
         if (seq !== fetchSeq.current) return;
@@ -78,7 +85,7 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
         });
         setWishlistedKeys(keys);
       })
-      .catch(() => {})
+      .catch(() => { if (seq === fetchSeq.current) setError(true); })
       .finally(() => { if (seq === fetchSeq.current) { setLoading(false); setSettled(true); } });
   }, [resetWishlist]);
 
@@ -152,7 +159,26 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
     }, 'Sign in to save items to your wishlist.');
   }, [requireAuth, toast]);
 
-  const removeFromWishlist = useCallback(async (productId: string, variantId: string) => {
+  const saveToWishlist = useCallback(async (productId: string, variantId: string): Promise<boolean> => {
+    const k = wKey(productId, variantId);
+    if (wishlistedKeys.has(k)) return true; // already saved
+    setWishlistedKeys(prev => new Set(prev).add(k));
+    try {
+      const res = await apiAddToWishlist(productId, variantId);
+      idMap.current.set(k, res.data.wishlist._id);
+      if (res.data.product && res.data.variant) {
+        setWishlistItems(prev => (prev.some(i => i.product._id === productId)
+          ? prev.map(i => (i.product._id === productId && !i.variants.some(v => v._id === variantId) ? { ...i, variants: [...i.variants, res.data.variant] } : i))
+          : [...prev, { product: res.data.product, variants: [res.data.variant] }]));
+      }
+      return true;
+    } catch {
+      setWishlistedKeys(prev => { const s = new Set(prev); s.delete(k); return s; });
+      return false;
+    }
+  }, [wishlistedKeys]);
+
+  const removeFromWishlist = useCallback(async (productId: string, variantId: string, opts?: { silent?: boolean }) => {
     const k = wKey(productId, variantId);
     setWishlisting(variantId);
 
@@ -186,7 +212,7 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
         idMap.current.set(k, wishlistId);
       }
       await apiRemoveFromWishlist(wishlistId);
-      toast.success('Removed from wishlist');
+      if (!opts?.silent) toast.success('Removed from wishlist');
     } catch (err) {
       // Roll back both pieces of state together, restoring the item as
       // close to its original position as possible.
@@ -254,10 +280,13 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
     clearing,
     isWishlisted,
     addToWishlist,
+    saveToWishlist,
+    error,
+    refetch: fetchWishlist,
     removeFromWishlist,
     toggleWishlist,
     clearWishlist,
-  }), [wishlistItems, wishlistCount, loading, wishlisting, clearing, isWishlisted, addToWishlist, removeFromWishlist, toggleWishlist, clearWishlist]);
+  }), [wishlistItems, wishlistCount, loading, wishlisting, clearing, isWishlisted, addToWishlist, saveToWishlist, error, fetchWishlist, removeFromWishlist, toggleWishlist, clearWishlist]);
 
   return (
     <WishlistContext.Provider value={value}>

@@ -137,7 +137,7 @@ export function MegaSectionLabel({ children, action }: { children: ReactNode; ac
 }
 
 export function CategoriesMegaContent({
-  categories, onShopCategory, initialActiveId,
+  categories: allCategories, onShopCategory, initialActiveId,
   fixedHeight,
 }: {
   categories:     CategoryNode[];
@@ -155,6 +155,10 @@ export function CategoriesMegaContent({
    *  cap fitting a slim bar rather than a full-screen modal). */
   fixedHeight?: number;
 }) {
+  // A category (or sub-category) with 0 products is not offered - nothing to open.
+  const categories = allCategories
+    .filter(c => c.productCount !== 0)
+    .map(c => (c.children ? { ...c, children: c.children.filter(s => s.productCount !== 0) } : c));
   const [activeId, setActiveId] = useState<string | null>(initialActiveId ?? categories[0]?._id ?? null);
   const active = categories.find(c => c._id === activeId) ?? categories[0] ?? null;
 

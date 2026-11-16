@@ -3,7 +3,7 @@ import { useLiveRefresh } from '@/hooks/useLiveRefresh';
 import { formatMoney } from '@/utils/currency';
 import { useSearchParams } from 'react-router-dom';
 import { ListingReviewModal } from '@/features/admin/components/ListingReviewModal';
-import { apiGetListingReviewCount, apiApproveListing, apiRejectListing } from '@/api/services/marketplace/adminMarketplace';
+import { apiGetListingReviewCount, apiApproveListing, apiRejectListing, apiApproveQuality, apiAskSellerToFix } from '@/api/services/marketplace/adminMarketplace';
 import { ExportCsvButton } from '@/features/admin/components/ExportCsvButton';
 import { BulkDecisionModal } from '@/features/admin/components/BulkDecisionModal';
 import { FeaturedSellersPanel } from '@/features/admin/components/FeaturedSellersPanel';
@@ -28,6 +28,7 @@ const STATUS_OPTIONS = [
   { value: 'draft', label: 'Draft' },
   { value: 'scheduled', label: 'Scheduled' },
   { value: 'flagged', label: 'Flagged' },
+  { value: 'needs_review', label: 'Needs review' },
 ];
 
 function flattenCategories(nodes: CategoryNode[]): { value: string; label: string }[] {
@@ -125,6 +126,28 @@ export function AdminMarketplace() {
     if (res) refreshAll();
   }
 
+  // 'Needs review' quality flag: Approve (clears it) / Ask seller to fix (note required). Neither changes the listing's status.
+  const [qualityBusyId, setQualityBusyId] = useState<string | null>(null);
+  const [fixing, setFixing] = useState<MarketplaceListingRow | null>(null);
+  const [fixNote, setFixNote] = useState('');
+  const [fixError, setFixError] = useState('');
+  const isNeedsReview = (r: MarketplaceListingRow) => !!r.flags?.includes('needs_review');
+  async function approveQualityRow(row: MarketplaceListingRow) {
+    if (qualityBusyId) return;
+    setQualityBusyId(row.id); setBulkMsg('');
+    try { await apiApproveQuality(row.id); setBulkMsg(`"${row.title}" approved - the flag is cleared.`); refreshAll(); }
+    catch (e) { setBulkMsg(e instanceof Error ? e.message : 'Could not approve this listing.'); }
+    finally { setQualityBusyId(null); }
+  }
+  async function sendFixRequest() {
+    if (!fixing || qualityBusyId) return;
+    if (fixNote.trim().length < 10) { setFixError('Write at least 10 characters so the seller knows what to fix.'); return; }
+    setQualityBusyId(fixing.id); setFixError('');
+    try { await apiAskSellerToFix(fixing.id, fixNote.trim()); setBulkMsg(`The seller of "${fixing.title}" was asked to fix it.`); setFixing(null); setFixNote(''); refreshAll(); }
+    catch (e) { setFixError(e instanceof Error ? e.message : 'Could not send the request.'); }
+    finally { setQualityBusyId(null); }
+  }
+
   async function toggleFeatured(row: MarketplaceListingRow) {
     const ok = await setFeatured(row.id, !row.isFeatured);
     if (ok) refetch();
@@ -155,7 +178,7 @@ export function AdminMarketplace() {
 
   const columns: TableColumn<MarketplaceListingRow>[] = [
     { key: 'id', header: 'ID', render: (r) => <span className="text-[12px] font-mono text-slate whitespace-nowrap">{r.id.slice(-8)}</span> },
-    { key: 'title', header: 'Title', render: (r) => <p className="text-[13px] font-medium text-graphite max-w-[220px] truncate">{r.title}{r.flags?.includes('contact_info') && <span className="ms-2 align-middle rounded-full bg-error-bg border border-error-border px-[7px] py-[1px] text-[12px] font-bold text-error" title={(r.contactMatches ?? []).join(' | ')}>Contains contact info</span>}{r.hasPendingEdit && <span className="ms-2 align-middle rounded-full bg-info-bg border border-info/30 px-[7px] py-[1px] text-[12px] font-bold text-info">Update review</span>}{r.isTest && <span className="ms-2 align-middle rounded-full bg-[#fff6d6] border border-[#f1d98a] px-[7px] py-[1px] text-[12px] font-bold text-[#8a6100]" title="Hidden from the public">Test</span>}</p> },
+    { key: 'title', header: 'Title', render: (r) => <p className="text-[13px] font-medium text-graphite max-w-[220px] truncate">{r.title}{r.flags?.includes('contact_info') && <span className="ms-2 align-middle rounded-full bg-error-bg border border-error-border px-[7px] py-[1px] text-[12px] font-bold text-error" title={(r.contactMatches ?? []).join(' | ')}>Contains contact info</span>}{isNeedsReview(r) && <span className="ms-2 align-middle rounded-full bg-[#fff6d6] border border-[#f1d98a] px-[7px] py-[1px] text-[12px] font-bold text-[#8a6100]" title={(r.qualityReasons ?? []).join(' | ')}>Needs review{r.qualityFixRequestedAt ? ' · seller asked' : ''}</span>}{r.hasPendingEdit && <span className="ms-2 align-middle rounded-full bg-info-bg border border-info/30 px-[7px] py-[1px] text-[12px] font-bold text-info">Update review</span>}{r.isTest && <span className="ms-2 align-middle rounded-full bg-[#fff6d6] border border-[#f1d98a] px-[7px] py-[1px] text-[12px] font-bold text-[#8a6100]" title="Hidden from the public">Test</span>}</p> },
     { key: 'sellerName', header: 'Seller', render: (r) => <span className="text-[13px] text-graphite whitespace-nowrap">{r.sellerName}</span> },
     { key: 'price', header: 'Price', align: 'right', render: (r) => <span className="text-[13px] font-semibold text-charcoal">{r.price == null ? '—' : formatMoney(r.price, r.currency)}</span> },
     { key: 'purchaseCount', header: 'Sales', align: 'right', render: (r) => <span className="text-[13px] text-charcoal">{formatNumber(r.purchaseCount)}</span> },
@@ -177,6 +200,11 @@ export function AdminMarketplace() {
           <div className="flex items-center gap-[6px]">
             {(r.status === 'pending_review' || r.status === 'rejected' || r.hasPendingEdit) ? (
               <Button size="xs" variant="primary" icon={<ClipboardCheck size={11} />} onClick={() => setReviewing(r.id)}>{r.hasPendingEdit ? 'Review update' : 'Review'}</Button>
+            ) : isNeedsReview(r) ? (
+              <>
+                <Button size="xs" variant="primary" icon={<CheckCircle2 size={11} />} loading={qualityBusyId === r.id} disabled={!!qualityBusyId} onClick={() => approveQualityRow(r)}>Approve</Button>
+                <Button size="xs" variant="outline" disabled={!!qualityBusyId} onClick={() => { setFixError(''); setFixNote(''); setFixing(r); }}>Ask seller to fix</Button>
+              </>
             ) : (
             <Button
               size="xs"
@@ -322,6 +350,28 @@ export function AdminMarketplace() {
           onClose={() => setReviewing(null)}
           onDone={() => { setReviewing(null); refreshAll(); }}
         />
+      )}
+
+      {fixing && (
+        <Modal mobileSheet
+          title="Ask seller to fix"
+          onClose={() => setFixing(null)}
+          footer={<>
+            <Button variant="ghost" onClick={() => setFixing(null)}>Cancel</Button>
+            <Button variant="primary" onClick={sendFixRequest} loading={qualityBusyId === fixing.id} disabled={fixNote.trim().length < 10}>Send to seller</Button>
+          </>}
+        >
+          <p className="text-[13px] text-charcoal leading-[1.6]">
+            "<strong>{fixing.title}</strong>" stays live. The seller gets your note as a notification and the flag stays until they fix it (or you approve it).
+          </p>
+          {(fixing.qualityReasons ?? []).length > 0 && (
+            <ul className="m-0 ps-4 text-[12.5px] text-graphite leading-[1.6]">
+              {(fixing.qualityReasons ?? []).map(q => <li key={q}>{q}</li>)}
+            </ul>
+          )}
+          <Textarea id="fix-note" label="Note to the seller (required)" rows={4} value={fixNote} onChange={(e) => setFixNote(e.target.value)} />
+          {fixError && <p role="alert" className="text-[12.5px] text-error m-0">{fixError}</p>}
+        </Modal>
       )}
 
       {removing && (

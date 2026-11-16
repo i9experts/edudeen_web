@@ -1,4 +1,4 @@
-import { normalizeTitle, titleError, vagueTitleWarning, titleClassConflict, classRangeError, findContactInfo, contactWarning, searchVisibility } from '../src/features/seller/store/Dashboard/StoreSection/products/productQuality.ts';
+import { normalizeTitle, titleError, vagueTitleWarning, titleClassConflict, titleTypeConflict, singleImageWarning, classRangeError, findContactInfo, contactWarning, searchVisibility } from '../src/features/seller/store/Dashboard/StoreSection/products/productQuality.ts';
 // Run: npm run test:rules  (Node 22.6+/24 strips the TypeScript types itself; no test runner needed)
 import assert from 'node:assert/strict';
 import { weightError, toggleRemember, weightTextError, weightToStored, weightFromStored, stockError, parseWeightKg, validatePrices, descriptionError, premiumConflict, maxCompareAtForPremium } from '../src/features/seller/store/Dashboard/StoreSection/products/priceRules.ts';
@@ -127,6 +127,17 @@ t('title vs class range', () => {
   assert.match(titleClassConflict('Course G1 English', 'nursery', 'university'), /Class 1/);
   assert.match(titleClassConflict('Beginner Level Arabic', 'class-6', 'class-12'), /Beginner/);
   assert.equal(titleClassConflict('Class 5 Science Guide', 'class-4', 'class-6'), null);
+  // "Class 5 book" with class 7 warns; Class 5 inside 4-5 is fine
+  assert.match(titleClassConflict('Class 5 book', 'class-7', 'class-7'), /Title says Class 5 but suitable classes are Class 7/);
+  assert.equal(titleClassConflict('Class 5 book', 'class-4', 'class-5'), null);
+});
+t('title says course but Physical; only one image', () => {
+  assert.ok(titleTypeConflict('Complete Math Course for Class 4', 'physical'));
+  assert.equal(titleTypeConflict('Complete Math Course for Class 4', 'digital'), null);
+  assert.equal(titleTypeConflict('Class 4 Maths Workbook', 'physical'), null);
+  assert.ok(singleImageWarning(1));
+  assert.equal(singleImageWarning(3), null);
+  assert.equal(singleImageWarning(0), null);
 });
 t('class range required for digital/educational only', () => {
   assert.ok(classRangeError('digital', null, null));

@@ -44,7 +44,7 @@ import { PlatformStatsSection } from '@/features/buyer/components/PlatformStatsS
 import { HomeTrustBar } from '@/features/buyer/components/home/HomeTrustBar';
 import { usePlatformTrust } from '@/hooks/usePlatformTrust';
 import { apiGetCategoryTree, type CategoryNode } from '@/api/services/categories';
-import { EDUCATION_LEVELS } from '@/api/services/product';
+import { CLASS_LEVELS, classIndex } from '@/constants/classLevels';
 import { normalizeProductType } from '@/utils/productType';
 import { type MarketplaceProduct, type MarketplaceSortBy } from '@/api/services/marketplace';
 import { productSalePct, soonestSaleEnd } from '@/utils/saleMath';
@@ -93,6 +93,15 @@ const LANGUAGES: { value: string; label: string; match: RegExp }[] = [
   { value: 'arabic',  label: 'Arabic',  match: /arabic|عربي/i },
   { value: 'urdu',    label: 'Urdu',    match: /urdu|اردو/i },
 ];
+
+/** Does the product's class range include `cls`? Products without a range are not excluded (nothing to compare). */
+function coversClass(p: MarketplaceProduct, cls: string): boolean {
+  if (!p.classFrom && !p.classTo) return true;
+  const i = classIndex(cls);
+  const from = classIndex(p.classFrom ?? p.classTo);
+  const to = classIndex(p.classTo ?? p.classFrom);
+  return i >= 0 && from >= 0 && to >= 0 ? i >= Math.min(from, to) && i <= Math.max(from, to) : true;
+}
 
 function flattenCategories(nodes: CategoryNode[], out: CategoryNode[] = []): CategoryNode[] {
   for (const n of nodes) { out.push(n); flattenCategories(n.children ?? [], out); }
@@ -269,8 +278,10 @@ function HomeLanding() {
   const [language, setLanguage] = useState('');
   const [sort, setSort]         = useState<SortFilter>('featured');
   const [freeOnly, setFreeOnly] = useState(false);
-  const [format, setFormat]     = useState<'course' | ''>('');
   const [filters, setFilters]   = useState<MarketplaceFilters>(EMPTY_FILTERS);
+  // ONE "Type" group in the drawer: Physical / Digital download / Online course (a course is the old `format=course`).
+  const typeSel = filters.type[0];
+  const format: 'course' | '' = typeSel === 'Online course' ? 'course' : '';
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [limit, setLimit]       = useState(PAGE_SIZE);
 
@@ -299,7 +310,7 @@ function HomeLanding() {
   }, [subject, shopTabs, allCategories]);
 
   const languageDef = LANGUAGES.find(l => l.value === language) ?? null;
-  const itemType = filters.type[0]?.toLowerCase() as TypeFilter | undefined;
+  const itemType: TypeFilter | undefined = typeSel === 'Physical' ? 'physical' : typeSel === 'Digital' ? 'digital' : undefined;
   const [minP, maxP] = filters.priceRange;
 
   // ── Search (`/?search=`) — a real text search; every filter below then
@@ -325,13 +336,14 @@ function HomeLanding() {
   const { products: browsed, total: serverTotal, loading: browseLoading } = useProductsByCategory(
     1, clientSide ? CLIENT_POOL : limit, subjectTab?.categoryId,
     itemType || undefined,
-    level || undefined, campaignId || undefined,
+    undefined, campaignId || undefined,
     freeOnly ? undefined : (minP > 0 ? minP : undefined),
     freeOnly ? 0 : (maxP < PRICE_NO_MAX ? maxP : undefined),
     filters.minRating ?? undefined,
     SORT_TO_API[sort],
     !searchQ,
     format || undefined,
+    level || undefined,
   );
 
   const narrowed = useMemo(() => {
@@ -350,7 +362,7 @@ function HomeLanding() {
         const price = defaultVariant(p)?.price ?? 0;
         const kind = normalizeProductType(p.productType ?? p.type);
         if (format && p.deliveryFormat !== format) return false;
-        if (level && p.educationLevel !== level) return false;
+        if (level && !coversClass(p, level)) return false;
         if (itemType && kind !== itemType) return false;
         if (freeOnly ? price > 0 : (price < minP || price > maxP)) return false;
         if (filters.minRating && p.averageRating < filters.minRating) return false;
@@ -383,11 +395,11 @@ function HomeLanding() {
   }, [subjectTab, searchQ, campaignId, freeOnly]);
 
   const resetFilters = () => {
-    setSubject(null); setLevel(''); setLanguage(''); setSort('featured'); setFreeOnly(false); setFormat(''); setFilters(EMPTY_FILTERS);
+    setSubject(null); setLevel(''); setLanguage(''); setSort('featured'); setFreeOnly(false); setFilters(EMPTY_FILTERS);
     if (searchQ) clearSearch();
     if (campaignId) clearCampaign();
   };
-  const pageFilterCount = (subject ? 1 : 0) + (level ? 1 : 0) + (language ? 1 : 0) + (freeOnly ? 1 : 0) + (format ? 1 : 0) + (sort !== 'featured' ? 1 : 0);
+  const pageFilterCount = (subject ? 1 : 0) + (level ? 1 : 0) + (language ? 1 : 0) + (freeOnly ? 1 : 0) + (sort !== 'featured' ? 1 : 0);
   const drawerFilterCount =
     (sameRange(filters.priceRange, EMPTY_FILTERS.priceRange) ? 0 : 1) + filters.type.length + (filters.minRating ? 1 : 0) + (filters.onSale ? 1 : 0);
   const hasFilters = pageFilterCount + drawerFilterCount > 0 || !!campaignId;
@@ -647,6 +659,15 @@ function HomeLanding() {
 
           <div className="flex gap-[10px] flex-wrap mb-6 items-center">
             <FiltersButton count={pageFilterCount + drawerFilterCount} onClick={() => setFiltersOpen(true)} />
+            {/* The one Sort control (it used to be duplicated inside the Filters drawer). */}
+            <select
+              aria-label="Sort by"
+              value={sort}
+              onChange={e => setSort(e.target.value as SortFilter)}
+              className="rounded-full border border-bone bg-white px-4 min-h-11 text-[13.5px] font-medium text-carbon cursor-pointer"
+            >
+              {(Object.keys(SORT_LABELS) as SortFilter[]).map(s => <option key={s} value={s}>{SORT_LABELS[s]}</option>)}
+            </select>
             {campaignId && (
               <span className="inline-flex items-center gap-1.5 rounded-full bg-[#F4DC4C] text-[#152D43] text-[13px] font-semibold ps-3 pe-1.5 py-[6px]">
                 Sale: {activeCampaign?.name ?? 'Selected sale'}
@@ -722,20 +743,14 @@ function HomeLanding() {
           >
             <Section title="Subject">
               <RadioRow name="f-subject" label="All resources" checked={!subject} onChange={() => setSubject(null)} />
-              {shopTabs.map(t => (
+              {shopTabs.filter(t => subject === t.id || (t.node?.productCount ?? 1) > 0).map(t => (
                 <RadioRow key={t.id} name="f-subject" label={t.label} checked={subject === t.id} onChange={() => setSubject(t.id)} />
               ))}
             </Section>
 
-            <Section title="Format">
-              <RadioRow name="f-format" label="All formats" checked={!format} onChange={() => setFormat('')} />
-              <RadioRow name="f-format" label="Online courses" checked={format === 'course'} onChange={() => setFormat('course')} />
-
-            </Section>
-
-            <Section title="Age & grade">
-              <RadioRow name="f-level" label="All ages & grades" checked={!level} onChange={() => setLevel('')} />
-              {EDUCATION_LEVELS.filter(l => l.value !== 'other').map(l => (
+            <Section title="Class">
+              <RadioRow name="f-level" label="All classes" checked={!level} onChange={() => setLevel('')} />
+              {CLASS_LEVELS.map(l => (
                 <RadioRow key={l.value} name="f-level" label={l.label} checked={level === l.value} onChange={() => setLevel(l.value)} />
               ))}
             </Section>
@@ -744,12 +759,6 @@ function HomeLanding() {
               <RadioRow name="f-lang" label="All languages" checked={!language} onChange={() => setLanguage('')} />
               {LANGUAGES.map(l => (
                 <RadioRow key={l.value} name="f-lang" label={l.label} checked={language === l.value} onChange={() => setLanguage(l.value)} />
-              ))}
-            </Section>
-
-            <Section title="Sort by">
-              {(Object.keys(SORT_LABELS) as SortFilter[]).map(s => (
-                <RadioRow key={s} name="f-sort" label={SORT_LABELS[s]} checked={sort === s} onChange={() => setSort(s)} />
               ))}
             </Section>
 

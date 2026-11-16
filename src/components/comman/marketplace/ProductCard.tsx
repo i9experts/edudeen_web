@@ -1,4 +1,4 @@
-import { PremiumChip, PremiumTeaser, memberPriceOf, usePremiumView } from './PremiumBits';
+import { PremiumChip, memberPriceOf, usePremiumView } from './PremiumBits';
 import { useLocalizedProduct } from '@/hooks/useLocalizedProduct';
 import { responsiveImg, imgUrl } from '@/utils/cloudinaryImage';
 import { useState, useEffect, useRef, memo } from 'react';
@@ -329,7 +329,8 @@ export const ProductCard = memo(function ProductCard({ product: rawProduct, onCl
           )}>
             {typeLabel}
           </span>
-          {!member && pctOff != null && pctOff > 0 && (
+          {/* ONE % badge: a running sale (campaign) wins over the plain markdown percentage. */}
+          {!member && !campaignAmount && pctOff != null && pctOff > 0 && (
             <span dir="ltr" translate="no" className="px-[6px] py-[2px] rounded-md text-[12px] font-bold bg-error text-white">
               -{pctOff}%
             </span>
@@ -431,7 +432,7 @@ export const ProductCard = memo(function ProductCard({ product: rawProduct, onCl
         {subscriberPrice != null && (
           <p className="text-[12px] font-semibold text-brand-orange mt-[3px]">Members save {discountPercent}%</p>
         )}
-        {member ? <PremiumChip percent={member.percent} seller={member.seller} platform={member.platform} className="mt-[3px] self-start" /> : !compact && <PremiumTeaser percent={product.premiumPercent} seller={product.premiumSellerPercent} platform={product.premiumPlatformPercent} className="mt-[3px]" />}
+        {member && <PremiumChip percent={member.percent} seller={member.seller} platform={member.platform} className="mt-[3px] self-start" />}
 
         <div className={clsx('flex items-center gap-3 min-w-0', isList ? 'justify-between flex-wrap mt-2 pt-2 border-t border-bone/70' : 'justify-start mt-auto pt-2')}>
           <div className="flex items-baseline gap-[5px] min-w-0">

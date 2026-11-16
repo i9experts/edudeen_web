@@ -17,7 +17,12 @@ export interface MarketplaceFilters {
 
 export const EMPTY_FILTERS: MarketplaceFilters = { priceRange: [0, PRICE_NO_MAX], type: [], minRating: null, onSale: false };
 
-const ITEM_TYPES = ['Physical', 'Digital'];
+/** Values are what the pages store in `filters.type`; labels are what the buyer reads. */
+export const ITEM_TYPES = [
+  { value: 'Physical', label: 'Physical' },
+  { value: 'Digital', label: 'Digital download' },
+  { value: 'Online course', label: 'Online course' },
+];
 
 // Price filters are stored in the catalogue's currency (PKR) - that is what the API compares against - but
 // every label, preset and custom input is shown in the currency the buyer picked (PKR or USD).
@@ -229,10 +234,11 @@ export function FiltersDrawer({
             </Section>
           )}
 
-          <Section title="Item type">
-            <RadioRow name="f-type" label="All items" checked={!selectedType} onChange={() => setType(null)} />
+          {/* ONE type group (it was "Format" + "Item type"). `Online course` maps to the old format=course. */}
+          <Section title="Type">
+            <RadioRow name="f-type" label="All types" checked={!selectedType} onChange={() => setType(null)} />
             {ITEM_TYPES.map(t => (
-              <RadioRow key={t} name="f-type" label={t} checked={selectedType === t} onChange={() => setType(t)} />
+              <RadioRow key={t.value} name="f-type" label={t.label} checked={selectedType === t.value} onChange={() => setType(t.value)} />
             ))}
           </Section>
 
@@ -284,7 +290,8 @@ export function FiltersDrawer({
           {categories.length > 0 && (
             <Section title="Category">
               <RadioRow name="f-cat" label="All categories" checked={!selectedCategory} onChange={() => onCategoryChange('')} />
-              {categories.map(c => (
+              {/* A category with 0 products is not offered (the selected one stays so it can be unselected). */}
+              {categories.filter(c => c._id === selectedCategory || c.productCount !== 0).map(c => (
                 <RadioRow
                   key={c._id} name="f-cat" label={c.name} checked={selectedCategory === c._id}
                   onChange={() => onCategoryChange(c._id)}

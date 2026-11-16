@@ -12,8 +12,10 @@ import { COVER_STYLES, suggestCoverStyle, type CoverStyle } from '@/constants/co
 const inp = 'w-full px-3 py-[9px] text-[13px] border border-bone rounded-lg outline-none text-charcoal bg-white focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/10';
 const lbl = 'block text-[12.5px] font-semibold text-charcoal mb-1.5';
 
-export interface LearningValue { curricula: string[]; ageMin: string; ageMax: string; classFrom: string; classTo: string; coverStyle?: '' | CoverStyle; language?: '' | ProductLanguage }
-export const EMPTY_LEARNING: LearningValue = { curricula: [], ageMin: '', ageMax: '', classFrom: '', classTo: '', coverStyle: '', language: '' };
+export interface LearningValue { curricula: string[]; ageMin: string; ageMax: string; classFrom: string; classTo: string; coverStyle?: '' | CoverStyle; language?: '' | ProductLanguage; author?: string; publisher?: string; edition?: string }
+export const EMPTY_LEARNING: LearningValue = { curricula: [], ageMin: '', ageMax: '', classFrom: '', classTo: '', coverStyle: '', language: '', author: '', publisher: '', edition: '' };
+/** Same limits as the API (`BOOK_DETAIL_LIMITS`). */
+export const BOOK_DETAIL_LIMITS = { author: 120, publisher: 120, edition: 60 } as const;
 
 /** Required choice: how the product card looks (book cover or plain photo). Hint follows the picked category. */
 export function CoverStyleField({ value, onChange, categoryNames }: { value: '' | CoverStyle; onChange: (v: CoverStyle) => void; categoryNames: (string | null | undefined)[] }) {
@@ -46,6 +48,10 @@ export function learningPayload(v: LearningValue) {
   return {
     coverStyle: v.coverStyle || null,
     language: v.language || null,
+    // Empty = cleared (the API stores null); optional book details.
+    author: (v.author ?? '').trim() || null,
+    publisher: (v.publisher ?? '').trim() || null,
+    edition: (v.edition ?? '').trim() || null,
     curricula: v.curricula,
     ageMin: v.ageMin === '' ? null : Number(v.ageMin),
     ageMax: v.ageMax === '' ? null : Number(v.ageMax),
@@ -64,6 +70,9 @@ export function learningError(v: LearningValue): string | null {
   }
   if (min != null && max != null && min > max) return 'The youngest age can’t be more than the oldest.';
   if (v.classFrom && v.classTo && classIndex(v.classFrom) > classIndex(v.classTo)) return '"From class" can’t come after "To class".';
+  for (const k of ['author', 'publisher', 'edition'] as const) {
+    if ((v[k] ?? '').trim().length > BOOK_DETAIL_LIMITS[k]) return `${k[0].toUpperCase()}${k.slice(1)} can be at most ${BOOK_DETAIL_LIMITS[k]} characters.`;
+  }
   return null;
 }
 
@@ -122,6 +131,26 @@ export function LearningFields({ value, onChange, classRequired = false, classWa
           {PRODUCT_LANGUAGES.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
         </select>
         <p className="text-[12px] text-slate mt-1.5">Optional. Shown to buyers on the product page.</p>
+      </div>
+      <div>
+        <span className={lbl}>Book details</span>
+        <p className="text-[12px] text-slate -mt-1 mb-2">Optional. Only the ones you fill in are shown to buyers.</p>
+        <div className="grid gap-3 sm:grid-cols-3">
+          {([
+            ['author', 'Author', 'e.g. Ahmed Khan'],
+            ['publisher', 'Publisher', 'e.g. Oxford University Press'],
+            ['edition', 'Edition', 'e.g. 3rd edition, 2024'],
+          ] as const).map(([k, label, ph]) => (
+            <div key={k}>
+              <label htmlFor={`lf-${k}`} className="block text-[12px] font-semibold text-graphite mb-1">{label}</label>
+              <input
+                id={`lf-${k}`} type="text" maxLength={BOOK_DETAIL_LIMITS[k]} placeholder={ph}
+                value={value[k] ?? ''} onChange={e => onChange({ ...value, [k]: e.target.value })} className={inp}
+              />
+              <span className="block text-[11.5px] text-slate mt-0.5 text-end">{(value[k] ?? '').length}/{BOOK_DETAIL_LIMITS[k]}</span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

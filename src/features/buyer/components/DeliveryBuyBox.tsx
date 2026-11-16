@@ -38,13 +38,23 @@ export function DeliveryBuyBox({ productId, variantId, quantity, isPhysical, isC
 
   return (
     <div className="mb-3 flex flex-col gap-1.5">
-      <Row icon={<Truck size={14} />}>
-        <span>Delivery</span><span>{': '}</span>
-        {info.fee == null ? <span>Calculated at checkout</span>
-          : info.fee === 0 ? <span className="font-semibold">Free</span>
-          : <span className="font-semibold">{formatPrice(info.fee, info.currency)}</span>}
-        {info.estimate ? <span className="text-slate">{` · ${info.estimate}`}</span> : null}
-      </Row>
+      {info.fee == null && !info.estimate ? (
+        // Fee not known yet: say who delivers and what the seller states; never a made-up date.
+        <Row icon={<Truck size={14} />}>
+          {info.dispatchDays
+            ? <span>{`Delivery by seller - usually ships in 1-${info.dispatchDays} working day${info.dispatchDays === 1 ? '' : 's'}`}</span>
+            : <span>Seller confirms delivery after order</span>}
+          <span className="text-slate">{' · fee calculated at checkout'}</span>
+        </Row>
+      ) : (
+        <Row icon={<Truck size={14} />}>
+          <span>Delivery</span><span>{': '}</span>
+          {info.fee == null ? <span>Calculated at checkout</span>
+            : info.fee === 0 ? <span className="font-semibold">Free</span>
+            : <span className="font-semibold">{formatPrice(info.fee, info.currency)}</span>}
+          {info.estimate ? <span className="text-slate">{` · ${info.estimate}`}</span> : null}
+        </Row>
+      )}
       {info.cod && <Row icon={<Banknote size={14} />}>Cash on Delivery available</Row>}
     </div>
   );

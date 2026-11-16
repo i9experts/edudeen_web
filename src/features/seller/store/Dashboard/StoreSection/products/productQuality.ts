@@ -97,8 +97,21 @@ export function classRangeError(type: string | null | undefined, classFrom?: str
   return classRangeRequired(type) && !classFrom && !classTo ? 'Choose the classes this is suitable for (e.g. Class 3 to Class 5) - buyers filter by class.' : null;
 }
 
-export function qualityWarnings(title: string, classFrom?: string | null, classTo?: string | null): string[] {
-  return [vagueTitleWarning(title), titleClassConflict(title, classFrom, classTo)].filter((w): w is string => !!w);
+/** Non-blocking: the title says "course" but the product is Physical (mirror of the API rule; the API flags it 'needs_review'). */
+export function titleTypeConflict(title: string, type?: string | null): string | null {
+  if (type !== 'physical') return null;
+  return /\bcourses?\b/i.test(title ?? '')
+    ? 'The title says "course" but this is a Physical product. If it is an online course choose Digital, otherwise say what it is (e.g. "book", "workbook").'
+    : null;
+}
+
+/** Non-blocking: exactly one picture (none at all is a different, existing message). */
+export function singleImageWarning(imageCount?: number | null): string | null {
+  return imageCount === 1 ? 'Only 1 image. Listings with 3 or more photos get more clicks - add another view or a sample page.' : null;
+}
+
+export function qualityWarnings(title: string, classFrom?: string | null, classTo?: string | null, type?: string | null): string[] {
+  return [vagueTitleWarning(title), titleClassConflict(title, classFrom, classTo), titleTypeConflict(title, type)].filter((w): w is string => !!w);
 }
 
 // ── Search visibility (mirror of API searchVisibility in product-quality.util.ts; the list on the SEO page comes from the API) ──

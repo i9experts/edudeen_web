@@ -58,17 +58,29 @@ import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 import { maskPhone } from '@/utils/formatAddress';
 
 // ── Step badge ────────────────────────────────────────────────────────────────
-function StepBadge({ n, active, done }: { n: number; active: boolean; done: boolean }) {
+/** A raw "Internal server error" / empty message is never shown to the buyer; real server messages (4xx) are. */
+function checkoutErrorMessage(err: unknown): string {
+  const m = err instanceof Error ? err.message.trim() : '';
+  if (!m || /internal server error|request failed with status|network error|timeout/i.test(m)) {
+    return "We couldn't start your checkout right now. Please try again - your cart is safe.";
+  }
+  return m;
+}
+
+/** Checkout creation error: clear text plus a Retry button. */
+function CheckoutErrorBox({ message, onRetry, busy }: { message: string; onRetry: () => void; busy?: boolean }) {
   return (
-    <div className={clsx(
-      'w-7 h-7 rounded-full flex items-center justify-center text-[12px] font-bold flex-shrink-0 transition-colors',
-      done ? 'bg-success text-white' :
-        active ? 'bg-brand-orange text-white' :
-          'bg-bone text-slate',
-    )}>
-      {done ? <CheckCircle2 size={14} /> : n}
+    <div role="alert" className="flex flex-wrap items-center gap-2 text-[12px] text-error bg-error-bg border border-error-border rounded-[8px] px-3 py-2">
+      <AlertCircle size={13} className="flex-shrink-0" />
+      <span className="flex-1 min-w-[160px]">{message}</span>
+      <button type="button" onClick={onRetry} disabled={busy} className="font-semibold underline disabled:opacity-50">Retry</button>
     </div>
   );
+}
+
+// The numbered stepper at the top is the only place with step numbers; the accordion headers just show a tick once done.
+function StepBadge({ done }: { n: number; active: boolean; done: boolean }) {
+  return done ? <CheckCircle2 size={18} className="text-success flex-shrink-0" /> : null;
 }
 
 // ── Card payment slot — shows the real Stripe form once configured, a clear
@@ -536,6 +548,7 @@ export function CheckoutPage() {
   // Checkout creation (step 2 → 3)
   const [creatingCheckout, setCreatingCheckout] = useState(false);
   const [checkoutError, setCheckoutError] = useState('');
+  const [digitalRetry, setDigitalRetry] = useState(0);
   const [checkout, setCheckout] = useState<Checkout | null>(null);
   // Blank until the checkout has loaded — never guess a currency (it used to flash "$" for a Rs order).
   const checkoutCur = checkout?.currency ?? displayCurrency;
@@ -662,12 +675,12 @@ export function CheckoutPage() {
         setStep(3);
       })
       .catch(err => {
-        if (!cancelled) setCheckoutError(err instanceof Error ? err.message : 'Failed to initialize checkout.');
+        if (!cancelled) setCheckoutError(checkoutErrorMessage(err));
       })
       .finally(() => { if (!cancelled) setCreatingCheckout(false); });
     return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isDigital, loggedIn, checkoutStoreId]);
+  }, [isDigital, loggedIn, checkoutStoreId, digitalRetry]);
 
   // Card ('stripe') or split ('split') selected → get a Stripe clientSecret
   // for this checkout so the PaymentElement can mount. Re-fetches if the
@@ -796,6 +809,14 @@ export function CheckoutPage() {
     : selectedAddr ? zonesForAddress(zones, { city: selectedAddr.city, state: selectedAddr.state }) : [];
 
   const selectedZone = matchingZones.find(z => z._id === selectedZoneId) ?? null;
+
+  // Exactly one delivery option: the Shipping step is hidden (display only) and the option is shown as a line inside the
+  // Address step, so the buyer sees 3 steps. Several options (or none) keep the normal 4 steps.
+  const singleShip = !isDigital && !zonesLoading && !zonesError && matchingZones.length === 1;
+  const shipZone = singleShip ? matchingZones[0] : null;
+  const stepNo = (n: number) => (singleShip && n > 2 ? n - 1 : n);
+  const stepTotal = singleShip ? 3 : 4;
+  useEffect(() => { if (singleShip && step === 2) setStep(1); }, [singleShip, step]);
 
   // Only one way to ship there → pick it, one less click for the buyer.
   useEffect(() => {
@@ -992,14 +1013,17 @@ export function CheckoutPage() {
     if (selectedAddr) setStep(2);
   };
 
-  const handleContinueToPayment = async () => {
-    if (!selectedAddr || !selectedZoneId) return;
+  // `zoneOverride`: the single delivery option, when the Shipping step is hidden (same API call as before).
+  const handleContinueToPayment = async (zoneOverride?: string) => {
+    const zoneId = zoneOverride ?? selectedZoneId;
+    if (!selectedAddr || !zoneId) return;
+    if (zoneOverride) setSelectedZoneId(zoneOverride);
     setCreatingCheckout(true);
     setCheckoutError('');
     try {
       const res = await apiCreateCheckout({
         addressId: selectedAddr._id,
-        ...(selectedZoneId !== STANDARD_DELIVERY._id && { shippingZoneId: selectedZoneId }),
+        ...(zoneId !== STANDARD_DELIVERY._id && { shippingZoneId: zoneId }),
         storeId: checkoutStoreId,
         ...(buyNow && { buyNow }),
         ...(checkoutItemsPayload && { items: checkoutItemsPayload }),
@@ -1020,7 +1044,7 @@ export function CheckoutPage() {
       setAllowedMethods((res.data.allowedPaymentMethods ?? []).filter(m => m === 'free' || m === 'stripe' || m === 'cash_on_delivery' || m === 'manual_bank_transfer' || isHostedProvider(m)));
       setStep(3);
     } catch (err) {
-      setCheckoutError(err instanceof Error ? err.message : 'Failed to create checkout. Please try again.');
+      setCheckoutError(checkoutErrorMessage(err));
     } finally {
       setCreatingCheckout(false);
     }
@@ -1162,10 +1186,7 @@ export function CheckoutPage() {
                     <SkeletonBox height={48} rounded="12px" />
                   </div>
                 ) : checkoutError ? (
-                  <div className="flex items-start gap-2 text-[12px] text-error bg-error-bg border border-error-border rounded-[8px] px-3 py-2">
-                    <AlertCircle size={13} className="mt-[1px] flex-shrink-0" />
-                    {checkoutError}
-                  </div>
+                  <CheckoutErrorBox message={checkoutError} onRetry={() => { setCheckout(null); setDigitalRetry(n => n + 1); }} />
                 ) : (
                   <>
                     <div className="flex items-center gap-2 bg-[#eef0ff] border border-[#c7ceff] rounded-[8px] px-3 py-2 mb-5">
@@ -1259,7 +1280,7 @@ export function CheckoutPage() {
                   'text-[12px] font-semibold px-3 py-1 rounded-full',
                   step === 4 ? 'bg-[#e3f4ea] text-[#1e7a3c]' : 'bg-brand-pale-orange text-brand-orange',
                 )}>
-                  Step {step} of 4
+                  Step {stepNo(step)} of {stepTotal}
                 </span>
               </div>
 
@@ -1286,14 +1307,14 @@ export function CheckoutPage() {
                 {/* filled line */}
                 <div
                   className="absolute top-3 start-0 h-[2px] bg-success rounded-full transition-all duration-300"
-                  style={{ width: step === 1 ? '0%' : step === 2 ? '33%' : step === 3 ? '66%' : '100%' }}
+                  style={{ width: `${((stepNo(step) - 1) / (stepTotal - 1)) * 100}%` }}
                 />
                 {([
                   { n: 1, label: 'Address' },
                   { n: 2, label: 'Shipping' },
                   { n: 3, label: 'Payment' },
                   { n: 4, label: 'Review' },
-                ] as const).map(({ n, label }) => (
+                ] as const).filter(s => !(singleShip && s.n === 2)).map(({ n, label }) => (
                   <div key={n} className="relative z-10 flex flex-col items-center gap-[6px]">
                     <div className={clsx(
                       'w-6 h-6 rounded-full flex items-center justify-center text-[12px] font-bold transition-all duration-200',
@@ -1301,7 +1322,7 @@ export function CheckoutPage() {
                         step === n ? 'bg-brand-orange text-white ring-4 ring-brand-pale-orange' :
                           'bg-bone text-slate',
                     )}>
-                      {step > n ? <CheckCircle2 size={12} /> : n}
+                      {step > n ? <CheckCircle2 size={12} /> : stepNo(n)}
                     </div>
                     <span className={clsx(
                       'text-[12px] font-semibold whitespace-nowrap',
@@ -1445,14 +1466,33 @@ export function CheckoutPage() {
                         )}
                       </div>
 
+                      {/* The only delivery option, shown here because the Shipping step is hidden. */}
+                      {shipZone && (
+                        <div className="flex items-start gap-3 rounded-[10px] border border-bone bg-cream px-4 py-3">
+                          <Truck size={16} className="text-brand-orange mt-[2px] shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[13px] font-semibold text-carbon">Delivery: {zoneTitle(shipZone)}</p>
+                            <p className="text-[12px] text-slate mt-[1px]">
+                              {shipZone.estimatedDeliveryTime ? `Estimated delivery: ${shipZone.estimatedDeliveryTime}` : 'The seller will contact you about delivery'}
+                            </p>
+                          </div>
+                          <span className="text-[13px] font-bold text-carbon shrink-0">{zonePrice(shipZone)}</span>
+                        </div>
+                      )}
+
+                      {shipZone && checkoutError && (
+                        <CheckoutErrorBox message={checkoutError} onRetry={() => { void handleContinueToPayment(shipZone._id); }} busy={creatingCheckout} />
+                      )}
+
                       <div>
                         <Button
                           variant="primary" size="sm"
                           disabled={!selectedAddr}
-                          onClick={handleContinueToShipping}
+                          loading={!!shipZone && creatingCheckout}
+                          onClick={shipZone ? () => { void handleContinueToPayment(shipZone._id); } : handleContinueToShipping}
                           className="gap-1"
                         >
-                          Continue to Shipping <ChevronRight size={14} />
+                          {shipZone ? 'Continue to Payment Method' : 'Continue to Shipping'} <ChevronRight size={14} />
                         </Button>
                       </div>
                     </div>
@@ -1465,10 +1505,12 @@ export function CheckoutPage() {
                   <span className="font-medium">{selectedAddr.recipientName}</span>
                   {' — '}
                   {dedupeAddressParts([selectedAddr.addressLine1, selectedAddr.city, selectedAddr.state])}
+                  {shipZone && <span className="block text-slate mt-[2px]">Delivery: {zoneTitle(shipZone)} — {zonePrice(shipZone)}{shipZone.estimatedDeliveryTime ? ` · Estimated delivery: ${shipZone.estimatedDeliveryTime}` : ''}</span>}
                 </div>
               )}
             </div>
 
+            {!singleShip && (<>
             <div className="h-px bg-bone" />
 
             {/* Step 2: Shipping */}
@@ -1589,10 +1631,7 @@ export function CheckoutPage() {
                       </div>
 
                       {checkoutError && (
-                        <div className="flex items-start gap-2 text-[12px] text-error bg-error-bg border border-error-border rounded-[8px] px-3 py-2">
-                          <AlertCircle size={13} className="mt-[1px] flex-shrink-0" />
-                          {checkoutError}
-                        </div>
+                        <CheckoutErrorBox message={checkoutError} onRetry={() => { void handleContinueToPayment(); }} busy={creatingCheckout} />
                       )}
 
                       <div>
@@ -1601,7 +1640,7 @@ export function CheckoutPage() {
                           disabled={!selectedZoneId}
                           loading={creatingCheckout}
                           iconRight={!creatingCheckout && <ChevronRight size={14} />}
-                          onClick={handleContinueToPayment}
+                          onClick={() => { void handleContinueToPayment(); }}
                           className="gap-1"
                         >
                           {creatingCheckout ? 'Creating checkout…' : 'Continue to Payment Method'}
@@ -1620,6 +1659,7 @@ export function CheckoutPage() {
                 </div>
               )}
             </div>
+            </>)}
 
             <div className="h-px bg-bone" />
 
