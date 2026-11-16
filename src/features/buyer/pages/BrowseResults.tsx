@@ -24,7 +24,7 @@ import type { CategoryNode } from '@/api/services/categories';
 import { BuyerNavbar, Breadcrumb, Footer, EmptyState } from '@/components/comman/ui';
 import { ResourceCard, ResourceCardSkeleton } from '@/components/comman/marketplace/ResourceCard';
 import {
-  FiltersButton, FiltersDrawer, Section, RadioRow, PRICE_NO_MAX, type MarketplaceFilters,
+  FiltersButton, FiltersDrawer, Section, RadioRow, PRICE_NO_MAX, ITEM_TYPES, sameRange, usePriceBuckets, type MarketplaceFilters,
 } from '@/components/comman/marketplace/FiltersDrawer';
 
 // The shop's browse layout — the homepage in browse mode (`/?category=…` / `/?search=…`, see HomeBrowse) and the Learn pages.
@@ -242,6 +242,16 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
     format: f.type[0] === 'Online course' ? 'course' : undefined,
     rating: f.minRating ?? undefined,
   });
+  // Quick-filter row (above the results): reads/writes the same params as the drawer.
+  const { buckets: priceBuckets } = usePriceBuckets();
+  const typeValue = state.format === 'course' ? 'Online course' : state.type && PARAM_TO_TYPE[state.type] ? PARAM_TO_TYPE[state.type] : '';
+  const setTypeValue = (v: string) => update({ type: v && v !== 'Online course' ? TYPE_TO_PARAM[v] : undefined, format: v === 'Online course' ? 'course' : undefined });
+  const priceValue = (() => {
+    if (state.free || (state.min == null && state.max == null)) return '';
+    const cur: [number, number] = [state.min ?? 0, state.max ?? PRICE_NO_MAX];
+    const i = priceBuckets.findIndex(b => sameRange(b.range, cur));
+    return i >= 0 ? String(i) : 'custom';
+  })();
   const clearAll = () => update({ subjects: undefined, format: undefined, board: undefined, age: undefined, class: undefined, cat: undefined, grade: undefined, type: undefined, min: undefined, max: undefined, rating: undefined, free: undefined, sort: undefined });
 
   const catName = state.cat ? tree.flatMap(c => [c, ...(c.children ?? [])]).find(c => c._id === state.cat)?.name : null;
@@ -330,9 +340,27 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
           </p>
         )}
 
+        {/* Quick filters: the same URL params as the drawer (Class, Board, Type, Price). One scrolling row on phones. */}
+        <nav aria-label="Quick filters" className="mb-3">
+          <ScrollRow className="flex items-center gap-2 pb-1">
+            <FiltersButton label="All filters" count={chips.length} onClick={() => setDrawerOpen(true)} />
+            <ChipSelect label="Class" value={state.cls} onChange={v => update({ class: v || undefined })} options={CLASS_LEVELS.map(c => ({ value: c.value, label: c.label }))} />
+            <ChipSelect label="Board" value={state.board} onChange={v => update({ board: v || undefined })} options={CURRICULA.map(c => ({ value: c.value, label: c.label }))} />
+            <ChipSelect label="Type" value={typeValue} onChange={setTypeValue} options={ITEM_TYPES.map(o => ({ value: o.value, label: o.label }))} />
+            <ChipSelect
+              label="Price"
+              value={priceValue}
+              onChange={v => {
+                const b = v === '' ? null : priceBuckets[Number(v)];
+                update({ min: b && b.range[0] > 0 ? b.range[0] : undefined, max: b && b.range[1] < PRICE_NO_MAX ? b.range[1] : undefined, free: undefined });
+              }}
+              options={[...priceBuckets.map((b, i) => ({ value: String(i), label: b.label })), ...(priceValue === 'custom' ? [{ value: 'custom', label: chips.find(c => c.key === 'price')?.label ?? 'Custom' }] : [])]}
+            />
+          </ScrollRow>
+        </nav>
+
         {/* Toolbar */}
         <div className="flex flex-wrap items-center gap-3 mb-3">
-          <FiltersButton count={chips.length} onClick={() => setDrawerOpen(true)} />
           <SortMenu value={state.sort} defaultLabel={state.q ? 'Relevance' : 'Newest'} onChange={v => update({ sort: v || undefined })} />
           <label className="inline-flex items-center gap-2 min-h-11 text-[14px] -mx-3 px-3 font-medium text-carbon cursor-pointer select-none">
             <input type="checkbox" id="browse-free" checked={state.free} onChange={e => update({ free: e.target.checked || undefined })} className="w-4 h-4 accent-brand-orange" />
@@ -493,6 +521,29 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
             there is no second age / grade group any more. */}
       </FiltersDrawer>
     </div>
+  );
+}
+
+/** A small dropdown pill for the quick-filter row: shows its name until a value is picked, then the value (filled). */
+function ChipSelect({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: { value: string; label: string }[] }) {
+  const active = value !== '';
+  return (
+    <label className="relative shrink-0 inline-flex">
+      <span className="sr-only">{label}</span>
+      <select
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        className={clsx(
+          'appearance-none rounded-full border ps-4 pe-9 min-h-11 text-[13.5px] font-medium cursor-pointer transition-colors max-w-[220px] truncate',
+          'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange',
+          active ? 'border-brand-royal bg-brand-royal text-white' : 'border-bone bg-white text-carbon hover:border-brand-orange',
+        )}
+      >
+        <option value="">{label}</option>
+        {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+      </select>
+      <ChevronDown size={15} aria-hidden className={clsx('pointer-events-none absolute end-3 top-1/2 -translate-y-1/2', active ? 'text-white' : 'text-slate')} />
+    </label>
   );
 }
 

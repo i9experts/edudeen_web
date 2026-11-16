@@ -58,6 +58,7 @@ import { responseTimeLabel, returnSummary } from '@/utils/sellerTrust';
 const ProductReviewsSection = lazyWithRetry(() => import('./ProductReviews').then(m => ({ default: m.ProductReviewsSection })));
 import { ProductQuestions } from '@/features/buyer/components/ProductQuestions';
 import { BundleOffer } from '@/features/buyer/components/BundleOffer';
+import { AlsoInBundleLine } from '@/features/buyer/components/AlsoInBundleLine';
 import { CourseInfo } from '@/features/buyer/components/CourseInfo';
 import { normalizeDeliveryFormat } from '@/utils/deliveryFormat';
 import { PlacementBanner } from '@/components/comman/marketplace/PlacementBanner';
@@ -1125,6 +1126,7 @@ export function ProductDetail() {
                   </div>
 
                   <DeliveryBuyBox productId={product._id} variantId={activeVariant?._id} quantity={qty} isPhysical={isPhysical} isCourse={isCourse} />
+                  <div className="mb-3 empty:hidden"><AlsoInBundleLine productId={product._id} /></div>
 
                   {isDigital && product.digital?.previewAvailable && (
                     <div className="flex gap-2 mb-3">

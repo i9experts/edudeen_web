@@ -264,6 +264,9 @@ export const ResourceCard = memo(function ResourceCard({
   const meta = metaParts.map((part, i) => <span key={i}>{i > 0 ? ' · ' : ''}<span>{part}</span></span>);
   const metaText = metaParts.join(' · ');
 
+  // List view: a two-line plain-text description (tags stripped), only when the product has one.
+  const listDescription = (product.description ?? '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+
   // Board chip: only when the seller set curricula/board on the product (the existing field; nothing is guessed).
   const boards = (product.curricula ?? []).map(c => CURRICULUM_LABEL[c] ?? c).filter(Boolean);
   const boardChip = boards.length ? (
@@ -334,6 +337,7 @@ export const ResourceCard = memo(function ResourceCard({
             </div>
             <div className="flex items-center gap-2 shrink-0"><CompareToggle product={product} />{wishlistButton}</div>
           </div>
+          {listDescription && <p className="mt-1 mb-0 text-[13px] leading-[1.45] text-slate line-clamp-2">{listDescription}</p>}
           {shopName && (
             product.storeSlug ? (
               <Link to={getStorePagePath(product.storeSlug)} className="self-start mt-1 text-[13px] font-bold text-brand-orange no-underline hover:underline truncate max-w-full">

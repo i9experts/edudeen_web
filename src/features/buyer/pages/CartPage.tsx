@@ -59,10 +59,14 @@ function SavedForLater({ cartHasItems, cartLoading }: { cartHasItems: boolean; c
     if (movingRef.current.has(variantId)) return;
     movingRef.current.add(variantId);
     setMovingId(variantId);
+    const t0 = performance.now();
     try {
       if (!(await addToCart(productId, variantId, type, 1, { silent: true }))) return; // addToCart already shows the error
-      await removeFromWishlist(productId, variantId, { silent: true });
+      // The wishlist removal is optimistic in the context (the row is already gone from the list): do not make the
+      // buyer wait for its server round trip(s) before the confirmation. A failed removal rolls itself back and toasts.
+      void removeFromWishlist(productId, variantId, { silent: true });
       toast.success('Moved to cart');
+      if (import.meta.env.DEV) console.debug(`[move-to-cart] ${Math.round(performance.now() - t0)} ms until confirmation`);
     } finally {
       movingRef.current.delete(variantId);
       setMovingId(null);
@@ -180,18 +184,30 @@ export function CartPage() {
     savingRef.current.add(key);
     setSavingId(key);
     const wasSaved = isWishlisted(item.productId, key);
+    const t0 = performance.now();
     try {
-      if (!(await saveToWishlist(item.productId, key))) {
+      // WHY it felt slow: the two calls ran one after the other (wishlist POST, THEN cart DELETE), and the cart row only
+      // disappeared after the first answer. Now both start at once: removeItem takes the row out of the cart at the same
+      // instant (optimistic), and whichever fails is rolled back below.
+      const [saved, removed] = await Promise.all([
+        saveToWishlist(item.productId, key),
+        removeItem(item.productId, key, { silent: true }),
+      ]);
+      if (import.meta.env.DEV) console.debug(`[save-for-later] ${Math.round(performance.now() - t0)} ms (saved=${saved}, removed=${removed})`);
+      if (saved && removed) { toast.success('Saved for later'); return; }
+      if (!saved && removed) {
+        // The cart line is gone but the wishlist add failed: put the line back so nothing is lost.
+        await addToCart(item.productId, key, item.type === 'physical' || item.type === 'digital' ? item.type : undefined, item.quantity, { silent: true });
         toast.error('Could not save this item for later. It is still in your cart.');
         return;
       }
-      if (!(await removeItem(item.productId, key, { silent: true }))) {
+      if (saved && !removed) {
         // The cart still has it: undo the wishlist add so the item is not in both places.
         if (!wasSaved) await removeFromWishlist(item.productId, key, { silent: true });
         toast.error('Could not move this item. It is still in your cart.');
         return;
       }
-      toast.success('Saved for later');
+      toast.error('Could not save this item for later. It is still in your cart.');
     } finally {
       savingRef.current.delete(key);
       setSavingId(null);

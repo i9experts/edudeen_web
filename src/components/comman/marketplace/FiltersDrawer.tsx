@@ -32,10 +32,37 @@ const BUCKET_EDGES: Record<'PKR' | 'USD', number[]> = {
   USD: [2, 5, 10],
 };
 
-const sameRange = (a: [number, number], b: [number, number]) => a[0] === b[0] && a[1] === b[1];
+export const sameRange = (a: [number, number], b: [number, number]) => a[0] === b[0] && a[1] === b[1];
+
+/**
+ * The price presets, shown in the currency the buyer picked but stored in PKR (what the API compares against).
+ * Shared by the drawer and the chip row above the results, so both always offer the same ranges.
+ */
+export function usePriceBuckets() {
+  const { currency: prefCurrency, convertBetween, ratesLoaded } = useCurrencyPreference();
+  // Without rates a USD amount cannot be turned into PKR, so show PKR until they arrive rather than guess.
+  const dispCur: string = ratesLoaded ? prefCurrency : 'PKR';
+  const toBase = (v: number) => (dispCur === 'PKR' ? v : Math.round(convertBetween(v, dispCur, 'PKR')));
+  const fromBase = (v: number) => (dispCur === 'PKR' ? v : Math.round(convertBetween(v, 'PKR', dispCur) * 100) / 100);
+  const money = (v: number) => formatPrice(v, dispCur);
+  // PKR / USD have hand-picked buckets; a local currency (AED, GBP...) gets the USD ones converted and rounded to 2 significant digits.
+  const edges: readonly number[] = BUCKET_EDGES[dispCur as 'PKR' | 'USD']
+    ?? BUCKET_EDGES.USD.map(v => {
+      const c = convertBetween(v, 'USD', dispCur);
+      const mag = 10 ** Math.max(0, Math.floor(Math.log10(Math.max(c, 1))) - 1);
+      return Math.max(1, Math.round(c / mag) * mag);
+    });
+  const buckets: { label: string; range: [number, number] }[] = [
+    { label: `Under ${money(edges[0])}`, range: [0, toBase(edges[0])] },
+    { label: `${money(edges[0])} to ${money(edges[1])}`, range: [toBase(edges[0]), toBase(edges[1])] },
+    { label: `${money(edges[1])} to ${money(edges[2])}`, range: [toBase(edges[1]), toBase(edges[2])] },
+    { label: `Over ${money(edges[2])}`, range: [toBase(edges[2]), PRICE_NO_MAX] },
+  ];
+  return { dispCur, toBase, fromBase, buckets };
+}
 
 /** "Filters" pill that opens the drawer — shows how many filters are on. */
-export function FiltersButton({ count, onClick }: { count: number; onClick: () => void }) {
+export function FiltersButton({ count, onClick, label = 'Filters' }: { count: number; onClick: () => void; label?: string }) {
   return (
     <button
       type="button"
@@ -44,7 +71,7 @@ export function FiltersButton({ count, onClick }: { count: number; onClick: () =
       className="inline-flex items-center gap-2 rounded-full bg-[#FBF4CC] hover:bg-[#F5E9A6] px-5 py-[10px] text-[15px] font-semibold text-carbon border-none cursor-pointer transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange"
     >
       <SlidersHorizontal size={17} strokeWidth={2.2} />
-      Filters
+      {label}
       {count > 0 && (
         <span className="min-w-[20px] h-[20px] rounded-full bg-brand-orange text-white text-[12px] font-bold flex items-center justify-center px-[5px] leading-none">
           {count}
@@ -137,25 +164,7 @@ export function FiltersDrawer({
   /** Hide "On sale" where the page can't filter by it. */
   showOnSale?: boolean;
 }) {
-  const { currency: prefCurrency, convertBetween, ratesLoaded } = useCurrencyPreference();
-  // Without rates a USD amount cannot be turned into PKR, so show PKR until they arrive rather than guess.
-  const dispCur: string = ratesLoaded ? prefCurrency : 'PKR';
-  const toBase = (v: number) => (dispCur === 'PKR' ? v : Math.round(convertBetween(v, dispCur, 'PKR')));
-  const fromBase = (v: number) => (dispCur === 'PKR' ? v : Math.round(convertBetween(v, 'PKR', dispCur) * 100) / 100);
-  const money = (v: number) => formatPrice(v, dispCur);
-  // PKR / USD have hand-picked buckets; a local currency (AED, GBP...) gets the USD ones converted and rounded to 2 significant digits.
-  const edges: readonly number[] = BUCKET_EDGES[dispCur as 'PKR' | 'USD']
-    ?? BUCKET_EDGES.USD.map(v => {
-      const c = convertBetween(v, 'USD', dispCur);
-      const mag = 10 ** Math.max(0, Math.floor(Math.log10(Math.max(c, 1))) - 1);
-      return Math.max(1, Math.round(c / mag) * mag);
-    });
-  const PRICE_BUCKETS: { label: string; range: [number, number] }[] = [
-    { label: `Under ${money(edges[0])}`, range: [0, toBase(edges[0])] },
-    { label: `${money(edges[0])} to ${money(edges[1])}`, range: [toBase(edges[0]), toBase(edges[1])] },
-    { label: `${money(edges[1])} to ${money(edges[2])}`, range: [toBase(edges[1]), toBase(edges[2])] },
-    { label: `Over ${money(edges[2])}`, range: [toBase(edges[2]), PRICE_NO_MAX] },
-  ];
+  const { dispCur, toBase, fromBase, buckets: PRICE_BUCKETS } = usePriceBuckets();
   const bucketMatch = PRICE_BUCKETS.find(b => sameRange(b.range, filters.priceRange));
   const anyPrice = sameRange(filters.priceRange, EMPTY_FILTERS.priceRange);
   const [customOpen, setCustomOpen] = useState(!anyPrice && !bucketMatch);
