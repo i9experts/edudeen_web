@@ -74,6 +74,15 @@ export function isValidRailProduct(p: { variants?: RailVariant[] } | null | unde
   return shown > 0 || strike == null;
 }
 
+/**
+ * Discovery rails (Flash/Mega Sale, Bestsellers, Featured, curated, top picks): a valid price AND not waiting for a quality
+ * review (`needsReview`, sent by the API as a boolean). Mirror of the API's `isRailEligible`. Store pages and search keep
+ * using `isValidRailProduct` only.
+ */
+export function isRailEligible(p: ({ variants?: RailVariant[] } & { needsReview?: boolean }) | null | undefined): boolean {
+  return isValidRailProduct(p) && p?.needsReview !== true;
+}
+
 /** A rail shows a full row: 8 items when there are 8+, else 4 when there are 4+, else whatever exists (never an odd 5). */
 export function railSize(available: number): number {
   return available >= 8 ? 8 : available >= 4 ? 4 : Math.max(0, available);

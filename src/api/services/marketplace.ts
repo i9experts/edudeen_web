@@ -94,6 +94,8 @@ export interface MarketplaceProduct {
   name:              string;
   /** Admin-picked "Featured by Edudeen" listing. */
   isFeatured?:       boolean;
+  /** Waiting for a quality review: stays on the store page and in search, never in discovery rails. */
+  needsReview?:      boolean;
   sellerId:          string;
   storeId?:          string;
   storeSlug?:        string | null;

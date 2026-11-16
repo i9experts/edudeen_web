@@ -1,6 +1,6 @@
 // Run: npm run test:rules  (Node 22.6+/24 strips the TypeScript types itself; no test runner needed)
 import assert from 'node:assert/strict';
-import { soldLabel, dedupeInOrder, paymentTrust, paymentTrustSub, railSize, isValidRailProduct, MIN_RAIL_ITEMS, whatsappLink, GRADE_TILES, learnLevelPath, storeHighlightRows } from '../src/features/buyer/components/home/homeRules.ts';
+import { soldLabel, dedupeInOrder, paymentTrust, paymentTrustSub, railSize, isValidRailProduct, isRailEligible, MIN_RAIL_ITEMS, whatsappLink, GRADE_TILES, learnLevelPath, storeHighlightRows } from '../src/features/buyer/components/home/homeRules.ts';
 
 let n = 0;
 const t = (name, fn) => { fn(); n += 1; console.log('ok  ', name); };
@@ -23,6 +23,14 @@ t('rail guard: no Rs 0 with a strike price, free items stay', () => {
   assert.equal(isValidRailProduct(v({ price: 500, campaignPrice: 0 })), false);
   assert.equal(isValidRailProduct({ variants: [] }), false);
   assert.equal(MIN_RAIL_ITEMS, 4);
+});
+
+t('rails skip a needs_review listing (store page / search keep using isValidRailProduct)', () => {
+  const v = (x, extra = {}) => ({ variants: [{ isDefault: true, ...x }], ...extra });
+  assert.equal(isRailEligible(v({ price: 500 })), true);
+  assert.equal(isRailEligible(v({ price: 500 }, { needsReview: true })), false);
+  assert.equal(isValidRailProduct(v({ price: 500 }, { needsReview: true })), true);
+  assert.equal(isRailEligible(v({ price: 0, compareAtPrice: 500 })), false);
 });
 
 t('rails show 8, 4 or all - never 5', () => {

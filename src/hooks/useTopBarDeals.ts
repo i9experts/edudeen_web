@@ -39,7 +39,8 @@ function load(): Promise<TopBarDeals> {
     // No full-catalogue prefetch: one page of popular products + each live campaign's own products (bounded).
     const lists = await Promise.all([fetchProducts(), ...campaigns.slice(0, 3).map(c => fetchProducts(c._id))]);
     const seen = new Set<string>();
-    const products = lists.flat().filter(p => !seen.has(p._id) && !!seen.add(p._id));
+    // A listing waiting for a quality review never feeds the sale rails / ticker (it stays in search and on its store page).
+    const products = lists.flat().filter(p => p.needsReview !== true && !seen.has(p._id) && !!seen.add(p._id));
     return [campaigns, products] as [PublicCampaign[], MarketplaceProduct[]];
   }).then(([campaigns, products]) => {
     const now = Date.now();

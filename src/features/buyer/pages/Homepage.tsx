@@ -64,7 +64,7 @@ import { ProductShelf } from '@/features/buyer/components/home/ProductShelf';
 import { BundlesShelf } from '@/features/buyer/components/home/BundlesShelf';
 import { HomeNewsletter } from '@/features/buyer/components/home/HomeNewsletter';
 import { useHomeShelves } from '@/features/buyer/components/home/useHomeShelves';
-import { dedupeInOrder, soldLabel, railSize, isValidRailProduct, MIN_RAIL_ITEMS } from '@/features/buyer/components/home/homeRules';
+import { dedupeInOrder, soldLabel, railSize, isRailEligible, MIN_RAIL_ITEMS } from '@/features/buyer/components/home/homeRules';
 
 // Text lives in admin-edit/homeDefaults.ts (shared with the inline editor).
 
@@ -231,20 +231,21 @@ function HomeLanding() {
 
   // Deals are ranked over a much bigger slice of the catalogue than the first page. The ranking is shared with
   // the top-bar ticker (useTopBarDeals: one fetch, one maths helper), so every "Up to X% off" agrees.
-  const normalFlashDeals = (topBarDeals?.allDeals.length ? topBarDeals.allDeals : featuredPool.map(p => ({ product: p, pct: productSalePct(p) })).filter(x => x.pct > 0).sort((a, b) => b.pct - a.pct))
-    .filter(x => !!x.product.name?.trim() && isValidRailProduct(x.product))
+  const normalFlashDeals = (topBarDeals?.allDeals.length ? topBarDeals.allDeals : featuredPool.filter(p => p.needsReview !== true).map(p => ({ product: p, pct: productSalePct(p) })).filter(x => x.pct > 0).sort((a, b) => b.pct - a.pct))
+    .filter(x => !!x.product.name?.trim() && isRailEligible(x.product))
     .slice(0, 10);
   // Premium members: the same slot shows the biggest member discounts (Premium Deals) instead of the seller / platform flash sale.
   const { deals: premiumDeals } = usePremiumDeals();
   // A rail needs MIN_RAIL_ITEMS valid items, otherwise it is hidden (no empty state on the home page).
-  const validPremium = premiumDeals?.filter(d => isValidRailProduct(d.product)) ?? null;
+  const validPremium = premiumDeals?.filter(d => isRailEligible(d.product)) ?? null;
   const dealsAll = validPremium ?? normalFlashDeals;
   const flashDeals = dealsAll.length >= MIN_RAIL_ITEMS ? dealsAll : [];
-  const topPicks = [...featuredPool]
+  const railPool = featuredPool.filter(p => p.needsReview !== true);
+  const topPicks = [...railPool]
     .sort((a, b) => (b.purchaseCount + b.averageRating * 10) - (a.purchaseCount + a.averageRating * 10))
     .slice(0, 10);
 
-  const bestRated = [...featuredPool]
+  const bestRated = [...railPool]
     .filter(p => p.averageRating > 0)
     .sort((a, b) => b.averageRating - a.averageRating || (b.totalRatings ?? 0) - (a.totalRatings ?? 0))
     .slice(0, 10);
@@ -266,9 +267,9 @@ function HomeLanding() {
     ['flash', 'bestsellers', 'featured', ...shelves.map(s => `shelf-${s._id}`)],
     {
       flash: flashDeals.map(d => d.product),
-      bestsellers: homeShelves.bestsellers.items.filter(isValidRailProduct),
-      featured: featured.filter(isValidRailProduct),
-      ...Object.fromEntries(shelves.map(s => [`shelf-${s._id}`, s.products.filter(isValidRailProduct)])),
+      bestsellers: homeShelves.bestsellers.items.filter(isRailEligible),
+      featured: featured.filter(isRailEligible),
+      ...Object.fromEntries(shelves.map(s => [`shelf-${s._id}`, s.products.filter(isRailEligible)])),
     },
     { bestsellers: 8, featured: 5, ...Object.fromEntries(shelves.map(s => [`shelf-${s._id}`, 5])) },
   );
