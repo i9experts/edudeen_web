@@ -872,7 +872,9 @@ export function CheckoutPage() {
   // every discount off the item prices, so the total is `totalAmount` as-is.
   // (Summing item prices here mixed seller currencies with a PKR shipping fee
   // and took coupons off twice.) Before that, it's an estimate from the cart.
-  const shipping = checkout?.shippingFee ?? summary?.shippingFee ?? selectedZone?.shippingPrice ?? 0;
+  const shipping = checkout?.shippingFee ?? summary?.shippingFee ?? 0;
+  // Known only once the server has priced the checkout; a zone's list price alone is not the final fee (a seller's own charge may replace it).
+  const shippingLabel = checkout || summary ? (shipping > 0 ? formatPrice(shipping, checkoutCur) : 'Free') : null;
   const tax      = checkout?.taxAmount ?? summary?.taxAmount ?? 0;
   const couponDiscount = checkout?.couponDiscountUSD ?? 0;
   const giftCardDiscount = checkout?.giftCardDiscountUSD ?? 0;
@@ -1782,21 +1784,17 @@ export function CheckoutPage() {
                       <span className="text-slate flex-shrink-0">Phone</span>
                       <span className="font-medium text-carbon text-end" translate="no">{selectedAddr?.phoneNumber?.trim() ? maskPhone(selectedAddr.phoneNumber) : '—'}</span>
                     </div>
+                    {/* ONE Delivery row: "<method> · <fee or Free>" - the same value the Order Summary shows. */}
                     <div className="flex justify-between gap-3 text-[12.5px]">
                       <span className="text-slate flex-shrink-0">Delivery</span>
                       <span className="font-medium text-carbon text-end">
-                        {selectedZone?.estimatedDeliveryTime ? <><span>Estimated </span><span translate="no">{selectedZone.estimatedDeliveryTime}</span></> : 'Delivery arranged by the seller'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between gap-3 text-[12.5px]">
-                      <span className="text-slate flex-shrink-0">Shipping</span>
-                      <span className="font-medium text-carbon text-end">
-                        {selectedZone ? `${zoneTitle(selectedZone)} · ${checkout ? (checkout.shippingFee > 0 ? formatPrice(checkout.shippingFee, checkoutCur) : 'Free') : zonePrice(selectedZone)}` : '—'}
+                        {selectedZone ? `${zoneTitle(selectedZone)} · ${shippingLabel ?? 'Calculated next'}` : '—'}
+                        {selectedZone?.estimatedDeliveryTime && <span className="block text-[11px] font-normal text-slate"><span>Estimated </span><span translate="no">{selectedZone.estimatedDeliveryTime}</span></span>}
                         {(checkout?.shippingByStore?.length ?? 0) === 1 && <DeliveryVia line={checkout!.shippingByStore![0]} block />}
                       </span>
                     </div>
                     {checkout && (checkout.shippingByStore?.length ?? 0) > 1 && checkout.shippingByStore!.map((line, idx, arr) => {
-                      const storeName = checkout.items.find(i => i.storeId === line.storeId)?.sellerName || `Seller ${idx + 1}`;
+                      const storeName = checkout.items.find(i => i.storeId === line.storeId)?.sellerName || `Store ${idx + 1}`;
                       const pkgTotal = packageTotal(checkout, line);
                       return (
                         <div key={line.storeId} className="flex flex-col gap-0.5">
@@ -1965,8 +1963,8 @@ export function CheckoutPage() {
               {!isDigital && (
                 <div className="flex justify-between text-[13px]">
                   <span className="text-slate">Shipping</span>
-                  {checkout || summary || selectedZone
-                    ? <span className="font-semibold text-carbon">{shipping > 0 ? formatPrice(shipping, checkoutCur) : 'Free'}</span>
+                  {shippingLabel
+                    ? <span className="font-semibold text-carbon">{shippingLabel}</span>
                     : <span className="text-slate font-medium">Calculated next</span>
                   }
                 </div>
