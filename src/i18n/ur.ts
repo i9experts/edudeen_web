@@ -1886,7 +1886,7 @@ export const UR: Record<string, string> = {
   'Stationery & School Supplies': 'سٹیشنری اور اسکول کا سامان',
   'Educational Toys & Games': 'تعلیمی کھلونے اور کھیل',
   'Handwriting, Art & Creativity': 'خوشخطی، فن اور تخلیقی صلاحیت',
-  'Courses & Live Classes': 'کورسز اور لائیو کلاسز',
+  'Online Courses': 'آن لائن کورسز',
   'Homeschool & Parenting': 'ہوم اسکولنگ اور والدین کی رہنمائی',
   'Others': 'دیگر',
   'Islamic & Educational Resources': 'اسلامی و تعلیمی وسائل',

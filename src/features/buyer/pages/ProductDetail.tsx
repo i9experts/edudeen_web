@@ -45,6 +45,7 @@ import { Card } from '@/components/comman/ui/Card';
 import { SkeletonBox } from '@/components/comman/ui/SkeletonBox';
 import { TabBar } from '@/components/comman/ui/TabBar';
 import { Modal } from '@/components/comman/ui/Modal';
+import { APP_LIVE } from '@/utils/appLive';
 import { BuyerNavbar, Breadcrumb, AppDownloadBanner, Footer, CoverImage, pushRecentlyViewed } from '@/components/comman/ui';
 import { ProductCoverFallback } from '@/components/comman/marketplace/ProductCoverFallback';
 import {
@@ -1510,7 +1511,7 @@ export function ProductDetail() {
 
       {!loading && product && (
         <div className="pb-[76px] lg:pb-0">
-          <div className="px-4 md:px-6 lg:px-10 pb-8"><AppDownloadBanner /></div>
+          {APP_LIVE && <div className="px-4 md:px-6 lg:px-10 pb-8"><AppDownloadBanner /></div>}
           <Footer />
         </div>
       )}

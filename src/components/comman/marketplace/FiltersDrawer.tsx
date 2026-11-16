@@ -1,4 +1,5 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useFocusTrap } from '@/components/comman/ui/useFocusTrap';
 import { clsx } from 'clsx';
 import { Check, SlidersHorizontal, Star, X } from 'lucide-react';
 import type { CategoryNode } from '@/api/services/categories';
@@ -170,13 +171,9 @@ export function FiltersDrawer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters.priceRange[0], filters.priceRange[1], dispCur]);
 
-  // Esc closes; body behind stays put.
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [open, onClose]);
+  // Focus trap + Esc closes + focus returns to the Filters button; body behind stays put.
+  const panelRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(panelRef, onClose, open);
 
   const setType = (t: string | null) => onChange({ ...filters, type: t ? [t] : [] });
   const selectedType = filters.type.length === 1 ? filters.type[0] : null;
@@ -192,20 +189,22 @@ export function FiltersDrawer({
     <>
       <div
         className={clsx(
-          'fixed inset-0 z-[59] bg-[#0c1b29]/10 transition-opacity duration-300',
+          'fixed inset-0 z-[59] bg-[#0c1b29]/40 transition-opacity duration-300',
           open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none',
         )}
         onClick={onClose}
       />
 
       <div
+        ref={panelRef}
+        tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-label="Filters"
         aria-hidden={!open}
       inert={!open}
         className={clsx(
-          'fixed top-0 start-0 h-full w-[min(510px,100vw)] z-[60] bg-[#FBF4CC]/75 shadow-2xl flex flex-col',
+          'fixed top-0 start-0 h-full w-[min(510px,100vw)] z-[60] bg-white shadow-2xl flex flex-col outline-none',
           'transition-transform duration-300 ease-out',
           open ? 'translate-x-0' : '-translate-x-full rtl:translate-x-full',
         )}

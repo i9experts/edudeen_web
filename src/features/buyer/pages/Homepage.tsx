@@ -57,6 +57,7 @@ import { HomeHero, HomeHeroSkeleton } from '@/features/buyer/components/home/Hom
 import { ShopByCategory } from '@/features/buyer/components/home/ShopByCategory';
 import { HomeCardGrid } from '@/features/buyer/components/home/HomeCardGrid';
 import { AppSideCard } from '@/features/buyer/components/home/AppSideCard';
+import { APP_LIVE } from '@/utils/appLive';
 import { useHomeCards } from '@/hooks/useHomeCards';
 import { useHasPlacementBanners } from '@/hooks/useHasPlacementBanners';
 import { ProductShelf } from '@/features/buyer/components/home/ProductShelf';
@@ -540,12 +541,12 @@ function HomeLanding() {
 
         {/* ── Admin banners / paid promotions (Admin → Banners, homepage slot) ── */}
         <div className="mb-[25px] flex flex-col gap-3 lg:grid lg:grid-cols-12 lg:gap-4 lg:items-stretch">
-          <div className="min-w-0 lg:col-span-10">
+          <div className={APP_LIVE ? 'min-w-0 lg:col-span-10' : 'min-w-0 lg:col-span-12'}>
             {!heroBanners.loaded
               ? <div aria-hidden="true" className="w-full animate-pulse rounded-2xl bg-cream aspect-[2/1] sm:aspect-[5/2] lg:aspect-[3.2/1]" />
               : <PlacementBanner placement="homepageHero" tall />}
           </div>
-          {heroBanners.has && (
+          {APP_LIVE && heroBanners.has && (
             <div className="relative min-w-0 lg:col-span-2">
               <AppSideCard />
             </div>
