@@ -5,15 +5,18 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Package, Truck, CheckCircle2, Clock, XCircle,
   ChevronDown, MapPin, Box, ShoppingBag,
-  RotateCcw, Ban, Undo2, Star,
+  RotateCcw, Ban, Undo2, Star, Copy, Check, MessageSquare, Download, Info,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { CANCEL_PRESETS } from '../utils/cancelReasons';
 import { Card, EmptyState, Modal, Textarea, Button, SkeletonBox, PageHeader } from '@/components/comman/ui';
 import {
-  apiGetMyOrders, apiCancelOrder, apiRequestReturn,
-  type OrderSummary, type OrderStatus, type OrderLineItem,
+  apiGetMyOrders, apiGetOrderById, apiCancelOrder, apiRequestReturn,
+  type OrderSummary, type OrderLineItem,
 } from '@/api/services/orders';
+import { apiStartConversation } from '@/api/services/messaging';
+import { ORDER_TABS, orderTab, shortOrderId, isStaleCod, type OrderTab } from './account/orderTabs';
+import { reorderItems, hasVariantIds } from './account/orderActions';
 import { DigitalItemAccess, BoughtFormatBadge, useDeliveryFormat } from '@/features/buyer/components/DigitalItemAccess';
 import { formatPrice } from '@/utils/formatPrice';
 import { formatAddress, formatPhone } from '@/utils/formatAddress';
@@ -25,6 +28,7 @@ import { statusLabel } from '@/constants/statusLabels';
 // ─────────────────────────────────────────────────────────────────────────────
 // Status config
 // ─────────────────────────────────────────────────────────────────────────────
+type OrderStatus = OrderSummary['orderStatus'];
 const STATUS_CONFIG: Record<OrderStatus, { label: string; icon: typeof Clock; bg: string; text: string; border: string }> = {
   pending:    { label: 'Pending',    icon: Clock,        bg: '#FFF4DC', text: '#B36200', border: '#FDDFA0' },
   processing: { label: 'Processing', icon: RotateCcw,    bg: '#EEF0FF', text: '#3851D1', border: '#C7CEFF' },
@@ -33,16 +37,6 @@ const STATUS_CONFIG: Record<OrderStatus, { label: string; icon: typeof Clock; bg
   completed:  { label: 'Completed',  icon: CheckCircle2, bg: '#E3F4EA', text: '#1A6B35', border: '#A3D9B5' },
   cancelled:  { label: 'Cancelled',  icon: XCircle,      bg: '#FFF0F0', text: '#C0392B', border: '#F5BCBC' },
 };
-
-const FILTER_TABS: { key: 'all' | OrderStatus; label: string }[] = [
-  { key: 'all',        label: 'All'        },
-  { key: 'pending',    label: 'Pending'    },
-  { key: 'processing', label: 'Processing' },
-  { key: 'shipped',    label: 'Shipped'    },
-  { key: 'delivered',  label: 'Delivered'  },
-  { key: 'completed',  label: 'Completed'  },
-  { key: 'cancelled',  label: 'Cancelled'  },
-];
 
 // The order-level enum also has 'partially_shipped' (not in the OrderStatus
 // union) — fall back to a real label instead of crashing on an unknown key.
@@ -228,13 +222,13 @@ function OrderItemRow({ item, orderId, orderStatus, currency }: { item: OrderLin
 function FilterTabs({
   active, counts, onChange,
 }: {
-  active: 'all' | OrderStatus;
+  active: OrderTab;
   counts: Record<string, number>;
-  onChange: (v: 'all' | OrderStatus) => void;
+  onChange: (v: OrderTab) => void;
 }) {
   return (
     <div className="flex items-center gap-1 flex-wrap px-3 md:px-5 py-3 border-b border-bone">
-      {FILTER_TABS.map(tab => {
+      {ORDER_TABS.map(tab => {
         const count    = tab.key === 'all' ? counts.all : (counts[tab.key] ?? 0);
         const isActive = active === tab.key;
         return (
@@ -269,6 +263,7 @@ function FilterTabs({
 // ─────────────────────────────────────────────────────────────────────────────
 function OrderCard({ order, onChanged }: { order: OrderSummary; onChanged: () => void }) {
   const toast = useToast();
+  const navigate = useNavigate();
   const [expanded, setExpanded] = useState(false);
   const [modal, setModal] = useState<'cancel' | 'return' | null>(null);
 
@@ -283,17 +278,68 @@ function OrderCard({ order, onChanged }: { order: OrderSummary; onChanged: () =>
 
   const addr = order.shippingAddress as Record<string, string> | undefined;
 
+  const first = items[0];
+  const extra = items.length - 1;
+  // One button per store (a multi-store order has a separate seller for each package).
+  const messageStores = (order.stores ?? []).filter(s => s.storeId) as (OrderSummary['stores'][number] & { storeName?: string | null })[];
+  const canDownload = hasDigital && order.orderStatus !== 'cancelled' && (order.isPaid || !!order.isFreeClaim);
+  const canBuyAgain = !order.isFreeClaim && items.length > 0;
+  const [copied, setCopied] = useState(false);
+  const [busy, setBusy] = useState<'contact' | 'again' | null>(null);
+
+  const copyId = async () => {
+    try {
+      await navigator.clipboard.writeText(order.orderNumber);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1800);
+    } catch { toast.error('Could not copy the order ID.'); }
+  };
+
+  const messageSeller = async (storeId: string) => {
+    setBusy('contact');
+    try {
+      const conv = await apiStartConversation({ storeId, orderId: order.orderId });
+      navigate(`/account/messages?conversation=${conv._id}`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not open the conversation.');
+    } finally { setBusy(null); }
+  };
+
+  const buyAgain = async () => {
+    setBusy('again');
+    try {
+      // Newer API returns variantId on list rows; otherwise fall back to the order detail.
+      const groups = hasVariantIds(order.stores ?? []) ? order.stores : (await apiGetOrderById(order.orderId)).data.sellerOrders;
+      const { added, skipped } = await reorderItems(groups);
+      if (added === 0) { toast.error('These items can no longer be added to your cart.'); return; }
+      if (skipped.length) toast.info(`Skipped (unavailable): ${skipped.join(', ')}`);
+      navigate('/cart');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not add the items to your cart.');
+    } finally { setBusy(null); }
+  };
+
   return (
     <div className="border border-bone rounded-[12px] overflow-hidden bg-white">
 
       {/* Header — click to expand */}
       <button
         onClick={() => setExpanded(v => !v)}
-        className="w-full text-start px-4 md:px-5 py-4 flex items-center gap-3 flex-wrap cursor-pointer bg-transparent border-none"
+        className="w-full text-start px-4 md:px-5 py-4 flex items-center gap-3 cursor-pointer bg-transparent border-none"
       >
+        {first && (first.image ? (
+          <img loading="lazy" decoding="async" src={first.image} alt="" className="w-14 h-14 rounded-lg object-cover border border-bone shrink-0" />
+        ) : (
+          <ProductCoverFallback name={first.name} size="xs" className="w-14 h-14 rounded-lg shrink-0" />
+        ))}
         <div className="flex-1 min-w-0">
+          <p className="flex items-baseline gap-1 text-[14px] font-semibold text-carbon mb-[4px] min-w-0">
+            <span className="truncate">{first?.name ?? order.orderNumber}</span>
+            {extra > 0 && <span className="shrink-0 text-slate font-medium">{`+${extra} more`}</span>}
+          </p>
+          {/* Phones: the total sits under the title so the name keeps its width. */}
+          <p className="sm:hidden text-[13px] font-bold text-carbon mb-[4px]">{formatPrice(order.totalAmount, order.currency)}</p>
           <div className="flex items-center gap-2 flex-wrap mb-[4px]">
-            <span className="text-[13px] font-bold text-brand-deep-orange font-mono">{order.orderNumber}</span>
             {order.isFreeClaim && order.orderStatus !== 'cancelled' ? (
               <span className="inline-flex items-center gap-[5px] px-2.5 py-[4px] rounded-full text-[12px] font-bold bg-[#e3f4ea] text-[#1a6b35] border border-[#a3d9b5]">
                 <CheckCircle2 size={9} /> Availed
@@ -320,7 +366,7 @@ function OrderCard({ order, onChanged }: { order: OrderSummary; onChanged: () =>
         </div>
 
         <div className="flex items-center gap-3 shrink-0">
-          <div className="text-end">
+          <div className="text-end hidden sm:block">
             <p className="text-[12px] text-slate mb-[1px]">Total</p>
             <p className="text-[14px] font-bold text-carbon">{formatPrice(order.totalAmount, order.currency)}</p>
           </div>
@@ -332,6 +378,42 @@ function OrderCard({ order, onChanged }: { order: OrderSummary; onChanged: () =>
           </div>
         </div>
       </button>
+
+      {isStaleCod(order) && (
+        <p className="mx-4 md:mx-5 mb-3 flex items-start gap-1.5 rounded-lg bg-[#fff4dc] px-3 py-2 text-[12px] text-[#b36200]">
+          <Info size={13} className="mt-[1px] shrink-0" />
+          Seller has not confirmed yet - message the seller or cancel
+        </p>
+      )}
+
+      {/* Always-visible follow-up actions */}
+      <div className="px-4 md:px-5 pb-3 flex items-center gap-2 flex-wrap">
+        <span className="inline-flex items-center gap-1 text-[12px] font-mono font-bold text-brand-deep-orange">
+          {shortOrderId(order.orderNumber)}
+          <button
+            type="button"
+            onClick={() => void copyId()}
+            aria-label="Copy order ID"
+            title="Copy order ID"
+            className="size-6 rounded-md inline-flex items-center justify-center text-slate hover:text-brand-orange hover:bg-cream cursor-pointer bg-transparent border-none"
+          >
+            {copied ? <Check size={12} /> : <Copy size={12} />}
+          </button>
+        </span>
+        <div className="ms-auto flex items-center gap-2 flex-wrap">
+          {messageStores.map(s => (
+            <Button key={s.storeId} variant="outline" size="sm" icon={<MessageSquare size={13} />} loading={busy === 'contact'} onClick={() => void messageSeller(s.storeId)}>
+              {messageStores.length > 1 && s.storeName ? `Message ${s.storeName}` : 'Message seller'}
+            </Button>
+          ))}
+          {canBuyAgain && (
+            <Button variant="outline" size="sm" icon={<RotateCcw size={13} />} loading={busy === 'again'} onClick={() => void buyAgain()}>Buy again</Button>
+          )}
+          {canDownload && (
+            <Button variant="outline" size="sm" icon={<Download size={13} />} to="/account/downloads">Download</Button>
+          )}
+        </div>
+      </div>
 
       {/* Expanded body */}
       {expanded && (
@@ -505,9 +587,10 @@ const ORDERS_PAGE_SIZE = 50;
 export function OrdersTab() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [activeFilter, setActiveFilter] = useState<'all' | OrderStatus>(
-    () => (searchParams.get('status') as OrderStatus | null) ?? 'all',
-  );
+  const [activeFilter, setActiveFilter] = useState<OrderTab>(() => {
+    const s = searchParams.get('status');
+    return ORDER_TABS.some(t => t.key === s) ? (s as OrderTab) : 'all';
+  });
 
   useEffect(() => {
     const next = new URLSearchParams(searchParams);
@@ -562,17 +645,11 @@ export function OrdersTab() {
 
   const filtered = activeFilter === 'all'
     ? orders
-    : orders.filter(o => o.orderStatus === activeFilter);
+    : orders.filter(o => orderTab(o) === activeFilter);
 
-  const counts = {
-    all:        orders.length,
-    pending:    orders.filter(o => o.orderStatus === 'pending').length,
-    processing: orders.filter(o => o.orderStatus === 'processing').length,
-    shipped:    orders.filter(o => o.orderStatus === 'shipped').length,
-    delivered:  orders.filter(o => o.orderStatus === 'delivered').length,
-    completed:  orders.filter(o => o.orderStatus === 'completed').length,
-    cancelled:  orders.filter(o => o.orderStatus === 'cancelled').length,
-  };
+  // Same mapping as the filter above, so every count equals its list length.
+  const counts: Record<string, number> = { all: orders.length };
+  for (const o of orders) counts[orderTab(o)] = (counts[orderTab(o)] ?? 0) + 1;
 
   return (
     <div>
@@ -621,7 +698,7 @@ export function OrdersTab() {
           {filtered.map(order => (
             <OrderCard key={order.orderId} order={order} onChanged={refetch} />
           ))}
-          {activeFilter === 'all' && hasMore && (
+          {hasMore && (
             <Button
               variant="outline" size="sm"
               className="self-center mt-2 rounded-full!"

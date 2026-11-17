@@ -302,6 +302,9 @@ const mainRouter = createBrowserRouter([
               { path: 'messages',      element: <FeatureMaintenance feature="messaging"><AccountMessages /></FeatureMaintenance> },
             ],
           },
+          // Old / guessed order URLs land on the real orders page.
+          { path: 'my-orders',       element: <Navigate to="/account/orders" replace /> },
+          { path: 'orders',          element: <Navigate to="/account/orders" replace /> },
           // Pages with their own embedded navbar (no PublicLayout wrapper needed)
           { index: true,             element: <Homepage /> },
           // The homepage is the shop — the old separate marketplace pages

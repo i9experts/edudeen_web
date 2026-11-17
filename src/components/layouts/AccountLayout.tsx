@@ -18,6 +18,7 @@ import { PlatformTopBar } from '@/components/comman/ui/PlatformTopBar';
 import { useLockPageScroll } from '@/hooks/useLockPageScroll';
 import { AnnouncementBanner } from '@/components/comman/ui';
 import { useEdgeSwipeBack } from '@/hooks/useEdgeSwipeBack';
+import { usePageMeta } from '@/hooks/usePageMeta';
 
 // One shared lookup (the nav model is built in several places); false until the API says the programme is on.
 let referralsEnabledPromise: Promise<boolean> | null = null;
@@ -258,6 +259,13 @@ function MobileTopBar({ label, isRoot, onBack }: { label: string; isRoot: boolea
   );
 }
 
+const ACCOUNT_TITLES: Record<string, string> = {
+  dashboard: 'My Dashboard', orders: 'My Orders', returns: 'My Returns', downloads: 'My Library',
+  wishlist: 'Saved Items', reviews: 'My Reviews', payments: 'Bank Transfers', messages: 'Messages',
+  notifications: 'Notifications', profile: 'My Profile', security: 'Login & Security',
+  addresses: 'My Addresses', children: 'My Children', premium: 'Edudeen Premium', referrals: 'Refer & Earn',
+};
+
 // ── Layout ────────────────────────────────────────────────────────────────────
 export function AccountLayout() {
   // Only the dashboard's own content area scrolls — never the page around it.
@@ -267,6 +275,8 @@ export function AccountLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const navGroups = useNavGroups();
   const currentLabel = findAccountNavLabel(pathname, navGroups);
+  // Browser-tab title per account page ("My Orders | Edudeen"); private pages, so noindex.
+  usePageMeta({ title: ACCOUNT_TITLES[pathname.split('/')[2] ?? ''] ?? 'My Account', noindex: true });
   const isRoot = pathname === '/account/dashboard';
   const goHome = () => navigate('/account/dashboard');
   // Edge-swipe-back on every account sub-page, same gesture ProductDetail

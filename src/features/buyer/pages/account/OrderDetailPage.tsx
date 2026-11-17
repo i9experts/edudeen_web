@@ -6,9 +6,9 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, FileText, Truck, Package, Download, MapPin, CreditCard, MessageSquare, RotateCcw, Ban } from 'lucide-react';
 import { Card, SkeletonBox, Button, StatusBadge } from '@/components/comman/ui';
 import { useLiveRefresh } from '@/hooks/useLiveRefresh';
-import { apiGetOrderById, apiCancelOrder, type OrderDetail, type OrderLineItem } from '@/api/services/orders';
+import { apiGetOrderById, apiCancelOrder, type OrderDetail } from '@/api/services/orders';
 import { apiStartConversation } from '@/api/services/messaging';
-import { apiAddToCart } from '@/api/services/cart';
+import { reorderItems } from './orderActions';
 import { useToast } from '@/contexts/ToastContext';
 import { ReasonModal } from '../MyOrdersPage';
 import { CANCEL_PRESETS } from '../../utils/cancelReasons';
@@ -71,19 +71,11 @@ export function OrderDetailPage() {
   const buyAgain = async () => {
     if (!order) return;
     setBusy('again');
-    let added = 0;
     try {
-      for (const so of order.sellerOrders) {
-        for (const it of so.items as (OrderLineItem & { variantId?: string | null })[]) {
-          if (!it.productId || !it.variantId) continue;
-          await apiAddToCart(it.productId, it.variantId, so.storeId, it.quantity ?? 1);
-          added += 1;
-        }
-      }
+      const { added, skipped } = await reorderItems(order.sellerOrders);
       if (added === 0) { toast.error('These items can no longer be added to your cart.'); return; }
+      if (skipped.length) toast.info(`Skipped (unavailable): ${skipped.join(', ')}`);
       navigate('/cart');
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Could not add the items to your cart.');
     } finally { setBusy(null); }
   };
 

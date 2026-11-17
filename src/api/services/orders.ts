@@ -31,6 +31,8 @@ export interface OrderLineItem {
   name:       string;
   image:      string | null;
   sku:        string;
+  /** Present on the orders list and detail; older API builds omit it on the list. */
+  variantId?: string | null;
   type:       'physical' | 'digital';
   productType?: 'physical' | 'digital';
   quantity:   number;

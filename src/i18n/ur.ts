@@ -2531,6 +2531,25 @@ export const UR: Record<string, string> = {
   'Languages': 'زبانیں',
   'Exam Preparation': 'امتحانی تیاری',
   'Art & Handwriting': 'آرٹ اور خوشخطی',
+  // Orders list: follow-up actions, hint, account page titles
+  'Availed': 'حاصل کردہ',
+  'Message seller': 'سیلر کو پیغام بھیجیں',
+  'Buy again': 'دوبارہ خریدیں',
+  // "Message <store name>" is built per store; dynamic part stays as typed
+
+  'Copy order ID': 'آرڈر آئی ڈی کاپی کریں',
+  'Could not copy the order ID.': 'آرڈر آئی ڈی کاپی نہیں ہو سکی۔',
+  'Could not open the conversation.': 'گفتگو نہیں کھل سکی۔',
+  'Could not add the items to your cart.': 'اشیاء کارٹ میں شامل نہیں ہو سکیں۔',
+  'These items can no longer be added to your cart.': 'یہ اشیاء اب کارٹ میں شامل نہیں کی جا سکتیں۔',
+  'Seller has not confirmed yet - message the seller or cancel': 'سیلر نے ابھی تصدیق نہیں کی - سیلر کو پیغام بھیجیں یا آرڈر منسوخ کریں',
+  'My Dashboard': 'میرا ڈیش بورڈ',
+  'My Returns': 'میری واپسیاں',
+  'Saved Items': 'محفوظ شدہ اشیاء',
+  'My Reviews': 'میرے جائزے',
+  'My Profile': 'میری پروفائل',
+  'My Addresses': 'میرے پتے',
+  'Refer & Earn': 'ریفر کریں اور کمائیں',
 };
 
 const MONTHS: Record<string, string> = {
