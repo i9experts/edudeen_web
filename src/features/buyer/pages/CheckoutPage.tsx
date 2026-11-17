@@ -16,16 +16,11 @@ const STANDARD_DELIVERY: ShippingZone = {
 };
 const zoneTitle = (z: ShippingZone) => (z._id === STANDARD_DELIVERY._id ? 'Delivery arranged by the seller' : shippingZoneLabel(z));
 // Zone prices are always PKR, whatever currency the checkout is in.
-/** Joins address parts, skipping blanks and any part an earlier part already contains ("Karachi, Karachi"). */
-const dedupeAddressParts = (parts: (string | null | undefined)[]) => {
-  const kept: string[] = [];
-  for (const raw of parts) {
-    const p = raw?.trim();
-    if (p && !kept.some(k => k.toLowerCase().includes(p.toLowerCase()))) kept.push(p);
-  }
-  return kept.join(', ');
-};
-const zonePrice = (z: ShippingZone) => (z.shippingPrice > 0 ? formatPrice(z.shippingPrice, 'PKR') : 'Free');
+/** The one shared address formatter: skips blanks and repeats, so "Karachi, Karachi, Sindh" reads "Karachi, Sindh". */
+const dedupeAddressParts = formatAddress;
+// A zone's own list price is only an option price: the real fee is priced by the server at checkout (a seller's own charge may
+// replace it), and the "standard delivery" placeholder has no price at all - so neither may read "Free" before that.
+const zonePrice = (z: ShippingZone) => (z._id === STANDARD_DELIVERY._id ? shippingFeeLabel(null) : shippingFeeLabel(z.shippingPrice, 'PKR'));
 import { apiGetMyAddresses, type Address, type AddressPayload } from '@/api/services/address';
 import { apiCreateCheckout, apiApplyCoupon, apiRemoveCoupon, apiApplyGiftCard, apiRemoveGiftCard, type Checkout, type CheckoutSummary, type CheckoutCodInfo } from '@/api/services/checkout';
 import { apiPlaceCodOrder, apiPlaceFreeOrder, apiInitiatePayment, apiGetPaymentStatus } from '@/api/services/payment';
@@ -55,7 +50,8 @@ import { clsx } from 'clsx';
 import { formatPrice } from '@/utils/formatPrice';
 import { computeCartTotals } from '@/utils/cartTotals';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
-import { maskPhone } from '@/utils/formatAddress';
+import { maskPhone, formatAddress, formatPhone } from '@/utils/formatAddress';
+import { sumQuantity, itemsLabel, shippingFeeLabel } from '@/utils/cartLabels';
 
 // ── Step badge ────────────────────────────────────────────────────────────────
 /** A raw "Internal server error" / empty message is never shown to the buyer; real server messages (4xx) are. */
@@ -169,7 +165,7 @@ function DigitalPaymentNotice({
       <div className="flex flex-wrap gap-2">
         {physicalCount > 0 && (
           <Button variant="primary" size="sm" onClick={onPhysicalOnly} className="gap-1">
-            Check out {physicalCount} physical item{physicalCount !== 1 ? 's' : ''} now <ChevronRight size={14} />
+            Check out {physicalCount} physical {physicalCount === 1 ? 'item' : 'items'} now <ChevronRight size={14} />
           </Button>
         )}
         <Button variant="outline" size="sm" onClick={onBack}>Back to Cart</Button>
@@ -492,8 +488,8 @@ export function CheckoutPage() {
   const checkoutCount = cartItems.reduce((s, i) => s + i.quantity, 0);
   // '1 product · 2 items' when a line has quantity > 1, plain 'N items' otherwise.
   const orderCountLabel = cartItems.length > 0 && cartItems.length !== checkoutCount
-    ? `${cartItems.length} product${cartItems.length !== 1 ? 's' : ''} · ${checkoutCount} item${checkoutCount !== 1 ? 's' : ''} in this order`
-    : `${checkoutCount} item${checkoutCount !== 1 ? 's' : ''} in this order`;
+    ? `${cartItems.length} product${cartItems.length !== 1 ? 's' : ''} · ${itemsLabel(checkoutCount)} in this order`
+    : `${itemsLabel(checkoutCount)} in this order`;
   const hasDigital = cartItems.some(i => i.type === 'digital');
   // Fully-digital carts skip address/shipping entirely; a mixed cart still
   // needs both, for its physical items — so this only means "skip the
@@ -618,7 +614,8 @@ export function CheckoutPage() {
   // explain why and offer to check out the physical items on their own.
   const usableMethods = effectiveMethods.filter(m => !((m === 'stripe' || m === 'split') && !isStripeConfigured()));
   const digitalPaymentBlocked = hasDigital && !!checkout && usableMethods.length === 0;
-  const physicalItemCount = cartItems.filter(i => i.type !== 'digital').length;
+  // By quantity, like the cart ("4 physical items" there must read 4 on the button too).
+  const physicalItemCount = sumQuantity(cartItems, 'physical');
   // A courier needs a number to call: a physical order can't be placed without one (digital-only orders never reach this step).
   const phoneMissing = !isDigital && !!selectedAddr && !selectedAddr.phoneNumber?.trim();
 
@@ -872,9 +869,11 @@ export function CheckoutPage() {
   // every discount off the item prices, so the total is `totalAmount` as-is.
   // (Summing item prices here mixed seller currencies with a PKR shipping fee
   // and took coupons off twice.) Before that, it's an estimate from the cart.
-  const shipping = checkout?.shippingFee ?? summary?.shippingFee ?? 0;
+  const shippingFeeKnown: number | null = checkout?.shippingFee ?? summary?.shippingFee ?? null;
+  const shipping = shippingFeeKnown ?? 0;
   // Known only once the server has priced the checkout; a zone's list price alone is not the final fee (a seller's own charge may replace it).
-  const shippingLabel = checkout || summary ? (shipping > 0 ? formatPrice(shipping, checkoutCur) : 'Free') : null;
+  // Same helper as the cart summary: an unknown fee is "Calculated at checkout", never "Free".
+  const shippingLabel = shippingFeeLabel(shippingFeeKnown, checkoutCur);
   const tax      = checkout?.taxAmount ?? summary?.taxAmount ?? 0;
   const couponDiscount = checkout?.couponDiscountUSD ?? 0;
   const giftCardDiscount = checkout?.giftCardDiscountUSD ?? 0;
@@ -1406,13 +1405,15 @@ export function CheckoutPage() {
                                   <span className="text-[11px] text-brand-orange bg-brand-pale-orange rounded-full px-2 py-[1px] font-medium">Default</span>
                                 )}
                               </div>
+                              {selectedAddr.phoneNumber?.trim() && <p className="text-[12px] text-carbon" translate="no">{formatPhone(selectedAddr.phoneNumber)}</p>}
                               <p className="text-[12px] text-slate truncate">
-                                {dedupeAddressParts([selectedAddr.addressLine1, selectedAddr.city, selectedAddr.state])} {selectedAddr.zipCode}
+                                {dedupeAddressParts([selectedAddr.addressLine1, selectedAddr.addressLine2, selectedAddr.city, selectedAddr.state])} {selectedAddr.zipCode}
                               </p>
                             </div>
                           ) : (
                             <span className="text-[13px] text-slate">Select a delivery address…</span>
                           )}
+                          {selectedAddr && <span className="text-[12px] font-semibold text-brand-orange shrink-0">Change</span>}
                           <ChevronRight size={15} className={clsx('flex-shrink-0 text-slate transition-transform', addrDropOpen && 'rotate-90')} />
                         </button>
 
@@ -1448,7 +1449,7 @@ export function CheckoutPage() {
                                       <span className="text-[11px] text-brand-orange bg-brand-pale-orange rounded-full px-2 py-[1px] font-medium">Default</span>
                                     )}
                                   </div>
-                                  <p className="text-[12px] text-slate">{addr.phoneNumber}</p>
+                                  <p className="text-[12px] text-slate" translate="no">{formatPhone(addr.phoneNumber)}</p>
                                   <p className="text-[12px] text-carbon mt-[1px]">
                                     {dedupeAddressParts([addr.addressLine1, addr.addressLine2, addr.city, addr.state])} {addr.zipCode}
                                   </p>
@@ -1478,7 +1479,7 @@ export function CheckoutPage() {
                               {shipZone.estimatedDeliveryTime ? `Estimated delivery: ${shipZone.estimatedDeliveryTime}` : 'The seller will contact you about delivery'}
                             </p>
                           </div>
-                          <span className="text-[13px] font-bold text-carbon shrink-0">{zonePrice(shipZone)}</span>
+                          <span className="text-[13px] font-bold text-carbon shrink-0">{shippingLabel}</span>
                         </div>
                       )}
 
@@ -1507,7 +1508,8 @@ export function CheckoutPage() {
                   <span className="font-medium">{selectedAddr.recipientName}</span>
                   {' — '}
                   {dedupeAddressParts([selectedAddr.addressLine1, selectedAddr.city, selectedAddr.state])}
-                  {shipZone && <span className="block text-slate mt-[2px]">Delivery: {zoneTitle(shipZone)} — {zonePrice(shipZone)}{shipZone.estimatedDeliveryTime ? ` · Estimated delivery: ${shipZone.estimatedDeliveryTime}` : ''}</span>}
+                  {selectedAddr.phoneNumber?.trim() && <span className="block text-slate mt-[2px]" translate="no">{formatPhone(selectedAddr.phoneNumber)}</span>}
+                  {shipZone && <span className="block text-slate mt-[2px]">Delivery: {zoneTitle(shipZone)} — {shippingLabel}{shipZone.estimatedDeliveryTime ? ` · Estimated delivery: ${shipZone.estimatedDeliveryTime}` : ''}</span>}
                 </div>
               )}
             </div>
@@ -1788,7 +1790,7 @@ export function CheckoutPage() {
                     <div className="flex justify-between gap-3 text-[12.5px]">
                       <span className="text-slate flex-shrink-0">Delivery</span>
                       <span className="font-medium text-carbon text-end">
-                        {selectedZone ? `${zoneTitle(selectedZone)} · ${shippingLabel ?? 'Calculated next'}` : '—'}
+                        {selectedZone ? `${zoneTitle(selectedZone)} · ${shippingLabel}` : '—'}
                         {selectedZone?.estimatedDeliveryTime && <span className="block text-[11px] font-normal text-slate"><span>Estimated </span><span translate="no">{selectedZone.estimatedDeliveryTime}</span></span>}
                         {(checkout?.shippingByStore?.length ?? 0) === 1 && <DeliveryVia line={checkout!.shippingByStore![0]} block />}
                       </span>
@@ -1963,10 +1965,7 @@ export function CheckoutPage() {
               {!isDigital && (
                 <div className="flex justify-between text-[13px]">
                   <span className="text-slate">Shipping</span>
-                  {shippingLabel
-                    ? <span className="font-semibold text-carbon">{shippingLabel}</span>
-                    : <span className="text-slate font-medium">Calculated next</span>
-                  }
+                  <span className={shippingFeeKnown == null ? 'text-slate font-medium' : 'font-semibold text-carbon'}>{shippingLabel}</span>
                 </div>
               )}
               {codFee > 0 && (

@@ -1,3 +1,5 @@
+import { formatAddress } from '@/utils/formatAddress';
+
 interface AddressLike {
   addressLine1?: string | null;
   addressLine2?: string | null;
@@ -9,12 +11,7 @@ interface AddressLike {
 /** Joins address parts, skipping blanks and any part an earlier part already contains
  *  ("House 5, Karachi" + city "Karachi" would otherwise read "House 5, Karachi, Karachi"). */
 export function joinAddressParts(parts: (string | null | undefined)[]): string {
-  const kept: string[] = [];
-  for (const raw of parts) {
-    const p = raw?.trim();
-    if (p && !kept.some(k => k.toLowerCase().includes(p.toLowerCase()))) kept.push(p);
-  }
-  return kept.join(', ');
+  return formatAddress(parts);
 }
 
 /** Two display lines for a saved address: the street, then city/state/zip without repeating

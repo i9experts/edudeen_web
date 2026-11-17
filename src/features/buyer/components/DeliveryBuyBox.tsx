@@ -1,5 +1,5 @@
 import { Truck, Download, Banknote, Clock } from 'lucide-react';
-import { formatPrice } from '@/utils/formatPrice';
+import { shippingFeeLabel } from '@/utils/cartLabels';
 import { useDeliveryInfo } from '@/hooks/shipping/useDeliveryInfo';
 import { SkeletonBox } from '@/components/comman/ui/SkeletonBox';
 
@@ -51,9 +51,7 @@ export function DeliveryBuyBox({ productId, variantId, quantity, isPhysical, isC
       ) : (
         <Row icon={<Truck size={14} />}>
           <span>Delivery</span><span>{': '}</span>
-          {info.fee == null ? <span>Calculated at checkout</span>
-            : info.fee === 0 ? <span className="font-semibold">Free</span>
-            : <span className="font-semibold">{formatPrice(info.fee, info.currency)}</span>}
+          <span className={info.fee == null ? undefined : 'font-semibold'}>{shippingFeeLabel(info.fee, info.currency)}</span>
           {info.estimate ? <span className="text-slate">{` · ${info.estimate}`}</span> : null}
         </Row>
       )}

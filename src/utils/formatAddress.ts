@@ -1,15 +1,15 @@
 type Part = string | null | undefined;
 
-/** Comma-joined address: blank parts and repeats (case-insensitive) are skipped, so line 2 never echoes line 1 or the city twice. */
+/** Comma-joined address: blank parts and repeats (case-insensitive) are skipped, so line 2 never echoes line 1 or the city twice.
+ *  A part an earlier part already contains as whole words is skipped too ("House 5, Karachi" + city "Karachi"). */
 export function formatAddress(parts: Part[]): string {
-  const seen = new Set<string>();
   const out: string[] = [];
+  const norm = (s: string) => ` ${s.replace(/[^\p{L}\p{N}]+/gu, ' ').trim().toLowerCase()} `;
   for (const p of parts) {
     const v = (p ?? '').trim();
     if (!v) continue;
-    const key = v.replace(/\s+/g, ' ').toLowerCase();
-    if (seen.has(key)) continue;
-    seen.add(key);
+    const key = norm(v);
+    if (out.some(k => norm(k).includes(key))) continue;
     out.push(v);
   }
   return out.join(', ');

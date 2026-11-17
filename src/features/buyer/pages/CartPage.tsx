@@ -24,6 +24,9 @@ import { clsx } from 'clsx';
 import { formatPrice } from '@/utils/formatPrice';
 import { useDeliveryInfo } from '@/hooks/shipping/useDeliveryInfo';
 import { computeCartTotals } from '@/utils/cartTotals';
+import { sumQuantity, itemsLabel, shippingFeeLabel, hasUsableOnlinePayment } from '@/utils/cartLabels';
+import { usePublicPlatformConfig } from '@/hooks/usePublicPlatformConfig';
+import { isStripeConfigured } from '@/features/buyer/components/StripeCardPayment';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 
 function CartItemImage({ images, name }: { images?: string[]; name: string }) {
@@ -132,7 +135,7 @@ export function CartPage() {
   // fully viewable/editable. Only "Proceed to Checkout" below requires
   // login (CheckoutPage's own gate), matching how Amazon/Daraz let a guest
   // manage their cart freely and only ask for an account at checkout.
-  const { cart, loading, cartCount, updateQty, removeItem, clearCart, error, clearError, addToCart, adding } = useCartContext();
+  const { cart, loading, updateQty, removeItem, clearCart, error, clearError, addToCart, adding } = useCartContext();
   const [clearing,   setClearing]   = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
@@ -259,8 +262,25 @@ export function CartPage() {
   const hasDigital  = items.some(i => i.type === 'digital');
   const typeKnown   = hasPhysical || hasDigital;
 
-  const physicalCount = items.filter(i => i.type === 'physical').reduce((s, i) => s + i.quantity, 0);
-  const digitalCount  = items.filter(i => i.type === 'digital').reduce((s, i) => s + i.quantity, 0);
+  // One quantity-based count (utils/cartLabels) for the header, the summary, the notice and the checkout buttons.
+  const physicalCount = sumQuantity(items, 'physical');
+  const digitalCount  = sumQuantity(items, 'digital');
+  const totalCount    = sumQuantity(items);
+
+  // Digital items need an online payment method. Same "usable" rule as checkout (card needs the Stripe key; bank transfer / wallets
+  // come from the server's public list). Unknown (config not loaded) shows nothing rather than a false warning.
+  const { config: publicConfig } = usePublicPlatformConfig();
+  const onlinePaymentUsable = hasUsableOnlinePayment(publicConfig?.commerce?.paymentMethods, isStripeConfigured());
+  const showDigitalNotice = hasDigital && onlinePaymentUsable === false;
+  // The same physical-only flow checkout's own notice uses (?only=physical, one store when the cart is a single store).
+  const goPhysicalOnly = () => {
+    const sp = new URLSearchParams({ only: 'physical' });
+    if (!isMultiStore && items[0]?.storeId) sp.set('store', items[0].storeId);
+    navigate(`/checkout?${sp.toString()}`);
+  };
+  const saveDigitalForLater = () => {
+    requireAuth(() => { void (async () => { for (const it of items.filter(i => i.type === 'digital')) await doSaveForLater(it); })(); }, 'Sign in to save items for later.');
+  };
 
   const isEmpty = !loading && !items.length;
   // A line from a store that is on holiday cannot be checked out (the server refuses it too): the buyer removes it first.
@@ -309,6 +329,10 @@ export function CartPage() {
   const memberLine = (it: (typeof items)[number]) => (isPremium && it.premiumUnitPrice != null && it.premiumItemTotal != null ? { unit: convert(it.premiumUnitPrice, it.currency), total: convert(it.premiumItemTotal, it.currency), list: it.listPrice != null ? convert(it.listPrice, it.currency) : null } : null);
   const premiumSavings = items.reduce((s, it) => { const m = memberLine(it); return m ? s + Math.max(0, convert(it.itemTotal ?? (it.unitPrice ?? it.price ?? 0) * it.quantity, it.currency) - m.total) : s; }, 0);
   const payableTotal = Math.max(0, payablePreMember - premiumSavings);
+  // "You save": only from data the cart already carries - the running sale's saving off the list price (`campaignDiscount.amount`) plus
+  // the member saving. Nothing is shown when there is none.
+  const saleSaving = campaign ? Math.max(0, typeof campaign.amount === 'number' ? convert(campaign.amount, campaign.currency) : campaignAmount) : 0;
+  const totalSavings = saleSaving + premiumSavings;
 
   return (
     <div className="min-h-screen bg-cream">
@@ -406,12 +430,12 @@ export function CartPage() {
                 <div>
                   <h1 className="text-[20px] font-bold text-carbon leading-tight">Shopping Cart</h1>
                   <p className="text-[12px] text-slate mt-[2px]">
-                    {loading ? 'Loading…' : `${cartCount} item${cartCount !== 1 ? 's' : ''} in your cart`}
+                    {loading ? 'Loading…' : `${itemsLabel(totalCount)} in your cart`}
                   </p>
                 </div>
-                {!loading && cartCount > 0 && (
+                {!loading && totalCount > 0 && (
                   <span className="text-[12px] font-semibold px-3 py-[5px] rounded-full bg-brand-pale-orange text-brand-orange">
-                    {cartCount} {cartCount === 1 ? 'item' : 'items'}
+                    {itemsLabel(totalCount)}
                   </span>
                 )}
               </div>
@@ -503,6 +527,7 @@ export function CartPage() {
                         ) : (
                           <>
                             {formatPrice(price, displayCurrency)} each
+                            {item.listPrice != null && convert(item.listPrice, item.currency) > price + 0.005 && <s className="text-[#8a8780]">{formatPrice(convert(item.listPrice, item.currency), displayCurrency)}</s>}
                             {showTeaser && !item.onCampaign && <PremiumTeaser percent={item.premiumPercent} seller={item.premiumSellerPercent} platform={item.premiumPlatformPercent} link />}
                           </>
                         )}
@@ -621,7 +646,7 @@ export function CartPage() {
 
               <div className="flex flex-col gap-2">
                 <div className="flex justify-between text-[13px]">
-                  <span className="text-slate">{loading ? 'Subtotal' : `Subtotal (${cartCount} items)`}</span>
+                  <span className="text-slate">{loading ? 'Subtotal' : `Subtotal (${itemsLabel(totalCount)})`}</span>
                   {loading ? <SkeletonBox width={70} height={14} /> : <span className="font-semibold text-carbon">{formatPrice(displayTotal, displayCurrency)}</span>}
                 </div>
                 {campaignAmount !== 0 && (
@@ -640,8 +665,7 @@ export function CartPage() {
                   <span className="text-slate">{hasPhysical ? 'Shipping' : 'Delivery'}</span>
                   {loading ? <SkeletonBox width={90} height={12} /> : !typeKnown ? <span className="text-slate text-[12px]">—</span> : (
                     <span className="text-charcoal font-medium text-[12px]">
-                      {soloFee ? (soloFee.fee === 0 ? 'Free' : formatPrice(soloFee.fee as number, soloFee.currency))
-                        : hasPhysical ? 'Calculated at checkout' : 'Instant'}
+                      {hasPhysical ? shippingFeeLabel(soloFee ? (soloFee.fee as number) : null, soloFee?.currency) : 'Instant'}
                     </span>
                   )}
                 </div>
@@ -654,6 +678,10 @@ export function CartPage() {
                 {loading ? <SkeletonBox width={80} height={18} /> : <span className="text-carbon">{formatPrice(payableTotal, displayCurrency)}</span>}
               </div>
 
+              {!loading && totalSavings > 0.005 && (
+                <p className="text-[13px] font-semibold text-success -mt-2 m-0">You save {formatPrice(totalSavings, displayCurrency)}</p>
+              )}
+
               {/* Coupons are applied per checkout (the existing checkout coupon box); nothing is priced here. */}
               {!loading && payableTotal > 0 && (
                 <p className="text-[12px] text-slate -mt-2 m-0">Have a coupon? Apply it at checkout</p>
@@ -665,7 +693,7 @@ export function CartPage() {
               <div className="flex flex-col gap-2">
                 {typeKnown && hasPhysical && hasDigital && (
                   <p className="text-[12px] text-slate text-center -mt-1 mb-1">
-                    {physicalCount} physical item{physicalCount === 1 ? '' : 's'} shipped to you · {digitalCount} digital item{digitalCount === 1 ? '' : 's'} available instantly in My Library
+                    {physicalCount} physical {physicalCount === 1 ? 'item' : 'items'} shipped to you · {digitalCount} digital {digitalCount === 1 ? 'item' : 'items'} available instantly in My Library
                   </p>
                 )}
                 {loading ? (
@@ -682,6 +710,19 @@ export function CartPage() {
                         Some items are from a store that is away. Remove them to continue.
                       </p>
                     )}
+                    {showDigitalNotice && (
+                      <div role="status" className="flex flex-col gap-2 rounded-lg border border-[#c7ceff] bg-[#eef0ff] px-3 py-3 text-[12px] text-[#3851d1]">
+                        <p className="m-0 leading-[1.5]">Digital items need online payment, which is not available yet. You can check out your physical items now.</p>
+                        {physicalCount > 0 && (
+                          <Button variant="primary" size="sm" fullWidth disabled={hasAwayItem} onClick={goPhysicalOnly}>
+                            Checkout physical items
+                          </Button>
+                        )}
+                        <Button variant="outline" size="sm" fullWidth loading={!!savingId} disabled={!!savingId} onClick={saveDigitalForLater}>
+                          Save digital items for later
+                        </Button>
+                      </div>
+                    )}
                     <Button
                       variant="primary" fullWidth
                       className="justify-between! px-5! py-[11px]! rounded-xl!"
@@ -693,7 +734,7 @@ export function CartPage() {
                         Proceed to Checkout
                       </span>
                       <span className="flex items-center gap-1 opacity-80 text-[12px]">
-                        {cartCount} item{cartCount !== 1 ? 's' : ''}
+                        {itemsLabel(totalCount)}
                         <ChevronRight size={13} />
                       </span>
                     </Button>
