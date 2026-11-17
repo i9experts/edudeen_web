@@ -63,7 +63,7 @@ import { CourseInfo } from '@/features/buyer/components/CourseInfo';
 import { normalizeDeliveryFormat } from '@/utils/deliveryFormat';
 import { PlacementBanner } from '@/components/comman/marketplace/PlacementBanner';
 import { ShippingZonesSummary } from '@/features/buyer/components/ShippingZonesSummary';
-import { DeliveryBuyBox } from '@/features/buyer/components/DeliveryBuyBox';
+import { DeliveryBuyBox, DeliveryTabSummary } from '@/features/buyer/components/DeliveryBuyBox';
 import { syncRecentlyViewed } from '@/utils/recentlyViewedSync';
 import { formatMoney } from '@/utils/currency';
 import { formatPrice } from '@/utils/formatPrice';
@@ -1003,7 +1003,7 @@ export function ProductDetail() {
                         ? <Link to={getStorePagePath(product.storeSlug)} className="text-inherit no-underline hover:underline">{storeData?.name ?? product.storeName ?? product.sellerName}</Link>
                         : (storeData?.name ?? product.storeName ?? product.sellerName)}</>
                     )}
-                    {product.averageRating > 0 && (
+                    {(product.totalRatings ?? 0) > 0 && product.averageRating > 0 && (
                       <a
                         href="#reviews"
                         onClick={e => { e.preventDefault(); document.getElementById('reviews')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}
@@ -1406,7 +1406,18 @@ export function ProductDetail() {
 
                 {activeTab === 'shipping' && (
                   <div className="flex flex-col gap-4">
-                    {!isDigital && <ShippingZonesSummary sellerName={storeData?.name ?? product.storeName ?? product.sellerName} />}
+                    {!isDigital && (
+                      <div className="flex gap-3 items-start">
+                        <div className="w-8 h-8 rounded-lg bg-brand-pale-orange flex items-center justify-center flex-shrink-0">
+                          <Truck size={15} className="text-brand-orange" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="font-semibold text-[12px] text-charcoal mb-[2px]">Delivery promise</div>
+                          <DeliveryTabSummary productId={product._id} variantId={activeVariant?._id} quantity={qty} />
+                        </div>
+                      </div>
+                    )}
+                    {!isDigital && <ShippingZonesSummary />}
                     {[
                       ...(isDigital
                         ? [isCourse ? { Icon: Download, label: 'Online access', value: 'Start learning from My Library right after payment. No shipping.' }

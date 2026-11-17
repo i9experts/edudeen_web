@@ -10,7 +10,7 @@ import { shippingZoneLabel } from '@/api/services/shipping';
  * the delivery zones the Edudeen team sets up (Admin → Shipping Zones), the
  * same ones checkout charges. Prices are in PKR, like the zones themselves.
  */
-export function ShippingZonesSummary({ sellerName }: { sellerName?: string | null }) {
+export function ShippingZonesSummary() {
   const { zones, loading, error } = useShippingZones();
   // Zone prices are stored in PKR; show them in the buyer's chosen currency.
   const { currency, convertBetween } = useCurrencyPreference();
@@ -23,8 +23,8 @@ export function ShippingZonesSummary({ sellerName }: { sellerName?: string | nul
       <SkeletonBox width="70%" height={12} /><SkeletonBox width="55%" height={12} /><SkeletonBox width="62%" height={12} />
     </span>
   );
-  else if (error) body = <span className="text-slate">Delivery info unavailable</span>;
-  else if (!live.length) body = <span>Delivery is arranged by {sellerName ?? 'the seller'} after you order.</span>;
+  // No zones / lookup failed: the delivery promise above (DeliveryTabSummary) already says what applies, so render nothing here.
+  else if (error || !live.length) return null;
   else {
     const cheapest = Math.min(...live.map(z => z.shippingPrice));
     body = (

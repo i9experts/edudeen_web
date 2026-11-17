@@ -425,6 +425,7 @@ export const UR: Record<string, string> = {
   'Questions': 'سوالات',
   'Seller': 'فروخت کنندہ',
   'Delivery': 'ڈیلیوری',
+  'Delivery promise': 'ڈیلیوری کا وعدہ',
   'Shipping': 'شپنگ',
   'Grade / level': 'جماعت / درجہ',
   'Suitable for': 'موزوں عمر',
