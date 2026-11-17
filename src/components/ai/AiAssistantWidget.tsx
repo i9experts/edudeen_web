@@ -31,6 +31,14 @@ function AssistantInner() {
 
   useEffect(() => { endRef.current?.scrollIntoView({ block: 'end' }); }, [msgs, busy, open]);
 
+  // Tells back-to-top to stack above this button (44px + 12px gap) while it is on screen.
+  const pillShown = enabled('shopping_assistant') && !open;
+  useEffect(() => {
+    if (!pillShown) return;
+    document.documentElement.style.setProperty('--fab-ai-h', '56px');
+    return () => { document.documentElement.style.removeProperty('--fab-ai-h'); };
+  }, [pillShown]);
+
   if (!enabled('shopping_assistant')) return null;
 
   async function send(text: string) {
@@ -51,7 +59,7 @@ function AssistantInner() {
       {!open && (
         <button
           type="button" onClick={() => setOpen(true)} aria-label="Open shopping assistant"
-          className={`fixed z-40 ${/^\/(product\/|cart|checkout)/.test(pathname) ? 'bottom-[calc(228px+env(safe-area-inset-bottom,0px))]' : 'bottom-[calc(144px+env(safe-area-inset-bottom,0px))]'} md:bottom-[88px] end-4 flex items-center justify-center gap-2 rounded-full bg-brand-royal text-white shadow-lg size-11 md:size-auto md:px-4 md:py-3 text-[13px] font-semibold hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/60`}
+          className={`fixed z-40 ${/^\/(product\/|cart|checkout)/.test(pathname) ? 'bottom-[calc(var(--fab-stack-bottom,228px)+env(safe-area-inset-bottom,0px))]' : 'bottom-[calc(var(--fab-stack-bottom,144px)+env(safe-area-inset-bottom,0px))]'} md:bottom-[calc(var(--fab-stack-bottom,88px)+env(safe-area-inset-bottom,0px))] end-4 flex items-center justify-center gap-2 rounded-full bg-brand-royal text-white shadow-lg size-11 md:size-auto md:px-4 md:py-3 text-[13px] font-semibold hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/60`}
         >
           <Sparkles size={18} /> <span className="hidden md:inline">Ask Edudeen</span>
         </button>
@@ -80,7 +88,7 @@ function AssistantInner() {
                   <div className="mt-2 flex flex-col gap-2">
                     {m.products.slice(0, 4).map(p => (
                       <Link key={p.id} to={p.url} onClick={() => setOpen(false)} className="flex items-center gap-3 rounded-xl border border-bone p-2 hover:border-brand-royal">
-                        {p.image ? <img src={p.image} alt="" className="w-12 h-12 rounded-lg object-cover shrink-0" /> : <div className="w-12 h-12 rounded-lg bg-cream shrink-0" />}
+                        {p.image ? <img src={p.image} alt={p.name} className="w-12 h-12 rounded-lg object-cover shrink-0" /> : <div className="w-12 h-12 rounded-lg bg-cream shrink-0" />}
                         <span className="min-w-0">
                           <span className="block text-[12px] font-semibold text-carbon truncate" translate="no">{p.name}</span>
                           <span className="block text-[11px] text-slate">{money(p)}{p.ratingCount > 0 ? ` · ${p.rating}★ (${p.ratingCount})` : ''}</span>

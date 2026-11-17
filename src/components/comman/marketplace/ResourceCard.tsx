@@ -13,7 +13,7 @@ import { courseSummaryText } from '@/utils/deliveryFormat';
 import { isPlainLeftClick } from '@/utils/productLink';
 import { responsiveImg } from '@/utils/cloudinaryImage';
 import { getStorePagePath } from '@/utils/storefrontUrl';
-import { coverPaletteFor } from './ProductCoverFallback';
+import { coverPaletteFor, ProductCoverFallback } from './ProductCoverFallback';
 import { ageLabel } from '@/constants/learning';
 import { classRangeLabel } from '@/constants/classLevels';
 import { CURRICULUM_LABEL } from '@/constants/learning';
@@ -81,27 +81,49 @@ function CartButton({ onClick, isAdding, failed, disabled, label, disabledLabel 
   );
 }
 
-function ListCover({ product }: { product: MarketplaceProduct }) {
-  const { bg, accent } = paletteFor(product.name || product._id);
-  const [imgFailed, setImgFailed] = useState(false);
-  const image = !imgFailed ? product.images?.[0] : undefined;
+/** Card photo: first product image, then the default variant's first image (the model has no separate thumbnail field). */
+export const cardImage = (p: MarketplaceProduct): string | undefined =>
+  p.images?.find(Boolean) || p.variants?.find(v => v.isDefault)?.images?.find(Boolean) || p.variants?.[0]?.images?.find(Boolean) || undefined;
+
+const plainText = (s?: string | null) => (s ?? '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
+/** A subtitle/description line only when it adds something: hidden when it equals the title or starts with it. */
+export const distinctSubtitle = (title: string, sub?: string | null): string => {
+  const t = plainText(title), s = plainText(sub);
+  return s && s !== t && !s.startsWith(t) ? (sub ?? '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() : '';
+};
+
+/** Board / curriculum chip inside a FIXED-height slot (grid cards), so a card without a board lines up with one that has it. */
+export function BoardChipSlot({ product, reserve = true }: { product: MarketplaceProduct; reserve?: boolean }) {
+  const boards = (product.curricula ?? []).map(c => CURRICULUM_LABEL[c] ?? c).filter(Boolean);
+  if (!boards.length && !reserve) return null;
   return (
-    <div className="w-[112px] sm:w-[168px] aspect-square rounded-xl overflow-hidden flex items-center justify-center shrink-0" style={{ background: bg }}>
+    <div className={clsx('mb-1', reserve && 'h-5')}>
+      {boards.length > 0 && (
+        <span className="inline-block max-w-full truncate rounded bg-[#eef3f8] px-1.5 py-[1px] text-[11px] font-semibold text-[#2F6AA8]" title={boards.join(', ')}>
+          {boards[0]}{boards.length > 1 ? ` +${boards.length - 1}` : ''}
+        </span>
+      )}
+    </div>
+  );
+}
+
+function ListCover({ product }: { product: MarketplaceProduct }) {
+  const [imgFailed, setImgFailed] = useState(false);
+  const image = !imgFailed ? cardImage(product) : undefined;
+  return (
+    <div className="w-[112px] sm:w-[168px] aspect-square rounded-xl overflow-hidden flex items-center justify-center shrink-0 bg-[#f4f6f7]">
       {image ? (
         <img {...responsiveImg(image, '168px', [168, 336], 336)} alt={product.name} width={168} height={168} loading="lazy" decoding="async" onError={() => setImgFailed(true)} className="w-full h-full object-contain" />
       ) : (
-        <strong className="font-serif font-normal text-[15px] sm:text-[18px] leading-[1.1] text-center px-3 line-clamp-4" style={{ color: accent }}>
-          {product.name}
-        </strong>
+        <ProductCoverFallback name={product.name} size="sm" className="w-full h-full" />
       )}
     </div>
   );
 }
 
 function Cover({ product }: { product: MarketplaceProduct }) {
-  const { accent } = paletteFor(product.name || product._id);
   const [imgFailed, setImgFailed] = useState(false);
-  const image = !imgFailed ? (product.images?.[0] || product.video?.posterUrl || undefined) : undefined;
+  const image = !imgFailed ? (cardImage(product) || product.video?.posterUrl || undefined) : undefined;
   const imgProps = image ? responsiveImg(image, '(min-width: 1024px) 14vw, (min-width: 640px) 22vw, 36vw', [200, 320, 480, 640], 480) : null;
   const clipId = `bk-${product._id}`;
   // Every book is the same size; the whole picture is stretched to fill it (no bars, nothing cut off).
@@ -110,11 +132,11 @@ function Cover({ product }: { product: MarketplaceProduct }) {
   // Toys, stationery and other non-book items: plain rounded photo, no book shape.
   if (product.coverStyle === 'flat') {
     return (
-      <div className="h-[150px] min-[400px]:h-[165px] sm:h-[194px] lg:h-[205px] rounded-lg overflow-hidden flex items-center justify-center bg-[#f4f6f7]">
+      <div className="aspect-square w-full rounded-lg overflow-hidden flex items-center justify-center bg-[#f4f6f7]">
         {imgProps ? (
           <img {...imgProps} alt={product.name} loading="lazy" decoding="async" onError={() => setImgFailed(true)} className="w-full h-full object-contain" />
         ) : (
-          <strong className="font-serif font-normal text-[14px] leading-[1.15] text-center px-3 line-clamp-5" style={{ color: accent }}>{product.name}</strong>
+          <ProductCoverFallback name={product.name} size="md" className="w-full h-full" />
         )}
       </div>
     );
@@ -122,7 +144,7 @@ function Cover({ product }: { product: MarketplaceProduct }) {
 
   // Front-facing book drawn in SVG: the seller's image (or the title) fills the WHOLE cover; pages show as a thin edge behind it.
   return (
-    <div className="h-[150px] min-[400px]:h-[165px] sm:h-[194px] lg:h-[205px] rounded-lg overflow-hidden">
+    <div className="aspect-square w-full rounded-lg overflow-hidden">
       <svg viewBox="0 0 210 198" className="w-full h-full" role="img" aria-label={product.name} preserveAspectRatio="xMidYMid meet">
         <defs>
           <clipPath id={clipId}><rect x={cx} y={cy} width={cw} height={ch} rx="3" /></clipPath>
@@ -141,10 +163,7 @@ function Cover({ product }: { product: MarketplaceProduct }) {
             <image href={imgProps.src} x={cx} y={cy} width={cw} height={ch} preserveAspectRatio="xMidYMid slice" onError={() => setImgFailed(true)} />
           ) : (
             <foreignObject x="30" y="8" width="148" height="172">
-              <div className="w-full h-full flex flex-col items-center justify-center text-center px-3" style={{ color: accent }}>
-                <strong className="block font-serif font-normal text-[14px] leading-[1.15] line-clamp-5">{product.name}</strong>
-                <small className="mt-2 text-[10px] text-[#5d6570] line-clamp-1">{product.storeName ?? product.sellerName ?? 'Edudeen'}</small>
-              </div>
+              <ProductCoverFallback name={product.name} size="sm" className="w-full h-full" />
             </foreignObject>
           )}
           {/* spine shading */}
@@ -172,12 +191,12 @@ export function RatingLine({ rating, count, className }: { rating?: number; coun
 function QuickViewCover({ product }: { product: MarketplaceProduct }) {
   const { accent } = paletteFor(product.name || product._id);
   const [imgFailed, setImgFailed] = useState(false);
-  const image = !imgFailed ? product.images?.[0] : undefined;
+  const image = !imgFailed ? cardImage(product) : undefined;
   const imgProps = image ? responsiveImg(image, '88px', [120, 184, 240], 240) : null;
   return (
     <div className="w-[88px] h-[108px] shrink-0 rounded-lg overflow-hidden bg-[#f4f6f7] flex items-center justify-center">
       {imgProps ? (
-        <img {...imgProps} alt="" loading="lazy" decoding="async" onError={() => setImgFailed(true)} className="w-full h-full object-contain" />
+        <img {...imgProps} alt={product.name} loading="lazy" decoding="async" onError={() => setImgFailed(true)} className="w-full h-full object-contain" />
       ) : (
         <strong className="font-serif font-normal text-[11px] leading-[1.15] text-center px-1.5 line-clamp-5" style={{ color: accent }}>{product.name}</strong>
       )}
@@ -265,15 +284,7 @@ export const ResourceCard = memo(function ResourceCard({
   const metaText = metaParts.join(' · ');
 
   // List view: a two-line plain-text description (tags stripped), only when the product has one.
-  const listDescription = (product.description ?? '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
-
-  // Board chip: only when the seller set curricula/board on the product (the existing field; nothing is guessed).
-  const boards = (product.curricula ?? []).map(c => CURRICULUM_LABEL[c] ?? c).filter(Boolean);
-  const boardChip = boards.length ? (
-    <span className="inline-block max-w-full truncate rounded bg-[#eef3f8] px-1.5 py-[1px] text-[11px] font-semibold text-[#2F6AA8]" title={boards.join(', ')}>
-      {boards[0]}{boards.length > 1 ? ` +${boards.length - 1}` : ''}
-    </span>
-  ) : null;
+  const listDescription = distinctSubtitle(product.name, product.description);
 
   // Which side the hover quick view opens toward, so it never runs off the right edge of the viewport.
   const [flip, setFlip] = useState(false);
@@ -348,7 +359,7 @@ export const ResourceCard = memo(function ResourceCard({
             )
           )}
           <RatingLine rating={product.averageRating} count={product.totalRatings} className="mt-1" />
-          {boardChip && <div className="mt-1">{boardChip}</div>}
+          <div className="mt-1"><BoardChipSlot product={product} reserve={false} /></div>
           <TrustBadges trust={product.trust} className="mt-1.5" />
           <div className="flex items-center gap-2 flex-wrap mt-auto pt-3">
             <strong className={clsx('num text-[16px] sm:text-[18px]', member ? 'text-[#8a6100]' : was ? 'text-error' : 'text-carbon')}>
@@ -410,12 +421,12 @@ export const ResourceCard = memo(function ResourceCard({
       <Link
         to={href}
         onClick={go}
-        className="block py-1 -my-1 text-start text-carbon no-underline font-bold text-[13px] sm:text-[13.5px] leading-[1.35] cursor-pointer hover:underline line-clamp-2"
+        className="block py-1 -my-1 text-start text-carbon no-underline font-bold text-[13px] sm:text-[13.5px] leading-[1.35] cursor-pointer hover:underline line-clamp-2 min-h-[calc(2.7em+8px)]"
       >
         {product.name}
       </Link>
       <RatingLine rating={product.averageRating} count={product.totalRatings} className="block mb-1" />
-      {boardChip && <div className="mb-1">{boardChip}</div>}
+      <BoardChipSlot product={product} />
       <TrustBadges trust={product.trust} className="mt-1" />
       {/* Phones (2 narrow columns): price on its own line, then type chip + cart button; sm+: one row. */}
       <div className="flex flex-col gap-1.5 mt-2 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
@@ -444,7 +455,7 @@ export const ResourceCard = memo(function ResourceCard({
 export function ResourceCardSkeleton() {
   return (
     <div className="min-w-0 animate-pulse rounded-xl border border-[#e6ecee] p-2">
-      <div className="h-[150px] min-[400px]:h-[165px] sm:h-[194px] lg:h-[205px] rounded-lg bg-bone" />
+      <div className="aspect-square w-full rounded-lg bg-bone" />
       <div className="h-3 w-1/2 bg-bone rounded mt-4" />
       <div className="h-4 w-4/5 bg-bone rounded mt-3" />
       <div className="h-3 w-1/3 bg-bone rounded mt-3" />

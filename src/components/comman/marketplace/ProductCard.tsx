@@ -11,6 +11,7 @@ import { ProductCoverFallback } from './ProductCoverFallback';
 import type { MarketplaceProduct } from '@/api/services/marketplace';
 import { useProductPreview } from '@/hooks/marketplace/useProductPreview';
 import { CompareToggle } from './CompareToggle';
+import { BoardChipSlot, cardImage, distinctSubtitle } from './ResourceCard';
 import { formatMoney } from '@/utils/currency';
 import { formatPrice } from '@/utils/formatPrice';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
@@ -155,6 +156,8 @@ export const ProductCard = memo(function ProductCard({ product: rawProduct, onCl
   const isPhysical   = pType === 'physical';
   const isDigital    = !isPhysical;
   const typeLabel    = isPhysical ? 'Physical' : 'Digital';
+  // Hidden when the description just repeats (or starts with) the title.
+  const subtitle     = distinctSubtitle(product.name, product.description);
 
   const [previewOpen, setPreviewOpen] = useState(false);
   const { data: previewData, loading: previewLoading, error: previewError, load: loadPreview, reset: resetPreview } = useProductPreview(product._id);
@@ -198,7 +201,7 @@ export const ProductCard = memo(function ProductCard({ product: rawProduct, onCl
   ].filter(Boolean)));
   const variantSwatchImages = variantColorImages.length > 1 ? variantColorImages : galleryImages;
   const showVariantSwatches = !isList && variantSwatchImages.length > 1;
-  const activeImageSrc = activeVariantImage ?? product.images?.[0];
+  const activeImageSrc = activeVariantImage ?? cardImage(product);
   const nativeLowestPrice = variants.length > 0
     ? Math.min(...variants.map(v => v.price))
     : null;
@@ -306,7 +309,7 @@ export const ProductCard = memo(function ProductCard({ product: rawProduct, onCl
                     activeImageSrc === img ? 'ring-brand-orange' : 'ring-transparent',
                   )}
                 >
-                  <img src={imgUrl(img, { w: 80 })} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
+                  <img src={imgUrl(img, { w: 80 })} alt={product.name} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                 </button>
               ))}
               {variantSwatchImages.length > 2 && (
@@ -320,15 +323,8 @@ export const ProductCard = memo(function ProductCard({ product: rawProduct, onCl
 
         {/* Top-left: product type + discount/campaign badge(s), stacked —
             plain markdown in red, live sale campaign in orange with a flame. */}
-        <div className="absolute top-2 start-2 flex flex-col items-start gap-1">
-          <span className={clsx(
-            'px-[6px] py-[2px] rounded-md text-[12px] font-bold tracking-[0.01em] border',
-            isDigital
-              ? 'bg-[#ede9fe] text-[#7c3aed] border-[#ddd6fe]'
-              : 'bg-[#edf5e7] text-[#3b6720] border-[#c7e0b5]',
-          )}>
-            {typeLabel}
-          </span>
+        <div className="absolute top-[7px] start-[7px] sm:top-3 sm:start-3 max-w-[58%] sm:max-w-[70%] flex flex-col items-start gap-1">
+          {/* (the Physical/Digital chip now sits in the price row, like ResourceCard) */}
           {/* ONE % badge: a running sale (campaign) wins over the plain markdown percentage. */}
           {!member && !campaignAmount && pctOff != null && pctOff > 0 && (
             <span dir="ltr" translate="no" className="px-[6px] py-[2px] rounded-md text-[12px] font-bold bg-error text-white">
@@ -352,7 +348,7 @@ export const ProductCard = memo(function ProductCard({ product: rawProduct, onCl
           disabled={isWishlisting}
           aria-label={isWishlisted ? 'Remove from wishlist' : 'Save to wishlist'}
           className={clsx(
-            'absolute top-2 end-2 w-8 h-8 rounded-lg bg-white border border-bone after:absolute after:-inset-1',
+            'absolute top-[6px] end-[6px] sm:top-3 sm:end-3 w-8 h-8 rounded-lg bg-white border border-bone after:absolute after:-inset-1',
             'flex items-center justify-center transition-[transform,background-color] duration-150 hover:bg-brand-pale-orange hover:scale-[1.08]',
             isWishlisting ? 'cursor-wait' : 'cursor-pointer',
           )}
@@ -364,7 +360,7 @@ export const ProductCard = memo(function ProductCard({ product: rawProduct, onCl
           />
         </button>
 
-        <CompareToggle product={product} className="absolute top-[44px] end-2 !rounded-lg" />
+        <CompareToggle product={product} className="absolute top-[43px] end-[7px] sm:top-[54px] sm:end-3 !rounded-lg" />
 
         {/* Preview — digital only, same size/position language as wishlist */}
         {isDigital && product.digital?.previewAvailable && (
@@ -390,13 +386,13 @@ export const ProductCard = memo(function ProductCard({ product: rawProduct, onCl
         'flex-1 flex min-w-0',
         isList ? 'flex-col justify-center gap-[3px] p-3 sm:p-4' : clsx('flex-col pt-2', compact ? 'px-[9px] pb-2' : 'px-[9px] pb-2 sm:px-[10px] sm:pb-[10px]'),
       )}>
-        <p className={clsx('font-semibold text-carbon leading-[1.3] tracking-[-0.01em]', isList ? 'text-[13px] sm:text-[14px] line-clamp-1' : clsx('mb-[2px] line-clamp-2', compact ? 'text-[12px]' : 'text-[12px]'))}>
+        <p className={clsx('font-semibold text-carbon leading-[1.3] tracking-[-0.01em]', isList ? 'text-[13px] sm:text-[14px] line-clamp-1' : clsx('mb-[2px] line-clamp-2 min-h-[2.6em]', compact ? 'text-[12px]' : 'text-[12px]'))}>
           <HighlightedText text={product.name} query={highlightQuery} />
         </p>
 
-        {!compact && !isList && product.description && (
+        {!compact && !isList && subtitle && (
           <p className="text-[12px] text-slate/85 leading-[1.35] line-clamp-1 mb-1">
-            {product.description}
+            {subtitle}
           </p>
         )}
 
@@ -429,14 +425,16 @@ export const ProductCard = memo(function ProductCard({ product: rawProduct, onCl
           )}
         </div>
 
+        {!compact && <div className="mt-1"><BoardChipSlot product={product} reserve={!isList} /></div>}
+
         {subscriberPrice != null && (
           <p className="text-[12px] font-semibold text-brand-orange mt-[3px]">Members save {discountPercent}%</p>
         )}
         {member && <PremiumChip percent={member.percent} seller={member.seller} platform={member.platform} className="mt-[3px] self-start" />}
 
-        <div className={clsx('flex items-center gap-3 min-w-0', isList ? 'justify-between flex-wrap mt-2 pt-2 border-t border-bone/70' : 'justify-start mt-auto pt-2')}>
+        <div className={clsx('flex items-center gap-3 min-w-0', isList ? 'justify-between flex-wrap mt-2 pt-2 border-t border-bone/70' : 'justify-between mt-auto pt-2')}>
           <div className="flex items-baseline gap-[5px] min-w-0">
-            <span className={clsx('font-bold whitespace-nowrap tracking-tight', compact ? 'text-[14px]' : 'text-[14px] sm:text-[16px]', member ? 'text-[#8a6100]' : subscriberPrice != null || salePct ? 'text-brand-orange' : 'text-carbon')}>
+            <span className={clsx('font-bold whitespace-nowrap tracking-tight', compact ? 'text-[14px]' : 'text-[14px] sm:text-[15px]', member ? 'text-[#8a6100]' : subscriberPrice != null || salePct ? 'text-brand-orange' : 'text-carbon')}>
               {member ? formatMoney(member.price, displayCurrency) : shownPrice != null ? formatMoney(shownPrice, displayCurrency) : '—'}
             </span>
             {member && (member.list ?? shownPrice) != null && (
@@ -446,6 +444,7 @@ export const ProductCard = memo(function ProductCard({ product: rawProduct, onCl
               <span className="text-[12px] text-slate/70 line-through shrink-0">{formatMoney(struckPrice, displayCurrency)}</span>
             )}
           </div>
+          <span className="text-[12px] border border-[#dde5e8] px-[7px] py-[3px] rounded text-[#566773] shrink-0">{typeLabel}</span>
 
           {/* Add to Cart — full-width beneath the price in the standard grid
               card. Compact grids keep a small icon-only square docked to the

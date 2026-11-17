@@ -711,9 +711,8 @@ export function SearchBox({
                           className="group shrink-0 w-[74px] text-start bg-transparent border-none cursor-pointer p-0 focus-visible:outline-none"
                         >
                           <span className="block w-[74px] h-[74px] rounded-[10px] overflow-hidden bg-brand-pale-orange">
-                            {item.image
-                              ? <img loading="lazy" decoding="async" src={item.image} alt={item.name ?? ''} className="w-full h-full object-cover" />
-                              : <span className="w-full h-full flex items-center justify-center"><Sparkles size={16} className="text-brand-orange opacity-40" /></span>}
+                            {/* ProductImage = image (alt = title) -> ProductCoverFallback when missing or broken. */}
+                            <ProductImage images={item.image ? [item.image] : []} name={item.name ?? ''} className="w-full h-full object-cover" />
                           </span>
                           <span className="block text-[12px] text-charcoal leading-snug line-clamp-2 mt-[5px] group-hover:text-brand-deep-orange transition-colors">
                             {item.name}

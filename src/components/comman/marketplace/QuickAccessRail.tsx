@@ -39,10 +39,11 @@ function useScrolledPast(px: number, screens = 0) {
 
 /** 44px product thumbnail for the panels — the image, or the product's own colour cover. */
 function Thumb({ image, name }: { image: string | null | undefined; name: string }) {
+  const [failed, setFailed] = useState(false);
   return (
     <span className="w-11 h-11 rounded-lg overflow-hidden shrink-0 block border border-bone">
-      {image
-        ? <img src={image} alt={name} loading="lazy" className="w-full h-full object-cover block" />
+      {image && !failed
+        ? <img src={image} alt={name} loading="lazy" onError={() => setFailed(true)} className="w-full h-full object-cover block" />
         : <ProductCoverFallback name={name} size="xs" className="w-full h-full" />}
     </span>
   );
@@ -282,7 +283,7 @@ export function QuickAccessRail() {
   return (
     <>
       {/* Desktop rail */}
-      <div ref={rootRef} className="hidden xl:flex fixed end-1 min-[1500px]:end-3 top-[calc(50%+40px)] -translate-y-1/2 z-[60] items-center gap-2 print:hidden" onMouseLeave={scheduleClose}>
+      <div ref={rootRef} className="hidden xl:flex fixed end-1 min-[1500px]:end-3 top-[calc(50%+40px)] -translate-y-1/2 [@media(max-height:620px)]:top-auto [@media(max-height:620px)]:translate-y-0 [@media(max-height:620px)]:bottom-[calc(var(--fab-stack-bottom,88px)+var(--fab-ai-h,0px)+12px)] z-[60] items-center gap-2 print:hidden" onMouseLeave={scheduleClose}>
         {open && (
           <div className="order-first" onMouseEnter={() => show(open)} role="dialog" aria-label={buttons.find(b => b.id === open)?.label}>
             {open === 'deals' && <DealsPanel close={close} />}
@@ -342,8 +343,9 @@ export function QuickAccessRail() {
           scrolledFar && !footerInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3 pointer-events-none',
         )}
         tabIndex={scrolledFar && !footerInView ? 0 : -1}
-        // stacks on the same right edge, directly above the chat bubble (76px nav offset + 52px bubble + gap)
-        style={{ bottom: `calc(${/^\/(cart|checkout|product\/)/.test(pathname) ? 228 : 144}px + env(safe-area-inset-bottom, 0px))` }}
+        // stacks on the same end edge: chat bubble -> AI assistant button (when shown) -> this. ChatWidget publishes --fab-stack-bottom
+        // (bubble top + 12px) and the AI button --fab-ai-h (44px + 12px); the fallbacks are the old fixed offsets.
+        style={{ bottom: `calc(var(--fab-stack-bottom, ${/^\/(cart|checkout|product\/)/.test(pathname) ? 228 : 144}px) + var(--fab-ai-h, 0px) + env(safe-area-inset-bottom, 0px))` }}
       >
         <ChevronUp size={20} />
       </button>

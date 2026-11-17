@@ -30,9 +30,11 @@ const FOOTER_COLUMNS: { heading: string; links: FooterLink[] }[] = [
   {
     heading: 'Shop',
     links: [
-      { label: 'Shop by grade', path: '/?class=class-5' },
+      // Existing grade list (every CLASS_LEVELS entry -> browsePath) lives in the sitemap "Pages" tab.
+      { label: 'Shop by grade', path: '/sitemap?tab=pages' },
       { label: 'Flash Sale',    path: '/#deals' },
       { label: 'Track order',   path: '/account/orders' },
+      { label: 'Returns & refunds', path: '/returns' },
       { label: 'Saved',         path: '/account/wishlist' },
       { label: 'Edudeen Premium', path: '/premium' },
     ],

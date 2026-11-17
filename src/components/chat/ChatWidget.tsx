@@ -32,6 +32,16 @@ const POLL_OPEN = 8000;
 const POLL_CLOSED = 60000;
 const NAVY = 'linear-gradient(135deg,#152D43 0%,#174771 55%,#2b6a8f 100%)';
 
+/** Publishes where the bubble's top edge is (+12px gap) so the AI assistant button and back-to-top stack above it, wherever the bubble was lifted to. */
+function FabStackVar({ bottom }: { bottom: number }) {
+  useEffect(() => {
+    const root = document.documentElement.style;
+    root.setProperty('--fab-stack-bottom', `${bottom + BUBBLE + GAP}px`);
+    return () => { root.removeProperty('--fab-stack-bottom'); };
+  }, [bottom]);
+  return null;
+}
+
 type Role = 'user' | 'bot' | 'admin';
 interface Msg { id: number; role: Role; text: string; at: number; sid?: string; quick?: { id: string; label: string }[]; actions?: { label: string; to: string }[] }
 interface Saved { audience: ChatAudience; open: boolean; msgs: Msg[]; typedLang: string | null; noticeShown: boolean; unread: boolean }
@@ -419,6 +429,7 @@ export default function ChatWidget() {
 
   return (
     <div translate="no" data-chat-root className="print:hidden" style={modalOpen && !open ? { display: 'none' } : undefined}>
+      <FabStackVar bottom={bubbleBottom} />
       {!open && nudge && (
         <div role="status" style={{ ...bubbleStyle, bottom: `calc(${bubbleBottom + 64}px + env(safe-area-inset-bottom, 0px))` }}
           className="fixed z-[45] max-w-[240px] rounded-2xl bg-white border border-bone shadow-lg ps-3.5 pe-2 py-2.5 text-[13px] text-carbon flex items-start gap-2">
