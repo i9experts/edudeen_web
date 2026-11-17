@@ -141,6 +141,8 @@ export function CartProvider({ storeId, children }: { storeId?: string; children
   const [error,   setError]   = useState<string | null>(null);
   // false until the first cart load finishes: keeps the last known badge count (no 0 flash).
   const [settled, setSettled] = useState(false);
+  // Units added optimistically that the server/cart re-read has not confirmed yet (shown on the badge at once).
+  const [pendingAdd, setPendingAdd] = useState(0);
   const clearError = useCallback(() => setError(null), []);
 
   // Guest-only: caches each product's fetched detail (name/image/variants)
@@ -287,9 +289,9 @@ export function CartProvider({ storeId, children }: { storeId?: string; children
     if (!settled) return;
     try { sessionStorage.setItem(countKey, String(liveCount)); } catch { /* ignore */ }
   }, [liveCount, settled, countKey]);
-  const cartCount = settled ? liveCount : (() => {
+  const cartCount = (settled ? liveCount : (() => {
     try { return Number(sessionStorage.getItem(countKey)) || 0; } catch { return 0; }
-  })();
+  })()) + pendingAdd;
 
   // Variants with an add request in flight: a second click before the first answer is ignored,
   // so a rapid double click adds the quantity once (state alone is too slow to block it).
@@ -307,18 +309,22 @@ export function CartProvider({ storeId, children }: { storeId?: string; children
     if (type) storeType(productVariantId, type);
     setError(null);
     setAdding(productVariantId);
+    // Optimistic: the badge moves and the "Added to cart" toast shows at once; the server answer (and the cart
+    // re-read) only reconciles. A failure rolls the badge back and swaps the toast for the error.
+    setPendingAdd(n => n + quantity);
+    let released = false;
+    const release = () => { if (!released) { released = true; setPendingAdd(n => Math.max(0, n - quantity)); } };
+    if (!opts?.silent) toast.success('Added to cart');
 
     try {
       if (!TokenStorage.isLoggedIn()) {
         addGuestCartItem(productId, productVariantId, type, quantity);
         await refreshGuestCartDisplay();
-        if (!opts?.silent) toast.success('Added to cart');
         return true;
       }
       const res = await apiAddToCart(productId, productVariantId, storeId, quantity);
       if (storeId) setCart(mergeTypes(res.data));
       else await fetchMyCarts();
-      if (!opts?.silent) toast.success('Added to cart');
       return true;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to add item to cart.';
@@ -326,6 +332,7 @@ export function CartProvider({ storeId, children }: { storeId?: string; children
       if (!opts?.silent) toast.error(message);
       return false;
     } finally {
+      release();
       addingRef.current.delete(productVariantId);
       setAdding(null);
     }

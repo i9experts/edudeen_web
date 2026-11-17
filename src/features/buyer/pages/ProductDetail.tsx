@@ -96,7 +96,7 @@ function DetailSkeleton() {
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,380px)_minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,460px)_minmax(0,1fr)_320px] gap-6 items-start min-w-0 mb-8">
         {/* pictures */}
         <div className="min-w-0">
-          <SkeletonBox className="w-full h-[320px] md:h-[420px] lg:h-[460px]" rounded="16px" />
+          <SkeletonBox className="w-full h-[300px] md:h-[400px] lg:h-[460px]" rounded="16px" />
           <div className="mt-3 flex gap-2">
             {[1, 2, 3, 4].map(i => <SkeletonBox key={i} width={56} height={56} rounded="10px" />)}
           </div>
@@ -213,6 +213,7 @@ type GallerySlide = { kind: 'image'; src: string } | { kind: 'video'; src: strin
 function ImageGallery({ images, name, video = null }: { images: string[]; name: string; video?: { url: string; posterUrl: string | null; frontFirst: boolean } | null }) {
   const [selected, setSelected] = useState(0);
   const [errored, setErrored] = useState<Record<number, boolean>>({});
+  const [loadedImg, setLoadedImg] = useState<Record<number, boolean>>({});
   const [viewer, setViewer] = useState(false);
   const [playing, setPlaying] = useState(false);
 
@@ -244,7 +245,7 @@ function ImageGallery({ images, name, video = null }: { images: string[]; name: 
       {/* Main slide — a picture shown whole (no crop), or the video (poster + play button until clicked) */}
       <div
         onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}
-        className="relative flex-1 min-w-0 h-[300px] md:h-[400px] lg:h-[460px] max-h-[55vh] lg:max-h-none rounded-2xl overflow-hidden border border-bone bg-white touch-pan-y"
+        className="relative flex-none lg:flex-1 min-w-0 h-[300px] md:h-[400px] lg:h-[460px] max-h-[55vh] lg:max-h-none rounded-2xl overflow-hidden border border-bone bg-white touch-pan-y"
       >
         {slide?.kind === 'video' ? (
           playing ? (
@@ -266,8 +267,9 @@ function ImageGallery({ images, name, video = null }: { images: string[]; name: 
             <img
               {...responsiveImg(slide.src, '(min-width: 1024px) 520px, 100vw', [480, 720, 960, 1280], 960)} alt={name} width={960} height={960}
               loading={selected === 0 ? 'eager' : 'lazy'} fetchPriority={selected === 0 ? 'high' : undefined} decoding="async"
+              onLoad={() => setLoadedImg(l => (l[selected] ? l : { ...l, [selected]: true }))}
               onError={() => setErrored(e => ({ ...e, [selected]: true }))}
-              className="w-full h-full object-contain p-3"
+              className={`w-full h-full object-contain p-3 ${loadedImg[selected] ? '' : 'animate-pulse bg-cream'}`}
             />
             <button
               type="button" onClick={() => setViewer(true)} aria-label="Enlarge image"
@@ -825,9 +827,12 @@ export function ProductDetail() {
   }
 
   async function handleAddToCart(buyNow: boolean) {
-    if (!product || !activeVariant || pendingActionRef.current) return;
+    if (!product || !activeVariant) return;
+    if (!buyNow && addedFeedback) { navigate('/cart'); return; }
+    if (pendingActionRef.current) return;
     pendingActionRef.current = true;
-    setPendingAction(buyNow ? 'buy' : 'cart');
+    // Add to Cart gives feedback at once (below), so only Buy Now shows the button spinner.
+    if (buyNow) setPendingAction('buy');
     try {
     // Buy Now checks out only this product and quantity and never touches the cart: the checkout page
     // reads `?buyNow=` and the server prices that one line itself. A signed-out buyer is sent to log in
@@ -837,11 +842,14 @@ export function ProductDetail() {
       return;
     }
     // Add to Cart sends the selected quantity (the API merges it into an existing line).
-    // Within 3 s of adding, the same button reads "Added ✓ · View cart" and opens the cart.
-    if (addedFeedback) { navigate('/cart'); return; }
+    // Within 3 s of adding, the same button reads "Added ✓ · View cart" and opens the cart (checked at the top).
     // addToCart shows the one "Added to cart" toast itself.
-    await addToCart(product._id, activeVariant._id, isPhysical ? 'physical' : 'digital', qty);
-    setAddedFeedback(true); setTimeout(() => setAddedFeedback(false), 3000);
+    // Optimistic: the button flips to "Added ✓ · View cart" now; a failed add flips it back (the error toast comes from addToCart).
+    setAddedFeedback(true);
+    const feedbackTimer = setTimeout(() => setAddedFeedback(false), 3000);
+    if (!(await addToCart(product._id, activeVariant._id, isPhysical ? 'physical' : 'digital', qty))) {
+      clearTimeout(feedbackTimer); setAddedFeedback(false);
+    }
     } finally { pendingActionRef.current = false; setPendingAction(null); }
   }
 

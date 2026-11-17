@@ -134,6 +134,7 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
       setWishlisting(variantId);
       // Optimistic
       setWishlistedKeys(prev => new Set(prev).add(k));
+      toast.success('Added to wishlist');   // instant; a failure below rolls the heart back and shows the error
       try {
         const res = await apiAddToWishlist(productId, variantId);
         idMap.current.set(k, res.data.wishlist._id);
@@ -149,7 +150,6 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
             return [...prev, { product: res.data.product, variants: [res.data.variant] }];
           });
         }
-        toast.success('Added to wishlist');
       } catch (err) {
         setWishlistedKeys(prev => { const s = new Set(prev); s.delete(k); return s; });
         toast.error(err instanceof Error ? err.message : 'Failed to add to wishlist.');

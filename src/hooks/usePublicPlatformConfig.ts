@@ -1,6 +1,7 @@
+import { useEffect } from 'react';
 import { apiGetPublicPlatformConfig, type PublicPlatformConfig } from '@/api/services/publicPlatformConfig';
 import { createSharedResource } from '@/hooks/createSharedResource';
-import { useLiveRefresh } from '@/hooks/useLiveRefresh';
+import { subscribeLive } from '@/api/realtime';
 
 // Stale-while-revalidate: the last config the visitor saw is kept in localStorage and used straight away on the
 // next visit (so the hero / footer never wait on the network or flash default text), while ONE fresh request
@@ -28,10 +29,21 @@ const resource = createSharedResource<PublicPlatformConfig | null>(() =>
     .catch(() => null),
 );
 
+// ONE live subscription for all consumers. Each consumer used to subscribe on its own, so a single 'config' event
+// (or a socket reconnect) made every mounted consumer (footer, ticker, promo parts...) force its own request.
+let liveUsers = 0;
+let liveOff: (() => void) | null = null;
+function useSharedLiveConfig() {
+  useEffect(() => {
+    if (liveUsers++ === 0) liveOff = subscribeLive(['config'], () => resource.refresh());
+    return () => { if (--liveUsers === 0 && liveOff) { liveOff(); liveOff = null; } };
+  }, []);
+}
+
 export function usePublicPlatformConfig() {
   const { data, loading, refetch } = resource.useSharedResource();
-  // Admin changed hero text, social links, payment info, fees... -> every open page picks it up (shared: one request).
-  useLiveRefresh(['config'], refetch);
+  // Admin changed hero text, social links, payment info, fees... -> every open page picks it up (one shared request).
+  useSharedLiveConfig();
   // Until the fresh copy arrives (or if the request fails) fall back to the cached one; only a first-ever visit waits.
   const config = data ?? cachedAtStart;
   /** Re-fetches the shared config so every consumer updates without a reload (used after an inline admin edit). */

@@ -32,12 +32,14 @@ export function DeliveryBuyBox({ productId, variantId, quantity, isPhysical, isC
       </div>
     );
   }
-  if (loading) return <div className="mb-3 flex flex-col gap-2" aria-hidden="true"><SkeletonBox width={190} height={12} /><SkeletonBox width={150} height={12} /></div>;
-  if (error) return <div className="mb-3"><Row icon={<Truck size={14} />}><span className="text-slate">Delivery info unavailable</span></Row></div>;
-  if (!info || info.kind !== 'physical') return null;
+  // Every state keeps the same reserved height (room for 3 rows) so the buttons below never jump when delivery info arrives.
+  const reserve = 'mb-3 min-h-[88px] sm:min-h-[64px]';
+  if (loading) return <div className={`${reserve} flex flex-col gap-2`} aria-hidden="true"><SkeletonBox width={190} height={12} /><SkeletonBox width={150} height={12} /></div>;
+  if (error) return <div className={reserve}><Row icon={<Truck size={14} />}><span className="text-slate">Delivery info unavailable</span></Row></div>;
+  if (!info || info.kind !== 'physical') return <div className={reserve} aria-hidden="true" />;
 
   return (
-    <div className="mb-3 flex flex-col gap-1.5">
+    <div className={`${reserve} flex flex-col gap-1.5`}>
       {info.fee == null && !info.estimate ? (
         // Fee not known yet: say who delivers and what the seller states; never a made-up date.
         <Row icon={<Truck size={14} />}>

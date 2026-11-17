@@ -65,13 +65,21 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
   const clearToast = useCallback(() => setToast(null), []);
 
+  // The count is requested from several triggers (mount, login, socket connect, tab visible, fallback poll):
+  // one request at a time, and none within 10 s of the last one — the socket pushes every change anyway.
+  const unreadFetch = useRef({ busy: false, at: 0 });
   const fetchUnreadCount = useCallback(async () => {
     if (!TokenStorage.isLoggedIn()) return;
+    const st = unreadFetch.current;
+    if (st.busy || Date.now() - st.at < 10_000) return;
+    st.busy = true;
     try {
       const res = await apiGetUnreadCount();
       setUnreadCount(res.data.unreadCount);
     } catch {
       // Ignore count fetch errors
+    } finally {
+      st.busy = false; st.at = Date.now();
     }
   }, []);
 
@@ -209,7 +217,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   // Login/logout also reset the inbox + badge (the old effect only ran on first mount).
   useEffect(() => {
     const onLogin = () => { fetchUnreadCount(); };
-    const onLogout = () => { setNotifications([]); setUnreadCount(0); setPreferences(null); setToast(null); listLoadedRef.current = false; };
+    const onLogout = () => { setNotifications([]); setUnreadCount(0); setPreferences(null); setToast(null); listLoadedRef.current = false; unreadFetch.current.at = 0; };
     window.addEventListener('edudeen:auth-login', onLogin);
     window.addEventListener('edudeen:auth-logout', onLogout);
     return () => {
@@ -245,7 +253,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       if (pollTimer) return;
       pollTimer = window.setInterval(() => {
         if (document.visibilityState === 'visible') fetchUnreadCount();
-      }, 30_000);
+      }, 60_000);
     };
 
     const disconnect = () => {
