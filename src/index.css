@@ -749,8 +749,10 @@ html.lang-switching *, html.lang-switching *::before, html.lang-switching *::aft
 
 /* ── ResourceCard quick view (hover preview of the cover/title area) ──────
    Only on pointers that can truly hover (desktop); touch never sees it. */
-@media (hover: hover) and (pointer: fine) {
+.quick-view { display: none; }
+@media (hover: hover) and (pointer: fine) and (min-width: 1024px) {
   .quick-view {
+    display: block;
     opacity: 0;
     visibility: hidden;
     transform: translateY(6px) scale(0.98);
