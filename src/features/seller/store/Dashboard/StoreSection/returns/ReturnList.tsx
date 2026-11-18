@@ -178,7 +178,7 @@ export function StoreReturnList() {
   return (
     <>
       <StorePageHeader
-        title="Returns & Refunds"
+        title="Returns"
         subtitle="Review return and refund requests from your buyers. Aim to respond within 48 hours."
       />
 

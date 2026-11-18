@@ -100,8 +100,8 @@ export function NotificationsPanel() {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* ── CARD 1: Preferences Settings ── */}
-      <Card padding="none">
+      {/* ── CARD 1: Preferences Settings (shown after the history: people open this page to read notifications first) ── */}
+      <Card padding="none" className="order-2">
         <div className="px-5 pt-5 pb-4 border-b border-bone flex justify-between items-center">
           <div>
             <h2 className="text-[16px] font-bold text-carbon">Notification Preferences</h2>
@@ -240,7 +240,7 @@ export function NotificationsPanel() {
                     </div>
                     <div>
                       <p className="text-[12.5px] font-medium text-charcoal">Orders & Deliveries</p>
-                      <p className="text-[12px] text-slate leading-normal">Updates on purchases, order progress, and deliveries.</p>
+                      <p className="text-[12px] text-slate leading-normal">{isSeller ? 'New orders, cancellations, returns and refund requests for your store.' : 'Updates on purchases, order progress, and deliveries.'}</p>
                     </div>
                   </div>
                   <Toggle
@@ -257,8 +257,8 @@ export function NotificationsPanel() {
                       <MessageSquare size={13} className="text-[#1a65a8]" />
                     </div>
                     <div>
-                      <p className="text-[12.5px] font-medium text-charcoal">Direct Messages</p>
-                      <p className="text-[12px] text-slate leading-normal">Alerts when a seller or the Edudeen team sends a new message.</p>
+                      <p className="text-[12.5px] font-medium text-charcoal">{isSeller ? 'Messages & Questions' : 'Direct Messages'}</p>
+                      <p className="text-[12px] text-slate leading-normal">{isSeller ? 'Alerts when a buyer or the Edudeen team sends your store a message or question.' : 'Alerts when a seller or the Edudeen team sends a new message.'}</p>
                     </div>
                   </div>
                   <Toggle
@@ -315,8 +315,8 @@ export function NotificationsPanel() {
                       <Tag size={13} className="text-[#c2255c]" />
                     </div>
                     <div>
-                      <p className="text-[12.5px] font-medium text-charcoal">Promotions & Offers</p>
-                      <p className="text-[12px] text-slate leading-normal">Sales, price drops on saved items, cart reminders and personal coupons.</p>
+                      <p className="text-[12.5px] font-medium text-charcoal">{isSeller ? 'Sales & Promotions' : 'Promotions & Offers'}</p>
+                      <p className="text-[12px] text-slate leading-normal">{isSeller ? 'Sale campaigns you can join, promotion approvals and listing review results.' : 'Sales, price drops on saved items, cart reminders and personal coupons.'}</p>
                     </div>
                   </div>
                   <Toggle
@@ -334,7 +334,7 @@ export function NotificationsPanel() {
                     </div>
                     <div>
                       <p className="text-[12.5px] font-medium text-charcoal">Subscriptions & Plans</p>
-                      <p className="text-[12px] text-slate leading-normal">Billing notices, renewal reminders, or payment issues.</p>
+                      <p className="text-[12px] text-slate leading-normal">{isSeller ? 'Your Edudeen plan: renewals, trial ending and failed payments.' : 'Billing notices, renewal reminders, or payment issues.'}</p>
                     </div>
                   </div>
                   <Toggle
@@ -351,7 +351,7 @@ export function NotificationsPanel() {
       </Card>
 
       {/* ── CARD 2: History Inbox ── */}
-      <Card padding="none">
+      <Card padding="none" className="order-1">
         <div className="px-5 pt-5 pb-4 border-b border-bone flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h2 className="text-[16px] font-bold text-carbon">Notification History</h2>

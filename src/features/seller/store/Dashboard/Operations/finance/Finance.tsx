@@ -12,6 +12,7 @@ import type { BadgeColor } from '@/types';
 import { SkeletonBox, Table, type TableColumn } from '@/components/comman/ui';
 import { useSearchParams } from 'react-router-dom';
 import { EarningsStatement, StatementSkeleton } from './EarningsStatement';
+import { PayoutScheduleCard } from './PayoutScheduleCard';
 import { EarningsHero, PayoutHistory, HowFeesWork, METHOD_LABEL, VIEW_FILTER, type EarningsView } from './EarningsParts';
 import {
   apiGetFinanceDashboard, apiGetFinanceTransactions, apiExportFinanceTransactions,
@@ -390,7 +391,7 @@ export function StoreFinance() {
     <>
       <StorePageHeader
         title="Earnings"
-        subtitle="Your sales, fees and monthly payouts from Edudeen."
+        subtitle="Your sales, fees and payouts from Edudeen."
         actions={methodsKnown ? (
           hasDefault ? (
             <Button size="sm" variant="outline" onClick={() => methodRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>
@@ -409,7 +410,7 @@ export function StoreFinance() {
         <div className="px-4 md:px-8 pt-4">
           <div className="flex items-center gap-2 text-[12.5px] text-carbon bg-info-bg border border-[#bfdcf3] rounded-lg px-3 py-2">
             <CalendarCheck size={14} className="shrink-0 text-brand-royal" />
-            <span>Add a payout method so Edudeen knows where to send your monthly payout.</span>
+            <span>Add a payout method so Edudeen knows where to send your payouts.</span>
           </div>
         </div>
       )}
@@ -471,6 +472,9 @@ export function StoreFinance() {
           <EarningsHero s={summaryForCurrency} storeId={storeId} />
         )}
 
+        {/* 1b. Seller's own payout rhythm (nothing is moved for them) */}
+        {ready && summaryForCurrency && <PayoutScheduleCard s={summaryForCurrency} storeId={storeId} onSaved={loadSummary} />}
+
         {/* 2. Month statement */}
         {ready && summaryForCurrency && activeCurrency ? (
           <EarningsStatement storeId={storeId} currency={activeCurrency} nextPayoutDate={summaryForCurrency.nextPayoutDate} toShip={summaryForCurrency.expected.toShip} />
@@ -512,7 +516,7 @@ export function StoreFinance() {
                 <span className="text-[12px] text-slate">{new Date(t.createdAt).toLocaleDateString()}</span>
               </div>
             )}
-            emptyState={{ title: filter ? 'Nothing matches this filter.' : 'No transactions yet.' }}
+            emptyState={{ title: filter ? 'Nothing matches this filter.' : 'No transactions yet.', description: filter ? 'Try another filter.' : 'Sales, fees and payouts are listed here once you have orders.' }}
             pagination={{ page: txPage, total: txTotal, perPage: 10, onChange: setTxPage, label: 'transactions' }}
           />
         </section>

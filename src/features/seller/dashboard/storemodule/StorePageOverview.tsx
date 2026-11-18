@@ -328,7 +328,7 @@ export function StorePageOverview() {
   return (
     <div>
       <StorePageHeader
-        title="Customize your store"
+        title="Customize Store"
         subtitle="Make your Edudeen store page your own — buyers still shop and pay through Edudeen."
         tabs={loadState === 'ready' ? tabsNav : undefined}
       />

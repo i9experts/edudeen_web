@@ -87,7 +87,7 @@ export function NotificationToast() {
 
 /** Compact notifications block for the profile popup — latest few + mark-all / view-all. */
 export function NotificationsMenuSection({ onNavigate }: { onNavigate: (path: string) => void }) {
-  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotification();
+  const { notifications, unreadCount, markAsRead, markAllAsRead, notificationsLoaded } = useNotification();
   const recent = notifications.slice(0, 3);
 
   return (
@@ -136,7 +136,9 @@ export function NotificationsMenuSection({ onNavigate }: { onNavigate: (path: st
           ))}
         </div>
       ) : (
-        <p className="px-3 py-2 text-[12px] text-slate m-0">All caught up — no new notifications.</p>
+        notificationsLoaded
+          ? <p className="px-3 py-2 text-[12px] text-slate m-0">All caught up — no new notifications.</p>
+          : <div className="px-3 py-2 flex flex-col gap-2 animate-pulse" role="status" aria-label="Loading notifications"><div className="h-3 w-3/4 rounded bg-bone" /><div className="h-3 w-1/2 rounded bg-bone" /></div>
       )}
 
       <button
@@ -158,6 +160,7 @@ export function NotificationBell() {
     markAllAsRead,
     deleteNotification,
     fetchNotifications,
+    notificationsLoaded,
   } = useNotification();
 
   const [isOpen, setIsOpen] = useState(false);
@@ -309,6 +312,8 @@ export function NotificationBell() {
                   )}
                 </div>
               ))
+            ) : !notificationsLoaded ? (
+              <div className="py-6 px-4 flex flex-col gap-3 animate-pulse" role="status" aria-label="Loading notifications"><div className="h-3 w-3/4 rounded bg-bone" /><div className="h-3 w-1/2 rounded bg-bone" /><div className="h-3 w-2/3 rounded bg-bone" /></div>
             ) : (
               <div className="py-8 px-4 text-center">
                 <Bell size={24} className="text-slate/40 mx-auto mb-2" />

@@ -15,7 +15,7 @@ import { EdudeenIcon, EdudeenLogo } from '@/components/comman/ui/EdudeenLogo';
 import { apiGetStoreById, apiGetMyStores, type StoreData } from '@/api/services/store';
 import { apiGetAiStudioCredits } from '@/api/services/aiStudio';
 import { apiGetStoreEntitlements } from '@/api/services/platformPlans';
-import { useConversations } from '@/hooks/messaging/useConversations';
+import { useAiFeatures } from '@/hooks/useAiFeatures';
 import { useCommandPalette } from '@/hooks/useCommandPalette';
 import { useLogout } from '@/hooks/auth/useLogout';
 import { AnnouncementBanner, Modal, Button } from '@/components/comman/ui';
@@ -134,15 +134,12 @@ function StoreNavProvider({ children }: { children: ReactNode }) {
     apiGetStoreEntitlements(storeId).then(res => { if (!cancelled) setEntitlements(res.data ?? null); }).catch(() => {});
     return () => { cancelled = true; };
   }, [storeId]);
-  // Same source as the Messages inbox (live via its socket); a seller conversation counts when sellerUnread > 0.
-  const { conversations } = useConversations({ storeId, isArchived: false, limit: 50 });
-  const unreadChats = conversations.filter(c => (c.sellerUnread ?? 0) > 0).length;
-  // Orders / Returns / Messages badges come from the shared dashboard summary (the dashboard's Action-required card reads
-  // the same copy: one request, no extra call). Messages falls back to the inbox count until it has loaded.
+  // Orders / Returns / Messages badges come from ONE light request (GET /action-items); the Dashboard's Action-required card
+  // reads the same copy. No per-page conversation list or full summary is fetched just for badges.
   const { items: actionItems } = useStoreActionItems(storeId);
   const toShip = actionItems?.ordersToShip ?? 0;
   const returnsPending = actionItems?.returnsPending ?? 0;
-  const unreadMessages = actionItems ? actionItems.unreadMessages : unreadChats;
+  const unreadMessages = actionItems?.unreadMessages ?? 0;
 
   const value = useMemo<StoreNavState>(() => {
     const types = (store as { productTypes?: string[] } | null)?.productTypes;
@@ -384,8 +381,10 @@ function StoreSidebar({ open, onToggle }: StoreSidebarProps) {
   // 0/unknown = no fixed max) — never a made-up ceiling.
   const [aiCredits, setAiCredits] = useState<{ monthlyAllowance: number; balance: number } | null>(null);
   const [creditsState, setCreditsState] = useState<'loading' | 'ready' | 'error'>('loading');
+  // Server-side AI switch (shared 60s cache): when AI is not configured the widget is hidden and no credits request is made.
+  const { loading: aiLoading, available: aiAvailable } = useAiFeatures(storeId);
   useEffect(() => {
-    if (!storeId) return;
+    if (!storeId || aiLoading || !aiAvailable) return;
     let cancelled = false;
     setCreditsState('loading');
     // Same wallet AI Studio and Store Settings read (one source of truth).
@@ -397,7 +396,7 @@ function StoreSidebar({ open, onToggle }: StoreSidebarProps) {
       })
       .catch(() => { if (!cancelled) setCreditsState('error'); });
     return () => { cancelled = true; };
-  }, [storeId]);
+  }, [storeId, aiLoading, aiAvailable]);
   const nav = useStoreNav();
   const entitlements = nav.entitlements;
   const planInfo = sidebarPlanInfo(planSub, storeId, typeof entitlements?.currentPlanName === 'string' ? entitlements.currentPlanName : null);
@@ -561,7 +560,8 @@ function StoreSidebar({ open, onToggle }: StoreSidebarProps) {
         {/* Footer: AI credits + sign out */}
         {open ? (
           <div className="px-4 py-4 border-t border-bone shrink-0">
-            <div className="bg-cream border border-bone rounded-xl px-3 py-[10px] mb-3">
+            {aiAvailable && (
+            <Link to={`/store/${storeId}/ai/studio`} aria-label="Open AI Studio" className="block no-underline bg-cream border border-bone rounded-xl px-3 py-[10px] mb-3 hover:bg-[#e3ecf3] transition-colors">
               <div className="flex justify-between mb-[7px]">
                 <div className="flex items-center gap-[5px]">
                   <Sparkles size={12} className="text-brand-royal" />
@@ -583,7 +583,8 @@ function StoreSidebar({ open, onToggle }: StoreSidebarProps) {
                   />
                 </div>
               )}
-            </div>
+            </Link>
+            )}
             <div className="flex items-center gap-2">
               <p className="text-[12px] text-slate flex-1 min-w-0 truncate">Edudeen creator studio</p>
               <button
@@ -718,6 +719,13 @@ function StoreWorkspaceProvider({ children }: { children: ReactNode }) {
   const [denied, setDenied] = useState(false);
   const [publicSlug, setPublicSlug] = useState('');
 
+  // Switching store: tell the notification inbox/badge (it lives above the router) to reload for the new store.
+  useEffect(() => {
+    if (storeId) window.dispatchEvent(new Event('edudeen:store-scope'));
+    // Leaving the workspace (or switching) also re-scopes: the handler compares the URL's store with the last one.
+    return () => { window.dispatchEvent(new Event('edudeen:store-scope')); };
+  }, [storeId]);
+
   useEffect(() => {
     if (!storeId) return;
     let cancelled = false;
@@ -770,7 +778,16 @@ function StoreWorkspaceProvider({ children }: { children: ReactNode }) {
 
 // ── Store approval banner — only for legacy stores an admin has not approved yet (new stores go live at once). ──
 function StoreVerificationBanner() {
-  const { store } = useStoreWorkspace();
+  const { store, storeId } = useStoreWorkspace();
+  if (store?.status === 'active' && store.activeProductCount === 0) {
+    return (
+      <Link to={`/store/${storeId}/products/add`} className="flex w-full items-center justify-center gap-2 px-4 py-2 text-[12.5px] font-medium text-[#1a5a8a] bg-info-bg border-b border-[#bfdcf3] text-center no-underline">
+        <AlertCircle size={14} className="shrink-0" />
+        <span>Not visible yet: publish your first product and buyers can find your store.</span>
+        <span className="underline font-semibold">Add a product</span>
+      </Link>
+    );
+  }
   if (!store || store.status === 'active') return null;
 
   if (store.status === 'rejected') {

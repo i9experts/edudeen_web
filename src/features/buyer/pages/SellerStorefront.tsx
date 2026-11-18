@@ -32,6 +32,7 @@ import { StoreAboutTab } from '@/features/storefront/sections/StoreAboutTab';
 import { StorePoliciesFaq } from '@/features/storefront/sections/StorePoliciesFaq';
 import { StoreReviewsTab } from '@/features/storefront/sections/StoreReviewsTab';
 import { Link, useSearchParams } from 'react-router-dom';
+ import { useMyStores } from '@/hooks/store/useMyStores';
 import { localeDate } from '@/utils/localeTime';
 
 // Loyalty points and gift cards were retired from the seller panel; their
@@ -103,6 +104,8 @@ export function SellerStorefront() {
     description: ((store as { description?: string | null }).description ?? '').replace(/\s+/g, ' ').trim().slice(0, 155) || `Shop ${store.name} on Edudeen: educational worksheets, books, digital downloads and courses.`,
     image: store.logo ?? null,
     canonical: store.slug ? `/shop/${store.slug}` : undefined,
+    // No live product yet: keep the page out of search engines (the API also leaves the store out of search + sitemap).
+    noindex: (store as { hasActiveProducts?: boolean }).hasActiveProducts === false,
     jsonLd: { '@context': 'https://schema.org', '@type': 'Store', name: store.name, url: `${SITE_URL}/shop/${store.slug}`, ...(store.logo ? { logo: store.logo } : {}) },
   });
 
@@ -209,6 +212,7 @@ export function SellerStorefront() {
 
   return (
     <div>
+      {TokenStorage.getUser<{ role?: string }>()?.role === 'seller' && <OwnerBar storeId={store.storeId} />}
       {/* Identity banner: the SAME component the seller's Customize-store preview renders (StoreIdentityBanner). */}
       <StoreIdentityBanner
         store={store}
@@ -442,6 +446,21 @@ export function SellerStorefront() {
           )}
         </Modal>
       )}
+    </div>
+  );
+}
+
+/** Shown only to the store's own seller: quick way back to the workspace (the shopper view is otherwise a dead end). */
+function OwnerBar({ storeId }: { storeId: string }) {
+  const { stores } = useMyStores();
+  if (!stores.some(s => String((s as { _id?: string; storeId?: string })._id ?? (s as { storeId?: string }).storeId) === String(storeId))) return null;
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-2 bg-carbon text-white px-4 py-2 text-[13px]" role="region" aria-label="Store owner">
+      <span>You are viewing your public store.</span>
+      <span className="flex flex-wrap items-center gap-2">
+        <Link to={`/store/${storeId}/storebuilder`} className="inline-flex items-center min-h-[44px] px-3 rounded-lg bg-white text-carbon font-semibold no-underline">Edit store</Link>
+        <Link to={`/store/${storeId}/dashboard`} className="inline-flex items-center min-h-[44px] px-3 rounded-lg border border-white/40 text-white font-semibold no-underline">Back to dashboard</Link>
+      </span>
     </div>
   );
 }

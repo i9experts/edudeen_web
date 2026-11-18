@@ -75,7 +75,6 @@ export default function StoreCategories() {
     <>
       <StorePageHeader
         title="Categories"
-        eyebrow=""
         wrapSubtitle
         subtitle="Your store's main category and its subcategories, with how many of your products are in each."
       />

@@ -1,10 +1,13 @@
-import { Bell, Package, MessageSquare, Star, Sparkles, Megaphone, Wallet, RotateCcw, PackageX, UserPlus, Tag, ShieldCheck, HelpCircle, CreditCard } from 'lucide-react';
+import { Bell, Package, MessageSquare, Star, Sparkles, Megaphone, Wallet, RotateCcw, PackageX, UserPlus, Tag, ShieldCheck, HelpCircle, CreditCard, XCircle, AlertTriangle } from 'lucide-react';
 
 /** Shared by NotificationBell (dropdown) and NotificationsPanel (full page) —
  *  previously each hand-rolled an identical copy of this type→icon/color
  *  mapping, which risked silently drifting apart if one was edited alone. */
 export function getNotificationIcon(type: string, size: number = 14) {
   const t = type.toLowerCase();
+  // Bad news first (before the category icons): removal / rejection / suspension / deletion = red, needs-changes = amber warning.
+  if (/(reject|removed|suspend|deleted|declin|failed|banned|takedown)/.test(t)) return <XCircle size={size} className="text-[#c0392b]" />;
+  if (/(fix_requested|needs_change|needs_review|changes_requested)/.test(t)) return <AlertTriangle size={size} className="text-[#d98e04]" />;
   if (t.includes('campaign') || t.includes('promotion')) return <Megaphone size={size} className="text-brand-green" />;
   if (t.includes('payout')) return <Wallet size={size} className="text-brand-green" />;
   if (t.includes('return') || t.includes('refund')) return <RotateCcw size={size} className="text-brand-orange" />;

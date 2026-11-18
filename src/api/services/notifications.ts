@@ -10,6 +10,7 @@ export interface NotificationItem {
   title:         string;
   body:          string;
   data:          Record<string, any> | null;
+  storeId?:      string | null;
   isRead:        boolean;
   readAt:        string | null;
   createdAt:     string;
@@ -64,8 +65,28 @@ interface ApiResponse<T> {
   data:    T;
 }
 
+/** Inside a seller workspace (/store/<id>/…) the inbox + badge are limited to that store; elsewhere = everything. */
+export function currentStoreScope(): string | null {
+  try { return window.location.pathname.match(/^\/store\/([a-f0-9]{24})(?:\/|$)/i)?.[1] ?? null; } catch { return null; }
+}
+
+/** Axios config for the bulk actions (mark all read / clear read): limited to the open store, like the list. */
+function scopeParams() {
+  const storeId = currentStoreScope();
+  return storeId ? { params: { storeId } } : undefined;
+}
+
+/** True when a (live-pushed) notice belongs in the current store scope. */
+export function notificationInScope(n: { storeId?: string | null; data?: Record<string, any> | null }): boolean {
+  const sid = currentStoreScope();
+  if (!sid) return true;
+  return n.storeId === sid || n.data?.storeId === sid || (typeof n.data?.link === 'string' && n.data.link.startsWith(`/store/${sid}/`));
+}
+
 export function apiListNotifications(query?: ListNotificationsQuery) {
   const params: Record<string, string> = {};
+  const scope = currentStoreScope();
+  if (scope) params.storeId = scope;
   if (query?.page) params.page = String(query.page);
   if (query?.limit) params.limit = String(query.limit);
   if (query?.unreadOnly !== undefined) params.unreadOnly = String(query.unreadOnly);
@@ -77,7 +98,8 @@ export function apiListNotifications(query?: ListNotificationsQuery) {
 }
 
 export function apiGetUnreadCount() {
-  return client.get<never, ApiResponse<{ unreadCount: number }>>(ENDPOINTS.NOTIFICATIONS.UNREAD_COUNT);
+  const storeId = currentStoreScope();
+  return client.get<never, ApiResponse<{ unreadCount: number }>>(ENDPOINTS.NOTIFICATIONS.UNREAD_COUNT, storeId ? { params: { storeId } } : undefined);
 }
 
 export function apiGetPreferences() {
@@ -97,7 +119,7 @@ export function apiRemoveDeviceToken(fcmToken: string) {
 }
 
 export function apiMarkAllNotificationsRead() {
-  return client.patch<never, ApiResponse<{ message: string }>>(ENDPOINTS.NOTIFICATIONS.MARK_ALL_READ);
+  return client.patch<never, ApiResponse<{ message: string }>>(ENDPOINTS.NOTIFICATIONS.MARK_ALL_READ, undefined, scopeParams());
 }
 
 export function apiMarkNotificationRead(id: string) {
@@ -105,7 +127,7 @@ export function apiMarkNotificationRead(id: string) {
 }
 
 export function apiClearReadNotifications() {
-  return client.delete<never, ApiResponse<{ deleted: number }>>(ENDPOINTS.NOTIFICATIONS.CLEAR_READ);
+  return client.delete<never, ApiResponse<{ deleted: number }>>(ENDPOINTS.NOTIFICATIONS.CLEAR_READ, scopeParams());
 }
 
 export function apiDeleteNotification(id: string) {

@@ -234,7 +234,6 @@ export default function StoreBundles() {
     <>
       <StorePageHeader
         title="Bundles"
-        eyebrow=""
         wrapSubtitle
         subtitle="Sell resources together at a discount — e.g. a full Grade 5 pack. The saving applies at checkout once every item is in the cart."
         actions={<Button variant="primary" size="sm" onClick={() => setEditing('new')}><Plus size={14} /> New bundle</Button>}

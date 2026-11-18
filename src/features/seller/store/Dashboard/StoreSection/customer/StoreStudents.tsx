@@ -263,7 +263,7 @@ export default function StoreStudents() {
 
   return (
     <>
-      <StorePageHeader eyebrow="" title="Students" subtitle={firstLoad ? 'Loading…' : `${total} ${total === 1 ? 'enrolment' : 'enrolments'}`} />
+      <StorePageHeader title="Students" subtitle={firstLoad ? 'Loading…' : `${total} ${total === 1 ? 'enrolment' : 'enrolments'}`} />
       <div className="px-4 lg:px-7 pb-10 pt-5 flex flex-col gap-4 max-w-[1100px]">
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           <MetricCard label="Students" value={(stats?.totalStudents ?? 0).toLocaleString()} icon={<Users size={16} />} loading={firstLoad} />

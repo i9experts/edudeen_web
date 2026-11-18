@@ -61,6 +61,13 @@ export function apiStoreDashboardSummaryCached(storeId: string) {
   return cachedRequest(`dash-summary:${storeId}`, 60_000, () => apiStoreDashboardSummary(storeId));
 }
 
+/** Light call for the sidebar badges (only the Action-required counts; every store page needs it, not the whole summary). */
+export function apiStoreActionItems(storeId: string) {
+  return client.get<never, { success: boolean; data: { actionItems: ActionItems | null } }>(
+    `/api/store/${encodeURIComponent(storeId)}/action-items`,
+  );
+}
+
 /** One call for the whole seller dashboard (replaces five). */
 export function apiStoreDashboardSummary(storeId: string) {
   return client.get<never, { success: boolean; data: StoreDashboardSummary }>(

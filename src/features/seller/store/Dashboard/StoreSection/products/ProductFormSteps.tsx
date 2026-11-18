@@ -175,7 +175,7 @@ export function ProductFormSteps(p: ProductFormStepsProps) {
       {/* ── 2. Photos & files ────────────────────────────────────────── */}
       <StepPanel active={step === 1}>
         {banner(1)}
-        <Block id="fld-photos" title="Photos" need="recommended" hint="Up to 20 images - select several at once. The first image is the cover buyers see in search and on your shelf.">
+        <Block id="fld-photos" title="Photos" need="required" hint="At least 1 image to publish (a draft can be saved without one). Up to 20 images - select several at once. The first image is the cover buyers see in search and on your shelf.">
           <ProductPhotosUploader value={cur.images} onChange={urls => set('images', urls)} />
           {/* Non-blocking: one picture only. */}
           {singleImageWarning(cur.images.length) && (

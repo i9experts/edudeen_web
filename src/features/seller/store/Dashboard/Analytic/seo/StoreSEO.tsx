@@ -21,7 +21,7 @@ function fixLink(storeId: string, productId: string, fix: { step: number; fieldI
  * (category, pages, search console, analytics, audit, overview) are no longer shown to sellers; their API routes stay.
  */
 export function StoreSEO() {
-  usePageTitle('Search Visibility');
+  usePageTitle('SEO');
   const { storeId, store } = useStoreWorkspace();
   const [page, setPage] = useState(1);
   const [data, setData] = useState<SearchVisibilityData | null>(null);
@@ -41,24 +41,28 @@ export function StoreSEO() {
   useEffect(() => load(), [load]);
 
   const items = data?.items ?? [];
+  const description = (store as { description?: string } | null)?.description;
+  // Store-level problems (name / description / logo) count too, not only product ones.
+  const storeChecks = storeSearchChecks(store?.name, store?.logo, description);
+  const storeIssues = storeChecks.filter(c => !c.ok).length;
+  const noProducts = !!data && data.summary.totalProducts === 0;
   const pages = data?.pagination.pages ?? 1;
 
   return (
     <>
       <StorePageHeader
-        title="Search Visibility"
+        title="SEO"
         subtitle="How easy buyers find your products on Google and Edudeen, and what to fix."
-        eyebrow=""
         wrapSubtitle
       />
 
       <div className="px-4 md:px-7 pb-8 pt-5 flex flex-col gap-4 max-w-[980px]">
-        <StoreSearchCard storeId={storeId} name={store?.name} logo={store?.logo} description={(store as { description?: string } | null)?.description} />
+        <StoreSearchCard storeId={storeId} checks={storeChecks} />
 
         {data && (
           <div className="grid grid-cols-3 gap-3">
             <Stat label="Products" value={String(data.summary.totalProducts)} />
-            <Stat label="Need attention" value={String(data.summary.needFix)} tone={data.summary.needFix ? 'warn' : 'ok'} />
+            <Stat label="Need attention" value={String(data.summary.needFix + storeIssues)} tone={data.summary.needFix + storeIssues ? 'warn' : 'ok'} />
             <Stat label="Average score" value={data.summary.avgScore === null ? '—' : `${data.summary.avgScore}`} />
           </div>
         )}
@@ -67,15 +71,18 @@ export function StoreSEO() {
           <AnalyticsErrorState message={error} onRetry={load} />
         ) : loading && !data ? (
           <ListSkeleton />
+        ) : noProducts ? (
+          <Card className="flex flex-col items-center text-center gap-2 py-10">
+            <Wrench size={28} className="text-brand-orange" />
+            <p className="text-[15px] font-bold text-carbon m-0">Add your first product</p>
+            <p className="text-[13px] text-slate m-0 max-w-[420px]">Buyers cannot find a store with no products. Add one and it will be checked here.</p>
+            <Link to={`/store/${storeId}/products/add`} className="mt-2 inline-flex items-center justify-center min-h-[44px] px-5 rounded-lg bg-brand-orange text-white text-[13px] font-semibold no-underline">Add a product</Link>
+          </Card>
         ) : items.length === 0 ? (
           <Card className="flex flex-col items-center text-center gap-2 py-10">
             <CheckCircle2 size={28} className="text-success" />
-            <p className="text-[15px] font-bold text-carbon m-0">All good, nothing to fix</p>
-            <p className="text-[13px] text-slate m-0 max-w-[420px]">
-              {data && data.summary.totalProducts === 0
-                ? 'Add your first product and it will be checked here.'
-                : 'Every product has a clear title, description, photos and class details.'}
-            </p>
+            <p className="text-[15px] font-bold text-carbon m-0">{storeIssues ? 'Your products are fine' : 'All good, nothing to fix'}</p>
+            <p className="text-[13px] text-slate m-0 max-w-[420px]">Every product has a clear title, description, photos and class details.</p>
           </Card>
         ) : (
           <div className={`flex flex-col gap-3 transition-opacity ${loading ? 'opacity-60' : ''}`} aria-busy={loading}>
@@ -142,13 +149,16 @@ function ListSkeleton() {
 }
 
 /** Store name / description / logo already live in Store Settings: show their state here and link, no second form. */
-function StoreSearchCard({ storeId, name, logo, description }: { storeId: string; name?: string; logo?: string | null; description?: string }) {
+function storeSearchChecks(name?: string, logo?: string | null, description?: string) {
   const descLen = (description ?? '').trim().length;
-  const checks = [
+  return [
     { ok: !!name?.trim(), text: 'Store name' },
     { ok: descLen >= 50, text: descLen ? `Store description (${descLen} characters, 50+ is best)` : 'Store description' },
     { ok: !!logo, text: 'Store logo' },
   ];
+}
+
+function StoreSearchCard({ storeId, checks }: { storeId: string; checks: { ok: boolean; text: string }[] }) {
   return (
     <Card className="flex flex-col gap-3">
       <div className="flex items-center gap-2">

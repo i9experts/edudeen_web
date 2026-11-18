@@ -1,7 +1,7 @@
 import type { EducatorProfile } from '@/api/services/store';
 
 export interface CompletenessItem {
-  key: 'logo' | 'banner' | 'headline' | 'description' | 'phone' | 'faq' | 'teacher';
+  key: 'logo' | 'banner' | 'headline' | 'description' | 'faq' | 'teacher';
   label: string;
   hint: string;
   done: boolean;
@@ -30,7 +30,7 @@ export interface MeterInput {
 
 /**
  * THE store-page meter (one list, three screens: Customize store, Store Settings, Dashboard setup card).
- * Seven checks: logo, banner, tagline, description 80+, phone, 3+ FAQs, teaching profile.
+ * Six checks: logo, banner, tagline, description 80+, 3+ FAQs, teaching profile (the contact phone is private, so it is NOT part of the public-page meter).
  */
 export function storeSetupMeter(s: MeterInput): CompletenessItem[] {
   const ep = s.educatorProfile;
@@ -42,7 +42,6 @@ export function storeSetupMeter(s: MeterInput): CompletenessItem[] {
     { key: 'banner', label: 'Banner photo', hint: 'A wide photo behind your store name', done: !!s.coverImage?.trim(), anchor: 'sp-banner', path: 'storebuilder#sp-banner' },
     { key: 'headline', label: 'Tagline', hint: 'One line on what you teach', done: !!s.tagline?.trim(), anchor: 'sp-headline', path: 'storebuilder#sp-headline' },
     { key: 'description', label: `Description (${DESCRIPTION_MIN_CHARS}+ characters)`, hint: `${Math.min((s.description ?? '').trim().length, DESCRIPTION_MIN_CHARS)}/${DESCRIPTION_MIN_CHARS} characters`, done: (s.description ?? '').trim().length >= DESCRIPTION_MIN_CHARS, anchor: 'sp-description', path: 'storebuilder#sp-description' },
-    { key: 'phone', label: 'Contact phone', hint: 'Buyers can reach you', done: !!s.contactPhone?.trim(), anchor: 'sp-phone', path: 'settings#sp-phone' },
     { key: 'faq', label: `${FAQ_MIN}+ FAQs`, hint: `${Math.min(faqCount, FAQ_MIN)}/${FAQ_MIN} answered questions`, done: faqCount >= FAQ_MIN, anchor: 'sp-faq', path: 'settings#sp-faq' },
     { key: 'teacher', label: 'Teaching profile', hint: 'Your one-liner, qualifications, grades or subjects', done: teacher, anchor: 'sp-teacher', path: 'storebuilder#sp-teacher' },
   ];

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { summarizeShipping } from '@/features/seller/dashboard/shippingRules';
 import { StoreSetupMeterCard } from '@/features/seller/dashboard/storemodule/StoreSetupMeterCard';
 import { useLiveRefresh } from '@/hooks/useLiveRefresh';
 import { useAiStudioCredits } from '@/hooks/seller/useAiStudio';
@@ -454,6 +455,7 @@ function DomainWhiteLabelCard({ storeId, store, refetch }: {
 // ── Main ──────────────────────────────────────────────────────────────────────
 export default function StoreSettings() {
   const { store, storeId, loading, refetch } = useStoreWorkspace();
+  const shipSummary = summarizeShipping({ deliveryMethod: store?.deliveryMethod, deliverySettings: store?.deliverySettings, shipFrom: store?.shipFrom });
   const { stores: myStores } = useMyStores();
   const thisStoreListItem = myStores.find(s => s._id === storeId);
   // The credit wallet is the one AI Studio uses — store.aiCredits is a legacy field that can disagree with it.
@@ -763,7 +765,9 @@ export default function StoreSettings() {
                   <p className="text-[12px] text-slate">
                     {store?.fulfillmentMode === 'platform'
                       ? 'Edudeen ships your physical orders and collects cash on delivery. Shipping is not credited to you. Applies to new orders.'
-                      : 'You ship your own physical orders. Ask the Edudeen team if you want Edudeen to handle shipping.'}
+                      : shipSummary.empty
+                        ? 'Shipping is not set up yet. Choose how you deliver on the Shipping page.'
+                        : `Shipping mode: ${shipSummary.method}. Change it on the Shipping page.`}
                   </p>
                 </div>
               </div>

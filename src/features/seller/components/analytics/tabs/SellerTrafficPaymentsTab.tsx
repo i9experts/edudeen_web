@@ -61,7 +61,7 @@ export function SellerTrafficPaymentsTab({ params, currency }: { params: SellerA
             data={payments.data ?? []}
             keyExtractor={r => r.paymentType}
             loading={payments.loading}
-            emptyState={{ icon: <CreditCard size={28} className="text-slate/50" />, title: 'No payment data yet' }}
+            emptyState={{ icon: <CreditCard size={28} className="text-slate/50" />, title: 'No payment data yet', description: 'Payment methods used by your buyers appear here after your first paid order.' }}
           />
         </div>
       </div>

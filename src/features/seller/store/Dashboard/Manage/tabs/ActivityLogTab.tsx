@@ -206,7 +206,11 @@ export function ActivityLogTab() {
           ) : (
             logs.map((item, i) => {
               const isMe = !!me && item.actorId === me.id;
-              const actorName = isMe ? me!.name : (item.actorName ?? 'Team member');
+              // A readable name: the saved one (an e-mail becomes its name part), else by role (never a vague 'Team member' for the owner / Edudeen team).
+              const savedName = (item.actorName ?? '').trim();
+              const actorName = isMe ? me!.name
+                : savedName ? (savedName.includes('@') ? savedName.split('@')[0] : savedName)
+                : item.actorRole === 'seller' ? 'Store owner' : item.actorRole === 'admin' ? 'Edudeen team' : item.actorRole === 'system' ? 'System' : 'Team member';
               const actorRole = (isMe ? me!.role : item.actorRole ?? '') ;
               const roleLabel = actorRole ? actorRole.charAt(0).toUpperCase() + actorRole.slice(1) : '';
               const isAlert = item.isSecurityAlert && item.category === 'security' && ['login_failed', 'password_changed', 'email_changed', 'new_device_login', 'new_ip_login'].includes(item.action);

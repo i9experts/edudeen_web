@@ -166,6 +166,8 @@ export default function StoreAddProduct() {
     // Digital listings need a class range to go live (drafts may stay incomplete).
     const cErr = finalStatus === 'active' || finalStatus === 'scheduled' ? classRangeError(pType, learning.classFrom, learning.classTo) : null;
     if (cErr) out.push({ step: 3, message: cErr, fieldId: 'fld-learning', publishOnly: true });
+    // Publishing needs at least one photo; a draft may have none (same rule as the API).
+    if ((finalStatus === 'active' || finalStatus === 'scheduled') && cur.images.length === 0) out.push({ step: 1, message: 'Add at least 1 photo to publish (a draft can be saved without one)', fieldId: 'fld-photos', publishOnly: true });
     if (!learning.coverStyle && !learnFormat) out.push({ step: 3, message: 'Choose the product card style (Book or Toy / item)', fieldId: 'fld-cover', publishOnly: true });
     const missingAttr = findMissingRequiredAttribute(attrDefs, attributeValues);
     if (missingAttr) out.push({ step: 3, message: `${missingAttr.label} is required`, fieldId: 'fld-attrs' });

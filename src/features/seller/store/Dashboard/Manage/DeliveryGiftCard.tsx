@@ -29,7 +29,7 @@ export function DeliveryGiftCard({ storeId, delivery, giftWrap, shipFrom, delive
   const [delOn, setDelOn] = useState(delivery?.enabled ?? false);
   const [fee, setFee] = useState(String(delivery?.fee ?? 0));
   const [freeOver, setFreeOver] = useState(delivery?.freeOverAmount != null ? String(delivery.freeOverAmount) : '');
-  const [wrapOn, setWrapOn] = useState(giftWrap?.enabled ?? true);
+  const [wrapOn, setWrapOn] = useState(giftWrap?.enabled ?? false);
   const [wrapFee, setWrapFee] = useState(String(giftWrap?.fee ?? 0));
   const [dispatch, setDispatch] = useState(String(dispatchDays ?? DISPATCH_DAYS_DEFAULT));
   useEffect(() => { setDispatch(String(dispatchDays ?? DISPATCH_DAYS_DEFAULT)); }, [dispatchDays]);
@@ -72,7 +72,7 @@ export function DeliveryGiftCard({ storeId, delivery, giftWrap, shipFrom, delive
     setDelOn(delivery?.enabled ?? false);
     setFee(String(delivery?.fee ?? 0));
     setFreeOver(delivery?.freeOverAmount != null ? String(delivery.freeOverAmount) : '');
-    setWrapOn(giftWrap?.enabled ?? true);
+    setWrapOn(giftWrap?.enabled ?? false);
     setWrapFee(String(giftWrap?.fee ?? 0));
     setFromCity(shipFrom?.city ?? '');
     setFromProvince(shipFrom?.province ?? '');

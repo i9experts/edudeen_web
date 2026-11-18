@@ -205,6 +205,7 @@ export const ENDPOINTS = {
     // Customers (staff-facing — only people who ordered from this store)
     CUSTOMERS: {
       LIST:   (storeId: string) => `/api/store/${storeId}/customers`,
+      EXPORT: (storeId: string) => `/api/store/${storeId}/customers/export`,
       DETAIL: (storeId: string, customerId: string) => `/api/store/${storeId}/customers/${customerId}`,
       NOTE:   (storeId: string, customerId: string) => `/api/store/${storeId}/customers/${customerId}/note`,
     },

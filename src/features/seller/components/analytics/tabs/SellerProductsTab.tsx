@@ -62,7 +62,7 @@ export function SellerProductsTab({ params, currency }: { params: SellerAnalytic
             data={topProducts.data ?? []}
             keyExtractor={r => r.productId}
             loading={topProducts.loading}
-            emptyState={{ icon: <Package size={28} className="text-slate/50" />, title: 'No product data yet' }}
+            emptyState={{ icon: <Package size={28} className="text-slate/50" />, title: 'No product data yet', description: 'Views and sales per product show up here after buyers start visiting your products.' }}
           />
         )}
       </div>
@@ -80,7 +80,7 @@ export function SellerProductsTab({ params, currency }: { params: SellerAnalytic
             data={performance.data?.products ?? []}
             keyExtractor={r => r.productId}
             loading={performance.loading}
-            emptyState={{ icon: <Package size={28} className="text-slate/50" />, title: 'No products yet' }}
+            emptyState={{ icon: <Package size={28} className="text-slate/50" />, title: 'No products yet', description: 'Publish a product and its performance will be tracked here.' }}
             pagination={{
               page,
               total: performance.data?.pagination.total ?? 0,

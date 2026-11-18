@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { formatPrice } from '@/utils/formatPrice';
 import { StorePageHeader, useStoreWorkspace } from '@/components/layouts/StoreLayout';
@@ -19,7 +20,10 @@ export function SellerShipping() {
   const sum = summarizeShipping({ deliveryMethod: store?.deliveryMethod, deliverySettings: store?.deliverySettings, shipFrom: store?.shipFrom });
   const platform = store?.fulfillmentMode === 'platform';
 
-  const goToForm = () => document.getElementById('shipping-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // Empty state OR the form, never both: "Set up shipping" swaps the empty state for the form.
+  const [setupOpen, setSetupOpen] = useState(false);
+  const showForm = !!store && (!sum.empty || setupOpen);
+  const goToForm = () => setSetupOpen(true);
 
   return (
     <>
@@ -36,14 +40,14 @@ export function SellerShipping() {
 
         {!store ? (
           <SkeletonBox height={84} rounded="10px" />
-        ) : sum.empty ? (
+        ) : sum.empty && !setupOpen ? (
           <EmptyState
             icon={<Truck size={28} className="text-slate/50" />}
             title="Shipping is not set up yet"
             description="Choose how you deliver and where you ship from."
             action={{ label: 'Set up shipping', onClick: goToForm }}
           />
-        ) : (
+        ) : sum.empty ? null : (
           <div className="bg-white border border-bone rounded-[10px] px-4 sm:px-5 py-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <SummaryItem label="You deliver" value={sum.method} />
             <SummaryItem label="Ships from" value={sum.from || 'Not set'} />
@@ -53,7 +57,7 @@ export function SellerShipping() {
         )}
 
         <div id="shipping-form" className="scroll-mt-24">
-          {storeId && (
+          {storeId && showForm && (
             <DeliveryGiftCard
               storeId={storeId}
               delivery={store?.deliverySettings}

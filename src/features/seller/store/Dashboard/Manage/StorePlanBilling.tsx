@@ -23,6 +23,8 @@ import { invalidateCache } from '@/api/services/requestCache';
 import { NO_PLAN_LABEL, planName, planStatus, planVisibilityLine } from '@/hooks/store/useStorePlan';
 import { planPriceFor, planYearlySavePct, planYearlyPrice } from '@/utils/planPricing';
 import { PlanComparisonTable, commonToAllPlans } from './PlanComparison';
+import { promotionLimit, AI_COMING_SOON, isAiBullet } from './planUsage';
+import { useAiFeatures } from '@/hooks/useAiFeatures';
 import { FeeEstimateCard } from './FeeEstimateCard';
 import { useApproxPkr } from './useApproxPkr';
 import { confirmSubscriptionPayment } from '@/features/auth/pages/onboard/StripeCardSetup';
@@ -120,15 +122,18 @@ export default function StorePlanBilling() {
   const [trialInfo, setTrialInfo] = useState<{ eligible: boolean; usedAt: string | null } | null>(null);
   const creditsPerUnit = credits?.buyCredits?.creditsPerUnit ?? null;
 
+  // Platform AI switch (shared cache with the sidebar): off = no credits request, no Buy credits, AI rows say "Coming soon".
+  const { loading: aiLoading, available: aiAvailable } = useAiFeatures(storeId);
+  const aiOff = !aiLoading && !aiAvailable;
   useEffect(() => {
-    if (!storeId) return;
+    if (!storeId || aiLoading || !aiAvailable) return;
     let cancelled = false;
     setCreditsState('loading');
     apiGetAiStudioCredits(storeId)
       .then(res => { if (cancelled) return; setCredits(res.data ?? null); setCreditsState(res.data ? 'ready' : 'error'); })
       .catch(() => { if (!cancelled) setCreditsState('error'); });
     return () => { cancelled = true; };
-  }, [storeId]);
+  }, [storeId, aiLoading, aiAvailable]);
 
   // Add-on price comes from config (public catalog = the price a purchase charges); trial eligibility explains the disabled trial card.
   useEffect(() => {
@@ -351,7 +356,7 @@ export default function StorePlanBilling() {
 
   return (
     <>
-      <StorePageHeader title="Billing Center" subtitle="Your store's Edudeen plan, what it includes, and your billing history." />
+      <StorePageHeader title="Plan & Billing" subtitle="Your store's Edudeen plan, what it includes, and your billing history." />
 
       <div className="px-4 lg:px-7 pt-5 pb-8 flex flex-col gap-5">
         {error && (
@@ -435,11 +440,16 @@ export default function StorePlanBilling() {
                 {entitlements?.maxActivePromotions && (
                   <UsageBar
                     label="Active promotions" Icon={Megaphone}
-                    used={entitlements.maxActivePromotions.used} max={entitlements.maxActivePromotions.limit}
+                    used={entitlements.maxActivePromotions.used ?? 0} max={promotionLimit(entitlements.maxActivePromotions.limit)}
                     upgradeTo="#available-plans"
                   />
                 )}
-                {creditsState === 'loading' ? (
+                {aiOff ? (
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="flex items-center gap-1.5 text-[12.5px] text-graphite"><Sparkles size={13} className="text-slate" />AI credits</span>
+                    <span className="text-[12px] font-semibold text-slate">{AI_COMING_SOON}</span>
+                  </div>
+                ) : aiLoading || creditsState === 'loading' ? (
                   <SkeletonBox height={36} rounded="6px" />
                 ) : credits ? (
                   <UsageBar
@@ -521,8 +531,12 @@ export default function StorePlanBilling() {
                 )}
                 {isCurrent && planEndsAt && <p className="text-[12px] font-semibold text-[#1e7a3c] mb-2">{daysLeftText} · {current?.status === 'trialing' ? 'ends' : 'renews'} {fmtDate(planEndsAt)}</p>}
                 <ul className="flex flex-col gap-1.5 mb-4 p-0 list-none flex-1">
+                  {/* Rows the compare table shows but the admin's marketing bullets may not mention (from plan config, display only). The platform fee is NOT shown per plan: it is charged from the admin's per-type Platform fees (the Fee estimator below), not from the plan. */}
+                  {plan.limits?.emailCampaignsAllowed === true && !plan.featureBullets.some(b => /e-?mail/i.test(b)) && (
+                    <li className="flex items-start gap-1.5 text-[12px] text-graphite"><Check size={12} className="text-brand-orange mt-[2px] shrink-0" />Email campaigns</li>
+                  )}
                   {bullets.map(f => (
-                    <li key={f} className="flex items-start gap-1.5 text-[12px] text-graphite"><Check size={12} className="text-brand-orange mt-[2px] shrink-0" />{f}</li>
+                    <li key={f} className="flex items-start gap-1.5 text-[12px] text-graphite"><Check size={12} className="text-brand-orange mt-[2px] shrink-0" />{f}{aiOff && isAiBullet(f) && <span className="text-slate"> · {AI_COMING_SOON}</span>}</li>
                   ))}
                 </ul>
                 {(() => {
@@ -546,7 +560,7 @@ export default function StorePlanBilling() {
           })}
         </div>
 
-        <PlanComparisonTable plans={plans} currentPlanId={ps.ended ? null : (current?.platformPlanId ?? null)} />
+        <PlanComparisonTable aiOff={aiOff} plans={plans} currentPlanId={ps.ended ? null : (current?.platformPlanId ?? null)} />
 
         <FeeEstimateCard storeId={storeId} currency={store?.baseCurrency || 'PKR'} />
 

@@ -142,7 +142,7 @@ export interface PayoutSchedule {
   _id:                    string;
   storeId:                string;
   currency:               string;
-  frequency:              'daily' | 'weekly' | 'biweekly' | 'monthly' | 'manual';
+  frequency:              'daily' | 'weekly' | 'biweekly' | 'semimonthly' | 'monthly' | 'manual';
   dayOfWeek:              number;
   dayOfMonth:             number;
   minimumAmount:          number;
@@ -153,7 +153,7 @@ export interface PayoutSchedule {
 
 export interface UpdatePayoutSchedulePayload {
   currency?:              string;
-  frequency?:             'daily' | 'weekly' | 'biweekly' | 'monthly' | 'manual';
+  frequency?:             'daily' | 'weekly' | 'biweekly' | 'semimonthly' | 'monthly' | 'manual';
   dayOfWeek?:             number;
   dayOfMonth?:            number;
   minimumAmount?:         number;

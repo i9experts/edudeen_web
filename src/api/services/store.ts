@@ -138,6 +138,8 @@ export interface StoreData {
   announcementBar: StoreAnnouncementBar;
   createdAt:    string;
   updatedAt:    string;
+  /** Owner view only: live (buyer-visible) products. 0 = "Not visible yet". */
+  activeProductCount?: number;
 }
 
 export interface MyStoreItem extends StoreData {
@@ -555,6 +557,11 @@ interface PaginatedCustomers {
 }
 
 /** GET /api/store/:storeId/customers  (seller only). `q` = name / e-mail / phone search; sorted on the server before paging. */
+/** CSV of the customer list (same search / sort as the screen; contact details stay masked). */
+export function apiExportStoreCustomers(storeId: string, q = '', sort: CustomerSortKey = 'lastOrderAt', order: 'asc' | 'desc' = 'desc') {
+  return client.get<never, string>(ENDPOINTS.STORE.CUSTOMERS.EXPORT(storeId), { params: { q: q.trim() || undefined, sort, order }, responseType: 'text' });
+}
+
 export function apiGetStoreCustomers(
   storeId: string, page = 1, limit = 20, q = '',
   sort: CustomerSortKey = 'lastOrderAt', order: 'asc' | 'desc' = 'desc',

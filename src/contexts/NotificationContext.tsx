@@ -11,6 +11,8 @@ import {
   apiMarkNotificationRead,
   apiDeleteNotification,
   apiClearReadNotifications,
+  currentStoreScope,
+  notificationInScope,
   type NotificationItem,
   type NotificationPreferenceData,
   type NotificationPreferenceFlags,
@@ -22,6 +24,8 @@ interface NotificationContextValue {
   /** @deprecated use notificationsLoading */
   loading:       boolean;
   notificationsLoading: boolean;
+  /** The first list request has answered (success): before that, never claim 'All caught up'. */
+  notificationsLoaded: boolean;
   /** The last list request failed (cleared by the next successful one). */
   listError:     boolean;
   /** Deletes every already-read notification. */
@@ -54,6 +58,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const [unreadCount,   setUnreadCount]   = useState(0);
   const [notificationsLoading, setNotificationsLoading] = useState(false);
   const [listError, setListError] = useState(false);
+  const [notificationsLoaded, setNotificationsLoaded] = useState(false);
   const [preferences,  setPreferences]   = useState<NotificationPreferenceData | null>(null);
   const [toast,         setToast]         = useState<NotificationItem | null>(null);
   const [notificationsTotal, setNotificationsTotal] = useState(0);
@@ -94,6 +99,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       setNotificationsTotal(res.data?.total ?? 0);
       setUnreadCount(res.data?.unreadCount ?? 0);
       setListError(false);
+      setNotificationsLoaded(true);
     } catch {
       setListError(true);
     } finally {
@@ -217,10 +223,22 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   // Login/logout also reset the inbox + badge (the old effect only ran on first mount).
   useEffect(() => {
     const onLogin = () => { fetchUnreadCount(); };
-    const onLogout = () => { setNotifications([]); setUnreadCount(0); setPreferences(null); setToast(null); listLoadedRef.current = false; unreadFetch.current.at = 0; };
+    const onLogout = () => { setNotifications([]); setUnreadCount(0); setPreferences(null); setToast(null); setNotificationsLoaded(false); listLoadedRef.current = false; unreadFetch.current.at = 0; };
+    // Another store opened (or leaving the workspace): the old store's list/badge must not linger.
+    let lastScope = currentStoreScope();
+    const onScope = () => {
+      const now = currentStoreScope();
+      if (now === lastScope) return;
+      lastScope = now;
+      unreadFetch.current.at = 0;
+      void fetchUnreadCount();
+      if (listLoadedRef.current) void fetchNotificationsRef.current(listState.current.unreadOnly);
+    };
+    window.addEventListener('edudeen:store-scope', onScope);
     window.addEventListener('edudeen:auth-login', onLogin);
     window.addEventListener('edudeen:auth-logout', onLogout);
     return () => {
+      window.removeEventListener('edudeen:store-scope', onScope);
       window.removeEventListener('edudeen:auth-login', onLogin);
       window.removeEventListener('edudeen:auth-logout', onLogout);
     };
@@ -293,10 +311,13 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       s.on('connect_error', () => startPoll());
 
       s.on('notification:unread-count', (data: { unreadCount: number }) => {
-        setUnreadCount(data.unreadCount);
+        // The pushed number is the account total: inside a store workspace ask for that store's own count instead.
+        if (currentStoreScope()) { unreadFetch.current.at = 0; void fetchUnreadCount(); }
+        else setUnreadCount(data.unreadCount);
       });
 
       s.on('notification:new', (notification: NotificationItem) => {
+        if (!notificationInScope(notification)) return;
         setNotifications(prev => (prev.some(n => n._id === notification._id) ? prev : [notification, ...prev]));
         setToast(notification);
       });
@@ -328,6 +349,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         unreadCount,
         loading: notificationsLoading,
         notificationsLoading,
+        notificationsLoaded,
         listError,
         clearRead,
         preferences,

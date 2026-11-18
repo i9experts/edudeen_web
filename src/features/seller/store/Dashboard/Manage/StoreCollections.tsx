@@ -112,7 +112,6 @@ export default function StoreCollections() {
     <>
       <StorePageHeader
         title="Collections"
-        eyebrow=""
         wrapSubtitle
         subtitle="Named, curated product groupings — New Arrivals, Sale, Best Sellers. They appear as tabs on your store page in this order."
         actions={<Button icon={<Plus size={13} />} size="sm" disabled={atLimit} title={atLimit ? `Limit of ${MAX_COLLECTIONS} collections reached` : undefined} onClick={openNew}>New Collection</Button>}

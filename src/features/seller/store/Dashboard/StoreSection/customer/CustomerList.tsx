@@ -2,11 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLiveRefresh } from '@/hooks/useLiveRefresh';
 import { useUrlPage, useUrlParam } from '@/hooks/useUrlParam';
-import { Users, ShoppingBag, DollarSign, X, MessageCircle, ListOrdered, RefreshCw } from 'lucide-react';
+import { Users, ShoppingBag, DollarSign, X, MessageCircle, ListOrdered, RefreshCw, Download } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useStoreWorkspace, StorePageHeader } from '@/components/layouts/StoreLayout';
 import {
-  apiGetStoreCustomers, apiGetStoreCustomerDetail, apiSaveStoreCustomerNote,
+  apiGetStoreCustomers, apiExportStoreCustomers, apiGetStoreCustomerDetail, apiSaveStoreCustomerNote,
   type StoreCustomer, type StoreCustomerDetail, type CustomerSortKey,
 } from '@/api/services/store';
 import { TabBar, type Tab } from '@/components/comman/ui/TabBar';
@@ -14,6 +14,8 @@ import { MetricCard } from '@/components/comman/ui/MetricCard';
 import { Table, type TableColumn } from '@/components/comman/ui/Table';
 import { Badge, StatusBadge } from '@/components/comman/ui/Badge';
 import { SearchInput } from '@/components/comman/ui/SearchInput';
+import { Button } from '@/components/comman/ui/Button';
+import { saveCsv } from '@/api/services/adminExports';
 import { Modal } from '@/components/comman/ui/Modal';
 import { formatMoney, formatMoneyCompact } from '@/utils/currency';
 import { useDebouncedValue } from '@/hooks/seller/useInventorySearch';
@@ -297,6 +299,17 @@ export default function StoreCustomerList() {
     return () => { cancelled = true; };
   }, [storeId, page, activeTab, qParam, sort, dir, tryKey]);
 
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState('');
+  async function exportCsv() {
+    setExporting(true); setExportError('');
+    try {
+      const csv = await apiExportStoreCustomers(storeId, qParam, sort, dir);
+      saveCsv(csv, `customers-${new Date().toISOString().slice(0, 10)}.csv`);
+    } catch (err) { setExportError(err instanceof Error ? err.message : 'Export failed.'); }
+    finally { setExporting(false); }
+  }
+
   function onSort(key: string) {
     const k = key as CustomerSortKey;
     if (k === sort) setDirParam(dir === 'desc' ? 'asc' : 'desc');
@@ -355,8 +368,12 @@ export default function StoreCustomerList() {
 
           <div className={`grid grid-cols-1 gap-4 items-start ${panelOpen && isDesktop ? 'lg:grid-cols-[minmax(0,1fr)_340px]' : ''}`}>
             <div className="bg-white border border-bone rounded-[10px] min-w-0 overflow-hidden">
-              <div className="px-4 md:px-5 py-3.5 border-b border-bone">
+              <div className="px-4 md:px-5 py-3.5 border-b border-bone flex flex-wrap items-center justify-between gap-3">
                 <SearchInput value={search} onChange={setSearch} placeholder="Search name, email or phone…" className="max-w-[320px]" />
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" icon={<Download size={12} />} loading={exporting} disabled={!total} onClick={exportCsv}>Export CSV</Button>
+                  {exportError && <span role="alert" className="text-[12px] text-error max-w-[240px]">{exportError}</span>}
+                </div>
               </div>
 
               {error ? (

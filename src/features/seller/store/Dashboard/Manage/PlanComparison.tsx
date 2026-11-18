@@ -1,5 +1,6 @@
 import { Check, Minus } from 'lucide-react';
 import type { PlatformPlan, PlatformPlanLimits } from '@/api/services/platformPlans';
+import { AI_COMING_SOON } from './planUsage';
 
 // Comparison rows come ONLY from plan config (PlatformPlan.limits). A row whose field no plan carries is skipped.
 // There is deliberately no "products limit" row: maxProducts is informational and not enforced.
@@ -41,8 +42,11 @@ export function commonToAllPlans(plans: PlatformPlan[]): { labels: string[]; boo
   return { labels, boolKeys, bullets };
 }
 
-function Cell({ plan, row }: { plan: PlatformPlan; row: typeof ROWS[number] }) {
+const AI_ROW_KEYS = new Set<string>(['aiCreditsPerMonth', 'seoAiSuggestionsAllowed']);
+
+function Cell({ plan, row, aiOff }: { plan: PlatformPlan; row: typeof ROWS[number]; aiOff?: boolean }) {
   const v = plan.limits?.[row.key];
+  if (aiOff && AI_ROW_KEYS.has(row.key)) return <span className="text-slate">{AI_COMING_SOON}</span>;
   if (row.kind === 'bool') {
     return v ? <Check size={15} className="inline text-success" aria-label="Included" /> : <Minus size={15} className="inline text-slate" aria-label="Not included" />;
   }
@@ -52,7 +56,7 @@ function Cell({ plan, row }: { plan: PlatformPlan; row: typeof ROWS[number] }) {
   return <span>{v.toLocaleString()}</span>;
 }
 
-export function PlanComparisonTable({ plans, currentPlanId }: { plans: PlatformPlan[]; currentPlanId: string | null }) {
+export function PlanComparisonTable({ plans, currentPlanId, aiOff }: { plans: PlatformPlan[]; currentPlanId: string | null; aiOff?: boolean }) {
   const { boolKeys } = commonToAllPlans(plans);
   const rows = configuredRows(plans).filter(r => !boolKeys.has(r.key));
   if (plans.length < 2 || rows.length === 0) return null;
@@ -74,7 +78,7 @@ export function PlanComparisonTable({ plans, currentPlanId }: { plans: PlatformP
             {rows.map(r => (
               <tr key={r.key} className="border-t border-[#f0eee6]">
                 <th scope="row" className="px-5 py-2.5 text-start font-normal text-graphite sticky start-0 bg-white">{r.label}</th>
-                {plans.map(p => <td key={p._id} className="px-3 py-2.5 text-center text-carbon"><Cell plan={p} row={r} /></td>)}
+                {plans.map(p => <td key={p._id} className="px-3 py-2.5 text-center text-carbon"><Cell plan={p} row={r} aiOff={aiOff} /></td>)}
               </tr>
             ))}
           </tbody>

@@ -5,6 +5,7 @@ import type { BadgeColor } from '@/types';
 import { formatPrice } from '@/utils/formatPrice';
 import type { EarningsSummary, Payout, PayoutMethodType, PayoutStatus, FeeRule } from '@/api/services/finance';
 import { fmtDate } from './EarningsStatement';
+import { payoutCadence, payoutsAreText } from './payoutCadence';
 
 export const METHOD_LABEL: Record<PayoutMethodType, string> = {
   bank_transfer: 'Bank Transfer', paypal: 'PayPal', stripe: 'Stripe',
@@ -41,7 +42,7 @@ export function EarningsHero({ s, storeId }: { s: EarningsSummary; storeId: stri
         <MetricCard
           label={`Available (${c})`} value={money(s.available)}
           sub="Ready for the next payout" to="?view=available"
-          info="Money from sales that finished clearing. It is paid out in the next monthly payout after admin approval."
+          info="Money from sales that finished clearing. It is paid out in your next payout after admin approval."
         />
         <MetricCard
           label="Clearing" value={money(s.clearing)}
@@ -65,8 +66,8 @@ export function EarningsHero({ s, storeId }: { s: EarningsSummary; storeId: stri
         </p>
       )}
       <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-[13px] text-slate">
-        <span>Next payout: <span className="font-bold text-carbon">{s.nextPayoutDate ? fmtDate(s.nextPayoutDate) : '—'}</span>
-          <span className="ml-1.5">{s.nextPayoutDate ? '(monthly, after admin approval)' : '· No payout due yet'}</span>
+        <span>Next payout: <span className="font-bold text-carbon">{s.nextPayoutDate ? fmtDate(s.nextPayoutDate) : '—'}</span>{' '}
+          <span className="ml-1.5">{s.nextPayoutDate ? `(${payoutCadence(s.payoutFrequency)}, after admin approval)` : '· No payout due yet'}</span>
         </span>
         {s.defaultMethod && (
           <span>Pays to: {METHOD_LABEL[s.defaultMethod.type as PayoutMethodType] ?? s.defaultMethod.type}{s.defaultMethod.last4 ? ` ••${s.defaultMethod.last4}` : ''}</span>
@@ -123,7 +124,7 @@ export function PayoutHistory({ payouts, loading, error, onOpen, onRetry }: {
               <span className="text-[12px] text-slate">{p.processedAt ? `Paid ${fmtDate(p.processedAt)}` : 'Not paid yet'}</span>
             </button>
           )}
-          emptyState={{ title: 'No payouts yet.', description: 'Your first monthly payout appears here once an admin approves it.' }}
+          emptyState={{ title: 'No payouts yet.', description: 'Your first payout appears here once an admin approves it.' }}
         />
       )}
     </section>
@@ -174,7 +175,7 @@ export function HowFeesWork({ s }: { s: EarningsSummary }) {
         </div>
         <div>
           <p className="font-semibold text-carbon mb-1">Payouts</p>
-          <p>Payouts are monthly. Edudeen reviews and approves each one, then sends it to your default payout method.</p>
+          <p>{payoutsAreText(s.payoutFrequency)} Edudeen reviews and approves each one, then sends it to your default payout method.</p>
         </div>
       </div>
     </details>

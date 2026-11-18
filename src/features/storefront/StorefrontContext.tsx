@@ -71,12 +71,12 @@ export const RADIUS_PX_MAP: Record<ThemeBorderRadius, string> = {
   full:   '9999px',
 };
 
-// Edudeen logo gold (the minaret) and the default-theme cover gradient built
-// from all three logo colors — navy (keeps the white store name legible on
-// the left) → green → gold.
+// Edudeen logo gold (the minaret) and the default-theme cover (shown when a
+// store has no banner): the logo's light blue, deep enough to keep the white
+// store name legible.
 export const EDUDEEN_GOLD = '#CCB000';
 export const EDUDEEN_DEFAULT_COVER_GRADIENT =
-  'linear-gradient(120deg, #174771 0%, #2E6B5C 38%, #66AD36 64%, #E2C21A 86%, #F4DC4C 100%)';
+  'linear-gradient(120deg, #2F6AA8 0%, #3F7DBB 50%, #5A95CC 100%)';
 export const EDUDEEN_GOLD_GRADIENT = 'linear-gradient(90deg, #F4DC4C 0%, #E2C21A 50%, #CCB000 100%)';
 
 // The colors the backend stamps on every new store's theme (store-theme.schema

@@ -310,6 +310,8 @@ export default function StoreEditProduct() {
     const rangeChanged = !originalLearning.current || originalLearning.current.classFrom !== learning.classFrom || originalLearning.current.classTo !== learning.classTo;
     const cErr = publishing && (!wasLive || rangeChanged) ? classRangeError(pType, learning.classFrom, learning.classTo) : null;
     if (cErr) out.push({ step: 3, message: cErr, fieldId: 'fld-learning', publishOnly: true });
+    // Going live needs at least one photo (a product already live is not blocked on re-save).
+    if (publishing && !wasLive && cur.images.length === 0) out.push({ step: 1, message: 'Add at least 1 photo to publish (a draft can be saved without one)', fieldId: 'fld-photos', publishOnly: true });
     // Card style: not for courses, and not for a product that is already live without one.
     if (!learning.coverStyle && !isLearnFormat && publishing && !wasLive) out.push({ step: 3, message: 'Choose the product card style (Book or Toy / item)', fieldId: 'fld-cover', publishOnly: true });
     const missingAttr = findMissingRequiredAttribute(attrDefs, attributeValues);

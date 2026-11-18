@@ -169,7 +169,7 @@ export function ReturnPolicyCard({ storeId, policy, shippingNote, faqs, refetch 
       <Button size="sm" variant="outline" disabled={rows.length >= MAX_FAQS} onClick={() => setRows(rs => [...rs, { q: '', a: '' }])}>
         <Plus size={13} className="inline align-middle me-1" /> Add question
       </Button>
-      <span className="text-[12px] text-slate ms-2">{rows.length}/{MAX_FAQS}</span>
+      <span className="text-[12px] text-slate ms-2">· {rows.length}/{MAX_FAQS}</span>
     </div>
   );
 }
