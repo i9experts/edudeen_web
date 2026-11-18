@@ -4,7 +4,7 @@ import { Star } from 'lucide-react';
 import { Button, Card, SkeletonBox } from '@/components/comman/ui';
 import { ProductCoverFallback } from '@/components/comman/marketplace/ProductCoverFallback';
 import { ReviewFormModal } from '@/features/buyer/components/ReviewFormModal';
-import { apiGetMyOrders, type OrderLineItem } from '@/api/services/orders';
+import { apiGetMyOrders, apiGetMyLibrary, type OrderLineItem } from '@/api/services/orders';
 import { apiGetMyReviewedIds } from '@/api/services/rating';
 
 type Pending = Pick<OrderLineItem, 'productId' | 'name' | 'image'> & { orderNumber: string };
@@ -18,9 +18,12 @@ export function PendingReviews({ onReviewed }: { onReviewed: () => void }) {
     Promise.all([
       apiGetMyOrders({ page: 1, limit: 50 }),
       apiGetMyReviewedIds().catch(() => null),
+      apiGetMyLibrary().catch(() => null),
     ])
-      .then(([orders, reviewed]) => {
+      .then(([orders, reviewed, library]) => {
         const done = new Set(reviewed?.data?.productIds ?? []);
+        // Removed / unavailable products (e.g. a course an admin removed) cannot be reviewed any more.
+        for (const li of library?.data?.items ?? []) if (li.unavailable === 'removed') done.add(li.productId);
         const seen = new Set<string>();
         const out: Pending[] = [];
         for (const o of orders.data.orders ?? []) {
@@ -65,6 +68,7 @@ export function PendingReviews({ onReviewed }: { onReviewed: () => void }) {
         <ReviewFormModal
           mode="create"
           productId={writing.productId}
+          product={{ name: writing.name, image: writing.image }}
           onClose={() => setWriting(null)}
           onSaved={() => { setWriting(null); load(); onReviewed(); }}
         />

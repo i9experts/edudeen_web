@@ -72,6 +72,27 @@ export function statusColor(status: string): StatusTone {
   return EXTRA_COLORS[key] ?? STATUS_COLORS[status] ?? STATUS_COLORS[String(status ?? '').toLowerCase()] ?? STATUS_COLORS[key] ?? 'gray';
 }
 
+interface OrderLike {
+  orderStatus: string;
+  isFreeClaim?: boolean;
+  isPaid?: boolean;
+  /** item types of the whole order (list: stores[].items[].type; detail: sellerOrders[].items[].type) */
+  itemTypes?: string[];
+}
+
+/** Free claims and fully-digital paid orders are "Availed" (nothing ships), unless cancelled. */
+export function isAvailedOrder(o: OrderLike): boolean {
+  if (norm(o.orderStatus) === 'cancelled' || norm(o.orderStatus) === 'canceled') return false;
+  if (o.isFreeClaim) return true;
+  const t = o.itemTypes ?? [];
+  return !!o.isPaid && t.length > 0 && t.every(x => x === 'digital');
+}
+
+/** ONE order-status label for the dashboard, orders list and order detail. */
+export function orderStatusLabel(o: OrderLike): string {
+  return isAvailedOrder(o) ? 'Availed' : statusLabel(o.orderStatus);
+}
+
 /**
  * One label per concept (B10). Decisions:
  *  - product status: "Active" for live products (API `active`); "Published" is only for content (blog/pages/courses).

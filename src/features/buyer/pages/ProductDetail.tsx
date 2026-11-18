@@ -10,6 +10,7 @@ import { AwayText, holidayBlocksType, holidayLabel } from '@/utils/storeHoliday'
 import { getScrollTop } from '@/utils/scrollRoot';
 import { clsx } from 'clsx';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useDeliveryFormat } from '@/features/buyer/components/DigitalItemAccess';
 import { isPlainLeftClick, blockLinkForButtons } from '@/utils/productLink';
 import { usePageMeta } from '@/hooks/usePageMeta';
 import { productJsonLd, breadcrumbJsonLd } from '@/utils/seoSchema';
@@ -68,6 +69,7 @@ import { syncRecentlyViewed } from '@/utils/recentlyViewedSync';
 import { formatMoney } from '@/utils/currency';
 import { formatPrice } from '@/utils/formatPrice';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
+import { localeDate } from '@/utils/localeTime';
 
 // ── Skeleton ──────────────────────────────────────────────────────────────────
 const LICENSE_LABEL: Record<string, string> = {
@@ -856,6 +858,7 @@ export function ProductDetail() {
   // Free digital resource: "Avail" gets it straight into the library (free order, no payment step) and
   // lands on the order-success page, which has the Download button. The seller only sees who availed it.
   const isFreeAvail = !!product && isDigital && displayPrice === 0;
+  const { item: ownedItem } = useDeliveryFormat(isDigital && isLoggedIn && product ? product._id : '');
   // Store on holiday: the server refuses these lines too; here the buttons just say so instead of failing.
   const away = holidayBlocksType(product?.storeHoliday, isPhysical ? 'physical' : 'digital');
   const awayLabel = holidayLabel(product?.storeHoliday);
@@ -976,7 +979,7 @@ export function ProductDetail() {
                       {memberShown == null && pctOffShown != null && pctOffShown > 0 && !product.activeCampaign && <Badge color="red">-{pctOffShown}% OFF</Badge>}
                       {product.activeCampaign && (
                         <span
-                          title={`${product.activeCampaign.name} — ends ${new Date(product.activeCampaign.endDate).toLocaleDateString()}`}
+                          title={`${product.activeCampaign.name} — ends ${localeDate(new Date(product.activeCampaign.endDate), { day: 'numeric', month: 'short', year: 'numeric' })}`}
                           className="flex items-center gap-1 rounded-full bg-gradient-to-r from-brand-orange to-[#66AD36] px-2.5 py-[3px] text-[12px] font-bold text-white"
                         >
                           <Zap size={10} className="fill-white shrink-0" />
@@ -1155,8 +1158,16 @@ export function ProductDetail() {
                     </div>
                   )}
 
-                  {/* Buttons */}
-                  <div className="flex flex-col gap-[10px] mb-6">
+                  {/* Buttons (hidden when the buyer already owns this free/digital item: the API rejects a second order too) */}
+                  {ownedItem && (
+                    <div className="mb-6 rounded-xl border border-[#a3d9b5] bg-[#e3f4ea] p-3 text-[13px] text-[#1a6b35]">
+                      <p className="font-bold">Already in your library</p>
+                      <Link to={isCourse ? `/course/${ownedItem.slug ?? product._id}` : '/account/downloads'} className="inline-flex min-h-[44px] items-center font-semibold text-brand-royal underline">
+                        {isCourse ? 'Start learning' : 'Open My Library'}
+                      </Link>
+                    </div>
+                  )}
+                  <div className={`flex flex-col gap-[10px] mb-6${ownedItem ? ' hidden' : ''}`}>
                     <Button
                       variant="primary" size="lg" fullWidth className="justify-center"
                       disabled={stock <= 0 || away || !!pendingAction} loading={pendingAction === 'buy'}
@@ -1380,7 +1391,7 @@ export function ProductDetail() {
                       <div className="rounded-xl bg-cream border border-bone p-3 text-center">
                         <Calendar size={14} className="text-brand-orange mx-auto mb-1" />
                         <p className="text-[13px] font-bold text-carbon leading-none">
-                          {storeData?.createdAt ? new Date(storeData.createdAt).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }) : '—'}
+                          {storeData?.createdAt ? localeDate(new Date(storeData.createdAt), { month: 'short', year: 'numeric' }) : '—'}
                         </p>
                         <p className="text-[12px] text-slate mt-[3px]">Joined</p>
                       </div>

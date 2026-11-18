@@ -4,6 +4,7 @@ import { Newspaper } from 'lucide-react';
 import { SkeletonBox } from '@/components/comman/ui';
 import { apiListPublicBlogPosts, type BlogPostSummary } from '@/api/services/storeBlog';
 import { useStorefront, useStorefrontPaths } from '@/features/storefront/StorefrontContext';
+import { localeDate } from '@/utils/localeTime';
 
 export function StorefrontBlogIndex() {
   const { store, cfg } = useStorefront();
@@ -39,7 +40,7 @@ export function StorefrontBlogIndex() {
             <Link key={post.slug} to={path(`/blog/${post.slug}`)} className="block bg-white border border-bone rounded-xl overflow-hidden no-underline hover:shadow-md transition-shadow">
               {post.coverImage && <img src={post.coverImage} alt={post.title} className="w-full h-[160px] object-cover" />}
               <div className="p-4">
-                {post.publishedAt && <p className="text-[12px] text-slate mb-1">{new Date(post.publishedAt).toLocaleDateString()}</p>}
+                {post.publishedAt && <p className="text-[12px] text-slate mb-1">{localeDate(new Date(post.publishedAt), { day: 'numeric', month: 'short', year: 'numeric' })}</p>}
                 <p className="text-[15px] font-bold mb-1" style={{ color: cfg.textColor }}>{post.title}</p>
                 {post.excerpt && <p className="text-[12.5px] text-slate line-clamp-2">{post.excerpt}</p>}
               </div>

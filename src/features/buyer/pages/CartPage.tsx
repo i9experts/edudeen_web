@@ -12,6 +12,7 @@ import { useProductsByCategory } from '@/hooks/marketplace/useProductsByCategory
 import { apiGetAlsoBought, type MarketplaceProduct } from '@/api/services/marketplace';
 import { Button } from '@/components/comman/ui/Button';
 import { DeliveryFormatBadge } from '@/components/comman/ui/DeliveryFormatBadge';
+import { AlreadyInLibraryNote } from '@/features/buyer/components/DigitalItemAccess';
 import { BuyerNavbar, Footer, SkeletonBox, getRecentlyViewed } from '@/components/comman/ui';
 import { ProductCard } from '@/components/comman/marketplace/ProductCard';
 import {
@@ -511,6 +512,7 @@ export function CartPage() {
                           </span>
                         ))}
                       </div>
+                      {item.type === 'digital' && <AlreadyInLibraryNote productId={item.productId} />}
                       {item.holidayBlocked && (
                         <p role="alert" className="mb-2 inline-flex items-center gap-1.5 rounded-md bg-[#fff7e6] border border-[#f3d9a4] px-2 py-1 text-[12px] font-semibold text-[#7a4b00]">
                           <CalendarOff size={12} aria-hidden /> <AwayTextFromServer text={item.holidayText} />
@@ -582,6 +584,7 @@ export function CartPage() {
                           className="py-[11px]! min-h-10"
                           onClick={() => handleRemove(item.productId, key)}
                           loading={isRemoving}
+                          disabled={loading}
                           icon={!isRemoving && <Trash2 size={11} />}
                         >
                           Remove

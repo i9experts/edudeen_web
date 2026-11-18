@@ -10,6 +10,7 @@ import { apiGetProductReviews, apiDeleteReview, apiToggleReviewHelpful, type Pro
 import { ReviewFormModal } from '../components/ReviewFormModal';
 import { useToast } from '@/contexts/ToastContext';
 import { REVIEW_USED_FOR, REVIEW_USED_FOR_LABEL } from '../utils/reviewUsedFor';
+import { localeDate } from '@/utils/localeTime';
 
 const AVATAR_PALETTE = [
   ['#FDECEA', '#C0392B'], ['#EAF3FB', '#2156A8'], ['#EAF7EF', '#1E7A3C'],
@@ -29,7 +30,7 @@ function timeAgo(iso: string): string {
   if (hrs < 24) return `${hrs} hr${hrs > 1 ? 's' : ''} ago`;
   const days = Math.floor(hrs / 24);
   if (days < 30) return `${days} day${days > 1 ? 's' : ''} ago`;
-  return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  return localeDate(new Date(iso), { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 type SortOption = 'recent' | 'highest' | 'lowest';

@@ -17,6 +17,7 @@ import { formatMoney } from '@/utils/currency';
 import { formatPrice } from '@/utils/formatPrice';
 import { buildOrderProgress, OrderProgressTrack, OrderNextStep, isMultiPackageCod, PackagePayBadge, type ProgressStoreInput } from './account/orderProgress';
 import { statusLabel } from '@/constants/statusLabels';
+import { localeDate } from '@/utils/localeTime';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // OrderItemRow
@@ -284,7 +285,7 @@ function SuccessHero({ orders }: { orders: PlacedOrder[] }) {
           <div className="flex items-center gap-1.5 px-4 py-[7px] bg-cream rounded-[8px] border border-bone">
             <span className="text-[12px] text-slate">Placed</span>
             <span className="text-[12px] font-semibold text-charcoal">
-              {new Date(firstDate).toLocaleDateString('en-PK', {
+              {localeDate(new Date(firstDate), {
                 weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
               })}
             </span>

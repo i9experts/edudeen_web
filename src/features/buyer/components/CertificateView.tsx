@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { EdudeenLogo } from '@/components/comman/ui/EdudeenLogo';
 import { safeHttpUrl } from '@/utils/safeRedirect';
+import { titleCaseName } from '@/utils/formatName';
 import type { CertificateConfig } from '@/api/services/classroom';
+import { localeDate } from '@/utils/localeTime';
 
 /** A4 landscape at 96 dpi. The sheet is always laid out at this size, then scaled to fit the screen. */
 const W = 1122;
@@ -14,6 +16,7 @@ export interface CertificateViewData {
   /** ISO date shown on the certificate. */
   date: string | null;
   guardianName?: string | null;
+  gender?: 'male' | 'female' | null;
   institute?: string | null;
   city?: string | null;
   country?: string | null;
@@ -37,7 +40,7 @@ interface Props {
 function formatDate(iso: string | null) {
   if (!iso) return '';
   const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString('en-PK', { day: 'numeric', month: 'long', year: 'numeric' });
+  return Number.isNaN(d.getTime()) ? '' : localeDate(d, { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
 function Watermark({ text, image }: { text?: string | null; image?: string | null }) {
@@ -115,8 +118,8 @@ export function CertificateView({ data, config, sample, printable }: Props) {
             : <EdudeenLogo size={40} />}
           <p className="text-[15px] font-bold tracking-[0.34em] uppercase text-brand-royal mt-7 mb-1">Certificate of completion</p>
           <p className="text-[17px] text-slate m-0 mt-5">This certifies that</p>
-          <h1 className="font-serif font-normal text-[58px] text-carbon mt-3 mb-1 leading-tight break-words max-w-full">{data.learnerName}</h1>
-          {data.guardianName && <p className="text-[16px] text-graphite m-0">Son/Daughter of {data.guardianName}</p>}
+          <h1 className="font-serif font-normal text-[58px] text-carbon mt-3 mb-1 leading-tight break-words max-w-full">{titleCaseName(data.learnerName)}</h1>
+          {data.guardianName && <p className="text-[16px] text-graphite m-0">{data.gender === 'male' ? 'Son of' : data.gender === 'female' ? 'Daughter of' : 'Child of'} {data.guardianName}</p>}
           {details.length > 0 && <p className="text-[15px] text-slate m-0 mt-1">{details.join(' · ')}</p>}
           <p className="text-[17px] text-slate m-0 mt-5">has successfully completed the course</p>
           <h2 className="text-[32px] font-bold text-carbon mt-2 mb-1 max-w-[860px] leading-snug">{data.courseTitle}</h2>

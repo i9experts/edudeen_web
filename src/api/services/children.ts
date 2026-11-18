@@ -10,6 +10,8 @@ export interface ChildProfile {
   gradeLabel: string;
   age: number | null;
   subjects: string[];
+  /** Optional; used for "Son of" / "Daughter of" wording. */
+  gender?: 'male' | 'female' | null;
 }
 export type ChildInput = Omit<ChildProfile, '_id'>;
 

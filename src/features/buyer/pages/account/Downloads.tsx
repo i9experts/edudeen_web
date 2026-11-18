@@ -12,6 +12,7 @@ import { EDUCATION_LEVELS } from '@/api/services/product';
 import { CURRICULUM_LABEL, LICENSE_LABEL } from '@/constants/learning';
 import { DigitalFileDownloads } from '@/features/buyer/components/DigitalFileDownloads';
 import { NextUpRail } from '@/features/buyer/components/NextUpRail';
+import { localeDate } from '@/utils/localeTime';
 
 // "My Library" — every digital resource the buyer owns, findable by subject,
 // grade or name, instead of a flat list buried in order history.
@@ -62,7 +63,7 @@ type FormatTab = 'all' | 'download' | 'course';
 const FORMAT_TABS: { id: FormatTab; label: string }[] = [
   { id: 'all', label: 'All' }, { id: 'download', label: 'Files' }, { id: 'course', label: 'Courses' },
 ];
-const fmtDate = (iso: string) => new Date(iso).toLocaleDateString('en-PK', { day: 'numeric', month: 'short', year: 'numeric' });
+const fmtDate = (iso: string) => localeDate(new Date(iso), { day: 'numeric', month: 'short', year: 'numeric' });
 
 /** Progress, resume, certificate and access end date for a purchased course. */
 function CourseActions({ item, course }: { item: LibraryItem; course?: MyCourse }) {
@@ -186,7 +187,7 @@ export function Downloads() {
           <PageHeader
             eyebrow="Account"
             title="My Library"
-            description={loading ? 'Your files and courses' : `${ready} item${ready !== 1 ? 's' : ''} ready to use, any time`}
+            description={loading ? 'Your files and courses' : (ready < items.length ? `${ready} of ${items.length} available` : `${ready} item${ready !== 1 ? 's' : ''} ready to use, any time`)}
           />
         </div>
 
@@ -284,7 +285,7 @@ export function Downloads() {
                             </p>
                           ) : null}
                           <p className="text-[12px] text-slate mt-[2px]">
-                            Bought {new Date(item.purchasedAt).toLocaleDateString('en-PK', { day: 'numeric', month: 'short', year: 'numeric' })} ·{' '}
+                            Bought {localeDate(new Date(item.purchasedAt), { day: 'numeric', month: 'short', year: 'numeric' })} ·{' '}
                             <Link to={`/account/orders/${item.orderId}`} className="text-slate hover:text-brand-orange underline">Order {item.orderNumber}</Link>
                           </p>
                           {item.reviewable && (
@@ -309,7 +310,7 @@ export function Downloads() {
                           <div className="flex flex-col items-start gap-2">
                             {item.deliveryFormat === 'course' && <CourseActions item={item} course={courses.get(item.productId)} />}
                             {(item.deliveryFormat === 'download' || !item.deliveryFormat || item.fileCount > 0) && <DigitalFileDownloads orderId={item.orderId} productId={item.productId} />}
-                            <ResendLink orderId={item.orderId} productId={item.productId} />
+                            {item.deliveryFormat !== 'course' && item.fileCount > 0 && <ResendLink orderId={item.orderId} productId={item.productId} />}
                           </div>
                         ) : (
                           <span className="inline-flex items-center gap-[5px] px-2.5 py-[5px] rounded-[7px] text-[12px] font-semibold bg-[#fff4dc] text-[#b36200]">

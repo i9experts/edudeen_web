@@ -4,8 +4,9 @@ import { Button, Textarea } from '@/components/comman/ui';
 import { useAuthGate } from '@/contexts/AuthGateContext';
 import { useToast } from '@/contexts/ToastContext';
 import { apiGetProductQuestions, apiAskQuestion, apiDeleteQuestion, type ProductQuestion } from '@/api/services/classroom';
+import { localeDate } from '@/utils/localeTime';
 
-const when = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString('en-PK', { day: 'numeric', month: 'short', year: 'numeric' }) : '');
+const when = (iso: string | null) => (iso ? localeDate(new Date(iso), { day: 'numeric', month: 'short', year: 'numeric' }) : '');
 
 /**
  * Public Q&A on a listing. Answers are written by the seller and help the

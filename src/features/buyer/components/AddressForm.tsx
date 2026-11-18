@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from 'react';
+import { lazy, Suspense, useRef, useState } from 'react';
 import { clsx } from 'clsx';
 import { Loader2 } from 'lucide-react';
 const LocationPickerMap = lazy(() => import('@/components/comman/ui/LocationPickerMap').then(m => ({ default: m.LocationPickerMap })));
@@ -83,7 +83,8 @@ export function validateAddress(form: AddressPayload): Partial<Record<keyof Addr
   if (!/^(?:\+92|92|0)3\d{9}$/.test(form.phoneNumber.replace(/[\s-]/g, ''))) e.phoneNumber = 'Enter a valid mobile number (03XXXXXXXXX or +923XXXXXXXXX)';
   if (form.addressLine1.trim().length < 5) e.addressLine1 = 'Address must be at least 5 characters';
   const city = form.city.trim();
-  if (city.length < 2 || !/^[\p{L}][\p{L} ]*$/u.test(city)) e.city = 'Letters and spaces only, at least 2 characters';
+  if (!city) e.city = 'City is required';
+  else if (city.length < 2 || !/^[\p{L}][\p{L} ]*$/u.test(city)) e.city = 'Letters and spaces only, at least 2 characters';
   if (!(PK_PROVINCES as readonly string[]).includes(form.state)) e.state = 'Select a province';
   if (!/^\d{5}$/.test(form.zipCode.trim())) e.zipCode = 'Postal code must be exactly 5 digits';
   return e;
@@ -116,6 +117,7 @@ export function AddressForm({ initial, onSave, onCancel, saving, submitLabel = '
   /** Shown above the fields (e.g. "We filled this in from your sign-up"). */
   note?: string;
 }) {
+  const boxRef = useRef<HTMLDivElement>(null);
   const [form, setForm] = useState<AddressPayload>(initial);
   const [errors, setErrors] = useState<Partial<Record<keyof AddressPayload, string>>>({});
   const set = (k: keyof AddressPayload, v: string | boolean | number | null) => {
@@ -126,12 +128,20 @@ export function AddressForm({ initial, onSave, onCancel, saving, submitLabel = '
   const submit = () => {
     const found = validateAddress(form);
     setErrors(found);
-    if (Object.keys(found).length) return;
+    if (Object.keys(found).length) {
+      // Scroll to and focus the first invalid field once the error state has rendered.
+      window.setTimeout(() => {
+        const el = boxRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]');
+        el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        el?.focus({ preventScroll: true });
+      }, 0);
+      return;
+    }
     onSave(form);
   };
 
   return (
-    <div className="border-[1.5px] border-brand-orange rounded-[12px] px-5 py-5 bg-[#fffaf7]">
+    <div ref={boxRef} className="border-[1.5px] border-brand-orange rounded-[12px] px-5 py-5 bg-[#fffaf7]">
       {note && <p className="text-[12.5px] text-charcoal bg-white border border-bone rounded-lg px-3 py-2 mb-4">{note}</p>}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="sm:col-span-2">

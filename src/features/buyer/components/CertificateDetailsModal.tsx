@@ -21,6 +21,7 @@ export function CertificateDetailsModal({ idOrSlug, initial, defaultName, onClos
   const [f, setF] = useState({
     fullName: initial?.fullName ?? defaultName ?? '',
     guardianName: initial?.guardianName ?? '',
+    gender: (initial?.gender ?? '') as '' | 'male' | 'female',
     institute: initial?.institute ?? '',
     city: initial?.city ?? '',
     country: initial?.country ?? '',
@@ -40,6 +41,7 @@ export function CertificateDetailsModal({ idOrSlug, initial, defaultName, onClos
     const body: CertificateDetails = {
       fullName: name,
       guardianName: clean(f.guardianName) || null,
+      gender: f.gender || null,
       institute: clean(f.institute) || null,
       city: clean(f.city) || null,
       country: clean(f.country) || null,
@@ -63,6 +65,14 @@ export function CertificateDetailsModal({ idOrSlug, initial, defaultName, onClos
         <p className="text-[13px] text-slate m-0">These details will be printed on your certificate and cannot be changed after you finish.</p>
         <Input label="Full name *" value={f.fullName} maxLength={LIMITS.fullName} autoComplete="name" onChange={set('fullName')} error={touched ? nameError || undefined : undefined} />
         <Input label="Father / guardian name" value={f.guardianName} maxLength={LIMITS.other} onChange={set('guardianName')} />
+        <label className="flex flex-col gap-1 text-[13px] font-medium text-charcoal">
+          Son or daughter (optional)
+          <select value={f.gender} onChange={e => setF(p => ({ ...p, gender: e.target.value as '' | 'male' | 'female' }))} className="rounded-lg border border-bone px-3 py-[10px] text-[14px] bg-white font-normal">
+            <option value="">Not set</option>
+            <option value="male">Son</option>
+            <option value="female">Daughter</option>
+          </select>
+        </label>
         <Input label="School / institute" value={f.institute} maxLength={LIMITS.other} onChange={set('institute')} />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Input label="City" value={f.city} maxLength={LIMITS.other} autoComplete="address-level2" onChange={set('city')} />

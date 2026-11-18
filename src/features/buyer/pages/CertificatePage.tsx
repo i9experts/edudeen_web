@@ -64,6 +64,7 @@ export function CertificatePage() {
             code: cert.code,
             date: cert.issuedAt ?? cert.completedAt,
             guardianName: cert.guardianName,
+            gender: cert.gender,
             institute: cert.institute,
             city: cert.city,
             country: cert.country,

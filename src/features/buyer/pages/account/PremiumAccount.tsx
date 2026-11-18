@@ -11,8 +11,9 @@ import {
 } from '@/api/services/premium';
 import { PremiumCheckoutModal } from '@/features/buyer/components/PremiumCheckoutModal';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { localeDate } from '@/utils/localeTime';
 
-const fmtDate = (iso?: string | null) => (iso ? new Date(iso).toLocaleDateString('en-PK', { day: 'numeric', month: 'short', year: 'numeric' }) : '—');
+const fmtDate = (iso?: string | null) => (iso ? localeDate(new Date(iso), { day: 'numeric', month: 'short', year: 'numeric' }) : '—');
 
 const STATUS: Record<PremiumPaymentStatus, { label: string; color: 'yellow' | 'blue' | 'green' | 'red' | 'gray' }> = {
   awaiting_proof: { label: 'Waiting for receipt', color: 'yellow' },

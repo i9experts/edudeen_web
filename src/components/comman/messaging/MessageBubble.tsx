@@ -5,7 +5,7 @@ import {
   Reply as ReplyIcon, ChevronDown, Pencil, Trash2, X as XIcon, ShoppingBag,
 } from 'lucide-react';
 import type { Message, ProductShareInfo } from '@/api/services/messaging';
-import { formatPrice } from '@/utils/formatPrice';
+import { formatMoney } from '@/utils/currency';
 
 /** Shared-product card inside a chat bubble: a real link to the product page when the product has a slug. */
 function ProductShareCard({ share, own }: { share: ProductShareInfo | null; own: boolean }) {
@@ -23,7 +23,7 @@ function ProductShareCard({ share, own }: { share: ProductShareInfo | null; own:
         <p className="text-[13px] font-semibold truncate">{share.title ?? `Product #${share.productId.slice(-6)}`}</p>
         {share.price != null && (
           <p className={clsx('text-[12px]', own ? 'text-white/85' : 'text-slate')}>
-            {share.currency ? formatPrice(share.price, share.currency) : share.price}
+            {formatMoney(share.price, share.currency ?? 'PKR')}
           </p>
         )}
       </div>
@@ -38,6 +38,7 @@ import type { OptimisticMessage } from '@/hooks/messaging/useMessages';
 import { ChatAvatar } from './ChatAvatar';
 import { Modal } from '@/components/comman/ui/Modal';
 import { Button } from '@/components/comman/ui/Button';
+import { localeTime } from '@/utils/localeTime';
 
 interface MessageBubbleProps {
   message:          OptimisticMessage;
@@ -235,7 +236,7 @@ export const MessageBubble = memo(function MessageBubble({
   editing, editText, onEditTextChange, onStartEdit, onCancelEdit, onSaveEdit, onDelete, onReply, onRetry,
 }: MessageBubbleProps) {
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const time = new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const time = localeTime(new Date(message.createdAt), { hour: '2-digit', minute: '2-digit' });
 
   const bubbleRadius = own
     ? isLastInGroup ? 'rounded-[18px] rounded-ee-[4px]' : 'rounded-[18px]'

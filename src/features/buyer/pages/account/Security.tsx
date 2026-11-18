@@ -12,7 +12,7 @@ const INPUT_CLS = 'w-full py-[11px] px-[14px] text-[13px] border border-bone rou
 const LABEL_CLS = 'text-[12px] font-medium text-graphite mb-[6px] block';
 
 // Same show/hide affordance the Login/Register password fields already use.
-function PasswordField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+function PasswordField({ label, value, onChange, invalid }: { label: string; value: string; onChange: (v: string) => void; invalid?: boolean }) {
   const [show, setShow] = useState(false);
   return (
     <div>
@@ -22,7 +22,8 @@ function PasswordField({ label, value, onChange }: { label: string; value: strin
           type={show ? 'text' : 'password'}
           value={value}
           onChange={e => onChange(e.target.value)}
-          className={clsx(INPUT_CLS, 'pe-10')}
+          aria-invalid={invalid || undefined}
+          className={clsx(INPUT_CLS, 'pe-10', invalid && 'border-error focus:border-error focus:ring-error/10')}
         />
         <button
           type="button"
@@ -49,6 +50,7 @@ export function Security() {
   const [logoutMsg, setLogoutMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [pwSaving, setPwSaving] = useState(false);
   const [pwError, setPwError] = useState('');
+  const [badPw, setBadPw] = useState<'current' | 'new' | 'confirm' | null>(null);
   const [pwSuccess, setPwSuccess] = useState(false);
 
   // A social-only account (e.g. created with Google) has no password at all.
@@ -81,17 +83,28 @@ export function Security() {
   };
 
   const handleChangePassword = async () => {
-    setPwError(''); setPwSuccess(false);
+    setPwError(''); setPwSuccess(false); setBadPw(null);
+    // Mark the offending field (red border + aria-invalid) and move focus to it, not only the message by the button.
+    const flag = (f: 'current' | 'new' | 'confirm') => {
+      setBadPw(f);
+      window.setTimeout(() => {
+        const el = document.querySelector<HTMLElement>('input[aria-invalid="true"]');
+        el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        el?.focus({ preventScroll: true });
+      }, 0);
+    };
     const invalid = validateNewPassword(currentPassword, newPassword);
-    if (invalid) { setPwError(invalid); return; }
-    if (confirmPassword !== newPassword) { setPwError('The new passwords do not match.'); return; }
+    if (invalid) { setPwError(invalid); flag(currentPassword ? 'new' : 'current'); return; }
+    if (confirmPassword !== newPassword) { setPwError('The new passwords do not match.'); flag('confirm'); return; }
     setPwSaving(true);
     try {
       await apiChangePassword({ currentPassword, newPassword });
       setPwSuccess(true);
       setCurrentPassword(''); setNewPassword(''); setConfirmPassword('');
     } catch (err) {
-      setPwError(err instanceof Error ? err.message : 'Failed to change password');
+      const msg = err instanceof Error ? err.message : 'Failed to change password';
+      setPwError(msg);
+      if (/current|incorrect|wrong/i.test(msg)) flag('current');
     } finally {
       setPwSaving(false);
     }
@@ -177,9 +190,9 @@ export function Security() {
             </div>
           ) : (<>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-            <PasswordField label="Current Password" value={currentPassword} onChange={setCurrentPassword} />
-            <PasswordField label="New Password" value={newPassword} onChange={setNewPassword} />
-            <PasswordField label="Confirm New Password" value={confirmPassword} onChange={setConfirmPassword} />
+            <PasswordField label="Current Password" value={currentPassword} onChange={v => { setCurrentPassword(v); setBadPw(null); }} invalid={badPw === 'current'} />
+            <PasswordField label="New Password" value={newPassword} onChange={v => { setNewPassword(v); setBadPw(null); }} invalid={badPw === 'new'} />
+            <PasswordField label="Confirm New Password" value={confirmPassword} onChange={v => { setConfirmPassword(v); setBadPw(null); }} invalid={badPw === 'confirm' || (confirmPassword !== '' && confirmPassword !== newPassword)} />
           </div>
           {confirmPassword !== '' && confirmPassword !== newPassword && (
             <p className="text-[12px] text-error mb-2">The new passwords do not match.</p>

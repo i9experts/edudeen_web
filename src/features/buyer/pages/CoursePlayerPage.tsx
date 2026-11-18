@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { CheckCircle2, Circle, Video, FileText, AlignLeft, ListChecks, Award, ChevronLeft, ChevronRight, Loader2, Menu, X, IdCard } from 'lucide-react';
 import { clsx } from 'clsx';
+import { titleCaseName } from '@/utils/formatName';
 import { Button, ProgressBar } from '@/components/comman/ui';
 import { EdudeenLogo } from '@/components/comman/ui/EdudeenLogo';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -271,7 +272,7 @@ export function CoursePlayerPage() {
         </aside>
       </div>
       {detailsOpen && view.certificateEnabled && !view.progress.certificateCode && (
-        <CertificateDetailsModal idOrSlug={slug} initial={view.certificateDetails} defaultName={profile?.name} onClose={() => setDetailsOpen(false)} onSaved={onDetailsSaved} />
+        <CertificateDetailsModal idOrSlug={slug} initial={view.certificateDetails} defaultName={titleCaseName(profile?.name)} onClose={() => setDetailsOpen(false)} onSaved={onDetailsSaved} />
       )}
     </div>
   );

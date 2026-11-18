@@ -32,6 +32,7 @@ import { StoreAboutTab } from '@/features/storefront/sections/StoreAboutTab';
 import { StorePoliciesFaq } from '@/features/storefront/sections/StorePoliciesFaq';
 import { StoreReviewsTab } from '@/features/storefront/sections/StoreReviewsTab';
 import { Link, useSearchParams } from 'react-router-dom';
+import { localeDate } from '@/utils/localeTime';
 
 // Loyalty points and gift cards were retired from the seller panel; their
 // buttons stay off here too (flip to bring them back).
@@ -317,7 +318,7 @@ export function SellerStorefront() {
               <div>
                 <p className="text-[12.5px] font-semibold text-emerald-800">Reward redeemed! Apply this code at checkout:</p>
                 <p className="text-[15px] font-mono font-bold text-emerald-900 tracking-wide">{redeemedVoucher.code}</p>
-                <p className="text-[12px] text-emerald-700">Valid until {new Date(redeemedVoucher.expiresAt).toLocaleDateString()}</p>
+                <p className="text-[12px] text-emerald-700">Valid until {localeDate(new Date(redeemedVoucher.expiresAt), { day: 'numeric', month: 'short', year: 'numeric' })}</p>
               </div>
               <button
                 onClick={() => { navigator.clipboard?.writeText(redeemedVoucher.code); toast.success('Code copied'); }}

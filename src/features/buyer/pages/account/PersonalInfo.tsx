@@ -6,7 +6,10 @@ import { useGetProfile } from '@/hooks/auth/useGetProfile';
 import { useEditProfile } from '@/hooks/auth/useEditProfile';
 import { TokenStorage, apiEditProfile } from '@/api/services/auth';
 import { useUpload } from '@/hooks/upload/useUpload';
-import { Card, PageHeader, Badge, SkeletonBox } from '@/components/comman/ui';
+import { Card, Badge, SkeletonBox } from '@/components/comman/ui';
+import { AccountPageHeader } from './AccountPageHeader';
+import { titleCaseName } from '@/utils/formatName';
+import { useHasSellerAccount } from '@/hooks/auth/useSellerAccount';
 import { useToast } from '@/contexts/ToastContext';
 import { PhoneVerifyCard } from './PhoneVerifyCard';
 
@@ -81,12 +84,13 @@ export function PersonalInfo() {
     }
   };
 
+  const alsoSeller = useHasSellerAccount() === true;
   const initials = profile?.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() ?? '..';
 
   return (
     <div className="flex flex-col gap-5">
       <div className="hidden lg:block">
-        <PageHeader eyebrow="Account" title="Profile" description="Manage your personal information." />
+        <AccountPageHeader title="Profile" description="Manage your personal information." />
       </div>
 
       <div className="flex flex-col gap-5 min-w-0">
@@ -122,11 +126,11 @@ export function PersonalInfo() {
                 </button>
               </div>
               <div className="min-w-0">
-                <p className="text-[17px] font-bold text-charcoal truncate">{loading ? '…' : profile?.name ?? '—'}</p>
+                <p className="text-[17px] font-bold text-charcoal truncate">{loading ? '…' : profile?.name ? titleCaseName(profile.name) : '—'}</p>
                 <p className="text-[12.5px] text-slate truncate mt-[3px]">{loading ? '' : profile?.email ?? '—'}</p>
                 {!loading && (
                   <div className="flex items-center gap-1.5 mt-2">
-                    <Badge color="orange" size="sm" className="capitalize">{profile?.role === 'user' ? 'Buyer' : (profile?.role ?? '')}</Badge>
+                    <Badge color="orange" size="sm" className="capitalize">{profile?.role === 'user' ? (alsoSeller ? 'Buyer · Seller' : 'Buyer') : (profile?.role ?? '')}</Badge>
                     {profile?.isVerified && <Badge color="green" size="sm"><Check size={9} className="me-[2px]" /> Verified</Badge>}
                   </div>
                 )}

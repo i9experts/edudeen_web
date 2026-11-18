@@ -1,6 +1,6 @@
 import { formatPrice } from '@/utils/formatPrice';
 import { useEffect, useMemo, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { Baby, BadgeDollarSign, Check, Crown, Gift, Headphones, RotateCcw, ShieldCheck, Timer, type LucideIcon } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { Button } from '@/components/comman/ui/Button';
@@ -112,6 +112,9 @@ export function PremiumPage() {
 
   const ctaLabel = isPremium ? 'Renew Premium' : 'Get Premium';
 
+  // ONE premium page for signed-in members: /account/premium (Renew links keep #premiumPlans and stay here).
+  if (isPremium && !isStaff && hash !== '#premiumPlans') return <Navigate to="/account/premium" replace />;
+
   return (
     <div className="bg-cream">
       {/* Hero */}
@@ -143,14 +146,17 @@ export function PremiumPage() {
             <div className="relative rounded-3xl bg-white text-carbon p-6 shadow-[0_30px_60px_-24px_rgba(0,0,0,0.55)]">
               <div className="flex items-center justify-between">
                 <span className="inline-flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-[0.08em] text-[#8a6100]"><Crown size={13} /> Member</span>
-                <span className="text-[12px] font-semibold text-success bg-success-bg px-2 py-[2px] rounded-full">Active</span>
+                {isPremium
+                  ? <span className="text-[12px] font-semibold text-success bg-success-bg px-2 py-[2px] rounded-full">Active</span>
+                  : <span className="text-[12px] font-semibold text-slate bg-cream px-2 py-[2px] rounded-full">Example</span>}
               </div>
               <div className="mt-4 rounded-2xl border border-bone p-4">
                 <p className="text-[12px] text-slate">Example product</p>
                 <p className="text-[15px] font-bold mt-0.5">Grade 5 Maths Worksheets</p>
                 <div className="flex items-baseline gap-2 mt-2">
-                  <span className="text-[24px] font-extrabold" style={{ fontFamily: SERIF }}>Member price</span>
-                  <span className="text-[12px] bg-[#fff6d6] text-[#8a6100] font-bold px-2 py-[2px] rounded">Extra savings</span>
+                  <span className="text-[24px] font-extrabold" style={{ fontFamily: SERIF }}>{formatPrice(900, 'PKR')}</span>
+                  <s className="text-[13px] text-slate">{formatPrice(1000, 'PKR')}</s>
+                  <span className="text-[12px] bg-[#fff6d6] text-[#8a6100] font-bold px-2 py-[2px] rounded">Member price</span>
                 </div>
               </div>
               <ul className="mt-4 grid grid-cols-2 gap-2.5 text-[12.5px] text-charcoal">

@@ -156,6 +156,8 @@ interface FileUploadProps {
   accept?:    string;
   label?:     string;
   className?: string;
+  /** Optional: called with the chosen file before it uploads (e.g. to read a video's length). */
+  onFilePicked?: (file: File) => void;
 }
 
 function formatSize(bytes: number): string {
@@ -165,7 +167,7 @@ function formatSize(bytes: number): string {
 }
 
 export function FileUpload({
-  value, onChange, accept, label = 'Click to upload file', className,
+  value, onChange, accept, label = 'Click to upload file', className, onFilePicked,
 }: FileUploadProps) {
   const { upload, uploading, error } = useUpload('private');
 
@@ -173,6 +175,7 @@ export function FileUpload({
     const file = e.target.files?.[0];
     if (!file) return;
     e.target.value = '';
+    try { onFilePicked?.(file); } catch { /* optional hook must never block the upload */ }
     upload(file)
       .then(data => onChange(data))
       .catch(() => {});

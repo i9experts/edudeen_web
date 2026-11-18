@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Undo2 } from 'lucide-react';
 import { Badge, Button, Card, EmptyState, SkeletonBox } from '@/components/comman/ui';
 import { ProductCoverFallback } from '@/components/comman/marketplace/ProductCoverFallback';
 import { apiGetMyOrders, type OrderLineItem, type ReturnStatus } from '@/api/services/orders';
 import { formatPrice } from '@/utils/formatPrice';
 import { AccountPageHeader } from './AccountPageHeader';
+import { localeDate } from '@/utils/localeTime';
 
 const RETURN_LABEL: Record<Exclude<ReturnStatus, 'none'>, { label: string; color: 'orange' | 'blue' | 'green' | 'red' }> = {
   requested: { label: 'Requested', color: 'orange' },
@@ -18,6 +19,7 @@ interface ReturnRow { key: string; orderId: string; orderNumber: string; currenc
 
 /** Account → Returns: every item the buyer asked to return, with its status (built from the orders API, which carries `returnStatus` per item). */
 export function ReturnsPage() {
+  const navigate = useNavigate();
   const [rows, setRows] = useState<ReturnRow[] | null>(null);
   const [error, setError] = useState('');
   const [reload, setReload] = useState(0);
@@ -49,7 +51,7 @@ export function ReturnsPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <AccountPageHeader title="Returns" description="Items you asked to return and where each request stands." />
+      <AccountPageHeader title="Returns & refunds" description="Items you asked to return and where each request stands." />
       {error ? (
         <Card>
           <div className="flex flex-col items-center gap-3 py-8">
@@ -65,6 +67,7 @@ export function ReturnsPage() {
             icon={<Undo2 size={26} className="text-brand-orange opacity-55" />}
             title="No return requests"
             description="When you request a return from one of your delivered orders, it will show up here."
+            action={{ label: 'Go to orders', onClick: () => navigate('/account/orders') }}
           />
         </Card>
       ) : (
@@ -81,7 +84,7 @@ export function ReturnsPage() {
                     <p className="text-[13px] font-semibold text-charcoal truncate">{r.item.name}</p>
                     <p className="text-[12px] text-slate">
                       Order <Link to={`/account/orders/${r.orderId}`} className="text-brand-orange font-semibold no-underline hover:underline">{r.orderNumber}</Link>
-                      {' · '}{new Date(r.date).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      {' · '}{localeDate(new Date(r.date), { day: 'numeric', month: 'short', year: 'numeric' })}
                       {' · '}Qty {r.item.quantity} · {formatPrice(r.item.totalPrice, r.currency)}
                     </p>
                   </div>

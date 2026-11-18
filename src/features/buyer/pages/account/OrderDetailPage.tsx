@@ -15,16 +15,19 @@ import { CANCEL_PRESETS } from '../../utils/cancelReasons';
 import { getStorePagePath } from '@/utils/storefrontUrl';
 import { money, discountLines } from './orderFormat';
 import { LICENSE_LABEL } from '@/constants/learning';
-import { DigitalItemAccess, BoughtFormatBadge } from '@/features/buyer/components/DigitalItemAccess';
+import { DigitalItemAccess, BoughtFormatBadge, useAllCourses } from '@/features/buyer/components/DigitalItemAccess';
 import { RefundRequestPanel } from '@/features/buyer/components/RefundRequestPanel';
 import { OrderNextStep, OrderProgressTrack, buildOrderProgress, isMultiPackageCod, PackagePayBadge } from './orderProgress';
 import { formatAddressLine, formatPhone } from '@/utils/formatAddress';
+import { usePageTitle } from '@/hooks/usePageTitle';
+import { localeDateTime } from '@/utils/localeTime';
+import { orderStatusLabel, isAvailedOrder } from '@/constants/statusLabels';
 
 const PAYMENT_LABEL: Record<string, string> = {
   stripe: 'Card', cash_on_delivery: 'Cash on delivery', manual_bank_transfer: 'Bank transfer',
 };
 
-const fmt = (iso?: string | null) => (iso ? new Date(iso).toLocaleString('en-PK', { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : null);
+const fmt = (iso?: string | null) => (iso ? localeDateTime(new Date(iso), { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : null);
 
 /** One store's part of the order, as a step-by-step timeline with dates. */
 function Timeline({ order, so }: { order: OrderDetail; so: OrderDetail['sellerOrders'][number] }) {
@@ -57,6 +60,10 @@ export function OrderDetailPage() {
       .catch(err => { if (alive) setError(err instanceof Error ? err.message : 'Could not load this order.'); });
     return () => { alive = false; };
   }, [orderId, reloadKey]);
+
+  usePageTitle(order ? `Order #${String(order.orderNumber).replace(/^#/, '')}` : 'Order');
+  const digitalIds = (order?.sellerOrders ?? []).flatMap(so => (so.items ?? []).filter((i: any) => i.type === 'digital' && i.productId).map((i: any) => String(i.productId)));
+  const onlyCourses = useAllCourses(digitalIds);
 
   const contactSeller = async (storeId: string) => {
     setBusy('contact');
@@ -91,8 +98,18 @@ export function OrderDetailPage() {
 
   const addr = order.shippingAddress as Record<string, string> | null;
   const discounts = discountLines(order);
+  const allItems = order.sellerOrders.flatMap(so => so.items ?? []);
+  const itemTypes = allItems.map(i => i.type);
+  const availed = isAvailedOrder({ orderStatus: order.orderStatus, isFreeClaim: order.isFreeClaim, isPaid: order.isPaid, itemTypes });
+  // Same rules as the API: availed / paid-digital orders are final.
   const canCancel = ['pending', 'processing'].includes(order.orderStatus)
-    && order.sellerOrders.some(so => (so.items ?? []).some(i => i.status !== 'cancelled'));
+    && !availed && !order.isFreeClaim && !(order.isPaid && itemTypes.includes('digital'))
+    && allItems.some(i => i.status !== 'cancelled');
+  const canBuyAgain = !order.isFreeClaim && allItems.some(i => !(i.type === 'digital' && i.price === 0));
+  const cancelledPkgs = order.sellerOrders.filter(so => so.status === 'cancelled') as any[];
+  const wholeCancelled = order.orderStatus === 'cancelled';
+  const cancelInfo = cancelledPkgs.find(so => so.cancelReason) ?? cancelledPkgs[0];
+  const CANCELLED_BY: Record<string, string> = { buyer: 'you', seller: 'the seller', admin: 'Edudeen' };
   const sellers = order.sellerOrders.filter(so => so.storeId);
 
   return (
@@ -100,8 +117,8 @@ export function OrderDetailPage() {
       <div className="flex items-center gap-3 flex-wrap">
         <Link to="/account/orders" className="inline-flex items-center gap-1 text-[13px] text-slate hover:text-brand-orange no-underline"><ArrowLeft size={14} /> Orders</Link>
         <h1 className="text-[20px] font-bold text-carbon font-mono">{order.orderNumber}</h1>
-        {order.isFreeClaim && order.orderStatus !== 'cancelled' ? (
-          <span className="inline-flex items-center gap-1 px-2.5 py-[3px] rounded-full text-[12px] font-bold bg-[#e3f4ea] text-[#1a6b35] border border-[#a3d9b5]">Availed</span>
+        {availed ? (
+          <span className="inline-flex items-center gap-1 px-2.5 py-[3px] rounded-full text-[12px] font-bold bg-[#e3f4ea] text-[#1a6b35] border border-[#a3d9b5]">{orderStatusLabel({ orderStatus: order.orderStatus, isFreeClaim: order.isFreeClaim, isPaid: order.isPaid, itemTypes })}</span>
         ) : (
           <>
             <StatusBadge status={order.orderStatus} size="sm" />
@@ -114,11 +131,19 @@ export function OrderDetailPage() {
       </div>
       <p className="text-[12.5px] text-slate -mt-2">Placed {fmt(order.createdAt)} · {PAYMENT_LABEL[order.paymentType] ?? order.paymentType}</p>
 
+      {wholeCancelled && (
+        <div className="rounded-xl border border-[#f5bcbc] bg-[#fff0f0] px-4 py-3 text-[13px] text-carbon" role="status">
+          <p className="font-bold text-error">This order was cancelled</p>
+          {cancelInfo?.cancelledBy && <p className="mt-0.5">{`Cancelled by ${CANCELLED_BY[cancelInfo.cancelledBy] ?? cancelInfo.cancelledBy}${cancelInfo.cancelledAt ? ` on ${fmt(cancelInfo.cancelledAt)}` : ''}.`}</p>}
+          {cancelInfo?.cancelReason && <p className="mt-0.5 break-words">{`Reason: ${cancelInfo.cancelReason}`}</p>}
+        </div>
+      )}
+
       <div className="flex flex-wrap gap-2">
         {sellers.length === 1 && (
           <Button variant="outline" size="sm" icon={<MessageSquare size={13} />} loading={busy === 'contact'} onClick={() => void contactSeller(sellers[0].storeId)}>Contact seller</Button>
         )}
-        <Button variant="outline" size="sm" icon={<RotateCcw size={13} />} loading={busy === 'again'} onClick={() => void buyAgain()}>Buy again</Button>
+        {canBuyAgain && <Button variant="outline" size="sm" icon={<RotateCcw size={13} />} loading={busy === 'again'} onClick={() => void buyAgain()}>Buy again</Button>}
         {canCancel && <Button variant="danger" size="sm" icon={<Ban size={13} />} onClick={() => setCancelling(true)}>Cancel order</Button>}
       </div>
 
@@ -129,7 +154,7 @@ export function OrderDetailPage() {
             {so.storeSlug ? (
               <Link to={getStorePagePath(so.storeSlug)} className="text-[13.5px] font-bold text-carbon no-underline hover:text-brand-orange">{so.storeName ?? so.sellerName ?? 'Store'}</Link>
             ) : <span className="text-[13.5px] font-bold text-carbon">{so.storeName ?? so.sellerName ?? 'Store'}</span>}
-            {order.isFreeClaim && so.status !== 'cancelled'
+            {availed && so.status !== 'cancelled'
               ? <span className="inline-flex items-center gap-1 px-2.5 py-[3px] rounded-full text-[12px] font-bold bg-[#e3f4ea] text-[#1a6b35] border border-[#a3d9b5]">Availed</span>
               : <StatusBadge status={so.status} size="sm" />}
             {isMultiPackageCod({ paymentType: order.paymentType, stores: order.sellerOrders }) && <PackagePayBadge store={so} currency={order.currency} />}
@@ -142,7 +167,9 @@ export function OrderDetailPage() {
           </div>
           <div className="px-4 md:px-5 py-4 border-b border-bone">
             {order.isFreeClaim && so.status !== 'cancelled' ? (
-              <p className="text-[13px] text-carbon">You have already availed this free product. Download it from your library anytime.</p>
+              <p className="text-[13px] text-carbon">{onlyCourses
+                ? 'You have already availed this free course. Start learning from your library anytime.'
+                : 'You have already availed this free product. Download it from your library anytime.'}</p>
             ) : (
               <>
                 <Timeline order={order} so={so} />

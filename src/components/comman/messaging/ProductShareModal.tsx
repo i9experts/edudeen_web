@@ -3,6 +3,7 @@ import { X, Search, ImageOff, Loader2 } from 'lucide-react';
 import { apiGetPublicStoreProducts, type PublicStoreProduct } from '@/api/services/store';
 import { useFocusTrap } from '@/components/comman/ui/useFocusTrap';
 import { EmptyState } from '@/components/comman/ui';
+import { formatMoney } from '@/utils/currency';
 
 interface ProductShareModalProps {
   storeId:  string;
@@ -83,7 +84,7 @@ export function ProductShareModal({ storeId, onClose, onShare, sharing }: Produc
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-[13px] font-semibold text-charcoal truncate">{p.name}</p>
-                    {p.defaultVariantPrice != null && <p className="text-[12px] text-slate">${p.defaultVariantPrice.toLocaleString()}</p>}
+                    {p.defaultVariantPrice != null && <p className="text-[12px] text-slate">{formatMoney(p.defaultVariantPrice, p.variants?.find(v => v.isDefault)?.currency ?? p.variants?.[0]?.currency ?? 'PKR')}</p>}
                   </div>
                 </button>
               ))}

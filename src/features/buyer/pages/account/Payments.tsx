@@ -7,13 +7,14 @@ import {
   type ManualPaymentProof, type ManualPaymentProofStatus,
 } from '@/api/services/manualPayment';
 import { Card, EmptyState, SkeletonBox, PageHeader, Modal, Button, StatusBadge } from '@/components/comman/ui';
+import { localeDateTime } from '@/utils/localeTime';
 
 const STATUS_LABEL: Record<ManualPaymentProofStatus, string> = {
   pending: 'Pending', approved: 'Approved', rejected: 'Rejected',
 };
 
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+  return localeDateTime(new Date(iso), { dateStyle: 'medium', timeStyle: 'short' });
 }
 
 // ── Re-upload modal — only reachable for a rejected proof ─────────────────────

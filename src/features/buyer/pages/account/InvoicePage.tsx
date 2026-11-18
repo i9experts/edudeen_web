@@ -7,6 +7,7 @@ import { EdudeenLogo } from '@/components/comman/ui/EdudeenLogo';
 import { LICENSE_LABEL } from '@/constants/learning';
 import { money, discountLines } from './orderFormat';
 import { formatAddressLine, formatPhone } from '@/utils/formatAddress';
+import { localeDate } from '@/utils/localeTime';
 
 const PAYMENT_LABEL: Record<string, string> = {
   stripe: 'Card', cash_on_delivery: 'Cash on delivery', manual_bank_transfer: 'Bank transfer',
@@ -59,8 +60,8 @@ export function InvoicePage() {
             <h1 className="text-[22px] font-bold tracking-tight">Invoice</h1>
             {invoiceNo && <p className="font-mono mt-1">Invoice no. {invoiceNo}</p>}
             <p className={invoiceNo ? 'font-mono text-slate' : 'font-mono mt-1'}>{invoiceNo ? 'Order ' : ''}{order.orderNumber}</p>
-            <p className="text-slate">Date: {new Date(order.createdAt).toLocaleDateString('en-PK', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-            <p className="mt-1 font-semibold">{order.isPaid ? `Paid${order.paidAt ? ` on ${new Date(order.paidAt).toLocaleDateString('en-PK')}` : ''}` : order.paymentStatus === 'partially_paid' ? 'Partially paid - balance due on delivery' : 'Payment due'}</p>
+            <p className="text-slate">Date: {localeDate(new Date(order.createdAt), { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+            <p className="mt-1 font-semibold">{order.orderStatus === 'cancelled' ? 'CANCELLED' : order.isPaid ? `Paid${order.paidAt ? ` on ${localeDate(new Date(order.paidAt), { day: 'numeric', month: 'short', year: 'numeric' })}` : ''}` : order.paymentStatus === 'partially_paid' ? 'Partially paid - balance due on delivery' : order.paymentType === 'cash_on_delivery' ? 'Payment on delivery' : 'Payment due'}</p>
           </div>
         </header>
 

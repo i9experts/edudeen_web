@@ -10,8 +10,10 @@ import { usePresence } from '@/hooks/messaging/usePresence';
 import { useRecentSearches } from '@/hooks/messaging/useRecentSearches';
 import { apiUploadAttachment, apiDeleteConversation, type Conversation, type MessageType } from '@/api/services/messaging';
 import { ChatList, ChatWindow, type ChatListEntry, type ChatListFilter } from '@/components/comman/messaging';
-import { Card, PageHeader, type ActionMenuItem } from '@/components/comman/ui';
+import { Card, type ActionMenuItem } from '@/components/comman/ui';
+import { AccountPageHeader } from './AccountPageHeader';
 import { useToast } from '@/contexts/ToastContext';
+import { localeDate, localeTime } from '@/utils/localeTime';
 
 const TYPE_PREVIEW: Partial<Record<MessageType, string>> = {
   voice: 'Voice note', image: 'Photo', video: 'Video', pdf: 'File', document: 'File', product_share: 'Product shared',
@@ -20,8 +22,8 @@ const TYPE_PREVIEW: Partial<Record<MessageType, string>> = {
 /** Time when it was today, otherwise a short date ("Sep 30"). */
 function listTime(iso: string): string {
   const d = new Date(iso);
-  if (d.toDateString() === new Date().toDateString()) return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  if (d.toDateString() === new Date().toDateString()) return localeTime(d, { hour: '2-digit', minute: '2-digit' });
+  return localeDate(d, { month: 'short', day: 'numeric' });
 }
 
 // NOTE: buyer role has no archive/pin/mute — those messaging actions are
@@ -168,7 +170,7 @@ export function Messages() {
          "Messages" with a back arrow, and ChatList below has its own title
          too, so this would be a third repeat of the same word on one screen. */}
       <div className="hidden lg:block">
-        <PageHeader eyebrow="Account" title="Messages" description="Chat with sellers about your orders and questions." />
+        <AccountPageHeader title="Messages" description="Chat with sellers about your orders and questions." />
       </div>
       <Card padding="none" className="flex-1 min-h-[420px] lg:h-[calc(100dvh-240px)] lg:max-h-[760px] -mx-4 rounded-none border-x-0 lg:mx-0 lg:rounded-xl lg:border-x">
         <div className="flex overflow-hidden h-full">

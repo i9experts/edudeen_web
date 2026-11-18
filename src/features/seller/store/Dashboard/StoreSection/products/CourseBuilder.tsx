@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Plus, Trash2, ChevronUp, ChevronDown, Video, Loader2, Award, Eye, ArrowLeft, Users } from 'lucide-react';
 import { isAllowedExternalVideo } from '@/utils/externalVideo';
@@ -36,7 +36,21 @@ const toUpload = (f: CourseLessonInput['file']): PrivateUploadData | null =>
   f ? { publicId: f.url, fileName: f.name, fileSize: f.size ?? 0, mimeType: f.mimeType ?? '', resourceType: 'raw' } : null;
 
 /** Video lesson source: upload an MP4, or paste a YouTube / Vimeo (incl. unlisted) link. */
+/** Reads a chosen video's real length from its metadata (whole minutes, at least 1). 0 when it cannot be read. */
+function readVideoMinutes(file: File): Promise<number> {
+  return new Promise(resolve => {
+    const url = URL.createObjectURL(file);
+    const v = document.createElement('video');
+    const done = (m: number) => { URL.revokeObjectURL(url); v.removeAttribute('src'); resolve(m); };
+    v.preload = 'metadata';
+    v.onloadedmetadata = () => done(Number.isFinite(v.duration) && v.duration > 0 ? Math.max(1, Math.ceil(v.duration / 60)) : 0);
+    v.onerror = () => done(0);
+    v.src = url;
+  });
+}
+
 function VideoSource({ lesson, onChange }: { lesson: CourseLessonInput; onChange: (l: CourseLessonInput) => void }) {
+  const pickedMinutes = useRef(0);
   const [mode, setMode] = useState<'upload' | 'link'>(lesson.videoUrl ? 'link' : 'upload');
   const url = lesson.videoUrl ?? '';
   const bad = mode === 'link' && url.trim() !== '' && !isAllowedExternalVideo(url);
@@ -55,7 +69,13 @@ function VideoSource({ lesson, onChange }: { lesson: CourseLessonInput; onChange
       {mode === 'upload' ? (
         <FileUpload
           value={toUpload(lesson.file)} accept="video/mp4,video/*" label="Upload the video (MP4)"
-          onChange={d => onChange({ ...lesson, videoUrl: null, file: d ? { url: d.publicId, name: d.fileName, size: d.fileSize, mimeType: d.mimeType } : null })}
+          onFilePicked={f => readVideoMinutes(f).then(m => { pickedMinutes.current = m; })}
+          onChange={d => onChange({
+            ...lesson, videoUrl: null,
+            file: d ? { url: d.publicId, name: d.fileName, size: d.fileSize, mimeType: d.mimeType } : null,
+            // The real length from the video file itself (the seller can still edit the minutes).
+            ...(d && pickedMinutes.current ? { durationMinutes: pickedMinutes.current } : {}),
+          })}
         />
       ) : (
         <>

@@ -1,6 +1,7 @@
 import { clsx } from 'clsx';
 import { BadgeCheck, Box, Truck, CheckCircle2, Clock, ClipboardCheck, type LucideIcon } from 'lucide-react';
 import { formatPrice } from '@/utils/formatPrice';
+import { localeDate } from '@/utils/localeTime';
 
 // Real order progress, derived only from what the order actually records:
 //   Placed → Paid / Confirmed (COD) / Awaiting payment → Processing → Shipped → Delivered
@@ -158,7 +159,7 @@ export function PackagePayBadge({ store, currency }: { store: ProgressStoreInput
 function fmt(d: string | null) {
   if (!d) return null;
   const date = new Date(d);
-  return Number.isNaN(date.getTime()) ? null : date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+  return Number.isNaN(date.getTime()) ? null : localeDate(date, { day: 'numeric', month: 'short' });
 }
 
 /** Horizontal step track — same visual language the order pages already used. */

@@ -123,8 +123,9 @@ export function Addresses() {
     {
       key: 'address', header: 'Address',
       render: a => (
-        <span className="text-slate text-[12px] block max-w-[220px] truncate" title={formatAddress([a.addressLine1, a.addressLine2, a.city, a.state, a.zipCode])}>
+        <span className="text-slate text-[12px] block max-w-[260px]" title={formatAddress([a.addressLine1, a.addressLine2, a.city, a.state, a.zipCode])}>
           {formatAddress([a.addressLine1, a.addressLine2, a.city, a.state])}
+          {a.zipCode ? <span className="block font-semibold text-charcoal">{`Postal code: ${a.zipCode}`}</span> : null}
         </span>
       ),
     },

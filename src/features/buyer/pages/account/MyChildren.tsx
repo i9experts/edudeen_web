@@ -26,12 +26,13 @@ function ChildForm({ initial, onSave, onClose }: {
   const changeClass = (v: string) => { setClassSel(v); const l = levelForClass(v); if (l) setLevel(l); };
   const [age, setAge] = useState(initial?.age != null ? String(initial.age) : '');
   const [subjects, setSubjects] = useState((initial?.subjects ?? []).join(', '));
+  const [gender, setGender] = useState<'' | 'male' | 'female'>(initial?.gender ?? '');
   const [busy, setBusy] = useState(false);
   const ageNum = age === '' ? null : Number(age);
   const ageBad = ageNum !== null && (!Number.isInteger(ageNum) || ageNum < 2 || ageNum > 25);
   const save = async () => {
     setBusy(true);
-    try { await onSave({ name: name.trim(), educationLevel: level, gradeLabel: classSel === LEGACY ? legacyText : classSel, age: ageNum, subjects: parseSubjects(subjects) }); }
+    try { await onSave({ name: name.trim(), educationLevel: level, gradeLabel: classSel === LEGACY ? legacyText : classSel, age: ageNum, subjects: parseSubjects(subjects), gender: gender || null }); }
     finally { setBusy(false); }
   };
   return (
@@ -58,6 +59,14 @@ function ChildForm({ initial, onSave, onClose }: {
           </select>
         </label>
         <Input label="Age (optional)" type="number" min={2} max={25} value={age} onChange={e => setAge(e.target.value)} error={ageBad ? 'Enter an age between 2 and 25' : undefined} />
+        <label className="flex flex-col gap-1 text-[13px] font-medium text-charcoal">
+          Son or daughter (optional)
+          <select value={gender} onChange={e => setGender(e.target.value as '' | 'male' | 'female')} className="rounded-lg border border-bone px-3 py-[10px] text-[14px] bg-white font-normal">
+            <option value="">Not set</option>
+            <option value="male">Son</option>
+            <option value="female">Daughter</option>
+          </select>
+        </label>
         <Input label="Subjects of interest (optional)" value={subjects} onChange={e => setSubjects(e.target.value)} placeholder="Maths, Urdu, Science" />
       </div>
     </Modal>

@@ -180,7 +180,7 @@ export interface CertificateConfig {
 }
 
 /** What the buyer prints on their certificate. */
-export interface CertificateDetails { fullName: string; guardianName?: string | null; institute?: string | null; city?: string | null; country?: string | null }
+export interface CertificateDetails { fullName: string; guardianName?: string | null; gender?: 'male' | 'female' | null; institute?: string | null; city?: string | null; country?: string | null }
 
 export interface CourseBuilderData {
   product: { _id: string; name: string; slug: string; status: string; deliveryFormat: string };
@@ -254,6 +254,7 @@ export interface CertificateData {
   storeLogoUrl?: string | null;
   issuedAt?: string;
   guardianName?: string | null;
+  gender?: 'male' | 'female' | null;
   institute?: string | null;
   city?: string | null;
   country?: string | null;

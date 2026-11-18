@@ -5,7 +5,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Package, Truck, CheckCircle2, Clock, XCircle,
   ChevronDown, MapPin, Box, ShoppingBag,
-  RotateCcw, Ban, Undo2, Star, Copy, Check, MessageSquare, Download, Info,
+  RotateCcw, Ban, Undo2, Star, Copy, Check, MessageSquare, Download, Info, PlayCircle,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { CANCEL_PRESETS } from '../utils/cancelReasons';
@@ -17,13 +17,14 @@ import {
 import { apiStartConversation } from '@/api/services/messaging';
 import { ORDER_TABS, orderTab, shortOrderId, isStaleCod, type OrderTab } from './account/orderTabs';
 import { reorderItems, hasVariantIds } from './account/orderActions';
-import { DigitalItemAccess, BoughtFormatBadge, useDeliveryFormat } from '@/features/buyer/components/DigitalItemAccess';
+import { DigitalItemAccess, BoughtFormatBadge, useDeliveryFormat, useAllCourses } from '@/features/buyer/components/DigitalItemAccess';
 import { formatPrice } from '@/utils/formatPrice';
 import { formatAddress, formatPhone } from '@/utils/formatAddress';
 import { ProductCoverFallback } from '@/components/comman/marketplace/ProductCoverFallback';
 import { useToast } from '@/contexts/ToastContext';
 import { buildOrderProgress, OrderProgressTrack, OrderNextStep, isMultiPackageCod, PackagePayBadge } from './account/orderProgress';
-import { statusLabel } from '@/constants/statusLabels';
+import { statusLabel, orderStatusLabel, isAvailedOrder } from '@/constants/statusLabels';
+import { localeDate } from '@/utils/localeTime';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Status config
@@ -137,8 +138,11 @@ export function ReasonModal({
 // "Confirmed"), and shipped/delivered come from the seller orders with their
 // real shippedAt/deliveredAt timestamps — see account/orderProgress.tsx.
 function OrderTimeline({ order }: { order: OrderSummary }) {
+  const onlyCourses = useAllCourses((order.stores ?? []).flatMap(s => s.items ?? []).filter(i => i.type === 'digital' && i.productId).map(i => i.productId));
   if (order.isFreeClaim && order.orderStatus !== 'cancelled') {
-    return <p className="text-[13px] text-carbon">You have already availed this free product. Download it from your library anytime.</p>;
+    return <p className="text-[13px] text-carbon">{onlyCourses
+      ? 'You have already availed this free course. Start learning from your library anytime.'
+      : 'You have already availed this free product. Download it from your library anytime.'}</p>;
   }
   const input = {
     orderStatus:   order.orderStatus,
@@ -271,7 +275,11 @@ function OrderCard({ order, onChanged }: { order: OrderSummary; onChanged: () =>
   const allDigital = items.every(i => i.type === 'digital');
   const hasDigital = items.some(i => i.type === 'digital');
 
+  const itemTypes = items.map(i => i.type);
+  const availed = isAvailedOrder({ orderStatus: order.orderStatus, isFreeClaim: order.isFreeClaim, isPaid: order.isPaid, itemTypes });
+  // Same rules as the API: availed / paid-digital orders are final (the API rejects them with a message).
   const canCancel = ['pending', 'processing'].includes(order.orderStatus)
+    && !availed && !order.isFreeClaim && !(order.isPaid && hasDigital)
     && items.some(i => i.status !== 'cancelled');
   const canReturn = ['delivered', 'completed'].includes(order.orderStatus)
     && items.some(i => i.type === 'physical' && i.status !== 'cancelled' && (!i.returnStatus || i.returnStatus === 'none'));
@@ -283,7 +291,9 @@ function OrderCard({ order, onChanged }: { order: OrderSummary; onChanged: () =>
   // One button per store (a multi-store order has a separate seller for each package).
   const messageStores = (order.stores ?? []).filter(s => s.storeId) as (OrderSummary['stores'][number] & { storeName?: string | null })[];
   const canDownload = hasDigital && order.orderStatus !== 'cancelled' && (order.isPaid || !!order.isFreeClaim);
-  const canBuyAgain = !order.isFreeClaim && items.length > 0;
+  // Free / digital items the buyer already owns cannot be bought again.
+  const canBuyAgain = !order.isFreeClaim && items.some(i => !(i.type === 'digital' && i.price === 0));
+  const onlyCourses = useAllCourses(items.filter(i => i.type === 'digital' && i.productId).map(i => i.productId));
   const [copied, setCopied] = useState(false);
   const [busy, setBusy] = useState<'contact' | 'again' | null>(null);
 
@@ -340,9 +350,9 @@ function OrderCard({ order, onChanged }: { order: OrderSummary; onChanged: () =>
           {/* Phones: the total sits under the title so the name keeps its width. */}
           <p className="sm:hidden text-[13px] font-bold text-carbon mb-[4px]">{formatPrice(order.totalAmount, order.currency)}</p>
           <div className="flex items-center gap-2 flex-wrap mb-[4px]">
-            {order.isFreeClaim && order.orderStatus !== 'cancelled' ? (
+            {availed ? (
               <span className="inline-flex items-center gap-[5px] px-2.5 py-[4px] rounded-full text-[12px] font-bold bg-[#e3f4ea] text-[#1a6b35] border border-[#a3d9b5]">
-                <CheckCircle2 size={9} /> Availed
+                <CheckCircle2 size={9} /> {orderStatusLabel({ orderStatus: order.orderStatus, isFreeClaim: order.isFreeClaim, isPaid: order.isPaid, itemTypes })}
               </span>
             ) : (
               <>
@@ -359,7 +369,7 @@ function OrderCard({ order, onChanged }: { order: OrderSummary; onChanged: () =>
             )}
           </div>
           <p className="text-[12px] text-slate">
-            {new Date(order.createdAt).toLocaleDateString('en-PK', { day: 'numeric', month: 'short', year: 'numeric' })}
+            {localeDate(new Date(order.createdAt), { day: 'numeric', month: 'short', year: 'numeric' })}
             {' · '}{items.length} item{items.length !== 1 ? 's' : ''}
             {' · '}{order.paymentType.replace(/_/g, ' ')}
           </p>
@@ -410,7 +420,7 @@ function OrderCard({ order, onChanged }: { order: OrderSummary; onChanged: () =>
             <Button variant="outline" size="sm" icon={<RotateCcw size={13} />} loading={busy === 'again'} onClick={() => void buyAgain()}>Buy again</Button>
           )}
           {canDownload && (
-            <Button variant="outline" size="sm" icon={<Download size={13} />} to="/account/downloads">Download</Button>
+            <Button variant="outline" size="sm" icon={onlyCourses ? <PlayCircle size={13} /> : <Download size={13} />} to="/account/downloads">{onlyCourses ? 'Start learning' : 'Download'}</Button>
           )}
         </div>
       </div>
@@ -482,7 +492,7 @@ function OrderCard({ order, onChanged }: { order: OrderSummary; onChanged: () =>
                   <div key={s.storeId} className="bg-cream rounded-[9px] px-3 md:px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
                     <div className="min-w-0">
                       <p className="text-[12px] font-semibold text-charcoal">{isSelfCarrier(s.tracking!.carrier) ? 'Delivered by the seller' : (s.tracking!.carrier || 'Courier')}</p>
-                      <p className="text-[12px] text-slate break-all">{[s.tracking!.trackingNumber, s.tracking!.expectedDeliveryDate ? `Expected by ${new Date(s.tracking!.expectedDeliveryDate).toLocaleDateString('en-PK', { dateStyle: 'medium' })}` : ''].filter(Boolean).join(' · ')}</p>
+                      <p className="text-[12px] text-slate break-all">{[s.tracking!.trackingNumber, s.tracking!.expectedDeliveryDate ? `Expected by ${localeDate(new Date(s.tracking!.expectedDeliveryDate), { dateStyle: 'medium' })}` : ''].filter(Boolean).join(' · ')}</p>
                     </div>
                     {s.tracking!.trackingUrl && /^https?:\/\//i.test(s.tracking!.trackingUrl) && (
                       <a

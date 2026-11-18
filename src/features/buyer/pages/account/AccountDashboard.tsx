@@ -15,6 +15,8 @@ import { apiGetMyOrders, type OrderSummary, type OrderStatus } from '@/api/servi
 import { apiGetMyAddresses } from '@/api/services/address';
 import { Card, MetricCard, PageHeader, Badge, ProgressBar, Button, SkeletonBox, EmptyState, Avatar } from '@/components/comman/ui';
 import { formatPrice } from '@/utils/formatPrice';
+import { orderStatusLabel, isAvailedOrder } from '@/constants/statusLabels';
+import { isUrduUi, localeDate } from '@/utils/localeTime';
 import { useNavGroups } from '@/components/layouts/AccountLayout';
 import { ReferralCard } from './ReferralCard';
 import { PickUpWhereYouLeftOff } from '@/features/buyer/components/PickUpWhereYouLeftOff';
@@ -27,6 +29,8 @@ const STATUS_COLOR: Record<OrderStatus, 'orange' | 'blue' | 'green' | 'red'> = {
 
 function RecentOrderRow({ order }: { order: OrderSummary }) {
   const itemCount = (order.stores ?? []).reduce((n, s) => n + s.itemCount, 0);
+  const itemTypes = (order.stores ?? []).flatMap(s => (s.items ?? []).map(i => i.type));
+  const availed = isAvailedOrder({ orderStatus: order.orderStatus, isFreeClaim: order.isFreeClaim, isPaid: order.isPaid, itemTypes });
   return (
     <Link
       to={`/account/orders/${order.orderId}`}
@@ -38,11 +42,11 @@ function RecentOrderRow({ order }: { order: OrderSummary }) {
       <div className="flex-1 min-w-0">
         <p className="text-[12.5px] font-semibold text-charcoal truncate">{order.orderNumber}</p>
         <p className="text-[12px] text-slate mt-[1px]">
-          {new Date(order.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })} · {itemCount} item{itemCount !== 1 ? 's' : ''}
+          {localeDate(new Date(order.createdAt), { day: 'numeric', month: 'short' })} · {itemCount} item{itemCount !== 1 ? 's' : ''}
         </p>
       </div>
       <div className="flex items-center gap-2 shrink-0">
-        <Badge color={STATUS_COLOR[order.orderStatus]} size="sm" className="capitalize">{order.orderStatus}</Badge>
+        <Badge color={availed ? 'green' : STATUS_COLOR[order.orderStatus]} size="sm">{orderStatusLabel({ orderStatus: order.orderStatus, isFreeClaim: order.isFreeClaim, isPaid: order.isPaid, itemTypes })}</Badge>
         <span className="text-[12.5px] font-bold text-carbon whitespace-nowrap">
           {formatPrice(order.totalAmount, order.currency)}
         </span>
@@ -86,7 +90,7 @@ function WelcomeHero({ name, image, memberSince }: { name?: string; image?: stri
         <div className="min-w-0">
           <p className="text-[12px] sm:text-[12px] font-bold tracking-[0.15em] uppercase text-brand-royal mb-1.5 flex items-center gap-2 flex-wrap">Your Edudeen account{isPremium && <PremiumMemberBadge className="normal-case tracking-normal" />}</p>
           <p className="font-serif font-normal text-[24px] sm:text-[30px] text-carbon leading-[1.15] tracking-[-0.5px] truncate">
-            Welcome back{displayName ? `, ${displayName}` : ''}.
+            Welcome back{displayName ? `${isUrduUi() ? '،' : ','} ${displayName}` : ''}{isUrduUi() ? '۔' : '.'}
           </p>
           <p className="text-[13px] text-graphite mt-1">Member since {memberSince}</p>
         </div>
@@ -287,7 +291,7 @@ export function AccountDashboard() {
   const completionPct = Math.round((completionChecks.filter(Boolean).length / completionChecks.length) * 100);
 
   const memberSince = profile?.createdAt
-    ? new Date(profile.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long' })
+    ? localeDate(new Date(profile.createdAt), { year: 'numeric', month: 'long' })
     : '—';
 
   return (

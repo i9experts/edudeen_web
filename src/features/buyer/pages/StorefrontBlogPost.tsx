@@ -5,6 +5,7 @@ import { SkeletonBox } from '@/components/comman/ui';
 import { apiGetPublicBlogPost, type BlogPostData } from '@/api/services/storeBlog';
 import { useStorefront } from '@/features/storefront/StorefrontContext';
 import { ContentBlocks } from '@/features/storefront/sections/ContentBlocks';
+import { localeDate } from '@/utils/localeTime';
 
 export function StorefrontBlogPost() {
   const { postSlug } = useParams<{ postSlug: string }>();
@@ -49,7 +50,7 @@ export function StorefrontBlogPost() {
   return (
     <article className="px-4 sm:px-6 lg:px-10 py-10">
       <div className="max-w-[720px] mx-auto flex flex-col gap-4">
-        {post.publishedAt && <p className="text-[12px] text-slate">{new Date(post.publishedAt).toLocaleDateString()}</p>}
+        {post.publishedAt && <p className="text-[12px] text-slate">{localeDate(new Date(post.publishedAt), { day: 'numeric', month: 'short', year: 'numeric' })}</p>}
         <h1 className="text-[28px] font-bold" style={{ color: cfg.textColor }}>{post.title}</h1>
         {post.coverImage && <img src={post.coverImage} alt={post.title} className="w-full rounded-xl object-cover max-h-[420px]" />}
         <ContentBlocks blocks={post.content} />

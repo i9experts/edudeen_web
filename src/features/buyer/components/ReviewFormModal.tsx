@@ -3,6 +3,7 @@ import { StarRating, Button, ImageUpload, Modal } from '@/components/comman/ui';
 import { apiAddReview, apiEditReview, type ReviewUsedFor } from '@/api/services/rating';
 import { REVIEW_USED_FOR } from '../utils/reviewUsedFor';
 import { useToast } from '@/contexts/ToastContext';
+import { ProductCoverFallback } from '@/components/comman/marketplace/ProductCoverFallback';
 
 interface ReviewFormModalProps {
   mode:            'create' | 'edit';
@@ -12,13 +13,15 @@ interface ReviewFormModalProps {
   initialComment?: string;
   initialMedia?:   string[];
   initialUsedFor?: ReviewUsedFor | null;
+  /** The product being reviewed (already known to the caller): shown at the top of the modal. */
+  product?:        { name: string; image?: string | null } | null;
   onClose:        () => void;
   onSaved:         () => void;
 }
 
 export function ReviewFormModal({
   mode, productId, reviewId,
-  initialRating = 0, initialComment = '', initialMedia = [], initialUsedFor = null,
+  initialRating = 0, initialComment = '', initialMedia = [], initialUsedFor = null, product = null,
   onClose, onSaved,
 }: ReviewFormModalProps) {
   const [usedFor, setUsedFor]   = useState<ReviewUsedFor | null>(initialUsedFor);
@@ -70,6 +73,14 @@ export function ReviewFormModal({
         </>
       }
     >
+      {product && (
+        <div className="flex items-center gap-3 mb-4 rounded-xl border border-bone bg-cream p-2.5">
+          {product.image
+            ? <img src={product.image} alt="" className="w-12 h-12 rounded-lg object-cover border border-bone shrink-0" />
+            : <ProductCoverFallback name={product.name} size="xs" className="w-12 h-12 rounded-lg shrink-0" />}
+          <p className="text-[13px] font-semibold text-carbon min-w-0 break-words line-clamp-2">{product.name}</p>
+        </div>
+      )}
       <p className="text-[12px] font-semibold text-charcoal mb-2">How would you rate this product?</p>
       <StarRating value={rating} onChange={v => { setRating(v); setFieldErrs(f => ({ ...f, rating: undefined })); }} size={30} className={fieldErrs.rating ? 'mb-1' : 'mb-5'} />
       {fieldErrs.rating && <p role="alert" className="text-[12px] text-error mb-4">{fieldErrs.rating}</p>}

@@ -1,11 +1,28 @@
+import { urDayPeriod } from '@/i18n/ur';
 /** Urdu interface = Urdu words/format, but Latin digits (site convention). Read at call time from <html lang>. */
 export const isUrduUi = () => typeof document !== 'undefined' && document.documentElement.lang === 'ur';
 export const timeLocale = (): string | undefined => (isUrduUi() ? 'ur-PK-u-nu-latn' : undefined);
 
+/** Urdu clock text: "دوپہر 1:05" (Latin digits, the site convention). */
+function urClock(d: Date, withMinutes = true): string {
+  const h = d.getHours();
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${urDayPeriod(h)} ${h12}${withMinutes ? `:${String(d.getMinutes()).padStart(2, '0')}` : ''}`;
+}
+
 export function localeTime(d: Date, opts: Intl.DateTimeFormatOptions = { hour: 'numeric', minute: '2-digit' }): string {
+  // Plain hour/minute times in Urdu get the right day period (the browser's one says شام for 1 pm).
+  if (isUrduUi() && (opts.hour || opts.timeStyle === 'short') && !opts.second && !opts.timeZone && opts.hour12 !== false) {
+    return Number.isNaN(d.getTime()) ? '' : urClock(d, opts.minute !== undefined || opts.timeStyle === 'short');
+  }
   try { return d.toLocaleTimeString(timeLocale() ?? [], opts); } catch { return ''; }
 }
 export function localeDateTime(d: Date, opts: Intl.DateTimeFormatOptions = { dateStyle: 'medium', timeStyle: 'short' }): string {
+  if (isUrduUi() && !Number.isNaN(d.getTime()) && (opts.timeStyle === 'short' || (opts.hour && !opts.second && !opts.timeZone))) {
+    const { timeStyle: _t, hour: _h, minute: _m, hour12: _h12, ...dateOpts } = opts;
+    void _t; void _h; void _m; void _h12;
+    try { return `${d.toLocaleDateString(timeLocale(), dateOpts)}، ${urClock(d)}`; } catch { return ''; }
+  }
   try { return d.toLocaleString(timeLocale() ?? [], opts); } catch { return ''; }
 }
 export function localeDate(d: Date, opts: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' }): string {

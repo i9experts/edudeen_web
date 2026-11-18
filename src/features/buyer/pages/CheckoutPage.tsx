@@ -156,7 +156,7 @@ function DigitalPaymentNotice({
         <div>
           <p className="font-semibold text-carbon mb-[2px]">No payment method is available right now</p>
           <p className="text-slate leading-[1.6]">
-            Digital resources are delivered instantly, so they are paid for online (card or bank transfer) — not with cash on delivery.
+            Digital resources are delivered instantly, so they are paid for online — not with cash on delivery.
             {' '}Edudeen has not turned on an online payment method for this order yet. Your items stay safely in your cart,
             and you can check back soon or contact support.
           </p>
@@ -330,6 +330,15 @@ function packageTotal(
   const mine = checkout.items.filter(i => i.storeId === line.storeId);
   if (mine.length === 0) return null;
   return mine.reduce((s, i) => s + (i.totalPrice || 0), 0) + (line.fee ?? line.shippingFee ?? 0);
+}
+
+// The method the buyer last confirmed on the Payment step (fast track only skips that step for the same method).
+const CONFIRMED_METHOD_KEY = 'edudeen.checkout.confirmedMethod';
+function readConfirmedMethod(): string | null {
+  try { return localStorage.getItem(CONFIRMED_METHOD_KEY); } catch { return null; }
+}
+function saveConfirmedMethod(m: string) {
+  try { localStorage.setItem(CONFIRMED_METHOD_KEY, m); } catch { /* storage blocked: fast track just stays off */ }
 }
 
 // ── Payment method labels ─────────────────────────────────────────────────────
@@ -848,6 +857,8 @@ export function CheckoutPage() {
         const methods = (res.data.allowedPaymentMethods ?? []).filter(m => m === 'free' || m === 'stripe' || m === 'cash_on_delivery' || m === 'manual_bank_transfer' || isHostedProvider(m));
         const usable = methods.filter(m => !(m === 'stripe' && !isStripeConfigured()));
         if (usable.length !== 1) return; // a real choice (or none): normal stepper
+        // Never skip the payment step for a method the buyer has not confirmed before.
+        if (readConfirmedMethod() !== usable[0]) return;
         setClientSecret(null);
         setClientSecretMode(null);
         setChargeAmount(null);
@@ -1673,6 +1684,9 @@ export function CheckoutPage() {
                 <StepBadge n={3} active={step === 3} done={step > 3} />
                 <CreditCard size={16} className="text-brand-orange" />
                 <span className="font-semibold text-[14px] text-carbon">Payment Method</span>
+                {step > 3 && selectedMethod && PAYMENT_LABELS[selectedMethod] && (
+                  <span className="text-[12.5px] text-slate truncate">· {PAYMENT_LABELS[selectedMethod].label}</span>
+                )}
                 {step > 3 && (
                   <Button
                     variant="ghost" size="sm"
@@ -1741,7 +1755,7 @@ export function CheckoutPage() {
                     <Button
                       variant="primary" size="sm"
                       disabled={!selectedMethod || !usableMethods.includes(selectedMethod) || digitalPaymentBlocked}
-                      onClick={() => setStep(4)}
+                      onClick={() => { if (selectedMethod) saveConfirmedMethod(selectedMethod); setStep(4); }}
                       className="gap-1"
                     >
                       Continue to Review <ChevronRight size={14} />

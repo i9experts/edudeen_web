@@ -400,7 +400,13 @@ export function CartProvider({ storeId, children }: { storeId?: string; children
     }
 
     const itemStoreId = storeIdFor(productVariantId);
-    if (!itemStoreId) return false;
+    if (!itemStoreId) {
+      // ROOT CAUSE of the ignored first click: the cart line's store id is not known yet right after load, and this
+      // used to return silently. Re-read the cart and tell the buyer to tap again instead of doing nothing.
+      if (storeId) syncCart(storeId, c => setCart(c)); else fetchMyCarts();
+      if (!opts?.silent) toast.info('Your cart is still loading. Please tap Remove again.');
+      return false;
+    }
 
     setCart(prev => {
       if (!prev) return prev;

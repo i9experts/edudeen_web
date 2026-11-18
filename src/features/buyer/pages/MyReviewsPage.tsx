@@ -4,12 +4,14 @@ import { Star, ImageOff, Pencil, Trash2, AlertTriangle } from 'lucide-react';
 import {
   Card, EmptyState, StarRating, SkeletonBox,
   Table, type TableColumn, ActionMenu, type ActionMenuItem,
-  Modal, Button, PageHeader,
+  Modal, Button,
 } from '@/components/comman/ui';
 import { apiGetMyReviews, apiDeleteReview, type MyReviewEntry } from '@/api/services/rating';
 import { ReviewFormModal } from '@/features/buyer/components/ReviewFormModal';
 import { useToast } from '@/contexts/ToastContext';
 import { PendingReviews } from './account/PendingReviews';
+import { AccountPageHeader } from './account/AccountPageHeader';
+import { localeDate } from '@/utils/localeTime';
 
 const PER_PAGE = 10;
 
@@ -112,7 +114,7 @@ export function ReviewsTab() {
     },
     {
       key: 'createdAt', header: 'Date', width: '110px',
-      render: r => <span className="text-[12px] text-slate">{new Date(r.createdAt).toLocaleDateString()}</span>,
+      render: r => <span className="text-[12px] text-slate">{localeDate(new Date(r.createdAt), { day: 'numeric', month: 'short', year: 'numeric' })}</span>,
     },
     {
       key: 'actions', header: '', align: 'right', width: '60px',
@@ -130,8 +132,7 @@ export function ReviewsTab() {
     <div className="flex flex-col gap-5">
     {/* Header — desktop only; mobile's AccountLayout top bar already shows "Reviews". */}
     <div className="hidden lg:block">
-      <PageHeader
-        eyebrow="Account"
+      <AccountPageHeader
         title="Reviews"
         description={`${total} review${total !== 1 ? 's' : ''} written`}
       />
@@ -167,6 +168,7 @@ export function ReviewsTab() {
         <ReviewFormModal
           mode="edit"
           reviewId={editing.reviewId}
+          product={editing.product ? { name: editing.product.name, image: editing.product.image } : null}
           initialRating={editing.rating ?? 0}
           initialComment={editing.comments?.[0]?.text ?? ''}
           initialMedia={editing.media}

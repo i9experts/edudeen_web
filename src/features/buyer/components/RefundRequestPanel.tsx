@@ -19,6 +19,7 @@ const MAX_PHOTOS = REFUND_MAX_PHOTOS;
 const NOTE_MIN = 20;
 const NOTE_MAX = 1000;
 import { formatMoney } from '@/utils/currency';
+import { localeDate } from '@/utils/localeTime';
 
 /**
  * Buyer-side refund requests for ONE order: lists the requests already made
@@ -73,7 +74,7 @@ interface EligibleItem {
 function fmtDate(iso?: string | null) {
   if (!iso) return '';
   const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+  return Number.isNaN(d.getTime()) ? '' : localeDate(d, { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
 export function RefundRequestPanel({ order, onRequested, className }: RefundRequestPanelProps) {
@@ -127,6 +128,8 @@ export function RefundRequestPanel({ order, onRequested, className }: RefundRequ
         const itemId = String(raw._id ?? raw.itemId ?? '');
         if (!itemId || pendingItemIds.has(itemId)) continue;
         if (raw.status === 'refunded' || raw.status === 'cancelled') continue;
+        // A Rs 0 (free) item has nothing to refund (the API rejects it too).
+        if (order.isFreeClaim || !(typeof raw.totalPrice === 'number' && raw.totalPrice > 0)) continue;
         if (raw.type === 'digital') {
           if (!order.isPaid || (raw.downloadCount ?? 0) > 0) continue;
         } else if (!delivered) {
@@ -140,7 +143,7 @@ export function RefundRequestPanel({ order, onRequested, className }: RefundRequ
       }
     }
     return out;
-  }, [order.sellerOrders, order.isPaid, requests]);
+  }, [order.sellerOrders, order.isPaid, order.isFreeClaim, requests]);
 
   const targetItem = eligible.find(e => `${e.sellerOrderId}:${e.itemId}` === selected);
   const isDigital = !!targetItem?.isDigital;
@@ -218,16 +221,17 @@ export function RefundRequestPanel({ order, onRequested, className }: RefundRequ
     }
   };
 
-  // Nothing to show: no history and nothing refundable.
-  if (!loading && !loadError && requests.length === 0 && eligible.length === 0) return null;
+  // Nothing to show: no history and nothing refundable. While loading, an order with nothing refundable
+  // (free / not delivered) renders nothing, so the page does not jump when the answer arrives.
+  if (!loadError && requests.length === 0 && eligible.length === 0) return null;
 
   return (
-    <Card padding="none" className={className}>
+    <Card padding="none" className={`${loading ? 'min-h-[170px] ' : ''}${className ?? ''}`}>
       <div className="px-5 py-4 border-b border-bone flex items-center gap-2.5">
         <div className="w-8 h-8 rounded-[9px] bg-brand-pale-orange flex items-center justify-center shrink-0">
           <RotateCcw size={14} className="text-brand-orange" />
         </div>
-        <p className="text-[13px] font-bold text-charcoal flex-1">Refunds</p>
+        <p className="text-[13px] font-bold text-charcoal flex-1">Returns &amp; refunds</p>
         {!loading && eligible.length > 0 && (
           <Button variant="outline" size="sm" onClick={openDialog}>Request a refund</Button>
         )}

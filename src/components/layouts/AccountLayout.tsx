@@ -64,7 +64,7 @@ export function useNavGroups(): NavGroup[] {
       group: t('Shopping'),
       items: [
         { id: 'orders',   label: t('Orders'),   Icon: ShoppingBag, path: 'orders' },
-        { id: 'returns',  label: t('Returns'),  Icon: Undo2,       path: 'returns' },
+        { id: 'returns',  label: t('Returns & refunds'),  Icon: Undo2,       path: 'returns' },
         { id: 'downloads', label: t('My Library'), Icon: Download,  path: 'downloads' },
         { id: 'wishlist', label: t('Saved'), Icon: Heart,       path: 'wishlist', badge: wishlistCount },
         { id: 'reviews',  label: t('Reviews'),  Icon: Star,        path: 'reviews' },
@@ -260,7 +260,7 @@ function MobileTopBar({ label, isRoot, onBack }: { label: string; isRoot: boolea
 }
 
 const ACCOUNT_TITLES: Record<string, string> = {
-  dashboard: 'My Dashboard', orders: 'My Orders', returns: 'My Returns', downloads: 'My Library',
+  dashboard: 'My Dashboard', orders: 'My Orders', returns: 'Returns & refunds', downloads: 'My Library',
   wishlist: 'Saved Items', reviews: 'My Reviews', payments: 'Bank Transfers', messages: 'Messages',
   notifications: 'Notifications', profile: 'My Profile', security: 'Login & Security',
   addresses: 'My Addresses', children: 'My Children', premium: 'Edudeen Premium', referrals: 'Refer & Earn',
@@ -302,7 +302,7 @@ export function AccountLayout() {
         {/* Inside the column (not above the layout) so the page never grows past the screen. */}
         <AnnouncementBanner audience="buyers" />
         <MobileTopBar label={currentLabel} isRoot={isRoot} onBack={goHome} />
-        <main className="flex-1 min-h-0 min-w-0 px-4 md:px-7 py-4 md:py-6 overflow-y-auto overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <main className="flex-1 min-h-0 min-w-0 px-4 md:px-7 pt-4 md:pt-6 pb-10 md:pb-12 overflow-y-auto overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <Suspense fallback={<AccountContentSkeleton />}>
             <Outlet />
           </Suspense>
