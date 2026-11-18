@@ -455,7 +455,7 @@ export default function StoreEditProduct() {
     { label: 'Type', value: pType === 'physical' ? 'Physical product' : 'Digital download', step: 0 },
     { label: 'Title', value: cur.name || 'Missing', step: 0, ok: !!cur.name },
     { label: 'Description', value: cur.description ? `${cur.description.length} characters` : 'None yet (recommended)', step: 0 },
-    { label: 'Photos', value: cur.images.length ? `${cur.images.length} added` : 'None yet (recommended)', step: 1 },
+    { label: 'Photos', value: cur.images.length ? `${cur.images.length} added` : issues.some(i => i.fieldId === 'fld-photos') ? 'Missing (required to publish)' : 'None yet (optional for a draft)', step: 1, ok: cur.images.length > 0 || !issues.some(i => i.fieldId === 'fld-photos') },
     ...(isDigitalFamily ? [{ label: 'Files', value: dig.files.length ? `${dig.files.length} uploaded` : 'None', step: 1 }] : []),
     { label: 'Price', value: String(cur.price).trim() === '' ? 'Missing' : `${currencySymbol} ${cur.price}${cur.compareAtPrice ? ` (was ${currencySymbol} ${cur.compareAtPrice})` : ''}`, step: 2, ok: String(cur.price).trim() !== '' },
     ...(pType === 'physical' ? [{ label: 'Stock', value: phys.stock === '' ? 'Not set' : phys.stock, step: 2 }] : []),

@@ -8,6 +8,8 @@ import {
 import { Button, Input, Textarea, Toggle } from '@/components/comman/ui';
 import { StorePageHeader, useStoreWorkspace } from '@/components/layouts/StoreLayout';
 import { useToast } from '@/contexts/ToastContext';
+import { useStorePlan } from '@/hooks/store/useStorePlan';
+import { useStoreVisibility } from '@/hooks/store/useStoreVisibility';
 import { apiGetPublicStoreProducts } from '@/api/services/store';
 import { StoreImageField, StoreTextField } from '@/features/seller/store/StoreProfileFields';
 import { storeFieldError } from '@/utils/storeProfileRules';
@@ -165,6 +167,8 @@ export function StorePageOverview() {
   const toast = useToast();
   const navigate = useNavigate();
   const { store, storeId, refetch } = useStoreWorkspace();
+  const { sub } = useStorePlan(storeId);
+  const visibility = useStoreVisibility(store, sub);
 
   const [loadState, setLoadState] = useState<'loading' | 'error' | 'ready'>('loading');
   const [saved, setSaved] = useState<Work | null>(null);
@@ -312,7 +316,8 @@ export function StorePageOverview() {
   const status = hasError ? { text: 'Fix the highlighted fields to save.', tone: 'text-error' }
     : dirty ? { text: 'Unsaved changes', tone: 'text-brand-orange' }
     : unpublished ? { text: savedAt ? `Draft saved ${timeAgo(savedAt.getTime(), now)} · buyers do not see it yet` : 'Draft saved · buyers do not see it yet', tone: 'text-slate' }
-    : { text: 'Live: buyers see exactly this', tone: 'text-success' };
+    : visibility.isLive ? { text: 'Live: buyers see exactly this', tone: 'text-success' }
+    : { text: `Saved. ${visibility.label}: ${visibility.state === 'not_visible_no_products' ? 'publish a product so buyers can see this page.' : visibility.message}`, tone: 'text-slate' };
 
   const tabsNav = (
     <nav aria-label="Sections of this page" className="px-4 md:px-8 flex gap-1 overflow-x-auto scrollbar-none border-t border-bone">
@@ -501,19 +506,19 @@ export function StorePageOverview() {
 
       {/* ── ONE sticky bar: Discard / Save draft / Publish + status ── */}
       {loadState === 'ready' && cur && (
-        <div data-chat-avoid className="sticky bottom-3 z-30 mx-3 md:mx-8 mb-3 rounded-2xl border border-bone bg-white shadow-lg px-3 py-2.5 flex flex-wrap items-center gap-2">
+        <div data-chat-avoid className="seller-sticky-bar [--seller-bar-gap:12px] z-30 mx-3 md:mx-8 rounded-2xl border border-bone bg-white shadow-lg px-3 py-2.5 flex flex-wrap items-center gap-2">
           <p role="status" className={clsx('text-[12.5px] font-semibold me-auto min-w-0 basis-full sm:basis-auto', status.tone)}>{status.text}</p>
-          <Button variant="outline" size="sm" className="lg:hidden" onClick={() => setPreviewOpen(true)}>
+          <Button variant="outline" size="sm" className="lg:hidden min-h-[44px]" onClick={() => setPreviewOpen(true)}>
             <Eye size={13} className="inline align-middle me-1" /> Preview
           </Button>
-          <Button variant="outline" size="sm" disabled={!slug} onClick={() => window.open(getStorePagePath(slug), '_blank', 'noopener')}>
+          <Button variant="outline" size="sm" className="min-h-[44px]" disabled={!slug} onClick={() => window.open(getStorePagePath(slug), '_blank', 'noopener')}>
             <ExternalLink size={13} className="inline align-middle me-1" /> View store
           </Button>
-          <Button variant="outline" size="sm" disabled={!dirty || !!busy} onClick={discard}>Discard</Button>
-          <Button variant="outline" size="sm" disabled={!dirty || !!busy || hasError} onClick={saveDraft}>
+          <Button variant="outline" size="sm" className="min-h-[44px]" disabled={!dirty || !!busy} onClick={discard}>Discard</Button>
+          <Button variant="outline" size="sm" className="min-h-[44px]" disabled={!dirty || !!busy || hasError} onClick={saveDraft}>
             {busy === 'save' && <Loader2 size={13} className="inline align-middle me-1 animate-spin" />} Save draft
           </Button>
-          <Button variant="primary" size="sm" disabled={(!unpublished && !dirty) || !!busy || hasError} onClick={publish}>
+          <Button variant="primary" size="sm" className="min-h-[44px]" disabled={(!unpublished && !dirty) || !!busy || hasError} onClick={publish}>
             {busy === 'publish' && <Loader2 size={13} className="inline align-middle me-1 animate-spin" />} Publish
           </Button>
         </div>

@@ -4,10 +4,11 @@ import type { SellerOverviewData, RevenuePoint, SellerTodaySummaryData } from '.
 import type { InventoryProduct } from './product';
 
 export interface OnboardingChecklistStep {
-  key: 'logo' | 'banner' | 'payout' | 'first_product' | 'shipping';
+  key: 'logo' | 'banner' | 'payout' | 'first_product' | 'store_page' | 'shipping';
   label: string;
   done: boolean;
   notNeeded?: boolean;
+  progress?: { done: number; total: number };
   /** Path relative to /store/:storeId/ */
   path: string;
 }

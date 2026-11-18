@@ -602,7 +602,7 @@ export default function StoreProductList() {
         subtitle={loading && !storeTotal ? 'Loading…' : anyActive
           ? `${totalProducts} of ${storeTotal} product${storeTotal !== 1 ? 's' : ''}`
           : `${storeTotal || totalProducts} product${(storeTotal || totalProducts) !== 1 ? 's' : ''}`}
-        actions={<div className="flex items-center gap-2"><Button variant="outline" onClick={() => navigate(`/store/${storeId}/products/bulk`)} icon={<UploadCloud size={15} />} aria-label="Bulk upload"><span className="max-sm:sr-only">Bulk upload</span></Button><Button variant="outline" onClick={() => navigate(`/store/${storeId}/products/import`)} icon={<FileSpreadsheet size={15} />} aria-label="Import CSV"><span className="max-sm:sr-only">Import CSV</span></Button><Button onClick={goAdd} icon={<Plus size={15} />}>Add<span className="max-sm:hidden"> one product</span><span className="sm:hidden"> product</span></Button></div>}
+        actions={<div className="flex items-center gap-2"><Button variant="outline" onClick={() => navigate(`/store/${storeId}/products/bulk`)} icon={<UploadCloud size={15} />} aria-label="Bulk upload"><span className="max-sm:sr-only">Bulk upload</span></Button><Button variant="outline" onClick={() => navigate(`/store/${storeId}/products/import`)} icon={<FileSpreadsheet size={15} />} aria-label="Import CSV"><span className="max-sm:sr-only">Import CSV</span></Button><Button onClick={goAdd} icon={<Plus size={15} />}><span className="max-sm:hidden">Add one product</span><span className="sm:hidden">Add product</span></Button></div>}
       />
 
       <div className={`px-4 md:px-8 py-6 flex flex-col gap-5 ${selectedKeys.size > 0 ? 'pb-28' : ''}`}>

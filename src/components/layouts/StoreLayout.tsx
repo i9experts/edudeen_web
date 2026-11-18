@@ -26,6 +26,7 @@ import { CommandPalette, type CommandPaletteItem } from '@/components/comman/ui/
 import { StoreWorkspaceCtx, useStoreWorkspace } from './StoreWorkspaceContext';
 import { SellerStoreRedirect } from '@/router/SellerStoreRedirect';
 import { useStorePlan, sidebarPlanInfo } from '@/hooks/store/useStorePlan';
+import { useStoreVisibility } from '@/hooks/store/useStoreVisibility';
 import { useStoreCampaigns } from '@/hooks/store/useStoreCampaigns';
 import { useStoreActionItems } from '@/hooks/store/useStoreDashboardSummary';
 
@@ -247,7 +248,7 @@ function StoreBottomNav() {
   const moreActive = !STORE_TABS.some(t => isActive(t.path)) && pathname.startsWith(`/store/${storeId}/`);
 
   return (
-    <nav data-chat-avoid className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-bone">
+    <nav data-chat-avoid className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-bone [padding-bottom:env(safe-area-inset-bottom)]">
       <div className="flex items-stretch">
         {STORE_TABS.map(tab => {
           const active = isActive(tab.path);
@@ -459,11 +460,17 @@ function StoreSidebar({ open, onToggle }: StoreSidebarProps) {
                   <>
                     <p className="text-[13px] font-bold text-carbon leading-[1.3] truncate">{store?.name ?? 'Loading…'}</p>
                     <p className="text-[12px] text-slate leading-[1.3] truncate">
-                      {planLoaded ? planInfo.text : ''}
-                      {planLoaded && planInfo.to && planInfo.cta && (
-                        <> · <Link to={planInfo.to} className="font-semibold text-brand-royal underline">{planInfo.cta}</Link></>
+                      {!planLoaded ? (
+                        <span aria-hidden className="inline-block align-middle h-[10px] w-24 rounded bg-mist animate-pulse" />
+                      ) : (
+                        <>
+                          {planInfo.text}
+                          {planInfo.to && planInfo.cta && (
+                            <>{planInfo.text ? ' · ' : ''}<Link to={planInfo.to} className="font-semibold text-brand-royal underline">{planInfo.cta}</Link></>
+                          )}
+                          {!planInfo.to && store?.slug ? `${planInfo.text ? ' · ' : ''}/${store.slug}` : ''}
+                        </>
                       )}
-                      {!(planLoaded && planInfo.to) && store?.slug ? ` · /${store.slug}` : ''}
                     </p>
                   </>
                 )}
@@ -779,11 +786,12 @@ function StoreWorkspaceProvider({ children }: { children: ReactNode }) {
 // ── Store approval banner — only for legacy stores an admin has not approved yet (new stores go live at once). ──
 function StoreVerificationBanner() {
   const { store, storeId } = useStoreWorkspace();
-  if (store?.status === 'active' && store.activeProductCount === 0) {
+  const visibility = useStoreVisibility(store);
+  if (visibility.state === 'not_visible_no_products') {
     return (
       <Link to={`/store/${storeId}/products/add`} className="flex w-full items-center justify-center gap-2 px-4 py-2 text-[12.5px] font-medium text-[#1a5a8a] bg-info-bg border-b border-[#bfdcf3] text-center no-underline">
         <AlertCircle size={14} className="shrink-0" />
-        <span>Not visible yet: publish your first product and buyers can find your store.</span>
+        <span>{visibility.message}</span>
         <span className="underline font-semibold">Add a product</span>
       </Link>
     );
@@ -989,7 +997,7 @@ export function StoreLayout() {
           <AnnouncementBanner audience="sellers" />
           <StoreVerificationBanner />
           <PlatformBillingBanner />
-          <div ref={scrollRef} className="flex-1 overflow-y-auto overscroll-contain pb-[136px] lg:pb-[84px] tap-safe">
+          <div ref={scrollRef} className="flex-1 overflow-y-auto overscroll-contain tap-safe seller-scroll">
             {/* Content column capped at a readable studio width; the builder
                and messages views keep the full canvas they need. */}
             <div className={isFullBleedRoute(currentPath) ? 'min-h-full' : 'w-full max-w-[1440px] mx-auto min-h-full'}>

@@ -778,7 +778,7 @@ export default function StoreBulkUpload() {
 
       {/* Create bar */}
       {rows.length > 0 && (
-        <div data-chat-avoid className="sticky bottom-[56px] lg:bottom-0 z-10 bg-white/95 backdrop-blur-md border-t border-bone px-4 md:px-8 py-2.5">
+        <div data-chat-avoid className="seller-sticky-bar z-10bg-white/95 backdrop-blur-md border-t border-bone px-4 md:px-8 py-2.5">
           <div className="mx-auto max-w-[1400px] flex flex-wrap items-center gap-2 sm:gap-3">
             <div className="min-w-0 basis-full sm:basis-0 sm:flex-1 text-[12.5px] text-slate leading-snug" role="status" data-testid="bulk-progress">
               {creating ? <span className="inline-flex items-center gap-1.5 font-bold text-carbon"><Loader2 size={14} className="animate-spin" /> Creating {progress.done}/{progress.total}…</span>

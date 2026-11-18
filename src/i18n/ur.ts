@@ -116,6 +116,9 @@ export const UR: Record<string, string> = {
   'Back to My Account': 'میرے اکاؤنٹ پر واپس',
   'My Store': 'میرا اسٹور',
   'My store': 'میرا اسٹور',
+  'My store ↗': 'میرا اسٹور ↗',
+  'Follow Store': 'اسٹور کو فالو کریں',
+  'Bookshop & Supplies': 'کتاب گھر اور سامان',
 
   // ── Mega menu ─────────────────────────────────────────────────────────────
   'Categories': 'زمرے',
@@ -2757,6 +2760,7 @@ export const UR_PATTERNS: [RegExp, (m: RegExpMatchArray) => string][] = [
   [/^Delivery by seller - usually ships in 1-(\d+) working days?$/, m => `ڈیلیوری فروخت کنندہ کی طرف سے - عموماً 1-${m[1]} کام کے دنوں میں روانہ`],
   [/^Shipment (\d+) of (\d+) - (.+)$/, m => `شپمنٹ ${m[1]} از ${m[2]} - ${m[3]}`],
   [/^Counted from (.+)$/, m => `${m[1]} سے شمار کیا گیا`],
+  [/^All products from (.+)$/, m => `${m[1]} کی تمام مصنوعات`],
   [/^(\d+) need attention$/, m => `${m[1]} پر توجہ درکار ہے`],
   [/^(\d+) of (\d+) (orders|chats|items|reviews)$/, m => `${m[2]} میں سے ${m[1]} ${({ orders: 'آرڈرز', chats: 'چیٹس', items: 'آئٹمز', reviews: 'ریویوز' } as Record<string, string>)[m[3]]}`],
   [/^\+(\d+) more$/, m => `+${m[1]} مزید`],

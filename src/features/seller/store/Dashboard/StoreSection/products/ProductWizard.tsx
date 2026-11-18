@@ -190,27 +190,27 @@ export function ActionBar({ saving, primaryLabel, onPrimary, onDraft, onCancel, 
   saveNote: string; missing: number; onShowMissing: () => void;
 }) {
   return (
-    <div data-chat-avoid className="mt-auto sticky bottom-[56px] lg:bottom-0 z-10 bg-white/95 backdrop-blur-md border-t border-bone px-4 md:px-8 py-2.5">
+    <div data-chat-avoid className="mt-auto seller-sticky-bar z-10 bg-white/95 backdrop-blur-md border-t border-bone px-4 md:px-8 py-2.5">
       <div className="mx-auto max-w-[1700px] flex items-center gap-2 sm:gap-3">
         <div className="min-w-0 flex-1 text-[12px] text-slate leading-snug">
           <span className="block sm:truncate" role="status">{saveNote}</span>
           {missing > 0 && (
-            <button type="button" onClick={onShowMissing} className="bg-transparent border-none px-0 py-3 -my-3 cursor-pointer text-error font-bold underline underline-offset-2 text-[12px]">
+            <button type="button" onClick={onShowMissing} className="bg-transparent border-none px-0 py-0 min-h-[44px] -my-2 text-start cursor-pointer text-error font-bold underline underline-offset-2 text-[12px]">
               {missing} required {missing === 1 ? 'thing' : 'things'} missing
             </button>
           )}
         </div>
         {onCancel && (
-          <button type="button" onClick={onCancel} disabled={saving} className="hidden sm:block px-4 py-[10px] rounded-lg text-[14px] font-bold text-slate bg-transparent border-none cursor-pointer hover:text-carbon disabled:opacity-60">Cancel</button>
+          <button type="button" onClick={onCancel} disabled={saving} className="hidden sm:block px-4 py-[10px] min-h-[44px] rounded-lg text-[14px] font-bold text-slate bg-transparent border-none cursor-pointer hover:text-carbon disabled:opacity-60">Cancel</button>
         )}
         {onDraft && (
           <button type="button" onClick={onDraft} disabled={saving}
-            className="px-3 sm:px-4 py-[10px] rounded-lg text-[14px] font-bold text-brand-orange bg-white border border-bone cursor-pointer hover:bg-cream transition-colors disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap">
+            className="px-3 sm:px-4 py-[10px] min-h-[44px] rounded-lg text-[14px] font-bold text-brand-orange bg-white border border-bone cursor-pointer hover:bg-cream transition-colors disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap">
             Save as draft
           </button>
         )}
         <button type="button" onClick={onPrimary} disabled={saving}
-          className={`px-4 sm:px-5 py-[10px] flex items-center justify-center gap-1.5 rounded-lg text-[14px] font-bold border-none transition-colors whitespace-nowrap ${saving ? 'bg-bone text-slate cursor-not-allowed' : 'bg-brand-orange text-white hover:bg-brand-deep-orange cursor-pointer'}`}>
+          className={`px-4 sm:px-5 py-[10px] min-h-[44px] flex items-center justify-center gap-1.5 rounded-lg text-[14px] font-bold border-none transition-colors whitespace-nowrap ${saving ? 'bg-bone text-slate cursor-not-allowed' : 'bg-brand-orange text-white hover:bg-brand-deep-orange cursor-pointer'}`}>
           {saving ? <><Loader2 size={14} className="animate-spin" />Saving…</> : primaryLabel}
         </button>
       </div>

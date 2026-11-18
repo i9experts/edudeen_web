@@ -477,8 +477,8 @@ export function StoreOrderList() {
               <SearchInput
                 value={search}
                 onChange={setSearch}
-                placeholder="Order #, customer or product…"
-                className="w-full sm:w-[200px] sm:ml-auto"
+                placeholder="Order #, customer, product"
+                className="w-full sm:w-[260px] sm:ml-auto"
               />
               <div className="flex items-center gap-2 overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap sm:justify-end">
                 <FilterDropdown

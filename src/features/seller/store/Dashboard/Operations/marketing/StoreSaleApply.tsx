@@ -205,7 +205,7 @@ export function StoreSaleApply() {
       </div>
 
       {campaign && products && products.length > 0 && (
-        <div data-chat-avoid className="sticky bottom-[56px] lg:bottom-0 z-20 border-t border-bone bg-white/95 backdrop-blur px-4 lg:px-7 py-3 flex items-center gap-3 [padding-bottom:max(12px,env(safe-area-inset-bottom))]">
+        <div data-chat-avoid className="seller-sticky-bar z-20border-t border-bone bg-white/95 backdrop-blur px-4 lg:px-7 py-3 flex items-center gap-3 [padding-bottom:max(12px,env(safe-area-inset-bottom))]">
           <div className="flex-1 min-w-0">
             <p className="text-[13px] font-semibold text-carbon m-0">{selected.size} of {products.length} products in this sale</p>
             {message

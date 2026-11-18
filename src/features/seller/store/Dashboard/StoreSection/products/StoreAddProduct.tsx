@@ -296,7 +296,8 @@ export default function StoreAddProduct() {
     { label: 'Type', value: pType === 'physical' ? 'Physical product' : 'Digital download', step: 0 },
     { label: 'Title', value: cur.name || 'Missing', step: 0, ok: !!cur.name },
     { label: 'Description', value: cur.description ? `${cur.description.length} characters` : 'Missing', step: 0, ok: !!cur.description.trim() },
-    { label: 'Photos', value: cur.images.length ? `${cur.images.length} added` : 'None yet (recommended)', step: 1 },
+    // Same `issues` list as the missing counter and the stepper, so the three can never disagree.
+    { label: 'Photos', value: cur.images.length ? `${cur.images.length} added` : issues.some(i => i.fieldId === 'fld-photos') ? 'Missing (required to publish)' : 'None yet (optional for a draft)', step: 1, ok: cur.images.length > 0 || !issues.some(i => i.fieldId === 'fld-photos') },
     ...(isDigitalFamily ? [{ label: 'Files', value: dig.files.length ? `${dig.files.length} uploaded` : delivery.format === 'download' ? 'None yet' : 'None', step: 1, ok: !(delivery.format === 'download' && cur.status !== 'draft' && dig.files.length === 0) }] : []),
     { label: 'Price', value: cur.price === '' ? 'Missing' : `${currencySymbol} ${cur.price}${cur.compareAtPrice ? ` (was ${currencySymbol} ${cur.compareAtPrice})` : ''}`, step: 2, ok: cur.price !== '' },
     ...(pType === 'physical' ? [{ label: 'Stock', value: phys.stock === '' ? 'Missing' : phys.stock, step: 2, ok: phys.stock !== '' }] : []),

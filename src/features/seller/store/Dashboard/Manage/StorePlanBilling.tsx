@@ -21,6 +21,7 @@ import {
 import { apiGetAiStudioCredits, type AiCreditsOverview } from '@/api/services/aiStudio';
 import { invalidateCache } from '@/api/services/requestCache';
 import { NO_PLAN_LABEL, planName, planStatus, planVisibilityLine } from '@/hooks/store/useStorePlan';
+import { useStoreVisibility } from '@/hooks/store/useStoreVisibility';
 import { planPriceFor, planYearlySavePct, planYearlyPrice } from '@/utils/planPricing';
 import { PlanComparisonTable, commonToAllPlans } from './PlanComparison';
 import { promotionLimit, AI_COMING_SOON, isAiBullet } from './planUsage';
@@ -283,6 +284,7 @@ export default function StorePlanBilling() {
 
   // Same function the sidebar uses - status/visibility are never computed separately on this page.
   const ps = planStatus(current);
+  const visibility = useStoreVisibility(store, current);
   const trialDaysLeft = ps.kind === 'trial' ? ps.trialDaysLeft : null;
   const isPastDue = current?.status === 'past_due';
   const isExpired = current?.status === 'expired';
@@ -391,7 +393,7 @@ export default function StorePlanBilling() {
           <div className="bg-white border border-bone rounded-[10px] px-5 py-4">
             <p className="text-[13px] font-bold text-carbon">Your current plan — {NO_PLAN_LABEL}</p>
             <p className="text-[12px] text-slate mt-[3px]">No active subscription on this store. Choose a plan below to get started.</p>
-            <p className="text-[12px] text-graphite mt-2">{planVisibilityLine('none')}</p>
+            <p className="text-[12px] text-graphite mt-2">{visibility.state === 'live' ? planVisibilityLine('none') : visibility.message}</p>
           </div>
         )}
 
@@ -408,7 +410,7 @@ export default function StorePlanBilling() {
                     : planEndsAt ? `${isCancelPending ? 'Ends' : 'Renews'} ${fmtDate(planEndsAt)} · ${daysLeftText}`
                     : 'No end date'}
                 </p>
-                <p className={`text-[12px] mt-1.5 ${ps.ended ? 'text-error' : 'text-graphite'}`}>{planVisibilityLine(ps.kind)}</p>
+                <p className={`text-[12px] mt-1.5 ${ps.ended ? 'text-error' : 'text-graphite'}`}>{visibility.state === 'live' || ps.ended ? planVisibilityLine(ps.kind) : visibility.message}</p>
               </div>
               <div className="flex items-center gap-2 flex-wrap">
                 <span className={`text-[12px] font-semibold px-2 py-[3px] rounded-full capitalize ${

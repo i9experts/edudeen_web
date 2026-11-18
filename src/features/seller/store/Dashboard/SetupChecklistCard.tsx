@@ -1,11 +1,10 @@
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle2, Circle, ArrowRight } from 'lucide-react';
-import type { OnboardingChecklist, ProfileCompleteness } from '@/api/services/storeDashboard';
+import type { OnboardingChecklist } from '@/api/services/storeDashboard';
 import { StudioPanel, StudioWorkflow } from '@/features/seller/components/studio/Studio';
-import { storeSetupMeter, type MeterInput } from '@/features/seller/dashboard/storemodule/storePageCompleteness';
 
 /** Where each missing profile item is fixed (path relative to /store/:storeId/). */
-const PROFILE_FIX_PATH: Record<string, string> = { logo: 'storebuilder#sp-logo', banner: 'storebuilder#sp-banner', bio: 'storebuilder#sp-about', products: 'products/add' };
+const PROFILE_FIX_PATH: Record<string, string> = { logo: 'storebuilder#sp-logo', banner: 'storebuilder#sp-banner' };
 
 const TIPS = [
   { tag: 'Learning',     title: 'Start with an outcome', body: 'Make the age, learning goal and classroom or home use clear in your title and description.' },
@@ -19,36 +18,21 @@ interface Row { key: string; label: string; detail?: string; done: boolean; path
  * ONE setup card: store setup steps + store profile items (de-duplicated by destination label)
  * and the "make your next product ready" tips, collapsed. Hidden once setup and profile are complete.
  */
-export function SetupChecklistCard({ checklist, profile, store, storeId }: {
-  checklist?: OnboardingChecklist; profile?: ProfileCompleteness; store?: MeterInput | null; storeId: string;
+export function SetupChecklistCard({ checklist, storeId }: {
+  checklist?: OnboardingChecklist; storeId: string;
 }) {
   const navigate = useNavigate();
 
-  const rows: Row[] = [];
-  const seen = new Set<string>();
-  for (const s of checklist?.steps ?? []) {
-    seen.add(s.key === 'first_product' ? 'products' : s.key);
-    // logo / banner deep-link to the exact field (the meter's own destinations); other steps keep their page.
-    rows.push({ key: `s-${s.key}`, label: s.label + (s.notNeeded ? ' (not needed yet)' : ''), done: s.done, path: PROFILE_FIX_PATH[s.key] ?? s.path });
-  }
-  // The store-page meter (same seven checks as Customize store and Store Settings). logo / banner are already setup steps.
-  if (store) {
-    for (const it of storeSetupMeter(store)) {
-      if (seen.has(it.key)) continue;
-      rows.push({ key: `m-${it.key}`, label: it.label, detail: it.hint, done: it.done, path: it.path });
-    }
-  }
-  // Only the published-products requirement still comes from the API profile (the other profile items are covered above).
-  for (const it of profile?.items ?? []) {
-    if (it.key !== 'products' || seen.has('products')) continue;
-    rows.push({ key: `p-${it.key}`, label: it.label, detail: it.detail, done: it.done, path: PROFILE_FIX_PATH[it.key] ?? 'settings' });
-  }
-
-  const total = rows.length;
-  if (total === 0) return null;
-  const completed = rows.filter(r => r.done).length;
+  // Rows, total and completed all come from the API checklist (single source), so the count is stable before/after load.
+  const rows: Row[] = (checklist?.steps ?? []).map(s => ({
+    key: `s-${s.key}`,
+    label: s.label + (s.notNeeded ? ' (not needed yet)' : ''),
+    done: s.done,
+    path: PROFILE_FIX_PATH[s.key] ?? s.path,
+  }));
+  if (!checklist || rows.length === 0) return null;
+  const { total, completed, percent } = checklist;
   if (completed === total) return null;
-  const percent = Math.round((completed / total) * 100);
 
   return (
     <StudioPanel title="Finish setting up your store" sub={`${completed} of ${total} steps done`}>

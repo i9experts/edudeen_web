@@ -67,8 +67,12 @@ export function SellerStorefront() {
   const tab: StoreTab = rawTab === 'about' || rawTab === 'reviews' ? rawTab : 'products';
   const productsSearch = (() => { const p = new URLSearchParams(searchParams); p.delete('tab'); const s = p.toString(); return s ? `?${s}` : ''; })();
   const identityBanner = theme?.identityBanner;
-  const showFollow     = identityBanner?.showFollowButton     !== false;
-  const showMessage    = identityBanner?.showMessageButton    !== false;
+  // The owner viewing their own public page never sees Follow / Message (same ownership test as OwnerBar).
+  const { stores: myStores } = useMyStores();
+  const isOwner = TokenStorage.getUser<{ role?: string }>()?.role === 'seller'
+    && myStores.some(s => String((s as { _id?: string; storeId?: string })._id ?? (s as { storeId?: string }).storeId) === String(store.storeId));
+  const showFollow     = !isOwner && identityBanner?.showFollowButton     !== false;
+  const showMessage    = !isOwner && identityBanner?.showMessageButton    !== false;
   const showLoyaltyBtn = identityBanner?.showLoyaltyButton    !== false;
   const { currency: displayCurrency, convert } = useCurrencyPreference();
   const isLoggedIn = TokenStorage.isLoggedIn();

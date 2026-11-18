@@ -783,3 +783,22 @@ html.lang-switching *, html.lang-switching *::before, html.lang-switching *::aft
   html.cert-printing .cert-print-root .cert-sheet { transform: none !important; box-shadow: none !important; }
   html.cert-printing .cert-print-root, html.cert-printing .cert-print-root * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+
+/* ── Seller sticky bars (Add Product, Customize Store, Store sale apply, Bulk upload): ONE shared rule ──
+   --seller-nav-h = the mobile bottom nav (hidden from lg); --seller-pad-b = the scroll area's bottom padding.
+   A sticky bar is measured from the scroll area's padding edge, so its offset (and its end-of-page margin) is
+   Q - pad, where Q = nav + safe-area inset + optional gap: the bar always rests exactly above the nav, with no blank strip.
+   .seller-scroll also keeps scroll-padding so focused fields / anchors are never hidden behind a bar.
+   The chat bubble already lifts over any [data-chat-avoid] bar. */
+:root { --seller-nav-h: 56px; --seller-pad-b: 136px; --seller-bar-h: 72px; }
+@media (min-width: 1024px) { :root { --seller-nav-h: 0px; --seller-pad-b: 84px; } }
+.seller-sticky-bar {
+  --seller-q: calc(var(--seller-nav-h) + env(safe-area-inset-bottom, 0px) + var(--seller-bar-gap, 0px) - var(--seller-pad-b));
+  position: sticky;
+  bottom: var(--seller-q);
+  margin-bottom: var(--seller-q);
+}
+.seller-scroll {
+  padding-bottom: var(--seller-pad-b);
+  scroll-padding-bottom: calc(var(--seller-bar-h) + var(--seller-nav-h) + env(safe-area-inset-bottom, 0px) + 16px);
+}

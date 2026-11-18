@@ -760,6 +760,10 @@ export default function StoreSettings() {
                   </div>
                   <Toggle label="Cash on delivery" checked={codEnabled} onChange={setCodEnabled} />
                 </div>
+                <p className="text-[12px] text-slate mt-2 mb-0">
+                  COD shows to buyers once shipping is set up.{' '}
+                  {storeId && <Link to={`/store/${storeId}/shipping`} className="font-semibold text-brand-royal hover:underline">Open Shipping</Link>}
+                </p>
                 <div className="mt-3 px-[14px] py-3 rounded-[9px] border border-bone bg-cream">
                   <p className="text-[13px] font-medium text-charcoal">Who ships physical orders</p>
                   <p className="text-[12px] text-slate">

@@ -10,6 +10,8 @@ import type { SellerTodaySummaryData } from '@/api/services/analytics/analytics'
 import type { InventoryProduct } from '@/api/services/product';
 import { useStoreDashboardSummary } from '@/hooks/store/useStoreDashboardSummary';
 import { SetupChecklistCard } from './SetupChecklistCard';
+import { useStorePlan } from '@/hooks/store/useStorePlan';
+import { useStoreVisibility } from '@/hooks/store/useStoreVisibility';
 import { ActionRequiredCard } from './ActionRequiredCard';
 import { WeeklyDigestCard } from './Analytic/ai/components/WeeklyDigestCard';
 import { statusLabel } from '@/constants/statusLabels';
@@ -180,9 +182,11 @@ export default function StoreDashboard() {
     month: formatBucketLabel(p.date, 'month'),
     revenue: p.grossRevenue,
   }));
-  const revenueSparkline = (metrics?.revenueSeries ?? []).map(p => p.grossRevenue);
+  const hasRevenue = chartData.some(p => p.revenue > 0);
   const totalCustomers = metrics ? metrics.overview.newCustomersCount + metrics.overview.returningCustomersCount : 0;
-  const isLive = store?.status === 'active';
+  const { sub } = useStorePlan(storeId);
+  const visibility = useStoreVisibility(store, sub);
+  const isLive = visibility.isLive;
 
   return (
     <div>
@@ -194,7 +198,7 @@ export default function StoreDashboard() {
           {/* Compact store row */}
           <div className="dash-section-enter flex flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl border border-bone bg-white px-4 py-3">
             <p className="font-serif text-[20px] text-carbon m-0 truncate max-w-full min-w-0">{store?.name ?? 'Your store'}</p>
-            <StudioPill tone={isLive ? 'green' : 'gray'}>{isLive ? 'Live' : (store?.status ?? '—')}</StudioPill>
+            <StudioPill tone={isLive ? 'green' : 'gray'}>{store?.status && store.status !== 'active' ? store.status : visibility.label}</StudioPill>
             <div className="flex items-center gap-2 ms-auto max-sm:w-full max-sm:ms-0">
               {store?.slug && (
                 <a
@@ -232,14 +236,13 @@ export default function StoreDashboard() {
           <WeeklyDigestCard storeId={storeId} />
 
           {/* Setup checklist (real data; hidden once complete) */}
-          <SetupChecklistCard checklist={metrics?.checklist} profile={metrics?.profile} store={store} storeId={storeId} />
+          <SetupChecklistCard checklist={metrics?.checklist} storeId={storeId} />
 
           {/* Metric cards */}
           <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
             <MetricCard
               label="Order value (30 days)" value={formatMoneyCompact(metrics?.overview.totalRevenue ?? 0, store?.baseCurrency)}
               sub={metrics?.overview.totalRevenue ? 'Last 30 days' : 'No sales yet'}
-              sparkline={revenueSparkline}
               to={`/store/${storeId}/orders`}
             />
             <MetricCard
@@ -272,16 +275,23 @@ export default function StoreDashboard() {
           />
 
           {/* Revenue chart */}
-          <AreaChart
-            data={chartData}
-            dataKey="revenue"
-            xKey="month"
-            title="Revenue Overview"
-            subtitle="Monthly revenue trend"
-            height={300}
-            valuePrefix={currencySymbol(store?.baseCurrency)}
-            yTickFormatter={v => v >= 1000 ? `${currencySymbol(store?.baseCurrency)}${(v / 1000).toFixed(0)}k` : `${currencySymbol(store?.baseCurrency)}${v}`}
-          />
+          {hasRevenue ? (
+            <AreaChart
+              data={chartData}
+              dataKey="revenue"
+              xKey="month"
+              title="Revenue Overview"
+              subtitle="Monthly revenue trend"
+              height={300}
+              valuePrefix={currencySymbol(store?.baseCurrency)}
+              yTickFormatter={v => v >= 1000 ? `${currencySymbol(store?.baseCurrency)}${(v / 1000).toFixed(0)}k` : `${currencySymbol(store?.baseCurrency)}${v}`}
+            />
+          ) : (
+            <section aria-label="Revenue Overview" className="rounded-xl border border-bone bg-white p-5">
+              <p className="text-[14px] font-semibold text-carbon m-0">Revenue Overview</p>
+              <p className="text-[13px] text-slate mt-3 mb-0">No sales yet. Your monthly revenue trend appears here after your first order.</p>
+            </section>
+          )}
 
         </div>
       )}
