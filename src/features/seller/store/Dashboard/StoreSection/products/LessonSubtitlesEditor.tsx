@@ -1,5 +1,6 @@
 import { Captions, Plus, Trash2, Upload } from 'lucide-react';
 import { Textarea } from '@/components/comman/ui';
+import { UrduTextarea } from '@/components/comman/ui/UrduTextarea';
 import { useToast } from '@/contexts/ToastContext';
 import type { LessonSubtitle } from '@/api/services/classroom';
 import { SUBTITLE_LANGS, SUBTITLE_MAX_CHARS, describeSubtitle, normalizeSubtitle } from '@/utils/subtitles';
@@ -66,12 +67,19 @@ export function LessonSubtitlesEditor({ subtitles, onChange, external }: {
               <button type="button" aria-label={`Remove ${label} subtitles`} onClick={() => onChange(subtitles.filter(s => s.lang !== code))}
                 className="bg-transparent border-none cursor-pointer text-slate hover:text-error p-1"><Trash2 size={13} /></button>
             </div>
-            <Textarea
-              aria-label={`${label} subtitles`} rows={5} dir={dir} lang={code} maxLength={SUBTITLE_MAX_CHARS}
-              className={code === 'ur' ? 'font-urdu' : undefined}
-              value={sub.content} onChange={e => setContent(code, e.target.value)}
-              placeholder={code === 'ur' ? 'یہاں اردو سب ٹائٹل لکھیں یا فائل اپلوڈ کریں' : 'Type or paste the English subtitles here, or upload a file'}
-            />
+            {code === 'ur' ? (
+              <UrduTextarea
+                label={`${label} subtitles`} rows={5} maxLength={SUBTITLE_MAX_CHARS}
+                value={sub.content} onChange={v => setContent(code, v)}
+                placeholder="یہاں اردو سب ٹائٹل لکھیں یا فائل اپلوڈ کریں"
+              />
+            ) : (
+              <Textarea
+                aria-label={`${label} subtitles`} rows={5} dir={dir} lang={code} maxLength={SUBTITLE_MAX_CHARS}
+                value={sub.content} onChange={e => setContent(code, e.target.value)}
+                placeholder="Type or paste the English subtitles here, or upload a file"
+              />
+            )}
           </fieldset>
         );
       })}
