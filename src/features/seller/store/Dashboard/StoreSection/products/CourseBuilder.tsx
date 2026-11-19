@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { Plus, Trash2, ChevronUp, ChevronDown, Video, Loader2, Award, Eye, ArrowLeft, Users } from 'lucide-react';
+import { Plus, Trash2, ChevronUp, ChevronDown, Video, Mic, Loader2, Award, Eye, ArrowLeft, Users } from 'lucide-react';
 import { isAllowedExternalVideo } from '@/utils/externalVideo';
 import { clsx } from 'clsx';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -9,18 +9,21 @@ import { Button, Card, Input, Textarea, Toggle, FileUpload, type PrivateUploadDa
 import { useToast } from '@/contexts/ToastContext';
 import { apiSetProductStatus } from '@/api/services/product';
 import { CertificateDesigner, EMPTY_DESIGN, designFromConfig, configFromDesign, type CertDesign } from './CertificateDesigner';
+import { LessonSubtitlesEditor } from './LessonSubtitlesEditor';
+import { normalizeSubtitle } from '@/utils/subtitles';
 import {
   apiGetCourseBuilder, apiSaveCourse,
   type CourseBuilderData, type CourseLessonInput, type CourseSectionInput, type LessonType,
 } from '@/api/services/classroom';
 
-// New lessons are video only; PDF / text / quiz lessons that already exist keep working (their editor still renders).
+// New lessons are video or voice (audio); PDF / text / quiz lessons that already exist keep working (their editor still renders).
 const TYPES: { value: LessonType; label: string; Icon: typeof Video }[] = [
   { value: 'video', label: 'Video', Icon: Video },
+  { value: 'audio', label: 'Voice', Icon: Mic },
 ];
 
 const newLesson = (type: LessonType = 'video'): CourseLessonInput => ({
-  title: '', type, file: null, videoUrl: null, text: '', durationMinutes: null, isPreview: false,
+  title: '', type, file: null, videoUrl: null, subtitles: [], text: '', durationMinutes: null, isPreview: false,
   quiz: type === 'quiz' ? { passPercent: 60, questions: [{ question: '', options: ['', ''], answerIndex: 0 }] } : null,
 });
 
@@ -36,11 +39,11 @@ const toUpload = (f: CourseLessonInput['file']): PrivateUploadData | null =>
   f ? { publicId: f.url, fileName: f.name, fileSize: f.size ?? 0, mimeType: f.mimeType ?? '', resourceType: 'raw' } : null;
 
 /** Video lesson source: upload an MP4, or paste a YouTube / Vimeo (incl. unlisted) link. */
-/** Reads a chosen video's real length from its metadata (whole minutes, at least 1). 0 when it cannot be read. */
+/** Reads a chosen video's or voice recording's real length from its metadata (whole minutes, at least 1). 0 when it cannot be read. */
 function readVideoMinutes(file: File): Promise<number> {
   return new Promise(resolve => {
     const url = URL.createObjectURL(file);
-    const v = document.createElement('video');
+    const v = document.createElement(file.type.startsWith('audio/') || /\.(mp3|m4a|wav|ogg)$/i.test(file.name) ? 'audio' : 'video');
     const done = (m: number) => { URL.revokeObjectURL(url); v.removeAttribute('src'); resolve(m); };
     v.preload = 'metadata';
     v.onloadedmetadata = () => done(Number.isFinite(v.duration) && v.duration > 0 ? Math.max(1, Math.ceil(v.duration / 60)) : 0);
@@ -91,6 +94,23 @@ function VideoSource({ lesson, onChange }: { lesson: CourseLessonInput; onChange
   );
 }
 
+/** Voice lesson source: upload an MP3 / M4A / WAV / OGG recording. */
+function AudioSource({ lesson, onChange }: { lesson: CourseLessonInput; onChange: (l: CourseLessonInput) => void }) {
+  const pickedMinutes = useRef(0);
+  return (
+    <FileUpload
+      value={toUpload(lesson.file)} accept="audio/mpeg,audio/mp4,audio/x-m4a,audio/wav,audio/x-wav,audio/ogg,.mp3,.m4a,.wav,.ogg"
+      label="Upload the voice recording (MP3, M4A, WAV or OGG)"
+      onFilePicked={f => readVideoMinutes(f).then(m => { pickedMinutes.current = m; })}
+      onChange={d => onChange({
+        ...lesson, videoUrl: null,
+        file: d ? { url: d.publicId, name: d.fileName, size: d.fileSize, mimeType: d.mimeType } : null,
+        ...(d && pickedMinutes.current ? { durationMinutes: pickedMinutes.current } : {}),
+      })}
+    />
+  );
+}
+
 function QuizEditor({ quiz, onChange }: { quiz: NonNullable<CourseLessonInput['quiz']>; onChange: (q: NonNullable<CourseLessonInput['quiz']>) => void }) {
   const setQ = (i: number, patch: Partial<(typeof quiz.questions)[number]>) =>
     onChange({ ...quiz, questions: quiz.questions.map((q, k) => k === i ? { ...q, ...patch } : q) });
@@ -134,7 +154,7 @@ function LessonEditor({ lesson, index, count, onChange, onMove, onRemove }: {
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-[12px] font-bold text-slate w-6">{index + 1}.</span>
         <div className="flex-1 min-w-[180px]"><Input aria-label="Lesson title" value={lesson.title} maxLength={150} onChange={e => set('title', e.target.value)} placeholder="Lesson title" /></div>
-        {lesson.type !== 'video' && <span className="rounded-md border border-bone bg-fog px-2 py-1.5 text-[12px] text-slate capitalize">{lesson.type}</span>}
+        {lesson.type !== 'video' && <span className="rounded-md border border-bone bg-fog px-2 py-1.5 text-[12px] text-slate capitalize">{lesson.type === 'audio' ? 'Voice' : lesson.type}</span>}
         <div className="flex">
           <button type="button" aria-label="Move lesson up" disabled={index === 0} onClick={() => onMove(-1)} className="p-1 bg-transparent border-none cursor-pointer text-slate disabled:opacity-30"><ChevronUp size={15} /></button>
           <button type="button" aria-label="Move lesson down" disabled={index === count - 1} onClick={() => onMove(1)} className="p-1 bg-transparent border-none cursor-pointer text-slate disabled:opacity-30"><ChevronDown size={15} /></button>
@@ -144,6 +164,12 @@ function LessonEditor({ lesson, index, count, onChange, onMove, onRemove }: {
 
       {lesson.type === 'video' && (
         <VideoSource lesson={lesson} onChange={onChange} />
+      )}
+      {lesson.type === 'audio' && (
+        <AudioSource lesson={lesson} onChange={onChange} />
+      )}
+      {(lesson.type === 'video' || lesson.type === 'audio') && (
+        <LessonSubtitlesEditor subtitles={lesson.subtitles ?? []} onChange={s => set('subtitles', s)} external={lesson.type === 'video' && !!lesson.videoUrl} />
       )}
       {lesson.type === 'pdf' && (
         <FileUpload
@@ -234,7 +260,17 @@ export default function CourseBuilder() {
     try {
       const cleanOutcomes = outcomes.map(o => o.trim()).filter(Boolean);
       const res = await apiSaveCourse(storeId, productId, {
-        sections: sections.map(s => ({ ...s, lessons: s.lessons.map(l => ({ ...l, videoUrl: l.type === 'video' && l.videoUrl?.trim() ? l.videoUrl.trim() : null })) })),
+        sections: sections.map(s => ({
+          ...s,
+          lessons: s.lessons.map(l => ({
+            ...l,
+            videoUrl: l.type === 'video' && l.videoUrl?.trim() ? l.videoUrl.trim() : null,
+            // Subtitles: SRT is converted to WebVTT, empty boxes are dropped.
+            subtitles: l.type === 'video' || l.type === 'audio'
+              ? (l.subtitles ?? []).filter(x => x.content.trim()).map(x => ({ lang: x.lang, ...normalizeSubtitle(x.content) }))
+              : [],
+          })),
+        })),
         certificateEnabled: certificate,
         // Only sent when the seller touched the design (null values clear a field).
         ...(designDirty ? { certificateConfig: configFromDesign(design) } : {}),

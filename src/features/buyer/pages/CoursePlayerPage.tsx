@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
-import { CheckCircle2, Circle, Video, FileText, AlignLeft, ListChecks, Award, ChevronLeft, ChevronRight, Loader2, Menu, X, IdCard } from 'lucide-react';
+import { CheckCircle2, Circle, Video, Headphones, FileText, AlignLeft, ListChecks, Award, ChevronLeft, ChevronRight, Loader2, Menu, X, IdCard } from 'lucide-react';
 import { clsx } from 'clsx';
 import { titleCaseName } from '@/utils/formatName';
 import { Button, ProgressBar } from '@/components/comman/ui';
@@ -8,6 +8,8 @@ import { EdudeenLogo } from '@/components/comman/ui/EdudeenLogo';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useToast } from '@/contexts/ToastContext';
 import { LessonVideo } from '@/features/buyer/components/LessonVideo';
+import { LessonAudio } from '@/features/buyer/components/LessonAudio';
+import { LessonSubtitles } from '@/features/buyer/components/LessonSubtitles';
 import { CertificateDetailsModal } from '@/features/buyer/components/CertificateDetailsModal';
 import { useGetProfile } from '@/hooks/auth/useGetProfile';
 import {
@@ -15,7 +17,7 @@ import {
   type LearnView, type CertificateDetails, type LessonContent, type LessonType, type QuizResult,
 } from '@/api/services/classroom';
 
-const ICON: Record<LessonType, typeof Video> = { video: Video, pdf: FileText, text: AlignLeft, quiz: ListChecks };
+const ICON: Record<LessonType, typeof Video> = { video: Video, audio: Headphones, pdf: FileText, text: AlignLeft, quiz: ListChecks };
 
 function Quiz({ lesson, onResult }: { lesson: LessonContent; onResult: (r: QuizResult) => void }) {
   const [answers, setAnswers] = useState<number[]>([]);
@@ -159,11 +161,12 @@ export function CoursePlayerPage() {
   const isDone = lesson ? done.has(lesson._id) : false;
   // The shown lesson lags the URL until the new one arrives.
   const loadingLesson = !lesson || lesson._id !== currentId;
-  const hasVideo = !!lesson && lesson.type === 'video' && !!(lesson.file || lesson.videoUrl);
+  // A video or voice lesson must be watched / heard to the end before it can be completed.
+  const hasVideo = !!lesson && (lesson.type === 'video' || lesson.type === 'audio') && !!(lesson.file || lesson.videoUrl);
   const mustWatch = hasVideo && !isDone && watchedId !== lesson?._id;
   const goTo = (id: string) => {
     const target = flat.findIndex(l => l._id === id);
-    if (mustWatch && target > idx) { toast.error('Finish watching this video to continue.'); return; }
+    if (mustWatch && target > idx) { toast.error(lesson?.type === 'audio' ? 'Finish listening to this recording to continue.' : 'Finish watching this video to continue.'); return; }
     open(id);
   };
 
@@ -234,11 +237,21 @@ export function CoursePlayerPage() {
             <article className="flex flex-col gap-4">
               <h1 className="text-[22px] md:text-[26px] font-bold text-carbon m-0">{lesson.title}</h1>
               {lesson.type === 'video' && (lesson.file || lesson.videoUrl) && (
-                <LessonVideo key={lesson._id} file={lesson.file} videoUrl={lesson.videoUrl} title={lesson.title}
+                <LessonVideo key={lesson._id} file={lesson.file} videoUrl={lesson.videoUrl} title={lesson.title} subtitles={lesson.subtitles}
                   guard lockSeek={!isDone} onFinished={() => setWatchedId(lesson._id)} />
               )}
               {lesson.type === 'video' && !lesson.file && !lesson.videoUrl && (
                 <p className="text-[13px] text-slate m-0">The video for this lesson is not available yet.</p>
+              )}
+              {lesson.type === 'video' && !!lesson.subtitles?.length && (lesson.file || lesson.videoUrl) && (
+                <LessonSubtitles key={`sub-${lesson._id}`} subtitles={lesson.subtitles} />
+              )}
+              {lesson.type === 'audio' && lesson.file && (
+                <LessonAudio key={lesson._id} file={lesson.file} title={lesson.title} subtitles={lesson.subtitles}
+                  lockSeek={!isDone} onFinished={() => setWatchedId(lesson._id)} />
+              )}
+              {lesson.type === 'audio' && !lesson.file && (
+                <p className="text-[13px] text-slate m-0">The voice recording for this lesson is not available yet.</p>
               )}
               {lesson.type === 'pdf' && lesson.file && (
                 <div className="flex flex-col gap-2">
@@ -259,7 +272,7 @@ export function CoursePlayerPage() {
                     ? <span className="inline-flex items-center gap-1 text-[13px] text-success font-semibold"><CheckCircle2 size={15} /> Completed</span>
                     : <Button variant="primary" size="sm" loading={marking} disabled={mustWatch} onClick={markDone}>Mark complete{idx < flat.length - 1 ? ' & next' : ''}</Button>
                 )}
-                {mustWatch && <span role="status" className="text-[12.5px] text-slate">Watch the full video to unlock the next lesson.</span>}
+                {mustWatch && <span role="status" className="text-[12.5px] text-slate">{lesson?.type === 'audio' ? 'Listen to the full recording to unlock the next lesson.' : 'Watch the full video to unlock the next lesson.'}</span>}
                 <Button variant="ghost" size="sm" className="ms-auto" disabled={mustWatch || idx < 0 || idx >= flat.length - 1} onClick={() => open(flat[idx + 1]._id)}>Next <ChevronRight size={14} /></Button>
               </div>
             </article>

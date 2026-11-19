@@ -1,6 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MousePointer2 } from 'lucide-react';
 import { externalVideoEmbed } from '@/utils/externalVideo';
+import { useLanguage } from '@/contexts/languageCtx';
+import type { LessonSubtitle } from '@/api/services/classroom';
+import { parseCues } from '@/utils/subtitles';
 
 const IDLE_MS = 60_000;
 /** A jump bigger than this between two time reports is a seek, not normal playback. */
@@ -19,7 +22,7 @@ type Ctl = { play: () => void; pause: () => void; seek: (t: number) => void };
  * Mouse movement INSIDE a YouTube/Vimeo frame is invisible to the page, so for
  * those the pointer being over the frame counts as activity.
  */
-export function LessonVideo({ file, videoUrl, title, autoPlay, guard, lockSeek, onFinished }: {
+export function LessonVideo({ file, videoUrl, title, autoPlay, guard, lockSeek, onFinished, subtitles }: {
   file?: { url: string } | null;
   videoUrl?: string | null;
   title: string;
@@ -27,8 +30,17 @@ export function LessonVideo({ file, videoUrl, title, autoPlay, guard, lockSeek, 
   guard?: boolean;
   lockSeek?: boolean;
   onFinished?: () => void;
+  /** Timed Urdu / English subtitles: shown through the video's own captions (CC) button. */
+  subtitles?: LessonSubtitle[];
 }) {
   const embed = externalVideoEmbed(videoUrl);
+  const { lang: appLang } = useLanguage();
+  // One WebVTT blob per timed subtitle (plain-text transcripts have no timings, so they only appear under the video).
+  // data: URLs need no cleanup (a blob URL would be revoked by React StrictMode's effect replay).
+  const tracks = useMemo(() => (subtitles ?? [])
+    .filter(s => s.kind !== 'text' && parseCues(s.content).length > 0)
+    .map(s => ({ lang: s.lang, label: s.lang === 'ur' ? 'اردو' : 'English', src: `data:text/vtt;charset=utf-8,${encodeURIComponent(s.content)}` })), [subtitles]);
+  const defaultLang = (tracks.find(t => t.lang === appLang) ?? tracks[0])?.lang;
   const videoRef = useRef<HTMLVideoElement>(null);
   const frameRef = useRef<HTMLIFrameElement>(null);
   const ctl = useRef<Ctl | null>(null);
@@ -185,7 +197,9 @@ export function LessonVideo({ file, videoUrl, title, autoPlay, guard, lockSeek, 
   if (file?.url) {
     return (
       <>
-        <video ref={videoRef} src={file.url} controls autoPlay={autoPlay} controlsList="nodownload" className="w-full rounded-lg bg-black aspect-video" />
+        <video ref={videoRef} src={file.url} controls autoPlay={autoPlay} controlsList="nodownload" className="w-full rounded-lg bg-black aspect-video">
+          {tracks.map(t => <track key={t.lang} kind="subtitles" src={t.src} srcLang={t.lang} label={t.label} default={t.lang === defaultLang} />)}
+        </video>
         {idleNotice}
       </>
     );

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Video, FileText, AlignLeft, ListChecks, Award, PlayCircle, Lock, CheckCircle2, Infinity as InfinityIcon, GraduationCap } from 'lucide-react';
+import { Video, Headphones, FileText, AlignLeft, ListChecks, Award, PlayCircle, Lock, CheckCircle2, Infinity as InfinityIcon, GraduationCap } from 'lucide-react';
 import { Modal } from '@/components/comman/ui';
 import {
   apiGetCourseOutline, apiGetPreviewLesson,
@@ -7,9 +7,11 @@ import {
 } from '@/api/services/classroom';
 import type { MarketplaceProduct } from '@/api/services/marketplace';
 import { LessonVideo } from './LessonVideo';
+import { LessonAudio } from './LessonAudio';
+import { LessonSubtitles } from './LessonSubtitles';
 
-const ICON: Record<LessonType, typeof Video> = { video: Video, pdf: FileText, text: AlignLeft, quiz: ListChecks };
-const TYPE_LABEL: Record<LessonType, string> = { video: 'Video', pdf: 'PDF', text: 'Reading', quiz: 'Quiz' };
+const ICON: Record<LessonType, typeof Video> = { video: Video, audio: Headphones, pdf: FileText, text: AlignLeft, quiz: ListChecks };
+const TYPE_LABEL: Record<LessonType, string> = { video: 'Video', audio: 'Voice', pdf: 'PDF', text: 'Reading', quiz: 'Quiz' };
 
 const hours = (m: number) => (m >= 60 ? `${Math.floor(m / 60)}h${m % 60 ? ` ${m % 60}m` : ''}` : `${m}m`);
 
@@ -106,7 +108,13 @@ function CourseContent({ product }: { product: MarketplaceProduct }) {
         <Modal title={preview.title} onClose={() => setPreview(null)} width={760} mobileSheet>
           <div className="p-4">
             {preview.type === 'video' && (
-              <LessonVideo file={preview.file} videoUrl={preview.videoUrl ?? (preview.kind === 'external' ? preview.url : null)} title={preview.title} autoPlay />
+              <LessonVideo file={preview.file} videoUrl={preview.videoUrl ?? (preview.kind === 'external' ? preview.url : null)} title={preview.title} subtitles={preview.subtitles} autoPlay />
+            )}
+            {preview.type === 'video' && !!preview.subtitles?.length && (
+              <div className="mt-3"><LessonSubtitles subtitles={preview.subtitles} /></div>
+            )}
+            {preview.type === 'audio' && preview.file && (
+              <LessonAudio file={preview.file} title={preview.title} subtitles={preview.subtitles} autoPlay />
             )}
             {preview.type === 'video' && !preview.file && !preview.videoUrl && preview.kind !== 'external' && preview.url && (
               <video src={preview.url} controls autoPlay controlsList="nodownload" className="w-full rounded-lg bg-black aspect-video" />

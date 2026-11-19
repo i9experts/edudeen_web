@@ -148,8 +148,10 @@ export const apiAdminSearchProducts = (q: string) =>
 
 // ── Courses ───────────────────────────────────────────────────
 
-export type LessonType = 'video' | 'pdf' | 'text' | 'quiz';
+export type LessonType = 'video' | 'audio' | 'pdf' | 'text' | 'quiz';
 export interface CourseFileRef { url: string; name: string; size?: number | null; mimeType?: string | null }
+/** Urdu / English subtitles of a video or voice lesson. `content` is WebVTT (timed) or a plain transcript. */
+export interface LessonSubtitle { lang: 'ur' | 'en'; kind?: 'timed' | 'text'; content: string }
 export interface QuizQuestionInput { question: string; options: string[]; answerIndex: number }
 export interface CourseLessonInput {
   _id?: string;
@@ -158,6 +160,7 @@ export interface CourseLessonInput {
   file: CourseFileRef | null;
   /** External video (YouTube / Vimeo https link) used instead of an uploaded file. */
   videoUrl?: string | null;
+  subtitles?: LessonSubtitle[];
   text: string;
   durationMinutes: number | null;
   isPreview: boolean;
@@ -224,6 +227,7 @@ export interface LessonContent {
   file?: { name: string; mimeType: string; url: string };
   /** External video link (YouTube / Vimeo). */
   videoUrl?: string | null;
+  subtitles?: LessonSubtitle[];
   kind?: 'external' | 'file';
   url?: string;
   quiz?: { passPercent: number; questions: { question: string; options: string[] }[] };

@@ -327,7 +327,7 @@ export default function StoreProductDetail() {
                   return (
                     <>
                       <InfoRow label="Sections" value={course ? sections.length : '…'} />
-                      <InfoRow label="Lessons" value={course ? `${lessons} (${byType('video')} video, ${byType('pdf')} PDF, ${byType('text')} text, ${byType('quiz')} quiz)` : '…'} />
+                      <InfoRow label="Lessons" value={course ? `${lessons} (${byType('video')} video, ${byType('audio')} voice, ${byType('pdf')} PDF, ${byType('text')} text, ${byType('quiz')} quiz)` : '…'} />
                       <InfoRow label="Total length" value={course ? (minutes ? `${minutes} min` : '—') : '…'} />
                       <InfoRow label="Free previews" value={course ? sections.reduce((n, s) => n + s.lessons.filter(l => l.isPreview).length, 0) : '…'} />
                       <InfoRow label="Certificate" value={course ? (course.certificateEnabled ? 'Yes' : 'No') : '…'} />
