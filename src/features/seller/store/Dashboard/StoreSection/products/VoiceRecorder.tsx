@@ -22,9 +22,29 @@ function encodeWav(chunks: Int16Array[], rate: number): Blob {
   return new Blob([head.buffer as ArrayBuffer, ...chunks.map(c => c.buffer as ArrayBuffer)], { type: 'audio/wav' });
 }
 
+const microphoneState = async (): Promise<PermissionState | null> => {
+  try { return (await navigator.permissions.query({ name: 'microphone' as PermissionName })).state; } catch { return null; }
+};
+
+const BLOCKED_HELP = "Microphone is blocked for this site.\n1. Click the lock (or settings) icon at the left of the address bar.\n2. Set Microphone to Allow.\n3. Reload this page and press Start recording again.";
+
+/** Says WHY the browser refused, because "blocked" has three very different causes with three different fixes. */
+async function explainMicError(e: unknown): Promise<string> {
+  const name = (e as { name?: string } | null)?.name;
+  if (name !== 'NotAllowedError' && name !== 'SecurityError') return micError(e);
+  const doc = document as unknown as { permissionsPolicy?: { allowsFeature?: (f: string) => boolean }; featurePolicy?: { allowsFeature?: (f: string) => boolean } };
+  const policy = doc.permissionsPolicy ?? doc.featurePolicy;
+  if (policy?.allowsFeature && !policy.allowsFeature('microphone')) return 'This page is not allowed to use the microphone (a site security setting). Please tell Edudeen support. Meanwhile, upload a recording file instead.';
+  const state = await microphoneState();
+  if (state === 'denied') return BLOCKED_HELP;
+  if (state === 'prompt') return 'The microphone permission was not given. Press Start recording again and choose Allow in the box that appears near the address bar.';
+  // Allowed in the browser but still refused: the computer itself is blocking it.
+  return "The browser is allowed to use the microphone, but your computer is blocking it.\nWindows: Settings → Privacy & security → Microphone → turn on microphone access, and \"Let desktop apps access your microphone\".\nMac: System Settings → Privacy & Security → Microphone → tick your browser.\nThen close the browser fully, open it again and retry.";
+}
+
 const micError = (e: unknown) => {
   const name = (e as { name?: string } | null)?.name;
-  if (name === 'NotAllowedError' || name === 'SecurityError') return "Microphone access is blocked. Allow the microphone in your browser's address bar, then try again.";
+  if (name === 'NotAllowedError' || name === 'SecurityError') return BLOCKED_HELP;
   if (name === 'NotFoundError' || name === 'OverconstrainedError') return 'No microphone was found on this device.';
   if (name === 'NotReadableError') return 'The microphone is being used by another app. Close it and try again.';
   return 'Could not start the microphone. You can upload a recording instead.';
@@ -37,8 +57,13 @@ type Live = { stream: MediaStream; ctx: AudioContext; node: ScriptProcessorNode;
  * Records the seller's voice in the browser (start, pause, stop, listen back) and uploads it as a WAV file.
  * `onSaved` gets the stored file and its length in whole minutes.
  */
-export function VoiceRecorder({ onSaved }: { onSaved: (file: PrivateUploadData, minutes: number) => void }) {
+export function VoiceRecorder({ onSaved, onUseUpload }: {
+  onSaved: (file: PrivateUploadData, minutes: number) => void;
+  /** Offered when the microphone cannot be used: switches the seller to uploading a file. */
+  onUseUpload?: () => void;
+}) {
   const { upload, uploading, error: uploadError } = useUpload('private');
+  const [perm, setPerm] = useState<PermissionState | null>(null);
   const [phase, setPhase] = useState<'idle' | 'recording' | 'paused'>('idle');
   const [seconds, setSeconds] = useState(0);
   const [level, setLevel] = useState(0);
@@ -63,6 +88,17 @@ export function VoiceRecorder({ onSaved }: { onSaved: (file: PrivateUploadData, 
     l.stream.getTracks().forEach(t => t.stop());
     void l.ctx.close().catch(() => undefined);
   };
+
+  // Know up front when the browser has this site's microphone blocked (and notice when the seller fixes it).
+  useEffect(() => {
+    let status: PermissionStatus | null = null;
+    let dead = false;
+    const sync = () => { if (status && !dead) setPerm(status.state); };
+    navigator.permissions?.query({ name: 'microphone' as PermissionName })
+      .then(s => { if (dead) return; status = s; sync(); s.addEventListener('change', sync); })
+      .catch(() => undefined);
+    return () => { dead = true; status?.removeEventListener('change', sync); };
+  }, []);
 
   // Leaving the page mid-recording must free the microphone and the preview URL.
   useEffect(() => () => {
@@ -130,7 +166,7 @@ export function VoiceRecorder({ onSaved }: { onSaved: (file: PrivateUploadData, 
       }, 1000);
     } catch (e) {
       release();
-      setProblem(micError(e));
+      setProblem(await explainMicError(e));
     }
   };
 
@@ -187,7 +223,15 @@ export function VoiceRecorder({ onSaved }: { onSaved: (file: PrivateUploadData, 
         </div>
       )}
       {uploading && <p className="m-0 flex items-center gap-2 text-[12px] text-slate"><Loader2 size={13} className="animate-spin" /> Saving your recording…</p>}
-      {(problem || uploadError) && <p role="alert" className="m-0 text-[12px] text-error">{problem || uploadError}</p>}
+      {perm === 'denied' && phase === 'idle' && !take && !problem && (
+        <p role="status" className="m-0 whitespace-pre-line rounded-lg bg-brand-pale-orange/60 border border-brand-gold/40 px-3 py-2 text-[12px] text-carbon">{BLOCKED_HELP}</p>
+      )}
+      {(problem || uploadError) && <p role="alert" className="m-0 whitespace-pre-line text-[12px] text-error">{problem || uploadError}</p>}
+      {(problem || perm === 'denied') && onUseUpload && phase === 'idle' && !take && (
+        <button type="button" onClick={onUseUpload} className="self-start bg-transparent border-none p-0 cursor-pointer text-[12.5px] font-semibold text-brand-orange">
+          Can't use the microphone? Upload an audio file instead
+        </button>
+      )}
     </div>
   );
 }

@@ -95,7 +95,7 @@ function VideoSource({ lesson, onChange }: { lesson: CourseLessonInput; onChange
               ))}
             </div>
             {voiceHow === 'record' ? (
-              <VoiceRecorder onSaved={(d, minutes) => onChange({ ...lesson, type: 'audio', videoUrl: null, file: fileOf(d), durationMinutes: minutes })} />
+              <VoiceRecorder onUseUpload={() => setVoiceHow('upload')} onSaved={(d, minutes) => onChange({ ...lesson, type: 'audio', videoUrl: null, file: fileOf(d), durationMinutes: minutes })} />
             ) : (
               <FileUpload
                 value={null} accept={AUDIO_ACCEPT} label="Upload the voice recording (MP3, M4A, WAV or OGG)"
