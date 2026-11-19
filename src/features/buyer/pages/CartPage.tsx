@@ -806,7 +806,7 @@ export function CartPage() {
         </div>
       )}
 
-      <Footer />
+      <Footer showNewsletter={false} />
     </div>
   );
 }

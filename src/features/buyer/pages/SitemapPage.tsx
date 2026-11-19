@@ -28,6 +28,9 @@ const POLICY_LINKS: { label: string; to: string }[] = [
   { label: 'Privacy Policy', to: '/privacy-policy' },
   { label: 'Terms of Service', to: '/terms-of-service' },
   { label: 'Cookie Policy', to: '/cookie-policy' },
+  { label: 'Content Policy', to: '/content-policy' },
+  { label: 'Report a violation', to: '/report-violation' },
+  { label: 'Seller Terms', to: '/seller-terms' },
 ];
 
 const ACCOUNT_LINKS: { label: string; to: string }[] = [

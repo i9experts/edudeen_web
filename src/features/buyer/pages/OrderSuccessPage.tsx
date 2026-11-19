@@ -475,7 +475,7 @@ export function OrderSuccessPage() {
         </div>
       </div>
 
-      <Footer />
+      <Footer showNewsletter={false} />
     </div>
   );
 }

@@ -894,7 +894,7 @@ function HomeLanding() {
 
       </main>
 
-      <Footer />
+      <Footer showNewsletter />
     </div>
   );
 }

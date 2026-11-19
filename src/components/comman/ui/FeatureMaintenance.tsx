@@ -46,7 +46,7 @@ export function FeatureMaintenance({ feature, variant = 'section', children }: {
         <Message status={status} feature={feature} />
         <p className="text-center mt-5 mb-0"><Link to="/" className="text-[13px] font-semibold text-brand-orange">Back to home</Link></p>
       </main>
-      <Footer />
+      <Footer showNewsletter={false} />
     </div>
   );
 }

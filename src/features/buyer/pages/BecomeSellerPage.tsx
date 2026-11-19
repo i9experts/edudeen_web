@@ -402,7 +402,7 @@ export function BecomeSellerPage() {
         </section>
       </EditableSellerSection>
 
-      <Footer />
+      <Footer showNewsletter={false} />
     </div>
   );
 }

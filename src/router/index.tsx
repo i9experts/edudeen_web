@@ -56,6 +56,9 @@ const BecomeSellerPage = lazy(() => import('@/features/buyer/pages/BecomeSellerP
 const FaqPage = lazy(() => import('@/features/buyer/pages/FaqPage').then(m => ({ default: m.FaqPage })));
 const PrivacyPolicyPage = lazy(() => import('@/features/buyer/pages/PrivacyPolicyPage').then(m => ({ default: m.PrivacyPolicyPage })));
 const DeleteAccountPage = lazy(() => import('@/features/buyer/pages/DeleteAccountPage').then(m => ({ default: m.DeleteAccountPage })));
+const ContentPolicyPage = lazy(() => import('@/features/buyer/pages/ContentPolicyPage').then(m => ({ default: m.ContentPolicyPage })));
+const ReportViolationPage = lazy(() => import('@/features/buyer/pages/ReportViolationPage').then(m => ({ default: m.ReportViolationPage })));
+const SellerTermsPage = lazy(() => import('@/features/buyer/pages/SellerTermsPage').then(m => ({ default: m.SellerTermsPage })));
 const TermsOfServicePage = lazy(() => import('@/features/buyer/pages/TermsOfServicePage').then(m => ({ default: m.TermsOfServicePage })));
 const SitemapPage = lazy(() => import('@/features/buyer/pages/SitemapPage').then(m => ({ default: m.SitemapPage })));
 const ReturnsPolicyPage = lazy(() => import('@/features/buyer/pages/ReturnsPolicyPage').then(m => ({ default: m.ReturnsPolicyPage })));
@@ -265,6 +268,9 @@ const mainRouter = createBrowserRouter([
               { path: 'privacy-policy',  element: <PrivacyPolicyPage /> },
               { path: 'delete-account',  element: <DeleteAccountPage /> },
               { path: 'terms-of-service', element: <TermsOfServicePage /> },
+              { path: 'seller-terms',    element: <SellerTermsPage /> },
+              { path: 'content-policy',  element: <ContentPolicyPage /> },
+              { path: 'report-violation', element: <ReportViolationPage /> },
               { path: 'cookie-policy',   element: <CookiePolicyPage /> },
               { path: 'returns',         element: <ReturnsPolicyPage /> },
               { path: 'sitemap',         element: <SitemapPage /> },

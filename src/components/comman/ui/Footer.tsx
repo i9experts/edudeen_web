@@ -14,6 +14,9 @@ import { isBuyerSession } from '@/hooks/auth/useIsBuyer';
 import { TokenStorage } from '@/api/services/auth';
 import { EditableHomeSection } from '@/components/admin-edit/EditableHomeSection';
 import { EditableSocialLinks } from '@/components/admin-edit/EditableInline';
+import { useTopBarDeals } from '@/hooks/useTopBarDeals';
+import { useCategoryTree, categoryPath } from '@/hooks/marketplace/useCategoryTree';
+import type { CategoryNode } from '@/api/services/categories';
 import { useAdminEdit } from '@/contexts/adminEditCtx';
 import { effectiveContact } from '@/components/admin-edit/homeDefaults';
 import { whatsappLink } from '@/features/buyer/components/home/homeRules';
@@ -24,17 +27,19 @@ interface FooterLink {
 }
 
 const SELLER_ONLY_COLUMNS = new Set(['For Sellers', 'Solutions']);
-const SELLER_ONLY_PATHS = new Set(['/sellers', '/pricing', '/onboard']);
+const SELLER_ONLY_PATHS = new Set(['/sellers', '/pricing', '/onboard', '/seller', '/login', '/sitemap?tab=seller', '/seller-terms']);
+const SELLER_HIDDEN_PATHS = new Set(['/login', '/sitemap?tab=buyer', '/account/dashboard', '/premium', '/products/store-builder', '/account/wishlist', '/account/orders', '/#deals', '/sellers', '/pricing']);
 
 const FOOTER_COLUMNS: { heading: string; links: FooterLink[] }[] = [
   {
     heading: 'Shop',
     links: [
-      // Existing grade list (every CLASS_LEVELS entry -> browsePath) lives in the sitemap "Pages" tab.
-      { label: 'Shop by grade', path: '/sitemap?tab=pages' },
+      // The all-resources browse view, which has the Class (grade) filter - not the sitemap.
+      { label: 'Shop by grade', path: '/?browse=1' },
       { label: 'Flash Sale',    path: '/#deals' },
+      { label: 'Sign in / Create account', path: '/login' },   // signed-out visitors only
+      { label: 'My account',    path: '/account/dashboard' },   // signed-in buyers only
       { label: 'Track order',   path: '/account/orders' },
-      { label: 'Returns & refunds', path: '/returns' },
       { label: 'Saved',         path: '/account/wishlist' },
       { label: 'Edudeen Premium', path: '/premium' },
     ],
@@ -43,31 +48,33 @@ const FOOTER_COLUMNS: { heading: string; links: FooterLink[] }[] = [
     heading: 'Solutions',
     links: [
       { label: 'Teachers & Tutors',      path: '/solutions/teachers-tutors' },
-      { label: 'Quran & Islamic Studies', path: '/solutions/islamic-scholars' },
+      { label: 'Islamic Scholars & Teachers', path: '/solutions/islamic-scholars' },
       { label: 'Schools & Academies',    path: '/solutions/schools-academies' },
       { label: 'Publishers & Bookshops', path: '/solutions/publishers-bookshops' },
       { label: 'Educational Creators',   path: '/solutions/creators' },
     ],
   },
   {
+    // Resources + Company merged: one fuller column instead of two near-empty ones.
     heading: 'Resources',
     links: [
-      { label: 'Help & FAQ',  path: '/faq' },
-      { label: 'Contact Us',  path: '/contact-us' },
-    ],
-  },
-  {
-    heading: 'Company',
-    links: [
-      { label: 'About',       path: '/about' },
+      { label: 'Help & FAQ',        path: '/faq' },
+      { label: 'Buyer Guide',       path: '/sitemap?tab=buyer' },
+      { label: 'Returns & refunds', path: '/returns' },
+      { label: 'Contact Us',        path: '/contact-us' },
+      { label: 'About',             path: '/about' },
     ],
   },
   {
     heading: 'For Sellers',
     links: [
-      { label: 'Sell on Edudeen', path: '/sellers' },
-      { label: 'Store Builder',   path: '/products/store-builder' },
-      { label: 'Pricing',         path: '/pricing' },
+      { label: 'Seller Dashboard', path: '/seller' },      // seller accounts only
+      { label: 'Sell on Edudeen',  path: '/sellers' },
+      { label: 'Seller Login',     path: '/login' },       // signed-out visitors only
+      { label: 'Store Builder',    path: '/products/store-builder' },
+      { label: 'Pricing',          path: '/pricing' },
+      { label: 'Seller Guide',     path: '/sitemap?tab=seller' },
+      { label: 'Seller Terms',     path: '/seller-terms' },
     ],
   },
   {
@@ -76,7 +83,9 @@ const FOOTER_COLUMNS: { heading: string; links: FooterLink[] }[] = [
       { label: 'Privacy Policy',   path: '/privacy-policy' },
       { label: 'Terms of Service', path: '/terms-of-service' },
       { label: 'Cookie Policy',    path: '/cookie-policy' },
-      { label: 'Sitemap',          path: '/sitemap' },
+      { label: 'Content Policy',   path: '/content-policy' },
+      { label: 'Report a violation', path: '/report-violation' },
+      { label: 'Sitemap',         path: '/sitemap' },
     ],
   },
 ];
@@ -261,7 +270,7 @@ function FooterColumn({ heading, links, navigate }: { heading: string; links: Fo
   );
 }
 
-export function Footer({ showNewsletter = false }: { showNewsletter?: boolean }) {
+export function Footer({ showNewsletter = true }:{ showNewsletter?: boolean }) {
   const { config } = usePublicPlatformConfig();
   const socialLinks = config?.socialLinks ?? {};
   const socials = SOCIALS.filter(s => !!socialLinks[s.key]);
@@ -286,14 +295,54 @@ export function Footer({ showNewsletter = false }: { showNewsletter?: boolean })
         .map(col => ({ ...col, links: col.links.filter(l => !l.path || !SELLER_ONLY_PATHS.has(l.path)) }))
     : seller
       // A seller account has no Edudeen Premium (buyer-only) and already has its own store builder.
-      ? FOOTER_COLUMNS.map(col => ({ ...col, links: col.links.filter(l => l.path !== '/premium' && l.path !== '/products/store-builder') }))
-      : FOOTER_COLUMNS;
+      // and no buyer shortcuts (saved, track order, flash sale) or seller-recruitment links (sell on Edudeen, pricing).
+      // The whole Shop column is buyer-facing, so sellers don't get it at all.
+      ? FOOTER_COLUMNS.filter(col => col.heading !== 'Shop').map(col => ({ ...col, links: col.links.filter(l => !SELLER_HIDDEN_PATHS.has(l.path ?? '')) }))
+      // Signed-out visitor: "Seller Dashboard" needs a seller session.
+      // Signed-out visitor: no "Seller Dashboard" / "My account" (they need a session) - "Sign in / Create account" instead.
+      : FOOTER_COLUMNS.map(col => ({ ...col, links: col.links.filter(l => l.path !== '/seller' && l.path !== '/account/dashboard') }));
+  // "Flash Sale" only shows while something is actually on sale (otherwise the #deals section is empty).
+  const topBarDeals = useTopBarDeals();
+  const hasSale = !!topBarDeals && (topBarDeals.allDeals.length > 0 || topBarDeals.campaigns.length > 0);
+  const saleColumns = hasSale ? footerColumns : footerColumns.map(col => ({ ...col, links: col.links.filter(l => l.path !== '/#deals') }));
+
+  // "Explore" (buyers + signed-out visitors, never sellers): the Quran & Islamic category, the busiest main
+  // categories straight from the live category tree, free resources and learning paths.
+  const { tree } = useCategoryTree();
+  const findIslamic = (nodes: CategoryNode[]): CategoryNode | null => {
+    for (const n of nodes) {
+      if (/quran|islam/i.test(n.name)) return n;
+      const hit = findIslamic(n.children ?? []);
+      if (hit) return hit;
+    }
+    return null;
+  };
+  const islamic = findIslamic(tree);
+  const topCategories = tree
+    // Catch-all buckets ("Others", "Miscellaneous"...) are not a destination worth a footer link.
+    .filter(n => n._id !== islamic?._id && (n.productCount ?? 0) > 0 && !/^(others?|misc\w*|uncategori[sz]ed|general)$/i.test(n.name.trim()))
+    .sort((a, b) => (b.productCount ?? 0) - (a.productCount ?? 0))
+    .slice(0, 4);
+  const exploreColumn: { heading: string; links: FooterLink[] } = {
+    heading: 'Explore',
+    links: [
+      { label: 'Quran & Islamic Studies', path: islamic ? categoryPath(islamic) : '/?q=quran' },
+      ...topCategories.map(n => ({ label: n.name, path: categoryPath(n) })),
+      { label: 'Free resources', path: '/?free=1' },
+      { label: 'Learning Paths', path: '/learning-paths' },
+    ],
+  };
+  // Shop is always first for non-sellers; Explore goes right after it.
+  const visibleColumns = seller ? saleColumns : [...saleColumns.slice(0, 1), exploreColumn, ...saleColumns.slice(1)];
+  // "Get the App" only shows once at least one store URL is configured (no "Coming soon" badges).
+  const showApp = !!(useGooglePlayUrl() || useAppStoreUrl());
 
   return (
     <footer className="bg-white border-t border-bone text-slate">
 
       {/* ── Newsletter ── */}
-      {showNewsletter && (
+      {/* Shown on every public page by default; not for sellers (they are not the audience for deal alerts). */}
+      {showNewsletter && !seller && (
         <div className="bg-[#f5f8fa] border-b border-bone">
           <div className="max-w-[1480px] mx-auto px-[5%] md:px-[4%] py-7 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5">
             <div>
@@ -308,7 +357,10 @@ export function Footer({ showNewsletter = false }: { showNewsletter?: boolean })
 
       {/* ── Brand + link columns ── */}
       <div className="max-w-[1480px] mx-auto px-[5%] md:px-[4%] py-10 sm:py-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1.4fr_repeat(6,1fr)_1fr] gap-8 lg:gap-6">
+        <div
+          className="grid grid-cols-1 sm:grid-cols-2 gap-8 lg:gap-6 lg:[grid-template-columns:var(--footer-cols)]"
+          style={{ '--footer-cols': `1.4fr repeat(${visibleColumns.length}, 1fr)${(showApp || editing) ? ' 1fr' : ''}` } as React.CSSProperties}
+        >
 
           <div className="sm:col-span-2 lg:col-span-1 pb-2 sm:pb-0">
             <Link to="/" aria-label="Edudeen home" className="inline-block bg-transparent border-none p-0 cursor-pointer">
@@ -360,10 +412,11 @@ export function Footer({ showNewsletter = false }: { showNewsletter?: boolean })
             )}
           </div>
 
-          {footerColumns.map(col => (
+          {visibleColumns.map(col => (
             <FooterColumn key={col.heading} heading={col.heading} links={col.links} navigate={footerNavigate} />
           ))}
 
+          {(showApp || editing) && (
           <div className="pb-2 sm:pb-0">
             <p className="text-[12px] font-bold text-carbon uppercase tracking-[0.12em] mb-4">Get the App</p>
             <EditableHomeSection section="apps" label="app links" global>
@@ -373,6 +426,7 @@ export function Footer({ showNewsletter = false }: { showNewsletter?: boolean })
             </div>
             </EditableHomeSection>
           </div>
+          )}
         </div>
       </div>
 
