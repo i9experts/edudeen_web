@@ -67,7 +67,7 @@ export function memberPriceOf(
 }
 
 /** Understated teaser: "Premium members save up to 20%" (seller% + Edudeen%; hover shows the breakdown). A link on its own page, plain text inside a card link. */
-export function PremiumTeaser({ percent, seller, platform, link = false, button = false, className }: { percent?: number | null; seller?: number | null; platform?: number | null; link?: boolean; /** Inside a card that is itself a link: a button that opens /premium (nested links are invalid HTML). */ button?: boolean; className?: string }) {
+export function PremiumTeaser({ percent, link = false, button = false, className }: { percent?: number | null; seller?: number | null; platform?: number | null; link?: boolean; /** Inside a card that is itself a link: a button that opens /premium (nested links are invalid HTML). */ button?: boolean; className?: string }) {
   const { showTeaser } = usePremiumView();
   const navigate = useNavigate();
   if (!showTeaser || floorPct(percent) <= 0) return null;
