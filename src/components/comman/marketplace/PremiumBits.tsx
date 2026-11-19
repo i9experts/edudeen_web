@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
 import { Crown } from 'lucide-react';
 import { usePremium } from '@/hooks/usePremium';
@@ -67,14 +67,21 @@ export function memberPriceOf(
 }
 
 /** Understated teaser: "Premium members save up to 20%" (seller% + Edudeen%; hover shows the breakdown). A link on its own page, plain text inside a card link. */
-export function PremiumTeaser({ percent, seller, platform, link = false, className }: { percent?: number | null; seller?: number | null; platform?: number | null; link?: boolean; className?: string }) {
+export function PremiumTeaser({ percent, seller, platform, link = false, button = false, className }: { percent?: number | null; seller?: number | null; platform?: number | null; link?: boolean; /** Inside a card that is itself a link: a button that opens /premium (nested links are invalid HTML). */ button?: boolean; className?: string }) {
   const { showTeaser } = usePremiumView();
+  const navigate = useNavigate();
   if (!showTeaser || floorPct(percent) <= 0) return null;
   // Only shown to non-members, and the percent is this product's exact member discount (not a range).
   const text = `Get Premium to save ${floorPct(percent)}%`;
   const cls = clsx('inline-flex items-center gap-1 text-[12px] font-semibold text-[#8a6100]', className);
   const tip = premiumBreakdownText(seller, platform) || undefined;
   const inner = <><Crown size={11} className="shrink-0" aria-hidden /> {text}</>;
+  if (button) {
+    return (
+      <button type="button" title={tip} onClick={e => { e.preventDefault(); e.stopPropagation(); navigate('/premium'); }}
+        className={clsx(cls, 'bg-transparent border-0 p-0 cursor-pointer hover:underline')}>{inner}</button>
+    );
+  }
   return link
     ? <Link to="/premium" title={tip} className={clsx(cls, 'no-underline hover:underline')}>{inner}</Link>
     : <span title={tip} className={cls}>{inner}</span>;

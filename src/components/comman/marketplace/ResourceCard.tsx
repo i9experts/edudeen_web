@@ -20,7 +20,7 @@ import { CURRICULUM_LABEL } from '@/constants/learning';
 import { useLocalizedProduct } from '@/hooks/useLocalizedProduct';
 import { TrustBadges } from './TrustBadges';
 import { CompareToggle } from './CompareToggle';
-import { PremiumChip, memberPriceOf, usePremiumView } from './PremiumBits';
+import { PremiumChip, PremiumTeaser, memberPriceOf, usePremiumView } from './PremiumBits';
 import { holidayBlocksType, holidayLabel } from '@/utils/storeHoliday';
 
 // Same name-keyed palette as ProductCoverFallback, so a product keeps its
@@ -447,6 +447,7 @@ export const ResourceCard = memo(function ResourceCard({
         </span>
       </div>
       {member && <PremiumChip percent={member.percent} className="mt-1" />}
+      {!member && <PremiumTeaser link percent={product.premiumPercent} seller={product.premiumSellerPercent} platform={product.premiumPlatformPercent} className="mt-1" />}
       </div>
     </article>
   );
