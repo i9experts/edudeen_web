@@ -74,7 +74,8 @@ export function PremiumTeaser({ percent, seller, platform, link = false, button 
   // Only shown to non-members, and the percent is this product's exact member discount (not a range).
   const text = `Get Premium to save ${floorPct(percent)}%`;
   const cls = clsx('inline-flex items-center gap-1 text-[12px] font-semibold text-[#8a6100]', className);
-  const tip = premiumBreakdownText(seller, platform) || undefined;
+  // No hover tooltip: the seller / Edudeen split is not shown on the teaser.
+  const tip = undefined;
   const inner = <><Crown size={11} className="shrink-0" aria-hidden /> {text}</>;
   if (button) {
     return (
