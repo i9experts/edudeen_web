@@ -10,16 +10,17 @@ import { useToast } from '@/contexts/ToastContext';
 import { apiSetProductStatus } from '@/api/services/product';
 import { CertificateDesigner, EMPTY_DESIGN, designFromConfig, configFromDesign, type CertDesign } from './CertificateDesigner';
 import { LessonSubtitlesEditor } from './LessonSubtitlesEditor';
+import { VoiceRecorder } from './VoiceRecorder';
 import { normalizeSubtitle } from '@/utils/subtitles';
 import {
   apiGetCourseBuilder, apiSaveCourse,
   type CourseBuilderData, type CourseLessonInput, type CourseSectionInput, type LessonType,
 } from '@/api/services/classroom';
 
-// New lessons are video or voice (audio); PDF / text / quiz lessons that already exist keep working (their editor still renders).
+// New lessons start as video; its source switcher also offers Voice (which makes the lesson type `audio`).
+// PDF / text / quiz lessons that already exist keep working (their editor still renders).
 const TYPES: { value: LessonType; label: string; Icon: typeof Video }[] = [
-  { value: 'video', label: 'Video', Icon: Video },
-  { value: 'audio', label: 'Voice', Icon: Mic },
+  { value: 'video', label: 'Lesson (video or voice)', Icon: Video },
 ];
 
 const newLesson = (type: LessonType = 'video'): CourseLessonInput => ({
@@ -38,7 +39,6 @@ function move<T>(list: T[], i: number, d: -1 | 1) {
 const toUpload = (f: CourseLessonInput['file']): PrivateUploadData | null =>
   f ? { publicId: f.url, fileName: f.name, fileSize: f.size ?? 0, mimeType: f.mimeType ?? '', resourceType: 'raw' } : null;
 
-/** Video lesson source: upload an MP4, or paste a YouTube / Vimeo (incl. unlisted) link. */
 /** Reads a chosen video's or voice recording's real length from its metadata (whole minutes, at least 1). 0 when it cannot be read. */
 function readVideoMinutes(file: File): Promise<number> {
   return new Promise(resolve => {
@@ -52,24 +52,60 @@ function readVideoMinutes(file: File): Promise<number> {
   });
 }
 
+const AUDIO_ACCEPT = 'audio/mpeg,audio/mp4,audio/x-m4a,audio/wav,audio/x-wav,audio/ogg,.mp3,.m4a,.wav,.ogg';
+
+/**
+ * Lesson source, three ways: upload an MP4, paste a YouTube / Vimeo link, or a voice lesson (record in the
+ * browser, or upload an MP3 / M4A / WAV / OGG). Picking Voice makes the lesson type `audio`; the other two are `video`.
+ */
 function VideoSource({ lesson, onChange }: { lesson: CourseLessonInput; onChange: (l: CourseLessonInput) => void }) {
   const pickedMinutes = useRef(0);
-  const [mode, setMode] = useState<'upload' | 'link'>(lesson.videoUrl ? 'link' : 'upload');
+  const [mode, setMode] = useState<'upload' | 'link' | 'voice'>(lesson.type === 'audio' ? 'voice' : lesson.videoUrl ? 'link' : 'upload');
+  const [voiceHow, setVoiceHow] = useState<'record' | 'upload'>('record');
   const url = lesson.videoUrl ?? '';
   const bad = mode === 'link' && url.trim() !== '' && !isAllowedExternalVideo(url);
-  const pick = (m: 'upload' | 'link') => {
+  const pick = (m: 'upload' | 'link' | 'voice') => {
+    if (m === mode) return;
     setMode(m);
-    onChange(m === 'link' ? { ...lesson, file: null } : { ...lesson, videoUrl: null });
+    // A video file and a voice file are different things, so switching between them never keeps the old file.
+    if (m === 'voice') onChange({ ...lesson, type: 'audio', file: null, videoUrl: null });
+    else if (m === 'link') onChange({ ...lesson, type: 'video', file: null });
+    else onChange({ ...lesson, type: 'video', videoUrl: null, file: lesson.type === 'audio' ? null : lesson.file });
   };
+  const fileOf = (d: PrivateUploadData | null): CourseLessonInput['file'] => (d ? { url: d.publicId, name: d.fileName, size: d.fileSize, mimeType: d.mimeType } : null);
   return (
     <div className="flex flex-col gap-2">
-      <div role="radiogroup" aria-label="Video source" className="inline-flex rounded-lg border border-bone overflow-hidden self-start">
-        {([['upload', 'Upload MP4'], ['link', 'Paste YouTube / Vimeo link']] as const).map(([m, label]) => (
+      <div role="radiogroup" aria-label="Lesson source" className="inline-flex flex-wrap rounded-lg border border-bone overflow-hidden self-start">
+        {([['upload', 'Upload MP4'], ['link', 'Paste YouTube / Vimeo link'], ['voice', 'Voice (record / upload)']] as const).map(([m, label]) => (
           <button key={m} type="button" role="radio" aria-checked={mode === m} onClick={() => pick(m)}
-            className={clsx('px-3 py-1.5 text-[12.5px] border-none cursor-pointer', mode === m ? 'bg-carbon text-white' : 'bg-white text-graphite hover:bg-cream')}>{label}</button>
+            className={clsx('px-3 py-1.5 text-[12.5px] border-none cursor-pointer inline-flex items-center gap-1.5', mode === m ? 'bg-carbon text-white' : 'bg-white text-graphite hover:bg-cream')}>
+            {m === 'voice' && <Mic size={13} aria-hidden />}{label}
+          </button>
         ))}
       </div>
-      {mode === 'upload' ? (
+      {mode === 'voice' ? (
+        lesson.file ? (
+          <FileUpload value={toUpload(lesson.file)} onChange={d => onChange({ ...lesson, file: fileOf(d) })} />
+        ) : (
+          <div className="flex flex-col gap-2">
+            <div role="radiogroup" aria-label="Voice source" className="inline-flex rounded-lg border border-bone overflow-hidden self-start">
+              {([['record', 'Record now'], ['upload', 'Upload a file']] as const).map(([h, label]) => (
+                <button key={h} type="button" role="radio" aria-checked={voiceHow === h} onClick={() => setVoiceHow(h)}
+                  className={clsx('px-3 py-1 text-[12px] border-none cursor-pointer', voiceHow === h ? 'bg-brand-pale-orange text-carbon font-semibold' : 'bg-white text-graphite hover:bg-cream')}>{label}</button>
+              ))}
+            </div>
+            {voiceHow === 'record' ? (
+              <VoiceRecorder onSaved={(d, minutes) => onChange({ ...lesson, type: 'audio', videoUrl: null, file: fileOf(d), durationMinutes: minutes })} />
+            ) : (
+              <FileUpload
+                value={null} accept={AUDIO_ACCEPT} label="Upload the voice recording (MP3, M4A, WAV or OGG)"
+                onFilePicked={f => readVideoMinutes(f).then(m => { pickedMinutes.current = m; })}
+                onChange={d => onChange({ ...lesson, type: 'audio', videoUrl: null, file: fileOf(d), ...(d && pickedMinutes.current ? { durationMinutes: pickedMinutes.current } : {}) })}
+              />
+            )}
+          </div>
+        )
+      ) : mode === 'upload' ? (
         <FileUpload
           value={toUpload(lesson.file)} accept="video/mp4,video/*" label="Upload the video (MP4)"
           onFilePicked={f => readVideoMinutes(f).then(m => { pickedMinutes.current = m; })}
@@ -91,23 +127,6 @@ function VideoSource({ lesson, onChange }: { lesson: CourseLessonInput; onChange
         </>
       )}
     </div>
-  );
-}
-
-/** Voice lesson source: upload an MP3 / M4A / WAV / OGG recording. */
-function AudioSource({ lesson, onChange }: { lesson: CourseLessonInput; onChange: (l: CourseLessonInput) => void }) {
-  const pickedMinutes = useRef(0);
-  return (
-    <FileUpload
-      value={toUpload(lesson.file)} accept="audio/mpeg,audio/mp4,audio/x-m4a,audio/wav,audio/x-wav,audio/ogg,.mp3,.m4a,.wav,.ogg"
-      label="Upload the voice recording (MP3, M4A, WAV or OGG)"
-      onFilePicked={f => readVideoMinutes(f).then(m => { pickedMinutes.current = m; })}
-      onChange={d => onChange({
-        ...lesson, videoUrl: null,
-        file: d ? { url: d.publicId, name: d.fileName, size: d.fileSize, mimeType: d.mimeType } : null,
-        ...(d && pickedMinutes.current ? { durationMinutes: pickedMinutes.current } : {}),
-      })}
-    />
   );
 }
 
@@ -162,11 +181,8 @@ function LessonEditor({ lesson, index, count, onChange, onMove, onRemove }: {
         </div>
       </div>
 
-      {lesson.type === 'video' && (
+      {(lesson.type === 'video' || lesson.type === 'audio') && (
         <VideoSource lesson={lesson} onChange={onChange} />
-      )}
-      {lesson.type === 'audio' && (
-        <AudioSource lesson={lesson} onChange={onChange} />
       )}
       {(lesson.type === 'video' || lesson.type === 'audio') && (
         <LessonSubtitlesEditor subtitles={lesson.subtitles ?? []} onChange={s => set('subtitles', s)} external={lesson.type === 'video' && !!lesson.videoUrl} />
