@@ -149,7 +149,11 @@ export const apiAdminSearchProducts = (q: string) =>
 // ── Courses ───────────────────────────────────────────────────
 
 export type LessonType = 'video' | 'audio' | 'pdf' | 'text' | 'quiz';
-export interface CourseFileRef { url: string; name: string; size?: number | null; mimeType?: string | null }
+export interface CourseFileRef {
+  url: string; name: string; size?: number | null; mimeType?: string | null;
+  /** Builder only: a link the seller's browser can play (a signed link from the API, or a local blob right after upload). Never saved. */
+  playUrl?: string | null;
+}
 /** Urdu / English subtitles of a video or voice lesson. `content` is WebVTT (timed) or a plain transcript. */
 export interface LessonSubtitle { lang: 'ur' | 'en'; kind?: 'timed' | 'text'; content: string }
 export interface QuizQuestionInput { question: string; options: string[]; answerIndex: number }
@@ -186,7 +190,7 @@ export interface CertificateConfig {
 export interface CertificateDetails { fullName: string; guardianName?: string | null; gender?: 'male' | 'female' | null; institute?: string | null; city?: string | null; country?: string | null }
 
 export interface CourseBuilderData {
-  product: { _id: string; name: string; slug: string; status: string; deliveryFormat: string };
+  product: { _id: string; name: string; slug: string; status: string; deliveryFormat: string; imageCount?: number; classFrom?: string | null; classTo?: string | null };
   sections: CourseSectionInput[];
   certificateEnabled: boolean;
   certificateConfig?: CertificateConfig | null;

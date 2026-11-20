@@ -72,7 +72,9 @@ function VideoSource({ lesson, onChange }: { lesson: CourseLessonInput; onChange
     else if (m === 'link') onChange({ ...lesson, type: 'video', file: null });
     else onChange({ ...lesson, type: 'video', videoUrl: null, file: lesson.type === 'audio' ? null : lesson.file });
   };
-  const fileOf = (d: PrivateUploadData | null): CourseLessonInput['file'] => (d ? { url: d.publicId, name: d.fileName, size: d.fileSize, mimeType: d.mimeType } : null);
+  const pickedUrl = useRef<string | null>(null);
+  const fileOf = (d: PrivateUploadData | null, playUrl?: string | null): CourseLessonInput['file'] =>
+    (d ? { url: d.publicId, name: d.fileName, size: d.fileSize, mimeType: d.mimeType, ...(playUrl ? { playUrl } : {}) } : null);
   return (
     <div className="flex flex-col gap-2">
       <div role="radiogroup" aria-label="Lesson source" className="inline-flex flex-wrap rounded-lg border border-bone overflow-hidden self-start">
@@ -95,12 +97,12 @@ function VideoSource({ lesson, onChange }: { lesson: CourseLessonInput; onChange
               ))}
             </div>
             {voiceHow === 'record' ? (
-              <VoiceRecorder onUseUpload={() => setVoiceHow('upload')} onSaved={(d, minutes) => onChange({ ...lesson, type: 'audio', videoUrl: null, file: fileOf(d), durationMinutes: minutes })} />
+              <VoiceRecorder onUseUpload={() => setVoiceHow('upload')} onSaved={(d, minutes, localUrl) => onChange({ ...lesson, type: 'audio', videoUrl: null, file: fileOf(d, localUrl), durationMinutes: minutes })} />
             ) : (
               <FileUpload
                 value={null} accept={AUDIO_ACCEPT} label="Upload the voice recording (MP3, M4A, WAV or OGG)"
-                onFilePicked={f => readVideoMinutes(f).then(m => { pickedMinutes.current = m; })}
-                onChange={d => onChange({ ...lesson, type: 'audio', videoUrl: null, file: fileOf(d), ...(d && pickedMinutes.current ? { durationMinutes: pickedMinutes.current } : {}) })}
+                onFilePicked={f => { pickedUrl.current = URL.createObjectURL(f); readVideoMinutes(f).then(m => { pickedMinutes.current = m; }); }}
+                onChange={d => onChange({ ...lesson, type: 'audio', videoUrl: null, file: fileOf(d, pickedUrl.current), ...(d && pickedMinutes.current ? { durationMinutes: pickedMinutes.current } : {}) })}
               />
             )}
           </div>
@@ -163,13 +165,37 @@ function QuizEditor({ quiz, onChange }: { quiz: NonNullable<CourseLessonInput['q
   );
 }
 
-function LessonEditor({ lesson, index, count, onChange, onMove, onRemove }: {
-  lesson: CourseLessonInput; index: number; count: number;
+/** What stops a lesson from being saved (mirrors the API's cleanCourseInput), or null when it is complete. */
+function lessonProblem(l: CourseLessonInput): string | null {
+  if (!l.title.trim()) return 'needs a title';
+  if (l.type === 'video') {
+    if (l.videoUrl?.trim()) return isAllowedExternalVideo(l.videoUrl) ? null : 'has an invalid video link (use https YouTube or Vimeo)';
+    if (!l.file) return 'needs a video (upload an MP4 or paste a YouTube/Vimeo link)';
+  }
+  if (l.type === 'audio' && !l.file) return 'needs a voice recording (record or upload one)';
+  if (l.type === 'pdf' && !l.file) return 'needs a PDF';
+  if (l.type === 'text' && !l.text.trim()) return 'needs its lesson text';
+  if (l.type === 'quiz') {
+    const qs = l.quiz?.questions ?? [];
+    if (!qs.length) return 'needs at least one question';
+    for (let i = 0; i < qs.length; i++) {
+      if (!qs[i].question.trim()) return `has an empty question ${i + 1}`;
+      if (qs[i].options.filter(o => o.trim()).length < 2) return `needs at least 2 options in question ${i + 1}`;
+      if (!qs[i].options[qs[i].answerIndex]?.trim()) return `needs a correct answer marked in question ${i + 1}`;
+    }
+  }
+  return null;
+}
+
+interface BuilderIssue { message: string; /** element id to scroll to */ target?: string; /** link to another page (listing details) */ to?: string; publishOnly?: boolean }
+
+function LessonEditor({ id, lesson, index, count, onChange, onMove, onRemove }: {
+  id: string; lesson: CourseLessonInput; index: number; count: number;
   onChange: (l: CourseLessonInput) => void; onMove: (d: -1 | 1) => void; onRemove: () => void;
 }) {
   const set = <K extends keyof CourseLessonInput>(k: K, v: CourseLessonInput[K]) => onChange({ ...lesson, [k]: v });
   return (
-    <div className="rounded-xl border border-bone bg-white p-3 md:p-4 flex flex-col gap-3">
+    <div id={id} className="rounded-xl border border-bone bg-white p-3 md:p-4 flex flex-col gap-3 scroll-mt-[160px]">
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-[12px] font-bold text-slate w-6">{index + 1}.</span>
         <div className="flex-1 min-w-[180px]"><Input aria-label="Lesson title" value={lesson.title} maxLength={150} onChange={e => set('title', e.target.value)} placeholder="Lesson title" /></div>
@@ -185,7 +211,8 @@ function LessonEditor({ lesson, index, count, onChange, onMove, onRemove }: {
         <VideoSource lesson={lesson} onChange={onChange} />
       )}
       {(lesson.type === 'video' || lesson.type === 'audio') && (
-        <LessonSubtitlesEditor subtitles={lesson.subtitles ?? []} onChange={s => set('subtitles', s)} external={lesson.type === 'video' && !!lesson.videoUrl} />
+        <LessonSubtitlesEditor subtitles={lesson.subtitles ?? []} onChange={s => set('subtitles', s)} external={lesson.type === 'video' && !!lesson.videoUrl}
+          audioUrl={lesson.type === 'audio' ? lesson.file?.playUrl ?? null : null} voiceMissing={lesson.type === 'audio' && !lesson.file} />
       )}
       {lesson.type === 'pdf' && (
         <FileUpload
@@ -269,9 +296,37 @@ export default function CourseBuilder() {
   const daysBad = accessMode === 'days' && (!Number.isInteger(daysNum) || daysNum < 1 || daysNum > 3650);
   const badVideo = sections.some(s => s.lessons.some(l => l.type === 'video' && !!l.videoUrl?.trim() && !isAllowedExternalVideo(l.videoUrl)));
 
+  // ── Everything that would make Save / Publish fail, each with a link to where it is fixed ──
+  const editBase = `/store/${storeId}/products/edit/${productId}`;
+  const issues: BuilderIssue[] = [];
+  // Publish-only problems matter just for a course that can still be published (the Publish button only exists for those).
+  const canPublish = !!data && ['draft', 'rejected', 'archived'].includes(data.product.status);
+  if (data) {
+    if (!lessonCount) issues.push({ message: 'Add at least one lesson to the course', target: 'course-lessons', publishOnly: true });
+    sections.forEach((s, si) => s.lessons.forEach((l, li) => {
+      const p = lessonProblem(l);
+      if (p) issues.push({ message: `Section ${si + 1}, lesson ${li + 1}${l.title.trim() ? ` "${l.title.trim()}"` : ''} ${p}`, target: `lesson-${si}-${li}` });
+    }));
+    if (daysBad) issues.push({ message: 'Access days must be a whole number from 1 to 3650', target: 'course-access' });
+    if (canPublish && data.product.imageCount === 0) issues.push({ message: 'Add at least 1 photo to the listing (step 2 – Photos & files)', to: `${editBase}?step=1&field=fld-photos`, publishOnly: true });
+    if (canPublish && !data.product.classFrom && !data.product.classTo) issues.push({ message: 'Choose the classes this course is suitable for (step 4 – Category & details)', to: `${editBase}?step=3&field=fld-learning`, publishOnly: true });
+  }
+  const [attempted, setAttempted] = useState(false);
+  const goTo = (target?: string) => {
+    const el = target ? document.getElementById(target) : null;
+    el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    el?.querySelector<HTMLElement>('input,textarea,button')?.focus({ preventScroll: true });
+  };
+
   const save = async (publish: boolean) => {
+    const blocking = issues.filter(i => publish || !i.publishOnly);
+    if (blocking.length) {
+      setAttempted(true);
+      goTo(blocking.find(i => i.target)?.target);
+      toast.error(blocking.length === 1 ? blocking[0].message : `${blocking.length} things need fixing first — see the list at the top`);
+      return;
+    }
     if (badVideo) { toast.error('One of the video links is not a valid https YouTube or Vimeo link.'); return; }
-    if (daysBad) { toast.error('Access days must be a whole number from 1 to 3650.'); return; }
     setSaving(publish ? 'publish' : 'save');
     try {
       const cleanOutcomes = outcomes.map(o => o.trim()).filter(Boolean);
@@ -326,7 +381,7 @@ export default function CourseBuilder() {
           <div className="flex gap-2 flex-wrap">
             <Button variant="ghost" size="sm" to={`/store/${storeId}/products/${productId}/course/students`}><Users size={13} /> Students</Button>
             <Button variant="outline" size="sm" loading={saving === 'save'} onClick={() => save(false)}>{dirty ? 'Save changes' : 'Saved'}</Button>
-            {isDraft && <Button variant="primary" size="sm" loading={saving === 'publish'} disabled={!lessonCount} onClick={() => save(true)}>Save & publish</Button>}
+            {isDraft && <Button variant="primary" size="sm" loading={saving === 'publish'} onClick={() => save(true)}>Save & publish</Button>}
           </div>
         }
       />
@@ -337,6 +392,22 @@ export default function CourseBuilder() {
           <span className="ml-auto rounded-full bg-fog px-2 py-[2px] text-slate capitalize">{data.product.status.replace('_', ' ')}</span>
         </div>
 
+        {attempted && issues.length > 0 && (
+          <div role="alert" className="rounded-xl border border-error-border bg-error-bg px-4 py-3">
+            <p className="text-[13px] font-bold text-error m-0 mb-1.5">Fix these before you continue ({issues.length})</p>
+            <ul className="list-none p-0 m-0 flex flex-col gap-1">
+              {issues.map((x, i) => (
+                <li key={i}>
+                  {x.to
+                    ? <Link to={x.to} className="text-[13px] text-error underline underline-offset-2">{x.message} →</Link>
+                    : <button type="button" onClick={() => goTo(x.target)} className="bg-transparent border-none p-0 cursor-pointer text-[13px] text-error underline underline-offset-2 text-start">{x.message}</button>}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <div id="course-lessons" className="flex flex-col gap-4">
         {sections.map((s, si) => (
           <Card key={s._id ?? `new-${si}`} padding="none">
             <div className="px-4 md:px-5 py-3 border-b border-bone flex items-center gap-2">
@@ -349,7 +420,7 @@ export default function CourseBuilder() {
             <div className="p-3 md:p-4 flex flex-col gap-3 bg-cream/40">
               {s.lessons.map((l, li) => (
                 <LessonEditor
-                  key={l._id ?? `n-${si}-${li}`} lesson={l} index={li} count={s.lessons.length}
+                  key={l._id ?? `n-${si}-${li}`} id={`lesson-${si}-${li}`} lesson={l} index={li} count={s.lessons.length}
                   onChange={next => setLesson(si, li, next)}
                   onMove={d => setSection(si, { lessons: move(s.lessons, li, d) })}
                   onRemove={() => setSection(si, { lessons: s.lessons.filter((_, k) => k !== li) })}
@@ -364,6 +435,7 @@ export default function CourseBuilder() {
           </Card>
         ))}
         <Button variant="outline" size="md" onClick={() => edit([...sections, { title: `Section ${sections.length + 1}`, lessons: [] }])}><Plus size={14} /> Add section</Button>
+        </div>
 
         <Card>
           <h2 className="text-[14px] font-bold text-carbon m-0 mb-1">About this course</h2>
@@ -387,7 +459,7 @@ export default function CourseBuilder() {
                 <Textarea label="Instructor bio" rows={3} maxLength={1000} value={instructor.bio} onChange={e => { setInstructor({ ...instructor, bio: e.target.value }); setDirty(true); }} placeholder="Qualifications, experience, teaching style…" />
               </div>
             </div>
-            <div>
+            <div id="course-access">
               <p className="text-[13px] font-bold text-carbon m-0 mb-1.5">How long do students keep access?</p>
               <div className="flex items-center gap-3 flex-wrap">
                 <div role="radiogroup" aria-label="Access duration" className="inline-flex rounded-lg border border-bone overflow-hidden">

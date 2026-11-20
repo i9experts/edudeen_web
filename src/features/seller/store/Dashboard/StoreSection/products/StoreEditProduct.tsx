@@ -352,7 +352,7 @@ export default function StoreEditProduct() {
     if (issues.length) {
       wiz.setAttempted(true);
       validationMsg.current = issues[0].message;
-      setError(issues.length > 1 ? ` (+ more to fix)` : issues[0].message);
+      setError(issues.length > 1 ? `${issues[0].message} (+${issues.length - 1} more to fix — see the red steps on the left)` : issues[0].message);
       wiz.go(issues[0].step, issues[0].fieldId);
       return;
     }

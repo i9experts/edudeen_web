@@ -58,7 +58,8 @@ type Live = { stream: MediaStream; ctx: AudioContext; node: ScriptProcessorNode;
  * `onSaved` gets the stored file and its length in whole minutes.
  */
 export function VoiceRecorder({ onSaved, onUseUpload }: {
-  onSaved: (file: PrivateUploadData, minutes: number) => void;
+  /** `localUrl` plays the recording straight from this browser (the builder's subtitle timeline needs it before the course is saved). */
+  onSaved: (file: PrivateUploadData, minutes: number, localUrl: string) => void;
   /** Offered when the microphone cannot be used: switches the seller to uploading a file. */
   onUseUpload?: () => void;
 }) {
@@ -183,7 +184,8 @@ export function VoiceRecorder({ onSaved, onUseUpload }: {
   const save = () => {
     if (!take) return;
     const minutes = Math.max(1, Math.ceil(take.seconds / 60));
-    upload(take.file).then(d => { discard(); onSaved(d, minutes); }).catch(() => undefined);
+    const file = take.file;
+    upload(file).then(d => { const localUrl = URL.createObjectURL(file); discard(); onSaved(d, minutes, localUrl); }).catch(() => undefined);
   };
 
   if (!supported) {

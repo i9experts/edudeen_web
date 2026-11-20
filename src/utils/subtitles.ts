@@ -56,6 +56,70 @@ export function normalizeSubtitle(raw: string): { kind: 'timed' | 'text'; conten
   return cues.length ? { kind: 'timed', content: cuesToVtt(cues) } : { kind: 'text', content: raw.replace(/^\uFEFF/, '').trim() };
 }
 
+const MIN_CUE = 0.3;
+
+/** Cues sorted by start time, each at least MIN_CUE long, with line breaks that cannot split a WebVTT block. */
+export function tidyCues(cues: Cue[]): Cue[] {
+  return [...cues]
+    .map(c => ({ start: Math.max(0, c.start), end: Math.max(c.end, Math.max(0, c.start) + MIN_CUE), text: c.text.replace(/\n{2,}/g, '\n').replace(/^\n+|\n+$/g, '') }))
+    .sort((a, b) => a.start - b.start);
+}
+
+/** Writes cues back as WebVTT (the form that is stored). */
+export function vttFromCues(cues: Cue[]): string {
+  const clean = tidyCues(cues).filter(c => c.text.trim());
+  return clean.length ? cuesToVtt(clean) : '';
+}
+
+/**
+ * Turns a plain transcript into cues spread evenly over `totalSeconds`, one cue per line (or per sentence when the
+ * text is a single paragraph). A starting point the seller then drags into place on the timeline.
+ */
+export function spreadTranscript(text: string, totalSeconds: number): Cue[] {
+  const byLine = text.split(/\n+/).map(s => s.trim()).filter(Boolean);
+  const lines = byLine.length > 1 ? byLine : (text.match(/[^.۔?؟!]+[.۔?؟!]?/g) ?? []).map(s => s.trim()).filter(Boolean);
+  if (!lines.length) return [];
+  const per = Math.max(MIN_CUE, (totalSeconds > 0 ? totalSeconds : lines.length * 3) / lines.length);
+  return lines.map((t, i) => ({ start: i * per, end: (i + 1) * per, text: t }));
+}
+
+/** One cue per line, spread evenly over `total` seconds (3 s each when the length is unknown). */
+export function spreadLines(lines: string[], total: number): Cue[] {
+  if (!lines.length) return [];
+  const per = Math.max(MIN_CUE, total > 0 ? total / lines.length : 3);
+  return lines.map((text, i) => ({ start: i * per, end: (i + 1) * per, text }));
+}
+
+/**
+ * The seller edited the text line by line: every line keeps the timing of the cue at the same position, new lines at
+ * the end get 3 s slots after the last cue (or everything is re-spread when they would run past the end of the voice).
+ */
+export function cuesFromLines(lines: string[], previous: Cue[], total: number): Cue[] {
+  if (!previous.length) return spreadLines(lines, total);
+  let cursor = previous[previous.length - 1].end;
+  const out: Cue[] = [];
+  for (let i = 0; i < lines.length; i++) {
+    if (previous[i]) { out.push({ ...previous[i], text: lines[i] }); continue; }
+    out.push({ start: cursor, end: cursor + 3, text: lines[i] });
+    cursor += 3;
+  }
+  return total > 0 && cursor > total ? spreadLines(lines, total) : out;
+}
+
+/**
+ * "Tap along" timing: `taps[i]` is the moment line i started. Lines not tapped yet follow 3 s apart; each cue lasts
+ * until the next one starts, and the last one until `endAt` (3 s after its start when not known yet).
+ */
+export function cuesFromTaps(lines: string[], taps: number[], endAt: number | null): Cue[] {
+  const starts: number[] = [];
+  for (let i = 0; i < lines.length; i++) starts.push(i < taps.length ? taps[i] : i === 0 ? 0 : starts[i - 1] + 3);
+  return lines.map((text, i) => {
+    const start = starts[i];
+    const end = i < lines.length - 1 ? starts[i + 1] : (endAt ?? start + 3);
+    return { start, end: Math.max(end, start + MIN_CUE), text };
+  });
+}
+
 /** A short label for the builder: "42 timed lines" or "plain transcript". */
 export function describeSubtitle(raw: string): string {
   if (!raw.trim()) return 'empty';

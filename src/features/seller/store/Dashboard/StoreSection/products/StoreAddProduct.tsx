@@ -134,7 +134,9 @@ export default function StoreAddProduct() {
   // ── Every rule the form enforces, grouped by the step it belongs to ──────────
   const collectIssues = (status: ProductStatus): WizardIssue[] => {
     const out: WizardIssue[] = [];
-    const finalStatus = isCourse ? 'draft' : status;
+    // A course is only ever published later from the course builder, so it must already have everything a live listing needs
+    // (photo, class range) — otherwise the builder's Publish would fail on a step the seller thought was Done.
+    const finalStatus = isCourse ? 'active' : status;
     const tErr0 = titleFormError(cur.name);
     if (tErr0) out.push({ step: 0, message: tErr0, fieldId: 'ap-name' });
     const descErr = descriptionError(cur.description);
@@ -215,7 +217,7 @@ export default function StoreAddProduct() {
     if (found.length) {
       wiz.setAttempted(true);
       validationMsg.current = found[0].message;
-      setError(found.length > 1 ? ` (+ more to fix)` : found[0].message);
+      setError(found.length > 1 ? `${found[0].message} (+${found.length - 1} more to fix — see the red steps on the left)` : found[0].message);
       wiz.go(found[0].step, found[0].fieldId);
       if (found[0].fieldId === 'fld-schedule') setShowScheduleModal(true);
       return;

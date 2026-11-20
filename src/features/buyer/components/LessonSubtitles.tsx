@@ -13,16 +13,23 @@ const langLabel = (code: string) => SUBTITLE_LANGS.find(l => l.code === code)?.l
  * transcript. Urdu / English switch when the teacher added both. Text only, never HTML.
  * Pass `time` (seconds) to follow playback; pass `onSeek` to make transcript lines jump to that moment.
  */
-export function LessonSubtitles({ subtitles, time, onSeek, live }: {
+export function LessonSubtitles({ subtitles, time, onSeek, live, choice, onChoice }: {
   subtitles: LessonSubtitle[];
   time?: number;
   onSeek?: (t: number) => void;
   /** Show the line being spoken right now, big, above the transcript. */
   live?: boolean;
+  /** Controlled mode (voice lessons): the learner's pick, `'off'` hides the subtitles. Leave both out to let this component remember the language itself. */
+  choice?: 'ur' | 'en' | 'off';
+  onChoice?: (c: 'ur' | 'en' | 'off') => void;
 }) {
   const { lang: appLang } = useLanguage();
   // Starts in the learner's own language when the teacher wrote one, else the first available.
-  const [lang, setLang] = useState(() => (subtitles.find(s => s.lang === appLang) ?? subtitles[0])?.lang ?? 'en');
+  const [ownLang, setOwnLang] = useState(() => (subtitles.find(s => s.lang === appLang) ?? subtitles[0])?.lang ?? 'en');
+  const controlled = choice !== undefined && onChoice !== undefined;
+  const off = controlled && choice === 'off';
+  const lang = controlled && choice !== 'off' ? choice : ownLang;
+  const setLang = (l: 'ur' | 'en') => (controlled ? onChoice(l) : setOwnLang(l));
   const sub = subtitles.find(s => s.lang === lang) ?? subtitles[0] ?? null;
   const cues = useMemo(() => (sub && sub.kind !== 'text' ? parseCues(sub.content) : []), [sub]);
   const timed = cues.length > 0;
@@ -49,18 +56,22 @@ export function LessonSubtitles({ subtitles, time, onSeek, live }: {
       <div className="flex items-center gap-2 flex-wrap px-3 py-2 border-b border-bone bg-cream/60">
         <Captions size={15} className="text-brand-royal shrink-0" aria-hidden />
         <span className="text-[13px] font-bold text-carbon">Subtitles</span>
-        {subtitles.length > 1 && (
+        {(subtitles.length > 1 || controlled) && (
           <div role="radiogroup" aria-label="Subtitle language" className="inline-flex rounded-lg border border-bone overflow-hidden">
             {subtitles.map(s => (
-              <button key={s.lang} type="button" role="radio" aria-checked={s.lang === sub.lang} onClick={() => setLang(s.lang)} lang={s.lang}
-                className={clsx('px-2.5 py-1 text-[12.5px] border-none cursor-pointer', s.lang === 'ur' && 'font-urdu', s.lang === sub.lang ? 'bg-carbon text-white' : 'bg-white text-graphite hover:bg-cream')}>
+              <button key={s.lang} type="button" role="radio" aria-checked={!off && s.lang === sub.lang} onClick={() => setLang(s.lang)} lang={s.lang}
+                className={clsx('px-2.5 py-1 text-[12.5px] border-none cursor-pointer', s.lang === 'ur' && 'font-urdu', !off && s.lang === sub.lang ? 'bg-carbon text-white' : 'bg-white text-graphite hover:bg-cream')}>
                 {s.lang === 'ur' ? 'اردو' : 'English'}
               </button>
             ))}
+            {controlled && (
+              <button type="button" role="radio" aria-checked={off} onClick={() => onChoice('off')}
+                className={clsx('px-2.5 py-1 text-[12.5px] border-none cursor-pointer', off ? 'bg-carbon text-white' : 'bg-white text-graphite hover:bg-cream')}>Off</button>
+            )}
           </div>
         )}
-        {subtitles.length === 1 && <span className="text-[12px] text-slate" lang={sub.lang}>{langLabel(sub.lang)}</span>}
-        {timed && (
+        {subtitles.length === 1 && !controlled && <span className="text-[12px] text-slate" lang={sub.lang}>{langLabel(sub.lang)}</span>}
+        {timed && !off && (
           <button type="button" aria-expanded={open} onClick={() => setOpen(o => !o)}
             className="ms-auto inline-flex items-center gap-1 bg-transparent border-none cursor-pointer text-[12.5px] font-semibold text-brand-orange">
             {open ? 'Hide transcript' : 'Show transcript'} {open ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
@@ -68,14 +79,14 @@ export function LessonSubtitles({ subtitles, time, onSeek, live }: {
         )}
       </div>
 
-      {live && timed && (
+      {live && timed && !off && (
         <p dir={dir} lang={sub.lang} aria-hidden
           className={clsx('m-0 px-4 py-4 min-h-[88px] flex items-center justify-center text-center text-[18px] md:text-[22px] leading-[1.9] text-carbon whitespace-pre-line', urdu && 'font-urdu')}>
           {active >= 0 ? cues[active].text : ''}
         </p>
       )}
 
-      {open && (
+      {open && !off && (
         <div ref={listRef} className="relative max-h-[280px] overflow-y-auto border-t border-bone">
           {timed ? (
             <ul className="list-none m-0 p-1 flex flex-col">
