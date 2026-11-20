@@ -286,6 +286,9 @@ export interface MyCourse {
   isPublished?: boolean;
 }
 
+/** The seller's saved voice recording as bytes (for the in-browser voice editor). */
+export const apiGetLessonVoice = (storeId: string, productId: string, lessonId: string) =>
+  client.get<never, ArrayBuffer>(`/api/courses/seller/${storeId}/${productId}/lessons/${lessonId}/voice`, { responseType: 'arraybuffer' });
 export const apiGetCourseBuilder = (storeId: string, productId: string) => client.get<never, Ok<CourseBuilderData>>(`/api/courses/seller/${storeId}/${productId}`);
 export const apiSaveCourse = (storeId: string, productId: string, body: { sections: CourseSectionInput[]; certificateEnabled: boolean; certificateConfig?: CertificateConfig | null; outcomes?: string[]; instructor?: CourseInstructor | null; accessDays?: number | null }) =>
   client.put<never, Ok<{ sections: CourseSectionInput[]; certificateEnabled: boolean }>>(`/api/courses/seller/${storeId}/${productId}`, body);

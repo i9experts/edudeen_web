@@ -3,24 +3,13 @@ import { Mic, Pause, Play, RotateCcw, Square, Loader2, Check } from 'lucide-reac
 import { Button } from '@/components/comman/ui';
 import { useUpload } from '@/hooks/upload/useUpload';
 import type { PrivateUploadData } from '@/api/upload';
+import { encodeWav } from '@/utils/audioEdit';
 
 /** Speech does not need CD quality: 22.05 kHz mono keeps a recording near 2.6 MB per minute. */
 const OUT_RATE = 22050;
 const MAX_SECONDS = 30 * 60;
 
 const clock = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
-
-/** 16-bit mono PCM → a WAV file (plays and seeks in every browser, unlike a raw MediaRecorder stream). */
-function encodeWav(chunks: Int16Array[], rate: number): Blob {
-  const samples = chunks.reduce((n, c) => n + c.length, 0);
-  const head = new DataView(new ArrayBuffer(44));
-  const text = (at: number, s: string) => { for (let i = 0; i < s.length; i++) head.setUint8(at + i, s.charCodeAt(i)); };
-  text(0, 'RIFF'); head.setUint32(4, 36 + samples * 2, true); text(8, 'WAVE');
-  text(12, 'fmt '); head.setUint32(16, 16, true); head.setUint16(20, 1, true); head.setUint16(22, 1, true);
-  head.setUint32(24, rate, true); head.setUint32(28, rate * 2, true); head.setUint16(32, 2, true); head.setUint16(34, 16, true);
-  text(36, 'data'); head.setUint32(40, samples * 2, true);
-  return new Blob([head.buffer as ArrayBuffer, ...chunks.map(c => c.buffer as ArrayBuffer)], { type: 'audio/wav' });
-}
 
 const microphoneState = async (): Promise<PermissionState | null> => {
   try { return (await navigator.permissions.query({ name: 'microphone' as PermissionName })).state; } catch { return null; }
@@ -57,9 +46,11 @@ type Live = { stream: MediaStream; ctx: AudioContext; node: ScriptProcessorNode;
  * Records the seller's voice in the browser (start, pause, stop, listen back) and uploads it as a WAV file.
  * `onSaved` gets the stored file and its length in whole minutes.
  */
-export function VoiceRecorder({ onSaved, onUseUpload }: {
+export function VoiceRecorder({ onSaved, onTake, onUseUpload }: {
   /** `localUrl` plays the recording straight from this browser (the builder's subtitle timeline needs it before the course is saved). */
-  onSaved: (file: PrivateUploadData, minutes: number, localUrl: string) => void;
+  onSaved?: (file: PrivateUploadData, minutes: number, localUrl: string) => void;
+  /** Editor mode: hands over the recorded WAV file instead of uploading it (the voice editor joins it to the lesson's voice). */
+  onTake?: (file: File, seconds: number) => void;
   /** Offered when the microphone cannot be used: switches the seller to uploading a file. */
   onUseUpload?: () => void;
 }) {
@@ -185,7 +176,8 @@ export function VoiceRecorder({ onSaved, onUseUpload }: {
     if (!take) return;
     const minutes = Math.max(1, Math.ceil(take.seconds / 60));
     const file = take.file;
-    upload(file).then(d => { const localUrl = URL.createObjectURL(file); discard(); onSaved(d, minutes, localUrl); }).catch(() => undefined);
+    if (onTake) { const seconds = take.seconds; discard(); onTake(file, seconds); return; }
+    upload(file).then(d => { const localUrl = URL.createObjectURL(file); discard(); onSaved?.(d, minutes, localUrl); }).catch(() => undefined);
   };
 
   if (!supported) {
@@ -199,7 +191,7 @@ export function VoiceRecorder({ onSaved, onUseUpload }: {
           <p className="m-0 text-[13px] font-semibold text-carbon">Your recording · {clock(take.seconds)}</p>
           <audio src={take.url} controls preload="metadata" aria-label="Listen to your recording" className="w-full" />
           <div className="flex gap-2 flex-wrap">
-            <Button variant="primary" size="sm" loading={uploading} onClick={save}><Check size={13} /> Use this recording</Button>
+            <Button variant="primary" size="sm" loading={uploading} onClick={save}><Check size={13} /> {onTake ? 'Add this recording' : 'Use this recording'}</Button>
             <Button variant="ghost" size="sm" disabled={uploading} onClick={() => { discard(); void start(); }}><RotateCcw size={13} /> Record again</Button>
           </div>
         </>

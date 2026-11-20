@@ -62,7 +62,7 @@ export function LessonSubtitlesEditor({ subtitles, onChange, external, audioUrl,
         <p className="m-0 flex items-center gap-1.5 text-[13px] font-bold text-carbon"><Captions size={15} className="text-brand-royal" /> Subtitles <span className="font-normal text-slate">(optional)</span></p>
         <p className="m-0 mt-0.5 text-[12px] text-slate">
           {audioUrl
-            ? 'Write the text, tap along while your voice plays, and every line is timed. Students choose Urdu or English before the voice starts.'
+            ? 'Write the text yourself, or let Edudeen listen to your voice and write the subtitles. Then review and fix them. Students choose Urdu or English before the voice starts.'
             : <>Write them in Urdu, English or both. Upload an .srt / .vtt file, or paste the text.
               {external ? ' Because this lesson plays from YouTube / Vimeo, students will read it as a transcript under the video.' : ' With timings, the words appear in sync with the lesson.'}</>}
         </p>

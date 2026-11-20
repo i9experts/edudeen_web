@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Plus, Trash2, ChevronUp, ChevronDown, Video, Mic, Loader2, Award, Users } from 'lucide-react';
+import { Plus, Trash2, ChevronUp, ChevronDown, Video, Mic, Scissors, Loader2, Award, Users } from 'lucide-react';
 import { isAllowedExternalVideo } from '@/utils/externalVideo';
 import { clsx } from 'clsx';
 import { useStoreWorkspace } from '@/components/layouts/StoreLayout';
@@ -8,9 +8,10 @@ import { useToast } from '@/contexts/ToastContext';
 import { CertificateDesigner, EMPTY_DESIGN, designFromConfig, configFromDesign, type CertDesign } from './CertificateDesigner';
 import { LessonSubtitlesEditor } from './LessonSubtitlesEditor';
 import { VoiceRecorder } from './VoiceRecorder';
-import { normalizeSubtitle } from '@/utils/subtitles';
+import { VoiceEditor } from './VoiceEditor';
+import { normalizeSubtitle, parseCues, vttFromCues } from '@/utils/subtitles';
 import {
-  apiGetCourseBuilder, apiSaveCourse,
+  apiGetCourseBuilder, apiGetLessonVoice, apiSaveCourse,
   type CourseBuilderData, type CourseLessonInput, type CourseSectionInput, type LessonType,
 } from '@/api/services/classroom';
 
@@ -55,8 +56,9 @@ const AUDIO_ACCEPT = 'audio/mpeg,audio/mp4,audio/x-m4a,audio/wav,audio/x-wav,aud
  * Lesson source, three ways: upload an MP4, paste a YouTube / Vimeo link, or a voice lesson (record in the
  * browser, or upload an MP3 / M4A / WAV / OGG). Picking Voice makes the lesson type `audio`; the other two are `video`.
  */
-function VideoSource({ lesson, onChange }: { lesson: CourseLessonInput; onChange: (l: CourseLessonInput) => void }) {
+function VideoSource({ lesson, onChange, loadVoice }: { lesson: CourseLessonInput; onChange: (l: CourseLessonInput) => void; loadVoice: () => Promise<ArrayBuffer> }) {
   const pickedMinutes = useRef(0);
+  const [editingVoice, setEditingVoice] = useState(false);
   const [mode, setMode] = useState<'upload' | 'link' | 'voice'>(lesson.type === 'audio' ? 'voice' : lesson.videoUrl ? 'link' : 'upload');
   const [voiceHow, setVoiceHow] = useState<'record' | 'upload'>('record');
   const url = lesson.videoUrl ?? '';
@@ -84,7 +86,27 @@ function VideoSource({ lesson, onChange }: { lesson: CourseLessonInput; onChange
       </div>
       {mode === 'voice' ? (
         lesson.file ? (
-          <FileUpload value={toUpload(lesson.file)} onChange={d => onChange({ ...lesson, file: fileOf(d) })} />
+          <div className="flex flex-col gap-2">
+            <FileUpload value={toUpload(lesson.file)} onChange={d => onChange({ ...lesson, file: fileOf(d) })} />
+            <Button variant="outline" size="sm" className="self-start" onClick={() => setEditingVoice(true)}><Scissors size={13} /> Edit voice — cut parts or add more voice</Button>
+            {editingVoice && (
+              <VoiceEditor
+                loadOriginal={loadVoice}
+                onClose={() => setEditingVoice(false)}
+                onApplied={r => {
+                  // Subtitles that were timed to the old voice follow the cuts; plain-text ones are untouched.
+                  const subtitles = (lesson.subtitles ?? []).flatMap(s => {
+                    const cues = parseCues(s.content);
+                    if (!cues.length) return [s];
+                    const content = vttFromCues(r.mapCues(cues));
+                    return content ? [{ ...s, kind: 'timed' as const, content }] : [];
+                  });
+                  onChange({ ...lesson, type: 'audio', videoUrl: null, file: fileOf(r.file, r.localUrl), durationMinutes: r.minutes, subtitles });
+                  setEditingVoice(false);
+                }}
+              />
+            )}
+          </div>
         ) : (
           <div className="flex flex-col gap-2">
             <div role="radiogroup" aria-label="Voice source" className="inline-flex rounded-lg border border-bone overflow-hidden self-start">
@@ -186,9 +208,11 @@ function lessonProblem(l: CourseLessonInput): string | null {
 
 interface BuilderIssue { message: string; /** element id to scroll to */ target?: string; /** does not stop a save, only publishing */ publishOnly?: boolean }
 
-function LessonEditor({ id, lesson, index, count, onChange, onMove, onRemove }: {
+function LessonEditor({ id, lesson, index, count, onChange, onMove, onRemove, loadVoice }: {
   id: string; lesson: CourseLessonInput; index: number; count: number;
   onChange: (l: CourseLessonInput) => void; onMove: (d: -1 | 1) => void; onRemove: () => void;
+  /** Bytes of this lesson's voice, for the voice editor. */
+  loadVoice: (l: CourseLessonInput) => Promise<ArrayBuffer>;
 }) {
   const set = <K extends keyof CourseLessonInput>(k: K, v: CourseLessonInput[K]) => onChange({ ...lesson, [k]: v });
   return (
@@ -205,7 +229,7 @@ function LessonEditor({ id, lesson, index, count, onChange, onMove, onRemove }: 
       </div>
 
       {(lesson.type === 'video' || lesson.type === 'audio') && (
-        <VideoSource lesson={lesson} onChange={onChange} />
+        <VideoSource lesson={lesson} onChange={onChange} loadVoice={() => loadVoice(lesson)} />
       )}
       {(lesson.type === 'video' || lesson.type === 'audio') && (
         <LessonSubtitlesEditor subtitles={lesson.subtitles ?? []} onChange={s => set('subtitles', s)} external={lesson.type === 'video' && !!lesson.videoUrl}
@@ -255,6 +279,13 @@ export interface CourseBuilderStatus {
 export default function CourseBuilder({ productId, onStatus }: { productId: string; onStatus?: (s: CourseBuilderStatus) => void }) {
   const toast = useToast();
   const { storeId, store } = useStoreWorkspace();
+  /** The bytes of a lesson's voice for the voice editor: a recording from this browser, or the saved one through the API. */
+  const loadVoice = async (l: CourseLessonInput): Promise<ArrayBuffer> => {
+    const local = l.file?.playUrl;
+    if (local?.startsWith('blob:')) return (await fetch(local)).arrayBuffer();
+    if (!l._id) throw new Error('Save the course once, then you can edit this voice.');
+    return apiGetLessonVoice(storeId, productId, l._id);
+  };
   const [data, setData] = useState<CourseBuilderData | null>(null);
   const [sections, setSections] = useState<CourseSectionInput[]>([]);
   const [certificate, setCertificate] = useState(true);
@@ -432,6 +463,7 @@ export default function CourseBuilder({ productId, onStatus }: { productId: stri
                   onChange={next => setLesson(si, li, next)}
                   onMove={d => setSection(si, { lessons: move(s.lessons, li, d) })}
                   onRemove={() => setSection(si, { lessons: s.lessons.filter((_, k) => k !== li) })}
+                  loadVoice={loadVoice}
                 />
               ))}
               <div className="flex gap-2 flex-wrap">

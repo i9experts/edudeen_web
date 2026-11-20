@@ -4,7 +4,8 @@
  */
 
 export type SubtitleLang = 'ur' | 'en';
-export interface Cue { start: number; end: number; text: string }
+/** `check` is only a note for the seller while reviewing (the browser was unsure about this line). It is never stored. */
+export interface Cue { start: number; end: number; text: string; check?: boolean }
 
 export const SUBTITLE_LANGS: { code: SubtitleLang; label: string; dir: 'ltr' | 'rtl' }[] = [
   { code: 'en', label: 'English', dir: 'ltr' },
@@ -61,7 +62,7 @@ const MIN_CUE = 0.3;
 /** Cues sorted by start time, each at least MIN_CUE long, with line breaks that cannot split a WebVTT block. */
 export function tidyCues(cues: Cue[]): Cue[] {
   return [...cues]
-    .map(c => ({ start: Math.max(0, c.start), end: Math.max(c.end, Math.max(0, c.start) + MIN_CUE), text: c.text.replace(/\n{2,}/g, '\n').replace(/^\n+|\n+$/g, '') }))
+    .map(c => ({ ...c, start: Math.max(0, c.start), end: Math.max(c.end, Math.max(0, c.start) + MIN_CUE), text: c.text.replace(/\n{2,}/g, '\n').replace(/^\n+|\n+$/g, '') }))
     .sort((a, b) => a.start - b.start);
 }
 
@@ -104,20 +105,6 @@ export function cuesFromLines(lines: string[], previous: Cue[], total: number): 
     cursor += 3;
   }
   return total > 0 && cursor > total ? spreadLines(lines, total) : out;
-}
-
-/**
- * "Tap along" timing: `taps[i]` is the moment line i started. Lines not tapped yet follow 3 s apart; each cue lasts
- * until the next one starts, and the last one until `endAt` (3 s after its start when not known yet).
- */
-export function cuesFromTaps(lines: string[], taps: number[], endAt: number | null): Cue[] {
-  const starts: number[] = [];
-  for (let i = 0; i < lines.length; i++) starts.push(i < taps.length ? taps[i] : i === 0 ? 0 : starts[i - 1] + 3);
-  return lines.map((text, i) => {
-    const start = starts[i];
-    const end = i < lines.length - 1 ? starts[i + 1] : (endAt ?? start + 3);
-    return { start, end: Math.max(end, start + MIN_CUE), text };
-  });
 }
 
 /** A short label for the builder: "42 timed lines" or "plain transcript". */
