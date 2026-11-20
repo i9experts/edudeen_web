@@ -4,8 +4,7 @@
  */
 
 export type SubtitleLang = 'ur' | 'en';
-/** `check` is only a note for the seller while reviewing (the browser was unsure about this line). It is never stored. */
-export interface Cue { start: number; end: number; text: string; check?: boolean }
+export interface Cue { start: number; end: number; text: string }
 
 export const SUBTITLE_LANGS: { code: SubtitleLang; label: string; dir: 'ltr' | 'rtl' }[] = [
   { code: 'en', label: 'English', dir: 'ltr' },

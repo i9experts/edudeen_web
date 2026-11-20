@@ -1,23 +1,21 @@
 import { useMemo, useRef, useState, type RefObject } from 'react';
-import { AlertTriangle, Check, ChevronLeft, ChevronRight, Pause, Play, Plus, Trash2, Upload } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Pause, Play, Plus, Trash2, Upload } from 'lucide-react';
 import { clsx } from 'clsx';
 import { Button, Input, Textarea } from '@/components/comman/ui';
 import { UrduTextarea } from '@/components/comman/ui/UrduTextarea';
 import type { LessonSubtitle } from '@/api/services/classroom';
 import { SUBTITLE_LANGS, SUBTITLE_MAX_CHARS, cuesFromLines, cuesToVtt, parseCues, tidyCues, type Cue } from '@/utils/subtitles';
 import { useMediaClock } from './audioHooks';
-import { AutoSubtitles } from './AutoSubtitles';
 
 const MIN_CUE = 0.3;
 const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), Math.max(lo, hi));
 const stamp = (t: number) => `${Math.floor(t / 60)}:${(t % 60).toFixed(1).padStart(4, '0')}`;
 const TICK_STEPS = [1, 2, 5, 10, 15, 30, 60, 120, 300, 600];
 
-type Step = 'text' | 'auto' | 'tune';
+type Step = 'text' | 'tune';
 const STEPS: { id: Step; label: string }[] = [
   { id: 'text', label: '1. Write the text' },
-  { id: 'auto', label: '2. Auto subtitles from the voice' },
-  { id: 'tune', label: '3. Review and fix' },
+  { id: 'tune', label: '2. Review and fix' },
 ];
 
 function Clock({ audioRef, duration }: { audioRef: RefObject<HTMLAudioElement | null>; duration: number }) {
@@ -38,7 +36,7 @@ function LiveCaption({ audioRef, cues, lang }: { audioRef: RefObject<HTMLAudioEl
   );
 }
 
-/** One language: write the text, let Edudeen listen to the voice, then review and fix on a timeline. */
+/** One language: write the text, then place and fix every line against the voice on a timeline. */
 function CueTrack({ lang, content, onContent, audioRef, duration, onFile, onRemove }: {
   lang: 'ur' | 'en';
   content: string;
@@ -65,8 +63,6 @@ function CueTrack({ lang, content, onContent, audioRef, duration, onFile, onRemo
   const [active, setActive] = useState(-1);
   const [pps, setPps] = useState(40);
   const [hint, setHint] = useState('');
-  const [note, setNote] = useState('');
-  const [onlyCheck, setOnlyCheck] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const headRef = useRef<HTMLDivElement>(null);
@@ -78,7 +74,6 @@ function CueTrack({ lang, content, onContent, audioRef, duration, onFile, onRemo
   const cap = duration > 0 ? duration : Infinity;
   const width = Math.max(total * pps, 320);
   const tickStep = TICK_STEPS.find(s => s * pps >= 70) ?? 600;
-  const toCheck = cues.reduce((n, c) => n + (c.check ? 1 : 0), 0);
 
   const commit = (next: Cue[]) => {
     const t = tidyCues(next);
@@ -116,24 +111,10 @@ function CueTrack({ lang, content, onContent, audioRef, duration, onFile, onRemo
   const applyText = () => {
     if (!draftLines.length) { commit([]); return; }
     commit(cuesFromLines(draftLines, cues, duration));
-    setNote('');
     setStep('tune');
   };
 
-  // ── Step 2 result: a draft written by listening to the voice ──
-  const acceptAuto = (draftCues: Cue[]) => {
-    const t = commit(draftCues);
-    const flagged = t.filter(c => c.check).length;
-    setNote(`Edudeen wrote ${t.length} subtitle${t.length === 1 ? '' : 's'} from your voice.${flagged ? ` ${flagged} may be wrong — check them first.` : ' Play the voice and make sure every line is right.'}`);
-    setOnlyCheck(false);
-    setStep('tune');
-    const first = t.findIndex(c => c.check);
-    setSel(first >= 0 ? first : 0);
-    if (scrollRef.current) scrollRef.current.scrollLeft = 0;
-    seek(t[first >= 0 ? first : 0]?.start ?? 0);
-  };
-
-  // ── Step 3: review and fix ──
+  // ── Step 2: review and fix ──
   const seekFromPointer = (e: React.PointerEvent) => {
     const rect = trackRef.current?.getBoundingClientRect();
     if (rect) seek((e.clientX - rect.left) / pps);
@@ -150,16 +131,8 @@ function CueTrack({ lang, content, onContent, audioRef, duration, onFile, onRemo
     const t = commit([...cues, { start, end, text: lang === 'ur' ? 'نیا سب ٹائٹل' : 'New subtitle' }]);
     setSel(t.findIndex(c => c.start === start));
   };
-  // Fixing the words of a line counts as having checked it.
-  const update = (i: number, patch: Partial<Cue>) => commit(cues.map((c, k) => (k === i ? { ...c, ...patch, ...(patch.text !== undefined ? { check: false } : {}) } : c)));
+  const update = (i: number, patch: Partial<Cue>) => commit(cues.map((c, k) => (k === i ? { ...c, ...patch } : c)));
   const remove = (i: number) => { commit(cues.filter((_, k) => k !== i)); setSel(null); };
-  const markOk = (i: number) => commit(cues.map((c, k) => (k === i ? { ...c, check: false } : c)));
-  const nextToCheck = () => {
-    const from = sel ?? -1;
-    const i = cues.findIndex((c, k) => k > from && c.check);
-    const j = i >= 0 ? i : cues.findIndex(c => c.check);
-    if (j >= 0) showCue(j);
-  };
   const playLine = (c: Cue) => { seek(c.start); playUntil.current = c.end; void audioRef.current?.play(); };
 
   const onDown = (e: React.PointerEvent, i: number, mode: 'move' | 'l' | 'r') => {
@@ -184,7 +157,6 @@ function CueTrack({ lang, content, onContent, audioRef, duration, onFile, onRemo
   const onUp = () => { drag.current = null; };
 
   const current = sel !== null ? cues[sel] : undefined;
-  const listed = cues.map((c, i) => ({ c, i })).filter(x => !onlyCheck || x.c.check);
 
   return (
     <div className="flex flex-col gap-3">
@@ -210,7 +182,7 @@ function CueTrack({ lang, content, onContent, audioRef, duration, onFile, onRemo
       {/* Step 1 */}
       {step === 'text' && (
         <div className="flex flex-col gap-2">
-          <p className="m-0 text-[12.5px] text-slate">Type or paste what is said in the voice. <strong className="text-carbon">One line = one subtitle</strong>, so keep each line short (about one sentence). In step 3 you place the lines against the voice. Or skip this and let Edudeen write them in step 2.</p>
+          <p className="m-0 text-[12.5px] text-slate">Type or paste what is said in the voice. <strong className="text-carbon">One line = one subtitle</strong>, so keep each line short (about one sentence). In the next step you place the lines against the voice.</p>
           {lang === 'ur' ? (
             <UrduTextarea label="Urdu subtitle text" rows={8} maxLength={SUBTITLE_MAX_CHARS} value={draft} onChange={setDraft} placeholder="ہر سطر ایک سب ٹائٹل ہوگی" />
           ) : (
@@ -224,21 +196,10 @@ function CueTrack({ lang, content, onContent, audioRef, duration, onFile, onRemo
       )}
 
       {/* Step 2 */}
-      {step === 'auto' && <AutoSubtitles lang={lang} audioRef={audioRef} duration={duration} hasCues={cues.length > 0} onResult={acceptAuto} />}
-
-      {/* Step 3 */}
       {step === 'tune' && (
         <>
-          {note && <p role="status" className="m-0 rounded-lg bg-green-50 border border-success/30 px-3 py-2 text-[12.5px] text-carbon">{note}</p>}
-          {toCheck > 0 && (
-            <div role="status" className="rounded-lg bg-amber-50 border border-amber-300 px-3 py-2 flex items-center gap-2 flex-wrap text-[12.5px] text-carbon">
-              <AlertTriangle size={14} className="text-amber-600 shrink-0" aria-hidden />
-              <span><strong>{toCheck}</strong> {toCheck === 1 ? 'line is' : 'lines are'} marked ⚠ — the browser was not sure what it heard.</span>
-              <Button variant="outline" size="xs" className="ms-auto" onClick={nextToCheck}>Go to the next one to check →</Button>
-            </div>
-          )}
           {cues.length === 0 ? (
-            <p className="m-0 text-[12.5px] text-slate">There are no subtitles yet. Write the text in step 1, let Edudeen write them in step 2, or add one here at the playhead.</p>
+            <p className="m-0 text-[12.5px] text-slate">There are no subtitles yet. Write the text in step 1, or add one here at the playhead.</p>
           ) : (
             <p className="m-0 text-[12px] text-slate">Play the voice and watch the lines. Fix a wrong word, or drag a block to move it and its edges to resize it. Everything is saved when you save the course.</p>
           )}
@@ -260,16 +221,14 @@ function CueTrack({ lang, content, onContent, audioRef, duration, onFile, onRemo
               </div>
               <div className="relative h-16" onPointerDown={e => { setSel(null); seekFromPointer(e); }}>
                 {cues.map((c, i) => (
-                  <div key={i} role="button" tabIndex={0} aria-label={`Subtitle ${i + 1}${c.check ? ' (check this)' : ''}: ${c.text}`}
+                  <div key={i} role="button" tabIndex={0} aria-label={`Subtitle ${i + 1}: ${c.text}`}
                     onPointerDown={e => onDown(e, i, 'move')} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}
                     onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); showCue(i); } }}
                     className={clsx('absolute top-2 h-12 rounded-md border px-3 overflow-hidden text-[12px] leading-[1.5] cursor-grab active:cursor-grabbing touch-none',
-                      i === sel ? 'bg-brand-pale-orange border-brand-orange text-carbon z-[2]'
-                        : c.check ? 'bg-amber-50 border-amber-400 text-carbon'
-                          : i === active ? 'bg-green-100 border-success text-carbon' : 'bg-blue-50 border-brand-royal/40 text-carbon')}
+                      i === sel ? 'bg-brand-pale-orange border-brand-orange text-carbon z-[2]' : i === active ? 'bg-green-100 border-success text-carbon' : 'bg-blue-50 border-brand-royal/40 text-carbon')}
                     style={{ left: c.start * pps, width: Math.max((c.end - c.start) * pps, 8) }} title={`${stamp(c.start)} – ${stamp(c.end)}`}>
                     <span onPointerDown={e => onDown(e, i, 'l')} className="absolute inset-y-0 start-0 w-2 cursor-ew-resize bg-carbon/20 hover:bg-carbon/40" aria-hidden />
-                    <span dir={dir} lang={lang} className={clsx('block truncate pointer-events-none', lang === 'ur' && 'font-urdu')}>{c.check && '⚠ '}{c.text}</span>
+                    <span dir={dir} lang={lang} className={clsx('block truncate pointer-events-none', lang === 'ur' && 'font-urdu')}>{c.text}</span>
                     <span onPointerDown={e => onDown(e, i, 'r')} className="absolute inset-y-0 end-0 w-2 cursor-ew-resize bg-carbon/20 hover:bg-carbon/40" aria-hidden />
                   </div>
                 ))}
@@ -279,13 +238,12 @@ function CueTrack({ lang, content, onContent, audioRef, duration, onFile, onRemo
           </div>
 
           {current && sel !== null && (
-            <div className={clsx('rounded-lg border p-3 flex flex-col gap-2', current.check ? 'border-amber-400 bg-amber-50' : 'border-brand-orange/50 bg-brand-pale-orange/30')}>
+            <div className="rounded-lg border border-brand-orange/50 bg-brand-pale-orange/30 p-3 flex flex-col gap-2">
               <div className="flex items-center gap-2 flex-wrap">
                 <Button variant="ghost" size="xs" disabled={sel === 0} onClick={() => showCue(sel - 1)} aria-label="Previous line"><ChevronLeft size={14} /> Previous</Button>
                 <span className="text-[12.5px] font-semibold text-carbon tabular-nums">Line {sel + 1} of {cues.length}</span>
                 <Button variant="ghost" size="xs" disabled={sel >= cues.length - 1} onClick={() => showCue(sel + 1)} aria-label="Next line">Next <ChevronRight size={14} /></Button>
                 <Button variant="primary" size="sm" onClick={() => playLine(current)}><Play size={12} /> Play this line</Button>
-                {current.check && <Button variant="outline" size="sm" onClick={() => markOk(sel)}><Check size={13} /> This line is correct</Button>}
                 <button type="button" aria-label="Delete this subtitle" onClick={() => remove(sel)} className="ms-auto bg-transparent border-none cursor-pointer text-slate hover:text-error p-1"><Trash2 size={15} /></button>
               </div>
               {lang === 'ur' ? (
@@ -305,25 +263,17 @@ function CueTrack({ lang, content, onContent, audioRef, duration, onFile, onRemo
           )}
 
           {cues.length > 0 && (
-            <div className="flex flex-col gap-1.5">
-              {toCheck > 0 && (
-                <label className="inline-flex items-center gap-2 text-[12.5px] text-charcoal cursor-pointer self-start">
-                  <input type="checkbox" checked={onlyCheck} onChange={e => setOnlyCheck(e.target.checked)} className="accent-brand-orange" /> Show only the lines to check
-                </label>
-              )}
-              <ul className="list-none m-0 p-0 max-h-[200px] overflow-y-auto rounded-lg border border-bone divide-y divide-bone" aria-label="All subtitles">
-                {listed.map(({ c, i }) => (
-                  <li key={i}>
-                    <button type="button" onClick={() => showCue(i)} aria-current={i === sel ? 'true' : undefined}
-                      className={clsx('w-full flex items-start gap-3 px-3 py-1.5 text-start border-none cursor-pointer', i === sel ? 'bg-brand-pale-orange' : c.check ? 'bg-amber-50 hover:bg-amber-100' : i === active ? 'bg-green-50' : 'bg-white hover:bg-cream')}>
-                      <span className="text-[11.5px] text-slate tabular-nums shrink-0 mt-0.5" dir="ltr">{stamp(c.start)}</span>
-                      <span dir={dir} lang={lang} className={clsx('flex-1 text-[13px] leading-[1.7] truncate', lang === 'ur' && 'font-urdu')}>{c.text}</span>
-                      {c.check && <AlertTriangle size={13} className="text-amber-600 shrink-0 mt-1" aria-label="check this line" />}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            <ul className="list-none m-0 p-0 max-h-[200px] overflow-y-auto rounded-lg border border-bone divide-y divide-bone" aria-label="All subtitles">
+              {cues.map((c, i) => (
+                <li key={i}>
+                  <button type="button" onClick={() => showCue(i)} aria-current={i === sel ? 'true' : undefined}
+                    className={clsx('w-full flex items-start gap-3 px-3 py-1.5 text-start border-none cursor-pointer', i === sel ? 'bg-brand-pale-orange' : i === active ? 'bg-green-50' : 'bg-white hover:bg-cream')}>
+                    <span className="text-[11.5px] text-slate tabular-nums shrink-0 mt-0.5" dir="ltr">{stamp(c.start)}</span>
+                    <span dir={dir} lang={lang} className={clsx('flex-1 text-[13px] leading-[1.7] truncate', lang === 'ur' && 'font-urdu')}>{c.text}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
           )}
         </>
       )}
@@ -332,9 +282,9 @@ function CueTrack({ lang, content, onContent, audioRef, duration, onFile, onRemo
 }
 
 /**
- * Subtitle editor for a voice lesson. The voice plays on top; below it the seller writes the text (step 1), lets Edudeen
- * listen to the voice and write the subtitles with their timings (step 2), and reviews and fixes them (step 3).
- * Urdu and English each get their own tab over the same recording. Stores plain WebVTT, like the text editor does.
+ * Subtitle editor for a voice lesson. The voice plays on top; below it the seller writes the text (step 1) and places
+ * and fixes every line against the voice (step 2). Urdu and English each get their own tab over the same recording.
+ * Stores plain WebVTT, like the text editor does.
  */
 export function SubtitleTimelineEditor({ audioUrl, subtitles, onChange, onFile }: {
   audioUrl: string;

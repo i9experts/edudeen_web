@@ -26,16 +26,3 @@ export function useMediaClock(audioRef: RefObject<HTMLAudioElement | null>, tick
     };
   }, [audioRef]);
 }
-
-/** Runs `handler` when the voice fires `name` (always the latest handler, no re-subscribing). */
-export function useAudioEvent(audioRef: RefObject<HTMLAudioElement | null>, name: 'ended' | 'timeupdate', handler: () => void) {
-  const latest = useRef(handler);
-  useEffect(() => { latest.current = handler; });
-  useEffect(() => {
-    const a = audioRef.current;
-    if (!a) return;
-    const fn = () => latest.current();
-    a.addEventListener(name, fn);
-    return () => a.removeEventListener(name, fn);
-  }, [audioRef, name]);
-}
