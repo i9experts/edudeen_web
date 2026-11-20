@@ -27,7 +27,7 @@ import {
   type DigForm, type PhysForm, type ProductStatus, type ProductType,
 } from './ProductFormKit';
 import {
-  ActionBar, ProductPreview, StepRail, WizardNav, WIZARD_STEPS, dirtyCapture, timeAgo,
+  ActionBar, ProductPreview, StepRail, WizardNav, COURSE_STEP_INDEX, stepsFor, dirtyCapture, timeAgo,
   useDraftAutosave, useLeaveGuard, useWizard, type WizardIssue,
 } from './ProductWizard';
 import { ProductFormSteps } from './ProductFormSteps';
@@ -130,6 +130,9 @@ export default function StoreAddProduct() {
   };
 
   const isCourse = isDigitalFamily && delivery.format === 'course';
+  // An online course has 7 steps: the course builder is step 6 (opens right after the first save), Review & publish is step 7.
+  const steps = stepsFor(isCourse);
+  const reviewIdx = steps.length - 1;
 
   // ── Every rule the form enforces, grouped by the step it belongs to ──────────
   const collectIssues = (status: ProductStatus): WizardIssue[] => {
@@ -180,12 +183,12 @@ export default function StoreAddProduct() {
     if (gapErr) out.push({ step: 4, message: gapErr, fieldId: 'fld-offers' });
     if (offerFlags.premiumBlank) out.push({ step: 4, message: PREMIUM_BLANK_MESSAGE, fieldId: 'fld-offers' });
     if (offerFlags.conflict) out.push({ step: 4, message: OFFER_CONFLICT_MESSAGE, fieldId: 'fld-offers' });
-    if (finalStatus === 'scheduled' && !cur.scheduledAt) out.push({ step: 5, message: 'Pick a date and time for your scheduled listing', fieldId: 'fld-schedule', publishOnly: true });
+    if (finalStatus === 'scheduled' && !cur.scheduledAt) out.push({ step: reviewIdx, message: 'Pick a date and time for your scheduled listing', fieldId: 'fld-schedule', publishOnly: true });
     return out;
   };
   // Issues for the status currently chosen (what Publish would run into).
   const issues = collectIssues(cur.status);
-  const wiz = useWizard(issues, 'Add');
+  const wiz = useWizard(issues, 'Add', [0], steps);
   // A banner raised by a failed Save/Publish check disappears as soon as that problem is fixed.
   const validationMsg = useRef('');
   useEffect(() => {
@@ -273,6 +276,7 @@ export default function StoreAddProduct() {
 
       draft.clear();
       guard.allow.current = true;
+      // A course opens on step 6 of the same wizard (Edit mode), where the lessons are built.
       navigate(isCourse ? `/store/${storeId}/products/${productId}/course` : `/store/${storeId}/products`);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Something went wrong.';
@@ -291,7 +295,7 @@ export default function StoreAddProduct() {
   const primaryLabel = isCourse ? 'Save & build the course' : cur.status === 'scheduled' ? 'Schedule listing' : cur.status === 'draft' ? 'Save as draft' : 'Publish now';
 
   const requiredMissing = issues.length;
-  const showMissing = () => { wiz.setAttempted(true); wiz.go(5); };
+  const showMissing = () => { wiz.setAttempted(true); wiz.go(reviewIdx); };
 
   const subName = findCategoryName(categories, cur.subCategoryId);
   const summaryRows = [
@@ -305,9 +309,9 @@ export default function StoreAddProduct() {
     ...(pType === 'physical' ? [{ label: 'Stock', value: phys.stock === '' ? 'Missing' : phys.stock, step: 2, ok: phys.stock !== '' }] : []),
     { label: 'Category', value: [rootCategory?.name, subName].filter(Boolean).join(' › ') || 'Not chosen', step: 3 },
     ...(isDigitalFamily && (learning.classFrom || learning.classTo) ? [{ label: 'Classes', value: [learning.classFrom, learning.classTo].filter((c, i, a) => c && a.indexOf(c) === i).map(c => CLASS_LEVELS.find(l => l.value === c)?.label ?? c).join(' – '), step: 3 }] : []),
-    ...(isDigitalFamily && delivery.format === 'course' ? [{ label: 'Course', value: 'Lessons are added in the course builder after you save', step: 0 }] : []),
+    ...(isDigitalFamily && delivery.format === 'course' ? [{ label: 'Course', value: 'Lessons are added in step 6 (Course builder) right after you save', step: COURSE_STEP_INDEX }] : []),
     { label: 'Offers', value: campaignIds.length ? 'In a platform sale' : effectiveSellerPercent(premiumPct, storePremiumPct, premiumOptOut) > 0 ? `Premium discount ${effectiveSellerPercent(premiumPct, storePremiumPct, premiumOptOut)}%` : 'None', step: 4 },
-    { label: 'Status', value: cur.status === 'active' ? 'Publish now' : cur.status === 'scheduled' ? 'Scheduled' : 'Draft', step: 5 },
+    { label: 'Status', value: cur.status === 'active' ? 'Publish now' : cur.status === 'scheduled' ? 'Scheduled' : 'Draft', step: reviewIdx },
   ];
 
   const saveNote = saving ? 'Saving…' : draft.savedAt ? `Draft autosaved on this device ${timeAgo(draft.savedAt, now)}` : touched ? 'Unsaved changes' : 'Nothing saved yet';
@@ -316,7 +320,7 @@ export default function StoreAddProduct() {
     <div className="min-h-full flex flex-col tap-safe" {...dirtyCapture(() => setTouched(true))}>
       <StorePageHeader
         title="Add a new product"
-        subtitle={`Step ${wiz.step + 1} of ${WIZARD_STEPS.length} — ${WIZARD_STEPS[wiz.step].title}. Items marked Required must be filled.`}
+        subtitle={`Step ${wiz.step + 1} of ${steps.length} — ${steps[wiz.step].title}. Items marked Required must be filled.`}
       />
 
       <div className="px-4 md:px-8 pt-3">
@@ -335,7 +339,7 @@ export default function StoreAddProduct() {
 
       <div ref={wiz.topRef} className="px-4 md:px-8 py-5 max-lg:pb-24">
         <div className="mx-auto max-w-[1700px] grid grid-cols-1 gap-4 lg:gap-6 lg:grid-cols-[220px_minmax(0,1fr)] 2xl:grid-cols-[220px_minmax(0,1100px)_300px] items-start">
-          <StepRail step={wiz.step} statusOf={wiz.statusOf} onGo={i => wiz.go(i)} />
+          <StepRail step={wiz.step} statusOf={i => (isCourse && i === COURSE_STEP_INDEX ? 'empty' : wiz.statusOf(i))} onGo={i => wiz.go(i)} steps={steps} />
 
           <div className="flex flex-col gap-5 min-w-0">
             {error && (
@@ -355,9 +359,19 @@ export default function StoreAddProduct() {
               category={{ categories, loading: catLoading, error: catError, refetch: refetchCats, categoryId, rootName: rootCategory?.name ?? '', subcategories, change: changeCategory }}
               attrs={{ defs: attrDefs, loading: attrLoading, value: attributeValues, onChange: setAttributeValues }}
               addTag={addTag} setStatus={setStatus} openSchedule={() => setShowScheduleModal(true)} summaryRows={summaryRows}
+              courseStep={isCourse ? (
+                <div className="rounded-xl border border-bone bg-white p-5 text-[13px] text-graphite">
+                  <p className="m-0 font-bold text-carbon text-[15px]">Course builder</p>
+                  <p className="m-0 mt-1.5">A course is saved as a draft first. Press <b>Save &amp; build the course</b> below: this same step then opens as the course builder, where you add sections, lessons, quizzes and the certificate, and publish from the last step.</p>
+                  <button type="button" onClick={() => handleSubmit()} disabled={saving}
+                    className="mt-3 inline-flex items-center rounded-lg bg-brand-royal text-white px-4 py-2 text-[13px] font-bold border-none cursor-pointer disabled:opacity-60">
+                    Save &amp; build the course
+                  </button>
+                </div>
+              ) : undefined}
             />
 
-            <WizardNav step={wiz.step} onBack={wiz.back} onNext={wiz.next} />
+            <WizardNav step={wiz.step} onBack={wiz.back} onNext={wiz.next} steps={steps} />
           </div>
 
           <ProductPreview variant="column" data={previewData()} />

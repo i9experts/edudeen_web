@@ -20,6 +20,19 @@ export const WIZARD_STEPS = [
 ] as const;
 export const LAST_STEP = WIZARD_STEPS.length - 1;
 
+export interface WizardStepDef { key: string; title: string; short: string; hint: string }
+
+/** An online course gets a 7th step: the course builder sits between Offers and Review & publish (Review stays last). */
+export const COURSE_STEP_INDEX = 5;
+const COURSE_WIZARD_STEPS: readonly WizardStepDef[] = [
+  ...WIZARD_STEPS.slice(0, COURSE_STEP_INDEX),
+  { key: 'course', title: 'Course builder', short: 'Course', hint: 'Sections, lessons, quizzes and the certificate.' },
+  ...WIZARD_STEPS.slice(COURSE_STEP_INDEX),
+];
+export const stepsFor = (isCourse: boolean): readonly WizardStepDef[] => (isCourse ? COURSE_WIZARD_STEPS : WIZARD_STEPS);
+/** Index of the final "Review & publish" step (5 normally, 6 for a course). */
+export const reviewStepOf = (isCourse: boolean) => stepsFor(isCourse).length - 1;
+
 export interface WizardIssue {
   step: number;
   message: string;
@@ -48,14 +61,15 @@ function focusField(id?: string) {
   }, 60);
 }
 
-export function useWizard(issues: WizardIssue[], verb: 'Add' | 'Edit', initialVisited: number[] = [0]) {
+export function useWizard(issues: WizardIssue[], verb: 'Add' | 'Edit', initialVisited: number[] = [0], steps: readonly WizardStepDef[] = WIZARD_STEPS) {
+  const lastStep = steps.length - 1;
   const [step, setStep] = useState(0);
   const [visited, setVisited] = useState<number[]>(initialVisited);
   const [attempted, setAttempted] = useState(false);
   const [blockedStep, setBlockedStep] = useState<number | null>(null);
   const topRef = useRef<HTMLDivElement>(null);
 
-  usePageTitle(`${verb} product - step ${step + 1} of ${WIZARD_STEPS.length}`);
+  usePageTitle(`${verb} product - step ${step + 1} of ${steps.length}`);
 
   const go = useCallback((to: number, fieldId?: string) => {
     setStep(to);
@@ -65,7 +79,8 @@ export function useWizard(issues: WizardIssue[], verb: 'Add' | 'Edit', initialVi
     else topRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' });
   }, []);
 
-  const markAllVisited = useCallback(() => setVisited(WIZARD_STEPS.map((_, i) => i)), []);
+  const stepCount = steps.length;
+  const markAllVisited = useCallback(() => setVisited(Array.from({ length: stepCount }, (_, i) => i)), [stepCount]);
   const visitedKey = visited.join(',');
 
   const stepIssues = (i: number, forNext = false) => issues.filter(x => x.step === i && !(forNext && x.publishOnly));
@@ -77,7 +92,7 @@ export function useWizard(issues: WizardIssue[], verb: 'Add' | 'Edit', initialVi
       focusField(blocking[0].fieldId);
       return;
     }
-    go(Math.min(step + 1, LAST_STEP));
+    go(Math.min(step + 1, lastStep));
   };
   const back = () => go(Math.max(step - 1, 0));
 
@@ -85,7 +100,7 @@ export function useWizard(issues: WizardIssue[], verb: 'Add' | 'Edit', initialVi
     const has = issues.some(x => x.step === i);
     if (has) return attempted || (visited.includes(i) && i !== step) ? 'attention' : 'empty';
     // The last step (Review & publish) is only Done when nothing is missing anywhere.
-    if (i === LAST_STEP && issues.length > 0) return 'empty';
+    if (i === lastStep && issues.length > 0) return 'empty';
     return visited.includes(i) ? 'done' : 'empty';
   };
 
@@ -93,11 +108,11 @@ export function useWizard(issues: WizardIssue[], verb: 'Add' | 'Edit', initialVi
 }
 
 // ── Step rail ────────────────────────────────────────────────────────────────
-export function StepRail({ step, statusOf, onGo }: { step: number; statusOf: (i: number) => StepState; onGo: (i: number) => void }) {
+export function StepRail({ step, statusOf, onGo, steps = WIZARD_STEPS }: { step: number; statusOf: (i: number) => StepState; onGo: (i: number) => void; steps?: readonly WizardStepDef[] }) {
   return (
     <nav aria-label="Product steps" className="lg:sticky lg:top-[152px] max-lg:sticky max-lg:top-[76px] sm:max-lg:top-[100px] max-lg:z-[9] max-lg:bg-cream max-lg:-mx-4 max-lg:px-4 max-lg:py-2 max-lg:border-b max-lg:border-bone">
       <ol className="flex lg:flex-col gap-2 lg:gap-1 overflow-x-auto lg:overflow-visible list-none p-0 m-0 pb-1 lg:pb-0" data-no-edge-scroll>
-        {WIZARD_STEPS.map((s, i) => {
+        {steps.map((s, i) => {
           const state = statusOf(i);
           const current = i === step;
           return (
@@ -155,8 +170,8 @@ export function IssueLinks({ issues, onGo, title }: { issues: WizardIssue[]; onG
   );
 }
 
-export function WizardNav({ step, onBack, onNext }: { step: number; onBack: () => void; onNext: () => void }) {
-  if (step === LAST_STEP) {
+export function WizardNav({ step, onBack, onNext, steps = WIZARD_STEPS }: { step: number; onBack: () => void; onNext: () => void; steps?: readonly WizardStepDef[] }) {
+  if (step === steps.length - 1) {
     return step > 0 ? (
       <div className="flex" data-wiz-nav>
         <button type="button" onClick={onBack} className="flex items-center gap-1 px-4 py-2.5 rounded-lg text-[14px] font-bold text-graphite bg-white border border-bone cursor-pointer hover:bg-cream"><ChevronLeft size={16} /> Back</button>
@@ -169,7 +184,7 @@ export function WizardNav({ step, onBack, onNext }: { step: number; onBack: () =
         ? <button type="button" onClick={onBack} className="flex items-center gap-1 px-4 py-2.5 rounded-lg text-[14px] font-bold text-graphite bg-white border border-bone cursor-pointer hover:bg-cream"><ChevronLeft size={16} /> Back</button>
         : <span />}
       <button type="button" onClick={onNext} className="flex items-center gap-1 px-5 py-2.5 rounded-lg text-[14px] font-bold text-white bg-brand-royal border-none cursor-pointer hover:opacity-90">
-        Next: {WIZARD_STEPS[step + 1].title} <ChevronRight size={16} />
+        Next: {steps[step + 1].title} <ChevronRight size={16} />
       </button>
     </div>
   );

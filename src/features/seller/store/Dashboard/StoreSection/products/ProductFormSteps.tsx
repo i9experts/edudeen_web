@@ -20,7 +20,7 @@ import {
   Block, F, MoreOptions, Toggle, TagInput, VariantOptionsField, inp, ta, isDigitalFamilyType, packageSizeError, dispatchOverrideError,
   type DigForm, type PhysForm, type ProductStatus, type ProductType,
 } from './ProductFormKit';
-import { IssueLinks, StepPanel, SummaryRows, type WizardIssue } from './ProductWizard';
+import { COURSE_STEP_INDEX, IssueLinks, StepPanel, SummaryRows, type WizardIssue } from './ProductWizard';
 import { FieldErrorsContext } from './fieldErrorsContext';
 import { qualityWarnings, titleClassConflict, singleImageWarning, contactWarning, classRangeRequired, POLICY_LINE } from './productQuality';
 
@@ -67,6 +67,8 @@ export interface ProductFormStepsProps {
   basicsExtra?: ReactNode;
   deliveryExtra?: ReactNode;
   reviewBanner?: ReactNode;
+  /** Online course only: content of the extra "Course builder" step (index 5). Review & publish then moves to index 6. */
+  courseStep?: ReactNode;
 }
 
 /** All six step panels of the product form. Shared by Add and Edit so both stay identical. Panels stay mounted (hidden). */
@@ -396,8 +398,16 @@ export function ProductFormSteps(p: ProductFormStepsProps) {
         </Block>
       </StepPanel>
 
-      {/* ── 6. Review & publish ──────────────────────────────────────── */}
-      <StepPanel active={step === 5}>
+      {/* ── 6. Course builder (online courses only) ──────────────────── */}
+      {p.courseStep && (
+        <StepPanel active={step === COURSE_STEP_INDEX}>
+          {banner(COURSE_STEP_INDEX)}
+          {p.courseStep}
+        </StepPanel>
+      )}
+
+      {/* ── Last step: Review & publish (6 for a course) ─────────────── */}
+      <StepPanel active={step === (p.courseStep ? COURSE_STEP_INDEX + 1 : COURSE_STEP_INDEX)}>
         {p.reviewBanner}
         <IssueLinks issues={p.issues} onGo={go} title={p.issues.length === 1 ? 'One thing is missing' : `${p.issues.length} things are missing`} />
         {p.issues.length === 0 && (

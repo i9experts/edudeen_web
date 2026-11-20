@@ -1,13 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
-import { Plus, Trash2, ChevronUp, ChevronDown, Video, Mic, Loader2, Award, Eye, ArrowLeft, Users } from 'lucide-react';
+import { Plus, Trash2, ChevronUp, ChevronDown, Video, Mic, Loader2, Award, Users } from 'lucide-react';
 import { isAllowedExternalVideo } from '@/utils/externalVideo';
 import { clsx } from 'clsx';
-import { usePageTitle } from '@/hooks/usePageTitle';
-import { useStoreWorkspace, StorePageHeader } from '@/components/layouts/StoreLayout';
+import { useStoreWorkspace } from '@/components/layouts/StoreLayout';
 import { Button, Card, Input, Textarea, Toggle, FileUpload, type PrivateUploadData } from '@/components/comman/ui';
 import { useToast } from '@/contexts/ToastContext';
-import { apiSetProductStatus } from '@/api/services/product';
 import { CertificateDesigner, EMPTY_DESIGN, designFromConfig, configFromDesign, type CertDesign } from './CertificateDesigner';
 import { LessonSubtitlesEditor } from './LessonSubtitlesEditor';
 import { VoiceRecorder } from './VoiceRecorder';
@@ -187,7 +184,7 @@ function lessonProblem(l: CourseLessonInput): string | null {
   return null;
 }
 
-interface BuilderIssue { message: string; /** element id to scroll to */ target?: string; /** link to another page (listing details) */ to?: string; publishOnly?: boolean }
+interface BuilderIssue { message: string; /** element id to scroll to */ target?: string; /** does not stop a save, only publishing */ publishOnly?: boolean }
 
 function LessonEditor({ id, lesson, index, count, onChange, onMove, onRemove }: {
   id: string; lesson: CourseLessonInput; index: number; count: number;
@@ -244,10 +241,18 @@ function LessonEditor({ id, lesson, index, count, onChange, onMove, onRemove }: 
   );
 }
 
-/** Store → Products → Course builder: sections, lessons, quizzes and the certificate. */
-export default function CourseBuilder() {
-  const { productId = '' } = useParams();
-  const navigate = useNavigate();
+/** What the product wizard needs to know about the builder: unsaved edits and what still blocks publishing. */
+export interface CourseBuilderStatus {
+  dirty: boolean;
+  lessonCount: number;
+  issues: { message: string; target?: string }[];
+}
+
+/**
+ * The "Course builder" step (step 6) of the Edit product wizard: sections, lessons, quizzes and the certificate.
+ * It saves its own content (the course lives in its own collection); the wizard's Review step publishes the listing.
+ */
+export default function CourseBuilder({ productId, onStatus }: { productId: string; onStatus?: (s: CourseBuilderStatus) => void }) {
   const toast = useToast();
   const { storeId, store } = useStoreWorkspace();
   const [data, setData] = useState<CourseBuilderData | null>(null);
@@ -259,13 +264,15 @@ export default function CourseBuilder() {
   const [instructor, setInstructor] = useState({ name: '', bio: '' });
   const [accessMode, setAccessMode] = useState<'lifetime' | 'days'>('lifetime');
   const [accessDays, setAccessDays] = useState('365');
-  const [saving, setSaving] = useState<'save' | 'publish' | null>(null);
+  const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
-  usePageTitle(data ? `Course: ${data.product.name}` : 'Course builder');
 
+  const [loadError, setLoadError] = useState('');
+  const [reloadKey, setReloadKey] = useState(0);
   useEffect(() => {
     apiGetCourseBuilder(storeId, productId)
       .then(res => {
+        setLoadError('');
         setData(res.data);
         setSections(res.data.sections.length ? res.data.sections : [{ title: 'Getting started', lessons: [newLesson('video')] }]);
         setCertificate(res.data.certificateEnabled);
@@ -274,8 +281,8 @@ export default function CourseBuilder() {
         setInstructor({ name: res.data.instructor?.name ?? '', bio: res.data.instructor?.bio ?? '' });
         if (res.data.accessDays) { setAccessMode('days'); setAccessDays(String(res.data.accessDays)); }
       })
-      .catch(err => { toast.error(err instanceof Error ? err.message : 'Could not open the course.'); navigate(`/store/${storeId}/products`); });
-  }, [storeId, productId]); // eslint-disable-line react-hooks/exhaustive-deps
+      .catch(err => setLoadError(err instanceof Error ? err.message : 'Could not open the course.'));
+  }, [storeId, productId, reloadKey]);
 
   // Warn before leaving with unsaved changes.
   useEffect(() => {
@@ -296,11 +303,9 @@ export default function CourseBuilder() {
   const daysBad = accessMode === 'days' && (!Number.isInteger(daysNum) || daysNum < 1 || daysNum > 3650);
   const badVideo = sections.some(s => s.lessons.some(l => l.type === 'video' && !!l.videoUrl?.trim() && !isAllowedExternalVideo(l.videoUrl)));
 
-  // ── Everything that would make Save / Publish fail, each with a link to where it is fixed ──
-  const editBase = `/store/${storeId}/products/edit/${productId}`;
+  // ── Everything that would make Save fail (or the course unpublishable), each with a link to where it is fixed ──
+  // Listing problems (photo, class range) are other wizard steps and are reported there.
   const issues: BuilderIssue[] = [];
-  // Publish-only problems matter just for a course that can still be published (the Publish button only exists for those).
-  const canPublish = !!data && ['draft', 'rejected', 'archived'].includes(data.product.status);
   if (data) {
     if (!lessonCount) issues.push({ message: 'Add at least one lesson to the course', target: 'course-lessons', publishOnly: true });
     sections.forEach((s, si) => s.lessons.forEach((l, li) => {
@@ -308,18 +313,23 @@ export default function CourseBuilder() {
       if (p) issues.push({ message: `Section ${si + 1}, lesson ${li + 1}${l.title.trim() ? ` "${l.title.trim()}"` : ''} ${p}`, target: `lesson-${si}-${li}` });
     }));
     if (daysBad) issues.push({ message: 'Access days must be a whole number from 1 to 3650', target: 'course-access' });
-    if (canPublish && data.product.imageCount === 0) issues.push({ message: 'Add at least 1 photo to the listing (step 2 – Photos & files)', to: `${editBase}?step=1&field=fld-photos`, publishOnly: true });
-    if (canPublish && !data.product.classFrom && !data.product.classTo) issues.push({ message: 'Choose the classes this course is suitable for (step 4 – Category & details)', to: `${editBase}?step=3&field=fld-learning`, publishOnly: true });
   }
   const [attempted, setAttempted] = useState(false);
+  // Tell the wizard (unsaved edits / blockers) so it can stop a publish that would fail on this step.
+  const issuesKey = issues.map(i => i.message).join('|');
+  const lessonTotal = lessonCount;
+  useEffect(() => {
+    onStatus?.({ dirty, lessonCount: lessonTotal, issues: issues.map(i => ({ message: i.message, target: i.target })) });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dirty, lessonTotal, issuesKey]);
   const goTo = (target?: string) => {
     const el = target ? document.getElementById(target) : null;
     el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
     el?.querySelector<HTMLElement>('input,textarea,button')?.focus({ preventScroll: true });
   };
 
-  const save = async (publish: boolean) => {
-    const blocking = issues.filter(i => publish || !i.publishOnly);
+  const save = async () => {
+    const blocking = issues.filter(i => !i.publishOnly);
     if (blocking.length) {
       setAttempted(true);
       goTo(blocking.find(i => i.target)?.target);
@@ -327,7 +337,7 @@ export default function CourseBuilder() {
       return;
     }
     if (badVideo) { toast.error('One of the video links is not a valid https YouTube or Vimeo link.'); return; }
-    setSaving(publish ? 'publish' : 'save');
+    setSaving(true);
     try {
       const cleanOutcomes = outcomes.map(o => o.trim()).filter(Boolean);
       const res = await apiSaveCourse(storeId, productId, {
@@ -352,13 +362,8 @@ export default function CourseBuilder() {
       setSections(res.data.sections);
       setDirty(false);
       setDesignDirty(false);
-      if (publish) {
-        const pub = await apiSetProductStatus(productId, 'active');
-        const next = (pub.data?.product as { status?: string } | undefined)?.status ?? 'pending_review';
-        toast.success(next === 'active' ? 'Course is live' : 'Course submitted — it goes live after a quick review');
-        setData(d => d ? { ...d, product: { ...d.product, status: next } } : d);
-        navigate(next === 'active' && data?.product.slug ? `/product/${data.product.slug}` : `/store/${storeId}/products/detail/${productId}`);
-      } else toast.success('Course saved');
+      setAttempted(false);
+      toast.success('Course content saved');
     } catch (err) {
       // Network drops / 5xx can arrive as plain objects (no Error), so read the message from any shape.
       const e = err as { message?: unknown; response?: { data?: { message?: unknown } } } | string | null;
@@ -366,31 +371,36 @@ export default function CourseBuilder() {
       const msg = Array.isArray(raw) ? raw.join(', ') : typeof raw === 'string' ? raw : '';
       toast.error(msg || 'Could not save the course. Check your connection and try again.');
     }
-    finally { setSaving(null); }
+    finally { setSaving(false); }
   };
 
+  if (loadError) {
+    return (
+      <Card>
+        <p role="alert" className="m-0 mb-3 text-[13px] text-error">{loadError}</p>
+        <Button variant="outline" size="sm" onClick={() => { setLoadError(''); setReloadKey(k => k + 1); }}>Try again</Button>
+      </Card>
+    );
+  }
   if (!data) return <div className="flex justify-center py-20"><Loader2 className="animate-spin text-slate" /></div>;
-  const isDraft = ['draft', 'rejected', 'archived'].includes(data.product.status);
 
   return (
-    <>
-      <StorePageHeader
-        title="Course builder"
-        subtitle={`${data.product.name} · ${lessonCount} ${lessonCount === 1 ? 'lesson' : 'lessons'}${minutes ? ` · ${Math.round(minutes / 6) / 10} h` : ''}${data.learners ? ` · ${data.learners} learners` : ''}`}
-        actions={
-          <div className="flex gap-2 flex-wrap">
-            <Button variant="ghost" size="sm" to={`/store/${storeId}/products/${productId}/course/students`}><Users size={13} /> Students</Button>
-            <Button variant="outline" size="sm" loading={saving === 'save'} onClick={() => save(false)}>{dirty ? 'Save changes' : 'Saved'}</Button>
-            {isDraft && <Button variant="primary" size="sm" loading={saving === 'publish'} onClick={() => save(true)}>Save & publish</Button>}
+    <div className="flex flex-col gap-4 min-w-0">
+      <Card>
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex-1 min-w-[200px]">
+            <h2 className="text-[16px] font-bold text-carbon m-0">Course content</h2>
+            <p className="text-[12.5px] text-slate m-0 mt-0.5">
+              {lessonCount} {lessonCount === 1 ? 'lesson' : 'lessons'}{minutes ? ` · ${Math.round(minutes / 6) / 10} h` : ''}{data.learners ? ` · ${data.learners} learners` : ''}
+              {' · '}{dirty ? <b className="text-brand-orange">Unsaved changes</b> : 'All saved'}
+            </p>
           </div>
-        }
-      />
-      <div className="px-4 lg:px-7 pb-10 pt-5 flex flex-col gap-4 max-w-[980px]">
-        <div className="flex items-center gap-3 flex-wrap text-[12.5px]">
-          <Link to={`/store/${storeId}/products/edit/${productId}`} className="inline-flex items-center gap-1 text-slate no-underline hover:text-brand-orange"><ArrowLeft size={13} /> Listing details (price, images)</Link>
-          {data.product.status === 'active' && <a href={`/product/${data.product.slug}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-slate no-underline hover:text-brand-orange"><Eye size={13} /> View on Edudeen</a>}
-          <span className="ml-auto rounded-full bg-fog px-2 py-[2px] text-slate capitalize">{data.product.status.replace('_', ' ')}</span>
+          <Button variant="ghost" size="sm" to={`/store/${storeId}/products/${productId}/course/students`}><Users size={13} /> Students</Button>
+          <Button variant={dirty ? 'primary' : 'outline'} size="sm" loading={saving} onClick={() => save()}>{dirty ? 'Save course content' : 'Saved'}</Button>
         </div>
+        <p className="text-[12px] text-slate m-0 mt-2">Save here before leaving this step. Publishing the listing happens on the last step, Review &amp; publish.</p>
+      </Card>
+      <div className="flex flex-col gap-4">
 
         {attempted && issues.length > 0 && (
           <div role="alert" className="rounded-xl border border-error-border bg-error-bg px-4 py-3">
@@ -398,9 +408,7 @@ export default function CourseBuilder() {
             <ul className="list-none p-0 m-0 flex flex-col gap-1">
               {issues.map((x, i) => (
                 <li key={i}>
-                  {x.to
-                    ? <Link to={x.to} className="text-[13px] text-error underline underline-offset-2">{x.message} →</Link>
-                    : <button type="button" onClick={() => goTo(x.target)} className="bg-transparent border-none p-0 cursor-pointer text-[13px] text-error underline underline-offset-2 text-start">{x.message}</button>}
+                  <button type="button" onClick={() => goTo(x.target)} className="bg-transparent border-none p-0 cursor-pointer text-[13px] text-error underline underline-offset-2 text-start">{x.message}</button>
                 </li>
               ))}
             </ul>
@@ -497,6 +505,6 @@ export default function CourseBuilder() {
           )}
         </Card>
       </div>
-    </>
+    </div>
   );
 }

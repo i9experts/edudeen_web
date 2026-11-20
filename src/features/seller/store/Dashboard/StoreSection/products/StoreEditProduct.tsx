@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { Link, useNavigate, useParams, useLocation } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { AlertCircle } from 'lucide-react';
 import { useStoreWorkspace, StorePageHeader } from '@/components/layouts/StoreLayout';
 import { UrduCopyCard } from '@/components/ai/UrduCopyCard';
@@ -31,10 +31,11 @@ import { descriptionError, validatePrices, weightTextError, parseWeightKg, stock
 import { type VariantOption } from '@/api/services/product';
 import { findCategoryName, withPendingTags, packageSizeError, packageCmPayload, dispatchOverrideError, dispatchOverridePayload, type DigForm, type LicenseType, type PhysForm, type ProductStatus, type ProductVideoValue } from './ProductFormKit';
 import {
-  ActionBar, ProductPreview, StepRail, WizardNav, WIZARD_STEPS, dirtyCapture,
+  ActionBar, ProductPreview, StepRail, WizardNav, WIZARD_STEPS, COURSE_STEP_INDEX, stepsFor, dirtyCapture,
   useLeaveGuard, useWizard, type WizardIssue,
 } from './ProductWizard';
 import { ProductFormSteps } from './ProductFormSteps';
+import CourseBuilder, { type CourseBuilderStatus } from './CourseBuilder';
 const blankPhys: PhysForm = {
   name: '', description: '', price: '', compareAtPrice: '',
   stock: '', options: [] as VariantOption[], shippingWeight: '', subCategoryId: '',
@@ -133,6 +134,8 @@ export default function StoreEditProduct() {
   const [delivery, setDelivery] = useState(EMPTY_DELIVERY);
   // The delivery format as saved on the server (null until read). The course builder only exists once the product is saved as a course.
   const [savedFormat, setSavedFormat] = useState<string | null>(null);
+  // What the embedded course builder (step 6) reports: unsaved edits and what still blocks publishing.
+  const [courseStatus, setCourseStatus] = useState<CourseBuilderStatus>({ dirty: false, lessonCount: 0, issues: [] });
   // null until the product's own list arrives, so a save never wipes a selection that was not loaded yet.
   const [campaignIds, setCampaignIds] = useState<string[] | null>(null);
   // null until the product is read fresh, so saving never clears a Premium price that has not loaded.
@@ -277,6 +280,12 @@ export default function StoreEditProduct() {
   // Switching a product to "course" saves it as a draft first (a course needs lessons before it can go live), like Add does.
   const becomingCourse = pType !== 'physical' && delivery.format === 'course' && savedFormat !== null && savedFormat !== 'course';
   const finalStatusOf = (s?: ProductStatus) => becomingCourse ? 'draft' : s ?? (pType === 'physical' ? phys.status : dig.status);
+  // An online course has 7 steps: the course builder is step 6, Review & publish moves to step 7.
+  const isCourseFormat = pType !== 'physical' && delivery.format === 'course';
+  const steps = stepsFor(isCourseFormat);
+  const reviewIdx = steps.length - 1;
+  // The builder only exists once the product is saved as a course (otherwise step 6 explains the save-first rule).
+  const courseBuilderLive = isCourseFormat && savedFormat === 'course';
 
   // Every rule the form enforces, grouped by the step it belongs to.
   const issues = useMemo<WizardIssue[]>(() => {
@@ -323,11 +332,16 @@ export default function StoreEditProduct() {
     if (gapErr) out.push({ step: 4, message: gapErr, fieldId: 'fld-offers' });
     if (offerFlags.premiumBlank) out.push({ step: 4, message: PREMIUM_BLANK_MESSAGE, fieldId: 'fld-offers' });
     if (offerFlags.conflict) out.push({ step: 4, message: OFFER_CONFLICT_MESSAGE, fieldId: 'fld-offers' });
+    // Course builder (step 6): lesson edits are saved separately, so unsaved ones would be lost; lesson problems only block going live.
+    if (courseBuilderLive) {
+      if (courseStatus.dirty) out.push({ step: COURSE_STEP_INDEX, message: 'Save your course content first - it has unsaved changes', fieldId: 'course-lessons', publishOnly: true });
+      if (publishing) for (const ci of courseStatus.issues) out.push({ step: COURSE_STEP_INDEX, message: ci.message, fieldId: ci.target ?? 'course-lessons', publishOnly: true });
+    }
     return out;
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loaded, cur, pType, phys.stock, phys.shippingWeight, phys.pkgL, phys.pkgW, phys.pkgH,store?.baseCurrency, dig.sampleFile, dig.tiers, delivery, learning, attrDefs, attributeValues, premiumPct, premiumOptOut, campaignIds, premiumTerms, storePremiumPct, offerFlags]);
+  }, [loaded, cur, pType, phys.stock, phys.shippingWeight, phys.pkgL, phys.pkgW, phys.pkgH,store?.baseCurrency, dig.sampleFile, dig.tiers, delivery, learning, attrDefs, attributeValues, premiumPct, premiumOptOut, campaignIds, premiumTerms, storePremiumPct, offerFlags, courseBuilderLive, courseStatus]);
 
-  const wiz = useWizard(issues, 'Edit', [0, 1, 2, 3, 4, 5]);
+  const wiz = useWizard(issues, 'Edit', [0, 1, 2, 3, 4, 5, 6], steps);
 
   // Deep link from Search Visibility ("Fix"): ?step=<0-5>&field=<element id> opens that step and focuses the field, once.
   const deepLinked = useRef(false);
@@ -337,7 +351,7 @@ export default function StoreEditProduct() {
     const q = new URLSearchParams(window.location.search);
     const stepN = Number(q.get('step'));
     const fieldId = q.get('field') ?? undefined;
-    if (Number.isInteger(stepN) && stepN >= 0 && stepN <= 5 && /^[\w-]{1,40}$/.test(fieldId ?? 'x')) wiz.go(stepN, fieldId);
+    if (Number.isInteger(stepN) && stepN >= 0 && stepN < steps.length && /^[\w-]{1,40}$/.test(fieldId ?? 'x')) wiz.go(stepN, fieldId);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loaded]);
   // A banner raised by a failed Save/Publish check disappears as soon as that problem is fixed.
@@ -345,7 +359,7 @@ export default function StoreEditProduct() {
   useEffect(() => {
     if (validationMsg.current && !issues.some(i => i.message === validationMsg.current)) { validationMsg.current = ''; setError(''); }
   }, [issues]);
-  const guard = useLeaveGuard(touched && !saving);
+  const guard = useLeaveGuard((touched && !saving) || courseStatus.dirty);
 
   const handleSubmit = async (statusOverride?: ProductStatus) => {
     setError('');
@@ -413,7 +427,8 @@ export default function StoreEditProduct() {
       }
 
       guard.allow.current = true;
-      navigate(pType !== 'physical' && delivery.format === 'course' ? `/store/${storeId}/products/${productId}/course` : `/store/${storeId}/products`);
+      // A product that just became a course reopens on step 6 (the redirect remounts this page as a saved course); otherwise back to the list.
+      navigate(becomingCourse ? `/store/${storeId}/products/${productId}/course` : `/store/${storeId}/products`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong.');
     } finally {
@@ -461,7 +476,8 @@ export default function StoreEditProduct() {
     ...(pType === 'physical' ? [{ label: 'Stock', value: phys.stock === '' ? 'Not set' : phys.stock, step: 2 }] : []),
     { label: 'Category', value: [rootCategory?.name, subName].filter(Boolean).join(' › ') || 'Not chosen', step: 3 },
     { label: 'Offers', value: (campaignIds?.length ?? 0) > 0 ? 'In a platform sale' : effectiveSellerPercent(premiumPct ?? '', storePremiumPct, !!premiumOptOut) > 0 ? `Premium discount ${effectiveSellerPercent(premiumPct ?? '', storePremiumPct, !!premiumOptOut)}%` : 'None', step: 4 },
-    { label: 'Status', value: cur.status === 'active' ? 'Active' : cur.status === 'scheduled' ? 'Scheduled' : 'Draft', step: 5 },
+    ...(courseBuilderLive ? [{ label: 'Course', value: courseStatus.lessonCount ? `${courseStatus.lessonCount} ${courseStatus.lessonCount === 1 ? 'lesson' : 'lessons'}${courseStatus.dirty ? ' (unsaved changes)' : ''}` : 'No lessons yet', step: COURSE_STEP_INDEX, ok: courseStatus.lessonCount > 0 && !courseStatus.dirty }] : []),
+    { label: 'Status', value: cur.status === 'active' ? 'Active' : cur.status === 'scheduled' ? 'Scheduled' : 'Draft', step: reviewIdx },
   ];
 
   const previewData = {
@@ -485,12 +501,12 @@ export default function StoreEditProduct() {
     <div className="min-h-full flex flex-col tap-safe" {...dirtyCapture(() => setTouched(true))}>
       <StorePageHeader
         title="Edit product"
-        subtitle={`Step ${wiz.step + 1} of ${WIZARD_STEPS.length} — ${WIZARD_STEPS[wiz.step].title}`}
+        subtitle={`Step ${wiz.step + 1} of ${steps.length} — ${steps[wiz.step].title}`}
       />
 
       <div ref={wiz.topRef} className="px-4 md:px-8 py-5 max-lg:pb-24">
         <div className="mx-auto max-w-[1700px] grid grid-cols-1 gap-4 lg:gap-6 lg:grid-cols-[220px_minmax(0,1fr)] 2xl:grid-cols-[220px_minmax(0,1100px)_300px] items-start">
-          <StepRail step={wiz.step} statusOf={wiz.statusOf} onGo={i => wiz.go(i)} />
+          <StepRail step={wiz.step} statusOf={wiz.statusOf} onGo={i => wiz.go(i)} steps={steps} />
 
           <div className="flex flex-col gap-5 min-w-0">
             {editReview.pending && (
@@ -503,7 +519,7 @@ export default function StoreEditProduct() {
                 <b>Your last changes were not approved:</b> {editReview.rejection} The live listing was not changed.
               </div>
             )}
-            {review && wiz.step !== 5 && reviewBanner}
+            {review && wiz.step !== reviewIdx && reviewBanner}
             {error && (
               <p role="alert" className="m-0 flex items-start gap-2 text-[13px] text-error font-medium bg-error-bg border border-error-border rounded-lg px-4 py-3">
                 <AlertCircle size={16} className="mt-px shrink-0" /> {error}
@@ -535,17 +551,27 @@ export default function StoreEditProduct() {
                 />
                 <UrduCopyCard storeId={storeId} productId={productId} />
               </>}
-              deliveryExtra={delivery.format === 'course' && becomingCourse ? (
-                <p className="mt-3 mb-0 text-[12.5px] text-graphite rounded-lg bg-cream px-3 py-2">Save the changes first — it is saved as a draft and the course builder opens right after, where you add lessons and publish.</p>
-              ) : delivery.format === 'course' ? (
-                <Link to={`/store/${storeId}/products/${productId}/course`} className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-brand-royal text-white px-4 py-2 text-[13px] font-bold no-underline">
-                  Open the course builder
-                </Link>
+              deliveryExtra={isCourseFormat ? (
+                <p className="mt-3 mb-0 text-[12.5px] text-graphite rounded-lg bg-cream px-3 py-2">
+                  {becomingCourse
+                    ? 'Save the changes first — it is saved as a draft and the course builder (step 6) opens right after, where you add lessons.'
+                    : 'Lessons, quizzes and the certificate are added in step 6, Course builder.'}
+                </p>
+              ) : undefined}
+              courseStep={isCourseFormat ? (
+                courseBuilderLive
+                  ? <CourseBuilder productId={productId} onStatus={setCourseStatus} />
+                  : (
+                    <div className="rounded-xl border border-bone bg-white p-5 text-[13px] text-graphite">
+                      <p className="m-0 font-bold text-carbon text-[15px]">Course builder</p>
+                      <p className="m-0 mt-1.5">Press <b>Save changes</b> first. This product is saved as a draft course, and this step then opens the course builder where you add sections and lessons.</p>
+                    </div>
+                  )
               ) : undefined}
               reviewBanner={reviewBanner}
             />
 
-            <WizardNav step={wiz.step} onBack={wiz.back} onNext={wiz.next} />
+            <WizardNav step={wiz.step} onBack={wiz.back} onNext={wiz.next} steps={steps} />
           </div>
 
           <ProductPreview variant="column" data={previewData} />
@@ -554,7 +580,7 @@ export default function StoreEditProduct() {
 
       <ActionBar
         saving={saving} primaryLabel="Save changes" onPrimary={() => handleSubmit()} onCancel={() => navigate(`/store/${storeId}/products`)}
-        saveNote={saving ? 'Saving…' : touched ? 'Unsaved changes' : 'No changes yet'} missing={issues.length} onShowMissing={() => { wiz.setAttempted(true); wiz.go(5); }}
+        saveNote={saving ? 'Saving…' : touched ? 'Unsaved changes' : 'No changes yet'} missing={issues.length} onShowMissing={() => { wiz.setAttempted(true); wiz.go(reviewIdx); }}
       />
 
       {showScheduleModal && (
