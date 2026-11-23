@@ -6,6 +6,13 @@
     <link rel="preconnect" href="https://api.edudeen.com" crossorigin />
     <link rel="preconnect" href="https://res.cloudinary.com" crossorigin />
     <link rel="dns-prefetch" href="https://api.edudeen.com" />
+    <!-- Starts the homepage hero banner fetch (api/services/banner.ts's apiGetBanners,
+         read by placementBannerCache.ts) as soon as the HTML is parsed, instead of
+         waiting for the JS bundle to download, parse and mount before the request
+         even begins. The response sits in the HTTP cache so that first real fetch()
+         call resolves instantly — this is the request that gates when the hero
+         <img> (the page's LCP element) can start downloading. -->
+    <link rel="preload" as="fetch" crossorigin="anonymous" href="https://api.edudeen.com/api/spotlight?placement=homepageHero" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#174771" />
     <link rel="manifest" href="/manifest.webmanifest" />
