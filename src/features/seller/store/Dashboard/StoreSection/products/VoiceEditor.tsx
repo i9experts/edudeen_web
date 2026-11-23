@@ -37,6 +37,7 @@ export function VoiceEditor({ loadOriginal, onClose, onApplied }: {
   const { upload, uploading } = useUpload('private');
   const [phase, setPhase] = useState<'loading' | 'ready' | 'error'>('loading');
   const [error, setError] = useState('');
+  const [progress, setProgress] = useState<number | null>(null);
   const [sources, setSources] = useState<Int16Array[]>([]);
   const [segs, setSegs] = useState<Seg[]>([]);
   const [past, setPast] = useState<Seg[][]>([]);
@@ -69,7 +70,7 @@ export function VoiceEditor({ loadOriginal, onClose, onApplied }: {
   useEffect(() => {
     let dead = false;
     loadRef.current()
-      .then(decodeToMono)
+      .then(buf => decodeToMono(buf, p => { if (!dead) setProgress(Math.round(p * 100)); }))
       .then(pcm => {
         if (dead) return;
         setSources([pcm]);
@@ -266,7 +267,7 @@ export function VoiceEditor({ loadOriginal, onClose, onApplied }: {
         </div>
       ) : undefined}>
       <div className="p-4 flex flex-col gap-3">
-        {phase === 'loading' && <p className="m-0 flex items-center gap-2 text-[13px] text-slate py-10 justify-center"><Loader2 size={16} className="animate-spin" /> Opening your voice…</p>}
+        {phase === 'loading' && <p className="m-0 flex items-center gap-2 text-[13px] text-slate py-10 justify-center"><Loader2 size={16} className="animate-spin" /> Opening your voice…{progress !== null && ` ${progress}%`}</p>}
         {phase === 'error' && (
           <div role="alert" className="flex flex-col gap-3 py-6 items-center text-center">
             <p className="m-0 text-[13px] text-error max-w-[420px]">{error}</p>

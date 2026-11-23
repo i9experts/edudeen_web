@@ -22,6 +22,7 @@
     "leaflet": "^1.9.4",
     "lucide-react": "^1.17.0",
     "motion": "^13.1.0",
+    "mpg123-decoder": "^1.0.3",
     "qrcode": "^1.5.4",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
