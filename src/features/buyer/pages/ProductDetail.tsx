@@ -26,7 +26,7 @@ import { useT, useLanguage } from '@/contexts/languageCtx';
 const AiReviewSummary = lazyWithRetry(() => import('@/components/ai/AiReviewSummary').then(m => ({ default: m.AiReviewSummary })));
 import { TokenStorage } from '@/api/services/auth';
 import { isValidRailProduct } from '@/features/buyer/components/home/homeRules';
-import { apiGetAllProducts, apiGetAlsoBought, apiBrowseProducts, type MarketplaceProduct, type ProductVariant } from '@/api/services/marketplace';
+import { apiGetAllProducts, apiGetAlsoBought, apiGetAlsoViewed, apiBrowseProducts, type MarketplaceProduct, type ProductVariant } from '@/api/services/marketplace';
 import { apiStartConversation, apiSendMessage } from '@/api/services/messaging';
 import { apiCreateCheckout } from '@/api/services/checkout';
 import { apiPlaceFreeOrder } from '@/api/services/payment';
@@ -326,10 +326,14 @@ function ImageGallery({ images, name, video = null }: { images: string[]; name: 
 // Generic — groups every variant's options by attribute name (Color, Size,
 // Material…) and renders one chip-row per distinct attribute, instead of
 // hardcoding Color/Size blocks.
-function VariantSelector({ variants, selected, onSelect }: {
-  variants: ProductVariant[]; selected: ProductVariant | null; onSelect: (v: ProductVariant) => void;
+function VariantSelector({ variants, selected, onSelect, isDigital }: {
+  variants: ProductVariant[]; selected: ProductVariant | null; onSelect: (v: ProductVariant) => void; isDigital?: boolean;
 }) {
+  const t = useT();
+  const { currency: displayCurrency, convert } = useCurrencyPreference();
   if (!variants.length) return null;
+  // Price shown on a card = the variant's live price (platform sale included, same as the main price block).
+  const priceOf = (v: ProductVariant) => convert(typeof v.campaignPrice === 'number' ? v.campaignPrice : v.price, v.currency);
 
   const attributeNames = Array.from(new Set(variants.flatMap(v => (v.options ?? []).map(o => o.name))));
   if (!attributeNames.length) return null;
@@ -347,23 +351,51 @@ function VariantSelector({ variants, selected, onSelect }: {
     <div className="flex flex-col gap-3 mb-4">
       {attributeNames.map(name => {
         const values = Array.from(new Set(variants.map(v => valueOf(v, name)).filter((x): x is string => !!x)));
+        // Per option: cheapest price among its variants ("from" when they differ) and whether it can be bought at all.
+        const info = values.map(val => {
+          const group = variants.filter(v => valueOf(v, name) === val);
+          const prices = group.map(priceOf).filter(n => Number.isFinite(n));
+          return {
+            val,
+            min: prices.length ? Math.min(...prices) : null,
+            from: new Set(prices).size > 1,
+            soldOut: !isDigital && group.every(v => !v.unlimitedStock && (v.stock ?? 0) <= 0),
+          };
+        });
+        // Prices are only worth showing when options actually differ in price (not for plain colour/size choices).
+        const showPrice = new Set(info.map(i => i.min)).size > 1;
         return (
           <div key={name}>
             <p className="text-[12px] font-semibold text-charcoal mb-[6px]">
               {name}: <span className="font-normal text-slate">{valueOf(selected, name) ?? '—'}</span>
             </p>
-            <div className="flex flex-wrap gap-[6px]">
-              {values.map(val => (
-                <button
-                  key={val} onClick={() => pickVariant(name, val)}
-                  className={clsx(
-                    'px-[10px] py-1 rounded-[6px] text-[12px] cursor-pointer border-[1.5px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange',
-                    valueOf(selected, name) === val ? 'border-brand-orange bg-brand-pale-orange text-brand-deep-orange font-semibold' : 'border-bone bg-white text-charcoal font-normal',
-                  )}
-                >
-                  {val}
-                </button>
-              ))}
+            <div className="grid grid-cols-2 gap-2">
+              {info.map(({ val, min, from, soldOut }) => {
+                const on = valueOf(selected, name) === val;
+                return (
+                  <button
+                    key={val} onClick={() => pickVariant(name, val)} aria-pressed={on}
+                    className={clsx(
+                      'min-w-0 text-start px-3 py-2 rounded-[8px] text-[12px] cursor-pointer border-[1.5px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange',
+                      on ? 'border-brand-orange bg-brand-pale-orange text-brand-deep-orange' : 'border-bone bg-white text-charcoal',
+                      soldOut && !on && 'opacity-60',
+                    )}
+                  >
+                    <span className={clsx('block truncate', on ? 'font-semibold' : 'font-normal')}>{val}</span>
+                    {showPrice && min != null && (
+                      <span className="block text-[13px] font-bold mt-[2px]">
+                        {from && <span className="font-normal text-[11px] text-slate">{t('from')} </span>}
+                        {formatMoney(min, displayCurrency)}
+                      </span>
+                    )}
+                    {soldOut ? (
+                      <span className="block text-[11px] text-slate mt-[1px]">{t('Out of stock')}</span>
+                    ) : isDigital && showPrice ? (
+                      <span className="block text-[11px] text-slate mt-[1px]">{t('Instant download')}</span>
+                    ) : null}
+                  </button>
+                );
+              })}
             </div>
             {name === 'License' && (
               <p className="text-[12px] text-slate mt-[6px] leading-snug">
@@ -737,7 +769,9 @@ export function ProductDetail() {
     ],
   } : null);
   // What other teachers bought alongside this one.
-  const [alsoBought, setAlsoBought] = useState<{ basis: 'bought_together' | 'similar'; products: MarketplaceProduct[] }>({ basis: 'similar', products: [] });
+  const [alsoBought, setAlsoBought] = useState<{ basis: 'bought_together' | 'same_level' | 'similar'; products: MarketplaceProduct[] }>({ basis: 'similar', products: [] });
+  // "Students also viewed": co-viewed products (empty when the API has too little data).
+  const [alsoViewedRaw, setAlsoViewedRaw] = useState<MarketplaceProduct[]>([]);
   // "Similar for Class N": products of the same class (and category first); only loaded once the reviews block is near.
   const [similarRaw, setSimilarRaw] = useState<MarketplaceProduct[]>([]);
   const simClass = product?.classFrom ?? product?.classTo ?? null;
@@ -766,6 +800,8 @@ export function ProductDetail() {
     return out;
   };
   const rangeKey = (p: { classFrom?: string | null; classTo?: string | null }) => `${p.classFrom ?? ''}|${p.classTo ?? ''}`;
+  // Taken right after the bought-together rail, before Similar/seller/related, so it never repeats in them.
+  const alsoViewedRail = takeRail(alsoViewedRaw, isValidRailProduct).slice(0, 8);
   // Same class range first, then the rest (stable: the API's popularity order is kept inside each group).
   const similarRail = takeRail(
     [...similarRaw].sort((a, b) => Number(rangeKey(b) === rangeKey(product ?? {})) - Number(rangeKey(a) === rangeKey(product ?? {}))),
@@ -779,6 +815,14 @@ export function ProductDetail() {
     apiGetAlsoBought(product._id, 8)
       .then(res => { if (!cancelled) setAlsoBought(res.data ?? { basis: 'similar', products: [] }); })
       .catch(() => {});
+    return () => { cancelled = true; };
+  }, [product?._id, belowFold]);
+  useEffect(() => {
+    if (!product?._id || !belowFold) { setAlsoViewedRaw([]); return; }
+    let cancelled = false;
+    apiGetAlsoViewed(product._id, 12)
+      .then(res => { if (!cancelled) setAlsoViewedRaw(res.data?.products ?? []); })
+      .catch(() => { if (!cancelled) setAlsoViewedRaw([]); });
     return () => { cancelled = true; };
   }, [product?._id, belowFold]);
 
@@ -1112,7 +1156,7 @@ export function ProductDetail() {
                       </div>
                     );
                   })()}
-              <VariantSelector variants={variants} selected={activeVariant} onSelect={setSelectedVariant} />
+              <VariantSelector variants={variants} selected={activeVariant} onSelect={setSelectedVariant} isDigital={isDigital} />
               <div className="hidden lg:block">
                 <ProductFacts product={product} subject={subCategory?.name ?? category?.name ?? null} className="" />
               </div>
@@ -1459,8 +1503,26 @@ export function ProductDetail() {
 
           {/* ── Bought together ──────────────────────────────────────────────── */}
           {alsoBought.products.length > 0 && (
-            <ProductRail title={alsoBought.basis === 'bought_together' ? t('Teachers who bought this also bought') : `More for ${gradeLabel ?? 'this level'}`}>
+            <ProductRail title={alsoBought.basis === 'bought_together' ? t('Teachers who bought this also bought') : alsoBought.basis === 'same_level' && gradeLabel ? `More for ${gradeLabel}` : t('More in this category')}>
               {alsoBought.products.map(p => {
+                const dv = (p.variants ?? []).find(v => v.isDefault) ?? p.variants?.[0];
+                return (
+                  <RelatedCard
+                    key={p._id} id={p.slug} name={p.name} image={p.images?.[0] ?? null}
+                    price={dv?.price ?? null} compareAtPrice={dv?.compareAtPrice ?? null} currency={dv?.currency}
+                    premiumPrice={dv?.premiumPrice ?? null} premiumPercent={p.premiumPercent} premiumList={dv?.listPrice ?? null} memberPercent={dv?.premiumDiscountPercent} premiumSeller={p.premiumSellerPercent} premiumPlatform={p.premiumPlatformPercent}
+                    rating={p.averageRating} reviewCount={p.totalRatings} sold={p.purchaseCount}
+                    onClick={slug => navigate(`/product/${slug}`)}
+                  />
+                );
+              })}
+            </ProductRail>
+          )}
+
+          {/* ── Students also viewed (co-viewed; hidden when there is no data) ── */}
+          {alsoViewedRail.length > 0 && (
+            <ProductRail title={t('Students also viewed')}>
+              {alsoViewedRail.map(p => {
                 const dv = (p.variants ?? []).find(v => v.isDefault) ?? p.variants?.[0];
                 return (
                   <RelatedCard

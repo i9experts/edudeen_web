@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+﻿import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CategoryArt } from '@/components/comman/art/CategoryArt';
 import { SkeletonBox } from '@/components/comman/ui';
@@ -26,9 +26,11 @@ function Tile({ node, label, span }: { node: CategoryNode; label: string; span?:
   const broken = brokenSrc === src;
   return (
     <Link to={categoryUrl(node.slug || node._id)} className={`group block min-w-0 no-underline ${span ?? ''}`} aria-label={label || node.name} title={label || undefined}>
-      <div className={`${span ? 'aspect-[2/1]' : 'aspect-square'} rounded-lg overflow-hidden bg-[#eaf2f8]`}>
+      <div className={`${span ? 'aspect-[2/1]' : 'aspect-square'} relative rounded-lg overflow-hidden bg-white`}>
         {src && !broken
-          ? <img src={cloudinaryUrl(src, 400)} alt={label} loading="lazy" decoding="async" onError={() => setBrokenSrc(src)} onLoad={e => { if (e.currentTarget.naturalWidth < 2) setBrokenSrc(src); }} className="w-full h-full object-contain" />
+          ? <>
+              <img src={cloudinaryUrl(src, 400)} alt={label} loading="lazy" decoding="async" onError={() => setBrokenSrc(src)} onLoad={e => { if (e.currentTarget.naturalWidth < 2) setBrokenSrc(src); }} className="w-full h-full object-fill" />
+            </>
           : <CategoryArt name={node.name} className="w-full h-full" />}
       </div>
       <p className="text-[13px] sm:text-sm text-carbon mt-1.5 mb-0 line-clamp-2 break-words min-h-[2.75em] leading-snug group-hover:text-brand-royal group-hover:underline underline-offset-2">{label}</p>

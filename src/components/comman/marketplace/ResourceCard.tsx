@@ -113,7 +113,7 @@ function ListCover({ product }: { product: MarketplaceProduct }) {
   return (
     <div className="w-[112px] sm:w-[168px] aspect-square rounded-xl overflow-hidden flex items-center justify-center shrink-0 bg-[#f4f6f7]">
       {image ? (
-        <img {...responsiveImg(image, '168px', [168, 336], 336)} alt={product.name} width={168} height={168} loading="lazy" decoding="async" onError={() => setImgFailed(true)} className="w-full h-full object-contain" />
+        <img {...responsiveImg(image, '168px', [168, 336], 336)} alt={product.name} width={168} height={168} loading="lazy" decoding="async" onError={() => setImgFailed(true)} className="w-full h-full object-fill" />
       ) : (
         <ProductCoverFallback name={product.name} size="sm" className="w-full h-full" />
       )}
@@ -128,7 +128,7 @@ function Cover({ product }: { product: MarketplaceProduct }) {
   // Amazon-style: the plain product photo at its own proportions - full width, height follows the picture (no side bars, nothing cut).
   return imgProps ? (
     <div className="relative w-full aspect-[3/4] overflow-hidden bg-white flex items-center justify-center">
-      <img {...imgProps} alt={product.name} loading="lazy" decoding="async" onError={() => setImgFailed(true)} className="block w-full h-full object-contain" />
+      <img {...imgProps} alt={product.name} loading="lazy" decoding="async" onError={() => setImgFailed(true)} className="block w-full h-full object-fill" />
     </div>
   ) : (
     <div className="aspect-[4/5] w-full overflow-hidden">

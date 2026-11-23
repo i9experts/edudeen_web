@@ -336,7 +336,12 @@ export function apiGetProductPreview(id: string) {
 
 /** "Teachers who bought this also bought" — or similar resources for the same grade when there isn't enough order history. */
 export function apiGetAlsoBought(idOrSlug: string, limit = 8) {
-  return client.get<never, { success: boolean; data: { basis: 'bought_together' | 'similar'; products: MarketplaceProduct[] } }>(`/api/products/also-bought/${idOrSlug}?limit=${limit}`);
+  return client.get<never, { success: boolean; data: { basis: 'bought_together' | 'same_level' | 'similar'; products: MarketplaceProduct[] } }>(`/api/products/also-bought/${idOrSlug}?limit=${limit}`);
+}
+
+/** "Students also viewed" — other products opened by buyers who opened this one. Empty list when there isn't enough data. */
+export function apiGetAlsoViewed(idOrSlug: string, limit = 12) {
+  return client.get<never, { success: boolean; data: { products: MarketplaceProduct[] } }>(`/api/products/also-viewed/${idOrSlug}?limit=${limit}`);
 }
 
 /** GET /api/products/bestsellers: real best sellers (units on paid orders). `purchaseCount` is the real number. */

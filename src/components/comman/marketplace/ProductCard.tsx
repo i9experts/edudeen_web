@@ -292,7 +292,7 @@ export const ProductCard = memo(function ProductCard({ product: rawProduct, onCl
             name={product.name}
             tags={product.tags}
             productType={product.productType ?? product.type}
-            className="absolute inset-0 w-full h-full !object-contain bg-white"
+            className="absolute inset-0 w-full h-full !object-fill bg-white"
           />
 
           {/* Variant swatches — real photos, in a soft frosted pill. Always

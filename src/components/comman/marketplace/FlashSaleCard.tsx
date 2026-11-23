@@ -120,7 +120,7 @@ export function FlashSaleCard({ product, onClick, onAddToCart, isAdding, addToCa
           name={product.name}
           tags={product.tags}
           productType={product.productType ?? product.type}
-          className={clsx('absolute inset-0 w-full h-full !object-contain bg-white')}
+          className={clsx('absolute inset-0 w-full h-full !object-fill bg-white')}
         />
 
         {/* Category badge — compact, opaque (no blur/glass) */}

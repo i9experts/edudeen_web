@@ -11,7 +11,7 @@ import { formatMoney } from '@/utils/currency';
 function Cover({ src, name }: { src: string | null; name: string }) {
   const [err, setErr] = useState(false);
   if (!src || err) return <ProductCoverFallback name={name} size="xs" className="w-full aspect-[4/3] rounded-[10px]" />;
-  return <img loading="lazy" decoding="async" src={imgUrl(src, { w: 320 })} alt={name} width={320} height={240} onError={() => setErr(true)} className="w-full aspect-[4/3] rounded-[10px] object-cover border border-[#edebe2]" />;
+  return <img loading="lazy" decoding="async" src={imgUrl(src, { w: 320 })} alt={name} width={320} height={240} onError={() => setErr(true)} className="w-full aspect-[4/3] rounded-[10px] object-fill border border-[#edebe2]" />;
 }
 
 /**
