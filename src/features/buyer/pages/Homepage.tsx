@@ -62,7 +62,6 @@ import { useHomeCards } from '@/hooks/useHomeCards';
 import { useHasPlacementBanners } from '@/hooks/useHasPlacementBanners';
 import { ProductShelf } from '@/features/buyer/components/home/ProductShelf';
 import { BundlesShelf } from '@/features/buyer/components/home/BundlesShelf';
-import { HomeNewsletter } from '@/features/buyer/components/home/HomeNewsletter';
 import { useHomeShelves } from '@/features/buyer/components/home/useHomeShelves';
 import { dedupeInOrder, soldLabel, railSize, isRailEligible, MIN_RAIL_ITEMS } from '@/features/buyer/components/home/homeRules';
 
@@ -857,16 +856,12 @@ function HomeLanding() {
         </section>
 
         {/* ── Platform stats - the single stats block; real numbers only past the admin's thresholds ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 mb-12 items-stretch">
-          {statsOn && (
-            <div className="lg:col-span-8 [&>section]:h-full [&>section]:flex [&>section]:flex-col [&>section]:justify-center">
-              <PlatformStatsSection className="mb-0" />
-            </div>
-          )}
-          <div className={statsOn ? 'lg:col-span-4' : 'lg:col-span-12'}>
-            <HomeNewsletter embedded />
+        {/* Newsletter signup lives only in the Footer band (one place, buyers and sellers). */}
+        {statsOn && (
+          <div className="mb-12">
+            <PlatformStatsSection className="mb-0" />
           </div>
-        </div>
+        )}
 
         {/* ── Real reviews ── */}
         {(testimonialsLoading || testimonials.length > 0) && (

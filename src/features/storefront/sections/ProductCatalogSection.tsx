@@ -42,8 +42,10 @@ function ProductImage({ src, alt }: { src: string; alt: string }) {
   const [errored, setErrored] = useState(false);
   if (errored) return <ProductCoverFallback name={alt} size="lg" className="w-full h-full" />;
   return (
+    // object-fill: the whole picture is always visible (no crop) and fills the card's image area edge-to-edge (no gaps),
+    // so every card has the same image size whatever the photo's own aspect ratio.
     <img loading="lazy" decoding="async" src={src} alt={alt} onError={() => setErrored(true)}
-      className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.06]" />
+      className="w-full h-full object-fill transition-transform duration-500 ease-out group-hover:scale-[1.03]" />
   );
 }
 
@@ -155,8 +157,8 @@ export function ProductCatalogSection({ settings }: { settings: ProductCatalogSe
   const filtered = anyFilterActive(filters) || activeTag !== 'all' || !!collection;
   const kindOptions = KIND_OPTIONS.filter(o => o.value === 'all' || !facets || facets.kinds[o.value] > 0 || kind === o.value);
 
-  // Marketplace-style density: 2 on phones up to 5-6 on wide screens (cards stay small instead of stretching).
-  const colClass = { 2: 'grid-cols-2', 3: 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6', 4: 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6' }[settings.columns ?? 3];
+  // Marketplace-style cards, but slightly larger than the marketplace grid (which goes to 7): at most 6 per row on wide screens.
+  const colClass = { 2: 'grid-cols-2', 3: 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6', 4: 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6' }[settings.columns ?? 3];
   const gapClass = cfg.productGridDensity === 'relaxed' ? 'gap-3 sm:gap-4 lg:gap-5' : 'gap-2.5 sm:gap-3';
 
   // Seller tags, de-duplicated ("HURRY UP!", "Hurry Up", "Hurry Up !" are one tag) and capped so the row stays tidy.
@@ -260,22 +262,17 @@ export function ProductCatalogSection({ settings }: { settings: ProductCatalogSe
                       onClick={e => { e.stopPropagation(); if (vId) toggleWishlist(p._id, vId); }}
                       disabled={!vId || wishlisting === vId}
                       aria-label="Save to wishlist"
-                      className={clsx('absolute bottom-[6px] end-[6px] w-6 h-6 rounded-full bg-[rgba(255,255,255,0.92)] flex items-center justify-center border-none transition-transform duration-150', vId ? 'cursor-pointer hover:scale-110' : 'cursor-not-allowed opacity-50')}
+                      className={clsx('absolute top-[6px] end-[6px] sm:top-3 sm:end-3 w-8 h-8 rounded-lg bg-white border border-bone flex items-center justify-center transition-[transform,background-color] duration-150', vId ? 'cursor-pointer hover:bg-brand-pale-orange hover:scale-[1.08]' : 'cursor-not-allowed opacity-50')}
                     >
-                      <Heart size={11} className={clsx(isWishlisted(p._id, vId) ? 'text-[#e11d48] fill-[#e11d48]' : 'text-slate fill-none')} />
+                      <Heart size={14} className={clsx(isWishlisted(p._id, vId) ? 'text-[#e11d48] fill-[#e11d48]' : 'text-slate fill-none')} />
                     </button>
-                    <div className="absolute top-[6px] start-[6px]">
-                      <span className={clsx('px-[5px] py-[2px] rounded-[4px] text-[12px] font-semibold border leading-none', isPhysical ? 'bg-[#edf5e7] text-[#3b6720] border-[#c7e0b5]' : 'bg-accent-violet-bg text-accent-violet border-accent-violet/25')}>
-                        {typeLabel}
-                      </span>
-                    </div>
                     {!p.activeCampaign && pr.pct > 0 && (
-                      <div className="absolute top-[6px] end-[6px]">
-                        <span className="px-[5px] py-[2px] rounded-[4px] text-[12px] font-bold leading-none bg-error text-white">-{pr.pct}%</span>
+                      <div className="absolute top-[7px] start-[7px] sm:top-3 sm:start-3">
+                        <span className="px-[6px] py-[2px] rounded-md text-[12px] font-bold leading-none bg-error text-white">-{pr.pct}%</span>
                       </div>
                     )}
                     {p.activeCampaign && (
-                      <div className="absolute top-[6px] end-[6px]">
+                      <div className="absolute top-[7px] start-[7px] sm:top-3 sm:start-3">
                         <span className="flex items-center gap-[3px] px-[5px] py-[2px] rounded-[4px] text-[12px] font-bold leading-none bg-gradient-to-r from-brand-orange to-[#66AD36] text-white">
                           <Zap size={8} className="fill-white shrink-0" />
                           {p.activeCampaign.discountType && p.activeCampaign.discountValue != null
@@ -285,17 +282,17 @@ export function ProductCatalogSection({ settings }: { settings: ProductCatalogSe
                       </div>
                     )}
                   </ProductCardImage>
-                  <div className="flex-1 flex flex-col px-2.5 pt-2 pb-2.5 min-w-0">
-                    {/* Title always reserves 2 lines so cards in a row line up; rating and class lines only take room when present. */}
-                    <p className="font-bold text-[12px] sm:text-[13px] mb-[3px] leading-[1.4] line-clamp-2 min-h-[2.8em] break-words" style={{ color: cfg.textColor }}>{p.name}</p>
+                  <div className="flex-1 flex flex-col px-[9px] pt-2 pb-2 sm:px-[10px] sm:pb-[10px] min-w-0">
+                    {/* No reserved title height (it left a gap under 1-line titles); price + button are pushed to the card bottom with mt-auto, so rows still line up. */}
+                    <p className="font-bold text-[12px] sm:text-[13px] mb-[3px] leading-[1.4] line-clamp-2 break-words" style={{ color: cfg.textColor }}>{p.name}</p>
                     {classLabel && <p className="text-[12px] text-slate truncate mb-[2px]">{classLabel}</p>}
                     <RatingLine rating={p.averageRating} count={p.totalRatings} className="mb-[2px]" />
                     {p.subscriberPrice != null && (
                       <p className="text-[12px] sm:text-[12px] font-semibold mt-1" style={{ color: cfg.primaryColor }}>Members save {p.discountPercent}%</p>
                     )}
-                    <div className="flex items-end justify-between gap-1 mt-auto pt-[6px] sm:pt-[10px]">
-                      <span className="flex items-baseline flex-wrap gap-x-[6px] min-w-0">
-                        <span className="font-bold text-[12px] sm:text-[15px]" style={{ color: p.subscriberPrice != null ? cfg.primaryColor : pr.was ? '#c0392b' : cfg.textColor }}>
+                    <div className="flex items-center justify-between gap-3 mt-auto pt-2 min-w-0">
+                      <span className="flex items-baseline flex-wrap gap-x-[5px] min-w-0">
+                        <span className="font-bold text-[14px] sm:text-[15px] whitespace-nowrap tracking-tight" style={{ color: p.subscriberPrice != null ? cfg.primaryColor : pr.was ? '#c0392b' : cfg.textColor }}>
                           {(() => {
                             if (p.subscriberPrice != null) return formatPrice(convert(p.subscriberPrice, store.baseCurrency), displayCurrency);
                             if (pr.price > 0) return formatPrice(convert(pr.price, pr.currency), displayCurrency);
@@ -312,17 +309,19 @@ export function ProductCatalogSection({ settings }: { settings: ProductCatalogSe
                           </s>
                         )}
                       </span>
-                      <button type="button" disabled={!vId || adding === vId}
-                        aria-label={!vId ? 'Currently unavailable' : `Add ${p.name} to cart`}
-                        title={!vId ? 'Currently unavailable' : 'Add to cart'}
-                        onClick={e => { e.stopPropagation(); if (vId) addToCart(p._id, vId, isPhysical ? 'physical' : 'digital'); }}
-                        className="shrink-0 w-8 h-8 rounded-full inline-flex items-center justify-center border cursor-pointer transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                        style={{ color: cfg.primaryColor, borderColor: cfg.primaryColor, background: '#fff' }}
-                        onMouseEnter={e => { if (!e.currentTarget.disabled) { e.currentTarget.style.background = cfg.primaryColor; e.currentTarget.style.color = '#fff'; } }}
-                        onMouseLeave={e => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.color = cfg.primaryColor; }}>
-                        {adding === vId ? <Loader2 size={14} className="animate-spin" /> : <ShoppingCart size={14} />}
-                      </button>
+                      <span className="text-[12px] border border-[#dde5e8] px-[7px] py-[3px] rounded text-[#566773] shrink-0">{typeLabel}</span>
                     </div>
+                    <button type="button" disabled={!vId || adding === vId}
+                      aria-label={!vId ? 'Currently unavailable' : `Add ${p.name} to cart`}
+                      title={!vId ? 'Currently unavailable' : 'Add to cart'}
+                      onClick={e => { e.stopPropagation(); if (vId) addToCart(p._id, vId, isPhysical ? 'physical' : 'digital'); }}
+                      className="mt-2 w-full h-8 rounded-lg inline-flex items-center justify-center gap-[6px] border font-semibold text-[12px] cursor-pointer transition-colors active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed"
+                      style={{ color: cfg.primaryColor, borderColor: cfg.primaryColor, background: '#fff' }}
+                      onMouseEnter={e => { if (!e.currentTarget.disabled) { e.currentTarget.style.background = cfg.primaryColor; e.currentTarget.style.color = '#fff'; } }}
+                      onMouseLeave={e => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.color = cfg.primaryColor; }}>
+                      {adding === vId ? <Loader2 size={13} className="animate-spin" /> : <ShoppingCart size={13} />}
+                      <span className="whitespace-nowrap">{!vId ? 'Unavailable' : adding === vId ? 'Adding…' : 'Add to Cart'}</span>
+                    </button>
                   </div>
                 </ProductCardShell>
               );

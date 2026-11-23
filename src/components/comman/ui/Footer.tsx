@@ -341,8 +341,8 @@ export function Footer({ showNewsletter = true }:{ showNewsletter?: boolean }) {
     <footer className="bg-white border-t border-bone text-slate">
 
       {/* ── Newsletter ── */}
-      {/* Shown on every public page by default; not for sellers (they are not the audience for deal alerts). */}
-      {showNewsletter && !seller && (
+      {/* Shown on every public page by default, for buyers and sellers alike. */}
+      {showNewsletter && (
         <div className="bg-[#f5f8fa] border-b border-bone">
           <div className="max-w-[1480px] mx-auto px-[5%] md:px-[4%] py-7 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5">
             <div>
