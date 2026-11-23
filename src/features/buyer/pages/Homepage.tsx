@@ -626,7 +626,26 @@ function HomeLanding() {
         <ProductShelf
           eyebrow="What parents and teachers buy" title="Bestsellers"
           action={{ label: 'View all', onClick: () => navigate('/?sort=popularity') }}
-          items={unique.bestsellers.length >= MIN_RAIL_ITEMS ? unique.bestsellers.slice(0, railSize(unique.bestsellers.length)) : []} loading={homeShelves.bestsellers.loading} renderCard={renderResourceCard}
+          items={unique.bestsellers.length >= MIN_RAIL_ITEMS ? unique.bestsellers.slice(0, railSize(unique.bestsellers.length)) : []} loading={homeShelves.bestsellers.loading}
+          layout="scroll"
+          renderCard={(p) => {
+            const dv = (p.variants ?? []).find(v => v.isDefault) ?? p.variants?.[0];
+            const vId = dv?._id ?? '';
+            return (
+              <FlashSaleCard
+                key={p._id}
+                compact
+                product={p}
+                onClick={handleCardClick}
+                isAdding={adding === vId}
+                addToCartFailed={addToCartFailedId === vId}
+                onAddToCart={handleAddToCart}
+                isWishlisted={isWishlisted(p._id, vId)}
+                isWishlisting={wishlisting === vId}
+                onToggleWishlist={handleToggleWishlist}
+              />
+            );
+          }}
           note={p => { const s = soldLabel(p.purchaseCount); return s ? <p className="text-[12px] text-slate mt-1 mb-0">{s}</p> : null; }}
         />
         {/* ── Picked for the active child (My children): right under Bestsellers ── */}
@@ -704,7 +723,7 @@ function HomeLanding() {
             </span>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-[12px] gap-y-[18px] md:gap-x-[16px] md:gap-y-[20px]">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-x-[12px] gap-y-[18px] md:gap-x-[16px] md:gap-y-[20px]">
             {loading && products.length === 0
               ? Array.from({ length: 8 }).map((_, i) => <ResourceCardSkeleton key={i} />)
               : products.length === 0
@@ -781,7 +800,7 @@ function HomeLanding() {
               'grid grid-cols-2 gap-x-[14px] gap-y-[25px] md:gap-x-[22px] md:gap-y-[28px]',
               unique.featured.length === 2 && 'md:grid-cols-2 max-w-[560px]',
               unique.featured.length === 3 && 'md:grid-cols-3 max-w-[840px]',
-              unique.featured.length > 3 && 'md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5',
+              unique.featured.length > 3 && 'md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7',
             )}>
               {unique.featured.map(renderResourceCard)}
             </div>
@@ -800,7 +819,7 @@ function HomeLanding() {
                 action={{ label: 'View all', onClick: () => navigate(`/picks/${s.slug}`) }}
               />
               {s.subtitle && <p className="text-[13.5px] text-graphite -mt-3 mb-4">{s.subtitle}</p>}
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-[14px] gap-y-[25px] md:gap-x-[22px] md:gap-y-[28px]">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-x-[14px] gap-y-[25px] md:gap-x-[22px] md:gap-y-[28px]">
                 {items.map(renderResourceCard)}
               </div>
             </section>

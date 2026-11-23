@@ -10,7 +10,7 @@ import { memberPriceOf, usePremiumView } from './PremiumBits';
 // ── Skeleton ──────────────────────────────────────────────────────────────────
 export function FlashSaleCardSkeleton() {
   return (
-    <div className="bg-white rounded-2xl border border-bone overflow-hidden h-full flex flex-col">
+    <div className="bg-white rounded-none border border-bone overflow-hidden h-full flex flex-col">
       <div className="animate-pulse aspect-square bg-bone" />
       <div className="p-3.5 flex-1 flex flex-col">
         <div className="animate-pulse h-[9px] w-16 bg-bone rounded-full mb-2" />
@@ -104,7 +104,7 @@ export function FlashSaleCard({ product, onClick, onAddToCart, isAdding, addToCa
     <div
       onClick={() => onClick(product.slug)}
       className={clsx(
-        'group relative bg-white rounded-2xl border border-bone overflow-hidden cursor-pointer transition-all duration-300 hover:bg-brand-pale-orange/[0.12] hover:border-brand-orange/25',
+        'group relative bg-white rounded-none border border-bone overflow-hidden cursor-pointer transition-all duration-300 hover:bg-brand-pale-orange/[0.12] hover:border-brand-orange/25',
         !compact && 'h-full flex flex-col hover:-translate-y-[3px] hover:shadow-card-hover',
       )}
     >
@@ -114,13 +114,13 @@ export function FlashSaleCard({ product, onClick, onAddToCart, isAdding, addToCa
       {/* Image — square, the card's focal point without dominating the whole card.
           Compact: stays fixed-size on hover (no zoom) — hover instead reveals the
           price/rating overlay below. */}
-      <div className="relative overflow-hidden aspect-square">
+      <div className="relative overflow-hidden aspect-[3/4] bg-white">
         <ProductImage
           images={product.images ?? []}
           name={product.name}
           tags={product.tags}
           productType={product.productType ?? product.type}
-          className={clsx('w-full h-full object-cover transition-transform duration-500 ease-out', !compact && 'group-hover:scale-[1.06]')}
+          className={clsx('absolute inset-0 w-full h-full !object-contain bg-white')}
         />
 
         {/* Category badge — compact, opaque (no blur/glass) */}
@@ -135,8 +135,8 @@ export function FlashSaleCard({ product, onClick, onAddToCart, isAdding, addToCa
         {/* Discount — premium sale chip */}
         {pctOff != null && pctOff > 0 && (
           <span dir="ltr" translate="no" className={clsx(
-            'absolute rounded-full font-bold bg-error text-white',
-            compact ? 'top-[5px] end-[5px] px-[6px] py-[2px] text-[12px]' : 'top-[7px] end-[7px] px-[7px] py-[2.5px] text-[12px]',
+            'absolute rounded-none font-bold bg-error text-white top-0 end-0',
+            compact ? 'px-[6px] py-[2px] text-[12px]' : 'px-[7px] py-[2.5px] text-[12px]',
           )}>
             -{pctOff}%
           </span>

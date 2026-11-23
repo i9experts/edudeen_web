@@ -88,7 +88,7 @@ export function ProductImage({ images, name, className, categoryName, tags, prod
       loading="lazy"
       decoding="async"
       onError={() => setErrored(true)}
-      className={clsx('w-full object-cover block', className)}
+      className={clsx('w-full block', !/(^|\s)!?object-(contain|cover|fill|none|scale-down)/.test(className ?? '') && 'object-cover', className)}
     />
   );
 }
@@ -292,7 +292,7 @@ export const ProductCard = memo(function ProductCard({ product: rawProduct, onCl
             name={product.name}
             tags={product.tags}
             productType={product.productType ?? product.type}
-            className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-110"
+            className="absolute inset-0 w-full h-full !object-contain bg-white"
           />
 
           {/* Variant swatches — real photos, in a soft frosted pill. Always

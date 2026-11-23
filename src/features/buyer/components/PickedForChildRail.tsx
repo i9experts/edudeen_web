@@ -82,7 +82,7 @@ export function PickedForChildRail({ renderCard }: { renderCard: (p: Marketplace
         title={`${t('Picked for')} ${selected.name} (${childLevelLabel(selected)})`}
         action={{ label: t('View all'), onClick: () => navigate(`/?${params.toString()}`) }}
       />
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-[14px] gap-y-[25px] md:gap-x-[22px] md:gap-y-[28px]">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-x-[14px] gap-y-[25px] md:gap-x-[22px] md:gap-y-[28px]">
         {loading ? Array.from({ length: 5 }, (_, i) => <ResourceCardSkeleton key={i} />) : products.map(renderCard)}
       </div>
     </section>

@@ -28,7 +28,7 @@ function Tile({ node, label, span }: { node: CategoryNode; label: string; span?:
     <Link to={categoryUrl(node.slug || node._id)} className={`group block min-w-0 no-underline ${span ?? ''}`} aria-label={label || node.name} title={label || undefined}>
       <div className={`${span ? 'aspect-[2/1]' : 'aspect-square'} rounded-lg overflow-hidden bg-[#eaf2f8]`}>
         {src && !broken
-          ? <img src={cloudinaryUrl(src, 400)} alt={label} loading="lazy" decoding="async" onError={() => setBrokenSrc(src)} onLoad={e => { if (e.currentTarget.naturalWidth < 2) setBrokenSrc(src); }} className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]" />
+          ? <img src={cloudinaryUrl(src, 400)} alt={label} loading="lazy" decoding="async" onError={() => setBrokenSrc(src)} onLoad={e => { if (e.currentTarget.naturalWidth < 2) setBrokenSrc(src); }} className="w-full h-full object-contain" />
           : <CategoryArt name={node.name} className="w-full h-full" />}
       </div>
       <p className="text-[13px] sm:text-sm text-carbon mt-1.5 mb-0 line-clamp-2 break-words min-h-[2.75em] leading-snug group-hover:text-brand-royal group-hover:underline underline-offset-2">{label}</p>

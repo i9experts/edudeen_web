@@ -33,7 +33,7 @@ function TileView({ rt, span }: { rt: ResolvedTile; span?: string }) {
     <SmartLink to={tile.link} className={clsx('group block min-w-0 no-underline', span)} label={label || undefined}>
       <div className={clsx(span ? 'aspect-[2/1]' : 'aspect-square', 'rounded-lg overflow-hidden bg-[#eaf2f8]')}>
         {src && !broken
-          ? <img src={cloudinaryUrl(src, 400)} alt={label} loading="lazy" decoding="async" onError={() => setBrokenSrc(src)} onLoad={e => { if (e.currentTarget.naturalWidth < 2) setBrokenSrc(src); }} className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]" />
+          ? <img src={cloudinaryUrl(src, 400)} alt={label} loading="lazy" decoding="async" onError={() => setBrokenSrc(src)} onLoad={e => { if (e.currentTarget.naturalWidth < 2) setBrokenSrc(src); }} className="w-full h-full object-contain" />
           : <CategoryArt name={label || 'Resources'} className="w-full h-full" />}
       </div>
       <p title={label || undefined} className="text-[13px] sm:text-sm text-carbon mt-1.5 mb-0 line-clamp-2 break-words min-h-[2.75em] leading-snug group-hover:text-brand-royal group-hover:underline underline-offset-2">{label}</p>
@@ -77,7 +77,7 @@ function CardView({ card, bySlug }: { card: HomeCard; bySlug: Map<string, { node
           <SmartLink to={card.link} className="group block flex-1 no-underline" label={card.title}>
             <div className="aspect-[4/3] rounded-lg overflow-hidden bg-[#eaf2f8]">
               {card.imageUrl && brokenCover !== card.imageUrl
-                ? <img src={cloudinaryUrl(card.imageUrl, 640)} alt={card.title} loading="lazy" decoding="async" onError={() => setBrokenCover(card.imageUrl)} onLoad={e => { if (e.currentTarget.naturalWidth < 2) setBrokenCover(card.imageUrl); }} className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]" />
+                ? <img src={cloudinaryUrl(card.imageUrl, 640)} alt={card.title} loading="lazy" decoding="async" onError={() => setBrokenCover(card.imageUrl)} onLoad={e => { if (e.currentTarget.naturalWidth < 2) setBrokenCover(card.imageUrl); }} className="w-full h-full object-contain" />
                 : <CategoryArt name={card.title} className="w-full h-full" />}
             </div>
           </SmartLink>

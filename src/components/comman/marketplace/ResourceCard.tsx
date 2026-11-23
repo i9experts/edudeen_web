@@ -125,69 +125,44 @@ function Cover({ product }: { product: MarketplaceProduct }) {
   const [imgFailed, setImgFailed] = useState(false);
   const image = !imgFailed ? (cardImage(product) || product.video?.posterUrl || undefined) : undefined;
   const imgProps = image ? responsiveImg(image, '(min-width: 1024px) 14vw, (min-width: 640px) 22vw, 36vw', [200, 320, 480, 640], 480) : null;
-  const clipId = `bk-${product._id}`;
-  // Every book is the same size; the whole picture is stretched to fill it (no bars, nothing cut off).
-  const cx = 30, cy = 8, cw = 148, ch = 172;
-
-  // Toys, stationery and other non-book items: plain rounded photo, no book shape.
-  if (product.coverStyle === 'flat') {
-    return (
-      <div className="aspect-square w-full rounded-lg overflow-hidden flex items-center justify-center bg-[#f4f6f7]">
-        {imgProps ? (
-          <img {...imgProps} alt={product.name} loading="lazy" decoding="async" onError={() => setImgFailed(true)} className="w-full h-full object-contain" />
-        ) : (
-          <ProductCoverFallback name={product.name} size="md" className="w-full h-full" />
-        )}
-      </div>
-    );
-  }
-
-  // Front-facing book drawn in SVG: the seller's image (or the title) fills the WHOLE cover; pages show as a thin edge behind it.
-  return (
-    <div className="aspect-square w-full rounded-lg overflow-hidden">
-      <svg viewBox="0 0 210 198" className="w-full h-full" role="img" aria-label={product.name} preserveAspectRatio="xMidYMid meet">
-        <defs>
-          <clipPath id={clipId}><rect x={cx} y={cy} width={cw} height={ch} rx="3" /></clipPath>
-        </defs>
-        <g transform="rotate(-3 106 99)">
-        <ellipse cx={cx + cw / 2 + 5} cy="188" rx={Math.max(40, cw / 2)} ry="5" fill="#000" fillOpacity="0.10" />
-        {/* pages */}
-        <rect x={cx + 5} y={cy + 5} width={cw} height={ch} rx="3" fill="#fff" stroke="#9aa3aa" strokeWidth="1" />
-        <path d={`M${cx + cw + 3} ${cy + 9}v${ch - 8}M${cx + cw + 5} ${cy + 11}v${ch - 12}`} stroke="#c9d0d5" strokeWidth="0.8" />
-        {/* cover */}
-        <g clipPath={`url(#${clipId})`}>
-          <rect x={cx} y={cy} width={cw} height={ch} fill="#fff" />
-          {imgProps ? (
-            // Crops to fill the book shape (like CSS object-fit: cover) instead of stretching — a
-            // portrait, landscape or square upload all read as a clean, undistorted book cover.
-            <image href={imgProps.src} x={cx} y={cy} width={cw} height={ch} preserveAspectRatio="xMidYMid slice" onError={() => setImgFailed(true)} />
-          ) : (
-            <foreignObject x="30" y="8" width="148" height="172">
-              <ProductCoverFallback name={product.name} size="sm" className="w-full h-full" />
-            </foreignObject>
-          )}
-          {/* spine shading */}
-          <rect x={cx} y={cy} width="9" height={ch} fill="#000" fillOpacity="0.16" />
-          <rect x={cx + 9} y={cy} width="1.2" height={ch} fill="#000" fillOpacity="0.12" />
-        </g>
-        <rect x={cx} y={cy} width={cw} height={ch} rx="3" fill="none" stroke="#7d868d" strokeWidth="1.2" />
-      </g>
-      </svg>
+  // Amazon-style: the plain product photo at its own proportions - full width, height follows the picture (no side bars, nothing cut).
+  return imgProps ? (
+    <div className="relative w-full aspect-[3/4] overflow-hidden bg-white flex items-center justify-center">
+      <img {...imgProps} alt={product.name} loading="lazy" decoding="async" onError={() => setImgFailed(true)} className="block w-full h-full object-contain" />
+    </div>
+  ) : (
+    <div className="aspect-[4/5] w-full overflow-hidden">
+      <ProductCoverFallback name={product.name} size="md" className="w-full h-full" />
     </div>
   );
 }
-/** Stars + review count, e.g. "★ 4.6 (128)". Nothing for an unreviewed item. */
-export function RatingLine({ rating, count, className }: { rating?: number; count?: number; className?: string }) {
-  if (!count || !rating) return null;
+/** Amazon-style rating: "4.5 ★★★★½ (1,234)". `showEmpty` keeps the row (muted) for an unreviewed item so every card lines up. */
+export function RatingLine({ rating, count, className, showEmpty = false }: { rating?: number; count?: number; className?: string; showEmpty?: boolean }) {
+  const has = !!count && !!rating;
+  if (!has && !showEmpty) return null;
+  const r = has ? Math.max(0, Math.min(5, rating as number)) : 0;
   return (
-    <span className={clsx('inline-flex items-center gap-1 text-[12px] text-charcoal', className)} aria-label={`Rated ${rating.toFixed(1)} out of 5 from ${count} reviews`}>
-      <Star size={12} className="fill-brand-gold text-brand-gold" aria-hidden />
-      <b className="font-semibold">{rating.toFixed(1)}</b>
-      <span className="text-slate">({count.toLocaleString()})</span>
+    <span className={clsx('inline-flex items-center gap-1 text-[12px] text-charcoal', className)} aria-label={has ? `Rated ${r.toFixed(1)} out of 5 from ${count} reviews` : 'No reviews yet'}>
+      {has && <b className="font-medium">{r.toFixed(1)}</b>}
+      <span className="inline-flex" aria-hidden>
+        {[0, 1, 2, 3, 4].map(i => {
+          const fill = Math.max(0, Math.min(1, r - i));
+          return (
+            <span key={i} className="relative inline-block w-[13px] h-[13px]">
+              <Star size={13} className="absolute inset-0 text-[#d5d9d9] fill-[#d5d9d9]" />
+              {fill > 0 && (
+                <span className="absolute inset-0 overflow-hidden" style={{ width: `${fill * 100}%` }}>
+                  <Star size={13} className="text-[#ffa41c] fill-[#ffa41c]" />
+                </span>
+              )}
+            </span>
+          );
+        })}
+      </span>
+      {has ? <span className="text-[#007185]">({(count as number).toLocaleString()})</span> : <span className="text-slate">No reviews yet</span>}
     </span>
   );
 }
-
 function QuickViewCover({ product }: { product: MarketplaceProduct }) {
   const { accent } = paletteFor(product.name || product._id);
   const [imgFailed, setImgFailed] = useState(false);
@@ -358,7 +333,7 @@ export const ResourceCard = memo(function ResourceCard({
               <span className="mt-1 text-[13px] text-slate truncate">{shopName}</span>
             )
           )}
-          <RatingLine rating={product.averageRating} count={product.totalRatings} className="mt-1" />
+          <RatingLine rating={product.averageRating} count={product.totalRatings} showEmpty className="mt-1" />
           <div className="mt-1"><BoardChipSlot product={product} reserve={false} /></div>
           <TrustBadges trust={product.trust} className="mt-1.5" />
           <div className="flex items-center gap-2 flex-wrap mt-auto pt-3">
@@ -379,7 +354,7 @@ export const ResourceCard = memo(function ResourceCard({
   }
 
   return (
-    <article className="card-hover group relative min-w-0 rounded-xl border border-transparent bg-white p-2 transition-colors duration-200 hover:border-[#cfdadf] focus-within:border-[#cfdadf]">
+    <article className="card-hover group relative min-w-0 rounded-none border border-transparent bg-white p-0 pb-2 transition-colors duration-200 hover:border-[#cfdadf] focus-within:border-[#cfdadf]">
       <div ref={coverSlotRef} onMouseEnter={checkFlip} onFocus={checkFlip} className="relative quick-view-trigger">
         <Link
           to={href}
@@ -416,22 +391,22 @@ export const ResourceCard = memo(function ResourceCard({
 
       <CompareToggle product={product} className="absolute end-[7px] top-[43px] sm:end-3 sm:top-[54px]" />
 
-      <div className="px-1.5 pb-1">
+      <div className="px-2 pb-1">
       <p className="text-[12px] text-slate mt-2.5 mb-1 truncate">{meta}</p>
       <Link
         to={href}
         onClick={go}
-        className="block py-1 -my-1 text-start text-carbon no-underline font-bold text-[13px] sm:text-[13.5px] leading-[1.35] cursor-pointer hover:underline line-clamp-2 min-h-[calc(2.7em+8px)]"
+        className="block py-1 -my-1 text-start text-carbon no-underline font-bold text-[13px] sm:text-[13.5px] leading-[1.35] cursor-pointer hover:underline line-clamp-2"
       >
         {product.name}
       </Link>
-      <RatingLine rating={product.averageRating} count={product.totalRatings} className="block mb-1" />
-      <BoardChipSlot product={product} />
+      <RatingLine rating={product.averageRating} count={product.totalRatings} showEmpty className="flex mb-1" />
+      <BoardChipSlot product={product} reserve={false} />
       <TrustBadges trust={product.trust} className="mt-1" />
       {/* Phones (2 narrow columns): price on its own line, then type chip + cart button; sm+: one row. */}
-      <div className="flex flex-col gap-1.5 mt-2 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
+      <div className="flex flex-col gap-1.5 mt-1.5 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
         <span className="flex items-baseline gap-x-1.5 min-w-0 flex-wrap">
-          <strong className={clsx('num text-[14px] sm:text-[15px]', member ? 'text-[#8a6100]' : was ? 'text-error' : 'text-carbon')}>
+          <strong className={clsx('num text-[14px] sm:text-[15px] font-semibold', member ? 'text-[#8a6100]' : 'text-carbon')}>
             {rawPrice === 0 ? 'Free' : fmt(member ? member.price : price)}
           </strong>
           {member && <s className="text-[12px] text-slate">{fmt(member.list ?? price)}</s>}
