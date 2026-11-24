@@ -96,6 +96,10 @@ export interface MarketplaceProduct {
   isFeatured?:       boolean;
   /** Waiting for a quality review: stays on the store page and in search, never in discovery rails. */
   needsReview?:      boolean;
+  /** Admin hid it from recommendations + search (true only; the page and URL still work). */
+  hiddenFromRecommendations?: boolean;
+  /** Fails a basic quality check (true only): ranks lower in the product-page rails. */
+  lowQuality?:       boolean;
   sellerId:          string;
   storeId?:          string;
   storeSlug?:        string | null;
@@ -108,6 +112,7 @@ export interface MarketplaceProduct {
   descriptionUr?:    string | null;
   /** Pictures the seller added inside the description (Description tab on the product page). */
   descriptionImages?: string[];
+  samplePages?: string[];
   /** Optional product video: played in the product page gallery (cards always show a picture). */
   video?:            { url: string; posterUrl: string | null; frontFirst: boolean } | null;
   productType?:      'physical' | 'digital';
@@ -131,6 +136,14 @@ export interface MarketplaceProduct {
   author?:           string | null;
   publisher?:        string | null;
   edition?:          string | null;
+  pages?:            number | null;
+  isbn?:             string | null;
+  binding?:          'paperback' | 'hardcover' | 'spiral' | null;
+  /** Optional series name + position (same store); the product page lists the series in a table. */
+  series?:           string | null;
+  seriesOrder?:      number | null;
+  /** Product page only: in the top sellers AND 10+ sold. */
+  isBestseller?:     boolean;
   /** 'flat' = plain photo card (toys etc.); anything else = book-cover look. */
   coverStyle?:       'book' | 'flat' | null;
   deliveryFormat?:   'download' | 'course';
@@ -337,6 +350,11 @@ export function apiGetProductPreview(id: string) {
 /** "Teachers who bought this also bought" — or similar resources for the same grade when there isn't enough order history. */
 export function apiGetAlsoBought(idOrSlug: string, limit = 8) {
   return client.get<never, { success: boolean; data: { basis: 'bought_together' | 'same_level' | 'similar'; products: MarketplaceProduct[] } }>(`/api/products/also-bought/${idOrSlug}?limit=${limit}`);
+}
+
+/** Other books of this product's series (same store, max 8). `products` is empty when the product has no series. */
+export function apiGetSeries(idOrSlug: string) {
+  return client.get<never, { success: boolean; data: { series: string | null; products: MarketplaceProduct[] } }>(`/api/products/series/${idOrSlug}`);
 }
 
 /** "Students also viewed" — other products opened by buyers who opened this one. Empty list when there isn't enough data. */

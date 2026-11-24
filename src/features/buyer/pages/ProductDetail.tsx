@@ -35,9 +35,11 @@ import { getStorePagePath } from '@/utils/storefrontUrl';
 import { apiGetProductAttributes, type ProductAttributeValue } from '@/api/services/attributes';
 import { EDUCATION_LEVELS } from '@/api/services/product';
 import { useCategoryTree, categoryPath } from '@/hooks/marketplace/useCategoryTree';
-import { ageLabel, CURRICULUM_LABEL } from '@/constants/learning';
+import { ageLabel, BINDINGS, CURRICULUM_LABEL } from '@/constants/learning';
+import { ProductDescription } from '@/features/buyer/components/ProductDescription';
 import { classRangeLabel } from '@/constants/classLevels';
 import { ProductFacts } from '@/features/buyer/components/ProductFacts';
+import { SeriesTable } from '@/features/buyer/components/SeriesTable';
 import { EducatorCard, hasEducatorProfile } from '@/components/comman/marketplace/EducatorCard';
 import { Button } from '@/components/comman/ui/Button';
 import { NotFoundPage } from '@/features/buyer/pages/NotFoundPage';
@@ -52,7 +54,7 @@ import { ProductCoverFallback } from '@/components/comman/marketplace/ProductCov
 import {
   ArrowRight, Package, Download, ClipboardList, CheckCircle, Minus, Plus,
   ShoppingCart, Star, Link2, Share2, Heart, ShieldCheck, Truck,
-  UserPlus, UserCheck, Tag, ZoomIn, ZoomOut, ChevronLeft, ChevronRight, Users, Calendar, Award, Sparkles, Flame,
+  UserPlus, UserCheck, Tag, ZoomIn, ZoomOut, BookOpen, ChevronLeft, ChevronRight, Users, Calendar, Award, Sparkles, Flame,
   FileText, Play, Store as StoreIcon, Eye, Loader2, Zap, MessageCircle, MessageCircleQuestion, Clock, RotateCcw,
 } from 'lucide-react';
 import { responseTimeLabel, returnSummary } from '@/utils/sellerTrust';
@@ -60,6 +62,7 @@ const ProductReviewsSection = lazyWithRetry(() => import('./ProductReviews').the
 import { ProductQuestions } from '@/features/buyer/components/ProductQuestions';
 import { BundleOffer } from '@/features/buyer/components/BundleOffer';
 import { AlsoInBundleLine } from '@/features/buyer/components/AlsoInBundleLine';
+import { BuyTogetherPicker, type PickerItem } from '@/features/buyer/components/BuyTogetherPicker';
 import { CourseInfo } from '@/features/buyer/components/CourseInfo';
 import { normalizeDeliveryFormat } from '@/utils/deliveryFormat';
 import { PlacementBanner } from '@/components/comman/marketplace/PlacementBanner';
@@ -132,7 +135,7 @@ function DetailSkeleton() {
 }
 
 // ── Zoom viewer — zoom in/out buttons + previous/next for several images/pages ───
-function ZoomViewer({ pages, alt, start = 0 }: { pages: string[]; alt: string; start?: number }) {
+function ZoomViewer({ pages, alt, start = 0, onClose }: { pages: string[]; alt: string; start?: number; onClose?: () => void }) {
   const [i, setI] = useState(start);
   const [zoom, setZoom] = useState(1);
   // When zoomed, the picture follows the cursor (hover-pan) instead of needing scrollbars.
@@ -143,6 +146,20 @@ function ZoomViewer({ pages, alt, start = 0 }: { pages: string[]; alt: string; s
     el.scrollTop = ((e.clientY - r.top) / r.height) * (el.scrollHeight - el.clientHeight);
   };
   const go = (n: number) => { setI((n + pages.length) % pages.length); setZoom(1); };
+  // Keyboard: arrows move between pages (visual direction, so reversed in RTL), Esc closes.
+  const goRef = useRef(go); goRef.current = go;
+  const iRef = useRef(i); iRef.current = i;
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { onClose?.(); return; }
+      if (pages.length < 2 || (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight')) return;
+      const rtl = document.documentElement.dir === 'rtl';
+      const forward = (e.key === 'ArrowRight') !== rtl;
+      goRef.current(iRef.current + (forward ? 1 : -1));
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [pages.length, onClose]);
   const btn = 'w-11 h-11 rounded-full border border-bone bg-white flex items-center justify-center text-carbon hover:bg-bone disabled:opacity-40 cursor-pointer';
   // Swipe between pictures when not zoomed in (zoomed = the finger scrolls the picture instead).
   const sx = useRef<{ x: number; y: number } | null>(null);
@@ -165,7 +182,7 @@ function ZoomViewer({ pages, alt, start = 0 }: { pages: string[]; alt: string; s
         {pages.length > 1 && <button type="button" aria-label="Next" className={btn} onClick={() => go(i + 1)}><ChevronRight size={16} /></button>}
       </div>
       <div onMouseMove={zoom > 1 ? pan : undefined} onTouchStart={swipeStart} onTouchEnd={swipeEnd} className={clsx('overflow-auto max-h-[70vh] rounded-lg border border-bone bg-white', zoom > 1 && 'cursor-move')}>
-        <img src={pages[i]} alt={`${alt} ${i + 1}`} style={{ width: `${zoom * 100}%`, maxWidth: 'none' }} className="block mx-auto" />
+        <img src={pages[i]} alt={`${alt} - image ${i + 1} of ${pages.length}`} style={{ width: `${zoom * 100}%`, maxWidth: 'none' }} className="block mx-auto" />
       </div>
     </div>
   );
@@ -212,11 +229,14 @@ function ReviewsPlaceholder() {
 
 type GallerySlide = { kind: 'image'; src: string } | { kind: 'video'; src: string; poster: string | null };
 
-function ImageGallery({ images, name, video = null }: { images: string[]; name: string; video?: { url: string; posterUrl: string | null; frontFirst: boolean } | null }) {
+function ImageGallery({ images, name, video = null, samplePages = [] }: { images: string[]; name: string; video?: { url: string; posterUrl: string | null; frontFirst: boolean } | null; samplePages?: string[] }) {
   const [selected, setSelected] = useState(0);
   const [errored, setErrored] = useState<Record<number, boolean>>({});
   const [loadedImg, setLoadedImg] = useState<Record<number, boolean>>({});
   const [viewer, setViewer] = useState(false);
+  const [lookInside, setLookInside] = useState(false);
+  const isDesktop = useIsDesktop();
+  const trackRef = useRef<HTMLDivElement>(null);
   const [playing, setPlaying] = useState(false);
 
   // Slides in display order: the seller decides whether the video is first or comes after the pictures.
@@ -227,6 +247,17 @@ function ImageGallery({ images, name, video = null }: { images: string[]; name: 
   const imageOnly = slides.filter(s => s.kind === 'image').map(s => s.src);
   const imageStart = slide?.kind === 'image' ? Math.max(0, imageOnly.indexOf(slide.src)) : 0;
   const choose = (i: number) => { setSelected(i); setPlaying(false); };
+  const sampleList = samplePages.filter(Boolean);
+  const altFor = (slideIdx: number) => `${name} - image ${slides.slice(0, slideIdx + 1).filter(s => s.kind === 'image').length} of ${pics.length}`;
+  // Phones/tablets: a native scroll-snap track; the dots and thumbnails follow its position.
+  const trackIndex = () => { const el = trackRef.current; return el && el.clientWidth ? Math.round(Math.abs(el.scrollLeft) / el.clientWidth) : 0; };
+  const onTrackScroll = () => { const k = Math.min(slides.length - 1, Math.max(0, trackIndex())); if (k !== selected) { setSelected(k); setPlaying(false); } };
+  useEffect(() => {
+    const el = trackRef.current;
+    if (isDesktop || !el || !el.clientWidth || trackIndex() === selected) return;
+    el.scrollTo({ left: selected * el.clientWidth * (document.documentElement.dir === 'rtl' ? -1 : 1), behavior: 'smooth' });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected, isDesktop]);
   // Swipe on the main slide (phones/tablets): a mostly-horizontal drag of 45px+ moves to the next / previous slide.
   // Vertical drags still scroll the page (touch-pan-y), and a swipe never opens the viewer.
   const touchStart = useRef<{ x: number; y: number } | null>(null);
@@ -234,7 +265,7 @@ function ImageGallery({ images, name, video = null }: { images: string[]; name: 
   const onTouchEnd = (e: React.TouchEvent) => {
     const s = touchStart.current; touchStart.current = null;
     const t = e.changedTouches[0];
-    if (!s || !t || slides.length < 2 || playing) return;
+    if (!s || !t || slides.length < 2 || playing || !isDesktop) return;
     const dx = t.clientX - s.x; const dy = t.clientY - s.y;
     if (Math.abs(dx) < 45 || Math.abs(dx) < Math.abs(dy) * 1.2) return;
     // In RTL the "next" slide is to the left, like the page itself.
@@ -249,7 +280,44 @@ function ImageGallery({ images, name, video = null }: { images: string[]; name: 
         onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}
         className="relative flex-none lg:flex-1 min-w-0 h-[300px] md:h-[400px] lg:h-[460px] max-h-[55vh] lg:max-h-none rounded-2xl overflow-hidden border border-bone bg-white touch-pan-y"
       >
-        {slide?.kind === 'video' ? (
+        {!isDesktop && slides.length > 1 ? (
+          <>
+            <div ref={trackRef} onScroll={onTrackScroll} className="flex h-full w-full overflow-x-auto snap-x snap-mandatory scrollbar-hide overscroll-x-contain">
+              {slides.map((sl, i) => (
+                <div key={i} className="relative shrink-0 w-full h-full snap-center snap-always">
+                  {sl.kind === 'video' ? (
+                    playing && selected === i ? (
+                      <video src={sl.src} poster={sl.poster ?? undefined} controls autoPlay playsInline preload="auto" className="w-full h-full object-contain bg-black" />
+                    ) : (
+                      <button type="button" onClick={() => { setSelected(i); setPlaying(true); }} aria-label="Play product video" className="relative w-full h-full cursor-pointer bg-black p-0 border-0">
+                        {sl.poster && <img src={sl.poster} alt={name} loading={i === 0 ? 'eager' : 'lazy'} className="w-full h-full object-contain" />}
+                        <span className="absolute inset-0 flex items-center justify-center"><span className="flex items-center justify-center w-16 h-16 rounded-full bg-black/60 text-white"><Play size={28} className="fill-white ms-1" aria-hidden /></span></span>
+                      </button>
+                    )
+                  ) : errored[i] ? (
+                    <ProductCoverFallback name={name} size="lg" className="w-full h-full" />
+                  ) : (
+                    <img
+                      {...responsiveImg(sl.src, '100vw', [480, 720, 960], 720)} alt={altFor(i)} width={960} height={960}
+                      loading={i === 0 ? 'eager' : 'lazy'} fetchPriority={i === 0 ? 'high' : undefined} decoding="async"
+                      onLoad={() => setLoadedImg(l => (l[i] ? l : { ...l, [i]: true }))}
+                      onError={() => setErrored(e => ({ ...e, [i]: true }))}
+                      className={`w-full h-full object-contain p-3 ${loadedImg[i] ? '' : 'animate-pulse bg-cream'}`}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+            {slide?.kind === 'image' && !errored[selected] && (
+              <button type="button" onClick={() => setViewer(true)} aria-label="Enlarge image" className="absolute top-3 end-3 flex items-center gap-1 px-[9px] py-[5px] rounded-full bg-black/55 text-white text-[12px] font-medium backdrop-blur-sm cursor-pointer">
+                <ZoomIn size={12} /> Enlarge
+              </button>
+            )}
+            <div className="absolute bottom-2 inset-x-0 flex justify-center gap-1.5 pointer-events-none" aria-hidden="true">
+              {slides.map((_, i) => <span key={i} className={clsx('h-1.5 rounded-full transition-all', selected === i ? 'w-4 bg-brand-orange' : 'w-1.5 bg-black/25')} />)}
+            </div>
+          </>
+        ) : slide?.kind === 'video' ? (
           playing ? (
             <video src={slide.src} poster={slide.poster ?? undefined} controls autoPlay playsInline preload="auto" className="w-full h-full object-contain bg-black" />
           ) : (
@@ -267,7 +335,7 @@ function ImageGallery({ images, name, video = null }: { images: string[]; name: 
         ) : (
           <>
             <img
-              {...responsiveImg(slide.src, '(min-width: 1024px) 520px, 100vw', [480, 720, 960, 1280], 960)} alt={name} width={960} height={960}
+              {...responsiveImg(slide.src, '(min-width: 1024px) 520px, 100vw', [480, 720, 960, 1280], 960)} alt={altFor(selected)} width={960} height={960}
               loading={selected === 0 ? 'eager' : 'lazy'} fetchPriority={selected === 0 ? 'high' : undefined} decoding="async"
               onLoad={() => setLoadedImg(l => (l[selected] ? l : { ...l, [selected]: true }))}
               onError={() => setErrored(e => ({ ...e, [selected]: true }))}
@@ -281,10 +349,23 @@ function ImageGallery({ images, name, video = null }: { images: string[]; name: 
             </button>
           </>
         )}
+        {sampleList.length > 0 && (
+          <button
+            type="button" onClick={() => setLookInside(true)}
+            className="absolute bottom-3 start-3 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/95 border border-bone text-carbon text-[12.5px] font-semibold shadow-sm cursor-pointer"
+          >
+            <BookOpen size={14} aria-hidden /> Look inside
+          </button>
+        )}
       </div>
       {viewer && (
         <Modal title={name} onClose={() => setViewer(false)} width={760} mobileSheet>
-          <ZoomViewer pages={imageOnly} alt={name} start={imageStart} />
+          <ZoomViewer pages={imageOnly} alt={name} start={imageStart} onClose={() => setViewer(false)} />
+        </Modal>
+      )}
+      {lookInside && sampleList.length > 0 && (
+        <Modal title={`${name} - Look inside`} onClose={() => setLookInside(false)} width={760} mobileSheet>
+          <ZoomViewer pages={sampleList} alt={`${name} - sample page`} onClose={() => setLookInside(false)} />
         </Modal>
       )}
 
@@ -655,6 +736,11 @@ export function ProductDetail() {
   const isCourse = isDigital && format === 'course';
   const [showPolicy, setShowPolicy] = useState(false);
   const policySummary = returnSummary(storeData?.returnPolicy, isDigital);
+  // Seller's real return window (display only). null = seller set no policy -> keep the generic wording.
+  const rp = storeData?.returnPolicy;
+  const returnWindowText: string | null = !rp ? null
+    : rp.returnsAccepted && rp.windowDays > 0 ? `Returnable within ${rp.windowDays} ${rp.windowDays === 1 ? 'day' : 'days'} of delivery.`
+    : 'Not returnable.';
   const typeLabel  = isPhysical ? 'Physical' : 'Digital';
   // A physical variant marked unlimitedStock (seller disabled inventory
   // tracking for it) is always available — previously this fell through to
@@ -801,14 +887,17 @@ export function ProductDetail() {
   };
   const rangeKey = (p: { classFrom?: string | null; classTo?: string | null }) => `${p.classFrom ?? ''}|${p.classTo ?? ''}`;
   // Taken right after the bought-together rail, before Similar/seller/related, so it never repeats in them.
-  const alsoViewedRail = takeRail(alsoViewedRaw, isValidRailProduct).slice(0, 8);
+  // Admin 'hide from recommendations' listings never appear in a rail (their own page and the store page still work); low-quality ones rank last, never removed.
+  const railOk = (p: { hiddenFromRecommendations?: boolean }) => p.hiddenFromRecommendations !== true;
+  const lowLast = <T extends { lowQuality?: boolean }>(list: T[]): T[] => [...list.filter(p => !p.lowQuality), ...list.filter(p => p.lowQuality)];
+  const alsoViewedRail = takeRail(lowLast(alsoViewedRaw), p => isValidRailProduct(p) && railOk(p)).slice(0, 8);
   // Same class range first, then the rest (stable: the API's popularity order is kept inside each group).
   const similarRail = takeRail(
-    [...similarRaw].sort((a, b) => Number(rangeKey(b) === rangeKey(product ?? {})) - Number(rangeKey(a) === rangeKey(product ?? {}))),
-    isValidRailProduct,
+    lowLast([...similarRaw].sort((a, b) => Number(rangeKey(b) === rangeKey(product ?? {})) - Number(rangeKey(a) === rangeKey(product ?? {})))),
+    p => isValidRailProduct(p) && railOk(p),
   ).slice(0, 8);
-  const sellerRail = takeRail(sellerProducts);
-  const relatedRail = takeRail(relatedProducts);
+  const sellerRail = takeRail(lowLast(sellerProducts), railOk);
+  const relatedRail = takeRail(lowLast(relatedProducts), railOk);
   useEffect(() => {
     if (!product?._id || !belowFold) return;
     let cancelled = false;
@@ -941,6 +1030,9 @@ export function ProductDetail() {
     ...(product.author?.trim() ? [{ label: 'Author', value: product.author.trim() }] : []),
     ...(product.publisher?.trim() ? [{ label: 'Publisher', value: product.publisher.trim() }] : []),
     ...(product.edition?.trim() ? [{ label: 'Edition', value: product.edition.trim() }] : []),
+    ...(product.pages && product.pages > 0 ? [{ label: 'Pages', value: String(product.pages) }] : []),
+    ...(product.binding ? [{ label: 'Binding', value: BINDINGS.find(b => b.value === product.binding)?.label ?? '' }] : []),
+    ...(product.isbn?.trim() ? [{ label: 'ISBN', value: product.isbn.trim() }] : []),
     ...(classRangeLabel(product.classFrom, product.classTo) || ageLabel(product.ageMin, product.ageMax)
       ? [{ label: 'Suitable for', value: [classRangeLabel(product.classFrom, product.classTo), ageLabel(product.ageMin, product.ageMax)].filter(Boolean).join(' · ') }] : []),
     ...(product.trust?.scholarReviewed ? [{ label: 'Content review', value: 'Scholar reviewed by Edudeen' }] : []),
@@ -953,7 +1045,7 @@ export function ProductDetail() {
     ...(!isDigital ? [{ label: 'Delivery', value: 'Shipped by the seller' }] : []),
   ] : [];
 
-  const descriptionExtras = learningDetails.filter(d => !['Suitable for', 'Subject area', 'Delivery', 'Author', 'Publisher', 'Edition'].includes(d.label));
+  const descriptionExtras = learningDetails.filter(d => !['Suitable for', 'Subject area', 'Delivery', 'Author', 'Publisher', 'Edition', 'Pages', 'Binding', 'ISBN'].includes(d.label));
 
   // The license the buyer has picked, if the seller offers several.
   const licenseValue = product?.digital?.licenseType
@@ -1008,7 +1100,7 @@ export function ProductDetail() {
           <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,380px)_minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,460px)_minmax(0,1fr)_320px] gap-6 items-start min-w-0 mb-8">
             {/* Left: pictures (sticky, Amazon style) */}
             <div className="min-w-0 lg:sticky lg:top-20">
-              <ImageGallery images={allImages} name={product.name} video={product.video ?? null} />
+              <ImageGallery images={allImages} name={product.name} video={product.video ?? null} samplePages={product.samplePages ?? []} />
             </div>
 
             {/* Centre: title, price, what you get, options, facts, reviews */}
@@ -1061,6 +1153,7 @@ export function ProductDetail() {
                       </a>
                     )}
                     {product.purchaseCount > 0 && <span className="text-slate">• {product.purchaseCount} sold</span>}
+                    {product.isBestseller && <span className="inline-flex items-center gap-[3px] text-[12px] font-bold text-white bg-brand-deep-orange px-[6px] py-[2px] rounded-md"><Flame size={10} aria-hidden /> Bestseller</span>}
                   </p>
 
                   {/* Price */}
@@ -1103,7 +1196,7 @@ export function ProductDetail() {
                   )}
                   {displayPrice !== 0 && (
                     <p className="text-[12px] text-slate mb-0 mt-2 pt-2 border-t border-bone">
-                      {isPhysical ? 'Refund can be requested after delivery.' : 'Refund available only if you have not downloaded the file.'}{' '}
+                      {isPhysical ? (returnWindowText ?? 'Refund can be requested after delivery.') :'Refund available only if you have not downloaded the file.'}{' '}
                       <Link to="/returns" className="font-semibold text-brand-royal underline">Returns policy</Link>
                     </p>
                   )}
@@ -1160,6 +1253,7 @@ export function ProductDetail() {
               <div className="hidden lg:block">
                 <ProductFacts product={product} subject={subCategory?.name ?? category?.name ?? null} className="" />
               </div>
+              {isDesktop && product.series && <SeriesTable productId={product._id} currentId={product._id} />}
               {isDesktop && (
                 <ReviewsCard innerRef={belowRef} show={belowFold} productId={product._id} storeName={storeData?.name ?? product.storeName ?? product.sellerName} canReview={product.canReview} />
               )}
@@ -1332,7 +1426,7 @@ export function ProductDetail() {
                         ))}
                       </dl>
                     )}
-                    <p className="text-[14px] text-charcoal/80 leading-[1.8] mb-4 whitespace-pre-line max-w-[72ch]">{(lang === 'ur' && product.descriptionUr) || product.description || 'No description available.'}</p>
+                    <ProductDescription text={(lang === 'ur' && product.descriptionUr) || product.description || t('No description available.')} className="mb-1" />
                     {(product.descriptionImages?.length ?? 0) > 0 && (
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5 max-w-[760px]">
                         {product.descriptionImages!.map((src, i) => (
@@ -1478,6 +1572,7 @@ export function ProductDetail() {
                         ? [isCourse ? { Icon: Download, label: 'Online access', value: 'Start learning from My Library right after payment. No shipping.' }
                           : { Icon: Download, label: 'Instant Digital Delivery', value: 'Download link available immediately after purchase' }]
                         : []),
+                      ...(!isDigital && returnWindowText ? [{ Icon: RotateCcw, label: 'Returns', value: returnWindowText }] : []),
                       { Icon: Package, label: 'Seller Fulfilled', value: `Sold and shipped by ${storeData?.name ?? product.storeName ?? product.sellerName ?? 'the store'}` },
                     ].map(row => (
                       <div key={row.label} className="flex gap-3 items-start">
@@ -1497,11 +1592,24 @@ export function ProductDetail() {
 
           {/* ── Reviews ────────────────────────────────────────────────────────── */}
           {/* Desktop: the reviews card lives under the gallery (above). Phones/tablets: here, after the tabs. */}
+          {!isDesktop && product.series && <div className="mb-6"><SeriesTable productId={product._id} currentId={product._id} /></div>}
           {!isDesktop && (
             <ReviewsCard innerRef={belowRef} show={belowFold} productId={product._id} storeName={storeData?.name ?? product.storeName ?? product.sellerName} canReview={product.canReview} className="mb-6" />
           )}
 
           {/* ── Bought together ──────────────────────────────────────────────── */}
+          {alsoBought.basis === 'bought_together' && activeVariant && (() => {
+            const toItem = (p: { _id: string; name: string; images?: string[]; type?: string }, v: typeof activeVariant): PickerItem => ({
+              productId: p._id, variantId: v._id, type: p.type === 'physical' ? 'physical' : 'digital', name: p.name, image: p.images?.[0] ?? null,
+              price: v.price, currency: v.currency, inStock: !!v.unlimitedStock || v.stock > 0,
+            });
+            const items: PickerItem[] = [toItem(product, activeVariant)];
+            for (const p of alsoBought.products.slice(0, 3)) {
+              const dv = (p.variants ?? []).find(v => v.isDefault) ?? p.variants?.[0];
+              if (dv) items.push(toItem(p, dv));
+            }
+            return <BuyTogetherPicker items={items} />;
+          })()}
           {alsoBought.products.length > 0 && (
             <ProductRail title={alsoBought.basis === 'bought_together' ? t('Teachers who bought this also bought') : alsoBought.basis === 'same_level' && gradeLabel ? `More for ${gradeLabel}` : t('More in this category')}>
               {alsoBought.products.map(p => {

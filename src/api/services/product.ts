@@ -53,6 +53,11 @@ export interface LearningMetaInput {
   author?:    string | null;
   publisher?: string | null;
   edition?:   string | null;
+  pages?:     number | null;
+  isbn?:      string | null;
+  binding?:   'paperback' | 'hardcover' | 'spiral' | null;
+  series?:    string | null;
+  seriesOrder?: number | null;
   classFrom?: string | null;
   classTo?:   string | null;
   coverStyle?: 'book' | 'flat' | null;
@@ -123,6 +128,7 @@ export interface StoreProduct {
   images:            string[];
   /** Pictures the seller put inside the description (shown in the Description tab). */
   descriptionImages?: string[];
+  samplePages?: string[];
   /** Optional product video; null removes it on edit. */
   video?: { url: string; posterUrl: string | null; frontFirst: boolean } | null;
   tags:              string[];
@@ -133,6 +139,11 @@ export interface StoreProduct {
   author?:           string | null;
   publisher?:        string | null;
   edition?:          string | null;
+  pages?:            number | null;
+  isbn?:             string | null;
+  binding?:          'paperback' | 'hardcover' | 'spiral' | null;
+  series?:           string | null;
+  seriesOrder?:      number | null;
   coverStyle?:       'book' | 'flat' | null;
   classFrom?:        string | null;
   classTo?:          string | null;
@@ -177,6 +188,7 @@ export interface CreatePhysicalPayload extends LearningMetaInput {
   subCategoryId:     string | null;
   images:            string[];
   descriptionImages?: string[];
+  samplePages?: string[];
   /** Optional product video; null removes it on edit. */
   video?: { url: string; posterUrl: string | null; frontFirst: boolean } | null;
   tags:              string[];
@@ -207,6 +219,7 @@ export interface CreateDigitalPayload extends LearningMetaInput {
   subCategoryId:     string | null;
   images:            string[];
   descriptionImages?: string[];
+  samplePages?: string[];
   /** Optional product video; null removes it on edit. */
   video?: { url: string; posterUrl: string | null; frontFirst: boolean } | null;
   tags:              string[];
@@ -237,6 +250,7 @@ export interface EditPhysicalPayload extends LearningMetaInput {
   subCategoryId:     string | null;
   images:            string[];
   descriptionImages?: string[];
+  samplePages?: string[];
   /** Optional product video; null removes it on edit. */
   video?: { url: string; posterUrl: string | null; frontFirst: boolean } | null;
   tags:              string[];
@@ -265,6 +279,7 @@ export interface EditDigitalPayload extends LearningMetaInput {
   /** Cover + gallery photos (max 20). Omit to leave unchanged. */
   images?:        string[];
   descriptionImages?: string[];
+  samplePages?: string[];
   /** Optional product video; null removes it on edit. */
   video?: { url: string; posterUrl: string | null; frontFirst: boolean } | null;
   tags?:          string[];
@@ -344,6 +359,8 @@ export interface InventoryProduct {
   /** 0-100 listing completeness and what is missing. */
   qualityScore?: number;
   qualityMissing?: string[];
+  /** Seller 'Listing tips': plain-language basic checks this listing fails (empty/absent = fine). */
+  listingTips?: string[];
   /** Set for products whose stock can be edited inline (single variant). */
   defaultVariantId?: string | null;
   variantCount?:     number;

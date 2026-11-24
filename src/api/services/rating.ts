@@ -89,6 +89,10 @@ export interface ProductReviewStats {
   averageRating:   number;
   totalReviews:    number;
   ratingBreakdown: Record<'1' | '2' | '3' | '4' | '5', number>;
+  /** Whole percents per star that add up to exactly 100 (absent on an older API: the page falls back to its own rounding). */
+  ratingPercentages?: Record<'1' | '2' | '3' | '4' | '5', number>;
+  /** Keyword themes from the written reviews; only present with 5+ reviews. */
+  customersSay?: { themes: { key: string; label: string; count: number }[]; basedOn: number } | null;
 }
 
 export interface StoreReviewEntry {

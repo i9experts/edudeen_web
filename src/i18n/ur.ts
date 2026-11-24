@@ -10,6 +10,8 @@
  * آرڈر، ڈاؤن لوڈ). Brand: ایجوڈین.
  */
 export const UR: Record<string, string> = {
+  'Listing tips': 'لسٹنگ کے مشورے',
+  'Replace the placeholder-looking title (test / demo / sample / name or a trailing number) with a real one': 'ٹیسٹ، ڈیمو، سیمپل، نام یا آخر میں نمبر والے عنوان کی جگہ اصل عنوان لکھیں',
   "A seller's regular sale is not combined with the Premium price": 'سیلر کی عام سیل پریمیم قیمت کے ساتھ جمع نہیں ہوتی',
   'No payment method is available right now': 'اس وقت ادائیگی کا کوئی طریقہ دستیاب نہیں',
   'Digital resources are delivered instantly, so they are paid for online — not with cash on delivery.': 'ڈیجیٹل وسائل فوراً ملتے ہیں، اس لیے ان کی ادائیگی آن لائن ہوتی ہے، کیش آن ڈیلیوری سے نہیں۔',
@@ -412,6 +414,9 @@ export const UR: Record<string, string> = {
   'Preview': 'جھلک',
   'Enlarge image': 'تصویر بڑی کریں',
   'Enlarge': 'بڑا کریں',
+  'Look inside': 'اندر جھانکیں',
+  'Sample pages (Look inside)': 'نمونے کے صفحات (اندر جھانکیں)',
+  'Optional, up to 6, in reading order. Buyers get a Look inside button that opens these pages one by one (e.g. first pages of a book or worksheet).': 'اختیاری، زیادہ سے زیادہ 6، پڑھنے کی ترتیب میں۔ خریداروں کو اندر جھانکیں کا بٹن ملے گا جو یہ صفحات ایک ایک کر کے کھولے گا (مثلاً کتاب یا ورک شیٹ کے ابتدائی صفحات)۔',
   'Preview page': 'صفحے کی جھلک',
   'Free sample': 'مفت نمونہ',
   'Ask the seller a question': 'فروخت کنندہ سے سوال پوچھیں',
@@ -446,6 +451,9 @@ export const UR: Record<string, string> = {
   'Course content': 'کورس کا مواد',
   'Certificate on completion': 'مکمل کرنے پر سرٹیفکیٹ',
   'Teachers who bought this also bought': 'یہ خریدنے والے اساتذہ نے یہ بھی خریدا',
+  'Frequently bought together': 'اکثر ایک ساتھ خریدا جاتا ہے',
+  'Add selected to cart': 'منتخب کارٹ میں ڈالیں',
+  'Not returnable.': 'واپسی ممکن نہیں۔',
   'Students also viewed': 'طلبہ نے یہ بھی دیکھا',
   'More in this category': 'اسی کیٹیگری سے مزید',
   'from': 'از',
@@ -981,6 +989,14 @@ export const UR: Record<string, string> = {
   'Author': 'مصنف',
   'Publisher': 'ناشر',
   'Edition': 'ایڈیشن',
+  'Binding': 'جلد بندی',
+  'ISBN': 'آئی ایس بی این',
+  'Paperback': 'پیپر بیک',
+  'Hardcover': 'ہارڈ کور',
+  'Spiral': 'سپائرل',
+  'Read more': 'مزید پڑھیں',
+  'Show less': 'کم دکھائیں',
+  'No description available.': 'تفصیل دستیاب نہیں۔',
   'Similar for': 'ملتی جلتی چیزیں',
   'this class': 'اس جماعت',
   'No reviews yet. Bought this? Review it from': 'ابھی کوئی ریویو نہیں۔ یہ خریدا ہے؟ ریویو دیں',
@@ -1897,6 +1913,7 @@ export const UR: Record<string, string> = {
   'All filters': 'تمام فلٹرز',
   'Quick filters': 'فوری فلٹرز',
   'Delivery to': 'ڈیلیوری بنام',
+  'Estimated delivery': 'متوقع ڈیلیوری',
   'Also in:': 'یہ اس میں بھی ہے:',
   'Board': 'بورڈ',
   'Homeschool & Parenting': 'ہوم اسکولنگ اور والدین کی رہنمائی',
@@ -2724,6 +2741,21 @@ export const UR: Record<string, string> = {
   'Relevance': 'مطابقت',
   'Sign in as': 'سائن اِن بطور',
   "Educators can set up a store and start listing quickly. Every store is reviewed by our team, and buyers always pay through Edudeen's own checkout.": 'معلمین جلد اسٹور بنا کر لسٹنگ شروع کر سکتے ہیں۔ ہر اسٹور کا ہماری ٹیم جائزہ لیتی ہے، اور خریدار ہمیشہ ایجوڈین کے اپنے چیک آؤٹ سے ادائیگی کرتے ہیں۔',
+  // Series table, "Customers say", series fields
+  'Ages': 'عمریں',
+  'More in': 'مزید اسی سیریز میں',
+  '(this book)': '(یہ کتاب)',
+  'Could not load the series.': 'سیریز لوڈ نہیں ہو سکی۔',
+  'Customers say': 'خریدار کہتے ہیں',
+  'Series (optional)': 'سیریز (اختیاری)',
+  'Position in series': 'سیریز میں نمبر',
+  'Clear explanations': 'واضح وضاحتیں',
+  'Good practice questions': 'مشق کے اچھے سوالات',
+  'Children enjoy it': 'بچوں کو پسند آتی ہے',
+  'Good print / quality': 'اچھی چھپائی / معیار',
+  'Good value': 'اچھی قیمت',
+  'Matches the syllabus': 'نصاب کے مطابق',
+  'Fast delivery': 'تیز ڈیلیوری',
 };
 
 const MONTHS: Record<string, string> = {
@@ -2751,6 +2783,13 @@ const urOr = (s: string) => UR[s] ?? s;
 
 /** Strings with numbers or names in them — `m` is the RegExp match. */
 export const UR_PATTERNS: [RegExp, (m: RegExpMatchArray) => string][] = [
+  [/^Returnable within (\d+) days? of delivery\.$/, m => `ڈیلیوری کے ${m[1]} دن کے اندر واپسی ممکن`],
+  [/^Total for (\d+) items?:$/, m => `${m[1]} آئٹمز کا کل:`],
+  [/^Added (\d+) to your cart$/, m => `${m[1]} کارٹ میں شامل ہو گئے`],
+  // Seller "Listing tips" (basic listing-quality checks, texts come from the API).
+  [/^Add at least (\d+) images \((\d+) now\)$/, m => `کم از کم ${m[1]} تصاویر شامل کریں (اب ${m[2]} ہیں)`],
+  [/^Write a description of at least (\d+) characters \((\d+) now\)$/, m => `کم از کم ${m[1]} حروف کی تفصیل لکھیں (اب ${m[2]} ہیں)`],
+  [/^Make the title at least (\d+) characters \((\d+) now\)$/, m => `عنوان کم از کم ${m[1]} حروف کا بنائیں (اب ${m[2]} ہیں)`],
   // Cancel info + stored English notification texts (type + params; the stored notification is unchanged).
   [/^Cancelled by (you|the seller|Edudeen) on (.+)\.$/, m => `${({ you: 'آپ', 'the seller': 'فروخت کنندہ', Edudeen: 'ایجوڈین' } as Record<string, string>)[m[1]]} نے ${m[2]} کو منسوخ کیا۔`],
   [/^Cancelled by (you|the seller|Edudeen)\.$/, m => `${({ you: 'آپ', 'the seller': 'فروخت کنندہ', Edudeen: 'ایجوڈین' } as Record<string, string>)[m[1]]} نے منسوخ کیا۔`],

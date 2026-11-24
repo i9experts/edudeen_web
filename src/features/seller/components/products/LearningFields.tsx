@@ -1,7 +1,7 @@
 import { clsx } from 'clsx';
 import { Plus, Trash2 } from 'lucide-react';
 import { FileUpload, type PrivateUploadData } from '@/components/comman/ui';
-import { CURRICULA, LICENSE_LABEL, PRODUCT_LANGUAGES, type ProductLanguage } from '@/constants/learning';
+import { BINDINGS, CURRICULA, LICENSE_LABEL, PRODUCT_LANGUAGES, type Binding, type ProductLanguage } from '@/constants/learning';
 import { CLASS_LEVELS, classIndex } from '@/constants/classLevels';
 import { COVER_STYLES, suggestCoverStyle, type CoverStyle } from '@/constants/coverStyle';
 
@@ -12,10 +12,26 @@ import { COVER_STYLES, suggestCoverStyle, type CoverStyle } from '@/constants/co
 const inp = 'w-full px-3 py-[9px] text-[13px] border border-bone rounded-lg outline-none text-charcoal bg-white focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/10';
 const lbl = 'block text-[12.5px] font-semibold text-charcoal mb-1.5';
 
-export interface LearningValue { curricula: string[]; ageMin: string; ageMax: string; classFrom: string; classTo: string; coverStyle?: '' | CoverStyle; language?: '' | ProductLanguage; author?: string; publisher?: string; edition?: string }
-export const EMPTY_LEARNING: LearningValue = { curricula: [], ageMin: '', ageMax: '', classFrom: '', classTo: '', coverStyle: '', language: '', author: '', publisher: '', edition: '' };
-/** Same limits as the API (`BOOK_DETAIL_LIMITS`). */
+export interface LearningValue { curricula: string[]; ageMin: string; ageMax: string; classFrom: string; classTo: string; coverStyle?: '' | CoverStyle; language?: '' | ProductLanguage; author?: string; publisher?: string; edition?: string; pages?: string; isbn?: string; binding?: '' | Binding; series?: string; seriesOrder?: string }
+export const EMPTY_LEARNING: LearningValue = { curricula: [], ageMin: '', ageMax: '', classFrom: '', classTo: '', coverStyle: '', language: '', author: '', publisher: '', edition: '', pages: '', isbn: '', binding: '' };
+/** Same limits as the API (`BOOK_DETAIL_LIMITS`, `BOOK_PAGES_MAX`). */
 export const BOOK_DETAIL_LIMITS = { author: 120, publisher: 120, edition: 60 } as const;
+export const BOOK_PAGES_MAX = 5000;
+
+/** Same ISBN-10 / ISBN-13 checksum as the API (`isValidIsbn`). Input may have hyphens or spaces. */
+export function isbnError(raw: string | undefined): string | null {
+  const d = (raw ?? '').replace(/[\s-]/g, '').toUpperCase();
+  if (!d) return null;
+  let ok = false;
+  if (/^\d{13}$/.test(d)) ok = [...d].reduce((s, c, i) => s + Number(c) * (i % 2 === 0 ? 1 : 3), 0) % 10 === 0;
+  else if (/^\d{9}[\dX]$/.test(d)) ok = [...d].reduce((s, c, i) => s + (c === 'X' ? 10 : Number(c)) * (10 - i), 0) % 11 === 0;
+  return ok ? null : 'Check the ISBN: it must be a valid 10 or 13 digit number.';
+}
+/** The pages value as a number when it is valid, else null. */
+const pagesNumber = (v: string | undefined) => { const n = Number((v ?? '').trim()); return (v ?? '').trim() !== '' && Number.isInteger(n) && n >= 1 && n <= BOOK_PAGES_MAX ? n : null; };
+export function pagesError(raw: string | undefined): string | null {
+  return (raw ?? '').trim() === '' || pagesNumber(raw) != null ? null : `Pages must be a whole number from 1 to ${BOOK_PAGES_MAX}.`;
+}
 
 /** Required choice: how the product card looks (book cover or plain photo). Hint follows the picked category. */
 export function CoverStyleField({ value, onChange, categoryNames }: { value: '' | CoverStyle; onChange: (v: CoverStyle) => void; categoryNames: (string | null | undefined)[] }) {
@@ -52,6 +68,11 @@ export function learningPayload(v: LearningValue) {
     author: (v.author ?? '').trim() || null,
     publisher: (v.publisher ?? '').trim() || null,
     edition: (v.edition ?? '').trim() || null,
+    pages: pagesNumber(v.pages),
+    isbn: (v.isbn ?? '').trim() || null, // the API strips hyphens and stores digits
+    binding: v.binding || null,
+    series: (v.series ?? '').trim() || null,
+    seriesOrder: (v.seriesOrder ?? '').trim() === '' ? null : Number(v.seriesOrder),
     curricula: v.curricula,
     ageMin: v.ageMin === '' ? null : Number(v.ageMin),
     ageMax: v.ageMax === '' ? null : Number(v.ageMax),
@@ -73,10 +94,19 @@ export function learningError(v: LearningValue): string | null {
   for (const k of ['author', 'publisher', 'edition'] as const) {
     if ((v[k] ?? '').trim().length > BOOK_DETAIL_LIMITS[k]) return `${k[0].toUpperCase()}${k.slice(1)} can be at most ${BOOK_DETAIL_LIMITS[k]} characters.`;
   }
-  return null;
+  if ((v.series ?? '').trim().length > 80) return 'Series name can be at most 80 characters.';
+  const so = (v.seriesOrder ?? '').trim();
+  if (so !== '' && (!Number.isInteger(Number(so)) || Number(so) < 1 || Number(so) > 999)) return 'Series position must be a whole number from 1 to 999.';
+  return pagesError(v.pages) ?? isbnError(v.isbn);
 }
 
-export function LearningFields({ value, onChange, classRequired = false, classWarning = null }: { value: LearningValue; onChange: (v: LearningValue) => void; /** Digital products need a class range to be published. */ classRequired?: boolean; /** Non-blocking message when the title and the class range disagree. */ classWarning?: string | null }) {
+/** True when any book detail already has a value (so an old listing never hides what it has). */
+const hasBookDetails = (v: LearningValue) => !!(v.author || v.publisher || v.edition || v.pages || v.isbn || v.binding || v.series);
+
+export function LearningFields({ value, onChange, classRequired = false, classWarning = null, bookCategory = false }: { value: LearningValue; onChange: (v: LearningValue) => void; /** Digital products need a class range to be published. */ classRequired?: boolean; /** Non-blocking message when the title and the class range disagree. */ classWarning?: string | null; /** Book categories only: the book-details block is shown for these (or when a value already exists). */ bookCategory?: boolean }) {
+  const showBook = bookCategory || value.coverStyle === 'book' || hasBookDetails(value);
+  const isbnMsg = isbnError(value.isbn);
+  const pagesMsg = pagesError(value.pages);
   const toggle = (c: string) => onChange({
     ...value,
     curricula: value.curricula.includes(c) ? value.curricula.filter(x => x !== c) : [...value.curricula, c],
@@ -132,7 +162,7 @@ export function LearningFields({ value, onChange, classRequired = false, classWa
         </select>
         <p className="text-[12px] text-slate mt-1.5">Optional. Shown to buyers on the product page.</p>
       </div>
-      <div>
+      {showBook && <div>
         <span className={lbl}>Book details</span>
         <p className="text-[12px] text-slate -mt-1 mb-2">Optional. Only the ones you fill in are shown to buyers.</p>
         <div className="grid gap-3 sm:grid-cols-3">
@@ -150,8 +180,37 @@ export function LearningFields({ value, onChange, classRequired = false, classWa
               <span className="block text-[11.5px] text-slate mt-0.5 text-end">{(value[k] ?? '').length}/{BOOK_DETAIL_LIMITS[k]}</span>
             </div>
           ))}
+          <div>
+            <label htmlFor="lf-pages" className="block text-[12px] font-semibold text-graphite mb-1">Pages</label>
+            <input id="lf-pages" type="number" min={1} max={BOOK_PAGES_MAX} step={1} inputMode="numeric" placeholder="e.g. 240"
+              value={value.pages ?? ''} onChange={e => onChange({ ...value, pages: e.target.value })}
+              aria-invalid={!!pagesMsg} aria-describedby={pagesMsg ? 'lf-pages-err' : undefined} className={clsx(inp, pagesMsg && 'border-error')} />
+            {pagesMsg && <p id="lf-pages-err" role="alert" className="text-[12px] text-error mt-1 mb-0">{pagesMsg}</p>}
+          </div>
+          <div>
+            <label htmlFor="lf-isbn" className="block text-[12px] font-semibold text-graphite mb-1">ISBN</label>
+            <input id="lf-isbn" type="text" maxLength={17} inputMode="text" autoComplete="off" placeholder="e.g. 978-0-306-40615-7"
+              value={value.isbn ?? ''} onChange={e => onChange({ ...value, isbn: e.target.value })}
+              aria-invalid={!!isbnMsg} aria-describedby={isbnMsg ? 'lf-isbn-err' : undefined} className={clsx(inp, isbnMsg && 'border-error')} />
+            {isbnMsg && <p id="lf-isbn-err" role="alert" className="text-[12px] text-error mt-1 mb-0">{isbnMsg}</p>}
+          </div>
+          <div>
+            <label htmlFor="lf-binding" className="block text-[12px] font-semibold text-graphite mb-1">Binding</label>
+            <select id="lf-binding" value={value.binding ?? ''} onChange={e => onChange({ ...value, binding: e.target.value as '' | Binding })} className={inp}>
+              <option value="">Not stated</option>
+              {BINDINGS.map(b => <option key={b.value} value={b.value}>{b.label}</option>)}
+            </select>
+          </div>
+          <div>
+            <label htmlFor="lf-series" className="block text-[12px] font-semibold text-graphite mb-1">Series (optional)</label>
+            <input id="lf-series" type="text" maxLength={80} placeholder="e.g. Maths Workbook" value={value.series ?? ''} onChange={e => onChange({ ...value, series: e.target.value })} className={inp} />
+          </div>
+          <div>
+            <label htmlFor="lf-series-order" className="block text-[12px] font-semibold text-graphite mb-1">Position in series</label>
+            <input id="lf-series-order" type="number" min={1} max={999} step={1} inputMode="numeric" placeholder="e.g. 2" value={value.seriesOrder ?? ''} onChange={e => onChange({ ...value, seriesOrder: e.target.value })} className={inp} />
+          </div>
         </div>
-      </div>
+      </div>}
     </div>
   );
 }
