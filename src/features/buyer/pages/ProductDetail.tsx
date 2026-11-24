@@ -569,7 +569,7 @@ function RelatedCard({ id, name, image, price: nativePrice, compareAtPrice: nati
     >
       <div className="relative h-[110px] bg-brand-pale-orange flex items-center justify-center overflow-hidden">
         {image && !errored
-          ? <img loading="lazy" decoding="async" src={imgUrl(image, { w: 300 })} alt={name} width={150} height={110} onError={() => setErrored(true)} className="w-full h-full object-contain bg-white transition-transform duration-300 group-hover:scale-105" />
+          ? <img loading="lazy" decoding="async" src={imgUrl(image, { w: 300 })} alt={name} width={150} height={110} onError={() => setErrored(true)} className="w-full h-full object-fill bg-white transition-transform duration-300 group-hover:scale-105" />
           : <ProductCoverFallback name={name} size="sm" className="w-full h-full" />}
 
         {/* Badges */}
