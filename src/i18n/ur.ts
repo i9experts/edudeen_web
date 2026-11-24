@@ -1301,7 +1301,7 @@ export const UR: Record<string, string> = {
   'Change address': 'پتہ تبدیل کریں',
   'Select a shipping method…': 'شپنگ کا طریقہ منتخب کریں…',
   'Change Payment Method': 'ادائیگی کا طریقہ تبدیل کریں',
-  'No payment method is available for this order right now. Please try again shortly or contact support.': 'اس آرڈر کے لیے اس وقت ادائیگی کا کوئی طریقہ دستیاب نہیں۔ براہِ کرم کچھ دیر بعد کوشش کریں یا سپورٹ سے رابطہ کریں۔',
+  'No payment method is available for this order right now. Please try again shortly.': 'اس آرڈر کے لیے اس وقت ادائیگی کا کوئی طریقہ دستیاب نہیں۔ براہِ کرم کچھ دیر بعد کوشش کریں۔',
   'Continue to Review': 'جائزے پر آگے بڑھیں',
   'now,': 'ابھی،',
   'on delivery': 'ڈیلیوری پر',

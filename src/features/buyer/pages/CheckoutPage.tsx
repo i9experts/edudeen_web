@@ -48,6 +48,7 @@ import { usePremium } from '@/hooks/usePremium';
 import { BankDetailsCard, ProofFields } from '@/features/buyer/components/BankDetailsCard';
 import { clsx } from 'clsx';
 import { formatPrice } from '@/utils/formatPrice';
+import { convertWithSnapshots } from '@/utils/currency';
 import { computeCartTotals } from '@/utils/cartTotals';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 import { maskPhone, formatAddress, formatPhone } from '@/utils/formatAddress';
@@ -169,6 +170,7 @@ function DigitalPaymentNotice({
           </Button>
         )}
         <Button variant="outline" size="sm" onClick={onBack}>Back to Cart</Button>
+        <Link to="/contact-us" className="text-[12px] font-semibold underline text-carbon self-center">Contact support</Link>
       </div>
     </div>
   );
@@ -471,7 +473,7 @@ export function CheckoutPage() {
   const cartLoading = buyNow ? buyNowCart.loading : ctxCartLoading;
   // Before the checkout exists (steps 1-2) the sidebar shows the cart's own figures in the buyer's display currency,
   // through the same maths as the Cart page; from step 3 on the server's checkout is the source of truth.
-  const { currency: displayCurrency, convert: convertToDisplay } = useCurrencyPreference();
+  const { currency: displayCurrency, convert: convertToDisplay, chargeCurrency } = useCurrencyPreference();
 
   // On the main marketplace site the cart can span several stores. With no `?store=` the API builds ONE
   // checkout for every store's items (one payment, one order per store); `?store=` limits it to a single
@@ -640,6 +642,25 @@ export function CheckoutPage() {
     else setSelectedMethod(prev => (prev && usableMethods.includes(prev) ? prev : null));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [effectiveMethods.length, usableMethods.length]);
+
+  // The buyer switched currency while a checkout already exists in the other one: it is priced (and payable) in its own
+  // currency, so drop it and re-create it in the new one (digital re-fires via digitalRetry; physical goes back to shipping).
+  useEffect(() => {
+    if (!checkout || checkout.currency === chargeCurrency || placing || pollingStatus || manualPaymentResult) return;
+    setCheckout(null);
+    setSummary(null);
+    setCodInfo(null);
+    setAllowedMethods([]);
+    setSelectedMethod(null);
+    setClientSecret(null);
+    setClientSecretMode(null);
+    setChargeAmount(null);
+    setInitiatePaymentErr('');
+    setPlaceError('');
+    if (isDigital) setDigitalRetry(n => n + 1);
+    else setStep(selectedAddr ? 2 : 1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chargeCurrency]);
 
   // Fetch addresses (physical only) — skipped entirely while the sign-in
   // gate is up (see `loggedIn` above): both of these hit authenticated
@@ -907,6 +928,8 @@ export function CheckoutPage() {
     : Math.max(0, estimate.subtotal);
   // Symbol for every sidebar amount: the checkout's own currency once it exists, else the display currency.
   const summaryCur = checkout ? checkout.currency : displayCurrency;
+  // Checkout line prices are in each item's OWN seller currency: convert into the checkout currency before labelling.
+  const lineAmt = (item: { currency?: string }, v: number) => (checkout ? convertWithSnapshots(v, item.currency, checkout.currency, checkout.fxSnapshots) : v);
   // Admin's Cash on Delivery fee (per package): only added to what is due when the buyer chooses COD.
   const codFee = checkout && selectedMethod === 'cash_on_delivery' && codInfo && codInfo.feeTotal > 0 ? codInfo.feeTotal : 0;
   const totalDue = total + codFee;
@@ -1708,7 +1731,10 @@ export function CheckoutPage() {
                   {usableMethods.length === 0 && !digitalPaymentBlocked && (
                     <div className="flex items-start gap-2 text-[12px] text-error bg-error-bg border border-error-border rounded-[8px] px-3 py-3 mb-4">
                       <AlertCircle size={13} className="mt-[1px] flex-shrink-0" />
-                      No payment method is available for this order right now. Please try again shortly or contact support.
+                      <span>
+                        <span>No payment method is available for this order right now. Please try again shortly.</span>{' '}
+                        <Link to="/contact-us" className="font-semibold underline text-error">Contact support</Link>
+                      </span>
                     </div>
                   )}
                   {!digitalPaymentBlocked && codInfo && !codInfo.available && codInfo.reason && (
@@ -1842,7 +1868,7 @@ export function CheckoutPage() {
                             <span className="text-slate ms-1">×{item.quantity}</span>
                             {item.sellerName && <span className="block text-[11px] text-slate"><span>Sold by </span><span translate="no">{item.sellerName}</span></span>}
                           </span>
-                          <span className="font-medium text-carbon shrink-0">{formatPrice(item.totalPrice, summaryCur)}</span>
+                          <span className="font-medium text-carbon shrink-0">{formatPrice(lineAmt(item, item.totalPrice), summaryCur)}</span>
                         </li>
                       ))}
                     </ul>
@@ -1939,9 +1965,9 @@ export function CheckoutPage() {
                     </span>
                     <span className="font-medium text-carbon flex-shrink-0 text-end">
                       {!!item.premiumDiscountPercent && item.premiumDiscountPercent > 0 && item.originalPrice != null && (
-                        <s className="block text-[12px] font-normal text-slate">{formatPrice((item.originalPrice * item.quantity), summaryCur)}</s>
+                        <s className="block text-[12px] font-normal text-slate">{formatPrice(lineAmt(item, item.originalPrice * item.quantity), summaryCur)}</s>
                       )}
-                      {formatPrice(item.totalPrice, summaryCur)}
+                      {formatPrice(lineAmt(item, item.totalPrice), summaryCur)}
                     </span>
                   </div>
                 ))

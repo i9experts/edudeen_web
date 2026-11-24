@@ -19,7 +19,10 @@ import type { CodConfig } from '@/api/services/config/adminConfig';
 import { Toggle, Input, Textarea, Select, Button, SkeletonBox, Accordion } from '@/components/comman/ui';
 import { AdminStudioHeader } from '@/features/admin/components/studio';
 import { AnalyticsErrorState } from '@/components/comman/analytics/AnalyticsErrorState';
-import { CheckCircle2, Wrench, Sparkles, Mail, Landmark, Banknote, Percent, Home, Gift, Share2, Store, MessageCircle } from 'lucide-react';
+import { apiGetPublicPlatformConfig } from '@/api/services/publicPlatformConfig';
+import type { PublicPlatformConfig } from '@/api/services/publicPlatformConfig';
+import { isStripeConfigured } from '@/features/buyer/components/StripeCardPayment';
+import { AlertTriangle, CheckCircle2, Wrench, Sparkles, Mail, Landmark, Banknote, Percent, Home, Gift, Share2, Store, MessageCircle } from 'lucide-react';
 import { AiFeatureSwitches } from '@/features/admin/components/AiFeatureSwitches';
 
 const AI_MODELS = ['claude-sonnet-5', 'claude-haiku-4-5', 'claude-opus-4-8'];
@@ -418,6 +421,37 @@ function ConfigSkeleton() {
   );
 }
 
+// ── Warning when a checkout type has no way to pay (derived from the same public facts the checkout uses) ─────
+// Card needs the API Stripe key AND the web publishable key; JazzCash/Easypaisa are PKR-only; COD is physical-only.
+function PaymentAvailabilityWarning({ refreshKey }: { refreshKey: unknown }) {
+  const [cfg, setCfg] = useState<PublicPlatformConfig | null>(null);
+  useEffect(() => {
+    let off = false;
+    apiGetPublicPlatformConfig().then(r => { if (!off) setCfg(r.data); }).catch(() => { /* no warning if unreadable */ });
+    return () => { off = true; };
+  }, [refreshKey]);
+  const pm = cfg?.commerce?.paymentMethods;
+  if (!cfg || !pm) return null;
+  const card = !!pm.card && isStripeConfigured();
+  const cod = !!cfg.commerce?.codAvailable;
+  const missing: string[] = [];
+  for (const cur of ['PKR', 'USD']) {
+    const hosted = cur === 'PKR' && (!!pm.jazzcash || !!pm.easypaisa);
+    if (!(card || !!pm.bankTransfer || hosted || cod)) missing.push(`${cur} physical`);
+    if (!(card || !!pm.bankTransfer || hosted)) missing.push(`${cur} digital`);
+  }
+  if (!missing.length) return null;
+  return (
+    <div role="alert" className="flex items-start gap-2 text-[12.5px] text-error bg-error-bg border border-error-border rounded-[10px] px-4 py-3">
+      <AlertTriangle size={15} className="mt-[1px] shrink-0" />
+      <div>
+        <p className="font-semibold">No usable payment method for: {missing.join(', ')}</p>
+        <p>Buyers cannot pay for these orders. Add the platform payment account below, turn on Cash on Delivery for a store (physical only), or set the Stripe keys (API secret key and the web VITE_STRIPE_PUBLISHABLE_KEY).</p>
+      </div>
+    </div>
+  );
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 export function AdminConfig() {
   usePageTitle('Config');
@@ -442,6 +476,7 @@ export function AdminConfig() {
         <AnalyticsErrorState message={error} onRetry={refetch} />
       ) : config ? (
         <>
+          <PaymentAvailabilityWarning refreshKey={config.manualPaymentConfig} />
           <p className="text-[12px] text-slate -mb-2">Pick a topic to open its settings.</p>
           <Accordion items={[
             { id: 'maintenance', title: 'Maintenance', description: 'Take parts of the site offline with a message for visitors', icon: <Wrench size={16} />,

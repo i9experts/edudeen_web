@@ -4,7 +4,7 @@
 // hardcode a single currency across the whole app. Falls back to the code
 // itself (e.g. an unrecognized ISO code) so nothing silently disappears.
 
-import { formatPrice, formatPriceCompact } from './formatPrice';
+import { formatPrice, formatPriceCompact, currencyDecimals } from './formatPrice';
 
 const CURRENCY_SYMBOLS: Record<string, string> = {
   USD: '$',
@@ -31,6 +31,21 @@ export function formatMoney(amount: number | null | undefined, code?: string | n
 /** Same format, abbreviated (K/M) for tight spaces - "Rs 8K", "$1.2M". */
 export function formatMoneyCompact(amount: number | null | undefined, code?: string | null, locale?: string): string {
   return formatPriceCompact(amount, code, locale);
+}
+
+/** Mirror of the API's convertWithSnapshots: converts via USD with the checkout's frozen rates (checkout line prices
+ *  are in each item's own seller currency). Missing rate -> amount unchanged, like the display converter. */
+export function convertWithSnapshots(
+  amount: number, from: string | null | undefined, to: string,
+  snapshots?: { currency: string; ratePerUSD: number }[] | null,
+): number {
+  if (!from || from === to) return amount;
+  const rate = (c: string) => (c === 'USD' ? 1 : snapshots?.find(s => s.currency === c)?.ratePerUSD);
+  const fromRate = rate(from), toRate = rate(to);
+  if (!fromRate || !toRate) return amount;
+  const d = currencyDecimals(to);
+  const f = 10 ** d;
+  return Math.round((amount / fromRate) * toRate * f) / f;
 }
 
 export { formatPrice, formatPriceCompact, formatAmount, currencyDecimals } from './formatPrice';

@@ -19,6 +19,8 @@ export interface CheckoutItem {
   options:      VariantOption[];
   licenseType:  string | null;
   quantity:     number;
+  /** Seller's own currency: price/totalPrice/originalPrice are in this, not necessarily the checkout's. */
+  currency?:    string;
   price:        number;
   totalPrice:   number;
   originalPrice?:          number | null;
