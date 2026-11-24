@@ -1,4 +1,6 @@
-import { Truck, Download, Banknote, Clock } from 'lucide-react';
+import { Truck, Download, Banknote, Clock, CalendarDays } from 'lucide-react';
+import { useLanguage } from '@/contexts/languageCtx';
+import { deliveryEstimateLabel } from '@/utils/deliveryEstimate';
 import { shippingFeeLabel } from '@/utils/cartLabels';
 import { useDeliveryInfo, type DeliveryInfo } from '@/hooks/shipping/useDeliveryInfo';
 import { SkeletonBox } from '@/components/comman/ui/SkeletonBox';
@@ -24,6 +26,9 @@ const Row = ({ icon, children }: { icon: React.ReactNode; children: React.ReactN
 
 /** Fee / dispatch / route rows from one delivery-info answer. Shared by the buy box and the Shipping tab so they never disagree. */
 function DeliveryRows({ info, city }: { info: Extract<DeliveryInfo, { kind: 'physical' }>; city: string | null }) {
+  const { lang } = useLanguage();
+  // Needs a real city route + dispatch time (same condition as the days row); otherwise today's text only.
+  const estimate = city ? deliveryEstimateLabel(info.dispatchDays, info.routeDays, lang) : null;
   return (
     <>
       {info.fee == null && !info.estimate ? (
@@ -46,6 +51,12 @@ function DeliveryRows({ info, city }: { info: Extract<DeliveryInfo, { kind: 'phy
         <Row icon={<Clock size={14} />}>
           <span>{'Delivery to '}</span><span translate="no">{city}</span><span>{': '}</span>
           <span className="font-semibold">{`${1 + info.routeDays.min}-${info.dispatchDays + info.routeDays.max} days`}</span>
+        </Row>
+      ) : null}
+      {estimate ? (
+        <Row icon={<CalendarDays size={14} />}>
+          <span>Estimated delivery</span><span>{': '}</span>
+          <span className="font-semibold" translate="no">{estimate}</span>
         </Row>
       ) : null}
       {info.cod && <Row icon={<Banknote size={14} />}>Cash on Delivery available</Row>}
@@ -74,7 +85,7 @@ export function DeliveryBuyBox({ productId, variantId, quantity, isPhysical, isC
     );
   }
   // Every state keeps the same reserved height (room for 3 rows) so the buttons below never jump when delivery info arrives.
-  const reserve = 'mb-3 min-h-[88px] sm:min-h-[64px]';
+  const reserve = 'mb-3 min-h-[108px] sm:min-h-[84px]';
   if (loading) return <div className={`${reserve} flex flex-col gap-2`} aria-hidden="true"><SkeletonBox width={190} height={12} /><SkeletonBox width={150} height={12} /></div>;
   if (error) return <div className={reserve}><Row icon={<Truck size={14} />}><span className="text-slate">Delivery info unavailable</span></Row></div>;
   if (!info || info.kind !== 'physical') return <div className={reserve} aria-hidden="true" />;

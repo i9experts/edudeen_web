@@ -1,5 +1,5 @@
 import { useT } from '@/contexts/languageCtx';
-import { PRODUCT_LANGUAGES } from '@/constants/learning';
+import { BINDINGS, PRODUCT_LANGUAGES } from '@/constants/learning';
 import { classRangeLabel } from '@/constants/classLevels';
 import type { MarketplaceProduct } from '@/api/services/marketplace';
 
@@ -16,7 +16,7 @@ function durationText(totalMinutes: number): string {
   return h ? `${h}h` : `${m}m`;
 }
 
-export function ProductFacts({ product, subject, className = 'mb-6' }: { product: Pick<MarketplaceProduct, 'classFrom' | 'classTo' | 'language' | 'author' | 'publisher' | 'edition' | 'digital' | 'courseSummary' | 'deliveryFormat' | 'type'>; subject?: string | null; className?: string }) {
+export function ProductFacts({ product, subject, className = 'mb-6' }: { product: Pick<MarketplaceProduct, 'classFrom' | 'classTo' | 'language' | 'author' | 'publisher' | 'edition' | 'pages' | 'isbn' | 'binding' | 'digital' | 'courseSummary' | 'deliveryFormat' | 'type'>; subject?: string | null; className?: string }) {
   const t = useT();
   const isDigital = product.type === 'digital';
   const isCourse = isDigital && product.deliveryFormat === 'course';
@@ -45,6 +45,10 @@ export function ProductFacts({ product, subject, className = 'mb-6' }: { product
   if (product.author?.trim()) facts.push({ label: t('Author'), value: product.author.trim() });
   if (product.publisher?.trim()) facts.push({ label: t('Publisher'), value: product.publisher.trim() });
   if (product.edition?.trim()) facts.push({ label: t('Edition'), value: product.edition.trim() });
+  if (product.pages && product.pages > 0 && !facts.some(f => f.label === t('Pages'))) facts.push({ label: t('Pages'), value: String(product.pages) });
+  const bind = BINDINGS.find(b => b.value === product.binding);
+  if (bind) facts.push({ label: t('Binding'), value: t(bind.label) });
+  if (product.isbn?.trim()) facts.push({ label: t('ISBN'), value: product.isbn.trim() });
 
   if (!facts.length) return null;
   return (

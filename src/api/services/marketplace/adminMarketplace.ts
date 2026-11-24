@@ -12,7 +12,8 @@ export interface MarketplaceStats {
   gmvByCurrency?: { currency: string; gmv: number }[];
 }
 
-export type ListingStatus = 'active' | 'inactive' | 'draft' | 'scheduled' | 'pending_review' | 'rejected' | 'flagged' | 'needs_review';
+/** 'low_quality' (read-time: < 2 images, short title/description, placeholder title) and 'hidden' (hidden from recommendations) are filters, not statuses. */
+export type ListingStatus = 'active' | 'inactive' | 'draft' | 'scheduled' | 'pending_review' | 'rejected' | 'flagged' | 'needs_review' | 'low_quality' | 'hidden';
 
 export interface MarketplaceListingQuery {
   search?: string;
@@ -52,6 +53,11 @@ export interface MarketplaceListingRow {
   qualityReasons?: string[];
   /** Set when an admin already asked the seller to fix it. */
   qualityFixRequestedAt?: string | null;
+  /** Read-time basic quality: 0-100 (25 per check) and why it fails. Absent on an older API. */
+  quality?: { score: number; reasons: string[]; low: boolean };
+  /** Admin 'hide from recommendations': out of the product-page rails and search; the page/URL still works. */
+  hiddenFromRecommendations?: boolean;
+  recommendationHiddenReason?: string | null;
   createdAt?: string;
 }
 
@@ -120,6 +126,8 @@ export interface MarketplaceListingsData {
   total: number;
   page: number;
   limit: number;
+  /** 'low_quality' filter only: true when more live listings exist than the API scans (newest first). */
+  scanCapped?: boolean;
 }
 
 // ── Leads (new-store approval queue) ────────────────────────────────────────
@@ -196,6 +204,16 @@ export function apiSetListingFeatured(id: string, isFeatured: boolean) {
 /** Mark / unmark a listing as a QA test listing (hidden from the public while marked). */
 export function apiSetListingTest(id: string, isTest: boolean) {
   return client.patch<never, ApiResponse<null>>(ENDPOINTS.MARKETPLACE.ADMIN.TEST(id), { isTest });
+}
+
+/** Hide (reason required) / show a listing in recommendations + search. Audited by the API. */
+export function apiSetRecommendationVisibility(id: string, hidden: boolean, reason?: string) {
+  return client.patch<never, ApiResponse<{ hiddenFromRecommendations: boolean }>>(`/api/admin/marketplace/listings/${id}/recommendations`, hidden ? { hidden, reason } : { hidden });
+}
+
+/** Take a live listing offline (status inactive). Reason (3+ characters) required; audited by the API. */
+export function apiUnpublishListing(id: string, reason: string) {
+  return client.patch<never, ApiResponse<{ status: string }>>(`/api/admin/marketplace/listings/${id}/unpublish`, { reason });
 }
 
 export function apiRemoveListing(id: string, reason: string) {

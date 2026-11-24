@@ -352,6 +352,10 @@ export interface PublicStoreProduct {
   _id:         string;
   slug:        string;
   name:        string;
+  /** Admin hid it from recommendations + search (true only). The store page still lists it; product-page rails skip it. */
+  hiddenFromRecommendations?: boolean;
+  /** Fails a basic quality check (true only): ranks lower in rails. */
+  lowQuality?: boolean;
   images?:     string[];
   type?:       'physical' | 'digital';
   productType?: 'physical' | 'digital';

@@ -12,13 +12,14 @@ import { useBusyAction } from '@/hooks/useBusyAction';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useMarketplaceStats, useMarketplaceListings, useMarketplaceListingActions } from '@/hooks/admin/useAdminMarketplace';
 import type { MarketplaceListingRow, ListingStatus } from '@/api/services/marketplace/adminMarketplace';
+import { apiSetRecommendationVisibility, apiUnpublishListing } from '@/api/services/marketplace/adminMarketplace';
 import { apiGetCategoryTree, type CategoryNode } from '@/api/services/categories';
 import { Table, StatusBadge, Button, Modal, SkeletonBox, SearchInput, FilterDropdown, MetricCard, ActionMenu, Textarea, ConfirmActionModal } from '@/components/comman/ui';
 import { AdminStudioHeader } from '@/features/admin/components/studio';
 import type { TableColumn } from '@/components/comman/ui';
 import { AnalyticsErrorState } from '@/components/comman/analytics/AnalyticsErrorState';
 import { formatCurrency, formatNumber } from '@/components/comman/analytics/format';
-import { Star, StoreIcon, RefreshCw, GraduationCap, Trash2, ClipboardCheck, ShieldCheck, Truck, FlaskConical, CheckCircle2, XCircle } from 'lucide-react';
+import { Star, StoreIcon, RefreshCw, GraduationCap, Trash2, ClipboardCheck, ShieldCheck, Truck, FlaskConical, CheckCircle2, XCircle, EyeOff, Eye, PowerOff } from 'lucide-react';
 
 const STATUS_OPTIONS = [
   { value: 'pending_review', label: 'Waiting for review' },
@@ -29,6 +30,8 @@ const STATUS_OPTIONS = [
   { value: 'scheduled', label: 'Scheduled' },
   { value: 'flagged', label: 'Flagged' },
   { value: 'needs_review', label: 'Needs review' },
+  { value: 'low_quality', label: 'Low quality' },
+  { value: 'hidden', label: 'Hidden from recommendations' },
 ];
 
 function flattenCategories(nodes: CategoryNode[]): { value: string; label: string }[] {
@@ -148,6 +151,32 @@ export function AdminMarketplace() {
     finally { setQualityBusyId(null); }
   }
 
+  // Listing quality actions (no bulk): hide from / show in recommendations (reason to hide) and unpublish (reason). Each is one audited API call.
+  const [visTarget, setVisTarget] = useState<{ row: MarketplaceListingRow; mode: 'hide' | 'unpublish' } | null>(null);
+  const [visReason, setVisReason] = useState('');
+  const [visError, setVisError] = useState('');
+  const [visBusyId, setVisBusyId] = useState<string | null>(null);
+  async function showInRecommendations(row: MarketplaceListingRow) {
+    if (visBusyId) return;
+    setVisBusyId(row.id); setBulkMsg('');
+    try { await apiSetRecommendationVisibility(row.id, false); setBulkMsg(`\"${row.title}\" is back in recommendations and search.`); refetch(); }
+    catch (e) { setBulkMsg(e instanceof Error ? e.message : 'Could not update this listing.'); }
+    finally { setVisBusyId(null); }
+  }
+  async function confirmVisAction() {
+    if (!visTarget || visBusyId) return;
+    const { row, mode } = visTarget;
+    if (visReason.trim().length < 3) { setVisError('Write a reason (at least 3 characters). It is saved in the activity log.'); return; }
+    setVisBusyId(row.id); setVisError('');
+    try {
+      if (mode === 'hide') await apiSetRecommendationVisibility(row.id, true, visReason.trim());
+      else await apiUnpublishListing(row.id, visReason.trim());
+      setBulkMsg(mode === 'hide' ? `\"${row.title}\" hidden from recommendations and search. Its page still works.` : `\"${row.title}\" unpublished.`);
+      setVisTarget(null); setVisReason(''); refreshAll();
+    } catch (e) { setVisError(e instanceof Error ? e.message : 'Could not save this change.'); }
+    finally { setVisBusyId(null); }
+  }
+
   async function toggleFeatured(row: MarketplaceListingRow) {
     const ok = await setFeatured(row.id, !row.isFeatured);
     if (ok) refetch();
@@ -178,7 +207,13 @@ export function AdminMarketplace() {
 
   const columns: TableColumn<MarketplaceListingRow>[] = [
     { key: 'id', header: 'ID', render: (r) => <span className="text-[12px] font-mono text-slate whitespace-nowrap">{r.id.slice(-8)}</span> },
-    { key: 'title', header: 'Title', render: (r) => <p className="text-[13px] font-medium text-graphite max-w-[220px] truncate">{r.title}{r.flags?.includes('contact_info') && <span className="ms-2 align-middle rounded-full bg-error-bg border border-error-border px-[7px] py-[1px] text-[12px] font-bold text-error" title={(r.contactMatches ?? []).join(' | ')}>Contains contact info</span>}{isNeedsReview(r) && <span className="ms-2 align-middle rounded-full bg-[#fff6d6] border border-[#f1d98a] px-[7px] py-[1px] text-[12px] font-bold text-[#8a6100]" title={(r.qualityReasons ?? []).join(' | ')}>Needs review{r.qualityFixRequestedAt ? ' · seller asked' : ''}</span>}{r.hasPendingEdit && <span className="ms-2 align-middle rounded-full bg-info-bg border border-info/30 px-[7px] py-[1px] text-[12px] font-bold text-info">Update review</span>}{r.isTest && <span className="ms-2 align-middle rounded-full bg-[#fff6d6] border border-[#f1d98a] px-[7px] py-[1px] text-[12px] font-bold text-[#8a6100]" title="Hidden from the public">Test</span>}</p> },
+    { key: 'title', header: 'Title', render: (r) => <p className="text-[13px] font-medium text-graphite max-w-[220px] truncate">{r.title}{r.flags?.includes('contact_info') && <span className="ms-2 align-middle rounded-full bg-error-bg border border-error-border px-[7px] py-[1px] text-[12px] font-bold text-error" title={(r.contactMatches ?? []).join(' | ')}>Contains contact info</span>}{isNeedsReview(r) && <span className="ms-2 align-middle rounded-full bg-[#fff6d6] border border-[#f1d98a] px-[7px] py-[1px] text-[12px] font-bold text-[#8a6100]" title={(r.qualityReasons ?? []).join(' | ')}>Needs review{r.qualityFixRequestedAt ? ' · seller asked' : ''}</span>}{r.hasPendingEdit && <span className="ms-2 align-middle rounded-full bg-info-bg border border-info/30 px-[7px] py-[1px] text-[12px] font-bold text-info">Update review</span>}{r.isTest && <span className="ms-2 align-middle rounded-full bg-[#fff6d6] border border-[#f1d98a] px-[7px] py-[1px] text-[12px] font-bold text-[#8a6100]" title="Hidden from the public">Test</span>}{r.hiddenFromRecommendations && <span className="ms-2 align-middle rounded-full bg-[#fff6d6] border border-[#f1d98a] px-[7px] py-[1px] text-[12px] font-bold text-[#8a6100]" title={r.recommendationHiddenReason ?? 'Hidden from recommendations and search'}>Hidden from recommendations</span>}</p> },
+    { key: 'quality', header: 'Quality', render: (r) => r.quality ? (
+      <div className="flex flex-col items-start gap-0.5 max-w-[230px]">
+        <span className={`text-[13px] font-bold ${r.quality.score >= 100 ? 'text-success' : r.quality.score >= 75 ? 'text-[#8a6100]' : 'text-error'}`}>{r.quality.score}/100</span>
+        {r.quality.reasons.map(q => <span key={q} className="text-[12px] text-slate leading-snug">• {q}</span>)}
+      </div>
+    ) : <span className="text-slate/40">—</span> },
     { key: 'sellerName', header: 'Seller', render: (r) => <span className="text-[13px] text-graphite whitespace-nowrap">{r.sellerName}</span> },
     { key: 'price', header: 'Price', align: 'right', render: (r) => <span className="text-[13px] font-semibold text-charcoal">{r.price == null ? '—' : formatMoney(r.price, r.currency)}</span> },
     { key: 'purchaseCount', header: 'Sales', align: 'right', render: (r) => <span className="text-[13px] text-charcoal">{formatNumber(r.purchaseCount)}</span> },
@@ -234,6 +269,10 @@ export function AdminMarketplace() {
                 // Active listings are not in the review queue, so the trust-badge editor (inside the review modal) is reached from here.
                 ...(r.status === 'pending_review' || r.status === 'rejected' ? [] : [{ label: 'Edit badges', icon: <ShieldCheck size={13} />, onClick: () => setReviewing(r.id) }]),
                 { label: r.isTest ? 'Unmark as test (show to the public)' : 'Mark as test (hide from the public)', icon: <FlaskConical size={13} />, disabled: processingId === r.id, onClick: () => toggleTest(r) },
+                r.hiddenFromRecommendations
+                  ? { label: 'Show in recommendations', icon: <Eye size={13} />, disabled: visBusyId === r.id, onClick: () => showInRecommendations(r) }
+                  : { label: 'Hide from recommendations & search', icon: <EyeOff size={13} />, disabled: visBusyId === r.id, onClick: () => { setVisError(''); setVisReason(''); setVisTarget({ row: r, mode: 'hide' }); } },
+                ...(r.status === 'active' || r.status === 'scheduled' ? [{ label: 'Unpublish', icon: <PowerOff size={13} />, danger: true, disabled: visBusyId === r.id, onClick: () => { setVisError(''); setVisReason(''); setVisTarget({ row: r, mode: 'unpublish' }); } }] : []),
                 { label: 'Remove Listing', icon: <Trash2 size={13} />, danger: true, onClick: () => { setRemoveReason(''); setRemoving(r); } },
               ]}
             />
@@ -319,6 +358,9 @@ export function AdminMarketplace() {
           <FilterDropdown placeholder="All Statuses" options={STATUS_OPTIONS} value={statusFilter} onChange={(v) => { setStatusFilter(v); setPage(1); }} />
         </div>
 
+        {statusFilter === 'low_quality' && (
+          <p className="m-0 px-5 py-2 text-[12.5px] text-slate border-b border-bone">Checks: at least 2 images, description 80+ characters, title 15+ characters, no placeholder title. Computed live, nothing is stored.{data?.scanCapped ? ' Only the newest 5,000 live listings were checked.' : ''}</p>
+        )}
         {error ? (
           <div className="p-5"><AnalyticsErrorState message={error} onRetry={refetch} /></div>
         ) : (
@@ -371,6 +413,28 @@ export function AdminMarketplace() {
           )}
           <Textarea id="fix-note" label="Note to the seller (required)" rows={4} value={fixNote} onChange={(e) => setFixNote(e.target.value)} />
           {fixError && <p role="alert" className="text-[12.5px] text-error m-0">{fixError}</p>}
+        </Modal>
+      )}
+
+      {visTarget && (
+        <Modal mobileSheet
+          title={visTarget.mode === 'hide' ? 'Hide from recommendations' : 'Unpublish listing'}
+          onClose={() => { if (!visBusyId) setVisTarget(null); }}
+          footer={<>
+            <Button variant="ghost" onClick={() => setVisTarget(null)} disabled={!!visBusyId}>Cancel</Button>
+            <Button variant={visTarget.mode === 'hide' ? 'primary' : 'danger'} onClick={confirmVisAction} loading={visBusyId === visTarget.row.id} disabled={visReason.trim().length < 3}>{visTarget.mode === 'hide' ? 'Hide' : 'Unpublish'}</Button>
+          </>}
+        >
+          <p className="text-[13px] text-charcoal leading-[1.6]">
+            {visTarget.mode === 'hide'
+              ? <>"<strong>{visTarget.row.title}</strong>" stays live and its link still works, but it no longer appears in the product-page rails or in search. You can show it again at any time.</>
+              : <>"<strong>{visTarget.row.title}</strong>" goes offline (inactive). The seller can activate it again.</>}
+          </p>
+          {(visTarget.row.quality?.reasons ?? []).length > 0 && (
+            <ul className="m-0 ps-4 text-[12.5px] text-graphite leading-[1.6]">{(visTarget.row.quality?.reasons ?? []).map(q => <li key={q}>{q}</li>)}</ul>
+          )}
+          <Textarea id="vis-reason" label="Reason (required, saved in the activity log)" rows={3} value={visReason} onChange={(e) => setVisReason(e.target.value)} />
+          {visError && <p role="alert" className="text-[12.5px] text-error m-0">{visError}</p>}
         </Modal>
       )}
 

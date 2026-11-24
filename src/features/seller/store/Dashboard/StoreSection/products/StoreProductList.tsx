@@ -97,6 +97,18 @@ function QualityBadge({ p }: { p: InventoryProduct }) {
   );
 }
 
+/** 'Listing tips': the basic checks this (own) listing fails. Same amber warning look as the other row notices; hidden for drafts. */
+function ListingTips({ p }: { p: InventoryProduct }) {
+  const tips = p.listingTips ?? [];
+  if (!tips.length || p.status === 'draft') return null;
+  return (
+    <div role="note" className="ms-[46px] max-w-[300px] rounded-lg border border-[#f1d98a] bg-[#fff6d6] px-2.5 py-1.5">
+      <p className="m-0 text-[12px] font-bold text-[#8a6100]">Listing tips</p>
+      <ul className="m-0 ps-4 text-[12px] text-[#8a6100] leading-snug">{tips.map(t => <li key={t}>{t}</li>)}</ul>
+    </div>
+  );
+}
+
 /** Views · Sales · Conv% for the last 30 days. A dash = no data yet (never a fake 0). */
 function Last30({ p }: { p: InventoryProduct }) {
   const dash = '—';
@@ -532,6 +544,7 @@ export default function StoreProductList() {
         <div className="flex flex-col items-start gap-1 min-w-0">
           <ProductCell p={p} fluid />
           <span className="ms-[46px] flex flex-wrap items-center gap-1">{typeBadge(p)}<QualityBadge p={p} /></span>
+          <ListingTips p={p} />
         </div>
       ),
     },
@@ -584,6 +597,7 @@ export default function StoreProductList() {
         <QualityBadge p={p} />
         <span className="text-[12px] text-slate">{stockCell(p)}</span>
       </div>
+      <ListingTips p={p} />
       <div className="flex items-center gap-3 text-[12px] text-slate flex-wrap">
         <span>Views <b className="text-charcoal">{p.views30d == null ? '—' : p.views30d}</b></span>
         <span>Sales <b className="text-charcoal">{p.sales30d ?? 0}</b></span>

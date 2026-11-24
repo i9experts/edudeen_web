@@ -22,7 +22,11 @@ import {
 } from './ProductFormKit';
 import { COURSE_STEP_INDEX, IssueLinks, StepPanel, SummaryRows, type WizardIssue } from './ProductWizard';
 import { FieldErrorsContext } from './fieldErrorsContext';
+import { suggestCoverStyle } from '@/constants/coverStyle';
 import { qualityWarnings, titleClassConflict, singleImageWarning, contactWarning, classRangeRequired, POLICY_LINE } from './productQuality';
+
+/** Placeholder only (never inserted into the field, never validated). */
+const BOOK_DESCRIPTION_TEMPLATE = 'What your child will learn:\n- \n\nWhat is inside:\n- \n\nSuitable for:\n- \n\nFor parents:\n- ';
 
 export interface ProductFormStepsProps {
   mode: 'add' | 'edit';
@@ -76,7 +80,10 @@ export function ProductFormSteps(p: ProductFormStepsProps) {
   const { pType, phys, dig, sp, sd, currencySymbol, step, go } = p;
   const isDigitalFamily = isDigitalFamilyType(pType);
   const cur = pType === 'physical' ? phys : dig;
-  const set = <K extends 'name' | 'description' | 'price' | 'compareAtPrice' | 'subCategoryId' | 'status' | 'isListedOnEdudeen' | 'scheduledAt' | 'tagInput' | 'tags' | 'images' | 'descriptionImages' | 'video'>(k: K, v: PhysForm[K]) => {
+  // Book categories only: the card style the seller chose, else what the category suggests. Courses never.
+  const bookNames = [p.category.rootName, p.category.subcategories.find(c => c._id === cur.subCategoryId)?.name];
+  const isBookListing = (!isDigitalFamily || p.delivery.format === 'download') && ((p.learning.coverStyle || suggestCoverStyle(bookNames)) === 'book');
+  const set = <K extends 'name' | 'description' | 'price' | 'compareAtPrice' | 'subCategoryId' | 'status' | 'isListedOnEdudeen' | 'scheduledAt' | 'tagInput' | 'tags' | 'images' | 'descriptionImages' | 'samplePages' | 'video'>(k: K, v: PhysForm[K]) => {
     if (pType === 'physical') sp(k, v); else sd(k, v as unknown as DigForm[K]);
   };
   const digitalAvailable = p.supports.digital;
@@ -163,10 +170,14 @@ export function ProductFormSteps(p: ProductFormStepsProps) {
             </F>
             <F label="Description" req htmlFor="ap-desc" hint="Required, at least 20 characters. What's included, the learning goal, and how it's used at home or in class.">
               <textarea id="ap-desc" value={cur.description} onChange={e => set('description', e.target.value)}
-                placeholder="Describe your product — what it includes, who it's for, and what makes it special…" className={ta} />
+                placeholder={isBookListing ? BOOK_DESCRIPTION_TEMPLATE : "Describe your product — what it includes, who it's for, and what makes it special…"} className={ta} />
+              {isBookListing && <p className="text-[12px] text-slate mt-1.5 mb-0">Tip: the grey text is only a guide for what buyers like to read. Write it your own way, nothing is required.</p>}
             </F>
             <F label="Pictures inside the description" htmlFor="ap-desc-img" hint="Optional, up to 6. Buyers see these under your description on the product page (e.g. sample pages, what is inside).">
               <ProductPhotosUploader value={cur.descriptionImages} onChange={urls => set('descriptionImages', urls)} max={6} />
+            </F>
+            <F label="Sample pages (Look inside)" htmlFor="ap-sample-pages" hint="Optional, up to 6, in reading order. Buyers get a Look inside button that opens these pages one by one (e.g. first pages of a book or worksheet).">
+              <ProductPhotosUploader value={cur.samplePages} onChange={urls => set('samplePages', urls)} max={6} />
             </F>
             <p className="text-[12px] text-slate m-0">{POLICY_LINE}</p>
           </div>
@@ -363,7 +374,7 @@ export function ProductFormSteps(p: ProductFormStepsProps) {
         )}
 
         <Block id="fld-learning" title="Who it's for" need={classRangeRequired(isDigitalFamily ? 'digital' : 'physical') ? 'required' : 'optional'} hint="Boards, ages and class range help the right buyers find this.">
-          <LearningFields value={p.learning} onChange={p.setLearning} classRequired={isDigitalFamily} classWarning={titleClassConflict(cur.name, p.learning.classFrom, p.learning.classTo)} />
+          <LearningFields value={p.learning} onChange={p.setLearning} classRequired={isDigitalFamily} classWarning={titleClassConflict(cur.name, p.learning.classFrom, p.learning.classTo)} bookCategory={isBookListing} />
         </Block>
 
         {(p.attrs.loading || p.attrs.defs.length > 0) && (

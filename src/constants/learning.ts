@@ -37,6 +37,12 @@ export const PRODUCT_LANGUAGES = [
 
 export type ProductLanguage = (typeof PRODUCT_LANGUAGES)[number]['value'];
 
+/** Optional book binding (API BOOK_BINDINGS). */
+export type Binding = 'paperback' | 'hardcover' | 'spiral';
+export const BINDINGS: { value: Binding; label: string }[] = [
+  { value: 'paperback', label: 'Paperback' }, { value: 'hardcover', label: 'Hardcover' }, { value: 'spiral', label: 'Spiral' },
+];
+
 /** "Ages 6–8", "Ages 10+", "Up to age 5" — null when no range is set. */
 export function ageLabel(min?: number | null, max?: number | null): string | null {
   if (min == null && max == null) return null;
