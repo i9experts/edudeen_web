@@ -274,11 +274,11 @@ function ImageGallery({ images, name, video = null, samplePages = [] }: { images
   };
 
   return (
-    <div className="flex flex-col lg:flex-row-reverse gap-3 min-w-0">
+    <div className="flex flex-col gap-3 min-w-0">
       {/* Main slide — a picture shown whole (no crop), or the video (poster + play button until clicked) */}
       <div
         onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}
-        className="relative flex-none lg:flex-1 min-w-0 h-[300px] md:h-[400px] lg:h-[460px] max-h-[55vh] lg:max-h-none rounded-2xl overflow-hidden border border-bone bg-white touch-pan-y"
+        className="relative flex-none min-w-0 h-[300px] md:h-[400px] lg:h-[460px] max-h-[55vh] lg:max-h-none rounded-2xl overflow-hidden border border-bone bg-white touch-pan-y"
       >
         {!isDesktop && slides.length > 1 ? (
           <>
@@ -369,9 +369,9 @@ function ImageGallery({ images, name, video = null, samplePages = [] }: { images
         </Modal>
       )}
 
-      {/* Thumbnails — vertical rail on desktop, horizontal scroll on mobile (the video thumbnail has a play mark) */}
+      {/* Thumbnails — one row under the main image, like Amazon (the video thumbnail has a play mark) */}
       {slides.length > 1 && (
-        <div className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-visible scrollbar-hide shrink-0">
+        <div className="flex justify-center gap-2 overflow-x-auto scrollbar-hide shrink-0">
           {slides.slice(0, MAX_THUMBS).map((sl, i) => {
             const isLast = i === MAX_THUMBS - 1 && slides.length > MAX_THUMBS;
             const thumbSrc = sl.kind === 'video' ? sl.poster : sl.src;
@@ -382,7 +382,7 @@ function ImageGallery({ images, name, video = null, samplePages = [] }: { images
                 aria-label={sl.kind === 'video' ? 'Product video' : isLast ? `View all ${slides.length} items` : `View image ${i + 1} of ${slides.length}`}
                 aria-pressed={selected === i}
                 className={clsx(
-                  'relative w-14 h-14 lg:w-[60px] lg:h-[60px] rounded-[10px] overflow-hidden shrink-0 bg-white flex items-center justify-center border-2 cursor-pointer transition-all duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange',
+                  'relative w-14 h-14 lg:w-[64px] lg:h-[64px] rounded-[10px] overflow-hidden shrink-0 bg-white flex items-center justify-center border-2 cursor-pointer transition-all duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-orange',
                   selected === i ? 'border-brand-orange' : 'border-bone opacity-80 hover:opacity-100',
                 )}
               >
