@@ -11,6 +11,7 @@ import { TokenStorage } from '@/api/services/auth';
 import { EdudeenIcon } from '@/components/comman/ui/EdudeenLogo';
 import { apiChatbotMessage, apiChatConversation, apiChatFollowUp, type ChatAudience, type ChatGuest, type ChatReplyData } from '@/api/services/chatbot';
 import { CHIP_COUNT, DEFAULT_CHATBOT, type ChatQA } from './chatbotDefaults';
+import { withLivePayments } from './chatbotLive';
 
 /**
  * Edudeen Help: floating chat bubble (bottom end) with 5 suggested questions per audience. The panel opens as a popover
@@ -111,7 +112,7 @@ export default function ChatWidget() {
   const { mobile: isMobile, h: viewH } = useViewport();
 
   const audience: ChatAudience = SELLER_PATH.test(pathname) || TokenStorage.getRole() === 'seller' ? 'seller' : 'buyer';
-  const cfg = config?.chatbot ?? DEFAULT_CHATBOT;
+  const cfg = useMemo(() => withLivePayments(config?.chatbot ?? DEFAULT_CHATBOT, config?.commerce), [config?.chatbot, config?.commerce]);
   const list: ChatQA[] = useMemo(() => (audience === 'seller' ? cfg.sellerQuestions : cfg.buyerQuestions) ?? [], [audience, cfg]);
 
   const initial = useMemo(() => { const s = load(); return s && s.audience === audience ? s : null; }, []); // eslint-disable-line react-hooks/exhaustive-deps

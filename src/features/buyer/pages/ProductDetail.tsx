@@ -1180,7 +1180,7 @@ export function ProductDetail() {
                     <>
                       <div className="flex items-baseline gap-[10px] mb-1">
                         <span className="text-[30px] font-extrabold text-carbon tracking-[-0.5px]">
-                          {displayPrice != null ? `${formatPrice(displayPrice, displayCurrency)}` : '—'}
+                          {displayPrice === 0 ? t('Free') : displayPrice != null ? `${formatPrice(displayPrice, displayCurrency)}` : '—'}
                         </span>
                         {displayCompareAt != null && displayPrice != null && displayCompareAt > displayPrice && (
                           <span className="text-[14px] text-slate line-through">{formatPrice(displayCompareAt, displayCurrency)}</span>
@@ -1723,7 +1723,7 @@ export function ProductDetail() {
         <div className="fixed bottom-16 inset-x-0 z-50 lg:hidden bg-white border-t border-bone px-4 py-3 flex items-center gap-3">
           <div className="min-w-0 flex-1">
             <p className="text-[12px] text-slate leading-none mb-[3px]">Price</p>
-            <p className="text-[17px] font-extrabold text-carbon leading-none truncate">{formatPrice(displayPrice, displayCurrency)}</p>
+            <p className="text-[17px] font-extrabold text-carbon leading-none truncate">{displayPrice === 0 ? t('Free') : formatPrice(displayPrice, displayCurrency)}</p>
           </div>
           <Button
             variant="secondary" size="md" className="justify-center flex-1 max-w-[170px]"

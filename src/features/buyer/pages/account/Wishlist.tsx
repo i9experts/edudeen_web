@@ -168,7 +168,7 @@ export function Wishlist() {
 
                 {variant && (
                   <div className="flex items-center gap-[8px]">
-                    <span className="font-bold text-[16px] text-carbon">{formatPrice(convert(variant.price, variant.currency), displayCurrency)}</span>
+                    <span className="font-bold text-[16px] text-carbon">{variant.price === 0 ? 'Free' : formatPrice(convert(variant.price, variant.currency), displayCurrency)}</span>
                     {variant.compareAtPrice && variant.compareAtPrice > variant.price && (
                       <span className="text-[12px] line-through text-[#b0aeaa]">{formatPrice(convert(variant.compareAtPrice, variant.currency), displayCurrency)}</span>
                     )}

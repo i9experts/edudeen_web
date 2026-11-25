@@ -6,6 +6,7 @@ import { useFaqs, useFaqCategories } from '@/hooks/useFaqs';
 import { usePublicPlatformConfig } from '@/hooks/usePublicPlatformConfig';
 import { useLanguage } from '@/contexts/languageCtx';
 import { DEFAULT_CHATBOT } from '@/components/chat/chatbotDefaults';
+import { withLivePayments } from '@/components/chat/chatbotLive';
 import { Button, SkeletonBox } from '@/components/comman/ui';
 import type { Faq } from '@/api/services/faq';
 import { Reveal } from '@/components/comman/motion/Reveal';
@@ -69,13 +70,13 @@ export function FaqPage() {
   const { config: platformConfig } = usePublicPlatformConfig();
   const { lang } = useLanguage();
   const chatFaqs = useMemo<Faq[]>(() => {
-    const qs = (platformConfig?.chatbot ?? DEFAULT_CHATBOT).buyerQuestions ?? [];
+    const qs = withLivePayments(platformConfig?.chatbot ?? DEFAULT_CHATBOT, platformConfig?.commerce).buyerQuestions ?? [];
     const plain = (s: string) => s.replace(/\*\*(.+?)\*\*/g, '$1').replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
     return qs.map((q, i) => ({
       _id: `chat-${q.id}`, question: lang === 'ur' && q.qUr ? q.qUr : q.q, answer: plain(lang === 'ur' && q.aUr ? q.aUr : q.a),
       category: lang === 'ur' ? 'عمومی سوالات' : 'Common questions', order: i, isActive: true, createdAt: '', updatedAt: '',
     }));
-  }, [platformConfig?.chatbot, lang]);
+  }, [platformConfig?.chatbot, platformConfig?.commerce, lang]);
   const faqs = !loading && !error && savedFaqs.length === 0 && !query && !category ? chatFaqs : savedFaqs;
 
   // Grouped by category only in the unfiltered "All" view (with no active
