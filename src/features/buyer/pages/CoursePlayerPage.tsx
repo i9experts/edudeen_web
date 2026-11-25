@@ -204,6 +204,9 @@ export function CoursePlayerPage() {
   return (
     <div className="min-h-screen bg-white flex flex-col">
       <header className="sticky top-0 z-30 bg-carbon text-white px-4 md:px-6 h-[56px] flex items-center gap-3">
+        <Link to="/account/downloads" className="shrink-0 inline-flex items-center gap-0.5 text-[13px] font-semibold text-white no-underline" aria-label="My Library">
+          <ChevronLeft size={18} className="rtl:rotate-180" /><span className="hidden sm:inline">My Library</span>
+        </Link>
         <Link to="/" className="shrink-0" aria-label="Edudeen home"><EdudeenLogo size={26} variant="light" /></Link>
         <span className="hidden sm:block w-px h-5 bg-white/20" />
         <Link to={`/product/${view.product.slug}`} className="text-[13.5px] font-semibold text-white no-underline truncate">{view.product.name}</Link>
