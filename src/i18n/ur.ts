@@ -1195,6 +1195,7 @@ export const UR: Record<string, string> = {
   'Courier updates': 'کوریئر کی تازہ ترین معلومات',
   'Re-upload Payment Proof': 'ادائیگی کا ثبوت دوبارہ اپ لوڈ کریں',
   'Submit': 'جمع کرائیں',
+  'Submit Review': 'ریویو جمع کرائیں',
   'Previously rejected:': 'پہلے مسترد ہوا:',
   'Sender name (optional)': 'بھیجنے والے کا نام (اختیاری)',
   'Submitted': 'جمع کرایا گیا',
