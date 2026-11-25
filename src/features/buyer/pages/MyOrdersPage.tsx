@@ -1,4 +1,5 @@
 import { trackingLine, isSelfCarrier } from '@/utils/carriers';
+import { titleCaseName } from '@/utils/formatName';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useLiveRefresh } from '@/hooks/useLiveRefresh';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
@@ -463,7 +464,7 @@ function OrderCard({ order, onChanged }: { order: OrderSummary; onChanged: () =>
                 <p className="text-[12px] font-bold text-slate uppercase tracking-[0.07em]">Delivery Address</p>
               </div>
               <div className="bg-cream rounded-[9px] px-3 md:px-4 py-3">
-                <p className="text-[12px] font-semibold text-charcoal">{addr.recipientName}</p>
+                <p className="text-[12px] font-semibold text-charcoal">{titleCaseName(addr.recipientName)}</p>
                 <p className="text-[12px] text-slate mt-[2px]">{formatPhone(addr.phoneNumber)}</p>
                 <p className="text-[12px] text-charcoal mt-[2px]">
                   {formatAddress([addr.addressLine1, addr.addressLine2, addr.city, addr.state, addr.zipCode])}

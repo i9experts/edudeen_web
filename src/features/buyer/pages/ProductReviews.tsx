@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { titleCaseName } from '@/utils/formatName';
 import {
   ShieldCheck, Pencil, Trash2, Star, ThumbsUp, ImageIcon, ChevronLeft, ChevronRight, X, Store, AlertTriangle,
 } from 'lucide-react';
@@ -259,7 +260,7 @@ function ReviewCard({ review: r, storeName, onToggleHelpful, onEdit, onDelete, o
           </div>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-[13px] font-bold text-carbon">{r.customerName}</span>
+              <span className="text-[13px] font-bold text-carbon">{titleCaseName(r.customerName)}</span>
               {r.isVerifiedPurchase && (
                 <Badge color="green" size="sm">
                   <ShieldCheck size={11} />

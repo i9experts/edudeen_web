@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { addressLines } from '@/utils/address';
+import { titleCaseName } from '@/utils/formatName';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { apiGetOrdersByCheckout, type OrderSummary as MyOrderSummary } from '@/api/services/orders';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -103,7 +104,7 @@ function AddressSection({ addr }: { addr: OrderDeliveryAddress }) {
         <h3 className="text-[12px] font-bold text-slate uppercase tracking-[0.07em]">Delivery Address</h3>
       </div>
       <div className="bg-cream rounded-[10px] px-4 py-3 flex flex-col gap-[3px]">
-        <p className="text-[13px] font-semibold text-charcoal">{addr.recipientName}</p>
+        <p className="text-[13px] font-semibold text-charcoal">{titleCaseName(addr.recipientName)}</p>
         <p className="text-[12px] text-slate">{addr.phoneNumber}</p>
         <p className="text-[12px] text-charcoal">
           {street}

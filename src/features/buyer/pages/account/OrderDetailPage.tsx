@@ -1,4 +1,5 @@
 import { trackingLine } from '@/utils/carriers';
+import { titleCaseName } from '@/utils/formatName';
 import { useEffect, useState } from 'react';
 import { safeHttpUrl } from '@/utils/safeRedirect';
 import { ProductCoverFallback } from '@/components/comman/marketplace/ProductCoverFallback';
@@ -218,7 +219,7 @@ export function OrderDetailPage() {
           <p className="flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-[0.08em] text-slate mb-2"><MapPin size={12} /> Delivery address</p>
           {addr && Object.keys(addr).length ? (
             <p className="text-[13px] text-charcoal leading-relaxed">
-              {addr.recipientName}{addr.phoneNumber ? ` · ${formatPhone(addr.phoneNumber)}` : ''}<br />
+              {titleCaseName(addr.recipientName)}{addr.phoneNumber ? ` · ${formatPhone(addr.phoneNumber)}` : ''}<br />
               {formatAddressLine(addr)}
             </p>
           ) : <p className="text-[13px] text-slate">Digital order — nothing to ship.</p>}

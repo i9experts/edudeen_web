@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { titleCaseName } from '@/utils/formatName';
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useCartContext } from '@/contexts/CartContext';
@@ -1433,7 +1434,7 @@ export function CheckoutPage() {
                           {selectedAddr ? (
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-[2px]">
-                                <span className="text-[13px] font-semibold text-carbon">{selectedAddr.recipientName}</span>
+                                <span className="text-[13px] font-semibold text-carbon">{titleCaseName(selectedAddr.recipientName)}</span>
                                 <span className="text-[11px] text-slate bg-bone rounded-full px-2 py-[1px]">{selectedAddr.label}</span>
                                 {selectedAddr.isDefault && (
                                   <span className="text-[11px] text-brand-orange bg-brand-pale-orange rounded-full px-2 py-[1px] font-medium">Default</span>
@@ -1477,7 +1478,7 @@ export function CheckoutPage() {
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-2 flex-wrap mb-[2px]">
-                                    <span className="text-[13px] font-semibold text-carbon">{addr.recipientName}</span>
+                                    <span className="text-[13px] font-semibold text-carbon">{titleCaseName(addr.recipientName)}</span>
                                     <span className="text-[11px] text-slate bg-bone rounded-full px-2 py-[1px]">{addr.label}</span>
                                     {addr.isDefault && (
                                       <span className="text-[11px] text-brand-orange bg-brand-pale-orange rounded-full px-2 py-[1px] font-medium">Default</span>
@@ -1539,7 +1540,7 @@ export function CheckoutPage() {
 
               {step > 1 && selectedAddr && (
                 <div className="px-5 py-3 text-[13px] text-carbon">
-                  <span className="font-medium">{selectedAddr.recipientName}</span>
+                  <span className="font-medium">{titleCaseName(selectedAddr.recipientName)}</span>
                   {' — '}
                   {dedupeAddressParts([selectedAddr.addressLine1, selectedAddr.city, selectedAddr.state])}
                   {selectedAddr.phoneNumber?.trim() && <span className="block text-slate mt-[2px]" translate="no">{formatPhone(selectedAddr.phoneNumber)}</span>}
@@ -1819,7 +1820,7 @@ export function CheckoutPage() {
                     <div className="flex justify-between gap-3 text-[12.5px]">
                       <span className="text-slate flex-shrink-0">Deliver to</span>
                       <span className="font-medium text-carbon text-end">
-                        {selectedAddr?.recipientName} — {dedupeAddressParts([selectedAddr?.addressLine1, selectedAddr?.city, selectedAddr?.state])}
+                        {titleCaseName(selectedAddr?.recipientName)} — {dedupeAddressParts([selectedAddr?.addressLine1, selectedAddr?.city, selectedAddr?.state])}
                       </span>
                     </div>
                     <div className="flex justify-between gap-3 text-[12.5px]">

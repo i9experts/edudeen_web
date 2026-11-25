@@ -118,7 +118,7 @@ export function PremiumPage() {
   return (
     <div className="bg-cream">
       {/* Hero */}
-      <section className="px-4 md:px-10 pt-12 md:pt-16 pb-12 text-white" style={{ background: NAVY }}>
+      <section className="px-4 md:px-10 pt-12 md:pt-16 pb-12 text-white overflow-hidden" style={{ background: NAVY }}>
         <div className="max-w-[1100px] mx-auto grid grid-cols-1 md:grid-cols-[1.2fr_1fr] gap-10 items-center">
           <div>
             <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[12px] font-bold uppercase tracking-[0.08em]" style={{ background: GOLD, color: '#152D43' }}>
@@ -131,12 +131,12 @@ export function PremiumPage() {
               Member prices from sellers, early access to every sale and a personal coupon each month. One simple membership for your family or classroom.
             </p>
             {!isPremium && !isStaff && (
-              <Button variant="primary" size="lg" className="mt-7" onClick={() => document.getElementById('premiumPlans')?.scrollIntoView({ behavior: 'smooth' })}>
+              <Button variant="primary" size="lg" className="mt-7 font-bold hover:opacity-90" style={{ background: GOLD, color: '#152D43' }} onClick={() => document.getElementById('premiumPlans')?.scrollIntoView({ behavior: 'smooth' })}>
                 See plans
               </Button>
             )}
             {isPremium && (
-              <Button variant="primary" size="lg" className="mt-7" to={'/account/premium'}>
+              <Button variant="primary" size="lg" className="mt-7 font-bold hover:opacity-90" style={{ background: GOLD, color: '#152D43' }} to={'/account/premium'}>
                 You are a member - open my Premium
               </Button>
             )}
