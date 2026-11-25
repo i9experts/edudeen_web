@@ -4,6 +4,8 @@ import { Route as RouteIcon, ArrowRight } from 'lucide-react';
 import { BuyerNavbar, Breadcrumb, Footer, EmptyState } from '@/components/comman/ui';
 import { ResourceCard } from '@/components/comman/marketplace/ResourceCard';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { useLanguage } from '@/contexts/languageCtx';
+import { STARTER_LEARNING_PATHS } from '@/features/buyer/data/starterLearningPaths';
 import { usePageMeta } from '@/hooks/usePageMeta';
 import { EDUCATION_LEVELS } from '@/api/services/product';
 import { apiGetLearningPath, apiListLearningPaths, type LearningPathDetail, type LearningPathSummary } from '@/api/services/retention';
@@ -14,6 +16,8 @@ const levelLabel = (v: string | null) => EDUCATION_LEVELS.find(l => l.value === 
 export function LearningPathsIndexPage() {
   usePageTitle('Learning paths');
   usePageMeta('Step-by-step learning paths by grade on Edudeen - hand-picked resources, in the order to use them.');
+  const { lang } = useLanguage();
+  const ur = lang === 'ur';
   const [paths, setPaths] = useState<LearningPathSummary[] | null>(null);
   const [error, setError] = useState(false);
   useEffect(() => { apiListLearningPaths().then(r => setPaths(r.data ?? [])).catch(() => setError(true)); }, []);
@@ -36,7 +40,34 @@ export function LearningPathsIndexPage() {
         ) : paths === null ? (
           <p className="text-[13px] text-slate">Loading...</p>
         ) : paths.length === 0 ? (
-          <EmptyState icon={<RouteIcon size={22} />} title="No learning paths yet" description="We are preparing grade-by-grade paths. In the meantime, browse resources by grade." action={{ label: 'Browse by grade', onClick: () => { window.location.assign('/learn'); } }} />
+          // No admin-curated path yet: built-in study guides, each step links to a search for matching resources.
+          <section>
+            <h2 className="text-[16px] font-bold text-carbon mb-1">Starter guides</h2>
+            <p className="text-[13px] text-graphite mb-4 max-w-[70ch]">Hand-picked paths with resources are coming. Until then, follow these study guides and find matching resources for each step.</p>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              {STARTER_LEARNING_PATHS.map(p => (
+                <article key={p.id} className="rounded-2xl border border-bone p-5 flex flex-col gap-3">
+                  <header>
+                    <p className="text-[15px] font-bold text-carbon m-0" translate="no">{ur ? p.titleUr : p.title}</p>
+                    <p className="text-[13px] text-graphite m-0 mt-1" translate="no">{ur ? p.subtitleUr : p.subtitle}</p>
+                    <p className="text-[12px] text-slate m-0 mt-1" translate="no">{ur ? p.levelUr : p.level}</p>
+                  </header>
+                  <ol className="list-none p-0 m-0 flex flex-col gap-3">
+                    {p.steps.map((s, i) => (
+                      <li key={s.query} className="flex gap-3">
+                        <span className="size-6 shrink-0 rounded-full bg-brand-pale-orange text-brand-royal text-[12px] font-bold flex items-center justify-center">{i + 1}</span>
+                        <div className="min-w-0">
+                          <p className="text-[13.5px] font-semibold text-carbon m-0" translate="no">{ur ? s.titleUr : s.title}</p>
+                          <p className="text-[12.5px] text-graphite m-0 mt-0.5" translate="no">{ur ? s.textUr : s.text}</p>
+                          <Link to={`/search?q=${encodeURIComponent(s.query)}`} className="inline-flex items-center gap-1 mt-1 text-[12.5px] font-semibold text-brand-orange no-underline">Find resources <ArrowRight size={12} /></Link>
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
+                </article>
+              ))}
+            </div>
+          </section>
         ) : (
           [...byLevel.entries()].map(([label, list]) => (
             <section key={label} className="mb-8">

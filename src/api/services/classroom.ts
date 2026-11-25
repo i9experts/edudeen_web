@@ -300,7 +300,10 @@ export const apiGetLearnView = (idOrSlug: string) => client.get<never, Ok<LearnV
 export const apiGetLesson = (idOrSlug: string, lessonId: string) => client.get<never, Ok<LessonContent>>(`/api/courses/learn/${idOrSlug}/lessons/${lessonId}`);
 export const apiCompleteLesson = (idOrSlug: string, lessonId: string) =>
   client.post<never, Ok<{ completedLessonIds: string[]; completedAt: string | null; certificateCode: string | null }>>(`/api/courses/learn/${idOrSlug}/lessons/${lessonId}/complete`, {});
-export const apiSubmitQuiz = (idOrSlug: string, lessonId: string, answers: number[]) =>
+/** Audio/video: tell the server how many seconds were really played since the last report. `enough` = server counts >= 90%. */
+export const apiReportPlayed = (idOrSlug: string, lessonId: string, seconds: number, durationSeconds: number | null) =>
+  client.post<never, Ok<{ seconds: number; enough: boolean }>>(`/api/courses/learn/${idOrSlug}/lessons/${lessonId}/played`, { seconds, ...(durationSeconds ? { durationSeconds } : {}) });
+export const apiSubmitQuiz =(idOrSlug: string, lessonId: string, answers: number[]) =>
   client.post<never, Ok<QuizResult>>(`/api/courses/learn/${idOrSlug}/lessons/${lessonId}/quiz`, { answers });
 export const apiVerifyCertificate = (code: string) => client.get<never, Ok<CertificateData>>(`/api/courses/certificates/${encodeURIComponent(code)}`);
 export const apiGetMyCourses = () => client.get<never, Ok<MyCourse[]>>('/api/courses/mine');

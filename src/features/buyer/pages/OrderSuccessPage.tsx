@@ -16,7 +16,7 @@ import { BuyerNavbar, Footer } from '@/components/comman/ui';
 import { formatMoney } from '@/utils/currency';
 import { formatPrice } from '@/utils/formatPrice';
 import { buildOrderProgress, OrderProgressTrack, OrderNextStep, isMultiPackageCod, PackagePayBadge, type ProgressStoreInput } from './account/orderProgress';
-import { statusLabel } from '@/constants/statusLabels';
+import { statusLabel, orderStatusLabel, isAvailedOrder } from '@/constants/statusLabels';
 import { localeDate } from '@/utils/localeTime';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -152,6 +152,9 @@ function OrderTimeline({ order }: { order: PlacedOrder }) {
 // ─────────────────────────────────────────────────────────────────────────────
 function OrderCard({ order }: { order: PlacedOrder }) {
   const allDigital = order.items.every(i => i.type === 'digital');
+  // The same status wording as the orders list / detail / dashboard: a free or fully-digital paid order is "Availed", never "Pending".
+  const statusInput = { orderStatus: order.orderStatus, isFreeClaim: allDigital && order.paymentMethod === 'free', isPaid: order.isPaid, itemTypes: order.items.map(i => i.type) };
+  const availed = isAvailedOrder(statusInput);
 
   return (
     <article className="bg-white rounded-[14px] border border-bone overflow-hidden">
@@ -167,11 +170,11 @@ function OrderCard({ order }: { order: PlacedOrder }) {
         <div className="flex items-center gap-2 flex-wrap">
           <span className={clsx(
             'px-3 py-1 rounded-full text-[12px] font-bold uppercase tracking-wide',
-            order.orderStatus === 'completed' ? 'bg-[#e3f4ea] text-[#1a6b35]'
+            availed || order.orderStatus === 'completed' ? 'bg-[#e3f4ea] text-[#1a6b35]'
             : order.orderStatus === 'cancelled' ? 'bg-error-bg text-error'
             : 'bg-[#fff4dc] text-[#b36200]',
           )}>
-            {order.orderStatus}
+            {orderStatusLabel(statusInput)}
           </span>
           <span className="px-3 py-1 rounded-full text-[12px] font-semibold bg-bone text-slate capitalize">
             {order.paymentMethod.replace(/_/g, ' ')}

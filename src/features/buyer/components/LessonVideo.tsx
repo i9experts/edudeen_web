@@ -4,6 +4,7 @@ import { externalVideoEmbed } from '@/utils/externalVideo';
 import { useLanguage } from '@/contexts/languageCtx';
 import type { LessonSubtitle } from '@/api/services/classroom';
 import { parseCues } from '@/utils/subtitles';
+import { createPlayTracker } from '@/utils/playTracker';
 
 const IDLE_MS = 60_000;
 /** A jump bigger than this between two time reports is a seek, not normal playback. */
@@ -22,14 +23,17 @@ type Ctl = { play: () => void; pause: () => void; seek: (t: number) => void };
  * Mouse movement INSIDE a YouTube/Vimeo frame is invisible to the page, so for
  * those the pointer being over the frame counts as activity.
  */
-export function LessonVideo({ file, videoUrl, title, autoPlay, guard, lockSeek, onFinished, subtitles }: {
+export function LessonVideo({ file, videoUrl, title, autoPlay, guard, lockSeek, onFinished, onPlayed, subtitles }: {
   file?: { url: string } | null;
   videoUrl?: string | null;
   title: string;
   autoPlay?: boolean;
   guard?: boolean;
   lockSeek?: boolean;
+  /** Fires when the lesson counts as watched (server-confirmed 90% when `onPlayed` is given, else when the video ends). */
   onFinished?: () => void;
+  /** Reports really-played seconds; resolves true once the server counts >= 90%. */
+  onPlayed?: (playedSeconds: number, durationSeconds: number | null) => Promise<boolean>;
   /** Timed Urdu / English subtitles: shown through the video's own captions (CC) button. */
   subtitles?: LessonSubtitle[];
 }) {
@@ -54,23 +58,33 @@ export function LessonVideo({ file, videoUrl, title, autoPlay, guard, lockSeek, 
   finishedRef.current = onFinished;
   const lockRef = useRef(!!lockSeek);
   lockRef.current = !!lockSeek;
+  const playedRef = useRef(onPlayed);
+  playedRef.current = onPlayed;
+  const tracker = useRef<ReturnType<typeof createPlayTracker> | null>(null);
+  if (!tracker.current) {
+    tracker.current = createPlayTracker({
+      report: (s, d) => (playedRef.current ? playedRef.current(s, d) : Promise.resolve(false)),
+      onEnough: () => finishedRef.current?.(),
+    });
+  }
 
   // One place for "the player says it is at time t".
-  const reportTime = useCallback((t: number) => {
+  const reportTime = useCallback((t: number, dur?: number | null) => {
     if (!Number.isFinite(t)) return;
     if (lockRef.current && t > maxT.current + SEEK_TOLERANCE) { ctl.current?.seek(maxT.current); return; }
     if (t > maxT.current) maxT.current = t;
+    if (playedRef.current) tracker.current?.tick(t, dur);
   }, []);
 
-  const finish = useCallback(() => { playing.current = false; finishedRef.current?.(); }, []);
+  const finish = useCallback(() => { playing.current = false; if (playedRef.current) tracker.current?.end(); else finishedRef.current?.(); }, []);
 
   // Native <video> controller + guards.
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
     ctl.current = { play: () => { void v.play().catch(() => undefined); }, pause: () => v.pause(), seek: t => { v.currentTime = t; } };
-    const onTime = () => { if (!v.seeking) reportTime(v.currentTime); };
-    const onSeeking = () => { if (lockRef.current && v.currentTime > maxT.current + 0.75) v.currentTime = maxT.current; };
+    const onTime = () => { if (!v.seeking) reportTime(v.currentTime, v.duration); };
+    const onSeeking = () => { tracker.current?.seeked(); if (lockRef.current && v.currentTime > maxT.current + 0.75) v.currentTime = maxT.current; };
     const onPlay = () => { playing.current = true; };
     const onPause = () => { playing.current = false; };
     v.addEventListener('timeupdate', onTime);
@@ -114,7 +128,7 @@ export function LessonVideo({ file, videoUrl, title, autoPlay, guard, lockSeek, 
         if (d.event === 'onReady') handshake();
         const info = d.info;
         if (d.event === 'infoDelivery' && info) {
-          if (typeof info.currentTime === 'number') reportTime(info.currentTime);
+          if (typeof info.currentTime === 'number') reportTime(info.currentTime, typeof info.duration === 'number' ? info.duration : undefined);
           if (typeof info.playerState === 'number') {
             if (info.playerState === 0) finish();
             else playing.current = info.playerState === 1;
@@ -125,7 +139,7 @@ export function LessonVideo({ file, videoUrl, title, autoPlay, guard, lockSeek, 
           else playing.current = d.info === 1;
         }
       } else {
-        if (d.event === 'timeupdate') reportTime(Number(d.data?.seconds));
+        if (d.event === 'timeupdate') reportTime(Number(d.data?.seconds), Number(d.data?.duration));
         else if (d.event === 'seeked') reportTime(Number(d.data?.seconds));
         else if (d.event === 'play') playing.current = true;
         else if (d.event === 'pause') playing.current = false;

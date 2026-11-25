@@ -3,6 +3,9 @@ import { clsx } from 'clsx';
 import { Search, ChevronDown, HelpCircle, LifeBuoy, MessageCircle } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useFaqs, useFaqCategories } from '@/hooks/useFaqs';
+import { usePublicPlatformConfig } from '@/hooks/usePublicPlatformConfig';
+import { useLanguage } from '@/contexts/languageCtx';
+import { DEFAULT_CHATBOT } from '@/components/chat/chatbotDefaults';
 import { Button, SkeletonBox } from '@/components/comman/ui';
 import type { Faq } from '@/api/services/faq';
 import { Reveal } from '@/components/comman/motion/Reveal';
@@ -35,7 +38,7 @@ function FaqAccordionItem({ question, answer }: { question: string; answer: stri
           conditional mount, and the answer stays in the DOM either way. */}
       <div className={clsx('grid transition-[grid-template-rows] duration-300 ease-out', open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]')}>
         <div className="overflow-hidden">
-          <p id={id} className="text-[13px] text-slate leading-[1.75] pb-5 pe-9">{answer}</p>
+          <p id={id} className="text-[13px] text-slate leading-[1.75] pb-5 pe-9 whitespace-pre-line">{answer}</p>
         </div>
       </div>
     </div>
@@ -60,7 +63,20 @@ export function FaqPage() {
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('');
   const categories = useFaqCategories();
-  const { faqs, loading, error, refetch } = useFaqs(category || undefined, query);
+  const { faqs: savedFaqs, loading, error, refetch } = useFaqs(category || undefined, query);
+  // Nothing saved by an admin yet (and no search / category active): show the help-chat questions, so the page is never empty.
+  // The chat config is the live one (admin edits to it show here too); markdown in its answers is flattened to plain text.
+  const { config: platformConfig } = usePublicPlatformConfig();
+  const { lang } = useLanguage();
+  const chatFaqs = useMemo<Faq[]>(() => {
+    const qs = (platformConfig?.chatbot ?? DEFAULT_CHATBOT).buyerQuestions ?? [];
+    const plain = (s: string) => s.replace(/\*\*(.+?)\*\*/g, '$1').replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+    return qs.map((q, i) => ({
+      _id: `chat-${q.id}`, question: lang === 'ur' && q.qUr ? q.qUr : q.q, answer: plain(lang === 'ur' && q.aUr ? q.aUr : q.a),
+      category: lang === 'ur' ? 'عمومی سوالات' : 'Common questions', order: i, isActive: true, createdAt: '', updatedAt: '',
+    }));
+  }, [platformConfig?.chatbot, lang]);
+  const faqs = !loading && !error && savedFaqs.length === 0 && !query && !category ? chatFaqs : savedFaqs;
 
   // Grouped by category only in the unfiltered "All" view (with no active
   // search) — once a specific category is picked, or a search is running,

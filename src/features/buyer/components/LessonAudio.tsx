@@ -3,6 +3,7 @@ import { Captions, Headphones } from 'lucide-react';
 import { clsx } from 'clsx';
 import type { LessonSubtitle } from '@/api/services/classroom';
 import { LessonSubtitles } from './LessonSubtitles';
+import { createPlayTracker } from '@/utils/playTracker';
 
 type Choice = 'ur' | 'en' | 'off';
 const PREF_KEY = 'edudeen.subtitleChoice';
@@ -19,16 +20,28 @@ const savePref = (c: Choice) => { try { localStorage.setItem(PREF_KEY, c); } cat
  * Course-player mode (`lockSeek`): the learner cannot skip ahead of what they have heard, and `onFinished`
  * fires when the recording ends — the same rule as video lessons.
  */
-export function LessonAudio({ file, title, subtitles, autoPlay, lockSeek, onFinished }: {
+export function LessonAudio({ file, title, subtitles, autoPlay, lockSeek, onFinished, onPlayed }: {
   file: { url: string };
   title: string;
   subtitles?: LessonSubtitle[];
   autoPlay?: boolean;
   lockSeek?: boolean;
+  /** Fires when the lesson counts as listened (server-confirmed 90% when `onPlayed` is given, else when the recording ends). */
   onFinished?: () => void;
+  /** Reports really-played seconds; resolves true once the server counts >= 90%. */
+  onPlayed?: (playedSeconds: number, durationSeconds: number | null) => Promise<boolean>;
 }) {
   const ref = useRef<HTMLAudioElement>(null);
   const maxT = useRef(0);
+  const cb = useRef({ onFinished, onPlayed });
+  cb.current = { onFinished, onPlayed };
+  const tracker = useRef<ReturnType<typeof createPlayTracker> | null>(null);
+  if (!tracker.current) {
+    tracker.current = createPlayTracker({
+      report: (s, d) => (cb.current.onPlayed ? cb.current.onPlayed(s, d) : Promise.resolve(false)),
+      onEnough: () => cb.current.onFinished?.(),
+    });
+  }
   const [time, setTime] = useState(0);
   const subs = subtitles ?? [];
   // null = not asked yet. A remembered answer is only used when this lesson actually has that language.
@@ -79,12 +92,14 @@ export function LessonAudio({ file, title, subtitles, autoPlay, lockSeek, onFini
             if (lockSeek && a.currentTime > maxT.current + 2) { a.currentTime = maxT.current; return; }
             if (a.currentTime > maxT.current) maxT.current = a.currentTime;
             setTime(a.currentTime);
+            if (onPlayed) tracker.current?.tick(a.currentTime, a.duration);
           }}
           onSeeking={e => {
             const a = e.currentTarget;
+            tracker.current?.seeked();
             if (lockSeek && a.currentTime > maxT.current + 0.75) a.currentTime = maxT.current;
           }}
-          onEnded={() => onFinished?.()}
+          onEnded={() => { if (onPlayed) tracker.current?.end(); else onFinished?.(); }}
         />
       </div>
       {subs.length > 0 && (

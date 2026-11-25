@@ -66,8 +66,8 @@ export function ReviewFormModal({
       onClose={onClose}
       footer={
         <>
-          <Button variant="outline" onClick={onClose} fullWidth>Cancel</Button>
-          <Button onClick={submit} loading={saving} fullWidth>
+          <Button variant="outline" onClick={onClose} className="flex-1 min-w-0 justify-center">Cancel</Button>
+          <Button onClick={submit} loading={saving} className="flex-1 min-w-0 justify-center">
             {mode === 'create' ? 'Submit Review' : 'Save Changes'}
           </Button>
         </>

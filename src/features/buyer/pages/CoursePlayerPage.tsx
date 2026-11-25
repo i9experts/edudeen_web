@@ -13,7 +13,7 @@ import { LessonSubtitles } from '@/features/buyer/components/LessonSubtitles';
 import { CertificateDetailsModal } from '@/features/buyer/components/CertificateDetailsModal';
 import { useGetProfile } from '@/hooks/auth/useGetProfile';
 import {
-  apiGetLearnView, apiGetLesson, apiCompleteLesson, apiSubmitQuiz,
+  apiGetLearnView, apiGetLesson, apiCompleteLesson, apiReportPlayed, apiSubmitQuiz,
   type LearnView, type CertificateDetails, type LessonContent, type LessonType, type QuizResult,
 } from '@/api/services/classroom';
 
@@ -124,6 +124,10 @@ export function CoursePlayerPage() {
       else toast.success('Course complete!');
     }
   };
+
+  // Audio/video: report really-played seconds; the server decides when >= 90% is reached. Done lessons are not tracked.
+  const reportPlayed = (!lesson || done.has(lesson._id)) ? undefined
+    : (seconds: number, durationSeconds: number | null) => apiReportPlayed(slug, lesson._id, seconds, durationSeconds).then(r => r.data.enough);
 
   const markDone = async () => {
     if (!lesson) return;
@@ -238,7 +242,7 @@ export function CoursePlayerPage() {
               <h1 className="text-[22px] md:text-[26px] font-bold text-carbon m-0">{lesson.title}</h1>
               {lesson.type === 'video' && (lesson.file || lesson.videoUrl) && (
                 <LessonVideo key={lesson._id} file={lesson.file} videoUrl={lesson.videoUrl} title={lesson.title} subtitles={lesson.subtitles}
-                  guard lockSeek={!isDone} onFinished={() => setWatchedId(lesson._id)} />
+                  guard lockSeek={!isDone} onFinished={() => setWatchedId(lesson._id)} onPlayed={reportPlayed} />
               )}
               {lesson.type === 'video' && !lesson.file && !lesson.videoUrl && (
                 <p className="text-[13px] text-slate m-0">The video for this lesson is not available yet.</p>
@@ -248,7 +252,7 @@ export function CoursePlayerPage() {
               )}
               {lesson.type === 'audio' && lesson.file && (
                 <LessonAudio key={lesson._id} file={lesson.file} title={lesson.title} subtitles={lesson.subtitles}
-                  lockSeek={!isDone} onFinished={() => setWatchedId(lesson._id)} />
+                  lockSeek={!isDone} onFinished={() => setWatchedId(lesson._id)} onPlayed={reportPlayed} />
               )}
               {lesson.type === 'audio' && !lesson.file && (
                 <p className="text-[13px] text-slate m-0">The voice recording for this lesson is not available yet.</p>
