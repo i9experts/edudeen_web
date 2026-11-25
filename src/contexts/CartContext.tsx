@@ -342,6 +342,17 @@ export function CartProvider({ storeId, children }: { storeId?: string; children
   const addToCartRef = useRef(addToCart);
   addToCartRef.current = addToCart;
 
+  // A quantity change / removal is already applied on screen, so a successful one needs no second cart request,
+  // EXCEPT when the cart carries server-computed pricing (sale or Premium member prices) that depends on the lines.
+  const cartRef = useRef(cart);
+  cartRef.current = cart;
+  const reconcileAfterSuccess = useCallback(() => {
+    const c = cartRef.current as (Cart & { campaignDiscount?: unknown }) | null;
+    const serverPriced = !!c && (!!c.campaignDiscount || (c.items ?? []).some(i => i.onCampaign || i.premiumUnitPrice != null || i.listPrice != null));
+    if (!serverPriced) return;
+    if (storeId) syncCart(storeId, x => setCart(x)); else fetchMyCarts();
+  }, [fetchMyCarts, storeId]);
+
   const updateQty = useCallback(async (
     productId: string, productVariantId: string, action: 'increase' | 'decrease',
   ) => {
@@ -368,15 +379,16 @@ export function CartProvider({ storeId, children }: { storeId?: string; children
     setError(null);
     try {
       await apiUpdateCartQuantity(productId, productVariantId, action, itemStoreId);
+      reconcileAfterSuccess();
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to update quantity.';
       setError(message);
       toast.error(message);
-    } finally {
+      // Failure: re-read the real cart so the screen rolls back.
       if (storeId) syncCart(storeId, c => setCart(c));
       else fetchMyCarts();
     }
-  }, [refreshGuestCartDisplay, fetchMyCarts, storeIdFor, toast, storeId]);
+  }, [refreshGuestCartDisplay, fetchMyCarts, storeIdFor, toast, storeId, reconcileAfterSuccess]);
 
   // 5 s Undo: puts back the SAME product + variant + quantity through the normal add path.
   const removedToast = useCallback((removed: CartItem | undefined, productId: string, productVariantId: string) => {
@@ -417,18 +429,19 @@ export function CartProvider({ storeId, children }: { storeId?: string; children
     setError(null);
     try {
       await apiRemoveCartItem(productId, productVariantId, itemStoreId);
+      reconcileAfterSuccess();
       if (!opts?.silent) removedToast(removed, productId, productVariantId);
       return true;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to remove item.';
       setError(message);
       if (!opts?.silent) toast.error(message);
-      return false;
-    } finally {
+      // Failure: re-read the real cart so the removed line comes back.
       if (storeId) syncCart(storeId, c => setCart(c));
       else fetchMyCarts();
+      return false;
     }
-  }, [cart, refreshGuestCartDisplay, fetchMyCarts, storeIdFor, toast, storeId, removedToast]);
+  }, [cart, refreshGuestCartDisplay, fetchMyCarts, storeIdFor, toast, storeId, removedToast, reconcileAfterSuccess]);
 
   const clearCart = useCallback(async (onlyStoreId?: string) => {
     if (!TokenStorage.isLoggedIn()) {
