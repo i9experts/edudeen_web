@@ -4,12 +4,13 @@ import { clsx } from 'clsx';
 import type { LessonSubtitle } from '@/api/services/classroom';
 import { LessonSubtitles } from './LessonSubtitles';
 import { createPlayTracker } from '@/utils/playTracker';
+import { subtitleShortLabel } from '@/utils/subtitles';
 
-type Choice = 'ur' | 'en' | 'off';
+type Choice = 'ur' | 'en' | 'roman_ur' | 'off';
 const PREF_KEY = 'edudeen.subtitleChoice';
 
 const readPref = (): Choice | null => {
-  try { const v = localStorage.getItem(PREF_KEY); return v === 'ur' || v === 'en' || v === 'off' ? v : null; } catch { return null; }
+  try { const v = localStorage.getItem(PREF_KEY); return v === 'ur' || v === 'en' || v === 'roman_ur' || v === 'off' ? v : null; } catch { return null; }
 };
 const savePref = (c: Choice) => { try { localStorage.setItem(PREF_KEY, c); } catch { /* private mode: the question is simply asked again */ } };
 
@@ -66,7 +67,7 @@ export function LessonAudio({ file, title, subtitles, autoPlay, lockSeek, onFini
           {subs.map(s => (
             <button key={s.lang} type="button" onClick={() => pick(s.lang)} lang={s.lang}
               className={clsx('min-w-[140px] rounded-xl border border-bone bg-white px-5 py-3 text-[15px] font-semibold text-carbon cursor-pointer hover:border-brand-orange hover:bg-brand-pale-orange', s.lang === 'ur' && 'font-urdu text-[17px]')}>
-              {s.lang === 'ur' ? 'اردو' : 'English'}
+              {subtitleShortLabel(s.lang)}
             </button>
           ))}
           <button type="button" onClick={() => pick('off')}

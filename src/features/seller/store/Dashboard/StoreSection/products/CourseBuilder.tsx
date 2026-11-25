@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { minutesFromSeconds } from '@/utils/lessonLength';
 import { Plus, Trash2, ChevronUp, ChevronDown, Video, Mic, Scissors, Loader2, Award, Users } from 'lucide-react';
 import { isAllowedExternalVideo } from '@/utils/externalVideo';
 import { clsx } from 'clsx';
@@ -37,14 +38,14 @@ function move<T>(list: T[], i: number, d: -1 | 1) {
 const toUpload = (f: CourseLessonInput['file']): PrivateUploadData | null =>
   f ? { publicId: f.url, fileName: f.name, fileSize: f.size ?? 0, mimeType: f.mimeType ?? '', resourceType: 'raw' } : null;
 
-/** Reads a chosen video's or voice recording's real length from its metadata (whole minutes, at least 1). 0 when it cannot be read. */
+/** Reads a chosen video's or voice recording's real length from its metadata (minutes with 2 decimals, so 29 seconds = 0.48). 0 when it cannot be read. */
 function readVideoMinutes(file: File): Promise<number> {
   return new Promise(resolve => {
     const url = URL.createObjectURL(file);
     const v = document.createElement(file.type.startsWith('audio/') || /\.(mp3|m4a|wav|ogg)$/i.test(file.name) ? 'audio' : 'video');
     const done = (m: number) => { URL.revokeObjectURL(url); v.removeAttribute('src'); resolve(m); };
     v.preload = 'metadata';
-    v.onloadedmetadata = () => done(Number.isFinite(v.duration) && v.duration > 0 ? Math.max(1, Math.ceil(v.duration / 60)) : 0);
+    v.onloadedmetadata = () => done(Number.isFinite(v.duration) && v.duration > 0 ? minutesFromSeconds(v.duration) : 0);
     v.onerror = () => done(0);
     v.src = url;
   });
@@ -253,7 +254,7 @@ function LessonEditor({ id, lesson, index, count, onChange, onMove, onRemove, lo
 
       <div className="flex items-center gap-4 flex-wrap">
         {lesson.type !== 'quiz' && (
-          <div className="w-[150px]"><Input aria-label="Length in minutes" type="number" min={1} placeholder="Minutes" value={lesson.durationMinutes ?? ''} onChange={e => set('durationMinutes', e.target.value ? Number(e.target.value) : null)} /></div>
+          <div className="w-[150px]"><Input aria-label="Length in minutes" type="number" min={0.01} step="0.01" placeholder="Minutes" value={lesson.durationMinutes ?? ''} onChange={e => set('durationMinutes', e.target.value ? Number(e.target.value) : null)} /></div>
         )}
         {lesson.type !== 'quiz' && (
           <label className="inline-flex items-center gap-2 text-[12.5px] text-charcoal cursor-pointer">

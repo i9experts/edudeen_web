@@ -13,7 +13,8 @@ import { useProductPreview } from '@/hooks/marketplace/useProductPreview';
 import { CompareToggle } from './CompareToggle';
 import { BoardChipSlot, cardImage, distinctSubtitle } from './ResourceCard';
 import { formatMoney } from '@/utils/currency';
-import { formatPrice } from '@/utils/formatPrice';
+import { formatPrice, formatItemPrice } from '@/utils/formatPrice';
+import { percentOff } from '@/utils/saleMath';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 
 // Wraps the substring of `text` matching `query` in <mark> — same idea as
@@ -236,7 +237,7 @@ export const ProductCard = memo(function ProductCard({ product: rawProduct, onCl
   const member = isPremium ? memberPriceOf(lowestVariant, convert, shownPrice) : null;
   const struckPrice = salePct ? lowestPrice : subscriberPrice != null ? lowestPrice : (compareAt != null && compareAt > (lowestPrice ?? 0) ? compareAt : null);
   const pctOff = compareAt != null && lowestPrice != null && compareAt > lowestPrice
-    ? Math.round((1 - lowestPrice / compareAt) * 100)
+    ? percentOff(nativeLowestPrice, nativeCompareAt)
     : null;
   // Stock tracking only applies to physical goods with tracking enabled —
   // digital products, and any physical variant the seller marked
@@ -436,7 +437,7 @@ export const ProductCard = memo(function ProductCard({ product: rawProduct, onCl
         <div className={clsx('flex items-center gap-3 min-w-0', isList ? 'justify-between flex-wrap mt-2 pt-2 border-t border-bone/70' : 'justify-between mt-auto pt-2')}>
           <div className="flex items-baseline gap-[5px] min-w-0">
             <span className={clsx('font-bold whitespace-nowrap tracking-tight', compact ? 'text-[14px]' : 'text-[14px] sm:text-[15px]', member ? 'text-[#8a6100]' : subscriberPrice != null || salePct ? 'text-brand-orange' : 'text-carbon')}>
-              {member ? formatMoney(member.price, displayCurrency) : shownPrice != null ? formatMoney(shownPrice, displayCurrency) : '—'}
+              {member ? formatMoney(member.price, displayCurrency) : shownPrice != null ? formatItemPrice(shownPrice, displayCurrency) : '—'}
             </span>
             {member && (member.list ?? shownPrice) != null && (
               <span className="text-[12px] text-slate/70 line-through shrink-0">{formatMoney((member.list ?? shownPrice) as number, displayCurrency)}</span>

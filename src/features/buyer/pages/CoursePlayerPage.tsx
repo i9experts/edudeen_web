@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { lessonLengthLabel } from '@/utils/lessonLength';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { CheckCircle2, Circle, Video, Headphones, FileText, AlignLeft, ListChecks, Award, ChevronLeft, ChevronRight, Loader2, Menu, X, IdCard } from 'lucide-react';
 import { clsx } from 'clsx';
@@ -190,7 +191,7 @@ export function CoursePlayerPage() {
                     {done.has(l._id) ? <CheckCircle2 size={15} className="text-success shrink-0" /> : <Circle size={15} className="text-bone shrink-0" />}
                     <Icon size={13} className="text-slate shrink-0" />
                     <span className="flex-1 min-w-0 truncate">{l.title}</span>
-                    {l.durationMinutes ? <span className="text-[12px] text-slate">{l.durationMinutes}m</span> : null}
+                    {l.durationMinutes ? <span className="text-[12px] text-slate">{lessonLengthLabel(l.durationMinutes)}</span> : null}
                   </button>
                 </li>
               );

@@ -155,7 +155,7 @@ export interface CourseFileRef {
   playUrl?: string | null;
 }
 /** Urdu / English subtitles of a video or voice lesson. `content` is WebVTT (timed) or a plain transcript. */
-export interface LessonSubtitle { lang: 'ur' | 'en'; kind?: 'timed' | 'text'; content: string }
+export interface LessonSubtitle { lang: 'ur' | 'en' | 'roman_ur'; kind?: 'timed' | 'text'; content: string }
 export interface QuizQuestionInput { question: string; options: string[]; answerIndex: number }
 export interface CourseLessonInput {
   _id?: string;

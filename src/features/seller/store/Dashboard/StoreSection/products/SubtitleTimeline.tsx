@@ -4,7 +4,7 @@ import { clsx } from 'clsx';
 import { Button, Input, Textarea } from '@/components/comman/ui';
 import { UrduTextarea } from '@/components/comman/ui/UrduTextarea';
 import type { LessonSubtitle } from '@/api/services/classroom';
-import { SUBTITLE_LANGS, SUBTITLE_MAX_CHARS, cuesFromLines, cuesToVtt, parseCues, tidyCues, type Cue } from '@/utils/subtitles';
+import { SUBTITLE_LANGS, SUBTITLE_MAX_CHARS, cuesFromLines, cuesToVtt, parseCues, subtitleHtmlLang, tidyCues, type Cue } from '@/utils/subtitles';
 import { useMediaClock } from './audioHooks';
 
 const MIN_CUE = 0.3;
@@ -25,11 +25,11 @@ function Clock({ audioRef, duration }: { audioRef: RefObject<HTMLAudioElement | 
 }
 
 /** The subtitle line that is on screen right now, the way a learner will see it. */
-function LiveCaption({ audioRef, cues, lang }: { audioRef: RefObject<HTMLAudioElement | null>; cues: Cue[]; lang: 'ur' | 'en' }) {
+function LiveCaption({ audioRef, cues, lang }: { audioRef: RefObject<HTMLAudioElement | null>; cues: Cue[]; lang: 'ur' | 'en' | 'roman_ur' }) {
   const [text, setText] = useState('');
   useMediaClock(audioRef, t => setText(cues.find(c => t >= c.start && t < c.end)?.text ?? ''));
   return (
-    <p dir={lang === 'ur' ? 'rtl' : 'ltr'} lang={lang} aria-label="Subtitle preview"
+    <p dir={lang === 'ur' ? 'rtl' : 'ltr'} lang={subtitleHtmlLang(lang)} aria-label="Subtitle preview"
       className={clsx('m-0 rounded-lg bg-carbon text-white px-4 py-3 min-h-[64px] flex items-center justify-center text-center text-[16px] md:text-[19px] leading-[1.9] whitespace-pre-line', lang === 'ur' && 'font-urdu')}>
       {text || <span className="text-white/40 text-[12.5px]">The subtitle on screen at this moment appears here</span>}
     </p>
@@ -38,7 +38,7 @@ function LiveCaption({ audioRef, cues, lang }: { audioRef: RefObject<HTMLAudioEl
 
 /** One language: write the text, then place and fix every line against the voice on a timeline. */
 function CueTrack({ lang, content, onContent, audioRef, duration, onFile, onRemove }: {
-  lang: 'ur' | 'en';
+  lang: 'ur' | 'en' | 'roman_ur';
   content: string;
   onContent: (v: string) => void;
   audioRef: RefObject<HTMLAudioElement | null>;
@@ -228,7 +228,7 @@ function CueTrack({ lang, content, onContent, audioRef, duration, onFile, onRemo
                       i === sel ? 'bg-brand-pale-orange border-brand-orange text-carbon z-[2]' : i === active ? 'bg-green-100 border-success text-carbon' : 'bg-blue-50 border-brand-royal/40 text-carbon')}
                     style={{ left: c.start * pps, width: Math.max((c.end - c.start) * pps, 8) }} title={`${stamp(c.start)} – ${stamp(c.end)}`}>
                     <span onPointerDown={e => onDown(e, i, 'l')} className="absolute inset-y-0 start-0 w-2 cursor-ew-resize bg-carbon/20 hover:bg-carbon/40" aria-hidden />
-                    <span dir={dir} lang={lang} className={clsx('block truncate pointer-events-none', lang === 'ur' && 'font-urdu')}>{c.text}</span>
+                    <span dir={dir} lang={subtitleHtmlLang(lang)} className={clsx('block truncate pointer-events-none', lang === 'ur' && 'font-urdu')}>{c.text}</span>
                     <span onPointerDown={e => onDown(e, i, 'r')} className="absolute inset-y-0 end-0 w-2 cursor-ew-resize bg-carbon/20 hover:bg-carbon/40" aria-hidden />
                   </div>
                 ))}
@@ -269,7 +269,7 @@ function CueTrack({ lang, content, onContent, audioRef, duration, onFile, onRemo
                   <button type="button" onClick={() => showCue(i)} aria-current={i === sel ? 'true' : undefined}
                     className={clsx('w-full flex items-start gap-3 px-3 py-1.5 text-start border-none cursor-pointer', i === sel ? 'bg-brand-pale-orange' : i === active ? 'bg-green-50' : 'bg-white hover:bg-cream')}>
                     <span className="text-[11.5px] text-slate tabular-nums shrink-0 mt-0.5" dir="ltr">{stamp(c.start)}</span>
-                    <span dir={dir} lang={lang} className={clsx('flex-1 text-[13px] leading-[1.7] truncate', lang === 'ur' && 'font-urdu')}>{c.text}</span>
+                    <span dir={dir} lang={subtitleHtmlLang(lang)} className={clsx('flex-1 text-[13px] leading-[1.7] truncate', lang === 'ur' && 'font-urdu')}>{c.text}</span>
                   </button>
                 </li>
               ))}
@@ -338,7 +338,7 @@ export function SubtitleTimelineEditor({ audioUrl, subtitles, onChange, onFile }
           return (
             <button key={l.code} type="button" role="tab" aria-selected={lang === l.code} onClick={() => setLang(l.code)}
               className={clsx('px-3 py-1.5 text-[12.5px] border-none cursor-pointer inline-flex items-center gap-1.5', lang === l.code ? 'bg-carbon text-white' : 'bg-white text-graphite hover:bg-cream')}>
-              <span lang={l.code} className={l.code === 'ur' ? 'font-urdu' : undefined}>{l.code === 'ur' ? 'اردو (Urdu)' : 'English'}</span>
+              <span lang={subtitleHtmlLang(l.code)} className={l.code === 'ur' ? 'font-urdu' : undefined}>{l.code === 'ur' ? 'اردو (Urdu)' : l.code === 'roman_ur' ? 'Roman Urdu' : 'English'}</span>
               {has && <span className="size-1.5 rounded-full bg-success" aria-label="has subtitles" />}
             </button>
           );

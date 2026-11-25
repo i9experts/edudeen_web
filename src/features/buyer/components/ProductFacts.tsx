@@ -10,6 +10,7 @@ import type { MarketplaceProduct } from '@/api/services/marketplace';
 type Fact = { label: string; value: string };
 
 function durationText(totalMinutes: number): string {
+  if (totalMinutes < 1) return `${Math.max(1, Math.round(totalMinutes * 60))}s`;
   const h = Math.floor(totalMinutes / 60);
   const m = Math.round(totalMinutes % 60);
   if (h && m) return `${h}h ${m}m`;

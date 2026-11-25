@@ -19,6 +19,15 @@ export function variantSalePct(v: SaleVariant | null | undefined): number {
   return Math.round((1 - effective / was) * 100);
 }
 
+/** THE percent-off rounding for every badge (cards, flash bar, product page): whole number, from the price and the
+ *  struck "was" price in the SAME (native, un-converted) currency, so converting/rounding to PKR can never shift it
+ *  by 1%. null when there is no real discount. */
+export function percentOff(price: number | null | undefined, was: number | null | undefined): number | null {
+  if (typeof price !== 'number' || typeof was !== 'number' || !Number.isFinite(price) || !Number.isFinite(was)) return null;
+  if (was <= 0 || price <= 0 || !(was > price)) return null;
+  return Math.round((1 - price / was) * 100);
+}
+
 /** What a card shows for one variant: the price the buyer pays now (campaignPrice when a platform sale runs), the struck
  *  "was" price (list price under a platform sale, else the seller's compare-at) and the whole-number percentage, all
  *  from the same fields the cart uses. `was`/`pct` are null/0 when nothing is discounted or the data is bad. */

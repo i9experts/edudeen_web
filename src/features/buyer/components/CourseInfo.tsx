@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { lessonLengthLabel } from '@/utils/lessonLength';
 import { Video, Headphones, FileText, AlignLeft, ListChecks, Award, PlayCircle, Lock, CheckCircle2, Infinity as InfinityIcon, GraduationCap } from 'lucide-react';
 import { Modal } from '@/components/comman/ui';
 import {
@@ -13,7 +14,7 @@ import { LessonSubtitles } from './LessonSubtitles';
 const ICON: Record<LessonType, typeof Video> = { video: Video, audio: Headphones, pdf: FileText, text: AlignLeft, quiz: ListChecks };
 const TYPE_LABEL: Record<LessonType, string> = { video: 'Video', audio: 'Voice', pdf: 'PDF', text: 'Reading', quiz: 'Quiz' };
 
-const hours = (m: number) => (m >= 60 ? `${Math.floor(m / 60)}h${m % 60 ? ` ${m % 60}m` : ''}` : `${m}m`);
+const hours = (m: number) => (m < 1 ? lessonLengthLabel(m) : m >= 60 ? `${Math.floor(m / 60)}h${Math.round(m % 60) ? ` ${Math.round(m % 60)}m` : ''}` : `${Math.round(m)}m`);
 
 /** Udemy-style course page: instructor, outcomes, curriculum with free-preview lessons, certificate and access terms. */
 function CourseContent({ product }: { product: MarketplaceProduct }) {
@@ -72,7 +73,7 @@ function CourseContent({ product }: { product: MarketplaceProduct }) {
                         <PlayCircle size={13} /> {loading === l._id ? 'Loading…' : 'Free preview'}
                       </button>
                     ) : <Lock size={12} className="text-slate/50 shrink-0" aria-label="Unlocks after purchase" />}
-                    {l.durationMinutes ? <span className="text-[12px] text-slate w-10 text-end shrink-0">{l.durationMinutes}m</span> : null}
+                    {l.durationMinutes ? <span className="text-[12px] text-slate w-10 text-end shrink-0">{lessonLengthLabel(l.durationMinutes)}</span> : null}
                   </li>
                 );
               })}

@@ -3,12 +3,13 @@
  * or a plain transcript. Everything here is plain text, never HTML.
  */
 
-export type SubtitleLang = 'ur' | 'en';
+export type SubtitleLang = 'ur' | 'en' | 'roman_ur';
 export interface Cue { start: number; end: number; text: string }
 
 export const SUBTITLE_LANGS: { code: SubtitleLang; label: string; dir: 'ltr' | 'rtl' }[] = [
   { code: 'en', label: 'English', dir: 'ltr' },
   { code: 'ur', label: 'اردو (Urdu)', dir: 'rtl' },
+  { code: 'roman_ur', label: 'Roman Urdu', dir: 'ltr' },
 ];
 
 /** Mirrors the API cap (course.schema SUBTITLE_LIMITS.perTrack). */
@@ -117,3 +118,8 @@ export function describeSubtitle(raw: string): string {
 export function subtitleText(s: { kind?: string; content: string }): string {
   return s.kind === 'text' || !parseCues(s.content).length ? s.content : parseCues(s.content).map(c => c.text).join('\n');
 }
+
+/** Short button label of a subtitle language (buyer + seller). */
+export const subtitleShortLabel = (l: SubtitleLang): string => (l === 'ur' ? 'اردو' : l === 'roman_ur' ? 'Roman Urdu' : 'English');
+/** Valid HTML lang attribute for a subtitle language. */
+export const subtitleHtmlLang = (l: SubtitleLang): string => (l === 'roman_ur' ? 'ur-Latn' : l);

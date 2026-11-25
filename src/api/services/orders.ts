@@ -405,6 +405,8 @@ export interface LibraryItem {
   storeName:      string | null;
   storeSlug:      string | null;
   isPaid:         boolean;
+  /** Free claim or a Rs 0 line: the library says "Enrolled", not "Bought". Absent on an older API. */
+  isFree?:        boolean;
   purchasedAt:    string;
   downloadCount:  number;
   reviewable:     boolean;

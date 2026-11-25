@@ -4,7 +4,8 @@ import { ShoppingCart, Heart, Loader2, Star, Check, AlertCircle } from 'lucide-r
 import { ProductImage } from './ProductCard';
 import type { MarketplaceProduct } from '@/api/services/marketplace';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
-import { formatPrice } from '@/utils/formatPrice';
+import { formatPrice, formatItemPrice } from '@/utils/formatPrice';
+import { percentOff } from '@/utils/saleMath';
 import { memberPriceOf, usePremiumView } from './PremiumBits';
 
 // ── Skeleton ──────────────────────────────────────────────────────────────────
@@ -77,7 +78,7 @@ export function FlashSaleCard({ product, onClick, onAddToCart, isAdding, addToCa
   const displayPrice    = member ? member.price : (campaignPrice ?? subscriberPrice ?? lowestPrice);
   const compareAt = member ? (member.list ?? lowestPrice) : campaignPrice != null && defaultVariant ? convert(defaultVariant.price, nativeCurrency) : (nativeCompareAt != null ? convert(nativeCompareAt, nativeCurrency) : null);
   const pctOff = member && member.percent > 0 ? Math.floor(member.percent + 1e-9) : compareAt != null && displayPrice != null && compareAt > displayPrice
-    ? Math.round((1 - displayPrice / compareAt) * 100)
+    ? percentOff(campaignNative ?? nativeSubscriberPrice ?? nativeLowestPrice, campaignNative != null ? defaultVariant?.price : nativeCompareAt)
     : null;
   const savings = compareAt != null && displayPrice != null && compareAt > displayPrice
     ? compareAt - displayPrice
@@ -173,7 +174,7 @@ export function FlashSaleCard({ product, onClick, onAddToCart, isAdding, addToCa
           <div className="flex items-end justify-between gap-1">
             <div className="min-w-0">
               <span className={clsx('block text-[13px] font-bold tracking-tight', member ? 'text-[#8a6100]' : subscriberPrice != null ? 'text-brand-orange' : 'text-carbon')}>
-                {displayPrice != null ? formatPrice(displayPrice, displayCurrency) : '—'}
+                {displayPrice != null ? formatItemPrice(displayPrice, displayCurrency) : '—'}
               </span>
               {compareAt != null && compareAt > (displayPrice ?? 0) && (
                 <span className="block text-[12px] text-slate line-through">{formatPrice(compareAt, displayCurrency)}</span>
@@ -232,7 +233,7 @@ export function FlashSaleCard({ product, onClick, onAddToCart, isAdding, addToCa
             <div className="min-w-0">
               <div className="flex items-baseline gap-[5px] flex-wrap">
                 <span className={clsx('text-[14.5px] font-bold tracking-tight', member ? 'text-[#8a6100]' : subscriberPrice != null ? 'text-brand-orange' : 'text-carbon')}>
-                  {displayPrice != null ? formatPrice(displayPrice, displayCurrency) : '—'}
+                  {displayPrice != null ? formatItemPrice(displayPrice, displayCurrency) : '—'}
                 </span>
                 {compareAt != null && compareAt > (displayPrice ?? 0) && (
                   <span className="text-[12px] text-slate line-through">{formatPrice(compareAt, displayCurrency)}</span>

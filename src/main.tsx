@@ -10,7 +10,6 @@ import { CurrencyPreferenceProvider } from '@/contexts/CurrencyPreferenceContext
 import { AuthGateProvider } from '@/contexts/AuthGateContext';
 import { ToastProvider } from '@/contexts/ToastContext';
 import { LanguageProvider } from '@/contexts/LanguageContext';
-import { CountryUrlHash } from '@/components/CountryUrlHash';
 import { InstallAppPrompt } from '@/components/InstallAppPrompt';
 import { ErrorBoundary } from '@/components/comman/ErrorBoundary';
 import { AppCrashScreen } from '@/components/comman/AppCrashScreen';
@@ -60,7 +59,6 @@ createRoot(document.getElementById('root')!).render(
             <WishlistProvider>
               <NotificationProvider>
                 <RouterProvider router={router} />
-                <CountryUrlHash />
                 <InstallAppPrompt />
               </NotificationProvider>
             </WishlistProvider>

@@ -77,7 +77,7 @@ export function LessonSubtitlesEditor({ subtitles, onChange, external, audioUrl,
             <div key={code} className="flex flex-wrap gap-2">
               <button type="button" onClick={() => onChange([...subtitles, { lang: code, content: '' }])}
                 className="inline-flex items-center gap-1 bg-transparent border border-dashed border-bone rounded-lg px-3 py-1.5 text-[12.5px] font-semibold text-brand-orange cursor-pointer hover:bg-cream">
-                <Plus size={13} /> Add {code === 'ur' ? 'Urdu' : 'English'} subtitles
+                <Plus size={13} /> Add {code === 'ur' ? 'Urdu' : code === 'roman_ur' ? 'Roman Urdu' : 'English'} subtitles
               </button>
             </div>
           );

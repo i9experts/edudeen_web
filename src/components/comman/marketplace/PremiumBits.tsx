@@ -72,7 +72,7 @@ export function PremiumTeaser({ percent, link = false, button = false, className
   const navigate = useNavigate();
   if (!showTeaser || floorPct(percent) <= 0) return null;
   // Only shown to non-members, and the percent is this product's exact member discount (not a range).
-  const text = `Get Premium to save ${floorPct(percent)}%`;
+  const text = `Get Premium to save ${floorPct(percent)}% off list price`;
   const cls = clsx('inline-flex items-center gap-1 text-[12px] font-semibold text-[#8a6100]', className);
   // No hover tooltip: the seller / Edudeen split is not shown on the teaser.
   const tip = undefined;

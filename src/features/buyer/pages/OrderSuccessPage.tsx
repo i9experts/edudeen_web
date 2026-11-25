@@ -15,7 +15,8 @@ import { clsx } from 'clsx';
 import { Button } from '@/components/comman/ui/Button';
 import { BuyerNavbar, Footer } from '@/components/comman/ui';
 import { formatMoney } from '@/utils/currency';
-import { formatPrice } from '@/utils/formatPrice';
+import { formatItemPrice } from '@/utils/formatPrice';
+import { ApproxPrice } from '@/components/comman/ui/ApproxPrice';
 import { buildOrderProgress, OrderProgressTrack, OrderNextStep, isMultiPackageCod, PackagePayBadge, type ProgressStoreInput } from './account/orderProgress';
 import { statusLabel, orderStatusLabel, isAvailedOrder } from '@/constants/statusLabels';
 import { localeDate } from '@/utils/localeTime';
@@ -54,7 +55,7 @@ function OrderItemRow({ item, orderId, currency, canReview }: { item: OrderItem;
         </div>
       </div>
       <div className="flex flex-col items-end gap-1.5 shrink-0">
-        <p className="text-[13px] font-bold text-charcoal">{formatPrice(item.totalPrice, currency)}</p>
+        <p className="text-[13px] font-bold text-charcoal">{formatItemPrice(item.totalPrice, currency)}</p>
         {isDigital && item.productId && (
           <DigitalItemAccess orderId={orderId} productId={item.productId} />
         )}
@@ -180,7 +181,7 @@ function OrderCard({ order }: { order: PlacedOrder }) {
           <span className="px-3 py-1 rounded-full text-[12px] font-semibold bg-bone text-slate capitalize">
             {order.paymentMethod.replace(/_/g, ' ')}
           </span>
-          {order.isPaid && (
+          {order.isPaid && order.paymentMethod !== 'free' && (
             <span className="px-3 py-1 rounded-full text-[12px] font-bold bg-[#e3f4ea] text-[#1a6b35]">
               Paid
             </span>
@@ -227,7 +228,7 @@ function OrderCard({ order }: { order: PlacedOrder }) {
         <div className="flex flex-col gap-2">
           <div className="flex justify-between text-[12px]">
             <span className="text-slate">Subtotal</span>
-            <span className="font-medium text-charcoal">{formatPrice(order.summary.subtotal, order.currency)}</span>
+            <span className="font-medium text-charcoal">{formatItemPrice(order.summary.subtotal, order.currency)}</span>
           </div>
           {!allDigital && (
             <div className="flex justify-between text-[12px]">
@@ -239,7 +240,7 @@ function OrderCard({ order }: { order: PlacedOrder }) {
           )}
           <div className="flex justify-between text-[14px] font-bold pt-2 border-t border-bone">
             <span className="text-charcoal">Total</span>
-            <span className="text-charcoal">{formatPrice(order.summary.total, order.currency)}</span>
+            <span className="text-charcoal text-end">{formatItemPrice(order.summary.total, order.currency)}<ApproxPrice amount={order.summary.total} currency={order.currency} /></span>
           </div>
         </div>
       </footer>
@@ -334,14 +335,14 @@ function SummaryPanel({ orders, navigate }: { orders: PlacedOrder[]; navigate: (
               <p className="text-[12px] font-bold text-brand-deep-orange font-mono leading-tight">{order.orderNumber}</p>
               <p className="text-[12px] text-slate mt-[1px]">{order.items.length} item{order.items.length !== 1 ? 's' : ''}</p>
             </div>
-            <p className="text-[12px] font-semibold text-charcoal shrink-0">{formatPrice(order.summary.total, order.currency)}</p>
+            <p className="text-[12px] font-semibold text-charcoal shrink-0">{formatItemPrice(order.summary.total, order.currency)}</p>
           </div>
         ))}
       </div>
 
       <div className="px-5 py-4 flex justify-between items-center border-b border-bone">
         <span className="text-[13px] font-bold text-charcoal">Grand Total</span>
-        <span className="text-[15px] font-bold text-carbon">{formatPrice(grandTotal, orders[0]?.currency)}</span>
+        <span className="text-[15px] font-bold text-carbon">{formatItemPrice(grandTotal, orders[0]?.currency)}</span>
       </div>
 
       <div className="px-5 py-4 flex flex-col gap-2">

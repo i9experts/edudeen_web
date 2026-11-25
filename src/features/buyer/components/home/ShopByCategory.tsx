@@ -50,20 +50,9 @@ function CategoryCard({ node }: { node: CategoryNode }) {
     ),
     c => c.name, c => c.productCount,
   );
-  // Up to 4 tiles: sub-categories first, then distinct product photos of this category (unlabelled,
-  // so a name never repeats). No subs and no photos = the category itself as one tile.
+  // Up to 4 tiles, EVERY tile named: only real sub-categories with products (no unlabelled photo fillers).
+  // No sub-category at all = the category itself as one named tile.
   const tiles: { key: string; node: CategoryNode; label: string }[] = subs.slice(0, 4).map(c => ({ key: c._id, node: c, label: c.name }));
-  const used = new Set(tiles.map(t => photoOf(t.node)).filter(Boolean));
-  for (const src of node.coverImages ?? []) {
-    if (tiles.length >= 4) break;
-    if (!src || used.has(src)) continue;
-    used.add(src);
-    tiles.push({
-      key: `${node._id}-photo-${tiles.length}`,
-      node: { ...node, coverImage: src, image: src, coverImages: [] } as CategoryNode,
-      label: tiles.length === 0 ? node.name : '',
-    });
-  }
   if (tiles.length === 0) tiles.push({ key: node._id, node, label: node.name });
   return (
     <article className={`flex flex-col bg-white rounded-2xl border border-bone p-4 min-w-0 ${CARD_ITEM_CLASS}`}>

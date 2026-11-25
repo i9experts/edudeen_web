@@ -19,7 +19,8 @@ import { apiStartConversation } from '@/api/services/messaging';
 import { ORDER_TABS, orderTab, shortOrderId, isStaleCod, type OrderTab } from './account/orderTabs';
 import { reorderItems, hasVariantIds } from './account/orderActions';
 import { DigitalItemAccess, BoughtFormatBadge, useDeliveryFormat, useAllCourses } from '@/features/buyer/components/DigitalItemAccess';
-import { formatPrice } from '@/utils/formatPrice';
+import { formatPrice, formatItemPrice } from '@/utils/formatPrice';
+import { ApproxPrice } from '@/components/comman/ui/ApproxPrice';
 import { formatAddress, formatPhone } from '@/utils/formatAddress';
 import { ProductCoverFallback } from '@/components/comman/marketplace/ProductCoverFallback';
 import { useToast } from '@/contexts/ToastContext';
@@ -204,7 +205,7 @@ function OrderItemRow({ item, orderId, orderStatus, currency }: { item: OrderLin
         </div>
       </div>
       <div className="flex flex-col items-end gap-1.5 shrink-0">
-        <p className="text-[12px] font-bold text-charcoal">{formatPrice(item.totalPrice, currency)}</p>
+        <p className="text-[12px] font-bold text-charcoal">{formatItemPrice(item.totalPrice, currency)}</p>
         {isDigital && item.productId && (
           <DigitalItemAccess orderId={orderId} productId={item.productId} />
         )}
@@ -349,7 +350,7 @@ function OrderCard({ order, onChanged }: { order: OrderSummary; onChanged: () =>
             {extra > 0 && <span className="shrink-0 text-slate font-medium">{`+${extra} more`}</span>}
           </p>
           {/* Phones: the total sits under the title so the name keeps its width. */}
-          <p className="sm:hidden text-[13px] font-bold text-carbon mb-[4px]">{formatPrice(order.totalAmount, order.currency)}</p>
+          <p className="sm:hidden text-[13px] font-bold text-carbon mb-[4px]">{formatItemPrice(order.totalAmount, order.currency)}</p>
           <div className="flex items-center gap-2 flex-wrap mb-[4px]">
             {availed ? (
               <span className="inline-flex items-center gap-[5px] px-2.5 py-[4px] rounded-full text-[12px] font-bold bg-[#e3f4ea] text-[#1a6b35] border border-[#a3d9b5]">
@@ -379,7 +380,7 @@ function OrderCard({ order, onChanged }: { order: OrderSummary; onChanged: () =>
         <div className="flex items-center gap-3 shrink-0">
           <div className="text-end hidden sm:block">
             <p className="text-[12px] text-slate mb-[1px]">Total</p>
-            <p className="text-[14px] font-bold text-carbon">{formatPrice(order.totalAmount, order.currency)}</p>
+            <p className="text-[14px] font-bold text-carbon">{formatItemPrice(order.totalAmount, order.currency)}<ApproxPrice amount={order.totalAmount} currency={order.currency} /></p>
           </div>
           <div className={clsx(
             'w-7 h-7 rounded-full flex items-center justify-center bg-cream border border-bone transition-transform',
@@ -527,7 +528,7 @@ function OrderCard({ order, onChanged }: { order: OrderSummary; onChanged: () =>
             )}
             <div className="flex justify-between text-[13px] font-bold pt-2 border-t border-bone">
               <span className="text-charcoal">Total</span>
-              <span className="text-carbon">{formatPrice(order.totalAmount, order.currency)}</span>
+              <span className="text-carbon">{formatItemPrice(order.totalAmount, order.currency)}</span>
             </div>
           </div>
 

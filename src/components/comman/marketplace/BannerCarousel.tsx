@@ -257,7 +257,7 @@ export function BannerCarousel({ banners, entityType, fit = 'cover', showDots = 
                 <>
                   <div aria-hidden className="absolute inset-y-0 start-0 w-[70%] bg-gradient-to-r from-[#0F3354]/75 via-[#0F3354]/35 to-transparent pointer-events-none" />
                   <div className="absolute inset-y-0 start-0 flex items-center ps-5 sm:ps-8 lg:ps-12 pe-4 max-w-[75%] sm:max-w-[60%] pointer-events-none">
-                    <h2 className="m-0 text-white font-bold leading-tight tracking-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.45)] text-[20px] sm:text-[28px] lg:text-[40px] line-clamp-3">
+                    <h2 dir="auto" className="m-0 text-white font-bold leading-tight tracking-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.45)] text-[20px] sm:text-[28px] lg:text-[40px] line-clamp-3">
                       {banner.title}
                     </h2>
                   </div>

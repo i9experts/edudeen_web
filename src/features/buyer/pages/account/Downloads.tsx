@@ -285,7 +285,7 @@ export function Downloads() {
                             </p>
                           ) : null}
                           <p className="text-[12px] text-slate mt-[2px]">
-                            Bought {localeDate(new Date(item.purchasedAt), { day: 'numeric', month: 'short', year: 'numeric' })} ·{' '}
+                            {item.isFree || item.deliveryFormat === 'course' ? 'Enrolled' : 'Bought'} {localeDate(new Date(item.purchasedAt), { day: 'numeric', month: 'short', year: 'numeric' })} ·{' '}
                             <Link to={`/account/orders/${item.orderId}`} className="text-slate hover:text-brand-orange underline">Order {item.orderNumber}</Link>
                           </p>
                           {item.reviewable && (
@@ -299,7 +299,7 @@ export function Downloads() {
                         {item.unavailable === 'removed' ? (
                           <div className="max-w-[240px] rounded-[9px] bg-[#fff0f0] px-3 py-2 text-[12px] text-error">
                             <p className="flex items-center gap-1.5 font-semibold"><Ban size={12} /> No longer available</p>
-                            <p className="mt-1 text-graphite">Edudeen removed this resource, so it cannot be downloaded. Contact support if you think this is a mistake.</p>
+                            <p className="mt-1 text-graphite">{item.deliveryFormat === 'course' ? 'Edudeen removed this course, so it can no longer be accessed.' : 'Edudeen removed this resource, so it cannot be downloaded.'} Contact support if you think this is a mistake.</p>
                           </div>
                         ) : item.unavailable === 'expired' ? (
                           <div className="max-w-[240px] rounded-[9px] bg-[#fff4dc] px-3 py-2 text-[12px] text-[#b36200]">

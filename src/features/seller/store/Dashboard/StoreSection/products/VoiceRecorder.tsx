@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { minutesFromSeconds } from '@/utils/lessonLength';
 import { Mic, Pause, Play, RotateCcw, Square, Loader2, Check } from 'lucide-react';
 import { Button } from '@/components/comman/ui';
 import { useUpload } from '@/hooks/upload/useUpload';
@@ -174,7 +175,7 @@ export function VoiceRecorder({ onSaved, onTake, onUseUpload }: {
 
   const save = () => {
     if (!take) return;
-    const minutes = Math.max(1, Math.ceil(take.seconds / 60));
+    const minutes = minutesFromSeconds(take.seconds);
     const file = take.file;
     if (onTake) { const seconds = take.seconds; discard(); onTake(file, seconds); return; }
     upload(file).then(d => { const localUrl = URL.createObjectURL(file); discard(); onSaved?.(d, minutes, localUrl); }).catch(() => undefined);

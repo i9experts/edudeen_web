@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { minutesFromSeconds } from '@/utils/lessonLength';
 import { Loader2, Mic, Pause, Play, Plus, Redo2, Scissors, Undo2, Upload } from 'lucide-react';
 import { clsx } from 'clsx';
 import { Button, Modal } from '@/components/comman/ui';
@@ -217,7 +218,7 @@ export function VoiceEditor({ loadOriginal, onClose, onApplied }: {
       const file = new File([wav], `voice-edited-${stamp}.wav`, { type: 'audio/wav' });
       const d = await upload(file);
       const finalSegs = segs;
-      onApplied({ file: d, minutes: Math.max(1, Math.ceil(duration / 60)), localUrl: URL.createObjectURL(file), mapCues: cues => mapSubtitleTimes(finalSegs, cues) });
+      onApplied({ file: d, minutes: minutesFromSeconds(duration), localUrl: URL.createObjectURL(file), mapCues: cues => mapSubtitleTimes(finalSegs, cues) });
     } catch { toast.error('Could not save the edited voice. Check your connection and try again.'); }
     finally { setBusy(false); }
   };

@@ -11,6 +11,8 @@ interface Props {
   quantity: number;
   isPhysical: boolean;
   isCourse: boolean;
+  /** Free item: no purchase wording. */
+  isFree?: boolean;
 }
 
 /**
@@ -74,13 +76,13 @@ export function DeliveryTabSummary({ productId, variantId, quantity }: { product
   return <div className={reserve}><DeliveryRows info={info} city={city} /></div>;
 }
 
-export function DeliveryBuyBox({ productId, variantId, quantity, isPhysical, isCourse }: Props) {
+export function DeliveryBuyBox({ productId, variantId, quantity, isPhysical, isCourse, isFree }: Props) {
   const { info, city, loading, error } = useDeliveryInfo({ productId, variantId, quantity }, isPhysical && !!productId);
 
   if (!isPhysical) {
     return (
       <div className="mb-3">
-        <Row icon={<Download size={14} />}>{isCourse ? 'Instant access after purchase' : 'Instant download after purchase'}</Row>
+        <Row icon={<Download size={14} />}>{isFree ? (isCourse ? 'Instant access — free' : 'Instant download — free') : isCourse ? 'Instant access after purchase' : 'Instant download after purchase'}</Row>
       </div>
     );
   }

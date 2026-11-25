@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { formatItemPrice } from '@/utils/formatPrice';
 import { imgUrl } from '@/utils/cloudinaryImage';
 import { ScrollRow } from '@/components/comman/ui/ScrollRow';
 import { Link } from 'react-router-dom';
@@ -6,7 +7,6 @@ import { SectionHead } from '@/components/comman/marketplace/SectionHead';
 import { ProductCoverFallback } from '@/components/comman/marketplace/ProductCoverFallback';
 import { getRecentlyViewed } from '@/components/comman/ui/BuyerNavbar';
 import { fetchRecentlyViewed, type SyncedRecentlyViewedItem } from '@/utils/recentlyViewedSync';
-import { formatMoney } from '@/utils/currency';
 
 function Cover({ src, name }: { src: string | null; name: string }) {
   const [err, setErr] = useState(false);
@@ -42,7 +42,7 @@ export function RecentlyViewedRail() {
             <Link to={`/product/${i.slug ?? i.id}`} className="group block no-underline">
               <Cover src={i.image} name={i.name} />
               <p className="text-[13px] font-semibold text-charcoal mt-2 mb-0 line-clamp-2 group-hover:text-brand-orange">{i.name}</p>
-              {i.price != null && <p className="text-[13px] font-bold text-carbon mt-[2px] mb-0">{formatMoney(i.price, i.currency ?? undefined)}</p>}
+              {i.price != null && <p className="text-[13px] font-bold text-carbon mt-[2px] mb-0">{formatItemPrice(i.price, i.currency ?? undefined)}</p>}
             </Link>
           </li>
         ))}

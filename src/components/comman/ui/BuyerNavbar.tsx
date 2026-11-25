@@ -26,6 +26,7 @@ import { MiniCart } from './MiniCart';
 import { MiniWishlist } from './MiniWishlist';
 import { getScrollTop, getScrollMax, onPageScroll } from '@/utils/scrollRoot';
 import { useSellEntry } from '@/hooks/auth/useSellEntry';
+import { useHasSellerAccount } from '@/hooks/auth/useSellerAccount';
 import { isBuyerSession } from '@/hooks/auth/useIsBuyer';
 import { VoiceSearchButton } from '@/components/ai/VoiceSearchButton';
 
@@ -983,12 +984,15 @@ export function CurrencySelector({ tone = 'light' }: { tone?: 'light' | 'dark' }
 function AccountActions({ simple = false }: { simple?: boolean }) {
   const t = useT();
   const sellEntry = useSellEntry();
+  // Same fact the avatar menu uses: a buyer who already owns a seller account gets "Switch to your store" there,
+  // so the header must not also offer "Sell on Edudeen".
+  const hasSellerAccount = useHasSellerAccount();
 
   if (TokenStorage.isLoggedIn()) {
     // Currency lives in the top bar; notifications live inside the profile popup.
     return (
       <div className="flex items-center gap-2.5">
-        {isBuyerSession() && (
+        {isBuyerSession() && hasSellerAccount === false && (
           <Link
             to="/become-a-seller"
             className="hidden md:inline-flex items-center gap-[6px] shrink-0 whitespace-nowrap text-[13px] font-semibold text-white no-underline rounded-md px-[14px] py-[7px] bg-brand-orange hover:bg-brand-deep-orange transition-colors"

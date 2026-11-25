@@ -3,7 +3,7 @@ import { Captions, ChevronDown, ChevronUp } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useLanguage } from '@/contexts/languageCtx';
 import type { LessonSubtitle } from '@/api/services/classroom';
-import { SUBTITLE_LANGS, parseCues } from '@/utils/subtitles';
+import { SUBTITLE_LANGS, parseCues, subtitleShortLabel } from '@/utils/subtitles';
 
 const mmss = (sec: number) => `${Math.floor(sec / 60)}:${String(Math.floor(sec % 60)).padStart(2, '0')}`;
 const langLabel = (code: string) => SUBTITLE_LANGS.find(l => l.code === code)?.label ?? code;
@@ -20,8 +20,8 @@ export function LessonSubtitles({ subtitles, time, onSeek, live, choice, onChoic
   /** Show the line being spoken right now, big, above the transcript. */
   live?: boolean;
   /** Controlled mode (voice lessons): the learner's pick, `'off'` hides the subtitles. Leave both out to let this component remember the language itself. */
-  choice?: 'ur' | 'en' | 'off';
-  onChoice?: (c: 'ur' | 'en' | 'off') => void;
+  choice?: 'ur' | 'en' | 'roman_ur' | 'off';
+  onChoice?: (c: 'ur' | 'en' | 'roman_ur' | 'off') => void;
 }) {
   const { lang: appLang } = useLanguage();
   // Starts in the learner's own language when the teacher wrote one, else the first available.
@@ -29,7 +29,7 @@ export function LessonSubtitles({ subtitles, time, onSeek, live, choice, onChoic
   const controlled = choice !== undefined && onChoice !== undefined;
   const off = controlled && choice === 'off';
   const lang = controlled && choice !== 'off' ? choice : ownLang;
-  const setLang = (l: 'ur' | 'en') => (controlled ? onChoice(l) : setOwnLang(l));
+  const setLang = (l: 'ur' | 'en' | 'roman_ur') => (controlled ? onChoice(l) : setOwnLang(l));
   const sub = subtitles.find(s => s.lang === lang) ?? subtitles[0] ?? null;
   const cues = useMemo(() => (sub && sub.kind !== 'text' ? parseCues(sub.content) : []), [sub]);
   const timed = cues.length > 0;
@@ -61,7 +61,7 @@ export function LessonSubtitles({ subtitles, time, onSeek, live, choice, onChoic
             {subtitles.map(s => (
               <button key={s.lang} type="button" role="radio" aria-checked={!off && s.lang === sub.lang} onClick={() => setLang(s.lang)} lang={s.lang}
                 className={clsx('px-2.5 py-1 text-[12.5px] border-none cursor-pointer', s.lang === 'ur' && 'font-urdu', !off && s.lang === sub.lang ? 'bg-carbon text-white' : 'bg-white text-graphite hover:bg-cream')}>
-                {s.lang === 'ur' ? 'اردو' : 'English'}
+                {subtitleShortLabel(s.lang)}
               </button>
             ))}
             {controlled && (

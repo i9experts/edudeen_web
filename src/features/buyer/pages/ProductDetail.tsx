@@ -70,7 +70,8 @@ import { ShippingZonesSummary } from '@/features/buyer/components/ShippingZonesS
 import { DeliveryBuyBox, DeliveryTabSummary } from '@/features/buyer/components/DeliveryBuyBox';
 import { syncRecentlyViewed } from '@/utils/recentlyViewedSync';
 import { formatMoney } from '@/utils/currency';
-import { formatPrice } from '@/utils/formatPrice';
+import { formatPrice, formatItemPrice } from '@/utils/formatPrice';
+import { percentOff } from '@/utils/saleMath';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 import { localeDate } from '@/utils/localeTime';
 
@@ -554,7 +555,7 @@ function RelatedCard({ id, name, image, price: nativePrice, compareAtPrice: nati
   const price = nativePrice != null ? convert(nativePrice, nativeCurrency) : null;
   const compareAtPrice = nativeCompareAt != null ? convert(nativeCompareAt, nativeCurrency) : null;
   const pctOff = compareAtPrice != null && price != null && compareAtPrice > price
-    ? Math.round((1 - price / compareAtPrice) * 100)
+    ? percentOff(nativePrice, nativeCompareAt)
     : null;
   const { isPremium } = usePremiumView();
   const memberPrice = isPremium && nativePremium != null && price != null ? convert(nativePremium, nativeCurrency) : null;
@@ -602,7 +603,7 @@ function RelatedCard({ id, name, image, price: nativePrice, compareAtPrice: nati
         <p className="text-[12px] font-semibold text-carbon leading-tight line-clamp-2 mb-1 min-h-[28px]">{name}</p>
         <div className="flex items-center justify-between gap-1">
           <span className="flex items-baseline gap-1">
-            <span className={clsx('text-[12.5px] font-bold', member != null ? 'text-[#8a6100]' : 'text-carbon')}>{member != null ? formatMoney(member, displayCurrency) : price != null ? formatMoney(price, displayCurrency) : '—'}</span>
+            <span className={clsx('text-[12.5px] font-bold', member != null ? 'text-[#8a6100]' : 'text-carbon')}>{member != null ? formatMoney(member, displayCurrency) : price != null ? formatItemPrice(price, displayCurrency) : '—'}</span>
             {member != null && price != null && <span className="text-[12px] text-slate line-through">{formatMoney(nativeList != null ? convert(nativeList, nativeCurrency) : price, displayCurrency)}</span>}
             {member == null && compareAtPrice != null && price != null && compareAtPrice > price && (
               <span className="text-[12px] text-slate line-through">{formatMoney(compareAtPrice, displayCurrency)}</span>
@@ -618,7 +619,7 @@ function RelatedCard({ id, name, image, price: nativePrice, compareAtPrice: nati
         {member != null && <PremiumChip percent={memberPercent} seller={premiumSeller} platform={premiumPlatform} className="mt-[3px]" />}
         {(sold != null && sold > 0) || (reviewCount != null && reviewCount > 0) ? (
           <p className="text-[12px] text-slate mt-[2px]">
-            {sold != null && sold > 0 ? `${sold} sold` : ''}
+            {sold != null && sold > 0 ? `${sold} ${nativePrice === 0 ? 'enrolled' : 'sold'}` : ''}
             {sold != null && sold > 0 && reviewCount != null && reviewCount > 0 ? ' · ' : ''}
             {reviewCount != null && reviewCount > 0 ? `${reviewCount} reviews` : ''}
           </p>
@@ -761,7 +762,9 @@ export function ProductDetail() {
   const markdownWas = activeVariant?.compareAtPrice != null ? convert(activeVariant.compareAtPrice, activeVariant.currency) : null;
   // Struck-through = what the buyer would pay without the sale (the seller's price), else the seller's own markdown.
   const displayCompareAt = campaignNative != null ? listPrice : markdownWas;
-  const pctOffShown = displayCompareAt != null && displayPrice != null && displayCompareAt > displayPrice ? Math.round((1 - displayPrice / displayCompareAt) * 100) : null;
+  const pctOffShown = displayCompareAt != null && displayPrice != null && displayCompareAt > displayPrice
+    ? (campaignNative != null ? percentOff(activeVariant?.campaignPrice, activeVariant?.price) : percentOff(activeVariant?.price, activeVariant?.compareAtPrice))
+    : null;
 
   // Edudeen Premium: members see the member price under the regular one; everyone else a link teaser.
   const { isPremium: isPremiumMember } = usePremiumView();
@@ -1054,7 +1057,7 @@ export function ProductDetail() {
   const fileDetails: { label: string; value: string }[] = product && isDigital ? [
     ...(product.digital?.fileCount ? [{ label: 'Files', value: `${product.digital.fileCount} file${product.digital.fileCount > 1 ? 's' : ''}` }] : []),
     ...(licenseValue ? [{ label: 'License', value: licenseValue }] : []),
-    ...(product.digital?.downloadLimit ? [{ label: 'Downloads', value: product.digital.downloadLimit === 'unlimited' ? 'Unlimited' : `${product.digital.downloadLimit} times` }] : []),
+    ...(product.digital?.downloadLimit && !isCourse ? [{ label: 'Downloads', value: product.digital.downloadLimit === 'unlimited' ? 'Unlimited' : `${product.digital.downloadLimit} times` }] : []),
   ] : [];
 
   const specs: { label: string; value: string }[] = product ? [
@@ -1152,7 +1155,7 @@ export function ProductDetail() {
                         {product.averageRating.toFixed(1)} ({product.totalRatings} reviews)
                       </a>
                     )}
-                    {product.purchaseCount > 0 && <span className="text-slate">• {product.purchaseCount} sold</span>}
+                    {product.purchaseCount > 0 && <span className="text-slate">• {product.purchaseCount} {isFreeAvail ? 'enrolled' : 'sold'}</span>}
                     {product.isBestseller && <span className="inline-flex items-center gap-[3px] text-[12px] font-bold text-white bg-brand-deep-orange px-[6px] py-[2px] rounded-md"><Flame size={10} aria-hidden /> Bestseller</span>}
                   </p>
 
@@ -1196,7 +1199,7 @@ export function ProductDetail() {
                   )}
                   {displayPrice !== 0 && (
                     <p className="text-[12px] text-slate mb-0 mt-2 pt-2 border-t border-bone">
-                      {isPhysical ? (returnWindowText ?? 'Refund can be requested after delivery.') :'Refund available only if you have not downloaded the file.'}{' '}
+                      {isPhysical ? (returnWindowText ?? 'Refund can be requested after delivery.') : isCourse ? 'You can request a refund for this course; the seller reviews every request.' : 'Refund available only if you have not downloaded the file.'}{' '}
                       <Link to="/returns" className="font-semibold text-brand-royal underline">Returns policy</Link>
                     </p>
                   )}
@@ -1264,7 +1267,7 @@ export function ProductDetail() {
               <Card padding="none">
                 <div className="px-5 pt-5 pb-0">
                   {/* Stock / delivery status */}
-                  <div className={clsx(
+                  {!ownedItem && <div className={clsx(
                     'inline-flex w-fit items-center gap-[6px] rounded-full border px-3 py-[6px] mb-3 text-[12px] font-semibold',
                     stock <= 0 ? 'border-[#fecdd3] bg-[#fff0f5] text-error'
                       : stock <= 5 ? 'border-amber-200 bg-amber-50 text-amber-600'
@@ -1272,9 +1275,9 @@ export function ProductDetail() {
                   )}>
                     <CheckCircle size={13} />
                     {stock <= 0 ? 'Out of stock' : isCourse ? 'Available — start learning right after enrolling' : isDigital ? t('Available — instant delivery') : stock <= 5 ? `Only ${stock} left in stock` : 'In stock'}
-                  </div>
+                  </div>}
 
-                  <DeliveryBuyBox productId={product._id} variantId={activeVariant?._id} quantity={qty} isPhysical={isPhysical} isCourse={isCourse} />
+                  <DeliveryBuyBox productId={product._id} variantId={activeVariant?._id} quantity={qty} isPhysical={isPhysical} isCourse={isCourse} isFree={isFreeAvail} />
                   <div className="mb-3 empty:hidden"><AlsoInBundleLine productId={product._id} /></div>
 
                   {isDigital && product.digital?.previewAvailable && (
@@ -1370,8 +1373,8 @@ export function ProductDetail() {
                         <ShieldCheck size={14} className="text-brand-orange" />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-[12px] font-semibold text-charcoal leading-tight">{t('Secure checkout')}</p>
-                        <p className="text-[12px] text-slate mt-[1px] leading-snug">{t('Pay safely through Edudeen')}</p>
+                        <p className="text-[12px] font-semibold text-charcoal leading-tight">{isFreeAvail ? 'Free resource' : t('Secure checkout')}</p>
+                        <p className="text-[12px] text-slate mt-[1px] leading-snug">{isFreeAvail ? 'No payment needed' : t('Pay safely through Edudeen')}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-[8px] min-w-0">
@@ -1380,7 +1383,7 @@ export function ProductDetail() {
                       </div>
                       <div className="min-w-0">
                         <p className="text-[12px] font-semibold text-charcoal leading-tight">{isCourse ? 'Learn online' : isDigital ? t('Instant delivery') : t('Shipped by the seller')}</p>
-                        <p className="text-[12px] text-slate mt-[1px] leading-snug">{isCourse ? 'Start from My Library right after payment' : isDigital ? t('Download right after purchase') : t('Track it from My Orders')}</p>
+                        <p className="text-[12px] text-slate mt-[1px] leading-snug">{isCourse ? (isFreeAvail ? 'Start from My Library right after enrolling' : 'Start from My Library right after payment') : isDigital ? (isFreeAvail ? 'Download right after you get it' : t('Download right after purchase')) : t('Track it from My Orders')}</p>
                       </div>
                     </div>
                   </div>
@@ -1569,11 +1572,13 @@ export function ProductDetail() {
                     {!isDigital && <ShippingZonesSummary />}
                     {[
                       ...(isDigital
-                        ? [isCourse ? { Icon: Download, label: 'Online access', value: 'Start learning from My Library right after payment. No shipping.' }
+                        ? [isCourse ? { Icon: Download, label: 'Online access', value: isFreeAvail ? 'Start learning from My Library right after enrolling. No shipping.' : 'Start learning from My Library right after payment. No shipping.' }
                           : { Icon: Download, label: 'Instant Digital Delivery', value: 'Download link available immediately after purchase' }]
                         : []),
                       ...(!isDigital && returnWindowText ? [{ Icon: RotateCcw, label: 'Returns', value: returnWindowText }] : []),
-                      { Icon: Package, label: 'Seller Fulfilled', value: `Sold and shipped by ${storeData?.name ?? product.storeName ?? product.sellerName ?? 'the store'}` },
+                      isDigital
+                        ? { Icon: Package, label: 'Delivered online', value: `Delivered online by ${storeData?.name ?? product.storeName ?? product.sellerName ?? 'the store'}` }
+                        : { Icon: Package, label: 'Seller Fulfilled', value: `Sold and shipped by ${storeData?.name ?? product.storeName ?? product.sellerName ?? 'the store'}` },
                     ].map(row => (
                       <div key={row.label} className="flex gap-3 items-start">
                         <div className="w-8 h-8 rounded-lg bg-brand-pale-orange flex items-center justify-center flex-shrink-0">

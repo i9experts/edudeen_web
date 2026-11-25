@@ -308,6 +308,14 @@ export default function ChatWidget() {
     setMsgs(p => (p.length ? p : [{ id: ++idRef.current, role: 'bot', text: welcome, at: Date.now() }]));
   }, [welcome]);
   const closeChat = () => { setOpen(false); window.setTimeout(() => launcherRef.current?.focus(), 0); };
+  // Escape closes the panel wherever the focus is (the dialog's own handler only fires when focus is inside it).
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape' && !e.defaultPrevented) closeChat(); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
   const restart = () => { setMsgs([{ id: nextId(), role: 'bot', text: welcome, at: Date.now() }]); setTypedLang(null); sinceRef.current = undefined; setAuthTick(n => n + 1); };
 
   // notification links / emails open the chat with ?openChat=1

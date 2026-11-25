@@ -14,7 +14,8 @@ import { useNotification } from '@/contexts/NotificationContext';
 import { apiGetMyOrders, type OrderSummary, type OrderStatus } from '@/api/services/orders';
 import { apiGetMyAddresses } from '@/api/services/address';
 import { Card, MetricCard, PageHeader, Badge, ProgressBar, Button, SkeletonBox, EmptyState, Avatar } from '@/components/comman/ui';
-import { formatPrice } from '@/utils/formatPrice';
+import { formatItemPrice } from '@/utils/formatPrice';
+import { ApproxPrice } from '@/components/comman/ui/ApproxPrice';
 import { orderStatusLabel, isAvailedOrder } from '@/constants/statusLabels';
 import { isUrduUi, localeDate } from '@/utils/localeTime';
 import { useNavGroups } from '@/components/layouts/AccountLayout';
@@ -48,7 +49,8 @@ function RecentOrderRow({ order }: { order: OrderSummary }) {
       <div className="flex items-center gap-2 shrink-0">
         <Badge color={availed ? 'green' : STATUS_COLOR[order.orderStatus]} size="sm">{orderStatusLabel({ orderStatus: order.orderStatus, isFreeClaim: order.isFreeClaim, isPaid: order.isPaid, itemTypes })}</Badge>
         <span className="text-[12.5px] font-bold text-carbon whitespace-nowrap">
-          {formatPrice(order.totalAmount, order.currency)}
+          {formatItemPrice(order.totalAmount, order.currency)}
+          <ApproxPrice amount={order.totalAmount} currency={order.currency} className="block text-[12px] font-normal text-slate text-end" />
         </span>
         <ChevronRight size={13} className="text-bone shrink-0 transition-transform duration-200 group-hover:translate-x-[2px] group-hover:text-brand-orange" />
       </div>

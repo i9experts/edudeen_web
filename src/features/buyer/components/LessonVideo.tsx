@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { subtitleHtmlLang, subtitleShortLabel } from '@/utils/subtitles';
 import { MousePointer2 } from 'lucide-react';
 import { externalVideoEmbed } from '@/utils/externalVideo';
 import { useLanguage } from '@/contexts/languageCtx';
@@ -43,7 +44,7 @@ export function LessonVideo({ file, videoUrl, title, autoPlay, guard, lockSeek, 
   // data: URLs need no cleanup (a blob URL would be revoked by React StrictMode's effect replay).
   const tracks = useMemo(() => (subtitles ?? [])
     .filter(s => s.kind !== 'text' && parseCues(s.content).length > 0)
-    .map(s => ({ lang: s.lang, label: s.lang === 'ur' ? 'اردو' : 'English', src: `data:text/vtt;charset=utf-8,${encodeURIComponent(s.content)}` })), [subtitles]);
+    .map(s => ({ lang: s.lang, label: subtitleShortLabel(s.lang), src: `data:text/vtt;charset=utf-8,${encodeURIComponent(s.content)}` })), [subtitles]);
   const defaultLang = (tracks.find(t => t.lang === appLang) ?? tracks[0])?.lang;
   const videoRef = useRef<HTMLVideoElement>(null);
   const frameRef = useRef<HTMLIFrameElement>(null);
@@ -212,7 +213,7 @@ export function LessonVideo({ file, videoUrl, title, autoPlay, guard, lockSeek, 
     return (
       <>
         <video ref={videoRef} src={file.url} controls autoPlay={autoPlay} controlsList="nodownload" className="w-full rounded-lg bg-black aspect-video">
-          {tracks.map(t => <track key={t.lang} kind="subtitles" src={t.src} srcLang={t.lang} label={t.label} default={t.lang === defaultLang} />)}
+          {tracks.map(t => <track key={t.lang} kind="subtitles" src={t.src} srcLang={subtitleHtmlLang(t.lang)} label={t.label} default={t.lang === defaultLang} />)}
         </video>
         {idleNotice}
       </>

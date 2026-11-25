@@ -49,6 +49,11 @@ export function formatPrice(amount: number | null | undefined, currency?: string
   return `${sign}${sym}${gap}${formatAmount(amount, currency, locale)}`;
 }
 
+/** A single ITEM's price: a zero price reads "Free" (never "$0.00" / "Rs 0"). Totals, shipping and discounts keep using formatPrice. */
+export function formatItemPrice(amount: number | null | undefined, currency?: string | null, locale = 'en-US'): string {
+  return amount === 0 ? 'Free' : formatPrice(amount, currency, locale);
+}
+
 /** Same, abbreviated for tight spaces: "Rs 8K", "$1.2M". */
 export function formatPriceCompact(amount: number | null | undefined, currency?: string | null, locale = 'en-US'): string {
   if (amount == null || Number.isNaN(amount)) return '—';

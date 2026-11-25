@@ -22,7 +22,7 @@ import {
 import { AwayTextFromServer } from '@/utils/storeHoliday';
 import { ProductCoverFallback } from '@/components/comman/marketplace/ProductCoverFallback';
 import { clsx } from 'clsx';
-import { formatPrice } from '@/utils/formatPrice';
+import { formatPrice, formatItemPrice } from '@/utils/formatPrice';
 import { useDeliveryInfo } from '@/hooks/shipping/useDeliveryInfo';
 import { computeCartTotals } from '@/utils/cartTotals';
 import { sumQuantity, itemsLabel, shippingFeeLabel, hasUsableOnlinePayment } from '@/utils/cartLabels';
@@ -395,7 +395,7 @@ export function CartPage() {
                       </div>
                       <span className="text-[12px] font-medium text-charcoal leading-tight line-clamp-2 group-hover:text-brand-orange transition-colors">{item.name}</span>
                       {item.price != null && (
-                        <span className="text-[12px] font-bold text-carbon mt-[2px]">{formatPrice(convert(item.price, item.currency), displayCurrency)}</span>
+                        <span className="text-[12px] font-bold text-carbon mt-[2px]">{formatItemPrice(convert(item.price, item.currency), displayCurrency)}</span>
                       )}
                     </Link>
                   ))}
@@ -528,7 +528,7 @@ export function CartPage() {
                           </>
                         ) : (
                           <>
-                            {formatPrice(price, displayCurrency)} each
+                            {price === 0 ? 'Free' : <>{formatPrice(price, displayCurrency)} each</>}
                             {item.listPrice != null && convert(item.listPrice, item.currency) > price + 0.005 && <s className="text-[#8a8780]">{formatPrice(convert(item.listPrice, item.currency), displayCurrency)}</s>}
                             {showTeaser && !item.onCampaign && <PremiumTeaser percent={item.premiumPercent} seller={item.premiumSellerPercent} platform={item.premiumPlatformPercent} link />}
                           </>
@@ -599,7 +599,7 @@ export function CartPage() {
                           <span className="block text-[12px] font-normal text-slate line-through">{formatPrice(lineTotal, displayCurrency)}</span>
                           <span className="text-[#8a6100]">{formatPrice(member.total, displayCurrency)}</span>
                         </>
-                      ) : <>{formatPrice(lineTotal, displayCurrency)}</>}
+                      ) : <>{formatItemPrice(lineTotal, displayCurrency)}</>}
                     </p>
                   </div>
                   </div>

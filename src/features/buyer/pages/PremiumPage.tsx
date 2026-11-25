@@ -4,7 +4,8 @@ import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { Baby, BadgeDollarSign, Check, Crown, Gift, Headphones, RotateCcw, ShieldCheck, Timer, type LucideIcon } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { Button } from '@/components/comman/ui/Button';
-import { Footer, Accordion } from '@/components/comman/ui';
+import { Footer, Accordion, BuyerNavbar } from '@/components/comman/ui';
+import { usePublicPlatformConfig } from '@/hooks/usePublicPlatformConfig';
 import { SkeletonBox } from '@/components/comman/ui/SkeletonBox';
 import { TokenStorage } from '@/api/services/auth';
 import { apiGetPremiumPlans, type PremiumBenefits, type PremiumInterval, type PremiumPlan } from '@/api/services/premium';
@@ -33,13 +34,18 @@ export function PremiumPage() {
   usePageTitle('Edudeen Premium');
   const navigate = useNavigate();
   const { hash } = useLocation();
-  const { currency } = useCurrencyPreference();
+  const { currency, convert } = useCurrencyPreference();
   const { isPremium, pendingPayment, membership } = usePremium();
   const [plans, setPlans] = useState<PremiumPlan[] | null>(null);
   const [error, setError] = useState('');
   const [interval, setInterval] = useState<PremiumInterval>('monthly');
   const [buying, setBuying] = useState<PremiumPlan | null>(null);
   const [resuming, setResuming] = useState(false);
+
+  // Premium is paid by bank transfer / wallet receipt: when the platform has no payment account set, say so and block buying.
+  const { config: platformCfg } = usePublicPlatformConfig();
+  const pm = platformCfg?.commerce?.paymentMethods;
+  const paymentsOff = !!pm && !pm.bankTransfer && !pm.jazzcash && !pm.easypaisa;
 
   const role = TokenStorage.getRole();
   const loggedIn = TokenStorage.isLoggedIn();
@@ -105,7 +111,7 @@ export function PremiumPage() {
   const faqs = [
     { id: 'what', title: 'What is Edudeen Premium?', content: <p className="text-[13px] text-slate leading-[1.7]">A membership for parents, teachers and learners. Members get extra savings from sellers, early access to sales and more.</p> },
     { id: 'prices', title: 'How do Premium prices work?', content: <p className="text-[13px] text-slate leading-[1.7]">Sellers on Edudeen choose to offer members extra savings on selected products, and Edudeen adds a little more on top. When a product has a member price you will see it on the product page, in your cart and at checkout, together with how much comes from the seller and how much from Edudeen. Not every product has one.</p> },
-    { id: 'pay', title: 'How do I pay?', content: <p className="text-[13px] text-slate leading-[1.7]">By bank transfer or mobile wallet to Edudeen. Choose a plan, transfer the amount shown in PKR and upload your receipt. We check it and activate your membership, usually within 24 hours.</p> },
+    { id: 'pay', title: 'How do I pay?', content: <p className="text-[13px] text-slate leading-[1.7]">{paymentsOff ? 'Premium payments are not available right now. Please check back soon.' : 'By bank transfer or mobile wallet to Edudeen. Choose a plan, transfer the amount shown in PKR and upload your receipt. We check it and activate your membership, usually within 24 hours.'}</p> },
     { id: 'cancel', title: 'Can I cancel?', content: <p className="text-[13px] text-slate leading-[1.7]">Yes. Cancel any time from Account, Premium. You keep your benefits until the end of the period you paid for.</p> },
     { id: 'renew', title: 'How do I renew?', content: <p className="text-[13px] text-slate leading-[1.7]">Just buy again before it ends. The new period is added after your current one, so you lose no days.</p> },
   ];
@@ -117,6 +123,7 @@ export function PremiumPage() {
 
   return (
     <div className="bg-cream">
+      <BuyerNavbar />
       {/* Hero */}
       <section className="px-4 md:px-10 pt-12 md:pt-16 pb-12 text-white overflow-hidden" style={{ background: NAVY }}>
         <div className="max-w-[1100px] mx-auto grid grid-cols-1 md:grid-cols-[1.2fr_1fr] gap-10 items-center">
@@ -154,8 +161,8 @@ export function PremiumPage() {
                 <p className="text-[12px] text-slate">Example product</p>
                 <p className="text-[15px] font-bold mt-0.5">Grade 5 Maths Worksheets</p>
                 <div className="flex items-baseline gap-2 mt-2">
-                  <span className="text-[24px] font-extrabold" style={{ fontFamily: SERIF }}>{formatPrice(900, 'PKR')}</span>
-                  <s className="text-[13px] text-slate">{formatPrice(1000, 'PKR')}</s>
+                  <span className="text-[24px] font-extrabold" style={{ fontFamily: SERIF }}>{formatPrice(convert(900, 'PKR'), currency)}</span>
+                  <s className="text-[13px] text-slate">{formatPrice(convert(1000, 'PKR'), currency)}</s>
                   <span className="text-[12px] bg-[#fff6d6] text-[#8a6100] font-bold px-2 py-[2px] rounded">Member price</span>
                 </div>
               </div>
@@ -172,7 +179,7 @@ export function PremiumPage() {
       {/* Trust strip */}
       <div className="bg-white border-b border-bone px-4 md:px-10 py-4">
         <ul className="max-w-[1100px] mx-auto grid grid-cols-1 sm:grid-cols-3 gap-3 text-[13px] text-charcoal">
-          {[{ Icon: ShieldCheck, t: 'Secure bank / wallet payment' }, { Icon: Timer, t: 'Activated within 24 hours' }, { Icon: RotateCcw, t: 'Cancel any time' }].map(({ Icon, t }) => (
+          {[{ Icon: ShieldCheck, t: paymentsOff ? 'Secure payment' : 'Secure bank / wallet payment' }, { Icon: Timer, t: 'Activated within 24 hours' }, { Icon: RotateCcw, t: 'Cancel any time' }].map(({ Icon, t }) => (
             <li key={t} className="flex items-center justify-center gap-2 font-semibold"><Icon size={16} className="text-brand-royal" aria-hidden />{t}</li>
           ))}
         </ul>
@@ -233,7 +240,7 @@ export function PremiumPage() {
           <ol className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {[
               { n: 1, t: 'Choose a plan', d: 'Pick monthly or yearly. Yearly costs less per month.' },
-              { n: 2, t: 'Pay and upload your receipt', d: 'Transfer to Edudeen by bank or wallet and upload the receipt.' },
+              { n: 2, t: 'Pay and upload your receipt', d: paymentsOff ? 'Payment details appear here once Premium payments are available.' : 'Transfer to Edudeen by bank or wallet and upload the receipt.' },
               { n: 3, t: 'Start saving', d: 'We activate your membership and member prices appear everywhere you shop.' },
             ].map(s => (
               <li key={s.n} className="relative rounded-2xl bg-white border border-bone p-6">
@@ -292,8 +299,9 @@ export function PremiumPage() {
                         <li key={b} className="flex items-start gap-2 text-[12.5px] text-charcoal"><Check size={14} className="text-success mt-[2px] shrink-0" />{b}</li>
                       ))}
                     </ul>
-                    <Button variant="primary" size="md" fullWidth disabled={isStaff || underReview} onClick={() => choose(p)}>{`${ctaLabel} · ${interval === 'yearly' ? 'Yearly' : 'Monthly'}`}</Button>
-                    {!loggedIn && <p className="text-[12px] text-slate text-center mt-2">You will be asked to log in first.</p>}
+                    <Button variant="primary" size="md" fullWidth disabled={isStaff || underReview || paymentsOff} onClick={() => choose(p)}>{`${ctaLabel} · ${interval === 'yearly' ? 'Yearly' : 'Monthly'}`}</Button>
+                    {paymentsOff && <p className="text-[12px] text-error text-center mt-2">Premium payments are not available right now. Please check back soon.</p>}
+                    {!loggedIn && !paymentsOff && <p className="text-[12px] text-slate text-center mt-2">You will be asked to log in first.</p>}
                     {isStaff && <p className="text-[12px] text-slate text-center mt-2">Switch to your buyer account to join.</p>}
                   </div>
                 );

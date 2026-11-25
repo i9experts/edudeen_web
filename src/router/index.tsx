@@ -262,8 +262,7 @@ const mainRouter = createBrowserRouter([
               { path: 'pricing',         element: <NotForBuyers><PricingPage /></NotForBuyers> },
               { path: 'sellers',         element: <Navigate to="/become-a-seller" replace /> },
               { path: 'become-a-seller', element: <BecomeSellerPage /> },
-              { path: 'premium',         element: <PremiumLanding /> },
-              { path: 'faq',             element: <FaqPage /> },
+              { path: 'faq',            element: <FaqPage /> },
               { path: 'help',            element: <Navigate to="/faq" replace /> },
               { path: 'privacy-policy',  element: <PrivacyPolicyPage /> },
               { path: 'delete-account',  element: <DeleteAccountPage /> },
@@ -321,6 +320,8 @@ const mainRouter = createBrowserRouter([
           { path: 'education/*',            element: <Navigate to="/" replace /> },
           { path: 'EducationMarketplace',   element: <Navigate to="/" replace /> },
           { path: 'cart',            element: <FeatureMaintenance feature="cart" variant="page"><CartPage /></FeatureMaintenance> },
+          // Premium uses the standard buyer header (search, cart, wishlist), rendered by the page itself like the cart.
+          { path: 'premium',         element: <PremiumLanding /> },
           { path: 'checkout',        element: <CheckoutPage /> },
           { path: 'order-success',   element: <OrderSuccessPage /> },
           { path: 'payment/pk-return', element: <PkPaymentReturnPage /> },
