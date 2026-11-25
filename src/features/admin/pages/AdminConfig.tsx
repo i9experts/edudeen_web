@@ -440,13 +440,22 @@ function PaymentAvailabilityWarning({ refreshKey }: { refreshKey: unknown }) {
     if (!(card || !!pm.bankTransfer || hosted || cod)) missing.push(`${cur} physical`);
     if (!(card || !!pm.bankTransfer || hosted)) missing.push(`${cur} digital`);
   }
-  if (!missing.length) return null;
+  if (!missing.length && card) return null;
+  if (!missing.length) {
+    return (
+      <div role="status" className="flex items-start gap-2 text-[12.5px] text-slate bg-white border border-bone rounded-[10px] px-4 py-3">
+        <AlertTriangle size={15} className="mt-[1px] shrink-0" />
+        <p>Card payment is unavailable: {[!pm.cardKeys?.secretKey && 'API STRIPE_SECRET_KEY missing', !pm.cardKeys?.publishableKey && 'API STRIPE_PUBLISHABLE_KEY missing', !isStripeConfigured() && 'web VITE_STRIPE_PUBLISHABLE_KEY missing'].filter(Boolean).join(', ') || 'keys not ready'}. Other methods still work.</p>
+      </div>
+    );
+  }
   return (
     <div role="alert" className="flex items-start gap-2 text-[12.5px] text-error bg-error-bg border border-error-border rounded-[10px] px-4 py-3">
       <AlertTriangle size={15} className="mt-[1px] shrink-0" />
       <div>
         <p className="font-semibold">No usable payment method for: {missing.join(', ')}</p>
-        <p>Buyers cannot pay for these orders. Add the platform payment account below, turn on Cash on Delivery for a store (physical only), or set the Stripe keys (API secret key and the web VITE_STRIPE_PUBLISHABLE_KEY).</p>
+        <p>Buyers cannot pay for these orders. Add the platform payment account below, turn on Cash on Delivery for a store (physical only), or set the Stripe keys.</p>
+        {!card && <p className="mt-1">Card is unavailable: {[!pm.cardKeys?.secretKey && 'API STRIPE_SECRET_KEY missing', !pm.cardKeys?.publishableKey && 'API STRIPE_PUBLISHABLE_KEY missing', !isStripeConfigured() && 'web VITE_STRIPE_PUBLISHABLE_KEY missing'].filter(Boolean).join(', ') || 'keys not ready'}.</p>}
       </div>
     </div>
   );

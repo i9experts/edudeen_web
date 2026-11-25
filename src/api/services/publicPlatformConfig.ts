@@ -66,7 +66,7 @@ export interface SellerPageContent {
 }
 
 /** Payment methods the platform can really take right now (derived server-side, never a guess). */
-export interface PublicPaymentMethods { card?: boolean; bankTransfer?: boolean; jazzcash?: boolean; easypaisa?: boolean }
+export interface PublicPaymentMethods { card?: boolean; cardKeys?: { secretKey: boolean; publishableKey: boolean }; bankTransfer?: boolean; jazzcash?: boolean; easypaisa?: boolean }
 
 export interface PublicPlatformConfig {
   socialLinks: Partial<Record<SocialNetwork, string>>;

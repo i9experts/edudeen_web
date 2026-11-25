@@ -223,19 +223,35 @@ interface DeleteCheckoutResponse {
 
 // ── API ───────────────────────────────────────────────────────────────────────
 
-export function apiCreateCheckout(payload: CreateCheckoutPayload) {
+// One shared guard for EVERY checkout creation (Buy Now, fast-track probe, Continue, digital auto-create, free avail):
+// an identical request (same payload + currency) that is already running, or finished within the last minute, is
+// answered by that one network call instead of creating a second checkout, but only ONCE: the second caller takes it
+// over and the entry is dropped, so a later identical request (e.g. after a coupon) always gets a fresh checkout.
+// A failed call is never kept, and a changed payload (new address, zone, cart items, currency) is a different key.
+const CHECKOUT_REUSE_MS = 60000;
+const checkoutCalls = new Map<string, { promise: Promise<CreateCheckoutResponse>; at: number }>();
+
+export function apiCreateCheckout(payload: CreateCheckoutPayload): Promise<CreateCheckoutResponse> {
   // Forwards a click-attribution token (if the buyer arrived via a promoted
   // banner within the last 48h) so promotion analytics can attribute the
   // resulting order — every checkout-creation call site benefits automatically.
   // Also forwards the buyer's currency preference the same way, so every
   // call site gets multi-currency checkout without individually wiring it.
-  return client.post<never, CreateCheckoutResponse>(ENDPOINTS.CHECKOUT.CREATE, {
+  const body = {
     ...payload,
     ...getCheckoutAttributionFields(),
     currencyPreference: getCurrencyPreference(),
-  });
+  };
+  const key = JSON.stringify(body);
+  const now = Date.now();
+  for (const [k, v] of checkoutCalls) if (now - v.at > CHECKOUT_REUSE_MS) checkoutCalls.delete(k);
+  const hit = checkoutCalls.get(key);
+  if (hit) { checkoutCalls.delete(key); return hit.promise; }
+  const promise = client.post<never, CreateCheckoutResponse>(ENDPOINTS.CHECKOUT.CREATE, body);
+  checkoutCalls.set(key, { promise, at: now });
+  promise.catch(() => { if (checkoutCalls.get(key)?.promise === promise) checkoutCalls.delete(key); });
+  return promise;
 }
-
 export function apiAddShippingToCheckout(payload: AddShippingPayload) {
   return client.post<never, AddShippingResponse>(
     ENDPOINTS.CHECKOUT.ADD_SHIPPING_ZONE_IN_CHECKOUT,
