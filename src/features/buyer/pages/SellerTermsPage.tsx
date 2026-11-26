@@ -18,7 +18,7 @@ const SECTIONS: LegalSection[] = [
     title: 'Who Can Sell',
     body: [
       'Edudeen is for educational products and services: books, worksheets, courses, Islamic and Quran-study resources, digital downloads and related tools. Listings outside this scope may be removed.',
-      'You must provide accurate store, contact and payout details and keep them up to date. One seller account operates one store.',
+      'You must provide accurate store, contact and payout details and keep them up to date. One seller account may operate up to 5 stores.',
     ],
   },
   {

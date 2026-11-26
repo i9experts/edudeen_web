@@ -1,5 +1,6 @@
 import { type ReactNode, useState, useRef, useEffect } from 'react';
 import { ActiveStoreProvider, useActiveStore } from '@/contexts/ActiveStoreContext';
+import { MAX_STORES_PER_SELLER } from '@/api/services/store';
 import { useGetProfile } from '@/hooks/auth/useGetProfile';
 import { useLogout } from '@/hooks/auth/useLogout';
 import { useCommandPalette } from '@/hooks/useCommandPalette';
@@ -154,7 +155,9 @@ function SidebarStoreSwitcher() {
           <div className="h-px bg-bone mx-[6px] my-1" />
           <button
             onClick={() => { setOpen(false); navigate('/onboard'); }}
-            className="flex items-center gap-[7px] w-full py-2 px-[10px] rounded-[7px] bg-transparent border-0 cursor-pointer text-[12.5px] font-bold text-brand-orange hover:bg-brand-pale-orange transition-colors duration-150"
+            disabled={stores.length >= MAX_STORES_PER_SELLER}
+            title={stores.length >= MAX_STORES_PER_SELLER ? `You can run up to ${MAX_STORES_PER_SELLER} stores` : undefined}
+            className="flex items-center gap-[7px] w-full py-2 px-[10px] rounded-[7px] bg-transparent border-0 cursor-pointer text-[12.5px] font-bold text-brand-orange hover:bg-brand-pale-orange transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
           >
             <Plus size={12} /> New Store
           </button>

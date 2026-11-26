@@ -4,8 +4,9 @@ import { Loader2 } from 'lucide-react';
 import { resolveSellerDestinationRemote } from '@/utils/sellerRouting';
 
 /**
- * A seller owns exactly one store, so there's no separate seller dashboard —
- * every old `/seller/*` URL lands in that store's workspace instead.
+ * There's no separate seller dashboard — every old `/seller/*` URL lands in
+ * one of the seller's stores' workspaces instead (resolveSellerDestination:
+ * the store they last switched to, else any active one, else the first).
  * `to` is the page inside the store (e.g. "account"); the query string is
  * kept so links like `/seller/settings?tab=notifications` still work.
  * No store yet → onboarding.

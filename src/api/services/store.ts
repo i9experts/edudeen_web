@@ -13,6 +13,9 @@ export type SupportedCurrency = 'PKR' | 'USD';
 /** How many main categories a store can pick — covering a subject spans its whole subcategory tree too. */
 export const MAX_STORE_CATEGORIES = 3;
 
+/** How many stores one seller account can run at once — each its own independent workspace. */
+export const MAX_STORES_PER_SELLER = 5;
+
 export interface CreateStorePayload {
   name:         string;
   logo?:        string;

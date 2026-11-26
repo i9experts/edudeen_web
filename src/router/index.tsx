@@ -390,8 +390,9 @@ const mainRouter = createBrowserRouter([
       { path: '/store/:storeId/theme-preview/:themeId', element: <Navigate to="../../storebuilder" relative="path" replace /> },
       { path: '/store/:storeId/live-preview', element: <Navigate to="../storebuilder" relative="path" replace /> },
 
-      // ── Old seller-level pages — one seller has one store now, so these
-      //    all open that store's own workspace. ──────────────────────────
+      // ── Old seller-level pages — there's no separate seller dashboard, so these
+      //    all open one of the seller's stores' own workspace (SellerStoreRedirect /
+      //    resolveSellerDestination pick which one). ──────────────────────────
       {
         path: '/seller',
         children: [

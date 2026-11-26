@@ -20,7 +20,7 @@ import {
   apiCreateOnboardingSetupIntent, apiConfirmOnboardingPaymentMethod, apiGetOnboardingProgress, apiSaveOnboardingDraft,
   apiBrowsePlatformPlans, apiChangePlatformPlan, apiFreeTrialEligibility, type PlatformPlan,
 } from '@/api/services/platformPlans';
-import { apiGetMyStores, MAX_STORE_CATEGORIES } from '@/api/services/store';
+import { apiGetMyStores, MAX_STORE_CATEGORIES, MAX_STORES_PER_SELLER } from '@/api/services/store';
 import { planPriceFor, planYearlyPrice, planYearlySavePct, type PlanInterval } from '@/utils/planPricing';
 import { resolveSellerDestination } from '@/utils/sellerRouting';
 import { AuthSplitLayout } from '@/features/auth/components/AuthSplitLayout';
@@ -820,7 +820,7 @@ export function OnboardingPage() {
   useEffect(() => {
     let cancelled = false;
     apiGetMyStores()
-      .then(res => { if (!cancelled && (res.data ?? []).length > 0) setExistingDest(resolveSellerDestination(res.data)); })
+      .then(res => { if (!cancelled && (res.data ?? []).length >= MAX_STORES_PER_SELLER) setExistingDest(resolveSellerDestination(res.data)); })
       .catch(() => {})
       .finally(() => { if (!cancelled) setStoresChecked(true); });
     apiGetOnboardingProgress()
@@ -955,7 +955,7 @@ export function OnboardingPage() {
     setRetrying(false);
   };
 
-  // One seller, one store — someone who already has a store goes to it.
+  // Up to MAX_STORES_PER_SELLER stores — someone already at the cap goes to their stores instead.
   if (existingDest && !created) return <Navigate to={existingDest} replace />;
 
   // Brief — just long enough to know whether to resume a draft — but real,

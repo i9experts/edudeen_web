@@ -1,5 +1,6 @@
 import { apiGetMyStores, type MyStoreItem } from '@/api/services/store';
 import { apiGetStorePlatformPlan } from '@/api/services/platformPlans';
+import { ACTIVE_STORE_STORAGE_KEY } from '@/contexts/ActiveStoreContext';
 
 /** Where an authenticated seller actually belongs, based on their REAL
  *  backend store state — never a hardcoded "/onboard". Used by OTP-verify,
@@ -15,12 +16,21 @@ import { apiGetStorePlatformPlan } from '@/api/services/platformPlans';
  *  Rules (deliberately simple/deterministic — this only decides where the
  *  seller LANDS, it doesn't replace the route guards that protect each
  *  destination):
- *  - No stores yet                    → /onboard (create the first one)
- *  - Any store is `active`            → that store's own dashboard
- *  - Anything else                    → the first store's own dashboard
+ *  - No stores yet                      → /onboard (create the first one)
+ *  - The store they last switched to (the in-dashboard "Switch Store" picker,
+ *    ActiveStoreContext) is still theirs and `active` → that one, so a
+ *    seller running several stores doesn't get bounced back to the same one
+ *    on every login
+ *  - Otherwise, any store that's `active`  → that store's own dashboard
+ *  - Anything else                      → the first store's own dashboard
  */
 export function resolveSellerDestination(stores: MyStoreItem[]): string {
   if (stores.length === 0) return '/onboard';
+
+  let lastActiveId: string | null = null;
+  try { lastActiveId = localStorage.getItem(ACTIVE_STORE_STORAGE_KEY); } catch { /* storage blocked */ }
+  const lastActive = lastActiveId ? stores.find(s => s._id === lastActiveId && s.status === 'active') : undefined;
+  if (lastActive) return `/store/${lastActive._id}/dashboard`;
 
   const active = stores.find(s => s.status === 'active');
   if (active) return `/store/${active._id}/dashboard`;
