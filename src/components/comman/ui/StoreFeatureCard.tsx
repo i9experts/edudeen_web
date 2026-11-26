@@ -25,11 +25,11 @@ function initialsOf(name: string) {
 
 const MIN_SOLD_TO_SHOW = 10;
 
-/** What the seller sells: a real bio line when it is meaningful, else the main category. */
+/** What the seller sells: a real bio line when it is meaningful, else its categories. */
 function taglineOf(store: PublicStoreListItem): string | null {
   const bio = store.description?.trim() ?? '';
   if (bio.length >= 30) return bio;
-  return store.categoryName?.trim() || null;
+  return (store.categoryNames?.length ? store.categoryNames.join(', ') : store.categoryName?.trim()) || null;
 }
 
 // ── Featured seller card — the seller's best-selling products up top, logo, trust numbers, Visit store ──

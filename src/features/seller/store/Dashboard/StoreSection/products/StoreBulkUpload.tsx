@@ -149,7 +149,7 @@ export default function StoreBulkUpload() {
     digital: !store || productTypes.includes('digital_downloads') || productTypes.includes('educational_resources'),
     physical: !store || productTypes.includes('physical_products'),
   };
-  const defaultCategoryId = store?.categoryId ?? '';
+  const defaultCategoryId = store?.categoryIds?.[0] ?? store?.categoryId ?? '';
   const storePremiumPct = store?.premiumDiscount?.enabled ? store.premiumDiscount.percent : 0;
   const { terms: premiumTerms } = usePremiumTerms(type === 'physical' ? 'physical' : 'digital', store?.baseCurrency, storeId);
 

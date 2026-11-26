@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
+import { clsx } from 'clsx';
 import { Modal, Button, Input, Select, Textarea } from '@/components/comman/ui';
 import { EntitySearchSelect, type EntityOption } from '@/features/admin/components/analytics/EntitySearchSelect';
 import { apiListAdminUsers } from '@/api/services/users/adminUsers';
 import { apiGetCategoryTree, type CategoryNode } from '@/api/services/categories';
 import { apiCreateStoreForSeller, type CreatedStoreResult } from '@/api/services/adminStores';
+import { MAX_STORE_CATEGORIES } from '@/api/services/store';
 import { useBusyAction } from '@/hooks/useBusyAction';
 
 async function searchSellers(query: string): Promise<EntityOption[]> {
@@ -24,7 +26,7 @@ export function CreateStoreForSellerModal({ onClose, onCreated }: Props) {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [storeName, setStoreName] = useState('');
-  const [categoryId, setCategoryId] = useState('');
+  const [categoryIds, setCategoryIds] = useState<string[]>([]);
   const [currency, setCurrency] = useState('PKR');
   const [description, setDescription] = useState('');
   const [categories, setCategories] = useState<CategoryNode[]>([]);
@@ -36,12 +38,20 @@ export function CreateStoreForSellerModal({ onClose, onCreated }: Props) {
   const loadCats = () => { setCatError(false); apiGetCategoryTree().then(r => setCategories(r.data)).catch(() => setCatError(true)); };
   useEffect(loadCats, []);
 
+  const toggleCategory = (id: string) => {
+    setCategoryIds(prev => {
+      if (prev.includes(id)) return prev.filter(x => x !== id);
+      if (prev.length >= MAX_STORE_CATEGORIES) return prev;
+      return [...prev, id];
+    });
+  };
+
   const errors = {
     seller: mode === 'existing' && !seller ? 'Pick a seller' : '',
     name: mode === 'new' && name.trim().length < 2 ? 'Enter the seller name (2+ letters)' : '',
     email: mode === 'new' && !EMAIL_RE.test(email.trim()) ? 'Enter a valid e-mail address' : '',
     storeName: storeName.trim().length < 2 ? 'Store name must be at least 2 letters' : storeName.trim().length > 60 ? 'Store name can be at most 60 letters' : '',
-    category: !categoryId ? 'Pick a category' : '',
+    category: categoryIds.length === 0 ? 'Pick at least one category' : '',
   };
   const hasErrors = Object.values(errors).some(Boolean);
 
@@ -52,7 +62,7 @@ export function CreateStoreForSellerModal({ onClose, onCreated }: Props) {
       try {
         const r = await apiCreateStoreForSeller({
           ...(mode === 'existing' ? { sellerId: seller!.id } : { newSeller: { name: name.trim(), email: email.trim(), phone: phone.trim() || undefined } }),
-          store: { name: storeName.trim(), categoryId, baseCurrency: currency, description: description.trim() || undefined },
+          store: { name: storeName.trim(), categoryIds, baseCurrency: currency, description: description.trim() || undefined },
         });
         onCreated(r);
       } catch (e: any) {
@@ -99,11 +109,26 @@ export function CreateStoreForSellerModal({ onClose, onCreated }: Props) {
 
         <div className="border-t border-bone pt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="sm:col-span-2"><Input label="Store name" value={storeName} onChange={e => setStoreName(e.target.value)} maxLength={60} error={show(errors.storeName)} /></div>
-          <div>
-            <Select label="Category" value={categoryId} onChange={e => setCategoryId(e.target.value)} error={show(errors.category)}>
-              <option value="">Select a category…</option>
-              {categories.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
-            </Select>
+          <div className="sm:col-span-2">
+            <label className="block text-[12px] font-medium text-charcoal mb-1.5">
+              Categories <span className="text-slate font-normal">— pick up to {MAX_STORE_CATEGORIES}, covers everything filed under them too</span>
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {categories.map(c => {
+                const picked = categoryIds.includes(c._id);
+                const disabled = !picked && categoryIds.length >= MAX_STORE_CATEGORIES;
+                return (
+                  <button key={c._id} type="button" onClick={() => toggleCategory(c._id)} disabled={disabled} aria-pressed={picked}
+                    className={clsx(
+                      'px-3 py-[6px] rounded-full text-[12.5px] font-medium border cursor-pointer transition-colors disabled:opacity-40 disabled:cursor-not-allowed',
+                      picked ? 'bg-brand-orange text-white border-brand-orange' : 'bg-white text-charcoal border-bone hover:border-brand-orange/50',
+                    )}>
+                    {c.name}
+                  </button>
+                );
+              })}
+            </div>
+            {show(errors.category) && <p role="alert" className="mt-1 text-[12px] text-error">{errors.category}</p>}
             {catError && <p className="mt-1 text-[12px] text-error">Could not load categories. <button type="button" className="underline" onClick={loadCats}>Retry</button></p>}
           </div>
           <div>

@@ -5,7 +5,7 @@ interface ApiResponse<T> { success: boolean; message?: string; data: T }
 export interface CreateStoreForSellerPayload {
   sellerId?: string;
   newSeller?: { name: string; email: string; phone?: string };
-  store: { name: string; categoryId?: string; baseCurrency: string; description?: string };
+  store: { name: string; categoryIds?: string[]; baseCurrency: string; description?: string };
 }
 
 export interface CreatedStoreResult {

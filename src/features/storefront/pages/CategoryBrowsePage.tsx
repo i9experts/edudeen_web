@@ -5,29 +5,36 @@ import { useStorefront } from '../StorefrontContext';
 import { apiGetCategoryTree, type CategoryNode } from '@/api/services/categories';
 import { ProductCatalogSection } from '../sections/ProductCatalogSection';
 
-/** Store-scoped category browse — `/category/:slugOrId`. Resolves against the
- *  store's own subcategory tree client-side (the tree is small — one root
- *  plus its direct children, categories never nest further — so no new
- *  backend endpoint is needed), same `slugOrId` resolution precedent the
- *  main Marketplace already uses for its own category routes. Renders the
- *  real `ProductCatalogSection` scoped to the resolved subcategory, so this
- *  page shares its sort/pagination/filter behavior with every other product
- *  grid on the storefront rather than being a second implementation. */
+/** Store-scoped category browse — `/category/:slugOrId`. Resolves against one of the store's own
+ *  (up to MAX_STORE_CATEGORIES) subcategory trees client-side — each is small — one root plus its
+ *  direct children, categories never nest further — so no new backend endpoint is needed), same
+ *  `slugOrId` resolution precedent the main Marketplace already uses for its own category routes.
+ *  Renders the real `ProductCatalogSection` scoped to the resolved subcategory, so this page shares
+ *  its sort/pagination/filter behavior with every other product grid on the storefront rather than
+ *  being a second implementation. */
 export function CategoryBrowsePage() {
   const { slugOrId = '' } = useParams<{ slugOrId: string }>();
   const { store, cfg } = useStorefront();
+  const categoryIds = store.categoryIds?.length ? store.categoryIds : (store.categoryId ? [store.categoryId] : []);
   const [category, setCategory] = useState<CategoryNode | null | undefined>(undefined); // undefined = loading
 
   useEffect(() => {
-    if (!store.categoryId) { setCategory(null); return; }
+    if (!categoryIds.length) { setCategory(null); return; }
     setCategory(undefined);
-    apiGetCategoryTree(store.categoryId)
-      .then(res => {
-        const match = (res.data.children ?? []).find(c => c.slug === slugOrId || c._id === slugOrId) ?? null;
+    let cancelled = false;
+    Promise.all(categoryIds.map(id => apiGetCategoryTree(id).catch(() => null)))
+      .then(trees => {
+        if (cancelled) return;
+        let match: CategoryNode | null = null;
+        for (const tree of trees) {
+          const found = (tree?.data.children ?? []).find(c => c.slug === slugOrId || c._id === slugOrId);
+          if (found) { match = found; break; }
+        }
         setCategory(match);
-      })
-      .catch(() => setCategory(null));
-  }, [store.categoryId, slugOrId]);
+      });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categoryIds.join(','), slugOrId]);
 
   useEffect(() => {
     document.title = category ? `${category.name} — ${store.name}` : store.name;

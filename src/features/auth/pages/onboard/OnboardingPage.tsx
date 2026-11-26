@@ -20,7 +20,7 @@ import {
   apiCreateOnboardingSetupIntent, apiConfirmOnboardingPaymentMethod, apiGetOnboardingProgress, apiSaveOnboardingDraft,
   apiBrowsePlatformPlans, apiChangePlatformPlan, apiFreeTrialEligibility, type PlatformPlan,
 } from '@/api/services/platformPlans';
-import { apiGetMyStores } from '@/api/services/store';
+import { apiGetMyStores, MAX_STORE_CATEGORIES } from '@/api/services/store';
 import { planPriceFor, planYearlyPrice, planYearlySavePct, type PlanInterval } from '@/utils/planPricing';
 import { resolveSellerDestination } from '@/utils/sellerRouting';
 import { AuthSplitLayout } from '@/features/auth/components/AuthSplitLayout';
@@ -68,8 +68,9 @@ const PRODUCT_TYPES: { id: ProductType; Icon: React.ElementType; title: string; 
 
 interface StoreForm {
   storeName:    string;
-  categoryId:   string;
-  categoryName: string;
+  /** 1 to MAX_STORE_CATEGORIES main categories — picking one covers its whole subcategory tree too. */
+  categoryIds:   string[];
+  categoryNames: string[];
   description:  string;
   logo:         string;
   sellerType:   SellerType | '';
@@ -192,7 +193,7 @@ function Step1StoreInfo({ form, setForm, onNext, step, maxReached, onStepClick }
   const [preview, setPreview] = useState('');
   const [categories, setCategories] = useState<CategoryNode[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
-  const canProceed = form.storeName.trim().length > 0 && form.categoryId.length > 0;
+  const canProceed = form.storeName.trim().length > 0 && form.categoryIds.length > 0;
   const { upload: uploadLogo, uploading: logoUploading } = useUpload('public');
 
   useEffect(() => {
@@ -204,9 +205,12 @@ function Step1StoreInfo({ form, setForm, onNext, step, maxReached, onStepClick }
     return () => { cancelled = true; };
   }, []);
 
-  const handleCategoryChange = (id: string) => {
-    const name = categories.find(c => c._id === id)?.name ?? '';
-    setForm({ ...form, categoryId: id, categoryName: name });
+  const toggleCategory = (id: string) => {
+    const picked = form.categoryIds.includes(id);
+    if (!picked && form.categoryIds.length >= MAX_STORE_CATEGORIES) return;
+    const categoryIds = picked ? form.categoryIds.filter(x => x !== id) : [...form.categoryIds, id];
+    const categoryNames = categoryIds.map(cid => categories.find(c => c._id === cid)?.name ?? '').filter(Boolean);
+    setForm({ ...form, categoryIds, categoryNames });
   };
 
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -262,13 +266,38 @@ function Step1StoreInfo({ form, setForm, onNext, step, maxReached, onStepClick }
         </div>
 
         <div className="mb-4">
-          <label htmlFor="onboard-category" className="block text-[12px] font-medium text-charcoal mb-[6px]">Store Category <span className="text-brand-orange">*</span></label>
-          <select id="onboard-category" value={form.categoryId} onChange={e => handleCategoryChange(e.target.value)}
-            disabled={categoriesLoading}
-            className="w-full px-3 py-[10px] rounded-lg border border-bone text-[13px] text-charcoal outline-none bg-white cursor-pointer disabled:opacity-60 transition-[border-color,box-shadow] duration-150 focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/10">
-            <option value="">{categoriesLoading ? 'Loading categories...' : 'Select your main category...'}</option>
-            {categories.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
-          </select>
+          <label className="block text-[12px] font-medium text-charcoal mb-[6px]">
+            Store Categories <span className="text-brand-orange">*</span>
+            <span className="text-slate font-normal"> — pick up to {MAX_STORE_CATEGORIES}</span>
+          </label>
+          <p className="text-[12px] text-slate mb-2">
+            Picking a category covers everything filed under it too — you're never limited to one kind of product.
+          </p>
+          {categoriesLoading ? (
+            <p className="text-[13px] text-slate">Loading categories…</p>
+          ) : (
+            <div className="flex flex-wrap gap-2" role="group" aria-label="Store categories">
+              {categories.map(c => {
+                const picked = form.categoryIds.includes(c._id);
+                const disabled = !picked && form.categoryIds.length >= MAX_STORE_CATEGORIES;
+                return (
+                  <button
+                    key={c._id} type="button" onClick={() => toggleCategory(c._id)} disabled={disabled}
+                    aria-pressed={picked}
+                    className={clsx(
+                      'px-3 py-[7px] rounded-full text-[12.5px] font-medium border cursor-pointer transition-colors disabled:opacity-40 disabled:cursor-not-allowed',
+                      picked ? 'bg-brand-orange text-white border-brand-orange' : 'bg-white text-charcoal border-bone hover:border-brand-orange/50',
+                    )}
+                  >
+                    {c.name}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+          {form.categoryIds.length >= MAX_STORE_CATEGORIES && (
+            <p className="text-[12px] text-slate mt-2">You've picked the maximum of {MAX_STORE_CATEGORIES} — remove one to pick a different category.</p>
+          )}
         </div>
 
         <div className="mb-6">
@@ -663,7 +692,7 @@ function Step5Review({ form, submitting, submitError, onSubmit, onBack, step, ma
           <p className="text-[12px] font-bold text-carbon uppercase tracking-[0.05em] pb-2 mb-3 border-b border-bone">Store</p>
           <div className="grid grid-cols-2 gap-x-4 gap-y-[10px]">
             <div><p className="text-[12px] text-slate">Store name</p><p className="text-[12.5px] font-semibold text-carbon">{form.storeName || '—'}</p></div>
-            <div><p className="text-[12px] text-slate">Category</p><p className="text-[12.5px] font-semibold text-carbon">{form.categoryName || '—'}</p></div>
+            <div><p className="text-[12px] text-slate">Categor{form.categoryNames.length === 1 ? 'y' : 'ies'}</p><p className="text-[12.5px] font-semibold text-carbon">{form.categoryNames.join(', ') || '—'}</p></div>
             <div><p className="text-[12px] text-slate">Seller type</p><p className="text-[12.5px] font-semibold text-carbon">{sellerLabel}</p></div>
             <div><p className="text-[12px] text-slate">Sells</p><p className="text-[12.5px] font-semibold text-carbon">{productLabels || '—'}</p></div>
           </div>
@@ -771,7 +800,7 @@ export function OnboardingPage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [form, setForm] = useState<StoreForm>({
-    storeName: '', categoryId: '', categoryName: '', description: '', logo: '',
+    storeName: '', categoryIds: [], categoryNames: [], description: '', logo: '',
     sellerType: '', sellerKey: '', productTypes: [], baseCurrency: DEFAULT_CURRENCY,
     planId: '', planName: '', planPriceUSD: 0,
     billingInterval: readSavedInterval(),
@@ -885,7 +914,7 @@ export function OnboardingPage() {
       if (!store) {
         store = await createStore.execute({
           name:         form.storeName,
-          categoryId:   form.categoryId,
+          categoryIds:  form.categoryIds,
           description:  form.description,
           sellerType:   form.sellerType as SellerType,
           productTypes: [...new Set(form.productTypes)],

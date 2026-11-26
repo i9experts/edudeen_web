@@ -480,7 +480,7 @@ export function StorePageOverview() {
             </Section>
 
             <Section icon={<Layers size={15} />} title="Sections" hint="Chips above your products (they are your Collections). Order here = order on your store page. Changes apply at once, not with Publish.">
-              {storeId && <StoreSectionsCard storeId={storeId} categoryId={store?.categoryId} currency={(store as { baseCurrency?: string } | null)?.baseCurrency} />}
+              {storeId && <StoreSectionsCard storeId={storeId} categoryId={(store as { categoryIds?: string[] } | null)?.categoryIds?.[0] ?? store?.categoryId} currency={(store as { baseCurrency?: string } | null)?.baseCurrency} />}
             </Section>
 
             <Section icon={<Megaphone size={15} />} title="Store announcement">

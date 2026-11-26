@@ -481,7 +481,7 @@ export default function StoreSettings() {
   const [productTypes, setProductTypes] = useState<ProductType[]>([]);
   const [logo,         setLogo]         = useState('');
   const [coverImage,   setCoverImage]   = useState('');
-  const [categoryId,   setCategoryId]   = useState('');
+  const [categoryIds,  setCategoryIds]  = useState<string[]>([]);
   const [codEnabled,   setCodEnabled]   = useState(true);
   const [categories,   setCategories]   = useState<CategoryNode[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
@@ -516,7 +516,7 @@ export default function StoreSettings() {
     setProductTypes(store.productTypes ?? []);
     setLogo(store.logo ?? '');
     setCoverImage(store.coverImage ?? '');
-    setCategoryId(store.categoryId ?? '');
+    setCategoryIds(store.categoryIds?.length ? store.categoryIds : (store.categoryId ? [store.categoryId] : []));
     setCodEnabled(store.codEnabled !== false);
   }, [store]);
 
@@ -689,9 +689,9 @@ export default function StoreSettings() {
 
               <StoreTextField className="mb-5" field="name" label="Store Name *" value={name} onChange={setName} original={store?.name ?? ''} placeholder="Your store name" />
 
-              <Field label="Category">
+              <Field label={categoryIds.length > 1 ? 'Categories' : 'Category'}>
                 <p className="text-[13px] text-charcoal m-0">
-                  {categoriesLoading ? 'Loading…' : (categories.find(c => c._id === categoryId)?.name ?? '—')}
+                  {categoriesLoading ? 'Loading…' : (categoryIds.map(id => categories.find(c => c._id === id)?.name).filter(Boolean).join(', ') || '—')}
                 </p>
                 <p className="text-[12px] text-slate mt-1">
                   Set when your store was created.{' '}

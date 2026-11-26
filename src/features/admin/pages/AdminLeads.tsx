@@ -25,7 +25,7 @@ function StoreCell({ lead }: { lead: LeadRow }) {
       </div>
       <div className="min-w-0">
         <p className="text-[13px] font-semibold text-graphite truncate max-w-[180px]">{lead.storeName}</p>
-        {lead.categoryName && <p className="text-[12px] text-slate truncate max-w-[180px]">{lead.categoryName}</p>}
+        {lead.categoryNames.length > 0 && <p className="text-[12px] text-slate truncate max-w-[180px]">{lead.categoryNames.join(', ')}</p>}
       </div>
     </div>
   );
@@ -80,7 +80,7 @@ function LeadDetailModal({ leadId, onClose, onApprove, onReject, onDelete, proce
               </div>
               <div>
                 <p className="text-[15px] font-bold text-carbon">{data.storeName}</p>
-                <p className="text-[12px] text-slate">{data.categoryName ?? 'No category'}</p>
+                <p className="text-[12px] text-slate">{data.categoryNames.length ? data.categoryNames.join(', ') : 'No category'}</p>
               </div>
             </div>
             <StatusBadge status={data.storeStatus} />

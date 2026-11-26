@@ -144,8 +144,11 @@ export interface LeadRow {
   storeName: string;
   logo: string | null;
   description: string | null;
+  /** Deprecated — the first category (id + name). */
   categoryId: string | null;
   categoryName: string | null;
+  categoryIds: string[];
+  categoryNames: string[];
   sellerType: string | null;
   productTypes: string[];
   baseCurrency: string | null;
@@ -173,7 +176,9 @@ export interface LeadDetail {
   storeName: string;
   logo: string | null;
   description: string | null;
+  /** Deprecated — the first category's name. */
   categoryName: string | null;
+  categoryNames: string[];
   sellerType: string | null;
   productTypes: string[];
   storeStatus: string;

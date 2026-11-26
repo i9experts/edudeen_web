@@ -85,7 +85,7 @@ export function apiGetStoreCategoryUsage(storeId: string) {
 export function apiGetCategoryRequests(storeId: string) {
   return client.get<never, { success: boolean; data: CategoryRequest[]; pendingLimit: number }>('/api/categories/requests', { params: { storeId } });
 }
-export function apiCreateCategoryRequest(payload: { storeId: string; type: CategoryRequestType; name: string; reason: string; exampleProduct: string }) {
+export function apiCreateCategoryRequest(payload: { storeId: string; type: CategoryRequestType; name: string; reason: string; exampleProduct: string; categoryId?: string }) {
   return client.post<never, { success: boolean; data: CategoryRequest }>('/api/categories/requests', payload);
 }
 export function apiAdminGetCategoryRequests(status?: CategoryRequestStatus) {

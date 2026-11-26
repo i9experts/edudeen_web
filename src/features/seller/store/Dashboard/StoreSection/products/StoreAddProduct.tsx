@@ -73,7 +73,7 @@ export default function StoreAddProduct() {
   const { categories, loading: catLoading, error: catError, refetch: refetchCats } = useSellerCategories();
   // Main category chosen for THIS product; defaults to the store's own category.
   const [categoryChoice, setCategoryChoice] = useState<string | null>(null);
-  const categoryId   = categoryChoice ?? store?.categoryId ?? '';
+  const categoryId   = categoryChoice ?? store?.categoryIds?.[0] ?? store?.categoryId ?? '';
   const rootCategory = categories.find(c => c._id === categoryId);
   const subcategories = rootCategory?.children ?? [];
   const [pType,             setPType]             = useState<ProductType>('physical');

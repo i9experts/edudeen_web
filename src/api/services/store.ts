@@ -10,10 +10,14 @@ export type ProductType = 'physical_products' | 'digital_downloads' | 'education
 
 export type SupportedCurrency = 'PKR' | 'USD';
 
+/** How many main categories a store can pick — covering a subject spans its whole subcategory tree too. */
+export const MAX_STORE_CATEGORIES = 3;
+
 export interface CreateStorePayload {
   name:         string;
   logo?:        string;
-  categoryId:   string;
+  /** 1 to MAX_STORE_CATEGORIES main categories — picking one covers everything filed under it too. */
+  categoryIds:  string[];
   description?: string;
   sellerType:   SellerType;
   productTypes: ProductType[];
@@ -48,7 +52,8 @@ export interface UpdateStorePayload {
   name?:        string;
   logo?:        string;
   coverImage?:  string | null;
-  categoryId?:  string;
+  /** Locked once the store has its first product — same rule as at onboarding. */
+  categoryIds?: string[];
   description?: string;
   tagline?:      string;
   educatorProfile?: EducatorProfile | null;
@@ -85,7 +90,9 @@ export interface StoreData {
   slug:         string;
   logo:         string | null;
   coverImage:   string | null;
+  /** Deprecated — always `categoryIds[0]`. */
   categoryId:   string;
+  categoryIds:  string[];
   description:  string;
   /** Short marketing line — distinct from `description`, shown alongside the store name. */
   tagline:      string | null;
@@ -301,9 +308,11 @@ export interface PublicStoreData {
   aboutBio?:      string | null;
   contactEmail:   string | null;
   contactPhone:   string | null;
-  /** The store's single fixed root category — needed to resolve its own
-   *  subcategory tree for `/category/:slugOrId` (`apiGetCategoryTree`). */
+  /** Deprecated — always `categoryIds[0]`. */
   categoryId:     string | null;
+  /** Up to MAX_STORE_CATEGORIES main categories — needed to resolve `/category/:slugOrId` against
+   *  whichever one's subtree actually has it (`apiGetCategoryTree`). */
+  categoryIds:    string[];
   followersCount: number;
   averageRating:  number;
   reviewCount:    number;
@@ -437,7 +446,9 @@ export interface PublicStoreListItem {
   logo:           string | null;
   coverImage:     string | null;
   description:    string | null;
+  /** Deprecated — always `categoryIds[0]`. */
   categoryId:     string | null;
+  categoryIds:    string[];
   followersCount: number;
   averageRating:  number;
   reviewCount:    number;
@@ -447,7 +458,9 @@ export interface PublicStoreListItem {
   /** Home Featured sellers rail only: best-selling products (up to 3) with a photo. */
   topProducts?:   Array<{ id: string; name: string; image: string; coverStyle: 'book' | 'flat' | null }>;
   soldCount?:     number;
+  /** Deprecated — the first category's name. */
   categoryName?:  string | null;
+  categoryNames?: string[];
 }
 
 export interface ListPublicStoresParams {

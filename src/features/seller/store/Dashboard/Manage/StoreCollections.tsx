@@ -192,7 +192,7 @@ export default function StoreCollections() {
       {showForm && (
         <CollectionFormModal
           storeId={storeId}
-          mainCategoryId={store?.categoryId}
+          mainCategoryId={store?.categoryIds?.[0] ?? store?.categoryId}
           currency={(store as { baseCurrency?: string } | undefined)?.baseCurrency}
           collection={editing}
           otherNames={collections.filter(c => c._id !== editing?._id).map(c => c.name)}

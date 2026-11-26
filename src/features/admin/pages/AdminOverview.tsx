@@ -126,7 +126,7 @@ export function AdminOverview() {
 
   const leadColumns: TableColumn<LeadRow>[] = [
     { key: 'store', header: 'Store', render: l => <span className="text-carbon">{l.storeName}</span> },
-    { key: 'category', header: 'Category', render: l => l.categoryName ?? '—' },
+    { key: 'category', header: 'Category', render: l => (l.categoryNames.length ? l.categoryNames.join(', ') : '—') },
     { key: 'submitted', header: 'Submitted', render: l => formatDate(l.submittedAt) },
     { key: 'status', header: 'Status', render: l => <StatusBadge status={l.storeStatus} size="sm" /> },
     { key: 'action', header: 'Action', render: () => (

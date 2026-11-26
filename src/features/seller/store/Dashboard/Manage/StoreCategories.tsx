@@ -6,7 +6,7 @@ import { useStoreSubcategories } from '@/hooks/store/useStoreSubcategories';
 import { useLiveRefresh } from '@/hooks/useLiveRefresh';
 import { Button, SkeletonBox } from '@/components/comman/ui';
 import {
-  apiGetStoreCategoryUsage, apiGetCategoryRequests,
+  apiGetStoreCategoryUsage, apiGetCategoryRequests, apiGetCategoryTree,
   type CategoryNode, type CategoryRequest, type CategoryRequestType, type StoreCategoryUsage,
 } from '@/api/services/categories';
 import CategoryRequestModal from './CategoryRequestModal';
@@ -41,7 +41,22 @@ function ErrorBox({ text, onRetry }: { text: string; onRetry: () => void }) {
 
 export default function StoreCategories() {
   const { store, storeId } = useStoreWorkspace();
-  const { mainCategory, subcategories, loading, error: treeError, refetch: refetchTree } = useStoreSubcategories(store?.categoryId);
+  const storeCategoryIds = store?.categoryIds?.length ? store.categoryIds : (store?.categoryId ? [store.categoryId] : []);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | undefined>(undefined);
+  const activeCategoryId = selectedCategoryId && storeCategoryIds.includes(selectedCategoryId) ? selectedCategoryId : storeCategoryIds[0];
+  const { mainCategory, subcategories, loading, error: treeError, refetch: refetchTree } = useStoreSubcategories(activeCategoryId);
+
+  // Names for the tab row — only needed when the store has more than one category (the active one's
+  // name already comes from `mainCategory` above; this just fills in the OTHER tabs' labels).
+  const [categoryNames, setCategoryNames] = useState<Record<string, string>>({});
+  useEffect(() => {
+    if (storeCategoryIds.length < 2) return;
+    let cancelled = false;
+    Promise.all(storeCategoryIds.map(id => apiGetCategoryTree(id).then(r => [id, r.data.name] as const).catch(() => [id, ''] as const)))
+      .then(pairs => { if (!cancelled) setCategoryNames(Object.fromEntries(pairs.filter(([, name]) => name))); });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storeCategoryIds.join(',')]);
 
   const [usage, setUsage] = useState<StoreCategoryUsage | null>(null);
   const [usageError, setUsageError] = useState('');
@@ -92,6 +107,22 @@ export default function StoreCategories() {
             </span>
             <ChevronRight size={16} className="shrink-0 rtl:rotate-180" />
           </Link>
+        )}
+
+        {storeCategoryIds.length > 1 && (
+          <div className="flex flex-wrap gap-2" role="tablist" aria-label="Store categories">
+            {storeCategoryIds.map(id => (
+              <button
+                key={id} type="button" role="tab" aria-selected={id === activeCategoryId}
+                onClick={() => setSelectedCategoryId(id)}
+                className={`px-3 py-1.5 rounded-full text-[12.5px] font-medium border cursor-pointer transition-colors ${
+                  id === activeCategoryId ? 'bg-brand-orange text-white border-brand-orange' : 'bg-white text-charcoal border-bone hover:border-brand-orange/50'
+                }`}
+              >
+                {(id === activeCategoryId ? mainCategory?.name : undefined) ?? categoryNames[id] ?? '…'}
+              </button>
+            ))}
+          </div>
         )}
 
         {/* Main category (one line) */}
@@ -221,6 +252,7 @@ export default function StoreCategories() {
         <CategoryRequestModal
           storeId={storeId}
           type={modal}
+          categoryId={activeCategoryId}
           onClose={() => setModal(null)}
           onCreated={r => setRequests(prev => [r, ...(prev ?? [])])}
         />

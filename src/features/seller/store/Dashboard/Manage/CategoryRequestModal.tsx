@@ -14,8 +14,10 @@ export function validateCategoryRequest(v: { name: string; reason: string; examp
   return e;
 }
 
-export default function CategoryRequestModal({ storeId, type, onClose, onCreated }: {
+export default function CategoryRequestModal({ storeId, type, categoryId, onClose, onCreated }: {
   storeId: string; type: CategoryRequestType; onClose: () => void; onCreated: (r: CategoryRequest) => void;
+  /** Which of the store's own (possibly several) main categories a 'subcategory' request nests under. */
+  categoryId?: string;
 }) {
   const main = type === 'main_change';
   const [name, setName] = useState('');
@@ -31,7 +33,7 @@ export default function CategoryRequestModal({ storeId, type, onClose, onCreated
   const submit = async () => {
     setSubmitted(true);
     if (Object.keys(errors).length) return;
-    const r = await save.run(() => apiCreateCategoryRequest({ storeId, type, name, reason, exampleProduct: example }));
+    const r = await save.run(() => apiCreateCategoryRequest({ storeId, type, name, reason, exampleProduct: example, categoryId }));
     if (r) { onCreated(r.data); onClose(); }
   };
 
