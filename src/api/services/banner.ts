@@ -1,6 +1,7 @@
 import type { AxiosRequestConfig } from 'axios';
 import client from '../client';
 import { ENDPOINTS } from '../endpoints';
+import type { MarketplaceProduct } from './marketplace';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
@@ -16,10 +17,40 @@ export const ADMIN_BANNER_PLACEMENTS = PROMOTION_PLACEMENTS;
 
 export type BannerStatus = 'draft' | 'scheduled' | 'active' | 'paused' | 'expired';
 
+/** 'products' banners feature real catalog products instead of an uploaded picture. */
+export type BannerKind = 'image' | 'products';
+
+export const BANNER_STYLES = ['spotlight', 'countdown', 'lineup', 'collection'] as const;
+export type BannerStyle = (typeof BANNER_STYLES)[number];
+
+/** How many product slots each built-in layout has. */
+export const MAX_PRODUCTS_BY_STYLE: Record<BannerStyle, number> = {
+  spotlight: 1,
+  countdown: 1,
+  lineup: 3,
+  collection: 4,
+};
+
+export const BANNER_STYLE_LABEL: Record<BannerStyle, string> = {
+  spotlight: 'Spotlight',
+  countdown: 'Countdown deal',
+  lineup: 'Lineup',
+  collection: 'Collection grid',
+};
+
 export interface Banner {
   _id:         string;
   bannerImage: string;
   publicId:    string;
+  kind:        BannerKind;
+  /** Which built-in layout a 'products' banner renders as. */
+  style:       BannerStyle | null;
+  /** Ordered product ids a 'products' banner features — order fills the style's slots. */
+  productIds:  string[];
+  /** Live-resolved product data (price, photo, stock) for a 'products' banner — present only on
+   *  reads (public feed and admin list), never sent back on write; a product that's since been
+   *  removed or deactivated is silently missing from this array. */
+  products?:   MarketplaceProduct[];
   /** Admin-given name (admin list + picture alt text). */
   title?:      string;
   urlOnTap:    string | null;
@@ -32,6 +63,7 @@ export interface Banner {
    *  `placement`. */
   placements:  PromotionPlacement[];
   startAt:     string | null;
+  /** Also the countdown target time for the "countdown" style. */
   endAt:       string | null;
   /** Admin list only: true when visitors can see this banner right now. */
   live?:       boolean;
@@ -64,7 +96,22 @@ export interface CreateBannerPayload {
   saveAsDraft?: boolean;
 }
 
+export interface CreateProductBannerPayload {
+  style:        BannerStyle;
+  productIds:   string[];
+  title?:       string;
+  placements?:  PromotionPlacement[];
+  startAt?:     string;
+  /** Also the countdown target time for the "countdown" style. */
+  endAt?:       string;
+  order?:       number;
+  saveAsDraft?: boolean;
+}
+
 export interface UpdateBannerPayload {
+  kind?:        BannerKind;
+  style?:       BannerStyle;
+  productIds?:  string[];
   title?:       string;
   bannerImage?: string;
   urlOnTap?:    string;
@@ -103,6 +150,21 @@ export function apiGetBannerCount(placement?: PromotionPlacement) {
 export function apiCreateBannerFromUrl(payload: CreateBannerPayload, config?: AxiosRequestConfig) {
   return client.post<never, { success: boolean; message: string; data: Banner }>(
     ENDPOINTS.BANNER.CREATE, payload, config,
+  );
+}
+
+export function apiCreateBannerFromProducts(payload: CreateProductBannerPayload, config?: AxiosRequestConfig) {
+  return client.post<never, { success: boolean; message: string; data: Banner }>(
+    ENDPOINTS.BANNER.CREATE_PRODUCTS, payload, config,
+  );
+}
+
+/** Live product data for the builder's preview pane, resolved the SAME way the real banner will be
+ *  (price, photo, stock) — so what the admin sees while picking products is never an approximation. */
+export function apiPreviewBannerProducts(productIds: string[]) {
+  if (!productIds.length) return Promise.resolve({ success: true, data: [] as MarketplaceProduct[] });
+  return client.get<never, { success: boolean; data: MarketplaceProduct[] }>(
+    ENDPOINTS.BANNER.PREVIEW_PRODUCTS, { params: { ids: productIds.join(',') } },
   );
 }
 

@@ -19,7 +19,10 @@ export function loadPlacementBanners(placement: PromotionPlacement): Promise<Ban
   const running = inflight.get(placement);
   if (running) return running;
   const p = apiGetBanners(placement)
-    .then(res => (res.data ?? []).map(b => ({ _id: b._id, order: b.order, imageUrl: b.bannerImage, linkUrl: b.urlOnTap, title: b.title })))
+    .then(res => (res.data ?? []).map(b => ({
+      _id: b._id, order: b.order, imageUrl: b.bannerImage, linkUrl: b.urlOnTap, title: b.title,
+      kind: b.kind, style: b.style ?? undefined, products: b.products, endAt: b.endAt,
+    })))
     .catch(() => [] as BannerCarouselItem[])
     .then(items => { cache.set(placement, { at: Date.now(), items }); inflight.delete(placement); return items; });
   inflight.set(placement, p);

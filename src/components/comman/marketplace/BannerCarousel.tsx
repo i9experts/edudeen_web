@@ -4,6 +4,9 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { apiTrackPromotionImpression, apiTrackPromotionClick } from '@/api/services/promotions';
 import { setPromotionAttribution } from '@/utils/promotionAttribution';
 import { cloudinaryUrl, cloudinarySrcSet, cloudinaryDensitySrcSet } from '@/utils/cloudinaryImage';
+import type { BannerKind, BannerStyle } from '@/api/services/banner';
+import type { MarketplaceProduct } from '@/api/services/marketplace';
+import { ProductBannerSlide } from './ProductBannerSlide';
 
 /** Minimal shape this carousel needs — both the platform `Banner` (Marketplace/
  *  Education Marketplace hero) and a store's own `StoreBanner` (storefront hero)
@@ -19,6 +22,12 @@ export interface BannerCarouselItem {
    *  below 768px via `<picture>` art-direction instead of just serving a
    *  smaller version of the desktop crop. */
   mobileImageUrl?: string | null;
+  /** 'products' renders `style`/`products` via ProductBannerSlide instead of `imageUrl`. Platform banners only. */
+  kind?: BannerKind;
+  style?: BannerStyle;
+  products?: MarketplaceProduct[];
+  /** 'countdown' style's target time. */
+  endAt?: string | null;
 }
 
 const MOBILE_BREAKPOINT = '(max-width: 767px)';
@@ -180,7 +189,9 @@ export function BannerCarousel({ banners, entityType, fit = 'cover', showDots = 
   const activeId = active?._id;
   useEffect(() => { if (activeId) onActiveChange?.(activeId); }, [activeId, onActiveChange]);
 
-  const activeLoaded = active ? loadedIds.has(active._id) : false;
+  // A product slide has no single hero image to wait on (it renders structured DOM content, not one
+  // big picture) — never skeleton-gate it.
+  const activeLoaded = active ? (active.kind === 'products' || loadedIds.has(active._id)) : false;
 
   // Dots jump straight to a slide (more than one step is fine for a dot).
   const goTo = (i: number) => { if (loop && !busy.current) moveBy(i + 1 - posRef.current); };
@@ -265,6 +276,20 @@ export function BannerCarousel({ banners, entityType, fit = 'cover', showDots = 
               )}
             </>
           );
+
+          if (banner.kind === 'products') {
+            return (
+              <div key={`${banner._id}-${i}`} aria-hidden={!isActive} className="relative h-full w-full flex-none overflow-hidden">
+                <ProductBannerSlide
+                  style={banner.style ?? 'spotlight'}
+                  products={banner.products ?? []}
+                  endAt={banner.endAt}
+                  title={banner.title}
+                  onProductClick={() => { apiTrackPromotionClick(entityType, banner._id); setPromotionAttribution(entityType, banner._id); }}
+                />
+              </div>
+            );
+          }
 
           return (
             <div key={`${banner._id}-${i}`} aria-hidden={!isActive} className="relative h-full w-full flex-none overflow-hidden">
