@@ -19,6 +19,7 @@ const RULES: Array<[string, LucideIcon]> = [
   ['dua|duas|namaz|salah|salat|ramadan|hajj|umrah', MoonStar],
   ['seerah|sirah|prophet\\w*|hadith|hadees|fiqh|aqeedah|aqidah', Landmark],
   ['islam\\w*|muslim|deen|tarbiyah|tarbiyyah|nasheed', Star],
+  ['languages?|lingu\\w*', Languages],
   ['arabic|nahw|sarf|balagha', Languages],
   ['urdu|ghazal|nazm|muhavare|muhavara|insha|nastaliq', PenLine],
   ['phonics|alphabet|abc|spelling', SpellCheck],
