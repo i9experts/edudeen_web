@@ -9,6 +9,7 @@ import {
   apiGetStoreCategoryUsage, apiGetCategoryRequests, apiGetCategoryTree,
   type CategoryNode, type CategoryRequest, type CategoryRequestType, type StoreCategoryUsage,
 } from '@/api/services/categories';
+import { MAX_STORE_CATEGORIES } from '@/api/services/store';
 import CategoryRequestModal from './CategoryRequestModal';
 
 // A store's main category is fixed at creation (assertValidRootCategory on the backend). Subcategories are
@@ -109,19 +110,28 @@ export default function StoreCategories() {
           </Link>
         )}
 
-        {storeCategoryIds.length > 1 && (
-          <div className="flex flex-wrap gap-2" role="tablist" aria-label="Store categories">
-            {storeCategoryIds.map(id => (
-              <button
-                key={id} type="button" role="tab" aria-selected={id === activeCategoryId}
-                onClick={() => setSelectedCategoryId(id)}
-                className={`px-3 py-1.5 rounded-full text-[12.5px] font-medium border cursor-pointer transition-colors ${
-                  id === activeCategoryId ? 'bg-brand-orange text-white border-brand-orange' : 'bg-white text-charcoal border-bone hover:border-brand-orange/50'
-                }`}
-              >
-                {(id === activeCategoryId ? mainCategory?.name : undefined) ?? categoryNames[id] ?? '…'}
-              </button>
-            ))}
+        {(storeCategoryIds.length > 1 || storeCategoryIds.length >= MAX_STORE_CATEGORIES) && (
+          <div className="flex flex-wrap items-center gap-2">
+            {storeCategoryIds.length > 1 && (
+              <div className="flex flex-wrap gap-2" role="tablist" aria-label="Store categories">
+                {storeCategoryIds.map(id => (
+                  <button
+                    key={id} type="button" role="tab" aria-selected={id === activeCategoryId}
+                    onClick={() => setSelectedCategoryId(id)}
+                    className={`px-3 py-1.5 rounded-full text-[12.5px] font-medium border cursor-pointer transition-colors ${
+                      id === activeCategoryId ? 'bg-brand-orange text-white border-brand-orange' : 'bg-white text-charcoal border-bone hover:border-brand-orange/50'
+                    }`}
+                  >
+                    {(id === activeCategoryId ? mainCategory?.name : undefined) ?? categoryNames[id] ?? '…'}
+                  </button>
+                ))}
+              </div>
+            )}
+            {storeCategoryIds.length >= MAX_STORE_CATEGORIES && (
+              <Button size="sm" variant="outline" className="ms-auto" onClick={() => setModal('extra_category')}>
+                <Plus size={14} /> Request another category
+              </Button>
+            )}
           </div>
         )}
 
@@ -235,7 +245,7 @@ export default function StoreCategories() {
                     <div className="min-w-0 flex-1">
                       <p className="m-0 text-[13px] font-semibold text-carbon break-words">{r.name}</p>
                       <p className="m-0 text-[12px] text-slate">
-                        {r.type === 'main_change' ? 'Main category change' : 'Subcategory'} · {new Date(r.createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
+                        {r.type === 'main_change' ? 'Main category change' : r.type === 'extra_category' ? 'Additional category' : 'Subcategory'} · {new Date(r.createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
                       </p>
                     </div>
                     <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[12px] font-medium ${STATUS_STYLE[r.status]}`}>{STATUS_LABEL[r.status]}</span>
@@ -253,6 +263,7 @@ export default function StoreCategories() {
           storeId={storeId}
           type={modal}
           categoryId={activeCategoryId}
+          excludeCategoryIds={storeCategoryIds}
           onClose={() => setModal(null)}
           onCreated={r => setRequests(prev => [r, ...(prev ?? [])])}
         />

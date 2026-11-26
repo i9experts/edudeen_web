@@ -70,12 +70,14 @@ export function apiAddCategory(payload: CategoryPayload, config?: import('axios'
 export interface CategoryUsage { active: number; draft: number; total: number }
 export interface StoreCategoryUsage { counts: Record<string, CategoryUsage>; noSubcategory: number }
 
-export type CategoryRequestType = 'subcategory' | 'main_change';
+export type CategoryRequestType = 'subcategory' | 'main_change' | 'extra_category';
 export type CategoryRequestStatus = 'pending' | 'approved' | 'rejected';
 export interface CategoryRequest {
   _id: string; storeId: string; type: CategoryRequestType; name: string; reason: string; exampleProduct: string;
   status: CategoryRequestStatus; adminNote: string | null; reviewedAt: string | null; createdAt: string;
   storeName?: string | null; mainCategoryName?: string | null;
+  /** `extra_category` only: the real category id this request is for (server resolves `name` from it). */
+  requestedCategoryId?: string | null;
 }
 
 /** This store's product counts per category (same rule as the Products page ?category= filter). */
@@ -85,7 +87,10 @@ export function apiGetStoreCategoryUsage(storeId: string) {
 export function apiGetCategoryRequests(storeId: string) {
   return client.get<never, { success: boolean; data: CategoryRequest[]; pendingLimit: number }>('/api/categories/requests', { params: { storeId } });
 }
-export function apiCreateCategoryRequest(payload: { storeId: string; type: CategoryRequestType; name: string; reason: string; exampleProduct: string; categoryId?: string }) {
+export function apiCreateCategoryRequest(payload: {
+  storeId: string; type: CategoryRequestType; name: string; reason: string; exampleProduct: string;
+  categoryId?: string; requestedCategoryId?: string;
+}) {
   return client.post<never, { success: boolean; data: CategoryRequest }>('/api/categories/requests', payload);
 }
 export function apiAdminGetCategoryRequests(status?: CategoryRequestStatus) {

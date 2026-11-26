@@ -44,6 +44,8 @@ function DecisionModal({ request, decision, onClose, onDone }: {
       <p className="m-0 mb-3 text-[12px] text-slate">
         {reject
           ? 'The seller is notified with your reason.'
+          : request.type === 'extra_category'
+          ? 'Approving adds this category straight to the seller\'s store (past the usual 3-category limit). The seller is notified.'
           : 'This does not create the category. Add it first below (Add sub on the right main category), then mark the request approved. The seller is notified.'}
       </p>
       <Textarea
@@ -107,7 +109,7 @@ export function AdminCategoryRequests() {
               <div className="flex flex-wrap items-start gap-2">
                 <div className="min-w-0 flex-1">
                   <p className="m-0 text-[13px] font-semibold text-carbon break-words">
-                    {r.name} <span className="font-normal text-slate">· {r.type === 'main_change' ? 'Main category change' : 'Subcategory'}</span>
+                    {r.name} <span className="font-normal text-slate">· {r.type === 'main_change' ? 'Main category change' : r.type === 'extra_category' ? 'Additional category' : 'Subcategory'}</span>
                   </p>
                   <p className="m-0 text-[12px] text-slate">
                     {r.storeName ?? 'Store'}{r.mainCategoryName ? ` · under ${r.mainCategoryName}` : ''} · {new Date(r.createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
