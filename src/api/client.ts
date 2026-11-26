@@ -4,7 +4,7 @@ import axios, { type AxiosResponse, type InternalAxiosRequestConfig } from 'axio
 // `utils/authCookie.ts`. Imported directly (not via `services/auth.ts`'s
 // `TokenStorage`) to avoid a circular import, since `auth.ts` itself imports
 // this `client` module.
-import { getAuthCookie, setAuthCookie, deleteAuthCookie } from '@/utils/authCookie';
+import { getAuthCookie, setAuthCookie, deleteAuthCookie, getActAsSession, endActAsSession } from '@/utils/authCookie';
 import { API_BASE_URL, API_URL_MISSING } from './apiBase';
 import { promptReauth, rememberedReauth, forgetReauth } from './reauthPrompt';
 import { noteLocalWrite } from './realtime';
@@ -202,7 +202,15 @@ client.interceptors.response.use(
     const isAuthAttempt = AUTH_ATTEMPT_PATHS.some(p => err.config?.url?.includes(p));
     // A wrong *current password* on change-password is also a rejected attempt, not an expired session.
     const isWrongCurrentPassword = !!err.config?.url?.includes('/api/users/change-password') && /current password/i.test(String(err.response?.data?.message ?? ''));
-    if (err.response?.status === 401 && !isAuthAttempt && !isWrongCurrentPassword) {
+    // Admin "manage as seller" / store team member session: when its token expired (401) or the member was suspended or
+    // removed (403 MEMBER_ACCESS_ENDED), end THAT session and leave the store. The person's own login is untouched, so
+    // sending them to the sign-in page (with the dead token still in the tab) would only loop.
+    const actAsSession = getActAsSession();
+    const memberCutOff = err.response?.status === 403 && err.response?.data?.code === 'MEMBER_ACCESS_ENDED';
+    if (actAsSession && !isAuthAttempt && (err.response?.status === 401 || memberCutOff)) {
+      endActAsSession();
+      window.location.href = actAsSession.kind === 'collaborator' ? '/' : '/admin';
+    } else if (err.response?.status === 401 && !isAuthAttempt && !isWrongCurrentPassword) {
       deleteAuthCookie('accessToken');
       deleteAuthCookie('refreshToken');
       deleteAuthCookie('user');

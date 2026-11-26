@@ -8,7 +8,12 @@ import { AdminStudioHeader } from '@/features/admin/components/studio';
 import type { TableColumn } from '@/components/comman/ui';
 import { AnalyticsErrorState } from '@/components/comman/analytics/AnalyticsErrorState';
 import { formatDate } from '@/components/comman/analytics/format';
-import { Store, RefreshCw, Check, X, Eye, Trash2 } from 'lucide-react';
+import { Store, RefreshCw, Check, X, Eye, Trash2, Plus, LogIn, Users } from 'lucide-react';
+import { AdminStoreTeamModal } from '@/features/admin/components/AdminStoreTeamModal';
+import { useAdminAccess } from '@/hooks/admin/useAdminAccess';
+import { useManageAsSeller } from '@/hooks/admin/useManageAsSeller';
+import { CreateStoreForSellerModal } from '@/features/admin/components/CreateStoreForSellerModal';
+import type { CreatedStoreResult } from '@/api/services/adminStores';
 
 function StoreCell({ lead }: { lead: LeadRow }) {
   return (
@@ -138,6 +143,13 @@ export function AdminLeads() {
   const { data, loading, error, refetch } = useLeads(query);
   const { approve, reject, deleteStore, processingId, error: actionError } = useLeadActions();
 
+  const { can } = useAdminAccess();
+  const canManageStores = can('stores.manage');
+  const manage = useManageAsSeller();
+  const [creating, setCreating] = useState(false);
+  const [teamOf, setTeamOf] = useState<{ id: string; storeName: string } | null>(null);
+  const [created, setCreated] = useState<CreatedStoreResult | null>(null);
+
   const [viewingId, setViewingId] = useState<string | null>(null);
   const [rejecting, setRejecting] = useState<{ id: string; storeName: string } | null>(null);
   const [approving, setApproving] = useState<{ id: string; storeName: string } | null>(null);
@@ -200,6 +212,16 @@ export function AdminLeads() {
           <Button variant="ghost" size="xs" icon={<Eye size={12} />} onClick={() => setViewingId(lead.id)}>
             View
           </Button>
+          {canManageStores && (
+            <Button variant="ghost" size="xs" icon={<Users size={12} />} onClick={() => setTeamOf({ id: lead.id, storeName: lead.storeName })}>
+              Team
+            </Button>
+          )}
+          {canManageStores && (
+            <Button variant="outline" size="xs" icon={<LogIn size={12} />} onClick={() => manage.start(lead.id)} loading={manage.busyId === lead.id} disabled={!!manage.busyId}>
+              Manage as seller
+            </Button>
+          )}
           <Button
             variant="outline" size="xs"
             icon={<X size={12} />}
@@ -234,10 +256,24 @@ export function AdminLeads() {
       <AdminStudioHeader eyebrow="Edudeen team workspace · Commerce"
         title="Store approvals"
         subtitle="New stores go live automatically. This list only shows older stores that are still waiting for approval, or that were rejected."
-        actions={<Button variant="outline" size="sm" icon={<RefreshCw size={13} />} onClick={refetch}>Refresh</Button>}
+        actions={<>
+          {canManageStores && <Button variant="primary" size="sm" icon={<Plus size={13} />} onClick={() => setCreating(true)}>Create store for a seller</Button>}
+          <Button variant="outline" size="sm" icon={<RefreshCw size={13} />} onClick={refetch}>Refresh</Button>
+        </>}
       />
       <div className="px-4 sm:px-7 pt-6 pb-8 flex flex-col gap-5">
       {actionError && <div className="bg-error-bg border border-error-border rounded-lg px-4 py-2.5 text-[12.5px] text-error">{actionError}</div>}
+      {manage.error && <div role="alert" className="bg-error-bg border border-error-border rounded-lg px-4 py-2.5 text-[12.5px] text-error">{manage.error}</div>}
+      {created && (
+        <div role="status" className="bg-white border border-bone rounded-lg px-4 py-3 text-[12.5px] text-charcoal flex flex-wrap items-center gap-3">
+          <span>
+            Store <strong>{created.store.name}</strong> created for <strong>{created.seller.email}</strong>.
+            {created.createdSeller && (created.emailSent ? ' An invitation e-mail was sent.' : ' The invitation e-mail could not be sent: ask the seller to use "Forgot password" with this e-mail.')}
+          </span>
+          {canManageStores && <Button variant="outline" size="xs" icon={<LogIn size={12} />} onClick={() => manage.start(created.store.id)} loading={manage.busyId === created.store.id}>Manage as seller</Button>}
+          <Button variant="ghost" size="xs" onClick={() => setCreated(null)}>Dismiss</Button>
+        </div>
+      )}
 
       <div className="bg-white border border-bone rounded-xl overflow-hidden">
         <div className="flex items-center gap-[10px] px-5 py-[14px] border-b border-bone flex-wrap">
@@ -263,6 +299,12 @@ export function AdminLeads() {
           />
         )}
       </div>
+
+      {teamOf && <AdminStoreTeamModal storeId={teamOf.id} storeName={teamOf.storeName} onClose={() => setTeamOf(null)} />}
+
+      {creating && (
+        <CreateStoreForSellerModal onClose={() => setCreating(false)} onCreated={r => { setCreating(false); setCreated(r); refetch(); }} />
+      )}
 
       {viewingId && (
         <LeadDetailModal

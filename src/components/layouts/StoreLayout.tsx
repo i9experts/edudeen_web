@@ -19,6 +19,8 @@ import { useAiFeatures } from '@/hooks/useAiFeatures';
 import { useCommandPalette } from '@/hooks/useCommandPalette';
 import { useLogout } from '@/hooks/auth/useLogout';
 import { AnnouncementBanner, Modal, Button } from '@/components/comman/ui';
+import { ActAsBanner } from '@/features/seller/components/ActAsBanner';
+import { getActAsSession } from '@/utils/authCookie';
 import { PlatformTopBar } from '@/components/comman/ui/PlatformTopBar';
 import { MoreSheet } from '@/components/comman/ui/MoreSheet';
 import { useLockPageScroll } from '@/hooks/useLockPageScroll';
@@ -151,7 +153,8 @@ function StoreNavProvider({ children }: { children: ReactNode }) {
     return {
       entitlements,
       isLocked: item => !!item.lockedBy && entitlements?.[item.lockedBy] === false,
-      isVisible: (item, active) => active
+      // Plan & Billing (card charges) is locked in an admin "manage as seller" session.
+      isVisible: (item, active) => ((item.id === 'plan-billing' && !!getActAsSession()) || (item.id === 'earnings' && getActAsSession()?.kind === 'collaborator')) ? false : active
         || (item.visibleIf === 'physical' ? hasPhysical : item.visibleIf === 'digital' ? hasDigital : true),
       badges: { orders: toShip, returns: returnsPending, messages: unreadMessages },
     };
@@ -831,6 +834,7 @@ function PlatformBillingBanner() {
   // then let the seller look around (banner stays).
   useEffect(() => {
     if (!expired || !storeId) return;
+    if (getActAsSession()) return; // admin manage session: never bounce to the plan screens (they are locked there)
     if (/\/(plan-billing|plan-expired)$/.test(pathname)) return;
     const key = `plan-expired-shown:${storeId}`;
     try {
@@ -994,6 +998,7 @@ export function StoreLayout() {
         <StoreSidebar open={sidebarOpen} onToggle={toggle} />
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           <StoreTopBar />
+          <ActAsBanner />
           <AnnouncementBanner audience="sellers" />
           <StoreVerificationBanner />
           <PlatformBillingBanner />

@@ -13,6 +13,7 @@ import { SkeletonBox, Table, type TableColumn } from '@/components/comman/ui';
 import { useSearchParams } from 'react-router-dom';
 import { EarningsStatement, StatementSkeleton } from './EarningsStatement';
 import { PayoutScheduleCard } from './PayoutScheduleCard';
+import { getActAsSession } from '@/utils/authCookie';
 import { EarningsHero, PayoutHistory, HowFeesWork, METHOD_LABEL, VIEW_FILTER, type EarningsView } from './EarningsParts';
 import {
   apiGetFinanceDashboard, apiGetFinanceTransactions, apiExportFinanceTransactions,
@@ -269,6 +270,8 @@ export function StoreFinance() {
   const [txTotal, setTxTotal] = useState(0);
   const [txType, setTxType] = useState<TransactionType | ''>('');
   const [txLoading, setTxLoading] = useState(false);
+  // Admin "manage as seller" session: earnings are visible, but payout methods / schedule are locked (the server refuses them too).
+  const adminView = !!getActAsSession();
   const [methods, setMethods] = useState<PayoutMethod[] | null>(null);
   const [payouts, setPayouts] = useState<Payout[]>([]);
   const [payoutsLoading, setPayoutsLoading] = useState(true);
@@ -392,7 +395,7 @@ export function StoreFinance() {
       <StorePageHeader
         title="Earnings"
         subtitle="Your sales, fees and payouts from Edudeen."
-        actions={methodsKnown ? (
+        actions={methodsKnown && !adminView ? (
           hasDefault ? (
             <Button size="sm" variant="outline" onClick={() => methodRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>
               <span className="hidden sm:inline">Manage payout method</span>
@@ -406,7 +409,7 @@ export function StoreFinance() {
           )
         ) : undefined}
       />
-      {methodsKnown && !hasDefault && (
+      {methodsKnown && !hasDefault && !adminView && (
         <div className="px-4 md:px-8 pt-4">
           <div className="flex items-center gap-2 text-[12.5px] text-carbon bg-info-bg border border-[#bfdcf3] rounded-lg px-3 py-2">
             <CalendarCheck size={14} className="shrink-0 text-brand-royal" />
@@ -473,7 +476,7 @@ export function StoreFinance() {
         )}
 
         {/* 1b. Seller's own payout rhythm (nothing is moved for them) */}
-        {ready && summaryForCurrency && <PayoutScheduleCard s={summaryForCurrency} storeId={storeId} onSaved={loadSummary} />}
+        {ready && summaryForCurrency && !adminView && <PayoutScheduleCard s={summaryForCurrency} storeId={storeId} onSaved={loadSummary} />}
 
         {/* 2. Month statement */}
         {ready && summaryForCurrency && activeCurrency ? (
@@ -526,10 +529,13 @@ export function StoreFinance() {
           <div ref={methodRef} id="payout-method" className="bg-white border border-bone rounded-xl px-5 py-5 scroll-mt-24">
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-serif text-[18px] text-carbon font-normal">Payout method</h2>
-              <button type="button" onClick={() => setMethodModal(true)} aria-label="Add payout method" className="text-slate hover:text-brand-orange cursor-pointer bg-transparent border-none">
-                <Plus size={14} />
-              </button>
+              {!adminView && (
+                <button type="button" onClick={() => setMethodModal(true)} aria-label="Add payout method" className="text-slate hover:text-brand-orange cursor-pointer bg-transparent border-none">
+                  <Plus size={14} />
+                </button>
+              )}
             </div>
+            {adminView && <p className="text-[12px] text-amber-900 bg-amber-50 border border-amber-200 rounded-md px-2.5 py-1.5 mb-3">Payout methods and payouts are locked while you manage this store as admin.</p>}
             {!methodsKnown ? <SkeletonBox height={44} rounded="8px" /> : methods!.length === 0 ? (
               <p className="text-xs text-slate">No payout method yet.</p>
             ) : (
@@ -543,13 +549,15 @@ export function StoreFinance() {
                       </span>
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
-                      {!m.isDefault && (
+                      {!adminView && !m.isDefault && (
                         <button type="button" onClick={() => handleSetDefaultMethod(m._id)} className="text-[12px] text-slate hover:text-brand-orange cursor-pointer bg-transparent border-none">Set default</button>
                       )}
-                      <button type="button" onClick={() => setEditingMethod(m)} className="text-[12px] text-slate hover:text-brand-orange cursor-pointer bg-transparent border-none">Edit</button>
-                      <button type="button" onClick={() => { setDeletingMethodId(m._id); setDeleteMethodError(''); }} aria-label="Delete payout method" className="text-slate hover:text-error cursor-pointer bg-transparent border-none">
-                        <X size={12} />
-                      </button>
+                      {!adminView && <button type="button" onClick={() => setEditingMethod(m)} className="text-[12px] text-slate hover:text-brand-orange cursor-pointer bg-transparent border-none">Edit</button>}
+                      {!adminView && (
+                        <button type="button" onClick={() => { setDeletingMethodId(m._id); setDeleteMethodError(''); }} aria-label="Delete payout method" className="text-slate hover:text-error cursor-pointer bg-transparent border-none">
+                          <X size={12} />
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}

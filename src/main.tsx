@@ -15,6 +15,10 @@ import { ErrorBoundary } from '@/components/comman/ErrorBoundary';
 import { AppCrashScreen } from '@/components/comman/AppCrashScreen';
 import { reloadOnceForStaleChunk, armChunkReloadGuardReset } from '@/utils/lazyWithRetry';
 import { installLiveFieldValidation } from '@/utils/liveFieldValidation';
+import { consumeActAsHandoff } from '@/utils/authCookie';
+
+// Admin "Manage as seller" tab: pick up the hand-off BEFORE anything reads the auth cookies.
+consumeActAsHandoff();
 import './index.css';
 
 installLiveFieldValidation();

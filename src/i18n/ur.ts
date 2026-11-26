@@ -2793,6 +2793,20 @@ export const UR: Record<string, string> = {
   'Good value': 'اچھی قیمت',
   'Matches the syllabus': 'نصاب کے مطابق',
   'Fast delivery': 'تیز ڈیلیوری',
+  // Store team invitation page
+  'Store invitation': 'اسٹور کی دعوت',
+  'Ask the store owner to send you a new invitation.': 'اسٹور کے مالک سے نئی دعوت بھیجنے کو کہیں۔',
+  'You joined': 'آپ شامل ہو گئے',
+  'You can open it any time from your profile menu.': 'آپ اسے کسی بھی وقت اپنے پروفائل مینو سے کھول سکتے ہیں۔',
+  'Open the store': 'اسٹور کھولیں',
+  'You are invited to help run': 'آپ کو اس اسٹور کو چلانے میں مدد کی دعوت دی گئی ہے',
+  'Sent to': 'بھیجا گیا',
+  '. Sign in with that e-mail address to accept.': '۔ قبول کرنے کے لیے اسی ای میل ایڈریس سے سائن اِن کریں۔',
+  'Accept invitation': 'دعوت قبول کریں',
+  'Manager': 'مینیجر',
+  'Product editor': 'پروڈکٹ ایڈیٹر',
+  'Order handler': 'آرڈر ہینڈلر',
+  'Viewer': 'ناظر',
 };
 
 const MONTHS: Record<string, string> = {
@@ -2820,6 +2834,8 @@ const urOr = (s: string) => UR[s] ?? s;
 
 /** Strings with numbers or names in them — `m` is the RegExp match. */
 export const UR_PATTERNS: [RegExp, (m: RegExpMatchArray) => string][] = [
+  // Store team: profile-menu line for a store the person was invited to.
+  [/^Open as (.+)$/, m => `${({ Manager: 'مینیجر', 'Product editor': 'پروڈکٹ ایڈیٹر', 'Order handler': 'آرڈر ہینڈلر', Support: 'سپورٹ', Viewer: 'ناظر' } as Record<string, string>)[m[1]] ?? m[1]} کے طور پر کھولیں`],
   [/^Returnable within (\d+) days? of delivery\.$/, m => `ڈیلیوری کے ${m[1]} دن کے اندر واپسی ممکن`],
   [/^Total for (\d+) items?:$/, m => `${m[1]} آئٹمز کا کل:`],
   [/^Added (\d+) to your cart$/, m => `${m[1]} کارٹ میں شامل ہو گئے`],

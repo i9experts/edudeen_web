@@ -6,7 +6,7 @@ import { useLiveRefresh } from '@/hooks/useLiveRefresh';
 import { useAiStudioCredits } from '@/hooks/seller/useAiStudio';
 import { currencySymbol } from '@/utils/currency';
 import { statusLabel } from '@/constants/statusLabels';
-import { Store, Loader2, CheckCircle, AlertCircle, Globe, Lock, History, ChevronLeft, ChevronRight, Copy, Check, CreditCard } from 'lucide-react';
+import { Store, Loader2, CheckCircle, AlertCircle, Globe, Lock, History, ChevronLeft, ChevronRight, Copy, Check, CreditCard, Users } from 'lucide-react';
 import { useStoreWorkspace, StorePageHeader, StoreNavMenu } from '@/components/layouts/StoreLayout';
 import { useStorePlan, sidebarPlanInfo } from '@/hooks/store/useStorePlan';
 import { useToast } from '@/contexts/ToastContext';
@@ -27,14 +27,18 @@ import { ActivityLogTab } from './tabs/ActivityLogTab';
 import { ReturnPolicyCard } from './ReturnPolicyCard';
 import { PremiumDiscountCard } from './PremiumDiscountCard';
 import { HolidayCard } from './HolidayCard';
+import { StoreTeamTab } from './tabs/StoreTeamTab';
+import { getActAsSession } from '@/utils/authCookie';
 
 const TABS: Tab[] = [
   { id: 'general',  label: 'General' },
+  { id: 'team',     label: 'Team' },
   { id: 'activity', label: 'Activity Log' },
 ];
 
 const STORE_SETTINGS_NAV: { id: string; label: string; Icon: typeof Store }[] = [
   { id: 'general',  label: 'General',      Icon: Store   },
+  { id: 'team',     label: 'Team',         Icon: Users   },
   { id: 'activity', label: 'Activity Log', Icon: History },
 ];
 
@@ -462,12 +466,13 @@ export default function StoreSettings() {
   const aiCreditsQuery = useAiStudioCredits(storeId);
   const aiCreditBalance = aiCreditsQuery.data?.balance ?? null;
 
-  const [activeTab, setActiveTab] = useState('general');
+  // ?tab=team (notification link) opens the Team tab.
+  const [activeTab, setActiveTab] = useState(() => (new URLSearchParams(window.location.search).get('tab') === 'team' ? 'team' : 'general'));
   // Mobile-only: whether we've drilled into a tab from the store account-hub
   // menu below — mirrors the same drill-in pattern just built for the
   // top-level Seller Settings page. Desktop ignores this; it always shows
   // the TabBar + content.
-  const [mobileDrilledIn, setMobileDrilledIn] = useState(false);
+  const [mobileDrilledIn, setMobileDrilledIn] = useState(() => new URLSearchParams(window.location.search).get('tab') === 'team');
   const [name,         setName]         = useState('');
   const [description,  setDescription]  = useState('');
   const [tagline,      setTagline]      = useState('');
@@ -646,11 +651,15 @@ export default function StoreSettings() {
       )}
 
       <div className="hidden lg:block px-4 md:px-7 pt-3">
-        <TabBar tabs={TABS} active={activeTab} onChange={changeTab} />
+        <TabBar tabs={getActAsSession() ? TABS.filter(t => t.id !== 'team') : TABS} active={activeTab} onChange={changeTab} />
       </div>
 
       <div className={mobileDrilledIn ? 'block' : 'hidden lg:block'}>
-      {activeTab === 'activity' ? (
+      {activeTab === 'team' ? (
+        <div className="px-4 lg:px-7 py-6">
+          <StoreTeamTab />
+        </div>
+      ) : activeTab === 'activity' ? (
         <div className="px-4 lg:px-7 py-6">
           <ActivityLogTab />
         </div>

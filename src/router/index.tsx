@@ -58,6 +58,7 @@ const PrivacyPolicyPage = lazy(() => import('@/features/buyer/pages/PrivacyPolic
 const DeleteAccountPage = lazy(() => import('@/features/buyer/pages/DeleteAccountPage').then(m => ({ default: m.DeleteAccountPage })));
 const ContentPolicyPage = lazy(() => import('@/features/buyer/pages/ContentPolicyPage').then(m => ({ default: m.ContentPolicyPage })));
 const ReportViolationPage = lazy(() => import('@/features/buyer/pages/ReportViolationPage').then(m => ({ default: m.ReportViolationPage })));
+const StoreInvitePage = lazy(() => import('@/features/buyer/pages/StoreInvitePage').then(m => ({ default: m.StoreInvitePage })));
 const SellerTermsPage = lazy(() => import('@/features/buyer/pages/SellerTermsPage').then(m => ({ default: m.SellerTermsPage })));
 const TermsOfServicePage = lazy(() => import('@/features/buyer/pages/TermsOfServicePage').then(m => ({ default: m.TermsOfServicePage })));
 const SitemapPage = lazy(() => import('@/features/buyer/pages/SitemapPage').then(m => ({ default: m.SitemapPage })));
@@ -153,6 +154,7 @@ const AdminLearningPaths = lazy(() => named(import('@/features/admin/pages/Admin
 const SharedWishlistPage = lazy(() => named(import('@/features/buyer/pages/SharedWishlistPage'), 'SharedWishlistPage'));
 const LearningPathsIndexPage = lazy(() => named(import('@/features/buyer/pages/LearningPathPages'), 'LearningPathsIndexPage'));
 const LearningPathPage   = lazy(() => named(import('@/features/buyer/pages/LearningPathPages'), 'LearningPathPage'));
+import { ActAsLocked } from '@/features/seller/components/ActAsLocked';
 const StorePlanExpired   = lazy(() => import('@/features/seller/store/Dashboard/Manage/StorePlanExpired'));
 const StorePlanBilling   = lazy(() => import('@/features/seller/store/Dashboard/Manage/StorePlanBilling'));
 const StoreOrderList     = lazy(() => named(import('@/features/seller/store/Dashboard/StoreSection/orders/OrderList'),        'StoreOrderList'));
@@ -268,6 +270,7 @@ const mainRouter = createBrowserRouter([
               { path: 'delete-account',  element: <DeleteAccountPage /> },
               { path: 'terms-of-service', element: <TermsOfServicePage /> },
               { path: 'seller-terms',    element: <SellerTermsPage /> },
+              { path: 'store-invite/:token', element: <StoreInvitePage /> },
               { path: 'content-policy',  element: <ContentPolicyPage /> },
               { path: 'report-violation', element: <ReportViolationPage /> },
               { path: 'cookie-policy',   element: <CookiePolicyPage /> },
@@ -426,14 +429,14 @@ const mainRouter = createBrowserRouter([
           { path: 'students',                         element: <StoreStudents /> },
           { path: 'analytics',                        element: <StoreAnalytics /> },
           { path: 'settings',                         element: <StoreSettings /> },
-          { path: 'account',                          element: <SellerSettings /> },
+          { path: 'account',                          element: <ActAsLocked what="Account settings"><SellerSettings /></ActAsLocked> },
           { path: 'notifications',                    element: <StoreNotifications /> },
           { path: 'health',                           element: <StoreHealthPage /> },
           { path: 'categories',                       element: <StorePathTabs tabs={CATALOG_TABS} /> },
           { path: 'collections',                      element: <StorePathTabs tabs={CATALOG_TABS} /> },
           { path: 'bundles',                          element: <StorePathTabs tabs={CATALOG_TABS} /> },
-          { path: 'plan-billing',                     element: <StorePlanBilling /> },
-          { path: 'plan-expired',                     element: <StorePlanExpired /> },
+          { path: 'plan-billing',                     element: <ActAsLocked what="Plan & Billing"><StorePlanBilling /></ActAsLocked> },
+          { path: 'plan-expired',                     element: <ActAsLocked what="Plan & Billing"><StorePlanExpired /></ActAsLocked> },
           { path: 'verification',                     element: <Navigate to="../dashboard" replace /> }, // old links (business verification was removed)
           { path: 'storebuilder',                     element: <StorePageOverview /> },
           { path: 'returns',                          element: <StoreReturnList /> },
@@ -441,7 +444,7 @@ const mainRouter = createBrowserRouter([
           { path: 'ai/studio',                        element: <StoreAIStudio /> },
           { path: 'reviews',                          element: <StorePathTabs tabs={FEEDBACK_TABS} /> },
           { path: 'questions',                        element: <StorePathTabs tabs={FEEDBACK_TABS} /> },
-          { path: 'finance',                          element: <StoreFinance /> },
+          { path: 'finance',                          element: <ActAsLocked what="Earnings and payouts" blockKind="collaborator"><StoreFinance /></ActAsLocked> },
           { path: 'inventory',                        element: <StoreInventory /> },
           { path: 'marketing',                        element: <StoreMarketing /> },
           { path: 'marketing/sale/:campaignId',       element: <StoreSaleApply /> },

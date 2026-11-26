@@ -1,14 +1,15 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
 import { useHasSellerAccount, useSwitchToStore, useHasBuyerAccount, useSwitchToBuyer } from '@/hooks/auth/useSellerAccount';
 import { createPortal } from 'react-dom';
+import { getActAsSession } from '@/utils/authCookie';
+import { useMyTeamStores, useOpenTeamStore } from '@/hooks/useTeamStores';
 import { Link, useNavigate } from 'react-router-dom';
 import { isPlainLeftClick } from '@/utils/productLink';
 import { clsx } from 'clsx';
 import { titleCaseName } from '@/utils/formatName';
 import {
   User, LayoutDashboard, LogOut, ShoppingBag,
-  ChevronRight, Shield, Store, Package, Wallet, Crown, type LucideIcon,
-} from 'lucide-react';
+  ChevronRight, Shield, Store, Package, Wallet, Crown, Users, type LucideIcon } from 'lucide-react';
 import { useGetProfile } from '@/hooks/auth/useGetProfile';
 import { TokenStorage, apiLogout } from '@/api/services/auth';
 import { useNotification } from '@/contexts/NotificationContext';
@@ -183,6 +184,10 @@ function DropdownMenu({
   hasBuyer: boolean; hasDash: boolean; isAdmin: boolean; canSell: boolean; hasSellerAccount: boolean; hasBuyerAccount: boolean | null; isPremium: boolean; onSwitchStore: () => void; onSwitchBuyer: (create: boolean) => void;
   onNavigate: (path: string) => void; onLogout: () => void;
 }) {
+  // Admin "manage as seller" tab: no account switching, no account settings, no logout (the banner's Exit ends the session).
+  const actAs = !!getActAsSession();
+  const teamStores = useMyTeamStores();
+  const team = useOpenTeamStore();
   return (
     <>
       <div className="p-[6px]">
@@ -205,10 +210,13 @@ function DropdownMenu({
         {hasBuyer && (isPremium
           ? <MenuItem icon={Crown} label="My Premium" sublabel="Membership & perks" to={'/account/premium'} onClick={() => onNavigate('/account/premium')} />
           : <MenuItem icon={Crown} label="Go Premium" sublabel="Member prices & early access" to={'/premium'} onClick={() => onNavigate('/premium')} />)}
-        {canSell && (hasSellerAccount
+        {canSell && !actAs && (hasSellerAccount
           ? <MenuItem icon={Store} label="Switch to your store" sublabel="Open your seller account" onClick={onSwitchStore} />
           : <MenuItem icon={Store} label="Sell on Edudeen" sublabel="Open your own store" to={'/become-a-seller'} onClick={() => onNavigate('/become-a-seller')} />)}
-        {hasDash && !isAdmin && hasBuyerAccount !== null && (hasBuyerAccount
+        {!actAs && teamStores.map(s => (
+          <MenuItem key={s.storeId} icon={Users} label={s.name} sublabel={`Open as ${s.roleName}`} onClick={() => void team.open(s.storeId)} />
+        ))}
+        {hasDash && !isAdmin && !actAs && hasBuyerAccount !== null && (hasBuyerAccount
           ? <MenuItem icon={ShoppingBag} label="Switch to shopping" sublabel="Open your buyer account" onClick={() => onSwitchBuyer(false)} />
           : <MenuItem icon={ShoppingBag} label="Create buyer account" sublabel="Shop with the same email" onClick={() => onSwitchBuyer(true)} />)}
         {hasDash && (
@@ -226,7 +234,7 @@ function DropdownMenu({
             <MenuItem icon={Wallet} label="Finance" sublabel="Earnings and payouts" to={'/seller/finance'} onClick={() => onNavigate('/seller/finance')} />
           </>
         )}
-        {hasDash && !isAdmin && (
+        {hasDash && !isAdmin && !actAs && (
           <MenuItem
             icon={User}
             label="Account"
@@ -235,10 +243,12 @@ function DropdownMenu({
           />
         )}
       </div>
-      <div className="h-px bg-bone mx-3" />
-      <div className="p-[6px]">
-        <MenuItem icon={LogOut} label="Logout" onClick={onLogout} danger />
-      </div>
+      {!actAs && <div className="h-px bg-bone mx-3" />}
+      {!actAs && (
+        <div className="p-[6px]">
+          <MenuItem icon={LogOut} label="Logout" onClick={onLogout} danger />
+        </div>
+      )}
     </>
   );
 }
