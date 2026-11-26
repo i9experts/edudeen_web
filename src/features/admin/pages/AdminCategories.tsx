@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Plus, ChevronRight, FolderTree, ImagePlus, Loader2, ListFilter, Pencil, Trash2, ArrowUp, ArrowDown, Search } from 'lucide-react';
 import { clsx } from 'clsx';
-import { CategoryArt } from '@/components/comman/art/CategoryArt';
+import { CategoryIcon, assignCategoryIcons } from '@/components/comman/art/CategoryIcon';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import {
   apiAddCategory, apiAdminGetCategoryTree, apiAdminUpdateCategory, apiAdminDeleteCategory, apiAdminReorderCategories,
@@ -419,8 +419,8 @@ interface RowActions {
   visible: Set<string> | null;
 }
 
-function CategoryRow({ node, depth, siblings, index, actions }: {
-  node: CategoryNode; depth: number; siblings: CategoryNode[]; index: number; actions: RowActions;
+function CategoryRow({ node, depth, siblings, index, parentName, actions }: {
+  node: CategoryNode; depth: number; siblings: CategoryNode[]; index: number; parentName?: string | null; actions: RowActions;
 }) {
   const { onManageAttributes, onEdit, onDelete, onMove, onToggleExpand, onStartAdd, onAdded, reordering, expanded, addingTo, visible } = actions;
   if (visible && !visible.has(node._id)) return null;
@@ -428,6 +428,8 @@ function CategoryRow({ node, depth, siblings, index, actions }: {
   const isOpen = expanded.has(node._id);
   const inactive = node.status === 'inactive';
   const canAddChild = depth + 1 < MAX_LEVELS;
+  // Same icon logic (and same sibling de-duplication) as the storefront's category menu.
+  const icon = assignCategoryIcons(siblings.map(s => s.name || s.slug), parentName)[index];
   const arrowCls = 'p-1 rounded-md text-slate hover:text-brand-orange disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer bg-transparent border-none';
   const btnCls = 'flex items-center gap-1 text-[12px] font-semibold text-slate px-2 py-1 rounded-md shrink-0 cursor-pointer bg-transparent border-none';
 
@@ -445,8 +447,8 @@ function CategoryRow({ node, depth, siblings, index, actions }: {
             <span className="w-[13px] shrink-0" />
           )}
           {depth === 0
-            ? <span className="size-6 rounded-md overflow-hidden shrink-0">{node.image ? <img src={node.image} alt="" className="w-full h-full object-cover" /> : <CategoryArt name={node.name || node.slug} />}</span>
-            : <span className="size-5 rounded overflow-hidden shrink-0">{node.image ? <img src={node.image} alt="" className="w-full h-full object-cover" /> : <CategoryArt name={node.name || node.slug} />}</span>}
+            ? <span className="size-6 rounded-full overflow-hidden shrink-0 bg-cream border border-bone flex items-center justify-center">{node.image ? <img src={node.image} alt="" className="w-full h-full object-cover" /> : <CategoryIcon name={node.name || node.slug} parentName={parentName} icon={icon} className="w-4 h-4 text-brand-royal" />}</span>
+            : <span className="size-5 rounded-full overflow-hidden shrink-0 bg-cream border border-bone flex items-center justify-center">{node.image ? <img src={node.image} alt="" className="w-full h-full object-cover" /> : <CategoryIcon name={node.name || node.slug} parentName={parentName} icon={icon} className="w-3.5 h-3.5 text-brand-royal" />}</span>}
           <span className={clsx(depth === 0 ? 'text-[13px] font-semibold text-charcoal' : 'text-[13px] text-graphite', inactive && 'opacity-60')}>{node.name}</span>
           {inactive && (
             <span className="text-[12px] font-semibold px-1.5 py-[1px] rounded bg-cream border border-bone text-slate ml-1">Inactive</span>
@@ -486,7 +488,7 @@ function CategoryRow({ node, depth, siblings, index, actions }: {
         <InlineAddForm parent={node} depth={depth} onCancel={() => onStartAdd('')} onSaved={() => onAdded(node._id)} />
       )}
       {isOpen && node.children.map((child, i) => (
-        <CategoryRow key={child._id} node={child} depth={depth + 1} siblings={node.children} index={i} actions={actions} />
+        <CategoryRow key={child._id} node={child} depth={depth + 1} siblings={node.children} index={i} parentName={node.name} actions={actions} />
       ))}
     </div>
   );
