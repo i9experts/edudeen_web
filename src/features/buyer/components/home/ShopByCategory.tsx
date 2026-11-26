@@ -10,6 +10,11 @@ import { CARD_GRID_CLASS, CARD_ITEM_CLASS, placeOthersLast, tileSpanClass, uniqu
 
 const MAX_CARDS = 8;
 
+// Decorative only — rotates per card so the grid reads as colourful rather than a wall of white
+// (see the --color-tint-* tokens in index.css). Full class names, not built from the hex names, so
+// Tailwind's static scanner can find every one of them.
+const CARD_BG_CLASSES = ['bg-tint-sky', 'bg-tint-peach', 'bg-tint-mint', 'bg-tint-blossom', 'bg-tint-lilac', 'bg-tint-butter', 'bg-tint-seafoam', 'bg-tint-coral'];
+
 function photoOf(n: CategoryNode) {
   return n.coverImage || n.image || n.coverImages?.[0] || '';
 }
@@ -39,7 +44,7 @@ function Tile({ node, label, span }: { node: CategoryNode; label: string; span?:
 }
 
 /** One Amazon-style card: a main category, with its best sub-categories as photo tiles. */
-function CategoryCard({ node }: { node: CategoryNode }) {
+function CategoryCard({ node, tintClass }: { node: CategoryNode; tintClass: string }) {
   const t = useT();
   const to = categoryUrl(node.slug || node._id);
   const subs = placeOthersLast(
@@ -55,7 +60,7 @@ function CategoryCard({ node }: { node: CategoryNode }) {
   const tiles: { key: string; node: CategoryNode; label: string }[] = subs.slice(0, 4).map(c => ({ key: c._id, node: c, label: c.name }));
   if (tiles.length === 0) tiles.push({ key: node._id, node, label: node.name });
   return (
-    <article className={`flex flex-col bg-white rounded-2xl border border-bone p-4 min-w-0 ${CARD_ITEM_CLASS}`}>
+    <article className={`flex flex-col ${tintClass} rounded-2xl border border-bone p-4 min-w-0 ${CARD_ITEM_CLASS}`}>
       <div className="flex items-start justify-between gap-2 mb-3">
         <h3 className="text-[17px] md:text-[19px] font-extrabold text-carbon leading-tight tracking-tight m-0 line-clamp-2 min-h-[2.5em]">{node.name}</h3>
         <Link to={to} aria-label={node.name} className="shrink-0 text-carbon hover:text-brand-royal mt-0.5">
@@ -92,7 +97,7 @@ export function ShopByCategory({ categories, loading }: { categories: CategoryNo
     return (
       <section className="mb-12" aria-hidden>
         <div className={grid}>
-          {Array.from({ length: 4 }).map((_, i) => <div key={i} className={`bg-white rounded-2xl border border-bone p-4 ${CARD_ITEM_CLASS}`}><SkeletonBox width="60%" height={20} className="mb-3" /><SkeletonBox height={200} className="rounded-lg" /></div>)}
+          {Array.from({ length: 4 }).map((_, i) => <div key={i} className={`${CARD_BG_CLASSES[i % CARD_BG_CLASSES.length]} rounded-2xl border border-bone p-4 ${CARD_ITEM_CLASS}`}><SkeletonBox width="60%" height={20} className="mb-3" /><SkeletonBox height={200} className="rounded-lg" /></div>)}
         </div>
       </section>
     );
@@ -101,7 +106,7 @@ export function ShopByCategory({ categories, loading }: { categories: CategoryNo
   return (
     <section className="mb-12" aria-label={t('Shop by category')}>
       <div className={grid}>
-        {top.map(c => <CategoryCard key={c._id} node={c} />)}
+        {top.map((c, i) => <CategoryCard key={c._id} node={c} tintClass={CARD_BG_CLASSES[i % CARD_BG_CLASSES.length]} />)}
       </div>
     </section>
   );

@@ -37,6 +37,18 @@
   --color-accent-violet:    #7C3AED;
   --color-accent-violet-bg: #F5F0FB;
 
+  /* ── Decorative tints — NOT semantic/status colors (see success/warning/error/info below for those).
+     A light, bright rotating palette for purely decorative card fills, e.g. the homepage "Shop by
+     category" grid, so it reads as colourful/engaging instead of a wall of white cards. ── */
+  --color-tint-sky:      #E3F2FD;
+  --color-tint-peach:    #FDEEE3;
+  --color-tint-mint:     #E6F7ED;
+  --color-tint-blossom:  #FCE8F3;
+  --color-tint-lilac:    #F0EAFB;
+  --color-tint-butter:   #FEF6DC;
+  --color-tint-seafoam:  #E1F5F3;
+  --color-tint-coral:    #FDEAE6;
+
   /* ── Semantic ── */
   --color-success:    #2A7F49;
   --color-success-bg: #EBF7EF;
