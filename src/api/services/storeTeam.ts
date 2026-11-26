@@ -40,7 +40,24 @@ export async function apiTeamActivity(storeId: string): Promise<TeamActivityItem
 }
 
 // ── invitee ──
-export interface InviteInfo { storeName: string; roleName: string; emailHint: string; expiresAt: string }
+export interface InviteInfo {
+  storeName: string; roleName: string; emailHint: string; expiresAt: string;
+  /** An Edudeen account already exists for the invited e-mail / it has a password / it is verified (null when no account). */
+  hasAccount: boolean; hasPassword: boolean; accountVerified: boolean | null;
+}
+export interface JoinedWithSession {
+  storeId: string; storeName: string;
+  user: { id: string; name: string; email: string; role: string; image: string | null };
+  token: { accessToken: string; refreshToken: string };
+}
+/** No account yet: choose a password, join and get signed in (one step). */
+export async function apiAcceptWithNewPassword(token: string, password: string, name?: string): Promise<JoinedWithSession> {
+  return (await client.post<never, ApiResponse<JoinedWithSession>>('/api/store-team/accept-new', { token, password, ...(name ? { name } : {}) })).data;
+}
+/** Account exists: sign in with the existing password and join (one step). */
+export async function apiAcceptWithExistingPassword(token: string, password: string): Promise<JoinedWithSession> {
+  return (await client.post<never, ApiResponse<JoinedWithSession>>('/api/store-team/accept-existing', { token, password })).data;
+}
 export async function apiInviteInfo(token: string): Promise<InviteInfo> {
   return (await client.get<never, ApiResponse<InviteInfo>>(`/api/store-team/invite/${encodeURIComponent(token)}`)).data;
 }

@@ -24,6 +24,9 @@ const AUTH_ATTEMPT_PATHS = [
   '/api/auth/resend-otp',
   // Wrong admin password on the inline-edit confirmation: show it in the modal, never log the admin out.
   '/api/admin/reauth/verify-password',
+  // Team invitation page: wrong password for the existing account is shown inline on the page.
+  '/api/store-team/accept-existing',
+  '/api/store-team/accept-new',
 ];
 
 // ── Axios instance ────────────────────────────────────────────────────────────

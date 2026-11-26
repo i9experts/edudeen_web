@@ -1,29 +1,40 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Users } from 'lucide-react';
-import { Button, SkeletonBox } from '@/components/comman/ui';
+import { Button, Input, SkeletonBox } from '@/components/comman/ui';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { TokenStorage } from '@/api/services/auth';
-import { apiAcceptInvite, apiInviteInfo, type InviteInfo } from '@/api/services/storeTeam';
+import { apiAcceptInvite, apiAcceptWithExistingPassword, apiAcceptWithNewPassword, apiInviteInfo, type InviteInfo } from '@/api/services/storeTeam';
 import { useOpenTeamStore } from '@/hooks/useTeamStores';
 import { invalidateCache } from '@/api/services/requestCache';
 
 const msg = (e: any, fallback: string) => e?.response?.data?.message ?? e?.message ?? fallback;
 
-/** /store-invite/:token : what the invitation is for, then sign in (same e-mail) and accept. The token works once. */
+/**
+ * /store-invite/:token : what the invitation is for, then ONE step to join, on this page:
+ *  - no account yet            -> choose a password (creates the account, joins, signs in)
+ *  - account with a password   -> enter the existing password (no separate password for the team)
+ *  - signed in already         -> one tap to accept
+ * The token works once.
+ */
 export function StoreInvitePage() {
   usePageTitle('Store invitation');
   const { token = '' } = useParams();
   const [info, setInfo] = useState<InviteInfo | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
-  const [accepting, setAccepting] = useState(false);
-  const [acceptError, setAcceptError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [formError, setFormError] = useState('');
+  const [touched, setTouched] = useState(false);
+  const [name, setName] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
   const [joined, setJoined] = useState<{ storeId: string; storeName: string } | null>(null);
   const { open, busyId, error: openError } = useOpenTeamStore();
   const role = TokenStorage.getRole();
   const signedIn = TokenStorage.isLoggedIn() && (role === 'user' || role === 'seller');
   const here = `/store-invite/${token}`;
+  const loginHref = `/login?redirect=${encodeURIComponent(here)}`;
 
   const load = () => {
     setLoading(true); setError('');
@@ -31,13 +42,37 @@ export function StoreInvitePage() {
   };
   useEffect(load, [token]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  async function accept() {
-    if (accepting) return;
-    setAccepting(true); setAcceptError('');
-    try { setJoined(await apiAcceptInvite(token)); invalidateCache('team:mine'); }
-    catch (e) { setAcceptError(msg(e, 'Could not accept the invitation. Try again.')); }
-    finally { setAccepting(false); }
+  async function run(fn: () => Promise<{ storeId: string; storeName: string }>) {
+    if (busy) return;
+    setBusy(true); setFormError('');
+    try { setJoined(await fn()); invalidateCache('team:mine'); }
+    catch (e) { setFormError(msg(e, 'Could not join. Try again.')); }
+    finally { setBusy(false); }
   }
+
+  const newPwError = touched && password.length < 8 ? 'Password must be at least 8 characters' : '';
+  const confirmError = touched && confirm !== password ? 'Passwords do not match' : '';
+
+  const createAndJoin = () => {
+    setTouched(true);
+    if (password.length < 8 || confirm !== password) return;
+    void run(async () => {
+      const r = await apiAcceptWithNewPassword(token, password, name.trim() || undefined);
+      TokenStorage.save(r.token.accessToken, r.token.refreshToken);
+      TokenStorage.saveUser(r.user);
+      return r;
+    });
+  };
+  const signInAndJoin = () => {
+    setTouched(true);
+    if (!password) return;
+    void run(async () => {
+      const r = await apiAcceptWithExistingPassword(token, password);
+      TokenStorage.save(r.token.accessToken, r.token.refreshToken);
+      TokenStorage.saveUser(r.user);
+      return r;
+    });
+  };
 
   return (
     <div className="mx-auto max-w-[520px] px-4 py-14">
@@ -62,18 +97,38 @@ export function StoreInvitePage() {
           ) : info && (
             <div className="mt-3">
               <p className="text-[14px] text-charcoal leading-[1.6]">You are invited to help run <strong>{info.storeName}</strong> as <strong>{info.roleName}</strong>.</p>
-              <p className="mt-1 text-[12.5px] text-slate">Sent to {info.emailHint}. Sign in with that e-mail address to accept.</p>
+              <p className="mt-1 text-[12.5px] text-slate">Sent to {info.emailHint}.</p>
+
               {signedIn ? (
                 <>
-                  <Button className="mt-5" variant="primary" loading={accepting} onClick={accept}>Accept invitation</Button>
-                  {acceptError && <p role="alert" className="mt-3 text-[12.5px] text-error">{acceptError}</p>}
+                  <Button className="mt-5" variant="primary" loading={busy} onClick={() => run(() => apiAcceptInvite(token))}>Accept invitation</Button>
                 </>
+              ) : !info.hasAccount ? (
+                <form className="mt-5 flex flex-col gap-3 text-start" onSubmit={e => { e.preventDefault(); createAndJoin(); }} noValidate>
+                  <p className="text-[12.5px] text-slate leading-[1.6]">You do not have an Edudeen account yet. Choose a password to create it and join this store.</p>
+                  <Input label="Your name (optional)" value={name} onChange={e => setName(e.target.value)} maxLength={80} autoComplete="name" />
+                  <Input label="Password" type="password" value={password} onChange={e => setPassword(e.target.value)} maxLength={72} autoComplete="new-password" error={newPwError} />
+                  <Input label="Confirm password" type="password" value={confirm} onChange={e => setConfirm(e.target.value)} maxLength={72} autoComplete="new-password" error={confirmError} />
+                  <p className="text-[12px] text-slate">At least 8 characters.</p>
+                  <Button type="submit" variant="primary" loading={busy}>Create password and join</Button>
+                </form>
+              ) : info.hasPassword && info.accountVerified !== false ? (
+                <form className="mt-5 flex flex-col gap-3 text-start" onSubmit={e => { e.preventDefault(); signInAndJoin(); }} noValidate>
+                  <p className="text-[12.5px] text-slate leading-[1.6]">You already have an Edudeen account with this e-mail. Enter your usual password to join. You do not need a new password.</p>
+                  <Input label="Password" type="password" value={password} onChange={e => setPassword(e.target.value)} maxLength={72} autoComplete="current-password" error={touched && !password ? 'Enter your password' : ''} />
+                  <Button type="submit" variant="primary" loading={busy}>Sign in and join</Button>
+                  <div className="flex flex-wrap justify-between gap-2 text-[12.5px]">
+                    <Link to="/forgot-password" className="text-brand-royal underline">Forgot your password?</Link>
+                    <Link to={loginHref} className="text-brand-royal underline">Sign in another way</Link>
+                  </div>
+                </form>
               ) : (
-                <div className="mt-5 flex flex-col sm:flex-row gap-2 justify-center">
-                  <Button variant="primary" to={`/login?redirect=${encodeURIComponent(here)}`}>Sign in</Button>
-                  <Button variant="outline" onClick={() => { try { sessionStorage.setItem('afterAuthPath', here); } catch { /* storage blocked */ } window.location.assign('/register?role=user'); }}>Create an account</Button>
+                <div className="mt-5">
+                  <p className="text-[12.5px] text-slate leading-[1.6]">{info.hasPassword ? 'Please verify your account first, then come back to this invitation.' : 'This account signs in with Google or another method. Sign in, then accept the invitation.'}</p>
+                  <Button className="mt-4" variant="primary" to={loginHref}>Sign in</Button>
                 </div>
               )}
+              {formError && <p role="alert" className="mt-3 text-[12.5px] text-error">{formError}</p>}
             </div>
           )}
       </div>
