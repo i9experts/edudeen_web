@@ -642,6 +642,8 @@ export const ENDPOINTS = {
     COUNT:  '/api/banners/count',
     ADMIN_LIST: '/api/banners/admin/all',
     CREATE: '/api/banners',
+    CREATE_PRODUCTS: '/api/banners/products',
+    PREVIEW_PRODUCTS: '/api/banners/preview-products',
     UPLOAD: '/api/banners/upload',
     UPDATE: (id: string) => `/api/banners/${id}`,
     PAUSE:  (id: string) => `/api/banners/${id}/pause`,

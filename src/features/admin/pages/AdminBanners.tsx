@@ -1,7 +1,8 @@
 import { useUrlParam } from '@/hooks/useUrlParam';
 import { safeHttpUrl } from '@/utils/safeRedirect';
 import { useMemo, useState } from 'react';
-import { Plus, ImageIcon, ExternalLink, Pencil, Trash2, Pause, Play, AlertTriangle, CalendarClock, Radio } from 'lucide-react';
+import { Plus, ImageIcon, ExternalLink, Pencil, Trash2, Pause, Play, AlertTriangle, CalendarClock, Radio, Package } from 'lucide-react';
+import { ProductBannerSlide } from '@/components/comman/marketplace/ProductBannerSlide';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useAdminBanners, useBannerCount } from '@/hooks/admin/useAdminBanners';
 import {
@@ -117,7 +118,10 @@ export function AdminBanners() {
                 {[...liveByPlacement.entries()].map(([p, list]) => (
                   <div key={p} className="flex items-center gap-3 min-w-0">
                     <div className="flex -space-x-2 rtl:space-x-reverse shrink-0">
-                      {list.slice(0, 3).map(b => <img key={b._id} src={b.bannerImage} alt="" className="w-14 h-8 object-cover rounded border-2 border-white bg-cream" />)}
+                      {list.slice(0, 3).map(b => b.kind === 'products'
+                        ? <span key={b._id} className="w-14 h-8 flex items-center justify-center rounded border-2 border-white bg-brand-pale-orange text-brand-orange shrink-0"><Package size={13} /></span>
+                        : <img key={b._id} src={b.bannerImage} alt="" className="w-14 h-8 object-cover rounded border-2 border-white bg-cream" />,
+                      )}
                     </div>
                     <div className="min-w-0">
                       <p className="text-[12.5px] font-medium text-charcoal truncate">{PLACEMENT_LABEL[p] ?? p}</p>
@@ -169,8 +173,21 @@ export function AdminBanners() {
               const statusStyle = st.style;
               return (
                 <div key={b._id} className="bg-white border border-bone rounded-xl overflow-hidden flex flex-col transition-colors duration-200 hover:border-brand-orange/25">
-                  <div className="aspect-[16/9] bg-cream">
-                    <img loading="lazy" decoding="async" src={b.bannerImage} alt={b.title ?? ""} className="w-full h-full object-cover" />
+                  <div className="relative aspect-[16/9] bg-cream">
+                    {b.kind === 'products' ? (
+                      (b.products?.length ?? 0) > 0 ? (
+                        <div className="absolute inset-0 pointer-events-none">
+                          <ProductBannerSlide style={b.style ?? 'spotlight'} products={b.products!} endAt={b.endAt} title={b.title} />
+                        </div>
+                      ) : (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 text-slate">
+                          <Package size={20} />
+                          <span className="text-[11px]">No products selected yet</span>
+                        </div>
+                      )
+                    ) : (
+                      <img loading="lazy" decoding="async" src={b.bannerImage} alt={b.title ?? ""} className="w-full h-full object-cover" />
+                    )}
                   </div>
                   <div className="p-3 flex flex-col gap-2 flex-1">
                     {b.title && <p className="text-[13.5px] font-semibold text-charcoal m-0 truncate" title={b.title}>{b.title}</p>}
