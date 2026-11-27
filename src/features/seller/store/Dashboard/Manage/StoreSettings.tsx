@@ -134,9 +134,9 @@ function MobileStoreMenu({ active, onSelect }: { active: string; onSelect: (id: 
 }
 
 const PRODUCT_TYPE_LABELS: Record<ProductType, string> = {
-  physical_products:    'Books & School Supplies',
-  digital_downloads:    'Digital Learning Resources',
-  educational_resources:'Educational Resources',
+  physical_products:    'Physical products (we ship them)',
+  digital_downloads:    'Digital downloads',
+  educational_resources:'Both, plus teaching tools',
   services_bookings:    'Classes / Tutoring',
   subscriptions:        'Learning Subscriptions',
   // Retired (online-only marketplace) — kept only because the API enum still
@@ -724,7 +724,7 @@ export default function StoreSettings() {
             {/* Right column */}
             <div className="bg-white rounded-xl p-4 sm:p-6 border border-bone">
               <p className="text-[14px] font-semibold text-charcoal mb-2">Product Types</p>
-              <p className="text-[12px] text-slate mb-4">What kind of products will you sell?</p>
+              <p className="text-[12px] text-slate mb-4">How will your products reach buyers? This is the format, not the subject: you pick categories for each product.</p>
 
               <div className="flex flex-col gap-2.5">
                 {ALL_PRODUCT_TYPES.map(t => {
