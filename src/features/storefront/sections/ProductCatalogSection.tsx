@@ -21,6 +21,7 @@ import { ProductCoverFallback } from '@/components/comman/marketplace/ProductCov
 import { RatingLine } from '@/components/comman/marketplace/ResourceCard';
 import { classRangeLabel } from '@/constants/classLevels';
 import { storeCardPrice } from '../storeCardPrice';
+import { productImageFitClass } from '@/constants/imageFit';
 
 const SORT_OPTIONS = [
   { value: 'newest',     label: 'Newest'          },
@@ -38,14 +39,13 @@ const KIND_OPTIONS: { value: 'all' | NonNullable<PublicStoreProductsParams['kind
 
 // No photo (or a broken one) → the same designed name cover the homepage
 // cards use, instead of a bare box icon.
-function ProductImage({ src, alt }: { src: string; alt: string }) {
+function ProductImage({ src, alt, fit }: { src: string; alt: string; fit?: string | null }) {
   const [errored, setErrored] = useState(false);
   if (errored) return <ProductCoverFallback name={alt} size="lg" className="w-full h-full" />;
   return (
-    // object-fill: the whole picture is always visible (no crop) and fills the card's image area edge-to-edge (no gaps),
-    // so every card has the same image size whatever the photo's own aspect ratio.
+    // The seller picks per product: fill the card (crop edges) or show the whole photo (no crop, no stretching).
     <img loading="lazy" decoding="async" src={src} alt={alt} onError={() => setErrored(true)}
-      className="w-full h-full object-fill transition-transform duration-500 ease-out group-hover:scale-[1.03]" />
+      className={`w-full h-full bg-white ${productImageFitClass(fit)} transition-transform duration-500 ease-out group-hover:scale-[1.03]`} />
   );
 }
 
@@ -257,7 +257,7 @@ export function ProductCatalogSection({ settings }: { settings: ProductCatalogSe
                 <ProductCardShell key={p._id} onClick={() => toMain(`/product/${p.slug}`)} className="flex flex-col h-full">
                   <div className="absolute top-0 start-0 w-full h-[3px] scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300 z-[1]" style={{ background: cfg.primaryColor }} />
                   <ProductCardImage>
-                    {p.images?.[0] ? <ProductImage src={p.images[0]} alt={p.name} /> : <ProductCoverFallback name={p.name} size="lg" className="w-full h-full" />}
+                    {p.images?.[0] ? <ProductImage src={p.images[0]} alt={p.name} fit={p.imageFit} /> : <ProductCoverFallback name={p.name} size="lg" className="w-full h-full" />}
                     <button
                       onClick={e => { e.stopPropagation(); if (vId) toggleWishlist(p._id, vId); }}
                       disabled={!vId || wishlisting === vId}

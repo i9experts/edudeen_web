@@ -7,6 +7,7 @@ import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 import { formatPrice, formatItemPrice } from '@/utils/formatPrice';
 import { percentOff } from '@/utils/saleMath';
 import { memberPriceOf, usePremiumView } from './PremiumBits';
+import { productImageFitClassImportant } from '@/constants/imageFit';
 
 // ── Skeleton ──────────────────────────────────────────────────────────────────
 export function FlashSaleCardSkeleton() {
@@ -121,7 +122,7 @@ export function FlashSaleCard({ product, onClick, onAddToCart, isAdding, addToCa
           name={product.name}
           tags={product.tags}
           productType={product.productType ?? product.type}
-          className={clsx('absolute inset-0 w-full h-full !object-fill bg-white')}
+          className={clsx('absolute inset-0 w-full h-full bg-white', productImageFitClassImportant(product.imageFit))}
         />
 
         {/* Category badge — compact, opaque (no blur/glass) */}

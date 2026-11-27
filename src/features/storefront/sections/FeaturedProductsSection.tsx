@@ -11,6 +11,7 @@ import { useStorefront, useStorefrontPaths } from '../StorefrontContext';
 import { ProductCardShell, ProductCardImage } from '../ProductCard';
 import { ProductCoverFallback } from '@/components/comman/marketplace/ProductCoverFallback';
 import { sendHighlightClick, type HighlightRow } from '@/utils/visitTracking';
+import { productImageFitClass } from '@/constants/imageFit';
 
 export interface FeaturedProductsSectionSettings {
   heading?:      string;
@@ -97,7 +98,7 @@ export function ProductStrip({ heading, products, row }: { heading?: string; pro
               <div className="relative p-2">
                 <ProductCardImage>
                   {p.images?.[0]
-                    ? <ProductImage images={p.images} name={p.name} className="w-full h-full object-cover" />
+                    ? <ProductImage images={p.images} name={p.name} className={`w-full h-full bg-white ${productImageFitClass(p.imageFit)}`} />
                     : <ProductCoverFallback name={p.name} size="sm" className="w-full h-full" />}
                 </ProductCardImage>
                 <span className={`absolute top-3 start-3 px-[6px] py-[1px] rounded-[4px] text-[12px] font-semibold border ${isDigital ? 'bg-accent-violet-bg text-accent-violet border-accent-violet/25' : 'bg-[#edf5e7] text-[#3b6720] border-[#c7e0b5]'}`}>

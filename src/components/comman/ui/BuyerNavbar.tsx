@@ -29,6 +29,7 @@ import { useSellEntry } from '@/hooks/auth/useSellEntry';
 import { useHasSellerAccount } from '@/hooks/auth/useSellerAccount';
 import { isBuyerSession } from '@/hooks/auth/useIsBuyer';
 import { VoiceSearchButton } from '@/components/ai/VoiceSearchButton';
+import { productImageFitClass } from '@/constants/imageFit';
 
 export interface BuyerNavbarSearchConfig {
   value: string;
@@ -216,7 +217,7 @@ function RecommendedProductRow({ product, categoryName, query, onClick }: { prod
       className="group w-full flex items-center gap-3 px-2 py-2 rounded-xl bg-transparent border-none text-start cursor-pointer transition-colors duration-150 hover:bg-cream focus-visible:outline-none focus-visible:bg-cream"
     >
       <span className="w-14 h-14 rounded-[10px] overflow-hidden shrink-0 bg-brand-pale-orange">
-        <ProductImage images={product.images ?? []} name={product.name} className="w-full h-full object-cover" />
+        <ProductImage images={product.images ?? []} name={product.name} className={`w-full h-full bg-white ${productImageFitClass(product.imageFit)}`} />
       </span>
       <div className="flex-1 min-w-0">
         <p className="text-[12.5px] font-semibold text-carbon leading-snug line-clamp-1 group-hover:text-brand-deep-orange transition-colors">

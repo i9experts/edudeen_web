@@ -238,7 +238,7 @@ export interface PreviewData {
   name: string; images: string[]; price: string; compareAtPrice: string; currency?: string | null;
   productType: 'physical' | 'digital'; deliveryFormat?: 'download' | 'course';
   premiumPercent: number;
-  ageMin?: string; ageMax?: string; classFrom?: string; classTo?: string; coverStyle?: 'book' | 'flat'; storeName?: string | null;
+  ageMin?: string; ageMax?: string; classFrom?: string; classTo?: string; coverStyle?: 'book' | 'flat'; imageFit?: 'cover' | 'contain'; storeName?: string | null;
 }
 
 function PreviewCard({ d }: { d: PreviewData }) {
@@ -251,7 +251,7 @@ function PreviewCard({ d }: { d: PreviewData }) {
       deliveryFormat: d.productType === 'physical' ? undefined : d.deliveryFormat,
       ageMin: d.ageMin ? Number(d.ageMin) : null, ageMax: d.ageMax ? Number(d.ageMax) : null,
       classFrom: d.classFrom || d.classTo || null, classTo: d.classTo || d.classFrom || null,
-      coverStyle: d.coverStyle, storeName: d.storeName ?? null, premiumPercent: d.premiumPercent > 0 ? d.premiumPercent : undefined,
+      coverStyle: d.coverStyle, imageFit: d.imageFit, storeName: d.storeName ?? null, premiumPercent: d.premiumPercent > 0 ? d.premiumPercent : undefined,
       variants: [{ _id: 'preview', isDefault: true, price, compareAtPrice: cmp > price ? cmp : null, currency: d.currency ?? undefined }],
       averageRating: 0, totalRatings: 0, status: 'active', isDelete: false,
     } as unknown as MarketplaceProduct;

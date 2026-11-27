@@ -8,7 +8,7 @@ import type { AttributeDefinition } from '@/api/services/attributes';
 import { ProductPhotosUploader } from './ProductPhotosUploader';
 import { ProductVideoField } from './ProductVideoField';
 import {
-  LearningFields, CoverStyleField, LicenseTiersField, DeliverableFilesField, SampleFileField,
+  LearningFields, CoverStyleField, ImageFitField, LicenseTiersField, DeliverableFilesField, SampleFileField,
   type LearningValue,
 } from '@/features/seller/components/products/LearningFields';
 import { DeliveryFormatField, type DeliveryState } from '@/features/seller/components/products/DeliveryFormatField';
@@ -189,7 +189,10 @@ export function ProductFormSteps(p: ProductFormStepsProps) {
       <StepPanel active={step === 1}>
         {banner(1)}
         <Block id="fld-photos" title="Photos" need="required" hint="At least 1 image to publish (a draft can be saved without one). Up to 20 images - select several at once. The first image is the cover buyers see in search and on your shelf.">
-          <ProductPhotosUploader value={cur.images} onChange={urls => set('images', urls)} />
+          <ProductPhotosUploader value={cur.images} onChange={urls => set('images', urls)} fit={p.learning.imageFit} />
+          <div className="mt-4">
+            <ImageFitField value={p.learning.imageFit} onChange={v => p.setLearning({ ...p.learning, imageFit: v })} previewUrl={cur.images[0]} />
+          </div>
           {/* Non-blocking: one picture only. */}
           {singleImageWarning(cur.images.length) && (
             <p role="status" className="text-[12.5px] text-[#8a6100] bg-[#fff6d6] border border-[#f1d98a] rounded-lg px-3 py-2 mt-3 mb-0">{singleImageWarning(cur.images.length)}</p>

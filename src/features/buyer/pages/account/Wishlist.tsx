@@ -10,8 +10,9 @@ import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 import { formatPrice } from '@/utils/formatPrice';
 import { ShareSavedControl } from './ShareSavedControl';
 import { WishlistAlertsToggle } from './WishlistAlertsToggle';
+import { productImageFitClass } from '@/constants/imageFit';
 
-function WishlistImg({ images, name }: { images?: string[]; name: string }) {
+function WishlistImg({ images, name, fit }: { images?: string[]; name: string; fit?: string | null }) {
   const [err, setErr] = useState(false);
   const src = images?.[0];
   if (!src || err) {
@@ -19,7 +20,7 @@ function WishlistImg({ images, name }: { images?: string[]; name: string }) {
   }
   return (
     <img loading="lazy" decoding="async" src={src} alt={name} onError={() => setErr(true)}
-      className="w-[84px] h-[84px] rounded-[12px] object-cover shrink-0 border border-[#edebe2]" />
+      className={`w-[84px] h-[84px] rounded-[12px] shrink-0 border border-[#edebe2] bg-white ${productImageFitClass(fit)}`} />
   );
 }
 
@@ -137,7 +138,7 @@ export function Wishlist() {
                 isRemoving && 'opacity-40',
               )}
             >
-              <WishlistImg images={p.images ?? []} name={p.name} />
+              <WishlistImg images={p.images ?? []} name={p.name} fit={p.imageFit} />
 
               <div className="flex-1 min-w-0 flex flex-col gap-[7px]">
                 <p

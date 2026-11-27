@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ChangeEvent, type DragEvent } from 'r
 import { AlertCircle, ArrowLeft, ArrowRight, Loader2, Star, UploadCloud, X } from 'lucide-react';
 import { apiUploadPublicFile } from '@/api/upload';
 import { safeHttpUrl } from '@/utils/safeRedirect';
+import { productImageFitClass } from '@/constants/imageFit';
 
 export const MAX_PRODUCT_PHOTOS = 20;
 const CONCURRENCY = 3;
@@ -16,7 +17,7 @@ interface Pending { id: string; name: string; preview: string; status: 'queued' 
  * Uploads run a few at a time through the existing public upload endpoint; finished URLs are appended to `value`.
  * Reorder with the arrows, "Make cover" moves a photo to the first position (the cover buyers see).
  */
-export function ProductPhotosUploader({ value, onChange, max = MAX_PRODUCT_PHOTOS }: { value: string[]; onChange: (urls: string[]) => void; max?: number }) {
+export function ProductPhotosUploader({ value, onChange, max = MAX_PRODUCT_PHOTOS, fit }: { value: string[]; onChange: (urls: string[]) => void; max?: number; fit?: string | null }) {
   const [items, setItems] = useState<Pending[]>([]);
   const [notice, setNotice] = useState('');
   const [drag, setDrag] = useState(false);
@@ -173,7 +174,7 @@ export function ProductPhotosUploader({ value, onChange, max = MAX_PRODUCT_PHOTO
         <ul className="list-none p-0 m-0 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2.5">
           {value.map((url, i) => (
             <li key={`${url}-${i}`} className="relative rounded-lg overflow-hidden border border-bone bg-white">
-              <img loading="lazy" decoding="async" src={url} alt={`Photo ${i + 1}`} className="w-full aspect-square object-cover" />
+              <img loading="lazy" decoding="async" src={url} alt={`Photo ${i + 1}`} className={`w-full aspect-square bg-cream ${productImageFitClass(fit)}`} />
               {i === 0 && <span className="absolute top-1 start-1 text-[12px] font-bold bg-brand-orange text-white rounded px-1.5 py-[1px]">Cover</span>}
               <button type="button" aria-label={`Remove photo ${i + 1}`} onClick={() => remove(i)} className="absolute top-1 end-1 size-6 rounded-full bg-black/65 text-white flex items-center justify-center border-none cursor-pointer"><X size={12} /></button>
               <div className="flex items-center justify-between gap-1 px-1 py-1 border-t border-bone">

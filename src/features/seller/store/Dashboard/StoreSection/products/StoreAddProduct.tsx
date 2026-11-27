@@ -403,7 +403,7 @@ export default function StoreAddProduct() {
       name: cur.name, images: cur.images, price: cur.price, compareAtPrice: cur.compareAtPrice, currency: store?.baseCurrency,
       productType: pType, deliveryFormat: delivery.format,
       premiumPercent: campaignIds.length ? 0 : effectiveSellerPercent(premiumPct, storePremiumPct, premiumOptOut),
-      ageMin: learning.ageMin, ageMax: learning.ageMax, classFrom: learning.classFrom, classTo: learning.classTo, coverStyle: learning.coverStyle || undefined, storeName: store?.name,
+      ageMin: learning.ageMin, ageMax: learning.ageMax, classFrom: learning.classFrom, classTo: learning.classTo, coverStyle: learning.coverStyle || undefined, imageFit: learning.imageFit, storeName: store?.name,
     };
   }
 }

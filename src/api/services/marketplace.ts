@@ -146,6 +146,8 @@ export interface MarketplaceProduct {
   isBestseller?:     boolean;
   /** 'flat' = plain photo card (toys etc.); anything else = book-cover look. */
   coverStyle?:       'book' | 'flat' | null;
+  /** 'contain' = show the whole photo in tiles (landscape/square shots); default 'cover'. */
+  imageFit?:         'cover' | 'contain' | null;
   deliveryFormat?:   'download' | 'course';
   /** Online courses: lesson count and total minutes. */
   courseSummary?:    { lessonCount: number; totalMinutes: number } | null;
