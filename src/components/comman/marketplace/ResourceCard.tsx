@@ -337,11 +337,11 @@ export const ResourceCard = memo(function ResourceCard({
           <div className="mt-1"><BoardChipSlot product={product} reserve={false} /></div>
           <TrustBadges trust={product.trust} className="mt-1.5" />
           <div className="flex items-center gap-2 flex-wrap mt-auto pt-3">
-            <strong className={clsx('num text-[16px] sm:text-[18px]', member ? 'text-[#8a6100]' : was ? 'text-error' : 'text-carbon')}>
+            <strong className={clsx('num whitespace-nowrap text-[16px] sm:text-[18px]', member ? 'text-[#8a6100]' : was ? 'text-error' : 'text-carbon')}>
               {rawPrice === 0 ? 'Free' : fmt(member ? member.price : price)}
             </strong>
-            {member && <s className="text-[12.5px] text-slate">{fmt(member.list ?? price)}</s>}
-            {!member && was && rawPrice > 0 && <s className="text-[12.5px] text-slate" aria-label={`Was ${fmt(was)}`}>{fmt(was)}</s>}
+            {member && <s className="whitespace-nowrap text-[12.5px] text-slate">{fmt(member.list ?? price)}</s>}
+            {!member && was && rawPrice > 0 && <s className="whitespace-nowrap text-[12.5px] text-slate" aria-label={`Was ${fmt(was)}`}>{fmt(was)}</s>}
             {/* ONE % badge per card: the sale badge. The "Get Premium to save X%" teaser lives on the product page and cart only. */}
             {member && <PremiumChip percent={member.percent} />}
             {badge && <SaleBadge label={badge} />}
@@ -406,12 +406,12 @@ export const ResourceCard = memo(function ResourceCard({
       {/* Phones (2 narrow columns): price on its own line, then type chip + cart button; sm+: one row. */}
       <div className="flex flex-col gap-1.5 mt-1.5 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
         <span className="flex items-baseline gap-x-1.5 min-w-0 flex-wrap">
-          <strong className={clsx('num text-[14px] sm:text-[15px] font-semibold', member ? 'text-[#8a6100]' : 'text-carbon')}>
+          <strong className={clsx('num whitespace-nowrap text-[14px] sm:text-[15px] font-semibold', member ? 'text-[#8a6100]' : 'text-carbon')}>
             {rawPrice === 0 ? 'Free' : fmt(member ? member.price : price)}
           </strong>
-          {member && <s className="text-[12px] text-slate">{fmt(member.list ?? price)}</s>}
+          {member && <s className="whitespace-nowrap text-[12px] text-slate">{fmt(member.list ?? price)}</s>}
           {!member && was && rawPrice > 0 && (
-            <s className="text-[12px] text-slate" aria-label={`Was ${fmt(was)}`}>{fmt(was)}</s>
+            <s className="whitespace-nowrap text-[12px] text-slate" aria-label={`Was ${fmt(was)}`}>{fmt(was)}</s>
           )}
         </span>
         <span className="flex items-center justify-between gap-1.5 sm:justify-end sm:shrink-0">
