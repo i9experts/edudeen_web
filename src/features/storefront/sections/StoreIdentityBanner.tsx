@@ -115,7 +115,10 @@ export function StoreIdentityBanner({ store, flags, total, primaryColor, backgro
   return (
     <CoverImage
       className={clsx(
-        'flex',
+        // aspect-[4/1] matches the recommended 1600x400 banner upload: past the min-height floor
+        // (narrow/phone widths) it keeps the container's crop ratio locked to the image's own, so a
+        // wide desktop page never crops more off the top/bottom than the editor's own preview shows.
+        'flex aspect-[4/1]',
         bannerLayout === 'compact' ? 'min-h-[150px] sm:min-h-[180px] items-end' :
         bannerLayout === 'immersive' ? 'min-h-[320px] sm:min-h-[380px] lg:min-h-[440px] items-center' :
         'min-h-[210px] sm:min-h-[240px] lg:min-h-[270px] items-end',
