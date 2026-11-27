@@ -447,7 +447,6 @@ const mainRouter = createBrowserRouter([
           { path: 'bundles',                          element: <StorePathTabs tabs={CATALOG_TABS} /> },
           { path: 'plan-billing',                     element: <ActAsLocked what="Plan & Billing"><StorePlanBilling /></ActAsLocked> },
           { path: 'plan-expired',                     element: <ActAsLocked what="Plan & Billing"><StorePlanExpired /></ActAsLocked> },
-          { path: 'verification',                     element: <Navigate to="../dashboard" replace /> }, // old links (business verification was removed)
           { path: 'storebuilder',                     element: <StorePageOverview /> },
           { path: 'returns',                          element: <StoreReturnList /> },
           { path: 'seo',                              element: <StoreSEO /> },
