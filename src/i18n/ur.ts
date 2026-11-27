@@ -1360,6 +1360,7 @@ export const UR: Record<string, string> = {
   'Pages': 'صفحات',
   'Previous page': 'پچھلا صفحہ',
   'Next page': 'اگلا صفحہ',
+  'Go to page': 'صفحے پر جائیں',
   'Tell us why…': 'ہمیں وجہ بتائیں…',
   'Return': 'واپسی',
   'Unpaid': 'غیر ادا شدہ',
@@ -2847,6 +2848,7 @@ const urOr = (s: string) => UR[s] ?? s;
 
 /** Strings with numbers or names in them — `m` is the RegExp match. */
 export const UR_PATTERNS: [RegExp, (m: RegExpMatchArray) => string][] = [
+  [/^Page (\d+) of (\d+)$/, m => `صفحہ ${m[1]} از ${m[2]}`],
   // Store team: profile-menu line for a store the person was invited to.
   [/^Open as (.+)$/, m => `${({ Manager: 'مینیجر', 'Product editor': 'پروڈکٹ ایڈیٹر', 'Order handler': 'آرڈر ہینڈلر', Support: 'سپورٹ', Viewer: 'ناظر' } as Record<string, string>)[m[1]] ?? m[1]} کے طور پر کھولیں`],
   [/^Returnable within (\d+) days? of delivery\.$/, m => `ڈیلیوری کے ${m[1]} دن کے اندر واپسی ممکن`],
