@@ -14,7 +14,7 @@ import { suggestCoverStyle } from '@/constants/coverStyle';
 import { currencySymbol as symbolForCurrency } from '@/utils/currency';
 import { CLASS_LEVELS } from '@/constants/classLevels';
 import { EMPTY_DELIVERY, deliveryPayload } from '@/features/seller/components/products/DeliveryFormatField';
-import { learningPayload } from '@/features/seller/components/products/LearningFields';
+import { learningPayload, SeriesSelect } from '@/features/seller/components/products/LearningFields';
 import { ProductPhotosUploader } from './ProductPhotosUploader';
 import { usePremiumTerms } from './PremiumEarningsCalculator';
 import { effectiveSellerPercent, validatePrices, toggleRemember, weightError, weightToStored, type PremiumConflict, type WeightUnit } from './priceRules';
@@ -22,7 +22,7 @@ import { timeAgo, useDraftAutosave, useLeaveGuard } from './ProductWizard';
 import { inp } from './ProductFormKit';
 import {
   DOC_EXTENSIONS, MAX_BULK_FILES, MAX_BULK_PHOTOS, MAX_DOC_BYTES, MAX_PHOTO_BYTES, MAX_ROW_PHOTOS, PHOTO_EXTENSIONS,
-  ageRangeError, baseOf, blankRow, rowWarnings, duplicateTitles, extOf, filledGroups, findPhotoMatches, groupsFor, isDocName, isPhotoName, newId, normalizeRow, rowIssue, rowPremiumConflict,
+  ageRangeError, seriesOrderError, baseOf, blankRow, rowWarnings, duplicateTitles, extOf, filledGroups, findPhotoMatches, groupsFor, isDocName, isPhotoName, newId, normalizeRow, rowIssue, rowPremiumConflict,
   titleFromFileName,
   type RowContext, type BulkRow, type BulkType, type DetailGroup, type TrayPhoto,
 } from './bulkUtils';
@@ -418,7 +418,8 @@ export default function StoreBulkUpload() {
         images: r.images, tags: r.tags,
         isListedOnEdudeen: true, status: (mode === 'publish' ? 'active' : 'draft') as 'active' | 'draft',
         ...learningPayload({
-          curricula: [], ageMin: r.ageMin.trim(), ageMax: r.ageMax.trim(), classFrom: r.classFrom, classTo: r.classTo,
+          curricula: [], ageMin: r.ageMin.trim(), ageMax: r.ageMax.trim(),
+          series: type === 'physical' ? r.series.trim() : '', seriesOrder: type === 'physical' && r.series.trim() ? r.seriesOrder.trim() : '', classFrom: r.classFrom, classTo: r.classTo,
           // Files are printed-material style; physical items follow their category (toys etc. = flat), default flat.
           coverStyle: type === 'physical'
             ? (suggestCoverStyle([categories.find(c => c._id === r.categoryId)?.name]) ?? 'flat')
@@ -820,6 +821,7 @@ export default function StoreBulkUpload() {
       {detail && detailRow && (
         <DetailModal
           key={`${detail.rowId}-${detail.group}`} row={detailRow} group={detail.group} type={type} currency={currency} currencyCode={store?.baseCurrency} tray={tray.filter(t => t.state === 'done')}
+          seriesOptions={store?.productSeries ?? []} seriesSettingsHref={storeId ? `/store/${storeId}/settings` : undefined}
           onClose={() => setDetail(null)} onPatch={p => { setApplyUndo(null); patchRow(detail.rowId, p); }} onAssign={pid => assignPhoto(detail.rowId, pid)}
         />
       )}
@@ -862,24 +864,27 @@ function DetailsMenu({ row, type, onOpen, disabled }: { row: BulkRow; type: Bulk
 
 const CHIP_LABEL = (g: DetailGroup, r: BulkRow) => ({
   price: 'Compare-at', download: 'Download settings', inventory: 'SKU',
+  series: r.series.trim() ? `Series: ${r.series.trim()}${r.seriesOrder.trim() ? ` #${r.seriesOrder.trim()}` : ''}` : 'Series',
   age: `Ages ${r.ageMin.trim() || '0'}${r.ageMax.trim() ? `–${r.ageMax.trim()}` : '+'}`,
   photos: `${r.images.length} photo${r.images.length === 1 ? '' : 's'}`, tags: `${r.tags.length} tag${r.tags.length === 1 ? '' : 's'}`,
 }[g]);
 
 // ── Modal that edits one optional group ───────────────────────────────────────────────────────
-function DetailModal({ row, group, type, currency, currencyCode, tray, onClose, onPatch, onAssign }: {
+function DetailModal({ row, group, type, currency, currencyCode, tray, seriesOptions, seriesSettingsHref, onClose, onPatch, onAssign }: {
   row: BulkRow; group: DetailGroup; type: BulkType; currency: string; currencyCode?: string | null; tray: TrayPhoto[];
+  seriesOptions: string[]; seriesSettingsHref?: string;
   onClose: () => void; onPatch: (p: Partial<BulkRow>) => void; onAssign: (photoId: string) => void;
 }) {
   const [d, setD] = useState({
     compareAt: row.compareAt, classFrom: row.classFrom, classTo: row.classTo, tags: row.tags, tagInput: '',
-    sku: row.sku, ageMin: row.ageMin, ageMax: row.ageMax,
+    sku: row.sku, ageMin: row.ageMin, ageMax: row.ageMax, series: row.series, seriesOrder: row.seriesOrder,
     downloadLimit: row.downloadLimit === 'unlimited' ? '' : row.downloadLimit, linkExpiryDays: row.linkExpiryDays, buyerMessage: row.buyerMessage,
   });
   const label = groupsFor(type).find(g => g.key === group)?.label ?? 'Details';
   const err = (() => {
     if (group === 'price' && d.compareAt.trim()) { const c = validatePrices({ price: row.free ? '0' : row.price, compareAt: d.compareAt, currency: currencyCode, free: row.free }).compareAt; if (c) return c; }
     if (group === 'age') { const a = ageRangeError(d.ageMin, d.ageMax); if (a) return a; }
+    if (group === 'series' && d.series.trim()) { const s = seriesOrderError(d.seriesOrder); if (s) return s; }
     if (group === 'download' && d.downloadLimit.trim() && !(Number.isInteger(Number(d.downloadLimit)) && Number(d.downloadLimit) >= 1)) return 'Download limit must be a whole number, or leave it empty for unlimited.';
     if (group === 'download' && d.linkExpiryDays.trim() && !(Number.isInteger(Number(d.linkExpiryDays)) && Number(d.linkExpiryDays) >= 1)) return 'Link expiry must be a whole number of days.';
     return '';
@@ -898,6 +903,7 @@ function DetailModal({ row, group, type, currency, currencyCode, tray, onClose, 
     }
     if (group === 'inventory') onPatch({ sku: d.sku.trim() });
     if (group === 'age') onPatch({ ageMin: d.ageMin.trim(), ageMax: d.ageMax.trim() });
+    if (group === 'series') onPatch({ series: d.series.trim(), seriesOrder: d.series.trim() ? d.seriesOrder.trim() : '' });
     if (group === 'download') onPatch({ downloadLimit: d.downloadLimit.trim() || 'unlimited', linkExpiryDays: d.linkExpiryDays.trim(), buyerMessage: d.buyerMessage.trim() });
     onClose();
   };
@@ -933,6 +939,17 @@ function DetailModal({ row, group, type, currency, currencyCode, tray, onClose, 
               </div>
             )}
             {baseOf(row.fileName) && <p className="m-0 text-[12px] text-slate">Tip: a photo named <b>{baseOf(row.fileName)}.jpg</b> dropped on the page attaches itself.</p>}
+          </>
+        )}
+        {group === 'series' && (
+          <>
+            <SeriesSelect id="dm-series" value={d.series} options={seriesOptions} settingsHref={seriesSettingsHref} onChange={s => setD(x => ({ ...x, series: s, seriesOrder: s ? x.seriesOrder : '' }))} />
+            {d.series.trim() !== '' && (
+              <div>
+                <label htmlFor="dm-series-order" className={lab}>Position in series</label>
+                <input id="dm-series-order" type="number" min={1} max={999} step={1} inputMode="numeric" placeholder="e.g. 2" className={inp} value={d.seriesOrder} onChange={e => setD(x => ({ ...x, seriesOrder: e.target.value }))} />
+              </div>
+            )}
           </>
         )}
         {group === 'age' && (

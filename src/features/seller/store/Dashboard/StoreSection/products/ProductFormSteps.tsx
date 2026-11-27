@@ -374,7 +374,8 @@ export function ProductFormSteps(p: ProductFormStepsProps) {
         )}
 
         <Block id="fld-learning" title="Who it's for" need={classRangeRequired(isDigitalFamily ? 'digital' : 'physical') ? 'required' : 'optional'} hint="Boards, ages and class range help the right buyers find this.">
-          <LearningFields value={p.learning} onChange={p.setLearning} classRequired={isDigitalFamily} classWarning={titleClassConflict(cur.name, p.learning.classFrom, p.learning.classTo)} bookCategory={isBookListing} />
+          <LearningFields value={p.learning} onChange={p.setLearning} classRequired={isDigitalFamily} classWarning={titleClassConflict(cur.name, p.learning.classFrom, p.learning.classTo)} bookCategory={isBookListing}
+            showSeries={!isDigitalFamily} seriesOptions={p.store?.productSeries ?? []} seriesSettingsHref={p.store?._id ? `/store/${p.store._id}/settings` : undefined} />
         </Block>
 
         {(p.attrs.loading || p.attrs.defs.length > 0) && (

@@ -101,10 +101,33 @@ export function learningError(v: LearningValue): string | null {
 }
 
 /** True when any book detail already has a value (so an old listing never hides what it has). */
-const hasBookDetails = (v: LearningValue) => !!(v.author || v.publisher || v.edition || v.pages || v.isbn || v.binding || v.series);
+const hasBookDetails = (v: LearningValue) => !!(v.author || v.publisher || v.edition || v.pages || v.isbn || v.binding);
 
-export function LearningFields({ value, onChange, classRequired = false, classWarning = null, bookCategory = false }: { value: LearningValue; onChange: (v: LearningValue) => void; /** Digital products need a class range to be published. */ classRequired?: boolean; /** Non-blocking message when the title and the class range disagree. */ classWarning?: string | null; /** Book categories only: the book-details block is shown for these (or when a value already exists). */ bookCategory?: boolean }) {
+/**
+ * Series dropdown fed by the store's own list (Store settings -> Product series). A series already saved on the product
+ * but missing from the list stays selectable, so an old product never loses it.
+ */
+export function SeriesSelect({ id, value, options, settingsHref, onChange }: { id: string; value: string; options: string[]; settingsHref?: string; onChange: (series: string) => void }) {
+  const list = value && !options.includes(value) ? [value, ...options] : options;
+  return (
+    <div>
+      <label htmlFor={id} className="block text-[12px] font-semibold text-graphite mb-1">Series (optional)</label>
+      <select id={id} value={value} onChange={e => onChange(e.target.value)} className={inp}>
+        <option value="">No series</option>
+        {list.map(s => <option key={s} value={s}>{s}</option>)}
+      </select>
+      {options.length === 0 && (
+        <p className="text-[12px] text-slate mt-1 mb-0">
+          No series yet.{settingsHref ? <> <a href={settingsHref} target="_blank" rel="noreferrer" className="font-semibold text-brand-royal">Add series in Store settings</a>, then reload this list.</> : ' Add series in Store settings.'}
+        </p>
+      )}
+    </div>
+  );
+}
+
+export function LearningFields({ value, onChange, classRequired = false, classWarning = null, bookCategory = false, seriesOptions, seriesSettingsHref, showSeries = false }: { value: LearningValue; onChange: (v: LearningValue) => void; /** Store's series names for the dropdown. */ seriesOptions?: string[]; /** Link to the Store settings card where series are added. */ seriesSettingsHref?: string; /** Always show the Series block (physical products). It also shows for books and when the product already has a series. */ showSeries?: boolean; /** Digital products need a class range to be published. */ classRequired?: boolean; /** Non-blocking message when the title and the class range disagree. */ classWarning?: string | null; /** Book categories only: the book-details block is shown for these (or when a value already exists). */ bookCategory?: boolean }) {
   const showBook = bookCategory || value.coverStyle === 'book' || hasBookDetails(value);
+  const showSeriesBlock = showSeries || showBook || !!(value.series ?? '').trim();
   const isbnMsg = isbnError(value.isbn);
   const pagesMsg = pagesError(value.pages);
   const toggle = (c: string) => onChange({
@@ -201,14 +224,19 @@ export function LearningFields({ value, onChange, classRequired = false, classWa
               {BINDINGS.map(b => <option key={b.value} value={b.value}>{b.label}</option>)}
             </select>
           </div>
-          <div>
-            <label htmlFor="lf-series" className="block text-[12px] font-semibold text-graphite mb-1">Series (optional)</label>
-            <input id="lf-series" type="text" maxLength={80} placeholder="e.g. Maths Workbook" value={value.series ?? ''} onChange={e => onChange({ ...value, series: e.target.value })} className={inp} />
-          </div>
-          <div>
-            <label htmlFor="lf-series-order" className="block text-[12px] font-semibold text-graphite mb-1">Position in series</label>
-            <input id="lf-series-order" type="number" min={1} max={999} step={1} inputMode="numeric" placeholder="e.g. 2" value={value.seriesOrder ?? ''} onChange={e => onChange({ ...value, seriesOrder: e.target.value })} className={inp} />
-          </div>
+        </div>
+      </div>}
+      {showSeriesBlock && <div>
+        <span className={lbl}>Series</span>
+        <p className="text-[12px] text-slate -mt-1 mb-2">Optional. Pick the series this product belongs to; buyers see the whole series together.</p>
+        <div className="grid gap-3 sm:grid-cols-2 max-w-[560px]">
+          <SeriesSelect id="lf-series" value={value.series ?? ''} options={seriesOptions ?? []} settingsHref={seriesSettingsHref} onChange={s => onChange({ ...value, series: s, ...(s ? {} : { seriesOrder: '' }) })} />
+          {(value.series ?? '').trim() !== '' && (
+            <div>
+              <label htmlFor="lf-series-order" className="block text-[12px] font-semibold text-graphite mb-1">Position in series</label>
+              <input id="lf-series-order" type="number" min={1} max={999} step={1} inputMode="numeric" placeholder="e.g. 2" value={value.seriesOrder ?? ''} onChange={e => onChange({ ...value, seriesOrder: e.target.value })} className={inp} />
+            </div>
+          )}
         </div>
       </div>}
     </div>
