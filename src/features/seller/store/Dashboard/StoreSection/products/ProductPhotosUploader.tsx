@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ChangeEvent, type DragEvent } from 'react';
 import { AlertCircle, ArrowLeft, ArrowRight, Loader2, Star, UploadCloud, X } from 'lucide-react';
 import { apiUploadPublicFile } from '@/api/upload';
+import { safeHttpUrl } from '@/utils/safeRedirect';
 
 export const MAX_PRODUCT_PHOTOS = 20;
 const CONCURRENCY = 3;
@@ -113,6 +114,19 @@ export function ProductPhotosUploader({ value, onChange, max = MAX_PRODUCT_PHOTO
     onChange(next);
   };
   const remove = (i: number) => { setNotice(''); onChange(value.filter((_, idx) => idx !== i)); };
+  const [urlText, setUrlText] = useState('');
+  const [urlError, setUrlError] = useState('');
+  const addUrl = () => {
+    const raw = urlText.trim();
+    if (!raw) return;
+    const url = safeHttpUrl(raw);
+    if (!url) { setUrlError('Enter a valid link starting with https:// or http://'); return; }
+    if (valueRef.current.includes(url)) { setUrlError('This picture is already added.'); return; }
+    if (full) { setUrlError(`Only ${max} photos are allowed per product.`); return; }
+    onChange([...valueRef.current, url].slice(0, max));
+    setUrlText('');
+    setUrlError('');
+  };
   const retry = (it: Pending) => {
     started.current.delete(it.id);
     itemsRef.current = itemsRef.current.map(i => (i.id === it.id ? { ...i, status: 'queued', error: undefined } : i));
@@ -138,6 +152,22 @@ export function ProductPhotosUploader({ value, onChange, max = MAX_PRODUCT_PHOTO
         <p className="text-[12px] text-slate m-0" aria-live="polite">{total}/{max} photos · PNG, JPG or WebP, up to 10 MB each{full ? ' · limit reached' : ''}</p>
       </div>
       {notice && <p role="alert" className="text-[12px] text-error m-0">{notice}</p>}
+
+      <div className="flex flex-col gap-1">
+        <label htmlFor="photo-url-input" className="text-[12px] text-slate">Or paste a picture link (URL)</label>
+        <div className="flex gap-2">
+          <input
+            id="photo-url-input" type="url" inputMode="url" value={urlText} disabled={full} data-no-live-validate
+            onChange={e => { setUrlText(e.target.value); setUrlError(''); }}
+            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addUrl(); } }}
+            placeholder="https://example.com/picture.jpg"
+            aria-invalid={!!urlError}
+            className="flex-1 min-w-0 px-3 py-2 rounded-lg border border-bone text-[13px] bg-white disabled:opacity-50"
+          />
+          <button type="button" disabled={full || !urlText.trim()} onClick={addUrl} className="px-4 py-2 rounded-lg bg-brand-royal text-white text-[13px] font-semibold border-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">Add link</button>
+        </div>
+        {urlError && <p role="alert" className="text-[12px] text-error m-0">{urlError}</p>}
+      </div>
 
       {(value.length > 0 || items.length > 0) && (
         <ul className="list-none p-0 m-0 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2.5">
