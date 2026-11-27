@@ -403,8 +403,8 @@ export const ResourceCard = memo(function ResourceCard({
       <RatingLine rating={product.averageRating} count={product.totalRatings} showEmpty className="flex mb-1" />
       <BoardChipSlot product={product} reserve={false} />
       <TrustBadges trust={product.trust} className="mt-1" />
-      {/* Phones (2 narrow columns): price on its own line, then type chip + cart button; sm+: one row. */}
-      <div className="flex flex-col gap-1.5 mt-1.5 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
+      {/* Price on its own line, then type chip + cart button. Always stacked: grid cards stay narrow at every screen width. */}
+      <div className="flex flex-col gap-1.5 mt-1.5">
         <span className="flex items-baseline gap-x-1.5 min-w-0 flex-wrap">
           <strong className={clsx('num whitespace-nowrap text-[14px] sm:text-[15px] font-semibold', member ? 'text-[#8a6100]' : 'text-carbon')}>
             {rawPrice === 0 ? 'Free' : fmt(member ? member.price : price)}
@@ -414,7 +414,7 @@ export const ResourceCard = memo(function ResourceCard({
             <s className="whitespace-nowrap text-[12px] text-slate" aria-label={`Was ${fmt(was)}`}>{fmt(was)}</s>
           )}
         </span>
-        <span className="flex items-center justify-between gap-1.5 sm:justify-end sm:shrink-0">
+        <span className="flex items-center justify-between gap-1.5">
           <span className="text-[12px] sm:text-[12px] border border-[#dde5e8] px-[7px] py-[3px] rounded text-[#566773] shrink-0">
             {TYPE_LABEL[kind] ?? kind}
           </span>
