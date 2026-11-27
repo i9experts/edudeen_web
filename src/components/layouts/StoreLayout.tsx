@@ -9,7 +9,7 @@ import {
   Settings, Sparkles, ChevronLeft, ChevronRight,
   Megaphone, Star, Search, Wallet, Truck, Boxes, Palette,
   MessageSquare, FolderTree, Undo2, CreditCard,
-  HeartPulse, GraduationCap, Lock, MoreHorizontal, PanelLeftClose, Loader2, PanelLeftOpen, AlertTriangle, AlertCircle, XCircle, Clock, LogOut,
+  HeartPulse, GraduationCap, ShieldCheck, Lock, MoreHorizontal, PanelLeftClose, Loader2, PanelLeftOpen, AlertTriangle, AlertCircle, XCircle, Clock, LogOut,
 } from 'lucide-react';
 import { EdudeenIcon, EdudeenLogo } from '@/components/comman/ui/EdudeenLogo';
 import { apiGetStoreById, apiGetMyStores, type StoreData } from '@/api/services/store';
@@ -102,7 +102,14 @@ export const NAV: { group: string; items: NavItem[] }[] = [
     items: [
       // One page: balance, monthly statement, transactions, payout method.
       { id: 'earnings',     Icon: Wallet,     label: 'Earnings',       path: 'finance' },
+      { id: 'verification', Icon: ShieldCheck, label: 'Verification (KYC)', path: 'verification' },
       { id: 'plan-billing', Icon: CreditCard, label: 'Plan & Billing', path: 'plan-billing' },
+    ],
+  },
+  {
+    group: 'Learn',
+    items: [
+      { id: 'academy', Icon: GraduationCap, label: 'Edudeen Academy', path: 'academy' },
     ],
   },
   {

@@ -14,6 +14,7 @@ import { useSearchParams } from 'react-router-dom';
 import { EarningsStatement, StatementSkeleton } from './EarningsStatement';
 import { PayoutScheduleCard } from './PayoutScheduleCard';
 import { getActAsSession } from '@/utils/authCookie';
+import { KycPayoutNotice } from './KycPayoutNotice';
 import { EarningsHero, PayoutHistory, HowFeesWork, METHOD_LABEL, VIEW_FILTER, type EarningsView } from './EarningsParts';
 import {
   apiGetFinanceDashboard, apiGetFinanceTransactions, apiExportFinanceTransactions,
@@ -409,6 +410,7 @@ export function StoreFinance() {
           )
         ) : undefined}
       />
+      {!adminView && <KycPayoutNotice storeId={storeId} />}
       {methodsKnown && !hasDefault && !adminView && (
         <div className="px-4 md:px-8 pt-4">
           <div className="flex items-center gap-2 text-[12.5px] text-carbon bg-info-bg border border-[#bfdcf3] rounded-lg px-3 py-2">

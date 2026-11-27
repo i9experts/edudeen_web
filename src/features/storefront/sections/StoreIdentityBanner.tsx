@@ -21,7 +21,7 @@ function StoreBadges({ badges, sellerType }: { badges: string[]; sellerType: str
   if (safeBadges.includes('top_seller'))
     items.push({ label: 'Top Seller', icon: <Award size={10} />, cls: 'bg-amber-100 text-amber-700 border-amber-200' });
   if (safeBadges.includes('verified'))
-    items.push({ label: 'Verified', icon: <BadgeCheck size={10} />, cls: 'bg-blue-50 text-blue-600 border-blue-200' });
+    items.push({ label: 'Verified seller', icon: <BadgeCheck size={10} />, cls: 'bg-blue-50 text-blue-600 border-blue-200' });
   if (safeBadges.includes('featured'))
     items.push({ label: 'Featured', icon: <Star size={10} />, cls: 'bg-purple-50 text-purple-600 border-purple-200' });
 

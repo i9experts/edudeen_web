@@ -135,6 +135,9 @@ const CourseBuilderRedirect = lazy(() => import('@/features/seller/store/Dashboa
 const CourseStudents     = lazy(() => import('@/features/seller/store/Dashboard/StoreSection/products/CourseStudents'));
 const StoreNotifications = lazy(() => import('@/features/seller/store/Dashboard/Manage/StoreNotifications').then(m => ({ default: m.StoreNotifications })));
 const StoreHealthPage    = lazy(() => import('@/features/seller/store/Dashboard/Manage/StoreHealth').then(m => ({ default: m.StoreHealthPage })));
+const SellerVerification = lazy(() => import('@/features/seller/store/Dashboard/Manage/SellerVerification'));
+const SellerAcademy      = lazy(() => import('@/features/academy/SellerAcademy'));
+const SellerAcademyCourse = lazy(() => import('@/features/academy/SellerAcademyCourse'));
 const StoreStudents      = lazy(() => import('@/features/seller/store/Dashboard/StoreSection/customer/StoreStudents'));
 const StoreCustomerList  = lazy(() => import('@/features/seller/store/Dashboard/StoreSection/customer/CustomerList'));
 const StoreSettings      = lazy(() => import('@/features/seller/store/Dashboard/Manage/StoreSettings'));
@@ -184,6 +187,8 @@ const AdminCategories    = lazy(() => named(import('@/features/admin/pages/Admin
 const AdminPlatformPlans = lazy(() => named(import('@/features/admin/pages/AdminPlatformPlans'),                 'AdminPlatformPlans'));
 const AdminFinance       = lazy(() => named(import('@/features/admin/pages/AdminFinance'),                      'AdminFinance'));
 const AdminAnnouncements = lazy(() => named(import('@/features/admin/pages/AdminAnnouncements'),                'AdminAnnouncements'));
+const AdminSellerKyc     = lazy(() => named(import('@/features/admin/pages/AdminSellerKyc'),                    'AdminSellerKyc'));
+const AdminAcademy       = lazy(() => named(import('@/features/admin/pages/AdminAcademy'),                      'AdminAcademy'));
 const AdminHomeCards      = lazy(() => named(import('@/features/admin/pages/AdminHomeCards'),                     'AdminHomeCards'));
 const AdminBanners       = lazy(() => named(import('@/features/admin/pages/AdminBanners'),                       'AdminBanners'));
 const AdminFaqs          = lazy(() => named(import('@/features/admin/pages/AdminFaqs'),                          'AdminFaqs'));
@@ -406,6 +411,8 @@ const mainRouter = createBrowserRouter([
           { path: 'finance',       element: <SellerStoreRedirect to="finance" /> },
           { path: 'plan-billing',  element: <SellerStoreRedirect to="plan-billing" /> },
           { path: 'marketing',     element: <SellerStoreRedirect to="marketing" /> },
+          { path: 'academy',       element: <SellerStoreRedirect to="academy" /> },
+          { path: 'verification',  element: <SellerStoreRedirect to="verification" /> },
           { path: '*',             element: <SellerStoreRedirect /> },
         ],
       },
@@ -433,6 +440,8 @@ const mainRouter = createBrowserRouter([
           { path: 'account',                          element: <ActAsLocked what="Account settings"><SellerSettings /></ActAsLocked> },
           { path: 'notifications',                    element: <StoreNotifications /> },
           { path: 'health',                           element: <StoreHealthPage /> },
+          { path: 'academy',                          element: <SellerAcademy /> },
+          { path: 'academy/:slug',                    element: <SellerAcademyCourse /> },
           { path: 'categories',                       element: <StorePathTabs tabs={CATALOG_TABS} /> },
           { path: 'collections',                      element: <StorePathTabs tabs={CATALOG_TABS} /> },
           { path: 'bundles',                          element: <StorePathTabs tabs={CATALOG_TABS} /> },
@@ -446,6 +455,7 @@ const mainRouter = createBrowserRouter([
           { path: 'reviews',                          element: <StorePathTabs tabs={FEEDBACK_TABS} /> },
           { path: 'questions',                        element: <StorePathTabs tabs={FEEDBACK_TABS} /> },
           { path: 'finance',                          element: <ActAsLocked what="Earnings and payouts" blockKind="collaborator"><StoreFinance /></ActAsLocked> },
+          { path: 'verification',                     element: <ActAsLocked what="Identity verification"><SellerVerification /></ActAsLocked> },
           { path: 'inventory',                        element: <StoreInventory /> },
           { path: 'marketing',                        element: <StoreMarketing /> },
           { path: 'marketing/sale/:campaignId',       element: <StoreSaleApply /> },
@@ -483,9 +493,12 @@ const mainRouter = createBrowserRouter([
           { path: 'finance',      element: <RequireRole role="admin"><AdminFinance /></RequireRole> },
           { path: 'premium', element: <RequireRole role="admin"><AdminPremium /></RequireRole> },
           { path: 'manual-payments', element: <RequirePermission nav="manual-payments"><RequireRole role="admin"><AdminManualPayments /></RequireRole></RequirePermission> },
+          { path: 'seller-kyc',   element: <RequirePermission nav="seller-kyc"><RequireRole role="admin"><AdminSellerKyc /></RequireRole></RequirePermission> },
           { path: 'fx-settings', element: <RequirePermission nav="fx-settings"><RequireRole role="admin"><AdminFxSettings /></RequireRole></RequirePermission> },
           { path: 'commission-rules', element: <RequirePermission nav="finance"><RequireRole role="admin"><AdminCommissionRules /></RequireRole></RequirePermission> },
           { path: 'announcements',element: <RequirePermission nav="announcements"><RequireRole role="admin"><AdminAnnouncements /></RequireRole></RequirePermission> },
+          { path: 'academy',      element: <RequirePermission nav="academy"><RequireRole role="admin"><AdminAcademy /></RequireRole></RequirePermission> },
+          { path: 'academy/:courseId', element: <RequirePermission nav="academy"><RequireRole role="admin"><AdminAcademy /></RequireRole></RequirePermission> },
           { path: 'banners',      element: <RequirePermission nav="banners"><AdminBanners /></RequirePermission> },
       { path: 'home-cards',   element: <RequirePermission nav="home-cards"><AdminHomeCards /></RequirePermission> },
           { path: 'faqs',         element: <RequirePermission nav="faqs"><AdminFaqs /></RequirePermission> },

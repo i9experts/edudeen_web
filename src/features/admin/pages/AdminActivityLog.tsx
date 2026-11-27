@@ -23,7 +23,7 @@ const CATEGORY_COLOR: Record<AdminActivityCategory, BadgeColor> = {
   customers: 'green', settings: 'gray', security: 'red',
   loyalty: 'green', subscriptions: 'blue', platform_billing: 'orange',
   platform_plans: 'orange', seo: 'yellow', ai_studio: 'yellow',
-  announcements: 'gray', moderation: 'red', promotions: 'green',
+  announcements: 'gray', moderation: 'red', promotions: 'green', academy: 'blue',
 };
 
 function categoryLabel(c: string) {

@@ -20,7 +20,7 @@ import { Modal, Button, CopyIconButton } from '@/components/comman/ui';
 import { EdudeenLogo, EdudeenIcon } from '@/components/comman/ui/EdudeenLogo';
 import { PlatformTopBar } from '@/components/comman/ui/PlatformTopBar';
 import { MoreSheet } from '@/components/comman/ui/MoreSheet';
-import { MoreHorizontal, LayoutGrid } from 'lucide-react';
+import { MoreHorizontal, LayoutGrid, GraduationCap, ShieldCheck } from 'lucide-react';
 import { ReauthProvider } from '@/contexts/ReauthProvider';
 import { useLockPageScroll } from '@/hooks/useLockPageScroll';
 
@@ -53,6 +53,7 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { id: 'finance',       Icon: DollarSign,      label: 'Finance',         path: '/admin/finance'       },
   { id: 'monthly-payouts', Icon: CalendarCheck, label: 'Monthly Payouts', path: '/admin/finance?tab=monthly-payouts' },
   { id: 'manual-payments', Icon: Landmark,     label: 'Payment proofs',  path: '/admin/manual-payments' },
+  { id: 'seller-kyc',    Icon: ShieldCheck,     label: 'Seller KYC',      path: '/admin/seller-kyc'    },
   { id: 'fx-settings',   Icon: Coins,          label: 'FX Settings',     path: '/admin/fx-settings'   },
   { id: 'seo',           Icon: Search,          label: 'SEO',             path: '/admin/seo'           },
   { id: 'ai-studio',     Icon: Sparkles,        label: 'AI Studio',       path: '/admin/ai-studio'     },
@@ -61,6 +62,7 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { id: 'faqs',          Icon: HelpCircle,      label: 'FAQs',            path: '/admin/faqs'          },
   { id: 'testimonials',  Icon: Quote,           label: 'Testimonials',   path: '/admin/testimonials'  },
   { id: 'announcements', Icon: Bell,            label: 'Announcements',   path: '/admin/announcements' },
+  { id: 'academy',       Icon: GraduationCap,   label: 'Edudeen Academy', path: '/admin/academy' },
   { id: 'app-slides',    Icon: Smartphone,      label: 'App Intro Slides', path: '/admin/app-slides'  },
   { id: 'config',        Icon: Settings,        label: 'Platform Config', path: '/admin/config'        },
   { id: 'collaboration', Icon: Users,           label: 'Collaboration',   path: '/admin/collaboration' },
@@ -87,8 +89,8 @@ export const ADMIN_MODULES: AdminModule[] = [
   { id: 'commerce',  label: 'Commerce',             Icon: Store,           ids: ['orders', 'marketplace', 'categories', 'refunds', 'shipping-zones', 'platform-plans', 'premium'] },
   { id: 'people',    label: 'Users & Communication', Icon: Users,          ids: ['users', 'leads', 'moderation', 'messages', 'collaboration'] },
   { id: 'growth',    label: 'Growth',                Icon: TrendingUp,     ids: ['marketing', 'picks', 'learning-paths', 'seo', 'ai-studio'] },
-  { id: 'finance',   label: 'Finance',               Icon: DollarSign,     ids: ['finance', 'monthly-payouts', 'manual-payments', 'fx-settings'] },
-  { id: 'content',   label: 'Content',               Icon: ImageIcon,      ids: ['banners', 'home-cards', 'faqs', 'testimonials', 'announcements', 'app-slides'] },
+  { id: 'finance',   label: 'Finance',               Icon: DollarSign,     ids: ['finance', 'monthly-payouts', 'manual-payments', 'seller-kyc', 'fx-settings'] },
+  { id: 'content',   label: 'Content',               Icon: ImageIcon,      ids: ['banners', 'home-cards', 'faqs', 'testimonials', 'announcements', 'academy', 'app-slides'] },
   { id: 'analytics', label: 'Analytics',             Icon: BarChart3,       ids: ['analytics'] },
   { id: 'system',    label: 'System',                Icon: Settings,       ids: ['activity-log', 'config'] },
 ];

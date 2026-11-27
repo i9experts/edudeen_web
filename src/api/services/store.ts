@@ -330,6 +330,8 @@ export interface PublicStoreData {
   baseCurrency:   SupportedCurrency;
   sellerType:     string | null;
   badges:         string[];
+  /** The owner passed identity verification (KYC); the same thing as `badges` containing 'verified'. */
+  sellerVerified?: boolean;
   createdAt:      string;
   activeCampaign: ActiveCampaignBadge | null;
   announcementBar: { message: string | null; type: StoreAnnouncementType; ctaLabel: string | null; ctaLink: string | null } | null;
