@@ -31,7 +31,8 @@ import {
 // Every filter lives in the URL and is applied on the server, so results page
 // past the first screen and a filtered view can be shared or bookmarked.
 
-const PAGE_SIZE = 24;
+// 28 = full rows at 7 / 4 / 2 columns, so the grid has no gap before the last page.
+const PAGE_SIZE = 28;
 
 const SORTS: { value: MarketplaceSortBy | ''; label: string }[] = [
   { value: '',           label: 'Newest' },
@@ -480,6 +481,16 @@ export function BrowseResults({ title, eyebrow, intro, breadcrumb, categoryId, s
               aria-label="Next page"
               className="size-10 rounded-full border border-bone bg-white flex items-center justify-center cursor-pointer disabled:opacity-40 disabled:cursor-default"
             ><ChevronRight size={18} /></button>
+            <select
+              aria-label="Go to page"
+              value={state.page}
+              onChange={e => { const n = Number(e.target.value); update({ page: n === 1 ? undefined : n }, true); }}
+              className="ms-2 h-10 rounded-full border border-bone bg-white px-3 text-[14px] font-semibold text-carbon cursor-pointer"
+            >
+              {Array.from({ length: pages }, (_, i) => i + 1).map(n => (
+                <option key={n} value={n}>{`Page ${n} of ${pages}`}</option>
+              ))}
+            </select>
           </nav>
         )}
       </main>

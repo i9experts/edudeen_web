@@ -77,7 +77,7 @@ const SORT_TO_API: Record<SortFilter, MarketplaceSortBy | undefined> = {
   high:     'price_desc',
 };
 
-const PAGE_SIZE = 12;
+const PAGE_SIZE = 50;
 // The API caps a page at 50 — the pool used when a filter has to run in the browser.
 const CLIENT_POOL = 100;
 
