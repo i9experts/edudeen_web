@@ -4,6 +4,7 @@ import { FileUpload, type PrivateUploadData } from '@/components/comman/ui';
 import { BINDINGS, CURRICULA, LICENSE_LABEL, PRODUCT_LANGUAGES, type Binding, type ProductLanguage } from '@/constants/learning';
 import { CLASS_LEVELS, classIndex } from '@/constants/classLevels';
 import { COVER_STYLES, suggestCoverStyle, type CoverStyle } from '@/constants/coverStyle';
+import { IMAGE_FITS, type ImageFit } from '@/constants/imageFit';
 
 // Seller product-form fields that make a listing findable by teachers and
 // parents: exam board, age range, a free sample, extra files and
@@ -12,7 +13,7 @@ import { COVER_STYLES, suggestCoverStyle, type CoverStyle } from '@/constants/co
 const inp = 'w-full px-3 py-[9px] text-[13px] border border-bone rounded-lg outline-none text-charcoal bg-white focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/10';
 const lbl = 'block text-[12.5px] font-semibold text-charcoal mb-1.5';
 
-export interface LearningValue { curricula: string[]; ageMin: string; ageMax: string; classFrom: string; classTo: string; coverStyle?: '' | CoverStyle; language?: '' | ProductLanguage; author?: string; publisher?: string; edition?: string; pages?: string; isbn?: string; binding?: '' | Binding; series?: string; seriesOrder?: string }
+export interface LearningValue { curricula: string[]; ageMin: string; ageMax: string; classFrom: string; classTo: string; coverStyle?: '' | CoverStyle; imageFit?: ImageFit; language?: '' | ProductLanguage; author?: string; publisher?: string; edition?: string; pages?: string; isbn?: string; binding?: '' | Binding; series?: string; seriesOrder?: string }
 export const EMPTY_LEARNING: LearningValue = { curricula: [], ageMin: '', ageMax: '', classFrom: '', classTo: '', coverStyle: '', language: '', author: '', publisher: '', edition: '', pages: '', isbn: '', binding: '' };
 /** Same limits as the API (`BOOK_DETAIL_LIMITS`, `BOOK_PAGES_MAX`). */
 export const BOOK_DETAIL_LIMITS = { author: 120, publisher: 120, edition: 60 } as const;
@@ -60,9 +61,39 @@ export function CoverStyleField({ value, onChange, categoryNames }: { value: '' 
   );
 }
 
+/** How photos sit in product tiles: fill (crop) or show the whole photo. */
+export function ImageFitField({ value, onChange, previewUrl }: { value: ImageFit | undefined; onChange: (v: ImageFit) => void; previewUrl?: string }) {
+  const cur: ImageFit = value === 'contain' ? 'contain' : 'cover';
+  return (
+    <div>
+      <span className={lbl}>How photos show in tiles</span>
+      <div role="radiogroup" aria-label="How photos show in tiles" className="grid gap-2 sm:grid-cols-2">
+        {IMAGE_FITS.map(f => {
+          const on = cur === f.value;
+          return (
+            <button key={f.value} type="button" role="radio" aria-checked={on} onClick={() => onChange(f.value)}
+              className={clsx('flex items-start gap-3 text-start rounded-xl border p-3 cursor-pointer transition-colors', on ? 'border-brand-orange bg-brand-pale-orange' : 'border-bone bg-white hover:bg-cream')}>
+              {previewUrl && (
+                <span className="shrink-0 w-12 h-16 rounded-md overflow-hidden bg-cream border border-bone">
+                  <img src={previewUrl} alt="" className={clsx('w-full h-full', f.value === 'contain' ? 'object-contain' : 'object-cover')} />
+                </span>
+              )}
+              <span>
+                <b className={clsx('block text-[13px]', on ? 'text-brand-orange' : 'text-carbon')}>{f.label}</b>
+                <span className="block text-[12px] text-slate mt-0.5">{f.hint}</span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export function learningPayload(v: LearningValue) {
   return {
     coverStyle: v.coverStyle || null,
+    imageFit: (v.imageFit === 'contain' ? 'contain' : 'cover') as ImageFit,
     language: v.language || null,
     // Empty = cleared (the API stores null); optional book details.
     author: (v.author ?? '').trim() || null,

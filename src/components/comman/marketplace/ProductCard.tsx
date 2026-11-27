@@ -16,6 +16,7 @@ import { formatMoney } from '@/utils/currency';
 import { formatPrice, formatItemPrice } from '@/utils/formatPrice';
 import { percentOff } from '@/utils/saleMath';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
+import { productImageFitClassImportant } from '@/constants/imageFit';
 
 // Wraps the substring of `text` matching `query` in <mark> — same idea as
 // BuyerNavbar's search-suggestion dropdown (RecommendedProductRow), applied
@@ -293,7 +294,7 @@ export const ProductCard = memo(function ProductCard({ product: rawProduct, onCl
             name={product.name}
             tags={product.tags}
             productType={product.productType ?? product.type}
-            className="absolute inset-0 w-full h-full !object-fill bg-white"
+            className={clsx('absolute inset-0 w-full h-full bg-white', productImageFitClassImportant(product.imageFit))}
           />
 
           {/* Variant swatches — real photos, in a soft frosted pill. Always

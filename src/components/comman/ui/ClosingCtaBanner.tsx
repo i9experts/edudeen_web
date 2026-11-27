@@ -12,6 +12,7 @@ import { apiGetPlatformStats, type PlatformStats } from '@/api/services/store';
 import { MIN_REVIEWS_FOR_RATING } from '@/hooks/usePlatformTrust';
 import { apiGetTestimonials, type Testimonial } from '@/api/services/testimonials';
 import { apiGetAllProducts, type MarketplaceProduct } from '@/api/services/marketplace';
+import { productImageFitClass } from '@/constants/imageFit';
 
 // Mirrors AppDownloadBanner's own bottom tab bar (kept local/smaller here
 // rather than importing — that one isn't exported and this screen only
@@ -88,7 +89,7 @@ export function ClosingCtaBanner({ className }: { className?: string }) {
   const withoutPhotos = previewProducts.filter(p => (p.images ?? []).length === 0);
   const previewRows = [...withPhotos, ...withoutPhotos].slice(0, 3).map(p => {
     const dv = (p.variants ?? []).find(v => v.isDefault) ?? p.variants?.[0];
-    return { id: p._id, name: p.name, images: p.images ?? [], price: dv?.price, currency: dv?.currency };
+    return { id: p._id, name: p.name, images: p.images ?? [], imageFit: p.imageFit, price: dv?.price, currency: dv?.currency };
   });
 
   return (
@@ -216,7 +217,7 @@ export function ClosingCtaBanner({ className }: { className?: string }) {
                 {previewRows.map(row => (
                   <div key={row.id} className="flex items-center gap-[9px] rounded-[10px] border border-bone p-[8px]">
                     <div className="w-10 h-10 rounded-[8px] overflow-hidden shrink-0">
-                      <ProductImage images={row.images} name={row.name} className="w-full h-full object-cover" />
+                      <ProductImage images={row.images} name={row.name} className={`w-full h-full bg-white ${productImageFitClass(row.imageFit)}`} />
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-[12px] font-semibold text-charcoal truncate">{row.name}</p>

@@ -29,8 +29,9 @@ import { sumQuantity, itemsLabel, shippingFeeLabel, hasUsableOnlinePayment } fro
 import { usePublicPlatformConfig } from '@/hooks/usePublicPlatformConfig';
 import { isStripeConfigured } from '@/features/buyer/components/StripeCardPayment';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
+import { productImageFitClass } from '@/constants/imageFit';
 
-function CartItemImage({ images, name }: { images?: string[]; name: string }) {
+function CartItemImage({ images, name, fit }: { images?: string[]; name: string; fit?: string | null }) {
   const [errored, setErrored] = useState(false);
   const src = images?.[0];
   if (!src || errored) {
@@ -39,7 +40,7 @@ function CartItemImage({ images, name }: { images?: string[]; name: string }) {
   return (
     <img loading="lazy" decoding="async"
       src={src} alt={name} onError={() => setErrored(true)}
-      className="w-[72px] h-[72px] rounded-[10px] object-cover shrink-0 block"
+      className={`w-[72px] h-[72px] rounded-[10px] shrink-0 block bg-white ${productImageFitClass(fit)}`}
     />
   );
 }
@@ -107,7 +108,7 @@ function SavedForLater({ cartHasItems, cartLoading }: { cartHasItems: boolean; c
               const busy = movingId === variant._id;
               return (
                 <li key={variant._id} className="flex flex-wrap items-center gap-3 sm:gap-4 px-4 sm:px-5 py-3">
-                  <Link to={`/product/${product.slug}`} className="shrink-0"><CartItemImage images={variant.images?.length ? variant.images : product.images} name={product.name} /></Link>
+                  <Link to={`/product/${product.slug}`} className="shrink-0"><CartItemImage images={variant.images?.length ? variant.images : product.images} name={product.name} fit={product.imageFit} /></Link>
                   <div className="flex-1 min-w-[140px]">
                     <Link to={`/product/${product.slug}`} className="block text-[14px] font-semibold text-carbon no-underline leading-[1.35] hover:underline">{product.name}</Link>
                     <p className="text-[13px] text-slate m-0 mt-[2px]">{variant.price === 0 ? 'Free' : formatPrice(convert(variant.price, variant.currency ?? undefined), currency)}</p>
@@ -486,7 +487,7 @@ export function CartPage() {
                       isRemoving && 'opacity-50',
                     )}
                   >
-                    <CartItemImage images={imgs} name={item.name} />
+                    <CartItemImage images={imgs} name={item.name} fit={item.imageFit} />
 
                     <div className="flex-1 min-w-0">
                       {/* Multi-store carts already name the store in the group header above. */}

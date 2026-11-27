@@ -16,6 +16,7 @@ import { PremiumChip, memberPriceOf, usePremiumView } from '@/components/comman/
 import { MAX_COMPARE, useCompare } from '@/utils/compareStore';
 import { getStorePagePath } from '@/utils/storefrontUrl';
 import { useT } from '@/contexts/languageCtx';
+import { productImageFitClass } from '@/constants/imageFit';
 
 const LEVEL_LABEL = new Map<string, string>(EDUCATION_LEVELS.map(l => [l.value, l.label]));
 const DELIVERY_FORMAT: Record<string, string> = { download: 'Instant download', course: 'Online course' };
@@ -143,7 +144,7 @@ export function ComparePage() {
                       <button type="button" onClick={() => removeOne(p._id)} aria-label={`${t('Remove')} ${p.name}`} className="absolute -top-1 -end-1 size-6 rounded-full bg-carbon text-white border-none flex items-center justify-center cursor-pointer"><X size={12} aria-hidden /></button>
                       <Link to={`/product/${p.slug}`} className="block no-underline text-carbon">
                         <div className="aspect-square w-full max-w-[150px] rounded-xl overflow-hidden bg-bone flex items-center justify-center">
-                          {p.images?.[0] ? <img src={p.images[0]} alt="" loading="lazy" className="w-full h-full object-cover" /> : <span className="text-[12px] font-bold text-slate px-2 text-center">{p.name}</span>}
+                          {p.images?.[0] ? <img src={p.images[0]} alt="" loading="lazy" className={`w-full h-full bg-white ${productImageFitClass(p.imageFit)}`} /> : <span className="text-[12px] font-bold text-slate px-2 text-center">{p.name}</span>}
                         </div>
                         <span className="block mt-2 font-bold leading-snug line-clamp-3">{p.name}</span>
                       </Link>

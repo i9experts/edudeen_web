@@ -8,6 +8,7 @@ import { useT } from '@/contexts/languageCtx';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 import { formatPrice } from '@/utils/formatPrice';
 import type { PublicBundle } from '@/api/services/classroom';
+import { productImageFitClass } from '@/constants/imageFit';
 
 function BundleCard({ bundle }: { bundle: PublicBundle }) {
   const t = useT();
@@ -19,7 +20,7 @@ function BundleCard({ bundle }: { bundle: PublicBundle }) {
         {covers.map((p, i) => (
           <div key={p._id} className="size-[64px] rounded-[10px] overflow-hidden border-2 border-white bg-[#eaf2f8] shrink-0" style={{ zIndex: covers.length - i }}>
             {p.images?.[0]
-              ? <img src={imgUrl(p.images[0], { w: 160 })} alt={p.name} width={80} height={80} loading="lazy" decoding="async" className="w-full h-full object-fill" />
+              ? <img src={imgUrl(p.images[0], { w: 160 })} alt={p.name} width={80} height={80} loading="lazy" decoding="async" className={`w-full h-full bg-white ${productImageFitClass(p.imageFit)}`} />
               : <ProductCoverFallback name={p.name} size="xs" className="w-full h-full" />}
           </div>
         ))}

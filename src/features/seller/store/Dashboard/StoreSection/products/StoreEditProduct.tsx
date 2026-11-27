@@ -167,7 +167,7 @@ export default function StoreEditProduct() {
     originalName.current = p.name ?? '';
     setReview(p.status === 'pending_review' || p.status === 'rejected' ? { status: p.status, note: p.reviewNote ?? null } : null);
     setVariantId(v._id || null);
-    setLearning({ curricula: [...(p.curricula ?? [])], ageMin: p.ageMin != null ? String(p.ageMin) : '', ageMax: p.ageMax != null ? String(p.ageMax) : '', classFrom: p.classFrom ?? '', classTo: p.classTo ?? '', coverStyle: p.coverStyle ?? '', language: p.language ?? '', author: p.author ?? '', publisher: p.publisher ?? '', edition: p.edition ?? '', pages: p.pages != null ? String(p.pages) : '', isbn: p.isbn ?? '', binding: p.binding ?? '', series: p.series ?? '', seriesOrder: p.seriesOrder != null ? String(p.seriesOrder) : '' });
+    setLearning({ curricula: [...(p.curricula ?? [])], ageMin: p.ageMin != null ? String(p.ageMin) : '', ageMax: p.ageMax != null ? String(p.ageMax) : '', classFrom: p.classFrom ?? '', classTo: p.classTo ?? '', coverStyle: p.coverStyle ?? '', imageFit: p.imageFit === 'contain' ? 'contain' : 'cover', language: p.language ?? '', author: p.author ?? '', publisher: p.publisher ?? '', edition: p.edition ?? '', pages: p.pages != null ? String(p.pages) : '', isbn: p.isbn ?? '', binding: p.binding ?? '', series: p.series ?? '', seriesOrder: p.seriesOrder != null ? String(p.seriesOrder) : '' });
     if (p.productType === 'physical') { setPhys(physFromEntry(p, v)); hadWeight.current = !!String(v?.shippingWeight ?? '').trim(); }
     else                              setDig(digFromEntry(p, v));
   }
@@ -203,7 +203,7 @@ export default function StoreEditProduct() {
         setPremiumOptOut(!!p.premiumOptOut);
         const pe = p as unknown as { pendingEditInfo?: unknown; lastEditRejection?: { reason?: string } | null };
         setEditReview({ pending: !!pe.pendingEditInfo, rejection: pe.lastEditRejection?.reason ?? null });
-        setLearning({ curricula: [...(p.curricula ?? [])], ageMin: p.ageMin != null ? String(p.ageMin) : '', ageMax: p.ageMax != null ? String(p.ageMax) : '', classFrom: p.classFrom ?? '', classTo: p.classTo ?? '', coverStyle: p.coverStyle ?? '', language: p.language ?? '', author: p.author ?? '', publisher: p.publisher ?? '', edition: p.edition ?? '', pages: p.pages != null ? String(p.pages) : '', isbn: p.isbn ?? '', binding: p.binding ?? '', series: p.series ?? '', seriesOrder: p.seriesOrder != null ? String(p.seriesOrder) : '' });
+        setLearning({ curricula: [...(p.curricula ?? [])], ageMin: p.ageMin != null ? String(p.ageMin) : '', ageMax: p.ageMax != null ? String(p.ageMax) : '', classFrom: p.classFrom ?? '', classTo: p.classTo ?? '', coverStyle: p.coverStyle ?? '', imageFit: p.imageFit === 'contain' ? 'contain' : 'cover', language: p.language ?? '', author: p.author ?? '', publisher: p.publisher ?? '', edition: p.edition ?? '', pages: p.pages != null ? String(p.pages) : '', isbn: p.isbn ?? '', binding: p.binding ?? '', series: p.series ?? '', seriesOrder: p.seriesOrder != null ? String(p.seriesOrder) : '' });
         // The list cache can lack tags: fill them from the fresh read (never over tags the seller already typed).
         // The list cache can also lack the go-live date: fill it (and the scheduled choice) from the fresh read.
         // The list cache can lack the parcel fields: fill them from the fresh read (never over what the seller already typed).
@@ -484,7 +484,7 @@ export default function StoreEditProduct() {
     name: cur.name, images: cur.images, price: String(cur.price), compareAtPrice: cur.compareAtPrice, currency: store?.baseCurrency,
     productType: pType, deliveryFormat: delivery.format,
     premiumPercent: (campaignIds?.length ?? 0) > 0 ? 0 : effectiveSellerPercent(premiumPct ?? '', storePremiumPct, !!premiumOptOut),
-    ageMin: learning.ageMin, ageMax: learning.ageMax, classFrom: learning.classFrom, classTo: learning.classTo, coverStyle: learning.coverStyle || undefined, storeName: store?.name,
+    ageMin: learning.ageMin, ageMax: learning.ageMax, classFrom: learning.classFrom, classTo: learning.classTo, coverStyle: learning.coverStyle || undefined, imageFit: learning.imageFit, storeName: store?.name,
   };
 
   const reviewBanner = review ? (

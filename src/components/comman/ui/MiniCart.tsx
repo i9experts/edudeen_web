@@ -9,6 +9,7 @@ import { useDropdownPosition } from '@/hooks/useDropdownPosition';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 import { formatPrice } from '@/utils/formatPrice';
 import { Button } from './Button';
+import { productImageFitClass } from '@/constants/imageFit';
 
 const CLOSE_DELAY_MS = 150;
 
@@ -19,7 +20,7 @@ function ItemThumb({ item }: { item: CartItem }) {
   }
   return (
     <img loading="lazy" decoding="async" src={src} alt={item.name}
-      className="w-11 h-11 rounded-[9px] object-cover shrink-0 border border-bone" />
+      className={`w-11 h-11 rounded-[9px] shrink-0 border border-bone bg-white ${productImageFitClass(item.imageFit)}`} />
   );
 }
 

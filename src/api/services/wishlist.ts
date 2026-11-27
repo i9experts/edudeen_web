@@ -26,6 +26,7 @@ export interface WishlistVariant {
 
 export interface WishlistProduct {
   _id:              string;
+  imageFit?:        'cover' | 'contain' | null;
   name:             string;
   sellerId:         string;
   slug:             string;

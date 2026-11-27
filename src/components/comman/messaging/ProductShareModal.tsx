@@ -4,6 +4,7 @@ import { apiGetPublicStoreProducts, type PublicStoreProduct } from '@/api/servic
 import { useFocusTrap } from '@/components/comman/ui/useFocusTrap';
 import { EmptyState } from '@/components/comman/ui';
 import { formatMoney } from '@/utils/currency';
+import { productImageFitClass } from '@/constants/imageFit';
 
 interface ProductShareModalProps {
   storeId:  string;
@@ -80,7 +81,7 @@ export function ProductShareModal({ storeId, onClose, onShare, sharing }: Produc
                   className={`w-full flex items-center gap-3 px-2 py-2 rounded-[10px] text-start cursor-pointer border-none transition-colors ${selectedId === p._id ? 'bg-brand-pale-orange' : 'bg-transparent hover:bg-cream'}`}
                 >
                   <div className="w-11 h-11 rounded-[9px] bg-cream border border-bone overflow-hidden shrink-0 flex items-center justify-center">
-                    {p.images?.[0] ? <img loading="lazy" decoding="async" src={p.images[0]} alt="" className="w-full h-full object-cover" /> : <ImageOff size={14} className="text-slate" />}
+                    {p.images?.[0] ? <img loading="lazy" decoding="async" src={p.images[0]} alt="" className={`w-full h-full ${productImageFitClass(p.imageFit)}`} /> : <ImageOff size={14} className="text-slate" />}
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-[13px] font-semibold text-charcoal truncate">{p.name}</p>

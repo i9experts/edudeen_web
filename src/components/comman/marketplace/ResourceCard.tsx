@@ -22,6 +22,7 @@ import { TrustBadges } from './TrustBadges';
 import { CompareToggle } from './CompareToggle';
 import { PremiumChip, PremiumTeaser, memberPriceOf, usePremiumView } from './PremiumBits';
 import { holidayBlocksType, holidayLabel } from '@/utils/storeHoliday';
+import { productImageFitClass } from '@/constants/imageFit';
 
 // Same name-keyed palette as ProductCoverFallback, so a product keeps its
 // colours between the grid card and cart/wishlist/detail thumbnails.
@@ -113,7 +114,7 @@ function ListCover({ product }: { product: MarketplaceProduct }) {
   return (
     <div className="w-[112px] sm:w-[168px] aspect-square rounded-xl overflow-hidden flex items-center justify-center shrink-0 bg-[#f4f6f7]">
       {image ? (
-        <img {...responsiveImg(image, '168px', [168, 336], 336)} alt={product.name} width={168} height={168} loading="lazy" decoding="async" onError={() => setImgFailed(true)} className="w-full h-full object-fill" />
+        <img {...responsiveImg(image, '168px', [168, 336], 336)} alt={product.name} width={168} height={168} loading="lazy" decoding="async" onError={() => setImgFailed(true)} className={`w-full h-full ${productImageFitClass(product.imageFit)}`} />
       ) : (
         <ProductCoverFallback name={product.name} size="sm" className="w-full h-full" />
       )}
@@ -125,10 +126,10 @@ function Cover({ product }: { product: MarketplaceProduct }) {
   const [imgFailed, setImgFailed] = useState(false);
   const image = !imgFailed ? (cardImage(product) || product.video?.posterUrl || undefined) : undefined;
   const imgProps = image ? responsiveImg(image, '(min-width: 1024px) 14vw, (min-width: 640px) 22vw, 36vw', [200, 320, 480, 640], 480) : null;
-  // Amazon-style: the plain product photo at its own proportions - full width, height follows the picture (no side bars, nothing cut).
+  // Fixed 3:4 tile. The seller picks per product: fill the tile (crop edges) or show the whole photo on white.
   return imgProps ? (
     <div className="relative w-full aspect-[3/4] overflow-hidden bg-white flex items-center justify-center">
-      <img {...imgProps} alt={product.name} loading="lazy" decoding="async" onError={() => setImgFailed(true)} className="block w-full h-full object-fill" />
+      <img {...imgProps} alt={product.name} loading="lazy" decoding="async" onError={() => setImgFailed(true)} className={`block w-full h-full ${productImageFitClass(product.imageFit)}`} />
     </div>
   ) : (
     <div className="aspect-[4/5] w-full overflow-hidden">

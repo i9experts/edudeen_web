@@ -9,17 +9,18 @@ import { useDropdownPosition } from '@/hooks/useDropdownPosition';
 import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 import { formatPrice } from '@/utils/formatPrice';
 import { Button } from './Button';
+import { productImageFitClass } from '@/constants/imageFit';
 
 const CLOSE_DELAY_MS = 150;
 
-function WishlistThumb({ images, name }: { images?: string[]; name: string }) {
+function WishlistThumb({ images, name, fit }: { images?: string[]; name: string; fit?: string | null }) {
   const src = images?.[0];
   if (!src) {
     return <ProductCoverFallback name={name} size="xs" className="w-11 h-11 rounded-[9px] shrink-0" />;
   }
   return (
     <img loading="lazy" decoding="async" src={src} alt={name}
-      className="w-11 h-11 rounded-[9px] object-cover shrink-0 border border-bone" />
+      className={`w-11 h-11 rounded-[9px] shrink-0 border border-bone bg-white ${productImageFitClass(fit)}`} />
   );
 }
 
@@ -131,7 +132,7 @@ export function MiniWishlist() {
                       className={clsx('flex gap-2.5 p-3', 'cursor-pointer hover:bg-cream/60 transition-colors')}
                       onClick={() => goTo(`/product/${item.product.slug}`)}
                     >
-                      <WishlistThumb images={item.product.images} name={item.product.name} />
+                      <WishlistThumb images={item.product.images} name={item.product.name} fit={item.product.imageFit} />
                       <div className="flex-1 min-w-0">
                         <p className="text-[12px] font-medium text-charcoal leading-tight line-clamp-1">{item.product.name}</p>
                         {variant && <p className="text-[12px] text-slate mt-[3px]">{formatPrice(convert(variant.price, variant.currency), currency)}</p>}

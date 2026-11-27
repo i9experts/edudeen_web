@@ -14,8 +14,9 @@ import { useCurrencyPreference } from '@/contexts/CurrencyPreferenceContext';
 import { useNavigate } from 'react-router-dom';
 import { TokenStorage } from '@/api/services/auth';
 import { useStorefront, useStorefrontPaths } from './StorefrontContext';
+import { productImageFitClass } from '@/constants/imageFit';
 
-function CartItemImage({ images, name }: { images?: string[]; name: string }) {
+function CartItemImage({ images, name, fit }: { images?: string[]; name: string; fit?: string | null }) {
   const [errored, setErrored] = useState(false);
   const src = images?.[0];
   if (!src || errored) {
@@ -24,7 +25,7 @@ function CartItemImage({ images, name }: { images?: string[]; name: string }) {
   return (
     <img loading="lazy" decoding="async"
       src={src} alt={name} onError={() => setErrored(true)}
-      className="w-[72px] h-[72px] rounded-[10px] object-cover shrink-0 block"
+      className={`w-[72px] h-[72px] rounded-[10px] shrink-0 block bg-white ${productImageFitClass(fit)}`}
     />
   );
 }
@@ -163,7 +164,7 @@ export function StorefrontCartPage() {
                     isRemoving && 'opacity-50',
                   )}
                 >
-                  <CartItemImage images={imgs} name={item.name} />
+                  <CartItemImage images={imgs} name={item.name} fit={item.imageFit} />
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start gap-2 mb-[3px] flex-wrap">

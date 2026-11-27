@@ -61,6 +61,8 @@ export interface LearningMetaInput {
   classFrom?: string | null;
   classTo?:   string | null;
   coverStyle?: 'book' | 'flat' | null;
+  /** How photos sit in tiles: 'cover' fills (crops), 'contain' shows the whole photo. Default 'cover'. */
+  imageFit?: 'cover' | 'contain' | null;
   /** Digital only: files or an online course. */
   deliveryFormat?: DeliveryFormat;
 }
@@ -145,6 +147,7 @@ export interface StoreProduct {
   series?:           string | null;
   seriesOrder?:      number | null;
   coverStyle?:       'book' | 'flat' | null;
+  imageFit?:         'cover' | 'contain' | null;
   classFrom?:        string | null;
   classTo?:          string | null;
   /** Physical: parcel kind + packed size (cm) used for the delivery charge. */

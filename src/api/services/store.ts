@@ -366,6 +366,8 @@ export interface StoreCatalogFacets {
 
 export interface PublicStoreProduct {
   _id:         string;
+  /** 'contain' = show the whole photo in tiles; default 'cover'. */
+  imageFit?:   'cover' | 'contain' | null;
   slug:        string;
   name:        string;
   /** Admin hid it from recommendations + search (true only). The store page still lists it; product-page rails skip it. */
@@ -463,7 +465,7 @@ export interface PublicStoreListItem {
   badges:         string[];
   productCount?:  number;
   /** Home Featured sellers rail only: best-selling products (up to 3) with a photo. */
-  topProducts?:   Array<{ id: string; name: string; image: string; coverStyle: 'book' | 'flat' | null }>;
+  topProducts?:   Array<{ id: string; name: string; image: string; coverStyle: 'book' | 'flat' | null; imageFit?: 'cover' | 'contain' | null }>;
   soldCount?:     number;
   /** Deprecated — the first category's name. */
   categoryName?:  string | null;

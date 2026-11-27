@@ -61,9 +61,9 @@ const SELLER_TYPES: { id: SellerType; Icon: React.ElementType; title: string; de
 ];
 
 const PRODUCT_TYPES: { id: ProductType; Icon: React.ElementType; title: string; desc: string }[] = [
-  { id: 'physical_products', Icon: Package,           title: 'Books & School Supplies', desc: 'Ship books, stationery and learning kits' },
-  { id: 'digital_downloads', Icon: Download,          title: 'Digital Learning Resources', desc: 'eBooks, PDFs, audio and video lessons' },
-  { id: 'educational_resources', Icon: BookOpen,      title: 'Educational Resources', desc: 'Worksheets, lesson plans' },
+  { id: 'physical_products', Icon: Package,           title: 'Physical products (we ship them)', desc: 'Books, stationery, kits and anything posted to the buyer' },
+  { id: 'digital_downloads', Icon: Download,          title: 'Digital downloads', desc: 'eBooks, PDFs, audio and video lessons' },
+  { id: 'educational_resources', Icon: BookOpen,      title: 'Both, plus teaching tools', desc: 'Physical and digital, with the worksheet and lesson-plan tools' },
 ];
 
 interface StoreForm {
@@ -610,8 +610,8 @@ function Step4WhatYouSell({ form, setForm, onNext, onBack, step, maxReached, onS
     <div className={clsx(STEP_WIDTH, 'w-full mx-auto')}>
       <OnboardingStepHeader step={step} maxReached={maxReached} onStepClick={onStepClick} />
       <div className="text-center mb-9">
-        <h1 className="text-[28px] font-bold text-carbon mb-2">What will you sell?</h1>
-        <p className="text-[14px] text-slate">Select all that apply — we'll activate the right tools for you.</p>
+        <h1 className="text-[28px] font-bold text-carbon mb-2">How will your products reach buyers?</h1>
+        <p className="text-[14px] text-slate">Select all that apply — we'll activate the right tools for you. Subjects and categories are picked for each product later.</p>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[14px] mb-7">
         {PRODUCT_TYPES.map((t, idx) => {

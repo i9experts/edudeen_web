@@ -9,6 +9,8 @@ export interface CartItem {
   name:             string;
   image?:           string[];
   images?:          string[];
+  /** Product's photo display choice ('contain' = whole photo). */
+  imageFit?:        'cover' | 'contain' | null;
   unitPrice?:       number;
   price?:           number;
   /** Display-only snapshot of the owning store's currency at add-to-cart
