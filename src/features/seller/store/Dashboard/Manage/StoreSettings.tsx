@@ -26,6 +26,7 @@ import { TabBar, type Tab } from '@/components/comman/ui/TabBar';
 import { ActivityLogTab } from './tabs/ActivityLogTab';
 import { ReturnPolicyCard } from './ReturnPolicyCard';
 import { PremiumDiscountCard } from './PremiumDiscountCard';
+import { ProductSeriesCard } from './ProductSeriesCard';
 import { HolidayCard } from './HolidayCard';
 import { StoreTeamTab } from './tabs/StoreTeamTab';
 import { getActAsSession } from '@/utils/authCookie';
@@ -806,6 +807,8 @@ export default function StoreSettings() {
             )}
 
             {storeId && <ReturnPolicyCard storeId={storeId} policy={store?.returnPolicy} shippingNote={store?.shippingNote} faqs={store?.faqs} refetch={refetch} />}
+
+            {storeId && <ProductSeriesCard storeId={storeId} series={store?.productSeries} refetch={refetch} />}
 
             {storeId && <PremiumDiscountCard storeId={storeId} discount={store?.premiumDiscount} currency={store?.baseCurrency} refetch={refetch} />}
           </div>

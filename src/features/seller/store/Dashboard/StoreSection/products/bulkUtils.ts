@@ -21,7 +21,7 @@ export type BulkType = 'digital' | 'physical';
 /** 'none' = a row without a file (manual row, or a physical product). */
 export type UploadState = 'none' | 'queued' | 'uploading' | 'done' | 'failed';
 export type CreateState = 'idle' | 'creating' | 'created' | 'failed';
-export type DetailGroup = 'price' | 'photos' | 'tags' | 'inventory' | 'download' | 'age';
+export type DetailGroup = 'price' | 'photos' | 'tags' | 'inventory' | 'download' | 'age' | 'series';
 
 export interface BulkRow {
   id: string;
@@ -49,6 +49,9 @@ export interface BulkRow {
   /** Optional suitable age range in years (whole numbers 0-99, as typed). */
   ageMin: string;
   ageMax: string;
+  /** Optional product series (a name from the store's series list) and the position in it. */
+  series: string;
+  seriesOrder: string;
   images: string[];
   // Physical
   stock: string;
@@ -120,7 +123,7 @@ export function blankRow(file?: { name: string; size: number }, hasFile = true):
     id: newId(), fileName: file?.name ?? '', fileSize: file?.size ?? 0, upload: null,
     uploadState: file && hasFile ? 'queued' : 'none', uploadPct: 0, uploadError: '',
     title: file ? titleFromFileName(file.name) : '', description: '', price: '', free: false, savedPrice: '', savedStock: '', compareAt: '', categoryId: '', subCategoryId: '',
-    classFrom: '', classTo: '', ageMin: '', ageMax: '', images: [],
+    classFrom: '', classTo: '', ageMin: '', ageMax: '', series: '', seriesOrder: '', images: [],
     stock: '', unlimitedStock: false, sku: '', weight: '', weightUnit: 'kg', zeroStockOk: false,
     downloadLimit: 'unlimited', linkExpiryDays: '', buyerMessage: '', tags: [],
     createState: 'idle', createError: '', productId: '', createdStatus: '',
@@ -161,6 +164,12 @@ export function ageRangeError(ageMin: string, ageMax: string): string | null {
   return null;
 }
 
+/** Position in a series: empty, or a whole number 1-999 (same as the single product form). */
+export function seriesOrderError(v: string): string | null {
+  const s = v.trim();
+  return s !== '' && (!Number.isInteger(Number(s)) || Number(s) < 1 || Number(s) > 999) ? 'Position in series must be a whole number from 1 to 999' : null;
+}
+
 export const ZERO_STOCK_MESSAGE = 'Stock is 0 - product will show as out of stock. Tick the box under Stock to publish it as out of stock.';
 export function rowIssue(row: BulkRow, ctx: RowContext): string | null {
   if (ctx.type !== 'physical') {
@@ -189,6 +198,8 @@ export function rowIssue(row: BulkRow, ctx: RowContext): string | null {
   if (cErr) return cErr;
   const aErr = ageRangeError(row.ageMin, row.ageMax);
   if (aErr) return aErr;
+  const sErr = seriesOrderError(row.seriesOrder);
+  if (sErr) return sErr;
   if (row.linkExpiryDays.trim() !== '' && (!Number.isInteger(Number(row.linkExpiryDays)) || Number(row.linkExpiryDays) < 1)) return 'Link expiry must be a whole number of days';
   const pr = rowPremiumConflict(row, ctx);
   if (pr) return pr.short;
@@ -210,6 +221,7 @@ export function groupsFor(type: BulkType): { key: DetailGroup; label: string; hi
       ? [{ key: 'inventory' as const, label: 'SKU', hint: 'Your own product code (made for you if empty)' }]
       : [{ key: 'download' as const, label: 'Download settings', hint: 'Download limit, link expiry, thank-you message' }]),
     { key: 'age', label: 'Suitable ages', hint: 'Youngest and oldest age in years' },
+    ...(type === 'physical' ? [{ key: 'series' as const, label: 'Series', hint: 'Pick one of your series from Store settings' }] : []),
     { key: 'tags', label: 'Tags', hint: 'Words buyers might search for' },
   ];
 }
@@ -222,6 +234,7 @@ export function filledGroups(r: BulkRow, type: BulkType): DetailGroup[] {
   if (type === 'physical') { if (r.sku.trim()) out.push('inventory'); }
   else if (r.downloadLimit !== 'unlimited' || r.linkExpiryDays.trim() || r.buyerMessage.trim()) out.push('download');
   if (r.ageMin.trim() || r.ageMax.trim()) out.push('age');
+  if (type === 'physical' && r.series.trim()) out.push('series');
   if (r.tags.length) out.push('tags');
   return out;
 }

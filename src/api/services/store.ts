@@ -65,6 +65,8 @@ export interface UpdateStorePayload {
   shippingNote?: string | null;
   /** Seller FAQ (max 8); [] clears. */
   faqs?: StoreFaq[];
+  /** Seller's product series names (max 30, 80 chars each); [] clears. Offered in the product form dropdown. */
+  productSeries?: string[];
   /** About-tab text (max 1500); null/'' clears it. */
   aboutBio?: string | null;
   /** Seller-funded Edudeen Premium member discount; null clears it. */
@@ -106,6 +108,8 @@ export interface StoreData {
   returnPolicy?: StoreReturnPolicy | null;
   shippingNote?: string | null;
   faqs?: StoreFaq[];
+  /** Owner view: the seller's series names. */
+  productSeries?: string[];
   /** Holiday settings as saved (owner view). */
   holiday?: StoreHolidayInfo | null;
   aboutBio?: string | null;
