@@ -22,7 +22,7 @@ import { timeAgo, useDraftAutosave, useLeaveGuard } from './ProductWizard';
 import { inp } from './ProductFormKit';
 import {
   DOC_EXTENSIONS, MAX_BULK_FILES, MAX_BULK_PHOTOS, MAX_DOC_BYTES, MAX_PHOTO_BYTES, MAX_ROW_PHOTOS, PHOTO_EXTENSIONS,
-  baseOf, blankRow, rowWarnings, duplicateTitles, extOf, filledGroups, findPhotoMatches, groupsFor, isDocName, isPhotoName, newId, normalizeRow, rowIssue, rowPremiumConflict,
+  ageRangeError, baseOf, blankRow, rowWarnings, duplicateTitles, extOf, filledGroups, findPhotoMatches, groupsFor, isDocName, isPhotoName, newId, normalizeRow, rowIssue, rowPremiumConflict,
   titleFromFileName,
   type RowContext, type BulkRow, type BulkType, type DetailGroup, type TrayPhoto,
 } from './bulkUtils';
@@ -418,7 +418,7 @@ export default function StoreBulkUpload() {
         images: r.images, tags: r.tags,
         isListedOnEdudeen: true, status: (mode === 'publish' ? 'active' : 'draft') as 'active' | 'draft',
         ...learningPayload({
-          curricula: [], ageMin: '', ageMax: '', classFrom: r.classFrom, classTo: r.classTo,
+          curricula: [], ageMin: r.ageMin.trim(), ageMax: r.ageMax.trim(), classFrom: r.classFrom, classTo: r.classTo,
           // Files are printed-material style; physical items follow their category (toys etc. = flat), default flat.
           coverStyle: type === 'physical'
             ? (suggestCoverStyle([categories.find(c => c._id === r.categoryId)?.name]) ?? 'flat')
@@ -862,6 +862,7 @@ function DetailsMenu({ row, type, onOpen, disabled }: { row: BulkRow; type: Bulk
 
 const CHIP_LABEL = (g: DetailGroup, r: BulkRow) => ({
   price: 'Compare-at', download: 'Download settings', inventory: 'SKU',
+  age: `Ages ${r.ageMin.trim() || '0'}${r.ageMax.trim() ? `–${r.ageMax.trim()}` : '+'}`,
   photos: `${r.images.length} photo${r.images.length === 1 ? '' : 's'}`, tags: `${r.tags.length} tag${r.tags.length === 1 ? '' : 's'}`,
 }[g]);
 
@@ -872,12 +873,13 @@ function DetailModal({ row, group, type, currency, currencyCode, tray, onClose, 
 }) {
   const [d, setD] = useState({
     compareAt: row.compareAt, classFrom: row.classFrom, classTo: row.classTo, tags: row.tags, tagInput: '',
-    sku: row.sku,
+    sku: row.sku, ageMin: row.ageMin, ageMax: row.ageMax,
     downloadLimit: row.downloadLimit === 'unlimited' ? '' : row.downloadLimit, linkExpiryDays: row.linkExpiryDays, buyerMessage: row.buyerMessage,
   });
   const label = groupsFor(type).find(g => g.key === group)?.label ?? 'Details';
   const err = (() => {
     if (group === 'price' && d.compareAt.trim()) { const c = validatePrices({ price: row.free ? '0' : row.price, compareAt: d.compareAt, currency: currencyCode, free: row.free }).compareAt; if (c) return c; }
+    if (group === 'age') { const a = ageRangeError(d.ageMin, d.ageMax); if (a) return a; }
     if (group === 'download' && d.downloadLimit.trim() && !(Number.isInteger(Number(d.downloadLimit)) && Number(d.downloadLimit) >= 1)) return 'Download limit must be a whole number, or leave it empty for unlimited.';
     if (group === 'download' && d.linkExpiryDays.trim() && !(Number.isInteger(Number(d.linkExpiryDays)) && Number(d.linkExpiryDays) >= 1)) return 'Link expiry must be a whole number of days.';
     return '';
@@ -895,6 +897,7 @@ function DetailModal({ row, group, type, currency, currencyCode, tray, onClose, 
       onPatch({ tags: [...d.tags, ...extra.filter(p => !d.tags.includes(p))].slice(0, 30) });
     }
     if (group === 'inventory') onPatch({ sku: d.sku.trim() });
+    if (group === 'age') onPatch({ ageMin: d.ageMin.trim(), ageMax: d.ageMax.trim() });
     if (group === 'download') onPatch({ downloadLimit: d.downloadLimit.trim() || 'unlimited', linkExpiryDays: d.linkExpiryDays.trim(), buyerMessage: d.buyerMessage.trim() });
     onClose();
   };
@@ -931,6 +934,18 @@ function DetailModal({ row, group, type, currency, currencyCode, tray, onClose, 
             )}
             {baseOf(row.fileName) && <p className="m-0 text-[12px] text-slate">Tip: a photo named <b>{baseOf(row.fileName)}.jpg</b> dropped on the page attaches itself.</p>}
           </>
+        )}
+        {group === 'age' && (
+          <div>
+            <span className={lab}>Suitable ages</span>
+            <div className="flex items-center gap-2">
+              <input id="dm-age-min" aria-label="Youngest age" type="number" min={0} max={99} inputMode="numeric" placeholder="From" className={inp} value={d.ageMin} onChange={e => setD(x => ({ ...x, ageMin: e.target.value }))} />
+              <span className="text-slate text-[13px]">to</span>
+              <input id="dm-age-max" aria-label="Oldest age" type="number" min={0} max={99} inputMode="numeric" placeholder="To" className={inp} value={d.ageMax} onChange={e => setD(x => ({ ...x, ageMax: e.target.value }))} />
+              <span className="text-slate text-[13px] shrink-0">years</span>
+            </div>
+            <p className="m-0 mt-1.5 text-[12px] text-slate">Optional. Leave one side empty for an open range, e.g. “from 10”.</p>
+          </div>
         )}
         {group === 'tags' && (
           <div>

@@ -21,7 +21,7 @@ export type BulkType = 'digital' | 'physical';
 /** 'none' = a row without a file (manual row, or a physical product). */
 export type UploadState = 'none' | 'queued' | 'uploading' | 'done' | 'failed';
 export type CreateState = 'idle' | 'creating' | 'created' | 'failed';
-export type DetailGroup = 'price' | 'photos' | 'tags' | 'inventory' | 'download';
+export type DetailGroup = 'price' | 'photos' | 'tags' | 'inventory' | 'download' | 'age';
 
 export interface BulkRow {
   id: string;
@@ -46,6 +46,9 @@ export interface BulkRow {
   subCategoryId: string;
   classFrom: string;
   classTo: string;
+  /** Optional suitable age range in years (whole numbers 0-99, as typed). */
+  ageMin: string;
+  ageMax: string;
   images: string[];
   // Physical
   stock: string;
@@ -117,7 +120,7 @@ export function blankRow(file?: { name: string; size: number }, hasFile = true):
     id: newId(), fileName: file?.name ?? '', fileSize: file?.size ?? 0, upload: null,
     uploadState: file && hasFile ? 'queued' : 'none', uploadPct: 0, uploadError: '',
     title: file ? titleFromFileName(file.name) : '', description: '', price: '', free: false, savedPrice: '', savedStock: '', compareAt: '', categoryId: '', subCategoryId: '',
-    classFrom: '', classTo: '', images: [],
+    classFrom: '', classTo: '', ageMin: '', ageMax: '', images: [],
     stock: '', unlimitedStock: false, sku: '', weight: '', weightUnit: 'kg', zeroStockOk: false,
     downloadLimit: 'unlimited', linkExpiryDays: '', buyerMessage: '', tags: [],
     createState: 'idle', createError: '', productId: '', createdStatus: '',
@@ -148,6 +151,16 @@ export function rowPremiumConflict(row: Pick<BulkRow, 'price' | 'compareAt'>, ct
   return premiumConflict({ price, compareAt, sellerPct: ctx.premium.sellerPct, gap: ctx.premium.gap, currency: ctx.currency, symbol: ctx.symbol ?? '' });
 }
 
+/** Problem with an optional age range (same rules as the single product form), or null. */
+export function ageRangeError(ageMin: string, ageMax: string): string | null {
+  const min = ageMin.trim() === '' ? null : Number(ageMin);
+  const max = ageMax.trim() === '' ? null : Number(ageMax);
+  const bad = (n: number | null) => n != null && (!Number.isInteger(n) || n < 0 || n > 99);
+  if (bad(min) || bad(max)) return 'Ages must be whole numbers from 0 to 99';
+  if (min != null && max != null && min > max) return 'The youngest age can’t be more than the oldest';
+  return null;
+}
+
 export const ZERO_STOCK_MESSAGE = 'Stock is 0 - product will show as out of stock. Tick the box under Stock to publish it as out of stock.';
 export function rowIssue(row: BulkRow, ctx: RowContext): string | null {
   if (ctx.type !== 'physical') {
@@ -174,6 +187,8 @@ export function rowIssue(row: BulkRow, ctx: RowContext): string | null {
   if (row.classFrom && row.classTo && classIndex(row.classFrom) > classIndex(row.classTo)) return '"From class" comes after "To class"';
   const cErr = classRangeError(ctx.type, row.classFrom, row.classTo);
   if (cErr) return cErr;
+  const aErr = ageRangeError(row.ageMin, row.ageMax);
+  if (aErr) return aErr;
   if (row.linkExpiryDays.trim() !== '' && (!Number.isInteger(Number(row.linkExpiryDays)) || Number(row.linkExpiryDays) < 1)) return 'Link expiry must be a whole number of days';
   const pr = rowPremiumConflict(row, ctx);
   if (pr) return pr.short;
@@ -194,6 +209,7 @@ export function groupsFor(type: BulkType): { key: DetailGroup; label: string; hi
     ...(type === 'physical'
       ? [{ key: 'inventory' as const, label: 'SKU', hint: 'Your own product code (made for you if empty)' }]
       : [{ key: 'download' as const, label: 'Download settings', hint: 'Download limit, link expiry, thank-you message' }]),
+    { key: 'age', label: 'Suitable ages', hint: 'Youngest and oldest age in years' },
     { key: 'tags', label: 'Tags', hint: 'Words buyers might search for' },
   ];
 }
@@ -205,6 +221,7 @@ export function filledGroups(r: BulkRow, type: BulkType): DetailGroup[] {
   if (r.images.length) out.push('photos');
   if (type === 'physical') { if (r.sku.trim()) out.push('inventory'); }
   else if (r.downloadLimit !== 'unlimited' || r.linkExpiryDays.trim() || r.buyerMessage.trim()) out.push('download');
+  if (r.ageMin.trim() || r.ageMax.trim()) out.push('age');
   if (r.tags.length) out.push('tags');
   return out;
 }
