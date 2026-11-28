@@ -51,7 +51,7 @@ const NAV_PERMISSION: Record<string, string | string[] | null> = {
   overview: null, settings: null, collaboration: 'staff.view', analytics: 'analytics.view', 'activity-log': 'activity.view',
   users: 'users.view', leads: 'marketplace.view', stores: 'managed.manage', 'my-stores': 'stores.operate',
   // Everyone with operations.view sees all stores; a store operator sees the stores assigned to them.
-  operations: ['operations.view', 'stores.operate'], moderation: 'moderation.view', messages: 'support.view',
+  operations: ['operations.view', 'stores.operate'], 'team-performance': 'operations.view', moderation: 'moderation.view', messages: 'support.view',
   orders: 'orders.view', refunds: 'orders.view', 'shipping-zones': 'config.view', marketplace: 'marketplace.view', categories: 'categories.manage',
   'platform-plans': 'plans.view', premium: 'plans.view', marketing: 'marketing.view', picks: 'marketing.view',
   finance: 'finance.view', 'monthly-payouts': 'finance.view', 'manual-payments': 'payments.view', 'fx-settings': 'finance.view',

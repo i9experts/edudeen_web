@@ -192,6 +192,8 @@ const AdminStores        = lazy(() => named(import('@/features/admin/pages/Admin
 const AdminMyStores      = lazy(() => named(import('@/features/admin/pages/AdminMyStores'),                     'AdminMyStores'));
 const AdminOperations    = lazy(() => named(import('@/features/admin/pages/AdminOperations'),                   'AdminOperations'));
 const AdminOperationsStore = lazy(() => named(import('@/features/admin/pages/AdminOperationsStore'),            'AdminOperationsStore'));
+const AdminTeamPerformance = lazy(() => named(import('@/features/admin/pages/AdminTeamPerformance'),            'AdminTeamPerformance'));
+const AdminTeamMember    = lazy(() => named(import('@/features/admin/pages/AdminTeamMember'),                   'AdminTeamMember'));
 const AdminAcademy       = lazy(() => named(import('@/features/admin/pages/AdminAcademy'),                      'AdminAcademy'));
 const AdminHomeCards      = lazy(() => named(import('@/features/admin/pages/AdminHomeCards'),                     'AdminHomeCards'));
 const AdminBanners       = lazy(() => named(import('@/features/admin/pages/AdminBanners'),                       'AdminBanners'));
@@ -501,6 +503,9 @@ const mainRouter = createBrowserRouter([
           { path: 'my-stores',    element: <RequirePermission nav="my-stores"><RequireRole role="admin"><AdminMyStores /></RequireRole></RequirePermission> },
           { path: 'operations',   element: <RequirePermission nav="operations"><RequireRole role="admin"><AdminOperations /></RequireRole></RequirePermission> },
           { path: 'operations/:storeId', element: <RequirePermission nav="operations"><RequireRole role="admin"><AdminOperationsStore /></RequireRole></RequirePermission> },
+          { path: 'team',         element: <RequirePermission nav="team-performance"><RequireRole role="admin"><AdminTeamPerformance /></RequireRole></RequirePermission> },
+          // A store operator may open their own page (the server refuses anyone else's).
+          { path: 'team/:adminId', element: <RequirePermission nav="operations"><RequireRole role="admin"><AdminTeamMember /></RequireRole></RequirePermission> },
           { path: 'fx-settings', element: <RequirePermission nav="fx-settings"><RequireRole role="admin"><AdminFxSettings /></RequireRole></RequirePermission> },
           { path: 'commission-rules', element: <RequirePermission nav="finance"><RequireRole role="admin"><AdminCommissionRules /></RequireRole></RequirePermission> },
           { path: 'announcements',element: <RequirePermission nav="announcements"><RequireRole role="admin"><AdminAnnouncements /></RequireRole></RequirePermission> },

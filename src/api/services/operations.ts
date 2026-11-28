@@ -100,3 +100,64 @@ export const HEALTH_LABEL: Record<HealthLevel, string> = { good: 'Good', watch: 
 
 /** 'PK' -> 🇵🇰 (regional indicator letters). */
 export const flagOf = (code: string) => (/^[A-Z]{2}$/.test(code) ? String.fromCodePoint(...[...code].map(c => 0x1f1a5 + c.charCodeAt(0))) : '');
+
+// ── Team performance + work queue ───────────────────────────────────────────
+
+export type TeamPeriod = 7 | 30 | 90;
+
+export interface TeamRow {
+  adminId: string;
+  name: string | null;
+  email: string | null;
+  stores: { assigned: number; managed: number };
+  products: { created: number; edited: number };
+  replies: { sent: number; answered: number; medianMinutes: number | null; within24hPct: number | null };
+  orders: { actioned: number; confirmed: number; shipped: number; delivered: number; courierBooked: number; cancelled: number; onTimePct: number | null; onTimeSample: number };
+  workload: { toShip: number; overdue: number; waiting: number; waitingOver24h: number; stuck: number; listingIssues: number };
+  lastActiveAt: string | null;
+  breaches: string[];
+}
+
+export interface TeamList {
+  days: TeamPeriod;
+  items: TeamRow[];
+  summary: { members: number; withBreaches: number; productsListed: number; repliesAnswered: number; medianReplyMinutes: number | null; ordersActioned: number; onTimePct: number | null; openOverdue: number };
+  generatedAt: string;
+}
+
+export interface TeamMemberStore {
+  storeId: string;
+  name: string;
+  managementType: 'self' | 'managed';
+  assigned: boolean;
+  role: string | null;
+  assignedAt: string | null;
+  health: { level: HealthLevel; reasons: string[] } | null;
+  workload: { toShip: number; overdue: number; waiting: number; waitingOver24h: number; stuck: number; listingIssues: number } | null;
+  activity: { productsCreated: number; productsEdited: number; messagesSent: number; answered: number; medianReplyMinutes: number | null; ordersActioned: number; shipped: number; onTimePct: number | null };
+}
+
+export interface TeamMemberDetail {
+  days: TeamPeriod;
+  member: TeamRow;
+  stores: TeamMemberStore[];
+  timeline: { items: { at: string; storeId: string; storeName: string; label: string }[]; total: number; page: number; limit: number };
+  generatedAt: string;
+}
+
+export interface MyQueue {
+  stores: { id: string; name: string; managementType: 'self' | 'managed' }[];
+  waiting: { storeId: string; storeName: string; conversationId: string; buyer: string; waitingSince: string | null; hoursWaiting: number | null }[];
+  toShip: QueueParcel[];
+  overdue: QueueParcel[];
+  stuck: { storeId: string; storeName: string; orderId: string; orderNumber: string; courier: string | null; trackingNumber: string | null; kind: ShipmentKind; days: number }[];
+  listings: { storeId: string; storeName: string; productId: string; name: string; issue: 'rejected' | 'missing_photos' | 'out_of_stock'; note: string | null }[];
+  kpis: { medianReplyMinutes: number | null; within24hPct: number | null; onTimePct: number | null; onTimeSample: number };
+  adminId: string;
+  generatedAt: string;
+}
+export interface QueueParcel { storeId: string; storeName: string; orderId: string; orderNumber: string; status: string; buyerCountry: string | null; createdAt: string; dueAt: string | null; hoursToDue: number | null; shippedBy: 'seller' | 'edudeen' }
+
+export const apiOpsTeam = (days: TeamPeriod, refresh?: boolean) => client.get<never, Res<TeamList>>('/api/admin/operations/team', { params: { days, ...(refresh ? { refresh: '1' } : {}) } });
+export const apiOpsTeamMember = (adminId: string, days: TeamPeriod, page = 1) => client.get<never, Res<TeamMemberDetail>>(`/api/admin/operations/team/${adminId}`, { params: { days, page } });
+export const apiOpsMyQueue = () => client.get<never, Res<MyQueue>>('/api/admin/operations/my-queue');
