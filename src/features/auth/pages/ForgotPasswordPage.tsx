@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Mail, KeyRound, ShieldCheck, Clock, AlertTriangle } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useForgotPassword } from '@/hooks/auth/useForgotPassword';
@@ -23,10 +23,12 @@ export function ForgotPasswordPage() {
   const navigate       = useNavigate();
   usePageTitle('Forgot Password');
   const forgotPassword = useForgotPassword();
+  // Admin-created seller invites link here with ?email= so the seller doesn't have to type it.
+  const [searchParams] = useSearchParams();
 
   const { values, errors, set, blur, handleSubmit } = useForm(
     forgotPasswordSchema,
-    { email: '' },
+    { email: searchParams.get('email')?.trim() ?? '' },
     {
       onSubmit: async (data: ForgotPasswordFormData) => {
         // Seller-only web login (see LoginPage's SELLER_ONLY_LOGIN) — every
