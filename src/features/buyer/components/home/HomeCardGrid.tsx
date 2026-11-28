@@ -9,7 +9,7 @@ import { categorySlugOf } from '@/utils/linkTarget';
 import { safeHttpUrl } from '@/utils/safeRedirect';
 import { SkeletonBox } from '@/components/comman/ui';
 import type { CategoryNode } from '@/api/services/categories';
-import type { HomeCard, HomeCardTile } from '@/api/services/homeCards';
+import { homeCardTintClass, type HomeCard, type HomeCardTile } from '@/api/services/homeCards';
 import { CARD_GRID_CLASS, CARD_ITEM_CLASS, placeOthersLast, tileSpanClass, uniqueByIdThenName } from './categoryCardRules';
 
 /** In-site path -> router Link; http(s) URL -> new-tab anchor; anything else -> plain box (not clickable). */
@@ -67,7 +67,7 @@ function CardView({ card, bySlug }: { card: HomeCard; bySlug: Map<string, { node
     <svg aria-hidden viewBox="0 0 24 24" className="w-5 h-5 rtl:rotate-180" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 5 7 7-7 7" /></svg>
   );
   return (
-    <article className={clsx('flex flex-col bg-white rounded-2xl border border-bone p-4 min-w-0', CARD_ITEM_CLASS)}>
+    <article className={clsx('flex flex-col rounded-2xl border border-bone p-4 min-w-0', homeCardTintClass(card.tint), CARD_ITEM_CLASS)}>
       <div className="flex items-start justify-between gap-2 mb-3">
         <h2 className="text-[17px] md:text-[19px] font-extrabold text-carbon leading-tight tracking-tight m-0 line-clamp-2 min-h-[2.5em]">{card.title}</h2>
         {card.link && (

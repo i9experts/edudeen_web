@@ -13,7 +13,7 @@ import { invalidateHomeCards } from '@/hooks/useHomeCards';
 import { cloudinaryUrl } from '@/utils/cloudinaryImage';
 import {
   apiCreateHomeCard, apiDeleteHomeCard, apiGetAdminHomeCards, apiReorderHomeCards, apiUpdateHomeCard,
-  type HomeCard, type HomeCardLayout, type HomeCardTile,
+  HOME_CARD_TINTS, homeCardTintClass, type HomeCard, type HomeCardLayout, type HomeCardTile, type HomeCardTint,
 } from '@/api/services/homeCards';
 
 const emptyTile = (): HomeCardTile => ({ label: '', imageUrl: '', link: '' });
@@ -29,6 +29,7 @@ function CardForm({ card, onClose, onSaved }: { card: HomeCard | null; onClose: 
   const [imageUrl, setImageUrl] = useState(card?.imageUrl ?? '');
   const [link, setLink] = useState(card?.link ?? '');
   const [ctaLabel, setCtaLabel] = useState(card?.ctaLabel ?? '');
+  const [tint, setTint] = useState<HomeCardTint>(card?.tint ?? 'white');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -42,7 +43,7 @@ function CardForm({ card, onClose, onSaved }: { card: HomeCard | null; onClose: 
     setError('');
     setSaving(true);
     try {
-      const payload = { title: title.trim(), layout, tiles: layout === 'grid4' ? usedTiles : [], imageUrl: layout === 'single' ? imageUrl : '', link, ctaLabel: ctaLabel.trim(), status };
+      const payload = { title: title.trim(), layout, tiles: layout === 'grid4' ? usedTiles : [], imageUrl: layout === 'single' ? imageUrl : '', link, ctaLabel: ctaLabel.trim(), tint, status };
       if (card) await apiUpdateHomeCard(card._id, payload);
       else await apiCreateHomeCard(payload);
       invalidateHomeCards();
@@ -67,6 +68,21 @@ function CardForm({ card, onClose, onSaved }: { card: HomeCard | null; onClose: 
           <option value="grid4">4 small pictures (like Amazon)</option>
           <option value="single">One big picture</option>
         </Select>
+
+        <div>
+          <p className="block text-[12px] font-medium text-charcoal mb-1.5">Card colour</p>
+          <div role="radiogroup" aria-label="Card colour" className="flex flex-wrap gap-2">
+            {HOME_CARD_TINTS.map(t => (
+              <button
+                key={t.value} type="button" role="radio" aria-checked={tint === t.value} title={t.label} onClick={() => setTint(t.value)}
+                className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px] cursor-pointer transition ${tint === t.value ? 'border-brand-orange ring-2 ring-brand-orange/25 text-carbon font-semibold' : 'border-bone text-slate hover:border-border-hover'}`}
+              >
+                <span className={`size-4 rounded-full border border-bone ${t.className}`} />{t.label}
+              </button>
+            ))}
+          </div>
+          <p className="mt-1.5 text-[12px] text-slate/70">A light background behind the whole card. Pictures stay as they are.</p>
+        </div>
 
         {layout === 'single' ? (
           <div>
@@ -156,7 +172,7 @@ export function AdminHomeCards() {
             {cards.map((c, i) => {
               const thumbs = c.layout === 'single' ? [c.imageUrl] : c.tiles.map(t => t.imageUrl);
               return (
-                <li key={c._id} className="flex flex-wrap items-center gap-3 rounded-xl border border-bone bg-white p-3">
+                <li key={c._id} className={`flex flex-wrap items-center gap-3 rounded-xl border border-bone p-3 ${homeCardTintClass(c.tint)}`}>
                   <div className="flex gap-1 shrink-0">
                     {thumbs.slice(0, 4).map((u, k) => (u
                       ? <img key={k} src={cloudinaryUrl(u, 96)} alt="" className="size-12 rounded object-cover" />
