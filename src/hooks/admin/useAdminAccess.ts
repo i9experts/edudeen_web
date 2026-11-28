@@ -46,9 +46,12 @@ if (typeof window !== 'undefined') {
 }
 
 /** Which sidebar page needs which permission (the server enforces the same rules; this only hides what would be refused). */
-const NAV_PERMISSION: Record<string, string | null> = {
+// An array = any one of them is enough.
+const NAV_PERMISSION: Record<string, string | string[] | null> = {
   overview: null, settings: null, collaboration: 'staff.view', analytics: 'analytics.view', 'activity-log': 'activity.view',
-  users: 'users.view', leads: 'marketplace.view', stores: 'managed.manage', 'my-stores': 'stores.operate', moderation: 'moderation.view', messages: 'support.view',
+  users: 'users.view', leads: 'marketplace.view', stores: 'managed.manage', 'my-stores': 'stores.operate',
+  // Everyone with operations.view sees all stores; a store operator sees the stores assigned to them.
+  operations: ['operations.view', 'stores.operate'], moderation: 'moderation.view', messages: 'support.view',
   orders: 'orders.view', refunds: 'orders.view', 'shipping-zones': 'config.view', marketplace: 'marketplace.view', categories: 'categories.manage',
   'platform-plans': 'plans.view', premium: 'plans.view', marketing: 'marketing.view', picks: 'marketing.view',
   finance: 'finance.view', 'monthly-payouts': 'finance.view', 'manual-payments': 'payments.view', 'fx-settings': 'finance.view',
@@ -60,8 +63,8 @@ const NAV_PERMISSION: Record<string, string | null> = {
   'seller-kyc': 'staff.manage',
 };
 
-const allows = (m: StaffMember | null, perm: string | null | undefined) =>
-  !perm || (!!m && (m.isOwner || m.permissions.includes(perm)));
+const allows = (m: StaffMember | null, perm: string | string[] | null | undefined) =>
+  !perm || (Array.isArray(perm) && !perm.length) || (!!m && (m.isOwner || (Array.isArray(perm) ? perm.some(p => m.permissions.includes(p)) : m.permissions.includes(perm))));
 
 /** Synchronous check used by the sidebar lists (AdminLayout re-renders them when access loads). */
 export function navAllowed(id: string): boolean {
@@ -72,7 +75,7 @@ export function useAdminAccess() {
   useEffect(() => { loadAdminAccess(); }, []);
   const current = useSyncExternalStore(cb => { subs.add(cb); return () => { subs.delete(cb); }; }, () => me);
   const state = useSyncExternalStore(cb => { subs.add(cb); return () => { subs.delete(cb); }; }, () => status);
-  const can = (perm: string | null | undefined) => allows(current, perm);
+  const can = (perm: string | string[] | null | undefined) => allows(current, perm);
   return {
     me: current,
     /** true only once the server confirmed this account is an owner */

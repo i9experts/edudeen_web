@@ -290,6 +290,8 @@ export function AdminOrders() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [openId, setOpenId] = useState<string | null>(params.get('order'));
+  // ?store=<id> (from Seller operations): only that store's orders.
+  const storeFilter = /^[a-f0-9]{24}$/i.test(params.get('store') ?? '') ? (params.get('store') as string) : '';
   const [reload, setReload] = useState(0);
   const [creating, setCreating] = useState(false);
 
@@ -333,9 +335,10 @@ export function AdminOrders() {
     paymentType: (paymentType || undefined) as AdminPaymentType | undefined,
     from: from || undefined,
     to: to || undefined,
+    storeId: storeFilter || undefined,
     page,
     limit: PER_PAGE,
-  }), [search, status, paymentStatus, paymentType, from, to, page]);
+  }), [search, status, paymentStatus, paymentType, from, to, storeFilter, page]);
 
   const quietRef = useRef(false);
   useLiveRefresh(['orders'], () => { quietRef.current = true; setReload(r => r + 1); });
@@ -390,6 +393,12 @@ export function AdminOrders() {
       />
       <div className={`${ADMIN_GUTTER} pt-6 pb-8 flex flex-col gap-4`}>
         {bulk.message && <div role="status" className="bg-info-bg border border-info/30 rounded-lg px-4 py-2.5 text-[12.5px] text-carbon">{bulk.message}</div>}
+        {storeFilter && (
+          <div role="status" className="flex items-center gap-3 bg-info-bg border border-info/30 rounded-lg px-4 py-2.5 text-[12.5px] text-carbon">
+            <span className="flex-1">Showing one store's orders only.</span>
+            <button type="button" onClick={() => { const next = new URLSearchParams(params); next.delete('store'); setParams(next, { replace: true }); setPage(1); }} className="font-semibold underline bg-transparent border-none cursor-pointer text-brand-royal">Show all orders</button>
+          </div>
+        )}
         <div className="bg-white border border-bone rounded-xl overflow-hidden">
           <div className="flex items-center gap-[10px] px-5 py-[14px] border-b border-bone flex-wrap">
             <SearchInput value={search} onChange={v => reset(() => setSearch(v))} placeholder="Order no., buyer, email or phone" className="flex-1 min-w-[260px] max-w-[420px]" />

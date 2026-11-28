@@ -1,5 +1,6 @@
 import { safeHttpUrl } from '@/utils/safeRedirect';
 import { useId, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { X, MessageSquare, Flag, Paperclip, Inbox, FlagOff } from 'lucide-react';
 import { useAdminConversationDetail } from '@/hooks/messaging/useAdminMessaging';
@@ -109,10 +110,14 @@ function NameCell({ name, id, sub }: { name?: string | null; id?: string; sub?: 
 }
 
 function ConversationsPanel() {
+  // ?store=<id>&conversation=<id> (from Seller operations): start filtered to that store with the chat open.
+  const [params] = useSearchParams();
+  const linkedStore = OBJECT_ID_RE.test(params.get('store') ?? '') ? (params.get('store') as string) : '';
+  const linkedConversation = OBJECT_ID_RE.test(params.get('conversation') ?? '') ? params.get('conversation') : null;
   // Filters are edited as a draft and applied on "Apply" (or Enter) — a
   // half-typed id would otherwise fire a request on every keystroke.
-  const [draft, setDraft] = useState<ConversationFilters>(EMPTY_FILTERS);
-  const [filters, setFilters] = useState<ConversationFilters>(EMPTY_FILTERS);
+  const [draft, setDraft] = useState<ConversationFilters>({ ...EMPTY_FILTERS, storeId: linkedStore });
+  const [filters, setFilters] = useState<ConversationFilters>({ ...EMPTY_FILTERS, storeId: linkedStore });
   const [filterError, setFilterError] = useState('');
   const { conversations, loading, error } = useAdminConversationRows({
     storeId:    filters.storeId  || undefined,
@@ -120,7 +125,7 @@ function ConversationsPanel() {
     sellerId:   filters.sellerId || undefined,
     isArchived: filters.isArchived === '' ? undefined : filters.isArchived === 'true',
   });
-  const [viewingId, setViewingId] = useState<string | null>(null);
+  const [viewingId, setViewingId] = useState<string | null>(linkedConversation);
 
   function applyFilters() {
     const trimmed = { ...draft, storeId: draft.storeId.trim(), buyerId: draft.buyerId.trim(), sellerId: draft.sellerId.trim() };
