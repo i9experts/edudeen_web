@@ -188,6 +188,8 @@ const AdminPlatformPlans = lazy(() => named(import('@/features/admin/pages/Admin
 const AdminFinance       = lazy(() => named(import('@/features/admin/pages/AdminFinance'),                      'AdminFinance'));
 const AdminAnnouncements = lazy(() => named(import('@/features/admin/pages/AdminAnnouncements'),                'AdminAnnouncements'));
 const AdminSellerKyc     = lazy(() => named(import('@/features/admin/pages/AdminSellerKyc'),                    'AdminSellerKyc'));
+const AdminStores        = lazy(() => named(import('@/features/admin/pages/AdminStores'),                       'AdminStores'));
+const AdminMyStores      = lazy(() => named(import('@/features/admin/pages/AdminMyStores'),                     'AdminMyStores'));
 const AdminAcademy       = lazy(() => named(import('@/features/admin/pages/AdminAcademy'),                      'AdminAcademy'));
 const AdminHomeCards      = lazy(() => named(import('@/features/admin/pages/AdminHomeCards'),                     'AdminHomeCards'));
 const AdminBanners       = lazy(() => named(import('@/features/admin/pages/AdminBanners'),                       'AdminBanners'));
@@ -493,6 +495,8 @@ const mainRouter = createBrowserRouter([
           { path: 'premium', element: <RequireRole role="admin"><AdminPremium /></RequireRole> },
           { path: 'manual-payments', element: <RequirePermission nav="manual-payments"><RequireRole role="admin"><AdminManualPayments /></RequireRole></RequirePermission> },
           { path: 'seller-kyc',   element: <RequirePermission nav="seller-kyc"><RequireRole role="admin"><AdminSellerKyc /></RequireRole></RequirePermission> },
+          { path: 'stores',       element: <RequirePermission nav="stores"><RequireRole role="admin"><AdminStores /></RequireRole></RequirePermission> },
+          { path: 'my-stores',    element: <RequirePermission nav="my-stores"><RequireRole role="admin"><AdminMyStores /></RequireRole></RequirePermission> },
           { path: 'fx-settings', element: <RequirePermission nav="fx-settings"><RequireRole role="admin"><AdminFxSettings /></RequireRole></RequirePermission> },
           { path: 'commission-rules', element: <RequirePermission nav="finance"><RequireRole role="admin"><AdminCommissionRules /></RequireRole></RequirePermission> },
           { path: 'announcements',element: <RequirePermission nav="announcements"><RequireRole role="admin"><AdminAnnouncements /></RequireRole></RequirePermission> },

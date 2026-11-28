@@ -20,7 +20,7 @@ import { Modal, Button, CopyIconButton } from '@/components/comman/ui';
 import { EdudeenLogo, EdudeenIcon } from '@/components/comman/ui/EdudeenLogo';
 import { PlatformTopBar } from '@/components/comman/ui/PlatformTopBar';
 import { MoreSheet } from '@/components/comman/ui/MoreSheet';
-import { MoreHorizontal, LayoutGrid, GraduationCap, ShieldCheck } from 'lucide-react';
+import { MoreHorizontal, LayoutGrid, GraduationCap, ShieldCheck, Building2, Briefcase } from 'lucide-react';
 import { ReauthProvider } from '@/contexts/ReauthProvider';
 import { useLockPageScroll } from '@/hooks/useLockPageScroll';
 
@@ -40,6 +40,8 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { id: 'activity-log',  Icon: Activity,        label: 'Activity Log',    path: '/admin/activity-log'  },
   { id: 'messages',      Icon: MessageSquare,   label: 'Messages',        path: '/admin/messages'      },
   { id: 'leads',         Icon: UserPlus,        label: 'Store approvals', path: '/admin/leads'     },
+  { id: 'stores',        Icon: Building2,       label: 'Stores',          path: '/admin/stores'        },
+  { id: 'my-stores',     Icon: Briefcase,       label: 'My stores',       path: '/admin/my-stores'     },
   { id: 'orders',        Icon: ShoppingBag,     label: 'Orders',          path: '/admin/orders'        },
   { id: 'refunds',       Icon: Undo2,           label: 'Refunds',         path: '/admin/refunds'       },
   { id: 'shipping-zones',Icon: Truck,           label: 'Shipping Zones',  path: '/admin/shipping-zones' },
@@ -86,6 +88,7 @@ interface AdminModule {
 // nothing to expand for a "section" that's really just one page.
 export const ADMIN_MODULES: AdminModule[] = [
   { id: 'overview',  label: 'Overview',             Icon: LayoutDashboard, ids: ['overview'] },
+  { id: 'sellers',   label: 'Sellers',              Icon: Building2,       ids: ['stores', 'my-stores'] },
   { id: 'commerce',  label: 'Commerce',             Icon: Store,           ids: ['orders', 'marketplace', 'categories', 'refunds', 'shipping-zones', 'platform-plans', 'premium'] },
   { id: 'people',    label: 'Users & Communication', Icon: Users,          ids: ['users', 'leads', 'moderation', 'messages', 'collaboration'] },
   { id: 'growth',    label: 'Growth',                Icon: TrendingUp,     ids: ['marketing', 'picks', 'learning-paths', 'seo', 'ai-studio'] },

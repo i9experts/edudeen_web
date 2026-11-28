@@ -145,6 +145,8 @@ export function AdminLeads() {
 
   const { can } = useAdminAccess();
   const canManageStores = can('stores.manage');
+  // Operating a store as the seller is its own right; the server also requires the store to be assigned to staff.
+  const canOperate = can('stores.operate');
   const manage = useManageAsSeller();
   const [creating, setCreating] = useState(false);
   const [teamOf, setTeamOf] = useState<{ id: string; storeName: string } | null>(null);
@@ -217,7 +219,7 @@ export function AdminLeads() {
               Team
             </Button>
           )}
-          {canManageStores && (
+          {canOperate && (
             <Button variant="outline" size="xs" icon={<LogIn size={12} />} onClick={() => manage.start(lead.id)} loading={manage.busyId === lead.id} disabled={!!manage.busyId}>
               Manage as seller
             </Button>
@@ -270,7 +272,7 @@ export function AdminLeads() {
             Store <strong>{created.store.name}</strong> created for <strong>{created.seller.email}</strong>.
             {created.createdSeller && (created.emailSent ? ' An invitation e-mail was sent.' : ' The invitation e-mail could not be sent: ask the seller to use "Forgot password" with this e-mail.')}
           </span>
-          {canManageStores && <Button variant="outline" size="xs" icon={<LogIn size={12} />} onClick={() => manage.start(created.store.id)} loading={manage.busyId === created.store.id}>Manage as seller</Button>}
+          {canOperate && <Button variant="outline" size="xs" icon={<LogIn size={12} />} onClick={() => manage.start(created.store.id)} loading={manage.busyId === created.store.id}>Manage as seller</Button>}
           <Button variant="ghost" size="xs" onClick={() => setCreated(null)}>Dismiss</Button>
         </div>
       )}

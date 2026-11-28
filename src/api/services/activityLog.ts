@@ -11,12 +11,12 @@ export type ActivityCategory = 'products' | 'orders' | 'finance' | 'marketing' |
 export type AdminActivityCategory =
   | ActivityCategory
   | 'loyalty' | 'subscriptions' | 'platform_billing' | 'platform_plans'
-  | 'seo' | 'ai_studio' | 'announcements' | 'moderation' | 'promotions' | 'academy';
+  | 'seo' | 'ai_studio' | 'announcements' | 'moderation' | 'promotions' | 'academy' | 'managed';
 
 export const ADMIN_ACTIVITY_CATEGORIES: AdminActivityCategory[] = [
   'products', 'orders', 'finance', 'marketing', 'customers', 'settings', 'security',
   'loyalty', 'subscriptions', 'platform_billing', 'platform_plans',
-  'seo', 'ai_studio', 'announcements', 'moderation', 'promotions', 'academy',
+  'seo', 'ai_studio', 'announcements', 'moderation', 'promotions', 'academy', 'managed',
 ];
 
 export interface ActivityLogEntry {

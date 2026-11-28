@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLiveRefresh } from '@/hooks/useLiveRefresh';
 import { formatPrice } from '@/utils/formatPrice';
 import { clsx } from 'clsx';
-import { Download, Plus, X, Star, AlertTriangle, CalendarCheck } from 'lucide-react';
+import { Download, Plus, X, Star, AlertTriangle, CalendarCheck, Handshake } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useStoreWorkspace, StorePageHeader } from '@/components/layouts/StoreLayout';
 import { Button } from '@/components/comman/ui/Button';
@@ -411,6 +411,17 @@ export function StoreFinance() {
         ) : undefined}
       />
       {!adminView && <KycPayoutNotice storeId={storeId} />}
+      {dashboard?.platformFeeBreakdown?.platformFeeSource === 'managed_mou' && (
+        <div className="px-4 md:px-8 pt-4">
+          <div className="flex items-start gap-2 text-[12.5px] text-carbon bg-cream border border-bone rounded-lg px-3 py-2">
+            <Handshake size={14} className="shrink-0 mt-0.5 text-brand-royal" />
+            <span>
+              <strong>Managed by Edudeen</strong> · commission {Number(((dashboard.platformFeeRate ?? 0) * 100).toFixed(2))}% of each item price, as agreed in your MOU.
+              Shipping is not charged. The Edudeen team lists products and handles orders for this store.
+            </span>
+          </div>
+        </div>
+      )}
       {methodsKnown && !hasDefault && !adminView && (
         <div className="px-4 md:px-8 pt-4">
           <div className="flex items-center gap-2 text-[12.5px] text-carbon bg-info-bg border border-[#bfdcf3] rounded-lg px-3 py-2">

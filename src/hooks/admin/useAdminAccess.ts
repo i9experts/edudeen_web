@@ -48,7 +48,7 @@ if (typeof window !== 'undefined') {
 /** Which sidebar page needs which permission (the server enforces the same rules; this only hides what would be refused). */
 const NAV_PERMISSION: Record<string, string | null> = {
   overview: null, settings: null, collaboration: 'staff.view', analytics: 'analytics.view', 'activity-log': 'activity.view',
-  users: 'users.view', leads: 'marketplace.view', moderation: 'moderation.view', messages: 'support.view',
+  users: 'users.view', leads: 'marketplace.view', stores: 'managed.manage', 'my-stores': 'stores.operate', moderation: 'moderation.view', messages: 'support.view',
   orders: 'orders.view', refunds: 'orders.view', 'shipping-zones': 'config.view', marketplace: 'marketplace.view', categories: 'categories.manage',
   'platform-plans': 'plans.view', premium: 'plans.view', marketing: 'marketing.view', picks: 'marketing.view',
   finance: 'finance.view', 'monthly-payouts': 'finance.view', 'manual-payments': 'payments.view', 'fx-settings': 'finance.view',
